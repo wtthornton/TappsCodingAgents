@@ -1,0 +1,4 @@
+model_profiles:
+  implementer_default:
+    primary: local:qwen2.5-coder-14b
+    fallback: cursor:gpt-5.1
