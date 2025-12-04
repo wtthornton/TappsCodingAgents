@@ -1,19 +1,71 @@
 # TappsCodingAgents
 
-Coding agents specification and requirements repository.
+**A specification framework for defining, configuring, and orchestrating coding agents.**
 
-## Structure
+## Overview
 
-- `requirments/` - Requirements and specifications for coding agents
-  - `agent_api.md` - Agent API definitions
-  - `agents.md` - Unified Agent Specification (2025)
-  - `model_profiles.yaml` - Model profiles and configuration
-  - `template/` - Template files for agent configuration
-    - `agent.yaml` - Agent configuration template
-    - `persona.md` - Persona template
-    - `*.schema.json` - JSON schema definitions
+TappsCodingAgents provides a standardized framework for building AI coding agents with:
+
+- **Workflow Agents** (18): Standard SDLC task execution
+- **Industry Experts** (N): Business domain knowledge with weighted decision-making
+- **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
+- **RAG Integration**: Retrieval-augmented generation for domain knowledge
+- **Fine-Tuning Support**: LoRA adapters for domain specialization
+- **Claude Code Compatible**: Native Agent Skills format
+
+## Key Features
+
+### Two-Layer Agent Model
+
+| Layer | Type | Purpose | Count |
+|-------|------|---------|-------|
+| **Knowledge** | Industry Experts | Business domain authority | N (per project) |
+| **Execution** | Workflow Agents | SDLC task execution | 18 (fixed) |
+
+### Workflow Agents (18)
+
+- **Planning**: analyst, planner, estimator
+- **Design**: architect, designer, ui-designer
+- **Development**: implementer, refactorer, debugger, documenter
+- **Quality**: reviewer, analyzer, enhancer
+- **Testing**: test-writer, test-fixer
+- **Security & Ops**: security-auditor, deployment-engineer
+- **Orchestration**: orchestrator
+
+### Industry Experts
+
+- Business domain authorities (not technical specialists)
+- 1:1 mapping: N domains → N experts
+- Weighted decision-making (Primary: 51%, Others: 49%/(N-1))
+- RAG + Fine-tuning capabilities
+- Consult-based integration with workflow agents
+
+## Project Structure
+
+```
+TappsCodingAgents/
+├── requirements/                  # Specification documents
+│   ├── PROJECT_REQUIREMENTS.md    # Main requirements document
+│   ├── agent_api.md               # Agent API specification
+│   ├── agents.md                  # Agent types specification
+│   ├── model_profiles.yaml        # Model configurations
+│   └── template/                  # Templates and schemas
+│
+├── agents/                        # Agent Skills (coming)
+├── knowledge/                     # RAG templates (coming)
+├── adapters/                      # Fine-tuning templates (coming)
+└── config/                        # Configuration templates (coming)
+```
+
+## Documentation
+
+- **[Project Requirements](requirements/PROJECT_REQUIREMENTS.md)** - Complete specification document
+
+## Status
+
+**Phase**: Design  
+**Version**: 1.0.0-draft
 
 ## License
 
 See LICENSE file for details.
-
