@@ -21,18 +21,19 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **YAML Workflow Definitions**: Declarative, version-controlled orchestration
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
 
-## Current Status (Phase 1 - Week 2 Complete)
+## Current Status (Phase 1 - Week 3 Day 2 Complete)
 
 ✅ **Implemented:**
-- Reviewer Agent (99% test coverage)
+- Reviewer Agent (99% test coverage) with Code Scoring
+- Planner Agent (91% test coverage) with Story Generation
 - Complete Code Scoring System (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
 - Configuration System (YAML-based, Pydantic validated)
 - BaseAgent with BMAD-METHOD patterns (star commands, activation instructions)
 - Model Abstraction Layer (MAL) for Ollama
-- 66 tests passing, 62% overall coverage
+- 96 tests passing, 69% overall coverage
 
 🚧 **In Progress:**
-- Additional workflow agents (11 remaining)
+- Additional workflow agents (10 remaining)
 - MCP Gateway
 - Tiered Context System
 - Workflow Engine
@@ -48,7 +49,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 
 ### Workflow Agents (12)
 
-- **Planning**: analyst, planner
+- **Planning**: analyst, planner ✅ (Story Generation)
 - **Design**: architect, designer
 - **Development**: implementer, debugger, documenter
 - **Quality**: reviewer ✅ (with Code Scoring), improver

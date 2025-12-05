@@ -24,21 +24,23 @@
 
 ### Current Implementation Status
 
-**Phase 1 (Week 1-2) - Complete:**
-- ✅ Reviewer Agent with Code Scoring
+**Phase 1 (Week 3 Day 2) - Complete:**
+- ✅ Reviewer Agent with Code Scoring (99% coverage)
+- ✅ Planner Agent with Story Generation (91% coverage)
 - ✅ Configuration System
 - ✅ BaseAgent Framework
 - ✅ Model Abstraction Layer (MAL)
-- ✅ Comprehensive test suite (66 tests, 62% coverage)
+- ✅ Comprehensive test suite (96 tests, 69% coverage)
 
 **Available Now:**
 - Code review with scoring (`*review` command)
 - Code scoring without LLM feedback (`*score` command)
+- Story generation and planning (`*plan`, `*create-story`, `*list-stories` commands)
 - Configuration via `.tapps-agents/config.yaml`
 - All 5 scoring metrics (complexity, security, maintainability, test_coverage, performance)
 
 **Coming Soon:**
-- Additional workflow agents (11 remaining)
+- Additional workflow agents (10 remaining)
 - MCP Gateway
 - Tiered Context System
 - Workflow Engine
@@ -373,6 +375,191 @@ scoring:
 - **Very large files** (> 1500 lines): 5-10 seconds (scoring only recommended)
 
 Performance scales linearly with file size. For very large files, use `*score` command (no LLM feedback) for faster results.
+
+### Planner Agent (Available Now)
+
+The Planner Agent generates user stories and task breakdowns for feature planning. It creates structured story files with acceptance criteria, tasks, and complexity estimates.
+
+#### Commands
+
+```bash
+# Create a plan for a feature/requirement
+python -m tapps_agents.cli planner plan "Add user authentication with OAuth2 support"
+
+# Generate a user story from description
+python -m tapps_agents.cli planner create-story "User should be able to log in with Google"
+
+# Create story with epic and priority
+python -m tapps_agents.cli planner create-story "Add shopping cart" --epic checkout --priority high
+
+# List all stories
+python -m tapps_agents.cli planner list-stories
+
+# List stories filtered by epic
+python -m tapps_agents.cli planner list-stories --epic checkout
+
+# List stories filtered by status
+python -m tapps_agents.cli planner list-stories --status draft
+
+# Show help
+python -m tapps_agents.cli planner help
+```
+
+**Note:** Commands can also be used programmatically:
+
+```python
+from tapps_agents.agents.planner import PlannerAgent
+
+planner = PlannerAgent()
+await planner.activate()
+
+# Create a plan
+result = await planner.run("plan", description="Add user authentication")
+
+# Create a story
+result = await planner.run("create-story", description="User login", epic="auth", priority="high")
+
+# List stories
+result = await planner.run("list-stories", epic="checkout")
+```
+
+#### Story Generation Features
+
+The Planner Agent automatically generates:
+
+1. **Story Metadata**:
+   - Unique story ID (auto-generated slug)
+   - Title (extracted from description)
+   - Domain inference (backend/frontend/testing/documentation/general)
+   - Complexity estimate (1-5 scale via LLM)
+   - Epic, priority, status
+
+2. **Acceptance Criteria** (LLM-generated):
+   - 3-5 testable criteria
+   - Formatted as checkboxes
+
+3. **Task Breakdown** (LLM-generated):
+   - 3-7 actionable tasks
+   - Numbered list format
+
+4. **Story File**: Markdown with YAML frontmatter saved to `stories/` directory
+
+#### Example Story File
+
+Generated stories are saved as `stories/{story-id}.md`:
+
+```markdown
+# User Login with Google
+
+```yaml
+story_id: authentication-user-login-with-google
+title: User Login with Google
+description: |
+  User should be able to log in with Google OAuth2
+epic: authentication
+domain: backend
+priority: medium
+complexity: 3
+status: draft
+created_at: 2025-12-04T10:30:00
+created_by: planner
+```
+
+## Description
+
+User should be able to log in with Google OAuth2
+
+## Acceptance Criteria
+
+- [ ] User can initiate Google OAuth login
+- [ ] OAuth callback handles authentication
+- [ ] User session is created after successful login
+- [ ] Error handling for failed authentication
+
+## Tasks
+
+1. Set up Google OAuth2 credentials
+2. Implement OAuth callback endpoint
+3. Create user session management
+4. Add error handling and logging
+5. Write integration tests
+
+## Technical Notes
+
+(Technical considerations, dependencies, etc.)
+
+## Dependencies
+
+- Related stories: []
+- Blocks: []
+- Blocked by: []
+```
+
+#### Configuration
+
+Configure the Planner Agent in `.tapps-agents/config.yaml`:
+
+```yaml
+agents:
+  planner:
+    model: "qwen2.5-coder:7b"      # LLM model for planning
+    stories_dir: "stories"           # Directory for story files (default: stories/)
+    default_priority: "medium"       # Default priority for new stories
+```
+
+#### Story Metadata
+
+Each story includes:
+
+- **story_id**: Auto-generated slug (e.g., `authentication-user-login`)
+- **title**: Short title extracted from description
+- **epic**: Feature area or epic name
+- **domain**: Inferred domain (backend/frontend/testing/documentation/general)
+- **priority**: high/medium/low
+- **complexity**: 1-5 scale estimate (via LLM)
+  - 1: Trivial (<1 hour)
+  - 2: Easy (1-4 hours)
+  - 3: Medium (1-2 days)
+  - 4: Complex (3-5 days)
+  - 5: Very Complex (1+ weeks)
+- **status**: draft/ready/in-progress/done
+- **created_at**: ISO timestamp
+- **created_by**: "planner"
+
+#### Domain Inference
+
+The Planner Agent automatically infers the domain from keywords:
+
+- **backend**: Contains "api", "endpoint", "service"
+- **frontend**: Contains "ui", "interface", "component", "page"
+- **testing**: Contains "test", "testing", "spec"
+- **documentation**: Contains "documentation", "docs", "guide"
+- **general**: Default fallback
+
+#### Story Listing and Filtering
+
+List stories with optional filters:
+
+```bash
+# List all stories
+*list-stories
+
+# Filter by epic
+*list-stories --epic=authentication
+
+# Filter by status
+*list-stories --status=draft
+
+# Combined filters (future)
+*list-stories --epic=checkout --status=ready
+```
+
+#### Integration with Project Workflow
+
+1. **Create Stories**: Use `*create-story` for each user story
+2. **Organize by Epic**: Use `--epic` parameter to group related stories
+3. **Track Progress**: Update `status` field in story files as work progresses
+4. **Review**: Stories are stored in `stories/` directory for easy review
 
 ### In Cursor IDE
 
