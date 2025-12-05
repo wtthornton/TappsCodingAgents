@@ -59,6 +59,7 @@ TappsCodingAgents/
 
 ## Documentation
 
+- **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - **Start here!** How to use this framework
 - **[Project Requirements](requirements/PROJECT_REQUIREMENTS.md)** - Complete specification document
 - **[Technology Stack](requirements/TECH_STACK.md)** - Recommended technologies and configurations
 
