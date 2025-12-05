@@ -59,10 +59,19 @@ class ReviewerAgentConfig(BaseModel):
     max_file_size: int = Field(default=1024 * 1024, ge=1024, description="Maximum file size in bytes (1MB default)")
 
 
+class PlannerAgentConfig(BaseModel):
+    """Configuration specific to Planner Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for planning")
+    stories_dir: Optional[str] = Field(default=None, description="Directory for storing stories (default: stories/)")
+    default_priority: str = Field(default="medium", description="Default priority for new stories (high/medium/low)")
+
+
 class AgentsConfig(BaseModel):
     """Configuration for all agents"""
     
     reviewer: ReviewerAgentConfig = Field(default_factory=ReviewerAgentConfig)
+    planner: PlannerAgentConfig = Field(default_factory=PlannerAgentConfig)
 
 
 class ProjectConfig(BaseModel):
