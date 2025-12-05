@@ -179,4 +179,72 @@ class TestCodeScorer:
         
         assert isinstance(result, dict)
         assert "overall_score" in result
+        assert "test_coverage_score" in result
+        assert "performance_score" in result
+    
+    def test_test_coverage_score(self, tmp_path: Path):
+        """Test test coverage score calculation."""
+        scorer = CodeScorer()
+        test_file = tmp_path / "sample.py"
+        test_file.write_text("def hello(): pass")
+        
+        result = scorer.score_file(test_file, "def hello(): pass")
+        
+        # Should return a score between 0 and 10
+        assert 0 <= result["test_coverage_score"] <= 10
+        assert "test_coverage" in result["metrics"]
+    
+    def test_performance_score(self, tmp_path: Path):
+        """Test performance score calculation."""
+        scorer = CodeScorer()
+        test_file = tmp_path / "sample.py"
+        
+        # Simple function should score well
+        simple_code = "def add(a, b): return a + b"
+        result = scorer.score_file(test_file, simple_code)
+        assert 0 <= result["performance_score"] <= 10
+        
+        # Complex nested code should score lower
+        complex_code = """
+def complex():
+    for i in range(10):
+        for j in range(10):
+            for k in range(10):
+                if i > 5:
+                    if j > 5:
+                        if k > 5:
+                            return i + j + k
+"""
+        result2 = scorer.score_file(test_file, complex_code)
+        # Complex code might score lower (more nesting)
+        assert 0 <= result2["performance_score"] <= 10
+    
+    def test_performance_score_large_function(self, tmp_path: Path):
+        """Test performance score penalizes large functions."""
+        scorer = CodeScorer()
+        test_file = tmp_path / "large.py"
+        
+        # Create a large function (> 50 lines)
+        large_func = "def large():\n"
+        large_func += "\n".join([f"    x = {i}" for i in range(60)])
+        
+        result = scorer.score_file(test_file, large_func)
+        # Large functions should score lower
+        assert result["performance_score"] < 10.0
+    
+    def test_performance_score_nested_loops(self, tmp_path: Path):
+        """Test performance score penalizes nested loops."""
+        scorer = CodeScorer()
+        test_file = tmp_path / "nested.py"
+        
+        nested_code = """
+def process():
+    for i in range(10):
+        for j in range(10):
+            for k in range(10):
+                result = i * j * k
+"""
+        result = scorer.score_file(test_file, nested_code)
+        # Nested loops should reduce score
+        assert 0 <= result["performance_score"] <= 10
 

@@ -10,6 +10,7 @@ aiohttp>=3.9.0
 radon>=6.0.1          # Complexity analysis
 bandit>=1.7.5         # Security analysis
 pylint>=3.0.0         # Code quality (optional, for maintainability)
+coverage>=7.0.0       # Test coverage analysis
 
 # Testing
 pytest>=7.4.0
