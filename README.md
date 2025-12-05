@@ -60,6 +60,7 @@ TappsCodingAgents/
 ## Documentation
 
 - **[Project Requirements](requirements/PROJECT_REQUIREMENTS.md)** - Complete specification document
+- **[Technology Stack](requirements/TECH_STACK.md)** - Recommended technologies and configurations
 
 ## Status
 
