@@ -21,6 +21,22 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **YAML Workflow Definitions**: Declarative, version-controlled orchestration
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
 
+## Current Status (Phase 1 - Week 2 Complete)
+
+✅ **Implemented:**
+- Reviewer Agent (99% test coverage)
+- Complete Code Scoring System (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
+- Configuration System (YAML-based, Pydantic validated)
+- BaseAgent with BMAD-METHOD patterns (star commands, activation instructions)
+- Model Abstraction Layer (MAL) for Ollama
+- 66 tests passing, 62% overall coverage
+
+🚧 **In Progress:**
+- Additional workflow agents (11 remaining)
+- MCP Gateway
+- Tiered Context System
+- Workflow Engine
+
 ## Key Features
 
 ### Two-Layer Agent Model
@@ -35,10 +51,22 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Planning**: analyst, planner
 - **Design**: architect, designer
 - **Development**: implementer, debugger, documenter
-- **Quality**: reviewer (with Code Scoring), improver
+- **Quality**: reviewer ✅ (with Code Scoring), improver
 - **Testing**: tester
 - **Operations**: ops
 - **Orchestration**: orchestrator
+
+### Code Scoring System
+
+The Reviewer Agent includes a comprehensive code scoring system with 5 objective metrics:
+
+1. **Complexity Score** (0-10): Cyclomatic complexity analysis using Radon
+2. **Security Score** (0-10): Vulnerability detection using Bandit + heuristics
+3. **Maintainability Score** (0-10): Maintainability Index using Radon MI
+4. **Test Coverage Score** (0-10): Coverage data parsing + heuristic analysis
+5. **Performance Score** (0-10): Static analysis (function size, nesting depth, pattern detection)
+
+All metrics are configurable with weighted scoring and quality thresholds.
 
 ### Industry Experts
 

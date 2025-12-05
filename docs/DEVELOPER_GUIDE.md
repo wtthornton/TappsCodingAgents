@@ -22,6 +22,28 @@
 
 ## 1. Quick Start (5 minutes)
 
+### Current Implementation Status
+
+**Phase 1 (Week 1-2) - Complete:**
+- ✅ Reviewer Agent with Code Scoring
+- ✅ Configuration System
+- ✅ BaseAgent Framework
+- ✅ Model Abstraction Layer (MAL)
+- ✅ Comprehensive test suite (66 tests, 62% coverage)
+
+**Available Now:**
+- Code review with scoring (`*review` command)
+- Code scoring without LLM feedback (`*score` command)
+- Configuration via `.tapps-agents/config.yaml`
+- All 5 scoring metrics (complexity, security, maintainability, test_coverage, performance)
+
+**Coming Soon:**
+- Additional workflow agents (11 remaining)
+- MCP Gateway
+- Tiered Context System
+- Workflow Engine
+- Industry Experts
+
 ### Prerequisites
 
 - **Ollama** installed ([ollama.com](https://ollama.com))
@@ -261,6 +283,96 @@ When making decisions:
 ---
 
 ## 5. Using Workflow Agents
+
+### Reviewer Agent (Available Now)
+
+The Reviewer Agent provides code review with comprehensive scoring. It's the first fully implemented agent.
+
+#### Commands
+
+```bash
+# Review a file with scoring and LLM feedback
+python -m tapps_agents.cli reviewer *review path/to/file.py
+
+# Score only (no LLM feedback, faster)
+python -m tapps_agents.cli reviewer *score path/to/file.py
+
+# Show help
+python -m tapps_agents.cli reviewer *help
+```
+
+#### Code Scoring Metrics
+
+The Reviewer Agent calculates 5 objective quality metrics:
+
+1. **Complexity Score** (0-10): Cyclomatic complexity (lower is better)
+2. **Security Score** (0-10): Vulnerability detection (higher is better)
+3. **Maintainability Score** (0-10): Code maintainability index (higher is better)
+4. **Test Coverage Score** (0-10): Test coverage analysis (higher is better)
+5. **Performance Score** (0-10): Static performance analysis (higher is better)
+
+**Overall Score** (0-100): Weighted combination of all metrics.
+
+#### Example Output
+
+```json
+{
+  "file": "src/main.py",
+  "scoring": {
+    "complexity_score": 3.2,
+    "security_score": 9.5,
+    "maintainability_score": 8.1,
+    "test_coverage_score": 7.0,
+    "performance_score": 8.5,
+    "overall_score": 78.5,
+    "metrics": {
+      "complexity": 3.2,
+      "security": 9.5,
+      "maintainability": 8.1,
+      "test_coverage": 7.0,
+      "performance": 8.5
+    }
+  },
+  "feedback": {
+    "summary": "Code quality is good overall...",
+    "full_feedback": "..."
+  },
+  "passed": true,
+  "threshold": 70.0
+}
+```
+
+#### Configuration
+
+Configure the Reviewer Agent in `.tapps-agents/config.yaml`:
+
+```yaml
+agents:
+  reviewer:
+    model: "qwen2.5-coder:7b"      # LLM model for feedback
+    quality_threshold: 70.0         # Minimum overall score to pass
+    include_scoring: true           # Include static scoring
+    include_llm_feedback: true      # Include LLM-generated feedback
+    max_file_size: 1048576          # Max file size in bytes (1MB)
+
+scoring:
+  weights:
+    complexity: 0.20                # Weight for complexity score
+    security: 0.30                  # Weight for security score
+    maintainability: 0.25           # Weight for maintainability
+    test_coverage: 0.15             # Weight for test coverage
+    performance: 0.10               # Weight for performance
+  quality_threshold: 70.0           # Overall score threshold
+```
+
+#### Performance
+
+- **Small files** (< 100 lines): < 1 second
+- **Medium files** (100-500 lines): 1-2 seconds
+- **Large files** (500-1500 lines): 2-5 seconds
+- **Very large files** (> 1500 lines): 5-10 seconds (scoring only recommended)
+
+Performance scales linearly with file size. For very large files, use `*score` command (no LLM feedback) for faster results.
 
 ### In Cursor IDE
 

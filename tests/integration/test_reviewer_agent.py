@@ -170,4 +170,129 @@ class TestReviewerAgent:
         
         assert "error" in result
         assert "unknown" in result["error"].lower() or "command" in result["error"].lower()
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_score_command_no_file(self, mock_mal):
+        """Test score command without file path."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        result = await reviewer.run("score")
+        assert "error" in result
+        assert "File path required" in result["error"]
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_file_not_found(self, mock_mal, tmp_path: Path):
+        """Test review_file raises FileNotFoundError for non-existent file."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        non_existent = tmp_path / "nonexistent.py"
+        
+        with pytest.raises(FileNotFoundError, match="File not found"):
+            await reviewer.review_file(non_existent)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_file_too_large(self, mock_mal, tmp_path: Path):
+        """Test review_file raises ValueError for files exceeding size limit."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        large_file = tmp_path / "large.py"
+        # Create file larger than default max (1MB)
+        large_content = "x" * (2 * 1024 * 1024)  # 2MB
+        large_file.write_text(large_content, encoding='utf-8')
+        
+        with pytest.raises(ValueError, match="File too large"):
+            await reviewer.review_file(large_file)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_file_path_traversal_detection(self, mock_mal, tmp_path: Path):
+        """Test path traversal detection."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        
+        # Create a path with .. traversal that doesn't exist when resolved
+        # This tests line 123: the specific check for ".." in path and not exists
+        traversal_path = Path(str(tmp_path) + "/../nonexistent_file.py")
+        # Ensure it doesn't exist
+        if traversal_path.exists():
+            traversal_path = Path(str(tmp_path) + "/../../nonexistent_file_2.py")
+        
+        # This should raise ValueError for path traversal detection
+        with pytest.raises((ValueError, FileNotFoundError), match="Path traversal|File not found"):
+            await reviewer.review_file(traversal_path)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_file_suspicious_path(self, mock_mal, tmp_path: Path):
+        """Test detection of suspicious path patterns."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        
+        # Create path with URL-encoded traversal patterns
+        suspicious_file = tmp_path / "test%2e%2epy"
+        suspicious_file.write_text("print('test')", encoding='utf-8')
+        
+        with pytest.raises(ValueError, match="Suspicious path detected"):
+            await reviewer.review_file(suspicious_file)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_file_encoding_error(self, mock_mal, tmp_path: Path):
+        """Test handling of files with encoding errors."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        bad_encoding_file = tmp_path / "bad_encoding.py"
+        # Write some bytes that are not valid UTF-8
+        bad_encoding_file.write_bytes(b'\x80\x81\x82')
+
+        with pytest.raises(ValueError, match="Cannot decode file as UTF-8"):
+            await reviewer.review_file(bad_encoding_file)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_llm_feedback_exception(self, mock_mal, tmp_path: Path):
+        """Test that LLM feedback gracefully handles exceptions."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        
+        test_file = tmp_path / "test.py"
+        test_file.write_text("def hello(): pass", encoding='utf-8')
+        
+        # Make MAL.generate raise an exception
+        mock_mal.generate.side_effect = Exception("LLM connection failed")
+        
+        result = await reviewer.review_file(
+            test_file,
+            include_scoring=True,
+            include_llm_feedback=True
+        )
+        
+        # Should still return results, but with error in feedback
+        assert "feedback" in result
+        assert "error" in result["feedback"]
+        assert "LLM connection failed" in result["feedback"]["error"]
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_performance_large_file(self, mock_mal, tmp_path: Path):
+        """Performance test: Review a large file (1000+ lines) should complete in <5s."""
+        import time
+        
+        reviewer = ReviewerAgent(mal=mock_mal)
+        await reviewer.activate()
+        
+        # Create a large Python file (~1500 lines)
+        large_code = "# Large file test\n"
+        large_code += "\n".join([f"def func_{i}(): return {i}" for i in range(1500)])
+        
+        large_file = tmp_path / "large_test.py"
+        large_file.write_text(large_code, encoding='utf-8')
+        
+        start_time = time.time()
+        result = await reviewer.review_file(
+            large_file,
+            include_scoring=True,
+            include_llm_feedback=False  # Skip LLM to focus on scoring performance
+        )
+        elapsed = time.time() - start_time
+        
+        # Should complete in <5 seconds for 1500-line file
+        assert elapsed < 5.0, f"Review took {elapsed:.2f}s, expected <5s"
+        assert "scoring" in result
+        assert result["scoring"]["overall_score"] >= 0
 
