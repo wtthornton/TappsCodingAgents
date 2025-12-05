@@ -6,13 +6,15 @@
 
 ---
 
-## Phase 1: Proof of Concept (Week 1)
+## Phase 1: Proof of Concept (Week 1) - UPDATED with BMAD Patterns
 
 ### Goal
 Build a minimal working reviewer agent that can:
 - Review code files
 - Generate Code Scores
 - Provide feedback
+- Use star-prefixed commands (`*review`, `*score`, `*help`)
+- Follow activation instructions pattern
 
 ### Deliverables
 
@@ -86,10 +88,16 @@ Add missing features from requirements:
 - [ ] Create minimal reviewer agent skeleton
 
 ### Step 2: Core Reviewer (Days 1-2)
-- [ ] Implement file reading
-- [ ] Implement basic scoring (complexity, security)
-- [ ] Implement MAL routing to Ollama
-- [ ] Create CLI interface
+- [x] Implement file reading
+- [x] Implement basic scoring (complexity, security)
+- [x] Implement MAL routing to Ollama
+- [x] Create CLI interface
+
+### Step 2a: BMAD Patterns (Days 2-3) - NEW
+- [ ] Add star-prefixed commands (`*review`, `*score`, `*help`)
+- [ ] Implement activation instructions in agent definition
+- [ ] Add command discovery system (numbered lists)
+- [ ] Update CLI to support both `*command` and `command` formats
 
 ### Step 3: Test & Iterate (Days 2-3)
 - [ ] Test with real code files
@@ -118,8 +126,32 @@ Add missing features from requirements:
 - ✅ Scores are meaningful and useful
 - ✅ API patterns extracted and documented
 - ✅ Can be used as template for other agents
+- ✅ Star commands work (`*review`, `*help`)
+- ✅ Activation instructions followed
+- ✅ Command discovery shows numbered options
 
 ---
 
-**Next Action:** Create package structure and start implementing reviewer agent.
+## BMAD-METHOD Integration (NEW)
+
+### High Priority Patterns to Implement
+
+1. **Star-Prefixed Commands** (P0) - ✅ In progress
+   - CLI: `*review file.py`
+   - Agent: `*help` shows numbered list
+   
+2. **Activation Instructions** (P0) - ✅ In progress
+   - Standardized startup sequence
+   - Load config, greet, run *help, wait
+   
+3. **Workflow Enhancements** (P0) - ⏳ Next
+   - Conditions, optional_steps, notes, repeats
+
+4. **Scale-Adaptive** (P1) - ⏳ Next
+   - `*workflow-init` command
+   - Auto-detect project type
+
+---
+
+**Next Action:** Implement star commands and activation instructions for reviewer agent.
 

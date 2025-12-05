@@ -3,14 +3,15 @@ Reviewer Agent - Performs code review with scoring
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, List
 import json
 
 from ...core.mal import MAL
+from ...core.agent_base import BaseAgent
 from .scoring import CodeScorer
 
 
-class ReviewerAgent:
+class ReviewerAgent(BaseAgent):
     """
     Reviewer Agent - Code review with Code Scoring.
     
@@ -18,8 +19,56 @@ class ReviewerAgent:
     """
     
     def __init__(self, mal: Optional[MAL] = None):
+        super().__init__(agent_id="reviewer", agent_name="Reviewer Agent")
         self.mal = mal or MAL()
         self.scorer = CodeScorer()
+    
+    def get_commands(self) -> List[Dict[str, str]]:
+        """Return available commands for reviewer agent"""
+        base_commands = super().get_commands()
+        return base_commands + [
+            {"command": "*review", "description": "Review code file with scoring and feedback"},
+            {"command": "*score", "description": "Calculate code scores only (no LLM feedback)"},
+        ]
+    
+    async def run(self, command: str, **kwargs) -> Dict[str, Any]:
+        """
+        Execute reviewer agent command.
+        
+        Commands:
+        - help: Show available commands
+        - review: Review file with scoring and feedback
+        - score: Calculate scores only
+        """
+        if command == "help":
+            return {"type": "help", "content": self.format_help()}
+        
+        elif command == "review":
+            file_path = kwargs.get("file")
+            if not file_path:
+                return {"error": "File path required. Usage: *review <file>"}
+            
+            model = kwargs.get("model", "qwen2.5-coder:7b")
+            return await self.review_file(
+                Path(file_path),
+                model=model,
+                include_scoring=True,
+                include_llm_feedback=True
+            )
+        
+        elif command == "score":
+            file_path = kwargs.get("file")
+            if not file_path:
+                return {"error": "File path required. Usage: *score <file>"}
+            
+            return await self.review_file(
+                Path(file_path),
+                include_scoring=True,
+                include_llm_feedback=False
+            )
+        
+        else:
+            return {"error": f"Unknown command: {command}. Use *help to see available commands."}
     
     async def review_file(
         self,

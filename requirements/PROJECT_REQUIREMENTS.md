@@ -1,8 +1,8 @@
 # TappsCodingAgents - Project Requirements Document
 
-**Version:** 1.1.0-draft  
+**Version:** 1.2.0-draft  
 **Date:** December 2025  
-**Status:** Design Phase (Enhanced Features Added)
+**Status:** Design Phase (BMAD-METHOD Patterns Added)
 
 ---
 
@@ -29,7 +29,12 @@
     - [MCP Gateway Architecture](#163-mcp-gateway-architecture)
     - [YAML Workflow Definitions](#164-yaml-workflow-definitions)
     - [Greenfield vs Brownfield Workflows](#165-greenfield-vs-brownfield-workflows)
-17. [Appendix](#17-appendix)
+17. [Agent Command System & Activation](#17-agent-command-system--activation)
+    - [Star-Prefixed Command System](#171-star-prefixed-command-system)
+    - [Agent Activation Instructions](#172-agent-activation-instructions)
+    - [Workflow Enhancement Patterns](#173-workflow-enhancement-patterns)
+    - [Scale-Adaptive Workflow Selection](#174-scale-adaptive-workflow-selection)
+18. [Appendix](#18-appendix)
 
 ---
 
@@ -1230,6 +1235,8 @@ tester (final) → reviewer (sign-off) → ops (deploy) → orchestrator (gate)
 
 These features are integrated from best practices across multiple coding agent projects to create a comprehensive, optimized framework.
 
+**Inspired by:** BMAD-METHOD (https://github.com/bmad-code-org/BMAD-METHOD), codefortify, HomeIQ BMAD, LocalMCP
+
 ### 16.1 Code Scoring System
 
 **Origin:** Adapted from codefortify project
@@ -1562,6 +1569,8 @@ YAML Workflow Definitions provide **declarative, version-controlled** workflow o
 
 #### 16.4.1 Workflow Structure
 
+**Enhanced with BMAD-METHOD patterns:** Conditions, optional steps, notes, repeats
+
 ```yaml
 # workflows/feature-development.yaml
 
@@ -1573,6 +1582,7 @@ workflow:
   
   # Workflow type selection
   type: "greenfield"  # or "brownfield"
+  auto_detect: true  # Automatically detect project type (BMAD pattern)
   
   # Global settings
   settings:
@@ -1588,6 +1598,13 @@ workflow:
       context_tier: 1
       creates:
         - requirements.md
+      requires: []  # No prerequisites
+      condition: optional  # Can be skipped? (BMAD pattern)
+      optional_steps:  # Additional steps user can request (BMAD pattern)
+        - brainstorming_session
+        - market_research
+      notes: "Save output to docs/ folder"  # User guidance (BMAD pattern)
+      repeats: false  # Or "for_each_domain" for loops (BMAD pattern)
       next: planning
       
     - id: planning
@@ -1956,9 +1973,214 @@ All five enhanced features work together in an integrated system:
 
 ---
 
-## 17. Appendix
+## 17. Agent Command System & Activation
 
-### 17.1 Glossary
+### 17.1 Star-Prefixed Command System
+
+**Origin:** BMAD-METHOD pattern
+
+All agent commands use `*` prefix for clear namespace separation and discoverability.
+
+#### 17.1.1 Command Pattern
+
+```python
+# Command format: *{command} {args}
+*help                    # Show available commands
+*review {file}           # Review code file
+*score {file}            # Calculate scores only
+*workflow-start {id}     # Start workflow
+*workflow-init           # Auto-detect and initialize workflow
+```
+
+#### 17.1.2 Command Discovery
+
+Agents must:
+- List commands as numbered options when user asks
+- Show `*help` output automatically on activation
+- Allow users to type number or command name
+- Provide examples for each command
+
+#### 17.1.3 CLI Integration
+
+```bash
+# CLI supports both formats
+python -m tapps_agents *review file.py    # Star-prefixed
+python -m tapps_agents review file.py     # Also works
+
+# In agent conversations
+User: *help
+Agent: Shows numbered command list
+
+User: 1  # or *review file.py
+Agent: Executes review command
+```
+
+---
+
+### 17.2 Agent Activation Instructions
+
+**Origin:** BMAD-METHOD activation pattern
+
+Each agent must follow standardized activation instructions for consistent behavior.
+
+#### 17.2.1 Activation Sequence
+
+```yaml
+activation-instructions:
+  - STEP 1: Read complete agent definition (SKILL.md)
+  - STEP 2: Adopt persona from YAML header
+  - STEP 3: Load project configuration (.tapps-agents/config.yaml)
+  - STEP 4: Load domain configuration (.tapps-agents/domains.md) if exists
+  - STEP 5: Load customizations (.tapps-agents/customizations/{agent-id}-custom.yaml) if exists
+  - STEP 6: Greet user with role and capabilities
+  - STEP 7: Automatically run *help command
+  - STEP 8: HALT and await user commands (do NOT start work automatically)
+```
+
+#### 17.2.2 Activation Rules
+
+| Rule | Description |
+|------|-------------|
+| **No File Scanning** | Do NOT scan filesystem or load resources during startup |
+| **No Auto-Discovery** | Do NOT run discovery tasks automatically |
+| **Wait for Commands** | After greeting, wait for explicit user commands |
+| **Load on Demand** | Only load dependency files when commanded |
+
+#### 17.2.3 Agent Definition Format
+
+```markdown
+<!-- Powered by TappsCodingAgents -->
+# Reviewer Agent
+
+ACTIVATION-NOTICE: This file contains your complete agent definition.
+DO NOT load external files during activation.
+Only load dependencies when commanded.
+
+## COMPLETE AGENT DEFINITION
+
+```yaml
+agent:
+  name: Reviewer
+  id: reviewer
+  title: Code Reviewer with Scoring
+  icon: 🔍
+
+activation-instructions:
+  - STEP 1: Read THIS ENTIRE FILE
+  - STEP 2: Adopt persona from agent section
+  - STEP 3: Load .tapps-agents/config.yaml
+  # ... continue
+```
+
+---
+
+### 17.3 Workflow Enhancement Patterns
+
+#### 17.3.1 Conditional Execution
+
+```yaml
+steps:
+  - id: design_review
+    agent: architect
+    condition: user_approves_design  # Only run if condition true
+    requires: [architecture.md]
+    
+  - id: optional_research
+    condition: optional  # User can skip
+    agent: analyst
+```
+
+#### 17.3.2 Optional Steps
+
+```yaml
+steps:
+  - id: requirements
+    agent: analyst
+    optional_steps:
+      - brainstorming_session
+      - competitor_analysis
+      - market_research
+```
+
+#### 17.3.3 User Guidance Notes
+
+```yaml
+steps:
+  - id: implementation
+    agent: implementer
+    notes: |
+      - Save code to src/ directory
+      - Follow project coding standards
+      - Update File List when complete
+```
+
+#### 17.3.4 Loop Support
+
+```yaml
+steps:
+  - id: create_story
+    agent: planner
+    repeats: for_each_epic  # Loop through each epic
+    creates: [story-{epic}-{number}.md]
+```
+
+---
+
+### 17.4 Scale-Adaptive Workflow Selection
+
+**Origin:** BMAD-METHOD `*workflow-init` pattern
+
+Automatically detect project type and recommend appropriate workflow.
+
+#### 17.4.1 Detection Logic
+
+```yaml
+workflow_detection:
+  auto_detect: true
+  
+  rules:
+    greenfield:
+      conditions:
+        - "no src/ directory exists"
+        - "no package.json or requirements.txt"
+        - "user mentions 'new project'"
+      confidence: 0.9
+      
+    brownfield:
+      conditions:
+        - "src/ directory exists"
+        - "package.json or requirements.txt exists"
+        - "git history exists"
+      confidence: 0.9
+      
+    quick_fix:
+      conditions:
+        - "user mentions 'bug', 'fix', 'hotfix'"
+        - "scope < 5 files"
+      confidence: 0.8
+```
+
+#### 17.4.2 Workflow Init Command
+
+```bash
+*workflow-init
+```
+
+**Behavior:**
+1. Analyze project structure
+2. Detect project type
+3. Recommend workflow track:
+   - ⚡ Quick Flow (bug fixes)
+   - 📋 BMad Method (standard features)
+   - 🏢 Enterprise (complex/compliance)
+4. Update `.tapps-agents/config.yaml` with selection
+5. Load appropriate workflow YAML
+
+---
+
+## 18. Appendix
+
+### 18.1 Glossary
 
 | Term | Definition |
 |------|------------|
@@ -1976,25 +2198,32 @@ All five enhanced features work together in an integrated system:
 | **Brownfield** | Existing project workflow (adding to codebase) |
 | **Quality Gate** | Automated checkpoint with pass/fail criteria |
 | **Context Tier** | Level of context detail (1=core, 2=extended, 3=full) |
+| **Star Commands** | Commands prefixed with `*` for namespace separation (`*help`, `*review`) |
+| **Activation Instructions** | Standardized startup sequence for agent initialization |
+| **Workflow Init** | Auto-detect project type and recommend workflow (`*workflow-init`) |
+| **Conditional Steps** | Workflow steps that execute based on conditions |
+| **Optional Steps** | Additional workflow steps user can request |
 
-### 17.2 Inspired By
+### 18.2 Inspired By
 
 | Project | Contribution |
 |---------|--------------|
+| **BMAD-METHOD** | Star-prefixed commands, activation instructions, scale-adaptive workflows, workflow conditions/notes, agent customization |
 | **codefortify** | Code Scoring System, quantitative quality metrics |
-| **HomeIQ (BMAD)** | Tiered Context Injection, YAML Workflows, Greenfield/Brownfield |
+| **HomeIQ (BMAD)** | Tiered Context Injection, YAML Workflows, Greenfield/Brownfield, document sharding |
 | **LocalMCP** | MCP Gateway architecture, local-first AI patterns |
 | **agentforge-mcp** | MCP integration patterns, comprehensive tooling |
 | **TappsHA** | Smart suggestions system |
 | **AgentForge** | Agent-OS patterns, compliance checking, security |
 | **Claude Code Skills** | Agent definition format |
 
-### 17.3 Version History
+### 18.3 Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0-draft | Dec 2025 | Initial requirements document |
 | 1.1.0-draft | Dec 2025 | Added Enhanced Features: Code Scoring, Tiered Context, MCP Gateway, YAML Workflows, Greenfield/Brownfield |
+| 1.2.0-draft | Dec 2025 | Added BMAD-METHOD patterns: Star commands, activation instructions, workflow enhancements, scale-adaptive selection |
 
 ---
 
