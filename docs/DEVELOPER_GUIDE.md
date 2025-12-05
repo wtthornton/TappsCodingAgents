@@ -427,6 +427,224 @@ result = await planner.run("list-stories", epic="checkout")
 
 The Planner Agent automatically generates:
 
+### Implementer Agent (Available Now)
+
+The Implementer Agent generates production code from specifications and writes it to files with automatic code review. It includes safety features like file backups, path validation, and integration with the Reviewer Agent for quality assurance.
+
+#### Commands
+
+```bash
+# Generate and write code to file (with review)
+python -m tapps_agents.cli implementer implement "Create a function to calculate factorial" factorial.py
+
+# Generate code with context
+python -m tapps_agents.cli implementer implement "Add user authentication endpoint" api/auth.py --context "Use FastAPI patterns"
+
+# Generate code only (no file write)
+python -m tapps_agents.cli implementer generate-code "Create a REST API client class"
+
+# Generate code for specific file with language
+python -m tapps_agents.cli implementer generate-code "Add data validation" --file utils/validation.py --language python
+
+# Refactor existing code file
+python -m tapps_agents.cli implementer refactor utils/helpers.py "Extract common logic into helper functions"
+
+# Show help
+python -m tapps_agents.cli implementer help
+```
+
+**Note:** Commands can also be used programmatically:
+
+```python
+from tapps_agents.agents.implementer import ImplementerAgent
+
+implementer = ImplementerAgent()
+await implementer.activate()
+
+# Implement code
+result = await implementer.run("implement", specification="Create a user service", file_path="services/user.py")
+
+# Generate code only
+result = await implementer.run("generate-code", specification="Create a utility function")
+
+# Refactor code
+result = await implementer.run("refactor", file_path="models.py", instruction="Add type hints")
+```
+
+#### Features
+
+The Implementer Agent includes:
+
+1. **Code Generation**: Generate code from natural language specifications
+2. **Code Refactoring**: Refactor existing code based on instructions
+3. **Automatic Code Review**: All generated code is reviewed using ReviewerAgent before writing
+4. **File Safety**: Automatic backups, path validation, and file size limits
+5. **Language Detection**: Automatically detects programming language from file extension
+6. **Context Support**: Include existing code patterns or requirements via context
+
+#### Safety Features
+
+- ✅ **Code Review**: All generated code is automatically reviewed; code below quality threshold is rejected
+- ✅ **File Backups**: Automatic backups created before overwriting existing files (format: `filename.backup_TIMESTAMP.ext`)
+- ✅ **Path Validation**: Prevents path traversal attacks and unsafe file operations
+- ✅ **File Size Limits**: Prevents processing files that exceed configured limits (default: 10MB)
+- ✅ **Automatic Rollback**: Restores backup if file write fails
+
+#### Configuration
+
+Configure the Implementer Agent in `.tapps-agents/config.yaml`:
+
+```yaml
+agents:
+  implementer:
+    model: "qwen2.5-coder:7b"      # LLM model for code generation
+    require_review: true            # Require code review before writing files
+    auto_approve_threshold: 80.0    # Auto-approve if score >= threshold (0-100)
+    backup_files: true              # Create backup before overwriting existing files
+    max_file_size: 10485760         # Maximum file size in bytes (10MB)
+```
+
+### Tester Agent (Available Now)
+
+The Tester Agent generates unit and integration tests from code analysis and runs test suites with coverage reporting. It uses LLM-powered code analysis to identify test cases and generate comprehensive test suites.
+
+#### Commands
+
+```bash
+# Generate and run tests for a file
+python -m tapps_agents.cli tester test calculator.py
+
+# Generate integration tests
+python -m tapps_agents.cli tester test api.py --integration
+
+# Generate tests only (don't run)
+python -m tapps_agents.cli tester generate-tests utils.py
+
+# Generate tests with custom test file path
+python -m tapps_agents.cli tester generate-tests calculator.py --test-file tests/test_calculator.py
+
+# Run all tests in tests/ directory
+python -m tapps_agents.cli tester run-tests
+
+# Run specific test file
+python -m tapps_agents.cli tester run-tests tests/test_calculator.py
+
+# Run tests without coverage report
+python -m tapps_agents.cli tester run-tests --no-coverage
+
+# Show help
+python -m tapps_agents.cli tester help
+```
+
+**Note:** Commands can also be used programmatically:
+
+```python
+from tapps_agents.agents.tester import TesterAgent
+
+tester = TesterAgent()
+await tester.activate()
+
+# Generate and run tests
+result = await tester.run("test", file="calculator.py")
+
+# Generate tests only
+result = await tester.run("generate-tests", file="utils.py", integration=True)
+
+# Run tests
+result = await tester.run("run-tests", test_path="tests/", coverage=True)
+```
+
+#### Features
+
+The Tester Agent includes:
+
+1. **Test Generation**: Generate unit and integration tests from code analysis
+2. **Code Analysis**: Analyze code structure to identify functions, classes, and test targets
+3. **Test Framework Support**: Supports pytest (default) and unittest
+4. **Test Execution**: Run pytest test suites with coverage reporting
+5. **Coverage Tracking**: Track and report test coverage percentage
+6. **Automatic Test File Naming**: Automatically generates appropriate test file paths
+
+#### Test Generation Process
+
+1. **Code Analysis**: Analyzes source code to extract:
+   - Functions and methods
+   - Classes and their methods
+   - Imports and dependencies
+   - Test framework detection
+
+2. **Test Generation**: Uses LLM to generate tests based on:
+   - Code structure analysis
+   - Function signatures and arguments
+   - Class methods
+   - Project test patterns
+
+3. **Test Writing**: Automatically writes generated tests to appropriate test files
+
+4. **Test Execution**: Runs pytest with coverage reporting
+
+#### Configuration
+
+Configure the Tester Agent in `.tapps-agents/config.yaml`:
+
+```yaml
+agents:
+  tester:
+    model: "qwen2.5-coder:7b"      # LLM model for test generation
+    test_framework: "pytest"         # Test framework to use (pytest/unittest)
+    tests_dir: null                  # Directory for tests (default: tests/)
+    coverage_threshold: 80.0         # Target test coverage percentage (0-100)
+    auto_write_tests: true           # Automatically write generated tests to files
+```
+
+#### Example Workflow
+
+1. **Generate Tests**:
+   ```bash
+   python -m tapps_agents.cli tester test calculator.py
+   ```
+
+2. **Generate Integration Tests**:
+   ```bash
+   python -m tapps_agents.cli tester test api.py --integration
+   ```
+
+3. **Run Test Suite**:
+   ```bash
+   python -m tapps_agents.cli tester run-tests
+   ```
+
+#### Example Workflow (Implementer Agent)
+
+1. **Generate Code**:
+   ```bash
+   python -m tapps_agents.cli implementer implement "Create a user service class with CRUD operations" services/user_service.py
+   ```
+
+2. **Code Review** (automatic):
+   - Code is generated using LLM
+   - ReviewerAgent reviews the generated code
+   - If score >= threshold (default: 80.0), code is written to file
+   - If score < threshold, operation fails with review feedback
+
+3. **Backup** (if file exists):
+   - Original file is backed up to `user_service.backup_20250105_143022.py`
+   - New code is written to `services/user_service.py`
+
+4. **Result**:
+   - File written with new code
+   - Backup created (if applicable)
+   - Review results included in response
+
+#### Best Practices
+
+1. **Provide Clear Specifications**: Be specific about what code to generate
+2. **Include Context**: Use `--context` to provide existing code patterns or requirements
+3. **Specify Language**: Use `--language` for non-Python code
+4. **Review Before Commit**: Even with auto-approve, manually review generated code
+5. **Use Refactor for Improvements**: Don't rewrite entire files, use refactor for targeted improvements
+6. **Test Generated Code**: Always test generated code before committing
+
 1. **Story Metadata**:
    - Unique story ID (auto-generated slug)
    - Title (extracted from description)

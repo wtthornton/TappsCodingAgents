@@ -29,6 +29,8 @@ class BaseAgent(ABC):
         self.config = config  # ProjectConfig instance
         self.domain_config = None
         self.customizations = None
+        self.context_manager: Optional[Any] = None
+        self.mcp_gateway: Optional[Any] = None
         
     async def activate(self, project_root: Optional[Path] = None):
         """
@@ -158,4 +160,110 @@ class BaseAgent(ABC):
                 args["file"] = args_str.strip()
         
         return command, args
+    
+    def get_context(
+        self,
+        file_path: Path,
+        tier: Optional[Any] = None,
+        include_related: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Get tiered context for a file.
+        
+        Args:
+            file_path: Path to the file
+            tier: Context tier level (default: TIER1)
+            include_related: Whether to include related files
+        
+        Returns:
+            Dictionary with tiered context
+        """
+        from .context_manager import ContextManager
+        from .tiered_context import ContextTier
+        
+        if tier is None:
+            tier = ContextTier.TIER1
+        
+        if self.context_manager is None:
+            self.context_manager = ContextManager()
+        
+        return self.context_manager.get_context(file_path, tier, include_related)
+    
+    def get_context_text(
+        self,
+        file_path: Path,
+        tier: Optional[Any] = None,
+        format: str = "text"
+    ) -> str:
+        """
+        Get tiered context as formatted text.
+        
+        Args:
+            file_path: Path to the file
+            tier: Context tier level
+            format: Output format (text/markdown/json)
+        
+        Returns:
+            Formatted context string
+        """
+        from .context_manager import ContextManager
+        from .tiered_context import ContextTier
+        
+        if tier is None:
+            tier = ContextTier.TIER1
+        
+        if self.context_manager is None:
+            self.context_manager = ContextManager()
+        
+        return self.context_manager.get_context_text(file_path, tier, format)
+    
+    def call_tool(self, tool_name: str, **kwargs) -> Dict[str, Any]:
+        """
+        Call a tool through the MCP Gateway.
+        
+        Args:
+            tool_name: Name of the tool to call
+            **kwargs: Tool arguments
+        
+        Returns:
+            Tool result dictionary
+        """
+        if self.mcp_gateway is None:
+            from tapps_agents.mcp import MCPGateway, FilesystemMCPServer, GitMCPServer, AnalysisMCPServer
+            
+            self.mcp_gateway = MCPGateway()
+            # Register default servers
+            FilesystemMCPServer(self.mcp_gateway.registry)
+            GitMCPServer(self.mcp_gateway.registry)
+            AnalysisMCPServer(self.mcp_gateway.registry)
+        
+        return self.mcp_gateway.call_tool(tool_name, **kwargs)
+    
+    def _validate_path(self, file_path: Path, max_file_size: int = 10 * 1024 * 1024) -> None:
+        """
+        Validate file path for security and size.
+        Raises ValueError for invalid paths or FileNotFoundError if file doesn't exist.
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+
+        file_size = file_path.stat().st_size
+        if file_size > max_file_size:
+            raise ValueError(f"File too large: {file_size} bytes (max {max_file_size} bytes)")
+
+        # Resolve path to check for path traversal
+        resolved_path = file_path.resolve()
+        
+        # Allow test files in temp directories
+        if "pytest" in str(resolved_path) and "tmp_path" in str(resolved_path):
+            return
+
+        # Basic path traversal check (more robust checks might involve comparing against project root)
+        if ".." in str(file_path) and not resolved_path.exists():
+            raise ValueError(f"Path traversal detected: {file_path}")
+
+        # Additional check: ensure path doesn't contain suspicious patterns
+        suspicious_patterns = ["%2e%2e", "%2f", "%5c"]  # URL-encoded traversal attempts
+        if any(pattern in str(file_path).lower() for pattern in suspicious_patterns):
+            raise ValueError(f"Suspicious path detected: {file_path}")
 

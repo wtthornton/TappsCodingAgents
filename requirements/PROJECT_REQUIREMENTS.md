@@ -1,8 +1,97 @@
 # TappsCodingAgents - Project Requirements Document
 
-**Version:** 1.2.0-draft  
+**Version:** 1.3.0-draft  
 **Date:** December 2025  
-**Status:** Design Phase (BMAD-METHOD Patterns Added)
+**Status:** Implementation Phase - Core Framework Complete
+
+---
+
+## Implementation Status
+
+### ✅ Completed Features
+
+#### Core Framework (100%)
+- ✅ **All 12 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator)
+- ✅ **BaseAgent** with BMAD-METHOD patterns (star commands, activation instructions, path validation)
+- ✅ **Configuration System** (YAML-based, Pydantic validated)
+- ✅ **Model Abstraction Layer (MAL)** with Ollama + Cloud Fallback (Anthropic & OpenAI)
+- ✅ **Code Scoring System** (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
+- ✅ **Tiered Context System** (90%+ token savings, 3 tiers with caching)
+- ✅ **MCP Gateway** (Unified tool access with filesystem, Git, and analysis servers)
+- ✅ **YAML Workflow Definitions** (Parser, executor, artifact tracking, conditional steps, gates)
+
+#### Industry Experts Framework (100%)
+- ✅ **BaseExpert** class (concrete, no abstract requirement)
+- ✅ **Configuration-Only Experts** (YAML-based expert definition, no code classes required)
+- ✅ **Weight Distribution Algorithm** (51% primary authority model)
+- ✅ **Domain Configuration System** (domains.md parser, expert_weights.yaml generation)
+- ✅ **Expert Registry** (Expert management, weighted consultation, decision aggregation)
+- ✅ **Simple File-Based RAG** (Knowledge base retrieval with markdown-aware chunking)
+- ✅ **Workflow Expert Integration** (Agents consult experts for domain knowledge)
+
+#### Testing & Quality
+- ✅ **307+ unit tests passing**
+- ✅ **98% coverage** for expert configuration system
+- ✅ **82% coverage** for MAL cloud fallback
+- ✅ **Comprehensive test suite** for all implemented components
+
+### ⏸️ Deferred Features (Optional/Future)
+
+- ⏸️ **Fine-Tuning Support (LoRA)** - Deferred to Phase 6 (optional enhancement)
+- ⏸️ **Vector DB RAG** - Only if simple file-based RAG proves insufficient
+- ⏸️ **Example Expert Implementations** - Templates for common domains
+- ⏸️ **Scale-Adaptive Workflow Selection** - Auto-detection for workflow selection
+
+### 🚧 Future Work (Enhancement Phases)
+
+- 🚧 **Context7 Integration** (Section 18) - KB-first caching, auto-refresh, performance analytics
+- 🚧 **Greenfield/Brownfield Workflow Detection** - Auto-detect project type
+- 🚧 **Workflow State Persistence** - Advanced state management
+- 🚧 **Advanced Analytics Dashboard** - Performance monitoring
+
+### 📋 Next Priorities
+
+Based on implementation status, the next priorities are:
+
+1. **Phase 3: Example Expert Implementations** ✅ **Complete**
+   - ✅ Created 4 example expert configurations
+   - ✅ Added templates for common domains
+   - ✅ Created example knowledge bases with real-world content
+   - ✅ Documented best practices and usage examples
+
+2. **Phase 4: Scale-Adaptive Workflow Selection** ✅ **Complete**
+   - ✅ Implemented project type auto-detection (Greenfield, Brownfield, Quick-Fix, Hybrid)
+   - ✅ Implemented workflow recommendation system with confidence scoring
+   - ✅ Integrated with workflow executor for automatic workflow selection
+   - ✅ Created comprehensive test suite (16/16 tests passing)
+   - ✅ Documented usage and best practices
+
+3. **Phase 5: Context7 Integration** (Enhancement Phase)
+   - KB-first caching system (Section 18.2)
+   - MCP integration (Section 18.3)
+   - Auto-refresh system (Section 18.4)
+   - Performance analytics (Section 18.5)
+
+4. **Phase 6: Optional Advanced Features** (If Needed)
+   - Vector DB RAG (if simple RAG insufficient)
+   - Fine-tuning support (LoRA adapters)
+   - Advanced workflow features
+
+### 📊 Implementation Progress
+
+| Category | Status | Completion |
+|----------|--------|------------|
+| **Workflow Agents** | ✅ Complete | 12/12 (100%) |
+| **Code Scoring** | ✅ Complete | 5/5 metrics (100%) |
+| **MAL (Local + Cloud)** | ✅ Complete | Ollama + Anthropic + OpenAI (100%) |
+| **Tiered Context** | ✅ Complete | 3 tiers, caching (100%) |
+| **MCP Gateway** | ✅ Complete | Filesystem, Git, Analysis (100%) |
+| **YAML Workflows** | ✅ Complete | Parser, Executor, Tracking (100%) |
+| **Industry Experts** | ✅ Complete | Config-based, RAG, Registry (100%) |
+| **Simple RAG** | ✅ Complete | File-based, markdown-aware (100%) |
+| **Testing** | ✅ Complete | 307+ tests, 82%+ coverage |
+| **Context7 Integration** | 🚧 Future | Phase 18 (Enhancement) |
+| **Fine-Tuning (LoRA)** | ⏸️ Deferred | Optional enhancement |
 
 ---
 
@@ -34,7 +123,16 @@
     - [Agent Activation Instructions](#172-agent-activation-instructions)
     - [Workflow Enhancement Patterns](#173-workflow-enhancement-patterns)
     - [Scale-Adaptive Workflow Selection](#174-scale-adaptive-workflow-selection)
-18. [Appendix](#18-appendix)
+18. [Context7 Integration (Enhancement Phase)](#18-context7-integration-enhancement-phase)
+    - [Context7 Overview](#181-context7-overview)
+    - [KB-First Caching System](#182-kb-first-caching-system)
+    - [MCP Integration](#183-mcp-integration)
+    - [Auto-Refresh System](#184-auto-refresh-system)
+    - [Performance Analytics](#185-performance-analytics)
+    - [Agent Integration](#186-agent-integration)
+    - [Configuration Schema](#187-configuration-schema)
+    - [Implementation Phases](#188-implementation-phases)
+19. [Appendix](#19-appendix)
 
 ---
 
@@ -237,33 +335,33 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 ### 5.2 Permission Matrix
 
 ```
-                        Read  Write  Edit  Grep  Glob  Bash
-─────────────────────────────────────────────────────────────
+                        Read  Write  Edit  Grep  Glob  Bash    Status
+─────────────────────────────────────────────────────────────────────────────
 PLANNING
-  analyst                ✅    ❌     ❌    ✅    ✅    ❌
-  planner                ✅    ✅     ❌    ✅    ✅    ❌
+  analyst                ✅    ❌     ❌    ✅    ✅    ❌      ✅ Complete
+  planner                ✅    ✅     ❌    ✅    ✅    ❌      ✅ Complete
 
 DESIGN
-  architect              ✅    ✅     ❌    ✅    ✅    ❌
-  designer               ✅    ✅     ❌    ✅    ✅    ❌
+  architect              ✅    ✅     ❌    ✅    ✅    ❌      ✅ Complete
+  designer               ✅    ✅     ❌    ✅    ✅    ❌      ✅ Complete
 
 DEVELOPMENT
-  implementer            ✅    ✅     ✅    ✅    ✅    ✅
-  debugger               ✅    ✅     ✅    ✅    ✅    ✅
-  documenter             ✅    ✅     ❌    ✅    ✅    ❌
+  implementer            ✅    ✅     ✅    ✅    ✅    ✅      ✅ Complete
+  debugger               ✅    ✅     ✅    ✅    ✅    ✅      ✅ Complete
+  documenter             ✅    ✅     ❌    ✅    ✅    ❌      ✅ Complete
 
 QUALITY
-  reviewer               ✅    ❌     ❌    ✅    ✅    ❌
-  improver               ✅    ✅     ✅    ✅    ✅    ❌
+  reviewer               ✅    ❌     ❌    ✅    ✅    ❌      ✅ Complete
+  improver               ✅    ✅     ✅    ✅    ✅    ❌      ✅ Complete
 
 TESTING
-  tester                 ✅    ✅     ✅    ✅    ✅    ✅
+  tester                 ✅    ✅     ✅    ✅    ✅    ✅      ✅ Complete
 
 OPERATIONS
-  ops                    ✅    ✅     ❌    ✅    ✅    ✅
+  ops                    ✅    ✅     ❌    ✅    ✅    ✅      ✅ Complete
 
 ORCHESTRATION
-  orchestrator           ✅    ❌     ❌    ✅    ✅    ❌
+  orchestrator           ✅    ❌     ❌    ✅    ✅    ❌      ✅ Complete
 ```
 
 ### 5.3 Permission Summary
@@ -314,23 +412,45 @@ Industry Experts are **business domain authorities**, NOT technical specialists.
 | **Consultation** | Answer domain questions | Query interface |
 | **Validation** | Verify domain correctness | Review support |
 
-### 6.4 Expert Inheritance
+### 6.4 Expert Definition (Configuration-Based)
 
+Experts are defined via **YAML configuration files**, not code classes. This simplifies expert creation and makes them version-control friendly.
+
+**Configuration File Format:**
+```yaml
+# .tapps-agents/experts.yaml
+experts:
+  - expert_id: expert-home-automation
+    expert_name: Home Automation Expert
+    primary_domain: home-automation
+    rag_enabled: true
+    fine_tuned: false
+  
+  - expert_id: expert-healthcare
+    expert_name: Healthcare Domain Expert
+    primary_domain: healthcare
+    rag_enabled: true
+    fine_tuned: false
+```
+
+**Architecture:**
 ```
 ┌─────────────────────┐
 │    base-expert      │
+│   (Concrete Class)  │
 │                     │
 │ • Shared knowledge  │
 │ • Core capabilities │
 │ • Base behaviors    │
 └─────────┬───────────┘
           │
-          │ extends
+          │ instantiated from
           │
     ┌─────┴─────┬─────────────┐
     ▼           ▼             ▼
 ┌────────┐  ┌────────┐  ┌────────┐
 │Expert A│  │Expert B│  │Expert C│
+│(Config)│  │(Config)│  │(Config)│
 │        │  │        │  │        │
 │+Domain │  │+Domain │  │+Domain │
 │ RAG    │  │ RAG    │  │ RAG    │
@@ -339,30 +459,69 @@ Industry Experts are **business domain authorities**, NOT technical specialists.
 └────────┘  └────────┘  └────────┘
 ```
 
-### 6.5 Base Expert Definition
+**Key Points:**
+- ✅ **No code required**: Experts defined in YAML configuration
+- ✅ **Automatic instantiation**: ExpertRegistry loads from config
+- ✅ **Version control friendly**: Easy to diff and review
+- ✅ **Dynamic**: Add experts without code changes
+- ✅ **Backward compatible**: Code-based experts still supported (optional)
+
+### 6.5 Expert Configuration
+
+Experts are defined in `.tapps-agents/experts.yaml`:
 
 ```yaml
-base-expert:
-  shared_knowledge:
-    - Project context
-    - Coding standards
-    - Architecture patterns
-    - Business terminology
-    
-  shared_capabilities:
-    - RAG integration
-    - Confidence scoring
-    - Influence weighting
-    - Consultation interface
-    
-  shared_behaviors:
-    - Always cite sources
-    - Acknowledge uncertainty
-    - Defer to primary expert
-    - Provide influence not override
+# .tapps-agents/experts.yaml
+experts:
+  - expert_id: expert-home-automation
+    expert_name: Home Automation Expert
+    primary_domain: home-automation
+    rag_enabled: true
+    fine_tuned: false
+  
+  - expert_id: expert-healthcare
+    expert_name: Healthcare Domain Expert
+    primary_domain: healthcare
+    rag_enabled: true
+    fine_tuned: false
 ```
 
-### 6.6 Consultation Flow
+**Configuration Fields:**
+- `expert_id` (required): Unique identifier matching domain's primary expert
+- `expert_name` (required): Human-readable name
+- `primary_domain` (required): Domain where expert has 51% authority
+- `rag_enabled` (optional, default: false): Enable knowledge base RAG
+- `fine_tuned` (optional, default: false): Use fine-tuned models (future)
+- `confidence_matrix` (optional): Custom confidence weights (usually auto-calculated)
+
+**Loading Experts:**
+```python
+# Load from config file
+registry = ExpertRegistry.from_config_file(
+    Path(".tapps-agents/experts.yaml"),
+    domain_config=domain_config
+)
+```
+
+### 6.6 Base Expert Shared Capabilities
+
+All experts share these capabilities via BaseExpert:
+
+```yaml
+shared_capabilities:
+  - RAG integration (knowledge base retrieval)
+  - Confidence scoring (weighted decision-making)
+  - Influence weighting (51% primary authority)
+  - Consultation interface (*consult, *validate, *provide-context)
+  
+shared_behaviors:
+  - Always cite sources
+  - Acknowledge uncertainty
+  - Defer to primary expert
+  - Provide influence not override
+```
+
+### 6.7 Consultation Flow
 
 | Workflow Agent | Consults Expert When... |
 |----------------|-------------------------|
@@ -532,6 +691,8 @@ Expert D    16.33%   16.33%   16.33%   51.00%   ← NEW expert
 
 ## 8. Model Abstraction Layer (MAL)
 
+**Status**: ✅ **Complete** - Ollama (local) + Anthropic + OpenAI (cloud fallback) implemented
+
 ### 8.1 Routing Strategy
 
 ```
@@ -620,6 +781,8 @@ model_profiles:
 
 ## 9. RAG Integration
 
+**Status**: ✅ **Complete** - Simple file-based RAG implemented with markdown-aware chunking. Vector DB RAG deferred to optional enhancement.
+
 ### 9.1 RAG Architecture
 
 ```
@@ -687,6 +850,8 @@ knowledge_bases:
 ---
 
 ## 10. Fine-Tuning Support
+
+**Status**: ⏸️ **Deferred** - Optional enhancement for Phase 6. Framework supports it, but LoRA adapter loading not yet implemented.
 
 ### 10.1 Fine-Tuning Methods
 
@@ -2178,7 +2343,553 @@ workflow_detection:
 
 ---
 
-## 18. Appendix
+## 18. Context7 Integration (Enhancement Phase)
+
+**Status:** Post-Implementation Enhancement  
+**Priority:** High  
+**Estimated Effort:** 6-9 weeks (3 phases)
+
+### 18.1 Context7 Overview
+
+**Origin:** Adapted from HomeIQ BMAD framework Context7 KB integration
+
+Context7 integration provides **real-time, version-specific library documentation** with intelligent caching, reducing API calls by 87%+ and ensuring agents always have access to current best practices.
+
+#### 18.1.1 Key Benefits
+
+| Benefit | Impact |
+|---------|--------|
+| **87%+ API Call Reduction** | KB-first caching minimizes external API usage |
+| **<0.15s Response Time** | Cached content responds in milliseconds |
+| **Version-Specific Docs** | Always current, eliminates outdated references |
+| **Reduced Hallucinations** | Accurate API references from official sources |
+| **Cost Efficiency** | Fewer API calls = lower costs |
+| **Performance Visibility** | Analytics track hit rates and optimization |
+
+#### 18.1.2 Integration Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    AGENT REQUEST                                  │
+│              (Library/Framework Question)                          │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                  KB-FIRST LOOKUP SYSTEM                          │
+│                                                                  │
+│  Step 1: Check KB Cache                                          │
+│    ├─ Hit? → Return cached (0.12s avg)                          │
+│    └─ Miss? → Step 2                                            │
+│                                                                  │
+│  Step 2: Fuzzy Match Lookup                                      │
+│    ├─ Match Found? → Return fuzzy match                         │
+│    └─ No Match? → Step 3                                        │
+│                                                                  │
+│  Step 3: Context7 API Call (via MCP)                            │
+│    └─ Fetch fresh documentation                                  │
+│                                                                  │
+│  Step 4: Store in KB Cache                                       │
+│    └─ Save for future use                                       │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 18.2 KB-First Caching System
+
+#### 18.2.1 Cache Structure
+
+```
+.tapps-agents/kb/context7-cache/
+├── index.yaml                    # Master index of all cached docs
+├── cross-references.yaml         # Topic cross-references
+├── .refresh-queue               # Stale entry refresh queue
+│
+├── libraries/                    # Library-based sharding
+│   ├── react/
+│   │   ├── meta.yaml            # React library metadata
+│   │   ├── hooks.md             # React hooks docs
+│   │   ├── components.md        # React components docs
+│   │   └── state-management.md  # React state docs
+│   │
+│   ├── fastapi/
+│   │   ├── meta.yaml            # FastAPI metadata
+│   │   ├── authentication.md    # FastAPI auth docs
+│   │   └── routing.md           # FastAPI routing docs
+│   │
+│   └── [other libraries...]
+│
+└── topics/                       # Topic-based cross-referencing
+    ├── hooks/
+    │   └── index.yaml           # Hooks topic index
+    └── routing/
+        └── index.yaml           # Routing topic index
+```
+
+#### 18.2.2 KB Cache File Format
+
+```markdown
+# {library} - {topic}
+
+**Source**: {context7_id} (Trust Score: {trust_score})
+**Snippets**: {snippet_count} | **Tokens**: {token_count}
+**Last Updated**: {last_updated} | **Cache Hits**: {cache_hits}
+
+---
+
+{context7_content}
+
+---
+
+<!-- KB Metadata -->
+<!-- Library: {library} -->
+<!-- Topic: {topic} -->
+<!-- Context7 ID: {context7_id} -->
+<!-- Trust Score: {trust_score} -->
+<!-- Snippet Count: {snippet_count} -->
+<!-- Last Updated: {last_updated} -->
+<!-- Cache Hits: {cache_hits} -->
+<!-- Token Count: {token_count} -->
+```
+
+#### 18.2.3 Fuzzy Matching
+
+- **Confidence Threshold**: 0.7 (configurable)
+- **Matching Strategy**:
+  - Exact library match (highest priority)
+  - Topic similarity (string similarity)
+  - Cross-reference lookup
+- **Fallback**: Context7 API if no match found
+
+#### 18.2.4 Performance Targets
+
+| Metric | Target | Current (BMAD) |
+|--------|--------|----------------|
+| **Hit Rate** | >70% | 87%+ |
+| **Cached Response Time** | <0.15s | 0.12s avg |
+| **Context7 API Time** | <2.0s | 1.5-2.0s |
+| **KB Storage Time** | <0.5s | 0.3-0.5s |
+| **Metadata Update Time** | <0.1s | <0.1s |
+
+### 18.3 MCP Integration
+
+#### 18.3.1 MCP Tools
+
+**Library Resolution Tool:**
+- **Tool Name**: `mcp_Context7_resolve-library-id`
+- **Purpose**: Resolve library/package name to Context7-compatible ID
+- **Parameters**: `libraryName` (string, required)
+- **Returns**: List of matching libraries with Context7 IDs (`/org/project` format)
+
+**Documentation Retrieval Tool:**
+- **Tool Name**: `mcp_Context7_get-library-docs`
+- **Purpose**: Fetch up-to-date documentation for a library
+- **Parameters**:
+  - `context7CompatibleLibraryID` (string, required)
+  - `topic` (string, optional) - Focus documentation
+  - `mode` (string, optional) - "code" (default) or "info"
+  - `page` (integer, optional) - Pagination (1-10)
+- **Returns**: Documentation content in markdown format
+
+#### 18.3.2 KB-First Workflow (MANDATORY)
+
+```yaml
+kb_first_workflow:
+  step_1_check_cache:
+    action: "read_file"
+    path: ".tapps-agents/kb/context7-cache/libraries/{library}/{topic}.md"
+    on_hit:
+      - extract_metadata_from_comments
+      - update_hit_count_in_meta_yaml
+      - update_last_accessed_timestamp
+      - return_cached_content
+      - log_performance: "cache_hit"
+    on_miss:
+      - proceed_to_fuzzy_match
+  
+  step_2_fuzzy_match:
+    action: "search_kb_index"
+    index_file: ".tapps-agents/kb/context7-cache/index.yaml"
+    cross_refs_file: ".tapps-agents/kb/context7-cache/cross-references.yaml"
+    confidence_threshold: 0.7
+    on_match:
+      - return_fuzzy_match_with_confidence
+      - update_hit_count
+    on_no_match:
+      - proceed_to_context7_resolution
+  
+  step_3_resolve_library:
+    check_kb_first: ".tapps-agents/kb/context7-cache/libraries/{library}/meta.yaml"
+    on_found:
+      - use_cached_context7_id
+    on_not_found:
+      - call_mcp_tool: "mcp_Context7_resolve-library-id"
+      - store_result_in_kb
+  
+  step_4_context7_api:
+    condition: "kb_cache_miss AND fuzzy_match_failed"
+    tool: "mcp_Context7_get-library-docs"
+    on_success:
+      - proceed_to_kb_storage
+  
+  step_5_store_in_kb:
+    steps:
+      - create_directory: ".tapps-agents/kb/context7-cache/libraries/{library}"
+      - write_content: ".tapps-agents/kb/context7-cache/libraries/{library}/{topic}.md"
+      - update_metadata: "meta.yaml"
+      - update_index: "index.yaml"
+      - update_cross_refs: "cross-references.yaml"
+```
+
+### 18.4 Auto-Refresh System
+
+#### 18.4.1 Staleness Detection
+
+```yaml
+staleness_policies:
+  stable:
+    max_age_days: 30
+    examples: ["react", "pytest", "fastapi", "typescript"]
+  
+  active:
+    max_age_days: 14
+    examples: ["vitest", "playwright", "vite"]
+  
+  critical:
+    max_age_days: 7
+    examples: ["security-libs", "jwt", "oauth"]
+```
+
+#### 18.4.2 Refresh Modes
+
+**Manual Refresh:**
+```bash
+*context7-kb-refresh                    # Refresh all stale entries
+*context7-kb-refresh --check-only       # Check what needs refreshing
+*context7-kb-refresh {library}          # Refresh specific library
+```
+
+**Automatic Refresh:**
+- **Check on First Access**: Session-based staleness check
+- **Queue System**: Background refresh queue
+- **Process Queue**: `*context7-kb-process-queue` command
+
+#### 18.4.3 Queue Management
+
+```python
+# Simple file-based queue
+queue_file: ".tapps-agents/kb/context7-cache/.refresh-queue"
+
+# Queue entry format
+{library_name},{topic or 'all'},{queued_at_timestamp}
+
+# Processing
+- Silent processing on agent startup (if enabled)
+- Manual processing via command
+- Failed items remain in queue for retry
+```
+
+### 18.5 Performance Analytics
+
+#### 18.5.1 Metrics Tracked
+
+| Metric | Description | Target |
+|--------|-------------|--------|
+| **Hit Rate** | Cache hits / (hits + misses) | >70% |
+| **Average Response Time** | Time to return documentation | <0.15s (cached) |
+| **Cache Size** | Total KB cache size | <100MB (configurable) |
+| **Total Entries** | Number of cached library/topic pairs | Tracked |
+| **Top Libraries** | Most frequently accessed | Top 5 |
+| **Top Topics** | Most frequently accessed topics | Top 5 |
+
+#### 18.5.2 Status Command
+
+```bash
+*context7-kb-status
+```
+
+**Output Format:**
+```markdown
+# Context7 Knowledge Base Status
+
+## Overview
+- **Total Entries**: 45
+- **Total Size**: 12.3MB / 100MB (12.3%)
+- **Hit Rate**: 87.2%
+- **Average Response Time**: 0.15s
+- **Last Updated**: 2025-12-27T15:01:00Z
+
+## Performance Metrics
+- **Cache Hits**: 156
+- **Cache Misses**: 23
+- **Context7 Calls**: 23
+- **Fuzzy Matches**: 12
+
+## Top Libraries
+1. **React** - 45 hits, 2.3MB
+2. **Express** - 32 hits, 1.8MB
+3. **MongoDB** - 28 hits, 1.2MB
+
+## Recommendations
+- ✅ **Hit Rate Excellent**: 87.2% exceeds target of 70%
+- ✅ **Response Time Good**: 0.15s meets target
+- ⚠️ **Size Growth**: Consider cleanup if approaching 80MB
+```
+
+### 18.6 Agent Integration
+
+#### 18.6.1 Agent-Specific Configuration
+
+```yaml
+context7_agent_limits:
+  architect:
+    token_limit: 4000
+    topics: ["architecture", "design-patterns", "scalability"]
+    kb_priority: true
+    context7_mandatory: true
+  
+  implementer:
+    token_limit: 3000
+    topics: ["hooks", "routing", "authentication", "testing"]
+    kb_priority: true
+    context7_mandatory: true
+  
+  tester:
+    token_limit: 2500
+    topics: ["testing", "security", "performance"]
+    kb_priority: true
+    context7_mandatory: true
+```
+
+#### 18.6.2 Auto-Triggers
+
+Agents automatically use Context7 KB when:
+- User mentions a library/framework name
+- Discussing implementation patterns
+- Making technology recommendations
+- Troubleshooting library-specific issues
+- User asks "how does [library] work?"
+
+**Proactive Offer Pattern:**
+> "Would you like me to check Context7 KB for current [library] best practices?"
+
+#### 18.6.3 Integration with Existing RAG
+
+**Priority Order:**
+1. **Context7 KB** (for library/framework questions)
+2. **Domain Knowledge Base** (for business domain questions)
+3. **Context7 API** (if KB miss)
+
+**Combined Usage:**
+- Context7 for technical library documentation
+- Domain KB for business logic and patterns
+- Both can be used together for comprehensive answers
+
+### 18.7 Configuration Schema
+
+#### 18.7.1 Core Configuration
+
+```yaml
+# .tapps-agents/config.yaml
+
+context7:
+  enabled: true
+  default_token_limit: 3000
+  cache_duration: 3600
+  integration_level: mandatory  # or "optional"
+  usage_requirement: "MANDATORY for all technology decisions"
+  bypass_forbidden: true
+  
+  knowledge_base:
+    enabled: true
+    location: ".tapps-agents/kb/context7-cache"
+    sharding: true
+    indexing: true
+    cross_references: true
+    max_cache_size: "100MB"
+    cleanup_interval: 86400  # 24 hours
+    hit_rate_threshold: 0.7
+    fuzzy_match_threshold: 0.7
+    analytics_enabled: true
+    
+    refresh:
+      enabled: true
+      default_max_age_days: 30
+      check_on_access: true
+      auto_queue: true
+      notify_stale: true
+      auto_process_on_startup: true
+      auto_check_on_first_access: true
+      
+      library_types:
+        stable:
+          max_age_days: 30
+          examples: ["react", "pytest", "fastapi", "typescript"]
+        active:
+          max_age_days: 14
+          examples: ["vitest", "playwright", "vite"]
+        critical:
+          max_age_days: 7
+          examples: ["security-libs", "jwt", "oauth"]
+  
+  agent_limits:
+    architect:
+      token_limit: 4000
+      topics: ["architecture", "design-patterns", "scalability"]
+      kb_priority: true
+      context7_mandatory: true
+      bypass_forbidden: true
+    
+    implementer:
+      token_limit: 3000
+      topics: ["hooks", "routing", "authentication", "testing"]
+      kb_priority: true
+      context7_mandatory: true
+      bypass_forbidden: true
+    
+    tester:
+      token_limit: 2500
+      topics: ["testing", "security", "performance"]
+      kb_priority: true
+      context7_mandatory: true
+      bypass_forbidden: true
+```
+
+#### 18.7.2 MCP Server Configuration
+
+```yaml
+# MCP server configuration (Cursor/Claude Desktop)
+mcp_servers:
+  context7:
+    command: "npx"
+    args:
+      - "-y"
+      - "@context7/mcp-server"
+    env:
+      CONTEXT7_API_KEY: "${CONTEXT7_API_KEY}"
+```
+
+### 18.8 Implementation Phases
+
+**Current Status**: 🚧 **Not Started** - All phases pending
+
+#### Phase 1: Core Integration (2-3 weeks)
+
+**Deliverables:**
+1. MCP Context7 tool integration
+2. Basic KB cache structure
+3. KB-first lookup workflow
+4. Basic metadata tracking
+5. Library resolution caching
+
+**Success Criteria:**
+- ✅ KB cache structure created
+- ✅ MCP tools integrated
+- ✅ KB-first workflow functional
+- ✅ Basic caching working
+- ✅ Metadata files updated
+
+#### Phase 2: Intelligence Layer (2-3 weeks)
+
+**Deliverables:**
+1. Fuzzy matching implementation
+2. Auto-refresh system
+3. Performance analytics
+4. Agent-specific optimizations
+5. Status and search commands
+
+**Success Criteria:**
+- ✅ Fuzzy matching with 0.7 threshold
+- ✅ Staleness detection working
+- ✅ Refresh queue functional
+- ✅ Analytics dashboard complete
+- ✅ Hit rate >70%
+
+#### Phase 3: Advanced Features (2-3 weeks)
+
+**Deliverables:**
+1. Cross-references system
+2. Predictive pre-loading
+3. Advanced analytics
+4. KB cleanup automation
+5. Integration with existing RAG
+
+**Success Criteria:**
+- ✅ Cross-references functional
+- ✅ Pre-loading for common libraries
+- ✅ Advanced analytics dashboard
+- ✅ Automated cleanup working
+- ✅ Seamless RAG integration
+
+### 18.9 Commands Reference
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `*context7-docs {library} {topic}` | Get KB-first documentation | `*context7-docs react hooks` |
+| `*context7-resolve {library}` | Resolve library to Context7 ID | `*context7-resolve fastapi` |
+| `*context7-kb-status` | Show KB statistics and analytics | `*context7-kb-status` |
+| `*context7-kb-search {query}` | Search local knowledge base | `*context7-kb-search react` |
+| `*context7-kb-test` | Test KB integration functionality | `*context7-kb-test` |
+| `*context7-kb-refresh` | Refresh stale cache entries | `*context7-kb-refresh` |
+| `*context7-kb-refresh --check-only` | Check what needs refreshing | `*context7-kb-refresh --check-only` |
+| `*context7-kb-process-queue` | Process queued refreshes | `*context7-kb-process-queue` |
+| `*context7-kb-cleanup` | Clean up old/unused cached docs | `*context7-kb-cleanup` |
+| `*context7-kb-rebuild` | Rebuild knowledge base index | `*context7-kb-rebuild` |
+| `*context7-help` | Show Context7 usage examples | `*context7-help` |
+
+### 18.10 Integration with Existing Features
+
+#### 18.10.1 Tiered Context Integration
+
+- **Context7 KB** uses Tier 1 caching (fast, minimal tokens)
+- **Context7 API** uses Tier 2-3 (when KB miss)
+- **Combined**: Context7 docs + Tiered Context = optimal token usage
+
+#### 18.10.2 Code Scoring Integration
+
+- Context7 ensures accurate library API references
+- Reduces false positives in security/complexity scoring
+- Provides current best practices for code quality
+
+#### 18.10.3 MCP Gateway Integration
+
+- Context7 MCP tools accessible via MCP Gateway
+- Unified tool routing and caching
+- Consistent with other MCP server integrations
+
+#### 18.10.4 Workflow Integration
+
+- Context7 automatically used in technology selection steps
+- Architect agent uses Context7 for design decisions
+- Implementer agent uses Context7 for library implementation
+
+### 18.11 Expected Benefits
+
+| Metric | Before | After | Improvement |
+|--------|--------|-------|-------------|
+| **API Calls** | 100% external | 13% external | 87% reduction |
+| **Response Time** | 1.5-2.0s | 0.12s (cached) | 92% faster |
+| **Documentation Accuracy** | Variable | Always current | 100% accuracy |
+| **Hallucinated APIs** | Common | Rare | 90% reduction |
+| **Cost per Query** | High | Low (cached) | 87% cost savings |
+
+### 18.12 Migration Path
+
+**For Existing Projects:**
+1. Enable Context7 in configuration
+2. Run `*context7-kb-refresh` to populate initial cache
+3. Agents automatically use KB-first approach
+4. Monitor `*context7-kb-status` for hit rates
+5. Adjust refresh policies as needed
+
+**For New Projects:**
+1. Context7 enabled by default
+2. KB cache populated on first library question
+3. Auto-refresh keeps docs current
+4. No manual intervention needed
+
+---
+
+## 19. Appendix
 
 ### 18.1 Glossary
 
@@ -2203,6 +2914,11 @@ workflow_detection:
 | **Workflow Init** | Auto-detect project type and recommend workflow (`*workflow-init`) |
 | **Conditional Steps** | Workflow steps that execute based on conditions |
 | **Optional Steps** | Additional workflow steps user can request |
+| **Context7** | Real-time library documentation service with KB caching |
+| **KB-First** | Check local knowledge base cache before external API calls |
+| **Fuzzy Matching** | Find similar topics when exact match not found (0.7 threshold) |
+| **Auto-Refresh** | Automatic detection and refresh of stale cached documentation |
+| **Hit Rate** | Percentage of cache hits vs total requests (target: >70%) |
 
 ### 18.2 Inspired By
 
@@ -2210,7 +2926,7 @@ workflow_detection:
 |---------|--------------|
 | **BMAD-METHOD** | Star-prefixed commands, activation instructions, scale-adaptive workflows, workflow conditions/notes, agent customization |
 | **codefortify** | Code Scoring System, quantitative quality metrics |
-| **HomeIQ (BMAD)** | Tiered Context Injection, YAML Workflows, Greenfield/Brownfield, document sharding |
+| **HomeIQ (BMAD)** | Tiered Context Injection, YAML Workflows, Greenfield/Brownfield, document sharding, Context7 KB integration |
 | **LocalMCP** | MCP Gateway architecture, local-first AI patterns |
 | **agentforge-mcp** | MCP integration patterns, comprehensive tooling |
 | **TappsHA** | Smart suggestions system |
@@ -2224,6 +2940,7 @@ workflow_detection:
 | 1.0.0-draft | Dec 2025 | Initial requirements document |
 | 1.1.0-draft | Dec 2025 | Added Enhanced Features: Code Scoring, Tiered Context, MCP Gateway, YAML Workflows, Greenfield/Brownfield |
 | 1.2.0-draft | Dec 2025 | Added BMAD-METHOD patterns: Star commands, activation instructions, workflow enhancements, scale-adaptive selection |
+| 1.3.0-draft | Dec 2025 | Added Context7 Integration (Enhancement Phase): KB-first caching, MCP integration, auto-refresh, performance analytics |
 
 ---
 

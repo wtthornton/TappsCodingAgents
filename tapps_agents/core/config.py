@@ -41,12 +41,29 @@ class ScoringConfig(BaseModel):
     quality_threshold: float = Field(default=70.0, ge=0.0, le=100.0, description="Minimum overall score to pass")
 
 
+class CloudProviderConfig(BaseModel):
+    """Configuration for cloud LLM providers"""
+    
+    api_key: Optional[str] = Field(default=None, description="API key for cloud provider")
+    base_url: Optional[str] = Field(default=None, description="Custom base URL (optional)")
+    timeout: float = Field(default=60.0, ge=1.0, description="Request timeout in seconds")
+
+
 class MALConfig(BaseModel):
     """Configuration for Model Abstraction Layer"""
     
     ollama_url: str = Field(default="http://localhost:11434", description="Ollama API URL")
     default_model: str = Field(default="qwen2.5-coder:7b", description="Default model name for LLM calls")
+    default_provider: str = Field(default="ollama", description="Default provider (ollama/anthropic/openai)")
     timeout: float = Field(default=60.0, ge=1.0, description="Request timeout in seconds")
+    
+    # Cloud provider configurations
+    anthropic: Optional[CloudProviderConfig] = Field(default=None, description="Anthropic Claude configuration")
+    openai: Optional[CloudProviderConfig] = Field(default=None, description="OpenAI configuration")
+    
+    # Fallback settings
+    enable_fallback: bool = Field(default=True, description="Enable automatic fallback to cloud if local fails")
+    fallback_providers: list[str] = Field(default_factory=lambda: ["anthropic", "openai"], description="Fallback provider order")
 
 
 class ReviewerAgentConfig(BaseModel):
@@ -67,11 +84,52 @@ class PlannerAgentConfig(BaseModel):
     default_priority: str = Field(default="medium", description="Default priority for new stories (high/medium/low)")
 
 
+class ImplementerAgentConfig(BaseModel):
+    """Configuration specific to Implementer Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for code generation")
+    require_review: bool = Field(default=True, description="Require code review before writing files")
+    auto_approve_threshold: float = Field(default=80.0, ge=0.0, le=100.0, description="Auto-approve if score >= threshold")
+    backup_files: bool = Field(default=True, description="Create backup before overwriting existing files")
+    max_file_size: int = Field(default=10 * 1024 * 1024, ge=1024, description="Maximum file size in bytes (10MB default)")
+
+
+class TesterAgentConfig(BaseModel):
+    """Configuration specific to Tester Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for test generation")
+    test_framework: str = Field(default="pytest", description="Test framework to use (pytest/unittest)")
+    tests_dir: Optional[str] = Field(default=None, description="Directory for tests (default: tests/)")
+    coverage_threshold: float = Field(default=80.0, ge=0.0, le=100.0, description="Target test coverage percentage")
+    auto_write_tests: bool = Field(default=True, description="Automatically write generated tests to files")
+
+
+class DebuggerAgentConfig(BaseModel):
+    """Configuration specific to Debugger Agent"""
+    
+    model: str = Field(default="deepseek-coder:6.7b", description="LLM model to use for error analysis")
+    include_code_examples: bool = Field(default=True, description="Include code examples in fix suggestions")
+    max_context_lines: int = Field(default=50, ge=10, le=200, description="Maximum lines of code context to include in analysis")
+
+
+class DocumenterAgentConfig(BaseModel):
+    """Configuration specific to Documenter Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for documentation generation")
+    docs_dir: Optional[str] = Field(default=None, description="Directory for generated docs (default: docs/)")
+    include_examples: bool = Field(default=True, description="Include code examples in documentation")
+    docstring_format: str = Field(default="google", description="Docstring format (google/numpy/sphinx)")
+
+
 class AgentsConfig(BaseModel):
     """Configuration for all agents"""
     
     reviewer: ReviewerAgentConfig = Field(default_factory=ReviewerAgentConfig)
     planner: PlannerAgentConfig = Field(default_factory=PlannerAgentConfig)
+    implementer: ImplementerAgentConfig = Field(default_factory=ImplementerAgentConfig)
+    tester: TesterAgentConfig = Field(default_factory=TesterAgentConfig)
+    debugger: DebuggerAgentConfig = Field(default_factory=DebuggerAgentConfig)
+    documenter: DocumenterAgentConfig = Field(default_factory=DocumenterAgentConfig)
 
 
 class ProjectConfig(BaseModel):

@@ -1,0 +1,42 @@
+# Example Expert Configurations
+# 
+# This file demonstrates how to configure Industry Experts for your project.
+# Copy this to .tapps-agents/experts.yaml in your project root and customize.
+
+experts:
+  # Home Automation Expert
+  # Specializes in smart home systems, IoT devices, automation patterns
+  - expert_id: expert-home-automation
+    expert_name: Home Automation Expert
+    primary_domain: home-automation
+    rag_enabled: true
+    fine_tuned: false
+    # Optional: Custom MAL configuration
+    # mal_config:
+    #   primary_model: "qwen2.5-coder:7b"
+    #   fallback_models: ["claude-3-5-sonnet"]
+
+  # Healthcare Domain Expert
+  # Specializes in healthcare regulations, HIPAA compliance, medical data handling
+  - expert_id: expert-healthcare
+    expert_name: Healthcare Domain Expert
+    primary_domain: healthcare
+    rag_enabled: true
+    fine_tuned: false
+
+  # Financial Services Expert
+  # Specializes in fintech, banking, compliance, security, financial regulations
+  - expert_id: expert-financial-services
+    expert_name: Financial Services Expert
+    primary_domain: financial-services
+    rag_enabled: true
+    fine_tuned: false
+
+  # E-commerce Expert
+  # Specializes in online retail, payment processing, inventory management
+  - expert_id: expert-ecommerce
+    expert_name: E-commerce Expert
+    primary_domain: ecommerce
+    rag_enabled: true
+    fine_tuned: false
+

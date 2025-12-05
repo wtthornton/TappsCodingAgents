@@ -1,0 +1,27 @@
+# Expert Configuration Template
+# 
+# Copy this template to .tapps-agents/experts.yaml in your project root
+# and customize for your domains.
+
+experts:
+  # Template Expert Configuration
+  # Replace the following values:
+  # - expert_id: Must match primary_expert_id in domains.md
+  # - expert_name: Human-readable name for the expert
+  # - primary_domain: Domain where this expert has 51% authority
+  - expert_id: expert-{domain-name}
+    expert_name: {Domain Name} Expert
+    primary_domain: {domain-name}
+    rag_enabled: true  # Enable RAG for knowledge base retrieval
+    fine_tuned: false  # Future: Set to true when fine-tuning is available
+    
+    # Optional: Custom MAL configuration
+    # mal_config:
+    #   primary_model: "qwen2.5-coder:7b"
+    #   fallback_models: ["claude-3-5-sonnet"]
+    
+    # Optional: Custom confidence matrix (usually auto-calculated from weight matrix)
+    # confidence_matrix:
+    #   {domain-name}: 0.51
+    #   other-domain: 0.245
+

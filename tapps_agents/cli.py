@@ -10,6 +10,16 @@ from typing import Optional
 
 from .agents.reviewer.agent import ReviewerAgent
 from .agents.planner.agent import PlannerAgent
+from .agents.implementer.agent import ImplementerAgent
+from .agents.tester.agent import TesterAgent
+from .agents.debugger.agent import DebuggerAgent
+from .agents.documenter.agent import DocumenterAgent
+from .agents.orchestrator.agent import OrchestratorAgent
+from .agents.analyst.agent import AnalystAgent
+from .agents.architect.agent import ArchitectAgent
+from .agents.designer.agent import DesignerAgent
+from .agents.improver.agent import ImproverAgent
+from .agents.ops.agent import OpsAgent
 
 
 async def review_command(file_path: str, model: Optional[str] = None, output_format: str = "json"):
@@ -153,6 +163,71 @@ async def list_stories_command(epic: Optional[str] = None, status: Optional[str]
         await planner.close()
 
 
+async def implement_command(specification: str, file_path: str, context: Optional[str] = None, language: str = "python", output_format: str = "json"):
+    """Generate and write code to file (with review)"""
+    implementer = ImplementerAgent()
+    try:
+        await implementer.activate()
+        result = await implementer.run("implement", specification=specification, file_path=file_path, context=context, language=language)
+        
+        if "error" in result:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            sys.exit(1)
+        
+        if output_format == "json":
+            print(json.dumps(result, indent=2))
+        else:
+            print(f"Code implemented: {result['file']}")
+            print(f"Approved: {result['approved']}")
+            if result.get('backup'):
+                print(f"Backup created: {result['backup']}")
+    finally:
+        await implementer.close()
+
+
+async def generate_code_command(specification: str, file_path: Optional[str] = None, context: Optional[str] = None, language: str = "python", output_format: str = "json"):
+    """Generate code from specification (no file write)"""
+    implementer = ImplementerAgent()
+    try:
+        await implementer.activate()
+        result = await implementer.run("generate-code", specification=specification, file_path=file_path, context=context, language=language)
+        
+        if "error" in result:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            sys.exit(1)
+        
+        if output_format == "json":
+            print(json.dumps(result, indent=2))
+        else:
+            print("Generated Code:")
+            print("-" * 40)
+            print(result['code'])
+    finally:
+        await implementer.close()
+
+
+async def refactor_command(file_path: str, instruction: str, output_format: str = "json"):
+    """Refactor existing code file"""
+    implementer = ImplementerAgent()
+    try:
+        await implementer.activate()
+        result = await implementer.run("refactor", file_path=file_path, instruction=instruction)
+        
+        if "error" in result:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            sys.exit(1)
+        
+        if output_format == "json":
+            print(json.dumps(result, indent=2))
+        else:
+            print(f"Refactored: {result['file']}")
+            print(f"Approved: {result['approved']}")
+            if result.get('backup'):
+                print(f"Backup created: {result['backup']}")
+    finally:
+        await implementer.close()
+
+
 def main():
     """Main CLI entry point - supports both *command and command formats"""
     import argparse
@@ -195,6 +270,192 @@ def main():
     list_stories_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
     
     planner_help_parser = planner_subparsers.add_parser("help", aliases=["*help"], help="Show planner commands")
+    
+    # Implementer agent commands
+    implementer_parser = subparsers.add_parser("implementer", help="Implementer Agent commands")
+    implementer_subparsers = implementer_parser.add_subparsers(dest="command", help="Commands")
+    
+    implement_parser = implementer_subparsers.add_parser("implement", aliases=["*implement"], help="Generate and write code to file")
+    implement_parser.add_argument("specification", help="Code specification/description")
+    implement_parser.add_argument("file_path", help="Target file path")
+    implement_parser.add_argument("--context", help="Additional context")
+    implement_parser.add_argument("--language", default="python", help="Programming language")
+    implement_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    generate_code_parser = implementer_subparsers.add_parser("generate-code", aliases=["*generate-code"], help="Generate code (no file write)")
+    generate_code_parser.add_argument("specification", help="Code specification/description")
+    generate_code_parser.add_argument("--file", help="Optional target file path for context")
+    generate_code_parser.add_argument("--context", help="Additional context")
+    generate_code_parser.add_argument("--language", default="python", help="Programming language")
+    generate_code_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    refactor_parser = implementer_subparsers.add_parser("refactor", aliases=["*refactor"], help="Refactor existing code file")
+    refactor_parser.add_argument("file_path", help="Path to file to refactor")
+    refactor_parser.add_argument("instruction", help="Refactoring instruction")
+    refactor_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    implementer_help_parser = implementer_subparsers.add_parser("help", aliases=["*help"], help="Show implementer commands")
+    
+    # Tester agent commands
+    tester_parser = subparsers.add_parser("tester", help="Tester Agent commands")
+    tester_subparsers = tester_parser.add_subparsers(dest="command", help="Commands")
+    
+    test_parser = tester_subparsers.add_parser("test", aliases=["*test"], help="Generate and run tests for a file")
+    test_parser.add_argument("file", help="Source code file to test")
+    test_parser.add_argument("--test-file", help="Path to write test file")
+    test_parser.add_argument("--integration", action="store_true", help="Generate integration tests")
+    
+    generate_tests_parser = tester_subparsers.add_parser("generate-tests", aliases=["*generate-tests"], help="Generate tests without running")
+    generate_tests_parser.add_argument("file", help="Source code file to test")
+    generate_tests_parser.add_argument("--test-file", help="Path to write test file")
+    generate_tests_parser.add_argument("--integration", action="store_true", help="Generate integration tests")
+    
+    run_tests_parser = tester_subparsers.add_parser("run-tests", aliases=["*run-tests"], help="Run existing tests")
+    run_tests_parser.add_argument("test_path", nargs="?", help="Path to test file or directory (default: tests/)")
+    run_tests_parser.add_argument("--no-coverage", action="store_true", help="Don't include coverage report")
+    
+    tester_help_parser = tester_subparsers.add_parser("help", aliases=["*help"], help="Show tester commands")
+    
+    # Debugger agent commands
+    debugger_parser = subparsers.add_parser("debugger", help="Debugger Agent commands")
+    debugger_subparsers = debugger_parser.add_subparsers(dest="command", help="Commands")
+    
+    debug_parser = debugger_subparsers.add_parser("debug", aliases=["*debug"], help="Debug an error or issue")
+    debug_parser.add_argument("error_message", help="Error message to debug")
+    debug_parser.add_argument("--file", help="File path where error occurred")
+    debug_parser.add_argument("--line", type=int, help="Line number where error occurred")
+    debug_parser.add_argument("--stack-trace", help="Stack trace")
+    
+    analyze_error_parser = debugger_subparsers.add_parser("analyze-error", aliases=["*analyze-error"], help="Analyze error message and stack trace")
+    analyze_error_parser.add_argument("error_message", help="Error message")
+    analyze_error_parser.add_argument("--stack-trace", help="Stack trace")
+    analyze_error_parser.add_argument("--code-context", help="Code context around error")
+    
+    trace_parser = debugger_subparsers.add_parser("trace", aliases=["*trace"], help="Trace code execution path")
+    trace_parser.add_argument("file", help="File path to trace")
+    trace_parser.add_argument("--function", help="Function name to trace from")
+    trace_parser.add_argument("--line", type=int, help="Line number to trace from")
+    
+    debugger_help_parser = debugger_subparsers.add_parser("help", aliases=["*help"], help="Show debugger commands")
+    
+    # Documenter agent commands
+    documenter_parser = subparsers.add_parser("documenter", help="Documenter Agent commands")
+    documenter_subparsers = documenter_parser.add_subparsers(dest="command", help="Commands")
+    
+    document_parser = documenter_subparsers.add_parser("document", aliases=["*document"], help="Generate documentation for a file")
+    document_parser.add_argument("file", help="Source code file path")
+    document_parser.add_argument("--output-format", default="markdown", help="Output format (markdown/rst/html)")
+    document_parser.add_argument("--output-file", help="Output file path")
+    
+    generate_docs_parser = documenter_subparsers.add_parser("generate-docs", aliases=["*generate-docs"], help="Generate API documentation")
+    generate_docs_parser.add_argument("file", help="Source code file path")
+    generate_docs_parser.add_argument("--output-format", default="markdown", help="Output format")
+    
+    update_readme_parser = documenter_subparsers.add_parser("update-readme", aliases=["*update-readme"], help="Generate or update README.md")
+    update_readme_parser.add_argument("--project-root", help="Project root directory (default: current directory)")
+    update_readme_parser.add_argument("--context", help="Additional context for README")
+    
+    update_docstrings_parser = documenter_subparsers.add_parser("update-docstrings", aliases=["*update-docstrings"], help="Update docstrings in code")
+    update_docstrings_parser.add_argument("file", help="Source code file path")
+    update_docstrings_parser.add_argument("--docstring-format", default="google", help="Docstring format (google/numpy/sphinx)")
+    update_docstrings_parser.add_argument("--write-file", action="store_true", help="Write updated code back to file")
+    
+    documenter_help_parser = documenter_subparsers.add_parser("help", aliases=["*help"], help="Show documenter commands")
+    
+    # Analyst agent commands
+    analyst_parser = subparsers.add_parser("analyst", help="Analyst Agent commands")
+    analyst_subparsers = analyst_parser.add_subparsers(dest="command", help="Commands")
+    
+    analyst_subparsers.add_parser("gather-requirements", aliases=["*gather-requirements"], help="Gather requirements for a project")
+    analyst_subparsers.add_parser("stakeholder-analysis", aliases=["*stakeholder-analysis"], help="Perform stakeholder analysis")
+    analyst_subparsers.add_parser("tech-research", aliases=["*tech-research"], help="Perform technology research")
+    analyst_subparsers.add_parser("estimate-effort", aliases=["*estimate-effort"], help="Estimate effort for tasks")
+    analyst_subparsers.add_parser("assess-risk", aliases=["*assess-risk"], help="Assess project risks")
+    analyst_subparsers.add_parser("competitive-analysis", aliases=["*competitive-analysis"], help="Perform competitive analysis")
+    analyst_subparsers.add_parser("help", aliases=["*help"], help="Show analyst commands")
+    
+    # Architect agent commands
+    architect_parser = subparsers.add_parser("architect", help="Architect Agent commands")
+    architect_subparsers = architect_parser.add_subparsers(dest="command", help="Commands")
+    
+    architect_subparsers.add_parser("design-system", aliases=["*design-system"], help="Design the overall system architecture")
+    architect_subparsers.add_parser("architecture-diagram", aliases=["*architecture-diagram"], help="Generate architecture diagrams")
+    architect_subparsers.add_parser("tech-selection", aliases=["*tech-selection"], help="Select appropriate technologies")
+    architect_subparsers.add_parser("security-design", aliases=["*security-design"], help="Design security aspects of the system")
+    architect_subparsers.add_parser("define-boundaries", aliases=["*define-boundaries"], help="Define system boundaries and interfaces")
+    architect_subparsers.add_parser("help", aliases=["*help"], help="Show architect commands")
+    
+    # Designer agent commands
+    designer_parser = subparsers.add_parser("designer", help="Designer Agent commands")
+    designer_subparsers = designer_parser.add_subparsers(dest="command", help="Commands")
+    
+    designer_subparsers.add_parser("api-design", aliases=["*api-design"], help="Design APIs (REST, GraphQL, gRPC)")
+    designer_subparsers.add_parser("data-model-design", aliases=["*data-model-design"], help="Design data models and schemas")
+    designer_subparsers.add_parser("ui-ux-design", aliases=["*ui-ux-design"], help="Design user interfaces and experiences")
+    designer_subparsers.add_parser("wireframes", aliases=["*wireframes"], help="Generate wireframes for UI")
+    designer_subparsers.add_parser("design-system", aliases=["*design-system"], help="Develop or extend a design system")
+    designer_subparsers.add_parser("help", aliases=["*help"], help="Show designer commands")
+    
+    # Improver agent commands
+    improver_parser = subparsers.add_parser("improver", help="Improver Agent commands")
+    improver_subparsers = improver_parser.add_subparsers(dest="command", help="Commands")
+    
+    refactor_improver_parser = improver_subparsers.add_parser("refactor", aliases=["*refactor"], help="Refactor existing code")
+    refactor_improver_parser.add_argument("file_path", help="Path to file to refactor")
+    refactor_improver_parser.add_argument("--instruction", help="Specific refactoring instructions")
+    
+    optimize_parser = improver_subparsers.add_parser("optimize", aliases=["*optimize"], help="Optimize code for performance or memory")
+    optimize_parser.add_argument("file_path", help="Path to file to optimize")
+    optimize_parser.add_argument("--type", choices=["performance", "memory", "both"], default="performance", help="Optimization type")
+    
+    improve_quality_parser = improver_subparsers.add_parser("improve-quality", aliases=["*improve-quality"], help="Improve overall code quality")
+    improve_quality_parser.add_argument("file_path", help="Path to file to improve")
+    
+    improver_help_parser = improver_subparsers.add_parser("help", aliases=["*help"], help="Show improver commands")
+    
+    # Ops agent commands
+    ops_parser = subparsers.add_parser("ops", help="Ops Agent commands")
+    ops_subparsers = ops_parser.add_subparsers(dest="command", help="Commands")
+    
+    security_scan_parser = ops_subparsers.add_parser("security-scan", aliases=["*security-scan"], help="Perform security scanning")
+    security_scan_parser.add_argument("--target", help="File or directory to scan (default: project root)")
+    security_scan_parser.add_argument("--type", default="all", help="Scan type (all, sql_injection, xss, secrets, etc.)")
+    
+    compliance_check_parser = ops_subparsers.add_parser("compliance-check", aliases=["*compliance-check"], help="Check compliance with standards")
+    compliance_check_parser.add_argument("--type", default="general", help="Compliance type (general, GDPR, HIPAA, SOC2, all)")
+    
+    deploy_parser = ops_subparsers.add_parser("deploy", aliases=["*deploy"], help="Deploy application")
+    deploy_parser.add_argument("--target", default="local", help="Deployment target (local, staging, production)")
+    deploy_parser.add_argument("--environment", help="Environment configuration name")
+    
+    infrastructure_setup_parser = ops_subparsers.add_parser("infrastructure-setup", aliases=["*infrastructure-setup"], help="Set up infrastructure")
+    infrastructure_setup_parser.add_argument("--type", default="docker", help="Infrastructure type (docker, kubernetes, terraform)")
+    
+    ops_help_parser = ops_subparsers.add_parser("help", aliases=["*help"], help="Show ops commands")
+    
+    # Orchestrator agent commands
+    orchestrator_parser = subparsers.add_parser("orchestrator", help="Orchestrator Agent commands")
+    orchestrator_subparsers = orchestrator_parser.add_subparsers(dest="command", help="Commands")
+    
+    workflow_list_parser = orchestrator_subparsers.add_parser("workflow-list", aliases=["*workflow-list"], help="List available workflows")
+    
+    workflow_start_parser = orchestrator_subparsers.add_parser("workflow-start", aliases=["*workflow-start"], help="Start a workflow")
+    workflow_start_parser.add_argument("workflow_id", help="Workflow ID to start")
+    
+    workflow_status_parser = orchestrator_subparsers.add_parser("workflow-status", aliases=["*workflow-status"], help="Show current workflow status")
+    
+    workflow_next_parser = orchestrator_subparsers.add_parser("workflow-next", aliases=["*workflow-next"], help="Show next step")
+    
+    workflow_skip_parser = orchestrator_subparsers.add_parser("workflow-skip", aliases=["*workflow-skip"], help="Skip an optional step")
+    workflow_skip_parser.add_argument("step_id", help="Step ID to skip")
+    
+    workflow_resume_parser = orchestrator_subparsers.add_parser("workflow-resume", aliases=["*workflow-resume"], help="Resume interrupted workflow")
+    
+    gate_parser = orchestrator_subparsers.add_parser("gate", aliases=["*gate"], help="Make a gate decision")
+    gate_parser.add_argument("--condition", help="Gate condition")
+    gate_parser.add_argument("--scoring-data", help="Scoring data as JSON", default="{}")
+    
+    orchestrator_help_parser = orchestrator_subparsers.add_parser("help", aliases=["*help"], help="Show orchestrator commands")
     
     args = parser.parse_args()
     
@@ -239,6 +500,440 @@ def main():
             result = asyncio.run(planner.run("help"))
             print(result["content"])
             asyncio.run(planner.close())
+    elif args.agent == "implementer":
+        command = args.command.lstrip("*") if args.command else None
+        if command == "implement":
+            asyncio.run(implement_command(
+                args.specification,
+                args.file_path,
+                context=getattr(args, "context", None),
+                language=getattr(args, "language", "python"),
+                output_format=getattr(args, "format", "json")
+            ))
+        elif command == "generate-code":
+            asyncio.run(generate_code_command(
+                args.specification,
+                file_path=getattr(args, "file", None),
+                context=getattr(args, "context", None),
+                language=getattr(args, "language", "python"),
+                output_format=getattr(args, "format", "json")
+            ))
+        elif command == "refactor":
+            asyncio.run(refactor_command(
+                args.file_path,
+                args.instruction,
+                output_format=getattr(args, "format", "json")
+            ))
+        elif command == "help":
+            implementer = ImplementerAgent()
+            asyncio.run(implementer.activate())
+            result = asyncio.run(implementer.run("help"))
+            print(result["content"])
+            asyncio.run(implementer.close())
+        else:
+            # Show implementer help by default
+            implementer = ImplementerAgent()
+            asyncio.run(implementer.activate())
+            result = asyncio.run(implementer.run("help"))
+            print(result["content"])
+            asyncio.run(implementer.close())
+    elif args.agent == "tester":
+        command = args.command.lstrip("*") if args.command else None
+        if command == "test":
+            tester = TesterAgent()
+            asyncio.run(tester.activate())
+            result = asyncio.run(tester.run(
+                "test",
+                file=args.file,
+                test_file=getattr(args, "test_file", None),
+                integration=getattr(args, "integration", False)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(tester.close())
+        elif command == "generate-tests":
+            tester = TesterAgent()
+            asyncio.run(tester.activate())
+            result = asyncio.run(tester.run(
+                "generate-tests",
+                file=args.file,
+                test_file=getattr(args, "test_file", None),
+                integration=getattr(args, "integration", False)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(tester.close())
+        elif command == "run-tests":
+            tester = TesterAgent()
+            asyncio.run(tester.activate())
+            result = asyncio.run(tester.run(
+                "run-tests",
+                test_path=getattr(args, "test_path", None),
+                coverage=not getattr(args, "no_coverage", False)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(tester.close())
+        elif command == "help":
+            tester = TesterAgent()
+            asyncio.run(tester.activate())
+            result = asyncio.run(tester.run("help"))
+            print(result["content"])
+            asyncio.run(tester.close())
+        else:
+            # Show tester help by default
+            tester = TesterAgent()
+            asyncio.run(tester.activate())
+            result = asyncio.run(tester.run("help"))
+            print(result["content"])
+            asyncio.run(tester.close())
+    elif args.agent == "debugger":
+        command = args.command.lstrip("*") if args.command else None
+        if command == "debug":
+            debugger = DebuggerAgent()
+            asyncio.run(debugger.activate())
+            result = asyncio.run(debugger.run(
+                "debug",
+                error_message=args.error_message,
+                file=getattr(args, "file", None),
+                line=getattr(args, "line", None),
+                stack_trace=getattr(args, "stack_trace", None)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(debugger.close())
+        elif command == "analyze-error":
+            debugger = DebuggerAgent()
+            asyncio.run(debugger.activate())
+            result = asyncio.run(debugger.run(
+                "analyze-error",
+                error_message=args.error_message,
+                stack_trace=getattr(args, "stack_trace", None),
+                code_context=getattr(args, "code_context", None)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(debugger.close())
+        elif command == "trace":
+            debugger = DebuggerAgent()
+            asyncio.run(debugger.activate())
+            result = asyncio.run(debugger.run(
+                "trace",
+                file=args.file,
+                function=getattr(args, "function", None),
+                line=getattr(args, "line", None)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(debugger.close())
+        elif command == "help":
+            debugger = DebuggerAgent()
+            asyncio.run(debugger.activate())
+            result = asyncio.run(debugger.run("help"))
+            print(result["content"])
+            asyncio.run(debugger.close())
+        else:
+            debugger = DebuggerAgent()
+            asyncio.run(debugger.activate())
+            result = asyncio.run(debugger.run("help"))
+            print(result["content"])
+            asyncio.run(debugger.close())
+    elif args.agent == "documenter":
+        command = args.command.lstrip("*") if args.command else None
+        if command == "document":
+            documenter = DocumenterAgent()
+            asyncio.run(documenter.activate())
+            result = asyncio.run(documenter.run(
+                "document",
+                file=args.file,
+                output_format=getattr(args, "output_format", "markdown"),
+                output_file=getattr(args, "output_file", None)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(documenter.close())
+        elif command == "generate-docs":
+            documenter = DocumenterAgent()
+            asyncio.run(documenter.activate())
+            result = asyncio.run(documenter.run(
+                "generate-docs",
+                file=args.file,
+                output_format=getattr(args, "output_format", "markdown")
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(documenter.close())
+        elif command == "update-readme":
+            documenter = DocumenterAgent()
+            asyncio.run(documenter.activate())
+            result = asyncio.run(documenter.run(
+                "update-readme",
+                project_root=getattr(args, "project_root", None),
+                context=getattr(args, "context", None)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(documenter.close())
+        elif command == "update-docstrings":
+            documenter = DocumenterAgent()
+            asyncio.run(documenter.activate())
+            result = asyncio.run(documenter.run(
+                "update-docstrings",
+                file=args.file,
+                docstring_format=getattr(args, "docstring_format", None),
+                write_file=getattr(args, "write_file", False)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(documenter.close())
+        elif command == "help":
+            documenter = DocumenterAgent()
+            asyncio.run(documenter.activate())
+            result = asyncio.run(documenter.run("help"))
+            print(result["content"])
+            asyncio.run(documenter.close())
+        else:
+            documenter = DocumenterAgent()
+            asyncio.run(documenter.activate())
+            result = asyncio.run(documenter.run("help"))
+            print(result["content"])
+            asyncio.run(documenter.close())
+    elif args.agent == "orchestrator":
+        command = args.command.lstrip("*") if args.command else None
+        orchestrator = OrchestratorAgent()
+        asyncio.run(orchestrator.activate())
+        
+        if command == "workflow-list" or command == "*workflow-list":
+            result = asyncio.run(orchestrator.run("*workflow-list"))
+            print(json.dumps(result, indent=2))
+        elif command == "workflow-start" or command == "*workflow-start":
+            workflow_id = getattr(args, "workflow_id", None)
+            if not workflow_id:
+                print("Error: workflow_id required", file=sys.stderr)
+                sys.exit(1)
+            result = asyncio.run(orchestrator.run("*workflow-start", workflow_id=workflow_id))
+            print(json.dumps(result, indent=2))
+        elif command == "workflow-status" or command == "*workflow-status":
+            result = asyncio.run(orchestrator.run("*workflow-status"))
+            print(json.dumps(result, indent=2))
+        elif command == "workflow-next" or command == "*workflow-next":
+            result = asyncio.run(orchestrator.run("*workflow-next"))
+            print(json.dumps(result, indent=2))
+        elif command == "workflow-skip" or command == "*workflow-skip":
+            step_id = getattr(args, "step_id", None)
+            if not step_id:
+                print("Error: step_id required", file=sys.stderr)
+                sys.exit(1)
+            result = asyncio.run(orchestrator.run("*workflow-skip", step_id=step_id))
+            print(json.dumps(result, indent=2))
+        elif command == "workflow-resume" or command == "*workflow-resume":
+            result = asyncio.run(orchestrator.run("*workflow-resume"))
+            print(json.dumps(result, indent=2))
+        elif command == "gate" or command == "*gate":
+            condition = getattr(args, "condition", None)
+            scoring_data = getattr(args, "scoring_data", {})
+            if isinstance(scoring_data, str):
+                scoring_data = json.loads(scoring_data)
+            result = asyncio.run(orchestrator.run("*gate", condition=condition, scoring_data=scoring_data))
+            print(json.dumps(result, indent=2))
+        elif command == "help" or command == "*help":
+            result = asyncio.run(orchestrator.run("*help"))
+            print(json.dumps(result, indent=2))
+        else:
+            result = asyncio.run(orchestrator.run("*help"))
+            print(json.dumps(result, indent=2))
+        
+        asyncio.run(orchestrator.close())
+    elif args.agent == "analyst":
+        command = args.command.lstrip("*") if args.command else None
+        analyst = AnalystAgent()
+        asyncio.run(analyst.activate())
+        
+        if command == "gather-requirements":
+            result = asyncio.run(analyst.run("gather-requirements", description=args.description, context=getattr(args, "context", ""), output_file=getattr(args, "output_file", None)))
+        elif command == "analyze-stakeholders":
+            result = asyncio.run(analyst.run("analyze-stakeholders", description=args.description, stakeholders=getattr(args, "stakeholders", [])))
+        elif command == "research-technology":
+            result = asyncio.run(analyst.run("research-technology", requirement=args.requirement, context=getattr(args, "context", ""), criteria=getattr(args, "criteria", [])))
+        elif command == "estimate-effort":
+            result = asyncio.run(analyst.run("estimate-effort", feature_description=args.feature_description, context=getattr(args, "context", "")))
+        elif command == "assess-risk":
+            result = asyncio.run(analyst.run("assess-risk", feature_description=args.feature_description, context=getattr(args, "context", "")))
+        elif command == "competitive-analysis":
+            result = asyncio.run(analyst.run("competitive-analysis", product_description=args.product_description, competitors=getattr(args, "competitors", [])))
+        elif command == "help":
+            result = asyncio.run(analyst.run("help"))
+            print(result["content"])
+        else:
+            result = asyncio.run(analyst.run("help"))
+            print(result["content"])
+        
+        if command != "help":
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+        
+        asyncio.run(analyst.close())
+    elif args.agent == "architect":
+        command = args.command.lstrip("*") if args.command else None
+        architect = ArchitectAgent()
+        asyncio.run(architect.activate())
+        
+        if command == "design-system":
+            result = asyncio.run(architect.run("design-system", requirements=args.requirements, context=getattr(args, "context", ""), output_file=getattr(args, "output_file", None)))
+        elif command == "create-diagram":
+            result = asyncio.run(architect.run("create-diagram", architecture_description=args.architecture_description, diagram_type=getattr(args, "diagram_type", "component"), output_file=getattr(args, "output_file", None)))
+        elif command == "select-technology":
+            result = asyncio.run(architect.run("select-technology", component_description=args.component_description, requirements=getattr(args, "requirements", ""), constraints=getattr(args, "constraints", [])))
+        elif command == "design-security":
+            result = asyncio.run(architect.run("design-security", system_description=args.system_description, threat_model=getattr(args, "threat_model", "")))
+        elif command == "define-boundaries":
+            result = asyncio.run(architect.run("define-boundaries", system_description=args.system_description, context=getattr(args, "context", "")))
+        elif command == "help":
+            result = asyncio.run(architect.run("help"))
+            print(result["content"])
+        else:
+            result = asyncio.run(architect.run("help"))
+            print(result["content"])
+        
+        if command != "help":
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+        
+        asyncio.run(architect.close())
+    elif args.agent == "designer":
+        command = args.command.lstrip("*") if args.command else None
+        designer = DesignerAgent()
+        asyncio.run(designer.activate())
+        
+        if command == "design-api":
+            result = asyncio.run(designer.run("design-api", requirements=args.requirements, api_type=getattr(args, "api_type", "REST"), output_file=getattr(args, "output_file", None)))
+        elif command == "design-data-model":
+            result = asyncio.run(designer.run("design-data-model", requirements=args.requirements, data_source=getattr(args, "data_source", ""), output_file=getattr(args, "output_file", None)))
+        elif command == "design-ui":
+            result = asyncio.run(designer.run("design-ui", feature_description=args.feature_description, user_stories=getattr(args, "user_stories", []), output_file=getattr(args, "output_file", None)))
+        elif command == "create-wireframe":
+            result = asyncio.run(designer.run("create-wireframe", screen_description=args.screen_description, wireframe_type=getattr(args, "wireframe_type", "page"), output_file=getattr(args, "output_file", None)))
+        elif command == "define-design-system":
+            result = asyncio.run(designer.run("define-design-system", project_description=args.project_description, brand_guidelines=getattr(args, "brand_guidelines", ""), output_file=getattr(args, "output_file", None)))
+        elif command == "help":
+            result = asyncio.run(designer.run("help"))
+            print(result["content"])
+        else:
+            result = asyncio.run(designer.run("help"))
+            print(result["content"])
+        
+        if command != "help":
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+        
+        asyncio.run(designer.close())
+    elif args.agent == "improver":
+        command = args.command.lstrip("*") if args.command else None
+        improver = ImproverAgent()
+        asyncio.run(improver.activate())
+        
+        if command == "refactor":
+            result = asyncio.run(improver.run(
+                "refactor",
+                file_path=args.file_path,
+                instruction=getattr(args, "instruction", None)
+            ))
+        elif command == "optimize":
+            result = asyncio.run(improver.run(
+                "optimize",
+                file_path=args.file_path,
+                optimization_type=getattr(args, "type", "performance")
+            ))
+        elif command == "improve-quality":
+            result = asyncio.run(improver.run(
+                "improve-quality",
+                file_path=args.file_path
+            ))
+        elif command == "help":
+            result = asyncio.run(improver.run("help"))
+            print(json.dumps(result["content"], indent=2))
+            asyncio.run(improver.close())
+            return
+        else:
+            result = asyncio.run(improver.run("help"))
+            print(json.dumps(result["content"], indent=2))
+            asyncio.run(improver.close())
+            return
+        
+        if "error" in result:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            sys.exit(1)
+        print(json.dumps(result, indent=2))
+        asyncio.run(improver.close())
+    elif args.agent == "ops":
+        command = args.command.lstrip("*") if args.command else None
+        ops = OpsAgent()
+        asyncio.run(ops.activate())
+        
+        if command == "security-scan":
+            result = asyncio.run(ops.run(
+                "security-scan",
+                target=getattr(args, "target", None),
+                scan_type=getattr(args, "type", "all")
+            ))
+        elif command == "compliance-check":
+            result = asyncio.run(ops.run(
+                "compliance-check",
+                compliance_type=getattr(args, "type", "general")
+            ))
+        elif command == "deploy":
+            result = asyncio.run(ops.run(
+                "deploy",
+                target=getattr(args, "target", "local"),
+                environment=getattr(args, "environment", None)
+            ))
+        elif command == "infrastructure-setup":
+            result = asyncio.run(ops.run(
+                "infrastructure-setup",
+                infrastructure_type=getattr(args, "type", "docker")
+            ))
+        elif command == "help":
+            result = asyncio.run(ops.run("help"))
+            print(json.dumps(result["content"], indent=2))
+            asyncio.run(ops.close())
+            return
+        else:
+            result = asyncio.run(ops.run("help"))
+            print(json.dumps(result["content"], indent=2))
+            asyncio.run(ops.close())
+            return
+        
+        if "error" in result:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            sys.exit(1)
+        print(json.dumps(result, indent=2))
+        asyncio.run(ops.close())
     else:
         # Show main help
         parser.print_help()

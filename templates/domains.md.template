@@ -1,0 +1,27 @@
+# Project Domains
+
+This file defines the business domains for your project and their primary experts.
+
+## Project: {Project Name}
+
+{Brief project description}
+
+### Domain 1: {Domain Name}
+
+- **Primary Expert**: expert-{domain-name}
+- **Description**: {Brief description of the domain and its scope}
+- **Key Areas**: {List key areas of expertise}
+
+### Domain 2: {Another Domain}
+
+- **Primary Expert**: expert-{another-domain}
+- **Description**: {Brief description}
+- **Key Areas**: {List key areas}
+
+## Notes
+
+- Each domain must have exactly one primary expert
+- Expert IDs must match the expert_id in experts.yaml
+- Experts can have influence (not primary authority) in other domains
+- See PROJECT_REQUIREMENTS.md Section 7 for weight distribution details
+

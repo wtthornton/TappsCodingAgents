@@ -1,0 +1,348 @@
+"""
+Tester Agent - Generates and runs tests
+"""
+
+from pathlib import Path
+from typing import Dict, Any, Optional, List
+import subprocess
+import json
+import re
+
+from ...core.mal import MAL
+from ...core.agent_base import BaseAgent
+from ...core.config import ProjectConfig, load_config, TesterAgentConfig
+from .test_generator import TestGenerator
+
+
+class TesterAgent(BaseAgent):
+    """
+    Tester Agent - Test generation and execution.
+    
+    Permissions: Read, Write, Edit, Grep, Glob, Bash
+    """
+    
+    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None):
+        super().__init__(agent_id="tester", agent_name="Tester Agent", config=config)
+        # Use config if provided, otherwise load defaults
+        if config is None:
+            config = load_config()
+        self.config = config
+        
+        # Initialize MAL with config
+        mal_config = config.mal if config else None
+        self.mal = mal or MAL(
+            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
+        )
+        
+        # Initialize test generator
+        self.test_generator = TestGenerator(self.mal)
+        
+        # Get tester config
+        tester_config = config.agents.tester if config and config.agents else None
+        self.test_framework = tester_config.test_framework if tester_config else "pytest"
+        self.tests_dir = Path(tester_config.tests_dir) if tester_config and tester_config.tests_dir else Path("tests")
+        self.coverage_threshold = tester_config.coverage_threshold if tester_config else 80.0
+        self.auto_write_tests = tester_config.auto_write_tests if tester_config else True
+        
+        # Ensure tests directory exists
+        self.tests_dir.mkdir(parents=True, exist_ok=True)
+    
+    def get_commands(self) -> List[Dict[str, str]]:
+        """Return list of available commands."""
+        commands = super().get_commands()
+        commands.extend([
+            {"command": "*test", "description": "Generate and run tests for a file"},
+            {"command": "*generate-tests", "description": "Generate tests without running"},
+            {"command": "*run-tests", "description": "Run existing tests"}
+        ])
+        return commands
+    
+    async def run(self, command: str, **kwargs) -> Dict[str, Any]:
+        """Execute a command."""
+        if command == "test":
+            return await self.test_command(**kwargs)
+        elif command == "generate-tests":
+            return await self.generate_tests_command(**kwargs)
+        elif command == "run-tests":
+            return await self.run_tests_command(**kwargs)
+        elif command == "help":
+            return await self._help()
+        else:
+            return {"error": f"Unknown command: {command}"}
+    
+    async def test_command(
+        self,
+        file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        integration: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Generate and run tests for a file.
+        
+        Args:
+            file: Source code file to test
+            test_file: Optional path to write test file
+            integration: If True, generate integration tests
+        """
+        if not file:
+            return {"error": "File path required"}
+        
+        file_path = Path(file)
+        if not file_path.exists():
+            return {"error": f"File not found: {file_path}"}
+        
+        # Validate path (inherited from BaseAgent)
+        try:
+            self._validate_path(file_path, max_file_size=10 * 1024 * 1024)
+        except (FileNotFoundError, ValueError) as e:
+            return {"error": str(e)}
+        
+        # Generate tests
+        if integration:
+            # For integration tests, use the file itself (could be extended to accept multiple files)
+            test_code = await self.test_generator.generate_integration_tests([file_path], test_path=Path(test_file) if test_file else None)
+        else:
+            test_code = await self.test_generator.generate_unit_tests(file_path, test_path=Path(test_file) if test_file else None)
+        
+        # Determine test file path
+        if test_file:
+            test_path = Path(test_file)
+        else:
+            # Auto-generate test file path
+            test_path = self._get_test_file_path(file_path)
+        
+        # Write test file if auto_write is enabled
+        if self.auto_write_tests:
+            test_path.parent.mkdir(parents=True, exist_ok=True)
+            test_path.write_text(test_code, encoding='utf-8')
+        
+        # Run tests
+        run_result = await self._run_pytest(test_path if self.auto_write_tests else None, [str(file_path)])
+        
+        return {
+            "type": "test",
+            "test_code": test_code,
+            "test_file": str(test_path),
+            "written": self.auto_write_tests,
+            "run_result": run_result
+        }
+    
+    async def generate_tests_command(
+        self,
+        file: Optional[str] = None,
+        test_file: Optional[str] = None,
+        integration: bool = False
+    ) -> Dict[str, Any]:
+        """
+        Generate tests without running them.
+        
+        Args:
+            file: Source code file to test
+            test_file: Optional path to write test file
+            integration: If True, generate integration tests
+        """
+        if not file:
+            return {"error": "File path required"}
+        
+        file_path = Path(file)
+        if not file_path.exists():
+            return {"error": f"File not found: {file_path}"}
+        
+        # Validate path (inherited from BaseAgent)
+        try:
+            self._validate_path(file_path, max_file_size=10 * 1024 * 1024)
+        except (FileNotFoundError, ValueError) as e:
+            return {"error": str(e)}
+        
+        # Generate tests
+        if integration:
+            test_code = await self.test_generator.generate_integration_tests([file_path], test_path=Path(test_file) if test_file else None)
+        else:
+            test_code = await self.test_generator.generate_unit_tests(file_path, test_path=Path(test_file) if test_file else None)
+        
+        # Determine test file path
+        if test_file:
+            test_path = Path(test_file)
+        else:
+            test_path = self._get_test_file_path(file_path)
+        
+        # Write test file if auto_write is enabled
+        if self.auto_write_tests:
+            test_path.parent.mkdir(parents=True, exist_ok=True)
+            test_path.write_text(test_code, encoding='utf-8')
+        
+        return {
+            "type": "test_generation",
+            "test_code": test_code,
+            "test_file": str(test_path),
+            "written": self.auto_write_tests
+        }
+    
+    async def run_tests_command(
+        self,
+        test_path: Optional[str] = None,
+        coverage: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Run existing tests.
+        
+        Args:
+            test_path: Path to test file or directory (default: tests/)
+            coverage: Include coverage report
+        """
+        if test_path:
+            path = Path(test_path)
+            if not path.exists():
+                return {"error": f"Test path not found: {path}"}
+        else:
+            path = self.tests_dir
+        
+        # Run tests
+        run_result = await self._run_pytest(path, coverage=coverage)
+        
+        return {
+            "type": "test_execution",
+            "test_path": str(path),
+            "result": run_result
+        }
+    
+    def _get_test_file_path(self, source_path: Path) -> Path:
+        """Generate test file path from source file path."""
+        # Convert source path to absolute and try to make it relative to cwd
+        abs_source = source_path.resolve()
+        try:
+            cwd = Path.cwd().resolve()
+            rel_path = abs_source.relative_to(cwd)
+        except ValueError:
+            # If not relative to cwd, use the source path's parent structure
+            rel_path = source_path
+        
+        # Determine test directory structure
+        # If source is in src/, put test in tests/
+        # Otherwise mirror directory structure in tests/
+        parts = list(rel_path.parts)
+        
+        # Remove filename for directory structure
+        file_name = parts[-1]
+        
+        if "src" in parts:
+            # Source is in src/, test goes to tests/
+            # Replace src with tests
+            test_parts = []
+            for p in parts[:-1]:
+                if p == "src":
+                    test_parts.append("tests")
+                else:
+                    test_parts.append(p)
+        else:
+            # Mirror structure in tests/ directory
+            test_parts = ["tests"] + parts[:-1]
+        
+        # Generate test file name: test_<original_name>
+        test_name = f"test_{Path(file_name).stem}.py"
+        
+        # Build path relative to cwd
+        if test_parts:
+            return (Path.cwd() / Path(*test_parts) / test_name).resolve()
+        else:
+            return (Path.cwd() / "tests" / test_name).resolve()
+    
+    async def _run_pytest(
+        self,
+        test_path: Optional[Path] = None,
+        source_paths: Optional[List[str]] = None,
+        coverage: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Run pytest and return results.
+        
+        Args:
+            test_path: Path to test file or directory
+            source_paths: Source paths for coverage calculation
+            coverage: Include coverage report
+        """
+        cmd = ["pytest", "-v"]
+        
+        if coverage and source_paths:
+            # Add coverage options
+            source_modules = ",".join([str(Path(p).stem) for p in source_paths])
+            cmd.extend([
+                "--cov",
+                source_modules,
+                "--cov-report=term-missing",
+                "--cov-report=json:coverage.json"
+            ])
+        elif coverage:
+            # Coverage for all modules
+            cmd.extend([
+                "--cov",
+                ".",
+                "--cov-report=term-missing",
+                "--cov-report=json:coverage.json"
+            ])
+        
+        if test_path:
+            cmd.append(str(test_path))
+        
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300  # 5 minute timeout
+            )
+            
+            # Parse coverage if available
+            coverage_data = None
+            if coverage and Path("coverage.json").exists():
+                try:
+                    with open("coverage.json", encoding='utf-8') as f:
+                        coverage_data = json.load(f)
+                except (json.JSONDecodeError, FileNotFoundError):
+                    pass
+            
+            # Extract summary from stdout
+            summary_match = re.search(r"(\d+) (passed|failed|error)", result.stdout, re.IGNORECASE)
+            summary = None
+            if summary_match:
+                summary = {
+                    "count": int(summary_match.group(1)),
+                    "status": summary_match.group(2).lower()
+                }
+            
+            return {
+                "success": result.returncode == 0,
+                "return_code": result.returncode,
+                "stdout": result.stdout,
+                "stderr": result.stderr,
+                "summary": summary,
+                "coverage": coverage_data.get("totals") if coverage_data else None
+            }
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Test execution timeout (5 minutes)",
+                "return_code": -1
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+                "return_code": -1
+            }
+    
+    async def _help(self) -> Dict[str, Any]:
+        """Generate help text."""
+        help_text = self.format_help()
+        help_text += "\n\nExamples:\n"
+        help_text += "  *test file.py              # Generate and run tests for file.py\n"
+        help_text += "  *generate-tests file.py    # Generate tests only\n"
+        help_text += "  *run-tests                 # Run all tests in tests/\n"
+        help_text += "  *run-tests test_file.py    # Run specific test file\n"
+        return {"type": "help", "content": help_text}
+    
+    async def close(self):
+        """Close agent and clean up resources."""
+        if self.mal:
+            await self.mal.close()
+

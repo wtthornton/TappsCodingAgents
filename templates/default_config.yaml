@@ -15,6 +15,36 @@ agents:
     include_scoring: true                # Include code scoring in review
     include_llm_feedback: true           # Include LLM-generated feedback
     max_file_size: 1048576               # Maximum file size in bytes (1MB)
+  
+  planner:
+    model: "qwen2.5-coder:7b"           # LLM model for planning
+    stories_dir: "stories"               # Directory for storing stories
+    default_priority: "medium"           # Default priority for new stories (high/medium/low)
+  
+  implementer:
+    model: "qwen2.5-coder:7b"           # LLM model for code generation
+    require_review: true                 # Require code review before writing files
+    auto_approve_threshold: 80.0         # Auto-approve if score >= threshold (0-100)
+    backup_files: true                   # Create backup before overwriting existing files
+    max_file_size: 10485760              # Maximum file size in bytes (10MB)
+  
+  tester:
+    model: "qwen2.5-coder:7b"           # LLM model for test generation
+    test_framework: "pytest"             # Test framework to use (pytest/unittest)
+    tests_dir: null                      # Directory for tests (default: tests/)
+    coverage_threshold: 80.0             # Target test coverage percentage (0-100)
+    auto_write_tests: true               # Automatically write generated tests to files
+  
+  debugger:
+    model: "deepseek-coder:6.7b"        # LLM model for error analysis
+    include_code_examples: true          # Include code examples in fix suggestions
+    max_context_lines: 50                # Maximum lines of code context to include in analysis (10-200)
+  
+  documenter:
+    model: "qwen2.5-coder:7b"           # LLM model for documentation generation
+    docs_dir: null                       # Directory for generated docs (default: docs/)
+    include_examples: true               # Include code examples in documentation
+    docstring_format: "google"           # Docstring format (google/numpy/sphinx)
 
 # Code scoring configuration
 scoring:
