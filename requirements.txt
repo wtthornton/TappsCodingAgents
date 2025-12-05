@@ -1,10 +1,7 @@
-# TappsCodingAgents - Python Dependencies
-
 # Core Framework
 pydantic>=2.10.0
 httpx>=0.28.0
 pyyaml>=6.0.2
-PyYAML>=6.0.2
 
 # LLM Integration (Ollama)
 aiohttp>=3.9.0
@@ -14,9 +11,13 @@ radon>=6.0.1          # Complexity analysis
 bandit>=1.7.5         # Security analysis
 pylint>=3.0.0         # Code quality (optional, for maintainability)
 
-# Development
-pytest>=8.0.0
+# Testing
+pytest>=7.4.0
 pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.12.0
+pytest-timeout>=2.2.0
+
+# Development
 black>=24.0.0
 ruff>=0.1.0
-
