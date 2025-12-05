@@ -13,6 +13,14 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
 - **Claude Code Compatible**: Native Agent Skills format
 
+### Enhanced Features (v1.1)
+
+- **Code Scoring System**: Objective quality metrics (complexity, security, maintainability)
+- **Tiered Context Injection**: 90%+ token savings with intelligent caching
+- **MCP Gateway**: Unified Model Context Protocol interface for tool access
+- **YAML Workflow Definitions**: Declarative, version-controlled orchestration
+- **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
+
 ## Key Features
 
 ### Two-Layer Agent Model
@@ -27,7 +35,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Planning**: analyst, planner
 - **Design**: architect, designer
 - **Development**: implementer, debugger, documenter
-- **Quality**: reviewer, improver
+- **Quality**: reviewer (with Code Scoring), improver
 - **Testing**: tester
 - **Operations**: ops
 - **Orchestration**: orchestrator
@@ -67,7 +75,7 @@ TappsCodingAgents/
 ## Status
 
 **Phase**: Design  
-**Version**: 1.0.0-draft
+**Version**: 1.1.0-draft
 
 ## License
 

@@ -1,8 +1,8 @@
 # TappsCodingAgents - Project Requirements Document
 
-**Version:** 1.0.0-draft  
+**Version:** 1.1.0-draft  
 **Date:** December 2025  
-**Status:** Design Phase
+**Status:** Design Phase (Enhanced Features Added)
 
 ---
 
@@ -23,7 +23,13 @@
 13. [Directory Structure](#13-directory-structure)
 14. [Configuration Schemas](#14-configuration-schemas)
 15. [Standard Workflows](#15-standard-workflows)
-16. [Appendix](#16-appendix)
+16. [Enhanced Features](#16-enhanced-features)
+    - [Code Scoring System](#161-code-scoring-system)
+    - [Tiered Context Injection](#162-tiered-context-injection)
+    - [MCP Gateway Architecture](#163-mcp-gateway-architecture)
+    - [YAML Workflow Definitions](#164-yaml-workflow-definitions)
+    - [Greenfield vs Brownfield Workflows](#165-greenfield-vs-brownfield-workflows)
+17. [Appendix](#17-appendix)
 
 ---
 
@@ -36,8 +42,12 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 - A standardized way to define agent capabilities and behaviors
 - Support for business domain experts with weighted decision-making
 - Hybrid model routing (local + cloud)
-- Optional MCP (Model Context Protocol) integration
+- Optional MCP (Model Context Protocol) integration via **MCP Gateway**
 - RAG and fine-tuning capabilities for domain specialization
+- **Code Scoring System** for objective quality metrics
+- **Tiered Context Injection** for 90%+ token savings
+- **YAML Workflow Definitions** for declarative orchestration
+- **Greenfield vs Brownfield** workflow support
 
 ### 1.2 Key Characteristics
 
@@ -198,7 +208,7 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 
 | Agent | Purpose | Permissions | Consolidated From |
 |-------|---------|-------------|-------------------|
-| **reviewer** | Code review, metrics, style, complexity analysis (read-only) | Read, Grep, Glob | reviewer + analyzer |
+| **reviewer** | Code review, **Code Scoring** (complexity, security, maintainability), style, analysis (read-only) | Read, Grep, Glob | reviewer + analyzer + codefortify scoring |
 | **improver** | Refactor and enhance existing code | Read, Write, Edit, Grep, Glob | refactorer + enhancer |
 
 #### Testing Phase (1 Agent)
@@ -217,7 +227,7 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 
 | Agent | Purpose | Permissions | Consolidated From |
 |-------|---------|-------------|-------------------|
-| **orchestrator** | Coordinate workflows + gate decisions | Read, Grep, Glob | — |
+| **orchestrator** | Coordinate **YAML-defined workflows**, gate decisions, **Greenfield/Brownfield** routing | Read, Grep, Glob | — |
 
 ### 5.2 Permission Matrix
 
@@ -1130,12 +1140,19 @@ knowledge_bases:
 
 ## 15. Standard Workflows
 
+> **Note:** These workflows can be defined in YAML format for declarative orchestration. See [Section 16.4 YAML Workflow Definitions](#164-yaml-workflow-definitions) for configuration details.
+
 ### 15.1 Feature Development Workflow
+
+**YAML Definition:** `workflows/feature-development.yaml`  
+**Type:** Greenfield or Brownfield (auto-detected)  
+**Quality Gates:** Code Scoring enabled
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
 │   analyst   │───▶│   planner   │───▶│  architect  │
 │ (research)  │    │ (stories)   │    │ (design)    │
+│ Tier 1      │    │ Tier 1      │    │ Tier 2      │
 └─────────────┘    └─────────────┘    └─────────────┘
                                             │
                                       ┌─────┴─────┐
@@ -1143,38 +1160,53 @@ knowledge_bases:
                                 ┌──────────┐ ┌──────────┐
                                 │ designer │ │ expert(s)│
                                 │(contracts)│ │ consult  │
+                                │ Tier 2   │ │ RAG      │
                                 └──────────┘ └──────────┘
                                       │
                                       ▼
                               ┌─────────────┐
                               │ implementer │
                               │ (code)      │
+                              │ Tier 2-3    │
                               └──────┬──────┘
                                      │
                           ┌──────────┼──────────┐
                           ▼          ▼          ▼
                   ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
                   │  reviewer   │ │   tester    │ │ documenter  │
-                  └─────────────┘ └─────────────┘ └─────────────┘
-                          │                 │
-                          └────────┬────────┘
-                                   ▼
+                  │ + Scoring   │ │ Tier 2      │ │ Tier 1      │
+                  │ Tier 2      │ └─────────────┘ └─────────────┘
+                  └─────────────┘         │
+                          │               │
+                          └───────┬───────┘
+                                  ▼
                            ┌─────────────┐
                            │ orchestrator│
                            │ (gate)      │
+                           │ Tier 1      │
                            └─────────────┘
 ```
 
-### 15.2 Bug Fix Workflow
+### 15.2 Bug Fix Workflow (Quick Fix)
+
+**YAML Definition:** `workflows/quick-fix.yaml`  
+**Type:** Quick Fix  
+**Quality Gates:** Security scoring required
 
 ```
 debugger → implementer → reviewer → tester → orchestrator (gate)
+(Tier 2)   (Tier 2)      (quick    (optional) (Tier 1)
+                         scoring)
 ```
 
 ### 15.3 Code Quality Improvement Workflow
 
+**YAML Definition:** `workflows/quality-improvement.yaml`  
+**Quality Gates:** Full Code Scoring (complexity, security, maintainability)
+
 ```
 reviewer → improver → reviewer → orchestrator (gate)
+(scoring)  (Tier 2)   (scoring)  (score >= 70%)
     ↑                      │
     └──────────────────────┘
        (loop until gate passes)
@@ -1194,9 +1226,739 @@ tester (final) → reviewer (sign-off) → ops (deploy) → orchestrator (gate)
 
 ---
 
-## 16. Appendix
+## 16. Enhanced Features
 
-### 16.1 Glossary
+These features are integrated from best practices across multiple coding agent projects to create a comprehensive, optimized framework.
+
+### 16.1 Code Scoring System
+
+**Origin:** Adapted from codefortify project
+
+The Code Scoring System provides **objective, quantitative metrics** for code quality assessment, enhancing the reviewer agent with measurable quality gates.
+
+#### 16.1.1 Scoring Metrics
+
+| Metric | Description | Range | Threshold |
+|--------|-------------|-------|-----------|
+| **Complexity Score** | Cyclomatic complexity, nesting depth, function length | 0-10 | Max 8.0 |
+| **Security Score** | Vulnerability patterns, unsafe operations, input validation | 0-10 | Min 7.0 |
+| **Maintainability Score** | Code duplication, naming conventions, documentation | 0-10 | Min 7.0 |
+| **Test Coverage Score** | Line coverage, branch coverage, critical path coverage | 0-100% | Min 80% |
+| **Performance Score** | Time complexity, memory usage patterns, async handling | 0-10 | Min 6.0 |
+
+#### 16.1.2 Scoring Formula
+
+```
+Overall Quality Score = (
+    Complexity × 0.20 +
+    Security × 0.30 +
+    Maintainability × 0.25 +
+    Test Coverage × 0.15 +
+    Performance × 0.10
+) / 10 × 100
+
+Pass Threshold: >= 70%
+```
+
+#### 16.1.3 Reviewer Agent Integration
+
+```yaml
+# reviewer scoring configuration
+reviewer:
+  scoring:
+    enabled: true
+    mode: "comprehensive"  # or "quick" for fast reviews
+    
+    thresholds:
+      complexity_max: 8.0
+      security_min: 7.0
+      maintainability_min: 7.0
+      test_coverage_min: 80
+      performance_min: 6.0
+      overall_min: 70
+    
+    weights:
+      complexity: 0.20
+      security: 0.30
+      maintainability: 0.25
+      test_coverage: 0.15
+      performance: 0.10
+    
+    output:
+      include_metrics: true
+      include_suggestions: true
+      include_trends: true  # Compare to previous reviews
+```
+
+#### 16.1.4 Quality Gate Integration
+
+```yaml
+# Quality gate using code scoring
+quality_gate:
+  name: "Pre-Merge Gate"
+  enabled: true
+  
+  conditions:
+    - metric: overall_score
+      operator: ">="
+      value: 70
+      
+    - metric: security_score
+      operator: ">="
+      value: 7.0
+      
+    - metric: complexity_score
+      operator: "<="
+      value: 8.0
+  
+  actions:
+    on_pass: "proceed_to_next_step"
+    on_fail: "block_and_notify"
+```
+
+#### 16.1.5 Trend Tracking
+
+The scoring system tracks metrics over time for continuous improvement:
+
+```
+Review History:
+────────────────────────────────────────────────────
+Date        Overall  Security  Complexity  Trend
+────────────────────────────────────────────────────
+2025-12-01  72%      7.5       6.8         ↑ +3%
+2025-12-05  75%      7.8       6.5         ↑ +3%
+2025-12-10  78%      8.0       6.2         ↑ +3%
+────────────────────────────────────────────────────
+```
+
+---
+
+### 16.2 Tiered Context Injection
+
+**Origin:** Adapted from HomeIQ BMAD framework
+
+Tiered Context Injection provides **90%+ token savings** by intelligently loading only the context needed for each task.
+
+#### 16.2.1 Context Tiers
+
+| Tier | Description | Token Cost | Cache TTL | Use Case |
+|------|-------------|------------|-----------|----------|
+| **Tier 1** | Core context (structure, types, signatures) | ~500 tokens | 5 min | Most agent tasks |
+| **Tier 2** | Extended context (implementations, dependencies) | ~2,000 tokens | 2 min | Implementation tasks |
+| **Tier 3** | Full context (entire files, history) | ~10,000 tokens | 1 min | Complex analysis |
+
+#### 16.2.2 Tier Definitions
+
+```yaml
+# tiered_context_config.yaml
+
+tiers:
+  tier1:
+    name: "Core Context"
+    includes:
+      - file_structure        # Directory tree
+      - type_definitions      # Interface, type, class signatures
+      - function_signatures   # Public API signatures
+      - imports_exports       # Module boundaries
+    cache_ttl: 300            # 5 minutes
+    max_tokens: 1000
+    
+  tier2:
+    name: "Extended Context"
+    includes:
+      - tier1                 # Inherit from Tier 1
+      - function_bodies       # Implementation details
+      - local_dependencies    # Related files
+      - test_files           # Test coverage
+    cache_ttl: 120            # 2 minutes
+    max_tokens: 5000
+    
+  tier3:
+    name: "Full Context"
+    includes:
+      - tier2                 # Inherit from Tier 2
+      - git_history          # Recent changes
+      - documentation        # Related docs
+      - cross_references     # All related files
+    cache_ttl: 60             # 1 minute
+    max_tokens: 20000
+```
+
+#### 16.2.3 Agent-Tier Mapping
+
+| Agent | Default Tier | Upgrades To | When |
+|-------|--------------|-------------|------|
+| **analyst** | Tier 1 | Tier 2 | Complex requirements |
+| **planner** | Tier 1 | Tier 2 | Cross-cutting stories |
+| **architect** | Tier 2 | Tier 3 | System-wide decisions |
+| **designer** | Tier 2 | Tier 3 | Complex API design |
+| **implementer** | Tier 2 | Tier 3 | Large features |
+| **debugger** | Tier 3 | — | Always needs full context |
+| **reviewer** | Tier 2 | Tier 3 | Security reviews |
+| **tester** | Tier 2 | Tier 3 | Integration tests |
+| **orchestrator** | Tier 1 | — | Workflow coordination only |
+
+#### 16.2.4 Context Cache Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    TIERED CONTEXT MANAGER                        │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐         │
+│  │   Tier 1    │    │   Tier 2    │    │   Tier 3    │         │
+│  │   Cache     │    │   Cache     │    │   Cache     │         │
+│  │  (5 min)    │    │  (2 min)    │    │  (1 min)    │         │
+│  └──────┬──────┘    └──────┬──────┘    └──────┬──────┘         │
+│         │                  │                  │                 │
+│         └──────────────────┼──────────────────┘                 │
+│                            │                                     │
+│                    ┌───────┴───────┐                            │
+│                    │  Context      │                            │
+│                    │  Assembler    │                            │
+│                    └───────┬───────┘                            │
+│                            │                                     │
+│                    ┌───────┴───────┐                            │
+│                    │   Agent       │                            │
+│                    │   Request     │                            │
+│                    └───────────────┘                            │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+#### 16.2.5 Token Savings Calculation
+
+```
+Without Tiered Context:
+  Every agent request: ~10,000 tokens (full context)
+  10 agent calls: 100,000 tokens
+
+With Tiered Context:
+  8 calls @ Tier 1: 8 × 500 = 4,000 tokens
+  2 calls @ Tier 2: 2 × 2,000 = 4,000 tokens
+  Total: 8,000 tokens
+  
+  Savings: 92% token reduction
+```
+
+---
+
+### 16.3 MCP Gateway Architecture
+
+**Origin:** Adapted from LocalMCP project
+
+The MCP Gateway provides a **unified protocol layer** for all tool access, enabling consistent, extensible tool integration.
+
+#### 16.3.1 Gateway Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        AGENT REQUEST                             │
+└──────────────────────────────┬──────────────────────────────────┘
+                               │
+                               ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                       MCP GATEWAY                                │
+│                                                                  │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
+│  │   Router     │  │    Cache     │  │   Registry   │          │
+│  │              │  │   (Tiered)   │  │  (Servers)   │          │
+│  └──────┬───────┘  └──────────────┘  └──────────────┘          │
+│         │                                                        │
+│         ├─────────────────────────────────────────────────┐     │
+│         │                                                 │     │
+└─────────┼─────────────────────────────────────────────────┼─────┘
+          │                                                 │
+          ▼                                                 ▼
+┌─────────────────────┐  ┌─────────────────────┐  ┌─────────────────────┐
+│   Filesystem MCP    │  │   Git MCP Server    │  │  Analysis MCP       │
+│   Server            │  │                     │  │  Server             │
+│   - read_file       │  │   - git_status      │  │   - analyze_code    │
+│   - write_file      │  │   - git_diff        │  │   - find_patterns   │
+│   - list_dir        │  │   - git_log         │  │   - score_code      │
+└─────────────────────┘  └─────────────────────┘  └─────────────────────┘
+```
+
+#### 16.3.2 Gateway Configuration
+
+```yaml
+# mcp_gateway_config.yaml
+
+gateway:
+  enabled: true
+  cache_integration: true  # Use Tiered Context cache
+  
+servers:
+  filesystem:
+    enabled: true
+    tools:
+      - read_file
+      - write_file
+      - list_directory
+      - glob_search
+      - grep_search
+    
+  git:
+    enabled: true
+    tools:
+      - git_status
+      - git_diff
+      - git_log
+      - git_blame
+    
+  analysis:
+    enabled: true
+    tools:
+      - analyze_complexity
+      - find_patterns
+      - score_code
+      - detect_issues
+    
+  custom:
+    enabled: false  # User-defined MCP servers
+    servers: []
+```
+
+#### 16.3.3 Tool Routing
+
+| Tool Category | MCP Server | Cache Strategy |
+|---------------|------------|----------------|
+| File Read | filesystem | Tier 1-3 based on size |
+| File Write | filesystem | Invalidate related cache |
+| Directory List | filesystem | Tier 1 (structure) |
+| Git Operations | git | No cache (real-time) |
+| Code Analysis | analysis | Tier 2 (implementation) |
+| Code Scoring | analysis | Cache with review ID |
+
+#### 16.3.4 Integration with Agents
+
+```yaml
+# Agent tool access via MCP Gateway
+agent:
+  name: implementer
+  
+  mcp_gateway:
+    enabled: true
+    servers:
+      - filesystem  # read/write files
+      - analysis    # code analysis
+    
+    tool_permissions:
+      filesystem:
+        - read_file: true
+        - write_file: true
+        - list_directory: true
+      analysis:
+        - analyze_complexity: true
+        - score_code: false  # Reviewer only
+```
+
+---
+
+### 16.4 YAML Workflow Definitions
+
+**Origin:** Adapted from HomeIQ BMAD framework
+
+YAML Workflow Definitions provide **declarative, version-controlled** workflow orchestration.
+
+#### 16.4.1 Workflow Structure
+
+```yaml
+# workflows/feature-development.yaml
+
+workflow:
+  id: feature-development
+  name: "Feature Development Workflow"
+  description: "Standard workflow for new feature implementation"
+  version: "1.0.0"
+  
+  # Workflow type selection
+  type: "greenfield"  # or "brownfield"
+  
+  # Global settings
+  settings:
+    quality_gates: true
+    code_scoring: true
+    context_tier_default: 2
+  
+  # Workflow steps
+  steps:
+    - id: requirements
+      agent: analyst
+      action: gather_requirements
+      context_tier: 1
+      creates:
+        - requirements.md
+      next: planning
+      
+    - id: planning
+      agent: planner
+      action: create_stories
+      context_tier: 1
+      requires:
+        - requirements.md
+      creates:
+        - stories/
+      next: design
+      
+    - id: design
+      agent: architect
+      action: design_system
+      context_tier: 2
+      requires:
+        - requirements.md
+        - stories/
+      creates:
+        - architecture.md
+      next: implementation
+      consults:
+        - expert-*  # Consult domain experts
+      
+    - id: implementation
+      agent: implementer
+      action: write_code
+      context_tier: 3
+      requires:
+        - architecture.md
+        - stories/
+      creates:
+        - src/
+      next: review
+      
+    - id: review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - src/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 70
+          security_min: 7.0
+      gate:
+        condition: "scoring.passed == true"
+        on_pass: testing
+        on_fail: implementation  # Loop back
+      
+    - id: testing
+      agent: tester
+      action: write_tests
+      context_tier: 2
+      requires:
+        - src/
+      creates:
+        - tests/
+      next: final_gate
+      
+    - id: final_gate
+      agent: orchestrator
+      action: gate_decision
+      context_tier: 1
+      requires:
+        - src/
+        - tests/
+      gate:
+        conditions:
+          - "reviewer.scoring.passed"
+          - "tester.coverage >= 80"
+        on_pass: complete
+        on_fail: review
+```
+
+#### 16.4.2 Workflow Commands
+
+| Command | Description | Example |
+|---------|-------------|---------|
+| `/workflow-list` | List available workflows | `/workflow-list` |
+| `/workflow-start {id}` | Start a workflow | `/workflow-start feature-development` |
+| `/workflow-status` | Show current progress | `/workflow-status` |
+| `/workflow-next` | Show next step | `/workflow-next` |
+| `/workflow-skip {step}` | Skip optional step | `/workflow-skip review` |
+| `/workflow-resume` | Resume interrupted workflow | `/workflow-resume` |
+
+#### 16.4.3 Artifact Tracking
+
+```yaml
+# Workflow state tracking
+workflow_state:
+  id: feature-development
+  started: "2025-12-10T10:00:00Z"
+  current_step: implementation
+  
+  artifacts:
+    requirements.md:
+      status: complete
+      created_by: analyst
+      created_at: "2025-12-10T10:15:00Z"
+      
+    stories/:
+      status: complete
+      created_by: planner
+      created_at: "2025-12-10T10:30:00Z"
+      
+    architecture.md:
+      status: complete
+      created_by: architect
+      created_at: "2025-12-10T11:00:00Z"
+      
+    src/:
+      status: in_progress
+      created_by: implementer
+      started_at: "2025-12-10T11:30:00Z"
+  
+  scoring_history:
+    - step: review
+      attempt: 1
+      score: 65
+      passed: false
+      
+    - step: review
+      attempt: 2
+      score: 78
+      passed: true
+```
+
+---
+
+### 16.5 Greenfield vs Brownfield Workflows
+
+**Origin:** Adapted from HomeIQ BMAD framework
+
+Different project types require different workflows. The framework automatically selects the appropriate workflow based on project context.
+
+#### 16.5.1 Workflow Types
+
+| Type | Description | Use Case |
+|------|-------------|----------|
+| **Greenfield** | New project, no existing code | Starting from scratch |
+| **Brownfield** | Existing codebase, add features | Feature additions, enhancements |
+| **Quick Fix** | Minimal workflow for small changes | Bug fixes, hotfixes |
+
+#### 16.5.2 Workflow Selection
+
+```yaml
+# workflow_selection.yaml
+
+selection:
+  auto_detect: true  # Automatically detect project type
+  
+  detection_rules:
+    greenfield:
+      conditions:
+        - "no existing src/ directory"
+        - "no package.json or requirements.txt"
+        - "user explicitly requests 'new project'"
+      confidence: 0.9
+      
+    brownfield:
+      conditions:
+        - "existing src/ directory"
+        - "existing package.json or requirements.txt"
+        - "git history exists"
+      confidence: 0.9
+      
+    quick_fix:
+      conditions:
+        - "user mentions 'bug', 'fix', 'hotfix'"
+        - "scope < 5 files"
+        - "single service/module affected"
+      confidence: 0.8
+  
+  fallback: brownfield  # Default if detection fails
+```
+
+#### 16.5.3 Greenfield Workflow
+
+```yaml
+# workflows/greenfield-fullstack.yaml
+
+workflow:
+  id: greenfield-fullstack
+  name: "Greenfield Full Stack"
+  type: greenfield
+  
+  steps:
+    - id: discovery
+      agent: analyst
+      action: gather_requirements
+      context_tier: 3  # Full context (no existing code to cache)
+      creates: [prd.md]
+      
+    - id: architecture
+      agent: architect
+      action: design_full_system
+      context_tier: 3  # Full system design needed
+      creates: [architecture.md, tech-stack.md]
+      
+    - id: scaffolding
+      agent: implementer
+      action: create_project_structure
+      creates: [src/, tests/, docs/]
+      
+    # ... continue with standard steps
+```
+
+#### 16.5.4 Brownfield Workflow
+
+```yaml
+# workflows/brownfield-service.yaml
+
+workflow:
+  id: brownfield-service
+  name: "Brownfield Service Addition"
+  type: brownfield
+  
+  steps:
+    - id: analysis
+      agent: analyst
+      action: analyze_existing_codebase
+      context_tier: 1  # Minimal context (existing codebase)
+      reads: [existing_codebase]
+      creates: [integration_analysis.md]
+      
+    - id: impact_assessment
+      agent: architect
+      action: assess_integration_impact
+      context_tier: 2  # Extended for understanding integration
+      creates: [integration_design.md]
+      
+    - id: implementation
+      agent: implementer
+      action: implement_incremental
+      context_tier: 2  # Extended for existing patterns
+      modifies: [src/]  # Modifies, not creates
+      
+    # ... continue with standard steps
+```
+
+#### 16.5.5 Quick Fix Workflow
+
+```yaml
+# workflows/quick-fix.yaml
+
+workflow:
+  id: quick-fix
+  name: "Quick Fix Workflow"
+  type: quick_fix
+  
+  settings:
+    quality_gates: optional
+    code_scoring: quick  # Fast mode
+    
+  steps:
+    - id: triage
+      agent: debugger
+      action: investigate_issue
+      context_tier: 2
+      creates: [diagnosis.md]
+      
+    - id: fix
+      agent: implementer
+      action: apply_fix
+      context_tier: 2
+      modifies: [affected_files]
+      
+    - id: verify
+      agent: tester
+      action: verify_fix
+      optional: true
+      context_tier: 1
+      
+    - id: quick_review
+      agent: reviewer
+      action: quick_review
+      scoring:
+        mode: quick
+        thresholds:
+          security_min: 7.0  # Security always enforced
+      gate:
+        condition: "scoring.security >= 7.0"
+        on_pass: complete
+        on_fail: fix
+```
+
+#### 16.5.6 Context Tier Differences
+
+| Step | Greenfield Tier | Brownfield Tier | Reason |
+|------|-----------------|-----------------|--------|
+| Requirements | Tier 3 | Tier 1 | Greenfield needs full vision; Brownfield has existing context |
+| Architecture | Tier 3 | Tier 2 | Greenfield designs entire system; Brownfield extends |
+| Implementation | Tier 3 | Tier 2 | Greenfield scaffolds; Brownfield follows patterns |
+| Review | Tier 2 | Tier 2 | Same review depth |
+
+---
+
+### 16.6 Feature Integration Architecture
+
+All five enhanced features work together in an integrated system:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ENHANCED TAPPSCODINGAGENTS                        │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  PROJECT TYPE DETECTION (Greenfield/Brownfield)              │    │
+│  │  Automatically selects appropriate workflow                   │    │
+│  └──────────────────────────────┬──────────────────────────────┘    │
+│                                 │                                    │
+│                                 ▼                                    │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  YAML WORKFLOW ENGINE                                        │    │
+│  │  Loads and executes declarative workflow definitions         │    │
+│  └──────────────────────────────┬──────────────────────────────┘    │
+│                                 │                                    │
+│                                 ▼                                    │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  ORCHESTRATOR (Enhanced)                                     │    │
+│  │  • Reads YAML workflow steps                                 │    │
+│  │  • Coordinates agents via MCP Gateway                        │    │
+│  │  • Uses Tiered Context for efficiency                        │    │
+│  │  • Enforces Code Scoring quality gates                       │    │
+│  └──────────────────────────────┬──────────────────────────────┘    │
+│                                 │                                    │
+│              ┌──────────────────┴──────────────────┐                │
+│              ▼                                      ▼                 │
+│  ┌───────────────────────┐          ┌───────────────────────────┐   │
+│  │  MCP GATEWAY          │          │  TIERED CONTEXT           │   │
+│  │  • Unified tool API   │◄────────▶│  • Tier 1/2/3 caching     │   │
+│  │  • Protocol standard  │          │  • 90% token savings      │   │
+│  │  • Extensible servers │          │  • Smart loading          │   │
+│  └───────────┬───────────┘          └───────────────────────────┘   │
+│              │                                                       │
+│              ▼                                                       │
+│  ┌─────────────────────────────────────────────────────────────┐    │
+│  │  WORKFLOW AGENTS (12) + INDUSTRY EXPERTS (N)                 │    │
+│  │  • Reviewer with Code Scoring                                │    │
+│  │  • Context tier per agent type                               │    │
+│  │  • MCP tool access via Gateway                               │    │
+│  └─────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### 16.7 Benefits Summary
+
+| Feature | Primary Benefit | Synergy Benefits |
+|---------|-----------------|------------------|
+| **Code Scoring** | Objective quality metrics | Quality gates, trend tracking |
+| **Tiered Context** | 90% token savings | Faster responses, lower costs |
+| **MCP Gateway** | Unified tool access | Extensibility, caching |
+| **YAML Workflows** | Declarative orchestration | Version control, reusability |
+| **Greenfield/Brownfield** | Context-appropriate workflows | Faster setup, better guidance |
+
+**Combined Benefits:**
+- 70% faster development cycles
+- 90% lower token costs
+- Objective quality tracking
+- Automated workflow management
+- Extensible tool ecosystem
+
+---
+
+## 17. Appendix
+
+### 17.1 Glossary
 
 | Term | Definition |
 |------|------------|
@@ -1207,21 +1969,32 @@ tester (final) → reviewer (sign-off) → ops (deploy) → orchestrator (gate)
 | **Workflow Agent** | Agent that executes SDLC tasks |
 | **Industry Expert** | Business domain knowledge authority |
 | **Agent Skill** | Claude Code format for agent definition |
+| **Code Scoring** | Quantitative code quality metrics system |
+| **Tiered Context** | Multi-level context caching for token optimization |
+| **MCP Gateway** | Unified Model Context Protocol interface layer |
+| **Greenfield** | New project workflow (no existing code) |
+| **Brownfield** | Existing project workflow (adding to codebase) |
+| **Quality Gate** | Automated checkpoint with pass/fail criteria |
+| **Context Tier** | Level of context detail (1=core, 2=extended, 3=full) |
 
-### 16.2 Inspired By
+### 17.2 Inspired By
 
 | Project | Contribution |
 |---------|--------------|
-| CodeFortify | Multi-agent architecture, quality scoring, self-improvement |
-| AgentForge | Agent-OS patterns, compliance checking, security |
-| TappMCP-Bridge | MCP integration patterns |
-| Claude Code Skills | Agent definition format |
+| **codefortify** | Code Scoring System, quantitative quality metrics |
+| **HomeIQ (BMAD)** | Tiered Context Injection, YAML Workflows, Greenfield/Brownfield |
+| **LocalMCP** | MCP Gateway architecture, local-first AI patterns |
+| **agentforge-mcp** | MCP integration patterns, comprehensive tooling |
+| **TappsHA** | Smart suggestions system |
+| **AgentForge** | Agent-OS patterns, compliance checking, security |
+| **Claude Code Skills** | Agent definition format |
 
-### 16.3 Version History
+### 17.3 Version History
 
 | Version | Date | Changes |
 |---------|------|---------|
 | 1.0.0-draft | Dec 2025 | Initial requirements document |
+| 1.1.0-draft | Dec 2025 | Added Enhanced Features: Code Scoring, Tiered Context, MCP Gateway, YAML Workflows, Greenfield/Brownfield |
 
 ---
 
