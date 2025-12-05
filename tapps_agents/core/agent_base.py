@@ -2,9 +2,11 @@
 Base Agent Class - Common functionality for all agents
 """
 
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, Tuple
 import yaml
 
 
@@ -45,19 +47,29 @@ class BaseAgent(ABC):
         # Step 3: Load project configuration
         config_path = project_root / ".tapps-agents" / "config.yaml"
         if config_path.exists():
-            with open(config_path) as f:
-                self.config = yaml.safe_load(f)
+            try:
+                with open(config_path, encoding='utf-8') as f:
+                    self.config = yaml.safe_load(f)
+            except (yaml.YAMLError, IOError):
+                # If config file is invalid, just skip it
+                self.config = None
         
         # Step 4: Load domain configuration
         domains_path = project_root / ".tapps-agents" / "domains.md"
         if domains_path.exists():
-            self.domain_config = domains_path.read_text()
+            try:
+                self.domain_config = domains_path.read_text(encoding='utf-8')
+            except IOError:
+                self.domain_config = None
         
         # Step 5: Load customizations
         custom_path = project_root / ".tapps-agents" / "customizations" / f"{self.agent_id}-custom.yaml"
         if custom_path.exists():
-            with open(custom_path) as f:
-                self.customizations = yaml.safe_load(f)
+            try:
+                with open(custom_path, encoding='utf-8') as f:
+                    self.customizations = yaml.safe_load(f)
+            except (yaml.YAMLError, IOError):
+                self.customizations = None
     
     def get_commands(self) -> List[Dict[str, str]]:
         """
@@ -107,7 +119,7 @@ class BaseAgent(ABC):
         """Execute agent command"""
         pass
     
-    def parse_command(self, user_input: str) -> tuple[str, Dict[str, str]]:
+    def parse_command(self, user_input: str) -> Tuple[str, Dict[str, str]]:
         """
         Parse user input to extract command and arguments.
         

@@ -127,7 +127,11 @@ class CodeScorer:
             # Score: 10 - (high*3 + medium*1)
             score = 10.0 - (high_severity * 3.0 + medium_severity * 1.0)
             return max(0.0, score)
-        except Exception:
+        except (FileNotFoundError, PermissionError, ValueError) as e:
+            # Specific exceptions for file/system errors
+            return 5.0  # Default neutral on error
+        except Exception as e:
+            # Catch-all for unexpected errors (should be rare)
             return 5.0  # Default neutral on error
     
     def _calculate_maintainability(self, code: str) -> float:
@@ -143,12 +147,18 @@ class CodeScorer:
             return max(0.0, score)
         
         try:
-            tree = ast.parse(code)
-            mi_score = mi_visit(tree, code.splitlines())
+            # mi_visit expects (code_string, lines_list), not (tree, lines)
+            # Parse to check for syntax errors first
+            ast.parse(code)
+            lines = code.splitlines()
+            mi_score = mi_visit(code, lines)
             
             # Maintainability Index: 0-100 scale, convert to 0-10
             # MI > 80 = good (10), MI < 20 = bad (0)
             return min(mi_score / 10.0, 10.0)
         except SyntaxError:
             return 0.0
+        except Exception:
+            # Fallback on any other error
+            return 5.0
 

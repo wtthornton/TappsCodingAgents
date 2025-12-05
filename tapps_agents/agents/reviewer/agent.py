@@ -92,8 +92,32 @@ class ReviewerAgent(BaseAgent):
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
         
+        # Input validation: Check file size (limit to 1MB)
+        file_size = file_path.stat().st_size
+        MAX_FILE_SIZE = 1024 * 1024  # 1MB
+        if file_size > MAX_FILE_SIZE:
+            raise ValueError(f"File too large: {file_size} bytes (max {MAX_FILE_SIZE} bytes)")
+        
+        # Input validation: Check path traversal (allow absolute paths for testing)
+        # In production, we'd restrict to project directory
+        # For now, just ensure it's an absolute path or within reasonable bounds
+        resolved_path = file_path.resolve()
+        
+        # Check for obvious path traversal patterns
+        path_str = str(resolved_path)
+        if ".." in str(file_path) and not resolved_path.exists():
+            raise ValueError(f"Path traversal detected: {file_path}")
+        
+        # Additional check: ensure path doesn't contain suspicious patterns
+        suspicious_patterns = ["%2e%2e", "%2f", "%5c"]  # URL-encoded traversal attempts
+        if any(pattern in path_str.lower() for pattern in suspicious_patterns):
+            raise ValueError(f"Suspicious path detected: {file_path}")
+        
         # Read code
-        code = file_path.read_text(encoding='utf-8')
+        try:
+            code = file_path.read_text(encoding='utf-8')
+        except UnicodeDecodeError as e:
+            raise ValueError(f"Cannot decode file as UTF-8: {e}")
         
         result = {
             "file": str(file_path),

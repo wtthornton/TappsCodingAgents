@@ -108,7 +108,7 @@ class TestReviewerAgent:
         assert result["file"] == str(test_file)
         assert result["scoring"]["complexity_score"] >= 0
         # Complex code might have lower scores
-        assert result["overall_score"] >= 0
+        assert result["scoring"]["overall_score"] >= 0
     
     @pytest.mark.asyncio
     async def test_reviewer_review_file_insecure_code(self, mock_mal, tmp_path: Path):
