@@ -135,7 +135,10 @@ class TestBaseAgent:
         # Should not raise exception
         await agent.activate(temp_project_dir)
         
-        assert agent.config is None
+        # Config should be a ProjectConfig with defaults if no file exists
+        from tapps_agents.core.config import ProjectConfig
+        assert isinstance(agent.config, ProjectConfig)
+        assert agent.config.project_name is None  # Defaults
         assert agent.domain_config is None
     
     def test_run_is_abstract(self):

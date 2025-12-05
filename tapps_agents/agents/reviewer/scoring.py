@@ -2,7 +2,7 @@
 Code Scoring System - Calculates objective quality metrics
 """
 
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from pathlib import Path
 import ast
 
@@ -21,13 +21,20 @@ try:
 except ImportError:
     HAS_BANDIT = False
 
+# Type hint for config
+try:
+    from ...core.config import ScoringWeightsConfig
+except ImportError:
+    ScoringWeightsConfig = None
+
 
 class CodeScorer:
     """Calculate code quality scores"""
-    
-    def __init__(self):
+
+    def __init__(self, weights: Optional[ScoringWeightsConfig] = None):
         self.has_radon = HAS_RADON
         self.has_bandit = HAS_BANDIT
+        self.weights = weights  # Will use defaults if None
     
     def score_file(self, file_path: Path, code: str) -> Dict[str, Any]:
         """
@@ -64,12 +71,25 @@ class CodeScorer:
         scores["metrics"]["maintainability"] = scores["maintainability_score"]
         
         # Overall Score (weighted average)
+        # Use configured weights or defaults
+        if self.weights:
+            w = self.weights
+        else:
+            # Default weights
+            class DefaultWeights:
+                complexity = 0.20
+                security = 0.30
+                maintainability = 0.25
+                test_coverage = 0.15
+                performance = 0.10
+            w = DefaultWeights()
+        
         scores["overall_score"] = (
-            (10 - scores["complexity_score"]) * 0.20 +  # Invert complexity (lower is better)
-            scores["security_score"] * 0.30 +
-            scores["maintainability_score"] * 0.25 +
-            scores["test_coverage_score"] * 0.15 +
-            scores["performance_score"] * 0.10
+            (10 - scores["complexity_score"]) * w.complexity +  # Invert complexity (lower is better)
+            scores["security_score"] * w.security +
+            scores["maintainability_score"] * w.maintainability +
+            scores["test_coverage_score"] * w.test_coverage +
+            scores["performance_score"] * w.performance
         )
         
         return scores

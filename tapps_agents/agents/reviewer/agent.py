@@ -8,6 +8,7 @@ import json
 
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
+from ...core.config import ProjectConfig, load_config
 from .scoring import CodeScorer
 
 
@@ -18,10 +19,22 @@ class ReviewerAgent(BaseAgent):
     Permissions: Read, Grep, Glob (read-only)
     """
     
-    def __init__(self, mal: Optional[MAL] = None):
-        super().__init__(agent_id="reviewer", agent_name="Reviewer Agent")
-        self.mal = mal or MAL()
-        self.scorer = CodeScorer()
+    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None):
+        super().__init__(agent_id="reviewer", agent_name="Reviewer Agent", config=config)
+        # Use config if provided, otherwise load defaults
+        if config is None:
+            config = load_config()
+        self.config = config
+        
+        # Initialize MAL with config
+        mal_config = config.mal if config else None
+        self.mal = mal or MAL(
+            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
+        )
+        # Initialize scorer with config weights
+        scoring_config = config.scoring if config else None
+        weights = scoring_config.weights if scoring_config else None
+        self.scorer = CodeScorer(weights=weights)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for reviewer agent"""
@@ -51,7 +64,7 @@ class ReviewerAgent(BaseAgent):
             model = kwargs.get("model", "qwen2.5-coder:7b")
             return await self.review_file(
                 Path(file_path),
-                model=model,
+                model=model or (self.config.agents.reviewer.model if self.config else "qwen2.5-coder:7b"),
                 include_scoring=True,
                 include_llm_feedback=True
             )
@@ -92,11 +105,12 @@ class ReviewerAgent(BaseAgent):
         if not file_path.exists():
             raise FileNotFoundError(f"File not found: {file_path}")
         
-        # Input validation: Check file size (limit to 1MB)
+        # Input validation: Check file size
+        reviewer_config = self.config.agents.reviewer if self.config else None
+        max_file_size = reviewer_config.max_file_size if reviewer_config else (1024 * 1024)
         file_size = file_path.stat().st_size
-        MAX_FILE_SIZE = 1024 * 1024  # 1MB
-        if file_size > MAX_FILE_SIZE:
-            raise ValueError(f"File too large: {file_size} bytes (max {MAX_FILE_SIZE} bytes)")
+        if file_size > max_file_size:
+            raise ValueError(f"File too large: {file_size} bytes (max {max_file_size} bytes)")
         
         # Input validation: Check path traversal (allow absolute paths for testing)
         # In production, we'd restrict to project directory
@@ -134,10 +148,12 @@ class ReviewerAgent(BaseAgent):
             feedback = await self._generate_feedback(code, scores if include_scoring else None, model)
             result["feedback"] = feedback
         
-        # Determine pass/fail
+        # Determine pass/fail using configured threshold
         if include_scoring:
-            result["passed"] = scores["overall_score"] >= 70.0
-            result["threshold"] = 70.0
+            reviewer_config = self.config.agents.reviewer if self.config else None
+            threshold = reviewer_config.quality_threshold if reviewer_config else 70.0
+            result["passed"] = scores["overall_score"] >= threshold
+            result["threshold"] = threshold
         
         return result
     

@@ -1,0 +1,34 @@
+# TappsCodingAgents - Default Configuration Template
+# 
+# Copy this file to .tapps-agents/config.yaml in your project root
+# and customize as needed.
+
+# Project metadata (optional)
+project_name: null
+version: null
+
+# Agent configurations
+agents:
+  reviewer:
+    model: "qwen2.5-coder:7b"           # LLM model for code reviews
+    quality_threshold: 70.0              # Minimum score (0-100) to pass review
+    include_scoring: true                # Include code scoring in review
+    include_llm_feedback: true           # Include LLM-generated feedback
+    max_file_size: 1048576               # Maximum file size in bytes (1MB)
+
+# Code scoring configuration
+scoring:
+  weights:
+    complexity: 0.20                     # Weight for complexity score (must sum to 1.0)
+    security: 0.30                       # Weight for security score
+    maintainability: 0.25                # Weight for maintainability score
+    test_coverage: 0.15                  # Weight for test coverage score
+    performance: 0.10                    # Weight for performance score
+  quality_threshold: 70.0                # Minimum overall score (0-100) to pass
+
+# Model Abstraction Layer (MAL) configuration
+mal:
+  ollama_url: "http://localhost:11434"   # Ollama API URL
+  default_model: "qwen2.5-coder:7b"      # Default model name
+  timeout: 60.0                          # Request timeout in seconds
+

@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 import yaml
 
+from .config import ProjectConfig, load_config
+
 
 class BaseAgent(ABC):
     """
@@ -21,10 +23,10 @@ class BaseAgent(ABC):
     - Help system
     """
     
-    def __init__(self, agent_id: str, agent_name: str):
+    def __init__(self, agent_id: str, agent_name: str, config: Optional[ProjectConfig] = None):
         self.agent_id = agent_id
         self.agent_name = agent_name
-        self.config = None
+        self.config = config  # ProjectConfig instance
         self.domain_config = None
         self.customizations = None
         
@@ -45,14 +47,13 @@ class BaseAgent(ABC):
             project_root = Path.cwd()
         
         # Step 3: Load project configuration
-        config_path = project_root / ".tapps-agents" / "config.yaml"
-        if config_path.exists():
+        # If config not already loaded, load it now
+        if self.config is None:
             try:
-                with open(config_path, encoding='utf-8') as f:
-                    self.config = yaml.safe_load(f)
-            except (yaml.YAMLError, IOError):
-                # If config file is invalid, just skip it
-                self.config = None
+                self.config = load_config(project_root / ".tapps-agents" / "config.yaml")
+            except (ValueError, FileNotFoundError):
+                # Use defaults if config file is invalid or missing
+                self.config = load_config()  # Returns defaults
         
         # Step 4: Load domain configuration
         domains_path = project_root / ".tapps-agents" / "domains.md"
