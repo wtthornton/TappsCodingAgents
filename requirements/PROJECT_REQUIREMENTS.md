@@ -98,7 +98,7 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 │       INDUSTRY EXPERTS          │   │        WORKFLOW AGENTS          │
 │       (Business Knowledge)      │   │        (SDLC Execution)         │
 │                                 │   │                                 │
-│  • N experts for N domains      │   │  • 18 fixed agents              │
+│  • N experts for N domains      │   │  • 12 fixed agents              │
 │  • Weighted decision-making     │   │  • Standard SDLC coverage       │
 │  • RAG + Fine-tuning           │   │  • Permission-based access      │
 │  • Primary: 51% authority       │   │  • Consult experts as needed    │
@@ -130,7 +130,7 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 | Layer | Type | Purpose | Count |
 |-------|------|---------|-------|
 | **Knowledge Layer** | Industry Experts | Business domain knowledge | N (configurable) |
-| **Execution Layer** | Workflow Agents | SDLC task execution | 18 (fixed) |
+| **Execution Layer** | Workflow Agents | SDLC task execution | 12 (fixed) |
 
 ---
 
@@ -164,66 +164,60 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 | **Configuration** | Per-project domains | Standard set |
 | **Customization** | RAG + Fine-tuning | Minimal |
 | **Decision Authority** | Weighted by confidence | Executes decisions |
-| **Count** | N (based on domains) | 18 (fixed) |
+| **Count** | N (based on domains) | 12 (fixed) |
 
 ---
 
 ## 5. Workflow Agents
 
-### 5.1 Agent Inventory (18 Agents)
+### 5.1 Agent Inventory (12 Agents)
 
-#### Planning Phase (3 Agents)
+#### Planning Phase (2 Agents)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **analyst** | Requirements gathering + technical research | Read, Grep, Glob |
-| **planner** | Create user stories + task breakdown | Read, Write, Grep, Glob |
-| **estimator** | Estimate effort, complexity, risk | Read, Grep, Glob |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **analyst** | Requirements gathering, technical research, effort/risk estimation | Read, Grep, Glob | analyst + estimator |
+| **planner** | Create user stories + task breakdown | Read, Write, Grep, Glob | — |
 
-#### Design Phase (3 Agents)
+#### Design Phase (2 Agents)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **architect** | System + security architecture design | Read, Write, Grep, Glob |
-| **designer** | API contracts + data models | Read, Write, Grep, Glob |
-| **ui-designer** | UI/UX specifications + wireframes | Read, Write, Grep, Glob |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **architect** | System + security architecture design | Read, Write, Grep, Glob | — |
+| **designer** | API contracts, data models, UI/UX specifications | Read, Write, Grep, Glob | designer + ui-designer |
 
-#### Development Phase (4 Agents)
+#### Development Phase (3 Agents)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **implementer** | Write production code | Read, Write, Edit, Grep, Glob, Bash |
-| **refactorer** | Improve existing code structure | Read, Write, Edit, Grep, Glob |
-| **debugger** | Investigate and fix bugs | Read, Write, Edit, Grep, Glob, Bash |
-| **documenter** | Write documentation | Read, Write, Grep, Glob |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **implementer** | Write production code | Read, Write, Edit, Grep, Glob, Bash | — |
+| **debugger** | Investigate and fix bugs | Read, Write, Edit, Grep, Glob, Bash | — |
+| **documenter** | Write documentation | Read, Write, Grep, Glob | — |
 
-#### Quality Phase (3 Agents)
+#### Quality Phase (2 Agents)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **reviewer** | Code review (read-only feedback) | Read, Grep, Glob |
-| **analyzer** | Metrics, style, complexity analysis | Read, Grep, Glob |
-| **enhancer** | Autonomous code improvement | Read, Write, Edit, Grep, Glob |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **reviewer** | Code review, metrics, style, complexity analysis (read-only) | Read, Grep, Glob | reviewer + analyzer |
+| **improver** | Refactor and enhance existing code | Read, Write, Edit, Grep, Glob | refactorer + enhancer |
 
-#### Testing Phase (2 Agents)
+#### Testing Phase (1 Agent)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **test-writer** | Write unit + integration tests | Read, Write, Grep, Glob, Bash |
-| **test-fixer** | Fix failing tests | Read, Write, Edit, Grep, Glob, Bash |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **tester** | Write tests, fix failing tests, test coverage | Read, Write, Edit, Grep, Glob, Bash | test-writer + test-fixer |
 
-#### Security & Ops Phase (2 Agents)
+#### Operations Phase (1 Agent)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **security-auditor** | Vulnerability scanning + compliance | Read, Grep, Glob |
-| **deployment-engineer** | Deploy + infrastructure | Read, Write, Grep, Glob, Bash |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **ops** | Security scanning, compliance, deployment, infrastructure | Read, Write, Grep, Glob, Bash | security-auditor + deployment-engineer |
 
 #### Orchestration (1 Agent)
 
-| Agent | Purpose | Permissions |
-|-------|---------|-------------|
-| **orchestrator** | Coordinate workflows + gate decisions | Read, Grep, Glob |
+| Agent | Purpose | Permissions | Consolidated From |
+|-------|---------|-------------|-------------------|
+| **orchestrator** | Coordinate workflows + gate decisions | Read, Grep, Glob | — |
 
 ### 5.2 Permission Matrix
 
@@ -233,31 +227,25 @@ TappsCodingAgents is a **specification framework** for defining, configuring, an
 PLANNING
   analyst                ✅    ❌     ❌    ✅    ✅    ❌
   planner                ✅    ✅     ❌    ✅    ✅    ❌
-  estimator              ✅    ❌     ❌    ✅    ✅    ❌
 
 DESIGN
   architect              ✅    ✅     ❌    ✅    ✅    ❌
   designer               ✅    ✅     ❌    ✅    ✅    ❌
-  ui-designer            ✅    ✅     ❌    ✅    ✅    ❌
 
 DEVELOPMENT
   implementer            ✅    ✅     ✅    ✅    ✅    ✅
-  refactorer             ✅    ✅     ✅    ✅    ✅    ❌
   debugger               ✅    ✅     ✅    ✅    ✅    ✅
   documenter             ✅    ✅     ❌    ✅    ✅    ❌
 
 QUALITY
   reviewer               ✅    ❌     ❌    ✅    ✅    ❌
-  analyzer               ✅    ❌     ❌    ✅    ✅    ❌
-  enhancer               ✅    ✅     ✅    ✅    ✅    ❌
+  improver               ✅    ✅     ✅    ✅    ✅    ❌
 
 TESTING
-  test-writer            ✅    ✅     ❌    ✅    ✅    ✅
-  test-fixer             ✅    ✅     ✅    ✅    ✅    ✅
+  tester                 ✅    ✅     ✅    ✅    ✅    ✅
 
-SECURITY & OPS
-  security-auditor       ✅    ❌     ❌    ✅    ✅    ❌
-  deployment-engineer    ✅    ✅     ❌    ✅    ✅    ✅
+OPERATIONS
+  ops                    ✅    ✅     ❌    ✅    ✅    ✅
 
 ORCHESTRATION
   orchestrator           ✅    ❌     ❌    ✅    ✅    ❌
@@ -267,10 +255,11 @@ ORCHESTRATION
 
 | Permission Type | Agents with Access | Count |
 |-----------------|-------------------|-------|
-| **Write + Edit** | implementer, refactorer, debugger, enhancer, test-fixer | 5 |
-| **Write only** | planner, architect, designer, ui-designer, documenter, test-writer, deployment-engineer | 7 |
-| **Read-only** | analyst, estimator, reviewer, analyzer, security-auditor, orchestrator | 6 |
-| **Bash** | implementer, debugger, test-writer, test-fixer, deployment-engineer | 5 |
+| **Write + Edit + Bash** | implementer, debugger, tester | 3 |
+| **Write + Edit** | improver | 1 |
+| **Write + Bash** | ops | 1 |
+| **Write only** | planner, architect, designer, documenter | 4 |
+| **Read-only** | analyst, reviewer, orchestrator | 3 |
 
 ---
 
@@ -362,13 +351,15 @@ base-expert:
 
 | Workflow Agent | Consults Expert When... |
 |----------------|-------------------------|
+| **analyst** | Gathering domain-specific requirements |
 | **planner** | Breaking down domain-specific stories |
 | **architect** | Designing domain-appropriate systems |
-| **designer** | Creating domain-specific APIs/schemas |
+| **designer** | Creating domain-specific APIs/schemas/UI |
 | **implementer** | Writing domain-specific code |
 | **reviewer** | Validating domain correctness |
 | **debugger** | Diagnosing domain-specific issues |
-| **test-writer** | Creating domain-appropriate tests |
+| **tester** | Creating domain-appropriate tests |
+| **ops** | Security compliance for domain regulations |
 
 ---
 
@@ -559,21 +550,22 @@ Request → MAL Router
 | Agent | Primary Model | Fallback |
 |-------|---------------|----------|
 | implementer | local:qwen2.5-coder-14b | cloud:claude-sonnet-4 |
-| reviewer | local:qwen2.5-coder-14b | cloud:claude-sonnet-4 |
 | debugger | local:deepseek-coder-6.7b | cloud:claude-sonnet-4 |
-| test-writer | local:qwen2.5-coder-14b | cloud:claude-sonnet-4 |
-| analyzer | local:qwen2.5-coder-7b | cloud:claude-sonnet-4 |
+| tester | local:qwen2.5-coder-14b | cloud:claude-sonnet-4 |
+| reviewer | local:qwen2.5-coder-14b | cloud:claude-sonnet-4 |
 | documenter | local:qwen2.5-coder-7b | cloud:claude-sonnet-4 |
 
 #### Cloud-Preferred Agents (Complex Tasks)
 
 | Agent | Primary Model | Fallback |
 |-------|---------------|----------|
+| analyst | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
+| planner | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
 | architect | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
 | designer | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
-| planner | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
+| improver | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
+| ops | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
 | orchestrator | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
-| enhancer | cloud:claude-sonnet-4 | local:qwen2.5-coder-14b |
 
 #### Expert Agents (Fine-Tuned + RAG)
 
@@ -966,36 +958,30 @@ TappsCodingAgents/
 │   │   └── common-patterns.md          # Shared patterns
 │   │
 │   ├── planning/
-│   │   ├── analyst/SKILL.md
-│   │   ├── planner/SKILL.md
-│   │   └── estimator/SKILL.md
+│   │   ├── analyst/SKILL.md            # Requirements + estimation
+│   │   └── planner/SKILL.md            # Stories + task breakdown
 │   │
 │   ├── design/
-│   │   ├── architect/SKILL.md
-│   │   ├── designer/SKILL.md
-│   │   └── ui-designer/SKILL.md
+│   │   ├── architect/SKILL.md          # System + security design
+│   │   └── designer/SKILL.md           # API + data + UI design
 │   │
 │   ├── development/
-│   │   ├── implementer/SKILL.md
-│   │   ├── refactorer/SKILL.md
-│   │   ├── debugger/SKILL.md
-│   │   └── documenter/SKILL.md
+│   │   ├── implementer/SKILL.md        # Write production code
+│   │   ├── debugger/SKILL.md           # Investigate + fix bugs
+│   │   └── documenter/SKILL.md         # Write documentation
 │   │
 │   ├── quality/
-│   │   ├── reviewer/SKILL.md
-│   │   ├── analyzer/SKILL.md
-│   │   └── enhancer/SKILL.md
+│   │   ├── reviewer/SKILL.md           # Review + analyze (read-only)
+│   │   └── improver/SKILL.md           # Refactor + enhance (write)
 │   │
 │   ├── testing/
-│   │   ├── test-writer/SKILL.md
-│   │   └── test-fixer/SKILL.md
+│   │   └── tester/SKILL.md             # Write + fix tests
 │   │
-│   ├── security-ops/
-│   │   ├── security-auditor/SKILL.md
-│   │   └── deployment-engineer/SKILL.md
+│   ├── operations/
+│   │   └── ops/SKILL.md                # Security + deployment
 │   │
 │   ├── orchestration/
-│   │   └── orchestrator/SKILL.md
+│   │   └── orchestrator/SKILL.md       # Coordinate workflows
 │   │
 │   └── experts/                        # Industry Expert templates
 │       ├── _base/BASE_EXPERT_SKILL.md
@@ -1148,56 +1134,62 @@ knowledge_bases:
 
 ```
 ┌─────────────┐    ┌─────────────┐    ┌─────────────┐
-│   planner   │───▶│  architect  │───▶│  designer   │
-│ (stories)   │    │ (design)    │    │ (contracts) │
+│   analyst   │───▶│   planner   │───▶│  architect  │
+│ (research)  │    │ (stories)   │    │ (design)    │
 └─────────────┘    └─────────────┘    └─────────────┘
-                          │
-                    ┌─────┴─────┐
-                    ▼           ▼
-              ┌──────────┐ ┌──────────┐
-              │ expert(s)│ │ expert(s)│
-              │ consult  │ │ consult  │
-              └──────────┘ └──────────┘
-                    │
-                    ▼
-            ┌─────────────┐
-            │ implementer │
-            │ (code)      │
-            └──────┬──────┘
-                   │
-        ┌──────────┼──────────┐
-        ▼          ▼          ▼
-┌─────────────┐ ┌─────────────┐ ┌─────────────┐
-│  reviewer   │ │ test-writer │ │ documenter  │
-└─────────────┘ └─────────────┘ └─────────────┘
-        │                 │
-        └────────┬────────┘
-                 ▼
-         ┌─────────────┐
-         │ orchestrator│
-         │ (gate)      │
-         └─────────────┘
+                                            │
+                                      ┌─────┴─────┐
+                                      ▼           ▼
+                                ┌──────────┐ ┌──────────┐
+                                │ designer │ │ expert(s)│
+                                │(contracts)│ │ consult  │
+                                └──────────┘ └──────────┘
+                                      │
+                                      ▼
+                              ┌─────────────┐
+                              │ implementer │
+                              │ (code)      │
+                              └──────┬──────┘
+                                     │
+                          ┌──────────┼──────────┐
+                          ▼          ▼          ▼
+                  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐
+                  │  reviewer   │ │   tester    │ │ documenter  │
+                  └─────────────┘ └─────────────┘ └─────────────┘
+                          │                 │
+                          └────────┬────────┘
+                                   ▼
+                           ┌─────────────┐
+                           │ orchestrator│
+                           │ (gate)      │
+                           └─────────────┘
 ```
 
 ### 15.2 Bug Fix Workflow
 
 ```
-debugger → implementer → reviewer → test-fixer → orchestrator (gate)
+debugger → implementer → reviewer → tester → orchestrator (gate)
 ```
 
 ### 15.3 Code Quality Improvement Workflow
 
 ```
-analyzer → reviewer → enhancer → reviewer → orchestrator (gate)
-           ↑                          │
-           └──────────────────────────┘
-              (loop until gate passes)
+reviewer → improver → reviewer → orchestrator (gate)
+    ↑                      │
+    └──────────────────────┘
+       (loop until gate passes)
 ```
 
 ### 15.4 Security Review Workflow
 
 ```
-security-auditor → expert (security domain) → implementer (fixes) → security-auditor (re-scan)
+ops (audit) → expert (domain compliance) → implementer (fixes) → ops (re-scan)
+```
+
+### 15.5 Deployment Workflow
+
+```
+tester (final) → reviewer (sign-off) → ops (deploy) → orchestrator (gate)
 ```
 
 ---

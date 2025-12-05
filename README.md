@@ -6,7 +6,7 @@
 
 TappsCodingAgents provides a standardized framework for building AI coding agents with:
 
-- **Workflow Agents** (18): Standard SDLC task execution
+- **Workflow Agents** (12): Standard SDLC task execution
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
 - **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
@@ -20,16 +20,16 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 | Layer | Type | Purpose | Count |
 |-------|------|---------|-------|
 | **Knowledge** | Industry Experts | Business domain authority | N (per project) |
-| **Execution** | Workflow Agents | SDLC task execution | 18 (fixed) |
+| **Execution** | Workflow Agents | SDLC task execution | 12 (fixed) |
 
-### Workflow Agents (18)
+### Workflow Agents (12)
 
-- **Planning**: analyst, planner, estimator
-- **Design**: architect, designer, ui-designer
-- **Development**: implementer, refactorer, debugger, documenter
-- **Quality**: reviewer, analyzer, enhancer
-- **Testing**: test-writer, test-fixer
-- **Security & Ops**: security-auditor, deployment-engineer
+- **Planning**: analyst, planner
+- **Design**: architect, designer
+- **Development**: implementer, debugger, documenter
+- **Quality**: reviewer, improver
+- **Testing**: tester
+- **Operations**: ops
 - **Orchestration**: orchestrator
 
 ### Industry Experts
