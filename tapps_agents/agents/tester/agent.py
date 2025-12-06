@@ -11,6 +11,7 @@ import re
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config, TesterAgentConfig
+from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
 from .test_generator import TestGenerator
 
 
@@ -46,6 +47,11 @@ class TesterAgent(BaseAgent):
         
         # Ensure tests directory exists
         self.tests_dir.mkdir(parents=True, exist_ok=True)
+        
+        # Initialize Context7 helper
+        self.context7: Optional[Context7AgentHelper] = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return list of available commands."""

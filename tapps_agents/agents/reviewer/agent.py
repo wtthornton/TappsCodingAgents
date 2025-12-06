@@ -10,6 +10,11 @@ from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from .scoring import CodeScorer
+from .typescript_scorer import TypeScriptScorer
+from .report_generator import ReportGenerator
+from .service_discovery import ServiceDiscovery
+from .aggregator import QualityAggregator
+from ..ops.dependency_analyzer import DependencyAnalyzer
 
 
 class ReviewerAgent(BaseAgent):
@@ -31,10 +36,41 @@ class ReviewerAgent(BaseAgent):
         self.mal = mal or MAL(
             ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
         )
-        # Initialize scorer with config weights
+        # Initialize scorer with config weights and quality tools
         scoring_config = config.scoring if config else None
         weights = scoring_config.weights if scoring_config else None
-        self.scorer = CodeScorer(weights=weights)
+        quality_tools = config.quality_tools if config else None
+        ruff_enabled = quality_tools.ruff_enabled if quality_tools else True
+        mypy_enabled = quality_tools.mypy_enabled if quality_tools else True
+        jscpd_enabled = quality_tools.jscpd_enabled if quality_tools else True
+        duplication_threshold = quality_tools.duplication_threshold if quality_tools else 3.0
+        min_duplication_lines = quality_tools.min_duplication_lines if quality_tools else 5
+        self.scorer = CodeScorer(
+            weights=weights,
+            ruff_enabled=ruff_enabled,
+            mypy_enabled=mypy_enabled,
+            jscpd_enabled=jscpd_enabled,
+            duplication_threshold=duplication_threshold,
+            min_duplication_lines=min_duplication_lines
+        )
+        
+        # Initialize dependency analyzer for security scoring (will be set in activate)
+        pip_audit_enabled = quality_tools.pip_audit_enabled if quality_tools else True
+        self.dependency_analyzer_enabled = pip_audit_enabled
+        self.dependency_analyzer = None
+        
+        # Initialize TypeScript scorer (Phase 6.4.4)
+        typescript_enabled = quality_tools.typescript_enabled if quality_tools else True
+        self.typescript_enabled = typescript_enabled
+        if typescript_enabled:
+            eslint_config = quality_tools.eslint_config if quality_tools else None
+            tsconfig_path = quality_tools.tsconfig_path if quality_tools else None
+            self.typescript_scorer = TypeScriptScorer(
+                eslint_config=eslint_config,
+                tsconfig_path=tsconfig_path
+            )
+        else:
+            self.typescript_scorer = None
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for reviewer agent"""
@@ -42,6 +78,12 @@ class ReviewerAgent(BaseAgent):
         return base_commands + [
             {"command": "*review", "description": "Review code file with scoring and feedback"},
             {"command": "*score", "description": "Calculate code scores only (no LLM feedback)"},
+            {"command": "*lint", "description": "Run Ruff linting on a file and return issues (Phase 6.1)"},
+            {"command": "*type-check", "description": "Run mypy type checking on a file and return errors (Phase 6.2)"},
+            {"command": "*report", "description": "Generate quality reports in multiple formats (Phase 6.3)"},
+            {"command": "*duplication", "description": "Detect code duplication using jscpd (Phase 6.4)"},
+            {"command": "*analyze-project", "description": "Analyze entire project with all services (Phase 6.4.2)"},
+            {"command": "*analyze-services", "description": "Analyze specific services (Phase 6.4.2)"},
         ]
     
     async def run(self, command: str, **kwargs) -> Dict[str, Any]:
@@ -80,8 +122,109 @@ class ReviewerAgent(BaseAgent):
                 include_llm_feedback=False
             )
         
+        elif command == "lint":
+            file_path = kwargs.get("file")
+            if not file_path:
+                return {"error": "File path required. Usage: *lint <file>"}
+            
+            return await self.lint_file(Path(file_path))
+        
+        elif command == "type-check":
+            file_path = kwargs.get("file")
+            if not file_path:
+                return {"error": "File path required. Usage: *type-check <file>"}
+            
+            return await self.type_check_file(Path(file_path))
+        
+        elif command == "report":
+            # Generate quality reports
+            format_type = kwargs.get("format", "all")  # json, markdown, html, all
+            output_dir = kwargs.get("output_dir")
+            files_list = kwargs.get("files")  # Optional list of files to analyze
+            
+            return await self.generate_reports(format_type=format_type, output_dir=output_dir, files=files_list)
+        
+        elif command == "duplication":
+            file_path = kwargs.get("file")
+            if not file_path:
+                return {"error": "File or directory path required. Usage: *duplication <file_or_directory>"}
+            
+            return await self.check_duplication(Path(file_path))
+        
+        elif command == "analyze-project":
+            project_root = kwargs.get("project_root")
+            include_comparison = kwargs.get("include_comparison", True)
+            
+            return await self.analyze_project(
+                project_root=Path(project_root) if project_root else None,
+                include_comparison=include_comparison
+            )
+        
+        elif command == "analyze-services":
+            services = kwargs.get("services")  # List of service names or patterns
+            project_root = kwargs.get("project_root")
+            include_comparison = kwargs.get("include_comparison", True)
+            
+            return await self.analyze_services(
+                services=services if services else None,
+                project_root=Path(project_root) if project_root else None,
+                include_comparison=include_comparison
+            )
+        
         else:
             return {"error": f"Unknown command: {command}. Use *help to see available commands."}
+    
+    def _get_dependency_security_penalty(self) -> float:
+        """
+        Get security penalty based on dependency vulnerabilities.
+        
+        Phase 6.4.3: Dependency Analysis & Security Auditing
+        
+        Returns:
+            Penalty score (0-10, where 10 = no vulnerabilities, 0 = critical vulnerabilities)
+        """
+        if not self.dependency_analyzer_enabled:
+            return 10.0  # No penalty if dependency auditing disabled
+        
+        # Initialize dependency analyzer if not already initialized
+        if self.dependency_analyzer is None:
+            project_root = getattr(self, 'project_root', Path.cwd())
+            self.dependency_analyzer = DependencyAnalyzer(project_root=project_root)
+        
+        try:
+            # Get security audit
+            quality_tools = self.config.quality_tools if self.config else None
+            threshold = quality_tools.dependency_audit_threshold if quality_tools else "high"
+            
+            audit_result = self.dependency_analyzer.run_security_audit(
+                severity_threshold=threshold
+            )
+            
+            if not audit_result or "error" in audit_result:
+                return 10.0  # No penalty if audit fails
+            
+            vulnerabilities = audit_result.get("vulnerabilities", [])
+            severity_breakdown = audit_result.get("severity_breakdown", {})
+            
+            # Calculate penalty based on severity
+            # Critical: -3 points each
+            # High: -2 points each
+            # Medium: -1 point each
+            # Low: -0.5 points each
+            penalty = (
+                severity_breakdown.get("critical", 0) * 3.0 +
+                severity_breakdown.get("high", 0) * 2.0 +
+                severity_breakdown.get("medium", 0) * 1.0 +
+                severity_breakdown.get("low", 0) * 0.5
+            )
+            
+            # Score: 10 - penalty, minimum 0
+            score = max(0.0, 10.0 - penalty)
+            
+            return score
+        
+        except Exception:
+            return 10.0  # No penalty on error
     
     async def review_file(
         self,
@@ -141,6 +284,14 @@ class ReviewerAgent(BaseAgent):
         # Calculate scores
         if include_scoring:
             scores = self.scorer.score_file(file_path, code)
+            
+            # Enhance security score with dependency health (Phase 6.4.3)
+            dependency_security = self._get_dependency_security_penalty()
+            # Blend dependency security into security score (70% code security, 30% dependency security)
+            original_security = scores.get("security_score", 5.0)
+            scores["security_score"] = (original_security * 0.7) + (dependency_security * 0.3)
+            scores["dependency_security_score"] = dependency_security
+            
             result["scoring"] = scores
         
         # Generate LLM feedback
@@ -207,6 +358,533 @@ class ReviewerAgent(BaseAgent):
                 "error": str(e),
                 "summary": "Could not generate LLM feedback"
             }
+    
+    async def lint_file(self, file_path: Path) -> Dict[str, Any]:
+        """
+        Run Ruff linting on a file and return detailed issues.
+        
+        Phase 6: Modern Quality Analysis - Ruff Integration
+        
+        Args:
+            file_path: Path to code file (Python only)
+            
+        Returns:
+            Dictionary with linting results:
+            {
+                "file": str,
+                "linting_score": float (0-10),
+                "issues": List[Dict],
+                "issue_count": int,
+                "error_count": int,
+                "warning_count": int,
+                "fatal_count": int
+            }
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        file_ext = file_path.suffix.lower()
+        
+        # Route to appropriate linter (Phase 6.4.4)
+        if file_ext in [".ts", ".tsx", ".js", ".jsx"] and self.typescript_scorer:
+            # Use ESLint for TypeScript/JavaScript
+            linting_score = self.typescript_scorer._calculate_linting_score(file_path)
+            issues_result = self.typescript_scorer.get_eslint_issues(file_path)
+            
+            issues = issues_result.get("issues", [])
+            error_count = 0
+            warning_count = 0
+            
+            # Count errors and warnings from ESLint output
+            for file_result in issues:
+                messages = file_result.get("messages", [])
+                for message in messages:
+                    severity = message.get("severity", 1)
+                    if severity == 2:  # Error
+                        error_count += 1
+                    elif severity == 1:  # Warning
+                        warning_count += 1
+            
+            return {
+                "file": str(file_path),
+                "linting_score": linting_score,
+                "issues": issues,
+                "issue_count": error_count + warning_count,
+                "error_count": error_count,
+                "warning_count": warning_count,
+                "fatal_count": 0,
+                "tool": "eslint"
+            }
+        elif file_ext == ".py":
+            # Use Ruff for Python files
+            linting_score = self.scorer._calculate_linting_score(file_path)
+            issues = self.scorer.get_ruff_issues(file_path)
+            
+            # Count issues by severity
+            error_count = sum(1 for d in issues if d.get("code", {}).get("name", "").startswith("E"))
+            warning_count = sum(1 for d in issues if d.get("code", {}).get("name", "").startswith("W"))
+            fatal_count = sum(1 for d in issues if d.get("code", {}).get("name", "").startswith("F"))
+            
+            return {
+                "file": str(file_path),
+                "linting_score": linting_score,
+                "issues": issues,
+                "issue_count": len(issues),
+                "error_count": error_count,
+                "warning_count": warning_count,
+                "fatal_count": fatal_count,
+                "tool": "ruff"
+            }
+        else:
+            return {
+                "file": str(file_path),
+                "linting_score": 10.0,
+                "issues": [],
+                "issue_count": 0,
+                "error_count": 0,
+                "warning_count": 0,
+                "fatal_count": 0,
+                "message": "Linting only supported for Python and TypeScript/JavaScript files",
+                "tool": "none"
+            }
+    
+    async def type_check_file(self, file_path: Path) -> Dict[str, Any]:
+        """
+        Run mypy type checking on a file and return detailed errors.
+        
+        Phase 6.2: Modern Quality Analysis - mypy Integration
+        
+        Args:
+            file_path: Path to code file (Python only)
+            
+        Returns:
+            Dictionary with type checking results:
+            {
+                "file": str,
+                "type_checking_score": float (0-10),
+                "errors": List[Dict],
+                "error_count": int,
+                "error_codes": List[str] (unique error codes found)
+            }
+        """
+        if not file_path.exists():
+            raise FileNotFoundError(f"File not found: {file_path}")
+        
+        file_ext = file_path.suffix.lower()
+        
+        # Route to appropriate type checker (Phase 6.4.4)
+        if file_ext in [".ts", ".tsx"] and self.typescript_scorer:
+            # Use TypeScript compiler for TypeScript files
+            type_checking_score = self.typescript_scorer._calculate_type_checking_score(file_path)
+            errors_result = self.typescript_scorer.get_type_errors(file_path)
+            
+            errors = errors_result.get("errors", [])
+            error_count = errors_result.get("error_count", 0)
+            
+            # Extract error codes from TypeScript errors
+            error_codes = []
+            for error in errors:
+                if "TS" in error:
+                    # Extract TS error code (e.g., "error TS2345")
+                    parts = error.split("TS")
+                    if len(parts) > 1:
+                        code = "TS" + parts[1].split()[0] if parts[1] else "TS0000"
+                        if code not in error_codes:
+                            error_codes.append(code)
+            
+            return {
+                "file": str(file_path),
+                "type_checking_score": type_checking_score,
+                "errors": errors,
+                "error_count": error_count,
+                "error_codes": error_codes,
+                "tool": "tsc",
+                "passed": errors_result.get("passed", error_count == 0)
+            }
+        elif file_ext == ".py":
+            # Use mypy for Python files
+            type_checking_score = self.scorer._calculate_type_checking_score(file_path)
+            errors = self.scorer.get_mypy_errors(file_path)
+            
+            # Extract unique error codes
+            error_codes = list(set([err.get("error_code") for err in errors.get("errors", []) if err.get("error_code")]))
+            
+            return {
+                "file": str(file_path),
+                "type_checking_score": type_checking_score,
+                "errors": errors.get("errors", []),
+                "error_count": errors.get("error_count", 0),
+                "error_codes": error_codes,
+                "tool": "mypy"
+            }
+        else:
+            return {
+                "file": str(file_path),
+                "type_checking_score": 5.0,
+                "errors": [],
+                "error_count": 0,
+                "error_codes": [],
+                "message": "Type checking only supported for Python and TypeScript files",
+                "tool": "none"
+            }
+    
+    async def generate_reports(
+        self,
+        format_type: str = "all",
+        output_dir: Optional[str] = None,
+        files: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
+        """
+        Generate quality reports in multiple formats.
+        
+        Phase 6.3: Comprehensive Reporting Infrastructure
+        
+        Args:
+            format_type: Report format ('json', 'markdown', 'html', 'all')
+            output_dir: Custom output directory (default: reports/quality/)
+            files: Optional list of file paths to analyze (if None, uses single file or project)
+            
+        Returns:
+            Dictionary with report generation results
+        """
+        from datetime import datetime
+        from pathlib import Path
+        
+        # Initialize report generator
+        report_gen = ReportGenerator(output_dir=Path(output_dir) if output_dir else None)
+        
+        # Collect scores from files
+        all_files = []
+        aggregated_scores = {
+            "complexity_score": 0.0,
+            "security_score": 0.0,
+            "maintainability_score": 0.0,
+            "test_coverage_score": 0.0,
+            "performance_score": 0.0,
+            "linting_score": 0.0,
+            "type_checking_score": 0.0,
+            "metrics": {}
+        }
+        
+        if files:
+            # Analyze multiple files
+            file_count = 0
+            for file_path_str in files:
+                file_path = Path(file_path_str)
+                if not file_path.exists():
+                    continue
+                
+                try:
+                    code = file_path.read_text(encoding='utf-8')
+                    scores = self.scorer.score_file(file_path, code)
+                    
+                    all_files.append({
+                        "file": str(file_path),
+                        "scoring": scores
+                    })
+                    
+                    # Aggregate scores
+                    aggregated_scores["complexity_score"] += scores.get("complexity_score", 0.0)
+                    aggregated_scores["security_score"] += scores.get("security_score", 0.0)
+                    aggregated_scores["maintainability_score"] += scores.get("maintainability_score", 0.0)
+                    aggregated_scores["test_coverage_score"] += scores.get("test_coverage_score", 0.0)
+                    aggregated_scores["performance_score"] += scores.get("performance_score", 0.0)
+                    aggregated_scores["linting_score"] += scores.get("linting_score", 0.0)
+                    aggregated_scores["type_checking_score"] += scores.get("type_checking_score", 0.0)
+                    file_count += 1
+                except Exception as e:
+                    # Skip files that can't be analyzed
+                    continue
+            
+            # Calculate averages
+            if file_count > 0:
+                aggregated_scores["complexity_score"] /= file_count
+                aggregated_scores["security_score"] /= file_count
+                aggregated_scores["maintainability_score"] /= file_count
+                aggregated_scores["test_coverage_score"] /= file_count
+                aggregated_scores["performance_score"] /= file_count
+                aggregated_scores["linting_score"] /= file_count
+                aggregated_scores["type_checking_score"] /= file_count
+                
+                # Calculate overall score (weighted average)
+                aggregated_scores["overall_score"] = (
+                    (10 - aggregated_scores["complexity_score"]) * 0.20 +
+                    aggregated_scores["security_score"] * 0.30 +
+                    aggregated_scores["maintainability_score"] * 0.25 +
+                    aggregated_scores["test_coverage_score"] * 0.15 +
+                    aggregated_scores["performance_score"] * 0.10
+                )
+        else:
+            # Single file or project-level - use defaults
+            aggregated_scores["overall_score"] = 0.0
+        
+        # Prepare metadata
+        reviewer_config = self.config.agents.reviewer if self.config else None
+        threshold = reviewer_config.quality_threshold if reviewer_config else 70.0
+        
+        metadata = {
+            "timestamp": datetime.now(),
+            "project_name": self.config.project_name if self.config and self.config.project_name else "Unknown",
+            "version": self.config.version if self.config and self.config.version else "Unknown",
+            "thresholds": {
+                "overall": threshold,
+                "complexity": 5.0,
+                "security": 8.0,
+                "maintainability": 7.0
+            }
+        }
+        
+        # Generate reports based on format_type
+        reports = {}
+        
+        if format_type in ["json", "all"]:
+            reports["json"] = str(report_gen.generate_json_report(aggregated_scores, all_files, metadata))
+        
+        if format_type in ["markdown", "all"]:
+            reports["markdown"] = str(report_gen.generate_summary_report(aggregated_scores, all_files, metadata))
+        
+        if format_type in ["html", "all"]:
+            reports["html"] = str(report_gen.generate_html_report(aggregated_scores, all_files, metadata))
+        
+        if format_type == "all":
+            reports["historical"] = str(report_gen.save_historical_data(aggregated_scores, metadata))
+        
+        return {
+            "format": format_type,
+            "output_dir": str(report_gen.output_dir),
+            "reports": reports,
+            "summary": {
+                "files_analyzed": len(all_files),
+                "overall_score": aggregated_scores.get("overall_score", 0.0),
+                "passed": aggregated_scores.get("overall_score", 0.0) >= threshold
+            }
+        }
+    
+    async def check_duplication(self, file_path: Path) -> Dict[str, Any]:
+        """
+        Check code duplication using jscpd.
+        
+        Phase 6.4: Modern Quality Analysis - jscpd Integration
+        
+        Args:
+            file_path: Path to file or directory to analyze
+            
+        Returns:
+            Dictionary with duplication analysis results
+        """
+        # Get duplication report
+        report = self.scorer.get_duplication_report(file_path)
+        
+        # Get duplication score
+        duplication_score = self.scorer._calculate_duplication_score(file_path)
+        
+        # Get threshold from config
+        quality_tools = self.config.quality_tools if self.config else None
+        threshold = quality_tools.duplication_threshold if quality_tools else 3.0
+        
+        return {
+            "file_or_directory": str(file_path),
+            "available": report.get("available", False),
+            "duplication_percentage": report.get("percentage", 0.0),
+            "duplication_score": duplication_score,
+            "threshold": threshold,
+            "passed": report.get("percentage", 0.0) < threshold,
+            "total_lines": report.get("total_lines", 0),
+            "duplicated_lines": report.get("duplicated_lines", 0),
+            "duplicates": report.get("duplicates", []),
+            "file_stats": report.get("files", []),
+            "error": report.get("error") if "error" in report else None
+        }
+    
+    async def analyze_project(
+        self,
+        project_root: Optional[Path] = None,
+        include_comparison: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Analyze entire project with all services.
+        
+        Phase 6.4.2: Multi-Service Analysis
+        
+        Args:
+            project_root: Root directory of project (default: current directory)
+            include_comparison: Whether to include cross-service comparison
+        
+        Returns:
+            Dictionary with project-wide analysis results
+        """
+        if project_root is None:
+            project_root = Path.cwd()
+        
+        # Discover all services
+        discovery = ServiceDiscovery(project_root=project_root)
+        services = discovery.discover_services()
+        
+        if not services:
+            return {
+                "project_root": str(project_root),
+                "services_found": 0,
+                "error": "No services found in project"
+            }
+        
+        # Analyze all services in parallel
+        service_names = [s["name"] for s in services]
+        return await self.analyze_services(
+            services=service_names,
+            project_root=project_root,
+            include_comparison=include_comparison
+        )
+    
+    async def analyze_services(
+        self,
+        services: Optional[List[str]] = None,
+        project_root: Optional[Path] = None,
+        include_comparison: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Analyze specific services in parallel.
+        
+        Phase 6.4.2: Multi-Service Analysis
+        
+        Args:
+            services: List of service names or patterns (None = all services)
+            project_root: Root directory of project (default: current directory)
+            include_comparison: Whether to include cross-service comparison
+        
+        Returns:
+            Dictionary with service analysis results and aggregation
+        """
+        import asyncio
+        
+        if project_root is None:
+            project_root = Path.cwd()
+        
+        # Discover services
+        discovery = ServiceDiscovery(project_root=project_root)
+        
+        if services is None:
+            # Analyze all services
+            discovered_services = discovery.discover_services()
+        else:
+            # Analyze specific services
+            discovered_services = []
+            for service_name_or_pattern in services:
+                if '*' in service_name_or_pattern or '?' in service_name_or_pattern:
+                    # Pattern match
+                    matches = discovery.discover_by_pattern(service_name_or_pattern)
+                    discovered_services.extend(matches)
+                else:
+                    # Exact name match
+                    service = discovery.discover_service(service_name_or_pattern)
+                    if service:
+                        discovered_services.append(service)
+        
+        if not discovered_services:
+            return {
+                "project_root": str(project_root),
+                "services_found": 0,
+                "error": "No matching services found"
+            }
+        
+        # Analyze services in parallel
+        async def analyze_service(service: Dict[str, any]) -> Dict[str, Any]:
+            """Analyze a single service."""
+            service_path = Path(service["path"])
+            service_name = service["name"]
+            
+            try:
+                # Find all code files in service
+                code_files = []
+                for pattern in ["*.py", "*.ts", "*.tsx", "*.js", "*.jsx"]:
+                    code_files.extend(service_path.rglob(pattern))
+                
+                # Filter out excluded directories
+                excluded_dirs = {"node_modules", ".git", "__pycache__", ".venv", "venv"}
+                code_files = [
+                    f for f in code_files
+                    if not any(excluded in str(f) for excluded in excluded_dirs)
+                ]
+                
+                # Analyze files
+                all_scores = []
+                total_lines = 0
+                files_analyzed = 0
+                
+                for file_path in code_files[:100]:  # Limit to first 100 files per service
+                    try:
+                        code = file_path.read_text(encoding='utf-8', errors='ignore')
+                        scores = self.scorer.score_file(file_path, code)
+                        all_scores.append(scores)
+                        total_lines += len(code.splitlines())
+                        files_analyzed += 1
+                    except Exception:
+                        # Skip files that can't be analyzed
+                        continue
+                
+                # Aggregate scores for this service
+                if all_scores:
+                    avg_scores = {}
+                    for key in all_scores[0].keys():
+                        if key != "metrics":
+                            values = [s.get(key, 0.0) for s in all_scores]
+                            avg_scores[key] = sum(values) / len(values) if values else 0.0
+                    
+                    # Calculate overall score
+                    avg_scores["overall_score"] = avg_scores.get("overall_score", 0.0)
+                else:
+                    avg_scores = {
+                        "overall_score": 0.0,
+                        "complexity_score": 0.0,
+                        "security_score": 0.0,
+                        "maintainability_score": 0.0,
+                        "test_coverage_score": 0.0,
+                        "performance_score": 0.0,
+                        "linting_score": 0.0,
+                        "type_checking_score": 0.0,
+                        "duplication_score": 0.0
+                    }
+                
+                return {
+                    "service_name": service_name,
+                    "service_path": str(service_path),
+                    "relative_path": service.get("relative_path", ""),
+                    "scores": avg_scores,
+                    "files_analyzed": files_analyzed,
+                    "total_lines": total_lines,
+                    "status": "success"
+                }
+                
+            except Exception as e:
+                return {
+                    "service_name": service_name,
+                    "service_path": str(service_path),
+                    "scores": {},
+                    "files_analyzed": 0,
+                    "total_lines": 0,
+                    "status": "error",
+                    "error": str(e)
+                }
+        
+        # Run all service analyses in parallel
+        tasks = [analyze_service(service) for service in discovered_services]
+        service_results = await asyncio.gather(*tasks)
+        
+        # Aggregate results
+        aggregator = QualityAggregator()
+        
+        result = {
+            "project_root": str(project_root),
+            "services_found": len(discovered_services),
+            "services_analyzed": len([r for r in service_results if r.get("status") == "success"]),
+            "aggregated": aggregator.aggregate_service_scores(service_results)
+        }
+        
+        if include_comparison:
+            result["comparison"] = aggregator.compare_services(service_results)
+        
+        result["services"] = service_results
+        
+        return result
     
     async def close(self):
         """Clean up resources"""

@@ -10,6 +10,7 @@ import subprocess
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
+from .dependency_analyzer import DependencyAnalyzer
 
 
 class OpsAgent(BaseAgent):
@@ -30,6 +31,9 @@ class OpsAgent(BaseAgent):
         self.mal = mal or MAL(
             ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
         )
+        
+        # Initialize dependency analyzer
+        self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
     
     async def activate(self, project_root: Optional[Path] = None):
         await super().activate(project_root)
@@ -316,6 +320,78 @@ Return Dockerfile content and docker-compose.yml content."""
                 "status": "not_implemented"
             }
     
+    async def _handle_audit_dependencies(
+        self,
+        severity_threshold: Optional[str] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        """
+        Audit dependencies for security vulnerabilities.
+        
+        Phase 6.4.3: Dependency Analysis & Security Auditing
+        
+        Args:
+            severity_threshold: Minimum severity to report (low/medium/high/critical)
+        
+        Returns:
+            Dictionary with security audit results
+        """
+        if severity_threshold is None:
+            # Get from config
+            quality_tools = self.config.quality_tools if self.config else None
+            severity_threshold = quality_tools.dependency_audit_threshold if quality_tools else "high"
+        
+        audit_result = self.dependency_analyzer.run_security_audit(
+            severity_threshold=severity_threshold
+        )
+        
+        return {
+            "message": "Dependency security audit completed",
+            "severity_threshold": severity_threshold,
+            "vulnerabilities": audit_result.get("vulnerabilities", []),
+            "vulnerability_count": audit_result.get("vulnerability_count", 0),
+            "severity_breakdown": audit_result.get("severity_breakdown", {}),
+            "tools_available": audit_result.get("tools_available", {}),
+            "error": audit_result.get("error")
+        }
+    
+    async def _handle_dependency_tree(self, **kwargs: Any) -> Dict[str, Any]:
+        """
+        Visualize dependency tree.
+        
+        Phase 6.4.3: Dependency Analysis & Security Auditing
+        
+        Returns:
+            Dictionary with dependency tree information
+        """
+        tree_result = self.dependency_analyzer.get_dependency_tree()
+        
+        return {
+            "message": "Dependency tree generated",
+            "tree": tree_result.get("tree"),
+            "tree_json": tree_result.get("tree_json"),
+            "package_count": tree_result.get("package_count", 0),
+            "error": tree_result.get("error")
+        }
+    
+    async def _handle_check_vulnerabilities(
+        self,
+        severity_threshold: Optional[str] = None,
+        **kwargs: Any
+    ) -> Dict[str, Any]:
+        """
+        Check for dependency vulnerabilities (alias for audit-dependencies).
+        
+        Phase 6.4.3: Dependency Analysis & Security Auditing
+        
+        Args:
+            severity_threshold: Minimum severity to report (low/medium/high/critical)
+        
+        Returns:
+            Dictionary with vulnerability check results
+        """
+        return await self._handle_audit_dependencies(severity_threshold=severity_threshold, **kwargs)
+    
     async def _handle_help(self) -> Dict[str, Any]:
         """Show this help message."""
         help_message = {
@@ -323,6 +399,9 @@ Return Dockerfile content and docker-compose.yml content."""
             "*compliance-check [type]": "Check compliance with standards (GDPR, HIPAA, SOC2, general)",
             "*deploy [target] [environment]": "Deploy application to target environment (local, staging, production)",
             "*infrastructure-setup [type]": "Set up infrastructure as code (docker, kubernetes, terraform)",
+            "*audit-dependencies [severity_threshold]": "Audit dependencies for security vulnerabilities (Phase 6.4.3)",
+            "*dependency-tree": "Visualize dependency tree using pipdeptree (Phase 6.4.3)",
+            "*check-vulnerabilities [severity_threshold]": "Check for dependency vulnerabilities (Phase 6.4.3)",
             "*help": "Show this help message"
         }
         return {"content": help_message}

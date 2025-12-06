@@ -9,6 +9,7 @@ import json
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
+from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
 
 
 class ArchitectAgent(BaseAgent):
@@ -36,6 +37,11 @@ class ArchitectAgent(BaseAgent):
         self.mal = mal or MAL(
             ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
         )
+        
+        # Initialize Context7 helper
+        self.context7: Optional[Context7AgentHelper] = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for architect agent"""
@@ -111,12 +117,33 @@ class ArchitectAgent(BaseAgent):
         if not requirements:
             return {"error": "requirements is required"}
         
+        # Use Context7 to get documentation for mentioned technologies
+        context7_docs = {}
+        if self.context7:
+            full_text = f"{requirements} {context}"
+            if self.context7.should_use_context7(full_text):
+                # Extract potential library names and get docs
+                libraries = await self.context7.search_libraries(requirements, limit=5)
+                for lib_info in libraries:
+                    lib_name = lib_info.get("id", "").split("/")[-1] if isinstance(lib_info, dict) else str(lib_info)
+                    if lib_name:
+                        doc = await self.context7.get_documentation(lib_name, topic="architecture")
+                        if doc:
+                            context7_docs[lib_name] = doc.get("content", "")[:500]
+        
+        context7_section = ""
+        if context7_docs:
+            context7_section = "\n\nRelevant Architecture Documentation:\n"
+            for lib_name, doc_content in context7_docs.items():
+                context7_section += f"\n{lib_name} Architecture:\n{doc_content[:300]}...\n"
+        
         prompt = f"""Design a system architecture based on the following requirements.
 
 Requirements:
 {requirements}
 
 {f"Context: {context}" if context else ""}
+{context7_section}
 
 Provide a comprehensive architecture design including:
 1. System Overview
@@ -231,6 +258,26 @@ Format:
         if constraints is None:
             constraints = []
         
+        # Use Context7 to get documentation for mentioned technologies
+        context7_docs = {}
+        if self.context7:
+            full_text = f"{component_description} {requirements} {' '.join(constraints)}"
+            if self.context7.should_use_context7(full_text):
+                # Search for library mentions and get docs
+                libraries = await self.context7.search_libraries(component_description, limit=3)
+                for lib_info in libraries:
+                    lib_name = lib_info.get("id", "").split("/")[-1] if isinstance(lib_info, dict) else str(lib_info)
+                    if lib_name:
+                        doc = await self.context7.get_documentation(lib_name, topic="overview")
+                        if doc:
+                            context7_docs[lib_name] = doc.get("content", "")[:500]  # First 500 chars
+        
+        context7_section = ""
+        if context7_docs:
+            context7_section = "\n\nRelevant Technology Documentation from Context7:\n"
+            for lib_name, doc_content in context7_docs.items():
+                context7_section += f"\n{lib_name}:\n{doc_content[:300]}...\n"
+        
         prompt = f"""Select an appropriate technology stack for the following component.
 
 Component Description:
@@ -239,6 +286,7 @@ Component Description:
 {f"Requirements: {requirements}" if requirements else ""}
 
 {f"Constraints: {', '.join(constraints)}" if constraints else ""}
+{context7_section}
 
 For each technology recommendation, provide:
 1. Technology Name
@@ -262,7 +310,8 @@ Format as structured JSON with technology recommendations."""
                 "component": component_description,
                 "requirements": requirements,
                 "constraints": constraints,
-                "recommendations": response
+                "recommendations": response,
+                "context7_docs_used": list(context7_docs.keys()) if context7_docs else []
             }
             
             return {

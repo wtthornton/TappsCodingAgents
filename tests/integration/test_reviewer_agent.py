@@ -295,4 +295,146 @@ class TestReviewerAgent:
         assert elapsed < 5.0, f"Review took {elapsed:.2f}s, expected <5s"
         assert "scoring" in result
         assert result["scoring"]["overall_score"] >= 0
+    
+    # Phase 6.1: Ruff Integration Tests
+    @pytest.mark.asyncio
+    async def test_reviewer_lint_command(self, mock_mal, sample_python_file: Path):
+        """Test that lint command works (Phase 6)."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        
+        result = await reviewer.run("lint", file=str(sample_python_file))
+        
+        assert "file" in result
+        assert "linting_score" in result
+        assert "issues" in result
+        assert "issue_count" in result
+        assert "error_count" in result
+        assert "warning_count" in result
+        assert "fatal_count" in result
+        assert 0 <= result["linting_score"] <= 10
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_lint_command_no_file(self, mock_mal):
+        """Test that lint command handles missing file gracefully."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        
+        result = await reviewer.run("lint", file=None)
+        
+        assert "error" in result
+        assert "required" in result["error"].lower()
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_lint_file_non_python(self, mock_mal, tmp_path: Path):
+        """Test lint_file returns appropriate result for non-Python files."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("This is not Python code")
+        
+        result = await reviewer.lint_file(test_file)
+        
+        assert result["file"] == str(test_file)
+        assert result["linting_score"] == 10.0
+        assert result["issue_count"] == 0
+        assert "message" in result
+        assert "Python files" in result["message"]
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_lint_file_not_found(self, mock_mal, tmp_path: Path):
+        """Test lint_file raises FileNotFoundError for non-existent file."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        non_existent = tmp_path / "nonexistent.py"
+        
+        with pytest.raises(FileNotFoundError, match="File not found"):
+            await reviewer.lint_file(non_existent)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_get_commands_includes_lint(self, mock_mal):
+        """Test that get_commands includes *lint command (Phase 6)."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        commands = reviewer.get_commands()
+        
+        command_names = [cmd["command"] for cmd in commands]
+        assert "*lint" in command_names
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_includes_linting_score(self, mock_mal, sample_python_file: Path):
+        """Test that review command includes linting_score in results (Phase 6.1)."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        mock_mal.generate.return_value = "Code review feedback"
+        
+        result = await reviewer.run("review", file=str(sample_python_file))
+        
+        assert "scoring" in result
+        assert "linting_score" in result["scoring"]
+        assert "linting" in result["scoring"]["metrics"]
+    
+    # Phase 6.2: mypy Integration Tests
+    @pytest.mark.asyncio
+    async def test_reviewer_type_check_command(self, mock_mal, sample_python_file: Path):
+        """Test that type-check command works (Phase 6.2)."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        
+        result = await reviewer.run("type-check", file=str(sample_python_file))
+        
+        assert "file" in result
+        assert "type_checking_score" in result
+        assert "errors" in result
+        assert "error_count" in result
+        assert "error_codes" in result
+        assert 0 <= result["type_checking_score"] <= 10
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_type_check_command_no_file(self, mock_mal):
+        """Test that type-check command handles missing file gracefully."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        
+        result = await reviewer.run("type-check", file=None)
+        
+        assert "error" in result
+        assert "required" in result["error"].lower()
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_type_check_file_non_python(self, mock_mal, tmp_path: Path):
+        """Test type_check_file returns appropriate result for non-Python files."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        test_file = tmp_path / "test.txt"
+        test_file.write_text("This is not Python code")
+        
+        result = await reviewer.type_check_file(test_file)
+        
+        assert result["file"] == str(test_file)
+        assert result["type_checking_score"] == 10.0
+        assert result["error_count"] == 0
+        assert "message" in result
+        assert "Python files" in result["message"]
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_type_check_file_not_found(self, mock_mal, tmp_path: Path):
+        """Test type_check_file raises FileNotFoundError for non-existent file."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        non_existent = tmp_path / "nonexistent.py"
+        
+        with pytest.raises(FileNotFoundError, match="File not found"):
+            await reviewer.type_check_file(non_existent)
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_get_commands_includes_type_check(self, mock_mal):
+        """Test that get_commands includes *type-check command (Phase 6.2)."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        commands = reviewer.get_commands()
+        
+        command_names = [cmd["command"] for cmd in commands]
+        assert "*type-check" in command_names
+    
+    @pytest.mark.asyncio
+    async def test_reviewer_review_includes_type_checking_score(self, mock_mal, sample_python_file: Path):
+        """Test that review command includes type_checking_score in results (Phase 6.2)."""
+        reviewer = ReviewerAgent(mal=mock_mal)
+        mock_mal.generate.return_value = "Code review feedback"
+        
+        result = await reviewer.run("review", file=str(sample_python_file))
+        
+        assert "scoring" in result
+        assert "type_checking_score" in result["scoring"]
+        assert "type_checking" in result["scoring"]["metrics"]
 

@@ -121,6 +121,69 @@ class DocumenterAgentConfig(BaseModel):
     docstring_format: str = Field(default="google", description="Docstring format (google/numpy/sphinx)")
 
 
+class Context7KnowledgeBaseConfig(BaseModel):
+    """Configuration for Context7 knowledge base caching"""
+    
+    enabled: bool = Field(default=True, description="Enable KB caching")
+    location: str = Field(default=".tapps-agents/kb/context7-cache", description="KB cache directory")
+    sharding: bool = Field(default=True, description="Enable library-based sharding")
+    indexing: bool = Field(default=True, description="Enable indexing")
+    max_cache_size: str = Field(default="100MB", description="Maximum cache size")
+    hit_rate_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Target hit rate threshold")
+    fuzzy_match_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Fuzzy match confidence threshold")
+
+
+class Context7RefreshConfig(BaseModel):
+    """Configuration for Context7 auto-refresh system"""
+    
+    enabled: bool = Field(default=True, description="Enable auto-refresh")
+    default_max_age_days: int = Field(default=30, ge=1, description="Default max age for cache entries (days)")
+    check_on_access: bool = Field(default=True, description="Check staleness on access")
+    auto_queue: bool = Field(default=True, description="Automatically queue stale entries")
+    auto_process_on_startup: bool = Field(default=False, description="Process queue on agent startup")
+
+
+class Context7Config(BaseModel):
+    """Configuration for Context7 integration"""
+    
+    enabled: bool = Field(default=True, description="Enable Context7 integration")
+    default_token_limit: int = Field(default=3000, ge=100, description="Default token limit for Context7 docs")
+    cache_duration: int = Field(default=3600, ge=0, description="Cache duration in seconds")
+    integration_level: str = Field(default="optional", description="Integration level (mandatory/optional)")
+    usage_requirement: Optional[str] = Field(default=None, description="Usage requirement description")
+    bypass_forbidden: bool = Field(default=True, description="Allow bypassing if Context7 unavailable")
+    
+    knowledge_base: Context7KnowledgeBaseConfig = Field(default_factory=Context7KnowledgeBaseConfig)
+    refresh: Context7RefreshConfig = Field(default_factory=Context7RefreshConfig)
+
+
+class QualityToolsConfig(BaseModel):
+    """Configuration for quality analysis tools (Phase 6 - 2025 Standards)"""
+    
+    # Ruff configuration
+    ruff_enabled: bool = Field(default=True, description="Enable Ruff linting")
+    ruff_config_path: Optional[str] = Field(default=None, description="Path to ruff.toml or pyproject.toml (auto-detected if None)")
+    
+    # mypy configuration
+    mypy_enabled: bool = Field(default=True, description="Enable mypy type checking")
+    mypy_strict: bool = Field(default=False, description="Enable strict mode for mypy")
+    mypy_config_path: Optional[str] = Field(default=None, description="Path to mypy.ini or pyproject.toml (auto-detected if None)")
+    
+    # jscpd configuration
+    jscpd_enabled: bool = Field(default=True, description="Enable jscpd duplication detection")
+    duplication_threshold: float = Field(default=3.0, ge=0.0, le=100.0, description="Maximum duplication percentage threshold")
+    min_duplication_lines: int = Field(default=5, ge=3, description="Minimum lines for duplication detection")
+    
+    # TypeScript/JavaScript configuration
+    typescript_enabled: bool = Field(default=True, description="Enable TypeScript/JavaScript support")
+    eslint_config: Optional[str] = Field(default=None, description="Path to ESLint config file")
+    tsconfig_path: Optional[str] = Field(default=None, description="Path to tsconfig.json")
+    
+    # Dependency security auditing
+    pip_audit_enabled: bool = Field(default=True, description="Enable pip-audit security scanning")
+    dependency_audit_threshold: str = Field(default="high", description="Minimum severity threshold (low/medium/high/critical)")
+
+
 class AgentsConfig(BaseModel):
     """Configuration for all agents"""
     
@@ -143,6 +206,8 @@ class ProjectConfig(BaseModel):
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     scoring: ScoringConfig = Field(default_factory=ScoringConfig)
     mal: MALConfig = Field(default_factory=MALConfig)
+    context7: Optional[Context7Config] = Field(default_factory=Context7Config, description="Context7 integration configuration")
+    quality_tools: Optional[QualityToolsConfig] = Field(default_factory=QualityToolsConfig, description="Quality analysis tools configuration (Phase 6)")
     
     model_config = {
         "extra": "ignore",  # Ignore unknown fields

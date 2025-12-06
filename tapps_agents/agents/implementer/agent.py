@@ -10,6 +10,7 @@ import shutil
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config, ImplementerAgentConfig
+from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
 from .code_generator import CodeGenerator
 # Import ReviewerAgent (circular import handled lazily)
 from typing import TYPE_CHECKING
@@ -46,6 +47,11 @@ class ImplementerAgent(BaseAgent):
         self.auto_approve_threshold = implementer_config.auto_approve_threshold if implementer_config else 80.0
         self.backup_files = implementer_config.backup_files if implementer_config else True
         self.max_file_size = implementer_config.max_file_size if implementer_config else 10 * 1024 * 1024
+        
+        # Initialize Context7 helper
+        self.context7: Optional[Context7AgentHelper] = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
         
         # Reviewer agent for code review
         self.reviewer = None

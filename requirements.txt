@@ -21,4 +21,12 @@ pytest-timeout>=2.2.0
 
 # Development
 black>=24.0.0
-ruff>=0.1.0
+# Code Quality Tools (2025 Standards - Phase 6)
+ruff>=0.8.0,<1.0           # Fast Python linter (10-100x faster than pylint)
+mypy>=1.13.0,<2.0          # Static type checking
+pip-audit>=2.6.0           # Dependency security auditing
+pipdeptree>=2.5.0          # Dependency tree visualization
+
+# Reporting (Phase 6.3)
+jinja2>=3.1.0              # HTML template rendering for quality reports
+plotly>=5.18.0             # Optional: Trend visualization (for future enhancements)
