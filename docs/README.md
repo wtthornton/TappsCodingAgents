@@ -16,6 +16,7 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 - **[Industry Experts Guide](EXPERTS.md)** - Domain expert configuration and usage
 
 ### Feature Guides
+- **[Enhancer Agent Guide](ENHANCER_AGENT.md)** - Prompt enhancement utility with expert integration
 - **[Expert Configuration Guide](EXPERTS/EXPERT_CONFIG_GUIDE.md)** - Creating custom experts
 - **[Expert Examples Guide](EXPERTS/EXPERT_EXAMPLES_GUIDE.md)** - Real-world examples
 - **[Knowledge Base Guide](EXPERTS/KNOWLEDGE_BASE_GUIDE.md)** - Building knowledge bases
@@ -95,8 +96,8 @@ We welcome contributions to improve documentation! See [Contributing Guidelines]
 
 ## 🔄 Documentation Versions
 
-- **Current Version**: 1.5.0 (December 2025)
-- **Latest Updates**: Phase 6 complete - Modern Quality Analysis
+- **Current Version**: 1.6.0 (December 2025)
+- **Latest Updates**: Enhancer Agent - Prompt Enhancement Utility
 - **Last Reviewed**: December 2025
 
 For version-specific documentation, see [CHANGELOG](../CHANGELOG.md).

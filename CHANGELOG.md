@@ -5,6 +5,22 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.6.0] - 2025-12-XX
+
+### Added
+- **Enhancer Agent - Prompt Enhancement Utility**
+  - Full 7-stage enhancement pipeline (analysis, requirements, architecture, codebase context, quality, implementation, synthesis)
+  - Quick enhancement mode (stages 1-3) for fast iteration
+  - Stage-by-stage execution for debugging and customization
+  - Session management with save/resume capability
+  - Industry Expert integration with weighted consultation
+  - Multiple output formats (Markdown, JSON, YAML)
+  - CLI commands: `enhance`, `enhance-quick`, `enhance-stage`, `enhance-resume`
+  - Configuration system via `.tapps-agents/enhancement-config.yaml`
+  - Workflow definition: `workflows/prompt-enhancement.yaml`
+  - Comprehensive documentation and examples
+  - See [Enhancer Agent Guide](docs/ENHANCER_AGENT.md) for details
+
 ## [1.5.0] - 2025-12-XX
 
 ### Added
@@ -138,6 +154,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Features |
 |---------|------|--------------|
+| 1.6.0 | Dec 2025 | Enhancer Agent - Prompt Enhancement Utility with Expert Integration |
 | 1.5.0 | Dec 2025 | Phase 6 Complete - Modern Quality Analysis (Ruff, mypy, TypeScript, multi-service, dependencies) |
 | 1.4.0 | Dec 2025 | Phase 6.1-6.3 - Reporting, Type Checking, Ruff Integration |
 | 1.3.0 | Dec 2025 | Phase 5 Complete - Context7 Integration |

@@ -20,6 +20,7 @@ from .agents.architect.agent import ArchitectAgent
 from .agents.designer.agent import DesignerAgent
 from .agents.improver.agent import ImproverAgent
 from .agents.ops.agent import OpsAgent
+from .agents.enhancer.agent import EnhancerAgent
 
 
 async def review_command(file_path: str, model: Optional[str] = None, output_format: str = "json"):
@@ -432,6 +433,31 @@ def main():
     infrastructure_setup_parser.add_argument("--type", default="docker", help="Infrastructure type (docker, kubernetes, terraform)")
     
     ops_help_parser = ops_subparsers.add_parser("help", aliases=["*help"], help="Show ops commands")
+    
+    # Enhancer agent commands
+    enhancer_parser = subparsers.add_parser("enhancer", help="Enhancer Agent commands")
+    enhancer_subparsers = enhancer_parser.add_subparsers(dest="command", help="Commands")
+    
+    enhance_parser = enhancer_subparsers.add_parser("enhance", aliases=["*enhance"], help="Full enhancement pipeline")
+    enhance_parser.add_argument("prompt", help="Prompt to enhance")
+    enhance_parser.add_argument("--format", choices=["markdown", "json", "yaml"], default="markdown", help="Output format")
+    enhance_parser.add_argument("--output", help="Output file path")
+    enhance_parser.add_argument("--config", help="Enhancement config file path")
+    
+    enhance_quick_parser = enhancer_subparsers.add_parser("enhance-quick", aliases=["*enhance-quick"], help="Quick enhancement (stages 1-3)")
+    enhance_quick_parser.add_argument("prompt", help="Prompt to enhance")
+    enhance_quick_parser.add_argument("--format", choices=["markdown", "json", "yaml"], default="markdown", help="Output format")
+    enhance_quick_parser.add_argument("--output", help="Output file path")
+    
+    enhance_stage_parser = enhancer_subparsers.add_parser("enhance-stage", aliases=["*enhance-stage"], help="Run specific enhancement stage")
+    enhance_stage_parser.add_argument("stage", help="Stage to run (analysis, requirements, architecture, etc.)")
+    enhance_stage_parser.add_argument("--prompt", help="Prompt to enhance")
+    enhance_stage_parser.add_argument("--session-id", help="Session ID to continue")
+    
+    enhance_resume_parser = enhancer_subparsers.add_parser("enhance-resume", aliases=["*enhance-resume"], help="Resume interrupted enhancement")
+    enhance_resume_parser.add_argument("session_id", help="Session ID to resume")
+    
+    enhancer_help_parser = enhancer_subparsers.add_parser("help", aliases=["*help"], help="Show enhancer commands")
     
     # Orchestrator agent commands
     orchestrator_parser = subparsers.add_parser("orchestrator", help="Orchestrator Agent commands")
@@ -934,6 +960,64 @@ def main():
             sys.exit(1)
         print(json.dumps(result, indent=2))
         asyncio.run(ops.close())
+    elif args.agent == "enhancer":
+        command = args.command.lstrip("*") if args.command else None
+        enhancer = EnhancerAgent()
+        asyncio.run(enhancer.activate())
+        
+        if command == "enhance" or command == "*enhance":
+            result = asyncio.run(enhancer.run(
+                "enhance",
+                prompt=args.prompt,
+                output_format=getattr(args, "format", "markdown"),
+                output_file=getattr(args, "output", None),
+                config_path=getattr(args, "config", None)
+            ))
+        elif command == "enhance-quick" or command == "*enhance-quick":
+            result = asyncio.run(enhancer.run(
+                "enhance-quick",
+                prompt=args.prompt,
+                output_format=getattr(args, "format", "markdown"),
+                output_file=getattr(args, "output", None)
+            ))
+        elif command == "enhance-stage" or command == "*enhance-stage":
+            result = asyncio.run(enhancer.run(
+                "enhance-stage",
+                stage=args.stage,
+                prompt=getattr(args, "prompt", None),
+                session_id=getattr(args, "session_id", None)
+            ))
+        elif command == "enhance-resume" or command == "*enhance-resume":
+            result = asyncio.run(enhancer.run(
+                "enhance-resume",
+                session_id=args.session_id
+            ))
+        elif command == "help" or command == "*help":
+            result = asyncio.run(enhancer.run("help"))
+            print(result["content"])
+            asyncio.run(enhancer.close())
+            return
+        else:
+            result = asyncio.run(enhancer.run("help"))
+            print(result["content"])
+            asyncio.run(enhancer.close())
+            return
+        
+        if "error" in result:
+            print(f"Error: {result['error']}", file=sys.stderr)
+            sys.exit(1)
+        
+        # Format output
+        if getattr(args, "format", "markdown") == "json":
+            print(json.dumps(result, indent=2))
+        else:
+            enhanced = result.get("enhanced_prompt", {})
+            if isinstance(enhanced, dict):
+                print(enhanced.get("enhanced_prompt", json.dumps(enhanced, indent=2)))
+            else:
+                print(enhanced)
+        
+        asyncio.run(enhancer.close())
     else:
         # Show main help
         parser.print_help()

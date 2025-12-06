@@ -182,6 +182,25 @@ python -m tapps_agents.cli debugger analyze-error \
   --code-context "def get_user(id): return users[id]"
 ```
 
+### Example 6: Enhance Prompts
+
+```bash
+# Full enhancement pipeline (all stages)
+python -m tapps_agents.cli enhancer enhance \
+  "Create a login system" \
+  --output enhanced-prompt.md
+
+# Quick enhancement (stages 1-3 only)
+python -m tapps_agents.cli enhancer enhance-quick \
+  "Add user authentication"
+
+# Run specific stage
+python -m tapps_agents.cli enhancer enhance-stage analysis \
+  "Create payment processing system"
+```
+
+**Output:** Enhanced prompt with requirements, architecture guidance, expert domain context, quality standards, and implementation strategy.
+
 ---
 
 ## Project Setup (Optional but Recommended)
@@ -275,6 +294,7 @@ See `examples/experts/` for complete examples.
 | **improver** | Code refactoring | `refactor`, `optimize`, `improve-quality` |
 | **ops** | Security, deployment | `security-scan`, `compliance-check`, `deploy` |
 | **orchestrator** | Workflow coordination | `workflow-start`, `workflow-status`, `gate` |
+| **enhancer** | Prompt enhancement | `enhance`, `enhance-quick`, `enhance-stage` |
 
 **Get help for any agent:**
 ```bash

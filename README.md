@@ -11,12 +11,13 @@
 
 TappsCodingAgents provides a standardized framework for building AI coding agents with:
 
-- **Workflow Agents** (12): Standard SDLC task execution
+- **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
 - **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
 - **Claude Code Compatible**: Native Agent Skills format
+- **Prompt Enhancement Utility**: Transform simple prompts into comprehensive, context-aware prompts
 
 ### Enhanced Features (v1.1)
 
@@ -35,7 +36,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - Comprehensive CLI commands for KB management
 
 ✅ **Core Framework Complete:**
-- **All 12 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator)
+- **All 13 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer)
 - **Complete Code Scoring System** (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
 - **Model Abstraction Layer (MAL)** - Ollama + Cloud Fallback (Anthropic & OpenAI)
 - **Tiered Context System** (90%+ token savings, 3 tiers with caching)
@@ -68,7 +69,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 | **Knowledge** | Industry Experts | Business domain authority | N (per project) |
 | **Execution** | Workflow Agents | SDLC task execution | 12 (fixed) |
 
-### Workflow Agents (12)
+### Workflow Agents (13)
 
 - **Planning**: analyst ✅, planner ✅ (Story Generation)
 - **Design**: architect ✅, designer ✅
@@ -77,6 +78,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Quality**: reviewer ✅ (with Code Scoring), improver ✅ (Refactoring & Optimization)
 - **Operations**: ops ✅ (Security, Compliance, Deployment)
 - **Orchestration**: orchestrator ✅ (Workflow Coordination)
+- **Enhancement**: enhancer ✅ (Prompt Enhancement Utility - NEW)
 
 ### Code Scoring System
 
@@ -121,6 +123,7 @@ TappsCodingAgents/
 - **[Quick Start Guide](QUICK_START.md)** - 🚀 Get started in 10 minutes
 - **[Documentation Index](docs/README.md)** - Complete documentation overview
 - **[API Reference](docs/API.md)** - Python API and CLI documentation
+- **[Enhancer Agent Guide](docs/ENHANCER_AGENT.md)** - Prompt enhancement utility documentation
 
 ### Core Guides
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - System architecture and design
@@ -142,8 +145,8 @@ TappsCodingAgents/
 
 ## Status
 
-**Phase**: Implementation Phase - Phase 5 Complete, Phase 6 Ready to Start  
-**Version**: 1.5.0-draft  
+**Phase**: Implementation Phase - Phase 6 Complete, Enhancer Agent Added  
+**Version**: 1.6.0  
 **Last Updated**: December 2025
 
 ## License
