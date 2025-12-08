@@ -65,8 +65,7 @@ class Context7AgentHelper:
         self.kb_lookup = KBLookup(
             kb_cache=self.kb_cache,
             mcp_gateway=mcp_gateway,
-            fuzzy_matcher=self.fuzzy_matcher,
-            analytics_manager=self.analytics
+            fuzzy_threshold=0.7
         )
     
     async def get_documentation(

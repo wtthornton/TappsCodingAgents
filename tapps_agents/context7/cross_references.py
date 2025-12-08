@@ -35,6 +35,12 @@ class CrossReference:
     @classmethod
     def from_dict(cls, data: Dict) -> "CrossReference":
         """Create from dictionary."""
+        if isinstance(data, str):
+            # Handle case where data is a string (shouldn't happen, but be defensive)
+            raise ValueError(f"Expected dict, got string: {data}")
+        if not isinstance(data, dict):
+            # Handle case where data is not a dict
+            raise ValueError(f"Expected dict, got {type(data)}: {data}")
         return cls(**data)
 
 
@@ -58,7 +64,14 @@ class TopicIndex:
     @classmethod
     def from_dict(cls, data: Dict) -> "TopicIndex":
         """Create from dictionary."""
-        relationships = [CrossReference.from_dict(r) for r in data.get("relationships", [])]
+        relationships = []
+        for r in data.get("relationships", []):
+            if isinstance(r, dict):
+                try:
+                    relationships.append(CrossReference.from_dict(r))
+                except (ValueError, TypeError):
+                    # Skip invalid entries
+                    continue
         return cls(
             topic=data["topic"],
             libraries=data.get("libraries", {}),
@@ -101,9 +114,16 @@ class CrossReferenceManager:
             
             if data:
                 for key, refs_data in data.items():
-                    self._cross_refs[key] = [
-                        CrossReference.from_dict(ref_data) for ref_data in refs_data
-                    ]
+                    if not isinstance(refs_data, list):
+                        continue
+                    self._cross_refs[key] = []
+                    for ref_data in refs_data:
+                        if isinstance(ref_data, dict):
+                            try:
+                                self._cross_refs[key].append(CrossReference.from_dict(ref_data))
+                            except (ValueError, TypeError):
+                                # Skip invalid entries
+                                continue
         except (yaml.YAMLError, IOError) as e:
             # Start with empty cross-references on error
             self._cross_refs = {}

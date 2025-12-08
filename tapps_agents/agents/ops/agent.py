@@ -20,11 +20,16 @@ class OpsAgent(BaseAgent):
     Permissions: Read, Write, Grep, Glob, Bash (no Edit)
     """
     
-    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None):
+    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None, project_root: Optional[Path] = None):
         super().__init__(agent_id="ops", agent_name="Ops Agent", config=config)
         if config is None:
             config = load_config()
         self.config = config
+        
+        # Set project_root early (before activate) if provided, otherwise use cwd
+        if project_root is None:
+            project_root = Path.cwd()
+        self.project_root = Path(project_root).resolve()
         
         # Initialize MAL with config
         mal_config = config.mal if config else None
@@ -36,6 +41,12 @@ class OpsAgent(BaseAgent):
         self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
     
     async def activate(self, project_root: Optional[Path] = None):
+        # Update project_root if provided
+        if project_root is not None:
+            self.project_root = Path(project_root).resolve()
+            # Reinitialize dependency analyzer with new project_root
+            self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
+        
         await super().activate(project_root)
         self.greet()
         await self.run("help")

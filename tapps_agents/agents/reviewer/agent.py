@@ -504,23 +504,24 @@ class ReviewerAgent(BaseAgent):
         elif file_ext == ".py":
             # Use mypy for Python files
             type_checking_score = self.scorer._calculate_type_checking_score(file_path)
-            errors = self.scorer.get_mypy_errors(file_path)
+            errors = self.scorer.get_mypy_errors(file_path)  # Returns List[Dict]
             
             # Extract unique error codes
-            error_codes = list(set([err.get("error_code") for err in errors.get("errors", []) if err.get("error_code")]))
+            error_codes = list(set([err.get("error_code") for err in errors if err.get("error_code")]))
             
             return {
                 "file": str(file_path),
                 "type_checking_score": type_checking_score,
-                "errors": errors.get("errors", []),
-                "error_count": errors.get("error_count", 0),
+                "errors": errors,  # Already a list
+                "error_count": len(errors),
                 "error_codes": error_codes,
                 "tool": "mypy"
             }
         else:
+            # Non-Python files can't be type-checked, so they get a perfect score
             return {
                 "file": str(file_path),
-                "type_checking_score": 5.0,
+                "type_checking_score": 10.0,
                 "errors": [],
                 "error_count": 0,
                 "error_codes": [],

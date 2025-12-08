@@ -2,6 +2,7 @@
 Context7 Commands - CLI commands for Context7 KB management.
 """
 
+import re
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 from datetime import datetime
@@ -20,21 +21,58 @@ from .refresh_queue import RefreshQueue
 from ..core.config import ProjectConfig
 
 
+def _parse_size_string(size_str: str) -> int:
+    """
+    Parse size string like "100MB" or "1GB" into bytes.
+    
+    Args:
+        size_str: Size string (e.g., "100MB", "1GB", "500KB")
+    
+    Returns:
+        Size in bytes
+    """
+    if not size_str:
+        return 100 * 1024 * 1024  # Default 100MB
+    
+    # Match pattern like "100MB", "1.5GB", etc.
+    match = re.match(r'^(\d+(?:\.\d+)?)\s*([KMGT]?B?)$', size_str.upper().strip())
+    if not match:
+        # If parsing fails, default to 100MB
+        return 100 * 1024 * 1024
+    
+    value = float(match.group(1))
+    unit = match.group(2) or 'B'
+    
+    multipliers = {
+        'B': 1,
+        'KB': 1024,
+        'MB': 1024 * 1024,
+        'GB': 1024 * 1024 * 1024,
+        'TB': 1024 * 1024 * 1024 * 1024
+    }
+    
+    return int(value * multipliers.get(unit, 1))
+
+
 class Context7Commands:
     """
     Context7 KB commands for CLI/agent interface.
     """
     
-    def __init__(self, config: ProjectConfig, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Optional[Path] = None, config: Optional[ProjectConfig] = None):
         """
         Initialize Context7 commands.
         
         Args:
-            config: ProjectConfig instance
-            project_root: Optional project root path
+            project_root: Optional project root path (defaults to cwd)
+            config: Optional ProjectConfig instance (loads if not provided)
         """
         if project_root is None:
             project_root = Path.cwd()
+        
+        if config is None:
+            from ..core.config import load_config
+            config = load_config()
         
         context7_config = config.context7
         if not context7_config or not context7_config.enabled:
@@ -60,12 +98,17 @@ class Context7Commands:
             self.cache_structure.refresh_queue_file,
             self.staleness_policy_manager
         )
+        # Parse max_cache_size string (e.g., "100MB") to bytes
+        max_cache_size_bytes = _parse_size_string(
+            context7_config.knowledge_base.max_cache_size
+        )
+        
         self.cleanup = KBCleanup(
             self.cache_structure,
             self.metadata_manager,
             self.staleness_policy_manager,
             self.analytics,
-            max_cache_size_bytes=context7_config.knowledge_base.max_size_mb * 1024 * 1024
+            max_cache_size_bytes=max_cache_size_bytes
         )
         self.cross_refs = CrossReferenceManager(self.cache_structure)
         
@@ -73,8 +116,7 @@ class Context7Commands:
         self.kb_lookup = KBLookup(
             kb_cache=self.kb_cache,
             mcp_gateway=None,  # Set via set_mcp_gateway
-            fuzzy_matcher=self.fuzzy_matcher,
-            analytics_manager=self.analytics
+            fuzzy_threshold=0.7
         )
     
     def set_mcp_gateway(self, mcp_gateway):

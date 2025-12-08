@@ -1,0 +1,39 @@
+# TappsCodingAgents Industry Experts Configuration
+# .tapps-agents/experts.yaml
+
+experts:
+  # AI Agent Framework Expert
+  - expert_id: expert-ai-frameworks
+    expert_name: AI Agent Framework Expert
+    primary_domain: ai-agent-framework
+    rag_enabled: true
+    fine_tuned: false
+
+  # Code Quality & Analysis Expert
+  - expert_id: expert-code-quality
+    expert_name: Code Quality & Analysis Expert
+    primary_domain: code-quality-analysis
+    rag_enabled: true
+    fine_tuned: false
+
+  # Software Architecture Expert
+  - expert_id: expert-software-architecture
+    expert_name: Software Architecture Expert
+    primary_domain: software-architecture
+    rag_enabled: true
+    fine_tuned: false
+
+  # Development Workflow Expert
+  - expert_id: expert-devops
+    expert_name: Development Workflow Expert
+    primary_domain: development-workflow
+    rag_enabled: true
+    fine_tuned: false
+
+  # Documentation & Knowledge Management Expert
+  - expert_id: expert-documentation
+    expert_name: Documentation & Knowledge Management Expert
+    primary_domain: documentation-knowledge-management
+    rag_enabled: true
+    fine_tuned: false
+

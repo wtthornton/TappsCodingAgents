@@ -1024,5 +1024,20 @@ def main():
 
 
 if __name__ == "__main__":
+    # Run startup routines (documentation refresh) before main
+    import asyncio
+    from .core.startup import startup_routines
+    
+    async def startup():
+        """Run startup routines in background."""
+        try:
+            await startup_routines(refresh_docs=True, background_refresh=True)
+        except Exception:
+            # Don't fail if startup routines fail
+            pass
+    
+    # Start startup routines in background
+    asyncio.run(startup())
+    
     main()
 

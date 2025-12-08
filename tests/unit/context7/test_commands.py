@@ -45,7 +45,7 @@ def disabled_config():
 @pytest.fixture
 def commands(project_config, temp_cache_dir):
     """Create Context7Commands instance."""
-    return Context7Commands(project_config, project_root=temp_cache_dir.parent)
+    return Context7Commands(project_root=temp_cache_dir.parent, config=project_config)
 
 
 @pytest.fixture

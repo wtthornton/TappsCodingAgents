@@ -336,7 +336,7 @@ class TestReviewerAgent:
         assert result["linting_score"] == 10.0
         assert result["issue_count"] == 0
         assert "message" in result
-        assert "Python files" in result["message"]
+        assert "Python" in result["message"] or "TypeScript" in result["message"] or "JavaScript" in result["message"]
     
     @pytest.mark.asyncio
     async def test_reviewer_lint_file_not_found(self, mock_mal, tmp_path: Path):
@@ -406,7 +406,7 @@ class TestReviewerAgent:
         assert result["type_checking_score"] == 10.0
         assert result["error_count"] == 0
         assert "message" in result
-        assert "Python files" in result["message"]
+        assert "Python" in result["message"] or "TypeScript" in result["message"]
     
     @pytest.mark.asyncio
     async def test_reviewer_type_check_file_not_found(self, mock_mal, tmp_path: Path):

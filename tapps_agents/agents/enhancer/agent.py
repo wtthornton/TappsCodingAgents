@@ -7,6 +7,8 @@ from typing import Dict, Any, Optional, List
 from datetime import datetime
 import json
 import hashlib
+import sys
+import asyncio
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
@@ -155,46 +157,86 @@ class EnhancerAgent(BaseAgent):
         session_id = self._create_session(prompt, enhancement_config)
         session = self.current_session
         
+        # Calculate total stages for progress tracking
+        total_stages = sum([
+            enhancement_config.get("stages", {}).get("analysis", True),
+            enhancement_config.get("stages", {}).get("requirements", True),
+            enhancement_config.get("stages", {}).get("architecture", True),
+            enhancement_config.get("stages", {}).get("codebase_context", True),
+            enhancement_config.get("stages", {}).get("quality", True),
+            enhancement_config.get("stages", {}).get("implementation", True),
+            enhancement_config.get("stages", {}).get("synthesis", True)
+        ])
+        current_stage = 0
+        
         try:
             # Stage 1: Analysis
             if enhancement_config.get("stages", {}).get("analysis", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Analysis", "Analyzing prompt intent and scope...")
+                await asyncio.sleep(0.01)  # Ensure output appears immediately
                 session["stages"]["analysis"] = await self._stage_analysis(prompt)
+                self._print_progress(current_stage, total_stages, "Analysis", "[OK] Analysis complete")
             
             # Stage 2: Requirements
             if enhancement_config.get("stages", {}).get("requirements", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Requirements", "Gathering requirements from analyst and experts...")
+                await asyncio.sleep(0.01)
                 session["stages"]["requirements"] = await self._stage_requirements(
                     prompt, session["stages"].get("analysis", {})
                 )
+                self._print_progress(current_stage, total_stages, "Requirements", "[OK] Requirements gathered")
             
             # Stage 3: Architecture
             if enhancement_config.get("stages", {}).get("architecture", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Architecture", "Generating architecture guidance...")
+                await asyncio.sleep(0.01)
                 session["stages"]["architecture"] = await self._stage_architecture(
                     prompt, session["stages"].get("requirements", {})
                 )
+                self._print_progress(current_stage, total_stages, "Architecture", "[OK] Architecture guidance complete")
             
             # Stage 4: Codebase Context
             if enhancement_config.get("stages", {}).get("codebase_context", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Codebase Context", "Analyzing codebase and finding related files...")
+                await asyncio.sleep(0.01)
                 session["stages"]["codebase_context"] = await self._stage_codebase_context(
                     prompt, session["stages"].get("analysis", {})
                 )
+                self._print_progress(current_stage, total_stages, "Codebase Context", "[OK] Codebase context injected")
             
             # Stage 5: Quality Standards
             if enhancement_config.get("stages", {}).get("quality", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Quality Standards", "Defining quality standards and thresholds...")
+                await asyncio.sleep(0.01)
                 session["stages"]["quality"] = await self._stage_quality(
                     prompt, session["stages"].get("requirements", {})
                 )
+                self._print_progress(current_stage, total_stages, "Quality Standards", "[OK] Quality standards defined")
             
             # Stage 6: Implementation Strategy
             if enhancement_config.get("stages", {}).get("implementation", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Implementation Strategy", "Creating implementation plan and task breakdown...")
+                await asyncio.sleep(0.01)
                 session["stages"]["implementation"] = await self._stage_implementation(
                     prompt, session["stages"].get("requirements", {}), session["stages"].get("architecture", {})
                 )
+                self._print_progress(current_stage, total_stages, "Implementation Strategy", "[OK] Implementation plan created")
             
             # Stage 7: Synthesis
             if enhancement_config.get("stages", {}).get("synthesis", True):
+                current_stage += 1
+                self._print_progress(current_stage, total_stages, "Synthesis", "Synthesizing enhanced prompt from all stages...")
+                await asyncio.sleep(0.01)
                 session["stages"]["synthesis"] = await self._stage_synthesis(
                     prompt, session["stages"], output_format
                 )
+                self._print_progress(current_stage, total_stages, "Synthesis", "[OK] Enhanced prompt synthesized")
             
             # Save session
             self._save_session(session_id, session)
@@ -208,9 +250,16 @@ class EnhancerAgent(BaseAgent):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 if output_format == "json":
                     output_path.write_text(json.dumps(result, indent=2))
+                    if isinstance(result, dict):
+                        result["output_file"] = str(output_path)
                 else:
                     output_path.write_text(result)
-                result["output_file"] = str(output_path)
+                    # For markdown, result is a string, so we can't add to it
+                    # Return dict with both the markdown and file path
+                    result = {
+                        "enhanced_prompt": result,
+                        "output_file": str(output_path)
+                    }
             
             return {
                 "success": True,
@@ -236,24 +285,42 @@ class EnhancerAgent(BaseAgent):
         session_id = self._create_session(prompt, {"stages": {"analysis": True, "requirements": True, "architecture": True}})
         session = self.current_session
         
+        total_stages = 4  # analysis, requirements, architecture, synthesis
+        current_stage = 0
+        
         try:
             # Stage 1: Analysis
+            current_stage += 1
+            self._print_progress(current_stage, total_stages, "Analysis", "Analyzing prompt intent and scope...")
             session["stages"]["analysis"] = await self._stage_analysis(prompt)
+            self._print_progress(current_stage, total_stages, "Analysis", "✅ Analysis complete")
             
             # Stage 2: Requirements
+            current_stage += 1
+            self._print_progress(current_stage, total_stages, "Requirements", "Gathering requirements from analyst and experts...")
+            await asyncio.sleep(0.01)
             session["stages"]["requirements"] = await self._stage_requirements(
                 prompt, session["stages"].get("analysis", {})
             )
+            self._print_progress(current_stage, total_stages, "Requirements", "[OK] Requirements gathered")
             
             # Stage 3: Architecture
+            current_stage += 1
+            self._print_progress(current_stage, total_stages, "Architecture", "Generating architecture guidance...")
+            await asyncio.sleep(0.01)
             session["stages"]["architecture"] = await self._stage_architecture(
                 prompt, session["stages"].get("requirements", {})
             )
+            self._print_progress(current_stage, total_stages, "Architecture", "[OK] Architecture guidance complete")
             
             # Quick synthesis
+            current_stage += 1
+            self._print_progress(current_stage, total_stages, "Synthesis", "Synthesizing enhanced prompt...")
+            await asyncio.sleep(0.01)
             session["stages"]["synthesis"] = await self._stage_synthesis(
                 prompt, session["stages"], output_format
             )
+            self._print_progress(current_stage, total_stages, "Synthesis", "[OK] Enhanced prompt synthesized")
             
             self._save_session(session_id, session)
             result = self._format_output(session, output_format)
@@ -263,9 +330,16 @@ class EnhancerAgent(BaseAgent):
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 if output_format == "json":
                     output_path.write_text(json.dumps(result, indent=2))
+                    if isinstance(result, dict):
+                        result["output_file"] = str(output_path)
                 else:
                     output_path.write_text(result)
-                result["output_file"] = str(output_path)
+                    # For markdown, result is a string, so we can't add to it
+                    # Return dict with both the markdown and file path
+                    result = {
+                        "enhanced_prompt": result,
+                        "output_file": str(output_path)
+                    }
             
             return {
                 "success": True,
@@ -375,9 +449,10 @@ Prompt: {prompt}
 Provide structured JSON response."""
         
         try:
+            model_name = self.config.mal.default_model if (self.config and self.config.mal) else "qwen2.5-coder:7b"
             response = await self.mal.generate(
                 prompt=analysis_prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=model_name,
                 temperature=0.3
             )
             
@@ -710,18 +785,40 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         
         return "\n".join(lines)
     
+    def _print_progress(self, current: int, total: int, stage_name: str, message: str):
+        """Print progress indicator with percentage - real-time unbuffered output."""
+        percentage = int((current / total) * 100) if total > 0 else 0
+        bar_length = 30
+        filled = int(bar_length * current / total) if total > 0 else 0
+        # Use ASCII-compatible characters for better cross-platform support
+        bar = "=" * filled + "-" * (bar_length - filled)
+        
+        # Use ASCII checkmark for better compatibility
+        checkmark = "[OK]" if message.startswith("✅") or "[OK]" in message else ""
+        clean_message = message.replace("✅", "").replace("[OK]", "").strip()
+        
+        # Print progress line with immediate flush - ensure real-time output
+        progress_line = f"[{current}/{total}] {percentage:3d}% |{bar}| {stage_name}: {checkmark} {clean_message}"
+        # Write directly to stderr and force immediate flush for real-time display
+        sys.stderr.write(progress_line + "\n")
+        sys.stderr.flush()
+    
     async def close(self):
         """Clean up resources."""
-        if self.analyst:
-            await self.analyst.close()
-        if self.architect:
-            await self.architect.close()
-        if self.designer:
-            await self.designer.close()
-        if self.planner:
-            await self.planner.close()
-        if self.reviewer:
-            await self.reviewer.close()
-        if self.ops:
-            await self.ops.close()
+        # Close agents that have a close method (not all agents implement it)
+        agents_to_close = [
+            self.analyst,
+            self.architect,
+            self.designer,
+            self.planner,
+            self.reviewer,
+            self.ops
+        ]
+        
+        for agent in agents_to_close:
+            if agent and hasattr(agent, 'close'):
+                try:
+                    await agent.close()
+                except (AttributeError, TypeError):
+                    pass  # Agent doesn't have close or it's not async
 
