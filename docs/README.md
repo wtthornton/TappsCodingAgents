@@ -24,9 +24,21 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 - **[Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)** - Choosing the right workflow
 - **[Phase 4 & 5 Explanation](PHASE4_PHASE5_EXPLANATION.md)** - Workflow selection and Context7 integration
 
+### Cursor AI Integration ⭐
+- **[Cursor AI Integration Plan 2025](CURSOR_AI_INTEGRATION_PLAN_2025.md)** - Complete integration roadmap (all 7 phases complete)
+- **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills
+- **[Background Agents Guide](BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks
+- **[Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
+- **[Context7 Cache Optimization](CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates (95%+ target)
+- **[Context7 Security & Privacy](CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices and compliance
+- **[Context7 API Key Management](CONTEXT7_API_KEY_MANAGEMENT.md)** - Secure API key storage
+- **[NUC Setup Guide](NUC_SETUP_GUIDE.md)** - Optimize for low-power hardware
+- **[Quality Tools Usage Examples](QUALITY_TOOLS_USAGE_EXAMPLES.md)** - Ruff, mypy, Bandit, jscpd, pip-audit
+
 ### Quality & Analysis
 - **[Phase 6: Modern Quality Analysis](PHASE6_SUMMARY.md)** - Ruff, mypy, TypeScript support, comprehensive reporting
 - **[Project Quality Review](PROJECT_QUALITY_REVIEW.md)** - Quality assessment results
+- **[Quality Tools Usage Examples](QUALITY_TOOLS_USAGE_EXAMPLES.md)** - Detailed usage examples for all quality tools
 
 ### API Reference
 - **[API Documentation](API.md)** - Complete API reference with all agents and commands
@@ -98,7 +110,14 @@ We welcome contributions to improve documentation! See [Contributing Guidelines]
 ## 🔄 Documentation Versions
 
 - **Current Version**: 1.6.0 (December 2025)
-- **Latest Updates**: Enhancer Agent - Prompt Enhancement Utility
+- **Latest Updates**: All 7 phases of Cursor AI Integration Plan 2025 complete
+  - Phase 7: NUC Optimization (Resource monitoring, fallback strategy, performance benchmarks)
+  - Phase 6: Context7 Optimization + Security (Security audit, KB analytics, cross-references)
+  - Phase 5: Multi-Agent Orchestration (Parallel execution, worktree management)
+  - Phase 4: Background Agents Integration (CLI wrapper, progress reporting)
+  - Phase 3: Remaining Agents + Advanced Features (All 13 Cursor Skills)
+  - Phase 2: Quality Tools Integration (Ruff, mypy, Bandit, jscpd, pip-audit)
+  - Phase 1: Core Agents to Skills (Reviewer, Implementer, Tester, Debugger)
 - **Last Reviewed**: December 2025
 
 For version-specific documentation, see [CHANGELOG](../CHANGELOG.md).
