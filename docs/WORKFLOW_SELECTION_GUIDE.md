@@ -359,9 +359,139 @@ If confidence is low (< 50%):
 - Consider manually selecting a workflow
 - Review project structure and ensure clear indicators
 
+## Expert Consultation in Workflows
+
+Workflows can automatically consult domain experts during step execution. This enables domain-specific guidance and best practices to be incorporated into workflow steps.
+
+### Configuring Expert Consultation
+
+Add a `consults` field to any workflow step to enable expert consultation:
+
+```yaml
+steps:
+  - id: design
+    agent: architect
+    action: design_system
+    consults:
+      - expert-security
+      - expert-performance-optimization
+    context_tier: 2
+    requires:
+      - requirements.md
+    creates:
+      - architecture.md
+```
+
+### Automatic Expert Consultation
+
+When a step has `consults` configured, the workflow executor automatically:
+
+1. **Checks for experts**: Verifies if the step requires expert consultation
+2. **Generates context-aware query**: Creates a query from step information (agent, action, notes)
+3. **Consults experts**: Calls the expert registry with the query
+4. **Stores results**: Saves consultation results in workflow state for reference
+
+### Using Expert Consultation in Code
+
+```python
+from tapps_agents.workflow import WorkflowExecutor
+from tapps_agents.experts.expert_registry import ExpertRegistry
+
+# Create executor with expert registry
+registry = ExpertRegistry(load_builtin=True)
+executor = WorkflowExecutor(
+    project_root=Path("."),
+    expert_registry=registry
+)
+
+# Load and start workflow
+workflow = executor.load_workflow(Path("workflows/feature-development.yaml"))
+executor.start(workflow)
+
+# Automatically consult experts for current step (if configured)
+consultation = await executor.consult_experts_for_step()
+
+if consultation:
+    print(f"Expert advice: {consultation['weighted_answer']}")
+    print(f"Confidence: {consultation['confidence']}")
+    print(f"Experts consulted: {consultation['experts_consulted']}")
+```
+
+### Manual Expert Consultation
+
+You can also manually consult experts with a custom query:
+
+```python
+# Manual consultation with custom query
+result = await executor.consult_experts(
+    query="What security patterns should I use for API authentication?",
+    domain="security"
+)
+```
+
+### Checking if Step Requires Consultation
+
+```python
+# Check if current step requires expert consultation
+if executor.step_requires_expert_consultation():
+    consultation = await executor.consult_experts_for_step()
+    # Use expert advice in step execution
+```
+
+### Expert Consultation Results
+
+Expert consultation results include:
+
+- `weighted_answer`: Aggregated answer from all consulted experts
+- `confidence`: Overall confidence score (0.0-1.0)
+- `agreement_level`: How much experts agree (0.0-1.0)
+- `primary_expert`: ID of the primary expert consulted
+- `all_experts_agreed`: Whether all experts provided similar answers
+- `responses`: Individual responses from each expert
+
+### Example: Security Review Step
+
+```yaml
+steps:
+  - id: security-review
+    agent: reviewer
+    action: review_security
+    consults:
+      - expert-security
+      - expert-data-privacy
+    notes: "Review authentication and authorization implementation"
+    context_tier: 2
+    requires:
+      - src/
+    creates:
+      - security-review.md
+```
+
+When this step executes, experts are automatically consulted with a query like:
+> "Please provide expert guidance for this workflow step: Agent: reviewer | Action: review_security | Context: Review authentication and authorization implementation"
+
+### Best Practices
+
+1. **Use domain-specific experts**: Match expert domains to step requirements
+2. **Multiple experts for complex steps**: Consult multiple experts for weighted decisions
+3. **Store consultation results**: Results are automatically stored in workflow state
+4. **Use in gates**: Reference expert consultation in gate conditions if needed
+
+### Troubleshooting
+
+**Expert registry not available:**
+- Ensure `ExpertRegistry` is passed to `WorkflowExecutor.__init__()`
+- Check that experts are registered in the registry
+
+**No experts consulted:**
+- Verify step has `consults` field configured
+- Check that expert IDs match registered experts
+- Ensure expert registry has experts loaded
+
 ## See Also
 
 - [Workflow Models](../tapps_agents/workflow/models.py) - Workflow data structures
 - [Workflow Executor](../tapps_agents/workflow/executor.py) - Workflow execution
+- [Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md) - Configuring domain experts
 - [Project Requirements](../requirements/PROJECT_REQUIREMENTS.md#174-scale-adaptive-workflow-selection) - Full specification
 

@@ -54,6 +54,10 @@ knowledge/
     ├── scalability-patterns.md
     ├── backup-and-recovery.md
     └── acid-vs-cap.md
+├── agent-learning/                # Agent Learning Best Practices (Gap 1)
+    ├── best-practices.md
+    ├── pattern-extraction.md
+    └── prompt-optimization.md
 ```
 
 ## Knowledge Base Format

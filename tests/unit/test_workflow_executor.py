@@ -5,6 +5,7 @@ Unit tests for Workflow Executor.
 import pytest
 from pathlib import Path
 from datetime import datetime
+from unittest.mock import Mock, AsyncMock
 
 from tapps_agents.workflow import (
     WorkflowParser,
@@ -12,6 +13,7 @@ from tapps_agents.workflow import (
     Workflow,
     WorkflowStep,
 )
+from tapps_agents.experts.expert_registry import ConsultationResult
 
 
 @pytest.mark.unit
@@ -185,4 +187,236 @@ class TestWorkflowExecutor:
         assert status["current_step"] == "step1"
         assert status["current_step_details"]["agent"] == "analyst"
         assert status["can_proceed"] is True
+    
+    def test_step_requires_expert_consultation_with_consults(self, executor, sample_workflow_dict):
+        """Test step_requires_expert_consultation when step has consults configured."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "steps": [
+                    {
+                        "id": "step1",
+                        "agent": "analyst",
+                        "action": "gather",
+                        "consults": ["expert-security", "expert-performance"]
+                    }
+                ]
+            }
+        }
+        workflow = WorkflowParser.parse(workflow_dict)
+        executor.start(workflow)
+        
+        assert executor.step_requires_expert_consultation() is True
+    
+    def test_step_requires_expert_consultation_without_consults(self, executor, sample_workflow_dict):
+        """Test step_requires_expert_consultation when step has no consults."""
+        workflow = WorkflowParser.parse(sample_workflow_dict)
+        executor.start(workflow)
+        
+        assert executor.step_requires_expert_consultation() is False
+    
+    def test_step_requires_expert_consultation_no_step(self, executor):
+        """Test step_requires_expert_consultation when no step is available."""
+        assert executor.step_requires_expert_consultation() is False
+    
+    @pytest.mark.asyncio
+    async def test_consult_experts_for_step_with_consults(self, executor, tmp_path):
+        """Test consult_experts_for_step when step has consults configured."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "steps": [
+                    {
+                        "id": "step1",
+                        "agent": "analyst",
+                        "action": "gather",
+                        "consults": ["expert-security"],
+                        "notes": "Security review needed"
+                    }
+                ]
+            }
+        }
+        workflow = WorkflowParser.parse(workflow_dict)
+        executor.start(workflow)
+        
+        # Create mock expert registry
+        mock_registry = Mock()
+        mock_result = ConsultationResult(
+            weighted_answer="Use secure protocols",
+            confidence=0.9,
+            agreement_level=0.95,
+            primary_expert="expert-security",
+            all_experts_agreed=True,
+            responses=[
+                {
+                    "expert_id": "expert-security",
+                    "expert_name": "Security Expert",
+                    "answer": "Use secure protocols",
+                    "confidence": 0.9,
+                    "sources": []
+                }
+            ]
+        )
+        mock_registry.consult = AsyncMock(return_value=mock_result)
+        executor.expert_registry = mock_registry
+        
+        # Consult experts for step
+        result = await executor.consult_experts_for_step()
+        
+        assert result is not None
+        assert result["domain"] == "security"
+        assert result["experts_consulted"] == ["expert-security"]
+        assert result["weighted_answer"] == "Use secure protocols"
+        assert result["confidence"] == 0.9
+        
+        # Verify consultation was stored in state
+        assert "expert_consultations" in executor.state.variables
+        assert "step1" in executor.state.variables["expert_consultations"]
+    
+    @pytest.mark.asyncio
+    async def test_consult_experts_for_step_without_consults(self, executor, sample_workflow_dict):
+        """Test consult_experts_for_step when step has no consults."""
+        workflow = WorkflowParser.parse(sample_workflow_dict)
+        executor.start(workflow)
+        
+        result = await executor.consult_experts_for_step()
+        
+        assert result is None
+    
+    @pytest.mark.asyncio
+    async def test_consult_experts_for_step_with_custom_query(self, executor, tmp_path):
+        """Test consult_experts_for_step with custom query."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "steps": [
+                    {
+                        "id": "step1",
+                        "agent": "analyst",
+                        "action": "gather",
+                        "consults": ["expert-security"]
+                    }
+                ]
+            }
+        }
+        workflow = WorkflowParser.parse(workflow_dict)
+        executor.start(workflow)
+        
+        # Create mock expert registry
+        mock_registry = Mock()
+        mock_result = ConsultationResult(
+            weighted_answer="Custom answer",
+            confidence=0.8,
+            agreement_level=0.9,
+            primary_expert="expert-security",
+            all_experts_agreed=True,
+            responses=[]
+        )
+        mock_registry.consult = AsyncMock(return_value=mock_result)
+        executor.expert_registry = mock_registry
+        
+        # Consult with custom query
+        custom_query = "What security measures should I take?"
+        result = await executor.consult_experts_for_step(query=custom_query)
+        
+        assert result is not None
+        assert result["query"] == custom_query
+        mock_registry.consult.assert_called_once()
+        call_args = mock_registry.consult.call_args
+        assert call_args[1]["query"] == custom_query
+    
+    @pytest.mark.asyncio
+    async def test_consult_experts_for_step_no_registry(self, executor, tmp_path):
+        """Test consult_experts_for_step raises error when registry not available."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "steps": [
+                    {
+                        "id": "step1",
+                        "agent": "analyst",
+                        "action": "gather",
+                        "consults": ["expert-security"]
+                    }
+                ]
+            }
+        }
+        workflow = WorkflowParser.parse(workflow_dict)
+        executor.start(workflow)
+        executor.expert_registry = None
+        
+        with pytest.raises(ValueError, match="expert_registry not available"):
+            await executor.consult_experts_for_step()
+    
+    @pytest.mark.asyncio
+    async def test_consult_experts_manual(self, executor, tmp_path):
+        """Test manual consult_experts method."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "steps": [
+                    {
+                        "id": "step1",
+                        "agent": "analyst",
+                        "action": "gather",
+                        "consults": ["expert-security"]
+                    }
+                ]
+            }
+        }
+        workflow = WorkflowParser.parse(workflow_dict)
+        executor.start(workflow)
+        
+        # Create mock expert registry
+        mock_registry = Mock()
+        mock_result = ConsultationResult(
+            weighted_answer="Manual consultation answer",
+            confidence=0.85,
+            agreement_level=0.9,
+            primary_expert="expert-security",
+            all_experts_agreed=True,
+            responses=[]
+        )
+        mock_registry.consult = AsyncMock(return_value=mock_result)
+        executor.expert_registry = mock_registry
+        
+        # Manual consultation
+        result = await executor.consult_experts(
+            query="What should I do?",
+            domain="security"
+        )
+        
+        assert result is not None
+        assert result["query"] == "What should I do?"
+        assert result["domain"] == "security"
+        assert result["experts_consulted"] == ["expert-security"]
+    
+    def test_get_status_includes_expert_registry_available(self, executor, sample_workflow_dict):
+        """Test that get_status includes expert_registry_available flag."""
+        workflow = WorkflowParser.parse(sample_workflow_dict)
+        executor.start(workflow)
+        
+        status = executor.get_status()
+        assert "expert_registry_available" in status
+        assert status["expert_registry_available"] is False
+        
+        # With registry
+        executor.expert_registry = Mock()
+        status = executor.get_status()
+        assert status["expert_registry_available"] is True
 

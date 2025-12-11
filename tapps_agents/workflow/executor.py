@@ -220,6 +220,121 @@ class WorkflowExecutor:
                 self.state.current_step = step.next
                 break
     
+    def step_requires_expert_consultation(self, step: Optional[WorkflowStep] = None) -> bool:
+        """
+        Check if a step requires expert consultation.
+        
+        Args:
+            step: Optional workflow step (defaults to current step)
+        
+        Returns:
+            True if step has experts configured in 'consults' field
+        """
+        step = step or self.get_current_step()
+        if not step:
+            return False
+        
+        return bool(step.consults and len(step.consults) > 0)
+    
+    async def consult_experts_for_step(
+        self,
+        query: Optional[str] = None,
+        step: Optional[WorkflowStep] = None
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Automatically consult experts for a step if it has 'consults' configured.
+        
+        This is a convenience method that:
+        1. Checks if the step has experts configured
+        2. Generates a context-aware query if none provided
+        3. Consults the experts automatically
+        4. Returns the consultation result
+        
+        Args:
+            query: Optional query (auto-generated from step context if not provided)
+            step: Optional workflow step (defaults to current step)
+        
+        Returns:
+            Consultation result dict if experts were consulted, None otherwise
+        
+        Raises:
+            ValueError: If expert registry not available but step requires consultation
+        """
+        step = step or self.get_current_step()
+        if not step:
+            return None
+        
+        # Check if step requires expert consultation
+        if not self.step_requires_expert_consultation(step):
+            return None
+        
+        # Ensure expert registry is available
+        if not self.expert_registry:
+            raise ValueError(
+                f"Step '{step.id}' requires expert consultation (consults: {step.consults}), "
+                "but expert_registry not available. Provide expert_registry in WorkflowExecutor.__init__."
+            )
+        
+        # Generate query if not provided
+        if not query:
+            # Build context-aware query from step information
+            query_parts = [
+                f"Agent: {step.agent}",
+                f"Action: {step.action}"
+            ]
+            if step.notes:
+                query_parts.append(f"Context: {step.notes}")
+            if step.metadata:
+                context_info = step.metadata.get("context", step.metadata.get("description"))
+                if context_info:
+                    query_parts.append(f"Additional context: {context_info}")
+            
+            query = "Please provide expert guidance for this workflow step: " + " | ".join(query_parts)
+        
+        # Determine domain from expert IDs
+        expert_ids = step.consults
+        domain = "general"
+        if expert_ids:
+            # Extract domain from first expert ID (experts follow pattern: expert-{domain})
+            first_expert = expert_ids[0]
+            if first_expert.startswith("expert-"):
+                domain = first_expert.replace("expert-", "")
+            else:
+                # Try to infer from expert ID format
+                domain = first_expert.split("-")[-1] if "-" in first_expert else "general"
+        
+        # Consult experts via registry
+        consultation_result = await self.expert_registry.consult(
+            query=query,
+            domain=domain,
+            include_all=True  # Consult all experts for weighted decision
+        )
+        
+        # Store consultation in workflow state for reference
+        if self.state:
+            if "expert_consultations" not in self.state.variables:
+                self.state.variables["expert_consultations"] = {}
+            self.state.variables["expert_consultations"][step.id] = {
+                "query": query,
+                "domain": domain,
+                "experts_consulted": expert_ids,
+                "weighted_answer": consultation_result.weighted_answer,
+                "confidence": consultation_result.confidence,
+                "consulted_at": datetime.now().isoformat()
+            }
+        
+        return {
+            "query": query,
+            "domain": domain,
+            "experts_consulted": expert_ids,
+            "weighted_answer": consultation_result.weighted_answer,
+            "confidence": consultation_result.confidence,
+            "agreement_level": consultation_result.agreement_level,
+            "primary_expert": consultation_result.primary_expert,
+            "all_experts_agreed": consultation_result.all_experts_agreed,
+            "responses": consultation_result.responses
+        }
+    
     async def consult_experts(
         self,
         query: str,

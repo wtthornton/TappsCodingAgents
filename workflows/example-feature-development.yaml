@@ -40,6 +40,9 @@ workflow:
       agent: architect
       action: design_system
       context_tier: 2
+      consults:
+        - expert-security
+        - expert-performance-optimization
       requires:
         - requirements.md
         - stories/

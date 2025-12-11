@@ -10,10 +10,10 @@ from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
-from ...experts.expert_registry import ExpertRegistry
+from ...experts.agent_integration import ExpertSupportMixin
 
 
-class ArchitectAgent(BaseAgent):
+class ArchitectAgent(BaseAgent, ExpertSupportMixin):
     """
     Architect Agent - System and security architecture design.
     
@@ -31,7 +31,7 @@ class ArchitectAgent(BaseAgent):
         self,
         mal: Optional[MAL] = None,
         config: Optional[ProjectConfig] = None,
-        expert_registry: Optional[ExpertRegistry] = None
+        expert_registry: Optional[Any] = None
     ):
         super().__init__(agent_id="architect", agent_name="Architect Agent", config=config)
         if config is None:
@@ -49,8 +49,16 @@ class ArchitectAgent(BaseAgent):
         if config:
             self.context7 = get_context7_helper(self, config)
         
-        # Initialize expert registry
-        self.expert_registry: Optional[ExpertRegistry] = expert_registry
+        # Expert registry will be initialized in activate() via ExpertSupportMixin
+        # Allow manual override if provided
+        if expert_registry:
+            self.expert_registry = expert_registry
+    
+    async def activate(self, project_root: Optional[Path] = None):
+        """Activate the architect agent with expert support."""
+        await super().activate(project_root)
+        # Initialize expert support via mixin
+        await self._initialize_expert_support(project_root)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for architect agent"""

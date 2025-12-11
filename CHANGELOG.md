@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Technical Domains** - Added 4 new technical domains: `observability-monitoring`, `api-design-integration`, `cloud-infrastructure`, `database-data-management`
 - **Agent Integration** - Enhanced agent expert support matrix with new Phase 5 experts
 
-## [2.0.0] - 2025-12-XX
+## [2.0.0] - 2026-01-XX
 
 ### Added
 - **Built-in Expert System** - Framework-controlled technical domain experts

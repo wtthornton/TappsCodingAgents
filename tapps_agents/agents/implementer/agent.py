@@ -11,7 +11,7 @@ from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config, ImplementerAgentConfig
 from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
-from ...experts.expert_registry import ExpertRegistry
+from ...experts.agent_integration import ExpertSupportMixin
 from .code_generator import CodeGenerator
 # Import ReviewerAgent (circular import handled lazily)
 from typing import TYPE_CHECKING
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     from ...agents.reviewer.agent import ReviewerAgent
 
 
-class ImplementerAgent(BaseAgent):
+class ImplementerAgent(BaseAgent, ExpertSupportMixin):
     """
     Implementer Agent - Code generation and file writing.
     
@@ -30,7 +30,7 @@ class ImplementerAgent(BaseAgent):
         self,
         mal: Optional[MAL] = None,
         config: Optional[ProjectConfig] = None,
-        expert_registry: Optional[ExpertRegistry] = None
+        expert_registry: Optional[Any] = None
     ):
         super().__init__(agent_id="implementer", agent_name="Implementer Agent", config=config)
         # Use config if provided, otherwise load defaults
@@ -57,11 +57,19 @@ class ImplementerAgent(BaseAgent):
         if config:
             self.context7 = get_context7_helper(self, config)
         
-        # Initialize expert registry
-        self.expert_registry: Optional[ExpertRegistry] = expert_registry
+        # Expert registry will be initialized in activate() via ExpertSupportMixin
+        # Allow manual override if provided
+        if expert_registry:
+            self.expert_registry = expert_registry
         
         # Reviewer agent for code review
         self.reviewer = None
+    
+    async def activate(self, project_root: Optional[Path] = None):
+        """Activate the implementer agent with expert support."""
+        await super().activate(project_root)
+        # Initialize expert support via mixin
+        await self._initialize_expert_support(project_root)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for implementer agent"""

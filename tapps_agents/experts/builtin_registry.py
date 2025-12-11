@@ -42,6 +42,7 @@ class BuiltinExpertRegistry:
         "user-experience",
         "documentation-knowledge-management",
         "ai-agent-framework",
+        "agent-learning",  # Agent Learning Best Practices
         # Phase 5: High Priority Experts
         "observability-monitoring",
         "api-design-integration",
@@ -175,6 +176,15 @@ class BuiltinExpertRegistry:
             expert_id="expert-database",
             expert_name="Database & Data Management Expert",
             primary_domain="database-data-management",
+            rag_enabled=True,
+            fine_tuned=False,
+        ),
+        
+        # Agent Learning Best Practices Expert
+        ExpertConfigModel(
+            expert_id="expert-agent-learning",
+            expert_name="Agent Learning Best Practices Expert",
+            primary_domain="agent-learning",
             rag_enabled=True,
             fine_tuned=False,
         ),

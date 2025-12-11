@@ -9,7 +9,7 @@ import json
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...experts.expert_registry import ExpertRegistry
+from ...experts.agent_integration import ExpertSupportMixin
 from .scoring import CodeScorer
 from .typescript_scorer import TypeScriptScorer
 from .report_generator import ReportGenerator
@@ -18,7 +18,7 @@ from .aggregator import QualityAggregator
 from ..ops.dependency_analyzer import DependencyAnalyzer
 
 
-class ReviewerAgent(BaseAgent):
+class ReviewerAgent(BaseAgent, ExpertSupportMixin):
     """
     Reviewer Agent - Code review with Code Scoring.
     
@@ -29,7 +29,7 @@ class ReviewerAgent(BaseAgent):
         self,
         mal: Optional[MAL] = None,
         config: Optional[ProjectConfig] = None,
-        expert_registry: Optional[ExpertRegistry] = None
+        expert_registry: Optional[Any] = None
     ):
         super().__init__(agent_id="reviewer", agent_name="Reviewer Agent", config=config)
         # Use config if provided, otherwise load defaults
@@ -37,8 +37,10 @@ class ReviewerAgent(BaseAgent):
             config = load_config()
         self.config = config
         
-        # Initialize expert registry
-        self.expert_registry: Optional[ExpertRegistry] = expert_registry
+        # Expert registry will be initialized in activate() via ExpertSupportMixin
+        # Allow manual override if provided
+        if expert_registry:
+            self.expert_registry = expert_registry
         
         # Initialize MAL with config
         mal_config = config.mal if config else None
@@ -80,6 +82,15 @@ class ReviewerAgent(BaseAgent):
             )
         else:
             self.typescript_scorer = None
+    
+    async def activate(self, project_root: Optional[Path] = None):
+        """Activate the reviewer agent with expert support."""
+        await super().activate(project_root)
+        # Initialize expert support via mixin
+        await self._initialize_expert_support(project_root)
+        # Initialize dependency analyzer if enabled
+        if self.dependency_analyzer_enabled:
+            self.dependency_analyzer = DependencyAnalyzer(project_root=project_root or Path.cwd())
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for reviewer agent"""
