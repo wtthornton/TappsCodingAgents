@@ -55,7 +55,17 @@ class MALConfig(BaseModel):
     ollama_url: str = Field(default="http://localhost:11434", description="Ollama API URL")
     default_model: str = Field(default="qwen2.5-coder:7b", description="Default model name for LLM calls")
     default_provider: str = Field(default="ollama", description="Default provider (ollama/anthropic/openai)")
-    timeout: float = Field(default=60.0, ge=1.0, description="Request timeout in seconds")
+    timeout: float = Field(default=60.0, ge=1.0, description="Request timeout in seconds (legacy, use granular timeouts)")
+    
+    # Granular timeout configuration (2025 best practice)
+    connect_timeout: float = Field(default=10.0, ge=1.0, description="Connection timeout in seconds")
+    read_timeout: float = Field(default=600.0, ge=1.0, description="Read timeout in seconds (10 min for large files)")
+    write_timeout: float = Field(default=30.0, ge=1.0, description="Write timeout in seconds")
+    pool_timeout: float = Field(default=10.0, ge=1.0, description="Pool timeout in seconds")
+    
+    # Streaming configuration (2025 best practice)
+    use_streaming: bool = Field(default=True, description="Use streaming for large prompts")
+    streaming_threshold: int = Field(default=5000, ge=0, description="Prompt length (chars) to enable streaming")
     
     # Cloud provider configurations
     anthropic: Optional[CloudProviderConfig] = Field(default=None, description="Anthropic Claude configuration")

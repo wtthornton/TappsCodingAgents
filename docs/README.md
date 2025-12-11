@@ -10,6 +10,7 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 - **[Developer Guide](DEVELOPER_GUIDE.md)** - Development setup and workflows
 
 ### Core Concepts
+- **[Project Context](PROJECT_CONTEXT.md)** - Understanding framework development vs. self-hosting ⭐ **READ THIS FIRST**
 - **[Project Requirements](../requirements/PROJECT_REQUIREMENTS.md)** - Complete project specification
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture and design patterns
 - **[Agent Specifications](../requirements/agents.md)** - Agent types specification
@@ -34,6 +35,8 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 ### Operations
 - **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Hardware Recommendations](HARDWARE_RECOMMENDATIONS.md)** - Optimal computer specs for fast development
+- **[Cursor AI Integration Plan 2025](CURSOR_AI_INTEGRATION_PLAN_2025.md)** - Complete integration roadmap with Context7
 - **[Security Policy](../SECURITY.md)** - Security guidelines and reporting
 
 ### Contributing
@@ -53,9 +56,10 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 3. Explore [Example Experts](../examples/experts/)
 
 ### For Developers
-1. Read the [Developer Guide](DEVELOPER_GUIDE.md)
-2. Review [Architecture Overview](ARCHITECTURE.md)
-3. Check [API Documentation](API.md)
+1. **Read [Project Context](PROJECT_CONTEXT.md)** - Understand framework vs. self-hosting
+2. Read the [Developer Guide](DEVELOPER_GUIDE.md)
+3. Review [Architecture Overview](ARCHITECTURE.md)
+4. Check [API Documentation](API.md)
 
 ### For Project Managers
 1. Review [Project Manager Guide](PROJECT_MANAGER_GUIDE.md)

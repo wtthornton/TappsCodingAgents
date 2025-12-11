@@ -34,9 +34,7 @@ class ImplementerAgent(BaseAgent):
         
         # Initialize MAL with config
         mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
+        self.mal = mal or MAL(config=mal_config)
         
         # Initialize code generator
         self.code_generator = CodeGenerator(self.mal)

@@ -3,13 +3,15 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-1.5.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.6.0-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
 ## Overview
 
 TappsCodingAgents provides a standardized framework for building AI coding agents with:
+
+> **Note**: This project both **develops** the TappsCodingAgents framework AND **uses** it for its own development (self-hosting). See [Project Context](.cursor/rules/project-context.mdc) for details.
 
 - **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
@@ -141,6 +143,7 @@ TappsCodingAgents/
 ### Operations
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Hardware Recommendations](docs/HARDWARE_RECOMMENDATIONS.md)** - Optimal computer specs for fast development
 - **[Security Policy](SECURITY.md)** - Security guidelines
 
 ### Contributing
@@ -156,6 +159,16 @@ TappsCodingAgents/
 **Phase**: Implementation Phase - Phase 6 Complete, Enhancer Agent Added  
 **Version**: 1.6.0  
 **Last Updated**: December 2025
+
+## Self-Hosting
+
+This project uses its own framework for development:
+- **5 Industry Experts** configured (AI frameworks, code quality, architecture, DevOps, documentation)
+- **Enhancer Agent** actively used (23+ enhancement sessions)
+- **Context7 Integration** with KB cache
+- Configuration in `.tapps-agents/` directory
+
+See [Self-Hosting Setup](implementation/SELF_HOSTING_SETUP_COMPLETE.md) for details.
 
 ## License
 

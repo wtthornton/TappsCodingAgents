@@ -1,0 +1,154 @@
+{
+  "analysis": {
+    "code_quality": {
+      "tapps_agents/core/agent_base.py": {
+        "file": "tapps_agents\\core\\agent_base.py",
+        "review": {},
+        "scoring": {
+          "complexity_score": 1.8,
+          "security_score": 6.5,
+          "maintainability_score": 5.911896273840026,
+          "test_coverage_score": 5.0,
+          "performance_score": 10.0,
+          "linting_score": 5.0,
+          "type_checking_score": 5.0,
+          "duplication_score": 5.0,
+          "metrics": {
+            "complexity": 1.8,
+            "security": 5.0,
+            "maintainability": 5.911896273840026,
+            "test_coverage": 5.0,
+            "performance": 10.0,
+            "linting": 5.0,
+            "type_checking": 5.0,
+            "duplication": 5.0
+          },
+          "overall_score": 6.367974068460006,
+          "dependency_security_score": 10.0
+        },
+        "passed": false,
+        "threshold": 70.0
+      },
+      "tapps_agents/core/mal.py": {
+        "file": "tapps_agents\\core\\mal.py",
+        "review": {},
+        "scoring": {
+          "complexity_score": 2.8,
+          "security_score": 6.5,
+          "maintainability_score": 5.916409006030472,
+          "test_coverage_score": 5.0,
+          "performance_score": 10.0,
+          "linting_score": 5.0,
+          "type_checking_score": 5.0,
+          "duplication_score": 5.0,
+          "metrics": {
+            "complexity": 2.8,
+            "security": 5.0,
+            "maintainability": 5.916409006030472,
+            "test_coverage": 5.0,
+            "performance": 10.0,
+            "linting": 5.0,
+            "type_checking": 5.0,
+            "duplication": 5.0
+          },
+          "overall_score": 6.169102251507619,
+          "dependency_security_score": 10.0
+        },
+        "passed": false,
+        "threshold": 70.0
+      },
+      "tapps_agents/agents/reviewer/agent.py": {
+        "file": "tapps_agents\\agents\\reviewer\\agent.py",
+        "review": {},
+        "scoring": {
+          "complexity_score": 4.0,
+          "security_score": 6.5,
+          "maintainability_score": 2.912009936533699,
+          "test_coverage_score": 5.0,
+          "performance_score": 8.5,
+          "linting_score": 5.0,
+          "type_checking_score": 5.0,
+          "duplication_score": 5.0,
+          "metrics": {
+            "complexity": 4.0,
+            "security": 5.0,
+            "maintainability": 2.912009936533699,
+            "test_coverage": 5.0,
+            "performance": 8.5,
+            "linting": 5.0,
+            "type_checking": 5.0,
+            "duplication": 5.0
+          },
+          "overall_score": 5.028002484133426,
+          "dependency_security_score": 10.0
+        },
+        "passed": false,
+        "threshold": 70.0
+      },
+      "tapps_agents/cli.py": {
+        "file": "tapps_agents\\cli.py",
+        "review": {},
+        "scoring": {
+          "complexity_score": 10.0,
+          "security_score": 6.5,
+          "maintainability_score": 0.19640299525198335,
+          "test_coverage_score": 5.0,
+          "performance_score": 5.0,
+          "linting_score": 5.0,
+          "type_checking_score": 5.0,
+          "duplication_score": 5.0,
+          "metrics": {
+            "complexity": 10.0,
+            "security": 5.0,
+            "maintainability": 0.19640299525198335,
+            "test_coverage": 5.0,
+            "performance": 5.0,
+            "linting": 5.0,
+            "type_checking": 5.0,
+            "duplication": 5.0
+          },
+          "overall_score": 2.7991007488129958,
+          "dependency_security_score": 10.0
+        },
+        "passed": false,
+        "threshold": 70.0
+      }
+    },
+    "dependencies": {
+      "message": "Dependency security audit completed",
+      "severity_threshold": "high",
+      "vulnerabilities": [],
+      "vulnerability_count": 0,
+      "severity_breakdown": {},
+      "tools_available": {},
+      "error": "pip-audit not found in PATH"
+    },
+    "security": {
+      "message": "Security scan completed for C:\\cursor\\TappsCodingAgents\\tapps_agents",
+      "target": "C:\\cursor\\TappsCodingAgents\\tapps_agents",
+      "scan_type": "all",
+      "issues": [
+        {
+          "severity": "info",
+          "type": "scan_started",
+          "description": "Security scan initiated for directory: C:\\cursor\\TappsCodingAgents\\tapps_agents",
+          "recommendation": "Review codebase for security best practices"
+        }
+      ],
+      "issue_count": 1
+    }
+  },
+  "plan": {
+    "requirements": {
+      "error": "Failed to gather requirements: 'MALConfig' object has no attribute 'model'"
+    },
+    "stories": [
+      {
+        "error": "Unknown command: *create-story. Use *help to see available commands."
+      },
+      {
+        "error": "Unknown command: *create-story. Use *help to see available commands."
+      }
+    ]
+  }
+}

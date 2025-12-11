@@ -2,14 +2,15 @@
 Model Abstraction Layer (MAL) - Routes requests to appropriate LLM providers
 
 Supports:
-- Ollama (local)
+- Ollama (local) - with streaming support
 - Anthropic Claude (cloud)
 - OpenAI (cloud)
 - Automatic fallback
 """
 
 import asyncio
-from typing import Optional, Any
+import json
+from typing import Optional, Any, Callable
 import httpx
 import os
 
@@ -36,8 +37,16 @@ class MAL:
         self.ollama_url = ollama_url or config.ollama_url
         self.timeout = config.timeout
         
-        # Initialize HTTP client
-        self.client = httpx.AsyncClient(timeout=self.timeout)
+        # Create granular timeout configuration (2025 best practice)
+        self.timeout_config = httpx.Timeout(
+            connect=config.connect_timeout,
+            read=config.read_timeout,
+            write=config.write_timeout,
+            pool=config.pool_timeout
+        )
+        
+        # Initialize HTTP client with granular timeouts
+        self.client = httpx.AsyncClient(timeout=self.timeout_config)
     
     async def generate(
         self,
@@ -96,20 +105,158 @@ class MAL:
                 f"All providers failed. Last error from {provider}: {e}"
             ) from e
     
-    async def _ollama_generate(self, prompt: str, model: str, **kwargs) -> str:
-        """Generate using Ollama"""
-        response = await self.client.post(
-            f"{self.ollama_url}/api/generate",
-            json={
-                "model": model,
-                "prompt": prompt,
-                "stream": False,
-                **kwargs
-            }
-        )
-        response.raise_for_status()
-        data = response.json()
-        return data.get("response", "")
+    async def _ollama_generate(
+        self, 
+        prompt: str, 
+        model: str, 
+        **kwargs
+    ) -> str:
+        """
+        Generate using Ollama with automatic streaming detection.
+        
+        Args:
+            prompt: Input prompt
+            model: Model name
+            **kwargs: Additional model parameters, including:
+                - progress_callback: Optional callback for streaming progress
+                - stream: Optional boolean to force streaming/non-streaming
+        
+        Returns:
+            Generated text response
+        """
+        # Extract progress_callback from kwargs if provided
+        progress_callback = kwargs.pop("progress_callback", None)
+        
+        # Determine if streaming should be used
+        use_streaming = kwargs.get("stream", None)
+        if use_streaming is None:
+            # Auto-detect: use streaming for large prompts or if enabled in config
+            use_streaming = (
+                self.config.use_streaming and 
+                len(prompt) > self.config.streaming_threshold
+            )
+        
+        if use_streaming:
+            return await self._ollama_generate_streaming(
+                prompt, model, progress_callback, **kwargs
+            )
+        else:
+            return await self._ollama_generate_non_streaming(
+                prompt, model, **kwargs
+            )
+    
+    async def _ollama_generate_streaming(
+        self,
+        prompt: str,
+        model: str,
+        progress_callback: Optional[Callable[[str], None]] = None,
+        **kwargs
+    ) -> str:
+        """
+        Generate using Ollama with streaming (2025 best practice).
+        
+        Streams response tokens in real-time using newline-delimited JSON (ndjson).
+        This prevents timeouts on large files and provides better UX.
+        
+        Args:
+            prompt: Input prompt
+            model: Model name
+            progress_callback: Optional callback for streaming progress
+            **kwargs: Additional model parameters
+            
+        Returns:
+            Accumulated generated text response
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_config) as client:
+                async with client.stream(
+                    "POST",
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": model,
+                        "prompt": prompt,
+                        "stream": True,  # Enable streaming
+                        **{k: v for k, v in kwargs.items() if k not in ("timeout", "stream")}
+                    }
+                ) as response:
+                    response.raise_for_status()
+                    
+                    accumulated_response = ""
+                    async for line in response.aiter_lines():
+                        if line.strip():
+                            try:
+                                chunk = json.loads(line)
+                                chunk_text = chunk.get("response", "")
+                                accumulated_response += chunk_text
+                                
+                                # Call progress callback if provided
+                                if progress_callback and chunk_text:
+                                    progress_callback(chunk_text)
+                                
+                                # Check if generation is complete
+                                if chunk.get("done", False):
+                                    break
+                            except json.JSONDecodeError:
+                                # Skip invalid JSON lines (shouldn't happen, but be defensive)
+                                continue
+                    
+                    return accumulated_response
+        except httpx.RequestError as e:
+            raise ConnectionError(
+                f"Ollama request failed ({e.__class__.__name__}): {e}"
+            ) from e
+        except httpx.HTTPStatusError as e:
+            raise ConnectionError(
+                f"Ollama API returned error status {e.response.status_code}: {e.response.text}"
+            ) from e
+        except Exception as e:
+            raise ConnectionError(
+                f"An unexpected error occurred during Ollama streaming: {e}"
+            ) from e
+    
+    async def _ollama_generate_non_streaming(
+        self,
+        prompt: str,
+        model: str,
+        **kwargs
+    ) -> str:
+        """
+        Generate using Ollama without streaming (for small prompts).
+        
+        Args:
+            prompt: Input prompt
+            model: Model name
+            **kwargs: Additional model parameters
+            
+        Returns:
+            Generated text response
+        """
+        try:
+            async with httpx.AsyncClient(timeout=self.timeout_config) as client:
+                response = await client.post(
+                    f"{self.ollama_url}/api/generate",
+                    json={
+                        "model": model,
+                        "prompt": prompt,
+                        "stream": False,
+                        **{k: v for k, v in kwargs.items() if k != "timeout"}
+                    }
+                )
+                response.raise_for_status()
+                data = response.json()
+                return data.get("response", "")
+        except httpx.RequestError as e:
+            raise ConnectionError(
+                f"Ollama request failed ({e.__class__.__name__}): {e}"
+            ) from e
+        except httpx.HTTPStatusError as e:
+            raise ConnectionError(
+                f"Ollama API returned error status {e.response.status_code}: {e.response.text}"
+            ) from e
+        except Exception as e:
+            raise ConnectionError(
+                f"An unexpected error occurred during Ollama request: {e}"
+            ) from e
     
     async def _anthropic_generate(self, prompt: str, model: str, **kwargs) -> str:
         """Generate using Anthropic Claude API"""
@@ -126,10 +273,16 @@ class MAL:
             else "https://api.anthropic.com/v1"
         )
         
-        timeout = (
-            self.config.anthropic.timeout if self.config.anthropic
-            else self.timeout
-        )
+        # Use granular timeout configuration (2025 best practice)
+        timeout_config = self.timeout_config
+        if self.config.anthropic and self.config.anthropic.timeout:
+            # Override with provider-specific timeout if configured
+            timeout_config = httpx.Timeout(
+                connect=self.config.connect_timeout,
+                read=self.config.anthropic.timeout,
+                write=self.config.write_timeout,
+                pool=self.config.pool_timeout
+            )
         
         headers = {
             "x-api-key": api_key,
@@ -153,7 +306,7 @@ class MAL:
             ]
         }
         
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        async with httpx.AsyncClient(timeout=timeout_config) as client:
             response = await client.post(
                 f"{base_url}/messages",
                 headers=headers,
@@ -182,10 +335,16 @@ class MAL:
             else "https://api.openai.com/v1"
         )
         
-        timeout = (
-            self.config.openai.timeout if self.config.openai
-            else self.timeout
-        )
+        # Use granular timeout configuration (2025 best practice)
+        timeout_config = self.timeout_config
+        if self.config.openai and self.config.openai.timeout:
+            # Override with provider-specific timeout if configured
+            timeout_config = httpx.Timeout(
+                connect=self.config.connect_timeout,
+                read=self.config.openai.timeout,
+                write=self.config.write_timeout,
+                pool=self.config.pool_timeout
+            )
         
         headers = {
             "Authorization": f"Bearer {api_key}",
@@ -209,7 +368,7 @@ class MAL:
             "temperature": kwargs.get("temperature", 0.7),
         }
         
-        async with httpx.AsyncClient(timeout=timeout) as client:
+        async with httpx.AsyncClient(timeout=timeout_config) as client:
             response = await client.post(
                 f"{base_url}/chat/completions",
                 headers=headers,
