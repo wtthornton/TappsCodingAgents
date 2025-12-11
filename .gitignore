@@ -45,6 +45,9 @@ coverage.xml
 .tapps-agents/kb/
 .tapps-agents/cache/
 
+# Test artifacts
+MagicMock/
+
 # OS
 .DS_Store
 Thumbs.db
