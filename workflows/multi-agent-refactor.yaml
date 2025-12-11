@@ -1,0 +1,83 @@
+# Multi-Agent Refactoring Workflow
+# Refactors multiple components in parallel
+
+workflow:
+  id: multi-agent-refactor
+  name: "Multi-Agent Refactoring Workflow"
+  description: "Refactor multiple components concurrently"
+  version: "1.0.0"
+  
+  type: brownfield
+  parallel_execution: true
+  
+  settings:
+    max_parallel_agents: 6
+    use_worktrees: true
+    aggregate_results: true
+    performance_monitoring: true
+  
+  parallel_tasks:
+    - agent_id: auth-refactor
+      agent: improver
+      command: refactor
+      target: services/auth/
+      args:
+        instruction: "Refactor to use dependency injection and improve error handling"
+        format: json
+      worktree: auth-refactor
+      
+    - agent_id: api-refactor
+      agent: improver
+      command: refactor
+      target: services/api/
+      args:
+        instruction: "Refactor to improve code organization and add type hints"
+        format: json
+      worktree: api-refactor
+      
+    - agent_id: payment-refactor
+      agent: improver
+      command: refactor
+      target: services/payment/
+      args:
+        instruction: "Refactor to improve security and error handling"
+        format: json
+      worktree: payment-refactor
+    
+    - agent_id: auth-review
+      agent: reviewer
+      command: review
+      target: services/auth/
+      args:
+        format: json
+      worktree: auth-review-after
+      depends_on: [auth-refactor]
+      
+    - agent_id: api-review
+      agent: reviewer
+      command: review
+      target: services/api/
+      args:
+        format: json
+      worktree: api-review-after
+      depends_on: [api-refactor]
+      
+    - agent_id: payment-review
+      agent: reviewer
+      command: review
+      target: services/payment/
+      args:
+        format: json
+      worktree: payment-review-after
+      depends_on: [payment-refactor]
+  
+  steps:
+    - id: aggregate
+      agent: orchestrator
+      action: aggregate_results
+      context_tier: 1
+      requires:
+        - parallel_tasks
+      creates:
+        - refactoring-results.json
+

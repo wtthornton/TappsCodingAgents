@@ -1,0 +1,83 @@
+# NUC Optimization Configuration
+# 
+# This configuration optimizes TappsCodingAgents for slow NUC hardware.
+# NUC (Next Unit of Computing) devices typically have limited CPU and memory,
+# so this configuration prioritizes Background Agents and aggressive caching.
+
+optimization:
+  # Use Background Agents for heavy tasks (offload to cloud/remote)
+  use_background_agents: true
+  
+  # Maximize Context7 cache to reduce API calls
+  cache_aggressively: true
+  
+  # Disable parallel tool execution to reduce CPU load
+  parallel_tools: false
+  
+  # Use lightweight Skills for quick tasks
+  lightweight_skills: true
+  
+  # Resource thresholds
+  resource_thresholds:
+    cpu_warning: 50.0      # Warn if CPU > 50%
+    cpu_critical: 80.0     # Critical if CPU > 80%
+    memory_warning: 70.0   # Warn if memory > 70%
+    memory_critical: 85.0  # Critical if memory > 85%
+    disk_warning: 85.0     # Warn if disk > 85%
+    disk_critical: 95.0    # Critical if disk > 95%
+
+context7:
+  # Larger cache for offline operation
+  max_cache_size: "200MB"
+  
+  # Pre-populate cache with common libraries
+  pre_populate: true
+  
+  # Manual refresh only (no auto-refresh to reduce load)
+  auto_refresh: false
+  
+  # Cache settings
+  knowledge_base:
+    location: ".tapps-agents/kb/context7-cache"
+    sharding: true
+    indexing: true
+    hit_rate_threshold: 0.90  # Target 90%+ hit rate
+
+background_agents:
+  # Enable Background Agents
+  enabled: true
+  
+  # Default tasks to run in Background Agents
+  default_for:
+    - "analyze-project"
+    - "refactor-large"
+    - "generate-tests"
+    - "full-review"
+    - "security-scan"
+    - "performance-analysis"
+    - "documentation-generation"
+  
+  # Fallback strategy
+  fallback:
+    enabled: true
+    check_resources: true
+    auto_route: true  # Automatically route heavy tasks
+
+# Resource monitoring
+resource_monitoring:
+  enabled: true
+  log_file: ".tapps-agents/logs/resource-monitor.jsonl"
+  check_interval_seconds: 5
+  history_size: 1000
+
+# Performance settings
+performance:
+  # Reduce concurrent operations
+  max_concurrent_tasks: 2
+  
+  # Batch operations to reduce overhead
+  batch_operations: true
+  
+  # Use lightweight operations where possible
+  prefer_lightweight: true
+

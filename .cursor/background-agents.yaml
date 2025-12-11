@@ -1,0 +1,193 @@
+# TappsCodingAgents Background Agents Configuration
+# 
+# This file configures Background Agents for Cursor AI.
+# Background Agents run continuously and handle heavy tasks autonomously.
+#
+# Usage:
+#   1. Cursor AI automatically detects this file
+#   2. Agents are available in Cursor's Background Agents panel
+#   3. Trigger agents via natural language prompts
+#
+# Context7 Cache:
+#   - Shared between Sidebar Skills and Background Agents
+#   - Location: .tapps-agents/kb/context7-cache
+#   - Auto-synced on agent startup
+
+agents:
+  # Quality Analysis Agent
+  - name: "TappsCodingAgents Quality Analyzer"
+    type: "background"
+    description: "Analyze project quality, generate reports, and identify quality issues"
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      # Full project analysis
+      - "python -m tapps_agents.cli reviewer analyze-project --format json --output .tapps-agents/reports/quality-analysis.json"
+      # Quality report generation
+      - "python -m tapps_agents.cli reviewer report . json markdown html --output-dir .tapps-agents/reports"
+      # Service-specific analysis
+      - "python -m tapps_agents.cli reviewer review {target} --format json"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+      - "TAPPS_AGENTS_MODE=background"
+    triggers:
+      - "Analyze project quality"
+      - "Generate quality report"
+      - "Review all services"
+      - "Check code quality"
+      - "Run quality analysis"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file", "pr"]
+    worktree: "quality-analysis"
+
+  # Refactoring Agent
+  - name: "TappsCodingAgents Refactoring Agent"
+    type: "background"
+    description: "Refactor code, improve quality, and modernize legacy patterns"
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      # File refactoring
+      - "python -m tapps_agents.cli improver refactor {file} '{instruction}' --format json --output .tapps-agents/reports/refactor-{file}.json"
+      # Directory refactoring
+      - "python -m tapps_agents.cli improver refactor-dir {directory} '{instruction}' --format json --output .tapps-agents/reports/refactor-{directory}.json"
+      # Quality improvement
+      - "python -m tapps_agents.cli improver improve {target} --format json"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+      - "TAPPS_AGENTS_MODE=background"
+    triggers:
+      - "Refactor {service}"
+      - "Improve code quality in {directory}"
+      - "Modernize {file}"
+      - "Refactor code"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file", "pr"]
+    worktree: "refactoring"
+
+  # Testing Agent
+  - name: "TappsCodingAgents Testing Agent"
+    type: "background"
+    description: "Generate and run tests, analyze coverage, and ensure test quality"
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      # Test generation
+      - "python -m tapps_agents.cli tester generate {file} --format json --output .tapps-agents/reports/tests-{file}.json"
+      # Test execution
+      - "python -m tapps_agents.cli tester run {target} --format json --output .tapps-agents/reports/test-results-{target}.json"
+      # Coverage analysis
+      - "python -m tapps_agents.cli tester coverage {target} --format json --output .tapps-agents/reports/coverage-{target}.json"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+      - "TAPPS_AGENTS_MODE=background"
+    triggers:
+      - "Generate tests for {file}"
+      - "Run tests for {service}"
+      - "Check test coverage"
+      - "Create tests"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file", "pr"]
+    worktree: "testing"
+
+  # Documentation Agent
+  - name: "TappsCodingAgents Documentation Agent"
+    type: "background"
+    description: "Generate API documentation, README files, and update docstrings"
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      # API documentation
+      - "python -m tapps_agents.cli documenter generate-api {target} --format json --output .tapps-agents/reports/api-docs-{target}.json"
+      # README generation
+      - "python -m tapps_agents.cli documenter generate-readme {directory} --format json --output .tapps-agents/reports/readme-{directory}.json"
+      # Docstring updates
+      - "python -m tapps_agents.cli documenter update-docstrings {file} --format json --output .tapps-agents/reports/docstrings-{file}.json"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+      - "TAPPS_AGENTS_MODE=background"
+    triggers:
+      - "Generate API documentation"
+      - "Create README for {directory}"
+      - "Update docstrings"
+      - "Generate documentation"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file", "pr"]
+    worktree: "documentation"
+
+  # Security & Compliance Agent
+  - name: "TappsCodingAgents Security Agent"
+    type: "background"
+    description: "Security scanning, compliance checks, and vulnerability analysis"
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      # Security scanning
+      - "python -m tapps_agents.cli ops security-scan {target} --type all --format json --output .tapps-agents/reports/security-{target}.json"
+      # Compliance checking
+      - "python -m tapps_agents.cli ops compliance-check --type {compliance_type} --format json --output .tapps-agents/reports/compliance-{compliance_type}.json"
+      # Dependency auditing
+      - "python -m tapps_agents.cli reviewer audit-deps --format json --output .tapps-agents/reports/dependency-audit.json"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+      - "TAPPS_AGENTS_MODE=background"
+    triggers:
+      - "Run security scan"
+      - "Check compliance"
+      - "Audit dependencies"
+      - "Security analysis"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file", "pr"]
+    worktree: "security"
+
+  # Multi-Service Analysis Agent
+  - name: "TappsCodingAgents Multi-Service Analyzer"
+    type: "background"
+    description: "Analyze multiple services in parallel, generate comprehensive reports"
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      # Parallel service analysis
+      - "python -m tapps_agents.cli reviewer analyze-services {services} --parallel --format json --output .tapps-agents/reports/multi-service-analysis.json"
+      # Cross-service analysis
+      - "python -m tapps_agents.cli reviewer cross-service-analysis --format json --output .tapps-agents/reports/cross-service-analysis.json"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+      - "TAPPS_AGENTS_MODE=background"
+      - "TAPPS_AGENTS_PARALLEL=true"
+    triggers:
+      - "Analyze all services"
+      - "Review multiple services"
+      - "Cross-service analysis"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file", "pr", "web"]
+    worktree: "multi-service"
+
+# Global Configuration
+global:
+  context7_cache: ".tapps-agents/kb/context7-cache"
+  output_directory: ".tapps-agents/reports"
+  worktree_base: ".tapps-agents/worktrees"
+  progress_reporting: true
+  result_delivery: ["file", "pr"]
+  max_parallel_agents: 4
+  timeout_seconds: 3600  # 1 hour
+
