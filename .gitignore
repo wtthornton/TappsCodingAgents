@@ -37,6 +37,12 @@ env/
 .pytest_cache/
 .coverage
 htmlcov/
+coverage.xml
+
+# TappsCodingAgents
+.tapps-agents/sessions/
+.tapps-agents/kb/
+.tapps-agents/cache/
 
 # OS
 .DS_Store
