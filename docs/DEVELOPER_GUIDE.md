@@ -972,10 +972,11 @@ Expert consultations now use an improved confidence calculation system:
 **Confidence Algorithm:**
 ```python
 confidence = (
-    max_confidence * 0.4 +      # Maximum expert confidence
-    agreement_level * 0.3 +      # Expert agreement
-    rag_quality * 0.2 +          # Knowledge base match quality
-    domain_relevance * 0.1       # Domain relevance score
+    max_confidence * 0.35 +              # Maximum expert confidence (35%)
+    agreement_level * 0.25 +              # Expert agreement (25%)
+    rag_quality * 0.2 +                   # Knowledge base match quality (20%)
+    domain_relevance * 0.1 +              # Domain relevance score (10%)
+    project_context_relevance * 0.1       # Project context relevance (10%)
 )
 ```
 
