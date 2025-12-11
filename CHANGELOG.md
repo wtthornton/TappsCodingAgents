@@ -36,18 +36,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - All other dependencies updated to latest stable versions
   - See [requirements.txt](requirements.txt) for complete list
 
+- **Test Suite Performance Optimization**
+  - Disabled coverage by default in pytest.ini (2-5x faster test execution)
+  - Run only unit tests by default (3-10x faster for daily development)
+  - Added progress indicators to long-running tests for better visibility
+  - Test suite now runs in ~4-8 seconds (unit tests) vs ~120-240 seconds (with coverage)
+  - See [Test Performance Guide](docs/TEST_PERFORMANCE_GUIDE.md) for details
+
 ### Fixed
 - Resolved dependency conflict with pytest-httpx for pytest 9.x compatibility
 - Updated GitHub repository URLs to wtthornton/TappsCodingAgents
 - Updated project structure documentation in README.md
 - Fixed project context reference in README.md
 - Updated Skills installation instructions across documentation
+- Fixed Unicode encoding issues in test progress indicators for Windows compatibility
 
 ### Documentation
 - Updated all documentation to reflect latest dependency versions
 - Updated project structure in README.md
 - Updated Skills installation instructions in QUICK_START.md and DEVELOPER_GUIDE.md
 - Updated repository URLs across all documentation files
+- Added comprehensive [Test Performance Guide](docs/TEST_PERFORMANCE_GUIDE.md) with optimization strategies
 
 ## [1.5.0] - 2025-12-XX
 
