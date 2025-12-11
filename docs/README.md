@@ -109,7 +109,7 @@ We welcome contributions to improve documentation! See [Contributing Guidelines]
 
 ## 🔄 Documentation Versions
 
-- **Current Version**: 1.6.0 (December 2025)
+- **Current Version**: 1.6.1 (December 2025)
 - **Latest Updates**: All 7 phases of Cursor AI Integration Plan 2025 complete
   - Phase 7: NUC Optimization (Resource monitoring, fallback strategy, performance benchmarks)
   - Phase 6: Context7 Optimization + Security (Security audit, KB analytics, cross-references)

@@ -49,7 +49,7 @@
 ### Prerequisites
 
 - **Ollama** installed ([ollama.com](https://ollama.com))
-- **Python 3.12+** installed
+- **Python 3.10+** installed (3.13+ recommended)
 - **Cursor** or **VS Code** IDE
 - **8GB+ GPU** recommended (CPU works but slower)
 

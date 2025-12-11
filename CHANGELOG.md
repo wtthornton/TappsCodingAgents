@@ -5,7 +5,7 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.6.0] - 2025-12-XX
+## [1.6.0] - 2025-12-10
 
 ### Added
 - **Enhancer Agent - Prompt Enhancement Utility**
@@ -20,6 +20,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Workflow definition: `workflows/prompt-enhancement.yaml`
   - Comprehensive documentation and examples
   - See [Enhancer Agent Guide](docs/ENHANCER_AGENT.md) for details
+
+## [1.6.1] - 2025-12-10
+
+### Changed
+- **Dependencies Updated to Latest 2025 Stable Versions**
+  - pytest: 8.4.2 → 9.0.2 (major version upgrade)
+  - pytest-asyncio: 0.26.0 → 1.3.0 (major version upgrade)
+  - pylint: 4.0.1 → 4.0.4
+  - coverage: 7.10.6 → 7.13.0
+  - black: 25.1.0 → 25.12.0
+  - ruff: 0.14.5 → 0.14.8
+  - mypy: 1.18.1 → 1.19.0
+  - pytest-httpx: 0.35.0 → 0.36.0 (pytest 9.x compatibility)
+  - All other dependencies updated to latest stable versions
+  - See [requirements.txt](requirements.txt) for complete list
+
+### Fixed
+- Resolved dependency conflict with pytest-httpx for pytest 9.x compatibility
+- Updated GitHub repository URLs to wtthornton/TappsCodingAgents
+- Updated project structure documentation in README.md
+- Fixed project context reference in README.md
+- Updated Skills installation instructions across documentation
+
+### Documentation
+- Updated all documentation to reflect latest dependency versions
+- Updated project structure in README.md
+- Updated Skills installation instructions in QUICK_START.md and DEVELOPER_GUIDE.md
+- Updated repository URLs across all documentation files
 
 ## [1.5.0] - 2025-12-XX
 

@@ -89,7 +89,7 @@ python -m tapps_agents.cli reviewer review tapps_agents/agents/reviewer/agent.py
 
 ## Current Self-Hosting Configuration
 
-**Version**: 1.6.0
+**Version**: 1.6.1
 
 ### Industry Experts (5)
 
@@ -260,5 +260,5 @@ When working in this project, AI assistants should:
 ---
 
 **Last Updated**: December 2025  
-**Version**: 1.6.0
+**Version**: 1.6.1
 

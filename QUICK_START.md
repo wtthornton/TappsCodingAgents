@@ -25,7 +25,7 @@ TappsCodingAgents is a framework for building AI coding agents with specialized 
 
 ## Prerequisites
 
-- **Python 3.12+** installed
+- **Python 3.10+** installed (3.13+ recommended)
 - **Ollama** installed and running ([ollama.com](https://ollama.com))
 - **8GB+ GPU** recommended (CPU works but slower)
 - **Cursor IDE** or **VS Code** (optional, for IDE integration)
