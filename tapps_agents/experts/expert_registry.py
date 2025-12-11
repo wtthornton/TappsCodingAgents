@@ -13,6 +13,9 @@ from .domain_config import DomainConfig, DomainConfigParser
 from .weight_distributor import ExpertWeightMatrix
 from .expert_config import load_expert_configs, ExpertConfigModel
 from .builtin_registry import BuiltinExpertRegistry
+from .confidence_calculator import ConfidenceCalculator
+from .confidence_metrics import get_tracker
+from ..core.project_profile import load_project_profile, ProjectProfile
 
 # Technical domains where built-in experts have primary authority
 # These domains are framework-controlled and built-in experts should be prioritized
@@ -28,6 +31,7 @@ class ConsultationResult:
     weighted_answer: str  # Combined weighted answer
     agreement_level: float  # 0.0-1.0
     confidence: float  # Overall confidence
+    confidence_threshold: float  # Agent-specific confidence threshold
     primary_expert: str
     all_experts_agreed: bool
 
@@ -42,13 +46,14 @@ class ExpertRegistry:
     - Decision aggregation
     """
     
-    def __init__(self, domain_config: Optional[DomainConfig] = None, load_builtin: bool = True):
+    def __init__(self, domain_config: Optional[DomainConfig] = None, load_builtin: bool = True, project_root: Optional[Path] = None):
         """
         Initialize expert registry.
         
         Args:
             domain_config: Optional domain configuration (can be loaded later)
             load_builtin: Whether to auto-load built-in framework experts (default: True)
+            project_root: Optional project root for profile loading
         """
         self.domain_config = domain_config
         self.experts: Dict[str, BaseExpert] = {}
@@ -57,10 +62,23 @@ class ExpertRegistry:
         self.weight_matrix: Optional[ExpertWeightMatrix] = (
             domain_config.weight_matrix if domain_config else None
         )
+        self.project_root = project_root or Path.cwd()
+        self._cached_profile: Optional[ProjectProfile] = None
         
         # Auto-load built-in experts if enabled
         if load_builtin:
             self._load_builtin_experts()
+    
+    def _get_project_profile(self) -> Optional[ProjectProfile]:
+        """
+        Get project profile (cached).
+        
+        Returns:
+            ProjectProfile if available, None otherwise
+        """
+        if self._cached_profile is None:
+            self._cached_profile = load_project_profile(project_root=self.project_root)
+        return self._cached_profile
     
     @classmethod
     def from_domains_file(cls, domains_file: Path) -> 'ExpertRegistry':
@@ -207,7 +225,8 @@ class ExpertRegistry:
         query: str,
         domain: str,
         include_all: bool = True,
-        prioritize_builtin: bool = False
+        prioritize_builtin: bool = False,
+        agent_id: Optional[str] = None
     ) -> ConsultationResult:
         """
         Consult multiple experts on a domain question and aggregate weighted responses.
@@ -220,6 +239,7 @@ class ExpertRegistry:
                                If False (default), uses weight matrix configuration.
                                For technical domains, built-in experts should be prioritized.
                                For business domains, customer experts should be prioritized.
+            agent_id: Optional agent ID for agent-specific confidence threshold
         
         Returns:
             ConsultationResult with weighted answer and agreement metrics
@@ -264,6 +284,9 @@ class ExpertRegistry:
         if not expert_ids_to_consult:
             raise ValueError(f"No experts found for domain '{domain}'")
         
+        # Get project profile if available
+        project_profile = self._get_project_profile()
+        
         # Consult each expert
         responses = []
         for expert_id in expert_ids_to_consult:
@@ -272,7 +295,13 @@ class ExpertRegistry:
                 continue  # Skip if expert not registered
             
             try:
-                response = await expert.run("consult", query=query, domain=domain)
+                # Pass project profile to expert consultation
+                response = await expert.run(
+                    "consult", 
+                    query=query, 
+                    domain=domain,
+                    project_profile=project_profile
+                )
                 if "error" not in response:
                     responses.append({
                         "expert_id": expert_id,
@@ -316,9 +345,26 @@ class ExpertRegistry:
         # Calculate agreement level
         agreement_level = self._calculate_agreement(responses, domain, primary_expert_id)
         
-        # Get overall confidence
+        # Calculate confidence using improved algorithm
         valid_responses = [r for r in responses if "error" not in r]
-        confidence = max(r.get("confidence", 0.0) for r in valid_responses) if valid_responses else 0.0
+        
+        # Calculate RAG quality from sources
+        rag_quality = None
+        if valid_responses:
+            sources_count = sum(len(r.get("sources", [])) for r in valid_responses)
+            num_responses = len(valid_responses)
+            rag_quality = min(1.0, sources_count / max(num_responses * 2, 1))  # 2 sources per response = perfect
+        
+        # Use improved confidence calculator
+        confidence, threshold = ConfidenceCalculator.calculate(
+            responses=valid_responses,
+            domain=domain,
+            agent_id=agent_id,
+            agreement_level=agreement_level,
+            rag_quality=rag_quality,
+            num_experts_consulted=len(expert_ids_to_consult),
+            project_profile=project_profile
+        )
         
         # Check if all experts agreed
         primary_response = next(
@@ -327,6 +373,24 @@ class ExpertRegistry:
         )
         all_agreed = agreement_level >= 0.75  # High agreement threshold
         
+        # Track confidence metrics
+        if agent_id:
+            try:
+                tracker = get_tracker()
+                tracker.record(
+                    agent_id=agent_id,
+                    domain=domain,
+                    confidence=confidence,
+                    threshold=threshold,
+                    agreement_level=agreement_level,
+                    num_experts=len(expert_ids_to_consult),
+                    primary_expert=primary_expert_id or "unknown",
+                    query=query
+                )
+            except Exception:
+                # Silently fail if tracking fails
+                pass
+        
         return ConsultationResult(
             domain=domain,
             query=query,
@@ -334,6 +398,7 @@ class ExpertRegistry:
             weighted_answer=weighted_answer,
             agreement_level=agreement_level,
             confidence=confidence,
+            confidence_threshold=threshold,
             primary_expert=primary_expert_id,
             all_experts_agreed=all_agreed
         )

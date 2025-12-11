@@ -10,6 +10,7 @@ from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
+from ...experts.expert_registry import ExpertRegistry
 
 
 class ArchitectAgent(BaseAgent):
@@ -26,7 +27,12 @@ class ArchitectAgent(BaseAgent):
     - Define system boundaries
     """
     
-    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None):
+    def __init__(
+        self,
+        mal: Optional[MAL] = None,
+        config: Optional[ProjectConfig] = None,
+        expert_registry: Optional[ExpertRegistry] = None
+    ):
         super().__init__(agent_id="architect", agent_name="Architect Agent", config=config)
         if config is None:
             config = load_config()
@@ -42,6 +48,9 @@ class ArchitectAgent(BaseAgent):
         self.context7: Optional[Context7AgentHelper] = None
         if config:
             self.context7 = get_context7_helper(self, config)
+        
+        # Initialize expert registry
+        self.expert_registry: Optional[ExpertRegistry] = expert_registry
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for architect agent"""
@@ -117,6 +126,59 @@ class ArchitectAgent(BaseAgent):
         if not requirements:
             return {"error": "requirements is required"}
         
+        # Consult experts for architecture guidance
+        expert_guidance = {}
+        if self.expert_registry:
+            # Consult Software Architecture expert
+            try:
+                arch_consultation = await self.expert_registry.consult(
+                    query=f"Design system architecture for: {requirements}. Context: {context}",
+                    domain="software-architecture",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="architect"
+                )
+                expert_guidance["architecture"] = arch_consultation.weighted_answer
+                expert_guidance["architecture_confidence"] = arch_consultation.confidence
+            except Exception:
+                pass
+            
+            # Consult Performance expert
+            try:
+                perf_consultation = await self.expert_registry.consult(
+                    query=f"Performance considerations for architecture: {requirements}",
+                    domain="performance-optimization",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="architect"
+                )
+                expert_guidance["performance"] = perf_consultation.weighted_answer
+            except Exception:
+                pass
+            
+            # Consult Security expert
+            try:
+                sec_consultation = await self.expert_registry.consult(
+                    query=f"Security architecture considerations: {requirements}",
+                    domain="security",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="architect"
+                )
+                expert_guidance["security"] = sec_consultation.weighted_answer
+            except Exception:
+                pass
+        
+        expert_section = ""
+        if expert_guidance:
+            expert_section = "\n\nExpert Guidance:\n"
+            if "architecture" in expert_guidance:
+                expert_section += f"\nArchitecture Expert:\n{expert_guidance['architecture'][:500]}...\n"
+            if "performance" in expert_guidance:
+                expert_section += f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}...\n"
+            if "security" in expert_guidance:
+                expert_section += f"\nSecurity Expert:\n{expert_guidance['security'][:300]}...\n"
+        
         # Use Context7 to get documentation for mentioned technologies
         context7_docs = {}
         if self.context7:
@@ -138,6 +200,7 @@ class ArchitectAgent(BaseAgent):
                 context7_section += f"\n{lib_name} Architecture:\n{doc_content[:300]}...\n"
         
         prompt = f"""Design a system architecture based on the following requirements.
+{expert_section}
 
 Requirements:
 {requirements}
@@ -180,10 +243,13 @@ Format as structured JSON with detailed architecture specification."""
                 output_path.write_text(json.dumps(architecture, indent=2))
                 architecture["output_file"] = str(output_path)
             
-            return {
+            result = {
                 "success": True,
                 "architecture": architecture
             }
+            if expert_guidance:
+                result["expert_guidance"] = expert_guidance
+            return result
         except Exception as e:
             return {"error": f"Failed to design system: {str(e)}"}
     
@@ -258,6 +324,21 @@ Format:
         if constraints is None:
             constraints = []
         
+        # Consult Software Architecture expert for technology selection
+        tech_guidance = ""
+        if self.expert_registry:
+            try:
+                tech_consultation = await self.expert_registry.consult(
+                    query=f"Select technology stack for: {component_description}. Requirements: {requirements}. Constraints: {', '.join(constraints) if constraints else 'None'}",
+                    domain="software-architecture",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="architect"
+                )
+                tech_guidance = tech_consultation.weighted_answer
+            except Exception:
+                pass
+        
         # Use Context7 to get documentation for mentioned technologies
         context7_docs = {}
         if self.context7:
@@ -286,6 +367,8 @@ Component Description:
 {f"Requirements: {requirements}" if requirements else ""}
 
 {f"Constraints: {', '.join(constraints)}" if constraints else ""}
+
+{f"Architecture Expert Guidance:\n{tech_guidance}" if tech_guidance else ""}
 {context7_section}
 
 For each technology recommendation, provide:
@@ -330,12 +413,31 @@ Format as structured JSON with technology recommendations."""
         if not system_description:
             return {"error": "system_description is required"}
         
+        # Consult Security expert
+        security_guidance = ""
+        security_confidence = 0.0
+        if self.expert_registry:
+            try:
+                security_consultation = await self.expert_registry.consult(
+                    query=f"Design security architecture for: {system_description}. Threat model: {threat_model}",
+                    domain="security",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="architect"
+                )
+                security_guidance = security_consultation.weighted_answer
+                security_confidence = security_consultation.confidence
+            except Exception:
+                pass
+        
         prompt = f"""Design a security architecture for the following system.
 
 System Description:
 {system_description}
 
 {f"Threat Model: {threat_model}" if threat_model else ""}
+
+{f"Security Expert Guidance:\n{security_guidance}" if security_guidance else ""}
 
 Provide a comprehensive security design including:
 1. Security Principles
@@ -363,10 +465,16 @@ Format as structured JSON with detailed security architecture."""
                 "security_architecture": response
             }
             
-            return {
+            result = {
                 "success": True,
                 "security_design": security_design
             }
+            if security_guidance:
+                result["expert_guidance"] = {
+                    "security": security_guidance,
+                    "confidence": security_confidence
+                }
+            return result
         except Exception as e:
             return {"error": f"Failed to design security: {str(e)}"}
     

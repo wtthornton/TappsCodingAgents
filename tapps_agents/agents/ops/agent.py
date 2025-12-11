@@ -10,10 +10,11 @@ import subprocess
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
+from ...experts.agent_integration import ExpertSupportMixin
 from .dependency_analyzer import DependencyAnalyzer
 
 
-class OpsAgent(BaseAgent):
+class OpsAgent(BaseAgent, ExpertSupportMixin):
     """
     Ops Agent - Security scanning, compliance, deployment, and infrastructure management.
     
@@ -39,6 +40,9 @@ class OpsAgent(BaseAgent):
         
         # Initialize dependency analyzer
         self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
+        
+        # Expert registry will be initialized in activate
+        self.expert_registry = None
     
     async def activate(self, project_root: Optional[Path] = None):
         # Update project_root if provided
@@ -48,6 +52,7 @@ class OpsAgent(BaseAgent):
             self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
         
         await super().activate(project_root)
+        await self._initialize_expert_support(project_root)
         self.greet()
         await self.run("help")
     
@@ -78,10 +83,26 @@ class OpsAgent(BaseAgent):
         # Get codebase context for security analysis
         issues = []
         
+        # Consult Security expert for security scanning guidance
+        security_guidance = ""
+        if self.expert_registry:
+            security_consultation = await self.expert_registry.consult(
+                query=f"Provide security scanning best practices and vulnerability detection guidance for analyzing: {target_path.name if target_path.is_file() else 'directory'}",
+                domain="security",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if security_consultation.confidence >= security_consultation.confidence_threshold:
+                security_guidance = security_consultation.weighted_answer
+        
         # Use LLM to analyze security issues
         if target_path.is_file():
             code = target_path.read_text(encoding="utf-8")
-            prompt = f"""Analyze the following code for security vulnerabilities:
+            prompt = f"""Analyze the following code for security vulnerabilities.
+            
+{f'Security Expert Guidance:\n{security_guidance}\n' if security_guidance else ''}
+
+Code to analyze:
             
 ```python
 {code}
@@ -150,6 +171,28 @@ Return findings in JSON format:
         
         compliance_checks = []
         
+        # Consult Security and Data Privacy experts
+        security_guidance = ""
+        privacy_guidance = ""
+        if self.expert_registry:
+            security_consultation = await self.expert_registry.consult(
+                query=f"Provide security compliance best practices for {compliance_type} compliance checking",
+                domain="security",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if security_consultation.confidence >= security_consultation.confidence_threshold:
+                security_guidance = security_consultation.weighted_answer
+            
+            privacy_consultation = await self.expert_registry.consult(
+                query=f"Provide data privacy compliance best practices for {compliance_type} compliance checking",
+                domain="data-privacy-compliance",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if privacy_consultation.confidence >= privacy_consultation.confidence_threshold:
+                privacy_guidance = privacy_consultation.weighted_answer
+        
         # Basic compliance checks
         if compliance_type in ["general", "all"]:
             compliance_checks.append({
@@ -165,7 +208,12 @@ Return findings in JSON format:
             })
         
         # Use LLM for compliance analysis
-        prompt = f"""Analyze this project for {compliance_type} compliance:
+        prompt = f"""Analyze this project for {compliance_type} compliance.
+
+{f'Security Expert Guidance:\n{security_guidance}\n' if security_guidance else ''}
+{f'Data Privacy Expert Guidance:\n{privacy_guidance}\n' if privacy_guidance else ''}
+
+Project details:
         
 Project root: {self.project_root}
 Config files: {[str(f) for f in config_files]}
@@ -221,8 +269,24 @@ Return findings in JSON format:
         """Deploy application to target environment."""
         # Deploying to target environment...
         
+        # Consult Security expert for secure deployment guidance
+        security_guidance = ""
+        if self.expert_registry:
+            security_consultation = await self.expert_registry.consult(
+                query=f"Provide security best practices for deploying to {target} environment ({environment or 'default'})",
+                domain="security",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if security_consultation.confidence >= security_consultation.confidence_threshold:
+                security_guidance = security_consultation.weighted_answer
+        
         # Generate deployment script/instructions
-        prompt = f"""Generate deployment instructions for this project:
+        prompt = f"""Generate deployment instructions for this project.
+
+{f'Security Expert Guidance:\n{security_guidance}\n' if security_guidance else ''}
+
+Project details:
         
 Project root: {self.project_root}
 Target: {target}
@@ -285,8 +349,24 @@ Return deployment steps in JSON format:
             dockerfile_path = self.project_root / "Dockerfile"
             docker_compose_path = self.project_root / "docker-compose.yml"
             
+            # Consult Security expert for secure infrastructure setup
+            security_guidance = ""
+            if self.expert_registry:
+                security_consultation = await self.expert_registry.consult(
+                    query=f"Provide security best practices for setting up {infrastructure_type} infrastructure",
+                    domain="security",
+                    agent_id=self.agent_id,
+                    prioritize_builtin=True
+                )
+                if security_consultation.confidence >= security_consultation.confidence_threshold:
+                    security_guidance = security_consultation.weighted_answer
+            
             # Use LLM to generate Docker configurations
-            prompt = f"""Generate Docker configuration for this project:
+            prompt = f"""Generate Docker configuration for this project.
+
+{f'Security Expert Guidance:\n{security_guidance}\n' if security_guidance else ''}
+
+Project details:
             
 Project root: {self.project_root}
 Project type: Python application

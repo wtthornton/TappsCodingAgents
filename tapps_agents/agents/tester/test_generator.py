@@ -20,7 +20,8 @@ class TestGenerator:
         self,
         code_path: Path,
         test_path: Optional[Path] = None,
-        context: Optional[str] = None
+        context: Optional[str] = None,
+        expert_guidance: Optional[str] = None
     ) -> str:
         """
         Generate unit tests for a given code file.
@@ -40,7 +41,7 @@ class TestGenerator:
         analysis = self._analyze_code(code, code_path)
         
         # Build prompt for LLM
-        prompt = self._build_unit_test_prompt(code, analysis, test_path, context)
+        prompt = self._build_unit_test_prompt(code, analysis, test_path, context, expert_guidance)
         
         # Generate test code
         test_code = await self.mal.generate(prompt)
@@ -51,7 +52,8 @@ class TestGenerator:
         self,
         file_paths: List[Path],
         test_path: Optional[Path] = None,
-        context: Optional[str] = None
+        context: Optional[str] = None,
+        expert_guidance: Optional[str] = None
     ) -> str:
         """
         Generate integration tests for multiple files/modules.
@@ -73,7 +75,7 @@ class TestGenerator:
         combined_code = "\n".join(code_snippets)
         
         # Build prompt for LLM
-        prompt = self._build_integration_test_prompt(combined_code, test_path, context)
+        prompt = self._build_integration_test_prompt(combined_code, test_path, context, expert_guidance)
         
         # Generate test code
         test_code = await self.mal.generate(prompt)
@@ -133,7 +135,8 @@ class TestGenerator:
         code: str,
         analysis: Dict[str, Any],
         test_path: Optional[Path],
-        context: Optional[str]
+        context: Optional[str],
+        expert_guidance: Optional[str] = None
     ) -> str:
         """Build prompt for unit test generation."""
         prompt_parts = [
@@ -164,6 +167,11 @@ class TestGenerator:
             prompt_parts.append(context)
             prompt_parts.append("")
         
+        if expert_guidance:
+            prompt_parts.append("Expert Guidance:")
+            prompt_parts.append(expert_guidance)
+            prompt_parts.append("")
+        
         prompt_parts.extend([
             "Requirements:",
             "- Test all public functions and methods",
@@ -182,7 +190,8 @@ class TestGenerator:
         self,
         code: str,
         test_path: Optional[Path],
-        context: Optional[str]
+        context: Optional[str],
+        expert_guidance: Optional[str] = None
     ) -> str:
         """Build prompt for integration test generation."""
         prompt_parts = [
@@ -204,6 +213,11 @@ class TestGenerator:
         if context:
             prompt_parts.append("Context:")
             prompt_parts.append(context)
+            prompt_parts.append("")
+        
+        if expert_guidance:
+            prompt_parts.append("Expert Guidance:")
+            prompt_parts.append(expert_guidance)
             prompt_parts.append("")
         
         prompt_parts.extend([

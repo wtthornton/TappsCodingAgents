@@ -110,12 +110,36 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         except (FileNotFoundError, ValueError) as e:
             return {"error": str(e)}
         
+        # Consult Testing expert for test generation guidance
+        expert_guidance = ""
+        expert_advice = None
+        if self.expert_registry:
+            testing_consultation = await self.expert_registry.consult(
+                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.",
+                domain="testing-strategies",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if testing_consultation.confidence >= testing_consultation.confidence_threshold:
+                expert_guidance = testing_consultation.weighted_answer
+                expert_advice = {
+                    "confidence": testing_consultation.confidence,
+                    "threshold": testing_consultation.confidence_threshold,
+                    "guidance": expert_guidance
+                }
+            else:
+                expert_advice = {
+                    "confidence": testing_consultation.confidence,
+                    "threshold": testing_consultation.confidence_threshold,
+                    "guidance": f"Low confidence expert advice: {testing_consultation.weighted_answer}"
+                }
+        
         # Generate tests
         if integration:
             # For integration tests, use the file itself (could be extended to accept multiple files)
-            test_code = await self.test_generator.generate_integration_tests([file_path], test_path=Path(test_file) if test_file else None)
+            test_code = await self.test_generator.generate_integration_tests([file_path], test_path=Path(test_file) if test_file else None, expert_guidance=expert_guidance)
         else:
-            test_code = await self.test_generator.generate_unit_tests(file_path, test_path=Path(test_file) if test_file else None)
+            test_code = await self.test_generator.generate_unit_tests(file_path, test_path=Path(test_file) if test_file else None, expert_guidance=expert_guidance)
         
         # Determine test file path
         if test_file:
@@ -168,11 +192,23 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         except (FileNotFoundError, ValueError) as e:
             return {"error": str(e)}
         
+        # Consult Testing expert for test generation guidance
+        expert_guidance = ""
+        if self.expert_registry:
+            testing_consultation = await self.expert_registry.consult(
+                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.",
+                domain="testing-strategies",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if testing_consultation.confidence >= testing_consultation.confidence_threshold:
+                expert_guidance = testing_consultation.weighted_answer
+        
         # Generate tests
         if integration:
-            test_code = await self.test_generator.generate_integration_tests([file_path], test_path=Path(test_file) if test_file else None)
+            test_code = await self.test_generator.generate_integration_tests([file_path], test_path=Path(test_file) if test_file else None, expert_guidance=expert_guidance)
         else:
-            test_code = await self.test_generator.generate_unit_tests(file_path, test_path=Path(test_file) if test_file else None)
+            test_code = await self.test_generator.generate_unit_tests(file_path, test_path=Path(test_file) if test_file else None, expert_guidance=expert_guidance)
         
         # Determine test file path
         if test_file:

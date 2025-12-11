@@ -56,6 +56,7 @@ agents:
     include_scoring: true                # Include code scoring in review
     include_llm_feedback: true           # Include LLM-generated feedback
     max_file_size: 1048576               # Maximum file size in bytes (1MB)
+    min_confidence_threshold: 0.8        # Minimum expert confidence (0.0-1.0)
 ```
 
 **Options:**
@@ -64,6 +65,64 @@ agents:
 - `include_scoring` (bool): Whether to calculate and include code scores
 - `include_llm_feedback` (bool): Whether to generate LLM feedback
 - `max_file_size` (int): Maximum file size in bytes (default: 1MB)
+- `min_confidence_threshold` (float): Minimum expert confidence threshold (0.0-1.0, default: 0.8)
+
+### Agent Configuration: All Agents
+
+All agents support `min_confidence_threshold` for expert consultations:
+
+```yaml
+agents:
+  architect:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.75      # High threshold for architecture
+  
+  implementer:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.7       # Medium-high for code generation
+  
+  designer:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.65      # Medium for design decisions
+  
+  tester:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.7       # Medium-high for tests
+  
+  ops:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.75      # High for operations
+  
+  enhancer:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.6       # Medium for enhancements
+  
+  analyst:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.65      # Medium for analysis
+  
+  planner:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.6       # Medium for planning
+  
+  debugger:
+    model: "deepseek-coder:6.7b"
+    min_confidence_threshold: 0.7       # Medium-high for debugging
+  
+  documenter:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.5      # Lower for documentation
+  
+  orchestrator:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.6      # Medium for orchestration
+```
+
+**Confidence Threshold Guidelines:**
+- **High (0.75-0.8)**: Critical decisions (Reviewer, Architect, Ops)
+- **Medium-High (0.7)**: Important decisions (Implementer, Tester, Debugger)
+- **Medium (0.6-0.65)**: Standard decisions (Designer, Analyst, Planner, Orchestrator, Enhancer)
+- **Lower (0.5)**: Less critical (Documenter)
 
 ### Scoring Configuration
 

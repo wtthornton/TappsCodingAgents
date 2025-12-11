@@ -84,6 +84,7 @@ class ReviewerAgentConfig(BaseModel):
     include_scoring: bool = Field(default=True, description="Include code scoring in review")
     include_llm_feedback: bool = Field(default=True, description="Include LLM-generated feedback")
     max_file_size: int = Field(default=1024 * 1024, ge=1024, description="Maximum file size in bytes (1MB default)")
+    min_confidence_threshold: float = Field(default=0.8, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
 
 
 class PlannerAgentConfig(BaseModel):
@@ -92,6 +93,7 @@ class PlannerAgentConfig(BaseModel):
     model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for planning")
     stories_dir: Optional[str] = Field(default=None, description="Directory for storing stories (default: stories/)")
     default_priority: str = Field(default="medium", description="Default priority for new stories (high/medium/low)")
+    min_confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
 
 
 class ImplementerAgentConfig(BaseModel):
@@ -102,6 +104,7 @@ class ImplementerAgentConfig(BaseModel):
     auto_approve_threshold: float = Field(default=80.0, ge=0.0, le=100.0, description="Auto-approve if score >= threshold")
     backup_files: bool = Field(default=True, description="Create backup before overwriting existing files")
     max_file_size: int = Field(default=10 * 1024 * 1024, ge=1024, description="Maximum file size in bytes (10MB default)")
+    min_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
 
 
 class TesterAgentConfig(BaseModel):
@@ -112,6 +115,7 @@ class TesterAgentConfig(BaseModel):
     tests_dir: Optional[str] = Field(default=None, description="Directory for tests (default: tests/)")
     coverage_threshold: float = Field(default=80.0, ge=0.0, le=100.0, description="Target test coverage percentage")
     auto_write_tests: bool = Field(default=True, description="Automatically write generated tests to files")
+    min_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
 
 
 class DebuggerAgentConfig(BaseModel):
@@ -120,6 +124,7 @@ class DebuggerAgentConfig(BaseModel):
     model: str = Field(default="deepseek-coder:6.7b", description="LLM model to use for error analysis")
     include_code_examples: bool = Field(default=True, description="Include code examples in fix suggestions")
     max_context_lines: int = Field(default=50, ge=10, le=200, description="Maximum lines of code context to include in analysis")
+    min_confidence_threshold: float = Field(default=0.7, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
 
 
 class DocumenterAgentConfig(BaseModel):
@@ -129,6 +134,7 @@ class DocumenterAgentConfig(BaseModel):
     docs_dir: Optional[str] = Field(default=None, description="Directory for generated docs (default: docs/)")
     include_examples: bool = Field(default=True, description="Include code examples in documentation")
     docstring_format: str = Field(default="google", description="Docstring format (google/numpy/sphinx)")
+    min_confidence_threshold: float = Field(default=0.5, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
 
 
 class Context7KnowledgeBaseConfig(BaseModel):
@@ -194,6 +200,48 @@ class QualityToolsConfig(BaseModel):
     dependency_audit_threshold: str = Field(default="high", description="Minimum severity threshold (low/medium/high/critical)")
 
 
+class ArchitectAgentConfig(BaseModel):
+    """Configuration specific to Architect Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for architecture design")
+    min_confidence_threshold: float = Field(default=0.75, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
+
+
+class DesignerAgentConfig(BaseModel):
+    """Configuration specific to Designer Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for design")
+    min_confidence_threshold: float = Field(default=0.65, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
+
+
+class OpsAgentConfig(BaseModel):
+    """Configuration specific to Ops Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for operations")
+    min_confidence_threshold: float = Field(default=0.75, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
+
+
+class EnhancerAgentConfig(BaseModel):
+    """Configuration specific to Enhancer Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for enhancements")
+    min_confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
+
+
+class AnalystAgentConfig(BaseModel):
+    """Configuration specific to Analyst Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for analysis")
+    min_confidence_threshold: float = Field(default=0.65, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
+
+
+class OrchestratorAgentConfig(BaseModel):
+    """Configuration specific to Orchestrator Agent"""
+    
+    model: str = Field(default="qwen2.5-coder:7b", description="LLM model to use for orchestration")
+    min_confidence_threshold: float = Field(default=0.6, ge=0.0, le=1.0, description="Minimum expert confidence threshold (0.0-1.0)")
+
+
 class AgentsConfig(BaseModel):
     """Configuration for all agents"""
     
@@ -203,6 +251,12 @@ class AgentsConfig(BaseModel):
     tester: TesterAgentConfig = Field(default_factory=TesterAgentConfig)
     debugger: DebuggerAgentConfig = Field(default_factory=DebuggerAgentConfig)
     documenter: DocumenterAgentConfig = Field(default_factory=DocumenterAgentConfig)
+    architect: ArchitectAgentConfig = Field(default_factory=ArchitectAgentConfig)
+    designer: DesignerAgentConfig = Field(default_factory=DesignerAgentConfig)
+    ops: OpsAgentConfig = Field(default_factory=OpsAgentConfig)
+    enhancer: EnhancerAgentConfig = Field(default_factory=EnhancerAgentConfig)
+    analyst: AnalystAgentConfig = Field(default_factory=AnalystAgentConfig)
+    orchestrator: OrchestratorAgentConfig = Field(default_factory=OrchestratorAgentConfig)
 
 
 class ProjectConfig(BaseModel):

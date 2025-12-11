@@ -42,6 +42,11 @@ class BuiltinExpertRegistry:
         "user-experience",
         "documentation-knowledge-management",
         "ai-agent-framework",
+        # Phase 5: High Priority Experts
+        "observability-monitoring",
+        "api-design-integration",
+        "cloud-infrastructure",
+        "database-data-management",
     }
     
     # Built-in expert configurations
@@ -134,6 +139,42 @@ class BuiltinExpertRegistry:
             expert_id="expert-documentation",
             expert_name="Documentation & Knowledge Management Expert",
             primary_domain="documentation-knowledge-management",
+            rag_enabled=True,
+            fine_tuned=False,
+        ),
+        
+        # Phase 5: Observability & Monitoring Expert
+        ExpertConfigModel(
+            expert_id="expert-observability",
+            expert_name="Observability & Monitoring Expert",
+            primary_domain="observability-monitoring",
+            rag_enabled=True,
+            fine_tuned=False,
+        ),
+        
+        # Phase 5: API Design & Integration Expert
+        ExpertConfigModel(
+            expert_id="expert-api-design",
+            expert_name="API Design & Integration Expert",
+            primary_domain="api-design-integration",
+            rag_enabled=True,
+            fine_tuned=False,
+        ),
+        
+        # Phase 5: Cloud & Infrastructure Expert
+        ExpertConfigModel(
+            expert_id="expert-cloud-infrastructure",
+            expert_name="Cloud & Infrastructure Expert",
+            primary_domain="cloud-infrastructure",
+            rag_enabled=True,
+            fine_tuned=False,
+        ),
+        
+        # Phase 5: Database & Data Management Expert
+        ExpertConfigModel(
+            expert_id="expert-database",
+            expert_name="Database & Data Management Expert",
+            primary_domain="database-data-management",
             rag_enabled=True,
             fine_tuned=False,
         ),

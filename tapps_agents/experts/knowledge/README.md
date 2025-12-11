@@ -8,16 +8,52 @@ Each expert has its own subdirectory containing markdown knowledge files:
 
 ```
 knowledge/
-├── security/          # Security Expert knowledge base
+├── security/                      # Security Expert knowledge base
 │   ├── owasp-top10.md
 │   ├── secure-coding-practices.md
 │   ├── threat-modeling.md
 │   └── vulnerability-patterns.md
-├── performance/      # Performance Expert (Phase 2)
-├── testing/          # Testing Expert (Phase 2)
-├── data-privacy/     # Data Privacy Expert (Phase 3)
-├── accessibility/    # Accessibility Expert (Phase 4)
-└── user-experience/  # UX Expert (Phase 4)
+├── performance/                   # Performance Expert (Phase 2)
+├── testing/                       # Testing Expert (Phase 2)
+├── data-privacy-compliance/       # Data Privacy Expert (Phase 3)
+├── accessibility/                 # Accessibility Expert (Phase 4)
+├── user-experience/               # UX Expert (Phase 4)
+├── observability-monitoring/      # Observability Expert (Phase 5)
+│   ├── distributed-tracing.md
+│   ├── metrics-and-monitoring.md
+│   ├── logging-strategies.md
+│   ├── apm-tools.md
+│   ├── slo-sli-sla.md
+│   ├── alerting-patterns.md
+│   ├── observability-best-practices.md
+│   └── open-telemetry.md
+├── api-design-integration/        # API Design Expert (Phase 5)
+│   ├── restful-api-design.md
+│   ├── graphql-patterns.md
+│   ├── grpc-best-practices.md
+│   ├── api-versioning.md
+│   ├── rate-limiting.md
+│   ├── api-gateway-patterns.md
+│   ├── api-security-patterns.md
+│   └── contract-testing.md
+├── cloud-infrastructure/          # Cloud Infrastructure Expert (Phase 5)
+│   ├── cloud-native-patterns.md
+│   ├── containerization.md
+│   ├── kubernetes-patterns.md
+│   ├── infrastructure-as-code.md
+│   ├── serverless-architecture.md
+│   ├── multi-cloud-strategies.md
+│   ├── cost-optimization.md
+│   └── disaster-recovery.md
+└── database-data-management/      # Database Expert (Phase 5)
+    ├── database-design.md
+    ├── sql-optimization.md
+    ├── nosql-patterns.md
+    ├── data-modeling.md
+    ├── migration-strategies.md
+    ├── scalability-patterns.md
+    ├── backup-and-recovery.md
+    └── acid-vs-cap.md
 ```
 
 ## Knowledge Base Format

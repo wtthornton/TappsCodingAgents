@@ -6,12 +6,15 @@ They provide domain knowledge through consultation, RAG, and weighted decisions.
 """
 
 from pathlib import Path
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional, List, TYPE_CHECKING
 
 from ..core.agent_base import BaseAgent
 from ..core.config import ProjectConfig
 from ..core.mal import MAL
 from .simple_rag import SimpleKnowledgeBase
+
+if TYPE_CHECKING:
+    from ..core.project_profile import ProjectProfile
 
 
 class BaseExpert(BaseAgent):
@@ -177,8 +180,11 @@ class BaseExpert(BaseAgent):
         # Build context from domain knowledge
         context = await self._build_domain_context(query, domain)
         
+        # Get project profile if available (from kwargs)
+        project_profile = kwargs.get("project_profile")
+        
         # Query using LLM with domain context
-        prompt = self._build_consultation_prompt(query, context, domain)
+        prompt = await self._build_consultation_prompt(query, context, domain, project_profile=project_profile)
         response = await self._query_llm(prompt)
         
         return {
@@ -271,17 +277,96 @@ class BaseExpert(BaseAgent):
             return self.knowledge_base.get_sources(query, max_results=5)
         return []
     
-    async def _build_consultation_prompt(self, query: str, context: str, domain: str) -> str:
-        """Build LLM prompt for consultation."""
-        return f"""You are a {domain} domain expert.
+    async def _build_consultation_prompt(
+        self, 
+        query: str, 
+        context: str, 
+        domain: str,
+        project_profile: Optional['ProjectProfile'] = None
+    ) -> str:
+        """
+        Build LLM prompt for consultation.
+        
+        Args:
+            query: The question to ask
+            context: Domain context from RAG
+            domain: Domain name
+            project_profile: Optional project profile for context-aware advice
+        """
+        prompt = f"""You are a {domain} domain expert.
         
 Domain Context:
 {context}
-
+"""
+        
+        # Add project profile context if available and high confidence
+        if project_profile:
+            profile_context = self._format_profile_context(project_profile)
+            if profile_context:
+                prompt += f"\nProject Context:\n{profile_context}\n"
+        
+        prompt += f"""
 Question: {query}
 
-Provide a clear, accurate answer based on your domain expertise. Cite sources if applicable.
+Provide a clear, accurate answer based on your domain expertise. Tailor your advice to the project's characteristics if relevant. Cite sources if applicable.
 Answer:"""
+        
+        return prompt
+    
+    def _format_profile_context(self, profile: 'ProjectProfile') -> str:
+        """
+        Format project profile as context string for LLM.
+        
+        Only includes high-confidence profile values (>= 0.7).
+        
+        Args:
+            profile: ProjectProfile instance
+            
+        Returns:
+            Formatted context string or empty string if no high-confidence values
+        """
+        from ..core.project_profile import ProjectProfile
+        
+        context_parts = []
+        
+        # Deployment type
+        if profile.deployment_type and profile.deployment_type_confidence >= 0.7:
+            context_parts.append(
+                f"- Deployment: {profile.deployment_type} "
+                f"(confidence: {profile.deployment_type_confidence:.1%})"
+            )
+        
+        # Security level
+        if profile.security_level and profile.security_level_confidence >= 0.7:
+            context_parts.append(
+                f"- Security Level: {profile.security_level} "
+                f"(confidence: {profile.security_level_confidence:.1%})"
+            )
+        
+        # Compliance requirements
+        high_confidence_compliance = [
+            req for req in profile.compliance_requirements
+            if req.confidence >= 0.7
+        ]
+        if high_confidence_compliance:
+            compliance_names = ", ".join(req.name for req in high_confidence_compliance)
+            context_parts.append(f"- Compliance Requirements: {compliance_names}")
+        
+        # Tenancy (if detected)
+        if profile.tenancy and profile.tenancy_confidence >= 0.7:
+            context_parts.append(
+                f"- Tenancy: {profile.tenancy} "
+                f"(confidence: {profile.tenancy_confidence:.1%})"
+            )
+        
+        # User scale (if detected)
+        if profile.user_scale and profile.user_scale_confidence >= 0.7:
+            context_parts.append(
+                f"- User Scale: {profile.user_scale} "
+                f"(confidence: {profile.user_scale_confidence:.1%})"
+            )
+        
+        return "\n".join(context_parts) if context_parts else ""
     
     async def _build_validation_prompt(self, artifact: str, artifact_type: str, context: str, domain: str) -> str:
         """Build LLM prompt for validation."""

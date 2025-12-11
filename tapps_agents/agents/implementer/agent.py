@@ -11,6 +11,7 @@ from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config, ImplementerAgentConfig
 from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
+from ...experts.expert_registry import ExpertRegistry
 from .code_generator import CodeGenerator
 # Import ReviewerAgent (circular import handled lazily)
 from typing import TYPE_CHECKING
@@ -25,7 +26,12 @@ class ImplementerAgent(BaseAgent):
     Permissions: Read, Write, Edit, Grep, Glob, Bash
     """
     
-    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None):
+    def __init__(
+        self,
+        mal: Optional[MAL] = None,
+        config: Optional[ProjectConfig] = None,
+        expert_registry: Optional[ExpertRegistry] = None
+    ):
         super().__init__(agent_id="implementer", agent_name="Implementer Agent", config=config)
         # Use config if provided, otherwise load defaults
         if config is None:
@@ -50,6 +56,9 @@ class ImplementerAgent(BaseAgent):
         self.context7: Optional[Context7AgentHelper] = None
         if config:
             self.context7 = get_context7_helper(self, config)
+        
+        # Initialize expert registry
+        self.expert_registry: Optional[ExpertRegistry] = expert_registry
         
         # Reviewer agent for code review
         self.reviewer = None
@@ -140,13 +149,43 @@ class ImplementerAgent(BaseAgent):
         # Check if file exists
         file_exists = path.exists()
         
+        # Consult experts for code generation guidance
+        expert_guidance = {}
+        if self.expert_registry:
+            # Consult Security expert for secure coding practices
+            try:
+                security_consultation = await self.expert_registry.consult(
+                    query=f"Secure coding practices for: {specification}. Language: {language}",
+                    domain="security",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="implementer"
+                )
+                expert_guidance["security"] = security_consultation.weighted_answer
+            except Exception:
+                pass
+            
+            # Consult Performance expert for performance optimization
+            try:
+                perf_consultation = await self.expert_registry.consult(
+                    query=f"Performance optimization for code: {specification}",
+                    domain="performance-optimization",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="implementer"
+                )
+                expert_guidance["performance"] = perf_consultation.weighted_answer
+            except Exception:
+                pass
+        
         # Generate code
         try:
             generated_code = await self.code_generator.generate_code(
                 specification=specification,
                 file_path=path,
                 context=context,
-                language=language
+                language=language,
+                expert_guidance=expert_guidance
             )
         except Exception as e:
             return {"error": f"Code generation failed: {str(e)}"}
@@ -186,7 +225,7 @@ class ImplementerAgent(BaseAgent):
                 backup_path.unlink()
             return {"error": f"Failed to write file: {str(e)}"}
         
-        return {
+        result = {
             "type": "implement",
             "file": str(path),
             "code": generated_code,
@@ -195,6 +234,9 @@ class ImplementerAgent(BaseAgent):
             "approved": True,
             "file_existed": file_exists
         }
+        if expert_guidance:
+            result["expert_guidance"] = expert_guidance
+        return result
     
     async def generate_code(
         self,
@@ -220,20 +262,51 @@ class ImplementerAgent(BaseAgent):
         if path and not self._validate_path(path):
             return {"error": f"Invalid or unsafe path: {file_path}"}
         
+        # Consult experts for code generation guidance
+        expert_guidance = {}
+        if self.expert_registry:
+            try:
+                security_consultation = await self.expert_registry.consult(
+                    query=f"Secure coding practices for: {specification}",
+                    domain="security",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="implementer"
+                )
+                expert_guidance["security"] = security_consultation.weighted_answer
+            except Exception:
+                pass
+            
+            try:
+                perf_consultation = await self.expert_registry.consult(
+                    query=f"Performance optimization for: {specification}",
+                    domain="performance-optimization",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="implementer"
+                )
+                expert_guidance["performance"] = perf_consultation.weighted_answer
+            except Exception:
+                pass
+        
         try:
             generated_code = await self.code_generator.generate_code(
                 specification=specification,
                 file_path=path,
                 context=context,
-                language=language
+                language=language,
+                expert_guidance=expert_guidance
             )
             
-            return {
+            result = {
                 "type": "generate_code",
                 "code": generated_code,
                 "file_path": str(path) if path else None,
                 "language": language
             }
+            if expert_guidance:
+                result["expert_guidance"] = expert_guidance
+            return result
         except Exception as e:
             return {"error": f"Code generation failed: {str(e)}"}
     

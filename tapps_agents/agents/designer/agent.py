@@ -9,9 +9,10 @@ import json
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
+from ...experts.agent_integration import ExpertSupportMixin
 
 
-class DesignerAgent(BaseAgent):
+class DesignerAgent(BaseAgent, ExpertSupportMixin):
     """
     Designer Agent - API contracts, data models, UI/UX specifications.
     
@@ -36,6 +37,14 @@ class DesignerAgent(BaseAgent):
         self.mal = mal or MAL(
             ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
         )
+        
+        # Expert registry will be initialized in activate
+        self.expert_registry = None
+    
+    async def activate(self, project_root: Optional[Path] = None):
+        """Activate the designer agent with expert support."""
+        await super().activate(project_root)
+        await self._initialize_expert_support(project_root)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return available commands for designer agent"""
@@ -113,12 +122,26 @@ class DesignerAgent(BaseAgent):
         if not requirements:
             return {"error": "requirements is required"}
         
+        # Consult Data Privacy expert for API design
+        privacy_guidance = ""
+        if self.expert_registry:
+            privacy_consultation = await self.expert_registry.consult(
+                query=f"Provide data privacy and security best practices for designing a {api_type} API with the following requirements: {requirements[:500]}",
+                domain="data-privacy-compliance",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if privacy_consultation.confidence >= privacy_consultation.confidence_threshold:
+                privacy_guidance = privacy_consultation.weighted_answer
+        
         prompt = f"""Design an API contract for the following requirements.
 
 Requirements:
 {requirements}
 
 API Type: {api_type}
+
+{f'Data Privacy Expert Guidance:\n{privacy_guidance}\n' if privacy_guidance else ''}
 
 Provide a comprehensive API design including:
 1. API Overview and Purpose
@@ -173,12 +196,26 @@ Format as structured JSON with OpenAPI-style specification."""
         if not requirements:
             return {"error": "requirements is required"}
         
+        # Consult Data Privacy expert for data model design
+        privacy_guidance = ""
+        if self.expert_registry:
+            privacy_consultation = await self.expert_registry.consult(
+                query=f"Provide data privacy and security best practices for designing data models with the following requirements: {requirements[:500]}",
+                domain="data-privacy-compliance",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if privacy_consultation.confidence >= privacy_consultation.confidence_threshold:
+                privacy_guidance = privacy_consultation.weighted_answer
+        
         prompt = f"""Design data models and schemas for the following requirements.
 
 Requirements:
 {requirements}
 
 {f"Data Source: {data_source}" if data_source else ""}
+
+{f'Data Privacy Expert Guidance:\n{privacy_guidance}\n' if privacy_guidance else ''}
 
 Provide comprehensive data model design including:
 1. Entity Relationship Overview
@@ -234,12 +271,37 @@ Format as structured JSON with detailed data model specification."""
         if user_stories is None:
             user_stories = []
         
+        # Consult UX and Accessibility experts
+        ux_guidance = ""
+        accessibility_guidance = ""
+        if self.expert_registry:
+            ux_consultation = await self.expert_registry.consult(
+                query=f"Provide UX best practices for designing UI for: {feature_description[:500]}",
+                domain="user-experience",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if ux_consultation.confidence >= ux_consultation.confidence_threshold:
+                ux_guidance = ux_consultation.weighted_answer
+            
+            accessibility_consultation = await self.expert_registry.consult(
+                query=f"Provide accessibility best practices for designing UI for: {feature_description[:500]}",
+                domain="accessibility",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if accessibility_consultation.confidence >= accessibility_consultation.confidence_threshold:
+                accessibility_guidance = accessibility_consultation.weighted_answer
+        
         prompt = f"""Design UI/UX specifications for the following feature.
 
 Feature Description:
 {feature_description}
 
 {f"User Stories: {chr(10).join(f'- {story}' for story in user_stories)}" if user_stories else ""}
+
+{f'UX Expert Guidance:\n{ux_guidance}\n' if ux_guidance else ''}
+{f'Accessibility Expert Guidance:\n{accessibility_guidance}\n' if accessibility_guidance else ''}
 
 Provide comprehensive UI/UX design including:
 1. User Journey/Flow
@@ -354,12 +416,37 @@ Format as structured content."""
         if not project_description:
             return {"error": "project_description is required"}
         
+        # Consult UX and Accessibility experts
+        ux_guidance = ""
+        accessibility_guidance = ""
+        if self.expert_registry:
+            ux_consultation = await self.expert_registry.consult(
+                query=f"Provide UX best practices for defining a design system for: {project_description[:500]}",
+                domain="user-experience",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if ux_consultation.confidence >= ux_consultation.confidence_threshold:
+                ux_guidance = ux_consultation.weighted_answer
+            
+            accessibility_consultation = await self.expert_registry.consult(
+                query=f"Provide accessibility best practices for defining a design system for: {project_description[:500]}",
+                domain="accessibility",
+                agent_id=self.agent_id,
+                prioritize_builtin=True
+            )
+            if accessibility_consultation.confidence >= accessibility_consultation.confidence_threshold:
+                accessibility_guidance = accessibility_consultation.weighted_answer
+        
         prompt = f"""Define a design system for the following project.
 
 Project Description:
 {project_description}
 
 {f"Brand Guidelines: {brand_guidelines}" if brand_guidelines else ""}
+
+{f'UX Expert Guidance:\n{ux_guidance}\n' if ux_guidance else ''}
+{f'Accessibility Expert Guidance:\n{accessibility_guidance}\n' if accessibility_guidance else ''}
 
 Provide comprehensive design system including:
 1. Color Palette (primary, secondary, accent, neutral)

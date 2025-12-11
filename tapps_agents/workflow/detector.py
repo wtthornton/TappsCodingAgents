@@ -124,6 +124,138 @@ class ProjectDetector:
                 return True
         return False
     
+    def detect_deployment_type(self) -> Tuple[Optional[str], float, List[str]]:
+        """
+        Detect deployment type with confidence score.
+        
+        Returns:
+            Tuple of (deployment_type, confidence, indicators)
+            deployment_type: "local", "cloud", or "enterprise" (or None)
+            confidence: 0.0-1.0
+            indicators: List of indicator names that matched
+        """
+        indicators = []
+        cloud_score = 0.0
+        local_score = 0.0
+        
+        # Cloud indicators
+        cloud_checks = [
+            ("has_dockerfile", lambda p: (p / "Dockerfile").exists()),
+            ("has_docker_compose", lambda p: (p / "docker-compose.yml").exists() or (p / "docker-compose.yaml").exists()),
+            ("has_kubernetes", lambda p: (p / "k8s").exists() or (p / "kubernetes").exists()),
+            ("has_serverless", lambda p: (p / "serverless.yml").exists() or (p / "serverless.yaml").exists()),
+            ("has_terraform", lambda p: (p / "terraform").exists() or any((p / f).exists() for f in ["main.tf", "variables.tf", "terraform.tf"])),
+        ]
+        
+        for name, check in cloud_checks:
+            if check(self.project_root):
+                cloud_score += 0.2
+                indicators.append(name)
+        
+        # Local indicators (conservative - default to local)
+        if cloud_score < 0.3:
+            local_score = 0.5  # Conservative default
+            indicators.append("no_cloud_infrastructure")
+        
+        # Determine result
+        if cloud_score >= 0.6:
+            return ("cloud", min(0.9, cloud_score), indicators)
+        elif cloud_score >= 0.3:
+            return ("cloud", min(0.7, cloud_score), indicators)
+        else:
+            return ("local", min(0.8, local_score), indicators)
+    
+    def detect_compliance_requirements(self) -> List[Tuple[str, float, List[str]]]:
+        """
+        Detect compliance requirements from files.
+        
+        Returns:
+            List of tuples: (compliance_name, confidence, indicators)
+        """
+        compliance_patterns = {
+            "GDPR": ["gdpr", "general data protection regulation"],
+            "HIPAA": ["hipaa", "health insurance portability"],
+            "PCI": ["pci", "payment card industry"],
+            "SOC2": ["soc2", "soc 2", "service organization control"],
+            "ISO27001": ["iso27001", "iso 27001"],
+        }
+        
+        requirements = []
+        project_root = self.project_root
+        
+        # Check for compliance files/directories
+        for compliance_name, patterns in compliance_patterns.items():
+            indicators = []
+            confidence = 0.0
+            
+            # Check file/directory names
+            for pattern in patterns:
+                # Check exact file/directory names
+                if (project_root / pattern).exists():
+                    confidence += 0.4
+                    indicators.append(f"{pattern}_file_found")
+                
+                # Check in file paths
+                matching_files = list(project_root.rglob(f"*{pattern}*"))
+                if matching_files:
+                    confidence += 0.3
+                    indicators.append(f"{pattern}_pattern_in_paths")
+            
+            # Check in compliance directory
+            compliance_dir = project_root / "compliance"
+            if compliance_dir.exists():
+                # Check if compliance name appears in compliance directory
+                for pattern in patterns:
+                    if any(pattern in str(p).lower() for p in compliance_dir.rglob("*")):
+                        confidence += 0.3
+                        indicators.append(f"{compliance_name}_in_compliance_dir")
+                        break
+            
+            # If we found indicators, add requirement
+            if confidence > 0.0:
+                requirements.append((
+                    compliance_name,
+                    min(0.9, confidence),
+                    indicators
+                ))
+        
+        return requirements
+    
+    def detect_security_level(self) -> Tuple[Optional[str], float, List[str]]:
+        """
+        Detect security level with confidence score.
+        
+        Returns:
+            Tuple of (security_level, confidence, indicators)
+            security_level: "basic", "standard", "high", or "critical" (or None)
+            confidence: 0.0-1.0
+            indicators: List of indicator names that matched
+        """
+        security_files = [
+            ".security", "security.md", "SECURITY.md", ".bandit", ".safety",
+            ".snyk", "snyk.yml", ".dependabot", "dependabot.yml"
+        ]
+        
+        indicators = []
+        found_files = []
+        
+        for security_file in security_files:
+            if (self.project_root / security_file).exists():
+                found_files.append(security_file)
+                indicators.append(f"has_{security_file.replace('.', '').replace('-', '_')}")
+        
+        # Determine security level based on number of files
+        num_files = len(found_files)
+        
+        if num_files >= 3:
+            return ("high", 0.8, indicators)
+        elif num_files == 2:
+            return ("standard", 0.7, indicators)
+        elif num_files == 1:
+            return ("standard", 0.6, indicators)
+        else:
+            return ("basic", 0.5, ["no_security_files"])
+    
     def detect_from_context(
         self,
         user_query: Optional[str] = None,

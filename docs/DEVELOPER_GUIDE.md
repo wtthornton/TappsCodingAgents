@@ -851,6 +851,120 @@ For complex tasks, chain agents together:
 
 ## 6. Working with Industry Experts
 
+### Agent Expert Integration
+
+Six workflow agents have integrated expert consultation to enhance their decision-making:
+
+#### Architect Agent
+- **Experts Used**: Security, Performance, UX, Software Architecture
+- **Integration Points**:
+  - System design (`_design_system`) - Software Architecture expert
+  - Technology selection (`_select_technology`) - Software Architecture & Performance experts
+  - Security architecture (`_design_security`) - Security expert
+  - Boundary definition (`_define_boundaries`) - Software Architecture expert
+
+#### Implementer Agent
+- **Experts Used**: Security, Performance
+- **Integration Points**:
+  - Code generation (`implement`, `generate_code`) - Security & Performance experts
+  - Code refactoring (`refactor_code`) - Security & Performance experts
+
+#### Reviewer Agent
+- **Experts Used**: Security, Performance, Testing, Accessibility, Code Quality
+- **Integration Points**:
+  - Code review (`review_file`) - Security, Performance, and Code Quality experts
+  - Expert findings included in LLM feedback generation
+
+#### Tester Agent
+- **Experts Used**: Testing
+- **Integration Points**:
+  - Test generation (`test_command`, `generate_tests_command`) - Testing expert
+  - Expert guidance included in test generation prompts for better test coverage and patterns
+
+#### Designer Agent
+- **Experts Used**: Accessibility, UX, Data Privacy
+- **Integration Points**:
+  - UI/UX design (`_design_ui`) - UX & Accessibility experts
+  - Design system definition (`_define_design_system`) - UX & Accessibility experts
+  - API design (`_design_api`) - Data Privacy expert
+  - Data model design (`_design_data_model`) - Data Privacy expert
+
+#### Ops Agent
+- **Experts Used**: Security, Data Privacy
+- **Integration Points**:
+  - Security scanning (`_handle_security_scan`) - Security expert
+  - Compliance checking (`_handle_compliance_check`) - Security & Data Privacy experts
+  - Deployment (`_handle_deploy`) - Security expert
+  - Infrastructure setup (`_handle_infrastructure_setup`) - Security expert
+
+### Expert Confidence System (v2.1.0)
+
+Expert consultations now use an improved confidence calculation system:
+
+**Confidence Algorithm:**
+```python
+confidence = (
+    max_confidence * 0.4 +      # Maximum expert confidence
+    agreement_level * 0.3 +      # Expert agreement
+    rag_quality * 0.2 +          # Knowledge base match quality
+    domain_relevance * 0.1       # Domain relevance score
+)
+```
+
+**Agent-Specific Thresholds:**
+Each agent has a configurable confidence threshold:
+- **Reviewer**: 0.8 (High - critical code reviews)
+- **Architect**: 0.75 (High - architecture decisions)
+- **Implementer**: 0.7 (Medium-High - code generation)
+- **Designer**: 0.65 (Medium - design decisions)
+- **Tester**: 0.7 (Medium-High - test generation)
+- **Ops**: 0.75 (High - operations)
+
+Configure in `.tapps-agents/config.yaml`:
+```yaml
+agents:
+  reviewer:
+    min_confidence_threshold: 0.8
+```
+
+**Confidence Metrics Tracking:**
+All consultations are automatically tracked:
+```python
+from tapps_agents.experts.confidence_metrics import get_tracker
+
+tracker = get_tracker()
+stats = tracker.get_statistics(agent_id="reviewer", domain="security")
+```
+
+### How Agents Use Experts
+
+Agents automatically consult experts during their workflows. The consultation process:
+
+1. **Query Construction**: Agent builds a domain-specific query
+2. **Expert Consultation**: Registry routes to relevant experts
+3. **Confidence Calculation**: Weighted algorithm calculates overall confidence
+4. **Threshold Check**: Compares confidence to agent-specific threshold
+5. **Guidance Integration**: If confidence meets threshold, expert guidance is included in LLM prompts
+
+**Example Flow (Tester Agent):**
+```python
+# Agent generates test
+if self.expert_registry:
+    testing_consultation = await self.expert_registry.consult(
+        query=f"Best practices for generating tests for: {file}",
+        domain="testing-strategies",
+        agent_id=self.agent_id,  # Uses tester threshold (0.7)
+        prioritize_builtin=True
+    )
+    
+    if testing_consultation.confidence >= testing_consultation.confidence_threshold:
+        expert_guidance = testing_consultation.weighted_answer
+        # Pass to test generator
+        test_code = await self.test_generator.generate_unit_tests(
+            file_path, expert_guidance=expert_guidance
+        )
+```
+
 ### When to Consult Experts
 
 Workflow agents automatically consult experts when:

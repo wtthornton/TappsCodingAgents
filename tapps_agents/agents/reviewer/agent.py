@@ -9,6 +9,7 @@ import json
 from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
+from ...experts.expert_registry import ExpertRegistry
 from .scoring import CodeScorer
 from .typescript_scorer import TypeScriptScorer
 from .report_generator import ReportGenerator
@@ -24,12 +25,20 @@ class ReviewerAgent(BaseAgent):
     Permissions: Read, Grep, Glob (read-only)
     """
     
-    def __init__(self, mal: Optional[MAL] = None, config: Optional[ProjectConfig] = None):
+    def __init__(
+        self,
+        mal: Optional[MAL] = None,
+        config: Optional[ProjectConfig] = None,
+        expert_registry: Optional[ExpertRegistry] = None
+    ):
         super().__init__(agent_id="reviewer", agent_name="Reviewer Agent", config=config)
         # Use config if provided, otherwise load defaults
         if config is None:
             config = load_config()
         self.config = config
+        
+        # Initialize expert registry
+        self.expert_registry: Optional[ExpertRegistry] = expert_registry
         
         # Initialize MAL with config
         mal_config = config.mal if config else None
@@ -294,9 +303,59 @@ class ReviewerAgent(BaseAgent):
             
             result["scoring"] = scores
         
+        # Consult experts for review guidance
+        expert_guidance = {}
+        if self.expert_registry and include_llm_feedback:
+            code_preview = code[:2000]  # First 2000 chars for expert consultation
+            
+            # Consult Security expert
+            try:
+                security_consultation = await self.expert_registry.consult(
+                    query=f"Review this code for security vulnerabilities:\n\n{code_preview}",
+                    domain="security",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="reviewer"
+                )
+                expert_guidance["security"] = security_consultation.weighted_answer
+                expert_guidance["security_confidence"] = security_consultation.confidence
+            except Exception:
+                pass
+            
+            # Consult Performance expert
+            try:
+                perf_consultation = await self.expert_registry.consult(
+                    query=f"Review this code for performance issues:\n\n{code_preview}",
+                    domain="performance-optimization",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="reviewer"
+                )
+                expert_guidance["performance"] = perf_consultation.weighted_answer
+            except Exception:
+                pass
+            
+            # Consult Code Quality expert
+            try:
+                quality_consultation = await self.expert_registry.consult(
+                    query=f"Review this code for quality issues:\n\n{code_preview}",
+                    domain="code-quality-analysis",
+                    include_all=True,
+                    prioritize_builtin=True,
+                    agent_id="reviewer"
+                )
+                expert_guidance["code_quality"] = quality_consultation.weighted_answer
+            except Exception:
+                pass
+        
         # Generate LLM feedback
         if include_llm_feedback:
-            feedback = await self._generate_feedback(code, scores if include_scoring else None, model)
+            feedback = await self._generate_feedback(
+                code,
+                scores if include_scoring else None,
+                model,
+                expert_guidance=expert_guidance
+            )
             result["feedback"] = feedback
         
         # Determine pass/fail using configured threshold
@@ -312,7 +371,8 @@ class ReviewerAgent(BaseAgent):
         self,
         code: str,
         scores: Optional[Dict[str, Any]],
-        model: str
+        model: str,
+        expert_guidance: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """Generate LLM feedback on code"""
         
@@ -325,6 +385,17 @@ class ReviewerAgent(BaseAgent):
             code[:2000],  # Limit to first 2000 chars
             "```",
         ]
+        
+        # Add expert guidance if available
+        if expert_guidance:
+            prompt_parts.append("\nExpert Guidance:")
+            if "security" in expert_guidance:
+                prompt_parts.append(f"\nSecurity Expert:\n{expert_guidance['security'][:500]}...")
+            if "performance" in expert_guidance:
+                prompt_parts.append(f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}...")
+            if "code_quality" in expert_guidance:
+                prompt_parts.append(f"\nCode Quality Expert:\n{expert_guidance['code_quality'][:300]}...")
+            prompt_parts.append("")
         
         if scores:
             prompt_parts.extend([

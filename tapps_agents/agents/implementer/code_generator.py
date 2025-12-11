@@ -19,7 +19,8 @@ class CodeGenerator:
         specification: str,
         file_path: Optional[Path] = None,
         context: Optional[str] = None,
-        language: str = "python"
+        language: str = "python",
+        expert_guidance: Optional[Dict[str, str]] = None
     ) -> str:
         """
         Generate code from specification.
@@ -29,11 +30,12 @@ class CodeGenerator:
             file_path: Optional target file path for context
             context: Optional context (existing code, patterns, etc.)
             language: Programming language (default: python)
+            expert_guidance: Optional expert guidance dictionary
         
         Returns:
             Generated code string
         """
-        prompt = self._build_generation_prompt(specification, file_path, context, language)
+        prompt = self._build_generation_prompt(specification, file_path, context, language, expert_guidance)
         
         try:
             response = await self.mal.generate(prompt, model="qwen2.5-coder:7b")
@@ -71,7 +73,8 @@ class CodeGenerator:
         specification: str,
         file_path: Optional[Path],
         context: Optional[str],
-        language: str
+        language: str,
+        expert_guidance: Optional[Dict[str, str]] = None
     ) -> str:
         """Build prompt for code generation."""
         prompt_parts = [
@@ -84,8 +87,18 @@ class CodeGenerator:
             "- Consider edge cases",
             "- Write clean, maintainable code",
             "",
-            f"Specification:\n{specification}",
         ]
+        
+        # Add expert guidance if available
+        if expert_guidance:
+            prompt_parts.append("Expert Guidance:")
+            if "security" in expert_guidance:
+                prompt_parts.append(f"\nSecurity Expert:\n{expert_guidance['security'][:500]}...")
+            if "performance" in expert_guidance:
+                prompt_parts.append(f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}...")
+            prompt_parts.append("")
+        
+        prompt_parts.append(f"Specification:\n{specification}")
         
         if file_path:
             prompt_parts.append(f"\nTarget file: {file_path}")

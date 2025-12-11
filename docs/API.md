@@ -236,14 +236,22 @@ registry = ExpertRegistry(domain_config=None, load_builtin=True)
 result = await registry.consult(
     query="How to secure this API?",
     domain="security",
-    prioritize_builtin=True
+    prioritize_builtin=True,
+    agent_id="reviewer"  # Optional: for agent-specific confidence threshold
 )
+
+# Access confidence information
+print(f"Confidence: {result.confidence:.2%}")
+print(f"Threshold: {result.confidence_threshold:.2%}")
+print(f"Agreement: {result.agreement_level:.2%}")
+print(f"All experts agreed: {result.all_experts_agreed}")
 
 # Consult business domain (prioritizes customer experts)
 result = await registry.consult(
     query="How to handle checkout?",
     domain="e-commerce",
-    prioritize_builtin=False
+    prioritize_builtin=False,
+    agent_id="architect"
 )
 
 # List available experts
@@ -270,6 +278,80 @@ expert_config = BuiltinExpertRegistry.get_expert_for_domain("security")
 is_technical = BuiltinExpertRegistry.is_technical_domain("security")
 ```
 
+#### `ConsultationResult`
+
+Result from expert consultation with confidence metrics.
+
+```python
+from tapps_agents.experts.expert_registry import ConsultationResult
+
+# ConsultationResult fields:
+result.domain                    # Domain name
+result.query                     # Original query
+result.responses                 # List of expert responses
+result.weighted_answer           # Aggregated weighted answer
+result.agreement_level           # Agreement level (0.0-1.0)
+result.confidence                # Calculated confidence (0.0-1.0)
+result.confidence_threshold      # Agent-specific threshold (0.0-1.0)
+result.primary_expert            # Primary expert ID
+result.all_experts_agreed        # Whether all experts agreed (bool)
+
+# Check if confidence meets threshold
+meets_threshold = result.confidence >= result.confidence_threshold
+```
+
+#### `ConfidenceCalculator`
+
+Calculate confidence scores for expert consultations.
+
+```python
+from tapps_agents.experts.confidence_calculator import ConfidenceCalculator
+
+# Calculate confidence
+confidence, threshold = ConfidenceCalculator.calculate(
+    responses=expert_responses,
+    domain="security",
+    agent_id="reviewer",
+    agreement_level=0.85,
+    rag_quality=0.9
+)
+
+# Get agent-specific threshold
+threshold = ConfidenceCalculator.get_threshold("reviewer")
+
+# Check if meets threshold
+meets = ConfidenceCalculator.meets_threshold(confidence, "reviewer")
+```
+
+#### `ConfidenceMetricsTracker`
+
+Track and analyze confidence metrics.
+
+```python
+from tapps_agents.experts.confidence_metrics import get_tracker
+
+tracker = get_tracker()
+
+# Get statistics
+stats = tracker.get_statistics(agent_id="reviewer", domain="security")
+# Returns: {
+#   "count": 150,
+#   "avg_confidence": 0.82,
+#   "min_confidence": 0.45,
+#   "max_confidence": 0.98,
+#   "avg_agreement": 0.75,
+#   "threshold_meet_rate": 0.87,
+#   "low_confidence_count": 12
+# }
+
+# Get filtered metrics
+metrics = tracker.get_metrics(
+    agent_id="reviewer",
+    domain="security",
+    min_confidence=0.7
+)
+```
+
 #### `ExpertSupportMixin`
 
 Mixin class for agents to add expert consultation capabilities.
@@ -289,6 +371,11 @@ class MyAgent(BaseAgent, ExpertSupportMixin):
             query="How to optimize this?",
             domain="performance-optimization"
         )
+        
+        # Check confidence
+        if result.confidence >= result.confidence_threshold:
+            # Use expert guidance
+            pass
 ```
 
 ### Context7 Integration
