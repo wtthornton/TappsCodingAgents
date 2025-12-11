@@ -233,8 +233,19 @@ def main():
     """Main CLI entry point - supports both *command and command formats"""
     import argparse
     
-    parser = argparse.ArgumentParser(description="TappsCodingAgents CLI")
-    subparsers = parser.add_subparsers(dest="agent", help="Agent to use")
+    parser = argparse.ArgumentParser(
+        description="TappsCodingAgents CLI - AI coding agents framework",
+        epilog="""Quick shortcuts:
+  score <file>          - Score a code file (shortcut for 'reviewer score')
+  init                  - Initialize project (Cursor Rules + workflow presets)
+  workflow <preset>     - Run preset workflows (rapid, full, fix, quality, hotfix)
+  
+Examples:
+  python -m tapps_agents.cli score example.py
+  python -m tapps_agents.cli init
+  python -m tapps_agents.cli workflow rapid"""
+    )
+    subparsers = parser.add_subparsers(dest="agent", help="Agent or command to use")
     
     # Reviewer agent commands
     reviewer_parser = subparsers.add_parser("reviewer", help="Reviewer Agent commands")
@@ -482,6 +493,54 @@ def main():
     gate_parser.add_argument("--scoring-data", help="Scoring data as JSON", default="{}")
     
     orchestrator_help_parser = orchestrator_subparsers.add_parser("help", aliases=["*help"], help="Show orchestrator commands")
+    
+    # Workflow preset commands
+    workflow_parser = subparsers.add_parser("workflow", help="Run preset workflows (short commands)")
+    workflow_subparsers = workflow_parser.add_subparsers(dest="preset", help="Workflow presets")
+    
+    # Short aliases
+    workflow_subparsers.add_parser("full", help="Full SDLC Pipeline (enterprise, complete lifecycle)")
+    workflow_subparsers.add_parser("rapid", help="Rapid Development (feature, sprint work)")
+    workflow_subparsers.add_parser("fix", help="Maintenance & Bug Fixing (refactor, technical debt)")
+    workflow_subparsers.add_parser("quality", help="Quality Improvement (code review cycle)")
+    workflow_subparsers.add_parser("hotfix", help="Quick Fix (urgent, production bugs)")
+    
+    # Voice-friendly aliases
+    workflow_subparsers.add_parser("enterprise", help="Full SDLC Pipeline (alias for 'full')")
+    workflow_subparsers.add_parser("feature", help="Rapid Development (alias for 'rapid')")
+    workflow_subparsers.add_parser("refactor", help="Maintenance & Bug Fixing (alias for 'fix')")
+    workflow_subparsers.add_parser("improve", help="Quality Improvement (alias for 'quality')")
+    workflow_subparsers.add_parser("urgent", help="Quick Fix (alias for 'hotfix')")
+    
+    # List command
+    workflow_subparsers.add_parser("list", help="List all available workflow presets")
+    
+    # Project initialization command
+    init_parser = subparsers.add_parser(
+        "init", 
+        help="Initialize project: Set up Cursor Rules and workflow presets",
+        description="Initialize a new project with TappsCodingAgents configuration. Creates Cursor Rules for natural language workflow commands and copies workflow presets to your project."
+    )
+    init_parser.add_argument("--no-rules", action="store_true", help="Skip Cursor Rules setup")
+    init_parser.add_argument("--no-presets", action="store_true", help="Skip workflow presets setup")
+    
+    # Quick shortcuts for common commands
+    score_parser = subparsers.add_parser(
+        "score",
+        help="Quick shortcut: Score a code file (same as 'reviewer score')",
+        description="Quick shortcut to score code files. Equivalent to 'reviewer score <file>'"
+    )
+    score_parser.add_argument("file", help="File path to score")
+    score_parser.add_argument("--format", choices=["json", "text"], default="text", help="Output format")
+    
+    # Expert setup wizard commands
+    setup_experts_parser = subparsers.add_parser("setup-experts", help="Interactive expert setup wizard")
+    setup_experts_subparsers = setup_experts_parser.add_subparsers(dest="command", help="Setup commands")
+    
+    setup_experts_subparsers.add_parser("init", aliases=["initialize"], help="Initialize project with expert setup")
+    setup_experts_subparsers.add_parser("add", help="Add a new expert")
+    setup_experts_subparsers.add_parser("remove", help="Remove an expert")
+    setup_experts_subparsers.add_parser("list", help="List all experts")
     
     args = parser.parse_args()
     
@@ -1018,6 +1077,140 @@ def main():
                 print(enhanced)
         
         asyncio.run(enhancer.close())
+    elif args.agent == "workflow":
+        # Workflow preset execution
+        from .workflow.preset_loader import PresetLoader
+        from .workflow.executor import WorkflowExecutor
+        
+        loader = PresetLoader()
+        
+        preset_name = getattr(args, "preset", None)
+        
+        if not preset_name or preset_name == "list":
+            # List all presets
+            presets = loader.list_presets()
+            print("\n" + "="*60)
+            print("Available Workflow Presets")
+            print("="*60)
+            print()
+            
+            if presets:
+                for preset_id, preset_info in presets.items():
+                    print(f"{preset_info['name']}")
+                    if preset_info.get('description'):
+                        print(f"  Description: {preset_info['description']}")
+                    aliases = preset_info.get('aliases', [])
+                    if aliases:
+                        # Show primary aliases (first 5)
+                        primary_aliases = [a for a in aliases if a in ['full', 'rapid', 'fix', 'quality', 'hotfix', 'enterprise', 'feature', 'refactor', 'improve', 'urgent']]
+                        if primary_aliases:
+                            print(f"  Quick commands: {', '.join(primary_aliases[:5])}")
+                    print()
+            else:
+                print("No presets found. Check workflows/presets/ directory.")
+                print()
+            
+            print("Usage: python -m tapps_agents.cli workflow <alias>")
+            print("\nExamples:")
+            print("  python -m tapps_agents.cli workflow rapid")
+            print("  python -m tapps_agents.cli workflow full")
+            print("  python -m tapps_agents.cli workflow fix")
+            print("  python -m tapps_agents.cli workflow enterprise")
+            print("  python -m tapps_agents.cli workflow feature")
+            return
+        
+        # Load and execute preset
+        try:
+            workflow = loader.load_preset(preset_name)
+            if not workflow:
+                print(f"Error: Preset '{preset_name}' not found.", file=sys.stderr)
+                print(f"Available presets: {', '.join(loader.list_presets().keys())}", file=sys.stderr)
+                sys.exit(1)
+            
+            print(f"\n{'='*60}")
+            print(f"Starting: {workflow.name}")
+            print(f"{'='*60}")
+            print(f"Description: {workflow.description}")
+            print(f"Steps: {len(workflow.steps)}")
+            print()
+            
+            # Execute workflow
+            executor = WorkflowExecutor(auto_detect=False)
+            result = executor.start(workflow=workflow)
+            
+            if result.status == "completed":
+                print(f"\n{'='*60}")
+                print("Workflow completed successfully!")
+                print(f"{'='*60}")
+            elif result.status == "failed":
+                print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)
+                sys.exit(1)
+            else:
+                print(f"\nWorkflow status: {result.status}")
+                
+        except Exception as e:
+            print(f"Error executing workflow: {e}", file=sys.stderr)
+            sys.exit(1)
+    elif args.agent == "score":
+        # Quick shortcut for reviewer score
+        file_path = getattr(args, "file", None)
+        if not file_path:
+            print("Error: File path required", file=sys.stderr)
+            print("Usage: python -m tapps_agents.cli score <file>", file=sys.stderr)
+            sys.exit(1)
+        
+        output_format = getattr(args, "format", "text")
+        asyncio.run(score_command(file_path, output_format=output_format))
+    elif args.agent == "init":
+        # Project initialization
+        from .core.init_project import init_project
+        
+        print("\n" + "="*60)
+        print("TappsCodingAgents Project Initialization")
+        print("="*60)
+        print()
+        
+        results = init_project(
+            include_cursor_rules=not getattr(args, "no_rules", False),
+            include_workflow_presets=not getattr(args, "no_presets", False)
+        )
+        
+        print("Initialization Results:")
+        print(f"  Project Root: {results['project_root']}")
+        
+        if results["cursor_rules"]:
+            print("  Cursor Rules: Created")
+            print("    - .cursor/rules/workflow-presets.mdc")
+        else:
+            print("  Cursor Rules: Skipped or already exists")
+        
+        if results["workflow_presets"]:
+            print(f"  Workflow Presets: Created {len([f for f in results['files_created'] if 'presets' in f])} file(s)")
+        else:
+            print("  Workflow Presets: Skipped or already exists")
+        
+        print("\nNext Steps:")
+        print("  1. Set up experts: python -m tapps_agents.cli setup-experts init")
+        print("  2. List workflows: python -m tapps_agents.cli workflow list")
+        print("  3. Run a workflow: python -m tapps_agents.cli workflow rapid")
+        print()
+    elif args.agent == "setup-experts":
+        # Expert setup wizard
+        from .experts.setup_wizard import ExpertSetupWizard
+        
+        wizard = ExpertSetupWizard()
+        
+        command = getattr(args, "command", None)
+        if command == "init" or command == "initialize":
+            wizard.init_project()
+        elif command == "add":
+            wizard.add_expert()
+        elif command == "remove":
+            wizard.remove_expert()
+        elif command == "list":
+            wizard.list_experts()
+        else:
+            wizard.run_wizard()
     else:
         # Show main help
         parser.print_help()

@@ -51,3 +51,8 @@ MagicMock/
 # OS
 .DS_Store
 Thumbs.db
+
+# PyPI Credentials
+.pypirc
+*.env
+.env

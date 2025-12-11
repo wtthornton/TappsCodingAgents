@@ -34,7 +34,32 @@ TappsCodingAgents is a framework for building AI coding agents with specialized 
 
 ## Installation (5 minutes)
 
-### Step 1: Install Ollama
+### Step 0: Install TappsCodingAgents
+
+```bash
+# Clone or download TappsCodingAgents
+cd TappsCodingAgents
+
+# Install in editable mode (recommended for development)
+pip install -e .
+
+# Or install from wheel
+pip install dist/tapps_agents-1.6.1-py3-none-any.whl
+```
+
+### Step 1: Initialize Project (Optional but Recommended)
+
+```bash
+# Initialize project with Cursor Rules and workflow presets
+python -m tapps_agents.cli init
+```
+
+This sets up:
+- Cursor Rules (for natural language workflow commands)
+- Workflow presets (5 ready-to-use workflows)
+- Project structure
+
+### Step 2: Install Ollama
 
 ```bash
 # Windows (PowerShell)
