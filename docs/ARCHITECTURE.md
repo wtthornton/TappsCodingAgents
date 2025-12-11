@@ -1,6 +1,6 @@
 # Architecture Overview
 
-**Version**: 1.5.0  
+**Version**: 1.6.0  
 **Last Updated**: December 2025
 
 ## System Architecture
@@ -66,7 +66,7 @@ TappsCodingAgents is built on a two-layer agent model with a modular, extensible
 
 ### 1. Workflow Agents (Execution Layer)
 
-12 specialized agents that execute SDLC tasks:
+13 specialized agents that execute SDLC tasks:
 
 - **Planning**: Analyst, Planner
 - **Design**: Architect, Designer
@@ -75,6 +75,7 @@ TappsCodingAgents is built on a two-layer agent model with a modular, extensible
 - **Quality**: Reviewer, Improver
 - **Operations**: Ops
 - **Orchestration**: Orchestrator
+- **Enhancement**: Enhancer (Prompt Enhancement Utility)
 
 **Key Features:**
 - Star-prefixed command system (`*review`, `*plan`, etc.)

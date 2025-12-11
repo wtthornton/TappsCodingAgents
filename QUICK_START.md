@@ -8,7 +8,7 @@
 
 TappsCodingAgents is a framework for building AI coding agents with specialized workflow agents and domain experts. It provides:
 
-- **12 Workflow Agents** - Specialized agents for SDLC tasks (analyst, planner, architect, implementer, tester, reviewer, etc.)
+- **13 Workflow Agents** - Specialized agents for SDLC tasks (analyst, planner, architect, implementer, tester, reviewer, enhancer, etc.)
 - **Industry Experts** - Domain-specific knowledge experts you configure per project
 - **Model Abstraction Layer** - Automatic routing between local (Ollama) and cloud (Anthropic/OpenAI) models
 - **Code Scoring System** - Objective quality metrics (complexity, security, maintainability, test coverage, performance)
@@ -101,6 +101,12 @@ python -m tapps_agents.cli reviewer score path/to/file.py
 
 # Lint a file with Ruff (Phase 6 - fast, 10-100x faster than legacy tools)
 python -m tapps_agents.cli reviewer lint path/to/file.py
+
+# Type check a file with mypy (Phase 6)
+python -m tapps_agents.cli reviewer type-check path/to/file.py
+
+# Generate comprehensive quality reports (Phase 6)
+python -m tapps_agents.cli reviewer report path/to/directory json markdown html
 ```
 
 **Output:**
@@ -290,9 +296,9 @@ See `examples/experts/` for complete examples.
 | **tester** | Test generation | `test`, `generate-tests`, `run-tests` |
 | **debugger** | Error analysis | `debug`, `analyze-error`, `trace` |
 | **documenter** | Documentation generation | `document`, `update-readme` |
-| **reviewer** | Code review | `review`, `score` |
+| **reviewer** | Code review & quality analysis | `review`, `score`, `lint`, `type-check`, `report` |
 | **improver** | Code refactoring | `refactor`, `optimize`, `improve-quality` |
-| **ops** | Security, deployment | `security-scan`, `compliance-check`, `deploy` |
+| **ops** | Security, deployment, dependencies | `security-scan`, `compliance-check`, `deploy`, `audit-dependencies` |
 | **orchestrator** | Workflow coordination | `workflow-start`, `workflow-status`, `gate` |
 | **enhancer** | Prompt enhancement | `enhance`, `enhance-quick`, `enhance-stage` |
 

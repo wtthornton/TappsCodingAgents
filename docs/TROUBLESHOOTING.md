@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-**Version**: 1.5.0  
+**Version**: 1.6.0  
 **Last Updated**: December 2025
 
 ## Common Issues and Solutions

@@ -12,26 +12,24 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 ### Core Concepts
 - **[Project Requirements](../requirements/PROJECT_REQUIREMENTS.md)** - Complete project specification
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture and design patterns
-- **[Workflow Agents Guide](AGENTS.md)** - Understanding workflow agents
-- **[Industry Experts Guide](EXPERTS.md)** - Domain expert configuration and usage
+- **[Agent Specifications](../requirements/agents.md)** - Agent types specification
+- **[Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md)** - Domain expert configuration and usage
 
 ### Feature Guides
 - **[Enhancer Agent Guide](ENHANCER_AGENT.md)** - Prompt enhancement utility with expert integration
-- **[Expert Configuration Guide](EXPERTS/EXPERT_CONFIG_GUIDE.md)** - Creating custom experts
-- **[Expert Examples Guide](EXPERTS/EXPERT_EXAMPLES_GUIDE.md)** - Real-world examples
-- **[Knowledge Base Guide](EXPERTS/KNOWLEDGE_BASE_GUIDE.md)** - Building knowledge bases
+- **[Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md)** - Creating custom experts
+- **[Expert Examples Guide](EXPERT_EXAMPLES_GUIDE.md)** - Real-world examples
+- **[Knowledge Base Guide](KNOWLEDGE_BASE_GUIDE.md)** - Building knowledge bases
 - **[Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)** - Choosing the right workflow
-- **[Context7 Integration Guide](CONTEXT7.md)** - Library documentation integration
+- **[Phase 4 & 5 Explanation](PHASE4_PHASE5_EXPLANATION.md)** - Workflow selection and Context7 integration
 
 ### Quality & Analysis
-- **[Code Quality Guide](QUALITY.md)** - Code scoring and quality metrics
-- **[Phase 6: Modern Quality Analysis](PHASE6_SUMMARY.md)** - Ruff, mypy, TypeScript support
+- **[Phase 6: Modern Quality Analysis](PHASE6_SUMMARY.md)** - Ruff, mypy, TypeScript support, comprehensive reporting
 - **[Project Quality Review](PROJECT_QUALITY_REVIEW.md)** - Quality assessment results
 
 ### API Reference
-- **[API Documentation](API.md)** - Complete API reference
-- **[Agent Commands Reference](API/AGENT_COMMANDS.md)** - Star-prefixed commands
-- **[Configuration Schema](API/CONFIG_SCHEMA.md)** - Configuration file reference
+- **[API Documentation](API.md)** - Complete API reference with all agents and commands
+- **[Configuration Guide](CONFIGURATION.md)** - Complete configuration file reference
 
 ### Operations
 - **[Deployment Guide](DEPLOYMENT.md)** - Production deployment instructions
@@ -40,7 +38,6 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 
 ### Contributing
 - **[Contributing Guidelines](../CONTRIBUTING.md)** - How to contribute
-- **[Code of Conduct](../CODE_OF_CONDUCT.md)** - Community standards
 - **[Development Workflow](DEVELOPER_GUIDE.md#development-workflow)** - Development practices
 
 ### Project Management
@@ -84,11 +81,11 @@ This documentation follows 2025 best practices:
 - **DevOps**: Check [Deployment Guide](DEPLOYMENT.md) and [Troubleshooting](TROUBLESHOOTING.md)
 
 ### By Topic
-- **Agents**: [Workflow Agents Guide](AGENTS.md) and [Agent Commands](API/AGENT_COMMANDS.md)
-- **Experts**: [Expert Configuration](EXPERTS/EXPERT_CONFIG_GUIDE.md)
-- **Quality**: [Code Quality Guide](QUALITY.md) and [Phase 6 Summary](PHASE6_SUMMARY.md)
+- **Agents**: [Architecture Overview](ARCHITECTURE.md) and [API Documentation](API.md)
+- **Experts**: [Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md) and [Expert Examples](EXPERT_EXAMPLES_GUIDE.md)
+- **Quality**: [Phase 6 Summary](PHASE6_SUMMARY.md) and [Project Quality Review](PROJECT_QUALITY_REVIEW.md)
 - **Workflows**: [Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)
-- **Context7**: [Context7 Integration Guide](CONTEXT7.md)
+- **Context7**: [Phase 4 & 5 Explanation](PHASE4_PHASE5_EXPLANATION.md)
 
 ## 📝 Contributing to Documentation
 

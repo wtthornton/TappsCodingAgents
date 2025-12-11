@@ -1,6 +1,6 @@
 # API Reference
 
-**Version**: 1.5.0  
+**Version**: 1.6.0  
 **Last Updated**: December 2025
 
 ## Overview
@@ -145,6 +145,39 @@ result = await orchestrator.execute_workflow(
 - `*plan [task]` - Plan a multi-agent task
 - `*coordinate [agents]` - Coordinate multiple agents
 
+#### `EnhancerAgent`
+
+Prompt enhancement utility with expert integration.
+
+```python
+from tapps_agents.agents.enhancer.agent import EnhancerAgent
+
+enhancer = EnhancerAgent()
+
+# Full enhancement (all 7 stages)
+result = await enhancer.enhance(
+    prompt="Create a login system",
+    output_format="markdown"
+)
+
+# Quick enhancement (stages 1-3)
+result = await enhancer.enhance_quick(
+    prompt="Add user authentication"
+)
+
+# Stage-by-stage execution
+result = await enhancer.enhance_stage(
+    prompt="Create payment processing",
+    stage="analysis"
+)
+```
+
+**Available Commands:**
+- `*enhance [prompt]` - Full 7-stage enhancement
+- `*enhance-quick [prompt]` - Quick enhancement (stages 1-3)
+- `*enhance-stage [prompt] [stage]` - Run specific stage
+- `*enhance-resume [session_id]` - Resume interrupted enhancement
+
 ### Configuration
 
 #### `ProjectConfig`
@@ -262,7 +295,7 @@ python -m tapps_agents.cli orchestrator execute-workflow workflows/feature.yaml
 
 ```
 analyst, planner, architect, designer, implementer, tester,
-debugger, documenter, reviewer, improver, ops, orchestrator
+debugger, documenter, reviewer, improver, ops, orchestrator, enhancer
 ```
 
 ### Command Format
