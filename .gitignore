@@ -41,6 +41,7 @@ coverage.xml
 
 # TappsCodingAgents
 .tapps-agents/sessions/
+.tapps-agents/sessions/*.json
 .tapps-agents/kb/
 .tapps-agents/cache/
 

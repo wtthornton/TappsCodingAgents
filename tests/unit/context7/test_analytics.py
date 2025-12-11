@@ -242,13 +242,18 @@ class TestAnalytics:
     
     def test_response_times_limit(self, analytics):
         # Record many response times (should keep only last 1000)
+        print("\n[TEST] Recording 1500 response times (testing limit enforcement)...")
         for i in range(1500):
+            if i % 300 == 0:
+                print(f"[TEST] Progress: {i}/1500 records...")
             analytics.record_cache_hit(response_time_ms=float(i))
         
+        print("[TEST] Verifying response times limit...")
         response_times = analytics.metrics.get('response_times', [])
         assert len(response_times) == 1000
         # Should have the latest values (1000-1499)
         assert min(response_times) >= 500  # First 500 should be removed
+        print("[TEST] Response times limit test passed OK")
     
     def test_average_response_time_calculation(self, analytics):
         analytics.record_cache_hit(response_time_ms=10.0)

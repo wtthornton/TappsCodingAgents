@@ -237,10 +237,13 @@ async def test_enhance_multiple_prompts(enhancer_agent):
         "Add API rate limiting"
     ]
     
+    print(f"\n[TEST] Enhancing {len(prompts)} prompts...")
     results = []
-    for prompt in prompts:
+    for i, prompt in enumerate(prompts, 1):
+        print(f"[TEST] Processing prompt {i}/{len(prompts)}: {prompt[:50]}...")
         result = await enhancer_agent.run("enhance-quick", prompt=prompt)
         results.append(result)
+        print(f"[TEST] Prompt {i} enhanced ✓")
     
     # All should succeed
     assert len(results) == len(prompts)
@@ -251,6 +254,7 @@ async def test_enhance_multiple_prompts(enhancer_agent):
     # All should have different session IDs
     session_ids = [r["session_id"] for r in results]
     assert len(set(session_ids)) == len(prompts), "Each prompt should have unique session"
+    print("[TEST] Multiple prompts test passed OK")
 
 
 @pytest.mark.asyncio

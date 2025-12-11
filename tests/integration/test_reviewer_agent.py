@@ -273,16 +273,21 @@ class TestReviewerAgent:
         """Performance test: Review a large file (1000+ lines) should complete in <5s."""
         import time
         
+        print("\n[TEST] Starting large file performance test...")
         reviewer = ReviewerAgent(mal=mock_mal)
         await reviewer.activate()
+        print("[TEST] Reviewer agent activated")
         
         # Create a large Python file (~1500 lines)
+        print("[TEST] Creating large test file (1500 lines)...")
         large_code = "# Large file test\n"
         large_code += "\n".join([f"def func_{i}(): return {i}" for i in range(1500)])
         
         large_file = tmp_path / "large_test.py"
         large_file.write_text(large_code, encoding='utf-8')
+        print(f"[TEST] File created: {len(large_code)} bytes")
         
+        print("[TEST] Starting file review (this may take a few seconds)...")
         start_time = time.time()
         result = await reviewer.review_file(
             large_file,
@@ -290,11 +295,13 @@ class TestReviewerAgent:
             include_llm_feedback=False  # Skip LLM to focus on scoring performance
         )
         elapsed = time.time() - start_time
+        print(f"[TEST] Review completed in {elapsed:.2f}s")
         
         # Should complete in <5 seconds for 1500-line file
         assert elapsed < 5.0, f"Review took {elapsed:.2f}s, expected <5s"
         assert "scoring" in result
         assert result["scoring"]["overall_score"] >= 0
+        print("[TEST] Large file performance test passed OK")
     
     # Phase 6.1: Ruff Integration Tests
     @pytest.mark.asyncio
