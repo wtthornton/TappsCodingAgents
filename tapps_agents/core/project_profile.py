@@ -8,11 +8,40 @@ user scale, compliance, security level) to provide context-aware expert guidance
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 import yaml
 
 from .config import load_config
 from ..workflow.detector import ProjectDetector
+
+
+# Profile templates for common project types
+PROFILE_TEMPLATES = {
+    "local-development": {
+        "deployment_type": "local",
+        "tenancy": "single-tenant",
+        "user_scale": "small-team",
+        "security_level": "basic"
+    },
+    "saas-application": {
+        "deployment_type": "cloud",
+        "tenancy": "multi-tenant",
+        "user_scale": "enterprise",
+        "security_level": "high"
+    },
+    "enterprise-internal": {
+        "deployment_type": "enterprise",
+        "tenancy": "single-tenant",
+        "user_scale": "department",
+        "security_level": "high"
+    },
+    "startup-mvp": {
+        "deployment_type": "cloud",
+        "tenancy": "single-tenant",
+        "user_scale": "small-team",
+        "security_level": "standard"
+    }
+}
 
 
 @dataclass
@@ -99,7 +128,7 @@ class ProjectProfileDetector:
             ProjectProfile with detected characteristics
         """
         profile = ProjectProfile()
-        profile.detected_at = datetime.utcnow().isoformat() + "Z"
+        profile.detected_at = datetime.now(timezone.utc).isoformat()
         
         # Detect deployment type
         deployment_type, deployment_confidence, deployment_indicators = self.detector.detect_deployment_type()
@@ -122,6 +151,20 @@ class ProjectProfileDetector:
             profile.security_level_confidence = security_confidence
             profile.security_level_indicators = security_indicators
         
+        # Detect tenancy
+        tenancy, tenancy_confidence, tenancy_indicators = self.detector.detect_tenancy()
+        if tenancy:
+            profile.tenancy = tenancy
+            profile.tenancy_confidence = tenancy_confidence
+            profile.tenancy_indicators = tenancy_indicators
+        
+        # Detect user scale
+        user_scale, user_scale_confidence, user_scale_indicators = self.detector.detect_user_scale()
+        if user_scale:
+            profile.user_scale = user_scale
+            profile.user_scale_confidence = user_scale_confidence
+            profile.user_scale_indicators = user_scale_indicators
+        
         return profile
 
 
@@ -140,7 +183,7 @@ def save_project_profile(profile: ProjectProfile, project_root: Optional[Path] =
     profile_dir = project_root / ".tapps-agents"
     profile_dir.mkdir(exist_ok=True)
     
-    profile_file = profile_dir / "project-profile.yaml"
+    profile_file = profile_dir / "project_profile.yaml"
     
     # Convert to dict and save as YAML
     data = profile.to_dict()
@@ -162,7 +205,7 @@ def load_project_profile(project_root: Optional[Path] = None) -> Optional[Projec
         ProjectProfile if found, None otherwise
     """
     project_root = project_root or Path.cwd()
-    profile_file = project_root / ".tapps-agents" / "project-profile.yaml"
+    profile_file = project_root / ".tapps-agents" / "project_profile.yaml"
     
     if not profile_file.exists():
         return None
@@ -178,6 +221,55 @@ def load_project_profile(project_root: Optional[Path] = None) -> Optional[Projec
     except Exception:
         # Fail gracefully - profile is optional
         return None
+
+
+def match_template(profile: ProjectProfile, min_confidence: float = 0.7) -> Optional[str]:
+    """
+    Match detected profile to closest template.
+    
+    Args:
+        profile: ProjectProfile to match
+        min_confidence: Minimum confidence threshold for matching (default: 0.7)
+        
+    Returns:
+        Template name if match confidence >= min_confidence, None otherwise
+    """
+    best_match = None
+    best_score = 0.0
+    
+    for template_name, template_values in PROFILE_TEMPLATES.items():
+        score = 0.0
+        matches = 0
+        total = 0
+        
+        # Check each field
+        for field, template_value in template_values.items():
+            total += 1
+            profile_value = getattr(profile, field, None)
+            profile_confidence = getattr(profile, f"{field}_confidence", 0.0)
+            
+            # Only count if profile has high confidence value
+            if profile_value and profile_confidence >= min_confidence:
+                if profile_value == template_value:
+                    matches += 1
+                    # Weight by confidence
+                    score += profile_confidence
+                else:
+                    # Partial match (close but not exact)
+                    score += profile_confidence * 0.5
+        
+        # Normalize score
+        if total > 0:
+            normalized_score = score / total
+            if normalized_score > best_score:
+                best_score = normalized_score
+                best_match = template_name
+    
+    # Return best match if it meets threshold
+    if best_match and best_score >= min_confidence:
+        return best_match
+    
+    return None
 
 
 def detect_and_save_profile(project_root: Optional[Path] = None) -> ProjectProfile:

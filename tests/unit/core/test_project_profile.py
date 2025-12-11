@@ -13,6 +13,8 @@ from tapps_agents.core.project_profile import (
     ProjectProfileDetector,
     save_project_profile,
     load_project_profile,
+    match_template,
+    PROFILE_TEMPLATES,
 )
 from tapps_agents.workflow.detector import ProjectDetector
 
@@ -256,4 +258,170 @@ class TestProjectProfileStorage:
             assert len(loaded_profile.compliance_requirements) == 2
             assert loaded_profile.compliance_requirements[0].name == "SOC2"
             assert loaded_profile.compliance_requirements[1].name == "ISO27001"
+
+
+@pytest.mark.unit
+class TestTenancyDetection:
+    """Test tenancy detection."""
+    
+    def test_detect_multi_tenant(self):
+        """Test detection of multi-tenant project."""
+        with TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            # Create files with tenant patterns
+            (project_root / "user_service.py").write_text("def get_user(tenant_id: str): pass")
+            (project_root / "auth.py").write_text("tenantId = request.tenantId")
+            (project_root / "db.py").write_text("SELECT * FROM users WHERE tenant_id = ?")
+            (project_root / "api.py").write_text("tenant_context = get_tenant()")
+            
+            detector = ProjectDetector(project_root=project_root)
+            tenancy, confidence, indicators = detector.detect_tenancy()
+            
+            assert tenancy == "multi-tenant"
+            assert confidence >= 0.6
+            assert len(indicators) > 0
+    
+    def test_detect_single_tenant(self):
+        """Test detection of single-tenant project."""
+        with TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            # Create files without tenant patterns
+            (project_root / "main.py").write_text("def hello(): print('hello')")
+            (project_root / "utils.py").write_text("def helper(): pass")
+            
+            detector = ProjectDetector(project_root=project_root)
+            tenancy, confidence, indicators = detector.detect_tenancy()
+            
+            assert tenancy == "single-tenant"
+            assert confidence > 0.0
+
+
+@pytest.mark.unit
+class TestUserScaleDetection:
+    """Test user scale detection."""
+    
+    def test_detect_enterprise_scale(self):
+        """Test detection of enterprise user scale."""
+        with TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            # Create enterprise indicators
+            (project_root / "nginx.conf").write_text("upstream backend {}")
+            (project_root / "oauth").mkdir()
+            (project_root / "oauth" / "config.yaml").touch()
+            
+            detector = ProjectDetector(project_root=project_root)
+            user_scale, confidence, indicators = detector.detect_user_scale()
+            
+            assert user_scale == "enterprise"
+            assert confidence >= 0.3
+            assert len(indicators) > 0
+    
+    def test_detect_department_scale(self):
+        """Test detection of department user scale."""
+        with TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            # Create department indicators
+            (project_root / "redis.conf").write_text("port 6379")
+            (project_root / "docker-compose.yml").write_text("redis: image: redis")
+            
+            detector = ProjectDetector(project_root=project_root)
+            user_scale, confidence, indicators = detector.detect_user_scale()
+            
+            assert user_scale in ["department", "small-team"]
+            assert confidence >= 0.3
+    
+    def test_detect_small_team_scale(self):
+        """Test detection of small team user scale."""
+        with TemporaryDirectory() as tmpdir:
+            project_root = Path(tmpdir)
+            # Create basic infrastructure
+            (project_root / "Dockerfile").write_text("FROM python:3.9")
+            
+            detector = ProjectDetector(project_root=project_root)
+            user_scale, confidence, indicators = detector.detect_user_scale()
+            
+            assert user_scale in ["small-team", "department"]
+            assert confidence >= 0.3
+
+
+@pytest.mark.unit
+class TestProfileTemplates:
+    """Test profile template matching."""
+    
+    def test_match_local_development_template(self):
+        """Test matching local development template."""
+        profile = ProjectProfile(
+            deployment_type="local",
+            deployment_type_confidence=0.8,
+            tenancy="single-tenant",
+            tenancy_confidence=0.8,
+            user_scale="small-team",
+            user_scale_confidence=0.8,
+            security_level="basic",
+            security_level_confidence=0.7
+        )
+        
+        template = match_template(profile)
+        assert template == "local-development"
+    
+    def test_match_saas_template(self):
+        """Test matching SaaS application template."""
+        profile = ProjectProfile(
+            deployment_type="cloud",
+            deployment_type_confidence=0.9,
+            tenancy="multi-tenant",
+            tenancy_confidence=0.8,
+            user_scale="enterprise",
+            user_scale_confidence=0.8,
+            security_level="high",
+            security_level_confidence=0.9
+        )
+        
+        template = match_template(profile)
+        assert template == "saas-application"
+    
+    def test_match_enterprise_internal_template(self):
+        """Test matching enterprise internal template."""
+        profile = ProjectProfile(
+            deployment_type="enterprise",
+            deployment_type_confidence=0.9,
+            tenancy="single-tenant",
+            tenancy_confidence=0.8,
+            user_scale="department",
+            user_scale_confidence=0.8,
+            security_level="high",
+            security_level_confidence=0.9
+        )
+        
+        template = match_template(profile)
+        assert template == "enterprise-internal"
+    
+    def test_no_template_match_low_confidence(self):
+        """Test that low confidence profiles don't match templates."""
+        profile = ProjectProfile(
+            deployment_type="cloud",
+            deployment_type_confidence=0.5,  # Too low
+            tenancy="multi-tenant",
+            tenancy_confidence=0.5,  # Too low
+        )
+        
+        template = match_template(profile, min_confidence=0.7)
+        assert template is None
+    
+    def test_template_matching_partial_match(self):
+        """Test template matching with partial matches."""
+        profile = ProjectProfile(
+            deployment_type="cloud",
+            deployment_type_confidence=0.8,
+            tenancy="single-tenant",
+            tenancy_confidence=0.8,
+            user_scale="small-team",
+            user_scale_confidence=0.8,
+            security_level="standard",
+            security_level_confidence=0.8
+        )
+        
+        template = match_template(profile)
+        # Should match startup-mvp template
+        assert template == "startup-mvp"
 

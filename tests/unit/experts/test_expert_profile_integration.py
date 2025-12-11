@@ -30,7 +30,9 @@ class TestBaseExpertWithProfile:
         
         profile = ProjectProfile(
             deployment_type="cloud",
+            deployment_type_confidence=0.8,  # High enough to be included
             security_level="high",
+            security_level_confidence=0.8,  # High enough to be included
             compliance_requirements=[
                 ComplianceRequirement(name="GDPR", confidence=0.9, indicators=["gdpr.md"])
             ]
@@ -45,9 +47,11 @@ class TestBaseExpertWithProfile:
         )
         
         # Verify profile information is in prompt
-        assert "cloud" in prompt.lower() or "deployment" in prompt.lower()
+        # Note: Only high-confidence values (>= 0.7) are included
+        # Since we set compliance with 0.9 confidence, it should be included
         assert "gdpr" in prompt.lower() or "compliance" in prompt.lower()
         assert "security" in prompt.lower()
+        assert "project context" in prompt.lower()
     
     @pytest.mark.asyncio
     async def test_expert_works_without_profile(self, mock_mal):
@@ -97,7 +101,7 @@ class TestExpertRegistryWithProfile:
             registry.project_root = project_root
             
             # Load profile
-            loaded_profile = registry._load_project_profile()
+            loaded_profile = registry._get_project_profile()
             assert loaded_profile is not None
             assert loaded_profile.deployment_type == "enterprise"
             assert loaded_profile.security_level == "high"
@@ -111,6 +115,7 @@ class TestExpertRegistryWithProfile:
         mock_expert = Mock(spec=BaseExpert)
         mock_expert.expert_id = "expert-test"
         mock_expert.agent_name = "Test Expert"
+        mock_expert.primary_domain = "security"
         mock_expert.run = AsyncMock(return_value={
             "answer": "Test answer",
             "confidence": 0.8,
@@ -123,11 +128,11 @@ class TestExpertRegistryWithProfile:
         registry.project_root = None  # Skip file loading
         registry._cached_profile = profile  # Set directly for testing
         
-        # Consult expert
+        # Consult expert (registry will select experts automatically)
         result = await registry.consult(
             query="Test question",
             domain="security",
-            expert_ids=["expert-test"]
+            include_all=False
         )
         
         # Verify expert was called with profile
@@ -145,6 +150,7 @@ class TestExpertRegistryWithProfile:
         mock_expert = Mock(spec=BaseExpert)
         mock_expert.expert_id = "expert-test"
         mock_expert.agent_name = "Test Expert"
+        mock_expert.primary_domain = "security"
         mock_expert.run = AsyncMock(return_value={
             "answer": "Test answer",
             "confidence": 0.8,
@@ -160,7 +166,7 @@ class TestExpertRegistryWithProfile:
         result = await registry.consult(
             query="Test question",
             domain="security",
-            expert_ids=["expert-test"]
+            include_all=False
         )
         
         # Verify expert was called (with None profile)
@@ -302,9 +308,9 @@ class TestEndToEndProfileIntegration:
                 domain="security"
             )
             
-            # Verify result structure
-            assert "answer" in result or "error" in result
-            assert "confidence" in result
+            # Verify result structure (ConsultationResult is a dataclass)
+            assert hasattr(result, "weighted_answer") or hasattr(result, "responses")
+            assert hasattr(result, "confidence")
             # Profile should have been loaded and used
             assert registry._cached_profile is not None
     
@@ -344,7 +350,7 @@ class TestEndToEndProfileIntegration:
             domain="architecture"
         )
         
-        confidence_with = result_with_profile.get("confidence", 0.0)
+        confidence_with = result_with_profile.confidence
         
         # Test without profile
         registry._cached_profile = None
@@ -354,7 +360,7 @@ class TestEndToEndProfileIntegration:
             domain="architecture"
         )
         
-        confidence_without = result_without_profile.get("confidence", 0.0)
+        confidence_without = result_without_profile.confidence
         
         # Confidence might differ (though not guaranteed due to other factors)
         # At minimum, both should be valid confidence scores

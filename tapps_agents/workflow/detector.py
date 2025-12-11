@@ -136,13 +136,26 @@ class ProjectDetector:
         """
         indicators = []
         cloud_score = 0.0
+        enterprise_score = 0.0
         local_score = 0.0
         
-        # Cloud indicators
+        # Enterprise indicators (Kubernetes, Helm, compliance, security)
+        enterprise_checks = [
+            ("has_kubernetes", lambda p: (p / "k8s").exists() or (p / "kubernetes").exists()),
+            ("has_helm", lambda p: (p / "helm").exists() or any((p / f).exists() for f in ["Chart.yaml", "values.yaml"])),
+            ("has_compliance", lambda p: (p / "compliance").exists() or any((p / f).exists() for f in ["HIPAA.md", "GDPR.md", "SOC2.md"])),
+            ("has_security", lambda p: (p / "security").exists() or (p / ".security").exists() or (p / "security.md").exists()),
+        ]
+        
+        for name, check in enterprise_checks:
+            if check(self.project_root):
+                enterprise_score += 0.25
+                indicators.append(name)
+        
+        # Cloud indicators (Docker, serverless, terraform)
         cloud_checks = [
             ("has_dockerfile", lambda p: (p / "Dockerfile").exists()),
             ("has_docker_compose", lambda p: (p / "docker-compose.yml").exists() or (p / "docker-compose.yaml").exists()),
-            ("has_kubernetes", lambda p: (p / "k8s").exists() or (p / "kubernetes").exists()),
             ("has_serverless", lambda p: (p / "serverless.yml").exists() or (p / "serverless.yaml").exists()),
             ("has_terraform", lambda p: (p / "terraform").exists() or any((p / f).exists() for f in ["main.tf", "variables.tf", "terraform.tf"])),
         ]
@@ -153,12 +166,14 @@ class ProjectDetector:
                 indicators.append(name)
         
         # Local indicators (conservative - default to local)
-        if cloud_score < 0.3:
+        if cloud_score < 0.3 and enterprise_score < 0.3:
             local_score = 0.5  # Conservative default
             indicators.append("no_cloud_infrastructure")
         
-        # Determine result
-        if cloud_score >= 0.6:
+        # Determine result (enterprise takes precedence)
+        if enterprise_score >= 0.5:
+            return ("enterprise", min(0.95, enterprise_score), indicators)
+        elif cloud_score >= 0.6:
             return ("cloud", min(0.9, cloud_score), indicators)
         elif cloud_score >= 0.3:
             return ("cloud", min(0.7, cloud_score), indicators)
@@ -255,6 +270,133 @@ class ProjectDetector:
             return ("standard", 0.6, indicators)
         else:
             return ("basic", 0.5, ["no_security_files"])
+    
+    def detect_tenancy(self) -> Tuple[Optional[str], float, List[str]]:
+        """
+        Detect tenancy model (single-tenant vs multi-tenant) by grepping code.
+        
+        Returns:
+            Tuple of (tenancy, confidence, indicators)
+            tenancy: "single-tenant" or "multi-tenant" (or None)
+            confidence: 0.0-1.0
+            indicators: List of indicator names that matched
+        """
+        import re
+        
+        indicators = []
+        tenant_patterns = [
+            r'\btenant_id\b',
+            r'\btenantId\b',
+            r'\btenant-id\b',
+            r'\btenant_uuid\b',
+            r'\btenant_context\b',
+            r'\bmulti_tenant\b',
+            r'\bmultiTenant\b',
+        ]
+        
+        # Search in common code files
+        code_extensions = {'.py', '.js', '.ts', '.java', '.go', '.rs', '.cpp', '.c', '.cs'}
+        matching_files = set()
+        
+        for ext in code_extensions:
+            for code_file in self.project_root.rglob(f'*{ext}'):
+                try:
+                    # Skip very large files and binary-like files
+                    if code_file.stat().st_size > 1_000_000:  # 1MB limit
+                        continue
+                    
+                    content = code_file.read_text(encoding='utf-8', errors='ignore')
+                    
+                    # Check for tenant patterns
+                    for pattern in tenant_patterns:
+                        if re.search(pattern, content, re.IGNORECASE):
+                            matching_files.add(code_file)
+                            indicators.append(f"tenant_pattern_in_{code_file.name}")
+                            break  # Count file once even if multiple patterns match
+                except (UnicodeDecodeError, PermissionError, OSError):
+                    # Skip files that can't be read
+                    continue
+        
+        num_files = len(matching_files)
+        
+        # Determine tenancy based on number of files with tenant patterns
+        if num_files > 3:
+            return ("multi-tenant", 0.8, indicators)
+        elif num_files >= 1:
+            return ("multi-tenant", 0.6, indicators)  # Medium confidence, suggest
+        else:
+            # Conservative: default to single-tenant if no patterns found
+            return ("single-tenant", 0.7, ["no_tenant_patterns_found"])
+    
+    def detect_user_scale(self) -> Tuple[Optional[str], float, List[str]]:
+        """
+        Detect expected user scale from infrastructure patterns.
+        
+        Returns:
+            Tuple of (user_scale, confidence, indicators)
+            user_scale: "single-user", "small-team", "department", "enterprise" (or None)
+            confidence: 0.0-1.0
+            indicators: List of indicator names that matched
+        """
+        indicators = []
+        scale_score = {
+            "single-user": 0.0,
+            "small-team": 0.0,
+            "department": 0.0,
+            "enterprise": 0.0
+        }
+        
+        # Enterprise indicators (high scale)
+        enterprise_checks = [
+            ("has_load_balancer", lambda p: any((p / f).exists() for f in ["nginx.conf", "haproxy.cfg", "traefik.yml"])),
+            ("has_oauth", lambda p: any("oauth" in str(f).lower() for f in p.rglob("*") if f.is_file())),
+            ("has_saml", lambda p: any("saml" in str(f).lower() for f in p.rglob("*") if f.is_file())),
+            ("has_ldap", lambda p: any("ldap" in str(f).lower() for f in p.rglob("*") if f.is_file())),
+            ("has_kubernetes", lambda p: (p / "k8s").exists() or (p / "kubernetes").exists()),
+            ("has_helm", lambda p: (p / "helm").exists() or any((p / f).exists() for f in ["Chart.yaml", "values.yaml"])),
+        ]
+        
+        for name, check in enterprise_checks:
+            if check(self.project_root):
+                scale_score["enterprise"] += 0.15
+                indicators.append(name)
+        
+        # Department indicators (medium scale - caching, queues)
+        department_checks = [
+            ("has_redis", lambda p: any("redis" in str(f).lower() for f in p.rglob("*") if f.is_file()) or (p / "redis.conf").exists()),
+            ("has_memcached", lambda p: any("memcached" in str(f).lower() for f in p.rglob("*") if f.is_file())),
+            ("has_message_queue", lambda p: any(q in str(f).lower() for q in ["rabbitmq", "kafka", "sqs"] for f in p.rglob("*") if f.is_file())),
+        ]
+        
+        for name, check in department_checks:
+            if check(self.project_root):
+                scale_score["department"] += 0.2
+                indicators.append(name)
+        
+        # Small team indicators (basic infrastructure)
+        small_team_checks = [
+            ("has_docker", lambda p: (p / "Dockerfile").exists() or (p / "docker-compose.yml").exists()),
+            ("has_database", lambda p: any(db in str(f).lower() for db in ["postgres", "mysql", "sqlite"] for f in p.rglob("*") if f.is_file())),
+        ]
+        
+        for name, check in small_team_checks:
+            if check(self.project_root):
+                scale_score["small-team"] += 0.3
+                indicators.append(name)
+        
+        # Determine result
+        max_scale = max(scale_score.items(), key=lambda x: x[1])
+        max_scale_name, max_scale_score = max_scale
+        
+        if max_scale_score >= 0.6:
+            confidence = min(0.8, max_scale_score)
+            return (max_scale_name, confidence, indicators)
+        elif max_scale_score >= 0.3:
+            confidence = min(0.6, max_scale_score)
+            return (max_scale_name, confidence, indicators)  # Medium confidence, suggest
+        else:
+            # Default to small-team with low confidence
+            return ("small-team", 0.5, indicators + ["default_small_team"])
     
     def detect_from_context(
         self,
