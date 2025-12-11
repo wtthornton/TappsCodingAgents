@@ -897,6 +897,74 @@ Six workflow agents have integrated expert consultation to enhance their decisio
   - Deployment (`_handle_deploy`) - Security expert
   - Infrastructure setup (`_handle_infrastructure_setup`) - Security expert
 
+### Project Profiling System (v1.0.0+)
+
+The framework automatically detects your project characteristics to provide context-aware expert advice. This system analyzes your codebase to determine:
+
+- **Deployment Type**: local, cloud, or enterprise
+- **Tenancy Model**: single-tenant or multi-tenant
+- **User Scale**: single-user, small-team, department, or enterprise
+- **Compliance Requirements**: GDPR, HIPAA, PCI, SOC2, ISO27001
+- **Security Level**: basic, standard, high, or critical
+
+**How It Works:**
+
+1. **Automatic Detection**: When experts are consulted, the framework automatically detects project characteristics
+2. **Profile Storage**: Detected profile is saved to `.tapps-agents/project_profile.yaml`
+3. **Context-Aware Prompts**: Experts receive project context in their consultation prompts (high-confidence values only, ≥0.7)
+4. **Confidence Boost**: Project context relevance contributes 10% to overall confidence calculation
+
+**Example:**
+
+```python
+# Profile is automatically detected and used
+from tapps_agents.experts.expert_registry import ExpertRegistry
+
+registry = ExpertRegistry(load_builtin=True)
+result = await registry.consult(
+    query="How should I secure my API?",
+    domain="security"
+)
+
+# Expert receives context like:
+# "Project Context:
+#  - Deployment: cloud (confidence: 90%)
+#  - Compliance Requirements: GDPR
+#  - Security Level: high (confidence: 80%)"
+```
+
+**Manual Profile Management:**
+
+```python
+from tapps_agents.core.project_profile import (
+    ProjectProfileDetector, 
+    save_project_profile,
+    load_project_profile,
+    match_template
+)
+
+# Detect profile
+detector = ProjectProfileDetector()
+profile = detector.detect()
+save_project_profile(profile)
+
+# Load profile
+profile = load_project_profile()
+
+# Match to template
+template = match_template(profile)
+# Returns: "local-development", "saas-application", "enterprise-internal", or "startup-mvp"
+```
+
+**Profile Templates:**
+
+- **local-development**: local, single-tenant, small-team, basic security
+- **saas-application**: cloud, multi-tenant, enterprise, high security
+- **enterprise-internal**: enterprise, single-tenant, department, high security
+- **startup-mvp**: cloud, single-tenant, small-team, standard security
+
+See [Project Profiling Guide](PROJECT_PROFILING_GUIDE.md) for complete details.
+
 ### Expert Confidence System (v2.1.0)
 
 Expert consultations now use an improved confidence calculation system:

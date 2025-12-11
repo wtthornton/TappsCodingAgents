@@ -120,6 +120,7 @@ Configured in `.tapps-agents/experts.yaml`:
 - **Enhancer Agent**: 23+ enhancement sessions in `.tapps-agents/sessions/`
 - **Context7**: KB cache in `.tapps-agents/kb/context7-cache/`
 - **Workflows**: `workflows/prompt-enhancement.yaml` for prompt enhancement
+- **Project Profile**: Auto-detected profile in `.tapps-agents/project_profile.yaml` (v1.0.0+)
 
 ## Documentation Structure
 

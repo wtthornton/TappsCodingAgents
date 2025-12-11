@@ -17,7 +17,8 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
 - **Built-in Experts** (15): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
-- **Improved Confidence System** (v2.1.0): Weighted confidence calculation with agent-specific thresholds and metrics tracking
+- **Project Profiling System** (v1.0.0+): Automatic detection of project characteristics (deployment type, tenancy, user scale, compliance, security) for context-aware expert guidance
+- **Improved Confidence System** (v2.1.0): Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
 - **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
@@ -29,6 +30,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
   - **NUC Optimization** (Resource monitoring, fallback strategy)
 - **Claude Code Compatible**: Native Agent Skills format
 - **Prompt Enhancement Utility**: Transform simple prompts into comprehensive, context-aware prompts
+- **Project Profiling**: Automatic detection of project characteristics for context-aware expert advice
 
 ### Enhanced Features (v1.6.0+)
 

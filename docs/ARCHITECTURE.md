@@ -92,6 +92,7 @@ Domain-specific business authorities that provide context and decision-making gu
 - Weighted decision-making (51% primary authority)
 - File-based RAG for knowledge retrieval
 - Consult-based integration with workflow agents
+- **Context-aware advice** (v1.0.0+): Project profiling for tailored recommendations
 
 **Architecture Pattern:**
 ```
@@ -99,9 +100,12 @@ Expert Configuration (YAML)
     ↓
 Expert Registry (Weighted Selection)
     ↓
-Knowledge Base (RAG Retrieval)
-    ↓
-Workflow Agent Consultation
+Project Profile (Auto-detected) ──┐
+    ↓                               │
+Knowledge Base (RAG Retrieval)      │
+    ↓                               │
+Workflow Agent Consultation ◄───────┘
+    (with project context)
 ```
 
 ### 3. Model Abstraction Layer (MAL)
@@ -119,7 +123,31 @@ Unified interface for local and cloud LLM providers.
 - Reliability (automatic fallback)
 - Consistent API across providers
 
-### 4. MCP Gateway
+### 4. Project Profiling System *(v1.0.0+)*
+
+Automatic detection of project characteristics for context-aware expert guidance.
+
+**Components:**
+- **ProjectDetector**: Detects deployment type, compliance, security level, tenancy, user scale
+- **ProjectProfileDetector**: Orchestrates detection and builds profile
+- **Profile Storage**: YAML-based persistence in `.tapps-agents/project_profile.yaml`
+- **Template Matching**: Matches profiles to common templates
+
+**Detection Methods:**
+- **Deployment Type**: local, cloud, enterprise (from infrastructure files)
+- **Compliance**: GDPR, HIPAA, PCI, SOC2, ISO27001 (from compliance files)
+- **Security Level**: basic, standard, high, critical (from security files)
+- **Tenancy**: single-tenant, multi-tenant (from code patterns)
+- **User Scale**: single-user, small-team, department, enterprise (from infrastructure)
+
+**Integration:**
+- Automatically loaded by ExpertRegistry
+- Included in expert consultation prompts (high-confidence values only)
+- Affects confidence calculation (10% weight for project context relevance)
+
+See [Project Profiling Guide](PROJECT_PROFILING_GUIDE.md) for details.
+
+### 5. MCP Gateway
 
 Unified access to Model Context Protocol tools.
 

@@ -15,10 +15,11 @@ The confidence score is calculated using a weighted algorithm that considers mul
 
 ```python
 confidence = (
-    max_confidence * 0.4 +      # Maximum expert confidence (40%)
-    agreement_level * 0.3 +      # Expert agreement (30%)
-    rag_quality * 0.2 +          # Knowledge base match quality (20%)
-    domain_relevance * 0.1       # Domain relevance score (10%)
+    max_confidence * 0.35 +              # Maximum expert confidence (35%)
+    agreement_level * 0.25 +              # Expert agreement (25%)
+    rag_quality * 0.2 +                   # Knowledge base match quality (20%)
+    domain_relevance * 0.1 +              # Domain relevance score (10%)
+    project_context_relevance * 0.1       # Project context relevance (10%)
 )
 ```
 
@@ -43,6 +44,12 @@ confidence = (
    - How relevant the domain is to the query
    - Technical domains: 1.0
    - Business domains: 0.9
+
+5. **Project Context Relevance (10%)** *(v1.0.0+)*
+   - How well expert advice matches project characteristics
+   - Based on project profile (deployment type, tenancy, user scale, compliance, security)
+   - Keyword matching between advice and profile
+   - Only included if project profile is available
 
 ## Agent Integration
 

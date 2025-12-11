@@ -15,6 +15,7 @@ your-project/
 ├── .tapps-agents/
 │   ├── config.yaml          # Project configuration
 │   ├── domains.md           # Business domain definitions
+│   ├── project_profile.yaml # Project profile (auto-generated)
 │   └── customizations/      # Agent-specific customizations
 │       └── {agent-id}-custom.yaml
 └── src/
