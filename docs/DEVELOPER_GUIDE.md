@@ -903,7 +903,11 @@ Copy agent skills to your project:
 
 ```bash
 # From TappsCodingAgents repo
-cp -r agents/* your-project/.claude/skills/
+mkdir -p your-project/.claude/skills
+# Copy Skills from source location
+cp -r TappsCodingAgents/tapps_agents/agents/*/SKILL.md your-project/.claude/skills/
+# Or if Skills are in .claude/skills/:
+cp -r TappsCodingAgents/.claude/skills/* your-project/.claude/skills/
 ```
 
 #### Using Skills in Cursor

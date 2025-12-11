@@ -20,7 +20,7 @@ This guide covers deploying TappsCodingAgents in various environments, from loca
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-org/TappsCodingAgents.git
+   git clone https://github.com/wtthornton/TappsCodingAgents.git
    cd TappsCodingAgents
    ```
 

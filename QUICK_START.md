@@ -385,7 +385,12 @@ python -m tapps_agents.cli improver improve-quality path/to/file.py
 
 1. **Copy agent skills** to your project:
    ```bash
-   cp -r agents/* your-project/.claude/skills/
+   # Copy Skills from TappsCodingAgents source
+   mkdir -p your-project/.claude/skills
+   cp -r TappsCodingAgents/tapps_agents/agents/*/SKILL.md your-project/.claude/skills/
+   
+   # Or if Skills are already in .claude/skills/ in TappsCodingAgents:
+   cp -r TappsCodingAgents/.claude/skills/* your-project/.claude/skills/
    ```
 
 2. **Use agents in chat:**

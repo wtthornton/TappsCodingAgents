@@ -11,7 +11,7 @@
 
 TappsCodingAgents provides a standardized framework for building AI coding agents with:
 
-> **Note**: This project both **develops** the TappsCodingAgents framework AND **uses** it for its own development (self-hosting). See [Project Context](.cursor/rules/project-context.mdc) for details.
+> **Note**: This project both **develops** the TappsCodingAgents framework AND **uses** it for its own development (self-hosting). See [Project Context](docs/PROJECT_CONTEXT.md) for details.
 
 - **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
@@ -172,10 +172,23 @@ TappsCodingAgents/
 │   ├── model_profiles.yaml        # Model configurations
 │   └── template/                  # Templates and schemas
 │
-├── agents/                        # Agent Skills (coming)
-├── knowledge/                     # RAG templates (coming)
-├── adapters/                      # Fine-tuning templates (coming)
-└── config/                        # Configuration templates (coming)
+├── tapps_agents/                  # Framework source code
+│   ├── agents/                    # All 13 workflow agents
+│   │   ├── reviewer/             # Code review & scoring
+│   │   ├── implementer/          # Code generation
+│   │   ├── tester/               # Test generation
+│   │   └── ...                   # 10 more agents
+│   ├── core/                     # Core framework components
+│   ├── context7/                 # Context7 KB integration
+│   ├── experts/                  # Industry experts framework
+│   ├── workflow/                 # Workflow engine
+│   └── mcp/                      # MCP Gateway
+├── agents/                        # Cursor Skills (legacy location)
+├── workflows/                     # YAML workflow definitions
+├── examples/                      # Example configurations
+├── docs/                          # Comprehensive documentation
+├── requirements/                 # Project specifications
+└── tests/                         # Test suite
 ```
 
 ## Documentation

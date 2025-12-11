@@ -94,7 +94,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/your-org/TappsCodingAgents.git
+   git clone https://github.com/wtthornton/TappsCodingAgents.git
    cd TappsCodingAgents
    ```
 
