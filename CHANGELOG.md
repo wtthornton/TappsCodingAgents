@@ -5,6 +5,72 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] - 2025-12-XX
+
+### Added
+- **Built-in Expert System** - Framework-controlled technical domain experts
+  - **Security Expert** (`expert-security`) - OWASP Top 10, security patterns, vulnerability assessment (10 knowledge files)
+  - **Performance Expert** (`expert-performance`) - Optimization patterns, caching strategies, scalability (8 knowledge files)
+  - **Testing Expert** (`expert-testing`) - Test strategies, patterns, coverage analysis (9 knowledge files)
+  - **Data Privacy Expert** (`expert-data-privacy`) - GDPR, HIPAA, CCPA compliance, privacy best practices (8 knowledge files)
+  - **Accessibility Expert** (`expert-accessibility`) - WCAG 2.1/2.2, ARIA patterns, screen reader compatibility (9 knowledge files)
+  - **User Experience Expert** (`expert-user-experience`) - UX principles, usability heuristics, interaction design (8 knowledge files)
+  - Total: 52 knowledge base files (~200,000+ words of expert knowledge)
+
+- **Dual-Layer Expert Architecture**
+  - Built-in experts (framework-controlled, immutable, technical domains)
+  - Customer experts (user-controlled, configurable, business domains)
+  - Automatic priority system (technical domains prioritize built-in, business domains prioritize customer)
+  - Weighted consultation with 51% primary authority
+
+- **Enhanced Expert Registry**
+  - `BuiltinExpertRegistry` - Manages framework-controlled built-in experts
+  - Auto-loading of built-in experts on initialization
+  - Priority-based consultation (`prioritize_builtin` parameter)
+  - Automatic domain classification (technical vs business)
+  - Enhanced `ExpertRegistry.consult()` with priority system
+
+- **Agent Integration Patterns**
+  - `ExpertSupportMixin` - Easy-to-use mixin for agent expert support
+  - `_consult_builtin_expert()` - Convenience method for technical domains
+  - `_consult_customer_expert()` - Convenience method for business domains
+  - Automatic expert support initialization
+  - Tester agent integrated as example
+
+- **Comprehensive Documentation**
+  - [Built-in Experts Guide](docs/BUILTIN_EXPERTS_GUIDE.md) - Complete guide to all built-in experts
+  - [Expert Knowledge Base Guide](docs/EXPERT_KNOWLEDGE_BASE_GUIDE.md) - Knowledge base structure and best practices
+  - [Migration Guide 2.0](docs/MIGRATION_GUIDE_2.0.md) - Step-by-step migration from 1.x to 2.0
+  - Updated [API Documentation](docs/API.md) with new expert system APIs
+
+- **Comprehensive Testing**
+  - 15 comprehensive tests for dual-layer expert system
+  - Tests for domain classification, priority system, consultation flow
+  - All tests passing
+
+### Changed
+- **Expert Registry** - Now auto-loads built-in experts by default (`load_builtin=True`)
+- **BaseExpert** - Supports built-in knowledge bases via `_builtin_knowledge_path`
+- **Consultation API** - Enhanced with `prioritize_builtin` parameter and automatic domain detection
+- **Expert Selection** - Automatic priority based on domain type (technical vs business)
+
+### Technical Details
+- Built-in knowledge bases located in `tapps_agents/experts/knowledge/`
+- Customer knowledge bases continue to use `.tapps-agents/knowledge/`
+- Technical domains: security, performance-optimization, testing-strategies, code-quality-analysis, software-architecture, development-workflow, data-privacy-compliance, accessibility, user-experience, documentation-knowledge-management, ai-agent-framework
+- All other domains are business domains (customer experts prioritized)
+
+### Breaking Changes
+- **None** - Fully backward compatible with version 1.x
+- Existing expert configurations continue to work
+- Old consultation API still functional (with deprecation warnings)
+
+### Migration
+- See [Migration Guide 2.0](docs/MIGRATION_GUIDE_2.0.md) for detailed migration instructions
+- No code changes required for existing implementations
+- Built-in experts automatically available
+- Optional: Add `ExpertSupportMixin` to agents for enhanced integration
+
 ## [1.6.0] - 2025-12-10
 
 ### Added

@@ -31,6 +31,7 @@ class BaseAgent(ABC):
         self.customizations = None
         self.context_manager: Optional[Any] = None
         self.mcp_gateway: Optional[Any] = None
+        self._unified_cache: Optional[Any] = None  # Optional unified cache instance
         
     async def activate(self, project_root: Optional[Path] = None):
         """
@@ -266,4 +267,39 @@ class BaseAgent(ABC):
         suspicious_patterns = ["%2e%2e", "%2f", "%5c"]  # URL-encoded traversal attempts
         if any(pattern in str(file_path).lower() for pattern in suspicious_patterns):
             raise ValueError(f"Suspicious path detected: {file_path}")
+    
+    def get_unified_cache(self):
+        """
+        Get or create unified cache instance (optional enhancement).
+        
+        This provides access to the unified cache interface which includes:
+        - Tiered Context Cache
+        - Context7 KB Cache  
+        - RAG Knowledge Base
+        
+        Returns:
+            UnifiedCache instance (lazy initialization)
+        
+        Note: This is an optional enhancement. Existing code using
+        context_manager continues to work unchanged. The unified cache
+        will use the existing context_manager if available, or create
+        a new one if not.
+        """
+        if self._unified_cache is None:
+            from .unified_cache import create_unified_cache
+            from .cache_router import CacheType
+            # Use existing context_manager if available for backward compatibility
+            self._unified_cache = create_unified_cache(
+                context_manager=self.context_manager
+            )
+            # If we didn't have a context_manager, use the one from unified cache
+            if self.context_manager is None:
+                # Access the context_manager from the TieredContextAdapter
+                tiered_adapter = self._unified_cache.router.get_adapter(
+                    CacheType.TIERED_CONTEXT
+                )
+                if tiered_adapter:
+                    self.context_manager = tiered_adapter.context_manager
+        
+        return self._unified_cache
 

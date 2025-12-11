@@ -12,6 +12,11 @@ from .base_expert import BaseExpert
 from .domain_config import DomainConfig, DomainConfigParser
 from .weight_distributor import ExpertWeightMatrix
 from .expert_config import load_expert_configs, ExpertConfigModel
+from .builtin_registry import BuiltinExpertRegistry
+
+# Technical domains where built-in experts have primary authority
+# These domains are framework-controlled and built-in experts should be prioritized
+TECHNICAL_DOMAINS = BuiltinExpertRegistry.TECHNICAL_DOMAINS
 
 
 @dataclass
@@ -37,18 +42,25 @@ class ExpertRegistry:
     - Decision aggregation
     """
     
-    def __init__(self, domain_config: Optional[DomainConfig] = None):
+    def __init__(self, domain_config: Optional[DomainConfig] = None, load_builtin: bool = True):
         """
         Initialize expert registry.
         
         Args:
             domain_config: Optional domain configuration (can be loaded later)
+            load_builtin: Whether to auto-load built-in framework experts (default: True)
         """
         self.domain_config = domain_config
         self.experts: Dict[str, BaseExpert] = {}
+        self.builtin_experts: Dict[str, BaseExpert] = {}  # Built-in framework experts
+        self.customer_experts: Dict[str, BaseExpert] = {}  # Customer-configured experts
         self.weight_matrix: Optional[ExpertWeightMatrix] = (
             domain_config.weight_matrix if domain_config else None
         )
+        
+        # Auto-load built-in experts if enabled
+        if load_builtin:
+            self._load_builtin_experts()
     
     @classmethod
     def from_domains_file(cls, domains_file: Path) -> 'ExpertRegistry':
@@ -106,19 +118,64 @@ class ExpertRegistry:
             )
             registry.register_expert(expert)
         
+        registry = cls(domain_config=domain_config, load_builtin=True)
+        
+        # Create and register customer experts from config
+        for expert_config in expert_configs:
+            # Skip if this is a built-in expert (already loaded)
+            if BuiltinExpertRegistry.is_builtin_expert(expert_config.expert_id):
+                continue
+            
+            expert = BaseExpert(
+                expert_id=expert_config.expert_id,
+                expert_name=expert_config.expert_name,
+                primary_domain=expert_config.primary_domain,
+                confidence_matrix=expert_config.confidence_matrix,
+                rag_enabled=expert_config.rag_enabled,
+                fine_tuned=expert_config.fine_tuned
+            )
+            registry.register_expert(expert, is_builtin=False)
+        
         return registry
     
-    def register_expert(self, expert: BaseExpert) -> None:
+    def _load_builtin_experts(self):
+        """
+        Load all built-in framework experts automatically.
+        
+        Built-in experts are immutable and provide technical domain knowledge.
+        They are loaded from the BuiltinExpertRegistry.
+        """
+        builtin_configs = BuiltinExpertRegistry.get_builtin_experts()
+        builtin_knowledge_path = BuiltinExpertRegistry.get_builtin_knowledge_path()
+        
+        for config in builtin_configs:
+            expert = BaseExpert(
+                expert_id=config.expert_id,
+                expert_name=config.expert_name,
+                primary_domain=config.primary_domain,
+                confidence_matrix=config.confidence_matrix,
+                rag_enabled=config.rag_enabled,
+                fine_tuned=config.fine_tuned
+            )
+            # Mark as built-in for knowledge base path resolution
+            expert._is_builtin = True
+            expert._builtin_knowledge_path = builtin_knowledge_path
+            
+            self.register_expert(expert, is_builtin=True)
+    
+    def register_expert(self, expert: BaseExpert, is_builtin: bool = False) -> None:
         """
         Register an expert agent.
         
         Args:
             expert: BaseExpert instance to register
+            is_builtin: Whether this is a built-in expert (default: False)
         
         Raises:
-            ValueError: If expert not found in weight matrix
+            ValueError: If expert not found in weight matrix (unless it's a built-in expert)
         """
-        if self.weight_matrix and expert.expert_id not in self.weight_matrix.experts:
+        # Built-in experts don't need to be in weight matrix
+        if self.weight_matrix and expert.expert_id not in self.weight_matrix.experts and not is_builtin:
             raise ValueError(
                 f"Expert '{expert.expert_id}' not found in weight matrix. "
                 f"Registered experts: {list(self.weight_matrix.experts)}"
@@ -130,7 +187,12 @@ class ExpertRegistry:
                 expert.expert_id, {}
             )
         
+        # Register in appropriate dictionary
         self.experts[expert.expert_id] = expert
+        if is_builtin:
+            self.builtin_experts[expert.expert_id] = expert
+        else:
+            self.customer_experts[expert.expert_id] = expert
     
     def get_expert(self, expert_id: str) -> Optional[BaseExpert]:
         """Get an expert by ID."""
@@ -144,7 +206,8 @@ class ExpertRegistry:
         self,
         query: str,
         domain: str,
-        include_all: bool = True
+        include_all: bool = True,
+        prioritize_builtin: bool = False
     ) -> ConsultationResult:
         """
         Consult multiple experts on a domain question and aggregate weighted responses.
@@ -153,25 +216,53 @@ class ExpertRegistry:
             query: The question to ask
             domain: Domain context
             include_all: Whether to consult all experts or just primary
+            prioritize_builtin: If True, built-in experts get higher weight for technical domains.
+                               If False (default), uses weight matrix configuration.
+                               For technical domains, built-in experts should be prioritized.
+                               For business domains, customer experts should be prioritized.
         
         Returns:
             ConsultationResult with weighted answer and agreement metrics
         """
-        if not self.weight_matrix:
-            raise ValueError("Weight matrix not initialized. Load domain config first.")
-        
-        primary_expert_id = self.weight_matrix.get_primary_expert(domain)
-        if not primary_expert_id:
-            raise ValueError(f"No primary expert found for domain '{domain}'")
+        # Determine expert priority based on domain type
+        is_technical_domain = domain in TECHNICAL_DOMAINS
         
         # Collect expert IDs to consult
         expert_ids_to_consult = []
-        if include_all:
-            # Consult all experts
-            expert_ids_to_consult = list(self.weight_matrix.experts)
-        else:
-            # Only consult primary
-            expert_ids_to_consult = [primary_expert_id]
+        
+        # If weight matrix is available and not prioritizing built-in explicitly, use it
+        if self.weight_matrix and not prioritize_builtin:
+            primary_expert_id = self.weight_matrix.get_primary_expert(domain)
+            if primary_expert_id:
+                if include_all:
+                    # Consult all experts in weight matrix
+                    expert_ids_to_consult = list(self.weight_matrix.experts)
+                else:
+                    # Only consult primary
+                    expert_ids_to_consult = [primary_expert_id]
+        
+        # If no experts from weight matrix, get experts for domain
+        if not expert_ids_to_consult:
+            if prioritize_builtin and is_technical_domain:
+                # Technical domain: built-in experts have authority
+                expert_ids_to_consult = self._get_experts_for_domain(domain, prioritize_builtin=True)
+            elif not is_technical_domain:
+                # Business domain: customer experts have authority
+                expert_ids_to_consult = self._get_experts_for_domain(domain, prioritize_builtin=False)
+            else:
+                # Technical domain without prioritize_builtin: use built-in experts
+                expert_ids_to_consult = self._get_experts_for_domain(domain, prioritize_builtin=True)
+        
+        # If still no experts found, try fallback
+        if not expert_ids_to_consult:
+            # Fallback: get any available experts
+            if is_technical_domain:
+                expert_ids_to_consult = list(self.builtin_experts.keys())
+            else:
+                expert_ids_to_consult = list(self.customer_experts.keys()) + list(self.builtin_experts.keys())
+        
+        if not expert_ids_to_consult:
+            raise ValueError(f"No experts found for domain '{domain}'")
         
         # Consult each expert
         responses = []
@@ -200,14 +291,34 @@ class ExpertRegistry:
         if not responses:
             raise ValueError(f"No expert responses received for domain '{domain}'")
         
+        # Determine primary expert ID for aggregation
+        primary_expert_id = None
+        if self.weight_matrix:
+            primary_expert_id = self.weight_matrix.get_primary_expert(domain)
+        
+        # If no primary from weight matrix, use first expert or built-in expert for technical domains
+        if not primary_expert_id:
+            is_technical_domain = domain in TECHNICAL_DOMAINS
+            if is_technical_domain:
+                # For technical domains, prefer built-in expert
+                for expert_id in expert_ids_to_consult:
+                    if expert_id in self.builtin_experts:
+                        primary_expert_id = expert_id
+                        break
+            
+            # Fallback to first available expert
+            if not primary_expert_id and responses:
+                primary_expert_id = responses[0].get("expert_id")
+        
         # Aggregate weighted responses
-        weighted_answer = self._aggregate_responses(responses, domain)
+        weighted_answer = self._aggregate_responses(responses, domain, primary_expert_id)
         
         # Calculate agreement level
         agreement_level = self._calculate_agreement(responses, domain, primary_expert_id)
         
         # Get overall confidence
-        confidence = max(r.get("confidence", 0.0) for r in responses if "error" not in r)
+        valid_responses = [r for r in responses if "error" not in r]
+        confidence = max(r.get("confidence", 0.0) for r in valid_responses) if valid_responses else 0.0
         
         # Check if all experts agreed
         primary_response = next(
@@ -230,19 +341,22 @@ class ExpertRegistry:
     def _aggregate_responses(
         self,
         responses: List[Dict[str, Any]],
-        domain: str
+        domain: str,
+        primary_expert_id: Optional[str] = None
     ) -> str:
         """
         Aggregate expert responses using weighted decision-making.
         
         Primary expert (51%) has primary influence; others augment.
         """
-        if not self.weight_matrix:
-            # Fallback: just use primary expert
+        if not primary_expert_id:
+            # Fallback: use first available response
             primary = next((r for r in responses if r.get("expert_id") and "error" not in r), None)
             return primary.get("answer", "") if primary else ""
         
-        primary_expert_id = self.weight_matrix.get_primary_expert(domain)
+        # Try to get primary expert from weight matrix if not provided
+        if self.weight_matrix and not primary_expert_id:
+            primary_expert_id = self.weight_matrix.get_primary_expert(domain)
         
         # Find primary expert response
         primary_response = next(
@@ -271,7 +385,12 @@ class ExpertRegistry:
             influences = []
             for response in other_responses:
                 expert_id = response.get("expert_id", "")
-                weight = self.weight_matrix.get_expert_weight(expert_id, domain)
+                # Get weight from weight matrix if available, otherwise use default
+                if self.weight_matrix:
+                    weight = self.weight_matrix.get_expert_weight(expert_id, domain)
+                else:
+                    # Default weight for non-primary experts
+                    weight = 0.15  # Approximate weight for supporting experts
                 answer = response.get("answer", "")
                 expert_name = response.get("expert_name", expert_id)
                 
@@ -347,4 +466,64 @@ class ExpertRegistry:
         union = words1.union(words2)
         
         return len(intersection) / len(union) if union else 0.0
+    
+    def _get_experts_for_domain(
+        self,
+        domain: str,
+        prioritize_builtin: bool = False
+    ) -> List[str]:
+        """
+        Get expert IDs for a domain, prioritizing built-in or customer experts.
+        
+        Args:
+            domain: Domain name
+            prioritize_builtin: If True, prioritize built-in experts for technical domains.
+                              If False, prioritize customer experts for business domains.
+        
+        Returns:
+            List of expert IDs to consult, ordered by priority
+        """
+        expert_ids = []
+        is_technical_domain = domain in TECHNICAL_DOMAINS
+        
+        # Find experts that match the domain
+        builtin_matches = []
+        customer_matches = []
+        
+        for expert_id, expert in self.builtin_experts.items():
+            if expert.primary_domain == domain:
+                builtin_matches.append(expert_id)
+        
+        for expert_id, expert in self.customer_experts.items():
+            if expert.primary_domain == domain:
+                customer_matches.append(expert_id)
+        
+        # Determine priority order
+        if is_technical_domain and prioritize_builtin:
+            # Technical domain: built-in experts first
+            expert_ids.extend(builtin_matches)
+            expert_ids.extend(customer_matches)
+        elif not is_technical_domain and not prioritize_builtin:
+            # Business domain: customer experts first
+            expert_ids.extend(customer_matches)
+            expert_ids.extend(builtin_matches)
+        else:
+            # Default: built-in first for technical, customer first for business
+            if is_technical_domain:
+                expert_ids.extend(builtin_matches)
+                expert_ids.extend(customer_matches)
+            else:
+                expert_ids.extend(customer_matches)
+                expert_ids.extend(builtin_matches)
+        
+        # If no domain matches, try to find experts with related domains
+        if not expert_ids:
+            # Fallback: get any expert that might be relevant
+            if is_technical_domain:
+                expert_ids.extend(list(self.builtin_experts.keys()))
+            else:
+                expert_ids.extend(list(self.customer_experts.keys()))
+                expert_ids.extend(list(self.builtin_experts.keys()))
+        
+        return expert_ids
 

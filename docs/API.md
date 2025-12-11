@@ -224,22 +224,71 @@ async for chunk in mal.stream(prompt="...", model="..."):
 
 #### `ExpertRegistry`
 
-Expert management and consultation.
+Expert management and consultation with built-in and customer experts.
 
 ```python
-from tapps_agents.experts.registry import ExpertRegistry
+from tapps_agents.experts import ExpertRegistry
 
-registry = ExpertRegistry(config=config)
+# Create registry (auto-loads built-in experts)
+registry = ExpertRegistry(domain_config=None, load_builtin=True)
 
-# Consult experts
-advice = await registry.consult(
-    domain="healthcare",
-    question="What are HIPAA compliance requirements?",
-    context={"application_type": "patient_portal"}
+# Consult technical domain (prioritizes built-in experts)
+result = await registry.consult(
+    query="How to secure this API?",
+    domain="security",
+    prioritize_builtin=True
 )
 
-# Get expert weights
-weights = registry.get_expert_weights("healthcare")
+# Consult business domain (prioritizes customer experts)
+result = await registry.consult(
+    query="How to handle checkout?",
+    domain="e-commerce",
+    prioritize_builtin=False
+)
+
+# List available experts
+experts = registry.list_experts()
+
+# Get specific expert
+expert = registry.get_expert("expert-security")
+```
+
+#### `BuiltinExpertRegistry`
+
+Access to framework-controlled built-in experts.
+
+```python
+from tapps_agents.experts import BuiltinExpertRegistry
+
+# Get all built-in experts
+experts = BuiltinExpertRegistry.get_builtin_experts()
+
+# Get expert for domain
+expert_config = BuiltinExpertRegistry.get_expert_for_domain("security")
+
+# Check if domain is technical
+is_technical = BuiltinExpertRegistry.is_technical_domain("security")
+```
+
+#### `ExpertSupportMixin`
+
+Mixin class for agents to add expert consultation capabilities.
+
+```python
+from tapps_agents.core.agent_base import BaseAgent
+from tapps_agents.experts.agent_integration import ExpertSupportMixin
+
+class MyAgent(BaseAgent, ExpertSupportMixin):
+    async def activate(self, project_root: Optional[Path] = None):
+        await super().activate(project_root)
+        await self._initialize_expert_support(project_root)
+    
+    async def my_method(self):
+        # Consult built-in expert
+        result = await self._consult_builtin_expert(
+            query="How to optimize this?",
+            domain="performance-optimization"
+        )
 ```
 
 ### Context7 Integration
@@ -263,6 +312,88 @@ docs = await kb.get_docs(
 # Refresh cache
 await kb.refresh_cache(library="fastapi")
 ```
+
+### Unified Cache Architecture ✅
+
+#### `UnifiedCache`
+
+Single interface for all caching systems with hardware auto-detection.
+
+```python
+from tapps_agents.core import UnifiedCache, create_unified_cache, CacheType, ContextTier
+
+# Create unified cache (auto-detects hardware)
+cache = create_unified_cache()
+
+# Get hardware profile
+profile = cache.get_hardware_profile()
+print(f"Hardware: {profile.value}")  # nuc, development, workstation, server
+
+# Get tiered context
+response = cache.get(
+    CacheType.TIERED_CONTEXT,
+    key="path/to/file.py",
+    tier=ContextTier.TIER1
+)
+
+# Get Context7 KB entry
+response = cache.get(
+    CacheType.CONTEXT7_KB,
+    key="library-topic",
+    library="fastapi",
+    topic="routing"
+)
+
+# Get RAG knowledge
+response = cache.get(
+    CacheType.RAG_KNOWLEDGE,
+    key="query-id",
+    query="agent orchestration patterns"
+)
+
+# Store in cache
+cache.put(
+    CacheType.TIERED_CONTEXT,
+    key="path/to/file.py",
+    value={"context": "..."},
+    tier=ContextTier.TIER1
+)
+
+# Get statistics
+stats = cache.get_stats()
+print(f"Hits: {stats.total_hits}, Misses: {stats.total_misses}")
+```
+
+#### `BaseAgent.get_unified_cache()`
+
+Optional unified cache access in agents.
+
+```python
+from tapps_agents.core import BaseAgent, CacheType, ContextTier
+
+class MyAgent(BaseAgent):
+    async def run(self, command: str, **kwargs):
+        # Get unified cache (lazy initialization)
+        cache = self.get_unified_cache()
+        
+        # Use unified cache
+        response = cache.get(
+            CacheType.TIERED_CONTEXT,
+            key=kwargs.get("file", ""),
+            tier=ContextTier.TIER1
+        )
+        
+        return {"context": response.data if response else None}
+```
+
+**Key Features:**
+- Hardware auto-detection (NUC, Development, Workstation, Server)
+- Auto-optimization based on hardware profile
+- Unified interface for all cache types
+- Backward compatible with existing cache systems
+- Zero configuration required
+
+See [Unified Cache Integration Guide](../implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md) for details.
 
 ## CLI Interface
 

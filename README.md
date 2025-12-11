@@ -3,7 +3,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-1.6.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -15,6 +15,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 
 - **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
+- **Built-in Experts** (6): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX)
 - **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
@@ -103,6 +104,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Complete Code Scoring System** (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
 - **Model Abstraction Layer (MAL)** - Ollama + Cloud Fallback (Anthropic & OpenAI)
 - **Tiered Context System** (90%+ token savings, 3 tiers with caching)
+- **Unified Cache Architecture** ✅ (Single interface for all caching systems with hardware auto-detection)
 - **MCP Gateway** (Unified tool access with filesystem, Git, and analysis servers)
 - **YAML Workflow Definitions** (Parser, executor, artifact tracking, conditional steps)
 - **Industry Experts Framework** (Weighted decision-making, domain configuration, expert registry)
@@ -210,6 +212,8 @@ TappsCodingAgents/
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills
 - **[Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks
 - **[Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
+- **[Unified Cache Architecture](implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Single interface for all caching systems
+- **[Unified Cache Integration Guide](implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
 - **[Context7 Cache Optimization](docs/CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates
 - **[Context7 Security & Privacy](docs/CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices
 - **[NUC Setup Guide](docs/NUC_SETUP_GUIDE.md)** - Optimize for low-power hardware

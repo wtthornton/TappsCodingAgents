@@ -62,6 +62,10 @@ class BaseExpert(BaseAgent):
         self.fine_tuned = fine_tuned
         self.project_root: Optional[Path] = None
         
+        # Built-in expert flags (set by ExpertRegistry)
+        self._is_builtin: bool = False
+        self._builtin_knowledge_path: Optional[Path] = None
+        
         # RAG components (to be initialized if enabled)
         self.rag_interface = None
         self.knowledge_base = None
@@ -86,16 +90,44 @@ class BaseExpert(BaseAgent):
         await self.run("help")
     
     async def _initialize_rag(self):
-        """Initialize RAG interface and knowledge base."""
-        # Initialize simple file-based knowledge base
-        knowledge_dir = self.project_root / ".tapps-agents" / "knowledge" / self.primary_domain
+        """
+        Initialize RAG interface and knowledge base.
         
-        # Fallback to general knowledge if domain-specific doesn't exist
-        if not knowledge_dir.exists():
-            knowledge_dir = self.project_root / ".tapps-agents" / "knowledge"
+        For built-in experts, checks built-in knowledge path first.
+        For customer experts, checks project knowledge path.
+        """
+        knowledge_dirs: List[Path] = []
         
-        self.knowledge_base = SimpleKnowledgeBase(knowledge_dir, domain=self.primary_domain)
-        self.rag_interface = self.knowledge_base
+        if self._is_builtin and self._builtin_knowledge_path:
+            # Built-in expert: check built-in knowledge first
+            builtin_domain_dir = self._builtin_knowledge_path / self.primary_domain
+            if builtin_domain_dir.exists():
+                knowledge_dirs.append(builtin_domain_dir)
+            # Also check general built-in knowledge
+            if self._builtin_knowledge_path.exists():
+                knowledge_dirs.append(self._builtin_knowledge_path)
+        
+        # Customer knowledge (project-specific)
+        if self.project_root:
+            customer_domain_dir = self.project_root / ".tapps-agents" / "knowledge" / self.primary_domain
+            if customer_domain_dir.exists():
+                knowledge_dirs.append(customer_domain_dir)
+            # General customer knowledge
+            customer_general = self.project_root / ".tapps-agents" / "knowledge"
+            if customer_general.exists() and customer_general not in knowledge_dirs:
+                knowledge_dirs.append(customer_general)
+        
+        # Initialize knowledge base with all available directories
+        # SimpleKnowledgeBase will search across all provided directories
+        if knowledge_dirs:
+            # Use first directory as primary, but SimpleKnowledgeBase can be enhanced
+            # to support multiple directories in the future
+            self.knowledge_base = SimpleKnowledgeBase(knowledge_dirs[0], domain=self.primary_domain)
+            self.rag_interface = self.knowledge_base
+        else:
+            # No knowledge base available
+            self.knowledge_base = None
+            self.rag_interface = None
     
     async def _initialize_adapter(self):
         """Initialize fine-tuning adapter (LoRA)."""

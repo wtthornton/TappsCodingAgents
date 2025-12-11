@@ -260,6 +260,34 @@ Examples:
     score_parser.add_argument("file", help="Path to code file")
     score_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
     
+    lint_parser = reviewer_subparsers.add_parser("lint", aliases=["*lint"], help="Run Ruff linting on a file (Phase 6.1)")
+    lint_parser.add_argument("file", help="Path to code file")
+    lint_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    type_check_parser = reviewer_subparsers.add_parser("type-check", aliases=["*type-check"], help="Run mypy type checking on a file (Phase 6.2)")
+    type_check_parser.add_argument("file", help="Path to code file")
+    type_check_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    report_parser = reviewer_subparsers.add_parser("report", aliases=["*report"], help="Generate quality reports in multiple formats (Phase 6.3)")
+    report_parser.add_argument("target", help="File or directory path to analyze")
+    report_parser.add_argument("formats", nargs="+", choices=["json", "markdown", "html", "all"], help="Output formats")
+    report_parser.add_argument("--output-dir", help="Output directory for reports (default: reports/quality/)")
+    
+    duplication_parser = reviewer_subparsers.add_parser("duplication", aliases=["*duplication"], help="Detect code duplication using jscpd (Phase 6.4)")
+    duplication_parser.add_argument("target", help="File or directory path to analyze")
+    duplication_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    analyze_project_parser = reviewer_subparsers.add_parser("analyze-project", aliases=["*analyze-project"], help="Analyze entire project with all services (Phase 6.4.2)")
+    analyze_project_parser.add_argument("--project-root", help="Project root directory (default: current directory)")
+    analyze_project_parser.add_argument("--no-comparison", action="store_true", help="Skip comparison with previous analysis")
+    analyze_project_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
+    analyze_services_parser = reviewer_subparsers.add_parser("analyze-services", aliases=["*analyze-services"], help="Analyze specific services (Phase 6.4.2)")
+    analyze_services_parser.add_argument("services", nargs="*", help="Service names or patterns to analyze (default: all services)")
+    analyze_services_parser.add_argument("--project-root", help="Project root directory (default: current directory)")
+    analyze_services_parser.add_argument("--no-comparison", action="store_true", help="Skip comparison with previous analysis")
+    analyze_services_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+    
     reviewer_help_parser = reviewer_subparsers.add_parser("help", aliases=["*help"], help="Show reviewer commands")
     
     # Planner agent commands
@@ -378,34 +406,92 @@ Examples:
     analyst_parser = subparsers.add_parser("analyst", help="Analyst Agent commands")
     analyst_subparsers = analyst_parser.add_subparsers(dest="command", help="Commands")
     
-    analyst_subparsers.add_parser("gather-requirements", aliases=["*gather-requirements"], help="Gather requirements for a project")
-    analyst_subparsers.add_parser("stakeholder-analysis", aliases=["*stakeholder-analysis"], help="Perform stakeholder analysis")
-    analyst_subparsers.add_parser("tech-research", aliases=["*tech-research"], help="Perform technology research")
-    analyst_subparsers.add_parser("estimate-effort", aliases=["*estimate-effort"], help="Estimate effort for tasks")
-    analyst_subparsers.add_parser("assess-risk", aliases=["*assess-risk"], help="Assess project risks")
-    analyst_subparsers.add_parser("competitive-analysis", aliases=["*competitive-analysis"], help="Perform competitive analysis")
+    gather_req_parser = analyst_subparsers.add_parser("gather-requirements", aliases=["*gather-requirements"], help="Gather requirements for a project")
+    gather_req_parser.add_argument("description", help="Requirement description")
+    gather_req_parser.add_argument("--context", help="Additional context")
+    gather_req_parser.add_argument("--output-file", help="Output file path")
+    
+    stakeholder_parser = analyst_subparsers.add_parser("stakeholder-analysis", aliases=["*stakeholder-analysis"], help="Perform stakeholder analysis")
+    stakeholder_parser.add_argument("description", help="Project or feature description")
+    stakeholder_parser.add_argument("--stakeholders", nargs="+", help="List of stakeholders")
+    
+    tech_research_parser = analyst_subparsers.add_parser("tech-research", aliases=["*tech-research"], help="Perform technology research")
+    tech_research_parser.add_argument("requirement", help="Technology requirement")
+    tech_research_parser.add_argument("--context", help="Additional context")
+    tech_research_parser.add_argument("--criteria", nargs="+", help="Evaluation criteria")
+    
+    estimate_parser = analyst_subparsers.add_parser("estimate-effort", aliases=["*estimate-effort"], help="Estimate effort for tasks")
+    estimate_parser.add_argument("feature_description", help="Feature description")
+    estimate_parser.add_argument("--context", help="Additional context")
+    
+    assess_risk_parser = analyst_subparsers.add_parser("assess-risk", aliases=["*assess-risk"], help="Assess project risks")
+    assess_risk_parser.add_argument("feature_description", help="Feature or project description")
+    assess_risk_parser.add_argument("--context", help="Additional context")
+    
+    competitive_parser = analyst_subparsers.add_parser("competitive-analysis", aliases=["*competitive-analysis"], help="Perform competitive analysis")
+    competitive_parser.add_argument("product_description", help="Product description")
+    competitive_parser.add_argument("--competitors", nargs="+", help="List of competitors")
+    
     analyst_subparsers.add_parser("help", aliases=["*help"], help="Show analyst commands")
     
     # Architect agent commands
     architect_parser = subparsers.add_parser("architect", help="Architect Agent commands")
     architect_subparsers = architect_parser.add_subparsers(dest="command", help="Commands")
     
-    architect_subparsers.add_parser("design-system", aliases=["*design-system"], help="Design the overall system architecture")
-    architect_subparsers.add_parser("architecture-diagram", aliases=["*architecture-diagram"], help="Generate architecture diagrams")
-    architect_subparsers.add_parser("tech-selection", aliases=["*tech-selection"], help="Select appropriate technologies")
-    architect_subparsers.add_parser("security-design", aliases=["*security-design"], help="Design security aspects of the system")
-    architect_subparsers.add_parser("define-boundaries", aliases=["*define-boundaries"], help="Define system boundaries and interfaces")
+    design_system_parser = architect_subparsers.add_parser("design-system", aliases=["*design-system"], help="Design the overall system architecture")
+    design_system_parser.add_argument("requirements", help="System requirements")
+    design_system_parser.add_argument("--context", help="Additional context")
+    design_system_parser.add_argument("--output-file", help="Output file path")
+    
+    diagram_parser = architect_subparsers.add_parser("architecture-diagram", aliases=["*architecture-diagram"], help="Generate architecture diagrams")
+    diagram_parser.add_argument("architecture_description", help="Architecture description")
+    diagram_parser.add_argument("--diagram-type", default="component", help="Diagram type (component, sequence, deployment)")
+    diagram_parser.add_argument("--output-file", help="Output file path")
+    
+    tech_selection_parser = architect_subparsers.add_parser("tech-selection", aliases=["*tech-selection"], help="Select appropriate technologies")
+    tech_selection_parser.add_argument("component_description", help="Component description")
+    tech_selection_parser.add_argument("--requirements", help="Requirements")
+    tech_selection_parser.add_argument("--constraints", nargs="+", help="Constraints")
+    
+    security_design_parser = architect_subparsers.add_parser("security-design", aliases=["*security-design"], help="Design security aspects of the system")
+    security_design_parser.add_argument("system_description", help="System description")
+    security_design_parser.add_argument("--threat-model", help="Threat model")
+    
+    boundaries_parser = architect_subparsers.add_parser("define-boundaries", aliases=["*define-boundaries"], help="Define system boundaries and interfaces")
+    boundaries_parser.add_argument("system_description", help="System description")
+    boundaries_parser.add_argument("--context", help="Additional context")
+    
     architect_subparsers.add_parser("help", aliases=["*help"], help="Show architect commands")
     
     # Designer agent commands
     designer_parser = subparsers.add_parser("designer", help="Designer Agent commands")
     designer_subparsers = designer_parser.add_subparsers(dest="command", help="Commands")
     
-    designer_subparsers.add_parser("api-design", aliases=["*api-design"], help="Design APIs (REST, GraphQL, gRPC)")
-    designer_subparsers.add_parser("data-model-design", aliases=["*data-model-design"], help="Design data models and schemas")
-    designer_subparsers.add_parser("ui-ux-design", aliases=["*ui-ux-design"], help="Design user interfaces and experiences")
-    designer_subparsers.add_parser("wireframes", aliases=["*wireframes"], help="Generate wireframes for UI")
-    designer_subparsers.add_parser("design-system", aliases=["*design-system"], help="Develop or extend a design system")
+    api_design_parser = designer_subparsers.add_parser("api-design", aliases=["*api-design"], help="Design APIs (REST, GraphQL, gRPC)")
+    api_design_parser.add_argument("requirements", help="API requirements")
+    api_design_parser.add_argument("--api-type", default="REST", help="API type (REST, GraphQL, gRPC)")
+    api_design_parser.add_argument("--output-file", help="Output file path")
+    
+    data_model_parser = designer_subparsers.add_parser("data-model-design", aliases=["*data-model-design"], help="Design data models and schemas")
+    data_model_parser.add_argument("requirements", help="Data model requirements")
+    data_model_parser.add_argument("--data-source", help="Data source description")
+    data_model_parser.add_argument("--output-file", help="Output file path")
+    
+    ui_ux_parser = designer_subparsers.add_parser("ui-ux-design", aliases=["*ui-ux-design"], help="Design user interfaces and experiences")
+    ui_ux_parser.add_argument("feature_description", help="Feature description")
+    ui_ux_parser.add_argument("--user-stories", nargs="+", help="User stories")
+    ui_ux_parser.add_argument("--output-file", help="Output file path")
+    
+    wireframes_parser = designer_subparsers.add_parser("wireframes", aliases=["*wireframes"], help="Generate wireframes for UI")
+    wireframes_parser.add_argument("screen_description", help="Screen description")
+    wireframes_parser.add_argument("--wireframe-type", default="page", help="Wireframe type (page, component, flow)")
+    wireframes_parser.add_argument("--output-file", help="Output file path")
+    
+    design_system_designer_parser = designer_subparsers.add_parser("design-system", aliases=["*design-system"], help="Develop or extend a design system")
+    design_system_designer_parser.add_argument("project_description", help="Project description")
+    design_system_designer_parser.add_argument("--brand-guidelines", help="Brand guidelines")
+    design_system_designer_parser.add_argument("--output-file", help="Output file path")
+    
     designer_subparsers.add_parser("help", aliases=["*help"], help="Show designer commands")
     
     # Improver agent commands
@@ -442,6 +528,10 @@ Examples:
     
     infrastructure_setup_parser = ops_subparsers.add_parser("infrastructure-setup", aliases=["*infrastructure-setup"], help="Set up infrastructure")
     infrastructure_setup_parser.add_argument("--type", default="docker", help="Infrastructure type (docker, kubernetes, terraform)")
+    
+    audit_dependencies_parser = ops_subparsers.add_parser("audit-dependencies", aliases=["*audit-dependencies"], help="Audit dependencies for security vulnerabilities (Phase 6.4.3)")
+    audit_dependencies_parser.add_argument("--severity-threshold", choices=["low", "medium", "high", "critical"], default="high", help="Minimum severity threshold to report")
+    audit_dependencies_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
     
     ops_help_parser = ops_subparsers.add_parser("help", aliases=["*help"], help="Show ops commands")
     
@@ -551,6 +641,108 @@ Examples:
             asyncio.run(review_command(args.file, args.model, getattr(args, "format", "json")))
         elif command == "score":
             asyncio.run(score_command(args.file, getattr(args, "format", "json")))
+        elif command == "lint":
+            reviewer = ReviewerAgent()
+            asyncio.run(reviewer.activate())
+            result = asyncio.run(reviewer.run("lint", file=args.file))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            output_format = getattr(args, "format", "json")
+            if output_format == "json":
+                print(json.dumps(result, indent=2))
+            else:
+                if "issues" in result:
+                    print(f"Linting issues for {args.file}:")
+                    for issue in result["issues"]:
+                        print(f"  {issue.get('code', '')}: {issue.get('message', '')} (line {issue.get('line', '?')})")
+            asyncio.run(reviewer.close())
+        elif command == "type-check":
+            reviewer = ReviewerAgent()
+            asyncio.run(reviewer.activate())
+            result = asyncio.run(reviewer.run("type-check", file=args.file))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            output_format = getattr(args, "format", "json")
+            if output_format == "json":
+                print(json.dumps(result, indent=2))
+            else:
+                if "errors" in result:
+                    print(f"Type checking errors for {args.file}:")
+                    for error in result["errors"]:
+                        print(f"  {error.get('message', '')} (line {error.get('line', '?')})")
+            asyncio.run(reviewer.close())
+        elif command == "report":
+            reviewer = ReviewerAgent()
+            asyncio.run(reviewer.activate())
+            formats = getattr(args, "formats", ["all"])
+            if "all" in formats:
+                format_type = "all"
+            else:
+                format_type = ",".join(formats)
+            result = asyncio.run(reviewer.run(
+                "report",
+                format=format_type,
+                output_dir=getattr(args, "output_dir", None),
+                files=[args.target] if Path(args.target).is_file() else None
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            print(json.dumps(result, indent=2))
+            asyncio.run(reviewer.close())
+        elif command == "duplication":
+            reviewer = ReviewerAgent()
+            asyncio.run(reviewer.activate())
+            result = asyncio.run(reviewer.run("duplication", file=args.target))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            output_format = getattr(args, "format", "json")
+            if output_format == "json":
+                print(json.dumps(result, indent=2))
+            else:
+                if "duplicates" in result:
+                    print(f"Code duplication detected in {args.target}:")
+                    print(f"  Total duplicates: {len(result.get('duplicates', []))}")
+            asyncio.run(reviewer.close())
+        elif command == "analyze-project":
+            reviewer = ReviewerAgent()
+            asyncio.run(reviewer.activate())
+            result = asyncio.run(reviewer.run(
+                "analyze-project",
+                project_root=getattr(args, "project_root", None),
+                include_comparison=not getattr(args, "no_comparison", False)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            output_format = getattr(args, "format", "json")
+            if output_format == "json":
+                print(json.dumps(result, indent=2))
+            else:
+                print(f"Project analysis complete. See JSON output for details.")
+            asyncio.run(reviewer.close())
+        elif command == "analyze-services":
+            reviewer = ReviewerAgent()
+            asyncio.run(reviewer.activate())
+            services = getattr(args, "services", None)
+            result = asyncio.run(reviewer.run(
+                "analyze-services",
+                services=services if services else None,
+                project_root=getattr(args, "project_root", None),
+                include_comparison=not getattr(args, "no_comparison", False)
+            ))
+            if "error" in result:
+                print(f"Error: {result['error']}", file=sys.stderr)
+                sys.exit(1)
+            output_format = getattr(args, "format", "json")
+            if output_format == "json":
+                print(json.dumps(result, indent=2))
+            else:
+                print(f"Service analysis complete. See JSON output for details.")
+            asyncio.run(reviewer.close())
         elif command == "help":
             asyncio.run(help_command())
         else:
@@ -856,9 +1048,9 @@ Examples:
         
         if command == "gather-requirements":
             result = asyncio.run(analyst.run("gather-requirements", description=args.description, context=getattr(args, "context", ""), output_file=getattr(args, "output_file", None)))
-        elif command == "analyze-stakeholders":
+        elif command == "stakeholder-analysis":
             result = asyncio.run(analyst.run("analyze-stakeholders", description=args.description, stakeholders=getattr(args, "stakeholders", [])))
-        elif command == "research-technology":
+        elif command == "tech-research":
             result = asyncio.run(analyst.run("research-technology", requirement=args.requirement, context=getattr(args, "context", ""), criteria=getattr(args, "criteria", [])))
         elif command == "estimate-effort":
             result = asyncio.run(analyst.run("estimate-effort", feature_description=args.feature_description, context=getattr(args, "context", "")))
@@ -887,9 +1079,9 @@ Examples:
         
         if command == "design-system":
             result = asyncio.run(architect.run("design-system", requirements=args.requirements, context=getattr(args, "context", ""), output_file=getattr(args, "output_file", None)))
-        elif command == "create-diagram":
+        elif command == "architecture-diagram":
             result = asyncio.run(architect.run("create-diagram", architecture_description=args.architecture_description, diagram_type=getattr(args, "diagram_type", "component"), output_file=getattr(args, "output_file", None)))
-        elif command == "select-technology":
+        elif command == "tech-selection":
             result = asyncio.run(architect.run("select-technology", component_description=args.component_description, requirements=getattr(args, "requirements", ""), constraints=getattr(args, "constraints", [])))
         elif command == "design-security":
             result = asyncio.run(architect.run("design-security", system_description=args.system_description, threat_model=getattr(args, "threat_model", "")))
@@ -1002,6 +1194,11 @@ Examples:
             result = asyncio.run(ops.run(
                 "infrastructure-setup",
                 infrastructure_type=getattr(args, "type", "docker")
+            ))
+        elif command == "audit-dependencies":
+            result = asyncio.run(ops.run(
+                "audit-dependencies",
+                severity_threshold=getattr(args, "severity_threshold", "high")
             ))
         elif command == "help":
             result = asyncio.run(ops.run("help"))

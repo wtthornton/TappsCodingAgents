@@ -12,10 +12,11 @@ from ...core.mal import MAL
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config, TesterAgentConfig
 from ...context7.agent_integration import get_context7_helper, Context7AgentHelper
+from ...experts.agent_integration import ExpertSupportMixin
 from .test_generator import TestGenerator
 
 
-class TesterAgent(BaseAgent):
+class TesterAgent(BaseAgent, ExpertSupportMixin):
     """
     Tester Agent - Test generation and execution.
     
@@ -52,6 +53,12 @@ class TesterAgent(BaseAgent):
         self.context7: Optional[Context7AgentHelper] = None
         if config:
             self.context7 = get_context7_helper(self, config)
+    
+    async def activate(self, project_root: Optional[Path] = None):
+        """Activate the tester agent with expert support."""
+        await super().activate(project_root)
+        # Initialize expert support
+        await self._initialize_expert_support(project_root)
     
     def get_commands(self) -> List[Dict[str, str]]:
         """Return list of available commands."""
@@ -130,7 +137,8 @@ class TesterAgent(BaseAgent):
             "test_code": test_code,
             "test_file": str(test_path),
             "written": self.auto_write_tests,
-            "run_result": run_result
+            "run_result": run_result,
+            "expert_advice": expert_advice  # Include expert recommendations
         }
     
     async def generate_tests_command(

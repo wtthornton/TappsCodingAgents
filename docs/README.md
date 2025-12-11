@@ -29,6 +29,10 @@ Welcome to the comprehensive documentation for TappsCodingAgents, a specificatio
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills
 - **[Background Agents Guide](BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks
 - **[Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
+- **[Unified Cache Guide](UNIFIED_CACHE.md)** - Complete unified cache documentation
+- **[Unified Cache Architecture](../implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Architecture and implementation plan
+- **[Unified Cache Integration Guide](../implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
+- **[Unified Cache Quick Reference](../implementation/UNIFIED_CACHE_QUICK_REFERENCE.md)** - Quick reference guide
 - **[Context7 Cache Optimization](CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates (95%+ target)
 - **[Context7 Security & Privacy](CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices and compliance
 - **[Context7 API Key Management](CONTEXT7_API_KEY_MANAGEMENT.md)** - Secure API key storage

@@ -175,7 +175,31 @@ Agent Request → KB Cache Check → [Hit] Return Cached
                                   [Miss] → Context7 API → Cache → Return
 ```
 
-### 7. Tiered Context System
+### 7. Unified Cache Architecture ✅
+
+Single interface for all caching systems with hardware auto-detection and optimization.
+
+**Features:**
+- **Hardware Auto-Detection**: Automatically detects NUC, Development, Workstation, or Server profiles
+- **Auto-Optimization**: Configures cache settings based on detected hardware
+- **Unified Interface**: Single API for Tiered Context, Context7 KB, and RAG Knowledge caches
+- **Backward Compatible**: Existing cache systems continue to work unchanged
+- **Resource Monitoring**: Tracks CPU, memory, and disk usage
+
+**Cache Types:**
+1. **Tiered Context Cache**: Code context caching (in-memory LRU)
+2. **Context7 KB Cache**: Library documentation caching (file-based)
+3. **RAG Knowledge Base**: Domain knowledge caching (file-based)
+
+**Hardware Profiles:**
+- **NUC**: ≤6 cores, ≤16GB RAM - Conservative caching (50 entries, 100MB)
+- **Development**: ≤12 cores, ≤32GB RAM - Balanced caching (100 entries, 200MB)
+- **Workstation**: >12 cores, >32GB RAM - Aggressive caching (200 entries, 500MB)
+- **Server**: Variable resources - Custom settings
+
+See [Unified Cache Architecture Plan](../implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md) for details.
+
+### 8. Tiered Context System
 
 Intelligent context injection with 90%+ token savings.
 
@@ -185,7 +209,8 @@ Intelligent context injection with 90%+ token savings.
 3. **Tier 3**: Extended context (rarely included)
 
 **Caching:**
-- In-memory cache for frequently accessed context
+- Integrated with Unified Cache Architecture
+- Hardware-aware cache sizing
 - Automatic cache invalidation
 - Configurable cache size limits
 

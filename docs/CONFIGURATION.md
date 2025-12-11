@@ -260,9 +260,61 @@ quality_threshold: 70.0
 quality_threshold: "70.0"
 ```
 
+### Unified Cache Configuration ✅
+
+The unified cache automatically detects hardware and optimizes settings. Configuration is optional but can be customized:
+
+```yaml
+# Optional: Unified cache configuration
+# Location: .tapps-agents/unified-cache-config.yaml
+
+unified_cache:
+  enabled: true
+  storage_root: ".tapps-agents/kb/unified-cache"
+  
+  # Hardware auto-detection (automatic on first run)
+  hardware:
+    auto_detect: true
+    profile: "auto"  # auto, nuc, development, workstation, server
+    detected_profile: "development"  # Set automatically
+  
+  # Adaptive settings
+  adaptive:
+    enabled: true
+    check_interval: 60
+  
+  # Tiered context cache settings (auto-configured based on hardware)
+  tiered_context:
+    enabled: true
+    namespace: "tiered-context"
+    # Auto-configured per hardware profile
+    max_in_memory_entries: 100  # NUC: 50, Dev: 100, Workstation: 200
+    hybrid_mode: true  # NUC: false, Dev/Workstation: true
+  
+  # Context7 KB cache settings
+  context7_kb:
+    enabled: true
+    namespace: "context7-kb"
+    max_cache_size: "200MB"  # NUC: 100MB, Dev: 200MB, Workstation: 500MB
+  
+  # RAG knowledge base settings
+  rag_knowledge:
+    enabled: true
+    namespace: "rag-knowledge"
+```
+
+**Key Points:**
+- Configuration is **optional** - unified cache works with defaults
+- Hardware profile is **auto-detected** on first run
+- Settings are **auto-optimized** based on detected hardware
+- Manual override available if needed
+
+See [Unified Cache Architecture Plan](../implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md) for complete configuration options.
+
 ## Reference
 
 - **Default Template**: `templates/default_config.yaml`
 - **Config Models**: `tapps_agents/core/config.py`
 - **Project Requirements**: `requirements/PROJECT_REQUIREMENTS.md`
+- **Unified Cache Config**: `tapps_agents/core/unified_cache_config.py`
 

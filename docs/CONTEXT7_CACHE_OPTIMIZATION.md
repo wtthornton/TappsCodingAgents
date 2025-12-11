@@ -4,6 +4,8 @@
 
 This guide covers optimizing Context7 KB cache for maximum performance, including cache warming, hit rate optimization, and performance tuning.
 
+> **Note**: As of December 2025, Context7 KB cache is now part of the **Unified Cache Architecture**. The unified cache provides a single interface for all caching systems (Tiered Context, Context7 KB, and RAG Knowledge) with automatic hardware detection and optimization. See [Unified Cache Architecture Plan](../implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md) for details. This guide remains valid for direct Context7 KB cache usage, but consider using the unified cache for new implementations.
+
 ---
 
 ## Overview
