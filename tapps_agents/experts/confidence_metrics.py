@@ -221,7 +221,7 @@ class ConfidenceMetricsTracker:
                 json.dump(data, f, indent=2)
         except Exception:
             # Silently fail if saving fails
-            pass
+            return
 
 
 # Global metrics tracker instance

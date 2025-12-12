@@ -117,8 +117,10 @@ class IterativeRefinement:
             if not self.start_browser():
                 logger.error("Failed to start browser")
                 return None
-        # Help type-checker: start_browser() initializes browser_controller on success
-        assert self.browser_controller is not None
+        # start_browser() initializes browser_controller on success
+        if self.browser_controller is None:
+            logger.error("Browser controller is not available after start")
+            return None
 
         current_html = initial_html
         iteration = 0

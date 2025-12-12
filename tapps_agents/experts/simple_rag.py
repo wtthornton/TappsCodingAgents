@@ -5,8 +5,11 @@ Provides knowledge retrieval from markdown files in a knowledge/ directory
 using keyword search and context extraction. No vector DB required.
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -65,7 +68,8 @@ class SimpleKnowledgeBase:
                 self.files[md_file] = content
             except Exception:
                 # Skip files that can't be read
-                continue
+                logger.debug("Failed to read knowledge file %s", md_file, exc_info=True)
+                continue  # nosec B112 - best-effort load
 
     def search(
         self, query: str, max_results: int = 5, context_lines: int = 10

@@ -7,7 +7,7 @@ This prevents file conflicts when multiple agents run simultaneously.
 
 import logging
 import shutil
-import subprocess
+import subprocess  # nosec B404
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -51,9 +51,10 @@ class WorktreeManager:
 
         try:
             # Create worktree
-            cmd = ["git", "worktree", "add", str(worktree_path), "-b", branch_name]
+            git_path = shutil.which("git") or "git"
+            cmd = [git_path, "worktree", "add", str(worktree_path), "-b", branch_name]
 
-            subprocess.run(
+            subprocess.run(  # nosec B603
                 cmd, cwd=self.base_path, capture_output=True, text=True, check=True
             )
 
@@ -82,9 +83,10 @@ class WorktreeManager:
 
         try:
             # Remove worktree using git command
-            cmd = ["git", "worktree", "remove", str(worktree_path), "--force"]
+            git_path = shutil.which("git") or "git"
+            cmd = [git_path, "worktree", "remove", str(worktree_path), "--force"]
 
-            subprocess.run(
+            subprocess.run(  # nosec B603
                 cmd, cwd=self.base_path, capture_output=True, text=True, check=True
             )
 
@@ -112,8 +114,9 @@ class WorktreeManager:
         worktrees = {}
 
         try:
-            cmd = ["git", "worktree", "list"]
-            result = subprocess.run(
+            git_path = shutil.which("git") or "git"
+            cmd = [git_path, "worktree", "list"]
+            result = subprocess.run(  # nosec B603
                 cmd, cwd=self.base_path, capture_output=True, text=True, check=True
             )
 
@@ -150,8 +153,9 @@ class WorktreeManager:
             try:
                 # Check for uncommitted changes
                 if keep_active:
-                    cmd = ["git", "status", "--porcelain"]
-                    result = subprocess.run(
+                    git_path = shutil.which("git") or "git"
+                    cmd = [git_path, "status", "--porcelain"]
+                    result = subprocess.run(  # nosec B603
                         cmd, cwd=worktree_path, capture_output=True, text=True
                     )
                     if result.stdout.strip():

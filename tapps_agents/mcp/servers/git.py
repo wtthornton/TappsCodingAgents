@@ -2,7 +2,8 @@
 Git MCP Server - Git operations.
 """
 
-import subprocess
+import shutil
+import subprocess  # nosec B404
 from pathlib import Path
 from typing import Any
 
@@ -95,10 +96,13 @@ class GitMCPServer:
 
     def _run_git_command(self, args: list, repo_path: Path | None = None) -> str:
         """Run a Git command."""
-        cmd = ["git"] + args
+        git_path = shutil.which("git")
+        if not git_path:
+            raise RuntimeError("Git not found. Is Git installed?")
+        cmd = [git_path] + args
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 cmd,
                 cwd=repo_path or Path.cwd(),
                 capture_output=True,

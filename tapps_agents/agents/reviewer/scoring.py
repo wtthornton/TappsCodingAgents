@@ -6,6 +6,7 @@ import ast
 import json as json_lib
 import shutil
 import subprocess  # nosec B404 - used with fixed args, no shell
+import sys
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -177,7 +178,7 @@ class CodeScorer:
             + scores["maintainability_score"] * w.maintainability
             + scores["test_coverage_score"] * w.test_coverage
             + scores["performance_score"] * w.performance
-        )
+        ) * 10  # Scale from 0-10 weighted sum to 0-100
 
         return scores
 
@@ -543,8 +544,15 @@ class CodeScorer:
 
         try:
             # Run ruff check with JSON output
-            result = subprocess.run(  # nosec B603 - fixed args
-                ["ruff", "check", "--output-format=json", str(file_path)],
+            result = subprocess.run(  # nosec B603
+                [
+                    sys.executable,
+                    "-m",
+                    "ruff",
+                    "check",
+                    "--output-format=json",
+                    str(file_path),
+                ],
                 capture_output=True,
                 text=True,
                 timeout=30,  # 30 second timeout
@@ -622,8 +630,15 @@ class CodeScorer:
             return []
 
         try:
-            result = subprocess.run(  # nosec B603 - fixed args
-                ["ruff", "check", "--output-format=json", str(file_path)],
+            result = subprocess.run(  # nosec B603
+                [
+                    sys.executable,
+                    "-m",
+                    "ruff",
+                    "check",
+                    "--output-format=json",
+                    str(file_path),
+                ],
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -662,8 +677,15 @@ class CodeScorer:
 
         try:
             # Run mypy with JSON output and error codes
-            result = subprocess.run(  # nosec B603 - fixed args
-                ["mypy", "--show-error-codes", "--no-error-summary", str(file_path)],
+            result = subprocess.run(  # nosec B603
+                [
+                    sys.executable,
+                    "-m",
+                    "mypy",
+                    "--show-error-codes",
+                    "--no-error-summary",
+                    str(file_path),
+                ],
                 capture_output=True,
                 text=True,
                 timeout=60,  # 60 second timeout (mypy can be slower than Ruff)
@@ -717,8 +739,15 @@ class CodeScorer:
             return []
 
         try:
-            result = subprocess.run(  # nosec B603 - fixed args
-                ["mypy", "--show-error-codes", "--no-error-summary", str(file_path)],
+            result = subprocess.run(  # nosec B603
+                [
+                    sys.executable,
+                    "-m",
+                    "mypy",
+                    "--show-error-codes",
+                    "--no-error-summary",
+                    str(file_path),
+                ],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -802,8 +831,9 @@ class CodeScorer:
 
             # Build jscpd command
             # Use npx if jscpd not directly available
-            if shutil.which("jscpd"):
-                cmd = ["jscpd"]
+            jscpd_path = shutil.which("jscpd")
+            if jscpd_path:
+                cmd = [jscpd_path]
             else:
                 npx_path = shutil.which("npx")
                 if not npx_path:
@@ -927,8 +957,9 @@ class CodeScorer:
                 target = str(file_path)
 
             # Build jscpd command
-            if shutil.which("jscpd"):
-                cmd = ["jscpd"]
+            jscpd_path = shutil.which("jscpd")
+            if jscpd_path:
+                cmd = [jscpd_path]
             else:
                 npx_path = shutil.which("npx")
                 if not npx_path:

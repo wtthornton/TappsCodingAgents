@@ -10,7 +10,6 @@ from typing import Any
 
 from .ast_parser import ASTParser, ModuleInfo
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -129,7 +128,9 @@ class TieredContextBuilder:
                     full_content, config.max_tokens
                 )
             except Exception:
-                logger.debug("Failed to read full file content for tier3 context", exc_info=True)
+                logger.debug(
+                    "Failed to read full file content for tier3 context", exc_info=True
+                )
 
         # Calculate token estimate
         context["token_estimate"] = self._estimate_tokens(context)

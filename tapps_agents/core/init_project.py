@@ -46,6 +46,9 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
     Args:
         project_root: Project root directory (defaults to cwd)
         source_dir: Source directory for rules (defaults to framework's .cursor/rules)
+
+    Returns:
+        (success, list of copied rule paths)
     """
     if project_root is None:
         project_root = Path.cwd()
@@ -59,15 +62,26 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
     project_rules_dir = project_root / ".cursor" / "rules"
     project_rules_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy workflow presets rule
-    workflow_rule = source_dir / "workflow-presets.mdc"
-    if workflow_rule.exists():
-        dest_rule = project_rules_dir / "workflow-presets.mdc"
-        if not dest_rule.exists():
-            shutil.copy2(workflow_rule, dest_rule)
-            return True, str(dest_rule)
+    # Copy Cursor Rules (workflow-presets, quick-reference, and agent-capabilities)
+    rules_to_copy = [
+        "workflow-presets.mdc",
+        "quick-reference.mdc",
+        "agent-capabilities.mdc",
+    ]
+    copied_rules = []
 
-    return False, None
+    for rule_name in rules_to_copy:
+        source_rule = source_dir / rule_name
+        if source_rule.exists():
+            dest_rule = project_rules_dir / rule_name
+            if not dest_rule.exists():
+                shutil.copy2(source_rule, dest_rule)
+                copied_rules.append(str(dest_rule))
+
+    if copied_rules:
+        return True, copied_rules
+
+    return False, []
 
 
 def init_workflow_presets(
@@ -141,10 +155,10 @@ def init_project(
 
     # Initialize Cursor Rules
     if include_cursor_rules:
-        success, rule_path = init_cursor_rules(project_root)
+        success, rule_paths = init_cursor_rules(project_root)
         results["cursor_rules"] = success
-        if rule_path:
-            results["files_created"].append(rule_path)
+        if rule_paths:
+            results["files_created"].extend(rule_paths)
 
     # Initialize workflow presets
     if include_workflow_presets:

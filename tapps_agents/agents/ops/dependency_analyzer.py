@@ -6,7 +6,7 @@ Phase 6.4.3: Dependency Analysis & Security Auditing
 
 import json
 import shutil
-import subprocess  # nosec B404 - used with fixed args, no shell
+import subprocess  # nosec B404
 import sys
 from pathlib import Path
 from typing import Any
@@ -186,13 +186,13 @@ class DependencyAnalyzer:
 
         try:
             # Build command
-            command = ["pip-audit", "--format", format_type]
+            command = [sys.executable, "-m", "pip_audit", "--format", format_type]
 
             # Add severity filtering if supported (pip-audit 2.6+)
             # Note: pip-audit severity filtering may vary by version
             # For now, get all vulnerabilities and filter in code
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 command,
                 capture_output=True,
                 text=True,

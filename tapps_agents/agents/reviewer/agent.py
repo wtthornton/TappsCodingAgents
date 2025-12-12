@@ -17,7 +17,6 @@ from .scoring import CodeScorer
 from .service_discovery import ServiceDiscovery
 from .typescript_scorer import TypeScriptScorer
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -364,12 +363,13 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         # Consult experts for review guidance
         expert_guidance: dict[str, Any] = {}
-        if self.expert_registry and include_llm_feedback:
+        expert_registry = getattr(self, "expert_registry", None)
+        if expert_registry and include_llm_feedback:
             code_preview = code[:2000]  # First 2000 chars for expert consultation
 
             # Consult Security expert
             try:
-                security_consultation = await self.expert_registry.consult(
+                security_consultation = await expert_registry.consult(
                     query=f"Review this code for security vulnerabilities:\n\n{code_preview}",
                     domain="security",
                     include_all=True,
@@ -385,7 +385,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
             # Consult Performance expert
             try:
-                perf_consultation = await self.expert_registry.consult(
+                perf_consultation = await expert_registry.consult(
                     query=f"Review this code for performance issues:\n\n{code_preview}",
                     domain="performance-optimization",
                     include_all=True,
@@ -398,7 +398,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
             # Consult Code Quality expert
             try:
-                quality_consultation = await self.expert_registry.consult(
+                quality_consultation = await expert_registry.consult(
                     query=f"Review this code for quality issues:\n\n{code_preview}",
                     domain="code-quality-analysis",
                     include_all=True,
@@ -757,7 +757,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     file_count += 1
                 except Exception:
                     # Skip files that can't be analyzed
-                    continue
+                    logger.debug(
+                        "Skipping unreadable/unscorable file %s",
+                        file_path,
+                        exc_info=True,
+                    )
+                    continue  # nosec B112 - best-effort report generation
 
             # Calculate averages
             if file_count > 0:
@@ -776,7 +781,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     + aggregated_scores["maintainability_score"] * 0.25
                     + aggregated_scores["test_coverage_score"] * 0.15
                     + aggregated_scores["performance_score"] * 0.10
-                )
+                ) * 10  # Scale from 0-10 weighted sum to 0-100
         else:
             # Single file or project-level - use defaults
             aggregated_scores["overall_score"] = 0.0
@@ -1001,7 +1006,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                         files_analyzed += 1
                     except Exception:
                         # Skip files that can't be analyzed
-                        continue
+                        logger.debug(
+                            "Skipping unreadable/unscorable file %s",
+                            file_path,
+                            exc_info=True,
+                        )
+                        continue  # nosec B112 - best-effort analysis
 
                 # Aggregate scores for this service
                 if all_scores:

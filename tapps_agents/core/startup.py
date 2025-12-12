@@ -5,12 +5,15 @@ Handles automatic documentation refresh and other startup tasks.
 """
 
 import asyncio
+import logging
 import sys
 from pathlib import Path
 from typing import Any
 
 from ..context7.commands import Context7Commands
 from ..core.config import ProjectConfig, load_config
+
+logger = logging.getLogger(__name__)
 
 
 async def refresh_stale_documentation(
@@ -111,8 +114,7 @@ async def _process_refresh_queue_background(
                     file=sys.stderr,
                 )
     except Exception:
-        # Silently fail in background
-        pass
+        logger.debug("Background refresh queue processing failed", exc_info=True)
 
 
 async def _process_refresh_queue_sync(

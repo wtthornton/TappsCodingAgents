@@ -2,6 +2,7 @@
 Unified Cache - Single interface for all caching systems.
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -14,6 +15,8 @@ from .adaptive_cache_config import AdaptiveCacheConfig
 from .cache_router import CacheRequest, CacheResponse, CacheRouter, CacheType
 from .context_manager import ContextManager, ContextTier
 from .hardware_profiler import HardwareProfile, HardwareProfiler
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -104,7 +107,7 @@ class UnifiedCache:
                             tier_cache.max_size = cache_size
             except Exception:
                 # Best-effort only; never fail initialization because a mock doesn't behave like a real ContextManager.
-                pass
+                logger.debug("Failed to apply cache sizing to provided context_manager")
 
         # Initialize KB cache if not provided
         if kb_cache is None:

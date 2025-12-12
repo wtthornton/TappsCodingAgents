@@ -3,6 +3,9 @@ Workflow Executor - Execute YAML workflow definitions.
 """
 
 import json
+import shutil
+import subprocess  # nosec B404 - fixed args, no shell
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -131,6 +134,287 @@ class WorkflowExecutor:
         self.save_state()
 
         return self.state
+
+    def get_status(self) -> dict[str, Any]:
+        """Return a lightweight status snapshot for the active workflow."""
+        if not self.state:
+            return {"active": False, "status": "idle"}
+        return {
+            "active": True,
+            "workflow_id": self.state.workflow_id,
+            "status": self.state.status,
+            "current_step": self.state.current_step,
+            "completed_steps": list(self.state.completed_steps or []),
+            "skipped_steps": list(self.state.skipped_steps or []),
+            "artifacts": {
+                k: {"path": v.path, "status": v.status}
+                for k, v in (self.state.artifacts or {}).items()
+            },
+            "error": self.state.error,
+        }
+
+    @staticmethod
+    def _normalize_action(action: str) -> str:
+        return action.replace("-", "_").strip().lower()
+
+    def _default_target_file(self) -> Path | None:
+        """
+        Best-effort default target selection for demos.
+
+        For `workflow hotfix` / quick-start docs, we default to `example_bug.py` if present.
+        """
+        candidate = self.project_root / "example_bug.py"
+        return candidate if candidate.exists() else None
+
+    def _capture_python_exception(self, file_path: Path) -> tuple[str | None, str | None]:
+        """
+        Run a python file and capture its exception output (best-effort).
+
+        Returns:
+            (error_message, stack_trace)
+        """
+        try:
+            result = subprocess.run(  # nosec B603 - fixed args, no shell
+                [sys.executable, str(file_path)],
+                capture_output=True,
+                text=True,
+                cwd=str(file_path.parent),
+                timeout=30,
+                check=False,
+            )
+            stderr = (result.stderr or "").strip()
+            if not stderr:
+                return None, None
+
+            # Heuristic: last non-empty line is typically "XError: msg"
+            lines = [ln for ln in stderr.splitlines() if ln.strip()]
+            error_message = lines[-1] if lines else None
+            return error_message, stderr
+        except Exception:
+            return None, None
+
+    async def execute(
+        self,
+        workflow: Workflow | None = None,
+        target_file: str | None = None,
+        max_steps: int = 50,
+    ) -> WorkflowState:
+        """
+        Execute a workflow end-to-end.
+
+        Why this exists:
+        - `start()` only initializes/persists workflow state.
+        - The original CLI called `start()` and then stopped, leaving status as "running".
+
+        This method runs the current step, records artifacts, advances to next,
+        and repeats until completion/failure.
+        """
+        if workflow:
+            self.workflow = workflow
+        if not self.workflow:
+            raise ValueError("No workflow loaded. Call load_workflow() or pass workflow.")
+
+        # Ensure we have a state
+        if not self.state or self.state.workflow_id != self.workflow.id:
+            self.start(workflow=self.workflow)
+
+        # Establish target file (best-effort for demo workflows)
+        if target_file:
+            target_path = (self.project_root / target_file) if not Path(target_file).is_absolute() else Path(target_file)
+        else:
+            target_path = self._default_target_file()
+
+        if target_path:
+            self.state.variables["target_file"] = str(target_path)
+
+        steps_executed = 0
+        while (
+            self.state
+            and self.workflow
+            and self.state.status == "running"
+            and self.state.current_step
+        ):
+            if steps_executed >= max_steps:
+                self.state.status = "failed"
+                self.state.error = f"Max steps exceeded ({max_steps}). Aborting."
+                self.save_state()
+                break
+
+            step = self.get_current_step()
+            if not step:
+                self.state.status = "failed"
+                self.state.error = f"Unknown current step: {self.state.current_step}"
+                self.save_state()
+                break
+
+            try:
+                await self._execute_step(step=step, target_path=target_path)
+            except Exception as e:
+                self.state.status = "failed"
+                self.state.error = str(e)
+                self.save_state()
+                break
+
+            steps_executed += 1
+
+        return self.state
+
+    async def _execute_step(self, step: WorkflowStep, target_path: Path | None) -> None:
+        """
+        Execute a single workflow step and advance state.
+
+        This is intentionally pragmatic: it supports the shipped preset workflows
+        by mapping `step.action` to each agent's real CLI/API commands.
+        """
+        if not self.state or not self.workflow:
+            raise ValueError("Workflow not started")
+
+        action = self._normalize_action(step.action)
+        agent_name = (step.agent or "").strip().lower()
+
+        # ---- Helper: dynamic agent import + run ----
+        async def run_agent(agent: str, command: str, **kwargs: Any) -> dict[str, Any]:
+            module = __import__(f"tapps_agents.agents.{agent}.agent", fromlist=["*"])
+            class_name = f"{agent.title()}Agent"
+            agent_cls = getattr(module, class_name)
+            instance = agent_cls()
+            await instance.activate(self.project_root)
+            try:
+                return await instance.run(command, **kwargs)
+            finally:
+                await instance.close()
+
+        created_artifacts: list[dict[str, Any]] = []
+
+        # ---- Step execution mappings ----
+        if agent_name == "debugger" and action in {"analyze_error", "analyze-error", "analyze"}:
+            if not target_path or not target_path.exists():
+                raise ValueError(
+                    "Debugger step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
+                )
+
+            error_message, stack_trace = self._capture_python_exception(target_path)
+            if not error_message:
+                # Fall back to a generic message for static analysis
+                error_message = f"Bug(s) reported in {target_path.name} (no runtime traceback captured)."
+
+            debug_result = await run_agent(
+                "debugger",
+                "analyze-error",
+                error_message=error_message,
+                stack_trace=stack_trace,
+            )
+            self.state.variables["debugger_result"] = debug_result
+
+            # Write debug report artifact if requested
+            if "debug-report.md" in (step.creates or []):
+                report_path = self.project_root / "debug-report.md"
+                report_lines = [
+                    "# Debug Report",
+                    "",
+                    f"## Target: `{target_path}`",
+                    "",
+                    "## Error message",
+                    "```",
+                    error_message or "",
+                    "```",
+                ]
+                if stack_trace:
+                    report_lines += ["", "## Stack trace", "```", stack_trace, "```"]
+                report_lines += ["", "## Analysis (DebuggerAgent)", "```json", json.dumps(debug_result, indent=2), "```"]
+                report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
+                created_artifacts.append({"name": "debug-report.md", "path": str(report_path)})
+
+        elif agent_name == "implementer" and action in {"write_code", "fix", "implement"}:
+            if not target_path or not target_path.exists():
+                raise ValueError(
+                    "Implementer step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
+                )
+
+            debug_report_path = self.project_root / "debug-report.md"
+            debug_context = debug_report_path.read_text(encoding="utf-8") if debug_report_path.exists() else ""
+            instruction = (
+                f"Fix the bugs in {target_path.name}. "
+                "Add robust input validation and handle missing keys safely. "
+                "Do not change behavior beyond fixing the crashes.\n\n"
+                "Context:\n"
+                f"{debug_context[:4000]}"
+            )
+
+            fix_result = await run_agent(
+                "implementer",
+                "refactor",
+                file=str(target_path),
+                instruction=instruction,
+            )
+            self.state.variables["implementer_result"] = fix_result
+
+            # Create fixed-code/ artifact if requested by preset
+            if "fixed-code/" in (step.creates or []):
+                fixed_dir = self.project_root / "fixed-code"
+                fixed_dir.mkdir(parents=True, exist_ok=True)
+                fixed_copy = fixed_dir / target_path.name
+                shutil.copy2(target_path, fixed_copy)
+                self.state.variables["fixed_file"] = str(fixed_copy)
+                created_artifacts.append({"name": "fixed-code/", "path": str(fixed_dir)})
+
+        elif agent_name == "reviewer" and action in {"review_code", "review", "score"}:
+            # Prefer the fixed copy if available
+            fixed_file = self.state.variables.get("fixed_file")
+            review_target = Path(fixed_file) if fixed_file else target_path
+            if not review_target or not review_target.exists():
+                raise ValueError("Reviewer step requires a target file to review.")
+
+            review_result = await run_agent("reviewer", "score", file=str(review_target))
+            self.state.variables["reviewer_result"] = review_result
+
+            # Evaluate gate if configured
+            gate = step.gate or {}
+            if gate:
+                scoring = review_result.get("scoring", {}) if isinstance(review_result, dict) else {}
+                passed = bool(review_result.get("passed", False))
+                self.state.variables["gate_last"] = {
+                    "step": step.id,
+                    "passed": passed,
+                    "scoring": scoring,
+                }
+                on_pass = gate.get("on_pass") or gate.get("on-pass")
+                on_fail = gate.get("on_fail") or gate.get("on-fail")
+
+                # Mark review complete, but override next step based on gate decision
+                self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)
+                if passed and on_pass:
+                    self.state.current_step = on_pass
+                elif (not passed) and on_fail:
+                    self.state.current_step = on_fail
+                self.save_state()
+                return
+
+        elif agent_name == "tester" and action in {"write_tests", "test"}:
+            fixed_file = self.state.variables.get("fixed_file")
+            test_target = Path(fixed_file) if fixed_file else target_path
+            if not test_target or not test_target.exists():
+                raise ValueError("Tester step requires a target file to test.")
+
+            test_result = await run_agent("tester", "test", file=str(test_target))
+            self.state.variables["tester_result"] = test_result
+
+            if "tests/" in (step.creates or []):
+                tests_dir = self.project_root / "tests"
+                created_artifacts.append({"name": "tests/", "path": str(tests_dir)})
+
+        elif agent_name == "orchestrator" and action in {"finalize", "complete"}:
+            # Nothing to do other than marking completion.
+            pass
+
+        else:
+            # Unknown mapping: mark as skipped rather than hard-failing (best-effort).
+            # This keeps the executor resilient as presets evolve.
+            self.skip_step(step.id)
+            return
+
+        # Default: mark step complete and advance to its `next`
+        self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)
 
     def get_current_step(self) -> WorkflowStep | None:
         """Get the current workflow step."""

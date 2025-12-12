@@ -308,7 +308,9 @@ class SecurityAuditor:
                         f"Cache directory has open permissions: {oct(mode)}"
                     )
             except Exception:
-                logger.debug("Failed to stat cache directory permissions", exc_info=True)
+                logger.debug(
+                    "Failed to stat cache directory permissions", exc_info=True
+                )
 
         # Check for sensitive data in cache
         # (This is a simplified check - in production, scan for patterns)

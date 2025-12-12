@@ -1029,35 +1029,66 @@ Examples:
         dest="preset", help="Workflow presets"
     )
 
+    # Common workflow options (apply to all presets)
+    common_workflow_args = argparse.ArgumentParser(add_help=False)
+    common_workflow_args.add_argument(
+        "--file",
+        help="Optional target file for workflows (defaults to example_bug.py for hotfix if present)",
+    )
+
     # Short aliases
     workflow_subparsers.add_parser(
-        "full", help="Full SDLC Pipeline (enterprise, complete lifecycle)"
+        "full",
+        help="Full SDLC Pipeline (enterprise, complete lifecycle)",
+        parents=[common_workflow_args],
     )
     workflow_subparsers.add_parser(
-        "rapid", help="Rapid Development (feature, sprint work)"
+        "rapid",
+        help="Rapid Development (feature, sprint work)",
+        parents=[common_workflow_args],
     )
     workflow_subparsers.add_parser(
-        "fix", help="Maintenance & Bug Fixing (refactor, technical debt)"
+        "fix",
+        help="Maintenance & Bug Fixing (refactor, technical debt)",
+        parents=[common_workflow_args],
     )
     workflow_subparsers.add_parser(
-        "quality", help="Quality Improvement (code review cycle)"
+        "quality",
+        help="Quality Improvement (code review cycle)",
+        parents=[common_workflow_args],
     )
-    workflow_subparsers.add_parser("hotfix", help="Quick Fix (urgent, production bugs)")
+    workflow_subparsers.add_parser(
+        "hotfix",
+        help="Quick Fix (urgent, production bugs)",
+        parents=[common_workflow_args],
+    )
 
     # Voice-friendly aliases
     workflow_subparsers.add_parser(
-        "enterprise", help="Full SDLC Pipeline (alias for 'full')"
+        "enterprise",
+        help="Full SDLC Pipeline (alias for 'full')",
+        parents=[common_workflow_args],
     )
     workflow_subparsers.add_parser(
-        "feature", help="Rapid Development (alias for 'rapid')"
+        "feature",
+        help="Rapid Development (alias for 'rapid')",
+        parents=[common_workflow_args],
     )
     workflow_subparsers.add_parser(
-        "refactor", help="Maintenance & Bug Fixing (alias for 'fix')"
+        "refactor",
+        help="Maintenance & Bug Fixing (alias for 'fix')",
+        parents=[common_workflow_args],
     )
     workflow_subparsers.add_parser(
-        "improve", help="Quality Improvement (alias for 'quality')"
+        "improve",
+        help="Quality Improvement (alias for 'quality')",
+        parents=[common_workflow_args],
     )
-    workflow_subparsers.add_parser("urgent", help="Quick Fix (alias for 'hotfix')")
+    workflow_subparsers.add_parser(
+        "urgent",
+        help="Quick Fix (alias for 'hotfix')",
+        parents=[common_workflow_args],
+    )
 
     # List command
     workflow_subparsers.add_parser("list", help="List all available workflow presets")
@@ -2064,9 +2095,10 @@ Examples:
             print(f"Steps: {len(workflow.steps)}")
             print()
 
-            # Execute workflow
+            # Execute workflow (start + run steps until completion)
             executor = WorkflowExecutor(auto_detect=False)
-            result = executor.start(workflow=workflow)
+            target_file = getattr(args, "file", None)
+            result = asyncio.run(executor.execute(workflow=workflow, target_file=target_file))
 
             if result.status == "completed":
                 print(f"\n{'='*60}")
@@ -2111,7 +2143,12 @@ Examples:
 
         if results["cursor_rules"]:
             print("  Cursor Rules: Created")
-            print("    - .cursor/rules/workflow-presets.mdc")
+            # Find cursor rule files in files_created
+            cursor_rules = [
+                f for f in results.get("files_created", []) if ".cursor/rules" in f
+            ]
+            for rule_file in cursor_rules:
+                print(f"    - {rule_file}")
         else:
             print("  Cursor Rules: Skipped or already exists")
 
@@ -2290,7 +2327,7 @@ if __name__ == "__main__":
             await startup_routines(refresh_docs=True, background_refresh=True)
         except Exception:
             # Don't fail if startup routines fail
-            pass
+            return
 
     # Start startup routines in background
     asyncio.run(startup())

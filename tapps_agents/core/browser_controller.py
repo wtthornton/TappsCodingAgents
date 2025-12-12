@@ -132,7 +132,9 @@ class BrowserController:
 
         try:
             self.playwright = sync_playwright().start()
-            assert self.playwright is not None
+            if self.playwright is None:
+                logger.error("Failed to initialize Playwright")
+                return False
 
             browser_map = {
                 BrowserType.CHROMIUM: self.playwright.chromium,

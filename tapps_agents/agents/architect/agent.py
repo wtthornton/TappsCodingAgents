@@ -13,7 +13,6 @@ from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
 from ...experts.agent_integration import ExpertSupportMixin
 
-
 logger = logging.getLogger(__name__)
 
 

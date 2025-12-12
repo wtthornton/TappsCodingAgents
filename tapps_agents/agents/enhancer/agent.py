@@ -3,9 +3,9 @@ Enhancer Agent - Prompt enhancement utility that runs prompts through all TappsC
 """
 
 import asyncio
-import logging
 import hashlib
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -177,7 +177,8 @@ class EnhancerAgent(BaseAgent):
         # Create session
         session_id = self._create_session(prompt, enhancement_config)
         session = self.current_session
-        assert session is not None
+        if session is None:
+            return {"error": "Failed to initialize enhancement session"}
 
         # Calculate total stages for progress tracking
         total_stages = sum(
@@ -382,7 +383,8 @@ class EnhancerAgent(BaseAgent):
             {"stages": {"analysis": True, "requirements": True, "architecture": True}},
         )
         session = self.current_session
-        assert session is not None
+        if session is None:
+            return {"error": "Failed to initialize enhancement session"}
 
         total_stages = 4  # analysis, requirements, architecture, synthesis
         current_stage = 0
@@ -511,9 +513,8 @@ class EnhancerAgent(BaseAgent):
         else:
             session_id = self._create_session(prompt, {})
             session = self.current_session
-            assert session is not None
-
-        assert session_id is not None
+            if session is None:
+                return {"error": "Failed to initialize enhancement session"}
 
         # Run stage
         stage_handlers: dict[str, Any] = {

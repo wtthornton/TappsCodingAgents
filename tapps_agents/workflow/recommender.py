@@ -2,12 +2,15 @@
 Workflow Recommender - Recommend appropriate workflows based on project characteristics.
 """
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 
 from .detector import ProjectCharacteristics, ProjectDetector, WorkflowTrack
 from .models import Workflow
 from .parser import WorkflowParser
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -204,5 +207,8 @@ class WorkflowRecommender:
                 )
             except Exception:
                 # Skip invalid workflows
-                continue
+                logger.debug(
+                    "Skipping invalid workflow file %s", workflow_file, exc_info=True
+                )
+                continue  # nosec B112 - best-effort listing
         return workflows

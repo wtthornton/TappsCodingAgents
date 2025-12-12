@@ -4,7 +4,9 @@ Tester Agent - Generates and runs tests
 
 import json
 import re
-import subprocess
+import shutil
+import subprocess  # nosec B404
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -347,7 +349,11 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             source_paths: Source paths for coverage calculation
             coverage: Include coverage report
         """
-        cmd = ["pytest", "-v"]
+        # Prefer pytest on PATH, but fall back to module execution (python -m pytest)
+        if shutil.which("pytest"):
+            cmd: list[str] = ["pytest", "-v"]
+        else:
+            cmd = [sys.executable, "-m", "pytest", "-v"]
 
         if coverage and source_paths:
             # Add coverage options
@@ -375,7 +381,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             cmd.append(str(test_path))
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603
                 cmd, capture_output=True, text=True, timeout=300  # 5 minute timeout
             )
 

@@ -4,6 +4,7 @@ KB-First Lookup - Context7 documentation lookup with KB-first caching.
 
 from __future__ import annotations
 
+import logging
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
@@ -14,6 +15,9 @@ from .kb_cache import CacheEntry, KBCache
 
 if TYPE_CHECKING:
     from ..mcp.gateway import MCPGateway
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -180,7 +184,9 @@ class KBLookup:
                         )
             except Exception:
                 # Continue without context7_id if resolution fails
-                pass
+                logger.debug(
+                    "Failed to resolve Context7 library id via MCP", exc_info=True
+                )
 
         # Fallback to provided function
         if not context7_id and self.resolve_library_func:
@@ -202,7 +208,15 @@ class KBLookup:
                     )
             except Exception:
                 # Continue without context7_id if resolution fails
-                pass
+                return LookupResult(
+                    success=False,
+                    source="api",
+                    library=library,
+                    topic=topic,
+                    error="Failed to resolve library id",
+                    response_time_ms=(datetime.utcnow() - start_time).total_seconds()
+                    * 1000,
+                )
 
         # Step 4: Fetch from Context7 API
         if context7_id:
@@ -225,7 +239,7 @@ class KBLookup:
                         )
                 except Exception:
                     # Fall through to provided function
-                    pass
+                    content = None
 
             # Fallback to provided function
             if not content and self.get_docs_func:

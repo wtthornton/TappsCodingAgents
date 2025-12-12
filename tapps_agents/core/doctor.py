@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import platform
 import shutil
-import subprocess
+import subprocess  # nosec B404
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -40,7 +40,7 @@ def _parse_version_tuple(version: str) -> tuple[int, ...] | None:
 
 def _run_version_cmd(argv: list[str]) -> str | None:
     try:
-        proc = subprocess.run(
+        proc = subprocess.run(  # nosec B603
             argv,
             capture_output=True,
             text=True,

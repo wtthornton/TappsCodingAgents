@@ -9,12 +9,15 @@ Supports:
 """
 
 import json
+import logging
 import os
 from collections.abc import Callable
 
 import httpx
 
 from .config import MALConfig
+
+logger = logging.getLogger(__name__)
 
 
 class MAL:
@@ -105,7 +108,12 @@ class MAL:
                         elif fallback_provider == "openai":
                             return await self._openai_generate(prompt, model, **kwargs)
                     except Exception:
-                        continue  # Try next fallback
+                        logger.debug(
+                            "Fallback provider %s failed; trying next",
+                            fallback_provider,
+                            exc_info=True,
+                        )
+                        continue  # nosec B112 - intentional fallback loop
 
             # All providers failed
             raise ConnectionError(

@@ -14,7 +14,6 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -235,7 +234,10 @@ Format your response as structured text."""
                 )
             except Exception:
                 # Skip invalid story files
-                continue
+                logger.debug(
+                    "Skipping invalid story file %s", story_file, exc_info=True
+                )
+                continue  # nosec B112 - best-effort story discovery
 
         return {
             "type": "list_stories",

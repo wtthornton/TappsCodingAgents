@@ -47,6 +47,11 @@ reports/
 .tapps-agents/kb/
 .tapps-agents/cache/
 .tapps-agents/progress/
+.tapps-agents/workflow-state/
+
+# Local dev artifacts
+debug-report.md
+fixed-code/
 
 # Test artifacts
 MagicMock/

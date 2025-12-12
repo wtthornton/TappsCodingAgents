@@ -104,7 +104,7 @@ class RefreshQueue:
                     json.dump(data, f, indent=2)
         except Exception:
             # Log error but don't fail
-            pass
+            return
 
     def add_task(
         self,

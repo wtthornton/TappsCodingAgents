@@ -15,7 +15,6 @@ import yaml
 from .cache_structure import CacheStructure
 from .metadata import MetadataManager
 
-
 logger = logging.getLogger(__name__)
 
 
