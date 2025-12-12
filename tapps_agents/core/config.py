@@ -391,6 +391,54 @@ class QualityToolsConfig(BaseModel):
     )
 
 
+class ToolingTargetsConfig(BaseModel):
+    """Pin runtime/tool targets so agents and CI behave deterministically."""
+
+    python: str = Field(
+        default="3.14.2",
+        description="Target Python version for this project (pin exact patch where possible)",
+    )
+    python_requires: str = Field(
+        default=">=3.13",
+        description="PEP 440 requires-python constraint enforced by packaging/CI",
+    )
+    os_targets: list[str] = Field(
+        default_factory=lambda: ["windows", "linux"],
+        description="Primary OS targets (used for setup/doctor guidance)",
+    )
+    node: str | None = Field(
+        default=None,
+        description="Optional Node.js version (only needed if TypeScript/jscpd tooling is enabled)",
+    )
+
+
+class ToolingPolicyConfig(BaseModel):
+    """Policy for how missing/optional tools are handled."""
+
+    external_tools_mode: str = Field(
+        default="soft",
+        description="How to handle missing external tools: soft=warn/skip, hard=fail",
+    )
+    mypy_staged: bool = Field(
+        default=True, description="Stage mypy enforcement module-by-module"
+    )
+    mypy_stage_paths: list[str] = Field(
+        default_factory=lambda: [
+            "tapps_agents/core",
+            "tapps_agents/workflow",
+            "tapps_agents/context7",
+        ],
+        description="Paths enforced by mypy during the staged rollout",
+    )
+
+
+class ToolingConfig(BaseModel):
+    """Canonical tooling/targets configuration (single source of truth)."""
+
+    targets: ToolingTargetsConfig = Field(default_factory=ToolingTargetsConfig)
+    policy: ToolingPolicyConfig = Field(default_factory=ToolingPolicyConfig)
+
+
 class ArchitectAgentConfig(BaseModel):
     """Configuration specific to Architect Agent"""
 
@@ -607,6 +655,10 @@ class ProjectConfig(BaseModel):
     version: str | None = Field(default=None, description="Project version")
 
     # Core configuration
+    tooling: ToolingConfig = Field(
+        default_factory=ToolingConfig,
+        description="Canonical runtime/tool targets and policy (used by doctor/CI/agents)",
+    )
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     scoring: ScoringConfig = Field(default_factory=ScoringConfig)
     mal: MALConfig = Field(default_factory=MALConfig)

@@ -20,7 +20,7 @@ TappsCodingAgents provides **Claude Code Skills** that integrate directly into C
 ## Prerequisites
 
 1. **Cursor AI IDE** (latest version with Skills support)
-2. **Python 3.10+** installed
+2. **Python 3.13+** installed (recommended: latest stable Python)
 3. **TappsCodingAgents** installed (see [QUICK_START.md](../QUICK_START.md))
 4. **Context7 API Key** (optional, for library documentation)
 

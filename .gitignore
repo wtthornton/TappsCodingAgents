@@ -41,6 +41,7 @@ coverage.xml
 reports/
 
 # TappsCodingAgents
+.tapps-agents/config.yaml
 .tapps-agents/sessions/
 .tapps-agents/sessions/*.json
 .tapps-agents/kb/

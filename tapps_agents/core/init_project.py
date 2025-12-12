@@ -9,6 +9,35 @@ import shutil
 from pathlib import Path
 from typing import Any
 
+import yaml
+
+from .config import get_default_config
+
+
+def init_project_config(project_root: Path | None = None) -> tuple[bool, str | None]:
+    """
+    Initialize `.tapps-agents/config.yaml` with a canonical default config.
+
+    Returns:
+        (created, path)
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    config_dir = project_root / ".tapps-agents"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    config_file = config_dir / "config.yaml"
+    if config_file.exists():
+        return False, str(config_file)
+
+    default_config = get_default_config()
+    config_file.write_text(
+        yaml.safe_dump(default_config, sort_keys=False),
+        encoding="utf-8",
+    )
+    return True, str(config_file)
+
 
 def init_cursor_rules(
     project_root: Path | None = None, source_dir: Path | None = None
@@ -81,6 +110,7 @@ def init_project(
     project_root: Path | None = None,
     include_cursor_rules: bool = True,
     include_workflow_presets: bool = True,
+    include_config: bool = True,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -100,8 +130,16 @@ def init_project(
         "project_root": str(project_root),
         "cursor_rules": False,
         "workflow_presets": False,
+        "config": False,
         "files_created": [],
     }
+
+    # Initialize project config
+    if include_config:
+        success, config_path = init_project_config(project_root)
+        results["config"] = success
+        if config_path:
+            results["files_created"].append(config_path)
 
     # Initialize Cursor Rules
     if include_cursor_rules:

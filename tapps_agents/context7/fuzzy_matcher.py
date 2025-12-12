@@ -292,3 +292,70 @@ class FuzzyMatcher:
             return (best_match, best_score)
 
         return None
+
+    # ---------------------------------------------------------------------
+    # Compatibility helpers (contract stability)
+    #
+    # Older callers (and some CLI flows) expect a single entry-point method
+    # named `find_best_match` that can accept a cache index object. Keep this
+    # as a thin wrapper around the more explicit `find_matching_*` methods.
+    # ---------------------------------------------------------------------
+
+    def find_best_match(
+        self,
+        query: str,
+        topic: str | None,
+        cache_index: Any,
+        max_results: int = 5,
+    ) -> list[FuzzyMatch]:
+        """
+        Find best matches for a query across a cache index.
+
+        Args:
+            query: Query string (library/topic search term)
+            topic: Optional topic; when provided we prefer matching entries
+            cache_index: Cache index object with `.libraries` mapping
+            max_results: Maximum results to return
+
+        Returns:
+            List of FuzzyMatch results sorted by score desc.
+        """
+        libraries_map = getattr(cache_index, "libraries", {}) or {}
+        library_names = list(libraries_map.keys())
+
+        matches: list[FuzzyMatch] = []
+
+        # If a topic is provided, treat this as a (library/topic) entry match.
+        if topic:
+            available_entries: list[tuple[str, str]] = []
+            for lib_name, lib_data in libraries_map.items():
+                topics = (lib_data or {}).get("topics", {}) or {}
+                for topic_name in topics.keys():
+                    available_entries.append((lib_name, topic_name))
+            return self.find_matching_entry(
+                library_query=query,
+                topic_query=topic,
+                available_entries=available_entries,
+                max_results=max_results,
+            )
+
+        # Otherwise, search both library names and topic names.
+        matches.extend(self.find_matching_library(query, library_names, max_results))
+
+        for lib_name, lib_data in libraries_map.items():
+            topics = (lib_data or {}).get("topics", {}) or {}
+            topic_names = list(topics.keys())
+            matches.extend(
+                self.find_matching_topic(query, lib_name, topic_names, max_results)
+            )
+
+        # Deduplicate by (library, topic, match_type) keeping best score.
+        best: dict[tuple[str, str, str], FuzzyMatch] = {}
+        for m in matches:
+            key = (m.library, m.topic, m.match_type)
+            existing = best.get(key)
+            if existing is None or m.score > existing.score:
+                best[key] = m
+
+        out = sorted(best.values(), key=lambda x: x.score, reverse=True)
+        return out[:max_results]

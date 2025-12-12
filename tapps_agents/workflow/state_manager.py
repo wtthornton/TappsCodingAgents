@@ -403,6 +403,17 @@ class AdvancedStateManager:
 
     def _state_to_dict(self, state: WorkflowState) -> dict[str, Any]:
         """Convert WorkflowState to dictionary."""
+        def _artifact_to_dict(name: str, artifact: Any) -> dict[str, Any]:
+            created_at = getattr(artifact, "created_at", None)
+            return {
+                "name": getattr(artifact, "name", name) or name,
+                "path": str(getattr(artifact, "path", "")),
+                "status": getattr(artifact, "status", "pending"),
+                "created_by": getattr(artifact, "created_by", None),
+                "created_at": created_at.isoformat() if created_at else None,
+                "metadata": getattr(artifact, "metadata", {}) or {},
+            }
+
         return {
             "workflow_id": state.workflow_id,
             "started_at": state.started_at.isoformat(),
@@ -410,12 +421,7 @@ class AdvancedStateManager:
             "completed_steps": state.completed_steps,
             "skipped_steps": state.skipped_steps,
             "artifacts": {
-                k: {
-                    "path": str(v.path),
-                    "status": v.status,
-                    "step_id": v.step_id,
-                }
-                for k, v in (state.artifacts or {}).items()
+                k: _artifact_to_dict(k, v) for k, v in (state.artifacts or {}).items()
             },
             "variables": state.variables or {},
             "status": state.status,
@@ -428,10 +434,31 @@ class AdvancedStateManager:
 
         artifacts = {}
         for k, v in data.get("artifacts", {}).items():
+            if not isinstance(v, dict):
+                continue
+
+            # New format (preferred)
+            if "name" in v or "created_by" in v or "metadata" in v:
+                created_at = v.get("created_at")
+                artifacts[k] = Artifact(
+                    name=v.get("name", k) or k,
+                    path=str(v.get("path", "")),
+                    status=v.get("status", "pending"),
+                    created_by=v.get("created_by"),
+                    created_at=datetime.fromisoformat(created_at) if created_at else None,
+                    metadata=v.get("metadata", {}) or {},
+                )
+                continue
+
+            # Legacy format (v1): {"path": "...", "status": "...", "step_id": "..."}
+            step_id = v.get("step_id")
             artifacts[k] = Artifact(
-                path=Path(v["path"]),
-                status=v["status"],
-                step_id=v.get("step_id"),
+                name=k,
+                path=str(v.get("path", "")),
+                status=v.get("status", "pending"),
+                created_by=step_id if isinstance(step_id, str) else None,
+                created_at=None,
+                metadata={},
             )
 
         return WorkflowState(

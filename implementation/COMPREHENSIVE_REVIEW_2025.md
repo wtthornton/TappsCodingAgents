@@ -148,7 +148,7 @@ This document provides a comprehensive review of the TappsCodingAgents codebase,
 ### 3.1 ✅ Following 2025 Practices
 
 1. **Python Version**
-   - ✅ Requires Python 3.10+ (supports 3.10-3.13)
+   - ✅ Requires Python 3.13+ (recommended: latest stable Python)
    - ✅ Modern async patterns
    - ✅ Type hints
 
@@ -356,7 +356,7 @@ This document provides a comprehensive review of the TappsCodingAgents codebase,
 - httpx 0.28.1+ (async HTTP)
 
 ✅ **Appropriate:**
-- Python 3.10+ requirement (supports 3.10-3.13)
+- Python 3.13+ requirement (recommended: latest stable Python)
 - All dependencies pinned to stable versions
 
 ### Recommendations

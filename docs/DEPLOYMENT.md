@@ -9,7 +9,7 @@ TappsCodingAgents is a Python package that you typically run as a CLI tool again
 
 ## Prerequisites
 
-- Python 3.10+
+- Python 3.13+ (recommended: latest stable Python)
 - pip
 - (Optional) Ollama for local LLM execution
 

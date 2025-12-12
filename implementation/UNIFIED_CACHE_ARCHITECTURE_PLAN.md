@@ -1025,7 +1025,7 @@ Each cache type uses separate namespace within unified storage:
 ### External
 - Context7 API (existing integration)
 - File system access
-- Python 3.10+
+- Python 3.13+ (recommended: latest stable Python)
 
 ### Internal
 - Existing tiered context cache implementation

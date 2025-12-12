@@ -7,7 +7,7 @@
 
 ### `pip install` fails
 
-- Ensure Python 3.10+:
+- Ensure Python 3.13+ (recommended: latest stable Python):
 
 ```bash
 python --version

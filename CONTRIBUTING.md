@@ -86,7 +86,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ### Prerequisites
 
-- Python 3.10+
+- Python 3.13+ (recommended: latest stable Python)
 - Git
 - (Optional) Ollama for local LLM testing
 

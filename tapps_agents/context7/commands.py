@@ -189,7 +189,7 @@ class Context7Commands:
             return {"error": "MCP Gateway not available"}
 
         try:
-            result = await self.kb_lookup.mcp_gateway.call_tool(
+            result = self.kb_lookup.mcp_gateway.call_tool(
                 "mcp_Context7_resolve-library-id", libraryName=library
             )
 
@@ -317,6 +317,89 @@ class Context7Commands:
             }
         except Exception as e:
             return {"success": False, "error": str(e)}
+
+    async def cmd_refresh_process(self, max_items: int = 10) -> dict[str, Any]:
+        """
+        Process queued refresh tasks (best-effort).
+
+        This is used by startup routines to refresh stale entries incrementally.
+        If the MCP gateway is not available, we soft-fail with a clear error.
+        """
+        if not self.enabled:
+            return {"success": False, "error": "Context7 is not enabled", "items_processed": 0}
+
+        if not self.kb_lookup.mcp_gateway:
+            return {
+                "success": False,
+                "error": "MCP Gateway not available",
+                "items_processed": 0,
+            }
+
+        processed = 0
+        errors: list[str] = []
+
+        while processed < max_items:
+            task = self.refresh_queue.get_next_task()
+            if task is None:
+                break
+
+            topic = task.topic or "overview"
+            try:
+                # Resolve library -> Context7 ID
+                resolve = self.kb_lookup.mcp_gateway.call_tool(
+                    "mcp_Context7_resolve-library-id", libraryName=task.library
+                )
+                matches = resolve.get("result", {}).get("matches", []) if resolve.get("success") else []
+                context7_id = None
+                if matches:
+                    first = matches[0]
+                    context7_id = first.get("id") if isinstance(first, dict) else str(first)
+
+                if not context7_id:
+                    raise RuntimeError("Could not resolve Context7 library ID")
+
+                # Fetch docs
+                docs = self.kb_lookup.mcp_gateway.call_tool(
+                    "mcp_Context7_get-library-docs",
+                    context7CompatibleLibraryID=context7_id,
+                    topic=topic,
+                )
+                if not docs.get("success"):
+                    raise RuntimeError(docs.get("error") or "Failed to fetch docs")
+
+                result_data = docs.get("result", {})
+                content = (
+                    result_data.get("content")
+                    if isinstance(result_data, dict)
+                    else (result_data if isinstance(result_data, str) else None)
+                )
+                if not content:
+                    raise RuntimeError("No content returned from Context7 docs tool")
+
+                # Store (refresh) content
+                self.kb_cache.store(
+                    library=task.library,
+                    topic=topic,
+                    content=content,
+                    context7_id=context7_id,
+                )
+
+                self.refresh_queue.mark_task_completed(task.library, task.topic, error=None)
+                processed += 1
+
+            except Exception as e:
+                err = f"{task.library}/{topic}: {e}"
+                errors.append(err)
+                self.refresh_queue.mark_task_completed(task.library, task.topic, error=str(e))
+                # Avoid infinite loop on a permanently failing head task.
+                break
+
+        return {
+            "success": processed > 0 and not errors,
+            "items_processed": processed,
+            "errors": errors,
+            "queue_remaining": self.refresh_queue.size(),
+        }
 
     async def cmd_refresh(
         self, library: str | None = None, topic: str | None = None

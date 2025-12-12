@@ -192,6 +192,22 @@ class StalenessPolicyManager:
         policy = self.get_policy(library, library_type)
         return policy.is_stale(last_updated, reference_date)
 
+    # Compatibility alias: older code calls `check_staleness(...)`.
+    def check_staleness(
+        self,
+        library: str,
+        last_updated: str,
+        library_type: str | None = None,
+        reference_date: datetime | None = None,
+    ) -> bool:
+        """Alias for `is_entry_stale` (kept for contract stability)."""
+        return self.is_entry_stale(
+            library=library,
+            last_updated=last_updated,
+            library_type=library_type,
+            reference_date=reference_date,
+        )
+
     def get_refresh_recommendation(
         self,
         library: str,

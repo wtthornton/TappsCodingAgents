@@ -20,6 +20,7 @@ from .agents.orchestrator.agent import OrchestratorAgent
 from .agents.planner.agent import PlannerAgent
 from .agents.reviewer.agent import ReviewerAgent
 from .agents.tester.agent import TesterAgent
+from .core.doctor import collect_doctor_report
 
 
 async def review_command(
@@ -1063,6 +1064,21 @@ Examples:
     init_parser.add_argument(
         "--no-presets", action="store_true", help="Skip workflow presets setup"
     )
+    init_parser.add_argument(
+        "--no-config", action="store_true", help="Skip .tapps-agents/config.yaml setup"
+    )
+
+    # Environment diagnostics
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Validate local environment and tools (soft-degrades with warnings by default)",
+    )
+    doctor_parser.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format"
+    )
+    doctor_parser.add_argument(
+        "--config-path", help="Optional explicit path to .tapps-agents/config.yaml"
+    )
 
     # Quick shortcuts for common commands
     score_parser = subparsers.add_parser(
@@ -2077,6 +2093,7 @@ Examples:
         results = init_project(
             include_cursor_rules=not getattr(args, "no_rules", False),
             include_workflow_presets=not getattr(args, "no_presets", False),
+            include_config=not getattr(args, "no_config", False),
         )
 
         print("Initialization Results:")
@@ -2095,11 +2112,43 @@ Examples:
         else:
             print("  Workflow Presets: Skipped or already exists")
 
+        if results.get("config"):
+            print("  Project Config: Created")
+            print("    - .tapps-agents/config.yaml")
+        else:
+            print("  Project Config: Skipped or already exists")
+
         print("\nNext Steps:")
         print("  1. Set up experts: python -m tapps_agents.cli setup-experts init")
         print("  2. List workflows: python -m tapps_agents.cli workflow list")
         print("  3. Run a workflow: python -m tapps_agents.cli workflow rapid")
+        print("  4. Check environment: python -m tapps_agents.cli doctor")
         print()
+    elif args.agent == "doctor":
+        config_path = getattr(args, "config_path", None)
+        report = collect_doctor_report(
+            config_path=Path(config_path) if config_path else None
+        )
+
+        if getattr(args, "format", "text") == "json":
+            print(json.dumps(report, indent=2))
+        else:
+            policy = report.get("policy", {})
+            targets = report.get("targets", {})
+            print("\n" + "=" * 60)
+            print("TappsCodingAgents Doctor Report")
+            print("=" * 60)
+            print(f"\nTargets: python={targets.get('python')} requires={targets.get('python_requires')}")
+            print(f"Policy: external_tools_mode={policy.get('external_tools_mode')} mypy_staged={policy.get('mypy_staged')}")
+            print("\nFindings:")
+            for f in report.get("findings", []):
+                sev = (f.get("severity") or "warn").upper()
+                code = f.get("code") or ""
+                msg = f.get("message") or ""
+                print(f"  [{sev}] {code}: {msg}")
+                remediation = f.get("remediation")
+                if remediation:
+                    print(f"         remediation: {remediation}")
     elif args.agent == "setup-experts":
         # Expert setup wizard
         from .experts.setup_wizard import ExpertSetupWizard

@@ -87,7 +87,7 @@ tapps_agents/
 
 ### Issues Found
 
-🔴 **Type Hint Issues (Python 3.10+)**
+🔴 **Type Hint Issues (Python 3.13+)**
 
 **Issue 1:** `tuple[str, Dict[str, str]]` syntax (Python 3.9+)
 ```python
