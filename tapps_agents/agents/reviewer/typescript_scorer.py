@@ -292,7 +292,10 @@ class TypeScriptScorer:
 
         try:
             # Build tsc command
-            command = ["npx", "--yes", "tsc", "--noEmit", "--pretty", "false"]
+            npx_path = shutil.which("npx")
+            if not npx_path:
+                return 5.0  # Neutral if npx not available
+            command = [npx_path, "--yes", "tsc", "--noEmit", "--pretty", "false"]
 
             # Add tsconfig if provided
             if self.tsconfig_path:
@@ -301,7 +304,7 @@ class TypeScriptScorer:
             # Add file to check
             command.append(str(file_path))
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 command,
                 capture_output=True,
                 text=True,
@@ -429,12 +432,15 @@ class TypeScriptScorer:
             return {"available": False, "error": "ESLint not available"}
 
         try:
-            command = ["npx", "--yes", "eslint", str(file_path), "--format", "json"]
+            npx_path = shutil.which("npx")
+            if not npx_path:
+                return {"available": False, "error": "npx not available"}
+            command = [npx_path, "--yes", "eslint", str(file_path), "--format", "json"]
 
             if self.eslint_config:
                 command.extend(["--config", self.eslint_config])
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 command,
                 capture_output=True,
                 text=True,
@@ -472,14 +478,17 @@ class TypeScriptScorer:
             return {"available": False, "error": "File is not TypeScript"}
 
         try:
-            command = ["npx", "--yes", "tsc", "--noEmit", "--pretty", "false"]
+            npx_path = shutil.which("npx")
+            if not npx_path:
+                return {"available": False, "error": "npx not available"}
+            command = [npx_path, "--yes", "tsc", "--noEmit", "--pretty", "false"]
 
             if self.tsconfig_path:
                 command.extend(["--project", self.tsconfig_path])
 
             command.append(str(file_path))
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 command,
                 capture_output=True,
                 text=True,
