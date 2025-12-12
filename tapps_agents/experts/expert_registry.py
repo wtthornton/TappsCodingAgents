@@ -8,8 +8,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from ..core.project_profile import ProjectProfile, load_project_profile
 from ..core.config import get_expert_config
+from ..core.project_profile import ProjectProfile, load_project_profile
 from .base_expert import BaseExpert
 from .builtin_registry import BuiltinExpertRegistry
 from .confidence_calculator import ConfidenceCalculator
@@ -88,7 +88,7 @@ class ExpertRegistry:
         return self._cached_profile
 
     @classmethod
-    def from_domains_file(cls, domains_file: Path) -> "ExpertRegistry":
+    def from_domains_file(cls, domains_file: Path) -> ExpertRegistry:
         """
         Create registry from domains.md file.
 
@@ -104,7 +104,7 @@ class ExpertRegistry:
     @classmethod
     def from_config_file(
         cls, config_file: Path, domain_config: DomainConfig | None = None
-    ) -> "ExpertRegistry":
+    ) -> ExpertRegistry:
         """
         Create registry from experts.yaml configuration file.
 
@@ -354,6 +354,10 @@ class ExpertRegistry:
             # Fallback to first available expert
             if not primary_expert_id and responses:
                 primary_expert_id = responses[0].get("expert_id")
+
+        # Ensure a stable non-None primary expert id for downstream logic and dataclass typing.
+        if not primary_expert_id:
+            primary_expert_id = "unknown"
 
         # Aggregate weighted responses
         weighted_answer = self._aggregate_responses(

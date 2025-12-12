@@ -114,7 +114,7 @@ def collect_doctor_report(
     }
 
     typescript_enabled = bool(
-        (config.quality_tools and config.quality_tools.typescript_enabled)
+        config.quality_tools and config.quality_tools.typescript_enabled
     )
 
     for tool, argv in tool_cmds.items():

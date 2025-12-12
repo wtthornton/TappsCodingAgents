@@ -47,7 +47,7 @@ class RelationshipEdge:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "RelationshipEdge":
+    def from_dict(cls, data: dict) -> RelationshipEdge:
         """Create from dictionary."""
         data = data.copy()
         data["relationship_type"] = RelationshipType(data["relationship_type"])
@@ -305,7 +305,7 @@ class KnowledgeGraph:
 
         return None
 
-    def get_subgraph(self, task_ids: set[str]) -> "KnowledgeGraph":
+    def get_subgraph(self, task_ids: set[str]) -> KnowledgeGraph:
         """
         Get a subgraph containing only specified tasks.
 
@@ -351,7 +351,7 @@ class KnowledgeGraph:
     @classmethod
     def from_dict(
         cls, data: dict, memory_system: TaskMemorySystem | None = None
-    ) -> "KnowledgeGraph":
+    ) -> KnowledgeGraph:
         """
         Create graph from dictionary.
 

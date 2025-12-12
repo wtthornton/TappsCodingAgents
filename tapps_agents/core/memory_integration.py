@@ -242,6 +242,10 @@ class MemoryUpdater:
 class MemoryAwareMixin:
     """Mixin to add memory awareness to agents."""
 
+    # Implementers are expected to provide a stable agent identifier
+    # (e.g., via BaseAgent).
+    agent_id: str
+
     def __init__(self, *args, **kwargs):
         """Initialize memory-aware mixin."""
         super().__init__(*args, **kwargs)

@@ -8,7 +8,7 @@ import json
 import logging
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -67,7 +67,7 @@ class AgentSession:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "AgentSession":
+    def from_dict(cls, data: dict[str, Any]) -> AgentSession:
         """Create from dictionary."""
         data = data.copy()
         data["state"] = SessionState(data["state"])
@@ -87,12 +87,12 @@ class AgentSession:
 
     def update_duration(self):
         """Update duration based on current time."""
-        delta = datetime.now(timezone.utc) - self.start_time
+        delta = datetime.now(UTC) - self.start_time
         self.duration_hours = delta.total_seconds() / 3600.0
 
     def update_activity(self):
         """Update last activity timestamp."""
-        self.last_activity = datetime.now(timezone.utc)
+        self.last_activity = datetime.now(UTC)
         self.update_duration()
 
 
@@ -228,7 +228,7 @@ class SessionMonitor:
         session.resource_usage = self.resource_monitor.get_current_metrics()
 
         # Check if session is stale (no activity for 1 hour)
-        time_since_activity = datetime.now(timezone.utc) - session.last_activity
+        time_since_activity = datetime.now(UTC) - session.last_activity
         if time_since_activity > timedelta(hours=1):
             return HealthStatus.CRITICAL
 
@@ -413,7 +413,7 @@ class SessionManager:
             Created AgentSession
         """
         session_id = str(uuid.uuid4())
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
 
         session = AgentSession(
             session_id=session_id,
@@ -597,7 +597,7 @@ class SessionManager:
         Args:
             max_age_hours: Maximum age in hours for sessions to keep
         """
-        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
+        cutoff_time = datetime.now(UTC) - timedelta(hours=max_age_hours)
 
         for session in self.list_sessions():
             if session.state in (SessionState.COMPLETED, SessionState.FAILED):

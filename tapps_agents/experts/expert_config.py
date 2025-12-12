@@ -51,7 +51,7 @@ class ExpertsConfig:
     experts: list[ExpertConfigModel] = field(default_factory=list)
 
     @classmethod
-    def from_yaml(cls, yaml_file: Path) -> "ExpertsConfig":
+    def from_yaml(cls, yaml_file: Path) -> ExpertsConfig:
         """
         Load expert configurations from YAML file.
 

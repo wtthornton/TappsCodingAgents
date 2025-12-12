@@ -44,7 +44,7 @@ class UnifiedCacheConfig:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "UnifiedCacheConfig":
+    def from_dict(cls, data: dict[str, Any]) -> UnifiedCacheConfig:
         """Create from dictionary."""
         return cls(**data)
 

@@ -106,7 +106,7 @@ Focus on:
                 f"Refactoring request completed successfully (took ~{elapsed}s)",
                 "SUCCESS",
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if heartbeat_task:
                 heartbeat_task.cancel()
             log("LLM call timed out after 10 minutes", "ERROR")

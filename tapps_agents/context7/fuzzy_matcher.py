@@ -8,20 +8,27 @@ improving cache hit rates when exact matches aren't available.
 from dataclasses import dataclass
 from typing import Any
 
-try:
-    from rapidfuzz import fuzz, process
+fuzz: Any | None = None
+process: Any | None = None
 
+try:
+    from rapidfuzz import fuzz as _rf_fuzz
+    from rapidfuzz import process as _rf_process
+
+    fuzz = _rf_fuzz
+    process = _rf_process
     RAPIDFUZZ_AVAILABLE = True
 except ImportError:
     try:
-        from fuzzywuzzy import fuzz, process
+        from fuzzywuzzy import fuzz as _fw_fuzz
+        from fuzzywuzzy import process as _fw_process
 
+        fuzz = _fw_fuzz
+        process = _fw_process
         RAPIDFUZZ_AVAILABLE = False
     except ImportError:
         # Fallback to simple string similarity
         RAPIDFUZZ_AVAILABLE = False
-        fuzz = None
-        process = None
 
 
 @dataclass
@@ -108,12 +115,13 @@ class FuzzyMatcher:
         Returns:
             Similarity score between 0.0 and 1.0
         """
-        if self.use_rapidfuzz:
+        fuzz_impl = fuzz
+        if self.use_rapidfuzz and fuzz_impl is not None:
             # Use rapidfuzz (faster, better algorithms)
-            return fuzz.ratio(s1.lower(), s2.lower()) / 100.0
-        elif fuzz is not None:
+            return fuzz_impl.ratio(s1.lower(), s2.lower()) / 100.0
+        elif fuzz_impl is not None:
             # Use fuzzywuzzy
-            return fuzz.ratio(s1.lower(), s2.lower()) / 100.0
+            return fuzz_impl.ratio(s1.lower(), s2.lower()) / 100.0
         else:
             # Fallback to simple similarity
             return self._simple_similarity(s1, s2)

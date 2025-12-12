@@ -40,7 +40,7 @@ class StateMetadata:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "StateMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> StateMetadata:
         """Create from dictionary."""
         data = data.copy()
         data["saved_at"] = datetime.fromisoformat(data["saved_at"])
@@ -275,8 +275,16 @@ class AdvancedStateManager:
             if not is_valid:
                 logger.warning(f"State validation failed: {error}")
                 # Try to recover from history
+                recovered_workflow_id = (
+                    workflow_id
+                    or state_data.get("workflow_id")
+                    or state_data.get("id")
+                    or ""
+                )
+                if not isinstance(recovered_workflow_id, str) or not recovered_workflow_id:
+                    raise ValueError("Cannot recover: missing workflow_id in state data")
                 return self._recover_from_history(
-                    state_path, workflow_id or state_data.get("workflow_id")
+                    state_path, recovered_workflow_id
                 )
 
         # Check version and migrate if needed

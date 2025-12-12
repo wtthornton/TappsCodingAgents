@@ -68,7 +68,7 @@ class ProjectProfile:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict) -> "ProjectProfile":
+    def from_dict(cls, data: dict) -> ProjectProfile:
         """Create profile from dictionary."""
         # Convert compliance requirement dicts to objects
         compliance_reqs = [

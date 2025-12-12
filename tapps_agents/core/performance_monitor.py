@@ -48,7 +48,7 @@ class PerformanceMonitor:
             },
         }
 
-        self.start_time = None
+        self.start_time: float | None = None
         self.agent_timings: list[dict[str, Any]] = []
 
     def start(self):
@@ -101,7 +101,8 @@ class PerformanceMonitor:
         end_time = time.time()
         self.metrics["end_time"] = datetime.utcnow().isoformat()
 
-        if self.start_time:
+        total_duration: float = 0.0
+        if self.start_time is not None:
             total_duration = end_time - self.start_time
             self.metrics["total_duration"] = total_duration
 

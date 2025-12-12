@@ -97,12 +97,13 @@ class AnalysisMCPServer:
             weights = config.scoring.weights
             scorer = CodeScorer(weights)
 
-            complexity_result = scorer._calculate_complexity(path)
+            code = path.read_text(encoding="utf-8")
+            complexity_score = scorer._calculate_complexity(code)
 
             return {
                 "file_path": str(path),
-                "complexity": complexity_result.get("score", 0),
-                "details": complexity_result,
+                "complexity": complexity_score,
+                "details": {"score": complexity_score},
             }
         except ImportError:
             # Fallback if CodeScorer not available
@@ -148,7 +149,8 @@ class AnalysisMCPServer:
             weights = config.scoring.weights
             scorer = CodeScorer(weights)
 
-            score_result = scorer.score_file(path)
+            code = path.read_text(encoding="utf-8")
+            score_result = scorer.score_file(path, code)
 
             return {
                 "file_path": str(path),

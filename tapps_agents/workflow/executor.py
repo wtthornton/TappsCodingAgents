@@ -40,6 +40,7 @@ class WorkflowExecutor:
         self.auto_detect = auto_detect
         self.advanced_state = advanced_state
         self.recommender: WorkflowRecommender | None = None
+        self.state_manager: AdvancedStateManager | None = None
 
         # Initialize advanced state manager if enabled
         if self.advanced_state:
@@ -151,6 +152,8 @@ class WorkflowExecutor:
         current_step = self.get_current_step()
         if not current_step or not current_step.next:
             return None
+        if not self.workflow:
+            return None
 
         for step in self.workflow.steps:
             if step.id == current_step.next:
@@ -192,6 +195,8 @@ class WorkflowExecutor:
         """
         if not self.state:
             raise ValueError("Workflow not started")
+        if not self.workflow:
+            raise ValueError("No workflow loaded. Call load_workflow() first.")
 
         step_id = step_id or self.state.current_step
         if not step_id:
@@ -234,6 +239,8 @@ class WorkflowExecutor:
         """Skip a step."""
         if not self.state:
             raise ValueError("Workflow not started")
+        if not self.workflow:
+            raise ValueError("No workflow loaded. Call load_workflow() first.")
 
         if step_id not in self.state.skipped_steps:
             self.state.skipped_steps.append(step_id)

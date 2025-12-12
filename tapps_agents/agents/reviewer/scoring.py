@@ -9,6 +9,8 @@ import subprocess
 from pathlib import Path
 from typing import Any, Protocol
 
+from ...core.config import ScoringWeightsConfig
+
 # Import analysis libraries
 try:
     from radon.complexity import cc_visit
@@ -55,9 +57,6 @@ def _check_jscpd_available() -> bool:
 
 
 HAS_JSCPD = _check_jscpd_available()
-
-# Type hint for config
-from ...core.config import ScoringWeightsConfig
 
 # Import coverage tools
 try:

@@ -121,7 +121,7 @@ class Context7AgentHelper:
 
         try:
             # Use MCP tool to resolve library
-            result = await self.mcp_gateway.call_tool(
+            result = self.mcp_gateway.call_tool(
                 "mcp_Context7_resolve-library-id", libraryName=query
             )
 

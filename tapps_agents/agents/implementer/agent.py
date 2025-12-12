@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Import ReviewerAgent (circular import handled lazily)
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
@@ -76,7 +76,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             self.expert_registry = expert_registry
 
         # Reviewer agent for code review
-        self.reviewer: Optional["ReviewerAgent"] = None
+        self.reviewer: ReviewerAgent | None = None
 
     async def activate(self, project_root: Path | None = None):
         """Activate the implementer agent with expert support."""

@@ -4,7 +4,7 @@ Unit tests for SessionManager.
 
 import shutil
 import tempfile
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -33,8 +33,8 @@ class TestAgentSession:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=0.0,
             state=SessionState.ACTIVE,
         )
@@ -45,7 +45,7 @@ class TestAgentSession:
 
     def test_update_duration(self):
         """Test updating duration."""
-        start = datetime.now(timezone.utc) - timedelta(hours=2)
+        start = datetime.now(UTC) - timedelta(hours=2)
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
@@ -65,8 +65,8 @@ class TestAgentSession:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=1.5,
             state=SessionState.ACTIVE,
             metadata={"key": "value"},
@@ -98,8 +98,8 @@ class TestSessionStorage:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=0.0,
             state=SessionState.ACTIVE,
         )
@@ -121,8 +121,8 @@ class TestSessionStorage:
             session = AgentSession(
                 session_id=f"session-{i}",
                 agent_id="test-agent",
-                start_time=datetime.now(timezone.utc),
-                last_activity=datetime.now(timezone.utc),
+                start_time=datetime.now(UTC),
+                last_activity=datetime.now(UTC),
                 duration_hours=0.0,
                 state=SessionState.ACTIVE if i < 2 else SessionState.PAUSED,
             )
@@ -141,8 +141,8 @@ class TestSessionStorage:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=0.0,
             state=SessionState.ACTIVE,
         )
@@ -166,15 +166,15 @@ class TestSessionMonitor:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=1.0,
             state=SessionState.ACTIVE,
         )
 
         # Mock resource monitor to return healthy metrics
         mock_metrics = ResourceMetrics(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             cpu_percent=30.0,
             memory_percent=50.0,
             memory_used_mb=1000.0,
@@ -197,8 +197,8 @@ class TestSessionMonitor:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc) - timedelta(hours=2),  # Stale
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC) - timedelta(hours=2),  # Stale
             duration_hours=1.0,
             state=SessionState.ACTIVE,
         )
@@ -214,15 +214,15 @@ class TestSessionMonitor:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=1.0,
             state=SessionState.ACTIVE,
         )
 
         # High memory usage
         mock_metrics = ResourceMetrics(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             cpu_percent=30.0,
             memory_percent=95.0,  # Critical
             memory_used_mb=1900.0,
@@ -255,8 +255,8 @@ class TestSessionRecovery:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=1.0,
             state=SessionState.PAUSED,
         )
@@ -274,8 +274,8 @@ class TestSessionRecovery:
         session = AgentSession(
             session_id="test-session",
             agent_id="test-agent",
-            start_time=datetime.now(timezone.utc),
-            last_activity=datetime.now(timezone.utc),
+            start_time=datetime.now(UTC),
+            last_activity=datetime.now(UTC),
             duration_hours=1.0,
             state=SessionState.ACTIVE,
         )
@@ -287,7 +287,7 @@ class TestSessionRecovery:
             command="test",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc) - timedelta(minutes=10),
+            checkpoint_time=datetime.now(UTC) - timedelta(minutes=10),
         )
         checkpoint2 = TaskCheckpoint(
             task_id="task-2",
@@ -295,7 +295,7 @@ class TestSessionRecovery:
             command="test",
             state="running",
             progress=0.8,
-            checkpoint_time=datetime.now(timezone.utc) - timedelta(minutes=5),
+            checkpoint_time=datetime.now(UTC) - timedelta(minutes=5),
         )
 
         session.checkpoints = [checkpoint1, checkpoint2]
@@ -343,7 +343,7 @@ class TestSessionManager:
 
         # Mock resource monitor
         mock_metrics = ResourceMetrics(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             cpu_percent=30.0,
             memory_percent=50.0,
             memory_used_mb=1000.0,
@@ -387,7 +387,7 @@ class TestSessionManager:
             command="test",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
 
         self.manager.add_checkpoint(session.session_id, checkpoint)
@@ -414,7 +414,7 @@ class TestSessionManager:
     def test_cleanup_old_sessions(self):
         """Test cleaning up old sessions."""
         # Create old completed session
-        old_time = datetime.now(timezone.utc) - timedelta(days=10)
+        old_time = datetime.now(UTC) - timedelta(days=10)
         session = AgentSession(
             session_id="old-session",
             agent_id="test-agent",

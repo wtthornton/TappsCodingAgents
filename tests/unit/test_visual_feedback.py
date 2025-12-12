@@ -2,7 +2,7 @@
 Unit tests for Visual Feedback System (Phase 2.1).
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -280,7 +280,7 @@ class TestUIComparator:
         comparator = UIComparator()
 
         previous = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=1,
             quality_score=0.6,
             layout_metrics=LayoutMetrics(
@@ -300,7 +300,7 @@ class TestUIComparator:
         )
 
         current = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=2,
             quality_score=0.8,
             layout_metrics=LayoutMetrics(
@@ -329,14 +329,14 @@ class TestUIComparator:
         comparator = UIComparator()
 
         previous = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=1,
             quality_score=0.8,
             issues=[],
         )
 
         current = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=2,
             quality_score=0.6,
             issues=["Issue 1", "Issue 2"],
@@ -353,7 +353,7 @@ class TestUIComparator:
 
         feedback_history = [
             VisualFeedback(
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 iteration=i,
                 quality_score=0.5 + (i * 0.1),
             )
@@ -372,7 +372,7 @@ class TestUIComparator:
 
         feedback_history = [
             VisualFeedback(
-                timestamp=datetime.now(timezone.utc), iteration=1, quality_score=0.5
+                timestamp=datetime.now(UTC), iteration=1, quality_score=0.5
             )
         ]
 
@@ -390,7 +390,7 @@ class TestVisualPatternLearner:
         learner = VisualPatternLearner()
 
         feedback = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=1,
             layout_metrics=LayoutMetrics(
                 spacing_consistency=0.9,
@@ -421,7 +421,7 @@ class TestVisualPatternLearner:
         # Add multiple feedback items with good patterns
         for i in range(6):
             feedback = VisualFeedback(
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 iteration=i,
                 layout_metrics=LayoutMetrics(
                     spacing_consistency=0.9,
@@ -450,7 +450,7 @@ class TestVisualPatternLearner:
         learner = VisualPatternLearner()
 
         feedback = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=1,
             layout_metrics=LayoutMetrics(
                 spacing_consistency=0.9,

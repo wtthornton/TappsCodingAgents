@@ -43,7 +43,7 @@ class TaskCheckpoint:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TaskCheckpoint":
+    def from_dict(cls, data: dict[str, Any]) -> TaskCheckpoint:
         """Create from dictionary."""
         data = data.copy()
         data["checkpoint_time"] = datetime.fromisoformat(data["checkpoint_time"])

@@ -4,6 +4,7 @@ KB Cleanup Automation - Automated cleanup of old/unused Context7 KB entries.
 
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
+from typing import Any
 
 from .analytics import Analytics
 from .cache_structure import CacheStructure
@@ -236,11 +237,8 @@ class KBCleanup:
                 library_metadata = self.metadata_manager.load_library_metadata(library)
                 if library_metadata and library_metadata.last_updated:
                     try:
-                        last_updated = datetime.fromisoformat(
-                            library_metadata.last_updated.replace("Z", "+00:00")
-                        ).replace(tzinfo=None)
                         is_too_old = self.staleness_policy_manager.check_staleness(
-                            library, topic, last_updated
+                            library, topic, library_metadata.last_updated
                         )
                         # Also check if accessed date is too old
                         if not is_too_old:
@@ -399,16 +397,6 @@ class KBCleanup:
             details=all_details,
         )
 
-        # Update analytics if available
-        if self.analytics_manager:
-            cache_size = self.get_cache_size()
-            cache_index = self.metadata_manager.load_cache_index()
-            num_entries = sum(
-                len(lib_data.get("topics", {}))
-                for lib_data in cache_index.libraries.values()
-            )
-            self.analytics_manager.update_cache_stats(cache_size, num_entries)
-
         return combined_result
 
     def get_cleanup_recommendations(self) -> dict:
@@ -421,20 +409,21 @@ class KBCleanup:
         current_size = self.get_cache_size()
         entries = self.get_entry_access_info()
 
-        recommendations = {
+        recs: list[dict[str, Any]] = []
+        recommendations: dict[str, Any] = {
             "current_size_bytes": current_size,
             "current_size_mb": current_size / (1024 * 1024),
             "max_size_bytes": self.max_cache_size_bytes,
             "max_size_mb": self.max_cache_size_bytes / (1024 * 1024),
             "over_size_limit": current_size > self.max_cache_size_bytes,
             "total_entries": len(entries),
-            "recommendations": [],
+            "recommendations": recs,
         }
 
         # Check size
         if current_size > self.max_cache_size_bytes:
             bytes_to_free = current_size - self.max_cache_size_bytes
-            recommendations["recommendations"].append(
+            recs.append(
                 {
                     "type": "size_cleanup",
                     "priority": "high",
@@ -447,7 +436,7 @@ class KBCleanup:
         cutoff_date = datetime.utcnow() - timedelta(days=self.max_age_days)
         old_entries = [e for e in entries if e[2] < cutoff_date]
         if old_entries:
-            recommendations["recommendations"].append(
+            recs.append(
                 {
                     "type": "age_cleanup",
                     "priority": "medium",
@@ -460,7 +449,7 @@ class KBCleanup:
         access_cutoff = datetime.utcnow() - timedelta(days=self.min_access_days)
         unused_entries = [e for e in entries if e[2] < access_cutoff]
         if unused_entries:
-            recommendations["recommendations"].append(
+            recs.append(
                 {
                     "type": "unused_cleanup",
                     "priority": "low",

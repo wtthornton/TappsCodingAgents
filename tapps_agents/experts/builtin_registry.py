@@ -11,7 +11,6 @@ and cannot be modified by customers. They complement customer-defined business d
 - Dual-layer consultation: Weighted aggregation with priority system
 """
 
-import importlib.resources
 from pathlib import Path
 
 from .expert_config import ExpertConfigModel
@@ -219,15 +218,6 @@ class BuiltinExpertRegistry:
         Returns:
             Path to knowledge/ directory in package
         """
-        try:
-            # Try to use importlib.resources (Python 3.9+)
-            package = importlib.resources.files("tapps_agents.experts")
-            knowledge_path = package / "knowledge"
-            if knowledge_path.exists():
-                return knowledge_path
-        except (ImportError, AttributeError, TypeError):
-            pass
-
         # Fallback: Use __file__ to find package path
         try:
             import tapps_agents.experts

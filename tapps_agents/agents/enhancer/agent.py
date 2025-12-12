@@ -8,7 +8,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from ...agents.analyst.agent import AnalystAgent
 from ...core.agent_base import BaseAgent
@@ -55,11 +55,11 @@ class EnhancerAgent(BaseAgent):
 
         # Initialize sub-agents
         self.analyst = AnalystAgent(mal=self.mal, config=config)
-        self.architect: Optional["ArchitectAgent"] = None  # Lazy load
-        self.designer: Optional["DesignerAgent"] = None  # Lazy load
-        self.planner: Optional["PlannerAgent"] = None  # Lazy load
-        self.reviewer: Optional["ReviewerAgent"] = None  # Lazy load
-        self.ops: Optional["OpsAgent"] = None  # Lazy load
+        self.architect: ArchitectAgent | None = None  # Lazy load
+        self.designer: DesignerAgent | None = None  # Lazy load
+        self.planner: PlannerAgent | None = None  # Lazy load
+        self.reviewer: ReviewerAgent | None = None  # Lazy load
+        self.ops: OpsAgent | None = None  # Lazy load
 
         # Expert registry (lazy load)
         self.expert_registry: ExpertRegistry | None = None

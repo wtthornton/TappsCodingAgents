@@ -5,7 +5,7 @@ KB-First Lookup - Context7 documentation lookup with KB-first caching.
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import CacheEntry, KBCache
@@ -27,6 +27,8 @@ class LookupResult:
     cached_entry: CacheEntry | None = None
     error: str | None = None
     response_time_ms: float = 0.0
+    fuzzy_score: float | None = None
+    matched_topic: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -39,6 +41,8 @@ class LookupResult:
             "context7_id": self.context7_id,
             "error": self.error,
             "response_time_ms": self.response_time_ms,
+            "fuzzy_score": self.fuzzy_score,
+            "matched_topic": self.matched_topic,
         }
 
 
@@ -48,9 +52,9 @@ class KBLookup:
     def __init__(
         self,
         kb_cache: KBCache,
-        mcp_gateway: Optional["MCPGateway"] = None,
-        resolve_library_func: Callable[[str], dict[str, Any]] | None = None,
-        get_docs_func: Callable[[str, str | None], dict[str, Any]] | None = None,
+        mcp_gateway: MCPGateway | None = None,
+        resolve_library_func: Callable[[str], Any] | None = None,
+        get_docs_func: Callable[[str, str | None], Any] | None = None,
         fuzzy_threshold: float = 0.7,
     ):
         """
@@ -151,6 +155,8 @@ class KBLookup:
                         context7_id=fuzzy_entry.context7_id,
                         cached_entry=fuzzy_entry,
                         response_time_ms=response_time,
+                        fuzzy_score=best_match.score,
+                        matched_topic=best_match.topic,
                     )
 
         # Step 3: Resolve library ID if needed

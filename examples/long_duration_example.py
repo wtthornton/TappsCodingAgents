@@ -8,7 +8,7 @@ progress tracking.
 
 import time
 import traceback
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from tapps_agents.core import (
     CheckpointManager,
@@ -51,7 +51,7 @@ def simulate_long_task(
             total_steps=total_steps,
             context={
                 "current_step": step,
-                "last_update": datetime.now(timezone.utc).isoformat(),
+                "last_update": datetime.now(UTC).isoformat(),
             },
         )
 
@@ -97,7 +97,7 @@ def simulate_long_task(
     manager.complete_task(
         task_id=task_id,
         final_context={
-            "completed_at": datetime.now(timezone.utc).isoformat(),
+            "completed_at": datetime.now(UTC).isoformat(),
             "total_steps": total_steps,
         },
     )
@@ -127,7 +127,7 @@ def example_basic_usage():
         command="process_data",
         durability_level=DurabilityLevel.STANDARD,
         initial_context={
-            "started_at": datetime.now(timezone.utc).isoformat(),
+            "started_at": datetime.now(UTC).isoformat(),
             "task_type": "data_processing",
         },
     )

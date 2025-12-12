@@ -6,7 +6,7 @@ They provide domain knowledge through consultation, RAG, and weighted decisions.
 """
 
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from ..core.agent_base import BaseAgent
 from ..core.config import ProjectConfig
@@ -70,8 +70,8 @@ class BaseExpert(BaseAgent):
         self._builtin_knowledge_path: Path | None = None
 
         # RAG components (to be initialized if enabled)
-        self.rag_interface = None
-        self.knowledge_base = None
+        self.rag_interface: Any | None = None
+        self.knowledge_base: SimpleKnowledgeBase | None = None
 
         # Fine-tuning components (to be initialized if enabled)
         self.adapter = None
@@ -226,7 +226,9 @@ class BaseExpert(BaseAgent):
         context = await self._build_validation_context(artifact, artifact_type, domain)
 
         # Query for validation
-        prompt = self._build_validation_prompt(artifact, artifact_type, context, domain)
+        prompt = await self._build_validation_prompt(
+            artifact, artifact_type, context, domain
+        )
         validation = await self._query_llm(prompt)
 
         return {
@@ -300,7 +302,7 @@ class BaseExpert(BaseAgent):
         query: str,
         context: str,
         domain: str,
-        project_profile: Optional["ProjectProfile"] = None,
+        project_profile: ProjectProfile | None = None,
     ) -> str:
         """
         Build LLM prompt for consultation.
@@ -331,7 +333,7 @@ Answer:"""
 
         return prompt
 
-    def _format_profile_context(self, profile: "ProjectProfile") -> str:
+    def _format_profile_context(self, profile: ProjectProfile) -> str:
         """
         Format project profile as context string for LLM.
 

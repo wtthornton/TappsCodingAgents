@@ -6,7 +6,7 @@ Provides visual analysis, comparison, and pattern learning for UI generation.
 
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -152,7 +152,7 @@ class VisualFeedbackCollector:
             VisualFeedback object
         """
         feedback = VisualFeedback(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             iteration=iteration,
             screenshot_path=screenshot_path,
             visual_elements=visual_elements or [],

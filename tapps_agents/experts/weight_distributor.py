@@ -48,6 +48,14 @@ class ExpertWeightMatrix:
                 return expert_id
         return None
 
+    def get_primary_expert_domain(self, expert_id: str) -> str | None:
+        """Get the primary domain (51%) for an expert."""
+        expert_weights = self.weights.get(expert_id, {})
+        for domain, weight in expert_weights.items():
+            if weight >= 0.51:
+                return domain
+        return None
+
     def validate(self) -> list[str]:
         """
         Validate weight matrix against requirements.
@@ -134,7 +142,7 @@ class WeightDistributor:
             ValueError: If validation fails
         """
         # Validate: Each domain has exactly one primary expert
-        domain_primaries = {}
+        domain_primaries: dict[str, str] = {}
         for expert_id, primary_domain in expert_primary_map.items():
             if primary_domain in domain_primaries:
                 raise ValueError(
@@ -280,14 +288,3 @@ class WeightDistributor:
         return "\n".join(lines)
 
 
-# Add helper method to ExpertWeightMatrix
-def _get_primary_expert_domain(self, expert_id: str) -> str | None:
-    """Get the primary domain for an expert."""
-    expert_weights = self.weights.get(expert_id, {})
-    for domain, weight in expert_weights.items():
-        if weight >= 0.51:
-            return domain
-    return None
-
-
-ExpertWeightMatrix.get_primary_expert_domain = _get_primary_expert_domain

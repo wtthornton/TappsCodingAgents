@@ -10,13 +10,13 @@ Implements improved confidence calculation algorithms that consider:
 """
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from .builtin_registry import BuiltinExpertRegistry
 
 if TYPE_CHECKING:
-    from ..core.project_profile import ProjectProfile
     from ..core.config import ExpertConfig
+    from ..core.project_profile import ProjectProfile
 
 # Legacy constant for backward compatibility (deprecated, use config instead)
 AGENT_CONFIDENCE_THRESHOLDS: dict[str, float] = {
@@ -36,7 +36,7 @@ AGENT_CONFIDENCE_THRESHOLDS: dict[str, float] = {
 }
 
 
-def _get_expert_config() -> "ExpertConfig":
+def _get_expert_config() -> ExpertConfig:
     """Get expert configuration (lazy load)."""
     from ..core.config import get_expert_config
 
@@ -82,7 +82,7 @@ class ConfidenceCalculator:
         agreement_level: float = 0.0,
         rag_quality: float | None = None,
         num_experts_consulted: int | None = None,
-        project_profile: Optional["ProjectProfile"] = None,
+        project_profile: ProjectProfile | None = None,
     ) -> tuple[float, float]:
         """
         Calculate confidence score with multiple factors.
@@ -164,7 +164,7 @@ class ConfidenceCalculator:
 
     @staticmethod
     def _calculate_project_context_relevance(
-        responses: list[dict], project_profile: Optional["ProjectProfile"]
+        responses: list[dict], project_profile: ProjectProfile | None
     ) -> float:
         """
         Calculate how well expert advice matches project profile.

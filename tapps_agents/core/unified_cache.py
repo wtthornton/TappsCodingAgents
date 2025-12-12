@@ -60,6 +60,7 @@ class UnifiedCache:
             enable_adaptive: Whether to enable adaptive configuration (default: True)
         """
         self.hardware_profiler = HardwareProfiler()
+        self.adaptive_config: AdaptiveCacheConfig | None = None
         base_profile = None
 
         # Auto-detect hardware profile if not provided

@@ -4,7 +4,7 @@ Adaptive Cache Configuration - Dynamically adjusts cache settings based on resou
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from .hardware_profiler import (
@@ -158,7 +158,7 @@ class AdaptiveCacheConfig:
             True if configuration was adjusted
         """
         # Check if enough time has passed since last check
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         if self.last_check_time:
             elapsed = (now - self.last_check_time).total_seconds()
             if elapsed < self.check_interval:
@@ -381,7 +381,7 @@ class AdaptiveCacheConfig:
         new_settings = self.current_settings.to_dict()
 
         change = ConfigurationChange(
-            timestamp=datetime.now(timezone.utc).isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             reason="Manual reset to base profile",
             old_settings=old_settings,
             new_settings=new_settings,

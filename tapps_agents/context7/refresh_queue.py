@@ -40,7 +40,7 @@ class RefreshTask:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "RefreshTask":
+    def from_dict(cls, data: dict[str, Any]) -> RefreshTask:
         """Create from dictionary."""
         return cls(**data)
 

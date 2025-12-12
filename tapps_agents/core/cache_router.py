@@ -345,12 +345,13 @@ class CacheRouter:
 
     def get_all_stats(self) -> dict[str, Any]:
         """Get statistics from all adapters."""
-        stats = {
+        caches: dict[str, Any] = {}
+        stats: dict[str, Any] = {
             "hardware_profile": self.optimization_profile.profile.value,
-            "caches": {},
+            "caches": caches,
         }
 
         for cache_type, adapter in self.adapters.items():
-            stats["caches"][cache_type.value] = adapter.get_stats()
+            caches[cache_type.value] = adapter.get_stats()
 
         return stats

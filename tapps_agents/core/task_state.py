@@ -190,7 +190,7 @@ class TaskStateManager:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TaskStateManager":
+    def from_dict(cls, data: dict[str, Any]) -> TaskStateManager:
         """
         Create state manager from dictionary.
 

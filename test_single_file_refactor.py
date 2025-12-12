@@ -91,7 +91,7 @@ async def test_single_file():
             log(f"Refactoring completed successfully! (took ~{elapsed}s)", "SUCCESS")
             log(f"Result keys: {list(result.keys())}", "INFO")
 
-    except asyncio.TimeoutError:
+    except TimeoutError:
         if heartbeat_task:
             heartbeat_task.cancel()
         log("LLM call timed out after 10 minutes", "ERROR")

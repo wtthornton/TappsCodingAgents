@@ -5,9 +5,9 @@ Loads and maps preset workflows with short aliases and voice-friendly names.
 """
 
 from pathlib import Path
+from typing import Any
 
 import yaml
-from typing import Any
 
 from .models import Workflow
 from .parser import WorkflowParser

@@ -11,7 +11,7 @@ import shutil
 import threading
 import time
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -52,7 +52,7 @@ class ProgressSnapshot:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "ProgressSnapshot":
+    def from_dict(cls, data: dict[str, Any]) -> ProgressSnapshot:
         """Create from dictionary."""
         data = data.copy()
         data["timestamp"] = datetime.fromisoformat(data["timestamp"])
@@ -79,7 +79,7 @@ class FailureRecord:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "FailureRecord":
+    def from_dict(cls, data: dict[str, Any]) -> FailureRecord:
         """Create from dictionary."""
         data = data.copy()
         data["timestamp"] = datetime.fromisoformat(data["timestamp"])
@@ -128,7 +128,7 @@ class ProgressTracker:
             ProgressSnapshot instance
         """
         snapshot = ProgressSnapshot(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             progress=progress,
             current_step=current_step,
             steps_completed=steps_completed,
@@ -174,7 +174,7 @@ class ProgressTracker:
         if not hours:
             return self.snapshots.copy()
 
-        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+        cutoff = datetime.now(UTC) - timedelta(hours=hours)
         return [s for s in self.snapshots if s.timestamp >= cutoff]
 
     def calculate_velocity(self) -> float | None:
@@ -252,7 +252,7 @@ class DurabilityGuarantee:
             return True
 
         elapsed = (
-            datetime.now(timezone.utc) - self.last_checkpoint_time
+            datetime.now(UTC) - self.last_checkpoint_time
         ).total_seconds()
         return elapsed >= self.checkpoint_interval
 
@@ -300,7 +300,7 @@ class DurabilityGuarantee:
             artifacts=artifacts or [],
         )
 
-        self.last_checkpoint_time = datetime.now(timezone.utc)
+        self.last_checkpoint_time = datetime.now(UTC)
         self.checkpoint_count += 1
 
         logger.info(f"Created checkpoint {self.checkpoint_count} for task {task_id}")
@@ -414,7 +414,7 @@ class FailureRecovery:
             failure_metadata["task_id"] = task_id
 
         failure = FailureRecord(
-            timestamp=datetime.now(timezone.utc),
+            timestamp=datetime.now(UTC),
             failure_type=failure_type,
             error_message=error_message,
             stack_trace=stack_trace,
@@ -445,7 +445,7 @@ class FailureRecovery:
         """
         # Prefer list_checkpoints() so mocked managers can provide TaskCheckpoint objects directly.
         try:
-            listed = self.checkpoint_manager.list_checkpoints()
+            listed: list[Any] = self.checkpoint_manager.list_checkpoints()
         except (OSError, PermissionError) as e:
             # File system errors when listing files
             import logging
@@ -485,7 +485,7 @@ class FailureRecovery:
         checkpoint = max(
             candidates,
             key=lambda cp: getattr(
-                cp, "checkpoint_time", datetime.min.replace(tzinfo=timezone.utc)
+                cp, "checkpoint_time", datetime.min.replace(tzinfo=UTC)
             ),
         )
 

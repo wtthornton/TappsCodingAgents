@@ -9,7 +9,7 @@ import threading
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -64,8 +64,8 @@ class ExecutionState:
     """Current execution state."""
 
     mode: ExecutionMode = ExecutionMode.NORMAL
-    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-    last_check: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    start_time: datetime = field(default_factory=lambda: datetime.now(UTC))
+    last_check: datetime = field(default_factory=lambda: datetime.now(UTC))
     pause_count: int = 0
     degradation_count: int = 0
     resource_history: list[ResourceMetrics] = field(default_factory=list)
@@ -73,7 +73,7 @@ class ExecutionState:
 
     def add_alert(self, message: str):
         """Add an alert message."""
-        self.alerts.append(f"{datetime.now(timezone.utc).isoformat()}: {message}")
+        self.alerts.append(f"{datetime.now(UTC).isoformat()}: {message}")
         if len(self.alerts) > 100:  # Keep last 100 alerts
             self.alerts = self.alerts[-100:]
 
@@ -312,7 +312,7 @@ class ResourceAwareExecutor:
     def _check_resources(self, metrics: ResourceMetrics):
         """Check resources and adjust execution mode."""
         with self._lock:
-            self.execution_state.last_check = datetime.now(timezone.utc)
+            self.execution_state.last_check = datetime.now(UTC)
             self.execution_state.resource_history.append(metrics)
             if len(self.execution_state.resource_history) > 100:
                 self.execution_state.resource_history = (
@@ -322,14 +322,14 @@ class ResourceAwareExecutor:
             # Check for auto-pause
             should_pause, pause_reason = self.auto_pause.should_pause(metrics)
             if should_pause and not self.auto_pause.is_paused:
-                self._pause_execution(pause_reason)
+                self._pause_execution(pause_reason or "Resource limits exceeded")
             elif self.auto_pause.should_resume(metrics) and self.auto_pause.is_paused:
                 self._resume_execution()
 
             # Check for degradation
             should_degrade, degrade_reason = self.optimizer.should_degrade(metrics)
             if should_degrade and self.execution_state.mode == ExecutionMode.NORMAL:
-                self._degrade_execution(degrade_reason)
+                self._degrade_execution(degrade_reason or "Resource pressure detected")
             elif (
                 not should_degrade
                 and self.execution_state.mode == ExecutionMode.DEGRADED
@@ -417,7 +417,7 @@ class ResourceAwareExecutor:
             metrics = self.resource_monitor.get_current_metrics()
             should_pause, pause_reason = self.auto_pause.should_pause(metrics)
             if should_pause:
-                self._pause_execution(pause_reason)
+                self._pause_execution(pause_reason or "Resource limits exceeded")
                 raise RuntimeError(f"Execution paused: {pause_reason}")
 
         # Execute task

@@ -87,11 +87,15 @@ class TestGenerator:
 
     def _analyze_code(self, code: str, file_path: Path) -> dict[str, Any]:
         """Analyze code structure to extract functions, classes, etc."""
-        analysis = {
+        functions: list[dict[str, Any]] = []
+        classes: list[dict[str, Any]] = []
+        imports: list[str] = []
+
+        analysis: dict[str, Any] = {
             "file_name": file_path.name,
-            "functions": [],
-            "classes": [],
-            "imports": [],
+            "functions": functions,
+            "classes": classes,
+            "imports": imports,
             "test_framework": self._detect_test_framework(code),
         }
 
@@ -100,7 +104,7 @@ class TestGenerator:
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    analysis["functions"].append(
+                    functions.append(
                         {
                             "name": node.name,
                             "args": [arg.arg for arg in node.args.args],
@@ -114,12 +118,12 @@ class TestGenerator:
                     methods = [
                         n.name for n in node.body if isinstance(n, ast.FunctionDef)
                     ]
-                    analysis["classes"].append({"name": node.name, "methods": methods})
+                    classes.append({"name": node.name, "methods": methods})
                 elif isinstance(node, (ast.Import, ast.ImportFrom)):
                     if isinstance(node, ast.Import):
-                        analysis["imports"].extend([alias.name for alias in node.names])
+                        imports.extend([alias.name for alias in node.names])
                     else:
-                        analysis["imports"].append(node.module or "")
+                        imports.append(node.module or "")
         except SyntaxError:
             # If code has syntax errors, return basic analysis
             pass

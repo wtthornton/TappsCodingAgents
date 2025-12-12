@@ -93,11 +93,15 @@ class DocGenerator:
 
     def _analyze_code_structure(self, code: str) -> dict[str, Any]:
         """Analyze code structure to extract functions, classes, etc."""
-        structure = {
+        functions: list[dict[str, Any]] = []
+        classes: list[dict[str, Any]] = []
+        modules: list[str] = []
+
+        structure: dict[str, Any] = {
             "file_name": "",
-            "functions": [],
-            "classes": [],
-            "modules": [],
+            "functions": functions,
+            "classes": classes,
+            "modules": modules,
             "has_docstrings": False,
         }
 
@@ -105,18 +109,17 @@ class DocGenerator:
             tree = ast.parse(code)
 
             # Check for module docstring
-            if (
-                tree.body
-                and isinstance(tree.body[0], ast.Expr)
-                and isinstance(tree.body[0].value, ast.Str)
-            ):
-                structure["has_docstrings"] = True
+            if tree.body and isinstance(tree.body[0], ast.Expr):
+                if isinstance(tree.body[0].value, ast.Constant) and isinstance(
+                    tree.body[0].value.value, str
+                ):
+                    structure["has_docstrings"] = True
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
                     args = [arg.arg for arg in node.args.args]
                     has_doc = ast.get_docstring(node) is not None
-                    structure["functions"].append(
+                    functions.append(
                         {
                             "name": node.name,
                             "line": node.lineno,
@@ -129,7 +132,7 @@ class DocGenerator:
                         n.name for n in node.body if isinstance(n, ast.FunctionDef)
                     ]
                     has_doc = ast.get_docstring(node) is not None
-                    structure["classes"].append(
+                    classes.append(
                         {
                             "name": node.name,
                             "line": node.lineno,
@@ -144,24 +147,26 @@ class DocGenerator:
 
     def _analyze_project_structure(self, project_root: Path) -> dict[str, Any]:
         """Analyze project structure."""
-        info = {
+        python_files: list[str] = []
+        directories: list[str] = []
+        info: dict[str, Any] = {
             "name": project_root.name,
             "has_readme": (project_root / "README.md").exists(),
             "has_requirements": (project_root / "requirements.txt").exists(),
             "has_setup": (project_root / "setup.py").exists(),
-            "python_files": [],
-            "directories": [],
+            "python_files": python_files,
+            "directories": directories,
         }
 
         # Find Python files
         for py_file in project_root.rglob("*.py"):
             if "test" not in str(py_file) and "__pycache__" not in str(py_file):
-                info["python_files"].append(str(py_file.relative_to(project_root)))
+                python_files.append(str(py_file.relative_to(project_root)))
 
         # Find directories
         for dir_path in project_root.iterdir():
             if dir_path.is_dir() and not dir_path.name.startswith("."):
-                info["directories"].append(dir_path.name)
+                directories.append(dir_path.name)
 
         return info
 

@@ -51,7 +51,7 @@ class TaskMemory:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "TaskMemory":
+    def from_dict(cls, data: dict[str, Any]) -> TaskMemory:
         """Create from dictionary."""
         data = data.copy()
         data["timestamp"] = datetime.fromisoformat(data["timestamp"])

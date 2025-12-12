@@ -5,6 +5,7 @@ Demonstrates usage of the Visual Feedback system for iterative UI refinement.
 """
 
 import asyncio
+from datetime import UTC
 
 
 # Example 1: Basic Visual Design
@@ -350,7 +351,7 @@ async def example_comparing_iterations():
     print("Example 5: Comparing Iterations")
     print("=" * 60)
 
-    from datetime import datetime, timezone
+    from datetime import datetime
 
     from tapps_agents.core.visual_feedback import (
         AccessibilityMetrics,
@@ -366,7 +367,7 @@ async def example_comparing_iterations():
 
     # Create feedback for iteration 1
     feedback1 = VisualFeedback(
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         iteration=1,
         quality_score=0.6,
         layout_metrics=LayoutMetrics(
@@ -389,7 +390,7 @@ async def example_comparing_iterations():
 
     # Create feedback for iteration 2 (improved)
     feedback2 = VisualFeedback(
-        timestamp=datetime.now(timezone.utc),
+        timestamp=datetime.now(UTC),
         iteration=2,
         quality_score=0.8,
         layout_metrics=LayoutMetrics(

@@ -14,8 +14,11 @@ class Context7MCPServer:
     def __init__(
         self,
         registry: ToolRegistry | None = None,
-        resolve_library_client: Callable[[str], dict[str, Any]] | None = None,
-        get_docs_client: Callable[[str, str | None, str | None, int | None], dict[str, Any]] | None = None,
+        resolve_library_client: Callable[[str], Any] | None = None,
+        get_docs_client: Callable[
+            [str, str | None, str | None, int | None], Any
+        ]
+        | None = None,
     ):
         """
         Initialize Context7 MCP server.

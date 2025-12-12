@@ -32,7 +32,7 @@ class LibraryMetadata:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "LibraryMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> LibraryMetadata:
         """Create from dictionary."""
         return cls(**data)
 
@@ -56,7 +56,7 @@ class CacheIndex:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "CacheIndex":
+    def from_dict(cls, data: dict[str, Any]) -> CacheIndex:
         """Create from dictionary."""
         return cls(
             version=data.get("version", "1.0"),
@@ -69,7 +69,7 @@ class CacheIndex:
 class MetadataManager:
     """Manages metadata files for Context7 KB cache."""
 
-    def __init__(self, cache_structure: "CacheStructure"):
+    def __init__(self, cache_structure: CacheStructure):
         """
         Initialize metadata manager.
 

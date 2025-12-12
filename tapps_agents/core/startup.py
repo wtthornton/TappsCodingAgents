@@ -144,12 +144,13 @@ async def startup_routines(
     Returns:
         Dictionary with startup results
     """
-    results = {"success": True, "routines": {}}
+    routines: dict[str, Any] = {}
+    results: dict[str, Any] = {"success": True, "routines": routines}
 
     if refresh_docs:
         refresh_result = await refresh_stale_documentation(
             config=config, background=background_refresh
         )
-        results["routines"]["documentation_refresh"] = refresh_result
+        routines["documentation_refresh"] = refresh_result
 
     return results

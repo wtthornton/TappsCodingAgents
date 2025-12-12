@@ -100,7 +100,7 @@ class ErrorAnalyzer:
         self, error_message: str, stack_trace: str | None = None
     ) -> dict[str, Any]:
         """Parse error message and stack trace to extract information."""
-        error_info = {
+        error_info: dict[str, Any] = {
             "type": "Unknown",
             "message": error_message,
             "file": None,
@@ -127,14 +127,23 @@ class ErrorAnalyzer:
         """Analyze code structure for tracing."""
         import ast
 
-        structure = {"functions": [], "classes": [], "imports": [], "calls": []}
+        functions: list[dict[str, Any]] = []
+        classes: list[dict[str, Any]] = []
+        imports: list[str] = []
+        calls: list[dict[str, Any]] = []
+        structure: dict[str, Any] = {
+            "functions": functions,
+            "classes": classes,
+            "imports": imports,
+            "calls": calls,
+        }
 
         try:
             tree = ast.parse(code)
 
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef):
-                    structure["functions"].append(
+                    functions.append(
                         {
                             "name": node.name,
                             "line": node.lineno,
@@ -142,14 +151,10 @@ class ErrorAnalyzer:
                         }
                     )
                 elif isinstance(node, ast.ClassDef):
-                    structure["classes"].append(
-                        {"name": node.name, "line": node.lineno}
-                    )
+                    classes.append({"name": node.name, "line": node.lineno})
                 elif isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Name):
-                        structure["calls"].append(
-                            {"function": node.func.id, "line": node.lineno}
-                        )
+                        calls.append({"function": node.func.id, "line": node.lineno})
         except SyntaxError:
             pass
 

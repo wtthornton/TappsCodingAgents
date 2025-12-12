@@ -114,6 +114,9 @@ class APIKeyManager:
         if not self._cipher:
             self._load_or_create_master_key()
 
+        if self._cipher is None:
+            raise ValueError("Encryption not available. Failed to initialize cipher.")
+
         encrypted = self._cipher.encrypt(api_key.encode())
         return encrypted.decode("utf-8")
 
@@ -132,6 +135,9 @@ class APIKeyManager:
 
         if not self._cipher:
             self._load_or_create_master_key()
+
+        if self._cipher is None:
+            raise ValueError("Encryption not available. Failed to initialize cipher.")
 
         decrypted = self._cipher.decrypt(encrypted_key.encode())
         return decrypted.decode("utf-8")

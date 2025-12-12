@@ -4,6 +4,7 @@ Cross-References System - Topic-based cross-referencing for Context7 KB.
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from typing import Any
 
 import yaml
 
@@ -33,11 +34,8 @@ class CrossReference:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "CrossReference":
+    def from_dict(cls, data: dict) -> CrossReference:
         """Create from dictionary."""
-        if isinstance(data, str):
-            # Handle case where data is a string (shouldn't happen, but be defensive)
-            raise ValueError(f"Expected dict, got string: {data}")
         if not isinstance(data, dict):
             # Handle case where data is not a dict
             raise ValueError(f"Expected dict, got {type(data)}: {data}")
@@ -65,7 +63,7 @@ class TopicIndex:
         }
 
     @classmethod
-    def from_dict(cls, data: dict) -> "TopicIndex":
+    def from_dict(cls, data: dict) -> TopicIndex:
         """Create from dictionary."""
         relationships = []
         for r in data.get("relationships", []):
@@ -271,7 +269,7 @@ class CrossReferenceManager:
         refs.sort(key=lambda r: r.confidence, reverse=True)
         return refs
 
-    def get_related_topics(self, topic: str) -> list[dict[str, str]]:
+    def get_related_topics(self, topic: str) -> list[dict[str, Any]]:
         """
         Get all related topics across libraries for a given topic name.
 
@@ -290,7 +288,7 @@ class CrossReferenceManager:
         if not topic_index:
             return []
 
-        results = []
+        results: list[dict[str, Any]] = []
         for ref in topic_index.relationships:
             results.append(
                 {

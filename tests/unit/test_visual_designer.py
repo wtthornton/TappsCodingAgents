@@ -2,6 +2,7 @@
 Unit tests for Visual Designer Agent (Phase 2.3).
 """
 
+from datetime import UTC
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
@@ -194,13 +195,13 @@ class TestIterativeRefinement:
         refinement = IterativeRefinement()
 
         # Add mock iteration results
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         from tapps_agents.core.visual_feedback import VisualFeedback
 
         for i in range(3):
             feedback = VisualFeedback(
-                timestamp=datetime.now(timezone.utc),
+                timestamp=datetime.now(UTC),
                 iteration=i + 1,
                 quality_score=0.5 + (i * 0.1),
             )

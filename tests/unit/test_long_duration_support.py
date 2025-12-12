@@ -3,7 +3,7 @@ Unit tests for LongDurationManager and related components.
 """
 
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from unittest.mock import Mock
 
@@ -136,7 +136,7 @@ class TestDurabilityGuarantee:
         assert durability.should_checkpoint() is True
 
         # Should not checkpoint immediately after creating one
-        durability.last_checkpoint_time = datetime.now(timezone.utc)
+        durability.last_checkpoint_time = datetime.now(UTC)
         assert durability.should_checkpoint() is False
 
     def test_create_checkpoint(self):
@@ -148,7 +148,7 @@ class TestDurabilityGuarantee:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint_manager.create_checkpoint.return_value = checkpoint
 
@@ -243,7 +243,7 @@ class TestFailureRecovery:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint_manager.list_checkpoints.return_value = [checkpoint]
 
@@ -264,7 +264,7 @@ class TestFailureRecovery:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint.calculate_checksum()
         checkpoint.checksum = checkpoint.calculate_checksum()
@@ -354,7 +354,7 @@ class TestLongDurationManager:
             command="test command",
             state="running",
             progress=0.0,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint_manager.create_checkpoint.return_value = checkpoint
 
@@ -397,7 +397,7 @@ class TestLongDurationManager:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint_manager.create_checkpoint.return_value = checkpoint
 
@@ -430,7 +430,7 @@ class TestLongDurationManager:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint.calculate_checksum()
         checkpoint.checksum = checkpoint.calculate_checksum()
@@ -503,7 +503,7 @@ class TestLongDurationManager:
             command="test command",
             state="running",
             progress=0.0,
-            checkpoint_time=datetime.now(timezone.utc),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint_manager.create_checkpoint.return_value = checkpoint
 

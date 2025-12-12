@@ -55,7 +55,7 @@ class CacheEntry:
     @classmethod
     def from_markdown(
         cls, library: str, topic: str, markdown_content: str
-    ) -> "CacheEntry":
+    ) -> CacheEntry:
         """Parse cache entry from markdown file."""
         lines = markdown_content.split("\n")
 

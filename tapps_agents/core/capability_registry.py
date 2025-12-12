@@ -45,7 +45,7 @@ class RefinementRecord:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "RefinementRecord":
+    def from_dict(cls, data: dict[str, Any]) -> RefinementRecord:
         """Create from dictionary."""
         data = data.copy()
         data["timestamp"] = datetime.fromisoformat(data["timestamp"])
@@ -77,7 +77,7 @@ class CapabilityMetric:
         return data
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "CapabilityMetric":
+    def from_dict(cls, data: dict[str, Any]) -> CapabilityMetric:
         """Create from dictionary."""
         data = data.copy()
         if data.get("last_improved"):

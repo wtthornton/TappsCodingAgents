@@ -17,6 +17,10 @@ logger = logging.getLogger(__name__)
 class LearningAwareMixin:
     """Mixin to add learning capabilities to agents."""
 
+    # Implementers are expected to provide a stable agent identifier
+    # (e.g., via BaseAgent).
+    agent_id: str
+
     def __init__(self, *args, **kwargs):
         """Initialize learning-aware mixin."""
         super().__init__(*args, **kwargs)

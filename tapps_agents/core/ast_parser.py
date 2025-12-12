@@ -96,9 +96,6 @@ class ASTParser:
                 tree.body[0].value.value, str
             ):
                 docstring = tree.body[0].value.value
-            elif isinstance(tree.body[0].value, ast.Str):  # Python < 3.8 compatibility
-                # `ast.Str.s` is typed loosely in typeshed; normalize to `str`.
-                docstring = str(tree.body[0].value.s)
 
         # Extract from AST nodes
         for node in ast.walk(tree):
