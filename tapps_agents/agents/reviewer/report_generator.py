@@ -436,10 +436,67 @@ class ReportGenerator:
         thresholds: Dict[str, float],
         passed: bool
     ) -> str:
-        """Generate HTML using Jinja2 (future enhancement)."""
-        # For now, use simple HTML
-        # TODO: Create Jinja2 templates directory and implement template rendering
-        return self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed)
+        """
+        Generate HTML using Jinja2 templates.
+        
+        If templates are missing or rendering fails, falls back to the simple HTML generator.
+        """
+        if not HAS_JINJA2:
+            return self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed)
+        
+        try:
+            status_color = "#28a745" if passed else "#dc3545"
+            status_text = "PASSED" if passed else "FAILED"
+            overall_score = float(scores.get("overall_score", 0.0))
+            
+            template_dir = Path(__file__).parent / "templates"
+            template_name = "quality-dashboard.html.j2"
+            
+            # Normalize file-level data for the template
+            template_files: List[Dict[str, Any]] = []
+            if files:
+                for file_data in files[:50]:
+                    file_scores = file_data.get("scoring", {})
+                    template_files.append({
+                        "file": file_data.get("file", "Unknown"),
+                        "overall_score": f"{file_scores.get('overall_score', 0.0):.2f}",
+                        "complexity_score": f"{file_scores.get('complexity_score', 0.0):.2f}",
+                        "security_score": f"{file_scores.get('security_score', 0.0):.2f}",
+                        "maintainability_score": f"{file_scores.get('maintainability_score', 0.0):.2f}",
+                    })
+            
+            context = {
+                "generated_at": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+                "project_name": metadata.get("project_name", "Unknown"),
+                "version": metadata.get("version", "Unknown"),
+                "status_color": status_color,
+                "status_text": status_text,
+                "overall_score": f"{overall_score:.2f}",
+                "overall_threshold": thresholds.get("overall", 70.0),
+                "complexity_score": f"{scores.get('complexity_score', 0.0):.2f}",
+                "security_score": f"{scores.get('security_score', 0.0):.2f}",
+                "maintainability_score": f"{scores.get('maintainability_score', 0.0):.2f}",
+                "test_coverage_score": f"{scores.get('test_coverage_score', 0.0):.2f}",
+                "performance_score": f"{scores.get('performance_score', 0.0):.2f}",
+                "linting_score": f"{scores.get('linting_score', 0.0):.2f}",
+                "type_checking_score": f"{scores.get('type_checking_score', 0.0):.2f}",
+                "files": template_files,
+            }
+            
+            # Prefer file-based template, fall back to an inline template if missing.
+            if template_dir.exists() and (template_dir / template_name).exists():
+                env = Environment(
+                    loader=FileSystemLoader(str(template_dir)),
+                    autoescape=True,
+                )
+                template = env.get_template(template_name)
+                return template.render(**context)
+            
+            inline_template = Template(self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed))
+            return inline_template.render(**context)
+        except Exception:
+            # Any rendering errors should not break report generation.
+            return self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed)
     
     def save_historical_data(
         self,

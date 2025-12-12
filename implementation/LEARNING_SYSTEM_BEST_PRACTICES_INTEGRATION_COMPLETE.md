@@ -1,5 +1,8 @@
 # Learning System + Best Practices Integration - Implementation Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** January 2026  
 **Status:** ✅ **COMPLETE**  
 **Version:** 2.2.0  

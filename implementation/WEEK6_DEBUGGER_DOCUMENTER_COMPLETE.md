@@ -1,5 +1,8 @@
 # Week 6: Debugger + Documenter Agents - Implementation Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** December 5, 2025  
 **Status:** ✅ Complete
 

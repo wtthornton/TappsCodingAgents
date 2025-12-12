@@ -4,6 +4,9 @@
 **Overall Status**: 🚧 **In Progress**  
 **Current Phase**: Phase 6.1 Complete, Phase 6.2 Ready to Start
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ---
 
 ## Phase 6 Overview

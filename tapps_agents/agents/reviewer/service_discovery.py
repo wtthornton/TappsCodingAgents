@@ -41,7 +41,9 @@ class ServiceDiscovery:
                 "src/*/",
                 "apps/*/",
                 "microservices/*/",
-                "packages/*/"
+                "packages/*/",
+                # Treat the main Python package as a first-class service root for project analysis.
+                "tapps_agents/"
             ]
         self.service_patterns = service_patterns
         
@@ -74,6 +76,21 @@ class ServiceDiscovery:
         
         # Try each service pattern
         for pattern in self.service_patterns:
+            # If the pattern points directly at a service root (no wildcard), include that directory itself.
+            # This lets us analyze mono-package repos like `tapps_agents/` as a single “service”.
+            if "*" not in pattern and "?" not in pattern:
+                base_dir = pattern.rstrip("/").rstrip("\\")
+                candidate = self.project_root / base_dir
+                if candidate.exists() and candidate.is_dir() and not self._should_exclude(candidate):
+                    if self._is_service_directory(candidate):
+                        services.append({
+                            "name": candidate.name,
+                            "path": str(candidate),
+                            "relative_path": str(candidate.relative_to(self.project_root)),
+                            "pattern": pattern
+                        })
+                continue
+
             # Convert glob pattern to directory structure
             # e.g., "services/*/" -> "services/"
             base_dir = pattern.split('*')[0].rstrip('/')

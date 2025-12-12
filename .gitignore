@@ -38,6 +38,7 @@ env/
 .coverage
 htmlcov/
 coverage.xml
+reports/
 
 # TappsCodingAgents
 .tapps-agents/sessions/

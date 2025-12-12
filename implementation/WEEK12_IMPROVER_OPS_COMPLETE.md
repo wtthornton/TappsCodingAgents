@@ -1,5 +1,8 @@
 # Week 12 Implementation Complete: Improver + Ops Agents
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date**: December 2024  
 **Status**: ✅ Complete  
 **Test Coverage**: 90% (Improver), 85% (Ops)  

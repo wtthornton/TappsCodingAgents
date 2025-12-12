@@ -5,6 +5,7 @@ Workflow Executor - Execute YAML workflow definitions.
 from typing import Dict, Any, Optional, List
 from pathlib import Path
 from datetime import datetime
+import json
 
 from .models import Workflow, WorkflowStep, WorkflowState, Artifact
 from .parser import WorkflowParser
@@ -31,6 +32,7 @@ class WorkflowExecutor:
         self.project_root = project_root or Path.cwd()
         self.state: Optional[WorkflowState] = None
         self.workflow: Optional[Workflow] = None
+        self._workflow_path: Optional[Path] = None
         self.expert_registry = expert_registry
         self.auto_detect = auto_detect
         self.recommender: Optional[WorkflowRecommender] = None
@@ -81,6 +83,7 @@ class WorkflowExecutor:
         Returns:
             Loaded Workflow object
         """
+        self._workflow_path = workflow_path
         self.workflow = WorkflowParser.parse_file(workflow_path)
         return self.workflow
     
@@ -106,6 +109,12 @@ class WorkflowExecutor:
             current_step=self.workflow.steps[0].id if self.workflow.steps else None,
             status="running"
         )
+        
+        # Persist workflow path for resumption
+        if self._workflow_path:
+            self.state.variables["_workflow_path"] = str(self._workflow_path)
+        
+        self.save_state()
         
         return self.state
     
@@ -205,6 +214,8 @@ class WorkflowExecutor:
             # Workflow complete
             self.state.current_step = None
             self.state.status = "completed"
+        
+        self.save_state()
     
     def skip_step(self, step_id: str):
         """Skip a step."""
@@ -219,6 +230,140 @@ class WorkflowExecutor:
             if step.id == step_id and step.next:
                 self.state.current_step = step.next
                 break
+        
+        self.save_state()
+
+    def _state_dir(self) -> Path:
+        """Directory for persisted workflow state."""
+        return self.project_root / ".tapps-agents" / "workflow-state"
+
+    def _state_path_for(self, workflow_id: str) -> Path:
+        return self._state_dir() / f"workflow-{workflow_id}.json"
+
+    def _last_state_path(self) -> Path:
+        return self._state_dir() / "last.json"
+
+    @staticmethod
+    def _artifact_to_dict(artifact: Artifact) -> Dict[str, Any]:
+        return {
+            "name": artifact.name,
+            "path": artifact.path,
+            "status": artifact.status,
+            "created_by": artifact.created_by,
+            "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
+            "metadata": artifact.metadata or {},
+        }
+
+    @staticmethod
+    def _artifact_from_dict(data: Dict[str, Any]) -> Artifact:
+        created_at = data.get("created_at")
+        return Artifact(
+            name=data.get("name", ""),
+            path=data.get("path", ""),
+            status=data.get("status", "pending"),
+            created_by=data.get("created_by"),
+            created_at=datetime.fromisoformat(created_at) if created_at else None,
+            metadata=data.get("metadata", {}) or {},
+        )
+
+    def _state_to_dict(self, state: WorkflowState) -> Dict[str, Any]:
+        artifacts = {k: self._artifact_to_dict(v) for k, v in (state.artifacts or {}).items()}
+        return {
+            "workflow_id": state.workflow_id,
+            "started_at": state.started_at.isoformat(),
+            "current_step": state.current_step,
+            "completed_steps": list(state.completed_steps or []),
+            "skipped_steps": list(state.skipped_steps or []),
+            "artifacts": artifacts,
+            "variables": state.variables or {},
+            "status": state.status,
+            "error": state.error,
+        }
+
+    def _state_from_dict(self, data: Dict[str, Any]) -> WorkflowState:
+        artifacts_data = data.get("artifacts", {}) or {}
+        artifacts = {k: self._artifact_from_dict(v) for k, v in artifacts_data.items()}
+        started_at = datetime.fromisoformat(data["started_at"])
+        return WorkflowState(
+            workflow_id=data["workflow_id"],
+            started_at=started_at,
+            current_step=data.get("current_step"),
+            completed_steps=data.get("completed_steps", []) or [],
+            skipped_steps=data.get("skipped_steps", []) or [],
+            artifacts=artifacts,
+            variables=data.get("variables", {}) or {},
+            status=data.get("status", "running"),
+            error=data.get("error"),
+        )
+
+    def save_state(self) -> Optional[Path]:
+        """
+        Persist current workflow state (best-effort).
+        
+        Returns:
+            Path to the saved state file, or None if nothing was saved.
+        """
+        if not self.state:
+            return None
+        
+        try:
+            state_dir = self._state_dir()
+            state_dir.mkdir(parents=True, exist_ok=True)
+            state_path = self._state_path_for(self.state.workflow_id)
+            
+            data = self._state_to_dict(self.state)
+            with open(state_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, indent=2)
+            
+            # Update last pointer for easy resume
+            last_data = {
+                "workflow_id": self.state.workflow_id,
+                "state_file": str(state_path),
+                "saved_at": datetime.now().isoformat(),
+                "workflow_path": data.get("variables", {}).get("_workflow_path"),
+            }
+            with open(self._last_state_path(), "w", encoding="utf-8") as f:
+                json.dump(last_data, f, indent=2)
+            
+            return state_path
+        except Exception:
+            return None
+
+    def load_last_state(self) -> WorkflowState:
+        """
+        Load the most recently persisted workflow state and attach it to this executor.
+        
+        This also attempts to reload the workflow YAML referenced by state variables.
+        """
+        last_path = self._last_state_path()
+        if not last_path.exists():
+            raise FileNotFoundError("No persisted workflow state found to resume")
+        
+        last_data = json.loads(last_path.read_text(encoding="utf-8"))
+        state_file = last_data.get("state_file")
+        if not state_file:
+            raise ValueError("Invalid last state pointer (missing state_file)")
+        
+        state_path = Path(state_file)
+        if not state_path.is_absolute():
+            state_path = self.project_root / state_path
+        if not state_path.exists():
+            raise FileNotFoundError(f"Persisted workflow state file not found: {state_path}")
+        
+        data = json.loads(state_path.read_text(encoding="utf-8"))
+        state = self._state_from_dict(data)
+        
+        # Reload workflow if we have a path
+        workflow_path = (state.variables or {}).get("_workflow_path")
+        if workflow_path:
+            candidate = Path(workflow_path)
+            if not candidate.is_absolute():
+                candidate = self.project_root / candidate
+            if candidate.exists():
+                self.load_workflow(candidate)
+        
+        self.state = state
+        return state
     
     def step_requires_expert_consultation(self, step: Optional[WorkflowStep] = None) -> bool:
         """

@@ -4,6 +4,9 @@
 **Status:** Active Review  
 **Purpose:** Comprehensive priority list of all open enhancement implementations
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ---
 
 ## Executive Summary
@@ -463,12 +466,13 @@ Simple file-based knowledge base search (no vector DB initially). Simplified app
 
 **Tasks:**
 - [x] File-based knowledge base search ✅
-- [ ] Context extraction from markdown
-- [ ] Integration with expert consultation
+- [x] Context extraction from markdown ✅
+- [x] Integration with expert consultation ✅
 - [ ] Optional: Add embeddings later if needed
 
 **Files to Create:**
-- `tapps_agents/core/simple_rag.py`
+- `tapps_agents/experts/simple_rag.py` ✅
+- `tapps_agents/experts/base_expert.py` (uses RAG for `_build_domain_context()` + `_get_sources()`) ✅
 
 **Success Criteria:**
 - Keyword search working

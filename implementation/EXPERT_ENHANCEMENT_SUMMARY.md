@@ -4,6 +4,9 @@
 **Status:** Planning Complete, Ready for Implementation  
 **Version:** 2.0.0
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ---
 
 ## What Was Created

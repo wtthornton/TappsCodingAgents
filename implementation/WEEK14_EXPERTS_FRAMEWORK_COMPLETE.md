@@ -1,5 +1,8 @@
 # Week 14: Industry Experts Framework Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 This document details the completion of Week 14, focusing on the implementation of the Industry Experts Framework - a major missing component from the requirements.
 
 ## Summary

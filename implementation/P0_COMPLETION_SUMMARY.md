@@ -1,5 +1,8 @@
 # P0 Enhancements - Completion Summary
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** January 2026  
 **Status:** ✅ **ALL P0 ITEMS COMPLETE**  
 **Version:** 2.0.0

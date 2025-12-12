@@ -248,9 +248,12 @@ class TestWorkflowExecutor:
         # Create mock expert registry
         mock_registry = Mock()
         mock_result = ConsultationResult(
+            domain="security",
+            query="Security review needed",
             weighted_answer="Use secure protocols",
             confidence=0.9,
             agreement_level=0.95,
+            confidence_threshold=0.7,
             primary_expert="expert-security",
             all_experts_agreed=True,
             responses=[
@@ -314,9 +317,12 @@ class TestWorkflowExecutor:
         # Create mock expert registry
         mock_registry = Mock()
         mock_result = ConsultationResult(
+            domain="security",
+            query="What security measures should I take?",
             weighted_answer="Custom answer",
             confidence=0.8,
             agreement_level=0.9,
+            confidence_threshold=0.7,
             primary_expert="expert-security",
             all_experts_agreed=True,
             responses=[]
@@ -385,9 +391,12 @@ class TestWorkflowExecutor:
         # Create mock expert registry
         mock_registry = Mock()
         mock_result = ConsultationResult(
+            domain="security",
+            query="What should I do?",
             weighted_answer="Manual consultation answer",
             confidence=0.85,
             agreement_level=0.9,
+            confidence_threshold=0.7,
             primary_expert="expert-security",
             all_experts_agreed=True,
             responses=[]

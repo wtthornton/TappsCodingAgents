@@ -1,5 +1,8 @@
 # Configuration-Only Experts Implementation Plan
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** December 2025  
 **Purpose:** Simplify expert creation by making experts purely configuration-driven instead of requiring code classes
 

@@ -1,5 +1,8 @@
 # Week 10: Orchestrator Agent & Workflow Integration - Implementation Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ## Summary
 
 Week 10 focused on implementing the Orchestrator Agent, which coordinates YAML-defined workflows and makes gate decisions. The orchestrator provides workflow management commands and integrates with the workflow engine implemented in Week 9.

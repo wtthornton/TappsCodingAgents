@@ -1,5 +1,8 @@
 # Reviewer Agent Implementation Plan
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Approach:** Spike-First (Option B)  
 **Goal:** Build working reviewer agent to extract API patterns  
 **Status:** In Progress

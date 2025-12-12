@@ -3,6 +3,9 @@
 **Date:** December 2025  
 **Purpose:** Review planned next steps to ensure they align with 2025 best practices and avoid over-engineering
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ## Summary
 
 After reviewing requirements, current implementation, and 2025 best practices, here are the recommendations:

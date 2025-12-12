@@ -1,5 +1,8 @@
 # Context7 Best Practices Integration for Self-Improving Agents
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** January 2026  
 **Status:** ✅ **COMPLETE**  
 **Integration:** Gap 1 Self-Improving Agents + Context7 Knowledge Base

@@ -5,6 +5,9 @@
 **Status:** Complete Review  
 **Version Alignment:** Needs Update
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ---
 
 ## Executive Summary

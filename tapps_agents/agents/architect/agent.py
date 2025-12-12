@@ -51,6 +51,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
         
         # Expert registry will be initialized in activate() via ExpertSupportMixin
         # Allow manual override if provided
+        self.expert_registry = None
         if expert_registry:
             self.expert_registry = expert_registry
     

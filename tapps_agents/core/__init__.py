@@ -10,6 +10,19 @@ from .unified_cache import UnifiedCache, create_unified_cache, UnifiedCacheStats
 from .cache_router import CacheType, CacheRequest, CacheResponse
 from .hardware_profiler import HardwareProfile, HardwareProfiler, CacheOptimizationProfile
 from .unified_cache_config import UnifiedCacheConfig, UnifiedCacheConfigManager
+from .adaptive_cache_config import AdaptiveCacheConfig, AdaptiveCacheSettings, ConfigurationChange
+from .session_manager import (
+    SessionManager, AgentSession, SessionState, HealthStatus,
+    SessionStorage, SessionMonitor, SessionRecovery
+)
+from .resource_aware_executor import (
+    ResourceAwareExecutor, ExecutionConfig, ExecutionState, ExecutionMode,
+    AutoPause, ResourceOptimizer
+)
+from .long_duration_support import (
+    LongDurationManager, DurabilityGuarantee, FailureRecovery, ProgressTracker,
+    DurabilityLevel, ProgressSnapshot, FailureRecord
+)
 from .task_state import TaskState, TaskStateManager, StateTransition
 from .checkpoint_manager import CheckpointManager, CheckpointStorage, TaskCheckpoint
 from .resume_handler import ResumeHandler, ArtifactValidator, ContextRestorer
@@ -41,6 +54,14 @@ from .best_practice_consultant import (
 from .learning_decision import (
     LearningDecisionEngine, LearningDecision, DecisionResult, DecisionSource
 )
+from .visual_feedback import (
+    VisualFeedbackCollector, VisualAnalyzer, UIComparator, VisualPatternLearner,
+    VisualFeedback, VisualElement, LayoutMetrics, AccessibilityMetrics,
+    RenderingMode as VisualRenderingMode, VisualElementType
+)
+from .browser_controller import (
+    BrowserController, BrowserType, RenderingMode, ScreenshotOptions, InteractionEvent
+)
 
 __all__ = [
     "BaseAgent", "MAL", "ContextManager", "ContextTier", "TieredContextBuilder", "ASTParser",
@@ -48,6 +69,13 @@ __all__ = [
     "CacheType", "CacheRequest", "CacheResponse",
     "HardwareProfile", "HardwareProfiler", "CacheOptimizationProfile",
     "UnifiedCacheConfig", "UnifiedCacheConfigManager",
+    "AdaptiveCacheConfig", "AdaptiveCacheSettings", "ConfigurationChange",
+    "SessionManager", "AgentSession", "SessionState", "HealthStatus",
+    "SessionStorage", "SessionMonitor", "SessionRecovery",
+    "ResourceAwareExecutor", "ExecutionConfig", "ExecutionState", "ExecutionMode",
+    "AutoPause", "ResourceOptimizer",
+    "LongDurationManager", "DurabilityGuarantee", "FailureRecovery", "ProgressTracker",
+    "DurabilityLevel", "ProgressSnapshot", "FailureRecord",
     "TaskState", "TaskStateManager", "StateTransition",
     "CheckpointManager", "CheckpointStorage", "TaskCheckpoint",
     "ResumeHandler", "ArtifactValidator", "ContextRestorer",
@@ -62,6 +90,10 @@ __all__ = [
     "LearningAwareMixin",
     "LearningConfidenceCalculator", "LearnedExperienceMetrics", "ConfidenceFactors",
     "BestPracticeConsultant", "BestPracticeAdvice", "CachedAdvice",
-    "LearningDecisionEngine", "LearningDecision", "DecisionResult", "DecisionSource"
+    "LearningDecisionEngine", "LearningDecision", "DecisionResult", "DecisionSource",
+    "VisualFeedbackCollector", "VisualAnalyzer", "UIComparator", "VisualPatternLearner",
+    "VisualFeedback", "VisualElement", "LayoutMetrics", "AccessibilityMetrics",
+    "VisualRenderingMode", "VisualElementType",
+    "BrowserController", "BrowserType", "RenderingMode", "ScreenshotOptions", "InteractionEvent"
 ]
 

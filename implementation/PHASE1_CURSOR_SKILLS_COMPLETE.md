@@ -1,5 +1,8 @@
 # Phase 1: Core Agents to Skills - COMPLETE ✅
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** December 2025  
 **Status:** ✅ Complete  
 **Phase:** Phase 1 of Cursor AI Integration Plan 2025

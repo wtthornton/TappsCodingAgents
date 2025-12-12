@@ -4,6 +4,9 @@
 **Date:** December 2025  
 **See Full Plan:** [UNIFIED_CACHE_ARCHITECTURE_PLAN.md](UNIFIED_CACHE_ARCHITECTURE_PLAN.md)
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ---
 
 ## Problem Statement

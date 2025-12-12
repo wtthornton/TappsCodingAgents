@@ -1,0 +1,85 @@
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+exclude = '''
+/(
+  \.git
+| \.mypy_cache
+| \.pytest_cache
+| \.ruff_cache
+| \.venv
+| build
+| dist
+| htmlcov
+| MagicMock
+| tapps_agents\.egg-info
+| reports
+)/'''
+
+[tool.ruff]
+line-length = 88
+target-version = "py310"
+fix = false
+show-fixes = true
+exclude = [
+  ".git",
+  ".mypy_cache",
+  ".pytest_cache",
+  ".ruff_cache",
+  ".venv",
+  "build",
+  "dist",
+  "htmlcov",
+  "MagicMock",
+  "tapps_agents.egg-info",
+  "reports",
+]
+
+[tool.ruff.lint]
+# Start with a pragmatic, high-signal rule set; tighten over time during the marathon.
+select = ["E", "F", "I", "UP", "B"]
+ignore = [
+  # Let Black handle line-length; long strings/URLs are often intentional.
+  "E501",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = [
+  # Tests often have “unused” fixtures/parameters by design.
+  "ARG001",
+  "ARG002",
+]
+
+[tool.mypy]
+python_version = "3.10"
+pretty = true
+show_error_codes = true
+show_column_numbers = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_return_any = false
+warn_unreachable = true
+no_implicit_optional = true
+disallow_untyped_defs = false
+check_untyped_defs = false
+ignore_missing_imports = true
+exclude = "(^build/|^dist/|^htmlcov/|^MagicMock/|^reports/|^tapps_agents\\.egg-info/)"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = [
+  "-q",
+  "--disable-warnings",
+  "--maxfail=1",
+]
+asyncio_mode = "auto"
+timeout = 120
+
+[tool.coverage.run]
+branch = true
+source = ["tapps_agents"]
+
+[tool.coverage.report]
+skip_empty = true
+show_missing = true
+precision = 2

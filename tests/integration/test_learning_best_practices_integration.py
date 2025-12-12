@@ -8,7 +8,7 @@ from pathlib import Path
 
 from tapps_agents.core.agent_learning import AgentLearner
 from tapps_agents.core.capability_registry import CapabilityRegistry
-from tapps_agents.core.hardware_profiler import HardwareProfile, HardwareProfileType
+from tapps_agents.core.hardware_profiler import HardwareProfile
 from tapps_agents.core.learning_decision import DecisionSource
 from tapps_agents.experts.expert_registry import ExpertRegistry, ConsultationResult
 
@@ -24,12 +24,7 @@ class TestLearningBestPracticesIntegration:
     @pytest.fixture
     def hardware_profile(self):
         """Create hardware profile."""
-        return HardwareProfile(
-            profile_type=HardwareProfileType.WORKSTATION,
-            cpu_cores=8,
-            memory_gb=16,
-            has_gpu=False
-        )
+        return HardwareProfile.WORKSTATION
     
     @pytest.fixture
     def mock_expert_registry(self):
@@ -244,7 +239,8 @@ class TestLearningBestPracticesIntegration:
         assert cache_stats is not None
         assert cache_stats["cache_hits"] >= 1
     
-    def test_backward_compatibility_no_expert_registry(self, capability_registry, hardware_profile):
+    @pytest.mark.asyncio
+    async def test_backward_compatibility_no_expert_registry(self, capability_registry, hardware_profile):
         """Test that system works without expert registry (backward compatibility)."""
         learner = AgentLearner(
             capability_registry=capability_registry,

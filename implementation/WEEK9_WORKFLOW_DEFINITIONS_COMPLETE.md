@@ -1,5 +1,8 @@
 # Week 9: YAML Workflow Definitions - Implementation Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ## Summary
 
 Week 9 focused on implementing the YAML Workflow Definitions system, providing declarative, version-controlled workflow orchestration. The system supports BMAD-METHOD patterns including conditions, optional steps, artifact tracking, and gate-based branching.

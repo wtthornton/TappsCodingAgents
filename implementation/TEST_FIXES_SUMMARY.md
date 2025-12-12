@@ -1,5 +1,8 @@
 # Test Fixes Summary
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** January 2025  
 **Status:** Partial - 3 of 5 critical issues fixed
 

@@ -11,6 +11,7 @@ from .cache_router import (
 )
 from .context_manager import ContextManager, ContextTier
 from .hardware_profiler import HardwareProfiler, HardwareProfile
+from .adaptive_cache_config import AdaptiveCacheConfig
 from ..context7.kb_cache import KBCache
 from ..context7.cache_structure import CacheStructure
 from ..context7.metadata import MetadataManager
@@ -43,7 +44,9 @@ class UnifiedCache:
         context_manager: Optional[ContextManager] = None,
         kb_cache: Optional[KBCache] = None,
         knowledge_base: Optional[SimpleKnowledgeBase] = None,
-        hardware_profile: Optional[HardwareProfile] = None
+        hardware_profile: Optional[HardwareProfile] = None,
+        adaptive_config: Optional[AdaptiveCacheConfig] = None,
+        enable_adaptive: bool = True
     ):
         """
         Initialize unified cache.
@@ -54,6 +57,8 @@ class UnifiedCache:
             kb_cache: Optional KBCache instance
             knowledge_base: Optional SimpleKnowledgeBase instance
             hardware_profile: Optional hardware profile (auto-detects if not provided)
+            adaptive_config: Optional AdaptiveCacheConfig instance (creates default if enable_adaptive=True)
+            enable_adaptive: Whether to enable adaptive configuration (default: True)
         """
         self.hardware_profiler = HardwareProfiler()
         
@@ -63,12 +68,27 @@ class UnifiedCache:
         else:
             self.hardware_profile = self.hardware_profiler.detect_profile()
         
+        # Initialize adaptive configuration if enabled
+        if enable_adaptive:
+            if adaptive_config is None:
+                adaptive_config = AdaptiveCacheConfig(
+                    hardware_profiler=self.hardware_profiler
+                )
+            self.adaptive_config = adaptive_config
+        else:
+            self.adaptive_config = None
+        
         # Initialize context manager if not provided
         if context_manager is None:
-            optimization_profile = self.hardware_profiler.get_optimization_profile(self.hardware_profile)
-            context_manager = ContextManager(
-                cache_size=optimization_profile.max_in_memory_entries
-            )
+            # Use adaptive settings if available, otherwise use base profile
+            if self.adaptive_config:
+                settings = self.adaptive_config.get_current_settings()
+                cache_size = settings.max_in_memory_entries
+            else:
+                optimization_profile = self.hardware_profiler.get_optimization_profile(self.hardware_profile)
+                cache_size = optimization_profile.max_in_memory_entries
+            
+            context_manager = ContextManager(cache_size=cache_size)
         
         # Initialize KB cache if not provided
         if kb_cache is None:
@@ -230,6 +250,10 @@ class UnifiedCache:
         Returns:
             UnifiedCacheStats instance
         """
+        # Check and adjust adaptive configuration if enabled
+        if self.adaptive_config:
+            self.adaptive_config.check_and_adjust()
+        
         cache_stats = self.router.get_all_stats()
         resource_usage = self.hardware_profiler.get_current_resource_usage()
         
@@ -247,32 +271,74 @@ class UnifiedCache:
     
     def get_optimization_profile(self) -> Dict[str, Any]:
         """Get current optimization profile settings."""
-        profile = self.hardware_profiler.get_optimization_profile(self.hardware_profile)
-        return {
-            "profile": profile.profile.value,
-            "tiered_context": {
-                "tier1_ttl": profile.tier1_ttl,
-                "tier2_ttl": profile.tier2_ttl,
-                "tier3_ttl": profile.tier3_ttl,
-                "max_in_memory_entries": profile.max_in_memory_entries,
-                "hybrid_mode": profile.hybrid_mode,
-                "compression_enabled": profile.compression_enabled
-            },
-            "context7_kb": {
-                "max_cache_size_mb": profile.max_cache_size_mb,
-                "pre_populate": profile.pre_populate,
-                "auto_refresh": profile.auto_refresh
-            },
-            "rag_knowledge": {
-                "index_on_startup": profile.index_on_startup,
-                "max_knowledge_files": profile.max_knowledge_files
-            },
-            "adaptive": {
-                "enabled": profile.enable_adaptive,
-                "resource_check_interval": profile.resource_check_interval,
-                "emergency_cleanup_threshold": profile.emergency_cleanup_threshold
+        # Use adaptive settings if available, otherwise use base profile
+        if self.adaptive_config:
+            settings = self.adaptive_config.get_current_settings()
+            return {
+                "profile": self.hardware_profile.value,
+                "adaptive_enabled": True,
+                "tiered_context": {
+                    "tier1_ttl": settings.tier1_ttl,
+                    "tier2_ttl": settings.tier2_ttl,
+                    "tier3_ttl": settings.tier3_ttl,
+                    "max_in_memory_entries": settings.max_in_memory_entries,
+                    "hybrid_mode": settings.hybrid_mode,
+                    "compression_enabled": settings.compression_enabled
+                },
+                "context7_kb": {
+                    "max_cache_size_mb": settings.max_cache_size_mb,
+                    "pre_populate": settings.pre_populate,
+                    "auto_refresh": settings.auto_refresh
+                },
+                "rag_knowledge": {
+                    "index_on_startup": settings.index_on_startup,
+                    "max_knowledge_files": settings.max_knowledge_files
+                },
+                "adaptive_behavior": {
+                    "background_indexing_enabled": settings.background_indexing_enabled,
+                    "cache_warming_enabled": settings.cache_warming_enabled,
+                    "emergency_cleanup_active": settings.emergency_cleanup_active
+                }
             }
-        }
+        else:
+            profile = self.hardware_profiler.get_optimization_profile(self.hardware_profile)
+            return {
+                "profile": profile.profile.value,
+                "adaptive_enabled": False,
+                "tiered_context": {
+                    "tier1_ttl": profile.tier1_ttl,
+                    "tier2_ttl": profile.tier2_ttl,
+                    "tier3_ttl": profile.tier3_ttl,
+                    "max_in_memory_entries": profile.max_in_memory_entries,
+                    "hybrid_mode": profile.hybrid_mode,
+                    "compression_enabled": profile.compression_enabled
+                },
+                "context7_kb": {
+                    "max_cache_size_mb": profile.max_cache_size_mb,
+                    "pre_populate": profile.pre_populate,
+                    "auto_refresh": profile.auto_refresh
+                },
+                "rag_knowledge": {
+                    "index_on_startup": profile.index_on_startup,
+                    "max_knowledge_files": profile.max_knowledge_files
+                },
+                "adaptive": {
+                    "enabled": profile.enable_adaptive,
+                    "resource_check_interval": profile.resource_check_interval,
+                    "emergency_cleanup_threshold": profile.emergency_cleanup_threshold
+                }
+            }
+    
+    def get_adaptive_status(self) -> Optional[Dict[str, Any]]:
+        """
+        Get adaptive configuration status.
+        
+        Returns:
+            Dictionary with adaptive status or None if adaptive config is disabled
+        """
+        if self.adaptive_config:
+            return self.adaptive_config.get_status()
+        return None
 
 
 # Convenience function to create a default UnifiedCache instance

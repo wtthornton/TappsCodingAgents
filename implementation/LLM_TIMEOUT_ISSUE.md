@@ -1,5 +1,8 @@
 # LLM Timeout Issue - Improvement Execution
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date**: December 2025  
 **Status**: ⚠️ Timeout Issues with Large Files
 

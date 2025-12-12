@@ -1,5 +1,8 @@
 # Week 8: MCP Gateway - Implementation Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 ## Summary
 
 Week 8 focused on implementing the MCP Gateway, a unified interface for tool access across all agents. The gateway provides a consistent, extensible way to register and call tools from different categories (filesystem, Git, code analysis).

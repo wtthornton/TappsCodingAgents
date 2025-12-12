@@ -190,8 +190,27 @@ class OrchestratorAgent(BaseAgent):
     
     async def _resume_workflow(self) -> Dict[str, Any]:
         """Resume an interrupted workflow."""
-        # TODO: Load workflow state from persistence
-        return {"message": "Workflow resume not yet implemented"}
+        if not self.workflow_executor:
+            return {"error": "Workflow executor not initialized"}
+        
+        try:
+            state = self.workflow_executor.load_last_state()
+            self.current_workflow = self.workflow_executor.workflow
+            
+            return {
+                "success": True,
+                "workflow_id": state.workflow_id,
+                "status": state.status,
+                "current_step": state.current_step,
+                "completed_steps": state.completed_steps,
+                "skipped_steps": state.skipped_steps,
+                "artifacts": {k: {"path": v.path, "status": v.status} for k, v in (state.artifacts or {}).items()},
+                "message": "Workflow resumed from persisted state"
+            }
+        except FileNotFoundError as e:
+            return {"error": str(e)}
+        except Exception as e:
+            return {"error": f"Failed to resume workflow: {str(e)}"}
     
     async def _make_gate_decision(
         self,

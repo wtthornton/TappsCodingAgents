@@ -1,5 +1,8 @@
 # Week 15: Cloud MAL & Workflow Expert Integration Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** December 2025  
 **Status:** Complete  
 **Phase:** Phase 5 - Cloud & Integration (Revised Priorities)

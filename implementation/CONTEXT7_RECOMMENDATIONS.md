@@ -1,5 +1,8 @@
 # Context7 Research Recommendations
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date**: December 2025  
 **Research Focus**: Resolving timeout issues with large file refactoring  
 **Sources**: Context7 documentation for Ollama and httpx

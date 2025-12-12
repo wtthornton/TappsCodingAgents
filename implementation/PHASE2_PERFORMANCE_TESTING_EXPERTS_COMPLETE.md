@@ -1,5 +1,8 @@
 # Phase 2: Performance & Testing Experts - Complete
 
+> **Status Note (2025-12-11):** This file is a historical snapshot.  
+> **Canonical status:** See `implementation/IMPLEMENTATION_STATUS.md`.
+
 **Date:** December 2025  
 **Status:** ✅ Complete  
 **Duration:** Implementation complete  
