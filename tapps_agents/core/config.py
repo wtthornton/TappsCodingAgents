@@ -389,7 +389,7 @@ class ToolingTargetsConfig(BaseModel):
     """Pin runtime/tool targets so agents and CI behave deterministically."""
 
     python: str = Field(
-        default="3.14.2",
+        default="3.13.3",
         description="Target Python version for this project (pin exact patch where possible)",
     )
     python_requires: str = Field(

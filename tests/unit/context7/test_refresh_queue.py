@@ -3,7 +3,7 @@ Unit tests for Context7 refresh queue.
 """
 
 import tempfile
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -124,7 +124,7 @@ class TestRefreshQueue:
         assert task.priority == 3  # Only tasks with priority <= 5
 
     def test_get_next_task_scheduled_filter(self, queue):
-        future_time = (datetime.utcnow() + timedelta(hours=1)).isoformat() + "Z"
+        future_time = (datetime.now(UTC) + timedelta(hours=1)).isoformat() + "Z"
         queue.add_task("lib1", "topic1", priority=5, scheduled_for=future_time)
 
         task = queue.get_next_task()
@@ -188,7 +188,7 @@ class TestRefreshQueue:
                 queue_file.unlink()
 
     def test_queue_stale_entries(self, queue):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         entries = [
             {
                 "library": "react",
@@ -212,7 +212,7 @@ class TestRefreshQueue:
         assert queued == 2  # react and angular are stale
 
     def test_queue_stale_entries_priority(self, queue):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         entries = [
             {
                 "library": "react",
@@ -239,7 +239,7 @@ class TestRefreshQueue:
         assert very_stale_task.priority > moderate_stale_task.priority
 
     def test_queue_stale_entries_with_library_type(self, queue):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         entries = [
             {
                 "library": "jwt-auth",

@@ -198,9 +198,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             format_type = kwargs.get("format", "all")  # json, markdown, html, all
             output_dir = kwargs.get("output_dir")
             files_list = kwargs.get("files")  # Optional list of files to analyze
+            target = kwargs.get("target")  # Optional target path (file or directory)
 
             return await self.generate_reports(
-                format_type=format_type, output_dir=output_dir, files=files_list
+                format_type=format_type, output_dir=output_dir, files=files_list, target=target
             )
 
         elif command == "duplication":
@@ -683,6 +684,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         format_type: str = "all",
         output_dir: str | None = None,
         files: list[str] | None = None,
+        target: str | None = None,
     ) -> dict[str, Any]:
         """
         Generate quality reports in multiple formats.
@@ -693,6 +695,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             format_type: Report format ('json', 'markdown', 'html', 'all')
             output_dir: Custom output directory (default: reports/quality/)
             files: Optional list of file paths to analyze (if None, uses single file or project)
+            target: Optional file or directory path to analyze (if provided and files is None, files are discovered from target)
 
         Returns:
             Dictionary with report generation results
@@ -717,6 +720,52 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "type_checking_score": 0.0,
             "metrics": {},
         }
+
+        def _discover_code_files(root: Path) -> list[Path]:
+            """Discover code files under a directory, excluding common non-source directories."""
+            exclude_dir_names = {
+                ".git",
+                "__pycache__",
+                ".pytest_cache",
+                ".mypy_cache",
+                ".ruff_cache",
+                ".venv",
+                "venv",
+                "env",
+                "node_modules",
+                "dist",
+                "build",
+                "htmlcov",
+                "reports",
+            }
+            allowed_suffixes = {".py", ".ts", ".tsx", ".js", ".jsx"}
+
+            discovered: list[Path] = []
+            for path in root.rglob("*"):
+                if path.is_dir():
+                    # Quick prune on directory name; rglob still descends, but this keeps filtering simple.
+                    continue
+                if path.suffix.lower() not in allowed_suffixes:
+                    continue
+                # Exclude paths containing any excluded directory segment
+                if any(part in exclude_dir_names for part in path.parts):
+                    continue
+                discovered.append(path)
+            return discovered
+
+        # If no explicit file list is provided, derive it from target (file or directory) if present.
+        if not files and target:
+            target_path = Path(target)
+            if target_path.exists():
+                if target_path.is_file():
+                    files = [str(target_path)]
+                elif target_path.is_dir():
+                    files = [str(p) for p in _discover_code_files(target_path)]
+
+        # Support comma-separated multiple formats (e.g., "json,html") in addition to single tokens.
+        requested_formats = {f.strip().lower() for f in str(format_type).split(",") if f.strip()}
+        if "all" in requested_formats:
+            requested_formats = {"all"}
 
         if files:
             # Analyze multiple files
@@ -783,7 +832,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     + aggregated_scores["performance_score"] * 0.10
                 ) * 10  # Scale from 0-10 weighted sum to 0-100
         else:
-            # Single file or project-level - use defaults
+            # No target/files provided or no files found - keep scores at 0.
             aggregated_scores["overall_score"] = 0.0
 
         # Prepare metadata
@@ -813,24 +862,24 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         # Generate reports based on format_type
         reports = {}
 
-        if format_type in ["json", "all"]:
+        if "all" in requested_formats or "json" in requested_formats:
             reports["json"] = str(
                 report_gen.generate_json_report(aggregated_scores, all_files, metadata)
             )
 
-        if format_type in ["markdown", "all"]:
+        if "all" in requested_formats or "markdown" in requested_formats:
             reports["markdown"] = str(
                 report_gen.generate_summary_report(
                     aggregated_scores, all_files, metadata
                 )
             )
 
-        if format_type in ["html", "all"]:
+        if "all" in requested_formats or "html" in requested_formats:
             reports["html"] = str(
                 report_gen.generate_html_report(aggregated_scores, all_files, metadata)
             )
 
-        if format_type == "all":
+        if "all" in requested_formats:
             reports["historical"] = str(
                 report_gen.save_historical_data(aggregated_scores, metadata)
             )

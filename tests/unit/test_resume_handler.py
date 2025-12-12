@@ -4,7 +4,7 @@ Unit tests for Resume Handler.
 
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -67,7 +67,7 @@ class TestContextRestorer:
             command="test command",
             state="paused",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             context={"key": "value", "nested": {"data": 123}},
         )
 
@@ -115,7 +115,7 @@ class TestResumeHandler:
             command="test command",
             state="paused",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             artifacts=[],
         )
         checkpoint.checksum = checkpoint.calculate_checksum()
@@ -133,7 +133,7 @@ class TestResumeHandler:
             command="test command",
             state="completed",
             progress=1.0,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
         )
         checkpoint.checksum = checkpoint.calculate_checksum()
         checkpoint_manager.storage.save(checkpoint)
@@ -150,7 +150,7 @@ class TestResumeHandler:
             command="test command",
             state="paused",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             context={"key": "value"},
             artifacts=[],
         )
@@ -174,7 +174,7 @@ class TestResumeHandler:
             command="test command",
             state="paused",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             artifacts=["missing-file.txt"],
         )
         checkpoint.checksum = checkpoint.calculate_checksum()
@@ -192,7 +192,7 @@ class TestResumeHandler:
             command="test command",
             state="paused",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             artifacts=[],
         )
         checkpoint1.checksum = checkpoint1.calculate_checksum()
@@ -205,7 +205,7 @@ class TestResumeHandler:
             command="test command",
             state="completed",
             progress=1.0,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             artifacts=[],
         )
         checkpoint2.checksum = checkpoint2.calculate_checksum()

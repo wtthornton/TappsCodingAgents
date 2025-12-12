@@ -2,7 +2,7 @@
 Unit tests for Knowledge Graph.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from tapps_agents.core.knowledge_graph import (
     GraphQuery,
@@ -152,7 +152,7 @@ class TestKnowledgeGraph:
             task_id="task-1",
             agent_id="agent",
             command="design system",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
             patterns_used=["MVC"],
@@ -162,7 +162,7 @@ class TestKnowledgeGraph:
             task_id="task-2",
             agent_id="agent",
             command="design system",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.9,
             patterns_used=["MVC", "Repository"],

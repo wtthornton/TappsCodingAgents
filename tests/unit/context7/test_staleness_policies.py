@@ -2,7 +2,7 @@
 Unit tests for Context7 staleness policies.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -20,21 +20,21 @@ class TestStalenessPolicy:
 
     def test_is_stale_fresh_entry(self):
         policy = StalenessPolicy(max_age_days=30)
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=10)).isoformat() + "Z"
 
         assert policy.is_stale(last_updated, now) is False
 
     def test_is_stale_old_entry(self):
         policy = StalenessPolicy(max_age_days=30)
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=31)).isoformat() + "Z"
 
         assert policy.is_stale(last_updated, now) is True
 
     def test_is_stale_exactly_at_threshold(self):
         policy = StalenessPolicy(max_age_days=30)
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=30)).isoformat() + "Z"
 
         # Exactly at threshold should not be stale (age <= max_age)
@@ -43,11 +43,11 @@ class TestStalenessPolicy:
     def test_is_stale_invalid_date(self):
         policy = StalenessPolicy(max_age_days=30)
         # Invalid date should be considered stale for safety
-        assert policy.is_stale("invalid-date", datetime.utcnow()) is True
+        assert policy.is_stale("invalid-date", datetime.now(UTC)) is True
 
     def test_days_until_stale_fresh(self):
         policy = StalenessPolicy(max_age_days=30)
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=10)).isoformat() + "Z"
 
         days = policy.days_until_stale(last_updated, now)
@@ -55,7 +55,7 @@ class TestStalenessPolicy:
 
     def test_days_until_stale_already_stale(self):
         policy = StalenessPolicy(max_age_days=30)
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=35)).isoformat() + "Z"
 
         days = policy.days_until_stale(last_updated, now)
@@ -63,7 +63,7 @@ class TestStalenessPolicy:
 
     def test_days_until_stale_invalid_date(self):
         policy = StalenessPolicy(max_age_days=30)
-        days = policy.days_until_stale("invalid-date", datetime.utcnow())
+        days = policy.days_until_stale("invalid-date", datetime.now(UTC))
         assert days == -1  # Error case returns -1
 
 
@@ -115,7 +115,7 @@ class TestStalenessPolicyManager:
         assert policy.library_type == "experimental"
 
     def test_is_entry_stale_fresh(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=10)).isoformat() + "Z"
 
         assert (
@@ -123,13 +123,13 @@ class TestStalenessPolicyManager:
         )
 
     def test_is_entry_stale_old(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=31)).isoformat() + "Z"
 
         assert manager.is_entry_stale("react", last_updated, reference_date=now) is True
 
     def test_is_entry_stale_critical_library(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=8)).isoformat() + "Z"
 
         # Critical libraries stale after 7 days
@@ -138,7 +138,7 @@ class TestStalenessPolicyManager:
         )
 
     def test_get_refresh_recommendation_keep(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=10)).isoformat() + "Z"
 
         rec = manager.get_refresh_recommendation("react", last_updated)
@@ -147,7 +147,7 @@ class TestStalenessPolicyManager:
         assert rec["library_type"] == "stable"
 
     def test_get_refresh_recommendation_refresh(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=31)).isoformat() + "Z"
 
         rec = manager.get_refresh_recommendation(
@@ -157,7 +157,7 @@ class TestStalenessPolicyManager:
         assert rec["recommendation"] == "refresh"
 
     def test_get_refresh_recommendation_consider_refresh(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=25)).isoformat() + "Z"
 
         rec = manager.get_refresh_recommendation(
@@ -185,7 +185,7 @@ class TestStalenessPolicyManager:
         assert policy.max_age_days == 30
 
     def test_get_refresh_recommendation_fields(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=10)).isoformat() + "Z"
 
         rec = manager.get_refresh_recommendation(
@@ -200,7 +200,7 @@ class TestStalenessPolicyManager:
         assert "recommendation" in rec
 
     def test_is_entry_stale_with_explicit_type(self, manager):
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
         last_updated = (now - timedelta(days=8)).isoformat() + "Z"
 
         # Should use explicit type instead of inferring

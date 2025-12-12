@@ -23,6 +23,7 @@ except ImportError:
 
 try:
     import bandit
+    from bandit.core import config as bandit_config
     from bandit.core import manager
 
     HAS_BANDIT = True
@@ -219,7 +220,18 @@ class CodeScorer:
 
         try:
             # Use bandit for proper security analysis
-            b_mgr = manager.BanditManager(config={}, agg_type="file", debug=False)
+            # BanditManager expects a BanditConfig, not a dict. Passing a dict can raise ValueError,
+            # which would silently degrade scoring to a neutral 5.0.
+            b_conf = bandit_config.BanditConfig()
+            b_mgr = manager.BanditManager(
+                config=b_conf,
+                agg_type="file",
+                debug=False,
+                verbose=False,
+                quiet=True,
+                profile=None,
+                ignore_nosec=False,
+            )
             b_mgr.discover_files([str(file_path)], False)
             b_mgr.run_tests()
 

@@ -135,24 +135,6 @@ class WorkflowExecutor:
 
         return self.state
 
-    def get_status(self) -> dict[str, Any]:
-        """Return a lightweight status snapshot for the active workflow."""
-        if not self.state:
-            return {"active": False, "status": "idle"}
-        return {
-            "active": True,
-            "workflow_id": self.state.workflow_id,
-            "status": self.state.status,
-            "current_step": self.state.current_step,
-            "completed_steps": list(self.state.completed_steps or []),
-            "skipped_steps": list(self.state.skipped_steps or []),
-            "artifacts": {
-                k: {"path": v.path, "status": v.status}
-                for k, v in (self.state.artifacts or {}).items()
-            },
-            "error": self.state.error,
-        }
-
     @staticmethod
     def _normalize_action(action: str) -> str:
         return action.replace("-", "_").strip().lower()
@@ -166,7 +148,9 @@ class WorkflowExecutor:
         candidate = self.project_root / "example_bug.py"
         return candidate if candidate.exists() else None
 
-    def _capture_python_exception(self, file_path: Path) -> tuple[str | None, str | None]:
+    def _capture_python_exception(
+        self, file_path: Path
+    ) -> tuple[str | None, str | None]:
         """
         Run a python file and capture its exception output (best-effort).
 
@@ -212,19 +196,26 @@ class WorkflowExecutor:
         if workflow:
             self.workflow = workflow
         if not self.workflow:
-            raise ValueError("No workflow loaded. Call load_workflow() or pass workflow.")
+            raise ValueError(
+                "No workflow loaded. Call load_workflow() or pass workflow."
+            )
 
         # Ensure we have a state
         if not self.state or self.state.workflow_id != self.workflow.id:
             self.start(workflow=self.workflow)
 
         # Establish target file (best-effort for demo workflows)
+        target_path: Path | None
         if target_file:
-            target_path = (self.project_root / target_file) if not Path(target_file).is_absolute() else Path(target_file)
+            target_path = (
+                (self.project_root / target_file)
+                if not Path(target_file).is_absolute()
+                else Path(target_file)
+            )
         else:
             target_path = self._default_target_file()
 
-        if target_path:
+        if target_path and self.state:
             self.state.variables["target_file"] = str(target_path)
 
         steps_executed = 0
@@ -257,6 +248,8 @@ class WorkflowExecutor:
 
             steps_executed += 1
 
+        if not self.state:
+            raise RuntimeError("Workflow state lost during execution")
         return self.state
 
     async def _execute_step(self, step: WorkflowStep, target_path: Path | None) -> None:
@@ -287,7 +280,11 @@ class WorkflowExecutor:
         created_artifacts: list[dict[str, Any]] = []
 
         # ---- Step execution mappings ----
-        if agent_name == "debugger" and action in {"analyze_error", "analyze-error", "analyze"}:
+        if agent_name == "debugger" and action in {
+            "analyze_error",
+            "analyze-error",
+            "analyze",
+        }:
             if not target_path or not target_path.exists():
                 raise ValueError(
                     "Debugger step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
@@ -321,18 +318,34 @@ class WorkflowExecutor:
                 ]
                 if stack_trace:
                     report_lines += ["", "## Stack trace", "```", stack_trace, "```"]
-                report_lines += ["", "## Analysis (DebuggerAgent)", "```json", json.dumps(debug_result, indent=2), "```"]
+                report_lines += [
+                    "",
+                    "## Analysis (DebuggerAgent)",
+                    "```json",
+                    json.dumps(debug_result, indent=2),
+                    "```",
+                ]
                 report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-                created_artifacts.append({"name": "debug-report.md", "path": str(report_path)})
+                created_artifacts.append(
+                    {"name": "debug-report.md", "path": str(report_path)}
+                )
 
-        elif agent_name == "implementer" and action in {"write_code", "fix", "implement"}:
+        elif agent_name == "implementer" and action in {
+            "write_code",
+            "fix",
+            "implement",
+        }:
             if not target_path or not target_path.exists():
                 raise ValueError(
                     "Implementer step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
                 )
 
             debug_report_path = self.project_root / "debug-report.md"
-            debug_context = debug_report_path.read_text(encoding="utf-8") if debug_report_path.exists() else ""
+            debug_context = (
+                debug_report_path.read_text(encoding="utf-8")
+                if debug_report_path.exists()
+                else ""
+            )
             instruction = (
                 f"Fix the bugs in {target_path.name}. "
                 "Add robust input validation and handle missing keys safely. "
@@ -356,7 +369,9 @@ class WorkflowExecutor:
                 fixed_copy = fixed_dir / target_path.name
                 shutil.copy2(target_path, fixed_copy)
                 self.state.variables["fixed_file"] = str(fixed_copy)
-                created_artifacts.append({"name": "fixed-code/", "path": str(fixed_dir)})
+                created_artifacts.append(
+                    {"name": "fixed-code/", "path": str(fixed_dir)}
+                )
 
         elif agent_name == "reviewer" and action in {"review_code", "review", "score"}:
             # Prefer the fixed copy if available
@@ -365,13 +380,19 @@ class WorkflowExecutor:
             if not review_target or not review_target.exists():
                 raise ValueError("Reviewer step requires a target file to review.")
 
-            review_result = await run_agent("reviewer", "score", file=str(review_target))
+            review_result = await run_agent(
+                "reviewer", "score", file=str(review_target)
+            )
             self.state.variables["reviewer_result"] = review_result
 
             # Evaluate gate if configured
             gate = step.gate or {}
             if gate:
-                scoring = review_result.get("scoring", {}) if isinstance(review_result, dict) else {}
+                scoring = (
+                    review_result.get("scoring", {})
+                    if isinstance(review_result, dict)
+                    else {}
+                )
                 passed = bool(review_result.get("passed", False))
                 self.state.variables["gate_last"] = {
                     "step": step.id,
@@ -382,7 +403,9 @@ class WorkflowExecutor:
                 on_fail = gate.get("on_fail") or gate.get("on-fail")
 
                 # Mark review complete, but override next step based on gate decision
-                self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)
+                self.mark_step_complete(
+                    step_id=step.id, artifacts=created_artifacts or None
+                )
                 if passed and on_pass:
                     self.state.current_step = on_pass
                 elif (not passed) and on_fail:

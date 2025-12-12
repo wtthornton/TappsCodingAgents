@@ -4,7 +4,7 @@ Unit tests for Task Memory System.
 
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -29,7 +29,7 @@ class TestTaskMemory:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )
@@ -44,7 +44,7 @@ class TestTaskMemory:
             task_id="test-task",
             agent_id="test-agent",
             command="design system",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
             key_learnings=["Use modular design", "Follow patterns"],
@@ -65,7 +65,7 @@ class TestTaskMemory:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
             key_learnings=["learning1"],
@@ -96,7 +96,7 @@ class TestMemoryIndex:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )
@@ -114,7 +114,7 @@ class TestMemoryIndex:
             task_id="task-1",
             agent_id="agent-1",
             command="command1",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )
@@ -123,7 +123,7 @@ class TestMemoryIndex:
             task_id="task-2",
             agent_id="agent-2",
             command="command2",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.9,
         )
@@ -143,7 +143,7 @@ class TestMemoryIndex:
             task_id="test-task",
             agent_id="test-agent",
             command="design system",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )
@@ -162,7 +162,7 @@ class TestMemoryIndex:
             task_id="task-1",
             agent_id="agent",
             command="command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.3,
         )
@@ -171,7 +171,7 @@ class TestMemoryIndex:
             task_id="task-2",
             agent_id="agent",
             command="command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.9,
         )
@@ -193,7 +193,7 @@ class TestMemoryCompressor:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
             key_learnings=["learn1", "learn2", "learn3", "learn4", "learn5"],
@@ -232,7 +232,7 @@ class TestMemoryStorage:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )
@@ -252,7 +252,7 @@ class TestMemoryStorage:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )
@@ -271,7 +271,7 @@ class TestMemoryStorage:
             task_id="test-task",
             agent_id="test-agent",
             command="test command",
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=TaskOutcome.SUCCESS,
             quality_score=0.8,
         )

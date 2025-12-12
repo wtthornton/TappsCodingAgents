@@ -4,7 +4,7 @@ Unit tests for Checkpoint Manager.
 
 import shutil
 import tempfile
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -29,7 +29,7 @@ class TestTaskCheckpoint:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
         )
 
         assert checkpoint.task_id == "test-task"
@@ -44,7 +44,7 @@ class TestTaskCheckpoint:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
         )
 
         checksum = checkpoint.calculate_checksum()
@@ -59,7 +59,7 @@ class TestTaskCheckpoint:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
         )
 
         checkpoint.checksum = checkpoint.calculate_checksum()
@@ -77,7 +77,7 @@ class TestTaskCheckpoint:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             context={"key": "value"},
             artifacts=["file1.txt", "file2.txt"],
         )
@@ -118,7 +118,7 @@ class TestCheckpointStorage:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             context={"key": "value"},
         )
 
@@ -144,7 +144,7 @@ class TestCheckpointStorage:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
         )
 
         saved_path = storage.save(checkpoint)
@@ -167,7 +167,7 @@ class TestCheckpointStorage:
                 command="test command",
                 state="running",
                 progress=0.5,
-                checkpoint_time=datetime.utcnow(),
+                checkpoint_time=datetime.now(UTC),
             )
             storage.save(checkpoint)
 
@@ -187,7 +187,7 @@ class TestCheckpointStorage:
             command="test command",
             state="running",
             progress=0.5,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
         )
 
         storage.save(checkpoint)

@@ -4,7 +4,7 @@ Unit tests for Context7 KB cleanup automation.
 
 import shutil
 import tempfile
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -70,7 +70,7 @@ def sample_entries(kb_cache):
     entries = []
 
     # Create entries with different ages
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
 
     # Recent entry
     kb_cache.store(
@@ -225,7 +225,7 @@ class TestKBCleanup:
         """Test cleanup by age."""
         # Update metadata to set old dates
         metadata = cleanup.metadata_manager.load_cache_index()
-        now = datetime.utcnow()
+        now = datetime.now(UTC)
 
         # Make vue entry old
         if "vue" in metadata.libraries:
