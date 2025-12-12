@@ -2,6 +2,7 @@
 Reviewer Agent - Performs code review with scoring
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -15,6 +16,9 @@ from .report_generator import ReportGenerator
 from .scoring import CodeScorer
 from .service_discovery import ServiceDiscovery
 from .typescript_scorer import TypeScriptScorer
+
+
+logger = logging.getLogger(__name__)
 
 
 class ReviewerAgent(BaseAgent, ExpertSupportMixin):
@@ -377,7 +381,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     security_consultation.confidence
                 )
             except Exception:
-                pass
+                logger.debug("Security expert consultation failed", exc_info=True)
 
             # Consult Performance expert
             try:
@@ -390,7 +394,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["performance"] = perf_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Performance expert consultation failed", exc_info=True)
 
             # Consult Code Quality expert
             try:
@@ -403,7 +407,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["code_quality"] = quality_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Code quality expert consultation failed", exc_info=True)
 
         # Generate LLM feedback
         if include_llm_feedback:

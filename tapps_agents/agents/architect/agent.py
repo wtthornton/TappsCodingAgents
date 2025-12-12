@@ -3,6 +3,7 @@ Architect Agent - System and security architecture design.
 """
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,9 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
 from ...experts.agent_integration import ExpertSupportMixin
+
+
+logger = logging.getLogger(__name__)
 
 
 class ArchitectAgent(BaseAgent, ExpertSupportMixin):
@@ -170,7 +174,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
                     arch_consultation.confidence
                 )
             except Exception:
-                pass
+                logger.debug("Architecture expert consultation failed", exc_info=True)
 
             # Consult Performance expert
             try:
@@ -183,7 +187,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["performance"] = perf_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Performance expert consultation failed", exc_info=True)
 
             # Consult Security expert
             try:
@@ -196,7 +200,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["security"] = sec_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Security expert consultation failed", exc_info=True)
 
         expert_section = ""
         if expert_guidance:
@@ -378,7 +382,7 @@ Format:
                 )
                 tech_guidance = tech_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Technology selection consultation failed", exc_info=True)
 
         # Use Context7 to get documentation for mentioned technologies
         context7_docs = {}
@@ -486,7 +490,7 @@ Format as structured JSON with technology recommendations."""
                 security_guidance = security_consultation.weighted_answer
                 security_confidence = security_consultation.confidence
             except Exception:
-                pass
+                logger.debug("Security architecture consultation failed", exc_info=True)
 
         security_guidance_section = (
             f"Security Expert Guidance:\n{security_guidance}"

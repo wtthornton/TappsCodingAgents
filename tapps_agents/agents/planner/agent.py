@@ -2,6 +2,7 @@
 Planner Agent - Creates user stories and task breakdowns
 """
 
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
@@ -12,6 +13,9 @@ import yaml
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
+
+
+logger = logging.getLogger(__name__)
 
 
 class PlannerAgent(BaseAgent):
@@ -302,7 +306,7 @@ Respond with ONLY a single number (1-5)."""
             if match:
                 return int(match.group(1))
         except Exception:
-            pass
+            logger.debug("Complexity estimation failed; using default", exc_info=True)
 
         # Default to medium complexity if estimation fails
         return 3

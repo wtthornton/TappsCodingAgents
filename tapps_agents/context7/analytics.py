@@ -5,6 +5,7 @@ Tracks metrics like hit rate, response times, cache size, and provides
 reporting functionality.
 """
 
+import logging
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from typing import Any
@@ -13,6 +14,9 @@ import yaml
 
 from .cache_structure import CacheStructure
 from .metadata import MetadataManager
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -100,7 +104,7 @@ class Analytics:
                     self.metrics, f, default_flow_style=False, sort_keys=False
                 )
         except Exception:
-            pass
+            logger.debug("Failed to save Context7 metrics", exc_info=True)
 
     def record_cache_hit(self, response_time_ms: float = 0.0):
         """Record a cache hit."""

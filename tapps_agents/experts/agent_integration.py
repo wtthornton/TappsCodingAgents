@@ -5,9 +5,13 @@ Provides helper methods and patterns for agents to integrate with the expert sys
 Agents can use these utilities to consult experts during their workflows.
 """
 
+import logging
 from pathlib import Path
 
 from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExpertSupportMixin:
@@ -62,7 +66,7 @@ class ExpertSupportMixin:
                 self.expert_registry = ExpertRegistry.from_domains_file(domains_file)
                 return
             except Exception:
-                pass
+                logger.debug("Failed to load expert registry from domains.md", exc_info=True)
 
         # Try to load from experts.yaml
         if not experts_config_file:
@@ -82,7 +86,7 @@ class ExpertSupportMixin:
                 )
                 return
             except Exception:
-                pass
+                logger.debug("Failed to load expert registry from experts.yaml", exc_info=True)
 
         # Fallback: create registry with built-in experts only
         try:

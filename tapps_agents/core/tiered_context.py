@@ -2,12 +2,16 @@
 Tiered Context - Context tier definitions and builders.
 """
 
+import logging
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from .ast_parser import ASTParser, ModuleInfo
+
+
+logger = logging.getLogger(__name__)
 
 
 class ContextTier(Enum):
@@ -125,7 +129,7 @@ class TieredContextBuilder:
                     full_content, config.max_tokens
                 )
             except Exception:
-                pass
+                logger.debug("Failed to read full file content for tier3 context", exc_info=True)
 
         # Calculate token estimate
         context["token_estimate"] = self._estimate_tokens(context)

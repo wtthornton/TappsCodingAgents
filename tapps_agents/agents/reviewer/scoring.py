@@ -809,8 +809,6 @@ class CodeScorer:
                 if not npx_path:
                     return 5.0  # jscpd not available
                 cmd = [npx_path, "--yes", "jscpd"]
-            else:
-                return 5.0  # jscpd not available
 
             # Add jscpd arguments
             cmd.extend(

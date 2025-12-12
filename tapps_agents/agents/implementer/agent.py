@@ -3,6 +3,7 @@ Implementer Agent - Generates and writes production code
 """
 
 import shutil
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -18,6 +19,9 @@ from .code_generator import CodeGenerator
 
 if TYPE_CHECKING:
     from ..reviewer.agent import ReviewerAgent
+
+
+logger = logging.getLogger(__name__)
 
 
 class ImplementerAgent(BaseAgent, ExpertSupportMixin):
@@ -206,7 +210,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["security"] = security_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Security expert consultation failed", exc_info=True)
 
             # Consult Performance expert for performance optimization
             try:
@@ -219,7 +223,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["performance"] = perf_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Performance expert consultation failed", exc_info=True)
 
         # Generate code
         try:
@@ -318,7 +322,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["security"] = security_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Security expert consultation failed", exc_info=True)
 
             try:
                 perf_consultation = await self.expert_registry.consult(
@@ -330,7 +334,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 )
                 expert_guidance["performance"] = perf_consultation.weighted_answer
             except Exception:
-                pass
+                logger.debug("Performance expert consultation failed", exc_info=True)
 
         try:
             generated_code = await self.code_generator.generate_code(

@@ -5,6 +5,7 @@ Provides security audit, compliance verification, and API key management.
 """
 
 import hashlib
+import logging
 import os
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -19,6 +20,9 @@ try:
     CRYPTO_AVAILABLE = True
 except ImportError:
     CRYPTO_AVAILABLE = False
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -93,7 +97,8 @@ class APIKeyManager:
             try:
                 os.chmod(self.master_key_file, 0o600)
             except Exception:
-                pass  # Windows may not support chmod
+                # Windows may not support chmod; best-effort only.
+                logger.debug("chmod not supported for master key file", exc_info=True)
 
         self._cipher = Fernet(self._master_key)
 
@@ -174,7 +179,8 @@ class APIKeyManager:
         try:
             os.chmod(self.keys_file, 0o600)
         except Exception:
-            pass
+            # Best-effort only (Windows may not support chmod).
+            logger.debug("chmod not supported for keys file", exc_info=True)
 
     def load_api_key(self, key_name: str) -> str | None:
         """
@@ -290,7 +296,7 @@ class SecurityAuditor:
                         "Set file permissions to 600 (owner read/write only)"
                     )
             except Exception:
-                pass
+                logger.debug("Failed to stat API keys file permissions", exc_info=True)
 
         # Check cache directory permissions
         if self.cache_dir.exists():
@@ -302,7 +308,7 @@ class SecurityAuditor:
                         f"Cache directory has open permissions: {oct(mode)}"
                     )
             except Exception:
-                pass
+                logger.debug("Failed to stat cache directory permissions", exc_info=True)
 
         # Check for sensitive data in cache
         # (This is a simplified check - in production, scan for patterns)
