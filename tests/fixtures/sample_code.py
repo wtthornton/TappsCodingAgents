@@ -112,7 +112,6 @@ def calculate_average(numbers: list[float]) -> float:
 '''
 
 # Code with syntax error (should handle gracefully)
-SYNTAX_ERROR_CODE = '''def broken_function(
+SYNTAX_ERROR_CODE = """def broken_function(
     return True  # Missing closing parenthesis
-'''
-
+"""

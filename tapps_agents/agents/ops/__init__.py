@@ -1,2 +1,1 @@
-from .agent import OpsAgent
-
+from .agent import OpsAgent as OpsAgent

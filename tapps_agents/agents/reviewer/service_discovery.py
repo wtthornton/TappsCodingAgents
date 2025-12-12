@@ -4,27 +4,27 @@ Service Discovery - Auto-detect services in project structure
 Phase 6.4.2: Multi-Service Analysis
 """
 
-from typing import List, Optional, Dict
-from pathlib import Path
 import re
+from pathlib import Path
+from typing import Any
 
 
 class ServiceDiscovery:
     """
     Discover services in a project structure.
-    
+
     Phase 6.4.2: Multi-Service Analysis
     """
-    
+
     def __init__(
         self,
-        project_root: Optional[Path] = None,
-        service_patterns: Optional[List[str]] = None,
-        exclude_patterns: Optional[List[str]] = None
+        project_root: Path | None = None,
+        service_patterns: list[str] | None = None,
+        exclude_patterns: list[str] | None = None,
     ):
         """
         Initialize service discovery.
-        
+
         Args:
             project_root: Root directory of the project (default: current directory)
             service_patterns: List of patterns to match service directories
@@ -34,7 +34,7 @@ class ServiceDiscovery:
         if project_root is None:
             project_root = Path.cwd()
         self.project_root = Path(project_root).resolve()
-        
+
         if service_patterns is None:
             service_patterns = [
                 "services/*/",
@@ -43,10 +43,10 @@ class ServiceDiscovery:
                 "microservices/*/",
                 "packages/*/",
                 # Treat the main Python package as a first-class service root for project analysis.
-                "tapps_agents/"
+                "tapps_agents/",
             ]
         self.service_patterns = service_patterns
-        
+
         if exclude_patterns is None:
             exclude_patterns = [
                 "node_modules",
@@ -58,22 +58,22 @@ class ServiceDiscovery:
                 "env",
                 ".env",
                 "dist",
-                "build"
+                "build",
             ]
         self.exclude_patterns = exclude_patterns
-    
-    def discover_services(self) -> List[Dict[str, any]]:
+
+    def discover_services(self) -> list[dict[str, Any]]:
         """
         Discover all services in the project.
-        
+
         Returns:
             List of service dictionaries with:
             - name: Service name (directory name)
             - path: Full path to service directory
             - relative_path: Relative path from project root
         """
-        services = []
-        
+        services: list[dict[str, Any]] = []
+
         # Try each service pattern
         for pattern in self.service_patterns:
             # If the pattern points directly at a service root (no wildcard), include that directory itself.
@@ -81,43 +81,53 @@ class ServiceDiscovery:
             if "*" not in pattern and "?" not in pattern:
                 base_dir = pattern.rstrip("/").rstrip("\\")
                 candidate = self.project_root / base_dir
-                if candidate.exists() and candidate.is_dir() and not self._should_exclude(candidate):
+                if (
+                    candidate.exists()
+                    and candidate.is_dir()
+                    and not self._should_exclude(candidate)
+                ):
                     if self._is_service_directory(candidate):
-                        services.append({
-                            "name": candidate.name,
-                            "path": str(candidate),
-                            "relative_path": str(candidate.relative_to(self.project_root)),
-                            "pattern": pattern
-                        })
+                        services.append(
+                            {
+                                "name": candidate.name,
+                                "path": str(candidate),
+                                "relative_path": str(
+                                    candidate.relative_to(self.project_root)
+                                ),
+                                "pattern": pattern,
+                            }
+                        )
                 continue
 
             # Convert glob pattern to directory structure
             # e.g., "services/*/" -> "services/"
-            base_dir = pattern.split('*')[0].rstrip('/')
+            base_dir = pattern.split("*")[0].rstrip("/")
             base_path = self.project_root / base_dir
-            
+
             if not base_path.exists() or not base_path.is_dir():
                 continue
-            
+
             # Find all subdirectories
             for item in base_path.iterdir():
                 if not item.is_dir():
                     continue
-                
+
                 # Check exclusion patterns
                 if self._should_exclude(item):
                     continue
-                
+
                 # Check if it looks like a service (has code files)
                 if self._is_service_directory(item):
                     service_name = item.name
-                    services.append({
-                        "name": service_name,
-                        "path": str(item),
-                        "relative_path": str(item.relative_to(self.project_root)),
-                        "pattern": pattern
-                    })
-        
+                    services.append(
+                        {
+                            "name": service_name,
+                            "path": str(item),
+                            "relative_path": str(item.relative_to(self.project_root)),
+                            "pattern": pattern,
+                        }
+                    )
+
         # Remove duplicates (services might match multiple patterns)
         seen = set()
         unique_services = []
@@ -126,29 +136,29 @@ class ServiceDiscovery:
             if key not in seen:
                 seen.add(key)
                 unique_services.append(service)
-        
+
         return sorted(unique_services, key=lambda x: x["name"])
-    
+
     def _should_exclude(self, path: Path) -> bool:
         """Check if a path should be excluded."""
         path_str = str(path)
         path_name = path.name
-        
+
         # Check exclusion patterns
         for exclude_pattern in self.exclude_patterns:
             if exclude_pattern in path_str or path_name.startswith(exclude_pattern):
                 return True
-        
+
         # Exclude hidden directories
-        if path_name.startswith('.'):
+        if path_name.startswith("."):
             return True
-        
+
         return False
-    
+
     def _is_service_directory(self, path: Path) -> bool:
         """
         Check if a directory looks like a service directory.
-        
+
         A service directory should have:
         - Python files (*.py)
         - Or TypeScript files (*.ts, *.tsx)
@@ -171,9 +181,9 @@ class ServiceDiscovery:
             "Dockerfile",
             "docker-compose.yml",
             "*.yaml",
-            "*.yml"
+            "*.yml",
         ]
-        
+
         # Check for service indicators
         for indicator in service_indicators:
             if indicator.startswith("*."):
@@ -190,16 +200,16 @@ class ServiceDiscovery:
                 matches = list(path.glob(indicator))
                 if matches:
                     return True
-        
+
         return False
-    
-    def discover_service(self, service_name: str) -> Optional[Dict[str, any]]:
+
+    def discover_service(self, service_name: str) -> dict[str, Any] | None:
         """
         Discover a specific service by name.
-        
+
         Args:
             service_name: Name of the service to find
-            
+
         Returns:
             Service dictionary if found, None otherwise
         """
@@ -208,28 +218,26 @@ class ServiceDiscovery:
             if service["name"] == service_name:
                 return service
         return None
-    
-    def discover_by_pattern(self, pattern: str) -> List[Dict[str, any]]:
+
+    def discover_by_pattern(self, pattern: str) -> list[dict[str, Any]]:
         """
         Discover services matching a specific pattern.
-        
+
         Args:
             pattern: Pattern to match service names (supports wildcards)
-            
+
         Returns:
             List of matching services
         """
         services = self.discover_services()
-        
+
         # Convert pattern to regex
-        regex_pattern = pattern.replace('*', '.*').replace('?', '.')
+        regex_pattern = pattern.replace("*", ".*").replace("?", ".")
         regex = re.compile(f"^{regex_pattern}$", re.IGNORECASE)
-        
+
         matching_services = []
         for service in services:
             if regex.match(service["name"]):
                 matching_services.append(service)
-        
+
         return matching_services
-
-

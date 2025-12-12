@@ -146,9 +146,9 @@ python -m twine upload --skip-existing dist/*
 
 ## Your Current Package
 
-You have these files ready to upload:
-- `tapps_agents-1.6.1-py3-none-any.whl`
-- `tapps_agents-1.6.1.tar.gz`
+You have these files ready to upload (version will vary):
+- `tapps_agents-<version>-py3-none-any.whl`
+- `tapps_agents-<version>.tar.gz`
 
 Both will be uploaded when you run the command.
 

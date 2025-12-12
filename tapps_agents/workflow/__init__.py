@@ -1,24 +1,24 @@
 """Workflow Engine - YAML-based workflow orchestration."""
 
-from .parser import WorkflowParser
-from .executor import WorkflowExecutor
-from .models import (
-    Workflow,
-    WorkflowStep,
-    WorkflowState,
-    WorkflowType,
-    Artifact,
-    WorkflowSettings,
-)
 from .detector import (
+    ProjectCharacteristics,
     ProjectDetector,
     ProjectType,
-    ProjectCharacteristics,
     WorkflowTrack,
 )
+from .executor import WorkflowExecutor
+from .models import (
+    Artifact,
+    Workflow,
+    WorkflowSettings,
+    WorkflowState,
+    WorkflowStep,
+    WorkflowType,
+)
+from .parser import WorkflowParser
 from .recommender import (
-    WorkflowRecommender,
     WorkflowRecommendation,
+    WorkflowRecommender,
 )
 
 __all__ = [
@@ -37,4 +37,3 @@ __all__ = [
     "WorkflowRecommender",
     "WorkflowRecommendation",
 ]
-

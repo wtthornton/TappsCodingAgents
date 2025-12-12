@@ -24,13 +24,12 @@ import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass(frozen=True)
 class Step:
     name: str
-    out_file: Optional[Path]
+    out_file: Path | None
     command: list[str]
     cwd: Path
 
@@ -68,11 +67,10 @@ def _run_step(step: Step, force: bool) -> dict:
         _ensure_dir(step.out_file.parent)
         stdout_text = proc.stdout or ""
         step.out_file.write_text(stdout_text, encoding="utf-8", errors="replace")
-        # Add stderr alongside if present.
-        if proc.stderr:
-            (step.out_file.parent / f"{step.out_file.stem}.stderr.txt").write_text(
-                proc.stderr, encoding="utf-8", errors="replace"
-            )
+        # Always write stderr alongside (prevents stale *.stderr.txt from older runs).
+        (step.out_file.parent / f"{step.out_file.stem}.stderr.txt").write_text(
+            proc.stderr or "", encoding="utf-8", errors="replace"
+        )
 
     return {
         "name": step.name,
@@ -84,17 +82,22 @@ def _run_step(step: Step, force: bool) -> dict:
     }
 
 
-def _which(tool: str) -> Optional[str]:
+def _which(tool: str) -> str | None:
+    # Prefer scripts in the active interpreter's environment.
+    exe_dir = Path(sys.executable).resolve().parent
+    candidate = exe_dir / (tool + (".exe" if os.name == "nt" else ""))
+    if candidate.exists():
+        return str(candidate)
     return shutil.which(tool)
 
 
-def _tool_version(tool: str) -> Optional[str]:
+def _tool_version(tool: str) -> str | None:
     exe = _which(tool)
     if not exe:
         return None
     try:
         proc = subprocess.run(
-            [tool, "--version"],
+            [exe, "--version"],
             capture_output=True,
             text=True,
             encoding="utf-8",
@@ -122,7 +125,15 @@ def build_baseline_steps(project_root: Path, reports_dir: Path) -> list[Step]:
         Step(
             name="ruff_check_json",
             out_file=baseline_dir / "ruff.json",
-            command=[sys.executable, "-m", "ruff", "check", ".", "--output-format", "json"],
+            command=[
+                sys.executable,
+                "-m",
+                "ruff",
+                "check",
+                ".",
+                "--output-format",
+                "json",
+            ],
             cwd=project_root,
         ),
         Step(
@@ -159,13 +170,29 @@ def build_baseline_steps(project_root: Path, reports_dir: Path) -> list[Step]:
         Step(
             name="bandit_json",
             out_file=baseline_dir / "bandit.json",
-            command=[sys.executable, "-m", "bandit", "-r", "tapps_agents", "-f", "json"],
+            command=[
+                sys.executable,
+                "-m",
+                "bandit",
+                "-r",
+                "tapps_agents",
+                "-f",
+                "json",
+            ],
             cwd=project_root,
         ),
         Step(
             name="pip_audit_json",
             out_file=baseline_dir / "pip_audit.json",
-            command=[sys.executable, "-m", "pip_audit", "-r", "requirements.txt", "-f", "json"],
+            command=[
+                sys.executable,
+                "-m",
+                "pip_audit",
+                "-r",
+                "requirements.txt",
+                "-f",
+                "json",
+            ],
             cwd=project_root,
         ),
         Step(
@@ -205,10 +232,16 @@ def build_baseline_steps(project_root: Path, reports_dir: Path) -> list[Step]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Quality & Complexity Marathon Runner (baseline + checkpoints)")
+    parser = argparse.ArgumentParser(
+        description="Quality & Complexity Marathon Runner (baseline + checkpoints)"
+    )
     parser.add_argument("--project-root", default=".", help="Project root (default: .)")
-    parser.add_argument("--reports-dir", default="reports", help="Reports directory (default: reports)")
-    parser.add_argument("--force", action="store_true", help="Re-run steps even if outputs exist")
+    parser.add_argument(
+        "--reports-dir", default="reports", help="Reports directory (default: reports)"
+    )
+    parser.add_argument(
+        "--force", action="store_true", help="Re-run steps even if outputs exist"
+    )
     args = parser.parse_args()
 
     project_root = Path(args.project_root).resolve()
@@ -259,5 +292,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

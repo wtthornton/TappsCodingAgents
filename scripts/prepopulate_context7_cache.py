@@ -11,12 +11,13 @@ Usage:
     python scripts/prepopulate_context7_cache.py --libraries fastapi pytest sqlalchemy
 """
 
-import asyncio
+# ruff: noqa: E402
+
 import argparse
+import asyncio
 import re
-from pathlib import Path
-from typing import List, Set, Optional
 import sys
+from pathlib import Path
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
@@ -25,7 +26,6 @@ sys.path.insert(0, str(project_root))
 from tapps_agents.context7.commands import Context7Commands
 from tapps_agents.core.config import load_config
 
-
 # Common libraries to pre-populate (always cached)
 COMMON_LIBRARIES = [
     # Python Web Frameworks
@@ -33,39 +33,32 @@ COMMON_LIBRARIES = [
     "django",
     "flask",
     "starlette",
-    
     # Database
     "sqlalchemy",
     "pymongo",
     "psycopg2",
     "sqlite3",
-    
     # Testing
     "pytest",
     "unittest",
     "pytest-asyncio",
     "pytest-mock",
-    
     # Code Quality
     "ruff",
     "mypy",
     "bandit",
     "black",
-    
     # HTTP/API
     "httpx",
     "requests",
     "aiohttp",
-    
     # Data Processing
     "pandas",
     "numpy",
     "pydantic",
-    
     # Async
     "asyncio",
     "aiofiles",
-    
     # Type Checking
     "typing",
     "typing-extensions",
@@ -81,32 +74,32 @@ COMMON_TOPICS = {
 }
 
 
-def parse_requirements_file(requirements_path: Path) -> Set[str]:
+def parse_requirements_file(requirements_path: Path) -> set[str]:
     """
     Parse requirements.txt to extract library names.
-    
+
     Args:
         requirements_path: Path to requirements.txt
-        
+
     Returns:
         Set of library names (without version constraints)
     """
     libraries = set()
-    
+
     if not requirements_path.exists():
         print(f"⚠️  Requirements file not found: {requirements_path}")
         return libraries
-    
+
     try:
         content = requirements_path.read_text(encoding="utf-8")
-        
+
         for line in content.splitlines():
             line = line.strip()
-            
+
             # Skip comments and empty lines
             if not line or line.startswith("#"):
                 continue
-            
+
             # Remove version constraints and extras
             # Examples:
             #   pydantic>=2.10.0 -> pydantic
@@ -114,7 +107,7 @@ def parse_requirements_file(requirements_path: Path) -> Set[str]:
             #   git+https://... -> skip
             if line.startswith("git+") or line.startswith("http"):
                 continue
-            
+
             # Extract library name (before any version specifiers)
             match = re.match(r"^([a-zA-Z0-9_-]+)", line)
             if match:
@@ -122,36 +115,35 @@ def parse_requirements_file(requirements_path: Path) -> Set[str]:
                 # Normalize common variations
                 lib_name = lib_name.replace("_", "-")
                 libraries.add(lib_name)
-    
+
     except Exception as e:
         print(f"⚠️  Error parsing requirements file: {e}")
-    
+
     return libraries
 
 
 async def pre_populate_library(
     context7_commands: Context7Commands,
     library: str,
-    topics: Optional[List[str]] = None
+    topics: list[str] | None = None,
 ) -> bool:
     """
     Pre-populate cache for a library and optional topics.
-    
+
     Args:
         context7_commands: Context7Commands instance
         library: Library name
         topics: Optional list of topics to cache
-        
+
     Returns:
         True if successful, False otherwise
     """
     if not context7_commands.enabled:
         print(f"⚠️  Context7 is not enabled, skipping {library}")
         return False
-    
+
     success_count = 0
-    total_count = 1 + (len(topics) if topics else 0)
-    
+
     # Cache overview first
     print(f"  📚 Caching {library} (overview)...", end=" ", flush=True)
     result = await context7_commands.cmd_docs(library)
@@ -160,7 +152,7 @@ async def pre_populate_library(
         success_count += 1
     else:
         print(f"❌ ({result.get('error', 'Unknown error')})")
-    
+
     # Cache specific topics
     if topics:
         for topic in topics:
@@ -171,7 +163,7 @@ async def pre_populate_library(
                 success_count += 1
             else:
                 print(f"❌ ({result.get('error', 'Unknown error')})")
-    
+
     return success_count > 0
 
 
@@ -184,35 +176,31 @@ async def main():
         "--requirements",
         type=str,
         default="requirements.txt",
-        help="Path to requirements.txt file (default: requirements.txt)"
+        help="Path to requirements.txt file (default: requirements.txt)",
     )
     parser.add_argument(
-        "--libraries",
-        nargs="+",
-        help="Additional libraries to cache (space-separated)"
+        "--libraries", nargs="+", help="Additional libraries to cache (space-separated)"
     )
     parser.add_argument(
-        "--topics",
-        action="store_true",
-        help="Cache common topics for each library"
+        "--topics", action="store_true", help="Cache common topics for each library"
     )
     parser.add_argument(
         "--project-root",
         type=str,
-        help="Project root directory (default: current directory)"
+        help="Project root directory (default: current directory)",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Determine project root
     if args.project_root:
         project_root = Path(args.project_root)
     else:
         project_root = Path.cwd()
-    
+
     print("🚀 Context7 KB Cache Pre-population")
     print("=" * 60)
-    
+
     # Load configuration
     try:
         config = load_config(project_root)
@@ -224,17 +212,17 @@ async def main():
         print(f"⚠️  Error loading config: {e}")
         print("   Continuing with default settings...")
         config = None
-    
+
     # Initialize Context7 commands
     context7_commands = Context7Commands(project_root=project_root, config=config)
-    
+
     if not context7_commands.enabled:
         print("❌ Context7 is not enabled")
         return 1
-    
+
     # Collect libraries to cache
     libraries_to_cache = set(COMMON_LIBRARIES)
-    
+
     # Add libraries from requirements.txt
     requirements_path = project_root / args.requirements
     if requirements_path.exists():
@@ -242,37 +230,33 @@ async def main():
         req_libraries = parse_requirements_file(requirements_path)
         libraries_to_cache.update(req_libraries)
         print(f"   Found {len(req_libraries)} libraries in requirements.txt")
-    
+
     # Add explicitly specified libraries
     if args.libraries:
         libraries_to_cache.update(args.libraries)
         print(f"   Added {len(args.libraries)} explicitly specified libraries")
-    
+
     print(f"\n📚 Total libraries to cache: {len(libraries_to_cache)}")
     print("=" * 60)
-    
+
     # Pre-populate cache
     success_count = 0
     fail_count = 0
-    
+
     for library in sorted(libraries_to_cache):
         print(f"\n🔍 Processing {library}...")
-        
+
         topics = None
         if args.topics and library in COMMON_TOPICS:
             topics = COMMON_TOPICS[library]
-        
-        success = await pre_populate_library(
-            context7_commands,
-            library,
-            topics=topics
-        )
-        
+
+        success = await pre_populate_library(context7_commands, library, topics=topics)
+
         if success:
             success_count += 1
         else:
             fail_count += 1
-    
+
     # Summary
     print("\n" + "=" * 60)
     print("📊 Pre-population Summary")
@@ -280,7 +264,7 @@ async def main():
     print(f"✅ Successfully cached: {success_count} libraries")
     print(f"❌ Failed to cache: {fail_count} libraries")
     print(f"📈 Success rate: {success_count / (success_count + fail_count) * 100:.1f}%")
-    
+
     # Get cache statistics
     print("\n📊 Cache Statistics:")
     stats = context7_commands.cmd_status()
@@ -291,15 +275,14 @@ async def main():
         print(f"   Cache size: {metrics.get('cache_size_mb', 'N/A')} MB")
     else:
         print("   (Statistics unavailable)")
-    
+
     print("\n✅ Pre-population complete!")
     print("\n💡 Tip: Run this script periodically to keep cache up-to-date")
     print("   or use Context7 auto-refresh feature.")
-    
+
     return 0 if fail_count == 0 else 1
 
 
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
     sys.exit(exit_code)
-

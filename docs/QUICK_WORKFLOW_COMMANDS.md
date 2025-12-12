@@ -180,5 +180,4 @@ You can modify these files or create your own presets.
 
 - [Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)
 - [Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)
-- [SDLC Best Practices](../SDLC_BEST_PRACTICES.md)
 

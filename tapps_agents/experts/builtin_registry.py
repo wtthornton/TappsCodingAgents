@@ -11,9 +11,8 @@ and cannot be modified by customers. They complement customer-defined business d
 - Dual-layer consultation: Weighted aggregation with priority system
 """
 
-from pathlib import Path
-from typing import List, Dict, Set, Optional
 import importlib.resources
+from pathlib import Path
 
 from .expert_config import ExpertConfigModel
 
@@ -21,16 +20,16 @@ from .expert_config import ExpertConfigModel
 class BuiltinExpertRegistry:
     """
     Registry for built-in framework experts.
-    
+
     Built-in experts are:
     - Immutable (cannot be modified by customers)
     - Framework-controlled (updated via framework releases)
     - Technical domain focused (security, performance, testing, etc.)
     - Auto-loaded by ExpertRegistry
     """
-    
+
     # Technical domains where built-in experts have primary authority
-    TECHNICAL_DOMAINS: Set[str] = {
+    TECHNICAL_DOMAINS: set[str] = {
         "security",
         "performance-optimization",
         "testing-strategies",
@@ -49,10 +48,10 @@ class BuiltinExpertRegistry:
         "cloud-infrastructure",
         "database-data-management",
     }
-    
+
     # Built-in expert configurations
     # These will be expanded in phases
-    BUILTIN_EXPERTS: List[ExpertConfigModel] = [
+    BUILTIN_EXPERTS: list[ExpertConfigModel] = [
         # Phase 1: Security Expert
         ExpertConfigModel(
             expert_id="expert-security",
@@ -61,7 +60,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 2: Performance Expert
         ExpertConfigModel(
             expert_id="expert-performance",
@@ -70,7 +68,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 2: Testing Expert
         ExpertConfigModel(
             expert_id="expert-testing",
@@ -79,7 +76,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 3: Data Privacy Expert
         ExpertConfigModel(
             expert_id="expert-data-privacy",
@@ -88,7 +84,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 4: Accessibility Expert
         ExpertConfigModel(
             expert_id="expert-accessibility",
@@ -97,7 +92,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 4: User Experience Expert
         ExpertConfigModel(
             expert_id="expert-user-experience",
@@ -106,7 +100,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Existing framework experts (already in use)
         ExpertConfigModel(
             expert_id="expert-ai-frameworks",
@@ -143,7 +136,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 5: Observability & Monitoring Expert
         ExpertConfigModel(
             expert_id="expert-observability",
@@ -152,7 +144,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 5: API Design & Integration Expert
         ExpertConfigModel(
             expert_id="expert-api-design",
@@ -161,7 +152,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 5: Cloud & Infrastructure Expert
         ExpertConfigModel(
             expert_id="expert-cloud-infrastructure",
@@ -170,7 +160,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Phase 5: Database & Data Management Expert
         ExpertConfigModel(
             expert_id="expert-database",
@@ -179,7 +168,6 @@ class BuiltinExpertRegistry:
             rag_enabled=True,
             fine_tuned=False,
         ),
-        
         # Agent Learning Best Practices Expert
         ExpertConfigModel(
             expert_id="expert-agent-learning",
@@ -189,45 +177,45 @@ class BuiltinExpertRegistry:
             fine_tuned=False,
         ),
     ]
-    
+
     @classmethod
-    def get_builtin_experts(cls) -> List[ExpertConfigModel]:
+    def get_builtin_experts(cls) -> list[ExpertConfigModel]:
         """
         Get all built-in expert configurations.
-        
+
         Returns:
             List of ExpertConfigModel instances for built-in experts
         """
         return cls.BUILTIN_EXPERTS.copy()
-    
+
     @classmethod
-    def get_builtin_expert_ids(cls) -> List[str]:
+    def get_builtin_expert_ids(cls) -> list[str]:
         """
         Get list of all built-in expert IDs.
-        
+
         Returns:
             List of expert IDs
         """
         return [expert.expert_id for expert in cls.BUILTIN_EXPERTS]
-    
+
     @classmethod
     def is_builtin_expert(cls, expert_id: str) -> bool:
         """
         Check if an expert ID is a built-in expert.
-        
+
         Args:
             expert_id: Expert ID to check
-            
+
         Returns:
             True if built-in expert, False otherwise
         """
         return expert_id in cls.get_builtin_expert_ids()
-    
+
     @classmethod
     def get_builtin_knowledge_path(cls) -> Path:
         """
         Get path to built-in knowledge bases directory.
-        
+
         Returns:
             Path to knowledge/ directory in package
         """
@@ -239,38 +227,39 @@ class BuiltinExpertRegistry:
                 return knowledge_path
         except (ImportError, AttributeError, TypeError):
             pass
-        
+
         # Fallback: Use __file__ to find package path
         try:
             import tapps_agents.experts
+
             package_path = Path(tapps_agents.experts.__file__).parent
             knowledge_path = package_path / "knowledge"
             return knowledge_path
         except Exception:
             # Final fallback: relative path
             return Path(__file__).parent / "knowledge"
-    
+
     @classmethod
     def is_technical_domain(cls, domain: str) -> bool:
         """
         Check if a domain is a technical domain (built-in expert authority).
-        
+
         Args:
             domain: Domain name to check
-            
+
         Returns:
             True if technical domain, False if business domain
         """
         return domain in cls.TECHNICAL_DOMAINS
-    
+
     @classmethod
-    def get_expert_for_domain(cls, domain: str) -> Optional[ExpertConfigModel]:
+    def get_expert_for_domain(cls, domain: str) -> ExpertConfigModel | None:
         """
         Get built-in expert configuration for a domain.
-        
+
         Args:
             domain: Domain name
-            
+
         Returns:
             ExpertConfigModel if found, None otherwise
         """
@@ -278,4 +267,3 @@ class BuiltinExpertRegistry:
             if expert.primary_domain == domain:
                 return expert
         return None
-

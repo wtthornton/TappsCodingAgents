@@ -4,7 +4,6 @@ import pytest
 
 from tapps_agents.workflow.executor import WorkflowExecutor
 
-
 pytestmark = pytest.mark.unit
 
 
@@ -45,5 +44,3 @@ def test_workflow_executor_persists_and_resumes_last_state(tmp_path: Path) -> No
     assert state2.workflow_id == "test-workflow"
     assert state2.current_step == "s2"
     assert "s1" in state2.completed_steps
-
-

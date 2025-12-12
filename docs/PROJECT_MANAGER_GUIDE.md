@@ -757,18 +757,11 @@ knowledge/
 - [ ] Workflows are documented
 - [ ] Compliance requirements are captured
 
-### Indexing Knowledge Base
+### Knowledge Base Updates
 
-Developers handle indexing, but you should know it happens:
+For project-defined experts, the knowledge base is file-based Markdown under `.tapps-agents/knowledge/<domain>/*.md`.
 
-```bash
-# Developers run this (you don't need to)
-python -m tapps_agents.index_knowledge \
-  --source ./knowledge \
-  --output ./.tapps-agents/vectors
-```
-
-**When:** After adding/updating knowledge base documents.
+- **When it takes effect**: As soon as the files are updated (there is no separate indexing CLI step in the current implementation).
 
 ---
 

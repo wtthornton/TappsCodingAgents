@@ -2,18 +2,18 @@
 Context7 Integration - Real-time library documentation with KB-first caching.
 """
 
-from .kb_cache import KBCache, CacheEntry
-from .cache_structure import CacheStructure
-from .metadata import MetadataManager, LibraryMetadata, CacheIndex
-from .lookup import KBLookup, LookupResult
-from .fuzzy_matcher import FuzzyMatcher, FuzzyMatch
-from .staleness_policies import StalenessPolicyManager, StalenessPolicy
-from .refresh_queue import RefreshQueue, RefreshTask
-from .analytics import Analytics, CacheMetrics, LibraryMetrics
-from .cross_references import CrossReferenceManager, CrossReference, TopicIndex
-from .cleanup import KBCleanup, CleanupResult
-from .commands import Context7Commands
 from .agent_integration import Context7AgentHelper, get_context7_helper
+from .analytics import Analytics, CacheMetrics, LibraryMetrics
+from .cache_structure import CacheStructure
+from .cleanup import CleanupResult, KBCleanup
+from .commands import Context7Commands
+from .cross_references import CrossReference, CrossReferenceManager, TopicIndex
+from .fuzzy_matcher import FuzzyMatch, FuzzyMatcher
+from .kb_cache import CacheEntry, KBCache
+from .lookup import KBLookup, LookupResult
+from .metadata import CacheIndex, LibraryMetadata, MetadataManager
+from .refresh_queue import RefreshQueue, RefreshTask
+from .staleness_policies import StalenessPolicy, StalenessPolicyManager
 
 __all__ = [
     "KBCache",
@@ -42,4 +42,3 @@ __all__ = [
     "Context7AgentHelper",
     "get_context7_helper",
 ]
-

@@ -4,36 +4,33 @@ Report Generator - Generate quality analysis reports in multiple formats
 Phase 6.3: Comprehensive Reporting Infrastructure
 """
 
-from typing import Dict, Any, List, Optional
-from pathlib import Path
-from datetime import datetime
 import json
+from datetime import datetime
+from importlib.util import find_spec
+from pathlib import Path
+from typing import Any
 
 try:
     from jinja2 import Environment, FileSystemLoader, Template
+
     HAS_JINJA2 = True
 except ImportError:
     HAS_JINJA2 = False
 
-try:
-    import plotly.graph_objects as go
-    import plotly.express as px
-    HAS_PLOTLY = True
-except ImportError:
-    HAS_PLOTLY = False
+HAS_PLOTLY = find_spec("plotly") is not None
 
 
 class ReportGenerator:
     """
     Generate quality analysis reports in multiple formats.
-    
+
     Phase 6.3: Comprehensive Reporting Infrastructure
     """
-    
-    def __init__(self, output_dir: Optional[Path] = None):
+
+    def __init__(self, output_dir: Path | None = None):
         """
         Initialize report generator.
-        
+
         Args:
             output_dir: Base directory for reports (default: reports/quality/)
         """
@@ -42,33 +39,33 @@ class ReportGenerator:
         self.output_dir = Path(output_dir)
         self.quality_dir = self.output_dir
         self.historical_dir = self.quality_dir / "historical"
-        
+
         # Create directories if they don't exist
         self.quality_dir.mkdir(parents=True, exist_ok=True)
         self.historical_dir.mkdir(parents=True, exist_ok=True)
-    
+
     def generate_json_report(
         self,
-        scores: Dict[str, Any],
-        files: Optional[List[Dict[str, Any]]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        scores: dict[str, Any],
+        files: list[dict[str, Any]] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Path:
         """
         Generate JSON report for CI/CD integration.
-        
+
         Phase 6.3: Comprehensive Reporting Infrastructure
-        
+
         Args:
             scores: Quality scores dictionary
             files: List of file-level scores (optional)
             metadata: Additional metadata (timestamp, project name, etc.)
-            
+
         Returns:
             Path to generated JSON report
         """
         if metadata is None:
             metadata = {}
-        
+
         report_data = {
             "timestamp": metadata.get("timestamp", datetime.now().isoformat()),
             "project_name": metadata.get("project_name", "Unknown"),
@@ -81,61 +78,75 @@ class ReportGenerator:
                 "test_coverage_score": scores.get("test_coverage_score", 0.0),
                 "performance_score": scores.get("performance_score", 0.0),
                 "linting_score": scores.get("linting_score", 0.0),
-                "type_checking_score": scores.get("type_checking_score", 0.0)
+                "type_checking_score": scores.get("type_checking_score", 0.0),
             },
             "metrics": scores.get("metrics", {}),
             "files": files or [],
-            "thresholds": metadata.get("thresholds", {
-                "overall": 70.0,
-                "complexity": 5.0,
-                "security": 8.0,
-                "maintainability": 7.0
-            }),
-            "passed": scores.get("overall_score", 0.0) >= metadata.get("thresholds", {}).get("overall", 70.0)
+            "thresholds": metadata.get(
+                "thresholds",
+                {
+                    "overall": 70.0,
+                    "complexity": 5.0,
+                    "security": 8.0,
+                    "maintainability": 7.0,
+                },
+            ),
+            "passed": scores.get("overall_score", 0.0)
+            >= metadata.get("thresholds", {}).get("overall", 70.0),
         }
-        
+
         report_path = self.quality_dir / "quality-report.json"
-        with open(report_path, 'w', encoding='utf-8') as f:
-            json.dump(report_data, f, indent=2)
-        
+        with open(report_path, "w", encoding="utf-8") as f:
+            json.dump(report_data, f, indent=2, default=self._json_default)
+
         return report_path
-    
+
+    @staticmethod
+    def _json_default(obj: Any) -> Any:
+        """Best-effort JSON serializer for report payloads (e.g., datetimes)."""
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        return str(obj)
+
     def generate_summary_report(
         self,
-        scores: Dict[str, Any],
-        files: Optional[List[Dict[str, Any]]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        scores: dict[str, Any],
+        files: list[dict[str, Any]] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Path:
         """
         Generate Markdown summary report.
-        
+
         Phase 6.3: Comprehensive Reporting Infrastructure
-        
+
         Args:
             scores: Quality scores dictionary
             files: List of file-level scores (optional)
             metadata: Additional metadata
-            
+
         Returns:
             Path to generated Markdown report
         """
         if metadata is None:
             metadata = {}
-        
+
         timestamp = metadata.get("timestamp", datetime.now())
         if isinstance(timestamp, str):
             timestamp = datetime.fromisoformat(timestamp)
-        
-        thresholds = metadata.get("thresholds", {
-            "overall": 70.0,
-            "complexity": 5.0,
-            "security": 8.0,
-            "maintainability": 7.0
-        })
-        
+
+        thresholds = metadata.get(
+            "thresholds",
+            {
+                "overall": 70.0,
+                "complexity": 5.0,
+                "security": 8.0,
+                "maintainability": 7.0,
+            },
+        )
+
         overall_score = scores.get("overall_score", 0.0)
         passed = overall_score >= thresholds.get("overall", 70.0)
-        
+
         # Build markdown content
         markdown_lines = [
             "# Quality Analysis Report",
@@ -163,24 +174,28 @@ class ReportGenerator:
             f"| Type Checking | {scores.get('type_checking_score', 0.0):.2f}/10 | N/A | - |",
             "",
         ]
-        
+
         # Add file-level details if provided
         if files and len(files) > 0:
-            markdown_lines.extend([
-                "## File-Level Analysis",
-                "",
-                f"**Total Files**: {len(files)}",
-                "",
-                "| File | Overall Score | Complexity | Security | Maintainability |",
-                "|------|---------------|------------|----------|-----------------|",
-            ])
-            
+            markdown_lines.extend(
+                [
+                    "## File-Level Analysis",
+                    "",
+                    f"**Total Files**: {len(files)}",
+                    "",
+                    "| File | Overall Score | Complexity | Security | Maintainability |",
+                    "|------|---------------|------------|----------|-----------------|",
+                ]
+            )
+
             for file_data in files[:20]:  # Limit to top 20 files
                 file_scores = file_data.get("scoring", {})
                 file_path = file_data.get("file", "Unknown")
                 # Truncate long paths
-                display_path = file_path if len(file_path) <= 50 else "..." + file_path[-47:]
-                
+                display_path = (
+                    file_path if len(file_path) <= 50 else "..." + file_path[-47:]
+                )
+
                 markdown_lines.append(
                     f"| {display_path} | "
                     f"{file_scores.get('overall_score', 0.0):.2f} | "
@@ -188,85 +203,91 @@ class ReportGenerator:
                     f"{file_scores.get('security_score', 0.0):.2f} | "
                     f"{file_scores.get('maintainability_score', 0.0):.2f} |"
                 )
-            
+
             if len(files) > 20:
                 markdown_lines.append(f"\n*Showing top 20 of {len(files)} files*")
-        
-        markdown_lines.extend([
-            "",
-            "---",
-            f"*Generated by TappsCodingAgents Quality Analysis System*"
-        ])
-        
+
+        markdown_lines.extend(
+            ["", "---", "*Generated by TappsCodingAgents Quality Analysis System*"]
+        )
+
         report_path = self.quality_dir / "SUMMARY.md"
-        with open(report_path, 'w', encoding='utf-8') as f:
-            f.write('\n'.join(markdown_lines))
-        
+        with open(report_path, "w", encoding="utf-8") as f:
+            f.write("\n".join(markdown_lines))
+
         return report_path
-    
+
     def generate_html_report(
         self,
-        scores: Dict[str, Any],
-        files: Optional[List[Dict[str, Any]]] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        scores: dict[str, Any],
+        files: list[dict[str, Any]] | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> Path:
         """
         Generate interactive HTML dashboard.
-        
+
         Phase 6.3: Comprehensive Reporting Infrastructure
-        
+
         Args:
             scores: Quality scores dictionary
             files: List of file-level scores (optional)
             metadata: Additional metadata
-            
+
         Returns:
             Path to generated HTML report
         """
         if metadata is None:
             metadata = {}
-        
+
         timestamp = metadata.get("timestamp", datetime.now())
         if isinstance(timestamp, str):
             timestamp = datetime.fromisoformat(timestamp)
-        
-        thresholds = metadata.get("thresholds", {
-            "overall": 70.0,
-            "complexity": 5.0,
-            "security": 8.0,
-            "maintainability": 7.0
-        })
-        
+
+        thresholds = metadata.get(
+            "thresholds",
+            {
+                "overall": 70.0,
+                "complexity": 5.0,
+                "security": 8.0,
+                "maintainability": 7.0,
+            },
+        )
+
         overall_score = scores.get("overall_score", 0.0)
         passed = overall_score >= thresholds.get("overall", 70.0)
-        
+
         # Generate HTML using Jinja2 if available, otherwise use simple template
         if HAS_JINJA2:
             # Try to use Jinja2 template (would need to create templates directory)
-            html_content = self._generate_html_with_jinja2(scores, files, metadata, timestamp, thresholds, passed)
+            html_content = self._generate_html_with_jinja2(
+                scores, files, metadata, timestamp, thresholds, passed
+            )
         else:
             # Fallback to simple HTML
-            html_content = self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed)
-        
+            html_content = self._generate_simple_html(
+                scores, files, metadata, timestamp, thresholds, passed
+            )
+
         report_path = self.quality_dir / "quality-dashboard.html"
-        with open(report_path, 'w', encoding='utf-8') as f:
+        with open(report_path, "w", encoding="utf-8") as f:
             f.write(html_content)
-        
+
         return report_path
-    
+
     def _generate_simple_html(
         self,
-        scores: Dict[str, Any],
-        files: Optional[List[Dict[str, Any]]],
-        metadata: Dict[str, Any],
+        scores: dict[str, Any],
+        files: list[dict[str, Any]] | None,
+        metadata: dict[str, Any],
         timestamp: datetime,
-        thresholds: Dict[str, float],
-        passed: bool
+        thresholds: dict[str, float],
+        passed: bool,
     ) -> str:
         """Generate simple HTML without Jinja2."""
         status_color = "#28a745" if passed else "#dc3545"
         status_text = "PASSED" if passed else "FAILED"
-        
+        overall_score = float(scores.get("overall_score", 0.0))
+
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -385,7 +406,7 @@ class ReportGenerator:
         </div>
     </div>
 """
-        
+
         if files and len(files) > 0:
             html += """
     <h2>File-Level Analysis</h2>
@@ -417,8 +438,8 @@ class ReportGenerator:
         </tbody>
     </table>
 """
-        
-        html += f"""
+
+        html += """
     <div class="footer">
         Generated by TappsCodingAgents Quality Analysis System
     </div>
@@ -426,45 +447,49 @@ class ReportGenerator:
 </html>
 """
         return html
-    
+
     def _generate_html_with_jinja2(
         self,
-        scores: Dict[str, Any],
-        files: Optional[List[Dict[str, Any]]],
-        metadata: Dict[str, Any],
+        scores: dict[str, Any],
+        files: list[dict[str, Any]] | None,
+        metadata: dict[str, Any],
         timestamp: datetime,
-        thresholds: Dict[str, float],
-        passed: bool
+        thresholds: dict[str, float],
+        passed: bool,
     ) -> str:
         """
         Generate HTML using Jinja2 templates.
-        
+
         If templates are missing or rendering fails, falls back to the simple HTML generator.
         """
         if not HAS_JINJA2:
-            return self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed)
-        
+            return self._generate_simple_html(
+                scores, files, metadata, timestamp, thresholds, passed
+            )
+
         try:
             status_color = "#28a745" if passed else "#dc3545"
             status_text = "PASSED" if passed else "FAILED"
             overall_score = float(scores.get("overall_score", 0.0))
-            
+
             template_dir = Path(__file__).parent / "templates"
             template_name = "quality-dashboard.html.j2"
-            
+
             # Normalize file-level data for the template
-            template_files: List[Dict[str, Any]] = []
+            template_files: list[dict[str, Any]] = []
             if files:
                 for file_data in files[:50]:
                     file_scores = file_data.get("scoring", {})
-                    template_files.append({
-                        "file": file_data.get("file", "Unknown"),
-                        "overall_score": f"{file_scores.get('overall_score', 0.0):.2f}",
-                        "complexity_score": f"{file_scores.get('complexity_score', 0.0):.2f}",
-                        "security_score": f"{file_scores.get('security_score', 0.0):.2f}",
-                        "maintainability_score": f"{file_scores.get('maintainability_score', 0.0):.2f}",
-                    })
-            
+                    template_files.append(
+                        {
+                            "file": file_data.get("file", "Unknown"),
+                            "overall_score": f"{file_scores.get('overall_score', 0.0):.2f}",
+                            "complexity_score": f"{file_scores.get('complexity_score', 0.0):.2f}",
+                            "security_score": f"{file_scores.get('security_score', 0.0):.2f}",
+                            "maintainability_score": f"{file_scores.get('maintainability_score', 0.0):.2f}",
+                        }
+                    )
+
             context = {
                 "generated_at": timestamp.strftime("%Y-%m-%d %H:%M:%S"),
                 "project_name": metadata.get("project_name", "Unknown"),
@@ -482,7 +507,7 @@ class ReportGenerator:
                 "type_checking_score": f"{scores.get('type_checking_score', 0.0):.2f}",
                 "files": template_files,
             }
-            
+
             # Prefer file-based template, fall back to an inline template if missing.
             if template_dir.exists() and (template_dir / template_name).exists():
                 env = Environment(
@@ -491,86 +516,89 @@ class ReportGenerator:
                 )
                 template = env.get_template(template_name)
                 return template.render(**context)
-            
-            inline_template = Template(self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed))
+
+            inline_template = Template(
+                self._generate_simple_html(
+                    scores, files, metadata, timestamp, thresholds, passed
+                )
+            )
             return inline_template.render(**context)
         except Exception:
             # Any rendering errors should not break report generation.
-            return self._generate_simple_html(scores, files, metadata, timestamp, thresholds, passed)
-    
+            return self._generate_simple_html(
+                scores, files, metadata, timestamp, thresholds, passed
+            )
+
     def save_historical_data(
-        self,
-        scores: Dict[str, Any],
-        metadata: Optional[Dict[str, Any]] = None
+        self, scores: dict[str, Any], metadata: dict[str, Any] | None = None
     ) -> Path:
         """
         Save historical data for trend analysis.
-        
+
         Phase 6.3: Comprehensive Reporting Infrastructure
-        
+
         Args:
             scores: Quality scores dictionary
             metadata: Additional metadata
-            
+
         Returns:
             Path to saved historical data file
         """
         if metadata is None:
             metadata = {}
-        
+
         timestamp = datetime.now()
-        date_str = timestamp.strftime('%Y-%m-%d')
-        time_str = timestamp.strftime('%H%M%S')
-        
+        date_str = timestamp.strftime("%Y-%m-%d")
+        time_str = timestamp.strftime("%H%M%S")
+
         historical_data = {
             "timestamp": timestamp.isoformat(),
             "project_name": metadata.get("project_name", "Unknown"),
             "version": metadata.get("version", "Unknown"),
             "scores": scores,
-            "metrics": scores.get("metrics", {})
+            "metrics": scores.get("metrics", {}),
         }
-        
+
         # Save to date-based file
         historical_file = self.historical_dir / f"{date_str}-{time_str}.json"
-        with open(historical_file, 'w', encoding='utf-8') as f:
+        with open(historical_file, "w", encoding="utf-8") as f:
             json.dump(historical_data, f, indent=2)
-        
+
         return historical_file
-    
+
     def generate_all_reports(
         self,
-        scores: Dict[str, Any],
-        files: Optional[List[Dict[str, Any]]] = None,
-        metadata: Optional[Dict[str, Any]] = None
-    ) -> Dict[str, Path]:
+        scores: dict[str, Any],
+        files: list[dict[str, Any]] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, Path]:
         """
         Generate all report formats.
-        
+
         Phase 6.3: Comprehensive Reporting Infrastructure
-        
+
         Args:
             scores: Quality scores dictionary
             files: List of file-level scores (optional)
             metadata: Additional metadata
-            
+
         Returns:
             Dictionary mapping report type to file path
         """
         if metadata is None:
             metadata = {}
-        
+
         if "timestamp" not in metadata:
             metadata["timestamp"] = datetime.now()
-        
+
         reports = {}
-        
+
         # Generate all formats
         reports["json"] = self.generate_json_report(scores, files, metadata)
         reports["markdown"] = self.generate_summary_report(scores, files, metadata)
         reports["html"] = self.generate_html_report(scores, files, metadata)
-        
+
         # Save historical data
         reports["historical"] = self.save_historical_data(scores, metadata)
-        
-        return reports
 
+        return reports

@@ -1,2 +1,1 @@
-from .agent import ImproverAgent
-
+from .agent import ImproverAgent as ImproverAgent

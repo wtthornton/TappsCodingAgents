@@ -2,9 +2,11 @@
 pydantic>=2.12.5
 httpx>=0.28.1
 pyyaml>=6.0.3
+types-PyYAML>=6.0.12
 
 # LLM Integration (Ollama)
 aiohttp>=3.13.2
+psutil>=5.9.0
 
 # Code Analysis (for scoring)
 radon>=6.0.1          # Complexity analysis

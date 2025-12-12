@@ -2,6 +2,7 @@
 Simple test file to review with TappsCodingAgents
 """
 
+
 def greet(name: str) -> str:
     """Greet someone by name."""
     return f"Hello, {name}!"
@@ -15,4 +16,3 @@ def calculate_sum(a: int, b: int) -> int:
 if __name__ == "__main__":
     print(greet("World"))
     print(f"Sum: {calculate_sum(5, 3)}")
-

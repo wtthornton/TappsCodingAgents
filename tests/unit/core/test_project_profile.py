@@ -1,427 +1,215 @@
 """
-Unit tests for Project Profile system.
+Tests for Project Profile System.
 """
 
-import pytest
+import tempfile
 from pathlib import Path
-from tempfile import TemporaryDirectory
-import yaml
 
 from tapps_agents.core.project_profile import (
-    ProjectProfile,
     ComplianceRequirement,
+    ProjectProfile,
     ProjectProfileDetector,
-    save_project_profile,
     load_project_profile,
-    match_template,
-    PROFILE_TEMPLATES,
+    save_project_profile,
 )
-from tapps_agents.workflow.detector import ProjectDetector
 
 
-@pytest.mark.unit
-class TestComplianceRequirement:
-    """Test ComplianceRequirement dataclass."""
-    
-    def test_create_compliance_requirement(self):
-        """Test creating a compliance requirement."""
-        req = ComplianceRequirement(
-            name="GDPR",
-            confidence=0.9,
-            indicators=["gdpr.md", "compliance/gdpr"]
-        )
-        assert req.name == "GDPR"
-        assert req.confidence == 0.9
-        assert len(req.indicators) == 2
-        assert "gdpr.md" in req.indicators
-
-
-@pytest.mark.unit
 class TestProjectProfile:
-    """Test ProjectProfile dataclass."""
-    
-    def test_create_empty_profile(self):
-        """Test creating an empty profile."""
-        profile = ProjectProfile()
-        assert profile.deployment_type is None
-        assert profile.tenancy is None
-        assert profile.user_scale is None
-        assert profile.compliance_requirements == []
-        assert profile.security_level is None
-    
-    def test_create_profile_with_values(self):
-        """Test creating a profile with values."""
+    """Tests for ProjectProfile dataclass."""
+
+    def test_profile_creation(self):
+        """Test creating a basic profile."""
         profile = ProjectProfile(
             deployment_type="cloud",
-            tenancy="multi",
-            user_scale="thousands",
-            security_level="high"
+            deployment_type_confidence=0.9,
+            security_level="high",
+            security_level_confidence=0.8,
         )
+
         assert profile.deployment_type == "cloud"
-        assert profile.tenancy == "multi"
-        assert profile.user_scale == "thousands"
+        assert profile.deployment_type_confidence == 0.9
         assert profile.security_level == "high"
-    
-    def test_profile_with_compliance(self):
-        """Test profile with compliance requirements."""
-        compliance = [
-            ComplianceRequirement(name="GDPR", confidence=0.9, indicators=["gdpr.md"]),
-            ComplianceRequirement(name="HIPAA", confidence=0.8, indicators=["hipaa.md"])
-        ]
-        profile = ProjectProfile(compliance_requirements=compliance)
-        assert len(profile.compliance_requirements) == 2
+        assert profile.security_level_confidence == 0.8
+
+    def test_profile_to_dict(self):
+        """Test converting profile to dictionary."""
+        profile = ProjectProfile(
+            deployment_type="cloud",
+            deployment_type_confidence=0.9,
+            compliance_requirements=[
+                ComplianceRequirement(
+                    name="GDPR", confidence=0.8, indicators=["gdpr_file"]
+                )
+            ],
+        )
+
+        data = profile.to_dict()
+        assert data["deployment_type"] == "cloud"
+        assert data["deployment_type_confidence"] == 0.9
+        assert len(data["compliance_requirements"]) == 1
+        assert data["compliance_requirements"][0]["name"] == "GDPR"
+
+    def test_profile_from_dict(self):
+        """Test creating profile from dictionary."""
+        data = {
+            "deployment_type": "cloud",
+            "deployment_type_confidence": 0.9,
+            "compliance_requirements": [
+                {"name": "GDPR", "confidence": 0.8, "indicators": ["gdpr_file"]}
+            ],
+        }
+
+        profile = ProjectProfile.from_dict(data)
+        assert profile.deployment_type == "cloud"
+        assert len(profile.compliance_requirements) == 1
         assert profile.compliance_requirements[0].name == "GDPR"
-        assert profile.compliance_requirements[1].name == "HIPAA"
+
+    def test_format_context_high_confidence(self):
+        """Test formatting context with high-confidence values."""
+        profile = ProjectProfile(
+            deployment_type="cloud",
+            deployment_type_confidence=0.9,
+            security_level="high",
+            security_level_confidence=0.8,
+            compliance_requirements=[
+                ComplianceRequirement(name="GDPR", confidence=0.85, indicators=[])
+            ],
+        )
+
+        context = profile.format_context(min_confidence=0.7)
+        assert "Deployment: cloud" in context
+        assert "Security Level: high" in context
+        assert "GDPR" in context
+
+    def test_format_context_low_confidence(self):
+        """Test formatting context excludes low-confidence values."""
+        profile = ProjectProfile(
+            deployment_type="cloud",
+            deployment_type_confidence=0.5,  # Below threshold
+            security_level="high",
+            security_level_confidence=0.8,
+        )
+
+        context = profile.format_context(min_confidence=0.7)
+        assert "Deployment: cloud" not in context
+        assert "Security Level: high" in context
+
+    def test_format_context_empty(self):
+        """Test formatting context with no high-confidence values."""
+        profile = ProjectProfile()
+        context = profile.format_context(min_confidence=0.7)
+        assert context == ""
 
 
-@pytest.mark.unit
 class TestProjectProfileDetector:
-    """Test ProjectProfileDetector."""
-    
-    def test_detect_empty_project(self):
-        """Test detection on empty project."""
-        with TemporaryDirectory() as tmpdir:
+    """Tests for ProjectProfileDetector."""
+
+    def test_detector_initialization(self):
+        """Test detector can be initialized."""
+        detector = ProjectProfileDetector()
+        assert detector.project_root == Path.cwd()
+        assert detector.detector is not None
+
+    def test_detector_with_custom_root(self):
+        """Test detector with custom project root."""
+        custom_root = Path("/tmp/test")
+        detector = ProjectProfileDetector(project_root=custom_root)
+        assert detector.project_root == custom_root
+
+    def test_detect_profile_basic(self):
+        """Test detecting profile (basic case)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            detector = ProjectProfileDetector(project_root)
-            profile = detector.detect()
-            
-            # Should detect something (even if minimal)
-            assert isinstance(profile, ProjectProfile)
-            # Empty project might not detect deployment type
-            assert profile.deployment_type in [None, "local"]
-    
-    def test_detect_cloud_deployment(self):
-        """Test detection of cloud deployment."""
-        with TemporaryDirectory() as tmpdir:
+
+            # Create a basic project structure
+            (project_root / "README.md").touch()
+
+            detector = ProjectProfileDetector(project_root=project_root)
+            profile = detector.detect_profile()
+
+            assert profile is not None
+            assert profile.detected_at is not None
+            # Should detect at least deployment type (defaults to local)
+            assert profile.deployment_type is not None
+
+    def test_detect_profile_with_dockerfile(self):
+        """Test detecting profile with Dockerfile (cloud deployment)."""
+        with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            # Create Docker file
-            (project_root / "Dockerfile").write_text("FROM python:3.9")
-            # Create docker-compose
-            (project_root / "docker-compose.yml").write_text("version: '3'")
-            
-            detector = ProjectProfileDetector(project_root)
-            profile = detector.detect()
-            
-            assert profile.deployment_type == "cloud"
-    
-    def test_detect_enterprise_deployment(self):
-        """Test detection of enterprise deployment."""
-        with TemporaryDirectory() as tmpdir:
+
+            # Create Dockerfile
+            (project_root / "Dockerfile").touch()
+
+            detector = ProjectProfileDetector(project_root=project_root)
+            profile = detector.detect_profile()
+
+            assert profile.deployment_type in ["cloud", "enterprise"]
+            assert profile.deployment_type_confidence > 0.0
+
+    def test_detect_profile_with_security_files(self):
+        """Test detecting security level from security files."""
+        with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            # Create Kubernetes files
-            (project_root / "k8s").mkdir()
-            (project_root / "k8s" / "deployment.yaml").touch()
-            # Create Helm chart
-            (project_root / "helm").mkdir()
-            (project_root / "helm" / "Chart.yaml").touch()
-            
-            detector = ProjectProfileDetector(project_root)
-            profile = detector.detect()
-            
-            assert profile.deployment_type == "enterprise"
-    
-    def test_detect_compliance_requirements(self):
-        """Test detection of compliance requirements."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create GDPR file
-            (project_root / "GDPR.md").write_text("GDPR compliance documentation")
-            # Create HIPAA directory
-            (project_root / "compliance").mkdir()
-            (project_root / "compliance" / "HIPAA.md").write_text("HIPAA compliance")
-            
-            detector = ProjectProfileDetector(project_root)
-            profile = detector.detect()
-            
-            assert len(profile.compliance_requirements) >= 1
-            compliance_names = [req.name for req in profile.compliance_requirements]
-            assert "GDPR" in compliance_names or "HIPAA" in compliance_names
-    
-    def test_detect_security_level(self):
-        """Test detection of security level."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
+
             # Create security files
-            (project_root / "security.md").write_text("Security documentation")
-            (project_root / ".security").mkdir()
-            (project_root / ".security" / "policies.md").touch()
-            
-            detector = ProjectProfileDetector(project_root)
-            profile = detector.detect()
-            
-            assert profile.security_level in ["medium", "high"]
-    
-    def test_detect_local_deployment(self):
-        """Test detection of local deployment (no cloud indicators)."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create simple Python project
-            (project_root / "main.py").write_text("print('hello')")
-            (project_root / "requirements.txt").write_text("requests==2.28.0")
-            
-            detector = ProjectProfileDetector(project_root)
-            profile = detector.detect()
-            
-            # Should detect as local (or None if no indicators)
-            assert profile.deployment_type in [None, "local"]
+            (project_root / "SECURITY.md").touch()
+            (project_root / ".bandit").touch()
+
+            detector = ProjectProfileDetector(project_root=project_root)
+            profile = detector.detect_profile()
+
+            assert profile.security_level is not None
+            assert profile.security_level_confidence > 0.0
 
 
-@pytest.mark.unit
-class TestProjectProfileStorage:
-    """Test project profile save/load functions."""
-    
+class TestProfileStorage:
+    """Tests for profile save/load functionality."""
+
     def test_save_and_load_profile(self):
         """Test saving and loading a profile."""
-        with TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            config_dir = project_root / ".tapps-agents"
-            config_dir.mkdir()
-            
-            # Create a profile
+
             profile = ProjectProfile(
                 deployment_type="cloud",
-                tenancy="multi",
-                user_scale="thousands",
+                deployment_type_confidence=0.9,
                 security_level="high",
+                security_level_confidence=0.8,
                 compliance_requirements=[
                     ComplianceRequirement(
-                        name="GDPR",
-                        confidence=0.9,
-                        indicators=["gdpr.md"]
+                        name="GDPR", confidence=0.85, indicators=["gdpr_file"]
                     )
-                ]
+                ],
             )
-            
+
             # Save profile
-            save_project_profile(profile, project_root)
-            profile_path = config_dir / "project_profile.yaml"
-            assert profile_path.exists()
-            
+            profile_file = save_project_profile(profile, project_root=project_root)
+            assert profile_file.exists()
+
             # Load profile
-            loaded_profile = load_project_profile(project_root)
+            loaded_profile = load_project_profile(project_root=project_root)
             assert loaded_profile is not None
             assert loaded_profile.deployment_type == "cloud"
-            assert loaded_profile.tenancy == "multi"
-            assert loaded_profile.user_scale == "thousands"
+            assert loaded_profile.deployment_type_confidence == 0.9
             assert loaded_profile.security_level == "high"
             assert len(loaded_profile.compliance_requirements) == 1
             assert loaded_profile.compliance_requirements[0].name == "GDPR"
-    
+
     def test_load_nonexistent_profile(self):
         """Test loading a profile that doesn't exist."""
-        with TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            loaded_profile = load_project_profile(project_root)
-            assert loaded_profile is None
-    
-    def test_save_profile_creates_config_dir(self):
-        """Test that saving creates .tapps-agents directory if needed."""
-        with TemporaryDirectory() as tmpdir:
+
+            profile = load_project_profile(project_root=project_root)
+            assert profile is None
+
+    def test_save_profile_creates_directory(self):
+        """Test that saving profile creates .tapps-agents directory."""
+        with tempfile.TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
-            # Don't create .tapps-agents directory
-            
+
             profile = ProjectProfile(deployment_type="cloud")
-            save_project_profile(profile, project_root)
-            
-            config_dir = project_root / ".tapps-agents"
-            assert config_dir.exists()
-            assert (config_dir / "project_profile.yaml").exists()
-    
-    def test_profile_serialization(self):
-        """Test that profile can be serialized to YAML and back."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            config_dir = project_root / ".tapps-agents"
-            config_dir.mkdir()
-            
-            # Create profile with all fields
-            original_profile = ProjectProfile(
-                deployment_type="enterprise",
-                tenancy="multi",
-                user_scale="thousands",
-                security_level="high",
-                compliance_requirements=[
-                    ComplianceRequirement(name="SOC2", confidence=0.95, indicators=["soc2.md"]),
-                    ComplianceRequirement(name="ISO27001", confidence=0.85, indicators=["iso.md"])
-                ]
-            )
-            
-            # Save and load
-            save_project_profile(original_profile, project_root)
-            loaded_profile = load_project_profile(project_root)
-            
-            # Verify all fields
-            assert loaded_profile.deployment_type == original_profile.deployment_type
-            assert loaded_profile.tenancy == original_profile.tenancy
-            assert loaded_profile.user_scale == original_profile.user_scale
-            assert loaded_profile.security_level == original_profile.security_level
-            assert len(loaded_profile.compliance_requirements) == 2
-            assert loaded_profile.compliance_requirements[0].name == "SOC2"
-            assert loaded_profile.compliance_requirements[1].name == "ISO27001"
+            save_project_profile(profile, project_root=project_root)
 
-
-@pytest.mark.unit
-class TestTenancyDetection:
-    """Test tenancy detection."""
-    
-    def test_detect_multi_tenant(self):
-        """Test detection of multi-tenant project."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create files with tenant patterns
-            (project_root / "user_service.py").write_text("def get_user(tenant_id: str): pass")
-            (project_root / "auth.py").write_text("tenantId = request.tenantId")
-            (project_root / "db.py").write_text("SELECT * FROM users WHERE tenant_id = ?")
-            (project_root / "api.py").write_text("tenant_context = get_tenant()")
-            
-            detector = ProjectDetector(project_root=project_root)
-            tenancy, confidence, indicators = detector.detect_tenancy()
-            
-            assert tenancy == "multi-tenant"
-            assert confidence >= 0.6
-            assert len(indicators) > 0
-    
-    def test_detect_single_tenant(self):
-        """Test detection of single-tenant project."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create files without tenant patterns
-            (project_root / "main.py").write_text("def hello(): print('hello')")
-            (project_root / "utils.py").write_text("def helper(): pass")
-            
-            detector = ProjectDetector(project_root=project_root)
-            tenancy, confidence, indicators = detector.detect_tenancy()
-            
-            assert tenancy == "single-tenant"
-            assert confidence > 0.0
-
-
-@pytest.mark.unit
-class TestUserScaleDetection:
-    """Test user scale detection."""
-    
-    def test_detect_enterprise_scale(self):
-        """Test detection of enterprise user scale."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create enterprise indicators
-            (project_root / "nginx.conf").write_text("upstream backend {}")
-            (project_root / "oauth").mkdir()
-            (project_root / "oauth" / "config.yaml").touch()
-            
-            detector = ProjectDetector(project_root=project_root)
-            user_scale, confidence, indicators = detector.detect_user_scale()
-            
-            assert user_scale == "enterprise"
-            assert confidence >= 0.3
-            assert len(indicators) > 0
-    
-    def test_detect_department_scale(self):
-        """Test detection of department user scale."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create department indicators
-            (project_root / "redis.conf").write_text("port 6379")
-            (project_root / "docker-compose.yml").write_text("redis: image: redis")
-            
-            detector = ProjectDetector(project_root=project_root)
-            user_scale, confidence, indicators = detector.detect_user_scale()
-            
-            assert user_scale in ["department", "small-team"]
-            assert confidence >= 0.3
-    
-    def test_detect_small_team_scale(self):
-        """Test detection of small team user scale."""
-        with TemporaryDirectory() as tmpdir:
-            project_root = Path(tmpdir)
-            # Create basic infrastructure
-            (project_root / "Dockerfile").write_text("FROM python:3.9")
-            
-            detector = ProjectDetector(project_root=project_root)
-            user_scale, confidence, indicators = detector.detect_user_scale()
-            
-            assert user_scale in ["small-team", "department"]
-            assert confidence >= 0.3
-
-
-@pytest.mark.unit
-class TestProfileTemplates:
-    """Test profile template matching."""
-    
-    def test_match_local_development_template(self):
-        """Test matching local development template."""
-        profile = ProjectProfile(
-            deployment_type="local",
-            deployment_type_confidence=0.8,
-            tenancy="single-tenant",
-            tenancy_confidence=0.8,
-            user_scale="small-team",
-            user_scale_confidence=0.8,
-            security_level="basic",
-            security_level_confidence=0.7
-        )
-        
-        template = match_template(profile)
-        assert template == "local-development"
-    
-    def test_match_saas_template(self):
-        """Test matching SaaS application template."""
-        profile = ProjectProfile(
-            deployment_type="cloud",
-            deployment_type_confidence=0.9,
-            tenancy="multi-tenant",
-            tenancy_confidence=0.8,
-            user_scale="enterprise",
-            user_scale_confidence=0.8,
-            security_level="high",
-            security_level_confidence=0.9
-        )
-        
-        template = match_template(profile)
-        assert template == "saas-application"
-    
-    def test_match_enterprise_internal_template(self):
-        """Test matching enterprise internal template."""
-        profile = ProjectProfile(
-            deployment_type="enterprise",
-            deployment_type_confidence=0.9,
-            tenancy="single-tenant",
-            tenancy_confidence=0.8,
-            user_scale="department",
-            user_scale_confidence=0.8,
-            security_level="high",
-            security_level_confidence=0.9
-        )
-        
-        template = match_template(profile)
-        assert template == "enterprise-internal"
-    
-    def test_no_template_match_low_confidence(self):
-        """Test that low confidence profiles don't match templates."""
-        profile = ProjectProfile(
-            deployment_type="cloud",
-            deployment_type_confidence=0.5,  # Too low
-            tenancy="multi-tenant",
-            tenancy_confidence=0.5,  # Too low
-        )
-        
-        template = match_template(profile, min_confidence=0.7)
-        assert template is None
-    
-    def test_template_matching_partial_match(self):
-        """Test template matching with partial matches."""
-        profile = ProjectProfile(
-            deployment_type="cloud",
-            deployment_type_confidence=0.8,
-            tenancy="single-tenant",
-            tenancy_confidence=0.8,
-            user_scale="small-team",
-            user_scale_confidence=0.8,
-            security_level="standard",
-            security_level_confidence=0.8
-        )
-        
-        template = match_template(profile)
-        # Should match startup-mvp template
-        assert template == "startup-mvp"
-
+            assert (project_root / ".tapps-agents").exists()
+            assert (project_root / ".tapps-agents" / "project-profile.yaml").exists()

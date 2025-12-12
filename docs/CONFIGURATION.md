@@ -4,20 +4,20 @@ This document describes the configuration system for TappsCodingAgents.
 
 ## Overview
 
-TappsCodingAgents uses a YAML-based configuration system with Pydantic models for type-safe validation. Configuration files are optional - sensible defaults are provided for all settings.
+TappsCodingAgents uses a YAML-based configuration file validated by Pydantic models. Configuration is **optional**; if no file is found, the framework uses defaults.
 
 ## Configuration File Location
 
-The framework looks for configuration in `.tapps-agents/config.yaml` in your project root:
+The framework looks for configuration at `.tapps-agents/config.yaml` in your project root (or any parent directory of the current working directory):
 
 ```
 your-project/
 ├── .tapps-agents/
-│   ├── config.yaml          # Project configuration
-│   ├── domains.md           # Business domain definitions
-│   ├── project_profile.yaml # Project profile (auto-generated)
-│   └── customizations/      # Agent-specific customizations
-│       └── {agent-id}-custom.yaml
+│   ├── config.yaml            # Project configuration
+│   ├── domains.md             # Business domain definitions (optional)
+│   ├── experts.yaml           # Industry experts (optional)
+│   ├── project-profile.yaml   # Project profile (auto-generated)
+│   └── knowledge/             # Expert knowledge base (optional)
 └── src/
     └── ...
 ```
@@ -45,6 +45,14 @@ scoring:
 # Model Abstraction Layer (MAL) configuration
 mal:
   # MAL settings (see below)
+
+# Context7 integration (optional)
+context7:
+  # Context7 settings (see below)
+
+# Phase 6 quality tools (optional)
+quality_tools:
+  # Quality tools settings (see below)
 ```
 
 ### Agent Configuration: Reviewer
@@ -52,129 +60,68 @@ mal:
 ```yaml
 agents:
   reviewer:
-    model: "qwen2.5-coder:7b"           # LLM model for code reviews
-    quality_threshold: 70.0              # Minimum score (0-100) to pass review
-    include_scoring: true                # Include code scoring in review
-    include_llm_feedback: true           # Include LLM-generated feedback
-    max_file_size: 1048576               # Maximum file size in bytes (1MB)
-    min_confidence_threshold: 0.8        # Minimum expert confidence (0.0-1.0)
+    model: "qwen2.5-coder:7b"          # LLM model for code reviews
+    quality_threshold: 70.0             # Minimum score (0-100) to pass review
+    include_scoring: true               # Include code scoring in review
+    include_llm_feedback: true          # Include LLM-generated feedback
+    max_file_size: 1048576              # Maximum file size in bytes (1MB)
+    min_confidence_threshold: 0.8       # Minimum expert confidence (0.0-1.0)
 ```
-
-**Options:**
-- `model` (string): Model name for Ollama (e.g., "qwen2.5-coder:7b")
-- `quality_threshold` (float): Minimum overall score (0-100) to pass review
-- `include_scoring` (bool): Whether to calculate and include code scores
-- `include_llm_feedback` (bool): Whether to generate LLM feedback
-- `max_file_size` (int): Maximum file size in bytes (default: 1MB)
-- `min_confidence_threshold` (float): Minimum expert confidence threshold (0.0-1.0, default: 0.8)
 
 ### Agent Configuration: All Agents
 
-All agents support `min_confidence_threshold` for expert consultations:
+All agents support `model` and `min_confidence_threshold`.
 
 ```yaml
 agents:
   architect:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.75      # High threshold for architecture
-  
+    min_confidence_threshold: 0.75
+
   implementer:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.7       # Medium-high for code generation
-  
+    min_confidence_threshold: 0.7
+
   designer:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.65      # Medium for design decisions
-  
+    min_confidence_threshold: 0.65
+
   tester:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.7       # Medium-high for tests
-  
+    min_confidence_threshold: 0.7
+
   ops:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.75      # High for operations
-  
+    min_confidence_threshold: 0.75
+
   enhancer:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.6       # Medium for enhancements
-  
+    min_confidence_threshold: 0.6
+
   analyst:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.65      # Medium for analysis
-  
+    min_confidence_threshold: 0.65
+
   planner:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.6       # Medium for planning
-  
+    min_confidence_threshold: 0.6
+
   debugger:
     model: "deepseek-coder:6.7b"
-    min_confidence_threshold: 0.7       # Medium-high for debugging
-  
+    min_confidence_threshold: 0.7
+
   documenter:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.5      # Lower for documentation
-  
+    min_confidence_threshold: 0.5
+
   orchestrator:
     model: "qwen2.5-coder:7b"
-    min_confidence_threshold: 0.6      # Medium for orchestration
+    min_confidence_threshold: 0.6
 ```
-
-**Confidence Threshold Guidelines:**
-- **High (0.75-0.8)**: Critical decisions (Reviewer, Architect, Ops)
-- **Medium-High (0.7)**: Important decisions (Implementer, Tester, Debugger)
-- **Medium (0.6-0.65)**: Standard decisions (Designer, Analyst, Planner, Orchestrator, Enhancer)
-- **Lower (0.5)**: Less critical (Documenter)
 
 ### Scoring Configuration
 
 ```yaml
-scoring:
-  weights:
-    complexity: 0.20                     # Weight for complexity score
-    security: 0.30                       # Weight for security score
-    maintainability: 0.25                # Weight for maintainability score
-    test_coverage: 0.15                  # Weight for test coverage score
-    performance: 0.10                    # Weight for performance score
-  quality_threshold: 70.0                # Minimum overall score (0-100)
-```
-
-**Important:** The weights must sum to 1.0. If they don't, configuration loading will fail with a validation error.
-
-**Options:**
-- `weights.complexity` (float): Weight for complexity metric (0.0-1.0)
-- `weights.security` (float): Weight for security metric (0.0-1.0)
-- `weights.maintainability` (float): Weight for maintainability metric (0.0-1.0)
-- `weights.test_coverage` (float): Weight for test coverage metric (0.0-1.0)
-- `weights.performance` (float): Weight for performance metric (0.0-1.0)
-- `quality_threshold` (float): Minimum overall score (0-100) to pass
-
-### MAL Configuration
-
-```yaml
-mal:
-  ollama_url: "http://localhost:11434"   # Ollama API URL
-  default_model: "qwen2.5-coder:7b"      # Default model name
-  timeout: 60.0                          # Request timeout in seconds
-```
-
-**Options:**
-- `ollama_url` (string): Base URL for Ollama API
-- `default_model` (string): Default model to use if not specified
-- `timeout` (float): Request timeout in seconds (minimum: 1.0)
-
-## Default Values
-
-If no configuration file is provided, the following defaults are used:
-
-```yaml
-agents:
-  reviewer:
-    model: "qwen2.5-coder:7b"
-    quality_threshold: 70.0
-    include_scoring: true
-    include_llm_feedback: true
-    max_file_size: 1048576  # 1MB
-
 scoring:
   weights:
     complexity: 0.20
@@ -183,198 +130,115 @@ scoring:
     test_coverage: 0.15
     performance: 0.10
   quality_threshold: 70.0
-
-mal:
-  ollama_url: "http://localhost:11434"
-  default_model: "qwen2.5-coder:7b"
-  timeout: 60.0
 ```
+
+**Important:** The weights must sum to ~1.0 (a small floating point tolerance is allowed). If they don't, configuration loading will fail.
+
+### MAL Configuration
+
+```yaml
+mal:
+  # Provider + model used by agents when they need an LLM
+  default_provider: "ollama"          # ollama | anthropic | openai
+  default_model: "qwen2.5-coder:7b"
+
+  # Ollama endpoint
+  ollama_url: "http://localhost:11434"
+
+  # Timeouts (seconds)
+  connect_timeout: 10
+  read_timeout: 600
+  write_timeout: 30
+  pool_timeout: 10
+
+  # Streaming
+  use_streaming: true
+  streaming_threshold: 5000
+
+  # Fallback behavior
+  enable_fallback: true
+  fallback_providers: ["anthropic", "openai"]
+
+  # Optional cloud provider configuration
+  anthropic:
+    api_key: "YOUR_KEY"              # stored in YAML (no automatic env-var expansion)
+    base_url: null
+    timeout: 60
+  openai:
+    api_key: "YOUR_KEY"
+    base_url: null
+    timeout: 60
+```
+
+Note: the configuration loader **does not** interpolate environment variables (e.g., `${ANTHROPIC_API_KEY}` is treated as a literal string). If you want that behavior, expand env vars before writing `config.yaml`.
+
+### Context7 Configuration (optional)
+
+```yaml
+context7:
+  enabled: true
+  default_token_limit: 3000
+  cache_duration: 3600
+  integration_level: "optional"      # mandatory | optional
+  bypass_forbidden: true
+
+  knowledge_base:
+    enabled: true
+    location: ".tapps-agents/kb/context7-cache"
+    sharding: true
+    indexing: true
+    max_cache_size: "100MB"
+    hit_rate_threshold: 0.7
+    fuzzy_match_threshold: 0.7
+
+  refresh:
+    enabled: true
+    default_max_age_days: 30
+    check_on_access: true
+    auto_queue: true
+    auto_process_on_startup: false
+```
+
+### Quality Tools Configuration (Phase 6)
+
+```yaml
+quality_tools:
+  ruff_enabled: true
+  ruff_config_path: null
+
+  mypy_enabled: true
+  mypy_strict: false
+  mypy_config_path: null
+
+  jscpd_enabled: true
+  duplication_threshold: 3.0
+  min_duplication_lines: 5
+
+  typescript_enabled: true
+  eslint_config: null
+  tsconfig_path: null
+
+  pip_audit_enabled: true
+  dependency_audit_threshold: "high"   # low | medium | high | critical
+```
+
+## Default Values
+
+If no configuration file is provided, defaults are loaded from the Pydantic models in `tapps_agents/core/config.py`.
 
 ## Configuration Loading
 
-Configuration is automatically loaded when agents are activated:
+Configuration is loaded via `tapps_agents.core.config.load_config()` and is also loaded when agents are activated.
 
 ```python
-from tapps_agents.agents.reviewer.agent import ReviewerAgent
+from tapps_agents.core.config import load_config
 
-# Config is automatically loaded from .tapps-agents/config.yaml
-reviewer = ReviewerAgent()
-await reviewer.activate()  # Loads config during activation
+config = load_config()  # searches for .tapps-agents/config.yaml upward, else defaults
 ```
-
-You can also load configuration manually:
-
-```python
-from tapps_agents.core.config import load_config, ProjectConfig
-
-# Load from default location
-config = load_config()
-
-# Load from specific path
-config = load_config(Path(".tapps-agents/config.yaml"))
-
-# Access configuration
-print(config.agents.reviewer.quality_threshold)
-print(config.scoring.weights.complexity)
-```
-
-## Validation
-
-The configuration system uses Pydantic for validation:
-
-- **Type checking**: All values are validated for correct types
-- **Range validation**: Numeric values are checked against min/max bounds
-- **Sum validation**: Scoring weights must sum to 1.0
-
-If validation fails, a `ValueError` is raised with details about what's wrong.
-
-## Example: Custom Configuration
-
-Create `.tapps-agents/config.yaml` in your project:
-
-```yaml
-# Custom configuration for stricter code reviews
-agents:
-  reviewer:
-    model: "qwen2.5-coder:7b"
-    quality_threshold: 80.0  # Stricter: require 80+ score
-    max_file_size: 2097152   # Allow 2MB files
-
-scoring:
-  weights:
-    complexity: 0.15
-    security: 0.40           # Emphasize security
-    maintainability: 0.25
-    test_coverage: 0.15
-    performance: 0.05
-  quality_threshold: 80.0
-
-mal:
-  ollama_url: "http://localhost:11434"
-  timeout: 120.0  # Longer timeout for large files
-```
-
-## Using Configuration in Code
-
-Agents automatically access their configuration:
-
-```python
-# In your agent code
-class MyAgent(BaseAgent):
-    async def run(self, command: str, **kwargs):
-        # Access config
-        threshold = self.config.agents.reviewer.quality_threshold
-        model = self.config.agents.reviewer.model
-        
-        # Use config values
-        ...
-```
-
-## Template Generation
-
-To generate a default configuration template:
-
-```python
-from tapps_agents.core.config import get_default_config
-import yaml
-
-config_dict = get_default_config()
-with open("config.yaml", "w") as f:
-    yaml.dump(config_dict, f, default_flow_style=False)
-```
-
-Or simply copy `templates/default_config.yaml` to `.tapps-agents/config.yaml`.
-
-## Troubleshooting
-
-### Configuration Not Loading
-
-- Check that `.tapps-agents/config.yaml` exists in your project root
-- Verify YAML syntax is correct (use a YAML validator)
-- Check for validation errors in the error message
-
-### Weights Don't Sum to 1.0
-
-The scoring weights must sum to exactly 1.0. If you get an error, check your weights:
-
-```yaml
-scoring:
-  weights:
-    complexity: 0.20
-    security: 0.30
-    maintainability: 0.25
-    test_coverage: 0.15
-    performance: 0.10
-    # Sum: 0.20 + 0.30 + 0.25 + 0.15 + 0.10 = 1.0 ✓
-```
-
-### Type Errors
-
-All numeric values must be numbers (not strings). Use:
-
-```yaml
-# ✓ Correct
-quality_threshold: 70.0
-
-# ✗ Incorrect
-quality_threshold: "70.0"
-```
-
-### Unified Cache Configuration ✅
-
-The unified cache automatically detects hardware and optimizes settings. Configuration is optional but can be customized:
-
-```yaml
-# Optional: Unified cache configuration
-# Location: .tapps-agents/unified-cache-config.yaml
-
-unified_cache:
-  enabled: true
-  storage_root: ".tapps-agents/kb/unified-cache"
-  
-  # Hardware auto-detection (automatic on first run)
-  hardware:
-    auto_detect: true
-    profile: "auto"  # auto, nuc, development, workstation, server
-    detected_profile: "development"  # Set automatically
-  
-  # Adaptive settings
-  adaptive:
-    enabled: true
-    check_interval: 60
-  
-  # Tiered context cache settings (auto-configured based on hardware)
-  tiered_context:
-    enabled: true
-    namespace: "tiered-context"
-    # Auto-configured per hardware profile
-    max_in_memory_entries: 100  # NUC: 50, Dev: 100, Workstation: 200
-    hybrid_mode: true  # NUC: false, Dev/Workstation: true
-  
-  # Context7 KB cache settings
-  context7_kb:
-    enabled: true
-    namespace: "context7-kb"
-    max_cache_size: "200MB"  # NUC: 100MB, Dev: 200MB, Workstation: 500MB
-  
-  # RAG knowledge base settings
-  rag_knowledge:
-    enabled: true
-    namespace: "rag-knowledge"
-```
-
-**Key Points:**
-- Configuration is **optional** - unified cache works with defaults
-- Hardware profile is **auto-detected** on first run
-- Settings are **auto-optimized** based on detected hardware
-- Manual override available if needed
-
-See [Unified Cache Architecture Plan](../implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md) for complete configuration options.
 
 ## Reference
 
-- **Default Template**: `templates/default_config.yaml`
-- **Config Models**: `tapps_agents/core/config.py`
-- **Project Requirements**: `requirements/PROJECT_REQUIREMENTS.md`
-- **Unified Cache Config**: `tapps_agents/core/unified_cache_config.py`
-
+- **Default template**: `templates/default_config.yaml`
+- **Config models**: `tapps_agents/core/config.py`
+- **Expert setup**: `docs/EXPERT_SETUP_WIZARD.md`
+- **Project profiling**: `docs/PROJECT_PROFILING_GUIDE.md`

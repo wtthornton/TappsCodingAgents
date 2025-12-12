@@ -2,14 +2,13 @@
 KB-First Lookup - Context7 documentation lookup with KB-first caching.
 """
 
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from pathlib import Path
-from typing import Optional, Dict, Any, Callable, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, Optional
 
-from .kb_cache import KBCache, CacheEntry
-from .metadata import MetadataManager
 from .fuzzy_matcher import FuzzyMatcher
+from .kb_cache import CacheEntry, KBCache
 
 if TYPE_CHECKING:
     from ..mcp.gateway import MCPGateway
@@ -18,17 +17,18 @@ if TYPE_CHECKING:
 @dataclass
 class LookupResult:
     """Result from KB-first lookup."""
+
     success: bool
-    content: Optional[str] = None
+    content: str | None = None
     source: str = "cache"  # "cache", "api", "fuzzy_match"
-    library: Optional[str] = None
-    topic: Optional[str] = None
-    context7_id: Optional[str] = None
-    cached_entry: Optional[CacheEntry] = None
-    error: Optional[str] = None
+    library: str | None = None
+    topic: str | None = None
+    context7_id: str | None = None
+    cached_entry: CacheEntry | None = None
+    error: str | None = None
     response_time_ms: float = 0.0
-    
-    def to_dict(self) -> Dict[str, Any]:
+
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "success": self.success,
@@ -38,24 +38,24 @@ class LookupResult:
             "topic": self.topic,
             "context7_id": self.context7_id,
             "error": self.error,
-            "response_time_ms": self.response_time_ms
+            "response_time_ms": self.response_time_ms,
         }
 
 
 class KBLookup:
     """KB-first lookup workflow for Context7 documentation."""
-    
+
     def __init__(
         self,
         kb_cache: KBCache,
         mcp_gateway: Optional["MCPGateway"] = None,
-        resolve_library_func: Optional[Callable[[str], Dict[str, Any]]] = None,
-        get_docs_func: Optional[Callable[[str, Optional[str]], Dict[str, Any]]] = None,
-        fuzzy_threshold: float = 0.7
+        resolve_library_func: Callable[[str], dict[str, Any]] | None = None,
+        get_docs_func: Callable[[str, str | None], dict[str, Any]] | None = None,
+        fuzzy_threshold: float = 0.7,
     ):
         """
         Initialize KB-first lookup.
-        
+
         Args:
             kb_cache: KBCache instance
             mcp_gateway: Optional MCPGateway instance (used if provided)
@@ -68,37 +68,34 @@ class KBLookup:
         self.resolve_library_func = resolve_library_func
         self.get_docs_func = get_docs_func
         self.fuzzy_matcher = FuzzyMatcher(threshold=fuzzy_threshold)
-    
+
     async def lookup(
-        self,
-        library: str,
-        topic: Optional[str] = None,
-        use_fuzzy_match: bool = False
+        self, library: str, topic: str | None = None, use_fuzzy_match: bool = False
     ) -> LookupResult:
         """
         Perform KB-first lookup for library documentation.
-        
+
         Workflow:
         1. Check KB cache (exact match)
         2. If miss and fuzzy enabled: Try fuzzy matching (Phase 2)
         3. If still miss: Resolve library ID (if needed)
         4. If still miss: Fetch from Context7 API
         5. Store in cache
-        
+
         Args:
             library: Library name
             topic: Optional topic name
             use_fuzzy_match: Whether to use fuzzy matching (Phase 2 feature)
-        
+
         Returns:
             LookupResult with documentation content
         """
         start_time = datetime.utcnow()
-        
+
         # Default topic if not provided
         if topic is None:
             topic = "overview"
-        
+
         # Step 1: Check KB cache (exact match)
         cached_entry = self.kb_cache.get(library, topic)
         if cached_entry:
@@ -111,37 +108,40 @@ class KBLookup:
                 topic=topic,
                 context7_id=cached_entry.context7_id,
                 cached_entry=cached_entry,
-                response_time_ms=response_time
+                response_time_ms=response_time,
             )
-        
+
         # Step 2: Fuzzy matching (Phase 2)
         if use_fuzzy_match:
             # Get available entries from cache index
             from .metadata import MetadataManager
+
             metadata_manager = MetadataManager(self.kb_cache.cache_structure)
             index = metadata_manager.load_cache_index()
-            
+
             # Build list of available entries
             available_entries = []
             for lib_name, lib_data in index.libraries.items():
-                topics = lib_data.get('topics', {})
+                topics = lib_data.get("topics", {})
                 for topic_name in topics.keys():
                     available_entries.append((lib_name, topic_name))
-            
+
             # Try fuzzy matching
             fuzzy_matches = self.fuzzy_matcher.find_matching_entry(
                 library_query=library,
                 topic_query=topic,
                 available_entries=available_entries,
-                max_results=1
+                max_results=1,
             )
-            
+
             if fuzzy_matches:
                 best_match = fuzzy_matches[0]
                 # Try to get the matched entry from cache
                 fuzzy_entry = self.kb_cache.get(best_match.library, best_match.topic)
                 if fuzzy_entry:
-                    response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+                    response_time = (
+                        datetime.utcnow() - start_time
+                    ).total_seconds() * 1000
                     return LookupResult(
                         success=True,
                         content=fuzzy_entry.content,
@@ -150,24 +150,30 @@ class KBLookup:
                         topic=best_match.topic,
                         context7_id=fuzzy_entry.context7_id,
                         cached_entry=fuzzy_entry,
-                        response_time_ms=response_time
+                        response_time_ms=response_time,
                     )
-        
+
         # Step 3: Resolve library ID if needed
         context7_id = None
-        
+
         # Try MCP Gateway first
         if self.mcp_gateway:
             try:
-                resolve_result = self.mcp_gateway.call_tool("mcp_Context7_resolve-library-id", libraryName=library)
+                resolve_result = self.mcp_gateway.call_tool(
+                    "mcp_Context7_resolve-library-id", libraryName=library
+                )
                 if resolve_result.get("success"):
                     matches = resolve_result.get("result", {}).get("matches", [])
                     if matches and len(matches) > 0:
-                        context7_id = matches[0].get("id") if isinstance(matches[0], dict) else str(matches[0])
-            except Exception as e:
+                        context7_id = (
+                            matches[0].get("id")
+                            if isinstance(matches[0], dict)
+                            else str(matches[0])
+                        )
+            except Exception:
                 # Continue without context7_id if resolution fails
                 pass
-        
+
         # Fallback to provided function
         if not context7_id and self.resolve_library_func:
             try:
@@ -175,32 +181,44 @@ class KBLookup:
                 if isinstance(resolve_result, dict):
                     matches = resolve_result.get("matches", [])
                     if matches and len(matches) > 0:
-                        context7_id = matches[0].get("id") if isinstance(matches[0], dict) else str(matches[0])
+                        context7_id = (
+                            matches[0].get("id")
+                            if isinstance(matches[0], dict)
+                            else str(matches[0])
+                        )
                 elif isinstance(resolve_result, list) and len(resolve_result) > 0:
-                    context7_id = resolve_result[0].get("id") if isinstance(resolve_result[0], dict) else str(resolve_result[0])
-            except Exception as e:
+                    context7_id = (
+                        resolve_result[0].get("id")
+                        if isinstance(resolve_result[0], dict)
+                        else str(resolve_result[0])
+                    )
+            except Exception:
                 # Continue without context7_id if resolution fails
                 pass
-        
+
         # Step 4: Fetch from Context7 API
         if context7_id:
             content = None
-            
+
             # Try MCP Gateway first
             if self.mcp_gateway:
                 try:
                     api_result = self.mcp_gateway.call_tool(
                         "mcp_Context7_get-library-docs",
                         context7CompatibleLibraryID=context7_id,
-                        topic=topic
+                        topic=topic,
                     )
                     if api_result.get("success"):
                         result_data = api_result.get("result", {})
-                        content = result_data.get("content") if isinstance(result_data, dict) else result_data
-                except Exception as e:
+                        content = (
+                            result_data.get("content")
+                            if isinstance(result_data, dict)
+                            else result_data
+                        )
+                except Exception:
                     # Fall through to provided function
                     pass
-            
+
             # Fallback to provided function
             if not content and self.get_docs_func:
                 try:
@@ -210,25 +228,27 @@ class KBLookup:
                     elif isinstance(api_result, str):
                         content = api_result
                 except Exception as e:
-                    response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+                    response_time = (
+                        datetime.utcnow() - start_time
+                    ).total_seconds() * 1000
                     return LookupResult(
                         success=False,
                         source="api",
                         library=library,
                         topic=topic,
                         error=str(e),
-                        response_time_ms=response_time
+                        response_time_ms=response_time,
                     )
-            
+
             # Step 5: Store in cache if we got content
             if content:
                 cached_entry = self.kb_cache.store(
                     library=library,
                     topic=topic,
                     content=content,
-                    context7_id=context7_id
+                    context7_id=context7_id,
                 )
-                
+
                 response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
                 return LookupResult(
                     success=True,
@@ -238,9 +258,9 @@ class KBLookup:
                     topic=topic,
                     context7_id=context7_id,
                     cached_entry=cached_entry,
-                    response_time_ms=response_time
+                    response_time_ms=response_time,
                 )
-        
+
         # If we reach here, lookup failed
         response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
         return LookupResult(
@@ -249,6 +269,5 @@ class KBLookup:
             library=library,
             topic=topic,
             error="No documentation found in cache or API unavailable",
-            response_time_ms=response_time
+            response_time_ms=response_time,
         )
-

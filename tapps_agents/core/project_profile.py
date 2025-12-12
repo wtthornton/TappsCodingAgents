@@ -1,291 +1,258 @@
 """
-Project Profile System
+Project Profile System - Auto-detect project characteristics for context-aware expert guidance.
 
-Automatically detects and stores project characteristics (deployment type, tenancy,
-user scale, compliance, security level) to provide context-aware expert guidance.
+This module provides automatic detection of project characteristics such as:
+- Deployment type (local, cloud, enterprise)
+- Tenancy (single-tenant, multi-tenant)
+- User scale (single-user, small-team, department, enterprise)
+- Compliance requirements (GDPR, HIPAA, PCI, SOC2)
+- Security level (basic, standard, high, critical)
+
+The profile is used to provide context-aware expert guidance.
 """
 
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass, field, asdict
-from datetime import datetime, timezone
+
 import yaml
 
-from .config import load_config
 from ..workflow.detector import ProjectDetector
-
-
-# Profile templates for common project types
-PROFILE_TEMPLATES = {
-    "local-development": {
-        "deployment_type": "local",
-        "tenancy": "single-tenant",
-        "user_scale": "small-team",
-        "security_level": "basic"
-    },
-    "saas-application": {
-        "deployment_type": "cloud",
-        "tenancy": "multi-tenant",
-        "user_scale": "enterprise",
-        "security_level": "high"
-    },
-    "enterprise-internal": {
-        "deployment_type": "enterprise",
-        "tenancy": "single-tenant",
-        "user_scale": "department",
-        "security_level": "high"
-    },
-    "startup-mvp": {
-        "deployment_type": "cloud",
-        "tenancy": "single-tenant",
-        "user_scale": "small-team",
-        "security_level": "standard"
-    }
-}
 
 
 @dataclass
 class ComplianceRequirement:
-    """A compliance requirement with confidence and indicators."""
+    """A compliance requirement with confidence."""
+
     name: str
     confidence: float
-    indicators: List[str] = field(default_factory=list)
+    indicators: list[str] = field(default_factory=list)
 
 
 @dataclass
 class ProjectProfile:
     """
     Project profile with detected characteristics.
-    
+
     All fields are optional to support progressive disclosure.
+    Confidence scores indicate detection reliability.
     """
-    deployment_type: Optional[str] = None  # local, cloud, enterprise
+
+    deployment_type: str | None = None
     deployment_type_confidence: float = 0.0
-    deployment_type_indicators: List[str] = field(default_factory=list)
-    
-    tenancy: Optional[str] = None  # single-tenant, multi-tenant
+    deployment_type_indicators: list[str] = field(default_factory=list)
+
+    tenancy: str | None = None
     tenancy_confidence: float = 0.0
-    tenancy_indicators: List[str] = field(default_factory=list)
-    
-    user_scale: Optional[str] = None  # single-user, small-team, department, enterprise
+    tenancy_indicators: list[str] = field(default_factory=list)
+
+    user_scale: str | None = None
     user_scale_confidence: float = 0.0
-    user_scale_indicators: List[str] = field(default_factory=list)
-    
-    compliance_requirements: List[ComplianceRequirement] = field(default_factory=list)
-    
-    security_level: Optional[str] = None  # basic, standard, high, critical
+    user_scale_indicators: list[str] = field(default_factory=list)
+
+    compliance_requirements: list[ComplianceRequirement] = field(default_factory=list)
+
+    security_level: str | None = None
     security_level_confidence: float = 0.0
-    security_level_indicators: List[str] = field(default_factory=list)
-    
-    detected_at: Optional[str] = None  # ISO timestamp
-    
-    def to_dict(self) -> Dict:
+    security_level_indicators: list[str] = field(default_factory=list)
+
+    detected_at: str | None = None
+
+    def to_dict(self) -> dict:
         """Convert profile to dictionary for YAML serialization."""
         data = asdict(self)
         # Convert ComplianceRequirement objects to dicts
-        data['compliance_requirements'] = [
+        data["compliance_requirements"] = [
             asdict(req) for req in self.compliance_requirements
         ]
         return data
-    
+
     @classmethod
-    def from_dict(cls, data: Dict) -> 'ProjectProfile':
-        """Create profile from dictionary (YAML deserialization)."""
-        # Convert compliance requirements back to objects
-        compliance_data = data.pop('compliance_requirements', [])
+    def from_dict(cls, data: dict) -> "ProjectProfile":
+        """Create profile from dictionary."""
+        # Convert compliance requirement dicts to objects
         compliance_reqs = [
             ComplianceRequirement(**req) if isinstance(req, dict) else req
-            for req in compliance_data
+            for req in data.get("compliance_requirements", [])
         ]
-        
-        profile = cls(**{k: v for k, v in data.items() if k != 'compliance_requirements'})
-        profile.compliance_requirements = compliance_reqs
-        return profile
+        data["compliance_requirements"] = compliance_reqs
+        return cls(**data)
+
+    def format_context(self, min_confidence: float = 0.7) -> str:
+        """
+        Format profile as context string for expert prompts.
+
+        Only includes high-confidence values (>= min_confidence).
+
+        Args:
+            min_confidence: Minimum confidence to include a value
+
+        Returns:
+            Formatted context string
+        """
+        parts = []
+
+        if self.deployment_type and self.deployment_type_confidence >= min_confidence:
+            parts.append(
+                f"- Deployment: {self.deployment_type} (confidence: {self.deployment_type_confidence:.1f})"
+            )
+
+        if self.security_level and self.security_level_confidence >= min_confidence:
+            parts.append(
+                f"- Security Level: {self.security_level} (confidence: {self.security_level_confidence:.1f})"
+            )
+
+        if self.compliance_requirements:
+            high_conf_compliance = [
+                req.name
+                for req in self.compliance_requirements
+                if req.confidence >= min_confidence
+            ]
+            if high_conf_compliance:
+                parts.append(f"- Compliance: {', '.join(high_conf_compliance)}")
+
+        if self.tenancy and self.tenancy_confidence >= min_confidence:
+            parts.append(
+                f"- Tenancy: {self.tenancy} (confidence: {self.tenancy_confidence:.1f})"
+            )
+
+        if self.user_scale and self.user_scale_confidence >= min_confidence:
+            parts.append(
+                f"- User Scale: {self.user_scale} (confidence: {self.user_scale_confidence:.1f})"
+            )
+
+        if not parts:
+            return ""
+
+        return "Project Context:\n" + "\n".join(parts)
 
 
 class ProjectProfileDetector:
     """
-    Detects project profile characteristics using ProjectDetector.
-    
-    Orchestrates detection methods and aggregates results into ProjectProfile.
+    Detects project profile characteristics.
+
+    Wraps ProjectDetector and aggregates results into ProjectProfile.
     """
-    
-    def __init__(self, project_root: Optional[Path] = None):
+
+    def __init__(self, project_root: Path | None = None):
         """
         Initialize profile detector.
-        
+
         Args:
             project_root: Root directory of the project
         """
         self.project_root = project_root or Path.cwd()
         self.detector = ProjectDetector(project_root=self.project_root)
-    
-    def detect(self) -> ProjectProfile:
+
+    def detect_profile(self) -> ProjectProfile:
         """
-        Detect all project profile characteristics.
-        
+        Detect complete project profile.
+
         Returns:
-            ProjectProfile with detected characteristics
+            ProjectProfile with all detected characteristics
         """
         profile = ProjectProfile()
-        profile.detected_at = datetime.now(timezone.utc).isoformat()
-        
+        profile.detected_at = datetime.utcnow().isoformat() + "Z"
+
         # Detect deployment type
-        deployment_type, deployment_confidence, deployment_indicators = self.detector.detect_deployment_type()
+        deployment_type, deployment_conf, deployment_indicators = (
+            self.detector.detect_deployment_type()
+        )
         if deployment_type:
             profile.deployment_type = deployment_type
-            profile.deployment_type_confidence = deployment_confidence
+            profile.deployment_type_confidence = deployment_conf
             profile.deployment_type_indicators = deployment_indicators
-        
-        # Detect compliance requirements
-        compliance_data = self.detector.detect_compliance_requirements()
-        profile.compliance_requirements = [
-            ComplianceRequirement(name=name, confidence=conf, indicators=indicators)
-            for name, conf, indicators in compliance_data
-        ]
-        
-        # Detect security level
-        security_level, security_confidence, security_indicators = self.detector.detect_security_level()
-        if security_level:
-            profile.security_level = security_level
-            profile.security_level_confidence = security_confidence
-            profile.security_level_indicators = security_indicators
-        
+
         # Detect tenancy
-        tenancy, tenancy_confidence, tenancy_indicators = self.detector.detect_tenancy()
+        tenancy, tenancy_conf, tenancy_indicators = self.detector.detect_tenancy()
         if tenancy:
             profile.tenancy = tenancy
-            profile.tenancy_confidence = tenancy_confidence
+            profile.tenancy_confidence = tenancy_conf
             profile.tenancy_indicators = tenancy_indicators
-        
-        # Detect user scale
-        user_scale, user_scale_confidence, user_scale_indicators = self.detector.detect_user_scale()
-        if user_scale:
+
+        # Detect compliance requirements (use existing method)
+        compliance_results = self.detector.detect_compliance_requirements()
+        compliance_reqs = [
+            ComplianceRequirement(name=name, confidence=conf, indicators=indicators)
+            for name, conf, indicators in compliance_results
+        ]
+        profile.compliance_requirements = compliance_reqs
+
+        # Detect security level (use existing method)
+        security_level, security_conf, security_indicators = (
+            self.detector.detect_security_level()
+        )
+        if security_level:
+            profile.security_level = security_level
+            profile.security_level_confidence = security_conf
+            profile.security_level_indicators = security_indicators
+
+        # Detect user scale (use existing method)
+        user_scale, user_scale_conf, user_scale_indicators = (
+            self.detector.detect_user_scale()
+        )
+        if user_scale and user_scale_conf >= 0.5:
             profile.user_scale = user_scale
-            profile.user_scale_confidence = user_scale_confidence
+            profile.user_scale_confidence = user_scale_conf
             profile.user_scale_indicators = user_scale_indicators
-        
+
         return profile
 
 
-def save_project_profile(profile: ProjectProfile, project_root: Optional[Path] = None) -> Path:
+def save_project_profile(
+    profile: ProjectProfile, project_root: Path | None = None
+) -> Path:
     """
     Save project profile to YAML file.
-    
+
     Args:
         profile: ProjectProfile to save
         project_root: Root directory (defaults to current directory)
-        
+
     Returns:
         Path to saved profile file
     """
     project_root = project_root or Path.cwd()
     profile_dir = project_root / ".tapps-agents"
-    profile_dir.mkdir(exist_ok=True)
-    
-    profile_file = profile_dir / "project_profile.yaml"
-    
-    # Convert to dict and save as YAML
-    data = profile.to_dict()
-    
-    with open(profile_file, 'w', encoding='utf-8') as f:
-        yaml.dump(data, f, default_flow_style=False, sort_keys=False)
-    
+    profile_dir.mkdir(parents=True, exist_ok=True)
+
+    profile_file = profile_dir / "project-profile.yaml"
+
+    with open(profile_file, "w", encoding="utf-8") as f:
+        yaml.dump(profile.to_dict(), f, default_flow_style=False, sort_keys=False)
+
     return profile_file
 
 
-def load_project_profile(project_root: Optional[Path] = None) -> Optional[ProjectProfile]:
+def load_project_profile(
+    project_root: Path | None = None,
+) -> ProjectProfile | None:
     """
     Load project profile from YAML file.
-    
+
     Args:
         project_root: Root directory (defaults to current directory)
-        
+
     Returns:
         ProjectProfile if found, None otherwise
     """
     project_root = project_root or Path.cwd()
-    profile_file = project_root / ".tapps-agents" / "project_profile.yaml"
-    
+    profile_file = project_root / ".tapps-agents" / "project-profile.yaml"
+
     if not profile_file.exists():
         return None
-    
+
     try:
-        with open(profile_file, 'r', encoding='utf-8') as f:
+        with open(profile_file, encoding="utf-8") as f:
             data = yaml.safe_load(f)
-        
+
         if not data:
             return None
-        
+
         return ProjectProfile.from_dict(data)
-    except Exception:
-        # Fail gracefully - profile is optional
+    except (OSError, yaml.YAMLError, ValueError, KeyError) as e:
+        # File errors, YAML parsing errors, or invalid data
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Failed to load project profile: {e}")
         return None
-
-
-def match_template(profile: ProjectProfile, min_confidence: float = 0.7) -> Optional[str]:
-    """
-    Match detected profile to closest template.
-    
-    Args:
-        profile: ProjectProfile to match
-        min_confidence: Minimum confidence threshold for matching (default: 0.7)
-        
-    Returns:
-        Template name if match confidence >= min_confidence, None otherwise
-    """
-    best_match = None
-    best_score = 0.0
-    
-    for template_name, template_values in PROFILE_TEMPLATES.items():
-        score = 0.0
-        matches = 0
-        total = 0
-        
-        # Check each field
-        for field, template_value in template_values.items():
-            total += 1
-            profile_value = getattr(profile, field, None)
-            profile_confidence = getattr(profile, f"{field}_confidence", 0.0)
-            
-            # Only count if profile has high confidence value
-            if profile_value and profile_confidence >= min_confidence:
-                if profile_value == template_value:
-                    matches += 1
-                    # Weight by confidence
-                    score += profile_confidence
-                else:
-                    # Partial match (close but not exact)
-                    score += profile_confidence * 0.5
-        
-        # Normalize score
-        if total > 0:
-            normalized_score = score / total
-            if normalized_score > best_score:
-                best_score = normalized_score
-                best_match = template_name
-    
-    # Return best match if it meets threshold
-    if best_match and best_score >= min_confidence:
-        return best_match
-    
-    return None
-
-
-def detect_and_save_profile(project_root: Optional[Path] = None) -> ProjectProfile:
-    """
-    Detect project profile and save it.
-    
-    Convenience function that combines detection and saving.
-    
-    Args:
-        project_root: Root directory (defaults to current directory)
-        
-    Returns:
-        Detected ProjectProfile
-    """
-    detector = ProjectProfileDetector(project_root=project_root)
-    profile = detector.detect()
-    save_project_profile(profile, project_root=project_root)
-    return profile
-

@@ -62,3 +62,43 @@ mal:
   default_model: "qwen2.5-coder:7b"      # Default model name
   timeout: 60.0                          # Request timeout in seconds
 
+# Expert consultation system configuration
+expert:
+  # Agent-specific confidence thresholds (0.0-1.0)
+  agent_confidence_thresholds:
+    reviewer: 0.8        # High threshold for code reviews
+    architect: 0.75       # High for architecture decisions
+    implementer: 0.7      # Medium-high for code generation
+    designer: 0.65        # Medium for design decisions
+    tester: 0.7          # Medium-high for test generation
+    ops: 0.75            # High for operations
+    enhancer: 0.6         # Medium for enhancements
+    analyst: 0.65         # Medium for analysis
+    planner: 0.6          # Medium for planning
+    debugger: 0.7         # Medium-high for debugging
+    documenter: 0.5       # Lower for documentation (less critical)
+    orchestrator: 0.6     # Medium for orchestration
+    default: 0.7          # Default threshold
+  
+  # Confidence calculation weights (must sum to 1.0)
+  weight_max_confidence: 0.35      # Weight for maximum expert confidence
+  weight_agreement: 0.25          # Weight for expert agreement level
+  weight_rag_quality: 0.2         # Weight for RAG knowledge base quality
+  weight_domain_relevance: 0.1     # Weight for domain relevance
+  weight_project_context: 0.1      # Weight for project context relevance
+  
+  # Agreement and similarity thresholds (0.0-1.0)
+  high_agreement_threshold: 0.75   # High agreement threshold for expert consensus
+  similarity_threshold: 0.6         # Similarity threshold for expert response comparison
+  
+  # RAG (Retrieval-Augmented Generation) parameters
+  rag_max_length: 2000             # Maximum length for RAG context retrieval (characters)
+  rag_max_results: 5               # Maximum number of RAG results to retrieve
+  rag_default_quality: 0.8         # Default RAG quality score when not provided
+  
+  # Profile confidence threshold (0.0-1.0)
+  profile_confidence_threshold: 0.7 # Minimum confidence for including profile values
+  
+  # Supporting expert weight (0.0-1.0)
+  supporting_expert_weight: 0.15   # Approximate weight for supporting experts
+
