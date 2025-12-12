@@ -105,15 +105,15 @@ class TestBuiltinExpertRegistry:
         for expert in experts:
             assert expert.expert_id, f"Expert missing expert_id: {expert}"
             assert expert.expert_name, f"Expert missing expert_name: {expert.expert_id}"
-            assert (
-                expert.primary_domain
-            ), f"Expert missing primary_domain: {expert.expert_id}"
-            assert isinstance(
-                expert.rag_enabled, bool
-            ), f"Expert rag_enabled not bool: {expert.expert_id}"
-            assert isinstance(
-                expert.fine_tuned, bool
-            ), f"Expert fine_tuned not bool: {expert.expert_id}"
+            assert expert.primary_domain, (
+                f"Expert missing primary_domain: {expert.expert_id}"
+            )
+            assert isinstance(expert.rag_enabled, bool), (
+                f"Expert rag_enabled not bool: {expert.expert_id}"
+            )
+            assert isinstance(expert.fine_tuned, bool), (
+                f"Expert fine_tuned not bool: {expert.expert_id}"
+            )
 
     def test_builtin_experts_unique_ids(self):
         """Test that all built-in expert IDs are unique."""
@@ -127,6 +127,6 @@ class TestBuiltinExpertRegistry:
         experts = BuiltinExpertRegistry.get_builtin_experts()
 
         for expert in experts:
-            assert BuiltinExpertRegistry.is_technical_domain(
-                expert.primary_domain
-            ), f"Expert {expert.expert_id} uses non-technical domain: {expert.primary_domain}"
+            assert BuiltinExpertRegistry.is_technical_domain(expert.primary_domain), (
+                f"Expert {expert.expert_id} uses non-technical domain: {expert.primary_domain}"
+            )

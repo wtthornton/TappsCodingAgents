@@ -286,10 +286,10 @@ class VisualAnalyzer:
                 distance = abs(elem1.position[1] + elem1.size[1] - elem2.position[1])
                 if distance < 5:
                     spacing_scores.append(0.0)
-                    issues.append(f"Elements {i} and {i+1} are too close")
+                    issues.append(f"Elements {i} and {i + 1} are too close")
                 elif distance > 100:
                     spacing_scores.append(0.5)
-                    issues.append(f"Elements {i} and {i+1} have excessive spacing")
+                    issues.append(f"Elements {i} and {i + 1} have excessive spacing")
                 else:
                     spacing_scores.append(1.0)
 

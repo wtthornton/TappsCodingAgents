@@ -239,6 +239,8 @@ class StalenessPolicyManager:
             "recommendation": (
                 "refresh"
                 if is_stale
-                else "keep" if days_until_stale > 7 else "consider_refresh"
+                else "keep"
+                if days_until_stale > 7
+                else "consider_refresh"
             ),
         }

@@ -263,21 +263,40 @@ class ResourceAwareExecutor:
     def _apply_hardware_profile(self):
         """Apply hardware profile-specific adjustments."""
         profile = self.config.hardware_profile
+        defaults = ExecutionConfig()
 
         if profile == HardwareProfile.NUC:
             # NUC: More aggressive thresholds, frequent monitoring
-            self.config.monitor_interval = 20.0
-            self.config.pause_cpu_threshold = 85.0
-            self.config.pause_memory_threshold = 90.0
-            self.config.degrade_cpu_threshold = 60.0
-            self.config.degrade_memory_threshold = 70.0
+            # Only apply adjustments when the caller hasn't explicitly overridden
+            # the setting (i.e., when it still matches the default).
+            if self.config.monitor_interval == defaults.monitor_interval:
+                self.config.monitor_interval = 20.0
+            if self.config.pause_cpu_threshold == defaults.pause_cpu_threshold:
+                self.config.pause_cpu_threshold = 85.0
+            if self.config.pause_memory_threshold == defaults.pause_memory_threshold:
+                self.config.pause_memory_threshold = 90.0
+            if self.config.degrade_cpu_threshold == defaults.degrade_cpu_threshold:
+                self.config.degrade_cpu_threshold = 60.0
+            if (
+                self.config.degrade_memory_threshold
+                == defaults.degrade_memory_threshold
+            ):
+                self.config.degrade_memory_threshold = 70.0
         elif profile == HardwareProfile.WORKSTATION:
             # Workstation: Less aggressive, can handle more
-            self.config.monitor_interval = 60.0
-            self.config.pause_cpu_threshold = 95.0
-            self.config.pause_memory_threshold = 98.0
-            self.config.degrade_cpu_threshold = 80.0
-            self.config.degrade_memory_threshold = 85.0
+            if self.config.monitor_interval == defaults.monitor_interval:
+                self.config.monitor_interval = 60.0
+            if self.config.pause_cpu_threshold == defaults.pause_cpu_threshold:
+                self.config.pause_cpu_threshold = 95.0
+            if self.config.pause_memory_threshold == defaults.pause_memory_threshold:
+                self.config.pause_memory_threshold = 98.0
+            if self.config.degrade_cpu_threshold == defaults.degrade_cpu_threshold:
+                self.config.degrade_cpu_threshold = 80.0
+            if (
+                self.config.degrade_memory_threshold
+                == defaults.degrade_memory_threshold
+            ):
+                self.config.degrade_memory_threshold = 85.0
 
     def start_monitoring(self):
         """Start continuous resource monitoring."""

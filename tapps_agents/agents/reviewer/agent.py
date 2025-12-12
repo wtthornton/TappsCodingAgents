@@ -201,7 +201,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             target = kwargs.get("target")  # Optional target path (file or directory)
 
             return await self.generate_reports(
-                format_type=format_type, output_dir=output_dir, files=files_list, target=target
+                format_type=format_type,
+                output_dir=output_dir,
+                files=files_list,
+                target=target,
             )
 
         elif command == "duplication":
@@ -763,7 +766,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     files = [str(p) for p in _discover_code_files(target_path)]
 
         # Support comma-separated multiple formats (e.g., "json,html") in addition to single tokens.
-        requested_formats = {f.strip().lower() for f in str(format_type).split(",") if f.strip()}
+        requested_formats = {
+            f.strip().lower() for f in str(format_type).split(",") if f.strip()
+        }
         if "all" in requested_formats:
             requested_formats = {"all"}
 

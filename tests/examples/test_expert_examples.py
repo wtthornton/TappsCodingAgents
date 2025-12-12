@@ -140,9 +140,9 @@ class TestExampleKnowledgeBases:
         # Each domain directory should have at least one .md file
         for domain_dir in domain_dirs:
             md_files = list(domain_dir.glob("*.md"))
-            assert (
-                len(md_files) > 0
-            ), f"Domain {domain_dir.name} should have at least one .md file"
+            assert len(md_files) > 0, (
+                f"Domain {domain_dir.name} should have at least one .md file"
+            )
 
             # Files should be readable
             for md_file in md_files:

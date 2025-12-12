@@ -336,7 +336,7 @@ class IterativeRefinement:
                     element_type=VisualElementType.BUTTON,
                     position=(10.0, y_pos),
                     size=(100.0, 40.0),
-                    text=f"Button {i+1}",
+                    text=f"Button {i + 1}",
                 )
             )
             y_pos += 60.0
@@ -357,7 +357,7 @@ class IterativeRefinement:
                     element_type=VisualElementType.TEXT,
                     position=(10.0, y_pos),
                     size=(300.0, 30.0),
-                    text=f"Text {i+1}",
+                    text=f"Text {i + 1}",
                 )
             )
             y_pos += 50.0

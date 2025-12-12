@@ -146,7 +146,9 @@ class TestBestPracticeConsultant:
         # Cache with short TTL
         cache_key = consultant._generate_cache_key("test", {})
         consultant._cache_advice(
-            cache_key, mock_result, timedelta(seconds=-1)  # Already expired
+            cache_key,
+            mock_result,
+            timedelta(seconds=-1),  # Already expired
         )
 
         # Should not return expired entry

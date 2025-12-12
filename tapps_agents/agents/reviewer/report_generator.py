@@ -368,41 +368,41 @@ class ReportGenerator:
 <body>
     <div class="header">
         <h1>Quality Analysis Dashboard</h1>
-        <p><strong>Generated:</strong> {timestamp.strftime('%Y-%m-%d %H:%M:%S')}</p>
-        <p><strong>Project:</strong> {metadata.get('project_name', 'Unknown')}</p>
-        <p><strong>Version:</strong> {metadata.get('version', 'Unknown')}</p>
+        <p><strong>Generated:</strong> {timestamp.strftime("%Y-%m-%d %H:%M:%S")}</p>
+        <p><strong>Project:</strong> {metadata.get("project_name", "Unknown")}</p>
+        <p><strong>Version:</strong> {metadata.get("version", "Unknown")}</p>
         <div class="status">{status_text}</div>
-        <p><strong>Overall Score:</strong> {overall_score:.2f}/100 (Threshold: {thresholds.get('overall', 70.0)})</p>
+        <p><strong>Overall Score:</strong> {overall_score:.2f}/100 (Threshold: {thresholds.get("overall", 70.0)})</p>
     </div>
     
     <div class="metrics">
         <div class="metric-card">
             <div class="metric-label">Complexity</div>
-            <div class="metric-value">{scores.get('complexity_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("complexity_score", 0.0):.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Security</div>
-            <div class="metric-value">{scores.get('security_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("security_score", 0.0):.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Maintainability</div>
-            <div class="metric-value">{scores.get('maintainability_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("maintainability_score", 0.0):.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Test Coverage</div>
-            <div class="metric-value">{scores.get('test_coverage_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("test_coverage_score", 0.0):.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Performance</div>
-            <div class="metric-value">{scores.get('performance_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("performance_score", 0.0):.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Linting</div>
-            <div class="metric-value">{scores.get('linting_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("linting_score", 0.0):.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Type Checking</div>
-            <div class="metric-value">{scores.get('type_checking_score', 0.0):.2f}</div>
+            <div class="metric-value">{scores.get("type_checking_score", 0.0):.2f}</div>
         </div>
     </div>
 """
@@ -428,10 +428,10 @@ class ReportGenerator:
                 html += f"""
             <tr>
                 <td>{file_path}</td>
-                <td>{file_scores.get('overall_score', 0.0):.2f}</td>
-                <td>{file_scores.get('complexity_score', 0.0):.2f}</td>
-                <td>{file_scores.get('security_score', 0.0):.2f}</td>
-                <td>{file_scores.get('maintainability_score', 0.0):.2f}</td>
+                <td>{file_scores.get("overall_score", 0.0):.2f}</td>
+                <td>{file_scores.get("complexity_score", 0.0):.2f}</td>
+                <td>{file_scores.get("security_score", 0.0):.2f}</td>
+                <td>{file_scores.get("maintainability_score", 0.0):.2f}</td>
             </tr>
 """
             html += """

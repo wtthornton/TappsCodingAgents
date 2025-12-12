@@ -382,7 +382,10 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
 
         try:
             result = subprocess.run(  # nosec B603
-                cmd, capture_output=True, text=True, timeout=300  # 5 minute timeout
+                cmd,
+                capture_output=True,
+                text=True,
+                timeout=300,  # 5 minute timeout
             )
 
             # Parse coverage if available

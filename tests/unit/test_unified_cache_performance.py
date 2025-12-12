@@ -144,9 +144,9 @@ class TestPerformanceValidation:
         avg_overhead = elapsed / 100  # Average per call
 
         # Target: <5ms overhead per call (with margin)
-        assert (
-            avg_overhead < 20
-        ), f"Average overhead {avg_overhead:.2f}ms exceeds target of 5ms"
+        assert avg_overhead < 20, (
+            f"Average overhead {avg_overhead:.2f}ms exceeds target of 5ms"
+        )
 
     def test_hit_rate_tracking(
         self, tmp_cache_root, mock_context_manager, mock_kb_cache, mock_knowledge_base
@@ -205,9 +205,9 @@ class TestPerformanceValidation:
         elapsed = (time.perf_counter() - start) * 1000
 
         # Should handle 50 requests quickly
-        assert (
-            elapsed < 500
-        ), f"50 concurrent requests took {elapsed:.2f}ms, should be <500ms"
+        assert elapsed < 500, (
+            f"50 concurrent requests took {elapsed:.2f}ms, should be <500ms"
+        )
 
     def test_memory_usage_by_profile(
         self, tmp_cache_root, mock_context_manager, mock_kb_cache, mock_knowledge_base

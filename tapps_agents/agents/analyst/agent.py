@@ -247,7 +247,7 @@ Requirement:
 {f"Context: {context}" if context else ""}
 
 Evaluation Criteria:
-{', '.join(criteria)}
+{", ".join(criteria)}
 
 For each technology option, provide:
 1. Name and Description

@@ -47,8 +47,8 @@ async def improve_file(
 
         # Create improvement instruction
         instruction = f"""Refactor and improve code quality based on these scores:
-- Maintainability: {issues.get('maintainability_score', 0):.1f}/10 (target: 8.0+)
-- Overall Score: {issues.get('overall_score', 0):.1f}/100 (target: 70+)
+- Maintainability: {issues.get("maintainability_score", 0):.1f}/10 (target: 8.0+)
+- Overall Score: {issues.get("overall_score", 0):.1f}/100 (target: 70+)
 
 Focus on:
 1. Improving maintainability (code organization, function length, complexity)

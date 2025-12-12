@@ -386,25 +386,25 @@ TASKS:
         story_file = self.stories_dir / f"{story_id}.md"
 
         # Generate story content
-        content = f"""# {metadata['title']}
+        content = f"""# {metadata["title"]}
 
 ```yaml
-story_id: {metadata['story_id']}
-title: {metadata['title']}
+story_id: {metadata["story_id"]}
+title: {metadata["title"]}
 description: |
-{self._indent_yaml_multiline(metadata['description'])}
-epic: {metadata['epic']}
-domain: {metadata['domain']}
-priority: {metadata['priority']}
-complexity: {metadata['complexity']}
-status: {metadata['status']}
-created_at: {metadata['created_at']}
-created_by: {metadata['created_by']}
+{self._indent_yaml_multiline(metadata["description"])}
+epic: {metadata["epic"]}
+domain: {metadata["domain"]}
+priority: {metadata["priority"]}
+complexity: {metadata["complexity"]}
+status: {metadata["status"]}
+created_at: {metadata["created_at"]}
+created_by: {metadata["created_by"]}
 ```
 
 ## Description
 
-{metadata['description']}
+{metadata["description"]}
 
 ## Acceptance Criteria
 
@@ -412,7 +412,7 @@ created_by: {metadata['created_by']}
 
 ## Tasks
 
-{chr(10).join(f"{i+1}. {task}" for i, task in enumerate(tasks))}
+{chr(10).join(f"{i + 1}. {task}" for i, task in enumerate(tasks))}
 
 ## Technical Notes
 

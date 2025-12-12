@@ -266,9 +266,9 @@ async def test_enhance_multiple_prompts(enhancer_agent):
 
     # All should have different session IDs
     session_ids = [r["session_id"] for r in results]
-    assert len(set(session_ids)) == len(
-        prompts
-    ), "Each prompt should have unique session"
+    assert len(set(session_ids)) == len(prompts), (
+        "Each prompt should have unique session"
+    )
     print("[TEST] Multiple prompts test passed OK")
 
 

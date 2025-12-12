@@ -260,10 +260,10 @@ class EnhancerAgent(BaseAgent):
                     "Analyzing codebase and finding related files...",
                 )
                 await asyncio.sleep(0.01)
-                session["stages"]["codebase_context"] = (
-                    await self._stage_codebase_context(
-                        prompt, session["stages"].get("analysis", {})
-                    )
+                session["stages"][
+                    "codebase_context"
+                ] = await self._stage_codebase_context(
+                    prompt, session["stages"].get("analysis", {})
                 )
                 self._print_progress(
                     current_stage,
@@ -776,11 +776,11 @@ Provide structured JSON response."""
 
 Original Prompt: {prompt}
 
-Analysis: {json.dumps(stages.get('analysis', {}), indent=2)}
-Requirements: {json.dumps(stages.get('requirements', {}), indent=2)}
-Architecture: {json.dumps(stages.get('architecture', {}), indent=2)}
-Quality: {json.dumps(stages.get('quality', {}), indent=2)}
-Implementation: {json.dumps(stages.get('implementation', {}), indent=2)}
+Analysis: {json.dumps(stages.get("analysis", {}), indent=2)}
+Requirements: {json.dumps(stages.get("requirements", {}), indent=2)}
+Architecture: {json.dumps(stages.get("architecture", {}), indent=2)}
+Quality: {json.dumps(stages.get("quality", {}), indent=2)}
+Implementation: {json.dumps(stages.get("implementation", {}), indent=2)}
 
 Create a comprehensive, context-aware enhanced prompt that includes all relevant information."""
 

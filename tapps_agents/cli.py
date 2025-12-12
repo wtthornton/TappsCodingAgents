@@ -2078,9 +2078,9 @@ Examples:
                 )
                 sys.exit(1)
 
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Starting: {workflow.name}")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
             print(f"Description: {workflow.description}")
             print(f"Steps: {len(workflow.steps)}")
             print()
@@ -2093,9 +2093,9 @@ Examples:
             )
 
             if result.status == "completed":
-                print(f"\n{'='*60}")
+                print(f"\n{'=' * 60}")
                 print("Workflow completed successfully!")
-                print(f"{'='*60}")
+                print(f"{'=' * 60}")
             elif result.status == "failed":
                 print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)
                 sys.exit(1)
@@ -2245,7 +2245,7 @@ Examples:
                 )[:10]:
                     print(
                         f"  {agent['agent_name']}: {agent['total_executions']} executions, "
-                        f"{agent['success_rate']*100:.1f}% success, "
+                        f"{agent['success_rate'] * 100:.1f}% success, "
                         f"{agent['average_duration']:.2f}s avg"
                     )
 
@@ -2255,7 +2255,7 @@ Examples:
                 )[:10]:
                     print(
                         f"  {workflow['workflow_name']}: {workflow['total_executions']} executions, "
-                        f"{workflow['success_rate']*100:.1f}% success"
+                        f"{workflow['success_rate'] * 100:.1f}% success"
                     )
         elif command == "agents":
             # Show agent metrics
@@ -2267,7 +2267,7 @@ Examples:
                 for agent in metrics:
                     print(
                         f"{agent['agent_name']}: {agent['total_executions']} executions, "
-                        f"{agent['success_rate']*100:.1f}% success"
+                        f"{agent['success_rate'] * 100:.1f}% success"
                     )
         elif command == "workflows":
             # Show workflow metrics
@@ -2279,7 +2279,7 @@ Examples:
                 for workflow in metrics:
                     print(
                         f"{workflow['workflow_name']}: {workflow['total_executions']} executions, "
-                        f"{workflow['success_rate']*100:.1f}% success"
+                        f"{workflow['success_rate'] * 100:.1f}% success"
                     )
         elif command == "trends":
             # Show trends

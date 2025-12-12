@@ -101,9 +101,9 @@ class CrossReferenceManager:
         self.topic_index_dir.mkdir(exist_ok=True)
 
         # In-memory cache of cross-references
-        self._cross_refs: dict[str, list[CrossReference]] = (
-            {}
-        )  # "library/topic" -> [refs]
+        self._cross_refs: dict[
+            str, list[CrossReference]
+        ] = {}  # "library/topic" -> [refs]
         self._topic_indices: dict[str, TopicIndex] = {}
 
         self._load_cross_references()

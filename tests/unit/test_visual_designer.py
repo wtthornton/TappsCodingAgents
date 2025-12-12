@@ -104,7 +104,8 @@ class TestIterativeRefinement:
         refinement = IterativeRefinement(
             hardware_profile=HardwareProfile.NUC,
             config=RefinementConfig(
-                max_iterations=5, quality_threshold=0.5  # Low threshold
+                max_iterations=5,
+                quality_threshold=0.5,  # Low threshold
             ),
         )
 
@@ -207,7 +208,7 @@ class TestIterativeRefinement:
             )
             result = IterationResult(
                 iteration=i + 1,
-                html_content=f"<html>Iteration {i+1}</html>",
+                html_content=f"<html>Iteration {i + 1}</html>",
                 feedback=feedback,
                 quality_score=0.5 + (i * 0.1),
                 improvements=[],

@@ -16,7 +16,8 @@ async def test_streaming():
     print("Testing streaming mode...")
 
     config = MALConfig(
-        use_streaming=True, streaming_threshold=100  # Low threshold for testing
+        use_streaming=True,
+        streaming_threshold=100,  # Low threshold for testing
     )
     mal = MAL(config=config)
 

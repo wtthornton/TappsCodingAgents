@@ -4,7 +4,6 @@ Pytest configuration and shared fixtures for TappsCodingAgents tests.
 
 # ruff: noqa: E402
 
-
 # Add project root to path
 import sys
 from pathlib import Path

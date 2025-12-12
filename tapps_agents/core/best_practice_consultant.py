@@ -184,7 +184,7 @@ class BestPracticeConsultant:
         if not template:
             # Fallback template
             template = (
-                "What are the best practices for {decision_type}? " "Context: {context}"
+                "What are the best practices for {decision_type}? Context: {context}"
             )
             return template.format(
                 decision_type=decision_type, context=json.dumps(context, default=str)
@@ -243,7 +243,10 @@ class BestPracticeConsultant:
         return cached
 
     def _cache_advice(
-        self, cache_key: str, advice: Any, ttl: timedelta  # ConsultationResult
+        self,
+        cache_key: str,
+        advice: Any,
+        ttl: timedelta,  # ConsultationResult
     ) -> None:
         """
         Cache advice with TTL.
