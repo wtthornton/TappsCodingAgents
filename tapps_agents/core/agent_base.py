@@ -30,8 +30,8 @@ class BaseAgent(ABC):
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.config = config  # ProjectConfig instance
-        self.domain_config = None
-        self.customizations = None
+        self.domain_config: str | None = None
+        self.customizations: Any | None = None
         self.context_manager: Any | None = None
         self.mcp_gateway: Any | None = None
         self._unified_cache: Any | None = None  # Optional unified cache instance

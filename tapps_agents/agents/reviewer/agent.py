@@ -73,11 +73,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         # Initialize dependency analyzer for security scoring (will be set in activate)
         pip_audit_enabled = quality_tools.pip_audit_enabled if quality_tools else True
         self.dependency_analyzer_enabled = pip_audit_enabled
-        self.dependency_analyzer = None
+        self.dependency_analyzer: DependencyAnalyzer | None = None
 
         # Initialize TypeScript scorer (Phase 6.4.4)
         typescript_enabled = quality_tools.typescript_enabled if quality_tools else True
         self.typescript_enabled = typescript_enabled
+        self.typescript_scorer: TypeScriptScorer | None
         if typescript_enabled:
             eslint_config = quality_tools.eslint_config if quality_tools else None
             tsconfig_path = quality_tools.tsconfig_path if quality_tools else None
@@ -340,7 +341,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         except UnicodeDecodeError as e:
             raise ValueError(f"Cannot decode file as UTF-8: {e}") from e
 
-        result = {"file": str(file_path), "review": {}}
+        result: dict[str, Any] = {"file": str(file_path), "review": {}}
 
         # Calculate scores
         if include_scoring:
@@ -358,7 +359,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             result["scoring"] = scores
 
         # Consult experts for review guidance
-        expert_guidance = {}
+        expert_guidance: dict[str, Any] = {}
         if self.expert_registry and include_llm_feedback:
             code_preview = code[:2000]  # First 2000 chars for expert consultation
 
@@ -702,7 +703,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         # Collect scores from files
         all_files = []
-        aggregated_scores = {
+        aggregated_scores: dict[str, Any] = {
             "complexity_score": 0.0,
             "security_score": 0.0,
             "maintainability_score": 0.0,

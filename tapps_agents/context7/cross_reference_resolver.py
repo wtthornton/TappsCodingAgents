@@ -51,7 +51,7 @@ class CrossReferenceResolver:
         Returns:
             Dictionary with resolved cross-references
         """
-        result = {
+        result: dict[str, Any] = {
             "library": library,
             "topic": topic,
             "cross_references": [],

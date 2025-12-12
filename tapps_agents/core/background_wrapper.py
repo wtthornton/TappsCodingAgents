@@ -50,10 +50,10 @@ class BackgroundAgentWrapper:
         self.output_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize components
-        self.worktree_manager = None
-        self.worktree_path = None
+        self.worktree_manager: WorktreeManager | None = None
+        self.worktree_path: Path | None = None
         self.progress_reporter = create_progress_reporter(task_id, self.output_dir)
-        self.context7_commands = None
+        self.context7_commands: Context7Commands | None = None
 
         # Setup worktree if enabled
         if self.use_worktree:

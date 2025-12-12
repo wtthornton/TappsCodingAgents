@@ -5,7 +5,7 @@ Provides analytics dashboard functionality for Context7 KB usage in Skills.
 """
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -24,13 +24,9 @@ class SkillUsageMetrics:
     cache_hits: int = 0
     cache_misses: int = 0
     api_calls: int = 0
-    libraries_accessed: list[str] = None
+    libraries_accessed: list[str] = field(default_factory=list)
     avg_response_time_ms: float = 0.0
     last_used: str | None = None
-
-    def __post_init__(self):
-        if self.libraries_accessed is None:
-            self.libraries_accessed = []
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""

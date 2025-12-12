@@ -7,6 +7,7 @@ Cursor Rules, and workflow presets.
 
 import shutil
 from pathlib import Path
+from typing import Any
 
 
 def init_cursor_rules(
@@ -95,7 +96,7 @@ def init_project(
     if project_root is None:
         project_root = Path.cwd()
 
-    results = {
+    results: dict[str, Any] = {
         "project_root": str(project_root),
         "cursor_rules": False,
         "workflow_presets": False,

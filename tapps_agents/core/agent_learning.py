@@ -398,7 +398,12 @@ class FeedbackAnalyzer:
             Analysis results
         """
         overall_score = scores.get("overall_score", 0.0)
-        metrics = scores.get("metrics", {})
+        metrics_obj: object = scores.get("metrics", {})
+        metrics: dict[str, float] = {}
+        if isinstance(metrics_obj, dict):
+            for metric, score in metrics_obj.items():
+                if isinstance(score, (int, float)):
+                    metrics[str(metric)] = float(score)
 
         # Identify weak areas
         weak_areas = [metric for metric, score in metrics.items() if score < threshold]
@@ -539,11 +544,12 @@ class AgentLearner:
         Returns:
             Learning results
         """
-        results = {
+        results: dict[str, Any] = {
             "patterns_extracted": 0,
             "prompt_optimized": False,
             "feedback_analyzed": False,
         }
+        patterns: list[CodePattern] = []
 
         # Extract quality score
         quality_score = 0.5
@@ -600,7 +606,7 @@ class AgentLearner:
             ):
                 should_extract_patterns = quality_score >= decision.result.value
 
-        if should_extract_patterns:
+        if should_extract_patterns and code is not None:
             patterns = self.pattern_extractor.extract_patterns(
                 code=code, quality_score=quality_score, task_id=task_id
             )

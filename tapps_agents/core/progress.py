@@ -77,7 +77,7 @@ class ProgressReporter:
         """
         percentage = (current / total * 100) if total > 0 else 0
 
-        progress_data = {
+        progress_data: dict[str, Any] = {
             "current": current,
             "total": total,
             "percentage": round(percentage, 2),

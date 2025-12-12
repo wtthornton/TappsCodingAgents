@@ -154,7 +154,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
             return {"error": "requirements is required"}
 
         # Consult experts for architecture guidance
-        expert_guidance = {}
+        expert_guidance: dict[str, Any] = {}
         if self.expert_registry:
             # Consult Software Architecture expert
             try:
@@ -263,7 +263,9 @@ Format as structured JSON with detailed architecture specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.2,
             )
 
@@ -326,7 +328,9 @@ Format:
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.1,
             )
 
@@ -351,7 +355,7 @@ Format:
         self,
         component_description: str,
         requirements: str = "",
-        constraints: list[str] = None,
+        constraints: list[str] | None = None,
     ) -> dict[str, Any]:
         """Select technology stack for a component."""
         if constraints is None:
@@ -434,7 +438,9 @@ Format as structured JSON with technology recommendations."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.3,
             )
 
@@ -505,7 +511,9 @@ Format as structured JSON with detailed security architecture."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.2,
             )
 
@@ -554,7 +562,9 @@ Format as structured JSON with boundary and interface definitions."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.2,
             )
 

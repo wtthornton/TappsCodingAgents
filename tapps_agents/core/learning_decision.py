@@ -6,7 +6,7 @@ for the learning system.
 """
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from typing import Any
 
@@ -36,12 +36,7 @@ class DecisionResult:
     should_proceed: bool
     learned_confidence: float | None = None
     best_practice_confidence: float | None = None
-    metadata: dict[str, Any] = None
-
-    def __post_init__(self):
-        """Initialize metadata if not provided."""
-        if self.metadata is None:
-            self.metadata = {}
+    metadata: dict[str, Any] = field(default_factory=dict)
 
 
 @dataclass
@@ -52,12 +47,7 @@ class LearningDecision:
     result: DecisionResult
     learned_data: dict[str, Any]
     best_practice_advice: BestPracticeAdvice | None = None
-    context: dict[str, Any] = None
-
-    def __post_init__(self):
-        """Initialize context if not provided."""
-        if self.context is None:
-            self.context = {}
+    context: dict[str, Any] = field(default_factory=dict)
 
 
 class LearningDecisionEngine:
@@ -342,7 +332,7 @@ class LearningDecisionEngine:
         Returns:
             Dictionary with decision statistics
         """
-        stats = {
+        stats: dict[str, Any] = {
             "total_decisions": self._decision_count,
             "by_type": {},
             "by_source": {},

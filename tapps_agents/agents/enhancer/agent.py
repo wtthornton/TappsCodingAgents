@@ -8,7 +8,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from ...agents.analyst.agent import AnalystAgent
 from ...core.agent_base import BaseAgent
@@ -16,6 +16,13 @@ from ...core.config import ProjectConfig, load_config
 from ...core.context_manager import ContextManager
 from ...core.mal import MAL
 from ...experts.expert_registry import ExpertRegistry
+
+if TYPE_CHECKING:
+    from ...agents.architect.agent import ArchitectAgent
+    from ...agents.designer.agent import DesignerAgent
+    from ...agents.ops.agent import OpsAgent
+    from ...agents.planner.agent import PlannerAgent
+    from ...agents.reviewer.agent import ReviewerAgent
 
 
 class EnhancerAgent(BaseAgent):
@@ -48,11 +55,11 @@ class EnhancerAgent(BaseAgent):
 
         # Initialize sub-agents
         self.analyst = AnalystAgent(mal=self.mal, config=config)
-        self.architect = None  # Lazy load
-        self.designer = None  # Lazy load
-        self.planner = None  # Lazy load
-        self.reviewer = None  # Lazy load
-        self.ops = None  # Lazy load
+        self.architect: Optional["ArchitectAgent"] = None  # Lazy load
+        self.designer: Optional["DesignerAgent"] = None  # Lazy load
+        self.planner: Optional["PlannerAgent"] = None  # Lazy load
+        self.reviewer: Optional["ReviewerAgent"] = None  # Lazy load
+        self.ops: Optional["OpsAgent"] = None  # Lazy load
 
         # Expert registry (lazy load)
         self.expert_registry: ExpertRegistry | None = None
@@ -772,7 +779,9 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         try:
             enhanced = await self.mal.generate(
                 prompt=synthesis_prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.3,
             )
 

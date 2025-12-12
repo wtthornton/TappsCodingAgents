@@ -24,7 +24,7 @@ class RefreshTask:
     topic: str | None = None  # None means refresh entire library
     priority: int = 5  # 1-10, higher = more urgent
     reason: str = "staleness"
-    added_at: str = None
+    added_at: str | None = None
     scheduled_for: str | None = None
     attempts: int = 0
     last_attempt: str | None = None

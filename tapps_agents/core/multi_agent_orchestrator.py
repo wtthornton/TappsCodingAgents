@@ -286,7 +286,7 @@ class MultiAgentOrchestrator:
         Returns:
             Aggregated results dictionary
         """
-        aggregated = {
+        aggregated: dict[str, Any] = {
             "success": True,
             "timestamp": datetime.utcnow().isoformat(),
             "total_agents": len(agent_tasks),

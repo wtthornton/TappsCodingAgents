@@ -2,7 +2,7 @@
 KB Cleanup Automation - Automated cleanup of old/unused Context7 KB entries.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 
 from .analytics import Analytics
@@ -19,11 +19,7 @@ class CleanupResult:
     libraries_removed: int
     bytes_freed: int
     reason: str
-    details: list[str] = None
-
-    def __post_init__(self):
-        if self.details is None:
-            self.details = []
+    details: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         """Convert to dictionary."""

@@ -45,6 +45,7 @@ reports/
 .tapps-agents/sessions/*.json
 .tapps-agents/kb/
 .tapps-agents/cache/
+.tapps-agents/progress/
 
 # Test artifacts
 MagicMock/

@@ -499,8 +499,11 @@ Return Dockerfile content and docker-compose.yml content."""
                 quality_tools.dependency_audit_threshold if quality_tools else "high"
             )
 
-        audit_result = self.dependency_analyzer.run_security_audit(
-            severity_threshold=severity_threshold
+        audit_result = (
+            self.dependency_analyzer.run_security_audit(
+                severity_threshold=severity_threshold
+            )
+            or {}
         )
 
         return {
@@ -522,7 +525,7 @@ Return Dockerfile content and docker-compose.yml content."""
         Returns:
             Dictionary with dependency tree information
         """
-        tree_result = self.dependency_analyzer.get_dependency_tree()
+        tree_result = self.dependency_analyzer.get_dependency_tree() or {}
 
         return {
             "message": "Dependency tree generated",

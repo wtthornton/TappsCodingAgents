@@ -117,6 +117,8 @@ class IterativeRefinement:
             if not self.start_browser():
                 logger.error("Failed to start browser")
                 return None
+        # Help type-checker: start_browser() initializes browser_controller on success
+        assert self.browser_controller is not None
 
         current_html = initial_html
         iteration = 0
@@ -125,8 +127,10 @@ class IterativeRefinement:
             iteration += 1
             logger.info(f"Starting iteration {iteration}")
 
+            browser_controller = self.browser_controller
+
             # Load HTML in browser
-            if not self.browser_controller.load_html(current_html):
+            if not browser_controller.load_html(current_html):
                 logger.error(f"Failed to load HTML in iteration {iteration}")
                 break
 
@@ -136,7 +140,7 @@ class IterativeRefinement:
                 screenshot_path = str(
                     Path(self.config.screenshot_dir) / f"iteration_{iteration}.png"
                 )
-                self.browser_controller.capture_screenshot(screenshot_path)
+                browser_controller.capture_screenshot(screenshot_path)
 
             # Extract visual elements (simplified - would use actual DOM analysis)
             visual_elements = self._extract_visual_elements(current_html)

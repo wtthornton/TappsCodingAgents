@@ -44,7 +44,7 @@ class DependencyAnalyzer:
             - outdated: Outdated packages
             - total_packages: Total number of packages
         """
-        result = {
+        result: dict[str, Any] = {
             "dependency_tree": None,
             "vulnerabilities": [],
             "outdated": [],

@@ -7,7 +7,7 @@ from datetime import datetime
 from pathlib import Path
 
 # Import ReviewerAgent (circular import handled lazily)
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
@@ -17,7 +17,7 @@ from ...experts.agent_integration import ExpertSupportMixin
 from .code_generator import CodeGenerator
 
 if TYPE_CHECKING:
-    pass
+    from ..reviewer.agent import ReviewerAgent
 
 
 class ImplementerAgent(BaseAgent, ExpertSupportMixin):
@@ -76,7 +76,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             self.expert_registry = expert_registry
 
         # Reviewer agent for code review
-        self.reviewer = None
+        self.reviewer: Optional["ReviewerAgent"] = None
 
     async def activate(self, project_root: Path | None = None):
         """Activate the implementer agent with expert support."""
@@ -186,7 +186,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         path = Path(file_path)
 
         # Validate path
-        if not self._validate_path(path):
+        if not self._is_valid_path(path):
             return {"error": f"Invalid or unsafe path: {file_path}"}
 
         # Check if file exists
@@ -302,7 +302,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         """
         path = Path(file_path) if file_path else None
 
-        if path and not self._validate_path(path):
+        if path and not self._is_valid_path(path):
             return {"error": f"Invalid or unsafe path: {file_path}"}
 
         # Consult experts for code generation guidance
@@ -341,7 +341,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 expert_guidance=expert_guidance,
             )
 
-            result = {
+            result: dict[str, Any] = {
                 "type": "generate_code",
                 "code": generated_code,
                 "file_path": str(path) if path else None,
@@ -370,7 +370,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         if not path.exists():
             return {"error": f"File not found: {file_path}"}
 
-        if not self._validate_path(path):
+        if not self._is_valid_path(path):
             return {"error": f"Invalid or unsafe path: {file_path}"}
 
         # Read existing code
@@ -463,8 +463,8 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             if tmp_file_path.exists():
                 tmp_file_path.unlink()
 
-    def _validate_path(self, path: Path) -> bool:
-        """Validate file path for safety."""
+    def _is_valid_path(self, path: Path) -> bool:
+        """Return True if file path appears safe and within size constraints."""
         # Resolve to absolute path
         try:
             resolved = path.resolve()

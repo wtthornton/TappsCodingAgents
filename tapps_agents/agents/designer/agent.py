@@ -189,7 +189,9 @@ Format as structured JSON with OpenAPI-style specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.2,
             )
 
@@ -267,7 +269,9 @@ Format as structured JSON with detailed data model specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.2,
             )
 
@@ -293,7 +297,7 @@ Format as structured JSON with detailed data model specification."""
     async def _design_ui(
         self,
         feature_description: str,
-        user_stories: list[str] = None,
+        user_stories: list[str] | None = None,
         output_file: str | None = None,
     ) -> dict[str, Any]:
         """Design UI/UX specifications."""
@@ -364,7 +368,9 @@ Format as structured JSON with detailed UI/UX specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.3,
             )
 
@@ -423,7 +429,9 @@ Format as structured content."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.2,
             )
 
@@ -514,7 +522,9 @@ Format as structured JSON with detailed design system specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.model if self.config.mal else "qwen2.5-coder:7b",
+                model=self.config.mal.default_model
+                if (self.config and self.config.mal)
+                else "qwen2.5-coder:7b",
                 temperature=0.3,
             )
 
