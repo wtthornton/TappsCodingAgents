@@ -3,6 +3,7 @@ Enhancer Agent - Prompt enhancement utility that runs prompts through all TappsC
 """
 
 import asyncio
+import logging
 import hashlib
 import json
 import sys
@@ -23,6 +24,9 @@ if TYPE_CHECKING:
     from ...agents.ops.agent import OpsAgent
     from ...agents.planner.agent import PlannerAgent
     from ...agents.reviewer.agent import ReviewerAgent
+
+
+logger = logging.getLogger(__name__)
 
 
 class EnhancerAgent(BaseAgent):
@@ -84,7 +88,7 @@ class EnhancerAgent(BaseAgent):
                         domains_file
                     )
                 except Exception:
-                    pass  # Expert registry optional
+                    logger.debug("Expert registry optional; continuing without it")
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return available commands for enhancer agent."""
@@ -662,7 +666,10 @@ Provide structured JSON response."""
                         ],
                     }
                 except Exception:
-                    pass  # Expert consultation optional
+                    logger.debug(
+                        "Expert consultation optional; continuing without it",
+                        exc_info=True,
+                    )
 
         return {
             "functional_requirements": requirements.get("functional_requirements", []),
@@ -779,9 +786,11 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         try:
             enhanced = await self.mal.generate(
                 prompt=synthesis_prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -815,7 +824,7 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
                 with open(config_file) as f:
                     return yaml.safe_load(f) or {}
             except Exception:
-                pass
+                logger.debug("Failed to load stage defaults; using fallbacks")
 
         # Return defaults
         return {
@@ -832,7 +841,7 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
 
     def _create_session(self, prompt: str, config: dict[str, Any]) -> str:
         """Create a new enhancement session."""
-        session_id = hashlib.md5(
+        session_id = hashlib.sha256(
             f"{prompt}{datetime.now().isoformat()}".encode()
         ).hexdigest()[:8]
 

@@ -371,9 +371,7 @@ class TestUIComparator:
         comparator = UIComparator()
 
         feedback_history = [
-            VisualFeedback(
-                timestamp=datetime.now(UTC), iteration=1, quality_score=0.5
-            )
+            VisualFeedback(timestamp=datetime.now(UTC), iteration=1, quality_score=0.5)
         ]
 
         trend = comparator.get_improvement_trend(feedback_history)

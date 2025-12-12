@@ -140,9 +140,7 @@ class GitMCPServer:
 
         return {"repo_path": str(path), "file_path": file_path, "diff": output}
 
-    def git_log(
-        self, repo_path: str | None = None, limit: int = 10
-    ) -> dict[str, Any]:
+    def git_log(self, repo_path: str | None = None, limit: int = 10) -> dict[str, Any]:
         """Get Git log."""
         path = Path(repo_path) if repo_path else Path.cwd()
 
@@ -168,9 +166,7 @@ class GitMCPServer:
 
         return {"repo_path": str(path), "commits": commits, "count": len(commits)}
 
-    def git_blame(
-        self, file_path: str, repo_path: str | None = None
-    ) -> dict[str, Any]:
+    def git_blame(self, file_path: str, repo_path: str | None = None) -> dict[str, Any]:
         """Get Git blame."""
         path = Path(repo_path) if repo_path else Path.cwd()
         file_path_obj = Path(file_path)

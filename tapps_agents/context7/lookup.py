@@ -2,6 +2,8 @@
 KB-First Lookup - Context7 documentation lookup with KB-first caching.
 """
 
+from __future__ import annotations
+
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime

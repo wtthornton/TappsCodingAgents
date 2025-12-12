@@ -4,6 +4,8 @@ Task State Management for Checkpointing
 Defines task states and state management for checkpoint/resume functionality.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime

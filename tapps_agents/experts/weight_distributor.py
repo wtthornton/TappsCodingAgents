@@ -286,5 +286,3 @@ class WeightDistributor:
         lines.append(totals_row)
 
         return "\n".join(lines)
-
-

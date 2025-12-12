@@ -39,9 +39,7 @@ def init_project_config(project_root: Path | None = None) -> tuple[bool, str | N
     return True, str(config_file)
 
 
-def init_cursor_rules(
-    project_root: Path | None = None, source_dir: Path | None = None
-):
+def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None = None):
     """
     Initialize Cursor Rules for the project.
 

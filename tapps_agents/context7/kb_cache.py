@@ -2,6 +2,8 @@
 KB Cache - Main cache manager for Context7 knowledge base.
 """
 
+from __future__ import annotations
+
 import re
 from dataclasses import dataclass
 from datetime import datetime

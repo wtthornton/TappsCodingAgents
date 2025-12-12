@@ -123,4 +123,3 @@ class ProjectProfileError(TappsAgentsError):
     """Raised when project profile operations fail."""
 
     pass
-

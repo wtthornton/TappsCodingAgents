@@ -5,6 +5,8 @@ Manages a queue of cache entries that need to be refreshed, with support for
 priority, scheduling, and batch processing.
 """
 
+from __future__ import annotations
+
 import json
 from dataclasses import asdict, dataclass
 from datetime import datetime
@@ -149,9 +151,7 @@ class RefreshQueue:
         self._save_queue()
         return task
 
-    def _find_task(
-        self, library: str, topic: str | None = None
-    ) -> RefreshTask | None:
+    def _find_task(self, library: str, topic: str | None = None) -> RefreshTask | None:
         """Find existing task for library/topic."""
         for task in self.tasks:
             if task.library == library and task.topic == topic:

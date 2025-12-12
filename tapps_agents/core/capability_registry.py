@@ -4,6 +4,8 @@ Agent Capability Registry
 Tracks agent capabilities and their performance metrics for self-improvement.
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import logging

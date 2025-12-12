@@ -263,9 +263,11 @@ Format as structured JSON with detailed architecture specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.2,
             )
 
@@ -328,9 +330,11 @@ Format:
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.1,
             )
 
@@ -438,9 +442,11 @@ Format as structured JSON with technology recommendations."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -483,7 +489,9 @@ Format as structured JSON with technology recommendations."""
                 pass
 
         security_guidance_section = (
-            f"Security Expert Guidance:\n{security_guidance}" if security_guidance else ""
+            f"Security Expert Guidance:\n{security_guidance}"
+            if security_guidance
+            else ""
         )
 
         prompt = f"""Design a security architecture for the following system.
@@ -511,9 +519,11 @@ Format as structured JSON with detailed security architecture."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.2,
             )
 
@@ -562,9 +572,11 @@ Format as structured JSON with boundary and interface definitions."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.2,
             )
 

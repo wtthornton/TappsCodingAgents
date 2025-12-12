@@ -20,9 +20,7 @@ from .config import MALConfig
 class MAL:
     """Model Abstraction Layer - Routes to local or cloud models"""
 
-    def __init__(
-        self, config: MALConfig | None = None, ollama_url: str | None = None
-    ):
+    def __init__(self, config: MALConfig | None = None, ollama_url: str | None = None):
         """
         Initialize MAL with configuration.
 

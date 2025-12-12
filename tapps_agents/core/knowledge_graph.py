@@ -4,6 +4,8 @@ Knowledge Graph for Task Relationships
 Tracks relationships between tasks to enable knowledge discovery.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime

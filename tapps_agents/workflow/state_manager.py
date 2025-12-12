@@ -4,6 +4,8 @@ Advanced Workflow State Management
 Provides enhanced state persistence with validation, migration, versioning, and recovery.
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json
@@ -281,11 +283,14 @@ class AdvancedStateManager:
                     or state_data.get("id")
                     or ""
                 )
-                if not isinstance(recovered_workflow_id, str) or not recovered_workflow_id:
-                    raise ValueError("Cannot recover: missing workflow_id in state data")
-                return self._recover_from_history(
-                    state_path, recovered_workflow_id
-                )
+                if (
+                    not isinstance(recovered_workflow_id, str)
+                    or not recovered_workflow_id
+                ):
+                    raise ValueError(
+                        "Cannot recover: missing workflow_id in state data"
+                    )
+                return self._recover_from_history(state_path, recovered_workflow_id)
 
         # Check version and migrate if needed
         metadata_path = self.state_dir / f"{state_data['workflow_id']}.meta.json"
@@ -411,6 +416,7 @@ class AdvancedStateManager:
 
     def _state_to_dict(self, state: WorkflowState) -> dict[str, Any]:
         """Convert WorkflowState to dictionary."""
+
         def _artifact_to_dict(name: str, artifact: Any) -> dict[str, Any]:
             created_at = getattr(artifact, "created_at", None)
             return {
@@ -453,7 +459,9 @@ class AdvancedStateManager:
                     path=str(v.get("path", "")),
                     status=v.get("status", "pending"),
                     created_by=v.get("created_by"),
-                    created_at=datetime.fromisoformat(created_at) if created_at else None,
+                    created_at=(
+                        datetime.fromisoformat(created_at) if created_at else None
+                    ),
                     metadata=v.get("metadata", {}) or {},
                 )
                 continue

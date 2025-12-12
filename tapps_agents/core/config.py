@@ -57,12 +57,8 @@ class ScoringConfig(BaseModel):
 class CloudProviderConfig(BaseModel):
     """Configuration for cloud LLM providers"""
 
-    api_key: str | None = Field(
-        default=None, description="API key for cloud provider"
-    )
-    base_url: str | None = Field(
-        default=None, description="Custom base URL (optional)"
-    )
+    api_key: str | None = Field(default=None, description="API key for cloud provider")
+    base_url: str | None = Field(default=None, description="Custom base URL (optional)")
     timeout: float = Field(
         default=60.0, ge=1.0, description="Request timeout in seconds"
     )
@@ -377,9 +373,7 @@ class QualityToolsConfig(BaseModel):
     eslint_config: str | None = Field(
         default=None, description="Path to ESLint config file"
     )
-    tsconfig_path: str | None = Field(
-        default=None, description="Path to tsconfig.json"
-    )
+    tsconfig_path: str | None = Field(default=None, description="Path to tsconfig.json")
 
     # Dependency security auditing
     pip_audit_enabled: bool = Field(
@@ -622,9 +616,7 @@ class ExpertConfig(BaseModel):
             + self.weight_project_context
         )
         if abs(total - 1.0) > 0.01:  # Allow small floating point errors
-            raise ValueError(
-                f"Expert confidence weights must sum to 1.0, got {total}"
-            )
+            raise ValueError(f"Expert confidence weights must sum to 1.0, got {total}")
         return self
 
 
@@ -663,7 +655,8 @@ class ProjectConfig(BaseModel):
     scoring: ScoringConfig = Field(default_factory=ScoringConfig)
     mal: MALConfig = Field(default_factory=MALConfig)
     expert: ExpertConfig = Field(
-        default_factory=ExpertConfig, description="Expert consultation system configuration"
+        default_factory=ExpertConfig,
+        description="Expert consultation system configuration",
     )
     context7: Context7Config | None = Field(
         default_factory=Context7Config, description="Context7 integration configuration"

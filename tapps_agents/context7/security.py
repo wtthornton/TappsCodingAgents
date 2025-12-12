@@ -224,9 +224,7 @@ class APIKeyManager:
 class SecurityAuditor:
     """Performs security audits and compliance verification."""
 
-    def __init__(
-        self, config_dir: Path | None = None, cache_dir: Path | None = None
-    ):
+    def __init__(self, config_dir: Path | None = None, cache_dir: Path | None = None):
         """
         Initialize security auditor.
 

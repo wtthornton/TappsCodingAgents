@@ -4,6 +4,8 @@ Expert Configuration System
 Provides configuration models and loaders for defining experts via YAML files.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any

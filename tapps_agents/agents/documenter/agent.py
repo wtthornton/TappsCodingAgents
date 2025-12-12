@@ -18,9 +18,7 @@ class DocumenterAgent(BaseAgent):
     Permissions: Read, Write, Grep, Glob
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="documenter", agent_name="Documenter Agent", config=config
         )

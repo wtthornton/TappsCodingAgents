@@ -133,6 +133,6 @@
     - `implementation/TOP_PRIORITY_GAPS_IMPLEMENTATION_PLAN_2025.md`
     - `implementation/TOP_PRIORITY_GAPS_QUICK_REFERENCE.md`
 - **API/version docs need alignment**
-  - `docs/API.md` still advertises **Version: 1.6.1** (header).
+  - ✅ `docs/API.md` header is aligned to **Version: 2.0.0**.
 
 

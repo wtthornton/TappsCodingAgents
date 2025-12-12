@@ -88,7 +88,7 @@ PM Responsibilities                    Developer Responsibilities
 └──────────────────────────────────────────────────────────────┘
 ```
 
-### The 12 Workflow Agents (PM Perspective)
+### The 13 Workflow Agents (PM Perspective)
 
 | Agent | PM Use Case | What It Does for You |
 |-------|-------------|----------------------|
@@ -104,6 +104,7 @@ PM Responsibilities                    Developer Responsibilities
 | **tester** | Test coverage | Writes and maintains tests |
 | **ops** | Deployment | Handles security scans, deployment checks |
 | **orchestrator** | Complex workflows | Coordinates multiple agents for large features |
+| **enhancer** | Prompt enhancement | Turns a rough request into a structured, context-aware prompt (optionally with expert input) |
 
 ### Industry Experts: Your Domain Authorities
 

@@ -1,8 +1,8 @@
 # TappsCodingAgents - Technology Stack Document
 
-**Version:** 1.0.0-draft  
+**Version:** 2.0.0  
 **Date:** December 2025  
-**Status:** Design Phase
+**Status:** Implementation Reference
 
 ---
 
@@ -52,7 +52,7 @@
 │   Cursor • VS Code • Claude Code Skills • MCP Protocol              │
 ├─────────────────────────────────────────────────────────────────────┤
 │                    AGENT LAYER                                       │
-│   12 Workflow Agents • N Industry Experts • Orchestrator            │
+│   13 Workflow Agents • N Industry Experts • Orchestrator            │
 ├─────────────────────────────────────────────────────────────────────┤
 │                    INTELLIGENCE LAYER                                │
 │   RAG (ChromaDB embedded) • Embeddings • Optional Fine-Tuning       │
@@ -73,7 +73,7 @@
 
 | Technology | Version | Purpose | Justification |
 |------------|---------|---------|---------------|
-| **Python** | 3.12+ (3.13 recommended) | Core framework | Latest stable with performance improvements, better typing |
+| **Python** | 3.13+ | Core framework | Latest stable with performance improvements, better typing |
 | **TypeScript** | 5.6+ | MCP servers, IDE integration | Type safety, Claude Code compatibility |
 | **YAML** | 1.2 | Configuration | Human-readable, agent definitions |
 | **JSON Schema** | Draft 2020-12 | Validation | Latest schema standard with improved features |
@@ -82,13 +82,13 @@
 
 | Library | Version | Purpose |
 |---------|---------|---------|
-| **Pydantic** | 2.10+ | Data validation, settings, JSON Schema generation |
-| **FastAPI** | 0.115+ | API endpoints, webhooks, OpenAPI 3.1 |
-| **asyncio** | stdlib | Async operations (with TaskGroups in 3.12+) |
-| **httpx** | 0.28+ | Async HTTP client with HTTP/2 |
-| **PyYAML** | 6.0.2+ | YAML parsing |
-| **jsonschema** | 4.23+ | Schema validation |
-| **uvloop** | 0.21+ | High-performance event loop (Linux/macOS) |
+| **Pydantic** | 2.12.5+ | Data validation and configuration models |
+| **httpx** | 0.28.1+ | HTTP client (sync + async) |
+| **aiohttp** | 3.13.2+ | Async HTTP (Ollama integration) |
+| **PyYAML** | 6.0.3+ | YAML parsing |
+| **psutil** | 5.9.0+ | Resource monitoring (NUC optimization) |
+| **radon** | 6.0.1+ | Complexity / maintainability analysis |
+| **bandit** | 1.9.2+ | Security static analysis |
 
 ---
 
@@ -514,11 +514,11 @@ model_profile: implementer_profile
 
 | Tool | Purpose | Version |
 |------|---------|---------|
-| **pytest** | Unit testing | 7.x |
-| **pytest-asyncio** | Async testing | 0.21+ |
-| **mypy** | Type checking | 1.x |
-| **ruff** | Linting, formatting | 0.1+ |
-| **pre-commit** | Git hooks | 3.x |
+| **pytest** | Unit testing | 9.x |
+| **pytest-asyncio** | Async testing | 1.x |
+| **mypy** | Type checking | 1.19+ |
+| **ruff** | Linting, formatting | 0.14+ |
+| **black** | Formatting | 25.x |
 
 ### 8.3 Monitoring & Observability
 
@@ -817,38 +817,39 @@ note: "CPU inference is 10x slower. Consider cloud fallback for coding tasks."
 ### 12.1 Python Dependencies
 
 ```txt
-# requirements.txt (December 2025)
+# requirements.txt / pyproject.toml (current)
 
 # Core
-python>=3.12,<3.14
-pydantic>=2.10,<3.0
-fastapi>=0.115,<1.0
-httpx>=0.28,<1.0
-pyyaml>=6.0.2,<7.0
-uvicorn>=0.32,<1.0
+python>=3.13
+pydantic>=2.12.5
+httpx>=0.28.1
+pyyaml>=6.0.3
+aiohttp>=3.13.2
+psutil>=5.9.0
 
-# LLM Integration
-langchain>=0.3.14,<1.0
-langchain-community>=0.3.14,<1.0
-litellm>=1.55,<2.0
-anthropic>=0.42,<1.0
-openai>=1.58,<2.0
+# Code analysis
+radon>=6.0.1
+bandit>=1.9.2
+pylint>=4.0.4
+coverage>=7.13.0
 
-# RAG (Embedded)
-chromadb>=0.5.23,<1.0
-sentence-transformers>=3.3,<4.0
-# lancedb>=0.15,<1.0  # Alternative
+# Testing
+pytest>=9.0.2
+pytest-asyncio>=1.3.0
+pytest-cov>=7.0.0
+pytest-mock>=3.15.1
+pytest-timeout>=2.4.0
 
-# Fine-Tuning (Optional - install separately)
-# pip install unsloth
-# pip install peft>=0.14,<1.0
-# pip install trl>=0.12,<1.0
+# Development / quality tools
+black>=25.12.0
+ruff>=0.14.8,<1.0
+mypy>=1.19.0,<2.0
+pip-audit>=2.10.0
+pipdeptree>=2.30.0
 
-# Development
-pytest>=8.3,<9.0
-pytest-asyncio>=0.24,<1.0
-mypy>=1.13,<2.0
-ruff>=0.8,<1.0
+# Reporting
+jinja2>=3.1.6
+plotly>=6.5.0
 ```
 
 ### 12.2 Ollama Models (December 2025)
@@ -866,7 +867,7 @@ ollama pull mxbai-embed-large      # 670MB
 
 | Category | Strategy | Rationale |
 |----------|----------|-----------|
-| **Python** | 3.12+ | Performance, typing improvements |
+| **Python** | 3.13+ | Performance, typing improvements |
 | **Core libs** | Pin minor | Stability |
 | **LLM SDKs** | Pin minor | API compatibility |
 | **Ollama models** | Latest | Continuous improvement |
@@ -880,7 +881,7 @@ ollama pull mxbai-embed-large      # 670MB
 
 | Pattern | Implementation in TappsCodingAgents |
 |---------|-------------------------------------|
-| **Agent-First Development** | 12 workflow agents + N experts as core architecture |
+| **Agent-First Development** | 13 workflow agents + N experts as core architecture |
 | **Local-First AI** | Ollama local inference, cloud as fallback only |
 | **Embedded Data Stores** | ChromaDB embedded, no external database services |
 | **MCP Protocol** | Native integration with Claude Code and Cursor |

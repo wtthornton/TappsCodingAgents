@@ -5,7 +5,7 @@ Code Scoring System - Calculates objective quality metrics
 import ast
 import json as json_lib
 import shutil
-import subprocess
+import subprocess  # nosec B404 - used with fixed args, no shell
 from pathlib import Path
 from typing import Any, Protocol
 
@@ -42,10 +42,11 @@ def _check_jscpd_available() -> bool:
     if shutil.which("jscpd"):
         return True
     # Check for npx (Node.js package runner)
-    if shutil.which("npx"):
+    npx_path = shutil.which("npx")
+    if npx_path:
         try:
-            result = subprocess.run(
-                ["npx", "--yes", "jscpd", "--version"],
+            result = subprocess.run(  # nosec B603 - fixed args
+                [npx_path, "--yes", "jscpd", "--version"],
                 capture_output=True,
                 timeout=5,
                 check=False,
@@ -307,7 +308,8 @@ class CodeScorer:
     def _parse_coverage_xml(self, coverage_xml: Path, file_path: Path) -> float:
         """Parse coverage.xml and return coverage percentage for file_path"""
         try:
-            import xml.etree.ElementTree as ET
+            # coverage.xml is locally generated, but use defusedxml to reduce XML attack risk.
+            from defusedxml import ElementTree as ET
 
             tree = ET.parse(coverage_xml)
             root = tree.getroot()
@@ -541,7 +543,7 @@ class CodeScorer:
 
         try:
             # Run ruff check with JSON output
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 ["ruff", "check", "--output-format=json", str(file_path)],
                 capture_output=True,
                 text=True,
@@ -620,7 +622,7 @@ class CodeScorer:
             return []
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 ["ruff", "check", "--output-format=json", str(file_path)],
                 capture_output=True,
                 text=True,
@@ -660,7 +662,7 @@ class CodeScorer:
 
         try:
             # Run mypy with JSON output and error codes
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 ["mypy", "--show-error-codes", "--no-error-summary", str(file_path)],
                 capture_output=True,
                 text=True,
@@ -715,7 +717,7 @@ class CodeScorer:
             return []
 
         try:
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 ["mypy", "--show-error-codes", "--no-error-summary", str(file_path)],
                 capture_output=True,
                 text=True,
@@ -802,8 +804,11 @@ class CodeScorer:
             # Use npx if jscpd not directly available
             if shutil.which("jscpd"):
                 cmd = ["jscpd"]
-            elif shutil.which("npx"):
-                cmd = ["npx", "--yes", "jscpd"]
+            else:
+                npx_path = shutil.which("npx")
+                if not npx_path:
+                    return 5.0  # jscpd not available
+                cmd = [npx_path, "--yes", "jscpd"]
             else:
                 return 5.0  # jscpd not available
 
@@ -823,7 +828,7 @@ class CodeScorer:
             )
 
             # Run jscpd
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 cmd,
                 capture_output=True,
                 text=True,
@@ -926,15 +931,16 @@ class CodeScorer:
             # Build jscpd command
             if shutil.which("jscpd"):
                 cmd = ["jscpd"]
-            elif shutil.which("npx"):
-                cmd = ["npx", "--yes", "jscpd"]
             else:
-                return {
-                    "available": False,
-                    "percentage": 0.0,
-                    "duplicates": [],
-                    "files": [],
-                }
+                npx_path = shutil.which("npx")
+                if not npx_path:
+                    return {
+                        "available": False,
+                        "percentage": 0.0,
+                        "duplicates": [],
+                        "files": [],
+                    }
+                cmd = [npx_path, "--yes", "jscpd"]
 
             cmd.extend(
                 [
@@ -949,7 +955,7 @@ class CodeScorer:
             )
 
             # Run jscpd
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 cmd,
                 capture_output=True,
                 text=True,

@@ -126,9 +126,7 @@ class Context7Commands:
         """Set MCP Gateway for API calls."""
         self.kb_lookup.mcp_gateway = mcp_gateway
 
-    async def cmd_docs(
-        self, library: str, topic: str | None = None
-    ) -> dict[str, Any]:
+    async def cmd_docs(self, library: str, topic: str | None = None) -> dict[str, Any]:
         """
         Get KB-first documentation for a library/topic.
 
@@ -326,7 +324,11 @@ class Context7Commands:
         If the MCP gateway is not available, we soft-fail with a clear error.
         """
         if not self.enabled:
-            return {"success": False, "error": "Context7 is not enabled", "items_processed": 0}
+            return {
+                "success": False,
+                "error": "Context7 is not enabled",
+                "items_processed": 0,
+            }
 
         if not self.kb_lookup.mcp_gateway:
             return {
@@ -349,11 +351,17 @@ class Context7Commands:
                 resolve = self.kb_lookup.mcp_gateway.call_tool(
                     "mcp_Context7_resolve-library-id", libraryName=task.library
                 )
-                matches = resolve.get("result", {}).get("matches", []) if resolve.get("success") else []
+                matches = (
+                    resolve.get("result", {}).get("matches", [])
+                    if resolve.get("success")
+                    else []
+                )
                 context7_id = None
                 if matches:
                     first = matches[0]
-                    context7_id = first.get("id") if isinstance(first, dict) else str(first)
+                    context7_id = (
+                        first.get("id") if isinstance(first, dict) else str(first)
+                    )
 
                 if not context7_id:
                     raise RuntimeError("Could not resolve Context7 library ID")
@@ -384,13 +392,17 @@ class Context7Commands:
                     context7_id=context7_id,
                 )
 
-                self.refresh_queue.mark_task_completed(task.library, task.topic, error=None)
+                self.refresh_queue.mark_task_completed(
+                    task.library, task.topic, error=None
+                )
                 processed += 1
 
             except Exception as e:
                 err = f"{task.library}/{topic}: {e}"
                 errors.append(err)
-                self.refresh_queue.mark_task_completed(task.library, task.topic, error=str(e))
+                self.refresh_queue.mark_task_completed(
+                    task.library, task.topic, error=str(e)
+                )
                 # Avoid infinite loop on a permanently failing head task.
                 break
 

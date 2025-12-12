@@ -4,6 +4,8 @@ Expert Registry
 Manages expert instances and provides consultation services with weighted decision-making.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -414,6 +416,7 @@ class ExpertRegistry:
                 # Silently fail if tracking fails (non-critical)
                 # Log at debug level if logging is available
                 import logging
+
                 logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to track confidence metrics: {e}")
 

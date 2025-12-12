@@ -6,7 +6,8 @@ Phase 6.4.3: Dependency Analysis & Security Auditing
 
 import json
 import shutil
-import subprocess
+import subprocess  # nosec B404 - used with fixed args, no shell
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -93,8 +94,8 @@ class DependencyAnalyzer:
 
         try:
             # Run pipdeptree with JSON output
-            result = subprocess.run(
-                ["pipdeptree", "--json"],
+            result = subprocess.run(  # nosec B603 - fixed module invocation
+                [sys.executable, "-m", "pipdeptree", "--json"],
                 capture_output=True,
                 text=True,
                 timeout=60,
@@ -115,8 +116,8 @@ class DependencyAnalyzer:
                 package_count = self._count_packages(tree_json)
 
                 # Also get text output
-                text_result = subprocess.run(
-                    ["pipdeptree"],
+                text_result = subprocess.run(  # nosec B603 - fixed module invocation
+                    [sys.executable, "-m", "pipdeptree"],
                     capture_output=True,
                     text=True,
                     timeout=60,
@@ -328,8 +329,8 @@ class DependencyAnalyzer:
         """
         try:
             # Use pip list --outdated --format=json
-            result = subprocess.run(
-                ["pip", "list", "--outdated", "--format=json"],
+            result = subprocess.run(  # nosec B603 - fixed module invocation
+                [sys.executable, "-m", "pip", "list", "--outdated", "--format=json"],
                 capture_output=True,
                 text=True,
                 timeout=60,

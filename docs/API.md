@@ -84,7 +84,7 @@ Both of these are supported:
 From `python -m tapps_agents.cli --help`, the CLI exposes:
 
 - agent subcommands: `reviewer`, `planner`, `implementer`, `tester`, `debugger`, `documenter`, `analyst`, `architect`, `designer`, `improver`, `ops`, `enhancer`, `orchestrator`
-- utility subcommands: `workflow`, `init`, `score`, `setup-experts`, `analytics`
+- utility subcommands: `workflow`, `init`, `doctor`, `score`, `setup-experts`, `analytics`
 
 ### Command Naming (with and without `*`)
 
@@ -113,6 +113,10 @@ python -m tapps_agents.cli workflow full
 
 # Project initialization
 python -m tapps_agents.cli init
+
+# Environment diagnostics
+python -m tapps_agents.cli doctor
+python -m tapps_agents.cli doctor --format json
 
 # Expert setup wizard
 python -m tapps_agents.cli setup-experts init

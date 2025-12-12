@@ -130,7 +130,9 @@ class TestExpertRegistryWithProfile:
         registry._cached_profile = profile  # Set directly for testing
 
         # Consult expert (registry will select experts automatically)
-        await registry.consult(query="Test question", domain="security", include_all=False)
+        await registry.consult(
+            query="Test question", domain="security", include_all=False
+        )
 
         # Verify expert was called with profile
         mock_expert.run.assert_called_once()
@@ -158,7 +160,9 @@ class TestExpertRegistryWithProfile:
         registry._cached_profile = None
 
         # Should still work
-        await registry.consult(query="Test question", domain="security", include_all=False)
+        await registry.consult(
+            query="Test question", domain="security", include_all=False
+        )
 
         # Verify expert was called (with None profile)
         mock_expert.run.assert_called_once()

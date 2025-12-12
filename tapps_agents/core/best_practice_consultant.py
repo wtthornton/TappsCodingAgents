@@ -215,7 +215,8 @@ class BestPracticeConsultant:
         """
         # Create a stable hash of the context
         context_str = json.dumps(context, sort_keys=True, default=str)
-        context_hash = hashlib.md5(context_str.encode()).hexdigest()[:8]
+        # Use a modern hash even for non-security identifiers.
+        context_hash = hashlib.sha256(context_str.encode()).hexdigest()[:8]
 
         return f"{decision_type}_{context_hash}"
 

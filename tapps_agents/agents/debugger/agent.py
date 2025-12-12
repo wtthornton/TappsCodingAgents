@@ -18,9 +18,7 @@ class DebuggerAgent(BaseAgent):
     Permissions: Read, Write, Edit, Grep, Glob, Bash
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="debugger", agent_name="Debugger Agent", config=config
         )

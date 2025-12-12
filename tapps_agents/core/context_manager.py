@@ -156,7 +156,8 @@ class ContextManager:
             mtime = 0
 
         key_data = f"{file_path}:{tier.value}:{include_related}:{mtime}"
-        return hashlib.md5(key_data.encode()).hexdigest()
+        # Use a modern hash even for cache keys (not security-related).
+        return hashlib.sha256(key_data.encode()).hexdigest()
 
     def _format_as_text(self, context: dict[str, Any]) -> str:
         """Format context as plain text."""

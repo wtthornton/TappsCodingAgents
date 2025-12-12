@@ -431,9 +431,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             "approved": True,
         }
 
-    async def _review_code(
-        self, code: str, file_path: Path
-    ) -> dict[str, Any] | None:
+    async def _review_code(self, code: str, file_path: Path) -> dict[str, Any] | None:
         """Review generated code using ReviewerAgent."""
         if self.reviewer is None:
             # Lazy import to avoid circular dependency

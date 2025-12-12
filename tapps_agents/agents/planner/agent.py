@@ -21,9 +21,7 @@ class PlannerAgent(BaseAgent):
     Permissions: Read, Write, Grep, Glob
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(agent_id="planner", agent_name="Planner Agent", config=config)
         # Use config if provided, otherwise load defaults
         if config is None:

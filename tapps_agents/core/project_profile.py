@@ -11,6 +11,8 @@ This module provides automatic detection of project characteristics such as:
 The profile is used to provide context-aware expert guidance.
 """
 
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -253,6 +255,7 @@ def load_project_profile(
     except (OSError, yaml.YAMLError, ValueError, KeyError) as e:
         # File errors, YAML parsing errors, or invalid data
         import logging
+
         logger = logging.getLogger(__name__)
         logger.debug(f"Failed to load project profile: {e}")
         return None

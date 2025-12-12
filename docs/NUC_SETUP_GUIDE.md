@@ -26,7 +26,7 @@ NUC devices are compact computers with limited resources. This guide provides:
    - Recommended: 16GB+ RAM, 6+ core CPU
 
 2. **Software**
-   - Python 3.12+
+   - Python 3.13+
    - Cursor AI IDE
    - Git
    - Ollama (for local LLM)

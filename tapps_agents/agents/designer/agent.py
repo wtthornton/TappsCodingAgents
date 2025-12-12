@@ -26,9 +26,7 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
     - Define design systems
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="designer", agent_name="Designer Agent", config=config
         )
@@ -189,9 +187,11 @@ Format as structured JSON with OpenAPI-style specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.2,
             )
 
@@ -269,9 +269,11 @@ Format as structured JSON with detailed data model specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.2,
             )
 
@@ -368,9 +370,11 @@ Format as structured JSON with detailed UI/UX specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -429,9 +433,11 @@ Format as structured content."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.2,
             )
 
@@ -522,9 +528,11 @@ Format as structured JSON with detailed design system specification."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 

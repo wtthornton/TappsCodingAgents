@@ -207,9 +207,7 @@ class ResourceMonitor:
         with open(log_file, "a") as f:
             f.write(json.dumps(metrics.to_dict()) + "\n")
 
-    def get_average_metrics(
-        self, duration_seconds: int = 60
-    ) -> ResourceMetrics | None:
+    def get_average_metrics(self, duration_seconds: int = 60) -> ResourceMetrics | None:
         """
         Get average metrics over a duration.
 

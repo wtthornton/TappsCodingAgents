@@ -189,5 +189,3 @@ def collect_doctor_report(
             for f in findings
         ],
     }
-
-

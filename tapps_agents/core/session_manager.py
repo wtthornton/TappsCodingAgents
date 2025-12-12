@@ -4,6 +4,8 @@ Session Manager for Long-Duration Operations
 Manages long-running agent sessions with persistence, recovery, and health monitoring.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import uuid

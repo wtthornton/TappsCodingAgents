@@ -281,10 +281,10 @@ quality_tools:
 ```python
 ruff>=0.14.8,<1.0         # Fast Python linter (2025 standard)
 mypy>=1.19.0,<2.0         # Type checking (2025 standard)
-pip-audit>=2.6.0          # Security audit
-pipdeptree>=2.5.0         # Dependency tree
-jinja2>=3.1.0             # HTML templates
-plotly>=5.18.0            # Optional: Visualizations
+pip-audit>=2.10.0         # Security audit
+pipdeptree>=2.30.0        # Dependency tree
+jinja2>=3.1.6             # HTML templates
+plotly>=6.5.0             # Optional: Visualizations
 ```
 
 ### npm Packages (for TypeScript support)

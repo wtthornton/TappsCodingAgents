@@ -2,6 +2,8 @@
 Cross-References System - Topic-based cross-referencing for Context7 KB.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any

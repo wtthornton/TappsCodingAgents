@@ -5,6 +5,8 @@ Provides durability guarantees, failure recovery, and progress tracking for
 long-running tasks.
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import shutil
@@ -251,9 +253,7 @@ class DurabilityGuarantee:
         if self.last_checkpoint_time is None:
             return True
 
-        elapsed = (
-            datetime.now(UTC) - self.last_checkpoint_time
-        ).total_seconds()
+        elapsed = (datetime.now(UTC) - self.last_checkpoint_time).total_seconds()
         return elapsed >= self.checkpoint_interval
 
     def create_checkpoint(
@@ -394,8 +394,6 @@ class FailureRecovery:
                 listed = self.checkpoint_manager.list_checkpoints()
             except (OSError, PermissionError) as e:
                 # File system errors when listing files
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.debug(f"Failed to list files: {e}")
                 listed = []
 
@@ -448,8 +446,6 @@ class FailureRecovery:
             listed: list[Any] = self.checkpoint_manager.list_checkpoints()
         except (OSError, PermissionError) as e:
             # File system errors when listing files
-            import logging
-            logger = logging.getLogger(__name__)
             logger.debug(f"Failed to list files: {e}")
             listed = []
 

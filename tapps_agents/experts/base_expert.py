@@ -5,6 +5,8 @@ Industry Experts are business domain authorities (NOT technical specialists).
 They provide domain knowledge through consultation, RAG, and weighted decisions.
 """
 
+from __future__ import annotations
+
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -281,8 +283,11 @@ class BaseExpert(BaseAgent):
         """
         if self.rag_enabled and self.knowledge_base:
             from ..core.config import get_expert_config
+
             expert_config = get_expert_config()
-            return self.knowledge_base.get_context(query, max_length=expert_config.rag_max_length)
+            return self.knowledge_base.get_context(
+                query, max_length=expert_config.rag_max_length
+            )
         return f"Domain: {domain}. No additional context available."
 
     async def _get_sources(self, query: str, domain: str) -> list[str]:
@@ -293,8 +298,11 @@ class BaseExpert(BaseAgent):
         """
         if self.rag_enabled and self.knowledge_base:
             from ..core.config import get_expert_config
+
             expert_config = get_expert_config()
-            return self.knowledge_base.get_sources(query, max_results=expert_config.rag_max_results)
+            return self.knowledge_base.get_sources(
+                query, max_results=expert_config.rag_max_results
+            )
         return []
 
     async def _build_consultation_prompt(
@@ -346,20 +354,27 @@ Answer:"""
             Formatted context string or empty string if no high-confidence values
         """
         from ..core.config import get_expert_config
+
         expert_config = get_expert_config()
         profile_threshold = expert_config.profile_confidence_threshold
 
         context_parts = []
 
         # Deployment type
-        if profile.deployment_type and profile.deployment_type_confidence >= profile_threshold:
+        if (
+            profile.deployment_type
+            and profile.deployment_type_confidence >= profile_threshold
+        ):
             context_parts.append(
                 f"- Deployment: {profile.deployment_type} "
                 f"(confidence: {profile.deployment_type_confidence:.1%})"
             )
 
         # Security level
-        if profile.security_level and profile.security_level_confidence >= profile_threshold:
+        if (
+            profile.security_level
+            and profile.security_level_confidence >= profile_threshold
+        ):
             context_parts.append(
                 f"- Security Level: {profile.security_level} "
                 f"(confidence: {profile.security_level_confidence:.1%})"
@@ -367,7 +382,9 @@ Answer:"""
 
         # Compliance requirements
         high_confidence_compliance = [
-            req for req in profile.compliance_requirements if req.confidence >= profile_threshold
+            req
+            for req in profile.compliance_requirements
+            if req.confidence >= profile_threshold
         ]
         if high_confidence_compliance:
             compliance_names = ", ".join(req.name for req in high_confidence_compliance)

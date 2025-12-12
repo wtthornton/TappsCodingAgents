@@ -5,7 +5,6 @@ Tests that Accessibility and UX experts are properly configured
 and can be loaded from the built-in registry.
 """
 
-
 import pytest
 
 from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry

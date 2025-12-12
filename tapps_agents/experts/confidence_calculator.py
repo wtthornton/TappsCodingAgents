@@ -9,6 +9,8 @@ Implements improved confidence calculation algorithms that consider:
 - Agent-specific thresholds
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
@@ -105,7 +107,8 @@ class ConfidenceCalculator:
 
         if not responses:
             threshold = expert_config.agent_confidence_thresholds.get(
-                agent_id or "default", expert_config.agent_confidence_thresholds["default"]
+                agent_id or "default",
+                expert_config.agent_confidence_thresholds["default"],
             )
             return 0.0, threshold
 
@@ -113,7 +116,8 @@ class ConfidenceCalculator:
         valid_responses = [r for r in responses if "error" not in r]
         if not valid_responses:
             threshold = expert_config.agent_confidence_thresholds.get(
-                agent_id or "default", expert_config.agent_confidence_thresholds["default"]
+                agent_id or "default",
+                expert_config.agent_confidence_thresholds["default"],
             )
             return 0.0, threshold
 

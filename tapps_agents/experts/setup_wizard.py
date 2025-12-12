@@ -108,6 +108,7 @@ class ExpertSetupWizard:
         except (OSError, yaml.YAMLError, KeyError) as e:
             # File read errors, YAML parsing errors, or missing keys
             import logging
+
             logger = logging.getLogger(__name__)
             logger.debug(f"Failed to load expert configs: {e}")
             return []

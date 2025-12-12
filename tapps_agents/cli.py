@@ -400,7 +400,9 @@ Examples:
         "--format", choices=["json", "text"], default="json", help="Output format"
     )
 
-    reviewer_subparsers.add_parser("help", aliases=["*help"], help="Show reviewer commands")
+    reviewer_subparsers.add_parser(
+        "help", aliases=["*help"], help="Show reviewer commands"
+    )
 
     # Planner agent commands
     planner_parser = subparsers.add_parser("planner", help="Planner Agent commands")
@@ -438,7 +440,9 @@ Examples:
         "--format", choices=["json", "text"], default="json", help="Output format"
     )
 
-    planner_subparsers.add_parser("help", aliases=["*help"], help="Show planner commands")
+    planner_subparsers.add_parser(
+        "help", aliases=["*help"], help="Show planner commands"
+    )
 
     # Implementer agent commands
     implementer_parser = subparsers.add_parser(
@@ -565,7 +569,9 @@ Examples:
     trace_parser.add_argument("--function", help="Function name to trace from")
     trace_parser.add_argument("--line", type=int, help="Line number to trace from")
 
-    debugger_subparsers.add_parser("help", aliases=["*help"], help="Show debugger commands")
+    debugger_subparsers.add_parser(
+        "help", aliases=["*help"], help="Show debugger commands"
+    )
 
     # Documenter agent commands
     documenter_parser = subparsers.add_parser(
@@ -841,7 +847,9 @@ Examples:
     )
     improve_quality_parser.add_argument("file_path", help="Path to file to improve")
 
-    improver_subparsers.add_parser("help", aliases=["*help"], help="Show improver commands")
+    improver_subparsers.add_parser(
+        "help", aliases=["*help"], help="Show improver commands"
+    )
 
     # Ops agent commands
     ops_parser = subparsers.add_parser("ops", help="Ops Agent commands")
@@ -959,7 +967,9 @@ Examples:
     )
     enhance_resume_parser.add_argument("session_id", help="Session ID to resume")
 
-    enhancer_subparsers.add_parser("help", aliases=["*help"], help="Show enhancer commands")
+    enhancer_subparsers.add_parser(
+        "help", aliases=["*help"], help="Show enhancer commands"
+    )
 
     # Orchestrator agent commands
     orchestrator_parser = subparsers.add_parser(
@@ -2138,8 +2148,12 @@ Examples:
             print("\n" + "=" * 60)
             print("TappsCodingAgents Doctor Report")
             print("=" * 60)
-            print(f"\nTargets: python={targets.get('python')} requires={targets.get('python_requires')}")
-            print(f"Policy: external_tools_mode={policy.get('external_tools_mode')} mypy_staged={policy.get('mypy_staged')}")
+            print(
+                f"\nTargets: python={targets.get('python')} requires={targets.get('python_requires')}"
+            )
+            print(
+                f"Policy: external_tools_mode={policy.get('external_tools_mode')} mypy_staged={policy.get('mypy_staged')}"
+            )
             print("\nFindings:")
             for f in report.get("findings", []):
                 sev = (f.get("severity") or "warn").upper()

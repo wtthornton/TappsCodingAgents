@@ -15,10 +15,9 @@ class Context7MCPServer:
         self,
         registry: ToolRegistry | None = None,
         resolve_library_client: Callable[[str], Any] | None = None,
-        get_docs_client: Callable[
-            [str, str | None, str | None, int | None], Any
-        ]
-        | None = None,
+        get_docs_client: (
+            Callable[[str, str | None, str | None, int | None], Any] | None
+        ) = None,
     ):
         """
         Initialize Context7 MCP server.

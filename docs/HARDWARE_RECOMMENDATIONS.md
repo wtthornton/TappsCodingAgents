@@ -203,7 +203,7 @@ ollama pull qwen2.5-coder:14b-q4_K_M  # Quantized 14B model
 - **Use Cursor IDE** - Optimized for AI coding assistants
 - **Enable indexing** for faster code navigation
 - **Use virtual environments** to isolate dependencies
-- **Keep Python updated** (3.12+ recommended)
+- **Keep Python updated** (3.13+ recommended)
 
 ---
 

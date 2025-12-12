@@ -98,6 +98,7 @@ class PresetLoader:
                 except (KeyError, ValueError, TypeError, yaml.YAMLError, OSError) as e:
                     # Skip invalid preset entries (file errors, YAML errors, missing keys)
                     import logging
+
                     logger = logging.getLogger(__name__)
                     logger.warning(f"Invalid preset '{preset_name}': {e}")
                     presets[preset_name] = {

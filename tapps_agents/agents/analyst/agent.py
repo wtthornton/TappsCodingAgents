@@ -24,9 +24,7 @@ class AnalystAgent(BaseAgent):
     - Competitive analysis
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(agent_id="analyst", agent_name="Analyst Agent", config=config)
         if config is None:
             config = load_config()
@@ -155,9 +153,11 @@ Format as structured JSON with sections."""
             # Use LLM to analyze requirements
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -209,9 +209,11 @@ Format as structured JSON."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -260,9 +262,11 @@ Format as structured JSON with technology recommendations."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -300,9 +304,11 @@ Format as structured JSON."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -336,9 +342,11 @@ Format as structured JSON with risk assessment."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 
@@ -381,9 +389,11 @@ Format as structured JSON."""
         try:
             response = await self.mal.generate(
                 prompt=prompt,
-                model=self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b",
+                model=(
+                    self.config.mal.default_model
+                    if (self.config and self.config.mal)
+                    else "qwen2.5-coder:7b"
+                ),
                 temperature=0.3,
             )
 

@@ -2,7 +2,6 @@
 Unit tests for Task State Management.
 """
 
-
 import pytest
 
 from tapps_agents.core.task_state import TaskState, TaskStateManager

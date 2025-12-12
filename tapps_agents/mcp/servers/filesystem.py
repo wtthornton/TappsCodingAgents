@@ -176,9 +176,7 @@ class FilesystemMCPServer:
 
         return {"directory": str(path), "items": items, "count": len(items)}
 
-    def glob_search(
-        self, pattern: str, root_dir: str | None = None
-    ) -> dict[str, Any]:
+    def glob_search(self, pattern: str, root_dir: str | None = None) -> dict[str, Any]:
         """Search for files matching a pattern."""
         if root_dir:
             search_path = Path(root_dir) / pattern

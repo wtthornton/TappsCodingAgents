@@ -97,10 +97,10 @@ class IterativeRefinement:
         self,
         initial_html: str,
         requirements: dict[str, Any],
-        refinement_callback: Callable[
-            [str, VisualFeedback, list[str], dict[str, Any]], Awaitable[str]
-        ]
-        | None = None,
+        refinement_callback: (
+            Callable[[str, VisualFeedback, list[str], dict[str, Any]], Awaitable[str]]
+            | None
+        ) = None,
     ) -> IterationResult | None:
         """
         Refine UI through iterative feedback loop.

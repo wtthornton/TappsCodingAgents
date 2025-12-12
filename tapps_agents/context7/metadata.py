@@ -2,6 +2,8 @@
 Metadata Management - Handles metadata files for Context7 KB cache.
 """
 
+from __future__ import annotations
+
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import TYPE_CHECKING, Any

@@ -378,9 +378,7 @@ class MemoryAwareMixin:
 
         return self.memory_system.get_similar_tasks(task_id, limit)
 
-    def get_memory_context_prompt(
-        self, query: str, command: str | None = None
-    ) -> str:
+    def get_memory_context_prompt(self, query: str, command: str | None = None) -> str:
         """
         Get formatted memory context for prompt.
 

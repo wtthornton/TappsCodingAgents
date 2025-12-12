@@ -40,6 +40,17 @@ tapps-agents --help
 python -m tapps_agents.cli --help
 ```
 
+## Check Your Environment (recommended)
+
+Run `doctor` to validate your local environment and toolchain. It **soft-degrades with warnings** by default.
+
+```bash
+tapps-agents doctor
+
+# (Alternative + JSON output)
+python -m tapps_agents.cli doctor --format json
+```
+
 ---
 
 ## Optional: Install Ollama + Pull a Model

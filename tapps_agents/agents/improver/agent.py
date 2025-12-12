@@ -17,9 +17,7 @@ class ImproverAgent(BaseAgent):
     Permissions: Read, Write, Edit, Grep, Glob (no Bash)
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="improver", agent_name="Improver Agent", config=config
         )

@@ -6,7 +6,7 @@ Phase 6.4.4: TypeScript & JavaScript Support
 
 import json
 import shutil
-import subprocess
+import subprocess  # nosec B404 - used with fixed args, no shell
 from pathlib import Path
 from typing import Any
 
@@ -45,10 +45,11 @@ class TypeScriptScorer:
         """Check if TypeScript compiler (tsc) is available."""
         if shutil.which("tsc"):
             return True
-        if shutil.which("npx"):
+        npx_path = shutil.which("npx")
+        if npx_path:
             try:
-                result = subprocess.run(
-                    ["npx", "--yes", "tsc", "--version"],
+                result = subprocess.run(  # nosec B603 - fixed args
+                    [npx_path, "--yes", "tsc", "--version"],
                     capture_output=True,
                     timeout=5,
                     check=False,
@@ -62,10 +63,11 @@ class TypeScriptScorer:
         """Check if ESLint is available."""
         if shutil.which("eslint"):
             return True
-        if shutil.which("npx"):
+        npx_path = shutil.which("npx")
+        if npx_path:
             try:
-                result = subprocess.run(
-                    ["npx", "--yes", "eslint", "--version"],
+                result = subprocess.run(  # nosec B603 - fixed args
+                    [npx_path, "--yes", "eslint", "--version"],
                     capture_output=True,
                     timeout=5,
                     check=False,
@@ -216,13 +218,16 @@ class TypeScriptScorer:
 
         try:
             # Build ESLint command
-            command = ["npx", "--yes", "eslint", str(file_path), "--format", "json"]
+            npx_path = shutil.which("npx")
+            if not npx_path:
+                return 5.0  # Neutral if npx not available
+            command = [npx_path, "--yes", "eslint", str(file_path), "--format", "json"]
 
             # Add config if provided
             if self.eslint_config:
                 command.extend(["--config", self.eslint_config])
 
-            result = subprocess.run(
+            result = subprocess.run(  # nosec B603 - fixed args
                 command,
                 capture_output=True,
                 text=True,

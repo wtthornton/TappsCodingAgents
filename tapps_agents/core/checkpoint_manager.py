@@ -4,6 +4,8 @@ Checkpoint Manager for Task State Persistence
 Manages checkpoint creation, storage, and retrieval for task resumption.
 """
 
+from __future__ import annotations
+
 import gzip
 import hashlib
 import json

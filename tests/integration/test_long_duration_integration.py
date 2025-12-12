@@ -386,7 +386,9 @@ class TestFailureRecoveryScenarios:
         agent_id = "test-agent"
         command = "test command"
 
-        manager.start_long_duration_task(task_id=task_id, agent_id=agent_id, command=command)
+        manager.start_long_duration_task(
+            task_id=task_id, agent_id=agent_id, command=command
+        )
 
         manager.update_progress(
             task_id=task_id,
@@ -413,7 +415,9 @@ class TestFailureRecoveryScenarios:
         agent_id = "test-agent"
         command = "test command"
 
-        manager.start_long_duration_task(task_id=task_id, agent_id=agent_id, command=command)
+        manager.start_long_duration_task(
+            task_id=task_id, agent_id=agent_id, command=command
+        )
 
         manager.update_progress(
             task_id=task_id,
@@ -442,7 +446,9 @@ class TestFailureRecoveryScenarios:
         agent_id = "test-agent"
         command = "test command"
 
-        manager.start_long_duration_task(task_id=task_id, agent_id=agent_id, command=command)
+        manager.start_long_duration_task(
+            task_id=task_id, agent_id=agent_id, command=command
+        )
 
         # Make progress
         manager.update_progress(
@@ -480,7 +486,9 @@ class TestFailureRecoveryScenarios:
         command = "test command"
 
         # Start task but don't create any checkpoints
-        manager.start_long_duration_task(task_id=task_id, agent_id=agent_id, command=command)
+        manager.start_long_duration_task(
+            task_id=task_id, agent_id=agent_id, command=command
+        )
 
         # Don't update progress, so no checkpoint is created
 

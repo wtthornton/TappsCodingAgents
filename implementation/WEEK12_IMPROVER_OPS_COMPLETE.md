@@ -114,7 +114,7 @@ Both agents implement comprehensive error handling:
 
 ## Milestone Achievement
 
-🎉 **All 12 Workflow Agents Complete!**
+🎉 **All 12 Workflow Agents Complete!** (historical milestone; the framework later expanded to **13 workflow agents** with the `enhancer` agent)
 
 The TappsCodingAgents framework now includes all planned workflow agents:
 

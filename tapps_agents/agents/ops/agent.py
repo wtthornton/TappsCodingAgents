@@ -249,7 +249,9 @@ Return findings in JSON format:
 
         # Use LLM for compliance analysis
         security_guidance_section = (
-            f"Security Expert Guidance:\n{security_guidance}\n" if security_guidance else ""
+            f"Security Expert Guidance:\n{security_guidance}\n"
+            if security_guidance
+            else ""
         )
         privacy_guidance_section = (
             f"Data Privacy Expert Guidance:\n{privacy_guidance}\n"
@@ -338,7 +340,9 @@ Return findings in JSON format:
 
         # Generate deployment script/instructions
         security_guidance_section = (
-            f"Security Expert Guidance:\n{security_guidance}\n" if security_guidance else ""
+            f"Security Expert Guidance:\n{security_guidance}\n"
+            if security_guidance
+            else ""
         )
         prompt = f"""Generate deployment instructions for this project.
 

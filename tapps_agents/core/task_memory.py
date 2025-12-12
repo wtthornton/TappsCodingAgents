@@ -4,6 +4,8 @@ Task Memory System for Knowledge Retention
 Stores and retrieves task outcomes and learnings for future use.
 """
 
+from __future__ import annotations
+
 import gzip
 import json
 import logging

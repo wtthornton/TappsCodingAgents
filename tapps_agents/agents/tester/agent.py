@@ -23,9 +23,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
     Permissions: Read, Write, Edit, Grep, Glob, Bash
     """
 
-    def __init__(
-        self, mal: MAL | None = None, config: ProjectConfig | None = None
-    ):
+    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
         super().__init__(agent_id="tester", agent_name="Tester Agent", config=config)
         # Use config if provided, otherwise load defaults
         if config is None:
