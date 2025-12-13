@@ -10,10 +10,12 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .models import Artifact, Workflow, WorkflowState, WorkflowStep
+from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .timeline import generate_timeline, save_timeline
 from .parser import WorkflowParser
 from .recommender import WorkflowRecommendation, WorkflowRecommender
 from .state_manager import AdvancedStateManager
+from ..core.runtime_mode import is_cursor_mode
 
 
 class WorkflowExecutor:
@@ -25,6 +27,7 @@ class WorkflowExecutor:
         expert_registry: Any | None = None,
         auto_detect: bool = True,
         advanced_state: bool = True,
+        auto_mode: bool = False,
     ):
         """
         Initialize workflow executor.
@@ -34,6 +37,7 @@ class WorkflowExecutor:
             expert_registry: Optional ExpertRegistry instance for expert consultation
             auto_detect: Whether to enable automatic workflow detection and recommendation
             advanced_state: Whether to use advanced state management (validation, migration, recovery)
+            auto_mode: Whether to run in fully automated mode (no prompts)
         """
         self.project_root = project_root or Path.cwd()
         self.state: WorkflowState | None = None
@@ -42,6 +46,8 @@ class WorkflowExecutor:
         self.expert_registry = expert_registry
         self.auto_detect = auto_detect
         self.advanced_state = advanced_state
+        self.auto_mode = auto_mode
+        self.user_prompt: str | None = None
         self.recommender: WorkflowRecommender | None = None
         self.state_manager: AdvancedStateManager | None = None
 
@@ -127,6 +133,10 @@ class WorkflowExecutor:
             status="running",
         )
 
+        # Store user prompt if provided
+        if self.user_prompt:
+            self.state.variables["user_prompt"] = self.user_prompt
+
         # Persist workflow path for resumption
         if self._workflow_path:
             self.state.variables["_workflow_path"] = str(self._workflow_path)
@@ -192,7 +202,42 @@ class WorkflowExecutor:
 
         This method runs the current step, records artifacts, advances to next,
         and repeats until completion/failure.
+        
+        If running in Cursor mode, delegates to CursorWorkflowExecutor.
         """
+        # Route to Cursor executor if in Cursor mode
+        if is_cursor_mode():
+            from .cursor_executor import CursorWorkflowExecutor
+            
+            cursor_executor = CursorWorkflowExecutor(
+                project_root=self.project_root,
+                expert_registry=self.expert_registry,
+                auto_mode=self.auto_mode,
+            )
+            
+            # Load workflow if provided
+            if workflow:
+                cursor_executor.workflow = workflow
+            elif self.workflow:
+                cursor_executor.workflow = self.workflow
+            else:
+                raise ValueError(
+                    "No workflow loaded. Call load_workflow() or pass workflow."
+                )
+            
+            # Start workflow if needed
+            if not cursor_executor.state:
+                user_prompt = self.user_prompt or self.state.variables.get("user_prompt") if self.state else None
+                cursor_executor.start(workflow=cursor_executor.workflow, user_prompt=user_prompt)
+            
+            # Execute workflow
+            return await cursor_executor.run(
+                workflow=None,  # Already loaded
+                target_file=target_file,
+                max_steps=max_steps,
+            )
+        
+        # Continue with original MAL-based execution for headless mode
         if workflow:
             self.workflow = workflow
         if not self.workflow:
@@ -250,6 +295,17 @@ class WorkflowExecutor:
 
         if not self.state:
             raise RuntimeError("Workflow state lost during execution")
+        
+        # Generate timeline if workflow completed
+        if self.state.status == "completed" and self.workflow:
+            try:
+                timeline = generate_timeline(self.state, self.workflow)
+                timeline_path = self.project_root / "project-timeline.md"
+                save_timeline(timeline, timeline_path, format="markdown")
+                print(f"\nTimeline saved to: {timeline_path}")
+            except Exception as e:
+                print(f"Warning: Failed to generate timeline: {e}", file=sys.stderr)
+        
         return self.state
 
     async def _execute_step(self, step: WorkflowStep, target_path: Path | None) -> None:
@@ -265,6 +321,15 @@ class WorkflowExecutor:
         action = self._normalize_action(step.action)
         agent_name = (step.agent or "").strip().lower()
 
+        # Create step execution tracking
+        step_execution = StepExecution(
+            step_id=step.id,
+            agent=agent_name,
+            action=action,
+            started_at=datetime.now(),
+        )
+        self.state.step_executions.append(step_execution)
+
         # ---- Helper: dynamic agent import + run ----
         async def run_agent(agent: str, command: str, **kwargs: Any) -> dict[str, Any]:
             module = __import__(f"tapps_agents.agents.{agent}.agent", fromlist=["*"])
@@ -275,169 +340,407 @@ class WorkflowExecutor:
             try:
                 return await instance.run(command, **kwargs)
             finally:
-                await instance.close()
+                # Close agent if it has a close method
+                if hasattr(instance, 'close'):
+                    await instance.close()
 
         created_artifacts: list[dict[str, Any]] = []
 
-        # ---- Step execution mappings ----
-        if agent_name == "debugger" and action in {
-            "analyze_error",
-            "analyze-error",
-            "analyze",
-        }:
-            if not target_path or not target_path.exists():
-                raise ValueError(
-                    "Debugger step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
-                )
-
-            error_message, stack_trace = self._capture_python_exception(target_path)
-            if not error_message:
-                # Fall back to a generic message for static analysis
-                error_message = f"Bug(s) reported in {target_path.name} (no runtime traceback captured)."
-
-            debug_result = await run_agent(
-                "debugger",
+        try:
+            # ---- Step execution mappings ----
+            if agent_name == "debugger" and action in {
+                "analyze_error",
                 "analyze-error",
-                error_message=error_message,
-                stack_trace=stack_trace,
-            )
-            self.state.variables["debugger_result"] = debug_result
+                "analyze",
+            }:
+                if not target_path or not target_path.exists():
+                    raise ValueError(
+                        "Debugger step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
+                    )
 
-            # Write debug report artifact if requested
-            if "debug-report.md" in (step.creates or []):
-                report_path = self.project_root / "debug-report.md"
-                report_lines = [
-                    "# Debug Report",
-                    "",
-                    f"## Target: `{target_path}`",
-                    "",
-                    "## Error message",
-                    "```",
-                    error_message or "",
-                    "```",
-                ]
-                if stack_trace:
-                    report_lines += ["", "## Stack trace", "```", stack_trace, "```"]
-                report_lines += [
-                    "",
-                    "## Analysis (DebuggerAgent)",
-                    "```json",
-                    json.dumps(debug_result, indent=2),
-                    "```",
-                ]
-                report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-                created_artifacts.append(
-                    {"name": "debug-report.md", "path": str(report_path)}
+                error_message, stack_trace = self._capture_python_exception(target_path)
+                if not error_message:
+                    # Fall back to a generic message for static analysis
+                    error_message = f"Bug(s) reported in {target_path.name} (no runtime traceback captured)."
+
+                debug_result = await run_agent(
+                    "debugger",
+                    "analyze-error",
+                    error_message=error_message,
+                    stack_trace=stack_trace,
                 )
+                self.state.variables["debugger_result"] = debug_result
 
-        elif agent_name == "implementer" and action in {
-            "write_code",
-            "fix",
-            "implement",
-        }:
-            if not target_path or not target_path.exists():
-                raise ValueError(
-                    "Implementer step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
+                # Write debug report artifact if requested
+                if "debug-report.md" in (step.creates or []):
+                    report_path = self.project_root / "debug-report.md"
+                    report_lines = [
+                        "# Debug Report",
+                        "",
+                        f"## Target: `{target_path}`",
+                        "",
+                        "## Error message",
+                        "```",
+                        error_message or "",
+                        "```",
+                    ]
+                    if stack_trace:
+                        report_lines += ["", "## Stack trace", "```", stack_trace, "```"]
+                    report_lines += [
+                        "",
+                        "## Analysis (DebuggerAgent)",
+                        "```json",
+                        json.dumps(debug_result, indent=2),
+                        "```",
+                    ]
+                    report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
+                    created_artifacts.append(
+                        {"name": "debug-report.md", "path": str(report_path)}
+                    )
+
+            elif agent_name == "implementer" and action in {
+                "write_code",
+                "fix",
+                "implement",
+            }:
+                # Check if this is a greenfield project (new project from scratch)
+                from .models import WorkflowType
+                workflow_type = getattr(self.workflow, "type", None) if self.workflow else None
+                is_greenfield = (
+                    workflow_type == WorkflowType.GREENFIELD
+                    or (isinstance(workflow_type, str) and workflow_type.lower() == "greenfield")
+                    or (hasattr(workflow_type, "value") and workflow_type.value == "greenfield")
                 )
+                user_prompt = self.state.variables.get("user_prompt", "")
 
-            debug_report_path = self.project_root / "debug-report.md"
-            debug_context = (
-                debug_report_path.read_text(encoding="utf-8")
-                if debug_report_path.exists()
-                else ""
-            )
-            instruction = (
-                f"Fix the bugs in {target_path.name}. "
-                "Add robust input validation and handle missing keys safely. "
-                "Do not change behavior beyond fixing the crashes.\n\n"
-                "Context:\n"
-                f"{debug_context[:4000]}"
-            )
+                if is_greenfield and (not target_path or not target_path.exists()):
+                    # Greenfield project: create new code from scratch
+                    # Use requirements and architecture from previous steps
+                    requirements_path = self.project_root / "requirements.md"
+                    architecture_path = self.project_root / "architecture.md"
+                    
+                    # Build implementation specification
+                    spec_parts = []
+                    if user_prompt:
+                        spec_parts.append(user_prompt)
+                    if requirements_path.exists():
+                        req_content = requirements_path.read_text(encoding='utf-8')
+                        spec_parts.append(f"\n\nRequirements:\n{req_content[:3000]}")
+                    if architecture_path.exists():
+                        arch_content = architecture_path.read_text(encoding='utf-8')
+                        spec_parts.append(f"\n\nArchitecture:\n{arch_content[:3000]}")
+                    
+                    specification = "\n".join(spec_parts) or "Create the application based on requirements and architecture"
+                    
+                    # Build context from stories if available
+                    stories_dir = self.project_root / "stories"
+                    context_parts = []
+                    if stories_dir.exists():
+                        story_files = list(stories_dir.glob("*.md"))
+                        if story_files:
+                            context_parts.append("User Stories:")
+                            for story_file in story_files[:5]:  # Limit to first 5 stories
+                                context_parts.append(story_file.read_text(encoding='utf-8')[:500])
+                    context = "\n\n".join(context_parts) if context_parts else None
+                    
+                    # Determine output directory and main file from step.creates
+                    output_dir = self.project_root / "src"
+                    if step.creates:
+                        for create_item in step.creates:
+                            if create_item.endswith("/") or create_item.endswith("\\"):
+                                output_dir = self.project_root / create_item.rstrip("/\\")
+                                break
+                    
+                    output_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    # Create main application file
+                    main_file = output_dir / "app.py"
+                    
+                    # Use implement command for greenfield projects
+                    implement_result = await run_agent(
+                        "implementer",
+                        "implement",
+                        specification=specification,
+                        file_path=str(main_file),
+                        context=context,
+                    )
+                    self.state.variables["implementer_result"] = implement_result
+                    self.state.variables["target_file"] = str(main_file)
+                    created_artifacts.append(
+                        {"name": "src/", "path": str(output_dir)}
+                    )
+                    
+                elif target_path and target_path.exists():
+                    # Brownfield project: refactor existing code
+                    debug_report_path = self.project_root / "debug-report.md"
+                    debug_context = (
+                        debug_report_path.read_text(encoding="utf-8")
+                        if debug_report_path.exists()
+                        else ""
+                    )
+                    instruction = (
+                        f"Fix the bugs in {target_path.name}. "
+                        "Add robust input validation and handle missing keys safely. "
+                        "Do not change behavior beyond fixing the crashes.\n\n"
+                        "Context:\n"
+                        f"{debug_context[:4000]}"
+                    )
 
-            fix_result = await run_agent(
-                "implementer",
-                "refactor",
-                file=str(target_path),
-                instruction=instruction,
-            )
-            self.state.variables["implementer_result"] = fix_result
+                    fix_result = await run_agent(
+                        "implementer",
+                        "refactor",
+                        file=str(target_path),
+                        instruction=instruction,
+                    )
+                    self.state.variables["implementer_result"] = fix_result
 
-            # Create fixed-code/ artifact if requested by preset
-            if "fixed-code/" in (step.creates or []):
-                fixed_dir = self.project_root / "fixed-code"
-                fixed_dir.mkdir(parents=True, exist_ok=True)
-                fixed_copy = fixed_dir / target_path.name
-                shutil.copy2(target_path, fixed_copy)
-                self.state.variables["fixed_file"] = str(fixed_copy)
-                created_artifacts.append(
-                    {"name": "fixed-code/", "path": str(fixed_dir)}
+                    # Create fixed-code/ artifact if requested by preset
+                    if "fixed-code/" in (step.creates or []):
+                        fixed_dir = self.project_root / "fixed-code"
+                        fixed_dir.mkdir(parents=True, exist_ok=True)
+                        fixed_copy = fixed_dir / target_path.name
+                        shutil.copy2(target_path, fixed_copy)
+                        self.state.variables["fixed_file"] = str(fixed_copy)
+                        created_artifacts.append(
+                            {"name": "fixed-code/", "path": str(fixed_dir)}
+                        )
+                else:
+                    raise ValueError(
+                        "Implementer step requires either a target file for brownfield projects "
+                        "or a greenfield workflow type for new projects."
+                    )
+
+            elif agent_name == "reviewer" and action in {"review_code", "review", "score"}:
+                # Prefer the fixed copy if available, then check implementer result, then target_path
+                fixed_file = self.state.variables.get("fixed_file")
+                implementer_file = self.state.variables.get("target_file")
+                review_target = None
+                
+                if fixed_file:
+                    review_target = Path(fixed_file)
+                elif implementer_file:
+                    review_target = Path(implementer_file)
+                elif target_path:
+                    review_target = target_path
+                
+                if not review_target or not review_target.exists():
+                    raise ValueError("Reviewer step requires a target file to review.")
+
+                review_result = await run_agent(
+                    "reviewer", "score", file=str(review_target)
                 )
+                self.state.variables["reviewer_result"] = review_result
 
-        elif agent_name == "reviewer" and action in {"review_code", "review", "score"}:
-            # Prefer the fixed copy if available
-            fixed_file = self.state.variables.get("fixed_file")
-            review_target = Path(fixed_file) if fixed_file else target_path
-            if not review_target or not review_target.exists():
-                raise ValueError("Reviewer step requires a target file to review.")
+                # Evaluate gate if configured
+                gate = step.gate or {}
+                if gate:
+                    scoring = (
+                        review_result.get("scoring", {})
+                        if isinstance(review_result, dict)
+                        else {}
+                    )
+                    passed = bool(review_result.get("passed", False))
+                    self.state.variables["gate_last"] = {
+                        "step": step.id,
+                        "passed": passed,
+                        "scoring": scoring,
+                    }
+                    on_pass = gate.get("on_pass") or gate.get("on-pass")
+                    on_fail = gate.get("on_fail") or gate.get("on-fail")
 
-            review_result = await run_agent(
-                "reviewer", "score", file=str(review_target)
-            )
-            self.state.variables["reviewer_result"] = review_result
+                    # Mark review complete, but override next step based on gate decision
+                    self.mark_step_complete(
+                        step_id=step.id, artifacts=created_artifacts or None
+                    )
+                    if passed and on_pass:
+                        self.state.current_step = on_pass
+                    elif (not passed) and on_fail:
+                        self.state.current_step = on_fail
+                    self.save_state()
+                    return
 
-            # Evaluate gate if configured
-            gate = step.gate or {}
-            if gate:
-                scoring = (
-                    review_result.get("scoring", {})
-                    if isinstance(review_result, dict)
-                    else {}
+            elif agent_name == "tester" and action in {"write_tests", "test"}:
+                # Prefer the fixed copy if available, then check implementer result, then target_path
+                fixed_file = self.state.variables.get("fixed_file")
+                implementer_file = self.state.variables.get("target_file")
+                test_target = None
+                
+                if fixed_file:
+                    test_target = Path(fixed_file)
+                elif implementer_file:
+                    test_target = Path(implementer_file)
+                elif target_path:
+                    test_target = target_path
+                
+                if not test_target or not test_target.exists():
+                    raise ValueError("Tester step requires a target file to test.")
+
+                test_result = await run_agent("tester", "test", file=str(test_target))
+                self.state.variables["tester_result"] = test_result
+
+                if "tests/" in (step.creates or []):
+                    tests_dir = self.project_root / "tests"
+                    created_artifacts.append({"name": "tests/", "path": str(tests_dir)})
+
+            elif agent_name == "orchestrator" and action in {"finalize", "complete"}:
+                # Nothing to do other than marking completion.
+                pass
+
+            elif agent_name == "analyst" and action in {"gather_requirements", "gather-requirements", "analyze"}:
+                user_prompt = self.state.variables.get("user_prompt", "")
+                if not user_prompt and not self.auto_mode:
+                    # In non-auto mode, could prompt user, but for now use generic
+                    user_prompt = "Generate requirements for this project"
+                
+                requirements_result = await run_agent(
+                    "analyst",
+                    "gather-requirements",
+                    description=user_prompt,
+                    output_file="requirements.md"
                 )
-                passed = bool(review_result.get("passed", False))
-                self.state.variables["gate_last"] = {
-                    "step": step.id,
-                    "passed": passed,
-                    "scoring": scoring,
-                }
-                on_pass = gate.get("on_pass") or gate.get("on-pass")
-                on_fail = gate.get("on_fail") or gate.get("on-fail")
+                self.state.variables["analyst_result"] = requirements_result
+                
+                # Create requirements.md artifact if requested
+                if "requirements.md" in (step.creates or []):
+                    req_path = self.project_root / "requirements.md"
+                    # Analyst agent should have created this, but verify
+                    if req_path.exists():
+                        created_artifacts.append({"name": "requirements.md", "path": str(req_path)})
 
-                # Mark review complete, but override next step based on gate decision
-                self.mark_step_complete(
-                    step_id=step.id, artifacts=created_artifacts or None
+            elif agent_name == "planner" and action in {"create_stories", "create-stories", "plan", "breakdown"}:
+                requirements_path = self.project_root / "requirements.md"
+                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
+                
+                # Use "plan" command which creates a plan with multiple stories
+                # The plan command accepts description parameter
+                plan_description = requirements if requirements else "Create user stories for this project"
+                
+                planner_result = await run_agent(
+                    "planner",
+                    "plan",
+                    description=plan_description
                 )
-                if passed and on_pass:
-                    self.state.current_step = on_pass
-                elif (not passed) and on_fail:
-                    self.state.current_step = on_fail
-                self.save_state()
+                self.state.variables["planner_result"] = planner_result
+                
+                # Create stories directory if it doesn't exist
+                stories_dir = self.project_root / "stories"
+                stories_dir.mkdir(parents=True, exist_ok=True)
+                
+                if "stories/" in (step.creates or []):
+                    if stories_dir.exists():
+                        created_artifacts.append({"name": "stories/", "path": str(stories_dir)})
+
+            elif agent_name == "architect" and action in {"design_system", "design-system", "design_architecture"}:
+                requirements_path = self.project_root / "requirements.md"
+                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
+                stories_dir = self.project_root / "stories"
+                
+                # Build context from stories if available
+                context_parts = []
+                if stories_dir.exists():
+                    story_files = list(stories_dir.glob("*.md"))
+                    if story_files:
+                        context_parts.append("User Stories:")
+                        for story_file in story_files[:10]:  # Limit to first 10 stories
+                            context_parts.append(story_file.read_text(encoding="utf-8")[:1000])
+                context = "\n\n".join(context_parts) if context_parts else ""
+                
+                architect_result = await run_agent(
+                    "architect",
+                    "design-system",
+                    requirements=requirements,
+                    context=context,
+                    output_file="architecture.md"
+                )
+                self.state.variables["architect_result"] = architect_result
+                
+                if "architecture.md" in (step.creates or []):
+                    arch_path = self.project_root / "architecture.md"
+                    if arch_path.exists():
+                        created_artifacts.append({"name": "architecture.md", "path": str(arch_path)})
+
+            elif agent_name == "designer" and action in {"api_design", "api-design", "design_api"}:
+                requirements_path = self.project_root / "requirements.md"
+                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
+                arch_path = self.project_root / "architecture.md"
+                architecture = arch_path.read_text(encoding="utf-8") if arch_path.exists() else ""
+                
+                # Combine requirements and architecture for the design-api command
+                # The design-api command expects requirements parameter
+                api_requirements = f"{requirements}\n\nArchitecture:\n{architecture}" if architecture else requirements
+                
+                designer_result = await run_agent(
+                    "designer",
+                    "design-api",
+                    requirements=api_requirements
+                )
+                self.state.variables["designer_result"] = designer_result
+                
+                if "api-design.md" in (step.creates or []):
+                    api_design_path = self.project_root / "api-design.md"
+                    if api_design_path.exists():
+                        created_artifacts.append({"name": "api-design.md", "path": str(api_design_path)})
+
+            elif agent_name == "ops" and action in {"security_scan", "security-scan", "audit"}:
+                # Ops agent security scan
+                ops_result = await run_agent(
+                    "ops",
+                    "security-scan",
+                    project_root=str(self.project_root)
+                )
+                self.state.variables["ops_result"] = ops_result
+                
+                if "security-report.md" in (step.creates or []):
+                    security_path = self.project_root / "security-report.md"
+                    if security_path.exists():
+                        created_artifacts.append({"name": "security-report.md", "path": str(security_path)})
+
+            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document"}:
+                # Documenter agent - generate comprehensive documentation
+                requirements_path = self.project_root / "requirements.md"
+                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
+                
+                doc_result = await run_agent(
+                    "documenter",
+                    "generate-docs",
+                    requirements=requirements,
+                    project_root=str(self.project_root)
+                )
+                self.state.variables["documenter_result"] = doc_result
+                
+                if "docs/" in (step.creates or []):
+                    docs_dir = self.project_root / "docs"
+                    if docs_dir.exists():
+                        created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
+
+            else:
+                # Unknown mapping: mark as skipped rather than hard-failing (best-effort).
+                # This keeps the executor resilient as presets evolve.
+                step_execution.status = "skipped"
+                step_execution.completed_at = datetime.now()
+                step_execution.duration_seconds = 0.0
+                self.skip_step(step.id)
                 return
 
-        elif agent_name == "tester" and action in {"write_tests", "test"}:
-            fixed_file = self.state.variables.get("fixed_file")
-            test_target = Path(fixed_file) if fixed_file else target_path
-            if not test_target or not test_target.exists():
-                raise ValueError("Tester step requires a target file to test.")
+            # Mark step execution as completed
+            step_execution.completed_at = datetime.now()
+            step_execution.duration_seconds = (
+                step_execution.completed_at - step_execution.started_at
+            ).total_seconds()
+            step_execution.status = "completed"
 
-            test_result = await run_agent("tester", "test", file=str(test_target))
-            self.state.variables["tester_result"] = test_result
+            # Default: mark step complete and advance to its `next`
+            self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)
 
-            if "tests/" in (step.creates or []):
-                tests_dir = self.project_root / "tests"
-                created_artifacts.append({"name": "tests/", "path": str(tests_dir)})
-
-        elif agent_name == "orchestrator" and action in {"finalize", "complete"}:
-            # Nothing to do other than marking completion.
-            pass
-
-        else:
-            # Unknown mapping: mark as skipped rather than hard-failing (best-effort).
-            # This keeps the executor resilient as presets evolve.
-            self.skip_step(step.id)
-            return
-
-        # Default: mark step complete and advance to its `next`
-        self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)
+        except Exception as e:
+            # Mark step execution as failed
+            step_execution.completed_at = datetime.now()
+            step_execution.duration_seconds = (
+                step_execution.completed_at - step_execution.started_at
+            ).total_seconds()
+            step_execution.status = "failed"
+            step_execution.error = str(e)
+            raise
 
     def get_current_step(self) -> WorkflowStep | None:
         """Get the current workflow step."""
@@ -595,10 +898,47 @@ class WorkflowExecutor:
             metadata=data.get("metadata", {}) or {},
         )
 
+    @staticmethod
+    def _step_execution_to_dict(step_exec: StepExecution) -> dict[str, Any]:
+        return {
+            "step_id": step_exec.step_id,
+            "agent": step_exec.agent,
+            "action": step_exec.action,
+            "started_at": step_exec.started_at.isoformat(),
+            "completed_at": (
+                step_exec.completed_at.isoformat() if step_exec.completed_at else None
+            ),
+            "duration_seconds": step_exec.duration_seconds,
+            "status": step_exec.status,
+            "error": step_exec.error,
+        }
+
+    @staticmethod
+    def _step_execution_from_dict(data: dict[str, Any]) -> StepExecution:
+        started_at = datetime.fromisoformat(data["started_at"])
+        completed_at = (
+            datetime.fromisoformat(data["completed_at"])
+            if data.get("completed_at")
+            else None
+        )
+        return StepExecution(
+            step_id=data["step_id"],
+            agent=data["agent"],
+            action=data["action"],
+            started_at=started_at,
+            completed_at=completed_at,
+            duration_seconds=data.get("duration_seconds"),
+            status=data.get("status", "running"),
+            error=data.get("error"),
+        )
+
     def _state_to_dict(self, state: WorkflowState) -> dict[str, Any]:
         artifacts = {
             k: self._artifact_to_dict(v) for k, v in (state.artifacts or {}).items()
         }
+        step_executions = [
+            self._step_execution_to_dict(se) for se in (state.step_executions or [])
+        ]
         return {
             "workflow_id": state.workflow_id,
             "started_at": state.started_at.isoformat(),
@@ -609,12 +949,17 @@ class WorkflowExecutor:
             "variables": state.variables or {},
             "status": state.status,
             "error": state.error,
+            "step_executions": step_executions,
         }
 
     def _state_from_dict(self, data: dict[str, Any]) -> WorkflowState:
         artifacts_data = data.get("artifacts", {}) or {}
         artifacts = {k: self._artifact_from_dict(v) for k, v in artifacts_data.items()}
         started_at = datetime.fromisoformat(data["started_at"])
+        step_executions_data = data.get("step_executions", []) or []
+        step_executions = [
+            self._step_execution_from_dict(se_data) for se_data in step_executions_data
+        ]
         return WorkflowState(
             workflow_id=data["workflow_id"],
             started_at=started_at,
@@ -625,6 +970,7 @@ class WorkflowExecutor:
             variables=data.get("variables", {}) or {},
             status=data.get("status", "running"),
             error=data.get("error"),
+            step_executions=step_executions,
         )
 
     def save_state(self) -> Path | None:

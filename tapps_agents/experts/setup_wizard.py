@@ -14,15 +14,31 @@ from .domain_config import DomainConfigParser
 from .expert_config import load_expert_configs
 
 
+class NonInteractiveInputRequired(RuntimeError):
+    """Raised when required user input is missing in non-interactive mode."""
+
+    def __init__(self, question: str):
+        super().__init__(question)
+        self.question = question
+
+
 class ExpertSetupWizard:
     """Interactive wizard for setting up experts."""
 
-    def __init__(self, project_root: Path | None = None):
+    def __init__(
+        self,
+        project_root: Path | None = None,
+        *,
+        assume_yes: bool = False,
+        non_interactive: bool = False,
+    ):
         self.project_root = project_root or Path.cwd()
         self.config_dir = self.project_root / ".tapps-agents"
         self.experts_file = self.config_dir / "experts.yaml"
         self.domains_file = self.config_dir / "domains.md"
         self.knowledge_base_dir = self.config_dir / "knowledge"
+        self.assume_yes = assume_yes
+        self.non_interactive = non_interactive
 
     def _prompt(
         self,
@@ -31,6 +47,13 @@ class ExpertSetupWizard:
         choices: list[str] | None = None,
     ) -> str:
         """Prompt user for input."""
+        if self.non_interactive:
+            if default is not None:
+                return default
+            raise NonInteractiveInputRequired(question)
+        if self.assume_yes and default is not None:
+            return default
+
         prompt_text = question
         if default:
             prompt_text += f" [{default}]"
@@ -51,11 +74,18 @@ class ExpertSetupWizard:
                     continue
                 return response
             except (EOFError, KeyboardInterrupt):
+                if self.non_interactive:
+                    raise NonInteractiveInputRequired(question)
                 print("\nCancelled.")
                 sys.exit(0)
 
     def _prompt_yes_no(self, question: str, default: bool = True) -> bool:
         """Prompt for yes/no answer."""
+        if self.non_interactive:
+            return True if self.assume_yes else default
+        if self.assume_yes:
+            return True
+
         default_str = "Y/n" if default else "y/N"
         response = self._prompt(
             f"{question} ({default_str})",
@@ -335,6 +365,12 @@ Add your domain-specific knowledge here. This file will be used for RAG (Retriev
             print("\nWarning: No domains.md found.")
             if self._prompt_yes_no("Create domains.md template?", default=True):
                 self._create_domains_template()
+
+        # In non-interactive mode, skip adding experts to avoid prompting for required fields.
+        if self.non_interactive:
+            print("\nNon-interactive mode: skipping expert creation.")
+            print("Next: run 'python -m tapps_agents.cli setup-experts add' to add experts.")
+            return
 
         # Add first expert
         if self._prompt_yes_no("\nAdd your first expert?", default=True):

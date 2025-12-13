@@ -66,7 +66,7 @@ python -m tapps_agents.cli doctor
 python -m tapps_agents.cli init
 
 # Setup experts
-python -m tapps_agents.cli setup-experts init
+python -m tapps_agents.cli setup-experts init --yes --non-interactive
 ```
 
 ## Agent Usage Patterns
@@ -256,6 +256,7 @@ python -m tapps_agents.cli reviewer report . json markdown html
 You can use these phrases in Cursor AI conversations:
 
 - "Run rapid development workflow"
+- "Set up experts"
 - "Score this file" (when file is open)
 - "Review the code quality"
 - "Generate tests for this file"
@@ -284,6 +285,12 @@ python -m tapps_agents.cli --help
 python -m tapps_agents.cli reviewer help
 python -m tapps_agents.cli implementer help
 python -m tapps_agents.cli planner help
+```
+
+## Expert Setup (Cursor/CI-friendly)
+
+```bash
+python -m tapps_agents.cli setup-experts init --yes --non-interactive
 ```
 
 ## Version Check

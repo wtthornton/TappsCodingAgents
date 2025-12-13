@@ -1,0 +1,104 @@
+# Auto Mode with Prompt - Primary Use Case
+
+## Overview
+
+The primary use case for TappsCodingAgents is creating complete, tested applications from a description using fully automated workflows with timeline tracking.
+
+## Short Command
+
+```bash
+python -m tapps_agents.cli create "Your project description here"
+```
+
+This is a shortcut for:
+```bash
+python -m tapps_agents.cli workflow full --auto --prompt "Your project description here"
+```
+
+## What It Does
+
+1. **Fully Automated Execution**: Runs without any prompts or user interaction
+2. **Requirements Gathering**: Passes your prompt to the analyst agent
+3. **Complete SDLC Pipeline**: Executes all workflow steps (Analyst → Planner → Architect → Designer → Implementer → Reviewer → Tester → Ops → Documenter)
+4. **Timeline Tracking**: Generates `project-timeline.md` showing:
+   - Agent execution sequence
+   - Start/end times for each agent
+   - Duration for each step
+   - Total workflow duration
+   - Status summary
+
+## Usage Examples
+
+### Basic Usage
+```bash
+python -m tapps_agents.cli create "Create a task management web application"
+```
+
+### Detailed Description
+```bash
+python -m tapps_agents.cli create "Create a detailed interactive web application that is very modern and explains all the detailed information about this application. Contains a users guide, technical specs, technical designs, technical architecture and examples. Needs to be easy to use and a selling point to this application."
+```
+
+### With Different Workflow
+```bash
+python -m tapps_agents.cli create "Build a REST API for user management" --workflow rapid
+```
+
+## Natural Language Commands for Cursor
+
+When the user says:
+- "Create a web application for [description]"
+- "Build a [project type] with [features]"
+- "Create a new project for [description]"
+- "Make a [application type] that [does something]"
+
+Use the command:
+```bash
+python -m tapps_agents.cli create "[user's description]"
+```
+
+## Full Workflow Command (Alternative)
+
+If the user wants more control:
+
+```bash
+python -m tapps_agents.cli workflow full --auto --prompt "Your description"
+```
+
+Options:
+- `--auto`: Fully automated mode (no prompts)
+- `--prompt` / `-p`: User description/prompt
+- `--file`: Optional target file (for brownfield workflows)
+
+## Output
+
+After execution, you'll find:
+- Complete application code
+- Test files
+- Documentation
+- `project-timeline.md` - Execution timeline and metrics
+- All artifacts from the SDLC pipeline
+
+## When to Use
+
+Use `create` command when:
+- ✅ Starting a new project (greenfield)
+- ✅ Building a complete application from scratch
+- ✅ Need fully automated execution
+- ✅ Want timeline tracking
+- ✅ Need comprehensive documentation
+
+Use regular `workflow` commands when:
+- Working with existing codebases
+- Need specific workflow (rapid, quality, fix, hotfix)
+- Want to customize workflow execution
+
+## Integration with Cursor AI
+
+Cursor AI should recognize these patterns:
+- "Create [something]" → Use `create` command
+- "Build [something]" → Use `create` command
+- "Make a [something]" → Use `create` command
+- "Generate a [something]" → Use `create` command
+
+The command will execute fully automated and produce a complete, tested application with timeline tracking.

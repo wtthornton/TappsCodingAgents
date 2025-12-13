@@ -7,6 +7,7 @@ import json
 import sys
 from pathlib import Path
 
+from . import __version__ as PACKAGE_VERSION
 from .agents.analyst.agent import AnalystAgent
 from .agents.architect.agent import ArchitectAgent
 from .agents.debugger.agent import DebuggerAgent
@@ -1052,14 +1053,22 @@ def main():
     parser = argparse.ArgumentParser(
         description="TappsCodingAgents CLI - AI coding agents framework",
         epilog="""Quick shortcuts:
+  create <description>  - Create new project from description (PRIMARY USE CASE)
   score <file>          - Score a code file (shortcut for 'reviewer score')
   init                  - Initialize project (Cursor Rules + workflow presets)
   workflow <preset>     - Run preset workflows (rapid, full, fix, quality, hotfix)
   
 Examples:
+  python -m tapps_agents.cli create "Build a task management web app"
   python -m tapps_agents.cli score example.py
   python -m tapps_agents.cli init
   python -m tapps_agents.cli workflow rapid""",
+    )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"%(prog)s {PACKAGE_VERSION}",
+        help="Show version and exit",
     )
     subparsers = parser.add_subparsers(dest="agent", help="Agent or command to use")
 
@@ -1806,6 +1815,15 @@ Examples:
         "--file",
         help="Optional target file for workflows (defaults to example_bug.py for hotfix if present)",
     )
+    common_workflow_args.add_argument(
+        "--prompt", "-p",
+        help="User prompt/description for the project (for greenfield workflows)",
+    )
+    common_workflow_args.add_argument(
+        "--auto",
+        action="store_true",
+        help="Auto mode: no prompts, fully automated execution",
+    )
 
     # Short aliases
     workflow_subparsers.add_parser(
@@ -1863,6 +1881,25 @@ Examples:
 
     # List command
     workflow_subparsers.add_parser("list", help="List all available workflow presets")
+
+    # Short command for primary use case: create new project from prompt
+    create_parser = subparsers.add_parser(
+        "create",
+        help="Create a new project from description (shortcut for 'workflow full --auto --prompt')",
+        description="Primary use case: Create a complete, tested application from a description. "
+        "This is a shortcut for 'workflow full --auto --prompt'. "
+        "Executes fully automated with timeline tracking.",
+    )
+    create_parser.add_argument(
+        "prompt",
+        help="Project description/prompt (what you want to build)",
+    )
+    create_parser.add_argument(
+        "--workflow",
+        default="full",
+        choices=["full", "rapid", "enterprise", "feature"],
+        help="Workflow preset to use (default: full)",
+    )
 
     # Project initialization command
     init_parser = subparsers.add_parser(
@@ -1937,6 +1974,17 @@ Examples:
     # Expert setup wizard commands
     setup_experts_parser = subparsers.add_parser(
         "setup-experts", help="Interactive expert setup wizard"
+    )
+    setup_experts_parser.add_argument(
+        "-y",
+        "--yes",
+        action="store_true",
+        help="Assume 'yes' to all prompts (useful for Cursor/CI)",
+    )
+    setup_experts_parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Do not prompt for input; use defaults where possible and error if input is required",
     )
     setup_experts_subparsers = setup_experts_parser.add_subparsers(
         dest="command", help="Setup commands"
@@ -2192,6 +2240,56 @@ Examples:
                 print(enhanced)
 
         asyncio.run(enhancer.close())
+    elif args.agent == "create":
+        # Short command for primary use case: create project from prompt
+        from .workflow.executor import WorkflowExecutor
+        from .workflow.preset_loader import PresetLoader
+
+        loader = PresetLoader()
+        workflow_name = getattr(args, "workflow", "full")
+        user_prompt = getattr(args, "prompt", "")
+
+        if not user_prompt:
+            print("Error: Prompt/description required", file=sys.stderr)
+            print("Usage: python -m tapps_agents.cli create \"Your project description\"", file=sys.stderr)
+            sys.exit(1)
+
+        try:
+            workflow = loader.load_preset(workflow_name)
+            if not workflow:
+                print(f"Error: Workflow preset '{workflow_name}' not found.", file=sys.stderr)
+                sys.exit(1)
+
+            print(f"\n{'='*60}")
+            print(f"Creating Project: {workflow.name}")
+            print(f"{'='*60}")
+            print(f"Description: {workflow.description}")
+            print(f"Your Prompt: {user_prompt}")
+            print(f"Steps: {len(workflow.steps)}")
+            print(f"Mode: Auto (fully automated)")
+            print()
+
+            # Execute workflow with auto mode and prompt
+            executor = WorkflowExecutor(auto_detect=False, auto_mode=True)
+            executor.user_prompt = user_prompt
+
+            result = asyncio.run(executor.execute(workflow=workflow, target_file=None))
+
+            if result.status == "completed":
+                print(f"\n{'='*60}")
+                print("Project created successfully!")
+                print(f"{'='*60}")
+                print(f"Timeline: project-timeline.md")
+                print(f"Status: {result.status}")
+            elif result.status == "failed":
+                print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)
+                sys.exit(1)
+            else:
+                print(f"\nWorkflow status: {result.status}")
+
+        except Exception as e:
+            print(f"Error creating project: {e}", file=sys.stderr)
+            sys.exit(1)
     elif args.agent == "workflow":
         # Workflow preset execution
         from .workflow.executor import WorkflowExecutor
@@ -2269,8 +2367,14 @@ Examples:
             print()
 
             # Execute workflow (start + run steps until completion)
-            executor = WorkflowExecutor(auto_detect=False)
+            executor = WorkflowExecutor(auto_detect=False, auto_mode=getattr(args, "auto", False))
             target_file = getattr(args, "file", None)
+            user_prompt = getattr(args, "prompt", None)
+            
+            # Store prompt in executor state if provided
+            if user_prompt:
+                executor.user_prompt = user_prompt
+            
             result = asyncio.run(
                 executor.execute(workflow=workflow, target_file=target_file)
             )
@@ -2393,21 +2497,33 @@ Examples:
                     print(f"         remediation: {remediation}")
     elif args.agent == "setup-experts":
         # Expert setup wizard
-        from .experts.setup_wizard import ExpertSetupWizard
+        from .experts.setup_wizard import ExpertSetupWizard, NonInteractiveInputRequired
 
-        wizard = ExpertSetupWizard()
+        wizard = ExpertSetupWizard(
+            assume_yes=bool(getattr(args, "yes", False)),
+            non_interactive=bool(getattr(args, "non_interactive", False)),
+        )
 
         command = getattr(args, "command", None)
-        if command == "init" or command == "initialize":
-            wizard.init_project()
-        elif command == "add":
-            wizard.add_expert()
-        elif command == "remove":
-            wizard.remove_expert()
-        elif command == "list":
-            wizard.list_experts()
-        else:
-            wizard.run_wizard()
+        try:
+            if command == "init" or command == "initialize":
+                wizard.init_project()
+            elif command == "add":
+                wizard.add_expert()
+            elif command == "remove":
+                wizard.remove_expert()
+            elif command == "list":
+                wizard.list_experts()
+            else:
+                wizard.run_wizard()
+        except NonInteractiveInputRequired as e:
+            print(
+                "Error: Non-interactive mode requires additional input.\n"
+                f"Missing input for: {e.question}\n"
+                "Tip: Either run interactively (omit --non-interactive) or provide defaults/flags where supported.",
+                file=sys.stderr,
+            )
+            sys.exit(2)
     elif args.agent == "hardware-profile" or args.agent == "hardware":
         # Hardware profile command
         hardware_profile_command(

@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any, Protocol
 
 from ...core.config import ScoringWeightsConfig
+from ...core.subprocess_utils import wrap_windows_cmd_shim
 
 # Import analysis libraries
 try:
@@ -47,8 +48,9 @@ def _check_jscpd_available() -> bool:
     npx_path = shutil.which("npx")
     if npx_path:
         try:
+            cmd = wrap_windows_cmd_shim([npx_path, "--yes", "jscpd", "--version"])
             result = subprocess.run(  # nosec B603 - fixed args
-                [npx_path, "--yes", "jscpd", "--version"],
+                cmd,
                 capture_output=True,
                 timeout=5,
                 check=False,
@@ -869,7 +871,7 @@ class CodeScorer:
 
             # Run jscpd
             result = subprocess.run(  # nosec B603 - fixed args
-                cmd,
+                wrap_windows_cmd_shim(cmd),
                 capture_output=True,
                 text=True,
                 timeout=120,  # 2 minute timeout (jscpd can be slow on large codebases)
@@ -997,7 +999,7 @@ class CodeScorer:
 
             # Run jscpd
             result = subprocess.run(  # nosec B603 - fixed args
-                cmd,
+                wrap_windows_cmd_shim(cmd),
                 capture_output=True,
                 text=True,
                 timeout=120,

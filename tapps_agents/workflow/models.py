@@ -82,6 +82,20 @@ class Workflow:
 
 
 @dataclass
+class StepExecution:
+    """Execution tracking for a workflow step."""
+
+    step_id: str
+    agent: str
+    action: str
+    started_at: datetime
+    completed_at: datetime | None = None
+    duration_seconds: float | None = None
+    status: str = "running"  # running, completed, failed, skipped
+    error: str | None = None
+
+
+@dataclass
 class WorkflowState:
     """Workflow execution state."""
 
@@ -94,3 +108,4 @@ class WorkflowState:
     variables: dict[str, Any] = field(default_factory=dict)
     status: str = "running"  # running, paused, completed, failed
     error: str | None = None
+    step_executions: list[StepExecution] = field(default_factory=list)

@@ -13,6 +13,9 @@ python -m tapps_agents.cli setup-experts list
 python -m tapps_agents.cli setup-experts add
 python -m tapps_agents.cli setup-experts remove
 python -m tapps_agents.cli setup-experts init
+
+# Cursor/CI (non-interactive)
+python -m tapps_agents.cli setup-experts init --yes --non-interactive
 ```
 
 ## Commands
@@ -27,6 +30,17 @@ First-time setup for a new project. Creates:
 ```bash
 python -m tapps_agents.cli setup-experts init
 ```
+
+**Non-interactive (Cursor/CI):**
+
+```bash
+python -m tapps_agents.cli setup-experts init --yes --non-interactive
+```
+
+In non-interactive mode, the wizard will:
+- Use defaults and auto-confirm prompts (with `--yes`)
+- Initialize Cursor Rules + workflow presets and create a `domains.md` template (if missing)
+- **Skip adding experts** (because expert details require interactive input)
 
 **What it does:**
 - Creates `.tapps-agents/` directory structure

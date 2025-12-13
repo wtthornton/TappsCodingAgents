@@ -10,6 +10,8 @@ import subprocess  # nosec B404 - used with fixed args, no shell
 from pathlib import Path
 from typing import Any
 
+from ...core.subprocess_utils import wrap_windows_cmd_shim
+
 
 class TypeScriptScorer:
     """
@@ -49,7 +51,7 @@ class TypeScriptScorer:
         if npx_path:
             try:
                 result = subprocess.run(  # nosec B603 - fixed args
-                    [npx_path, "--yes", "tsc", "--version"],
+                    wrap_windows_cmd_shim([npx_path, "--yes", "tsc", "--version"]),
                     capture_output=True,
                     timeout=5,
                     check=False,
@@ -67,7 +69,7 @@ class TypeScriptScorer:
         if npx_path:
             try:
                 result = subprocess.run(  # nosec B603 - fixed args
-                    [npx_path, "--yes", "eslint", "--version"],
+                    wrap_windows_cmd_shim([npx_path, "--yes", "eslint", "--version"]),
                     capture_output=True,
                     timeout=5,
                     check=False,
@@ -228,7 +230,7 @@ class TypeScriptScorer:
                 command.extend(["--config", self.eslint_config])
 
             result = subprocess.run(  # nosec B603 - fixed args
-                command,
+                wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -305,7 +307,7 @@ class TypeScriptScorer:
             command.append(str(file_path))
 
             result = subprocess.run(  # nosec B603 - fixed args
-                command,
+                wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -441,7 +443,7 @@ class TypeScriptScorer:
                 command.extend(["--config", self.eslint_config])
 
             result = subprocess.run(  # nosec B603 - fixed args
-                command,
+                wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
                 timeout=30,
@@ -489,7 +491,7 @@ class TypeScriptScorer:
             command.append(str(file_path))
 
             result = subprocess.run(  # nosec B603 - fixed args
-                command,
+                wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
                 timeout=30,

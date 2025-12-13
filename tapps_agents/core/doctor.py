@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import ProjectConfig, load_config
+from .subprocess_utils import wrap_windows_cmd_shim
 
 
 @dataclass(frozen=True)
@@ -39,6 +40,8 @@ def _parse_version_tuple(version: str) -> tuple[int, ...] | None:
 
 
 def _run_version_cmd(argv: list[str]) -> str | None:
+    argv = wrap_windows_cmd_shim(argv)
+
     try:
         proc = subprocess.run(  # nosec B603
             argv,
