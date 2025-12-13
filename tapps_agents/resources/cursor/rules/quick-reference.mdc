@@ -33,6 +33,16 @@ python -m tapps_agents.cli workflow fix         # Bug fixes & refactoring
 python -m tapps_agents.cli workflow hotfix     # Urgent fixes
 ```
 
+### Quick Project Creation (Cursor Native)
+```bash
+# Create a complete project from description (uses full SDLC workflow)
+python -m tapps_agents.cli create "Create a modern web application"
+
+# This is a shortcut for: workflow full --auto --prompt
+# Automatically runs in Cursor-native mode (no MAL required)
+# Uses Cursor Skills and Background Agents
+```
+
 ### Code Generation
 ```bash
 # Generate code from specification
@@ -255,6 +265,7 @@ python -m tapps_agents.cli reviewer report . json markdown html
 
 You can use these phrases in Cursor AI conversations:
 
+- "Create a [project description]" → Uses `create` command (full SDLC)
 - "Run rapid development workflow"
 - "Set up experts"
 - "Score this file" (when file is open)
@@ -270,10 +281,14 @@ You can use these phrases in Cursor AI conversations:
 ## File Locations
 
 - **Config:** `.tapps-agents/config.yaml`
+- **Project Profile:** `.tapps-agents/project-profile.yaml` (auto-generated)
+- **Workflow State:** `.tapps-agents/workflow-state/` (runtime state)
 - **Workflows:** `workflows/presets/`
 - **Reports:** `reports/quality/` or `.tapps-agents/reports/`
 - **Sessions:** `.tapps-agents/sessions/` (Enhancer sessions)
 - **Cache:** `.tapps-agents/kb/context7-cache/` (Context7 cache)
+- **Cursor Skills:** `.claude/skills/` (13 agent skills)
+- **Background Agents:** `.cursor/background-agents.yaml`
 
 ## Getting Help
 
@@ -310,3 +325,22 @@ Background Agents are configured in `.cursor/background-agents.yaml`:
 - Multi-Service Analyzer
 
 Trigger via natural language in Cursor's Background Agents panel.
+
+### Cursor Native Execution Mode
+
+When running in Cursor IDE, workflows automatically use **Cursor Native Execution**:
+- ✅ **No API Key Required** (file-based mode by default)
+- ✅ Uses Cursor Skills (`@agent-name` commands)
+- ✅ Leverages Cursor's configured LLM
+- ✅ Background Agent API support (optional, with API key)
+- ✅ Project profiling automatically included
+- ✅ Worktree isolation per workflow step
+
+**Execution Modes:**
+1. **File-Based** (default): Creates command files, works immediately
+2. **API-Based** (optional): Programmatic execution with `CURSOR_API_KEY` set
+
+**Project Profiling:**
+- Automatically detects project characteristics (deployment type, tenancy, scale, compliance)
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- Automatically included in all agent context

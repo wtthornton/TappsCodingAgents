@@ -72,8 +72,13 @@ Gather and extract detailed requirements from a description.
 
 **Parameters:**
 - `description` (required): Requirement description
-- `--context`: Additional context or constraints
+- `--context`: Additional context or constraints (project profile automatically included)
 - `--output-file`: Save requirements to file (default: `requirements.md`)
+
+**Project Profile Context:**
+- Project characteristics automatically included (deployment type, tenancy, scale, compliance)
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- No manual configuration needed - auto-detected from codebase
 
 **Context7 Integration:**
 - Looks up requirements patterns from KB cache
@@ -84,6 +89,10 @@ Gather and extract detailed requirements from a description.
 - Auto-consults relevant domain experts
 - Uses weighted decision (51% primary expert, 49% split among others)
 - Incorporates domain-specific knowledge
+
+**Execution Modes:**
+- **File-Based** (default): Command files created in worktrees, manual/UI execution
+- **API-Based** (optional): Programmatic execution via Background Agent API (requires `CURSOR_API_KEY`)
 
 ### `*analyze-stakeholders {feature} [--stakeholders]`
 
@@ -159,6 +168,19 @@ Lookup library documentation from Context7 KB cache.
 - `*docs-refresh {library}` - Refresh library docs in cache
 
 **Cache Hit Rate Target:** 90%+ (pre-populate common libraries)
+
+## Project Profiling
+
+**Automatic Detection:**
+- Project characteristics are automatically detected and included in context
+- Profile includes: deployment type, tenancy model, user scale, compliance requirements, security level
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- No manual configuration required
+
+**When Used:**
+- Automatically included in all agent commands
+- Provides context-aware recommendations
+- Ensures compliance and security considerations
 
 ## Industry Experts Integration
 
