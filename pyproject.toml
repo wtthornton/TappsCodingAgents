@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapps-agents"
-version = "2.0.0"
+version = "2.0.1"
 description = "A specification framework for defining, configuring, and orchestrating coding agents"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -77,6 +77,9 @@ exclude = ["tests*", "examples*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.yaml", "*.yml", "*.md", "*.mdc", "*.j2"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.pyc", "__pycache__/*", "**/__pycache__/*"]
 
 [tool.black]
 line-length = 88

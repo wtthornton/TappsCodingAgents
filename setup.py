@@ -24,7 +24,7 @@ if requirements_file.exists():
 
 setup(
     name="tapps-agents",
-    version="2.0.0",
+    version="2.0.1",
     description="A specification framework for defining, configuring, and orchestrating coding agents",
     long_description=long_description,
     long_description_content_type="text/markdown",

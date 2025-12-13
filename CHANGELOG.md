@@ -5,6 +5,20 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.1] - 2025-12-13
+
+### Added
+- Packaged initialization resources so `tapps-agents init` works when installed from PyPI:
+  - Cursor Rules (`.mdc`)
+  - Cursor Skills (`.claude/skills/`)
+  - Background Agents config (`.cursor/background-agents.yaml`)
+  - Workflow presets (`workflows/presets/*.yaml`)
+
+### Changed
+- `init` now prefers packaged resources via `importlib.resources` with source-checkout fallback.
+- Documentation updated to consistently recommend `tapps-agents init` as the primary setup path.
+- `doctor` tooling targets aligned to Python 3.13.x defaults and packaging `requires-python`.
+
 ## [2.0.0] - 2026-01-15
 
 ### Added
@@ -271,6 +285,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Features |
 |---------|------|--------------|
+| 2.0.1 | Dec 2025 | Packaged init assets for PyPI installs; docs alignment; doctor targets aligned |
 | 2.0.0 | Jan 2026 | Complete Built-in Expert System (16 experts), Dual-Layer Architecture, All 7 Cursor AI Integration Phases Complete |
 | 1.6.1 | Dec 2025 | Dependencies Updated, Test Performance Optimization |
 | 1.6.0 | Dec 2025 | Enhancer Agent - Prompt Enhancement Utility with Expert Integration |
@@ -294,6 +309,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Additional built-in experts based on community feedback
 
 ---
-
 **Note**: This changelog is maintained according to [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) principles.
 
