@@ -15,10 +15,10 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 
 - **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
-- **Built-in Experts** (15): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database)
+- **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
 - **Project Profiling System** (v1.0.0+): Automatic detection of project characteristics (deployment type, tenancy, user scale, compliance, security) for context-aware expert guidance
-- **Improved Confidence System** (v2.1.0): Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
+- **Improved Confidence System**: Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
 - **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
@@ -54,8 +54,8 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **4 New Built-in Experts** ✅ (Observability, API Design, Cloud Infrastructure, Database)
 - **32 New Knowledge Files** ✅ (~120,000+ words of expert knowledge)
 - **Enhanced Agent Support** ✅ (Updated expert consultation for Architect, Implementer, Designer, Ops, Reviewer, Tester agents)
-- **Total Built-in Experts: 15** (up from 11)
-- **Total Knowledge Files: 84** (up from 52)
+- **Total Built-in Experts: 16** (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
+- **Total Knowledge Files: 83** (across 11 knowledge domains)
 - See [Built-in Experts Guide](docs/BUILTIN_EXPERTS_GUIDE.md) and [Phase 5 Implementation Plan](implementation/PHASE5_EXPERT_IMPLEMENTATION_PLAN.md)
 
 🎉 **ALL 7 PHASES COMPLETE - Cursor AI Integration Plan 2025** 🎉
@@ -263,7 +263,7 @@ TappsCodingAgents/
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
 **Version**: 2.0.0  
-**Last Updated**: December 2025  
+**Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)
 
@@ -291,6 +291,50 @@ This project uses its own framework for development:
 
 See [Self-Hosting Setup](implementation/SELF_HOSTING_SETUP_COMPLETE.md) for details.
 
+## GitHub Best Practices (2025)
+
+This project follows 2025 GitHub best practices for open-source development:
+
+### ✅ Automated Dependency Management
+- **Dependabot** configured for automated dependency updates (weekly for pip, monthly for GitHub Actions)
+- Dependency grouping to reduce PR noise
+- Automatic security vulnerability scanning
+
+### ✅ Code Review & Ownership
+- **CODEOWNERS** file for automatic code review assignments
+- Clear ownership structure for different parts of the codebase
+
+### ✅ Issue & Pull Request Templates
+- Structured **bug report** template for consistent issue reporting
+- **Feature request** template for enhancement proposals
+- **Pull request** template with checklist and guidelines
+- Issue templates guide users to appropriate channels (Discussions, Security Advisories)
+
+### ✅ Continuous Integration
+- **GitHub Actions** workflows with:
+  - Separate jobs for linting, type checking, and testing
+  - Concurrency control to cancel in-progress runs
+  - Caching for faster builds
+  - Coverage reporting with Codecov integration
+  - Latest action versions (actions/checkout@v4, actions/setup-python@v5, codecov/codecov-action@v4)
+
+### ✅ Security
+- **SECURITY.md** with vulnerability reporting guidelines
+- Security best practices documentation
+- Automated dependency vulnerability scanning
+
+### ✅ Documentation
+- Comprehensive **README.md** with clear project overview
+- **CONTRIBUTING.md** with contribution guidelines
+- **CHANGELOG.md** following Keep a Changelog format
+- Extensive documentation in `docs/` directory
+
+### ✅ Project Health
+- Clear license (MIT) in LICENSE file
+- Community guidelines in CONTRIBUTING.md
+- Security policy in SECURITY.md
+- Issue templates for better issue management
+
 ## License
 
-See LICENSE file for details.
+See [LICENSE](LICENSE) file for details.
