@@ -1,0 +1,47 @@
+# CODEOWNERS file
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+#
+# This file defines code owners for different parts of the repository.
+# Code owners are automatically requested for review when PRs modify files they own.
+
+# Global owners (fallback for unowned files)
+* @wtthornton
+
+# Core framework
+/tapps_agents/ @wtthornton
+/tapps_agents/core/ @wtthornton
+/tapps_agents/workflow/ @wtthornton
+/tapps_agents/context7/ @wtthornton
+
+# Agents
+/tapps_agents/agents/ @wtthornton
+/agents/ @wtthornton
+
+# Experts system
+/tapps_agents/experts/ @wtthornton
+
+# Configuration and setup
+/pyproject.toml @wtthornton
+/setup.py @wtthornton
+/requirements.txt @wtthornton
+
+# GitHub workflows
+/.github/ @wtthornton
+/.github/workflows/ @wtthornton
+
+# Documentation
+/docs/ @wtthornton
+/README.md @wtthornton
+/CONTRIBUTING.md @wtthornton
+/SECURITY.md @wtthornton
+/CHANGELOG.md @wtthornton
+
+# Tests
+/tests/ @wtthornton
+
+# Examples
+/examples/ @wtthornton
+
+# Workflows
+/workflows/ @wtthornton
+

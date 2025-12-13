@@ -1,7 +1,7 @@
 # Architecture Overview
 
 **Version**: 2.0.0  
-**Last Updated**: December 2025
+**Last Updated**: January 2026
 
 ## System Architecture
 
@@ -36,7 +36,7 @@ Agents are invoked:
 
 Experts live under `tapps_agents/experts/`.
 
-- **Built-in experts**: framework-provided technical domains.
+- **Built-in experts** (16): framework-provided technical domains (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning) with 83 knowledge files.
 - **Industry experts** (project-defined): configured in `.tapps-agents/experts.yaml` and optionally backed by a file-based knowledge base under `.tapps-agents/knowledge/<domain>/*.md`.
 
 ### 3) Model Abstraction Layer (MAL)

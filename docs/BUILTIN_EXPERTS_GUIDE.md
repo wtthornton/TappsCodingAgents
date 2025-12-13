@@ -1,7 +1,7 @@
 # Built-in Experts Guide
 
 **Version:** 2.0.0  
-**Last Updated:** December 2025
+**Last Updated:** January 2026
 
 ## Overview
 
@@ -12,7 +12,7 @@ TappsCodingAgents ships with a comprehensive set of **built-in experts** that pr
 ### 1. Security Expert (`expert-security`)
 
 **Domain:** `security`  
-**Knowledge Base:** 10 files covering OWASP Top 10, security patterns, vulnerabilities, and best practices
+**Knowledge Base:** 4 files covering OWASP Top 10, security patterns, vulnerabilities, and best practices
 
 **Use Cases:**
 - Code security reviews
@@ -61,7 +61,7 @@ print(f"Agreement level: {result.agreement_level:.2%}")
 ### 4. Data Privacy Expert (`expert-data-privacy`)
 
 **Domain:** `data-privacy-compliance`  
-**Knowledge Base:** 8 files covering GDPR, HIPAA, CCPA, and privacy best practices
+**Knowledge Base:** 10 files covering GDPR, HIPAA, CCPA, and privacy best practices
 
 **Use Cases:**
 - Compliance checking
@@ -190,23 +190,102 @@ result = await registry.consult(
 )
 ```
 
+### 11. Code Quality & Analysis Expert (`expert-code-quality`)
+
+**Domain:** `code-quality-analysis`  
+**Knowledge Base:** Framework-controlled expert for code quality analysis, maintainability, and best practices
+
+**Use Cases:**
+- Code quality assessments
+- Maintainability analysis
+- Code review best practices
+- Quality metric evaluation
+
+### 12. Software Architecture Expert (`expert-software-architecture`)
+
+**Domain:** `software-architecture`  
+**Knowledge Base:** Framework-controlled expert for software architecture patterns, design principles, and architectural decision-making
+
+**Use Cases:**
+- Architecture design reviews
+- Pattern selection guidance
+- Architectural decision records
+- System design recommendations
+
+### 13. Development Workflow Expert (`expert-devops`)
+
+**Domain:** `development-workflow`  
+**Knowledge Base:** Framework-controlled expert for DevOps practices, CI/CD, deployment strategies, and development workflows
+
+**Use Cases:**
+- CI/CD pipeline design
+- Deployment strategy recommendations
+- Development workflow optimization
+- DevOps best practices
+
+### 14. Documentation & Knowledge Management Expert (`expert-documentation`)
+
+**Domain:** `documentation-knowledge-management`  
+**Knowledge Base:** Framework-controlled expert for documentation practices, knowledge management, and technical writing
+
+**Use Cases:**
+- Documentation strategy
+- API documentation best practices
+- Knowledge base organization
+- Technical writing guidance
+
+### 15. AI Agent Framework Expert (`expert-ai-frameworks`)
+
+**Domain:** `ai-agent-framework`  
+**Knowledge Base:** Framework-controlled expert for AI agent frameworks, patterns, and best practices
+
+**Use Cases:**
+- Agent framework selection
+- Agent architecture design
+- Agent pattern recommendations
+- AI framework best practices
+
+### 16. Agent Learning Best Practices Expert (`expert-agent-learning`)
+
+**Domain:** `agent-learning`  
+**Knowledge Base:** 3 files covering agent learning patterns, prompt optimization, and best practices for improving agent performance
+
+**Use Cases:**
+- Agent learning strategy
+- Prompt optimization
+- Pattern extraction
+- Agent performance improvement
+
+**Example:**
+```python
+result = await registry.consult(
+    query="How to improve agent prompt effectiveness?",
+    domain="agent-learning",
+    prioritize_builtin=True,
+    agent_id="enhancer"
+)
+```
+
 ## Knowledge Base Structure
 
 Built-in expert knowledge bases are located in:
 
 ```
 tapps_agents/experts/knowledge/
-├── security/                      # 10 files
+├── security/                      # 4 files
 ├── performance/                   # 8 files
-├── testing/                       # 9 files
-├── data-privacy-compliance/       # 8 files
+├── testing/                        # 8 files
+├── data-privacy-compliance/       # 10 files
 ├── accessibility/                 # 9 files
-├── user-experience/               # 8 files
-├── observability-monitoring/      # 8 files (Phase 5)
-├── api-design-integration/        # 8 files (Phase 5)
-├── cloud-infrastructure/          # 8 files (Phase 5)
-└── database-data-management/      # 8 files (Phase 5)
+├── user-experience/                # 8 files
+├── observability-monitoring/       # 8 files (Phase 5)
+├── api-design-integration/         # 8 files (Phase 5)
+├── cloud-infrastructure/           # 8 files (Phase 5)
+├── database-data-management/       # 8 files (Phase 5)
+└── agent-learning/                 # 3 files
 ```
+
+**Total:** 83 knowledge files across 11 knowledge domains
 
 Each knowledge base contains markdown files with:
 - Domain overview
