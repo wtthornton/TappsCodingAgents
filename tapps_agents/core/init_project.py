@@ -124,6 +124,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
         "quick-reference.mdc",
         "agent-capabilities.mdc",
         "project-context.mdc",
+        "project-profiling.mdc",
     ]
     copied_rules = []
 

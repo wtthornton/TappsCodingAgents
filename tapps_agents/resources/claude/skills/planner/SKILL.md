@@ -61,6 +61,12 @@ Create a plan for a feature or requirement.
 - `feature` (required): Feature description
 - `--epic`: Create as epic (multiple stories)
 - `--output-file`: Save plan to file (default: `stories/{feature}.md`)
+- Project profile context automatically included (deployment type, tenancy, scale, compliance)
+
+**Project Profile Context:**
+- Project characteristics automatically included (deployment type, tenancy, scale, compliance)
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- Ensures stories align with project constraints and requirements
 
 **Context7 Integration:**
 - Looks up story templates from KB cache
@@ -137,6 +143,19 @@ Lookup library documentation from Context7 KB cache.
 - `*docs-refresh {library}` - Refresh library docs in cache
 
 **Cache Hit Rate Target:** 90%+ (pre-populate common libraries)
+
+## Project Profiling
+
+**Automatic Detection:**
+- Project characteristics are automatically detected and included in context
+- Profile includes: deployment type, tenancy model, user scale, compliance requirements, security level
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- No manual configuration required
+
+**When Used:**
+- Automatically included in all planning commands
+- Ensures stories align with project constraints (e.g., multi-tenant isolation, compliance requirements)
+- Provides context-aware story estimation and prioritization
 
 ## Industry Experts Integration
 

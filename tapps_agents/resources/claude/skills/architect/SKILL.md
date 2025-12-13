@@ -66,8 +66,13 @@ Design system architecture for a feature or project.
 
 **Parameters:**
 - `requirements` (required): System requirements
-- `--context`: Additional context or constraints
+- `--context`: Additional context or constraints (project profile automatically included)
 - `--output-file`: Save architecture to file (default: `docs/architecture.md`)
+
+**Project Profile Context:**
+- Project characteristics automatically included (deployment type, tenancy, scale, compliance, security)
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- Ensures architecture aligns with project constraints (e.g., multi-tenant vs single-tenant, cloud vs on-prem)
 
 **Context7 Integration:**
 - Looks up architecture patterns from KB cache
@@ -161,6 +166,19 @@ Lookup library documentation from Context7 KB cache.
 - `*docs-refresh {library}` - Refresh library docs in cache
 
 **Cache Hit Rate Target:** 90%+ (pre-populate common libraries)
+
+## Project Profiling
+
+**Automatic Detection:**
+- Project characteristics are automatically detected and included in context
+- Profile includes: deployment type, tenancy model, user scale, compliance requirements, security level
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- No manual configuration required
+
+**When Used:**
+- Automatically included in all architecture commands
+- Ensures architecture aligns with project constraints (e.g., multi-tenant vs single-tenant, cloud vs on-prem, compliance requirements)
+- Provides context-aware technology selection and security architecture
 
 ## Industry Experts Integration
 

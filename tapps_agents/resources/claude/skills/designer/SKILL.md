@@ -60,6 +60,12 @@ Design API contracts and endpoints.
 - `requirements` (required): API requirements
 - `--api-type`: REST, GraphQL, or gRPC (default: REST)
 - `--output-file`: Save API spec to file (default: `docs/api-spec.json`)
+- Project profile context automatically included (tenancy, scale, compliance, security)
+
+**Project Profile Context:**
+- Project characteristics automatically included (deployment type, tenancy, scale, compliance, security)
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- Ensures API design aligns with project constraints (e.g., multi-tenant isolation, compliance requirements)
 
 **Context7 Integration:**
 - Looks up API design patterns from KB cache
@@ -161,6 +167,19 @@ Lookup library documentation from Context7 KB cache.
 - `*docs-refresh {library}` - Refresh library docs in cache
 
 **Cache Hit Rate Target:** 90%+ (pre-populate common libraries)
+
+## Project Profiling
+
+**Automatic Detection:**
+- Project characteristics are automatically detected and included in context
+- Profile includes: deployment type, tenancy model, user scale, compliance requirements, security level
+- Profile stored in `.tapps-agents/project-profile.yaml`
+- No manual configuration required
+
+**When Used:**
+- Automatically included in all design commands
+- Ensures API and data model design aligns with project constraints (e.g., multi-tenant isolation, compliance requirements, security level)
+- Provides context-aware design patterns and data privacy considerations
 
 ## Industry Experts Integration
 
