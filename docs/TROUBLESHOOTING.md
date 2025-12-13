@@ -23,7 +23,15 @@ python -m pip install --upgrade pip
 
 ### CLI runs but prints "Playwright not available"
 
-Some browser-related functionality can run in a mocked mode if Playwright is not installed. This message is informational.
+Some browser-related functionality can run in a mocked mode if the **Python Playwright package** is not installed.
+
+- If you're using **Cursor** with **Playwright MCP**, you can ignore this: browser automation should be done via Cursor Skills/Background Agents.
+- If you need browser automation from the **CLI** (outside Cursor), install Playwright:
+
+```bash
+python -m pip install playwright
+python -m playwright install
+```
 
 ### "pytest is not recognized"
 
@@ -45,7 +53,13 @@ If you want configuration, create:
 
 - `.tapps-agents/config.yaml`
 
-Start from the template:
+Recommended:
+
+```bash
+python -m tapps_agents.cli init
+```
+
+Or start from the template:
 
 ```bash
 mkdir -p .tapps-agents

@@ -40,6 +40,21 @@ tapps-agents --help
 python -m tapps_agents.cli --help
 ```
 
+---
+
+## Initialize Your Project (recommended)
+
+Run the initializer to install **Cursor Rules**, **workflow presets**, **Cursor Skills**, **Background Agents config**, and a starter `.tapps-agents/config.yaml`:
+
+```bash
+tapps-agents init
+
+# (Alternative)
+python -m tapps_agents.cli init
+```
+
+This is the easiest way to ensure your project is fully set up to leverage TappsCodingAgents.
+
 ## Check Your Environment (recommended)
 
 Run `doctor` to validate your local environment and toolchain. It **soft-degrades with warnings** by default.
@@ -75,6 +90,12 @@ If you explicitly want to enable MAL while running the CLI from a Cursor-launche
 ```bash
 # Enable MAL for this process (optional)
 export TAPPS_AGENTS_MODE=headless
+```
+
+### Windows PowerShell equivalent
+
+```powershell
+$env:TAPPS_AGENTS_MODE = "headless"
 ```
 
 ---
@@ -145,8 +166,17 @@ Create `.tapps-agents/config.yaml` in your project root.
 Start from the default template:
 
 ```bash
+# Recommended: `tapps-agents init` (creates `.tapps-agents/config.yaml` for you)
+
+# If you want to copy the template manually (macOS/Linux):
 mkdir -p .tapps-agents
 cp templates/default_config.yaml .tapps-agents/config.yaml
+```
+
+```powershell
+# If you want to copy the template manually (Windows PowerShell):
+New-Item -ItemType Directory -Force .tapps-agents | Out-Null
+Copy-Item -Force templates\default_config.yaml .tapps-agents\config.yaml
 ```
 
 Then see `docs/CONFIGURATION.md` for the full schema.

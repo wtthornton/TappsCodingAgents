@@ -29,6 +29,14 @@ The CLI includes:
 
 Create `.tapps-agents/config.yaml` in your project root.
 
+Recommended:
+
+```bash
+python -m tapps_agents.cli init
+```
+
+Or copy the template manually:
+
 ```bash
 mkdir -p .tapps-agents
 cp templates/default_config.yaml .tapps-agents/config.yaml

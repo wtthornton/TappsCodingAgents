@@ -47,7 +47,13 @@ Configuration is optional. If you want to customize behavior, create:
 
 - `.tapps-agents/config.yaml`
 
-You can start from:
+Recommended (creates config + Cursor integration assets):
+
+```bash
+python -m tapps_agents.cli init
+```
+
+Or start from the template (manual copy):
 
 ```bash
 mkdir -p .tapps-agents

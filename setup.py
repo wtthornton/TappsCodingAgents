@@ -30,6 +30,7 @@ setup(
     long_description_content_type="text/markdown",
     author="Tapps",
     url="https://github.com/wtthornton/TappsCodingAgents",
+    include_package_data=True,
     packages=find_packages(exclude=["tests", "tests.*", "examples", "examples.*"]),
     python_requires=">=3.13",
     install_requires=requirements,

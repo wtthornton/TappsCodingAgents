@@ -6,7 +6,7 @@
 # 1. Install package
 pip install -e .
 
-# 2. Initialize project (sets up Cursor Rules + workflow presets)
+# 2. Initialize project (sets up Cursor Rules + Skills + Background Agents + workflow presets + config)
 python -m tapps_agents.cli init
 
 # 3. Set up experts (optional)
@@ -25,9 +25,11 @@ python -m tapps_agents.cli setup-experts init
 
 ### Project Initialization (`python -m tapps_agents.cli init`)
 
-- ✅ Cursor Rules (`.cursor/rules/workflow-presets.mdc`)
+- ✅ Cursor Rules (`.cursor/rules/*.mdc`)
+- ✅ Cursor Skills (`.claude/skills/`)
+- ✅ Cursor Background Agents config (`.cursor/background-agents.yaml`)
 - ✅ Workflow presets (`workflows/presets/*.yaml`)
-- ✅ Project structure
+- ✅ Starter config (`.tapps-agents/config.yaml`)
 
 ### Expert Setup (`python -m tapps_agents.cli setup-experts init`)
 

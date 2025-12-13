@@ -1,11 +1,25 @@
 # TappsCodingAgents - Default Configuration Template
 # 
-# Copy this file to .tapps-agents/config.yaml in your project root
-# and customize as needed.
+# Recommended: run `tapps-agents init` (or `python -m tapps_agents.cli init`) to create
+# `.tapps-agents/config.yaml` and install Cursor Rules, Skills, and workflow presets.
+#
+# If you want to copy manually, copy this file to `.tapps-agents/config.yaml` in your
+# project root and customize as needed.
 
 # Project metadata (optional)
 project_name: null
 version: null
+
+# Tooling targets (used by `doctor` for environment checks)
+tooling:
+  targets:
+    python: 3.13.3
+    python_requires: ">=3.13"
+    os_targets: ["windows", "linux"]
+  policy:
+    external_tools_mode: soft
+    mypy_staged: true
+    mypy_stage_paths: ["tapps_agents/core", "tapps_agents/workflow", "tapps_agents/context7"]
 
 # Agent configurations
 agents:

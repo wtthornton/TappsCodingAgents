@@ -2331,7 +2331,8 @@ Examples:
 
         if results["workflow_presets"]:
             print(
-                f"  Workflow Presets: Created {len([f for f in results['files_created'] if 'presets' in f])} file(s)"
+                "  Workflow Presets: Created "
+                f"{len([f for f in results['files_created'] if f.startswith('workflows/presets/')])} file(s)"
             )
         else:
             print("  Workflow Presets: Skipped or already exists")

@@ -30,7 +30,9 @@ except ImportError:
     Browser = Any
     Page = Any
     BrowserContext = Any
-    logger.warning("Playwright not available. Browser operations will be mocked.")
+    # Do not warn at import time. Many environments (especially Cursor-first setups)
+    # may rely on Browser automation via Cursor MCP rather than the Python Playwright
+    # package. We'll log only when/if browser operations are actually requested.
 
 
 class BrowserType(Enum):
@@ -125,8 +127,12 @@ class BrowserController:
             return True  # Cloud rendering doesn't need local browser
 
         if not HAS_PLAYWRIGHT:
-            logger.warning(
-                "Playwright not available. Browser operations will be mocked."
+            logger.info(
+                "Playwright (Python package) not installed; local browser operations are disabled. "
+                "If you're running inside Cursor and have Playwright configured as an MCP tool, "
+                "use Cursor Skills/Background Agents for browser automation. "
+                "For CLI/browser_controller usage, install Playwright: `pip install playwright` "
+                "and run `python -m playwright install`."
             )
             return False
 

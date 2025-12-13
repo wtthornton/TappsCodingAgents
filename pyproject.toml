@@ -69,10 +69,14 @@ Issues = "https://github.com/wtthornton/TappsCodingAgents/issues"
 tapps-agents = "tapps_agents.cli:main"
 
 [tool.setuptools]
-packages = ["tapps_agents"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["tapps_agents*"]
+exclude = ["tests*", "examples*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.yaml", "*.yml", "*.md", "*.j2"]
+"*" = ["*.yaml", "*.yml", "*.md", "*.mdc", "*.j2"]
 
 [tool.black]
 line-length = 88

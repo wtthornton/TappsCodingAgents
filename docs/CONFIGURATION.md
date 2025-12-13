@@ -33,6 +33,17 @@ If no config file is found, the framework uses default values.
 project_name: "MyProject"
 version: "1.0.0"
 
+# Tooling targets/policy (optional, used by `doctor`)
+tooling:
+  targets:
+    python: 3.13.3
+    python_requires: ">=3.13"
+    os_targets: ["windows", "linux"]
+  policy:
+    external_tools_mode: soft   # soft=warn/skip, hard=fail
+    mypy_staged: true
+    mypy_stage_paths: ["tapps_agents/core", "tapps_agents/workflow", "tapps_agents/context7"]
+
 # Agent configurations
 agents:
   reviewer:
@@ -54,6 +65,14 @@ context7:
 quality_tools:
   # Quality tools settings (see below)
 ```
+
+### Tooling (`doctor`) configuration
+
+The `doctor` command reads `.tapps-agents/config.yaml` and reports mismatches (Python version targets, missing tools like ruff/mypy/pytest).
+
+- `tooling.targets.python`: the “pinned” Python version you expect for this repo/project.
+- `tooling.targets.python_requires`: the PEP 440 requires-python constraint (should match your packaging config).
+- `tooling.policy.external_tools_mode`: soft-degrade (warn/skip) vs hard-fail for missing tools.
 
 ### Agent Configuration: Reviewer
 
