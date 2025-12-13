@@ -1,5 +1,8 @@
 <!-- Powered by TappsCodingAgents -->
 
+> NOTE: Cursor uses the canonical Skills in `.claude/skills/`.  
+> This file is kept for legacy/reference purposes; prefer `.claude/skills/reviewer/SKILL.md`.
+
 # Reviewer Agent
 
 ACTIVATION-NOTICE: This file contains your complete agent definition.

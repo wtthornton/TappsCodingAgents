@@ -48,6 +48,10 @@ reports/
 .tapps-agents/cache/
 .tapps-agents/progress/
 .tapps-agents/workflow-state/
+.tapps-agents/*.json
+.tapps-agents/*.jsonl
+.tapps-agents/*.encrypted
+.tapps-agents/.master-key
 
 # Local dev artifacts
 debug-report.md

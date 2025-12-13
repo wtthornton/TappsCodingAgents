@@ -1,5 +1,8 @@
 # Analyst Agent - Skill Definition
 
+> NOTE: Cursor uses the canonical Skills in `.claude/skills/`.  
+> This file is framework documentation; prefer `.claude/skills/analyst/SKILL.md` for Cursor.
+
 ## Purpose
 
 The Analyst Agent gathers requirements, performs technical research, and estimates effort/risk. It is a read-only agent that analyzes and provides recommendations.

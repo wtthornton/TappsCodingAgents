@@ -75,6 +75,17 @@ mal:
   ollama_url: "http://localhost:11434"
 ```
 
+### MAL disabled while running inside Cursor
+
+If you see errors like **`MALDisabledInCursorModeError`**, that is expected when running the framework under Cursor
+(including Cursor Background Agents). In this setup, **Cursor is the only LLM runtime** and the framework runs tools-only.
+
+If you explicitly want to enable MAL for a headless CLI run, set:
+
+```bash
+export TAPPS_AGENTS_MODE=headless
+```
+
 ## Quality Tools
 
 ### Ruff / mypy not found

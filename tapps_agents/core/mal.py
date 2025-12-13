@@ -16,6 +16,8 @@ from collections.abc import Callable
 import httpx
 
 from .config import MALConfig
+from .exceptions import MALDisabledInCursorModeError
+from .runtime_mode import RuntimeMode, detect_runtime_mode
 
 logger = logging.getLogger(__name__)
 
@@ -77,6 +79,15 @@ class MAL:
             ConnectionError: If all providers fail
             ValueError: If provider is invalid
         """
+        # Option A policy: when running under Cursor/Background Agents,
+        # Cursor is the only LLM runtime. The framework must not call MAL.
+        if detect_runtime_mode() == RuntimeMode.CURSOR:
+            raise MALDisabledInCursorModeError(
+                "MAL is disabled when running under Cursor/Background Agents. "
+                "Run LLM-driven steps in Cursor (Skills/Chat/Background Agents) using the user's configured model, "
+                "or run the CLI headlessly with TAPPS_AGENTS_MODE=headless to enable MAL (optional)."
+            )
+
         model = model or self.config.default_model
         provider = provider or self.config.default_provider
         enable_fallback = (

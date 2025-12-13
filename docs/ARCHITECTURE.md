@@ -48,6 +48,12 @@ It supports:
 - local provider: **Ollama**
 - optional cloud fallback providers: **Anthropic**, **OpenAI**
 
+**Runtime policy (Cursor-first):**
+- When running under Cursor (Skills / Background Agents), the framework runs **tools-only** and MAL is **disabled**.
+- When running headlessly, MAL is optional and can be enabled explicitly.
+
+See `docs/HOW_IT_WORKS.md` for the full “brain vs hands” model.
+
 ### 4) Configuration System
 
 Configuration is defined by Pydantic models in `tapps_agents/core/config.py` and loaded from `.tapps-agents/config.yaml` (searched upward from the working directory).

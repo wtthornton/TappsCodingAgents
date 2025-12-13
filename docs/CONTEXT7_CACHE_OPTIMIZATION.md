@@ -308,18 +308,15 @@ print(report)
 4. **API Calls**: Minimize external calls
 5. **Top Libraries**: Identify frequently used libraries
 
-### CLI Commands
+### Observability
 
-```bash
-# View cache status
-python -m tapps_agents.cli context7 status
+This repo does not currently expose a dedicated `tapps-agents context7 ...` CLI command set.
 
-# View analytics
-python -m tapps_agents.cli context7 analytics
+Use these instead:
 
-# Export dashboard
-python -m tapps_agents.cli context7 dashboard --export dashboard.json
-```
+- **Cache inspection**: check `.tapps-agents/kb/context7-cache/` (size, hot libraries, staleness).
+- **Pre-population**: `python scripts/prepopulate_context7_cache.py`
+- **System analytics**: `python -m tapps_agents.cli analytics dashboard`
 
 ---
 

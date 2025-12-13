@@ -5,12 +5,18 @@
 
 ## Executive Summary
 
-TappsCodingAgents is a Python-based AI coding framework that uses local LLM inference (Ollama) for code generation, review, and analysis. To run this project efficiently and make coding fast, you need a system optimized for:
+TappsCodingAgents is designed to work **Cursor-first**:
 
-1. **Local LLM Inference** - GPU acceleration for Ollama models (7B-14B parameters)
-2. **Python Development** - Fast CPU for code analysis tools (Ruff, mypy, pytest)
-3. **Multi-tasking** - Sufficient RAM for running IDE, agents, and analysis tools simultaneously
-4. **Fast I/O** - SSD storage for quick file operations and code indexing
+- **Cursor provides the LLM runtime** (using the developer’s configured model).
+- The framework provides the **tooling layer** (workflows, reports, quality tools, caching).
+- **Local LLM (Ollama) is optional** and intended for **headless usage** (outside Cursor).
+
+To run this project efficiently, optimize for:
+
+1. **Cursor + development workflow** - CPU/RAM for IDE + indexing + tooling
+2. **Python tooling** - Ruff, mypy, pytest, report generation
+3. **Fast I/O** - SSD for code indexing, caches, and reports
+4. **(Optional) Local LLM inference** - GPU/VRAM only if you choose to run Ollama headlessly
 
 ---
 
@@ -20,7 +26,8 @@ TappsCodingAgents is a Python-based AI coding framework that uses local LLM infe
 
 | Component | Resource Impact | Notes |
 |-----------|----------------|-------|
-| **Ollama LLM** | GPU VRAM: 8-16GB+ | Primary bottleneck for code generation |
+| **Cursor (LLM runtime)** | Network + CPU/RAM | Uses developer-configured model (Auto or pinned) |
+| **Ollama LLM (optional, headless)** | GPU VRAM: 8-16GB+ | Only needed if you enable MAL headlessly |
 | **Python Runtime** | RAM: 2-4GB | Framework + dependencies |
 | **Code Analysis Tools** | CPU: Multi-core | Ruff, mypy, pytest run in parallel |
 | **IDE (Cursor/VS Code)** | RAM: 2-4GB | Language servers, extensions |

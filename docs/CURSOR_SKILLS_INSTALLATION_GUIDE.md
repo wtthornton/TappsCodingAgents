@@ -38,7 +38,26 @@ cd TappsCodingAgents
 pip install -e .
 ```
 
-### Step 2: Copy Skills to Your Project
+### Step 2: Install Cursor integration artifacts (Recommended)
+
+Run the project initializer from **your target project** (not from this repo):
+
+```bash
+# In your project directory
+tapps-agents init
+# (or) python -m tapps_agents.cli init
+```
+
+This installs:
+- **Skills**: `.claude/skills/`
+- **Cursor Rules**: `.cursor/rules/*.mdc`
+- **Background Agents**: `.cursor/background-agents.yaml`
+- **Optional config**: `.tapps-agents/config.yaml`
+
+> Important: Skills are **model-agnostic**. Cursor uses the developer’s configured model (Auto or pinned).
+> The framework’s MAL (Ollama/cloud) is intended for **headless usage** only.
+
+### Step 3: (Alternative) Copy Skills to Your Project Manually
 
 **Option A: Copy Skills to Your Project (Recommended)**
 

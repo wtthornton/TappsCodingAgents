@@ -67,6 +67,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
         "workflow-presets.mdc",
         "quick-reference.mdc",
         "agent-capabilities.mdc",
+        "project-context.mdc",
     ]
     copied_rules = []
 
@@ -118,11 +119,76 @@ def init_workflow_presets(
     return len(copied) > 0, copied
 
 
+def init_claude_skills(project_root: Path | None = None, source_dir: Path | None = None):
+    """
+    Initialize Claude/Cursor Skills directory for a project.
+
+    Copies framework-provided Skills from `.claude/skills/` into the target project.
+    This is intentionally model-agnostic: Cursor's configured model is used at runtime.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    if source_dir is None:
+        current_file = Path(__file__)
+        framework_root = current_file.parent.parent.parent
+        source_dir = framework_root / ".claude" / "skills"
+
+    project_skills_dir = project_root / ".claude" / "skills"
+    project_skills_dir.mkdir(parents=True, exist_ok=True)
+
+    copied: list[str] = []
+    if source_dir.exists():
+        # Copy each skill folder (idempotent).
+        for skill_dir in source_dir.iterdir():
+            if not skill_dir.is_dir():
+                continue
+            dest_dir = project_skills_dir / skill_dir.name
+            if dest_dir.exists():
+                continue
+            shutil.copytree(skill_dir, dest_dir)
+            copied.append(str(dest_dir))
+
+    return len(copied) > 0, copied
+
+
+def init_background_agents_config(
+    project_root: Path | None = None, source_file: Path | None = None
+):
+    """
+    Initialize Cursor Background Agents config for a project.
+
+    Copies `.cursor/background-agents.yaml` into the target project if it doesn't exist.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    if source_file is None:
+        current_file = Path(__file__)
+        framework_root = current_file.parent.parent.parent
+        source_file = framework_root / ".cursor" / "background-agents.yaml"
+
+    project_cursor_dir = project_root / ".cursor"
+    project_cursor_dir.mkdir(parents=True, exist_ok=True)
+    dest_file = project_cursor_dir / "background-agents.yaml"
+
+    if dest_file.exists():
+        return False, str(dest_file)
+
+    if source_file.exists():
+        shutil.copy2(source_file, dest_file)
+        return True, str(dest_file)
+
+    return False, None
+
+
 def init_project(
     project_root: Path | None = None,
     include_cursor_rules: bool = True,
     include_workflow_presets: bool = True,
     include_config: bool = True,
+    include_skills: bool = True,
+    include_background_agents: bool = True,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -143,6 +209,8 @@ def init_project(
         "cursor_rules": False,
         "workflow_presets": False,
         "config": False,
+        "skills": False,
+        "background_agents": False,
         "files_created": [],
     }
 
@@ -168,5 +236,19 @@ def init_project(
             results["files_created"].extend(
                 [f"workflows/presets/{f}" for f in preset_files]
             )
+
+    # Initialize Skills for Cursor/Claude
+    if include_skills:
+        success, copied_skills = init_claude_skills(project_root)
+        results["skills"] = success
+        if copied_skills:
+            results["files_created"].extend(copied_skills)
+
+    # Initialize Cursor Background Agents config
+    if include_background_agents:
+        success, bg_path = init_background_agents_config(project_root)
+        results["background_agents"] = success
+        if bg_path:
+            results["files_created"].append(bg_path)
 
     return results

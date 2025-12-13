@@ -157,35 +157,29 @@ export CONTEXT7_API_KEY_PROD="prod-key-here"
 
 ---
 
-## CLI Commands
+## Managing API Keys
 
-### Store API Key
+This repo does not currently expose a dedicated `tapps-agents context7 ...` CLI command set.
+
+Recommended options:
+
+- **Environment variables (recommended)**:
 
 ```bash
-# Using encrypted storage
-python -m tapps_agents.cli context7 store-key --key-name context7 --encrypt
-
-# Using environment variable (manual)
 export CONTEXT7_API_KEY="your-key"
 ```
 
-### List Stored Keys
+- **Encrypted local storage (advanced)** via the Python API:
 
-```bash
-python -m tapps_agents.cli context7 list-keys
+```python
+from pathlib import Path
+from tapps_agents.context7.security import APIKeyManager
+
+mgr = APIKeyManager(config_dir=Path(".tapps-agents"))
+mgr.store_api_key("context7", "your-key", encrypt=True)
 ```
 
-### Delete API Key
-
-```bash
-python -m tapps_agents.cli context7 delete-key --key-name context7
-```
-
-### Test API Key
-
-```bash
-python -m tapps_agents.cli context7 test-key
-```
+> Note: Cursor-first policy means Skills/Background Agents use Cursor’s configured model; key storage here only affects Context7 API access (if used).
 
 ---
 
@@ -193,19 +187,12 @@ python -m tapps_agents.cli context7 test-key
 
 ### Environment Variable Priority
 
-TappsCodingAgents checks for API keys in this order:
+Recommended lookup order:
 
 1. Environment variable: `CONTEXT7_API_KEY`
-2. Encrypted storage: `.tapps-agents/api-keys.encrypted`
-3. Configuration file: `.tapps-agents/config.yaml` (not recommended)
+2. Encrypted storage file under `.tapps-agents/` (managed by `APIKeyManager`)
 
-### Configuration File (Not Recommended)
-
-```yaml
-# .tapps-agents/config.yaml
-context7:
-  api_key: "your-api-key-here"  # NOT RECOMMENDED - use env vars instead
-```
+This repo does **not** recommend (or currently support) putting Context7 API keys into `.tapps-agents/config.yaml`.
 
 **⚠️ Warning**: Storing API keys in configuration files is not recommended. Use environment variables or encrypted storage instead.
 
@@ -265,7 +252,9 @@ pip install cryptography
 
 2. **Test Key:**
    ```bash
-   python -m tapps_agents.cli context7 test-key
+   # There is no dedicated `tapps-agents context7 test-key` CLI command in this repo.
+   # A practical validation is to run the cache pre-population script (it will fail fast if the key is invalid):
+   python scripts/prepopulate_context7_cache.py --libraries fastapi
    ```
 
 3. **Regenerate Key:**
@@ -346,15 +335,15 @@ steps:
 # Set environment variable
 export CONTEXT7_API_KEY="dev-key-here"
 
-# Verify
-python -m tapps_agents.cli context7 test-key
+# Validate by performing a small fetch (fails fast if the key is invalid)
+python scripts/prepopulate_context7_cache.py --libraries fastapi
 ```
 
 ### Example 2: Production Setup
 
 ```bash
-# Use encrypted storage
-python -m tapps_agents.cli context7 store-key --key-name context7 --encrypt
+# Use encrypted storage (Python API)
+python -c "from tapps_agents.context7.security import APIKeyManager; APIKeyManager().store_api_key('context7','YOUR_KEY',encrypt=True)"
 
 # Or use environment variable (recommended)
 export CONTEXT7_API_KEY="prod-key-here"

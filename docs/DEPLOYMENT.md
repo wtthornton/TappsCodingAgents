@@ -11,7 +11,7 @@ TappsCodingAgents is a Python package that you typically run as a CLI tool again
 
 - Python 3.13+ (recommended: latest stable Python)
 - pip
-- (Optional) Ollama for local LLM execution
+- (Optional, headless only) Ollama for local LLM execution via MAL
 
 ## Local Installation
 
@@ -28,6 +28,17 @@ python -m venv .venv
 pip install -e .
 
 python -m tapps_agents.cli --help
+```
+
+## Cursor-first note
+
+When using TappsCodingAgents inside Cursor (Skills / Background Agents), Cursor uses the developer’s configured model.
+The framework runs tools-only in that environment.
+
+If you explicitly want MAL for a headless CLI run, set:
+
+```bash
+export TAPPS_AGENTS_MODE=headless
 ```
 
 ## Configuration

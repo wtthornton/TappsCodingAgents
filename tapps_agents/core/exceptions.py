@@ -107,6 +107,17 @@ class MALTimeoutError(MALError):
     pass
 
 
+class MALDisabledInCursorModeError(MALError):
+    """
+    Raised when MAL is invoked while running under Cursor/Background Agents.
+
+    Option A policy: Cursor is the only LLM runtime when running in Cursor.
+    The framework must run tools-only and must not call local/cloud LLMs via MAL.
+    """
+
+    pass
+
+
 class Context7Error(TappsAgentsError):
     """Base exception for Context7-related errors."""
 

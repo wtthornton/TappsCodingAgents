@@ -32,6 +32,17 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Prompt Enhancement Utility**: Transform simple prompts into comprehensive, context-aware prompts
 - **Project Profiling**: Automatic detection of project characteristics for context-aware expert advice
 
+### How it works (no confusion version)
+
+- **Cursor is the LLM runtime**: Skills and Background Agents use the developer’s configured model in Cursor (Auto or pinned).
+- **This framework is the tooling layer**: workflows, quality tools, reporting, worktrees, caching.
+- **Local LLM is optional (headless-only)**: MAL (Ollama/cloud) is intended for CLI/CI usage outside Cursor.
+
+See:
+- `docs/HOW_IT_WORKS.md`
+- `docs/CURRENT_DEFAULTS.md`
+- `docs/PR_MODE_GUIDE.md`
+
 ### Enhanced Features (v1.6.0+)
 
 - **Code Scoring System**: Objective quality metrics (complexity, security, maintainability)

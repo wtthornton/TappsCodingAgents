@@ -170,6 +170,11 @@ mal:
     timeout: 60
 ```
 
+**Important (Cursor-first policy):**
+- When the framework is invoked under Cursor (Skills / Background Agents), MAL is **disabled** (tools-only mode).
+  - Use `TAPPS_AGENTS_MODE=cursor` (set by default in this repo’s Background Agents config).
+- If you explicitly want MAL for a headless run, set `TAPPS_AGENTS_MODE=headless`.
+
 Note: the configuration loader **does not** interpolate environment variables (e.g., `${ANTHROPIC_API_KEY}` is treated as a literal string). If you want that behavior, expand env vars before writing `config.yaml`.
 
 ### Context7 Configuration (optional)

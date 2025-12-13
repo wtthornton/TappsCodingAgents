@@ -244,11 +244,16 @@ Results are saved to `.tapps-agents/reports/`:
 - Markdown/HTML for reports
 - Progress files for monitoring
 
-### Pull Request Delivery
+### Pull Request Delivery (Opt-in)
 
-For code changes, Background Agents can create PRs:
+For code changes, Background Agents can create PRs (optional). Recommended pattern:
 
-1. **Automatic PR Creation**: Enabled in configuration
+- **Artifacts-only agents (default)**: run deterministic checks and produce files/reports only
+- **PR-mode agent (explicit)**: creates a worktree/branch and enables PR delivery when you explicitly trigger it
+
+See `docs/PR_MODE_GUIDE.md` for trigger phrases and expected outputs.
+
+1. **Automatic PR Creation**: Enable explicitly per agent/task in configuration
 2. **Branch**: `agent/{agent-id}`
 3. **Title**: Based on task description
 4. **Description**: Includes progress and results
@@ -349,7 +354,9 @@ Set environment variables for Background Agents:
 ```yaml
 environment:
   - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
-  - "TAPPS_AGENTS_MODE=background"
+  # Option A policy: under Cursor (including Background Agents), the framework runs tools-only.
+  # Cursor itself (using the developer's configured model) is the only LLM runtime.
+  - "TAPPS_AGENTS_MODE=cursor"
   - "TAPPS_AGENTS_PARALLEL=true"
 ```
 
@@ -361,7 +368,7 @@ Customize output format and location:
 output:
   format: "json"
   location: ".tapps-agents/reports"
-  delivery: ["file", "pr", "web"]
+  delivery: ["file", "pr", "web"]  # recommended default: ["file"]; enable "pr"/"web" only if you want them
 ```
 
 ---

@@ -158,10 +158,10 @@ The security auditor checks:
 
 ### CLI Command
 
-```bash
-# Run security audit
-python -m tapps_agents.cli context7 security-audit
-```
+This repo does not currently expose a dedicated `tapps-agents context7 security-audit` CLI command.
+
+If you need to run an audit, use the Python API in `tapps_agents/context7/security.py` (e.g., `SecurityAuditor`)
+or follow the guidance in this document to validate permissions, retention, and key handling.
 
 ---
 

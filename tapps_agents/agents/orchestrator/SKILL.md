@@ -1,5 +1,8 @@
 # Orchestrator Agent - Skill Definition
 
+> NOTE: Cursor uses the canonical Skills in `.claude/skills/`.  
+> This file is framework documentation; prefer `.claude/skills/orchestrator/SKILL.md` for Cursor.
+
 ## Purpose
 
 The Orchestrator Agent coordinates YAML-defined workflows and makes gate decisions. It is responsible for:

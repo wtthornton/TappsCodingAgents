@@ -7,6 +7,14 @@
 
 **🎉 ALL PHASES COMPLETE! 🎉**
 
+> **Status note (current behavior):**
+> This document is a historical “integration plan” artifact. The implementation in this repo is Cursor-first:
+> - Canonical Skills live in `.claude/skills/`
+> - Background Agents are configured in `.cursor/background-agents.yaml`
+> - Under Cursor (Skills / Background Agents), the framework runs tools-only and **does not call MAL**
+>
+> See `docs/HOW_IT_WORKS.md` for the up-to-date model/runtime policy and directory layout.
+
 ---
 
 ## Executive Summary
@@ -22,7 +30,7 @@ This plan outlines the integration of TappsCodingAgents framework with Cursor AI
 
 ---
 
-## Current State Analysis
+## Current State Analysis (historical section)
 
 ### TappsCodingAgents Framework
 
@@ -36,15 +44,12 @@ This plan outlines the integration of TappsCodingAgents framework with Cursor AI
 - ✅ MCP Gateway (unified tool access)
 - ✅ One agent already in Skills format (Reviewer)
 
-**Gaps:**
-- ⚠️ Only 1 of 13 agents converted to Claude Code Skills
-- ⚠️ Skills don't leverage Context7 for library docs
-- ⚠️ No Background Agent integration
-- ⚠️ Skills don't reference framework's quality tools
-- ⚠️ YAML workflow definitions not integrated with Cursor
-- ⚠️ Industry Experts not accessible via Skills
-- ⚠️ Tiered context system not utilized in Skills
-- ⚠️ MCP Gateway not fully leveraged in Skills
+**Gaps (resolved in current repo):**
+- ✅ 13 Skills are present in `.claude/skills/`
+- ✅ Background Agents are present in `.cursor/background-agents.yaml`
+- ✅ Cursor Rules are present in `.cursor/rules/*.mdc`
+
+> Note: later implementation snippets in this plan may not reflect the current Cursor-first runtime policy.
 
 ### Cursor AI Capabilities (2025)
 

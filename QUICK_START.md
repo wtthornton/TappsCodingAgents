@@ -65,6 +65,18 @@ ollama pull qwen2.5-coder:7b
 ollama list
 ```
 
+### Note (Cursor-first policy)
+
+When running inside **Cursor** (Skills / Background Agents), Cursor uses the developer’s configured model.
+The framework’s MAL (including Ollama) is intended for **headless usage** only.
+
+If you explicitly want to enable MAL while running the CLI from a Cursor-launched shell, run with:
+
+```bash
+# Enable MAL for this process (optional)
+export TAPPS_AGENTS_MODE=headless
+```
+
 ---
 
 ## Common Commands

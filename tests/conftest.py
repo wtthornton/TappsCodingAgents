@@ -216,3 +216,48 @@ def reset_mocks():
     """Reset all mocks before each test."""
     yield
     # Cleanup happens automatically via pytest's fixture system
+
+
+# ============================================================================
+# LLM Availability Checks for Real Integration Tests
+# ============================================================================
+
+
+def pytest_configure(config):
+    """Configure pytest markers."""
+    config.addinivalue_line(
+        "markers", "requires_llm: mark test as requiring LLM service (Ollama, Anthropic, or OpenAI)"
+    )
+
+
+def pytest_collection_modifyitems(config, items):
+    """Automatically skip requires_llm and requires_context7 tests if services unavailable."""
+    import os
+    import httpx
+    
+    # Check LLM availability
+    ollama_available = False
+    try:
+        response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+        ollama_available = response.status_code == 200
+    except Exception:
+        pass
+    
+    anthropic_available = os.getenv("ANTHROPIC_API_KEY") is not None
+    openai_available = os.getenv("OPENAI_API_KEY") is not None
+    has_llm = ollama_available or anthropic_available or openai_available
+    
+    # Check Context7 API availability
+    context7_available = os.getenv("CONTEXT7_API_KEY") is not None
+    
+    # Skip requires_llm tests if no LLM available
+    skip_llm = pytest.mark.skip(reason="No LLM service available (Ollama, Anthropic, or OpenAI)")
+    for item in items:
+        if "requires_llm" in item.keywords and not has_llm:
+            item.add_marker(skip_llm)
+    
+    # Skip requires_context7 tests if no API key available
+    skip_context7 = pytest.mark.skip(reason="CONTEXT7_API_KEY not set - real API tests require API key")
+    for item in items:
+        if "requires_context7" in item.keywords and not context7_available:
+            item.add_marker(skip_context7)

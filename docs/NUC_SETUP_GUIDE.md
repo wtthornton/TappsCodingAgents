@@ -229,9 +229,6 @@ Pre-populate cache and use aggressive caching:
 ```bash
 # Pre-populate cache
 python scripts/prepopulate_context7_cache.py
-
-# Verify cache hit rate
-python -m tapps_agents.cli context7 status
 ```
 
 ### 3. Disable Parallel Tools

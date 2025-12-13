@@ -21,6 +21,8 @@ from .agents.planner.agent import PlannerAgent
 from .agents.reviewer.agent import ReviewerAgent
 from .agents.tester.agent import TesterAgent
 from .core.doctor import collect_doctor_report
+from .core.hardware_profiler import HardwareProfile, HardwareProfiler
+from .core.unified_cache_config import UnifiedCacheConfigManager
 
 
 async def review_command(
@@ -104,6 +106,156 @@ async def help_command():
     await reviewer.activate()
     result = await reviewer.run("help")
     print(result["content"])
+
+
+def hardware_profile_command(
+    set_profile: str | None = None,
+    output_format: str = "text",
+    show_metrics: bool = True,
+):
+    """
+    Check and optionally set hardware profile.
+    
+    Args:
+        set_profile: Optional profile to set (nuc, development, workstation, server, auto)
+        output_format: Output format (json or text)
+        show_metrics: Whether to show detailed hardware metrics
+    """
+    profiler = HardwareProfiler()
+    config_manager = UnifiedCacheConfigManager()
+    
+    # Get current hardware metrics
+    metrics = profiler.get_metrics()
+    detected_profile = profiler.detect_profile()
+    current_resource_usage = profiler.get_current_resource_usage()
+    
+    # Get current configuration
+    config = config_manager.load()
+    configured_profile = config.hardware_profile
+    detected_in_config = config.detected_profile
+    
+    # If user wants to set a profile
+    if set_profile:
+        # Validate profile
+        valid_profiles = ["auto", "nuc", "development", "workstation", "server"]
+        if set_profile.lower() not in valid_profiles:
+            print(
+                f"Error: Invalid profile '{set_profile}'. "
+                f"Valid options: {', '.join(valid_profiles)}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        
+        # Update configuration
+        config.hardware_profile = set_profile.lower()
+        if set_profile.lower() == "auto":
+            config.hardware_auto_detect = True
+            config.detected_profile = detected_profile.value
+        else:
+            config.hardware_auto_detect = False
+            config.detected_profile = set_profile.lower()
+        
+        config_manager.save(config)
+        
+        if output_format == "json":
+            result = {
+                "action": "set",
+                "profile_set": set_profile.lower(),
+                "detected_profile": detected_profile.value,
+                "hardware_metrics": {
+                    "cpu_cores": metrics.cpu_cores,
+                    "ram_gb": round(metrics.ram_gb, 2),
+                    "disk_free_gb": round(metrics.disk_free_gb, 2),
+                    "disk_total_gb": round(metrics.disk_total_gb, 2),
+                    "disk_type": metrics.disk_type,
+                    "cpu_arch": metrics.cpu_arch,
+                },
+                "current_resource_usage": {
+                    "cpu_percent": round(current_resource_usage["cpu_percent"], 1),
+                    "memory_percent": round(current_resource_usage["memory_percent"], 1),
+                    "memory_used_gb": round(current_resource_usage["memory_used_gb"], 2),
+                    "memory_available_gb": round(
+                        current_resource_usage["memory_available_gb"], 2
+                    ),
+                    "disk_percent": round(current_resource_usage["disk_percent"], 1),
+                    "disk_free_gb": round(current_resource_usage["disk_free_gb"], 2),
+                },
+            }
+            print(json.dumps(result, indent=2))
+        else:
+            print(f"\nHardware profile set to: {set_profile.lower()}")
+            if set_profile.lower() == "auto":
+                print(f"  Auto-detection enabled (detected: {detected_profile.value})")
+            else:
+                print(f"  Auto-detection disabled (using: {set_profile.lower()})")
+            print(f"\nConfiguration saved to: {config_manager.config_path}")
+    else:
+        # Just show current status
+        if output_format == "json":
+            result = {
+                "detected_profile": detected_profile.value,
+                "configured_profile": configured_profile,
+                "auto_detect": config.hardware_auto_detect,
+                "hardware_metrics": {
+                    "cpu_cores": metrics.cpu_cores,
+                    "ram_gb": round(metrics.ram_gb, 2),
+                    "disk_free_gb": round(metrics.disk_free_gb, 2),
+                    "disk_total_gb": round(metrics.disk_total_gb, 2),
+                    "disk_type": metrics.disk_type,
+                    "cpu_arch": metrics.cpu_arch,
+                },
+                "current_resource_usage": {
+                    "cpu_percent": round(current_resource_usage["cpu_percent"], 1),
+                    "memory_percent": round(current_resource_usage["memory_percent"], 1),
+                    "memory_used_gb": round(current_resource_usage["memory_used_gb"], 2),
+                    "memory_available_gb": round(
+                        current_resource_usage["memory_available_gb"], 2
+                    ),
+                    "disk_percent": round(current_resource_usage["disk_percent"], 1),
+                    "disk_free_gb": round(current_resource_usage["disk_free_gb"], 2),
+                },
+            }
+            print(json.dumps(result, indent=2))
+        else:
+            print("\n" + "=" * 60)
+            print("Hardware Profile Information")
+            print("=" * 60)
+            
+            print("\nHardware Metrics:")
+            print(f"  CPU Cores: {metrics.cpu_cores}")
+            print(f"  RAM: {metrics.ram_gb:.2f} GB")
+            print(f"  Disk: {metrics.disk_free_gb:.2f} GB free / {metrics.disk_total_gb:.2f} GB total")
+            print(f"  Disk Type: {metrics.disk_type.upper()}")
+            print(f"  CPU Architecture: {metrics.cpu_arch}")
+            
+            if show_metrics:
+                print("\nCurrent Resource Usage:")
+                print(f"  CPU Usage: {current_resource_usage['cpu_percent']:.1f}%")
+                print(f"  Memory Usage: {current_resource_usage['memory_percent']:.1f}%")
+                print(f"  Memory Used: {current_resource_usage['memory_used_gb']:.2f} GB")
+                print(f"  Memory Available: {current_resource_usage['memory_available_gb']:.2f} GB")
+                print(f"  Disk Usage: {current_resource_usage['disk_percent']:.1f}%")
+                print(f"  Disk Free: {current_resource_usage['disk_free_gb']:.2f} GB")
+            
+            print("\nProfile Detection:")
+            print(f"  Detected Profile: {detected_profile.value.upper()}")
+            print(f"  Configured Profile: {configured_profile}")
+            print(f"  Auto-Detect: {'Enabled' if config.hardware_auto_detect else 'Disabled'}")
+            
+            if detected_in_config and detected_in_config != detected_profile.value:
+                print(f"  Note: Previously detected profile was {detected_in_config}")
+            
+            # Show profile descriptions
+            print("\nAvailable Profiles:")
+            print("  - NUC: Low resources (<=6 cores, <=16GB RAM)")
+            print("  - DEVELOPMENT: Medium resources (<=12 cores, <=32GB RAM)")
+            print("  - WORKSTATION: High resources (>12 cores, >32GB RAM)")
+            print("  - SERVER: Variable resources, usually custom")
+            print("  - AUTO: Automatically detect based on hardware")
+            
+            print("\nTo set a profile, use:")
+            print("  tapps-agents hardware-profile --set <profile>")
+            print("  (Valid profiles: auto, nuc, development, workstation, server)")
 
 
 async def plan_command(description: str, output_format: str = "json"):
@@ -1727,6 +1879,16 @@ Examples:
     init_parser.add_argument(
         "--no-config", action="store_true", help="Skip .tapps-agents/config.yaml setup"
     )
+    init_parser.add_argument(
+        "--no-skills",
+        action="store_true",
+        help="Skip installing .claude/skills (Cursor Skills definitions)",
+    )
+    init_parser.add_argument(
+        "--no-background-agents",
+        action="store_true",
+        help="Skip installing .cursor/background-agents.yaml",
+    )
 
     # Environment diagnostics
     doctor_parser = subparsers.add_parser(
@@ -1738,6 +1900,27 @@ Examples:
     )
     doctor_parser.add_argument(
         "--config-path", help="Optional explicit path to .tapps-agents/config.yaml"
+    )
+
+    # Hardware profile command
+    hardware_parser = subparsers.add_parser(
+        "hardware-profile",
+        aliases=["hardware"],
+        help="Check and configure hardware profile (NUC, Development, Workstation, Server)",
+        description="Display current hardware metrics and detected profile. Optionally set a specific profile.",
+    )
+    hardware_parser.add_argument(
+        "--set",
+        choices=["auto", "nuc", "development", "workstation", "server"],
+        help="Set hardware profile (overrides auto-detection)",
+    )
+    hardware_parser.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format"
+    )
+    hardware_parser.add_argument(
+        "--no-metrics",
+        action="store_true",
+        help="Hide detailed resource usage metrics",
     )
 
     # Quick shortcuts for common commands
@@ -2128,6 +2311,8 @@ Examples:
             include_cursor_rules=not getattr(args, "no_rules", False),
             include_workflow_presets=not getattr(args, "no_presets", False),
             include_config=not getattr(args, "no_config", False),
+            include_skills=not getattr(args, "no_skills", False),
+            include_background_agents=not getattr(args, "no_background_agents", False),
         )
 
         print("Initialization Results:")
@@ -2156,6 +2341,19 @@ Examples:
             print("    - .tapps-agents/config.yaml")
         else:
             print("  Project Config: Skipped or already exists")
+
+        if results.get("skills"):
+            print("  Cursor Skills: Installed")
+            # Print a short hint rather than every file path (can be long).
+            print("    - .claude/skills/")
+        else:
+            print("  Cursor Skills: Skipped or already exists")
+
+        if results.get("background_agents"):
+            print("  Background Agents: Installed")
+            print("    - .cursor/background-agents.yaml")
+        else:
+            print("  Background Agents: Skipped or already exists")
 
         print("\nNext Steps:")
         print("  1. Set up experts: python -m tapps_agents.cli setup-experts init")
@@ -2209,6 +2407,13 @@ Examples:
             wizard.list_experts()
         else:
             wizard.run_wizard()
+    elif args.agent == "hardware-profile" or args.agent == "hardware":
+        # Hardware profile command
+        hardware_profile_command(
+            set_profile=getattr(args, "set", None),
+            output_format=getattr(args, "format", "text"),
+            show_metrics=not getattr(args, "no_metrics", False),
+        )
     elif args.agent == "analytics":
         # Analytics dashboard
         from .core.analytics_dashboard import AnalyticsDashboard

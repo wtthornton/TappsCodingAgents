@@ -46,6 +46,14 @@ print(config.agents.reviewer.quality_threshold)
 
 See `docs/CONFIGURATION.md` for the full schema.
 
+### Note on MAL vs Cursor
+
+When invoked under Cursor (Skills / Background Agents), this repo’s default policy is **Cursor-only LLM**:
+- the framework runs tools-only
+- MAL calls are disabled unless you explicitly run with `TAPPS_AGENTS_MODE=headless`
+
+See `docs/HOW_IT_WORKS.md`.
+
 ### Project Profiling
 
 ```python

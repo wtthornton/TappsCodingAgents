@@ -10,7 +10,13 @@ TappsCodingAgents can automatically set up Cursor Rules that provide context abo
 
 ### Cursor Rules
 
-**Location:** `.cursor/rules/workflow-presets.mdc`
+**Location:** `.cursor/rules/`
+
+**Files installed by `tapps-agents init`:**
+- `workflow-presets.mdc`
+- `quick-reference.mdc`
+- `agent-capabilities.mdc`
+- `project-context.mdc`
 
 **Content:**
 - Documentation of all 5 workflow presets
@@ -45,9 +51,11 @@ python -m tapps_agents.cli init
 ```
 
 This will:
-1. Create `.cursor/rules/workflow-presets.mdc`
+1. Install Cursor Rules into `.cursor/rules/`
 2. Copy workflow presets to `workflows/presets/`
-3. Set up project structure
+3. Install Skills into `.claude/skills/` (unless `--no-skills`)
+4. Install Background Agents config into `.cursor/background-agents.yaml` (unless `--no-background-agents`)
+5. Optionally create `.tapps-agents/config.yaml` (unless `--no-config`)
 
 **Options:**
 ```bash
@@ -56,6 +64,16 @@ python -m tapps_agents.cli init --no-rules
 
 # Skip workflow presets
 python -m tapps_agents.cli init --no-presets
+```
+
+Additional options:
+
+```bash
+# Skip installing Skills
+python -m tapps_agents.cli init --no-skills
+
+# Skip installing Background Agents config
+python -m tapps_agents.cli init --no-background-agents
 ```
 
 ### Method 2: During Expert Setup
