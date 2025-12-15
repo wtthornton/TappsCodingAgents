@@ -25,7 +25,7 @@ class TestProjectDetector:
         # Create Python project structure
         (tmp_path / "setup.py").write_text("from setuptools import setup\n")
         (tmp_path / "requirements.txt").write_text("requests\n")
-        (tmp_path / "src" / "main.py").mkdir(parents=True)
+        (tmp_path / "src").mkdir(parents=True)
         (tmp_path / "src" / "main.py").write_text("print('hello')\n")
         
         detector = ProjectDetector(tmp_path)
@@ -38,7 +38,7 @@ class TestProjectDetector:
         """Test detecting JavaScript project."""
         # Create JavaScript project structure
         (tmp_path / "package.json").write_text('{"name": "test", "version": "1.0.0"}\n')
-        (tmp_path / "src" / "index.js").mkdir(parents=True)
+        (tmp_path / "src").mkdir(parents=True)
         (tmp_path / "src" / "index.js").write_text("console.log('hello');\n")
         
         detector = ProjectDetector(tmp_path)
@@ -61,7 +61,7 @@ class TestProjectDetector:
         # Create mixed project
         (tmp_path / "package.json").write_text('{"name": "test"}\n')
         (tmp_path / "setup.py").write_text("from setuptools import setup\n")
-        (tmp_path / "src" / "main.py").mkdir(parents=True)
+        (tmp_path / "src").mkdir(parents=True)
         (tmp_path / "src" / "main.py").write_text("print('hello')\n")
         
         detector = ProjectDetector(tmp_path)

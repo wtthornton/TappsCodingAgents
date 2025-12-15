@@ -12,12 +12,14 @@ from pathlib import Path
 from typing import Any
 
 from .background_agent_api import BackgroundAgentAPI
+from .background_quality_agent import BackgroundQualityAgent
+from .background_testing_agent import BackgroundTestingAgent
 from .cursor_skill_helper import (
     check_skill_completion,
     create_skill_command_file,
     create_skill_execution_instructions,
 )
-from .models import WorkflowState, WorkflowStep
+from .models import Artifact, WorkflowState, WorkflowStep
 
 
 class SkillInvoker:
@@ -95,6 +97,14 @@ class SkillInvoker:
             "implement",
             {"specification": "specification_content", "file_path": "target_file"},
         ),
+        ("implementer", "write-code"): (
+            "implement",
+            {"specification": "specification_content", "file_path": "target_file"},
+        ),
+        ("implementer", "write_code"): (
+            "implement",
+            {"specification": "specification_content", "file_path": "target_file"},
+        ),
         ("implementer", "refactor"): (
             "refactor",
             {"file": "target_file", "requirements": "requirements_file"},
@@ -147,6 +157,10 @@ class SkillInvoker:
             "document",
             {"target": "target_file", "output_dir": "docs"},
         ),
+        ("documenter", "generate_docs"): (
+            "document",
+            {"target": "target_file", "output_dir": "docs"},
+        ),
         
         # Ops
         ("ops", "security-scan"): (
@@ -168,6 +182,34 @@ class SkillInvoker:
         ("enhancer", "enhance"): (
             "enhance",
             {"prompt": "user_prompt", "format": "markdown"},
+        ),
+        
+        # Quality Agent (Background Cloud)
+        ("quality", "analyze"): (
+            "quality-analyze",
+            {"target": "target_file"},
+        ),
+        ("quality", "quality-check"): (
+            "quality-analyze",
+            {"target": "target_file"},
+        ),
+        ("quality", "quality_check"): (
+            "quality-analyze",
+            {"target": "target_file"},
+        ),
+        
+        # Testing Agent (Background Cloud)
+        ("testing", "run-tests"): (
+            "testing-run",
+            {"test_path": "target_file", "coverage": True},
+        ),
+        ("testing", "run_tests"): (
+            "testing-run",
+            {"test_path": "target_file", "coverage": True},
+        ),
+        ("testing", "test"): (
+            "testing-run",
+            {"test_path": "target_file", "coverage": True},
         ),
     }
 
@@ -342,9 +384,10 @@ class SkillInvoker:
         self, state: WorkflowState, filename: str
     ) -> Path | None:
         """Find artifact by filename in workflow state."""
-        for artifact in state.artifacts:
-            if Path(artifact.path).name == filename:
-                return Path(artifact.path)
+        for artifact in state.artifacts.values():
+            if isinstance(artifact, Artifact) and artifact.path:
+                if Path(artifact.path).name == filename:
+                    return Path(artifact.path)
         return None
 
     def _build_command(
@@ -392,9 +435,10 @@ class SkillInvoker:
         Execute Skill command via Cursor Background Agents.
 
         This implementation:
-        1. Tries to use Background Agent API if available
-        2. Falls back to file-based execution if API unavailable
-        3. Creates structured command files and execution instructions
+        1. For quality/testing agents: Directly executes background agents
+        2. Tries to use Background Agent API if available
+        3. Falls back to file-based execution if API unavailable
+        4. Creates structured command files and execution instructions
 
         Args:
             command: Skill command string
@@ -404,6 +448,26 @@ class SkillInvoker:
         Returns:
             Result dictionary with execution status and details
         """
+        # Extract agent name and action from command
+        agent_name = None
+        action = None
+        if command.startswith("@"):
+            parts = command.split()
+            if parts:
+                agent_name = parts[0][1:]  # Remove "@"
+                if len(parts) > 1:
+                    action = parts[1]
+
+        # Special handling for quality and testing background agents
+        if agent_name in ["quality", "testing"]:
+            return await self._execute_background_agent(
+                agent_name=agent_name,
+                action=action or "analyze" if agent_name == "quality" else "run-tests",
+                command=command,
+                worktree_path=worktree_path,
+                step=step,
+            )
+
         # Try API-based execution first if enabled
         if self.use_api and self.background_agent_api:
             try:
@@ -499,5 +563,117 @@ exit 0
                 "See .cursor-skill-instructions.md for execution instructions. "
                 "Command can be executed in Cursor chat or via Background Agent."
             ),
+        }
+
+    async def _execute_background_agent(
+        self,
+        agent_name: str,
+        action: str,
+        command: str,
+        worktree_path: Path,
+        step: WorkflowStep | None = None,
+    ) -> dict[str, Any]:
+        """
+        Execute quality or testing background agent directly.
+
+        Args:
+            agent_name: "quality" or "testing"
+            action: Action to perform
+            command: Full command string
+            worktree_path: Path to worktree
+            step: Optional workflow step
+
+        Returns:
+            Result dictionary
+        """
+        correlation_id = None
+        if step:
+            correlation_id = f"{step.id}-{getattr(step, 'workflow_id', 'unknown')}"
+
+        try:
+            if agent_name == "quality":
+                # Extract target path from command if present
+                target_path = None
+                if "--target" in command or "--file" in command:
+                    # Simple parsing - in production would use proper argument parsing
+                    parts = command.split()
+                    for i, part in enumerate(parts):
+                        if part in ["--target", "--file"] and i + 1 < len(parts):
+                            target_path = Path(parts[i + 1].strip('"'))
+                            break
+
+                quality_agent = BackgroundQualityAgent(
+                    worktree_path=worktree_path,
+                    correlation_id=correlation_id,
+                    timeout_seconds=600.0,
+                )
+
+                artifact = await quality_agent.run_quality_analysis(
+                    target_path=target_path,
+                )
+
+                return {
+                    "status": artifact.status,
+                    "method": "background_agent",
+                    "agent": "quality",
+                    "worktree": str(worktree_path),
+                    "artifact_path": str(
+                        worktree_path / "reports" / "quality" / "quality-report.json"
+                    ),
+                    "artifact": artifact.to_dict(),
+                    "message": f"Quality analysis {artifact.status}",
+                }
+
+            elif agent_name == "testing":
+                # Extract test path from command if present
+                test_path = None
+                coverage = True
+                if "--test_path" in command or "--test-path" in command:
+                    parts = command.split()
+                    for i, part in enumerate(parts):
+                        if part in ["--test_path", "--test-path"] and i + 1 < len(parts):
+                            test_path = Path(parts[i + 1].strip('"'))
+                            break
+                if "--no-coverage" in command:
+                    coverage = False
+
+                testing_agent = BackgroundTestingAgent(
+                    worktree_path=worktree_path,
+                    correlation_id=correlation_id,
+                    timeout_seconds=600.0,
+                )
+
+                artifact = await testing_agent.run_tests(
+                    test_path=test_path,
+                    coverage=coverage,
+                )
+
+                return {
+                    "status": artifact.status,
+                    "method": "background_agent",
+                    "agent": "testing",
+                    "worktree": str(worktree_path),
+                    "artifact_path": str(
+                        worktree_path / "reports" / "tests" / "test-report.json"
+                    ),
+                    "artifact": artifact.to_dict(),
+                    "message": f"Test execution {artifact.status}",
+                }
+
+        except Exception as e:
+            return {
+                "status": "error",
+                "method": "background_agent",
+                "agent": agent_name,
+                "worktree": str(worktree_path),
+                "error": str(e),
+                "message": f"Background agent execution failed: {e}",
+            }
+
+        return {
+            "status": "error",
+            "method": "background_agent",
+            "agent": agent_name,
+            "error": f"Unknown agent: {agent_name}",
         }
 

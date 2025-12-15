@@ -31,7 +31,8 @@ class StalenessPolicy:
             True if entry is stale
         """
         if reference_date is None:
-            reference_date = datetime.utcnow()
+            from datetime import UTC
+            reference_date = datetime.now(UTC)
 
         try:
             # Parse ISO format timestamp - handle both naive and timezone-aware
@@ -40,15 +41,25 @@ class StalenessPolicy:
                 updated_str = updated_str[:-1] + "+00:00"
 
             updated_dt = datetime.fromisoformat(updated_str)
-            # Make both dates naive for comparison
-            if updated_dt.tzinfo is not None:
-                updated_dt = updated_dt.replace(tzinfo=None)
-            if reference_date.tzinfo is not None:
-                reference_date = reference_date.replace(tzinfo=None)
+            
+            # Convert both to UTC for comparison
+            from datetime import UTC
+            if updated_dt.tzinfo is None:
+                # Assume UTC if naive
+                updated_dt = updated_dt.replace(tzinfo=UTC)
+            else:
+                updated_dt = updated_dt.astimezone(UTC)
+                
+            if reference_date.tzinfo is None:
+                # Assume UTC if naive
+                reference_date = reference_date.replace(tzinfo=UTC)
+            else:
+                reference_date = reference_date.astimezone(UTC)
 
             age = reference_date - updated_dt
             max_age = timedelta(days=self.max_age_days)
 
+            # Entry is stale if age is strictly greater than max_age
             return age > max_age
         except (ValueError, TypeError):
             # If we can't parse the date, consider it stale for safety
@@ -68,7 +79,8 @@ class StalenessPolicy:
             Days until stale (negative if already stale)
         """
         if reference_date is None:
-            reference_date = datetime.utcnow()
+            from datetime import UTC
+            reference_date = datetime.now(UTC)
 
         try:
             updated_str = last_updated
@@ -76,11 +88,20 @@ class StalenessPolicy:
                 updated_str = updated_str[:-1] + "+00:00"
 
             updated_dt = datetime.fromisoformat(updated_str)
-            # Make both dates naive for comparison
-            if updated_dt.tzinfo is not None:
-                updated_dt = updated_dt.replace(tzinfo=None)
-            if reference_date.tzinfo is not None:
-                reference_date = reference_date.replace(tzinfo=None)
+            
+            # Convert both to UTC for comparison
+            from datetime import UTC
+            if updated_dt.tzinfo is None:
+                # Assume UTC if naive
+                updated_dt = updated_dt.replace(tzinfo=UTC)
+            else:
+                updated_dt = updated_dt.astimezone(UTC)
+                
+            if reference_date.tzinfo is None:
+                # Assume UTC if naive
+                reference_date = reference_date.replace(tzinfo=UTC)
+            else:
+                reference_date = reference_date.astimezone(UTC)
 
             age = reference_date - updated_dt
             max_age = timedelta(days=self.max_age_days)

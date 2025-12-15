@@ -187,7 +187,7 @@ class Context7Commands:
             return {"error": "MCP Gateway not available"}
 
         try:
-            result = self.kb_lookup.mcp_gateway.call_tool(
+            result = await self.kb_lookup.mcp_gateway.call_tool(
                 "mcp_Context7_resolve-library-id", libraryName=library
             )
 
@@ -348,7 +348,7 @@ class Context7Commands:
             topic = task.topic or "overview"
             try:
                 # Resolve library -> Context7 ID
-                resolve = self.kb_lookup.mcp_gateway.call_tool(
+                resolve = await self.kb_lookup.mcp_gateway.call_tool(
                     "mcp_Context7_resolve-library-id", libraryName=task.library
                 )
                 matches = (
@@ -367,7 +367,7 @@ class Context7Commands:
                     raise RuntimeError("Could not resolve Context7 library ID")
 
                 # Fetch docs
-                docs = self.kb_lookup.mcp_gateway.call_tool(
+                docs = await self.kb_lookup.mcp_gateway.call_tool(
                     "mcp_Context7_get-library-docs",
                     context7CompatibleLibraryID=context7_id,
                     topic=topic,

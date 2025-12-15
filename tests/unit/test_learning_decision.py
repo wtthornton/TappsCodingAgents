@@ -28,7 +28,10 @@ class TestLearningDecisionEngine:
     @pytest.fixture
     def mock_best_practice_consultant(self):
         """Create mock best practice consultant."""
-        return MagicMock(spec=BestPracticeConsultant)
+        from unittest.mock import AsyncMock
+        mock = MagicMock(spec=BestPracticeConsultant)
+        mock.consult_best_practices = AsyncMock(return_value=None)
+        return mock
 
     @pytest.fixture
     def decision_engine(self, mock_capability_registry, mock_best_practice_consultant):

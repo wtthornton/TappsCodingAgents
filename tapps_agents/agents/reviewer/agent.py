@@ -158,26 +158,32 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 return {"error": "File path required. Usage: *review <file>"}
 
             model = kwargs.get("model", "qwen2.5-coder:7b")
-            return await self.review_file(
-                Path(file_path),
-                model=model
-                or (
-                    self.config.agents.reviewer.model
-                    if self.config
-                    else "qwen2.5-coder:7b"
-                ),
-                include_scoring=True,
-                include_llm_feedback=True,
-            )
+            try:
+                return await self.review_file(
+                    Path(file_path),
+                    model=model
+                    or (
+                        self.config.agents.reviewer.model
+                        if self.config
+                        else "qwen2.5-coder:7b"
+                    ),
+                    include_scoring=True,
+                    include_llm_feedback=True,
+                )
+            except FileNotFoundError as e:
+                return {"error": str(e)}
 
         elif command == "score":
             file_path = kwargs.get("file")
             if not file_path:
                 return {"error": "File path required. Usage: *score <file>"}
 
-            return await self.review_file(
-                Path(file_path), include_scoring=True, include_llm_feedback=False
-            )
+            try:
+                return await self.review_file(
+                    Path(file_path), include_scoring=True, include_llm_feedback=False
+                )
+            except FileNotFoundError as e:
+                return {"error": str(e)}
 
         elif command == "lint":
             file_path = kwargs.get("file")

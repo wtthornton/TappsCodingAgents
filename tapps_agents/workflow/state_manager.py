@@ -55,6 +55,40 @@ class StateValidator:
     @staticmethod
     def calculate_checksum(state_data: dict[str, Any]) -> str:
         """Calculate SHA256 checksum for state data."""
+        def _make_json_serializable(obj: Any) -> Any:
+            """Recursively convert objects to JSON-serializable format."""
+            # Handle ProjectProfile objects
+            if hasattr(obj, "to_dict") and hasattr(obj, "compliance_requirements"):
+                try:
+                    from ..core.project_profile import ProjectProfile
+                    if isinstance(obj, ProjectProfile):
+                        return obj.to_dict()
+                except (ImportError, AttributeError):
+                    pass
+            
+            # Handle ComplianceRequirement objects
+            if hasattr(obj, "name") and hasattr(obj, "confidence") and hasattr(obj, "indicators"):
+                try:
+                    from ..core.project_profile import ComplianceRequirement
+                    if isinstance(obj, ComplianceRequirement):
+                        return asdict(obj)
+                except (ImportError, AttributeError):
+                    pass
+            
+            # Handle dictionaries recursively
+            if isinstance(obj, dict):
+                return {k: _make_json_serializable(v) for k, v in obj.items()}
+            
+            # Handle lists recursively
+            if isinstance(obj, list):
+                return [_make_json_serializable(item) for item in obj]
+            
+            return obj
+        
+        # Ensure variables are JSON-serializable
+        variables = state_data.get("variables", {})
+        serializable_variables = _make_json_serializable(variables)
+        
         # Create stable representation (sorted keys, no metadata)
         stable_data = {
             "workflow_id": state_data.get("workflow_id"),
@@ -62,7 +96,7 @@ class StateValidator:
             "completed_steps": sorted(state_data.get("completed_steps", [])),
             "skipped_steps": sorted(state_data.get("skipped_steps", [])),
             "status": state_data.get("status"),
-            "variables": json.dumps(state_data.get("variables", {}), sort_keys=True),
+            "variables": serializable_variables,
         }
         stable_str = json.dumps(stable_data, sort_keys=True)
         return hashlib.sha256(stable_str.encode()).hexdigest()
@@ -428,6 +462,47 @@ class AdvancedStateManager:
                 "metadata": getattr(artifact, "metadata", {}) or {},
             }
 
+        def _make_json_serializable(obj: Any) -> Any:
+            """Recursively convert objects to JSON-serializable format."""
+            # Handle ProjectProfile objects
+            if hasattr(obj, "to_dict") and hasattr(obj, "compliance_requirements"):
+                # This is likely a ProjectProfile object
+                try:
+                    from ..core.project_profile import ProjectProfile
+                    if isinstance(obj, ProjectProfile):
+                        return obj.to_dict()
+                except (ImportError, AttributeError):
+                    pass
+            
+            # Handle ComplianceRequirement objects
+            if hasattr(obj, "name") and hasattr(obj, "confidence") and hasattr(obj, "indicators"):
+                try:
+                    from ..core.project_profile import ComplianceRequirement
+                    if isinstance(obj, ComplianceRequirement):
+                        return asdict(obj)
+                except (ImportError, AttributeError):
+                    pass
+            
+            # Handle dictionaries recursively
+            if isinstance(obj, dict):
+                return {k: _make_json_serializable(v) for k, v in obj.items()}
+            
+            # Handle lists recursively
+            if isinstance(obj, list):
+                return [_make_json_serializable(item) for item in obj]
+            
+            # Handle other non-serializable types
+            try:
+                json.dumps(obj)
+                return obj
+            except (TypeError, ValueError):
+                # For non-serializable types, convert to string as fallback
+                return str(obj)
+
+        # Convert variables to JSON-serializable format
+        variables = state.variables or {}
+        serializable_variables = _make_json_serializable(variables)
+
         return {
             "workflow_id": state.workflow_id,
             "started_at": state.started_at.isoformat(),
@@ -437,7 +512,7 @@ class AdvancedStateManager:
             "artifacts": {
                 k: _artifact_to_dict(k, v) for k, v in (state.artifacts or {}).items()
             },
-            "variables": state.variables or {},
+            "variables": serializable_variables,
             "status": state.status,
             "error": state.error,
         }

@@ -11,9 +11,11 @@ import json
 import os
 import subprocess  # nosec B404 - fixed args, no shell
 import sys
+from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
+import hashlib
 
 from ..core.project_profile import (
     ProjectProfile,
@@ -26,6 +28,8 @@ from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowSt
 from .skill_invoker import SkillInvoker
 from .state_manager import AdvancedStateManager
 from .worktree_manager import WorktreeManager
+from .parallel_executor import ParallelStepExecutor
+from .logging_helper import WorkflowLogger
 
 
 class CursorWorkflowExecutor:
@@ -66,6 +70,8 @@ class CursorWorkflowExecutor:
         )
         self.worktree_manager = WorktreeManager(project_root=self.project_root)
         self.project_profile: ProjectProfile | None = None
+        self.parallel_executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=3600.0)
+        self.logger: WorkflowLogger | None = None  # Initialized in start() with workflow_id
         
         # Initialize state manager
         state_dir = self._state_dir()
@@ -107,7 +113,11 @@ class CursorWorkflowExecutor:
             Initial workflow state
         """
         self.workflow = workflow
+        # Use consistent workflow_id format: {workflow.id}-{timestamp}
         workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+
+        # Initialize logger with workflow_id for correlation
+        self.logger = WorkflowLogger(workflow_id=workflow_id)
 
         # Perform project profiling before workflow execution
         self._profile_project()
@@ -124,6 +134,12 @@ class CursorWorkflowExecutor:
             },
         )
 
+        self.logger.info(
+            "Workflow started",
+            workflow_name=workflow.name,
+            workflow_version=workflow.version,
+            step_count=len(workflow.steps),
+        )
         self.save_state()
         return self.state
 
@@ -132,8 +148,49 @@ class CursorWorkflowExecutor:
         if not self.state:
             return
 
+        def _make_json_serializable(obj: Any) -> Any:
+            """Recursively convert objects to JSON-serializable format."""
+            # Handle ProjectProfile objects
+            if hasattr(obj, "to_dict") and hasattr(obj, "compliance_requirements"):
+                try:
+                    from ..core.project_profile import ProjectProfile
+                    if isinstance(obj, ProjectProfile):
+                        return obj.to_dict()
+                except (ImportError, AttributeError):
+                    pass
+            
+            # Handle ComplianceRequirement objects
+            if hasattr(obj, "name") and hasattr(obj, "confidence") and hasattr(obj, "indicators"):
+                try:
+                    from ..core.project_profile import ComplianceRequirement
+                    if isinstance(obj, ComplianceRequirement):
+                        return asdict(obj)
+                except (ImportError, AttributeError):
+                    pass
+            
+            # Handle dictionaries recursively
+            if isinstance(obj, dict):
+                return {k: _make_json_serializable(v) for k, v in obj.items()}
+            
+            # Handle lists recursively
+            if isinstance(obj, list):
+                return [_make_json_serializable(item) for item in obj]
+            
+            # Handle other non-serializable types
+            try:
+                import json
+                json.dumps(obj)
+                return obj
+            except (TypeError, ValueError):
+                # For non-serializable types, convert to string as fallback
+                return str(obj)
+
         state_file = self._state_dir() / f"{self.state.workflow_id}.json"
         state_file.parent.mkdir(parents=True, exist_ok=True)
+
+        # Convert variables to JSON-serializable format
+        variables = self.state.variables or {}
+        serializable_variables = _make_json_serializable(variables)
 
         # Convert to dict for JSON serialization
         state_dict = {
@@ -143,7 +200,7 @@ class CursorWorkflowExecutor:
             "started_at": self.state.started_at.isoformat() if self.state.started_at else None,
             "completed_steps": self.state.completed_steps,
             "skipped_steps": self.state.skipped_steps,
-            "variables": self.state.variables,
+            "variables": serializable_variables,
             "artifacts": {
                 name: {
                     "name": a.name,
@@ -206,7 +263,7 @@ class CursorWorkflowExecutor:
             )
 
         # Ensure we have a state
-        if not self.state or self.state.workflow_id != self.workflow.id:
+        if not self.state or not self.state.workflow_id.startswith(f"{self.workflow.id}-"):
             self.start(workflow=self.workflow)
 
         # Establish target file
@@ -223,12 +280,15 @@ class CursorWorkflowExecutor:
         if target_path and self.state:
             self.state.variables["target_file"] = str(target_path)
 
+        # Use parallel execution for independent steps
         steps_executed = 0
+        completed_step_ids = set(self.state.completed_steps)
+        running_step_ids: set[str] = set()
+
         while (
             self.state
             and self.workflow
             and self.state.status == "running"
-            and self.state.current_step
         ):
             if steps_executed >= max_steps:
                 self.state.status = "failed"
@@ -236,22 +296,104 @@ class CursorWorkflowExecutor:
                 self.save_state()
                 break
 
-            step = self.get_current_step()
-            if not step:
-                self.state.status = "failed"
-                self.state.error = f"Unknown current step: {self.state.current_step}"
-                self.save_state()
-                break
+            # Find steps ready to execute (dependencies met)
+            available_artifacts = set(self.state.artifacts.keys())
+            ready_steps = self.parallel_executor.find_ready_steps(
+                workflow_steps=self.workflow.steps,
+                completed_step_ids=completed_step_ids,
+                running_step_ids=running_step_ids,
+                available_artifacts=available_artifacts,
+            )
+
+            if not ready_steps:
+                # No ready steps - check if workflow is complete or blocked
+                if len(completed_step_ids) >= len(self.workflow.steps):
+                    self.state.status = "completed"
+                    self.state.current_step = None
+                    self.save_state()
+                    break
+                else:
+                    # Workflow is blocked (dependencies not met)
+                    self.state.status = "failed"
+                    self.state.error = "Workflow blocked: no ready steps and workflow not complete"
+                    self.save_state()
+                    break
+
+            # Execute ready steps in parallel
+            running_step_ids.update(step.id for step in ready_steps)
+            
+            async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
+                """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
+                artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
+                return artifacts or {}
 
             try:
-                await self._execute_step(step=step, target_path=target_path)
+                results = await self.parallel_executor.execute_parallel(
+                    steps=ready_steps,
+                    execute_fn=execute_step_wrapper,
+                    state=self.state,
+                )
+
+                # Process results and update state
+                for result in results:
+                    step_logger = self.logger.with_context(
+                        step_id=result.step.id,
+                        agent=result.step.agent,
+                    ) if self.logger else None
+                    
+                    if result.error:
+                        # Step failed - mark as failed and stop workflow
+                        self.state.status = "failed"
+                        self.state.error = f"Step {result.step.id} failed: {result.error}"
+                        if step_logger:
+                            step_logger.error(
+                                "Step execution failed",
+                                error=str(result.error),
+                                action=result.step.action,
+                            )
+                        self.save_state()
+                        break
+                    
+                    # Mark step as completed
+                    completed_step_ids.add(result.step.id)
+                    running_step_ids.discard(result.step.id)
+                    
+                    if step_logger:
+                        step_logger.info(
+                            "Step completed",
+                            action=result.step.action,
+                            duration_seconds=result.step_execution.duration_seconds,
+                            artifact_count=len(result.artifacts) if result.artifacts else 0,
+                        )
+                    
+                    # Update artifacts from result
+                    if result.artifacts and isinstance(result.artifacts, dict):
+                        for art_name, art_data in result.artifacts.items():
+                            if isinstance(art_data, dict):
+                                artifact = Artifact(
+                                    name=art_data.get("name", art_name),
+                                    path=art_data.get("path", ""),
+                                    status="complete",
+                                    created_by=result.step.id,
+                                    created_at=datetime.now(),
+                                    metadata=art_data.get("metadata", {}),
+                                )
+                                self.state.artifacts[artifact.name] = artifact
+
+                steps_executed += len(ready_steps)
+                self.save_state()
+
             except Exception as e:
                 self.state.status = "failed"
                 self.state.error = str(e)
+                if self.logger:
+                    self.logger.error(
+                        "Workflow execution failed",
+                        error=str(e),
+                        exc_info=True,
+                    )
                 self.save_state()
                 break
-
-            steps_executed += 1
 
         if not self.state:
             raise RuntimeError("Workflow state lost during execution")
@@ -259,9 +401,139 @@ class CursorWorkflowExecutor:
         # Mark as completed if no error
         if self.state.status == "running":
             self.state.status = "completed"
+            if self.logger:
+                self.logger.info(
+                    "Workflow completed",
+                    completed_steps=len(completed_step_ids),
+                    total_steps=len(self.workflow.steps) if self.workflow else 0,
+                )
             self.save_state()
 
+        # Best-effort cleanup of worktrees created during this run
+        try:
+            await self.worktree_manager.cleanup_all()
+        except Exception:
+            pass
+
         return self.state
+
+    async def _execute_step_for_parallel(
+        self, step: WorkflowStep, target_path: Path | None
+    ) -> dict[str, dict[str, Any]] | None:
+        """
+        Execute a single workflow step using Cursor Skills and return artifacts (for parallel execution).
+        
+        This is similar to _execute_step but returns artifacts instead of updating state.
+        State updates (step_execution tracking) are handled by ParallelStepExecutor.
+        """
+        if not self.state or not self.workflow:
+            raise ValueError("Workflow not started")
+
+        action = self._normalize_action(step.action)
+        agent_name = (step.agent or "").strip().lower()
+
+        # Handle completion/finalization steps that don't require agent execution
+        if agent_name == "orchestrator" and action in ["finalize", "complete"]:
+            # Return empty artifacts for completion steps
+            return {}
+
+        try:
+            # Create worktree for this step
+            worktree_name = self._worktree_name_for_step(step.id)
+            worktree_path = await self.worktree_manager.create_worktree(
+                worktree_name=worktree_name
+            )
+
+            # Copy artifacts from previous steps to worktree
+            artifacts_list = list(self.state.artifacts.values())
+            await self.worktree_manager.copy_artifacts(
+                worktree_path=worktree_path,
+                artifacts=artifacts_list,
+            )
+
+            # Invoke Skill via SkillInvoker (creates command files for Background Agents)
+            result = await self.skill_invoker.invoke_skill(
+                agent_name=agent_name,
+                action=action,
+                step=step,
+                target_path=target_path,
+                worktree_path=worktree_path,
+                state=self.state,
+            )
+
+            # Wait for Skill to complete (Background Agents execute automatically)
+            from .cursor_skill_helper import check_skill_completion
+            import asyncio
+            
+            max_wait_time = 3600  # 1 hour max wait
+            poll_interval = 2  # Check every 2 seconds
+            elapsed = 0
+            
+            print(f"Waiting for {agent_name}/{action} to complete...")
+            while elapsed < max_wait_time:
+                completion_status = check_skill_completion(
+                    worktree_path=worktree_path,
+                    expected_artifacts=step.creates,
+                )
+                
+                if completion_status["completed"]:
+                    print(f"✓ {agent_name}/{action} completed - found artifacts: {completion_status['found_artifacts']}")
+                    break
+                
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+                
+                # Print progress every 10 seconds
+                if elapsed % 10 == 0:
+                    print(f"  Still waiting... ({elapsed}s elapsed)")
+            else:
+                raise TimeoutError(
+                    f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
+                    f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}"
+                )
+
+            # Extract artifacts from worktree
+            artifacts = await self.worktree_manager.extract_artifacts(
+                worktree_path=worktree_path,
+                step=step,
+            )
+
+            # Convert artifacts to dict format
+            artifacts_dict: dict[str, dict[str, Any]] = {}
+            for artifact in artifacts:
+                artifacts_dict[artifact.name] = {
+                    "name": artifact.name,
+                    "path": artifact.path,
+                    "status": artifact.status,
+                    "created_by": artifact.created_by,
+                    "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
+                    "metadata": artifact.metadata or {},
+                }
+
+            # Remove the worktree on success (keep on failure for debugging)
+            try:
+                await self.worktree_manager.remove_worktree(worktree_name)
+            except Exception:
+                pass
+
+            return artifacts_dict if artifacts_dict else None
+
+        except Exception as e:
+            # Re-raise exception - ParallelStepExecutor will handle it
+            raise
+
+    def _worktree_name_for_step(self, step_id: str) -> str:
+        """
+        Deterministic, collision-resistant worktree name for a workflow step.
+
+        Keeps names short/safe for Windows while still traceable back to workflow+step.
+        """
+        if not self.state:
+            raise ValueError("Workflow not started")
+        raw = f"workflow-{self.state.workflow_id}-step-{step_id}"
+        digest = hashlib.sha256(raw.encode("utf-8")).hexdigest()[:8]
+        base = f"{raw}-{digest}"
+        return WorktreeManager._sanitize_component(base, max_len=80)
 
     def get_current_step(self) -> WorkflowStep | None:
         """Get the current workflow step."""
@@ -302,6 +574,22 @@ class CursorWorkflowExecutor:
         action = self._normalize_action(step.action)
         agent_name = (step.agent or "").strip().lower()
 
+        # Handle completion/finalization steps that don't require agent execution
+        if agent_name == "orchestrator" and action in ["finalize", "complete"]:
+            # Mark step as completed without executing an agent
+            step_execution = StepExecution(
+                step_id=step.id,
+                agent=agent_name,
+                action=action,
+                started_at=datetime.now(),
+                completed_at=datetime.now(),
+                status="completed",
+            )
+            self.state.step_executions.append(step_execution)
+            self._advance_step()
+            self.save_state()
+            return
+
         # Create step execution tracking
         step_execution = StepExecution(
             step_id=step.id,
@@ -313,7 +601,7 @@ class CursorWorkflowExecutor:
 
         try:
             # Create worktree for this step
-            worktree_name = f"workflow-{self.state.workflow_id}-step-{step.id}"
+            worktree_name = self._worktree_name_for_step(step.id)
             worktree_path = await self.worktree_manager.create_worktree(
                 worktree_name=worktree_name
             )
@@ -325,7 +613,7 @@ class CursorWorkflowExecutor:
                 artifacts=artifacts_list,
             )
 
-            # Invoke Skill via SkillInvoker
+            # Invoke Skill via SkillInvoker (creates command files for Background Agents)
             result = await self.skill_invoker.invoke_skill(
                 agent_name=agent_name,
                 action=action,
@@ -334,6 +622,38 @@ class CursorWorkflowExecutor:
                 worktree_path=worktree_path,
                 state=self.state,
             )
+
+            # Wait for Skill to complete (Background Agents execute automatically)
+            # Poll for artifacts or completion marker
+            from .cursor_skill_helper import check_skill_completion
+            import asyncio
+            
+            max_wait_time = 3600  # 1 hour max wait
+            poll_interval = 2  # Check every 2 seconds
+            elapsed = 0
+            
+            print(f"Waiting for {agent_name}/{action} to complete...")
+            while elapsed < max_wait_time:
+                completion_status = check_skill_completion(
+                    worktree_path=worktree_path,
+                    expected_artifacts=step.creates,
+                )
+                
+                if completion_status["completed"]:
+                    print(f"✓ {agent_name}/{action} completed - found artifacts: {completion_status['found_artifacts']}")
+                    break
+                
+                await asyncio.sleep(poll_interval)
+                elapsed += poll_interval
+                
+                # Print progress every 10 seconds
+                if elapsed % 10 == 0:
+                    print(f"  Still waiting... ({elapsed}s elapsed)")
+            else:
+                raise TimeoutError(
+                    f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
+                    f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}"
+                )
 
             # Extract artifacts from worktree
             artifacts = await self.worktree_manager.extract_artifacts(
@@ -349,6 +669,12 @@ class CursorWorkflowExecutor:
             step_execution.completed_at = datetime.now()
             step_execution.status = "completed"
             step_execution.result = result
+
+            # Remove the worktree on success (keep on failure for debugging)
+            try:
+                await self.worktree_manager.remove_worktree(worktree_name)
+            except Exception:
+                pass
 
             # Advance to next step
             self._advance_step()

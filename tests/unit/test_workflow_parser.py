@@ -47,6 +47,12 @@ class TestWorkflowParser:
                         "requires": ["file1.md"],
                         "next": "step3",
                     },
+                    {
+                        "id": "step3",
+                        "agent": "orchestrator",
+                        "action": "finalize",
+                        "context_tier": 1,
+                    },
                 ],
             }
         }
@@ -59,7 +65,7 @@ class TestWorkflowParser:
         assert workflow.name == "Test Workflow"
         assert workflow.version == "1.0.0"
         assert workflow.type == WorkflowType.GREENFIELD
-        assert len(workflow.steps) == 2
+        assert len(workflow.steps) == 3
 
     def test_parse_workflow_settings(self, sample_workflow_dict):
         """Test parsing workflow settings."""
@@ -73,7 +79,7 @@ class TestWorkflowParser:
         """Test parsing workflow steps."""
         workflow = WorkflowParser.parse(sample_workflow_dict)
 
-        assert len(workflow.steps) == 2
+        assert len(workflow.steps) == 3
         step1 = workflow.steps[0]
         assert step1.id == "step1"
         assert step1.agent == "analyst"
@@ -92,7 +98,7 @@ class TestWorkflowParser:
         workflow = WorkflowParser.parse_file(workflow_file)
 
         assert workflow.id == "test-workflow"
-        assert len(workflow.steps) == 2
+        assert len(workflow.steps) == 3
 
     def test_parse_workflow_type_brownfield(self):
         """Test parsing brownfield workflow type."""
@@ -109,6 +115,39 @@ class TestWorkflowParser:
 
         workflow = WorkflowParser.parse(workflow_dict)
         assert workflow.type == WorkflowType.BROWNFIELD
+
+    def test_parse_workflow_type_invalid_raises(self):
+        """Workflow type must be one of the known enum values."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "type": "not-a-type",
+                "steps": [],
+            }
+        }
+
+        with pytest.raises(ValueError, match="Invalid workflow type"):
+            WorkflowParser.parse(workflow_dict)
+
+    def test_parse_invalid_next_reference_raises(self):
+        """Step 'next' must reference an existing step id."""
+        workflow_dict = {
+            "workflow": {
+                "id": "test",
+                "name": "Test",
+                "description": "Test",
+                "version": "1.0.0",
+                "steps": [
+                    {"id": "step1", "agent": "analyst", "action": "gather", "next": "missing"}
+                ],
+            }
+        }
+
+        with pytest.raises(ValueError, match="references unknown step id"):
+            WorkflowParser.parse(workflow_dict)
 
     def test_parse_step_with_gate(self):
         """Test parsing step with gate condition."""
@@ -157,3 +196,16 @@ class TestWorkflowParser:
 
         with pytest.raises(ValueError, match="Step must have id, agent, and action"):
             WorkflowParser.parse(workflow_dict)
+
+    def test_repo_workflows_parse(self, project_root_path: Path):
+        """All shipped top-level workflows should remain parseable."""
+        workflows_dir = project_root_path / "workflows"
+        assert workflows_dir.exists()
+
+        workflow_files = list(workflows_dir.glob("*.yml")) + list(
+            workflows_dir.glob("*.yaml")
+        )
+        assert workflow_files, "No workflows found under workflows/"
+
+        for wf in workflow_files:
+            WorkflowParser.parse_file(wf)

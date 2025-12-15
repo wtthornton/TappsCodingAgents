@@ -171,7 +171,7 @@ class KBLookup:
         # Try MCP Gateway first
         if self.mcp_gateway:
             try:
-                resolve_result = self.mcp_gateway.call_tool(
+                resolve_result = await self.mcp_gateway.call_tool(
                     "mcp_Context7_resolve-library-id", libraryName=library
                 )
                 if resolve_result.get("success"):
@@ -225,7 +225,7 @@ class KBLookup:
             # Try MCP Gateway first
             if self.mcp_gateway:
                 try:
-                    api_result = self.mcp_gateway.call_tool(
+                    api_result = await self.mcp_gateway.call_tool(
                         "mcp_Context7_get-library-docs",
                         context7CompatibleLibraryID=context7_id,
                         topic=topic,

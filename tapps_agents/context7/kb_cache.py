@@ -27,6 +27,20 @@ class CacheEntry:
     cached_at: str | None = None
     cache_hits: int = 0
 
+    def to_dict(self) -> dict:
+        """Convert cache entry to dictionary."""
+        return {
+            "library": self.library,
+            "topic": self.topic,
+            "content": self.content,
+            "context7_id": self.context7_id,
+            "trust_score": self.trust_score,
+            "snippet_count": self.snippet_count,
+            "token_count": self.token_count,
+            "cached_at": self.cached_at,
+            "cache_hits": self.cache_hits,
+        }
+
     def to_markdown(self) -> str:
         """Convert cache entry to markdown format."""
         lines = [
@@ -136,16 +150,31 @@ class KBCache:
     """Main KB cache manager for Context7 documentation."""
 
     def __init__(
-        self, cache_root: Path, metadata_manager: MetadataManager | None = None
+        self,
+        cache_root: Path | None = None,
+        cache_dir: Path | None = None,
+        metadata_manager: MetadataManager | None = None,
     ):
         """
         Initialize KB cache manager.
 
         Args:
-            cache_root: Root directory for KB cache
+            cache_root: Root directory for KB cache (preferred parameter name)
+            cache_dir: Alternative parameter name for cache_root (for backward compatibility)
             metadata_manager: Optional MetadataManager instance (creates new one if not provided)
         """
-        self.cache_structure = CacheStructure(cache_root)
+        # Support both cache_root and cache_dir for backward compatibility
+        root = cache_root or cache_dir
+        if root is None:
+            # Default to current directory if neither provided
+            from pathlib import Path as P
+            root = P.cwd() / ".tapps-agents" / "kb" / "context7-cache"
+        else:
+            root = Path(root)
+
+        self.cache_root = root
+        self.cache_dir = root  # Alias for backward compatibility
+        self.cache_structure = CacheStructure(root)
         self.metadata_manager = metadata_manager or MetadataManager(
             self.cache_structure
         )
@@ -181,9 +210,9 @@ class KBCache:
 
     def store(
         self,
-        library: str,
-        topic: str,
-        content: str,
+        library: str | CacheEntry,
+        topic: str | None = None,
+        content: str | None = None,
         context7_id: str | None = None,
         trust_score: float | None = None,
         snippet_count: int | None = None,
@@ -192,9 +221,9 @@ class KBCache:
         Store entry in cache.
 
         Args:
-            library: Library name
-            topic: Topic name
-            content: Documentation content
+            library: Library name, or CacheEntry instance (if entry is provided, other params ignored)
+            topic: Topic name (required if library is a string)
+            content: Documentation content (required if library is a string)
             context7_id: Optional Context7 ID
             trust_score: Optional trust score
             snippet_count: Optional snippet count
@@ -202,20 +231,36 @@ class KBCache:
         Returns:
             CacheEntry instance
         """
-        # Estimate token count (rough approximation: 1 token ≈ 4 characters)
-        token_count = len(content) // 4
+        # Support both CacheEntry object and individual parameters
+        if isinstance(library, CacheEntry):
+            entry = library
+            library = entry.library
+            topic = entry.topic
+            content = entry.content
+            context7_id = entry.context7_id or context7_id
+            trust_score = entry.trust_score if entry.trust_score is not None else trust_score
+            snippet_count = entry.snippet_count if entry.snippet_count else snippet_count
+        else:
+            if topic is None or content is None:
+                raise ValueError("topic and content are required when library is a string")
+            # Estimate token count (rough approximation: 1 token ≈ 4 characters)
+            token_count = len(content) // 4
 
-        entry = CacheEntry(
-            library=library,
-            topic=topic,
-            content=content,
-            context7_id=context7_id,
-            trust_score=trust_score,
-            snippet_count=snippet_count or 0,
-            token_count=token_count,
-            cached_at=datetime.utcnow().isoformat() + "Z",
-            cache_hits=0,
-        )
+            entry = CacheEntry(
+                library=library,
+                topic=topic,
+                content=content,
+                context7_id=context7_id,
+                trust_score=trust_score,
+                snippet_count=snippet_count or 0,
+                token_count=token_count,
+                cached_at=datetime.utcnow().isoformat() + "Z",
+                cache_hits=0,
+            )
+
+        # Update cached_at if not set
+        if not entry.cached_at:
+            entry.cached_at = datetime.utcnow().isoformat() + "Z"
 
         # Ensure library directory exists
         self.cache_structure.ensure_library_dir(library)
@@ -282,3 +327,36 @@ class KBCache:
                     self.metadata_manager.save_cache_index(index)
                 return True
             return False
+
+    def list_entries(self) -> list[CacheEntry]:
+        """
+        List all cache entries.
+
+        Returns:
+            List of CacheEntry instances
+        """
+        entries = []
+        index = self.metadata_manager.load_cache_index()
+        for library_name, library_info in index.libraries.items():
+            for topic_name in library_info.get("topics", {}):
+                entry = self.get(library_name, topic_name)
+                if entry:
+                    entries.append(entry)
+        return entries
+
+    def clear(self) -> None:
+        """
+        Clear all cache entries.
+        """
+        import shutil
+
+        # Delete all library directories
+        for library_dir in self.cache_structure.cache_root.iterdir():
+            if library_dir.is_dir() and library_dir.name != "metadata":
+                shutil.rmtree(library_dir)
+
+        # Reset index
+        from .cache_structure import CacheIndex
+
+        index = CacheIndex(version="1.0", last_updated=None, total_entries=0, libraries={})
+        self.metadata_manager.save_cache_index(index)

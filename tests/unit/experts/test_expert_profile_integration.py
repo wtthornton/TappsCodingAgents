@@ -155,20 +155,19 @@ class TestExpertRegistryWithProfile:
         )
         registry.register_expert(mock_expert, is_builtin=False)
 
-        # No profile available
-        registry.project_root = None
-        registry._cached_profile = None
+        # No profile available - mock the profile getter to return None
+        from unittest.mock import patch
+        with patch.object(registry, '_get_project_profile', return_value=None):
+            # Should still work
+            await registry.consult(
+                query="Test question", domain="security", include_all=False
+            )
 
-        # Should still work
-        await registry.consult(
-            query="Test question", domain="security", include_all=False
-        )
-
-        # Verify expert was called (with None profile)
-        mock_expert.run.assert_called_once()
-        call_kwargs = mock_expert.run.call_args[1]
-        assert "project_profile" in call_kwargs
-        assert call_kwargs["project_profile"] is None
+            # Verify expert was called (with None profile)
+            mock_expert.run.assert_called_once()
+            call_kwargs = mock_expert.run.call_args[1]
+            assert "project_profile" in call_kwargs
+            assert call_kwargs["project_profile"] is None
 
 
 @pytest.mark.unit

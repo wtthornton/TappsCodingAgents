@@ -20,6 +20,13 @@ from .recommender import (
     WorkflowRecommendation,
     WorkflowRecommender,
 )
+from .messaging import (
+    FileMessageBus,
+    TaskAssignmentMessage,
+    StatusUpdateMessage,
+    TaskCompleteMessage,
+)
+from .logging_helper import WorkflowLogger
 
 __all__ = [
     "WorkflowParser",
@@ -30,6 +37,11 @@ __all__ = [
     "WorkflowType",
     "Artifact",
     "WorkflowSettings",
+    "FileMessageBus",
+    "TaskAssignmentMessage",
+    "StatusUpdateMessage",
+    "TaskCompleteMessage",
+    "WorkflowLogger",
     "ProjectDetector",
     "ProjectType",
     "ProjectCharacteristics",

@@ -2,6 +2,7 @@
 Tests for Cloud MAL providers (Anthropic, OpenAI).
 """
 
+import os
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -20,6 +21,12 @@ class TestCloudMAL:
             anthropic=CloudProviderConfig(api_key="test-anthropic-key"),
             openai=CloudProviderConfig(api_key="test-openai-key"),
         )
+
+    @pytest.fixture(autouse=True)
+    def set_headless_mode(self):
+        """Set TAPPS_AGENTS_MODE to headless for all tests in this class."""
+        with patch.dict("os.environ", {"TAPPS_AGENTS_MODE": "headless"}):
+            yield
 
     @pytest.mark.asyncio
     async def test_anthropic_generate_success(self, mal_config):

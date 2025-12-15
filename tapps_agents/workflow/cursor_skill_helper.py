@@ -161,6 +161,15 @@ def check_skill_completion(
         else:
             result["missing_artifacts"].append(artifact_path)
     
+    # Check for background agent artifacts (quality/testing)
+    quality_report = worktree_path / "reports" / "quality" / "quality-report.json"
+    test_report = worktree_path / "reports" / "tests" / "test-report.json"
+    
+    if quality_report.exists():
+        result["found_artifacts"].append("reports/quality/quality-report.json")
+    if test_report.exists():
+        result["found_artifacts"].append("reports/tests/test-report.json")
+    
     # Consider complete if at least one expected artifact exists
     # or if a completion marker exists
     completion_marker = worktree_path / ".skill-completed.txt"
