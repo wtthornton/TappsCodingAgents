@@ -98,7 +98,59 @@ In CI, prefer:
 
 Reports default to `reports/quality/`.
 
+### CI Environment Variables
+
+For production CI environments, configure:
+
+```bash
+# Enable structured logging (JSON format)
+export TAPPS_AGENTS_STRUCTURED_LOGGING=true
+
+# Set runtime mode explicitly
+export TAPPS_AGENTS_MODE=headless
+
+# Optional: Set trace ID for distributed tracing
+export CURSOR_TRACE_ID=${CI_PIPELINE_ID}
+```
+
+## Production Readiness Checklist
+
+Before deploying to production, ensure:
+
+- [ ] **Logging & Monitoring**: Structured logging enabled (`TAPPS_AGENTS_STRUCTURED_LOGGING=true`)
+- [ ] **Error Handling**: Error redaction verified (no secrets in logs/artifacts)
+- [ ] **Artifact Retention**: Configured retention policies for `.tapps-agents/` artifacts
+- [ ] **Quality Gates**: Quality thresholds configured in workflows (if applicable)
+- [ ] **Configuration**: Production config file validated and tested
+- [ ] **Dependencies**: All required tools available (Ruff, mypy, pytest, etc.)
+- [ ] **Credentials**: Context7/MAL credentials configured securely (if used)
+- [ ] **Worktree Cleanup**: Automated cleanup configured for old worktrees
+- [ ] **Metrics**: Analytics collection enabled and monitored
+
+## Support Boundaries
+
+### Required Components
+
+- **Python 3.13+**: Framework requires Python 3.13 or later
+- **Core Agents**: All 13 workflow agents are required for full functionality
+- **Workflow Engine**: Required for workflow execution
+
+### Optional Components (Graceful Degradation)
+
+- **Context7**: Optional library documentation cache. If unavailable, agents continue without it.
+- **MAL (Model Abstraction Layer)**: Optional for headless mode. Required only if running outside Cursor.
+- **Playwright**: Optional for browser automation. Some features may be limited without it.
+- **External Quality Tools**: Ruff, mypy, pytest are optional but recommended for quality checks.
+
+### Best-Effort Features
+
+- **Expert System**: Built-in experts are always available. Custom experts are best-effort.
+- **Workflow Recommendations**: Auto-detection is best-effort; manual workflow selection always works.
+- **Cache Warming**: Context7 cache warming is best-effort and non-blocking.
+
 ## Related Documentation
 
-- `docs/TROUBLESHOOTING.md`
-- `docs/CONFIGURATION.md`
+- `docs/TROUBLESHOOTING.md` - Common issues and solutions
+- `docs/CONFIGURATION.md` - Complete configuration reference
+- `docs/API.md` - Python API and CLI usage
+- `docs/ARCHITECTURE.md` - System architecture overview

@@ -251,12 +251,124 @@ class Analytics:
         """
         metrics = self.get_cache_metrics()
 
+        # Determine health status
+        health_status = "healthy"
+        health_issues = []
+
+        if metrics.hit_rate < 70:
+            health_status = "needs_attention"
+            health_issues.append(f"Low hit rate: {metrics.hit_rate:.1f}% (target: >80%)")
+
+        if metrics.avg_response_time_ms > 1000:
+            health_status = "needs_attention"
+            health_issues.append(
+                f"High response time: {metrics.avg_response_time_ms:.1f}ms (target: <1s)"
+            )
+
+        if metrics.total_entries == 0:
+            health_status = "empty"
+            health_issues.append("Cache is empty - consider running cache warming")
+
+        if metrics.cache_misses > metrics.cache_hits * 2:
+            health_status = "needs_attention"
+            health_issues.append(
+                f"High miss rate: {metrics.cache_misses} misses vs {metrics.cache_hits} hits"
+            )
+
         return {
-            "status": "healthy" if metrics.hit_rate > 70 else "needs_attention",
+            "status": health_status,
+            "health_issues": health_issues,
             "metrics": metrics.to_dict(),
             "timestamp": datetime.utcnow().isoformat() + "Z",
             "top_libraries": [m.to_dict() for m in self.get_top_libraries(5)],
         }
+
+    def get_health_check(self) -> dict[str, Any]:
+        """
+        Get detailed health check report.
+
+        Returns:
+            Dictionary with health check information
+        """
+        metrics = self.get_cache_metrics()
+        status_report = self.get_status_report()
+
+        # Calculate token savings (estimate: cache hits save API calls)
+        # Rough estimate: each API call might use 1000-5000 tokens
+        estimated_tokens_saved = metrics.cache_hits * 2000  # Conservative estimate
+
+        return {
+            "healthy": status_report["status"] == "healthy",
+            "status": status_report["status"],
+            "issues": status_report.get("health_issues", []),
+            "metrics": {
+                "hit_rate": metrics.hit_rate,
+                "hit_rate_target": 80.0,
+                "hit_rate_meets_target": metrics.hit_rate >= 80.0,
+                "avg_response_time_ms": metrics.avg_response_time_ms,
+                "response_time_target_ms": 1000.0,
+                "response_time_meets_target": metrics.avg_response_time_ms <= 1000.0,
+                "total_entries": metrics.total_entries,
+                "total_libraries": metrics.total_libraries,
+                "cache_hits": metrics.cache_hits,
+                "cache_misses": metrics.cache_misses,
+                "api_calls": metrics.api_calls,
+                "estimated_tokens_saved": estimated_tokens_saved,
+                "token_savings_percentage": (
+                    (estimated_tokens_saved / (estimated_tokens_saved + metrics.api_calls * 2000) * 100)
+                    if (estimated_tokens_saved + metrics.api_calls * 2000) > 0
+                    else 0.0
+                ),
+            },
+            "recommendations": self._get_health_recommendations(metrics),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+
+    def _get_health_recommendations(self, metrics: CacheMetrics) -> list[str]:
+        """
+        Get health recommendations based on metrics.
+
+        Args:
+            metrics: CacheMetrics instance
+
+        Returns:
+            List of recommendation strings
+        """
+        recommendations = []
+
+        if metrics.hit_rate < 80:
+            recommendations.append(
+                f"Hit rate is {metrics.hit_rate:.1f}% (target: >80%). "
+                "Consider running cache warming to pre-populate common libraries."
+            )
+
+        if metrics.avg_response_time_ms > 1000:
+            recommendations.append(
+                f"Average response time is {metrics.avg_response_time_ms:.1f}ms (target: <1s). "
+                "Consider optimizing cache structure or reducing cache size."
+            )
+
+        if metrics.total_entries == 0:
+            recommendations.append(
+                "Cache is empty. Run 'context7-kb-populate' or 'context7-kb-warm' to populate cache."
+            )
+
+        if metrics.cache_misses > metrics.cache_hits:
+            recommendations.append(
+                f"Cache misses ({metrics.cache_misses}) exceed hits ({metrics.cache_hits}). "
+                "Consider warming cache with frequently used libraries."
+            )
+
+        if metrics.api_calls > metrics.cache_hits * 2:
+            recommendations.append(
+                f"High API call rate ({metrics.api_calls}). "
+                "Ensure cache warming is running to reduce API calls."
+            )
+
+        if not recommendations:
+            recommendations.append("Cache health is good. No immediate actions needed.")
+
+        return recommendations
 
     def reset_metrics(self):
         """Reset all metrics (keeps cache entries)."""

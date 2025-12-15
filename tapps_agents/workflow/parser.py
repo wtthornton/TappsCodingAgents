@@ -14,6 +14,7 @@ from .models import (
     WorkflowStep,
     WorkflowType,
 )
+from .schema_validator import WorkflowSchemaValidator, SchemaVersion
 
 
 class WorkflowParser:
@@ -73,6 +74,25 @@ class WorkflowParser:
                 raise ValueError(
                     f"{WorkflowParser._err_prefix(file_path)}Missing required top-level key 'workflow'"
                 )
+
+        # Determine schema version for validation
+        schema_version = workflow_data.get("schema_version")
+        if schema_version is None:
+            schema_version = SchemaVersion.LATEST.value
+        elif not isinstance(schema_version, str):
+            raise ValueError(
+                f"{WorkflowParser._err_prefix(file_path)}schema_version must be a string"
+            )
+
+        # Validate against schema
+        validator = WorkflowSchemaValidator(schema_version=schema_version)
+        validation_errors = validator.validate_workflow(content, file_path=file_path)
+        if validation_errors:
+            error_messages = [str(err) for err in validation_errors]
+            raise ValueError(
+                f"{WorkflowParser._err_prefix(file_path)}Schema validation failed:\n"
+                + "\n".join(f"  - {msg}" for msg in error_messages)
+            )
 
         # Parse workflow metadata
         workflow_id = workflow_data.get("id")

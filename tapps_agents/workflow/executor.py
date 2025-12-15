@@ -3,6 +3,7 @@ Workflow Executor - Execute YAML workflow definitions.
 """
 
 import json
+import os
 import shutil
 import subprocess  # nosec B404 - fixed args, no shell
 import sys
@@ -18,7 +19,11 @@ from .recommender import WorkflowRecommendation, WorkflowRecommender
 from .state_manager import AdvancedStateManager
 from .parallel_executor import ParallelStepExecutor
 from .logging_helper import WorkflowLogger
+from .event_log import WorkflowEventLog
+from .progress_monitor import WorkflowProgressMonitor
 from ..core.runtime_mode import is_cursor_mode
+from ..quality.quality_gates import QualityGate, QualityThresholds
+from ..core.error_envelope import ErrorEnvelopeBuilder, create_error_result
 
 
 class WorkflowExecutor:
@@ -62,6 +67,11 @@ class WorkflowExecutor:
             self.state_manager = AdvancedStateManager(state_dir, compression=False)
         else:
             self.state_manager = None
+
+        # Initialize event log
+        state_dir = self._state_dir()
+        events_dir = state_dir / "events"
+        self.event_log = WorkflowEventLog(events_dir)
 
         if auto_detect:
             self.recommender = WorkflowRecommender(
@@ -135,8 +145,13 @@ class WorkflowExecutor:
         # This matches CursorWorkflowExecutor format for consistency
         workflow_id = f"{self.workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
-        # Initialize logger with workflow_id for correlation
-        self.logger = WorkflowLogger(workflow_id=workflow_id)
+        # Initialize logger with workflow_id for correlation and trace context
+        # Check for structured logging config
+        structured_logging = os.getenv("TAPPS_AGENTS_STRUCTURED_LOGGING", "false").lower() == "true"
+        self.logger = WorkflowLogger(
+            workflow_id=workflow_id,
+            structured_output=structured_logging,
+        )
 
         self.state = WorkflowState(
             workflow_id=workflow_id,
@@ -159,6 +174,19 @@ class WorkflowExecutor:
             workflow_version=self.workflow.version,
             step_count=len(self.workflow.steps),
         )
+
+        # Emit workflow_start event
+        self.event_log.emit_event(
+            event_type="workflow_start",
+            workflow_id=workflow_id,
+            status="running",
+            metadata={
+                "workflow_name": self.workflow.name,
+                "workflow_version": self.workflow.version,
+                "step_count": len(self.workflow.steps),
+            },
+        )
+
         self.save_state()
 
         return self.state
@@ -294,6 +322,13 @@ class WorkflowExecutor:
             if steps_executed >= max_steps:
                 self.state.status = "failed"
                 self.state.error = f"Max steps exceeded ({max_steps}). Aborting."
+                # Emit workflow_end event
+                self.event_log.emit_event(
+                    event_type="workflow_end",
+                    workflow_id=self.state.workflow_id,
+                    status="failed",
+                    error=self.state.error,
+                )
                 self.save_state()
                 break
 
@@ -311,17 +346,41 @@ class WorkflowExecutor:
                 if len(completed_step_ids) >= len(self.workflow.steps):
                     self.state.status = "completed"
                     self.state.current_step = None
+                    # Emit workflow_end event
+                    self.event_log.emit_event(
+                        event_type="workflow_end",
+                        workflow_id=self.state.workflow_id,
+                        status="completed",
+                    )
                     self.save_state()
                     break
                 else:
                     # Workflow is blocked (dependencies not met)
                     self.state.status = "failed"
                     self.state.error = "Workflow blocked: no ready steps and workflow not complete"
+                    # Emit workflow_end event
+                    self.event_log.emit_event(
+                        event_type="workflow_end",
+                        workflow_id=self.state.workflow_id,
+                        status="failed",
+                        error=self.state.error,
+                    )
                     self.save_state()
                     break
 
             # Execute ready steps in parallel
             running_step_ids.update(step.id for step in ready_steps)
+            
+            # Emit step_start events
+            for step in ready_steps:
+                self.event_log.emit_event(
+                    event_type="step_start",
+                    workflow_id=self.state.workflow_id,
+                    step_id=step.id,
+                    agent=step.agent,
+                    action=step.action,
+                    status="running",
+                )
             
             async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
                 """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
@@ -343,7 +402,17 @@ class WorkflowExecutor:
                     ) if self.logger else None
                     
                     if result.error:
-                        # Step failed - mark as failed and stop workflow
+                        # Step failed - emit event and mark as failed
+                        self.event_log.emit_event(
+                            event_type="step_fail",
+                            workflow_id=self.state.workflow_id,
+                            step_id=result.step.id,
+                            agent=result.step.agent,
+                            action=result.step.action,
+                            status="failed",
+                            error=str(result.error),
+                        )
+                        # Mark as failed and stop workflow
                         self.state.status = "failed"
                         self.state.error = f"Step {result.step.id} failed: {result.error}"
                         if step_logger:
@@ -359,16 +428,8 @@ class WorkflowExecutor:
                     completed_step_ids.add(result.step.id)
                     running_step_ids.discard(result.step.id)
                     
-                    if step_logger:
-                        step_logger.info(
-                            "Step completed",
-                            action=result.step.action,
-                            duration_seconds=result.step_execution.duration_seconds,
-                            artifact_count=len(result.artifacts) if result.artifacts else 0,
-                        )
-                    
-                    # Update artifacts from result
-                    # result.artifacts is the dict returned by execute_step_wrapper
+                    # Prepare artifact summaries for event
+                    artifact_summaries = {}
                     if result.artifacts and isinstance(result.artifacts, dict):
                         for art_name, art_data in result.artifacts.items():
                             if isinstance(art_data, dict):
@@ -381,6 +442,29 @@ class WorkflowExecutor:
                                     metadata=art_data.get("metadata", {}),
                                 )
                                 self.state.artifacts[artifact.name] = artifact
+                                artifact_summaries[artifact.name] = {
+                                    "path": artifact.path,
+                                    "status": artifact.status,
+                                }
+                    
+                    # Emit step_finish event
+                    self.event_log.emit_event(
+                        event_type="step_finish",
+                        workflow_id=self.state.workflow_id,
+                        step_id=result.step.id,
+                        agent=result.step.agent,
+                        action=result.step.action,
+                        status="completed",
+                        artifacts=artifact_summaries,
+                    )
+                    
+                    if step_logger:
+                        step_logger.info(
+                            "Step completed",
+                            action=result.step.action,
+                            duration_seconds=result.step_execution.duration_seconds,
+                            artifact_count=len(result.artifacts) if result.artifacts else 0,
+                        )
                     
                     # Handle gate evaluation for reviewer steps
                     if result.step.agent == "reviewer" and result.step.gate:
@@ -390,6 +474,13 @@ class WorkflowExecutor:
                             passed = gate_last.get("passed", False)
                             on_pass = gate.get("on_pass") or gate.get("on-pass")
                             on_fail = gate.get("on_fail") or gate.get("on-fail")
+                            
+                            # Update current step based on gate result
+                            if passed and on_pass:
+                                self.state.current_step = on_pass
+                            elif (not passed) and on_fail:
+                                self.state.current_step = on_fail
+                            
                             # Note: Gate-based step advancement handled in next iteration
                             # when finding ready steps
 
@@ -398,7 +489,18 @@ class WorkflowExecutor:
 
             except Exception as e:
                 self.state.status = "failed"
-                self.state.error = str(e)
+                envelope = ErrorEnvelopeBuilder.from_exception(
+                    e,
+                    workflow_id=self.state.workflow_id,
+                )
+                self.state.error = envelope.to_user_message()
+                # Emit workflow_end event
+                self.event_log.emit_event(
+                    event_type="workflow_end",
+                    workflow_id=self.state.workflow_id,
+                    status="failed",
+                    error=str(e),
+                )
                 if self.logger:
                     self.logger.error(
                         "Workflow execution failed",
@@ -634,16 +736,30 @@ class WorkflowExecutor:
                 # Note: Gate evaluation handled separately in parallel execution flow
                 gate = step.gate or {}
                 if gate:
-                    scoring = (
-                        review_result.get("scoring", {})
-                        if isinstance(review_result, dict)
-                        else {}
-                    )
-                    passed = bool(review_result.get("passed", False))
+                    # Extract scoring thresholds from step configuration
+                    scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
+                    thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
+                    
+                    # Create quality thresholds from step config or use defaults
+                    thresholds = QualityThresholds.from_dict(thresholds_config)
+                    
+                    # Extract scores from review result
+                    scores = review_result.get("scores", {})
+                    if not scores:
+                        scoring = review_result.get("scoring", {})
+                        if scoring:
+                            scores = scoring.get("scores", {})
+                    
+                    # Evaluate quality gate
+                    quality_gate = QualityGate(thresholds=thresholds)
+                    gate_result = quality_gate.evaluate_from_review_result(review_result, thresholds)
+                    
+                    passed = gate_result.passed
                     self.state.variables["gate_last"] = {
                         "step": step.id,
                         "passed": passed,
-                        "scoring": scoring,
+                        "scoring": scores,
+                        "gate_result": gate_result.to_dict(),
                     }
 
             elif agent_name == "tester" and action in {"write_tests", "test"}:
@@ -770,22 +886,43 @@ class WorkflowExecutor:
                     if security_path.exists():
                         created_artifacts.append({"name": "security-report.md", "path": str(security_path)})
 
-            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                
-                doc_result = await run_agent(
-                    "documenter",
-                    "generate-docs",
-                    requirements=requirements,
-                    project_root=str(self.project_root)
-                )
-                self.state.variables["documenter_result"] = doc_result
-                
-                if "docs/" in (step.creates or []):
-                    docs_dir = self.project_root / "docs"
-                    if docs_dir.exists():
-                        created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
+            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document", "generate_project_docs", "generate-project-docs"}:
+                # Support both single-file and project-level documentation
+                if action in {"generate_project_docs", "generate-project-docs"}:
+                    # Project-level documentation
+                    output_dir = step.metadata.get("output_dir") if step.metadata else None
+                    output_format = step.metadata.get("output_format", "markdown") if step.metadata else "markdown"
+                    
+                    doc_result = await run_agent(
+                        "documenter",
+                        "generate-project-docs",
+                        project_root=str(self.project_root),
+                        output_dir=output_dir,
+                        output_format=output_format,
+                    )
+                    self.state.variables["documenter_result"] = doc_result
+                    
+                    # Capture docs/api/ directory as artifact
+                    docs_api_dir = self.project_root / "docs" / "api"
+                    if docs_api_dir.exists():
+                        created_artifacts.append({"name": "docs/api/", "path": str(docs_api_dir)})
+                else:
+                    # Single-file documentation (backward compatible)
+                    requirements_path = self.project_root / "requirements.md"
+                    requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
+                    
+                    doc_result = await run_agent(
+                        "documenter",
+                        "generate-docs",
+                        requirements=requirements,
+                        project_root=str(self.project_root)
+                    )
+                    self.state.variables["documenter_result"] = doc_result
+                    
+                    if "docs/" in (step.creates or []):
+                        docs_dir = self.project_root / "docs"
+                        if docs_dir.exists():
+                            created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
 
             else:
                 # Unknown mapping: return empty artifacts
@@ -1027,16 +1164,30 @@ class WorkflowExecutor:
                 # Evaluate gate if configured
                 gate = step.gate or {}
                 if gate:
-                    scoring = (
-                        review_result.get("scoring", {})
-                        if isinstance(review_result, dict)
-                        else {}
-                    )
-                    passed = bool(review_result.get("passed", False))
+                    # Extract scoring thresholds from step configuration
+                    scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
+                    thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
+                    
+                    # Create quality thresholds from step config or use defaults
+                    thresholds = QualityThresholds.from_dict(thresholds_config)
+                    
+                    # Extract scores from review result
+                    scores = review_result.get("scores", {})
+                    if not scores:
+                        scoring = review_result.get("scoring", {})
+                        if scoring:
+                            scores = scoring.get("scores", {})
+                    
+                    # Evaluate quality gate
+                    quality_gate = QualityGate(thresholds=thresholds)
+                    gate_result = quality_gate.evaluate_from_review_result(review_result, thresholds)
+                    
+                    passed = gate_result.passed
                     self.state.variables["gate_last"] = {
                         "step": step.id,
                         "passed": passed,
-                        "scoring": scoring,
+                        "scoring": scores,
+                        "gate_result": gate_result.to_dict(),
                     }
                     on_pass = gate.get("on_pass") or gate.get("on-pass")
                     on_fail = gate.get("on_fail") or gate.get("on-fail")
@@ -1188,23 +1339,43 @@ class WorkflowExecutor:
                     if security_path.exists():
                         created_artifacts.append({"name": "security-report.md", "path": str(security_path)})
 
-            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document"}:
-                # Documenter agent - generate comprehensive documentation
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                
-                doc_result = await run_agent(
-                    "documenter",
-                    "generate-docs",
-                    requirements=requirements,
-                    project_root=str(self.project_root)
-                )
-                self.state.variables["documenter_result"] = doc_result
-                
-                if "docs/" in (step.creates or []):
-                    docs_dir = self.project_root / "docs"
-                    if docs_dir.exists():
-                        created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
+            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document", "generate_project_docs", "generate-project-docs"}:
+                # Support both single-file and project-level documentation
+                if action in {"generate_project_docs", "generate-project-docs"}:
+                    # Project-level documentation
+                    output_dir = step.metadata.get("output_dir") if step.metadata else None
+                    output_format = step.metadata.get("output_format", "markdown") if step.metadata else "markdown"
+                    
+                    doc_result = await run_agent(
+                        "documenter",
+                        "generate-project-docs",
+                        project_root=str(self.project_root),
+                        output_dir=output_dir,
+                        output_format=output_format,
+                    )
+                    self.state.variables["documenter_result"] = doc_result
+                    
+                    # Capture docs/api/ directory as artifact
+                    docs_api_dir = self.project_root / "docs" / "api"
+                    if docs_api_dir.exists():
+                        created_artifacts.append({"name": "docs/api/", "path": str(docs_api_dir)})
+                else:
+                    # Single-file documentation (backward compatible)
+                    requirements_path = self.project_root / "requirements.md"
+                    requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
+                    
+                    doc_result = await run_agent(
+                        "documenter",
+                        "generate-docs",
+                        requirements=requirements,
+                        project_root=str(self.project_root)
+                    )
+                    self.state.variables["documenter_result"] = doc_result
+                    
+                    if "docs/" in (step.creates or []):
+                        docs_dir = self.project_root / "docs"
+                        if docs_dir.exists():
+                            created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
 
             else:
                 # Unknown mapping: mark as skipped rather than hard-failing (best-effort).
@@ -1232,7 +1403,13 @@ class WorkflowExecutor:
                 step_execution.completed_at - step_execution.started_at
             ).total_seconds()
             step_execution.status = "failed"
-            step_execution.error = str(e)
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                e,
+                workflow_id=self.state.workflow_id if self.state else None,
+                step_id=step.id,
+                agent=step.agent or "",
+            )
+            step_execution.error = envelope.to_user_message()
             raise
 
     def get_current_step(self) -> WorkflowStep | None:
@@ -1826,3 +2003,20 @@ class WorkflowExecutor:
             "can_proceed": self.can_proceed(),
             "expert_registry_available": self.expert_registry is not None,
         }
+
+    def get_progress(self) -> dict[str, Any]:
+        """
+        Get detailed progress report for the workflow.
+
+        Returns:
+            Dictionary with progress metrics, history, and recommendations
+        """
+        if not self.state or not self.workflow:
+            return {"status": "not_started", "message": "Workflow not started"}
+
+        monitor = WorkflowProgressMonitor(
+            workflow=self.workflow,
+            state=self.state,
+            event_log=self.event_log,
+        )
+        return monitor.get_progress_report()

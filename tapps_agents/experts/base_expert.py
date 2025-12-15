@@ -14,6 +14,7 @@ from ..core.agent_base import BaseAgent
 from ..core.config import ProjectConfig
 from ..core.mal import MAL
 from .simple_rag import SimpleKnowledgeBase
+from .vector_rag import VectorKnowledgeBase
 
 if TYPE_CHECKING:
     from ..core.project_profile import ProjectProfile
@@ -73,7 +74,7 @@ class BaseExpert(BaseAgent):
 
         # RAG components (to be initialized if enabled)
         self.rag_interface: Any | None = None
-        self.knowledge_base: SimpleKnowledgeBase | None = None
+        self.knowledge_base: SimpleKnowledgeBase | VectorKnowledgeBase | None = None
 
         # Fine-tuning components (to be initialized if enabled)
         self.adapter = None
@@ -100,6 +101,8 @@ class BaseExpert(BaseAgent):
 
         For built-in experts, checks built-in knowledge path first.
         For customer experts, checks project knowledge path.
+
+        Uses VectorKnowledgeBase (FAISS) when available, falls back to SimpleKnowledgeBase.
         """
         knowledge_dirs: list[Path] = []
 
@@ -124,15 +127,54 @@ class BaseExpert(BaseAgent):
             if customer_general.exists() and customer_general not in knowledge_dirs:
                 knowledge_dirs.append(customer_general)
 
-        # Initialize knowledge base with all available directories
-        # SimpleKnowledgeBase will search across all provided directories
+        # Initialize knowledge base with vector backend if available
         if knowledge_dirs:
-            # Use first directory as primary, but SimpleKnowledgeBase can be enhanced
-            # to support multiple directories in the future
-            self.knowledge_base = SimpleKnowledgeBase(
-                knowledge_dirs[0], domain=self.primary_domain
-            )
-            self.rag_interface = self.knowledge_base
+            primary_dir = knowledge_dirs[0]
+
+            # Try to use VectorKnowledgeBase (FAISS-based)
+            try:
+                from ..core.config import get_expert_config
+
+                expert_config = get_expert_config()
+                self.knowledge_base = VectorKnowledgeBase(
+                    knowledge_dir=primary_dir,
+                    domain=self.primary_domain,
+                    chunk_size=512,
+                    overlap=50,
+                    embedding_model="all-MiniLM-L6-v2",
+                    similarity_threshold=0.7,
+                )
+                self.rag_interface = self.knowledge_base
+
+                # Log backend selection
+                backend_type = self.knowledge_base.get_backend_type()
+                if backend_type == "vector":
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.info(
+                        f"Expert {self.expert_id}: Using VectorKnowledgeBase (FAISS) for RAG"
+                    )
+                else:
+                    import logging
+
+                    logger = logging.getLogger(__name__)
+                    logger.info(
+                        f"Expert {self.expert_id}: Using SimpleKnowledgeBase fallback for RAG"
+                    )
+            except Exception as e:
+                # Fallback to SimpleKnowledgeBase
+                import logging
+
+                logger = logging.getLogger(__name__)
+                logger.debug(
+                    f"Failed to initialize VectorKnowledgeBase for {self.expert_id}: {e}. "
+                    "Falling back to SimpleKnowledgeBase."
+                )
+                self.knowledge_base = SimpleKnowledgeBase(
+                    primary_dir, domain=self.primary_domain
+                )
+                self.rag_interface = self.knowledge_base
         else:
             # No knowledge base available
             self.knowledge_base = None

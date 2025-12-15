@@ -15,6 +15,18 @@ from .domain_config import DomainConfig, DomainConfigParser
 from .expert_config import ExpertConfigModel, ExpertsConfig, load_expert_configs
 from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
+from .rag_chunker import Chunk, Chunker
+from .rag_embedder import Embedder, SentenceTransformerEmbedder, create_embedder
+from .rag_index import IndexMetadata, VectorIndex
+from .rag_evaluation import (
+    EvaluationMetrics,
+    EvaluationQuestion,
+    EvaluationResult,
+    RAGEvaluator,
+    create_default_evaluation_set,
+)
+from .rag_safety import RAGSafetyHandler, create_safety_handler
+from .vector_rag import VectorKnowledgeBase
 from .weight_distributor import ExpertWeightMatrix, WeightDistributor
 
 __all__ = [
@@ -28,6 +40,21 @@ __all__ = [
     "TECHNICAL_DOMAINS",
     "SimpleKnowledgeBase",
     "KnowledgeChunk",
+    "VectorKnowledgeBase",
+    "Chunk",
+    "Chunker",
+    "Embedder",
+    "SentenceTransformerEmbedder",
+    "create_embedder",
+    "IndexMetadata",
+    "VectorIndex",
+    "RAGEvaluator",
+    "EvaluationMetrics",
+    "EvaluationQuestion",
+    "EvaluationResult",
+    "create_default_evaluation_set",
+    "RAGSafetyHandler",
+    "create_safety_handler",
     "ExpertConfigModel",
     "ExpertsConfig",
     "load_expert_configs",

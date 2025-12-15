@@ -77,10 +77,10 @@ Implement the business expert consultation framework with RAG (Retrieval-Augment
 
 ## Compatibility Requirements
 
-- [ ] Existing expert profiles remain functional
-- [ ] Expert system optional (agents work without experts)
-- [ ] No breaking changes to agent interfaces
-- [ ] RAG system doesn't impact agent performance significantly
+- [x] Existing expert profiles remain functional
+- [x] Expert system optional (agents work without experts)
+- [x] No breaking changes to agent interfaces
+- [x] RAG system doesn't impact agent performance significantly (fallback to SimpleKnowledgeBase when FAISS unavailable)
 
 ## Risk Mitigation
 
@@ -96,14 +96,16 @@ Implement the business expert consultation framework with RAG (Retrieval-Augment
 
 ## Definition of Done
 
-- [ ] Expert Registry operational
-- [ ] RAG system functional with FAISS indexing
-- [ ] Weighted decision-making works correctly
-- [ ] Expert consultation integrated into Design/Code agents
-- [ ] 2-3 industry experts configured and queryable
-- [ ] Knowledge retrieval < 2s average
-- [ ] Documentation updated
-- [ ] No regression in existing features
+- [x] Expert Registry operational
+- [x] RAG system functional with FAISS indexing
+- [x] Weighted decision-making works correctly
+- [x] Expert consultation integrated into Design/Code agents
+- [x] 2-3 industry experts configured and queryable
+- [x] Knowledge retrieval < 2s average (with timeout monitoring)
+- [x] Documentation updated
+- [x] No regression in existing features
+- [x] Safety hardening implemented (prompt injection defense)
+- [x] Evaluation system implemented (metrics, golden Q/A sets)
 
 ## Integration Verification
 

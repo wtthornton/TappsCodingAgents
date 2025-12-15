@@ -274,3 +274,211 @@ class DocGenerator:
         ]
 
         return "\n".join(prompt_parts)
+
+    async def generate_project_api_docs(
+        self,
+        project_root: Path,
+        output_dir: Path,
+        output_format: str = "markdown",
+        include_modules: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Generate project-level API documentation for multiple modules.
+
+        Args:
+            project_root: Root directory of the project
+            output_dir: Directory to write documentation files
+            output_format: Output format (markdown/rst/html)
+            include_modules: Optional list of module paths to include (relative to project_root)
+
+        Returns:
+            Dictionary with generation results including index path and generated files
+        """
+        output_dir.mkdir(parents=True, exist_ok=True)
+
+        # Determine which modules to document
+        if include_modules:
+            module_paths = [project_root / mod for mod in include_modules]
+        else:
+            # Default: document key agents and workflow engine modules
+            module_paths = self._find_key_modules(project_root)
+
+        generated_files: list[str] = []
+        module_docs: dict[str, str] = {}
+
+        # Generate docs for each module
+        for module_path in module_paths:
+            if not module_path.exists() or not module_path.is_file():
+                continue
+
+            # Skip test files and private modules
+            if "test" in str(module_path) or "__pycache__" in str(module_path):
+                continue
+
+            try:
+                # Generate documentation for this module
+                docs = await self.generate_api_docs(module_path, output_format)
+
+                # Determine output filename
+                rel_path = module_path.relative_to(project_root)
+                # Convert path to safe filename (e.g., tapps_agents/agents/reviewer/agent.py -> agents_reviewer_agent.md)
+                safe_name = str(rel_path).replace("/", "_").replace("\\", "_").replace(".py", "")
+                output_file = output_dir / f"{safe_name}.md"
+
+                # Write documentation
+                output_file.write_text(docs, encoding="utf-8")
+                generated_files.append(str(output_file))
+                module_docs[str(rel_path)] = str(output_file)
+
+            except Exception as e:
+                # Log error but continue with other modules
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Failed to generate docs for {module_path}: {e}")
+
+        # Generate index page
+        index_content = self._generate_index_page(module_docs, output_format)
+        index_path = output_dir / f"index.{'md' if output_format == 'markdown' else output_format}"
+        index_path.write_text(index_content, encoding="utf-8")
+
+        return {
+            "index_file": str(index_path),
+            "generated_files": generated_files,
+            "module_count": len(generated_files),
+        }
+
+    def _find_key_modules(self, project_root: Path) -> list[Path]:
+        """
+        Find key modules to document (agents + workflow engine).
+
+        Args:
+            project_root: Project root directory
+
+        Returns:
+            List of module paths to document
+        """
+        modules: list[Path] = []
+
+        # Find agent modules
+        agents_dir = project_root / "tapps_agents" / "agents"
+        if agents_dir.exists():
+            for agent_dir in agents_dir.iterdir():
+                if agent_dir.is_dir() and not agent_dir.name.startswith("_"):
+                    agent_file = agent_dir / "agent.py"
+                    if agent_file.exists():
+                        modules.append(agent_file)
+
+        # Find workflow engine modules
+        workflow_dir = project_root / "tapps_agents" / "workflow"
+        if workflow_dir.exists():
+            key_workflow_files = [
+                "executor.py",
+                "parser.py",
+                "state_manager.py",
+                "models.py",
+                "recommender.py",
+            ]
+            for filename in key_workflow_files:
+                workflow_file = workflow_dir / filename
+                if workflow_file.exists():
+                    modules.append(workflow_file)
+
+        # Find core modules
+        core_dir = project_root / "tapps_agents" / "core"
+        if core_dir.exists():
+            key_core_files = [
+                "agent_base.py",
+                "config.py",
+                "mal.py",
+                "exceptions.py",
+            ]
+            for filename in key_core_files:
+                core_file = core_dir / filename
+                if core_file.exists():
+                    modules.append(core_file)
+
+        return modules
+
+    def _generate_index_page(
+        self, module_docs: dict[str, str], output_format: str
+    ) -> str:
+        """
+        Generate index page linking to all module documentation.
+
+        Args:
+            module_docs: Dictionary mapping module paths to documentation file paths
+            output_format: Output format (markdown/rst/html)
+
+        Returns:
+            Index page content
+        """
+        if output_format == "markdown":
+            lines = [
+                "# API Documentation Index",
+                "",
+                "This directory contains automatically generated API documentation for the TappsCodingAgents project.",
+                "",
+                "## Modules",
+                "",
+            ]
+
+            # Group by category
+            agents: list[tuple[str, str]] = []
+            workflow: list[tuple[str, str]] = []
+            core: list[tuple[str, str]] = []
+            other: list[tuple[str, str]] = []
+
+            for module_path, doc_file in module_docs.items():
+                doc_filename = Path(doc_file).name
+                if "agents" in module_path:
+                    agents.append((module_path, doc_filename))
+                elif "workflow" in module_path:
+                    workflow.append((module_path, doc_filename))
+                elif "core" in module_path:
+                    core.append((module_path, doc_filename))
+                else:
+                    other.append((module_path, doc_filename))
+
+            if agents:
+                lines.append("### Agents")
+                lines.append("")
+                for module_path, doc_filename in sorted(agents):
+                    agent_name = Path(module_path).stem
+                    lines.append(f"- [{agent_name}]({doc_filename}) - `{module_path}`")
+                lines.append("")
+
+            if workflow:
+                lines.append("### Workflow Engine")
+                lines.append("")
+                for module_path, doc_filename in sorted(workflow):
+                    module_name = Path(module_path).stem
+                    lines.append(f"- [{module_name}]({doc_filename}) - `{module_path}`")
+                lines.append("")
+
+            if core:
+                lines.append("### Core")
+                lines.append("")
+                for module_path, doc_filename in sorted(core):
+                    module_name = Path(module_path).stem
+                    lines.append(f"- [{module_name}]({doc_filename}) - `{module_path}`")
+                lines.append("")
+
+            if other:
+                lines.append("### Other")
+                lines.append("")
+                for module_path, doc_filename in sorted(other):
+                    module_name = Path(module_path).stem
+                    lines.append(f"- [{module_name}]({doc_filename}) - `{module_path}`")
+                lines.append("")
+
+            lines.append("---")
+            lines.append("")
+            lines.append("*Generated automatically by TappsCodingAgents Documenter Agent*")
+
+            return "\n".join(lines)
+        else:
+            # For other formats, return a simple text index
+            lines = ["API Documentation Index", "", "Generated modules:"]
+            for module_path, doc_file in sorted(module_docs.items()):
+                lines.append(f"  - {module_path} -> {doc_file}")
+            return "\n".join(lines)

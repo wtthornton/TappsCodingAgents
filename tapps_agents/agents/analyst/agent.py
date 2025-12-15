@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
@@ -35,6 +36,11 @@ class AnalystAgent(BaseAgent):
         self.mal = mal or MAL(
             ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
         )
+
+        # Initialize Context7 helper
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return available commands for analyst agent"""

@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+from .cache_locking import cache_lock, get_cache_lock_file
 from .cache_structure import CacheStructure
 from .metadata import MetadataManager
 
@@ -262,22 +263,25 @@ class KBCache:
         if not entry.cached_at:
             entry.cached_at = datetime.utcnow().isoformat() + "Z"
 
-        # Ensure library directory exists
-        self.cache_structure.ensure_library_dir(library)
+        # Use file locking for atomic writes
+        lock_file = get_cache_lock_file(self.cache_root, library=library)
+        with cache_lock(lock_file):
+            # Ensure library directory exists
+            self.cache_structure.ensure_library_dir(library)
 
-        # Write markdown file
-        doc_file = self.cache_structure.get_library_doc_file(library, topic)
-        doc_file.write_text(entry.to_markdown(), encoding="utf-8")
+            # Write markdown file
+            doc_file = self.cache_structure.get_library_doc_file(library, topic)
+            doc_file.write_text(entry.to_markdown(), encoding="utf-8")
 
-        # Update metadata
-        self.metadata_manager.update_library_metadata(
-            library, context7_id=context7_id, topic=topic
-        )
+            # Update metadata
+            self.metadata_manager.update_library_metadata(
+                library, context7_id=context7_id, topic=topic
+            )
 
-        # Update cache index
-        self.metadata_manager.update_cache_index(
-            library, topic, context7_id=context7_id
-        )
+            # Update cache index
+            self.metadata_manager.update_cache_index(
+                library, topic, context7_id=context7_id
+            )
 
         return entry
 

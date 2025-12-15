@@ -85,6 +85,136 @@ class TestGenerator:
 
         return test_code
 
+    async def generate_e2e_tests(
+        self,
+        project_root: Path,
+        test_path: Path | None = None,
+        context: str | None = None,
+        expert_guidance: str | None = None,
+    ) -> str:
+        """
+        Generate end-to-end (E2E) tests for the project.
+
+        Args:
+            project_root: Root directory of the project
+            test_path: Optional path where test will be written
+            context: Optional context
+            expert_guidance: Optional expert guidance
+
+        Returns:
+            Generated test code as string, or empty string if E2E framework not detected
+        """
+        # Detect E2E framework
+        e2e_framework = self._detect_e2e_framework(project_root)
+        if not e2e_framework:
+            # Graceful degradation: return empty string with message in context
+            return ""
+
+        # Analyze project structure
+        project_analysis = self._analyze_project_structure(project_root)
+
+        # Build prompt for LLM
+        prompt = self._build_e2e_test_prompt(
+            project_root, e2e_framework, project_analysis, test_path, context, expert_guidance
+        )
+
+        # Generate test code
+        test_code = await self.mal.generate(prompt)
+
+        return test_code
+
+    def _detect_e2e_framework(self, project_root: Path) -> str | None:
+        """
+        Detect E2E testing framework in the project.
+
+        Returns:
+            Framework name ("playwright", "selenium", "cypress", "pytest-playwright") or None
+        """
+        project_root = Path(project_root)
+
+        # Check for Playwright
+        playwright_config = project_root / "playwright.config.js"
+        playwright_config_ts = project_root / "playwright.config.ts"
+        playwright_pyproject = project_root / "pyproject.toml"
+        if (
+            playwright_config.exists()
+            or playwright_config_ts.exists()
+            or (playwright_pyproject.exists() and "playwright" in playwright_pyproject.read_text())
+        ):
+            return "playwright"
+
+        # Check for pytest-playwright
+        if (project_root / "pytest.ini").exists():
+            pytest_ini_content = (project_root / "pytest.ini").read_text()
+            if "playwright" in pytest_ini_content.lower():
+                return "pytest-playwright"
+
+        # Check requirements.txt or pyproject.toml for pytest-playwright
+        for req_file in [project_root / "requirements.txt", project_root / "pyproject.toml"]:
+            if req_file.exists():
+                content = req_file.read_text().lower()
+                if "pytest-playwright" in content or "playwright" in content:
+                    return "pytest-playwright"
+
+        # Check for Selenium
+        selenium_config = project_root / "selenium.config.js"
+        for req_file in [project_root / "requirements.txt", project_root / "pyproject.toml"]:
+            if req_file.exists():
+                content = req_file.read_text().lower()
+                if "selenium" in content:
+                    return "selenium"
+        if selenium_config.exists():
+            return "selenium"
+
+        # Check for Cypress (JavaScript/TypeScript projects)
+        cypress_config = project_root / "cypress.config.js"
+        cypress_config_ts = project_root / "cypress.config.ts"
+        if cypress_config.exists() or cypress_config_ts.exists():
+            return "cypress"
+
+        return None
+
+    def _analyze_project_structure(self, project_root: Path) -> dict[str, Any]:
+        """Analyze project structure for E2E test generation."""
+        project_root = Path(project_root)
+        analysis: dict[str, Any] = {
+            "entry_points": [],
+            "main_modules": [],
+            "api_endpoints": [],
+            "test_directories": [],
+        }
+
+        # Find entry points (main.py, app.py, __main__.py, etc.)
+        entry_patterns = ["main.py", "app.py", "__main__.py", "server.py", "run.py"]
+        for pattern in entry_patterns:
+            for entry_file in project_root.rglob(pattern):
+                if "test" not in str(entry_file):
+                    analysis["entry_points"].append(str(entry_file.relative_to(project_root)))
+
+        # Find main modules (directories with __init__.py)
+        for init_file in project_root.rglob("__init__.py"):
+            module_dir = init_file.parent
+            if "test" not in str(module_dir):
+                rel_path = module_dir.relative_to(project_root)
+                if str(rel_path) != ".":
+                    analysis["main_modules"].append(str(rel_path))
+
+        # Find API endpoints (common patterns)
+        api_patterns = ["api", "routes", "endpoints", "controllers"]
+        for pattern in api_patterns:
+            api_dir = project_root / pattern
+            if api_dir.exists() and api_dir.is_dir():
+                analysis["api_endpoints"].append(pattern)
+
+        # Find existing test directories
+        test_dirs = ["tests", "test", "tests/e2e", "tests/integration"]
+        for test_dir in test_dirs:
+            test_path = project_root / test_dir
+            if test_path.exists() and test_path.is_dir():
+                analysis["test_directories"].append(test_dir)
+
+        return analysis
+
     def _analyze_code(self, code: str, file_path: Path) -> dict[str, Any]:
         """Analyze code structure to extract functions, classes, etc."""
         functions: list[dict[str, Any]] = []
@@ -241,6 +371,103 @@ class TestGenerator:
                 "- Include setup and teardown",
                 "- Use descriptive test names",
                 "- Mock external services",
+                "",
+                "Generate only the test code (no explanations):",
+            ]
+        )
+
+        return "\n".join(prompt_parts)
+
+    def _build_e2e_test_prompt(
+        self,
+        project_root: Path,
+        e2e_framework: str,
+        project_analysis: dict[str, Any],
+        test_path: Path | None,
+        context: str | None,
+        expert_guidance: str | None = None,
+    ) -> str:
+        """Build prompt for E2E test generation."""
+        prompt_parts = [
+            f"Generate comprehensive end-to-end (E2E) tests for this project using {e2e_framework}.",
+            "",
+            "Project structure:",
+        ]
+
+        if project_analysis["entry_points"]:
+            prompt_parts.append(
+                f"- Entry points: {', '.join(project_analysis['entry_points'][:5])}"
+            )
+        if project_analysis["main_modules"]:
+            prompt_parts.append(
+                f"- Main modules: {', '.join(project_analysis['main_modules'][:10])}"
+            )
+        if project_analysis["api_endpoints"]:
+            prompt_parts.append(
+                f"- API endpoints: {', '.join(project_analysis['api_endpoints'])}"
+            )
+
+        prompt_parts.append("")
+
+        if test_path:
+            prompt_parts.append(f"Write tests to: {test_path}")
+            prompt_parts.append("")
+
+        if context:
+            prompt_parts.append("Context:")
+            prompt_parts.append(context)
+            prompt_parts.append("")
+
+        if expert_guidance:
+            prompt_parts.append("Expert Guidance:")
+            prompt_parts.append(expert_guidance)
+            prompt_parts.append("")
+
+        # Framework-specific requirements
+        framework_requirements = {
+            "playwright": [
+                "- Use Playwright's page object model pattern",
+                "- Test user workflows and interactions",
+                "- Include browser automation (navigation, clicks, form fills)",
+                "- Test across different browsers if configured",
+            ],
+            "pytest-playwright": [
+                "- Use pytest fixtures for setup/teardown",
+                "- Use Playwright's async API",
+                "- Test user workflows end-to-end",
+                "- Include proper async/await patterns",
+            ],
+            "selenium": [
+                "- Use Selenium WebDriver patterns",
+                "- Test user interactions and workflows",
+                "- Include proper wait strategies",
+                "- Test across different browsers",
+            ],
+            "cypress": [
+                "- Use Cypress commands and patterns",
+                "- Test user journeys end-to-end",
+                "- Include proper assertions",
+                "- Use Cypress best practices",
+            ],
+        }
+
+        requirements = framework_requirements.get(
+            e2e_framework,
+            [
+                "- Test complete user workflows",
+                "- Include setup and teardown",
+                "- Test critical paths",
+            ],
+        )
+
+        prompt_parts.extend(
+            [
+                "Requirements:",
+                *requirements,
+                "- Test critical user journeys",
+                "- Include error scenarios",
+                "- Use descriptive test names",
+                "- Ensure tests are deterministic and repeatable",
                 "",
                 "Generate only the test code (no explanations):",
             ]

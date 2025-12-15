@@ -85,6 +85,10 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                     "command": "*generate-tests",
                     "description": "Generate tests without running",
                 },
+                {
+                    "command": "*generate-e2e-tests",
+                    "description": "Generate end-to-end tests (requires E2E framework)",
+                },
                 {"command": "*run-tests", "description": "Run existing tests"},
             ]
         )
@@ -96,6 +100,8 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             return await self.test_command(**kwargs)
         elif command == "generate-tests":
             return await self.generate_tests_command(**kwargs)
+        elif command == "generate-e2e-tests":
+            return await self.generate_e2e_tests_command(**kwargs)
         elif command == "run-tests":
             return await self.run_tests_command(**kwargs)
         elif command == "help":
@@ -270,6 +276,91 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             "test_code": test_code,
             "test_file": str(test_path),
             "written": self.auto_write_tests,
+        }
+
+    async def generate_e2e_tests_command(
+        self,
+        test_file: str | None = None,
+        project_root: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Generate end-to-end (E2E) tests for the project.
+
+        Args:
+            test_file: Optional path where test will be written
+            project_root: Optional project root directory (default: current directory)
+
+        Returns:
+            Dictionary with test generation results
+        """
+        # Determine project root
+        if project_root:
+            proj_root = Path(project_root)
+        else:
+            proj_root = self.project_root if hasattr(self, "project_root") else Path.cwd()
+
+        if not proj_root.exists():
+            return {"error": f"Project root not found: {proj_root}"}
+
+        # Consult Testing expert for E2E test generation guidance
+        expert_guidance = ""
+        expert_advice = None
+        if self.expert_registry:
+            testing_consultation = await self.expert_registry.consult(
+                query="Provide best practices for generating end-to-end (E2E) tests. Focus on test coverage, user workflows, and maintainability.",
+                domain="testing-strategies",
+                agent_id=self.agent_id,
+                prioritize_builtin=True,
+            )
+            if (
+                testing_consultation.confidence
+                >= testing_consultation.confidence_threshold
+            ):
+                expert_guidance = testing_consultation.weighted_answer
+                expert_advice = {
+                    "confidence": testing_consultation.confidence,
+                    "threshold": testing_consultation.confidence_threshold,
+                    "guidance": expert_guidance,
+                }
+
+        # Generate E2E tests
+        test_code = await self.test_generator.generate_e2e_tests(
+            project_root=proj_root,
+            test_path=Path(test_file) if test_file else None,
+            expert_guidance=expert_guidance,
+        )
+
+        # Check if E2E framework was detected
+        e2e_framework = self.test_generator._detect_e2e_framework(proj_root)
+        if not e2e_framework:
+            return {
+                "type": "e2e_test_generation",
+                "error": "No E2E testing framework detected. Please install one of: playwright, pytest-playwright, selenium, or cypress.",
+                "test_code": None,
+                "test_file": None,
+                "written": False,
+                "framework_detected": False,
+            }
+
+        # Determine test file path
+        if test_file:
+            test_path = Path(test_file)
+        else:
+            # Default E2E test location
+            test_path = proj_root / "tests" / "e2e" / "test_e2e.py"
+
+        # Write test file if auto_write is enabled
+        if self.auto_write_tests and test_code:
+            test_path.parent.mkdir(parents=True, exist_ok=True)
+            test_path.write_text(test_code, encoding="utf-8")
+
+        return {
+            "type": "e2e_test_generation",
+            "test_code": test_code,
+            "test_file": str(test_path),
+            "written": self.auto_write_tests and bool(test_code),
+            "framework_detected": e2e_framework,
+            "expert_advice": expert_advice,
         }
 
     async def run_tests_command(

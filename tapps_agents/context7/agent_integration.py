@@ -9,6 +9,7 @@ from ..core.config import ProjectConfig
 from ..mcp.gateway import MCPGateway
 from .analytics import Analytics
 from .cache_structure import CacheStructure
+from .credential_validation import validate_context7_credentials
 from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import KBCache
 from .lookup import KBLookup
@@ -43,6 +44,21 @@ class Context7AgentHelper:
         if not context7_config or not context7_config.enabled:
             self.enabled = False
             return
+
+        # Validate credentials (non-blocking, logs warnings if invalid)
+        try:
+            cred_result = validate_context7_credentials(mcp_gateway=mcp_gateway)
+            if not cred_result.valid:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(
+                    f"Context7 credentials validation failed: {cred_result.error}\n"
+                    f"{cred_result.actionable_message}"
+                )
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Context7 credential validation error: {e}", exc_info=True)
 
         self.enabled = True
         self.config = context7_config

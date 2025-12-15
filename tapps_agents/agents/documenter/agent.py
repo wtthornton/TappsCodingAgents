@@ -76,6 +76,10 @@ class DocumenterAgent(BaseAgent):
                     "command": "*update-docstrings",
                     "description": "Update docstrings in code",
                 },
+                {
+                    "command": "*generate-project-docs",
+                    "description": "Generate project-level API documentation for all agents and workflow engine",
+                },
             ]
         )
         return commands
@@ -90,6 +94,8 @@ class DocumenterAgent(BaseAgent):
             return await self.update_readme_command(**kwargs)
         elif command == "update-docstrings":
             return await self.update_docstrings_command(**kwargs)
+        elif command == "generate-project-docs":
+            return await self.generate_project_docs_command(**kwargs)
         elif command == "help":
             return await self._help()
         else:
@@ -242,6 +248,63 @@ class DocumenterAgent(BaseAgent):
             "written": write_file,
         }
 
+    async def generate_project_docs_command(
+        self,
+        project_root: str | None = None,
+        output_dir: str | None = None,
+        output_format: str = "markdown",
+        include_modules: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Generate project-level API documentation.
+
+        Args:
+            project_root: Project root directory (default: current directory)
+            output_dir: Output directory for docs (default: docs/api/)
+            output_format: Output format (markdown/rst/html)
+            include_modules: Optional list of module paths to include (relative to project_root)
+
+        Returns:
+            Dictionary with generation results
+        """
+        if project_root:
+            root_path = Path(project_root)
+        else:
+            root_path = Path.cwd()
+
+        if not root_path.exists():
+            return {"error": f"Directory not found: {root_path}"}
+
+        # Determine output directory
+        if output_dir:
+            output_path = Path(output_dir)
+            # Validate output path is within project or allowed location
+            self._validate_path(output_path)
+        else:
+            # Default to docs/api/ under project root
+            output_path = root_path / "docs" / "api"
+
+        # Ensure output directory exists
+        output_path.mkdir(parents=True, exist_ok=True)
+
+        # Generate project documentation
+        result = await self.doc_generator.generate_project_api_docs(
+            project_root=root_path,
+            output_dir=output_path,
+            output_format=output_format,
+            include_modules=include_modules,
+        )
+
+        return {
+            "type": "project_docs",
+            "project_root": str(root_path),
+            "output_dir": str(output_path),
+            "index_file": result["index_file"],
+            "generated_files": result["generated_files"],
+            "module_count": result["module_count"],
+            "format": output_format,
+        }
+
     async def _help(self) -> dict[str, Any]:
         """Generate help text."""
         help_text = self.format_help()
@@ -250,6 +313,7 @@ class DocumenterAgent(BaseAgent):
         help_text += "  *generate-docs utils.py\n"
         help_text += "  *update-readme\n"
         help_text += "  *update-docstrings code.py --write-file\n"
+        help_text += "  *generate-project-docs --output-dir docs/api\n"
         return {"type": "help", "content": help_text}
 
     async def close(self):

@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
@@ -42,6 +43,11 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
 
         # Expert registry will be initialized in activate
         self.expert_registry = None
+
+        # Initialize Context7 helper
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
     async def activate(self, project_root: Path | None = None):
         """Activate the designer agent with expert support."""

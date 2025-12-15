@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from .config import ProjectConfig, load_config
+from .error_envelope import create_error_result, ErrorEnvelopeBuilder
 
 
 class BaseAgent(ABC):
@@ -318,3 +319,48 @@ class BaseAgent(ABC):
                     self.context_manager = tiered_adapter.context_manager
 
         return self._unified_cache
+
+    def handle_optional_dependency_error(
+        self,
+        error: Exception,
+        dependency_name: str,
+        workflow_id: str | None = None,
+        step_id: str | None = None,
+    ) -> dict[str, Any]:
+        """
+        Handle errors from optional dependencies gracefully.
+
+        This method creates a structured error result that indicates
+        the dependency is optional and the operation can continue without it.
+
+        Args:
+            error: Exception that occurred
+            dependency_name: Name of the optional dependency (e.g., "Context7", "MAL")
+            workflow_id: Optional workflow ID for correlation
+            step_id: Optional step ID for correlation
+
+        Returns:
+            Error result dictionary with recoverable=True
+        """
+        from .exceptions import Context7UnavailableError, MALDisabledInCursorModeError
+
+        # Create a user-friendly message
+        if isinstance(error, (Context7UnavailableError, MALDisabledInCursorModeError)):
+            message = f"{dependency_name} is not available: {str(error)}"
+        else:
+            message = f"{dependency_name} operation failed: {str(error)}"
+
+        envelope = ErrorEnvelope(
+            code=f"{dependency_name.lower()}_unavailable",
+            message=message,
+            category="external_dependency",
+            workflow_id=workflow_id,
+            step_id=step_id,
+            agent=self.agent_id,
+            recoverable=True,
+        )
+
+        result = envelope.to_dict()
+        result["success"] = False
+        result["optional_dependency"] = True
+        return result

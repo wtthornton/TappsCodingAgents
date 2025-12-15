@@ -10,7 +10,9 @@ from typing import Any
 from ..core.config import ProjectConfig
 from .analytics import Analytics
 from .cache_structure import CacheStructure
+from .cache_warming import CacheWarmer
 from .cleanup import KBCleanup
+from .credential_validation import validate_context7_credentials
 from .cross_references import CrossReferenceManager
 from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import KBCache
@@ -122,9 +124,19 @@ class Context7Commands:
             fuzzy_threshold=0.7,
         )
 
+        # Cache warmer
+        self.cache_warmer = CacheWarmer(
+            kb_cache=self.kb_cache,
+            kb_lookup=self.kb_lookup,
+            cache_structure=self.cache_structure,
+            metadata_manager=self.metadata_manager,
+            project_root=self.project_root,
+        )
+
     def set_mcp_gateway(self, mcp_gateway):
         """Set MCP Gateway for API calls."""
         self.kb_lookup.mcp_gateway = mcp_gateway
+        self.cache_warmer.kb_lookup = self.kb_lookup
 
     async def cmd_docs(self, library: str, topic: str | None = None) -> dict[str, Any]:
         """
@@ -225,6 +237,7 @@ class Context7Commands:
             return {
                 "success": True,
                 "status": status_report.get("status", "unknown"),
+                "health_issues": status_report.get("health_issues", []),
                 "cache_size_bytes": cache_size,
                 "cache_size_mb": cache_size / (1024 * 1024),
                 "metrics": {
@@ -239,6 +252,24 @@ class Context7Commands:
                 "top_libraries": status_report.get("top_libraries", []),
                 "timestamp": status_report.get("timestamp"),
             }
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def cmd_health(self) -> dict[str, Any]:
+        """
+        Get detailed health check report.
+
+        Command: *context7-kb-health
+
+        Returns:
+            Dictionary with health check information
+        """
+        if not self.enabled:
+            return {"error": "Context7 is not enabled"}
+
+        try:
+            health_check = self.analytics.get_health_check()
+            return {"success": True, **health_check}
         except Exception as e:
             return {"success": False, "error": str(e)}
 
@@ -580,6 +611,155 @@ class Context7Commands:
         except Exception as e:
             return {"success": False, "error": str(e)}
 
+    async def cmd_warm(
+        self,
+        auto_detect: bool = True,
+        libraries: list[str] | None = None,
+        priority: int = 5,
+    ) -> dict[str, Any]:
+        """
+        Warm cache with project libraries and common topics.
+
+        Command: *context7-kb-warm [--auto-detect] [libraries...]
+
+        Args:
+            auto_detect: Whether to auto-detect libraries from project (default: True)
+            libraries: Optional list of library names
+            priority: Priority for warming (1-10)
+
+        Returns:
+            Dictionary with warming result
+        """
+        if not self.enabled:
+            return {"error": "Context7 is not enabled"}
+
+        if not self.kb_lookup.mcp_gateway:
+            return {"error": "MCP Gateway not available"}
+
+        try:
+            result = await self.cache_warmer.warm_cache(
+                libraries=libraries,
+                topics=None,  # Auto-detect topics
+                priority=priority,
+                auto_detect=auto_detect,
+            )
+            return result
+        except Exception as e:
+            return {"success": False, "error": str(e)}
+
+    async def cmd_populate(
+        self,
+        libraries: list[str] | None = None,
+        topics: list[str] | None = None,
+        force: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Pre-populate cache with library documentation.
+
+        Command: *context7-kb-populate [libraries...] [--topics topics...] [--force]
+
+        Args:
+            libraries: List of library names to populate (defaults to common libraries)
+            topics: Optional list of topics to populate (defaults to ["overview"])
+            force: Whether to force refresh even if already cached
+
+        Returns:
+            Dictionary with populate result
+        """
+        if not self.enabled:
+            return {"error": "Context7 is not enabled"}
+
+        if not self.kb_lookup.mcp_gateway:
+            return {"error": "MCP Gateway not available"}
+
+        # Default libraries if not provided
+        if libraries is None:
+            libraries = [
+                "fastapi",
+                "pytest",
+                "react",
+                "typescript",
+                "python",
+                "pydantic",
+                "sqlalchemy",
+                "playwright",
+            ]
+
+        # Default topics if not provided
+        if topics is None:
+            topics = ["overview"]
+
+        populated = 0
+        errors: list[str] = []
+
+        for library in libraries:
+            for topic in topics:
+                # Check if already cached (unless force)
+                if not force and self.kb_cache.exists(library, topic):
+                    continue
+
+                try:
+                    # Resolve library -> Context7 ID
+                    resolve = await self.kb_lookup.mcp_gateway.call_tool(
+                        "mcp_Context7_resolve-library-id", libraryName=library
+                    )
+                    matches = (
+                        resolve.get("result", {}).get("matches", [])
+                        if resolve.get("success")
+                        else []
+                    )
+                    context7_id = None
+                    if matches:
+                        first = matches[0]
+                        context7_id = (
+                            first.get("id") if isinstance(first, dict) else str(first)
+                        )
+
+                    if not context7_id:
+                        errors.append(f"{library}/{topic}: Could not resolve library ID")
+                        continue
+
+                    # Fetch docs
+                    docs = await self.kb_lookup.mcp_gateway.call_tool(
+                        "mcp_Context7_get-library-docs",
+                        context7CompatibleLibraryID=context7_id,
+                        topic=topic,
+                    )
+                    if not docs.get("success"):
+                        errors.append(
+                            f"{library}/{topic}: {docs.get('error', 'Failed to fetch docs')}"
+                        )
+                        continue
+
+                    result_data = docs.get("result", {})
+                    content = (
+                        result_data.get("content")
+                        if isinstance(result_data, dict)
+                        else (result_data if isinstance(result_data, str) else None)
+                    )
+                    if not content:
+                        errors.append(f"{library}/{topic}: No content returned")
+                        continue
+
+                    # Store in cache
+                    self.kb_cache.store(
+                        library=library,
+                        topic=topic,
+                        content=content,
+                        context7_id=context7_id,
+                    )
+                    populated += 1
+
+                except Exception as e:
+                    errors.append(f"{library}/{topic}: {str(e)}")
+
+        return {
+            "success": populated > 0,
+            "populated": populated,
+            "total_requested": len(libraries) * len(topics),
+            "errors": errors,
+        }
+
     def cmd_help(self) -> dict[str, Any]:
         """
         Show Context7 usage examples.
@@ -605,11 +785,22 @@ Status & Search:
   *context7-kb-status
     Show KB cache statistics and performance metrics.
     
+  *context7-kb-health
+    Get detailed health check report with recommendations.
+    
   *context7-kb-search {query} [limit]
     Search cached documentation.
     Example: *context7-kb-search authentication 5
 
 Management Commands:
+  *context7-kb-populate [libraries...] [--topics topics...] [--force]
+    Pre-populate cache with library documentation.
+    Example: *context7-kb-populate fastapi pytest react --topics overview hooks
+  
+  *context7-kb-warm [--auto-detect] [libraries...]
+    Warm cache with project libraries and common topics.
+    Example: *context7-kb-warm --auto-detect
+  
   *context7-kb-refresh [library] [topic]
     Refresh stale KB entries.
     Examples:
