@@ -1,0 +1,1509 @@
+{
+  "workflow_id": "full-sdlc-20251213-153511",
+  "status": "failed",
+  "current_step": "planning",
+  "started_at": "2025-12-13T15:35:11.492859",
+  "completed_steps": [],
+  "skipped_steps": [],
+  "variables": {
+    "user_prompt": "",
+    "project_profile": {
+      "deployment_type": "local",
+      "deployment_type_confidence": 0.5,
+      "deployment_type_indicators": [
+        "no_cloud_infrastructure"
+      ],
+      "tenancy": "single-tenant",
+      "tenancy_confidence": 0.7,
+      "tenancy_indicators": [
+        "no_tenant_patterns_found"
+      ],
+      "user_scale": "small-team",
+      "user_scale_confidence": 0.5,
+      "user_scale_indicators": [
+        "default_small_team"
+      ],
+      "compliance_requirements": [],
+      "security_level": "basic",
+      "security_level_confidence": 0.5,
+      "security_level_indicators": [
+        "no_security_files"
+      ],
+      "detected_at": "2025-12-13T23:32:56.695309Z"
+    },
+    "workflow_name": "Full SDLC Pipeline",
+    "analyst_gather-requirements_result": {
+      "status": "triggered",
+      "method": "api",
+      "job_id": "local-analyst",
+      "command": "@analyst gather-requirements --description \"\n\nProject Context:\n- Tenancy: single-tenant (confidence: 0.7)\" --output_file ",
+      "worktree": "C:\\cursor\\TappsCodingAgents\\billstest\\.tapps-agents\\worktrees\\workflow-full-sdlc-20251213-153511-step-requirements",
+      "message": "Background Agent triggered via API"
+    }
+  },
+  "artifacts": {
+    "conftest.py": {
+      "name": "conftest.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\conftest.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.057391",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cursor_executor.py": {
+      "name": "test_cursor_executor.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\test_cursor_executor.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.058088",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_workflow_prompt.py": {
+      "name": "test_workflow_prompt.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\test_workflow_prompt.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.058663",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_expert_examples.py": {
+      "name": "test_expert_examples.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\examples\\test_expert_examples.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.059321",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "sample_code.py": {
+      "name": "sample_code.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\fixtures\\sample_code.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.059860",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cli_real.py": {
+      "name": "test_cli_real.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_cli_real.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.060396",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_context7_real.py": {
+      "name": "test_context7_real.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_context7_real.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.060909",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_debugger_agent.py": {
+      "name": "test_debugger_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_debugger_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.061381",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_documenter_agent.py": {
+      "name": "test_documenter_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_documenter_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.061952",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_e2e_workflow_real.py": {
+      "name": "test_e2e_workflow_real.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_e2e_workflow_real.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.062448",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_enhancer_agent.py": {
+      "name": "test_enhancer_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_enhancer_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.062957",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_implementer_agent.py": {
+      "name": "test_implementer_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_implementer_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.063487",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_learning_best_practices_integration.py": {
+      "name": "test_learning_best_practices_integration.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_learning_best_practices_integration.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.063932",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_long_duration_integration.py": {
+      "name": "test_long_duration_integration.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_long_duration_integration.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.064346",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_mal_real.py": {
+      "name": "test_mal_real.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_mal_real.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.065192",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_planner_agent.py": {
+      "name": "test_planner_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_planner_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.084085",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_reviewer_agent.py": {
+      "name": "test_reviewer_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\agents\\test_reviewer_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.094446",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_reviewer_agent_real.py": {
+      "name": "test_reviewer_agent_real.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_reviewer_agent_real.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.067000",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_tester_agent.py": {
+      "name": "test_tester_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_tester_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.067667",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_visual_feedback_integration.py": {
+      "name": "test_visual_feedback_integration.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\integration\\test_visual_feedback_integration.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.068315",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "__init__.py": {
+      "name": "__init__.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\__init__.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.104060",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_adaptive_cache_config.py": {
+      "name": "test_adaptive_cache_config.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_adaptive_cache_config.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.069826",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_agent_base.py": {
+      "name": "test_agent_base.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_agent_base.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.070385",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_agent_learning.py": {
+      "name": "test_agent_learning.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_agent_learning.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.070934",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_analyst_agent.py": {
+      "name": "test_analyst_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_analyst_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.071389",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_architect_agent.py": {
+      "name": "test_architect_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_architect_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.072102",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_ast_parser.py": {
+      "name": "test_ast_parser.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_ast_parser.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.072866",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_best_practice_consultant.py": {
+      "name": "test_best_practice_consultant.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_best_practice_consultant.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.073548",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_browser_controller.py": {
+      "name": "test_browser_controller.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_browser_controller.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.074110",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cache_router.py": {
+      "name": "test_cache_router.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_cache_router.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.074711",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_capability_registry.py": {
+      "name": "test_capability_registry.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_capability_registry.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.075388",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_checkpoint_manager.py": {
+      "name": "test_checkpoint_manager.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_checkpoint_manager.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.075928",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_code_generator.py": {
+      "name": "test_code_generator.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_code_generator.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.076351",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_config.py": {
+      "name": "test_config.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_config.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.076811",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_context_manager.py": {
+      "name": "test_context_manager.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_context_manager.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.078056",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_designer_agent.py": {
+      "name": "test_designer_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_designer_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.078500",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_doc_generator.py": {
+      "name": "test_doc_generator.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_doc_generator.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.079011",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_error_analyzer.py": {
+      "name": "test_error_analyzer.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_error_analyzer.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.079468",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_improver_agent.py": {
+      "name": "test_improver_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_improver_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.080000",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_knowledge_graph.py": {
+      "name": "test_knowledge_graph.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_knowledge_graph.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.080541",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_learning_confidence.py": {
+      "name": "test_learning_confidence.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_learning_confidence.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.081090",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_learning_decision.py": {
+      "name": "test_learning_decision.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_learning_decision.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.081555",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_long_duration_support.py": {
+      "name": "test_long_duration_support.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_long_duration_support.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.082004",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_mcp_gateway.py": {
+      "name": "test_mcp_gateway.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_mcp_gateway.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.082615",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_ops_agent.py": {
+      "name": "test_ops_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_ops_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.083162",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_orchestrator_agent.py": {
+      "name": "test_orchestrator_agent.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_orchestrator_agent.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.083605",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_report_generator_jinja2.py": {
+      "name": "test_report_generator_jinja2.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_report_generator_jinja2.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.084671",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_resource_aware_executor.py": {
+      "name": "test_resource_aware_executor.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_resource_aware_executor.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.085210",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_resume_handler.py": {
+      "name": "test_resume_handler.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_resume_handler.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.085778",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_scoring.py": {
+      "name": "test_scoring.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_scoring.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.086379",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_session_manager.py": {
+      "name": "test_session_manager.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_session_manager.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.086896",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_task_memory.py": {
+      "name": "test_task_memory.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_task_memory.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.087380",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_task_state.py": {
+      "name": "test_task_state.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_task_state.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.087942",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_test_generator.py": {
+      "name": "test_test_generator.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_test_generator.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.088518",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_unified_cache.py": {
+      "name": "test_unified_cache.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_unified_cache.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.089072",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_unified_cache_hardware_aware.py": {
+      "name": "test_unified_cache_hardware_aware.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_unified_cache_hardware_aware.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.089753",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_unified_cache_performance.py": {
+      "name": "test_unified_cache_performance.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_unified_cache_performance.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.090317",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_visual_designer.py": {
+      "name": "test_visual_designer.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_visual_designer.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.090859",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_visual_feedback.py": {
+      "name": "test_visual_feedback.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_visual_feedback.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.091438",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_workflow_executor.py": {
+      "name": "test_workflow_executor.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_workflow_executor.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.091980",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_workflow_parser.py": {
+      "name": "test_workflow_parser.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_workflow_parser.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.092640",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_workflow_resume_persistence.py": {
+      "name": "test_workflow_resume_persistence.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\test_workflow_resume_persistence.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.093169",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cli.py": {
+      "name": "test_cli.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\cli\\test_cli.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.095271",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cli_version_flag.py": {
+      "name": "test_cli_version_flag.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\cli\\test_cli_version_flag.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.095911",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_agent_integration.py": {
+      "name": "test_agent_integration.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_agent_integration.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.097156",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_analytics.py": {
+      "name": "test_analytics.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_analytics.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.097677",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cache_structure.py": {
+      "name": "test_cache_structure.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_cache_structure.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.098238",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cleanup.py": {
+      "name": "test_cleanup.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_cleanup.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.098782",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_commands.py": {
+      "name": "test_commands.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_commands.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.099330",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_fuzzy_matcher.py": {
+      "name": "test_fuzzy_matcher.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_fuzzy_matcher.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.099833",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_kb_cache.py": {
+      "name": "test_kb_cache.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_kb_cache.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.100743",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_lookup.py": {
+      "name": "test_lookup.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_lookup.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.101186",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_metadata.py": {
+      "name": "test_metadata.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_metadata.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.101678",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_refresh_queue.py": {
+      "name": "test_refresh_queue.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_refresh_queue.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.102189",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_security.py": {
+      "name": "test_security.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_security.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.102730",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_staleness_policies.py": {
+      "name": "test_staleness_policies.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\context7\\test_staleness_policies.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.103400",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_cursor_first_policy.py": {
+      "name": "test_cursor_first_policy.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_cursor_first_policy.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.104711",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_doctor_windows_cmd_shims.py": {
+      "name": "test_doctor_windows_cmd_shims.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_doctor_windows_cmd_shims.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.105240",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_init_project_cursor_artifacts.py": {
+      "name": "test_init_project_cursor_artifacts.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_init_project_cursor_artifacts.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.105861",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_mal.py": {
+      "name": "test_mal.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_mal.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.106498",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_mal_cloud.py": {
+      "name": "test_mal_cloud.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_mal_cloud.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.107196",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_project_profile.py": {
+      "name": "test_project_profile.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_project_profile.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.107970",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_runtime_mode.py": {
+      "name": "test_runtime_mode.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\core\\test_runtime_mode.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.109040",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_accessibility_ux_experts.py": {
+      "name": "test_accessibility_ux_experts.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_accessibility_ux_experts.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.110620",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_builtin_expert_integration.py": {
+      "name": "test_builtin_expert_integration.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_builtin_expert_integration.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.111590",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_builtin_registry.py": {
+      "name": "test_builtin_registry.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_builtin_registry.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.112339",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_data_privacy_expert.py": {
+      "name": "test_data_privacy_expert.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_data_privacy_expert.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.112959",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_dual_layer_registry.py": {
+      "name": "test_dual_layer_registry.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_dual_layer_registry.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.113651",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_expert_config.py": {
+      "name": "test_expert_config.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_expert_config.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.114424",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_expert_profile_integration.py": {
+      "name": "test_expert_profile_integration.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_expert_profile_integration.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.115004",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_performance_testing_experts.py": {
+      "name": "test_performance_testing_experts.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_performance_testing_experts.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.115479",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_setup_wizard_non_interactive.py": {
+      "name": "test_setup_wizard_non_interactive.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_setup_wizard_non_interactive.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.115947",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_simple_rag.py": {
+      "name": "test_simple_rag.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_simple_rag.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.116478",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_weight_distributor.py": {
+      "name": "test_weight_distributor.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\experts\\test_weight_distributor.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.117086",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_context7_server.py": {
+      "name": "test_context7_server.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\mcp\\test_context7_server.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.117607",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_advanced_state_manager.py": {
+      "name": "test_advanced_state_manager.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\workflow\\test_advanced_state_manager.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.118183",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_detector.py": {
+      "name": "test_detector.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\workflow\\test_detector.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.118690",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_recommender.py": {
+      "name": "test_recommender.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\workflow\\test_recommender.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.119522",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "test_windows_npx_shims.py": {
+      "name": "test_windows_npx_shims.py",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\tests\\unit\\agents\\reviewer\\test_windows_npx_shims.py",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.120513",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "AGENT_LEARNING_GUIDE.md": {
+      "name": "AGENT_LEARNING_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\AGENT_LEARNING_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.121421",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "API.md": {
+      "name": "API.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\API.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.121980",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "ARCHITECTURE.md": {
+      "name": "ARCHITECTURE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\ARCHITECTURE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.122578",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "BACKGROUND_AGENTS_GUIDE.md": {
+      "name": "BACKGROUND_AGENTS_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\BACKGROUND_AGENTS_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.123268",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "BUILTIN_EXPERTS_GUIDE.md": {
+      "name": "BUILTIN_EXPERTS_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\BUILTIN_EXPERTS_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.123782",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CHECKPOINT_RESUME_GUIDE.md": {
+      "name": "CHECKPOINT_RESUME_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CHECKPOINT_RESUME_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.124297",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CONFIGURATION.md": {
+      "name": "CONFIGURATION.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CONFIGURATION.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.124963",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CONTEXT7_API_KEY_MANAGEMENT.md": {
+      "name": "CONTEXT7_API_KEY_MANAGEMENT.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CONTEXT7_API_KEY_MANAGEMENT.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.125459",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CONTEXT7_CACHE_OPTIMIZATION.md": {
+      "name": "CONTEXT7_CACHE_OPTIMIZATION.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CONTEXT7_CACHE_OPTIMIZATION.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.125938",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CONTEXT7_SECURITY_PRIVACY.md": {
+      "name": "CONTEXT7_SECURITY_PRIVACY.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CONTEXT7_SECURITY_PRIVACY.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.126440",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CURRENT_DEFAULTS.md": {
+      "name": "CURRENT_DEFAULTS.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CURRENT_DEFAULTS.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.126921",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CURSOR_AI_INTEGRATION_PLAN_2025.md": {
+      "name": "CURSOR_AI_INTEGRATION_PLAN_2025.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CURSOR_AI_INTEGRATION_PLAN_2025.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.127463",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CURSOR_RULES_SETUP.md": {
+      "name": "CURSOR_RULES_SETUP.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CURSOR_RULES_SETUP.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.127969",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "CURSOR_SKILLS_INSTALLATION_GUIDE.md": {
+      "name": "CURSOR_SKILLS_INSTALLATION_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\CURSOR_SKILLS_INSTALLATION_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.128475",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "DEPLOYMENT.md": {
+      "name": "DEPLOYMENT.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\DEPLOYMENT.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.129019",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "DEVELOPER_GUIDE.md": {
+      "name": "DEVELOPER_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\DEVELOPER_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.129512",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "ENHANCER_AGENT.md": {
+      "name": "ENHANCER_AGENT.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\ENHANCER_AGENT.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.130058",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "EXPERT_CONFIDENCE_GUIDE.md": {
+      "name": "EXPERT_CONFIDENCE_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\EXPERT_CONFIDENCE_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.130542",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "EXPERT_CONFIG_GUIDE.md": {
+      "name": "EXPERT_CONFIG_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\EXPERT_CONFIG_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.131315",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "EXPERT_EXAMPLES_GUIDE.md": {
+      "name": "EXPERT_EXAMPLES_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\EXPERT_EXAMPLES_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.131919",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "EXPERT_KNOWLEDGE_BASE_GUIDE.md": {
+      "name": "EXPERT_KNOWLEDGE_BASE_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\EXPERT_KNOWLEDGE_BASE_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.132472",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "EXPERT_SETUP_WIZARD.md": {
+      "name": "EXPERT_SETUP_WIZARD.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\EXPERT_SETUP_WIZARD.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.133019",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "HARDWARE_RECOMMENDATIONS.md": {
+      "name": "HARDWARE_RECOMMENDATIONS.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\HARDWARE_RECOMMENDATIONS.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.133558",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "HOW_IT_WORKS.md": {
+      "name": "HOW_IT_WORKS.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\HOW_IT_WORKS.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.134027",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "KNOWLEDGE_BASE_GUIDE.md": {
+      "name": "KNOWLEDGE_BASE_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\KNOWLEDGE_BASE_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.134773",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "LONG_DURATION_OPERATIONS_GUIDE.md": {
+      "name": "LONG_DURATION_OPERATIONS_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\LONG_DURATION_OPERATIONS_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.135325",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "MIGRATION_GUIDE_2.0.md": {
+      "name": "MIGRATION_GUIDE_2.0.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\MIGRATION_GUIDE_2.0.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.135849",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "MULTI_AGENT_ORCHESTRATION_GUIDE.md": {
+      "name": "MULTI_AGENT_ORCHESTRATION_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\MULTI_AGENT_ORCHESTRATION_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.136510",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "NUC_SETUP_GUIDE.md": {
+      "name": "NUC_SETUP_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\NUC_SETUP_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.137151",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PHASE4_PHASE5_EXPLANATION.md": {
+      "name": "PHASE4_PHASE5_EXPLANATION.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PHASE4_PHASE5_EXPLANATION.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.137763",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PHASE6_SUMMARY.md": {
+      "name": "PHASE6_SUMMARY.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PHASE6_SUMMARY.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.138281",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PROJECT_CONTEXT.md": {
+      "name": "PROJECT_CONTEXT.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PROJECT_CONTEXT.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.138924",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PROJECT_MANAGER_GUIDE.md": {
+      "name": "PROJECT_MANAGER_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PROJECT_MANAGER_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.139516",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PROJECT_PROFILING_GUIDE.md": {
+      "name": "PROJECT_PROFILING_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PROJECT_PROFILING_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.140197",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PROJECT_QUALITY_REVIEW.md": {
+      "name": "PROJECT_QUALITY_REVIEW.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PROJECT_QUALITY_REVIEW.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.140993",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "PR_MODE_GUIDE.md": {
+      "name": "PR_MODE_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\PR_MODE_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.141715",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "QUALITY_TOOLS_USAGE_EXAMPLES.md": {
+      "name": "QUALITY_TOOLS_USAGE_EXAMPLES.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\QUALITY_TOOLS_USAGE_EXAMPLES.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.142413",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "QUICK_WORKFLOW_COMMANDS.md": {
+      "name": "QUICK_WORKFLOW_COMMANDS.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\QUICK_WORKFLOW_COMMANDS.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.143062",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "README.md": {
+      "name": "README.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\README.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.143622",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "TASK_MEMORY_GUIDE.md": {
+      "name": "TASK_MEMORY_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\TASK_MEMORY_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.144145",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "TEST_PERFORMANCE_GUIDE.md": {
+      "name": "TEST_PERFORMANCE_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\TEST_PERFORMANCE_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.144657",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "TROUBLESHOOTING.md": {
+      "name": "TROUBLESHOOTING.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\TROUBLESHOOTING.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.145228",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "UNIFIED_CACHE.md": {
+      "name": "UNIFIED_CACHE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\UNIFIED_CACHE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.145829",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "VISUAL_FEEDBACK_GUIDE.md": {
+      "name": "VISUAL_FEEDBACK_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\VISUAL_FEEDBACK_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.146404",
+      "metadata": {
+        "type": "file"
+      }
+    },
+    "WORKFLOW_SELECTION_GUIDE.md": {
+      "name": "WORKFLOW_SELECTION_GUIDE.md",
+      "path": "C:\\cursor\\TappsCodingAgents\\billstest\\docs\\WORKFLOW_SELECTION_GUIDE.md",
+      "status": "complete",
+      "created_by": "requirements",
+      "created_at": "2025-12-13T15:35:13.146904",
+      "metadata": {
+        "type": "file"
+      }
+    }
+  },
+  "step_executions": [
+    {
+      "step_id": "requirements",
+      "agent": "analyst",
+      "action": "gather-requirements",
+      "started_at": "2025-12-13T15:35:11.493742",
+      "completed_at": "2025-12-13T15:35:13.147065",
+      "duration_seconds": null,
+      "status": "completed",
+      "error": null
+    },
+    {
+      "step_id": "planning",
+      "agent": "planner",
+      "action": "create-stories",
+      "started_at": "2025-12-13T15:35:13.150024",
+      "completed_at": "2025-12-13T15:35:13.766154",
+      "duration_seconds": null,
+      "status": "failed",
+      "error": "name 'Artifact' is not defined"
+    }
+  ],
+  "error": "name 'Artifact' is not defined"
+}

@@ -32,12 +32,8 @@ from .dependency_resolver import DependencyResolver, DependencyGraph
 from .event_log import WorkflowEventLog, WorkflowEvent
 from .progress_monitor import WorkflowProgressMonitor, ProgressMetrics
 
-# Background Agents (Epic 2)
-from .background_docs_agent import BackgroundDocsAgent
-from .background_ops_agent import BackgroundOpsAgent
-from .background_context_agent import BackgroundContextAgent
-from .background_quality_agent import BackgroundQualityAgent
-from .background_testing_agent import BackgroundTestingAgent
+# Background Agents (Epic 2) - Lazy imports to avoid circular dependencies
+# These are imported on-demand when needed
 
 # Background Agent Artifacts
 from .docs_artifact import DocumentationArtifact, DocFileResult
@@ -87,12 +83,12 @@ __all__ = [
     "WorkflowTrack",
     "WorkflowRecommender",
     "WorkflowRecommendation",
-    # Background Agents
-    "BackgroundDocsAgent",
-    "BackgroundOpsAgent",
-    "BackgroundContextAgent",
-    "BackgroundQualityAgent",
-    "BackgroundTestingAgent",
+    # Background Agents (lazy imports - use direct imports when needed)
+    # "BackgroundDocsAgent",
+    # "BackgroundOpsAgent",
+    # "BackgroundContextAgent",
+    # "BackgroundQualityAgent",
+    # "BackgroundTestingAgent",
     # Background Agent Artifacts
     "DocumentationArtifact",
     "DocFileResult",

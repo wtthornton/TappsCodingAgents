@@ -119,6 +119,64 @@ This document provides a high-level summary of all epics required to migrate Tap
 
 ---
 
+### Epic 8: E2E Testing Foundation (Hybrid Strategy Enablement)
+**Goal:** Establish a hybrid E2E testing foundation (smoke → workflows → scenarios → CLI) with markers, fixtures, project templates, and deterministic harness utilities.
+
+**Key Deliverables:**
+- `tests/e2e/` suite structure + harness conventions
+- Marker taxonomy for E2E slices (smoke/workflow/scenario/CLI)
+- Deterministic smoke E2E tests (mocked-by-default) with strong debug artifacts
+
+**Estimated Duration:** 1 week (Post-Phase)
+
+---
+
+### Epic 9: E2E Workflow Tests (Preset Workflows)
+**Goal:** Execute shipped workflow YAML presets end-to-end (with controlled dependencies) and validate artifacts, state transitions, gates, and resume behavior.
+
+**Key Deliverables:**
+- Workflow runner + assertions reusable across E2E suites
+- 2–3 tier-1 preset workflows covered
+- Gate routing (pass/fail) + persistence/resume verified
+
+**Estimated Duration:** 1 week (Post-Phase)
+
+---
+
+### Epic 10: E2E Scenario Tests (User Journeys)
+**Goal:** Validate realistic user journeys (feature, bug fix, refactor) to provide high confidence in multi-agent orchestration and quality outcomes.
+
+**Key Deliverables:**
+- Small/medium project templates for scenarios
+- 2–3 tier-1 scenario tests with explicit outcome contracts
+- Reliability controls (timeouts/retries/cost caps) for scheduled runs
+
+**Estimated Duration:** 1–2 weeks (Post-Phase)
+
+---
+
+### Epic 11: E2E CLI Tests (User-Facing Contract)
+**Goal:** Validate the CLI user experience end-to-end via subprocess runs in isolated sandboxes (outputs, exit codes, side effects, error UX).
+
+**Key Deliverables:**
+- CLI E2E harness (capture stdout/stderr/exit codes; env injection; timeouts)
+- Golden-path CLI coverage (review/score/workflow list/start/status)
+- Failure-path UX contracts for common user errors
+
+**Estimated Duration:** 1 week (Post-Phase)
+
+---
+
+### Epic 12: E2E CI/CD Execution (Matrix, Scheduling, Reporting)
+**Goal:** Integrate the hybrid E2E suite into CI/CD with a clear execution matrix, secure credentials handling, and actionable reporting/artifacts.
+
+**Key Deliverables:**
+- CI matrix: PR (unit+smoke), main (workflow mocked), nightly (scenario + real)
+- JUnit + failure artifact bundling (logs/state/outputs)
+- Safety controls for real-service suites (skip gates, timeouts, budgeting)
+
+**Estimated Duration:** 1 week (Post-Phase)
+
 ## Epic Dependencies
 
 ```
@@ -129,6 +187,11 @@ Epic 1 (Foundation)
       └─> Epic 5 (Workflow Engine) - Uses agents from Epic 2
           └─> Epic 6 (Quality & Testing) - Workflows need quality gates
               └─> Epic 7 (Documentation & Polish) - Final production readiness
+                  └─> Epic 8 (E2E Foundation) - E2E harness + markers
+                      ├─> Epic 9 (E2E Workflow Tests) - Preset workflow coverage
+                      ├─> Epic 10 (E2E Scenario Tests) - High-confidence user journeys
+                      ├─> Epic 11 (E2E CLI Tests) - User-facing contract checks
+                      └─> Epic 12 (E2E CI/CD) - Matrix + scheduled real-service runs
 ```
 
 ## Total Timeline
@@ -142,6 +205,7 @@ Epic 1 (Foundation)
 - **Week 8:** Epic 5 (Workflow Engine)
 - **Weeks 9-10:** Epic 6 (Quality & Testing)
 - **Weeks 11-12:** Epic 7 (Documentation & Polish)
+- **Weeks 13-16 (post-phase):** Epics 8–12 (Hybrid E2E foundation, suites, and CI scheduling)
 
 ## Success Metrics
 
@@ -183,3 +247,8 @@ Epic 1 (Foundation)
 - [Epic 5: YAML Workflow Orchestration Engine](./EPIC_05_Workflow_Engine.md)
 - [Epic 6: Comprehensive Quality Assurance & Testing](./EPIC_06_Quality_Testing.md)
 - [Epic 7: Documentation, Error Handling & Production Readiness](./EPIC_07_Documentation_Polish.md)
+- [Epic 8: E2E Testing Foundation (Hybrid Strategy Enablement)](./EPIC_08_E2E_Testing_Foundation.md)
+- [Epic 9: E2E Workflow Tests (Preset Workflows)](./EPIC_09_E2E_Workflow_Tests.md)
+- [Epic 10: E2E Scenario Tests (User Journeys)](./EPIC_10_E2E_Scenario_Tests.md)
+- [Epic 11: E2E CLI Tests (User-Facing Contract)](./EPIC_11_E2E_CLI_Tests.md)
+- [Epic 12: E2E CI/CD Execution (Matrix, Scheduling, Reporting)](./EPIC_12_E2E_CI_CD_Execution.md)

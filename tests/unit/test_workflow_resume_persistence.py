@@ -7,7 +7,9 @@ from tapps_agents.workflow.executor import WorkflowExecutor
 pytestmark = pytest.mark.unit
 
 
-def test_workflow_executor_persists_and_resumes_last_state(tmp_path: Path) -> None:
+def test_workflow_executor_persists_and_resumes_last_state(tmp_path: Path, monkeypatch) -> None:
+    # Preserve workflow ID for tests
+    monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
     workflows_dir = tmp_path / "workflows"
     workflows_dir.mkdir(parents=True, exist_ok=True)
     wf_file = workflows_dir / "test.yaml"

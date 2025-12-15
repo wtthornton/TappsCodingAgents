@@ -1,0 +1,83 @@
+# Feature Implementation Workflow
+# Best for: Adding new features to existing projects
+
+workflow:
+  id: feature-implementation
+  name: "Feature Implementation"
+  description: "Standard workflow for implementing new features in existing projects"
+  version: "1.0.0"
+  schema_version: "2.0"
+  
+  type: brownfield
+  auto_detect: true
+  
+  settings:
+    quality_gates: true
+    code_scoring: true
+    context_tier_default: 2
+  
+  steps:
+    - id: analysis
+      agent: analyst
+      action: analyze_requirements
+      context_tier: 1
+      creates:
+        - feature-spec.md
+      requires: []
+      next: design
+      
+    - id: design
+      agent: designer
+      action: design_feature
+      context_tier: 2
+      requires:
+        - feature-spec.md
+      creates:
+        - design.md
+      next: implementation
+      
+    - id: implementation
+      agent: implementer
+      action: write_code
+      context_tier: 3
+      requires:
+        - design.md
+      creates:
+        - feature-code/
+      metadata:
+        retry:
+          max_attempts: 2
+          initial_backoff_seconds: 2.0
+      next: review
+      
+    - id: review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - feature-code/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 65
+          security_min: 6.5
+      gate:
+        condition: "scoring.passed == true"
+        on_pass: testing
+        on_fail: implementation
+      next: testing
+      
+    - id: testing
+      agent: tester
+      action: write_tests
+      context_tier: 2
+      requires:
+        - feature-code/
+      creates:
+        - feature-tests/
+      next: complete
+      
+    - id: complete
+      agent: orchestrator
+      action: finalize
+      context_tier: 1

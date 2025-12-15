@@ -143,7 +143,11 @@ class WorkflowExecutor:
 
         # Use consistent workflow_id format: {workflow.id}-{timestamp}
         # This matches CursorWorkflowExecutor format for consistency
-        workflow_id = f"{self.workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        # For tests, preserve original ID if TAPPS_AGENTS_PRESERVE_WORKFLOW_ID is set
+        if os.getenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "false").lower() == "true":
+            workflow_id = self.workflow.id
+        else:
+            workflow_id = f"{self.workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
         # Initialize logger with workflow_id for correlation and trace context
         # Check for structured logging config

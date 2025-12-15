@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.1-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -66,7 +66,7 @@ See:
 - **32 New Knowledge Files** ✅ (~120,000+ words of expert knowledge)
 - **Enhanced Agent Support** ✅ (Updated expert consultation for Architect, Implementer, Designer, Ops, Reviewer, Tester agents)
 - **Total Built-in Experts: 16** (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
-- **Total Knowledge Files: 83** (across 11 knowledge domains)
+- **Total Knowledge Files: 83** (across 11 knowledge domains: security, performance, testing, data-privacy-compliance, accessibility, user-experience, observability-monitoring, api-design-integration, cloud-infrastructure, database-data-management, agent-learning)
 - See [Built-in Experts Guide](docs/BUILTIN_EXPERTS_GUIDE.md) and [Phase 5 Implementation Plan](implementation/PHASE5_EXPERT_IMPLEMENTATION_PLAN.md)
 
 🎉 **ALL 7 PHASES COMPLETE - Cursor AI Integration Plan 2025** 🎉
@@ -273,7 +273,7 @@ TappsCodingAgents/
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 2.0.0  
+**Version**: 2.0.1  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

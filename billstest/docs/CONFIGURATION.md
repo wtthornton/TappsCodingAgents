@@ -1,0 +1,268 @@
+# TappsCodingAgents - Configuration Guide
+
+This document describes the configuration system for TappsCodingAgents.
+
+## Overview
+
+TappsCodingAgents uses a YAML-based configuration file validated by Pydantic models. Configuration is **optional**; if no file is found, the framework uses defaults.
+
+## Configuration File Location
+
+The framework looks for configuration at `.tapps-agents/config.yaml` in your project root (or any parent directory of the current working directory):
+
+```
+your-project/
+├── .tapps-agents/
+│   ├── config.yaml            # Project configuration
+│   ├── domains.md             # Business domain definitions (optional)
+│   ├── experts.yaml           # Industry experts (optional)
+│   ├── project-profile.yaml   # Project profile (auto-generated)
+│   └── knowledge/             # Expert knowledge base (optional)
+└── src/
+    └── ...
+```
+
+If no config file is found, the framework uses default values.
+
+## Configuration Schema
+
+### Root Configuration
+
+```yaml
+# Project metadata (optional)
+project_name: "MyProject"
+version: "1.0.0"
+
+# Tooling targets/policy (optional, used by `doctor`)
+tooling:
+  targets:
+    python: 3.13.3
+    python_requires: ">=3.13"
+    os_targets: ["windows", "linux"]
+  policy:
+    external_tools_mode: soft   # soft=warn/skip, hard=fail
+    mypy_staged: true
+    mypy_stage_paths: ["tapps_agents/core", "tapps_agents/workflow", "tapps_agents/context7"]
+
+# Agent configurations
+agents:
+  reviewer:
+    # Reviewer agent settings (see below)
+
+# Code scoring configuration
+scoring:
+  # Scoring settings (see below)
+
+# Model Abstraction Layer (MAL) configuration
+mal:
+  # MAL settings (see below)
+
+# Context7 integration (optional)
+context7:
+  # Context7 settings (see below)
+
+# Phase 6 quality tools (optional)
+quality_tools:
+  # Quality tools settings (see below)
+```
+
+### Tooling (`doctor`) configuration
+
+The `doctor` command reads `.tapps-agents/config.yaml` and reports mismatches (Python version targets, missing tools like ruff/mypy/pytest).
+
+- `tooling.targets.python`: the “pinned” Python version you expect for this repo/project.
+- `tooling.targets.python_requires`: the PEP 440 requires-python constraint (should match your packaging config).
+- `tooling.policy.external_tools_mode`: soft-degrade (warn/skip) vs hard-fail for missing tools.
+
+### Agent Configuration: Reviewer
+
+```yaml
+agents:
+  reviewer:
+    model: "qwen2.5-coder:7b"          # LLM model for code reviews
+    quality_threshold: 70.0             # Minimum score (0-100) to pass review
+    include_scoring: true               # Include code scoring in review
+    include_llm_feedback: true          # Include LLM-generated feedback
+    max_file_size: 1048576              # Maximum file size in bytes (1MB)
+    min_confidence_threshold: 0.8       # Minimum expert confidence (0.0-1.0)
+```
+
+### Agent Configuration: All Agents
+
+All agents support `model` and `min_confidence_threshold`.
+
+```yaml
+agents:
+  architect:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.75
+
+  implementer:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.7
+
+  designer:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.65
+
+  tester:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.7
+
+  ops:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.75
+
+  enhancer:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.6
+
+  analyst:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.65
+
+  planner:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.6
+
+  debugger:
+    model: "deepseek-coder:6.7b"
+    min_confidence_threshold: 0.7
+
+  documenter:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.5
+
+  orchestrator:
+    model: "qwen2.5-coder:7b"
+    min_confidence_threshold: 0.6
+```
+
+### Scoring Configuration
+
+```yaml
+scoring:
+  weights:
+    complexity: 0.20
+    security: 0.30
+    maintainability: 0.25
+    test_coverage: 0.15
+    performance: 0.10
+  quality_threshold: 70.0
+```
+
+**Important:** The weights must sum to ~1.0 (a small floating point tolerance is allowed). If they don't, configuration loading will fail.
+
+### MAL Configuration
+
+```yaml
+mal:
+  # Provider + model used by agents when they need an LLM
+  default_provider: "ollama"          # ollama | anthropic | openai
+  default_model: "qwen2.5-coder:7b"
+
+  # Ollama endpoint
+  ollama_url: "http://localhost:11434"
+
+  # Timeouts (seconds)
+  connect_timeout: 10
+  read_timeout: 600
+  write_timeout: 30
+  pool_timeout: 10
+
+  # Streaming
+  use_streaming: true
+  streaming_threshold: 5000
+
+  # Fallback behavior
+  enable_fallback: true
+  fallback_providers: ["anthropic", "openai"]
+
+  # Optional cloud provider configuration
+  anthropic:
+    api_key: "YOUR_KEY"              # stored in YAML (no automatic env-var expansion)
+    base_url: null
+    timeout: 60
+  openai:
+    api_key: "YOUR_KEY"
+    base_url: null
+    timeout: 60
+```
+
+**Important (Cursor-first policy):**
+- When the framework is invoked under Cursor (Skills / Background Agents), MAL is **disabled** (tools-only mode).
+  - Use `TAPPS_AGENTS_MODE=cursor` (set by default in this repo’s Background Agents config).
+- If you explicitly want MAL for a headless run, set `TAPPS_AGENTS_MODE=headless`.
+
+Note: the configuration loader **does not** interpolate environment variables (e.g., `${ANTHROPIC_API_KEY}` is treated as a literal string). If you want that behavior, expand env vars before writing `config.yaml`.
+
+### Context7 Configuration (optional)
+
+```yaml
+context7:
+  enabled: true
+  default_token_limit: 3000
+  cache_duration: 3600
+  integration_level: "optional"      # mandatory | optional
+  bypass_forbidden: true
+
+  knowledge_base:
+    enabled: true
+    location: ".tapps-agents/kb/context7-cache"
+    sharding: true
+    indexing: true
+    max_cache_size: "100MB"
+    hit_rate_threshold: 0.7
+    fuzzy_match_threshold: 0.7
+
+  refresh:
+    enabled: true
+    default_max_age_days: 30
+    check_on_access: true
+    auto_queue: true
+    auto_process_on_startup: false
+```
+
+### Quality Tools Configuration (Phase 6)
+
+```yaml
+quality_tools:
+  ruff_enabled: true
+  ruff_config_path: null
+
+  mypy_enabled: true
+  mypy_strict: false
+  mypy_config_path: null
+
+  jscpd_enabled: true
+  duplication_threshold: 3.0
+  min_duplication_lines: 5
+
+  typescript_enabled: true
+  eslint_config: null
+  tsconfig_path: null
+
+  pip_audit_enabled: true
+  dependency_audit_threshold: "high"   # low | medium | high | critical
+```
+
+## Default Values
+
+If no configuration file is provided, defaults are loaded from the Pydantic models in `tapps_agents/core/config.py`.
+
+## Configuration Loading
+
+Configuration is loaded via `tapps_agents.core.config.load_config()` and is also loaded when agents are activated.
+
+```python
+from tapps_agents.core.config import load_config
+
+config = load_config()  # searches for .tapps-agents/config.yaml upward, else defaults
+```
+
+## Reference
+
+- **Default template**: `templates/default_config.yaml`
+- **Config models**: `tapps_agents/core/config.py`
+- **Expert setup**: `docs/EXPERT_SETUP_WIZARD.md`
+- **Project profiling**: `docs/PROJECT_PROFILING_GUIDE.md`

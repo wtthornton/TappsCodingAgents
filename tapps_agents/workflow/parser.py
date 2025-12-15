@@ -75,6 +75,30 @@ class WorkflowParser:
                     f"{WorkflowParser._err_prefix(file_path)}Missing required top-level key 'workflow'"
                 )
 
+        # Quick validation of required step fields before schema validation
+        # This ensures we get the expected error message format for missing required fields
+        steps_data = workflow_data.get("steps", [])
+        if isinstance(steps_data, list):
+            for step_data in steps_data:
+                if isinstance(step_data, dict):
+                    step_id = step_data.get("id", "<unknown>")
+                    agent = step_data.get("agent")
+                    action = step_data.get("action")
+                    
+                    # Check required fields and raise with expected message format
+                    if not isinstance(step_data.get("id"), str) or not step_data.get("id", "").strip():
+                        raise ValueError(
+                            f"{WorkflowParser._err_prefix(file_path)}Step must have id, agent, and action"
+                        )
+                    if not isinstance(agent, str) or not agent.strip():
+                        raise ValueError(
+                            f"{WorkflowParser._err_prefix(file_path, step_id)}Step must have id, agent, and action"
+                        )
+                    if not isinstance(action, str) or not action.strip():
+                        raise ValueError(
+                            f"{WorkflowParser._err_prefix(file_path, step_id)}Step must have id, agent, and action"
+                        )
+
         # Determine schema version for validation
         schema_version = workflow_data.get("schema_version")
         if schema_version is None:

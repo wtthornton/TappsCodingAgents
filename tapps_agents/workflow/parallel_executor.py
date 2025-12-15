@@ -320,7 +320,7 @@ class ParallelStepExecutor:
 
         # Execute all steps concurrently with bounded concurrency
         # Use gather with return_exceptions=True to collect all results even if some fail
-        tasks = [execute_with_semaphore(step) for step in steps]
+        tasks = [execute_with_retries(step) for step in steps]
         task_results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Collect results, handling both successes and exceptions

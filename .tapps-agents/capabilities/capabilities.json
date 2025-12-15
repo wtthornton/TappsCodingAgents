@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "hardware_profile": "server",
+  "metrics": [
+    {
+      "capability_id": "test-capability",
+      "agent_id": "test-agent",
+      "success_rate": 0.8701167784615638,
+      "average_duration": 0.9202335569231275,
+      "quality_score": 1.657492864429223,
+      "usage_count": 24,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    }
+  ]
+}

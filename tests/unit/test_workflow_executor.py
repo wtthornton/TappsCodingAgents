@@ -55,8 +55,10 @@ class TestWorkflowExecutor:
         }
 
     @pytest.fixture
-    def executor(self, tmp_path: Path):
+    def executor(self, tmp_path: Path, monkeypatch):
         """Create a WorkflowExecutor instance."""
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
         return WorkflowExecutor(project_root=tmp_path)
 
     def test_start_workflow(self, executor, sample_workflow_dict):

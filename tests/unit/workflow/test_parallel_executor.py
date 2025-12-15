@@ -80,6 +80,7 @@ async def test_execute_parallel_runs_steps_concurrently(sample_steps: list[Workf
 
     class MockState:
         step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
 
     state = MockState()
 
@@ -108,6 +109,7 @@ async def test_execute_parallel_handles_timeout(sample_steps: list[WorkflowStep]
 
     class MockState:
         step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
 
     state = MockState()
 
@@ -120,8 +122,9 @@ async def test_execute_parallel_handles_timeout(sample_steps: list[WorkflowStep]
 
     assert len(results) == 1
     assert results[0].step_execution.status == "failed"
-    assert "timed out" in results[0].step_execution.error.lower()
+    assert "too long" in results[0].step_execution.error.lower() or "timeout" in results[0].step_execution.error.lower()
     assert results[0].error is not None
+    assert isinstance(results[0].error, asyncio.TimeoutError)
 
 
 @pytest.mark.asyncio
@@ -135,6 +138,7 @@ async def test_execute_parallel_handles_exceptions(sample_steps: list[WorkflowSt
 
     class MockState:
         step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
 
     state = MockState()
 
@@ -210,6 +214,7 @@ async def test_execute_parallel_respects_max_parallel() -> None:
 
     class MockState:
         step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
 
     state = MockState()
 

@@ -16,7 +16,9 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.context_manager import ContextManager
 from ...core.mal import MAL
-from ...experts.expert_registry import ExpertRegistry
+
+if TYPE_CHECKING:
+    from ...experts.expert_registry import ExpertRegistry
 
 if TYPE_CHECKING:
     from ...agents.architect.agent import ArchitectAgent
@@ -66,7 +68,9 @@ class EnhancerAgent(BaseAgent):
         self.ops: OpsAgent | None = None  # Lazy load
 
         # Expert registry (lazy load)
-        self.expert_registry: ExpertRegistry | None = None
+        if TYPE_CHECKING:
+            from ...experts.expert_registry import ExpertRegistry
+        self.expert_registry: "ExpertRegistry | None" = None
 
         # Context manager
         self.context_manager = ContextManager()
@@ -84,6 +88,7 @@ class EnhancerAgent(BaseAgent):
             domains_file = project_root / ".tapps-agents" / "domains.md"
             if domains_file.exists():
                 try:
+                    from ...experts.expert_registry import ExpertRegistry
                     self.expert_registry = ExpertRegistry.from_domains_file(
                         domains_file
                     )

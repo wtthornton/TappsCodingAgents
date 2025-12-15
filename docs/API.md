@@ -1,6 +1,6 @@
 # API Reference
 
-**Version**: 2.0.0  
+**Version**: 2.0.1  
 **Last Updated**: January 2026
 
 ## Overview

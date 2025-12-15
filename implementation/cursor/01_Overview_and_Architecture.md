@@ -1,7 +1,7 @@
 # TappsCodingAgents - Part 1: Overview and Architecture
 
-**Version:** 2.0  
-**Date:** December 14, 2025  
+**Version:** 2.0.1  
+**Date:** January 2026  
 **Status:** Recommended Architecture
 
 ---

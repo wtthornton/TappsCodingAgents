@@ -39,7 +39,6 @@ class TestOrchestratorAgent:
                         "agent": "analyst",
                         "action": "gather",
                         "requires": [],
-                        "next": "step2",
                     }
                 ],
             }
@@ -87,11 +86,13 @@ class TestOrchestratorAgent:
 
     @pytest.mark.asyncio
     async def test_start_workflow(
-        self, orchestrator, sample_workflow_file, tmp_path: Path
+        self, orchestrator, sample_workflow_file, tmp_path: Path, monkeypatch
     ):
         """Test starting a workflow."""
         import os
 
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
@@ -144,11 +145,13 @@ class TestOrchestratorAgent:
 
     @pytest.mark.asyncio
     async def test_get_workflow_status_active(
-        self, orchestrator, sample_workflow_file, tmp_path: Path
+        self, orchestrator, sample_workflow_file, tmp_path: Path, monkeypatch
     ):
         """Test getting status of active workflow."""
         import os
 
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
         original_cwd = os.getcwd()
         try:
             os.chdir(tmp_path)
