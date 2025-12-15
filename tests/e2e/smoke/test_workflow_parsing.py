@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 
+from tests.e2e.fixtures.dependency_validator import validate_workflow_file
 from tapps_agents.workflow.parser import WorkflowParser
 
 
@@ -50,8 +51,8 @@ class TestWorkflowParsing:
         workflows_dir = project_root_path / "workflows"
         workflow_file = workflows_dir / "presets" / "feature-implementation.yaml"
         
-        if not workflow_file.exists():
-            pytest.skip(f"Workflow file not found: {workflow_file}")
+        # Validate workflow file exists - fail immediately if missing
+        validate_workflow_file(workflow_file)
         
         workflow = WorkflowParser.parse_file(workflow_file)
         
@@ -90,8 +91,8 @@ workflow:
         workflows_dir = project_root_path / "workflows"
         workflow_file = workflows_dir / "presets" / "feature-implementation.yaml"
         
-        if not workflow_file.exists():
-            pytest.skip(f"Workflow file not found: {workflow_file}")
+        # Validate workflow file exists - fail immediately if missing
+        validate_workflow_file(workflow_file)
         
         workflow = WorkflowParser.parse_file(workflow_file)
         

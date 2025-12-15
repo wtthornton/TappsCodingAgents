@@ -18,7 +18,8 @@ class TestCursorFirstMALGuard:
     async def test_mal_generate_raises_in_cursor_mode(self, monkeypatch):
         monkeypatch.setenv("TAPPS_AGENTS_MODE", "cursor")
         mal = MAL()
-        with pytest.raises(MALDisabledInCursorModeError):
+        # Validate specific error type and message content
+        with pytest.raises(MALDisabledInCursorModeError, match="MAL is disabled when running under Cursor"):
             await mal.generate("hello")
 
     @pytest.mark.asyncio

@@ -111,6 +111,8 @@ class TestContext7Commands:
 
         # Should return error since MCP Gateway is not set
         assert result["success"] is False
+        assert "error" in result
+        assert "MCP Gateway" in result["error"] or "gateway" in result["error"].lower()
 
     @pytest.mark.asyncio
     async def test_cmd_resolve_disabled(self, disabled_commands):

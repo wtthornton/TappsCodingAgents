@@ -347,7 +347,7 @@ class WorkflowRunner:
 
     def _validate_artifact_content(self, artifact_path: Path) -> None:
         """
-        Validate minimal content of an artifact file.
+        Validate minimal content of an artifact file using content validator.
 
         Args:
             artifact_path: Path to artifact file
@@ -355,21 +355,37 @@ class WorkflowRunner:
         Raises:
             AssertionError: If artifact is empty or invalid
         """
-        if not artifact_path.exists():
-            raise AssertionError(f"Artifact does not exist: {artifact_path}")
+        # Use content validator for enhanced validation
+        try:
+            from .content_validator import ArtifactStructureValidator
 
-        if artifact_path.is_file():
-            # Check file is not empty
-            if artifact_path.stat().st_size == 0:
-                raise AssertionError(f"Artifact is empty: {artifact_path}")
+            validator = ArtifactStructureValidator()
+            is_valid, errors = validator.validate_artifact_structure(artifact_path)
+            if not is_valid:
+                raise AssertionError(f"Artifact validation failed: {', '.join(errors)}")
 
-            # If JSON, validate structure
-            if artifact_path.suffix == ".json":
-                try:
-                    with open(artifact_path, "r", encoding="utf-8") as f:
-                        json.load(f)
-                except json.JSONDecodeError as e:
-                    raise AssertionError(f"Artifact is not valid JSON: {artifact_path} - {e}")
+            # Validate content quality
+            content_valid, content_error = validator.validate_artifact_content(artifact_path)
+            if not content_valid and content_error:
+                raise AssertionError(f"Artifact content validation failed: {content_error}")
+        except ImportError:
+            # Fallback to basic validation if content validator not available
+            if not artifact_path.exists():
+                raise AssertionError(f"Artifact does not exist: {artifact_path}")
+
+            if artifact_path.is_file():
+                # Check file is not empty
+                if artifact_path.stat().st_size == 0:
+                    raise AssertionError(f"Artifact is empty: {artifact_path}")
+
+                    # If JSON, validate structure
+                    if artifact_path.suffix == ".json":
+                        try:
+                            import json
+                            with open(artifact_path, "r", encoding="utf-8") as f:
+                                json.load(f)
+                        except json.JSONDecodeError as e:
+                            raise AssertionError(f"Artifact is not valid JSON: {artifact_path} - {e}")
 
     def control_gate_outcome(self, gate_id: str, outcome: bool) -> None:
         """
@@ -505,3 +521,78 @@ def control_gate_outcome(gate_id: str, outcome: bool, gate_controller: Optional[
     controller = gate_controller or GateController()
     controller.set_outcome(gate_id, outcome)
     return controller
+
+
+# Agent behavior validation helpers for Epic 15.5
+
+def validate_agent_context(
+    agent: Any, workflow_state: WorkflowState, step_context: Dict[str, Any]
+) -> None:
+    """
+    Validate that agent received correct context from workflow.
+
+    Args:
+        agent: Agent instance
+        workflow_state: Current workflow state
+        step_context: Step-specific context
+    """
+    # Verify agent has access to project context
+    assert agent.config is not None, "Agent should have project config"
+    assert agent.agent_id is not None, "Agent should have agent_id"
+    
+    # Verify workflow state is accessible (if agent has state reference)
+    assert workflow_state.workflow_id is not None, "Workflow state should have workflow_id"
+    
+    # Verify step context is provided
+    assert step_context is not None, "Step context should be provided"
+
+
+def validate_agent_artifacts(
+    artifacts: Dict[str, Any], expected_artifacts: List[str]
+) -> None:
+    """
+    Validate that agents produced artifacts that workflow expects.
+
+    Args:
+        artifacts: Dictionary of artifacts (from workflow state)
+        expected_artifacts: List of expected artifact names/paths
+    """
+    for artifact_name in expected_artifacts:
+        # Check if artifact exists in artifacts dict or as file
+        found = False
+        for key, artifact in artifacts.items():
+            if isinstance(artifact, dict):
+                if artifact.get("name") == artifact_name or artifact.get("path") == artifact_name:
+                    found = True
+                    break
+            elif key == artifact_name:
+                found = True
+                break
+        
+        if not found:
+            # Also check if it's a file path that exists
+            artifact_path = Path(artifact_name)
+            if artifact_path.exists():
+                found = True
+        
+        assert found, f"Expected artifact '{artifact_name}' not found"
+
+
+def validate_agent_workflow_state_interaction(
+    agent: Any, workflow_state: WorkflowState
+) -> None:
+    """
+    Validate that agent integrates correctly with workflow state.
+
+    Args:
+        agent: Agent instance
+        workflow_state: Workflow state to validate
+    """
+    # Verify workflow state structure
+    assert workflow_state.workflow_id is not None, "Workflow state should have workflow_id"
+    assert isinstance(workflow_state.artifacts, dict), "Artifacts should be a dictionary"
+    assert isinstance(workflow_state.completed_steps, list), "Completed steps should be a list"
+    
+    # Verify agent can access state (basic check)
+    assert agent is not None, "Agent should exist"
+    assert agent.config is not None, "Agent should have config for state access"

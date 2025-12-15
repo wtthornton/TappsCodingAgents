@@ -24,6 +24,13 @@ from tests.e2e.fixtures.workflow_runner import (
     WorkflowRunner,
     GateController,
 )
+from tests.e2e.fixtures.mock_agents import (
+    create_behavioral_mock,
+    MockPlanner,
+    MockImplementer,
+    MockReviewer,
+    MockTester,
+)
 
 
 @pytest.fixture
@@ -163,6 +170,37 @@ def workflow_project(e2e_project: Path) -> Path:
         Path to the test project directory
     """
     return e2e_project
+
+
+# Behavioral mock fixtures
+@pytest.fixture
+def behavioral_mock_planner() -> MockPlanner:
+    """Create a behavioral mock for Planner Agent."""
+    return MockPlanner()
+
+
+@pytest.fixture
+def behavioral_mock_implementer() -> MockImplementer:
+    """Create a behavioral mock for Implementer Agent."""
+    return MockImplementer()
+
+
+@pytest.fixture
+def behavioral_mock_reviewer() -> MockReviewer:
+    """Create a behavioral mock for Reviewer Agent."""
+    return MockReviewer(quality_score=75.0)
+
+
+@pytest.fixture
+def behavioral_mock_tester() -> MockTester:
+    """Create a behavioral mock for Tester Agent."""
+    return MockTester(test_results="pass")
+
+
+@pytest.fixture
+def behavioral_mock_factory():
+    """Factory fixture for creating behavioral mocks by agent type."""
+    return create_behavioral_mock
 
 
 # Hook to capture test results for artifact capture

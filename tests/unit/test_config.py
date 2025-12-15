@@ -278,3 +278,138 @@ class TestConfigIntegration:
         assert config.scoring.weights.security == 0.35
         assert config.scoring.quality_threshold == 75.0
         assert config.mal.timeout == 120.0
+
+    def test_config_merging_partial_config(self, tmp_path: Path):
+        """Test that partial config merges correctly with defaults (Story 18.3)."""
+        # Create a config file with only some fields set
+        config_file = tmp_path / "config.yaml"
+        config_data = {
+            "project_name": "MyProject",
+            # Only set some reviewer config, leave others as defaults
+            "agents": {
+                "reviewer": {
+                    "quality_threshold": 80.0,
+                    # model, include_scoring, etc. should use defaults
+                }
+            },
+            # Only set scoring quality_threshold, weights should use defaults
+            "scoring": {
+                "quality_threshold": 75.0,
+            },
+        }
+        with open(config_file, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = load_config(config_file)
+
+        # Verify explicitly set values
+        assert config.project_name == "MyProject"
+        assert config.agents.reviewer.quality_threshold == 80.0
+        assert config.scoring.quality_threshold == 75.0
+
+        # Verify defaults are applied for unset values
+        assert config.agents.reviewer.model == "qwen2.5-coder:7b", \
+            "model should use default value when not specified"
+        assert config.agents.reviewer.include_scoring is True, \
+            "include_scoring should use default value when not specified"
+        assert config.agents.reviewer.max_file_size == 1024 * 1024, \
+            "max_file_size should use default value when not specified"
+        
+        # Verify scoring weights use defaults
+        assert config.scoring.weights.complexity == 0.20, \
+            "scoring.weights.complexity should use default value"
+        assert config.scoring.weights.security == 0.30, \
+            "scoring.weights.security should use default value"
+        assert config.scoring.weights.maintainability == 0.25, \
+            "scoring.weights.maintainability should use default value"
+
+    def test_config_default_values_application(self, tmp_path: Path):
+        """Test that default values are correctly applied when fields are missing (Story 18.3)."""
+        # Create minimal config file (empty dict)
+        config_file = tmp_path / "config.yaml"
+        config_data = {}
+        with open(config_file, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = load_config(config_file)
+
+        # Verify all default values are applied
+        assert config.agents.reviewer.model == "qwen2.5-coder:7b", \
+            "Reviewer model should use default"
+        assert config.agents.reviewer.quality_threshold == 70.0, \
+            "Reviewer quality_threshold should use default"
+        assert config.agents.reviewer.include_scoring is True, \
+            "Reviewer include_scoring should use default"
+        assert config.agents.reviewer.max_file_size == 1024 * 1024, \
+            "Reviewer max_file_size should use default"
+        
+        # Verify scoring defaults
+        assert config.scoring.weights.complexity == 0.20
+        assert config.scoring.weights.security == 0.30
+        assert config.scoring.weights.maintainability == 0.25
+        assert config.scoring.weights.test_coverage == 0.15
+        assert config.scoring.weights.performance == 0.10
+        assert config.scoring.quality_threshold == 70.0
+        
+        # Verify weights sum to 1.0
+        weights_sum = (
+            config.scoring.weights.complexity +
+            config.scoring.weights.security +
+            config.scoring.weights.maintainability +
+            config.scoring.weights.test_coverage +
+            config.scoring.weights.performance
+        )
+        assert abs(weights_sum - 1.0) < 0.01, \
+            f"Default weights should sum to 1.0, got {weights_sum}"
+
+    def test_config_merging_nested_structures(self, tmp_path: Path):
+        """Test that nested config structures merge correctly (Story 18.3)."""
+        # Create config with partial nested structure
+        config_file = tmp_path / "config.yaml"
+        config_data = {
+            "agents": {
+                "reviewer": {
+                    "quality_threshold": 85.0,
+                    "model": "custom-model:7b",
+                    # Don't specify other reviewer fields (should use defaults)
+                },
+                # Don't specify other agents (should use defaults)
+            },
+            "scoring": {
+                "quality_threshold": 80.0,
+                # Don't specify weights (should use defaults)
+            },
+        }
+        with open(config_file, "w") as f:
+            yaml.dump(config_data, f)
+
+        config = load_config(config_file)
+
+        # Verify overridden values
+        assert config.agents.reviewer.quality_threshold == 85.0
+        assert config.agents.reviewer.model == "custom-model:7b"
+        assert config.scoring.quality_threshold == 80.0
+
+        # Verify defaults are applied for unset nested fields
+        assert config.agents.reviewer.include_scoring is True, \
+            "include_scoring should use default when not specified"
+        assert config.agents.reviewer.max_file_size == 1024 * 1024, \
+            "max_file_size should use default when not specified"
+        
+        # Verify default weights are applied
+        assert config.scoring.weights.complexity == 0.20
+        assert config.scoring.weights.security == 0.30
+        assert config.scoring.weights.maintainability == 0.25
+        assert config.scoring.weights.test_coverage == 0.15
+        assert config.scoring.weights.performance == 0.10
+        
+        # Verify weights sum to 1.0
+        weights_sum = (
+            config.scoring.weights.complexity +
+            config.scoring.weights.security +
+            config.scoring.weights.maintainability +
+            config.scoring.weights.test_coverage +
+            config.scoring.weights.performance
+        )
+        assert abs(weights_sum - 1.0) < 0.01, \
+            f"Default weights should sum to 1.0, got {weights_sum}"

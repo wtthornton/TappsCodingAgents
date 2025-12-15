@@ -291,8 +291,12 @@ class TestWorkflowExecutor:
         workflow = WorkflowParser.parse(sample_workflow_dict)
         executor.start(workflow)
 
+        # Verify step has no consults configured
+        assert executor.step_requires_expert_consultation() is False
+        
         result = await executor.consult_experts_for_step()
 
+        # Should return None when step has no consults
         assert result is None
 
     @pytest.mark.asyncio

@@ -38,23 +38,19 @@ class TestReviewCommand:
         assert "Error: File not found" in captured.err
 
     @pytest.mark.asyncio
-    async def test_review_command_success_json(self, sample_python_file, capsys):
-        """Test review command with valid file, JSON output."""
+    async def test_review_command_success_json(self, sample_python_file, capsys, mock_mal):
+        """Test review command with valid file, JSON output using real ReviewerAgent."""
+        from tapps_agents.agents.reviewer.agent import ReviewerAgent
+        
+        # Use real ReviewerAgent instance (will use real CodeScorer)
+        # Only mock MAL to avoid network calls
         with patch("tapps_agents.cli.ReviewerAgent") as mock_agent_class:
-            mock_agent = MagicMock()
-            mock_agent.activate = AsyncMock()
-            mock_agent.close = AsyncMock()
-            mock_agent.run = AsyncMock(return_value={
-                "file": str(sample_python_file),
-                "scoring": {
-                    "complexity_score": 7.5,
-                    "security_score": 8.0,
-                    "maintainability_score": 9.0,
-                    "overall_score": 82.5,
-                },
-                "passed": True,
-            })
-            mock_agent_class.return_value = mock_agent
+            # Create a real agent instance
+            real_agent = ReviewerAgent()
+            real_agent.mal = mock_mal
+            real_agent.activate = AsyncMock()
+            real_agent.close = AsyncMock()
+            mock_agent_class.return_value = real_agent
 
             await review_command(str(sample_python_file), output_format="json")
 
@@ -62,9 +58,12 @@ class TestReviewCommand:
             result = json.loads(captured.out)
             assert result["file"] == str(sample_python_file)
             assert "scoring" in result
-            mock_agent.activate.assert_called_once()
-            mock_agent.run.assert_called_once()
-            mock_agent.close.assert_called_once()
+            # Validate real scoring results are present (not just mocked values)
+            assert "overall_score" in result["scoring"]
+            assert isinstance(result["scoring"]["overall_score"], (int, float))
+            real_agent.activate.assert_called_once()
+            real_agent.run.assert_called_once()
+            real_agent.close.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_review_command_success_text(self, sample_python_file, capsys):

@@ -46,22 +46,30 @@ class TestExpertConfigModel:
 
     def test_missing_required_fields(self):
         """Test that missing required fields raise errors."""
-        with pytest.raises(ValidationError):
+        # Validate that ValidationError is raised with message mentioning missing field
+        with pytest.raises(ValidationError) as exc_info:
             ExpertConfigModel(
                 expert_name="Test Expert",
                 primary_domain="test-domain",
                 # Missing expert_id
             )
+        # Verify error message mentions the missing field
+        error_str = str(exc_info.value)
+        assert "expert_id" in error_str or "expert_id" in error_str.lower()
 
     def test_extra_fields_forbidden(self):
         """Test that extra fields are forbidden."""
-        with pytest.raises(ValidationError):
+        # Validate that ValidationError is raised with message mentioning extra field
+        with pytest.raises(ValidationError) as exc_info:
             ExpertConfigModel(
                 expert_id="expert-test",
                 expert_name="Test Expert",
                 primary_domain="test-domain",
                 unknown_field="value",  # Extra field
             )
+        # Verify error message mentions the extra field (Pydantic usually includes field names)
+        error_str = str(exc_info.value)
+        assert "unknown_field" in error_str or "extra" in error_str.lower()
 
 
 class TestExpertsConfig:
@@ -104,7 +112,8 @@ class TestExpertsConfig:
         """Test loading non-existent file raises FileNotFoundError."""
         yaml_file = temp_dir / "nonexistent.yaml"
 
-        with pytest.raises(FileNotFoundError):
+        # Validate specific error message: "Expert configuration file not found: {path}"
+        with pytest.raises(FileNotFoundError, match="Expert configuration file not found: .*nonexistent.yaml"):
             ExpertsConfig.from_yaml(yaml_file)
 
     def test_load_invalid_yaml(self, temp_dir):

@@ -54,21 +54,21 @@ class TestCodeScorer:
 
         result = scorer.score_file(test_file, SIMPLE_CODE)
 
-        # Simple code should have low complexity
-        assert result["complexity_score"] >= 0
-        assert result["complexity_score"] <= 10
+        # Simple code should have low complexity (high complexity_score means low complexity)
+        assert result["complexity_score"] >= 7.0  # Simple code should score high (low complexity)
+        assert result["complexity_score"] <= 10.0
 
         # Simple code should have good security (no issues)
-        assert result["security_score"] >= 0
-        assert result["security_score"] <= 10
+        assert result["security_score"] >= 8.0  # Simple code with no security issues should score high
+        assert result["security_score"] <= 10.0
 
         # Should have reasonable maintainability
-        assert result["maintainability_score"] >= 0
-        assert result["maintainability_score"] <= 10
+        assert result["maintainability_score"] >= 7.0  # Simple code should be maintainable
+        assert result["maintainability_score"] <= 10.0
 
-        # Overall score should be calculated
-        assert result["overall_score"] >= 0
-        assert result["overall_score"] <= 100
+        # Overall score should be calculated and reasonable for simple code
+        assert result["overall_score"] >= 70.0  # Simple code should score well overall
+        assert result["overall_score"] <= 100.0
 
     def test_score_file_complex_code(self, tmp_path: Path):
         """Test scoring complex code with high cyclomatic complexity."""
@@ -78,13 +78,21 @@ class TestCodeScorer:
 
         result = scorer.score_file(test_file, COMPLEX_CODE)
 
-        # Complex code should have higher complexity score
-        assert result["complexity_score"] >= 0
-        assert result["complexity_score"] <= 10
+        # Complex code should have lower complexity_score (high complexity = low score)
+        # Compare with simple code to ensure relative scoring works
+        simple_file = tmp_path / "simple.py"
+        simple_file.write_text(SIMPLE_CODE)
+        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        
+        # Complex code should score lower than simple code
+        assert result["complexity_score"] < simple_result["complexity_score"]
+        assert result["complexity_score"] >= 0.0
+        assert result["complexity_score"] <= 10.0
 
-        # Overall score should reflect complexity
-        assert result["overall_score"] >= 0
-        assert result["overall_score"] <= 100
+        # Overall score should reflect complexity (lower than simple code)
+        assert result["overall_score"] < simple_result["overall_score"]
+        assert result["overall_score"] >= 0.0
+        assert result["overall_score"] <= 100.0
 
     def test_score_file_insecure_code(self, tmp_path: Path):
         """Test scoring code with security issues."""
@@ -95,12 +103,21 @@ class TestCodeScorer:
         result = scorer.score_file(test_file, INSECURE_CODE)
 
         # Insecure code should have lower security score
-        assert result["security_score"] >= 0
-        assert result["security_score"] <= 10
+        # Compare with simple code to ensure relative scoring works
+        simple_file = tmp_path / "simple.py"
+        simple_file.write_text(SIMPLE_CODE)
+        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        
+        # Insecure code should score significantly lower on security
+        assert result["security_score"] < simple_result["security_score"]
+        assert result["security_score"] < 5.0  # Insecure code should score low
+        assert result["security_score"] >= 0.0
+        assert result["security_score"] <= 10.0
 
         # Security issues should lower overall score
-        assert result["overall_score"] >= 0
-        assert result["overall_score"] <= 100
+        assert result["overall_score"] < simple_result["overall_score"]
+        assert result["overall_score"] >= 0.0
+        assert result["overall_score"] <= 100.0
 
     def test_score_file_maintainable_code(self, tmp_path: Path):
         """Test scoring well-documented, maintainable code."""
@@ -111,12 +128,20 @@ class TestCodeScorer:
         result = scorer.score_file(test_file, MAINTAINABLE_CODE)
 
         # Maintainable code should score well
-        assert result["maintainability_score"] >= 0
-        assert result["maintainability_score"] <= 10
+        # Compare with simple code to ensure maintainable code scores higher
+        simple_file = tmp_path / "simple.py"
+        simple_file.write_text(SIMPLE_CODE)
+        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        
+        # Maintainable code (with docs, type hints, error handling) should score higher
+        assert result["maintainability_score"] >= simple_result["maintainability_score"]
+        assert result["maintainability_score"] >= 7.0  # Well-documented code should score high
+        assert result["maintainability_score"] <= 10.0
 
         # Overall score should be good
-        assert result["overall_score"] >= 0
-        assert result["overall_score"] <= 100
+        assert result["overall_score"] >= simple_result["overall_score"]
+        assert result["overall_score"] >= 70.0  # Maintainable code should score well
+        assert result["overall_score"] <= 100.0
 
     def test_score_file_syntax_error(self, tmp_path: Path):
         """Test that scorer handles syntax errors gracefully."""
@@ -171,6 +196,20 @@ class TestCodeScorer:
         # Formula: (10-complexity)*0.20 + security*0.30 + maintainability*0.25 + coverage*0.15 + performance*0.10
         expected_range = (0, 100)
         assert expected_range[0] <= result["overall_score"] <= expected_range[1]
+        
+        # Verify the formula is correct by checking individual components contribute
+        complexity_contrib = (10 - result["complexity_score"]) * 0.20
+        security_contrib = result["security_score"] * 0.30
+        maintainability_contrib = result["maintainability_score"] * 0.25
+        # Allow for rounding differences
+        calculated_score = (
+            complexity_contrib
+            + security_contrib
+            + maintainability_contrib
+            + result["test_coverage_score"] * 0.15
+            + result["performance_score"] * 0.10
+        )
+        assert abs(result["overall_score"] - calculated_score) < 1.0  # Allow small rounding differences
 
     def test_score_empty_file(self, tmp_path: Path):
         """Test scoring an empty file."""
@@ -608,3 +647,232 @@ test.py:2: error: Incompatible return type (got "int", expected "None") [return-
         assert len(errors) == 1
         assert errors[0]["error_code"] == "assignment"
         assert errors[0]["severity"] == "error"
+
+    def test_scoring_relative_relationships(self, tmp_path: Path):
+        """Test that scoring correctly ranks code quality (Story 16.3)."""
+        scorer = CodeScorer()
+        
+        # Score simple code
+        simple_file = tmp_path / "simple.py"
+        simple_file.write_text(SIMPLE_CODE)
+        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        
+        # Score complex code
+        complex_file = tmp_path / "complex.py"
+        complex_file.write_text(COMPLEX_CODE)
+        complex_result = scorer.score_file(complex_file, COMPLEX_CODE)
+        
+        # Score insecure code
+        insecure_file = tmp_path / "insecure.py"
+        insecure_file.write_text(INSECURE_CODE)
+        insecure_result = scorer.score_file(insecure_file, INSECURE_CODE)
+        
+        # Score maintainable code
+        maintainable_file = tmp_path / "maintainable.py"
+        maintainable_file.write_text(MAINTAINABLE_CODE)
+        maintainable_result = scorer.score_file(maintainable_file, MAINTAINABLE_CODE)
+        
+        # Business logic validation: Simple code should score better than complex code
+        assert simple_result["complexity_score"] > complex_result["complexity_score"], \
+            "Simple code should have lower complexity (higher complexity_score)"
+        assert simple_result["overall_score"] > complex_result["overall_score"], \
+            "Simple code should score higher overall than complex code"
+        
+        # Business logic validation: Secure code should score better than insecure code
+        assert simple_result["security_score"] > insecure_result["security_score"], \
+            "Secure code should score higher on security than insecure code"
+        assert insecure_result["security_score"] < 5.0, \
+            "Insecure code (with eval, exec, shell injection) should score low on security"
+        
+        # Business logic validation: Maintainable code should score well
+        assert maintainable_result["maintainability_score"] >= 7.0, \
+            "Well-documented, typed code should score high on maintainability"
+        assert maintainable_result["maintainability_score"] >= simple_result["maintainability_score"], \
+            "Maintainable code should score at least as high as simple code"
+        
+        # Business logic validation: Overall score relationships
+        assert maintainable_result["overall_score"] > complex_result["overall_score"], \
+            "Maintainable code should score higher overall than complex code"
+        assert simple_result["overall_score"] > insecure_result["overall_score"], \
+            "Simple secure code should score higher overall than insecure code"
+
+    def test_overall_score_formula_with_known_values(self, tmp_path: Path):
+        """Test that overall score formula matches specification with known values (Story 18.1)."""
+        scorer = CodeScorer()
+        
+        # Use custom weights for predictable testing
+        class TestWeights:
+            complexity = 0.20
+            security = 0.30
+            maintainability = 0.25
+            test_coverage = 0.15
+            performance = 0.10
+        
+        scorer.weights = TestWeights()
+        
+        test_file = tmp_path / "test.py"
+        test_file.write_text(SIMPLE_CODE)
+        
+        result = scorer.score_file(test_file, SIMPLE_CODE)
+        
+        # Extract individual scores
+        complexity = result["complexity_score"]
+        security = result["security_score"]
+        maintainability = result["maintainability_score"]
+        coverage = result["test_coverage_score"]
+        performance = result["performance_score"]
+        
+        # Calculate expected overall score using the exact formula from scoring.py
+        # Formula: ((10 - complexity) * 0.20 + security * 0.30 + maintainability * 0.25 + 
+        #           coverage * 0.15 + performance * 0.10) * 10
+        expected_overall = (
+            (10 - complexity) * 0.20 +
+            security * 0.30 +
+            maintainability * 0.25 +
+            coverage * 0.15 +
+            performance * 0.10
+        ) * 10
+        
+        # Verify the formula matches (allow for small floating point differences)
+        assert abs(result["overall_score"] - expected_overall) < 0.01, \
+            f"Overall score formula mismatch: expected {expected_overall}, got {result['overall_score']}"
+    
+    def test_weighted_average_calculation_correctness(self, tmp_path: Path):
+        """Test that weighted average calculations are mathematically correct (Story 18.1)."""
+        scorer = CodeScorer()
+        
+        # Test with custom weights that sum to 1.0
+        class CustomWeights:
+            complexity = 0.10
+            security = 0.40
+            maintainability = 0.20
+            test_coverage = 0.20
+            performance = 0.10
+        
+        scorer.weights = CustomWeights()
+        
+        test_file = tmp_path / "test.py"
+        test_file.write_text(SIMPLE_CODE)
+        
+        result = scorer.score_file(test_file, SIMPLE_CODE)
+        
+        # Verify weights sum to 1.0
+        assert abs(
+            CustomWeights.complexity + CustomWeights.security + 
+            CustomWeights.maintainability + CustomWeights.test_coverage + 
+            CustomWeights.performance - 1.0
+        ) < 0.0001, "Weights must sum to 1.0"
+        
+        # Calculate weighted average manually
+        weighted_sum = (
+            (10 - result["complexity_score"]) * CustomWeights.complexity +
+            result["security_score"] * CustomWeights.security +
+            result["maintainability_score"] * CustomWeights.maintainability +
+            result["test_coverage_score"] * CustomWeights.test_coverage +
+            result["performance_score"] * CustomWeights.performance
+        )
+        expected_overall = weighted_sum * 10
+        
+        # Verify calculation is correct
+        assert abs(result["overall_score"] - expected_overall) < 0.01, \
+            "Weighted average calculation is incorrect"
+    
+    def test_scoring_simple_vs_complex_with_same_context(self, tmp_path: Path):
+        """Test that simple code scores better than complex code with same test context (Story 18.1)."""
+        scorer = CodeScorer()
+        
+        # Score simple code
+        simple_file = tmp_path / "simple.py"
+        simple_file.write_text(SIMPLE_CODE)
+        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        
+        # Score complex code
+        complex_file = tmp_path / "complex.py"
+        complex_file.write_text(COMPLEX_CODE)
+        complex_result = scorer.score_file(complex_file, COMPLEX_CODE)
+        
+        # Business logic: Simple code should have lower complexity (higher complexity_score)
+        assert simple_result["complexity_score"] > complex_result["complexity_score"], \
+            "Simple code should have lower cyclomatic complexity (higher complexity_score)"
+        
+        # Business logic: Simple code should score higher overall (assuming other factors similar)
+        # Note: This assumes security, maintainability, etc. are similar for both
+        # The key difference should be complexity, which should make simple code score better
+        complexity_advantage = (simple_result["complexity_score"] - complex_result["complexity_score"]) * 0.20 * 10
+        if complexity_advantage > 5:  # Only assert if complexity difference is significant
+            assert simple_result["overall_score"] > complex_result["overall_score"], \
+                "Simple code should score higher overall due to lower complexity"
+    
+    def test_scoring_secure_vs_insecure_code(self, tmp_path: Path):
+        """Test that secure code scores significantly higher than insecure code (Story 18.1)."""
+        scorer = CodeScorer()
+        
+        # Score simple (secure) code
+        simple_file = tmp_path / "simple.py"
+        simple_file.write_text(SIMPLE_CODE)
+        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        
+        # Score insecure code
+        insecure_file = tmp_path / "insecure.py"
+        insecure_file.write_text(INSECURE_CODE)
+        insecure_result = scorer.score_file(insecure_file, INSECURE_CODE)
+        
+        # Business logic: Secure code should score much higher on security
+        security_difference = simple_result["security_score"] - insecure_result["security_score"]
+        assert security_difference > 3.0, \
+            f"Secure code should score significantly higher on security (diff: {security_difference})"
+        
+        # Business logic: Insecure code should score below threshold
+        assert insecure_result["security_score"] < 5.0, \
+            f"Insecure code (with eval, exec, shell injection) should score low on security, got {insecure_result['security_score']}"
+        
+        # Business logic: Overall score should reflect security importance (30% weight)
+        # Since security has 0.30 weight, security issues should significantly impact overall score
+        overall_difference = simple_result["overall_score"] - insecure_result["overall_score"]
+        assert overall_difference > 5.0, \
+            f"Security issues (30% weight) should significantly lower overall score (diff: {overall_difference})"
+    
+    def test_overall_score_formula_matches_specification(self, tmp_path: Path):
+        """Verify overall score formula exactly matches specification (Story 18.1)."""
+        scorer = CodeScorer()
+        
+        test_file = tmp_path / "test.py"
+        test_file.write_text(SIMPLE_CODE)
+        
+        result = scorer.score_file(test_file, SIMPLE_CODE)
+        
+        # Default weights from scoring.py
+        default_complexity = 0.20
+        default_security = 0.30
+        default_maintainability = 0.25
+        default_coverage = 0.15
+        default_performance = 0.10
+        
+        # Extract scores
+        complexity = result["complexity_score"]
+        security = result["security_score"]
+        maintainability = result["maintainability_score"]
+        coverage = result["test_coverage_score"]
+        performance = result["performance_score"]
+        
+        # Apply exact formula from scoring.py line 177-184
+        # Formula: ((10 - complexity_score) * w.complexity + 
+        #           security_score * w.security + 
+        #           maintainability_score * w.maintainability + 
+        #           test_coverage_score * w.test_coverage + 
+        #           performance_score * w.performance) * 10
+        calculated_overall = (
+            (10 - complexity) * default_complexity +
+            security * default_security +
+            maintainability * default_maintainability +
+            coverage * default_coverage +
+            performance * default_performance
+        ) * 10
+        
+        # Verify formula matches exactly (within floating point precision)
+        assert abs(result["overall_score"] - calculated_overall) < 0.01, \
+            f"Overall score formula does not match specification: " \
+            f"expected {calculated_overall}, got {result['overall_score']}. " \
+            f"Formula should be: ((10 - {complexity}) * {default_complexity} + " \
+            f"{security} * {default_security} + {maintainability} * {default_maintainability} + " \
+            f"{coverage} * {default_coverage} + {performance} * {default_performance}) * 10"

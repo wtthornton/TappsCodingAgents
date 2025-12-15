@@ -129,12 +129,13 @@ async def test_execute_parallel_handles_timeout(sample_steps: list[WorkflowStep]
 
 @pytest.mark.asyncio
 async def test_execute_parallel_handles_exceptions(sample_steps: list[WorkflowStep]) -> None:
-    """Test that parallel executor handles step exceptions."""
+    """Test that parallel executor handles step exceptions with proper error propagation."""
     executor = ParallelStepExecutor(max_parallel=8)
 
+    error_message = f"Step {sample_steps[0].id} failed"
     async def failing_execute(step: WorkflowStep) -> dict:
         """Mock step that raises an exception."""
-        raise ValueError(f"Step {step.id} failed")
+        raise ValueError(error_message)
 
     class MockState:
         step_executions: list[StepExecution] = []
@@ -150,9 +151,12 @@ async def test_execute_parallel_handles_exceptions(sample_steps: list[WorkflowSt
 
     assert len(results) == 1
     assert results[0].step_execution.status == "failed"
-    assert "failed" in results[0].step_execution.error.lower()
+    # Validate that error message is propagated correctly
+    assert error_message in results[0].step_execution.error
     assert results[0].error is not None
+    # Validate specific exception type (not broad matching)
     assert isinstance(results[0].error, ValueError)
+    assert str(results[0].error) == error_message
 
 
 @pytest.mark.asyncio

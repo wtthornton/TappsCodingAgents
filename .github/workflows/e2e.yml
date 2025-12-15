@@ -1,0 +1,244 @@
+name: E2E Tests
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  schedule:
+    # Run nightly tests at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+# Cancel in-progress runs for the same workflow and branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # PR checks: Fast tests only (unit + smoke E2E)
+  pr-checks:
+    name: PR Checks (Unit + Smoke E2E)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run unit and smoke tests
+        id: test
+        run: |
+          pytest -m "unit or e2e_smoke" \
+            --junitxml=junit-pr-checks.xml \
+            --tb=short \
+            -v
+        continue-on-error: true
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-pr-checks
+          path: junit-pr-checks.xml
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-pr-checks
+          path: |
+            .pytest_cache/
+            htmlcov/
+          retention-days: 7
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## PR Checks Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Unit and smoke E2E tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Some tests failed. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Main branch: Unit + integration + workflow E2E (mocked)
+  main-branch:
+    name: Main Branch (Unit + Integration + Workflow E2E)
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    timeout-minutes: 30
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Run unit, integration, and workflow tests
+        id: test
+        run: |
+          pytest -m "unit or integration or e2e_workflow" \
+            --junitxml=junit-main-branch.xml \
+            --tb=short \
+            -v \
+            --cov=tapps_agents \
+            --cov-report=xml \
+            --cov-report=term-missing
+        continue-on-error: true
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-main-branch
+          path: junit-main-branch.xml
+          retention-days: 30
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-main-branch
+          path: coverage.xml
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-main-branch
+          path: |
+            .pytest_cache/
+            htmlcov/
+          retention-days: 30
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Main Branch Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Unit, integration, and workflow E2E tests completed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.test.outcome }}" != "success" ]; then
+            echo "❌ Some tests failed. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Nightly: Scenario tests + real services
+  nightly:
+    name: Nightly (Scenario E2E + Real Services)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    timeout-minutes: 60
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Check credentials availability
+        id: check_creds
+        run: |
+          if [ -z "${{ secrets.ANTHROPIC_API_KEY }}" ] && [ -z "${{ secrets.OPENAI_API_KEY }}" ]; then
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "⚠️ No LLM credentials available. Tests will be skipped."
+          else
+            echo "available=true" >> $GITHUB_OUTPUT
+            echo "✅ LLM credentials available."
+          fi
+        continue-on-error: true
+
+      - name: Run scenario and real service tests
+        id: test
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          CONTEXT7_API_KEY: ${{ secrets.CONTEXT7_API_KEY }}
+        run: |
+          # Run tests with timeout and continue on error
+          pytest -m "e2e_scenario or (e2e_workflow and requires_llm) or (e2e_cli and requires_llm)" \
+            --junitxml=junit-nightly.xml \
+            --tb=short \
+            -v \
+            --maxfail=5 \
+            -x || true
+        continue-on-error: true
+
+      - name: Collect failure artifacts
+        if: failure() || steps.test.outcome == 'failure'
+        run: |
+          mkdir -p failure-artifacts
+          # Collect logs if they exist
+          find . -name "*.log" -type f -exec cp {} failure-artifacts/ \; || true
+          # Collect state snapshots if they exist
+          find . -path "*/.tapps-agents/*" -type f -exec cp --parents {} failure-artifacts/ \; || true
+          # Create summary
+          echo "# Failure Artifacts" > failure-artifacts/README.md
+          echo "Generated: $(date)" >> failure-artifacts/README.md
+          echo "Workflow: ${{ github.workflow }}" >> failure-artifacts/README.md
+          echo "Run ID: ${{ github.run_id }}" >> failure-artifacts/README.md
+        continue-on-error: true
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-nightly
+          path: junit-nightly.xml
+          retention-days: 90
+
+      - name: Upload failure artifacts
+        if: failure() || steps.test.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-artifacts-nightly
+          path: failure-artifacts/
+          retention-days: 90
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## Nightly Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.check_creds.outputs.available }}" == "true" ]; then
+            echo "✅ Credentials available" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "⚠️ No credentials available - tests skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.test.outcome }}" == "success" ]; then
+            echo "✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Some tests failed. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+          fi
+

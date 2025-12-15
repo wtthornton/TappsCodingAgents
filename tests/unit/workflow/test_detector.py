@@ -32,7 +32,8 @@ class TestProjectDetector:
         characteristics = detector.detect()
         
         assert characteristics is not None
-        assert characteristics.project_type.value == "python" or "python" in str(characteristics.project_type).lower()
+        # Should detect as Python project specifically
+        assert characteristics.project_type.value == "python"
 
     def test_detect_javascript_project(self, tmp_path):
         """Test detecting JavaScript project."""
@@ -45,8 +46,9 @@ class TestProjectDetector:
         characteristics = detector.detect()
         
         assert characteristics is not None
-        # May detect as JavaScript or generic
-        assert characteristics.project_type is not None
+        # Should detect as JavaScript project specifically (not generic)
+        assert characteristics.project_type.value in ["javascript", "typescript", "node"]
+        assert characteristics.project_type.value != "generic"
 
     def test_detect_empty_directory(self, tmp_path):
         """Test detecting empty directory."""

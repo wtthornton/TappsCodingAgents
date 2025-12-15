@@ -90,3 +90,55 @@ class TestQualityWorkflow:
             # Gate should have condition, on_pass, and/or on_fail
             gate = step.gate
             assert "condition" in gate or "on_pass" in gate or "on_fail" in gate
+
+    @pytest.mark.asyncio
+    @pytest.mark.timeout(300)
+    @pytest.mark.behavioral_mock
+    async def test_full_workflow_execution(
+        self, workflow_runner: WorkflowRunner, workflow_path: Path
+    ):
+        """Test complete quality workflow execution end-to-end."""
+        # Execute full workflow
+        state, results = await workflow_runner.run_workflow(workflow_path, max_steps=None)
+
+        assert state is not None
+        assert state.workflow_id == "quality"
+        assert results["correlation_id"] is not None
+
+        # Validate workflow completed
+        assert state.status in ["completed", "success"], f"Workflow did not complete: {state.status}"
+
+        # Validate step execution order and dependencies
+        executed_steps = results.get("steps_executed", [])
+        assert len(executed_steps) > 0, "No steps were executed"
+
+        # Validate gate routing worked
+        workflow = workflow_runner.load_workflow(workflow_path)
+        steps_with_gates = [step for step in workflow.steps if step.gate is not None]
+        if len(steps_with_gates) > 0:
+            # Gate routing should have been tested
+            assert "gate_outcomes" in results or state.status in ["completed", "success"]
+
+        # Validate final outcome
+        assert state.current_step is None or state.status == "completed", "Workflow should be completed"
+
+    @pytest.mark.asyncio
+    @pytest.mark.timeout(300)
+    @pytest.mark.behavioral_mock
+    async def test_workflow_gate_routing(
+        self, workflow_runner: WorkflowRunner, workflow_path: Path
+    ):
+        """Test quality workflow gate routing (pass/fail paths)."""
+        workflow = workflow_runner.load_workflow(workflow_path)
+
+        # Test pass path
+        workflow_runner.control_gate_outcome("quality_gate", True)
+        state_pass, _ = await workflow_runner.run_workflow(workflow_path, max_steps=10)
+
+        # Test fail path
+        workflow_runner.control_gate_outcome("quality_gate", False)
+        state_fail, _ = await workflow_runner.run_workflow(workflow_path, max_steps=10)
+
+        # Validate gate routing worked
+        assert state_pass is not None
+        assert state_fail is not None

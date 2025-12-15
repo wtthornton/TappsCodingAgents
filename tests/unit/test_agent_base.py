@@ -95,13 +95,14 @@ class TestBaseAgent:
         config_dir = temp_project_dir / ".tapps-agents"
         config_dir.mkdir(exist_ok=True)
         config_file = config_dir / "config.yaml"
-        config_file.write_text("test: value\nanother: key")
+        config_file.write_text("project_name: test-project\ntest: value\nanother: key")
 
         agent = base_agent
         await agent.activate(temp_project_dir)
 
-        # Config should be loaded (may be None if file doesn't exist, but we created it)
-        # The key is that activate doesn't crash and attempts to load
+        # Config should be loaded and contain the values we wrote
+        assert agent.config is not None
+        assert agent.config.project_name == "test-project"
 
     @pytest.mark.asyncio
     async def test_activate_loads_domain_config(
@@ -251,7 +252,7 @@ class TestBaseAgent:
         agent = base_agent
         non_existent = tmp_path / "nonexistent.py"
         
-        with pytest.raises(FileNotFoundError):
+        with pytest.raises(FileNotFoundError, match="File not found: .*nonexistent.py"):
             agent._validate_path(non_existent)
 
     def test_validate_path_file_too_large(self, base_agent, tmp_path):
@@ -262,7 +263,8 @@ class TestBaseAgent:
         # For testing, use a smaller max size
         large_file.write_text("x" * 100)
         
-        with pytest.raises(ValueError, match="File too large"):
+        # Validate specific error message format: "File too large: {size} bytes (max {max} bytes)"
+        with pytest.raises(ValueError, match=r"File too large: \d+ bytes \(max \d+ bytes\)"):
             agent._validate_path(large_file, max_file_size=50)
 
     def test_validate_path_valid_file(self, base_agent, sample_python_file):
@@ -274,11 +276,9 @@ class TestBaseAgent:
     def test_validate_path_path_traversal(self, base_agent, tmp_path):
         """Test _validate_path detects path traversal."""
         agent = base_agent
-        # Create a suspicious path
+        # Create a suspicious path with path traversal
         suspicious = tmp_path / ".." / ".." / "etc" / "passwd"
         
-        # May or may not raise depending on implementation
-        try:
+        # Should raise ValueError for path traversal attempts with specific message
+        with pytest.raises(ValueError, match="Path traversal detected: .*"):
             agent._validate_path(suspicious)
-        except (ValueError, FileNotFoundError):
-            pass  # Expected behavior

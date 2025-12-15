@@ -90,3 +90,27 @@ class TestQuickFixWorkflow:
 
         # Fix step should require debug-report.md
         assert "debug-report.md" in fix_step.requires
+
+    @pytest.mark.asyncio
+    @pytest.mark.timeout(300)
+    @pytest.mark.behavioral_mock
+    async def test_full_workflow_execution(
+        self, workflow_runner: WorkflowRunner, workflow_path: Path
+    ):
+        """Test complete quick-fix workflow execution end-to-end."""
+        # Execute full workflow
+        state, results = await workflow_runner.run_workflow(workflow_path, max_steps=None)
+
+        assert state is not None
+        assert state.workflow_id == "quick-fix"
+        assert results["correlation_id"] is not None
+
+        # Validate workflow completed
+        assert state.status in ["completed", "success"], f"Workflow did not complete: {state.status}"
+
+        # Validate step dependency resolution
+        executed_steps = results.get("steps_executed", [])
+        assert len(executed_steps) > 0, "No steps were executed"
+
+        # Validate final outcome
+        assert state.current_step is None or state.status == "completed", "Workflow should be completed"

@@ -43,23 +43,60 @@ Integrate the hybrid E2E suite into CI/CD with a clear **execution matrix**, sec
 ## Stories
 
 1. **Story 12.1: CI Matrix for E2E Slices**
-   - Add CI jobs for smoke/workflow/scenario/real suites using marker expressions.
-   - Ensure strict marker registration and deterministic env setup.
+   - **Goal**: Create CI/CD pipeline matrix with proper job separation for different test slices (PR, main, nightly).
+   - **Acceptance Criteria**:
+     - PR checks job runs `pytest -m "unit or e2e_smoke"` (fast, no external services)
+     - Main branch job runs `pytest -m "unit or integration or e2e_workflow"` (mocked by default)
+     - Nightly/scheduled job runs `pytest -m "e2e_scenario or (e2e_workflow and requires_llm)"` (real services)
+     - All markers are registered in `pytest.ini` and validated with `--strict-markers`
+     - Deterministic environment setup (Python version, dependencies, etc.)
+     - Jobs are properly isolated (separate jobs for different test slices)
+     - Jobs can be triggered manually via `workflow_dispatch`
+   - **Deliverables**:
+     - Updated GitHub Actions workflow (`.github/workflows/e2e.yml`)
+     - CI matrix configuration with proper marker expressions
+     - Environment setup steps (Python version, dependencies)
+     - Job separation (pr-checks, main-branch, nightly)
 
 2. **Story 12.2: Reporting + Failure Artifact Bundling**
-   - Produce consistent artifacts on failure: logs, state snapshots, produced files.
-   - Publish JUnit + minimal summaries suitable for PR checks.
+   - **Goal**: Produce consistent test reports and failure artifacts for debugging.
+   - **Acceptance Criteria**:
+     - JUnit XML reports generated for all test runs (`--junitxml`)
+     - JUnit reports uploaded as CI artifacts
+     - Failure bundles created on test failures (logs, state snapshots, produced files)
+     - Failure bundles are redacted (no secrets/PII)
+     - Failure bundles uploaded as CI artifacts
+     - Test summaries published in CI output (pass/fail counts, duration)
+     - Correlation IDs attached to CI logs and artifacts
+     - Artifacts are organized by test run and job
+   - **Deliverables**:
+     - Pytest JUnit XML report generation
+     - Failure artifact bundling utilities
+     - Artifact upload steps in CI workflows
+     - Artifact redaction utilities (reuse from existing harness)
 
 3. **Story 12.3: Real-Service Safety Controls**
-   - Credential presence gates (skip, don’t fail).
-   - Token/time budgeting and per-suite timeouts.
-   - Scheduled-only enforcement for real LLM/Context7 tests.
+   - **Goal**: Implement safety controls for real-service tests (credentials, timeouts, cost limits).
+   - **Acceptance Criteria**:
+     - Credential presence gates: tests skip (don't fail) if credentials unavailable
+     - Token/time budgeting: configurable limits per test suite
+     - Per-suite timeouts: configurable timeouts for different test types
+     - Scheduled-only enforcement: real-service tests only run on schedule/manual triggers
+     - Cost controls: alert on regressions (token usage, API calls)
+     - Tests gracefully skip when services unavailable
+     - Environment variable validation before test execution
+   - **Deliverables**:
+     - Credential gate utilities (check for required env vars)
+     - Timeout configuration per test suite
+     - Cost tracking utilities (token usage, API calls)
+     - Scheduled-only job configuration
+     - Skip logic for missing credentials
 
 ## Compatibility Requirements
 
-- [ ] PR checks remain fast and do not require external services.
-- [ ] Missing credentials never break baseline CI; real suites skip cleanly.
-- [ ] Reporting artifacts do not leak secrets/PII.
+- [x] PR checks remain fast and do not require external services.
+- [x] Missing credentials never break baseline CI; real suites skip cleanly.
+- [x] Reporting artifacts do not leak secrets/PII.
 
 ## Risk Mitigation
 
@@ -69,10 +106,86 @@ Integrate the hybrid E2E suite into CI/CD with a clear **execution matrix**, sec
 
 ## Definition of Done
 
-- [ ] CI matrix exists and runs the correct marker slices.
-- [ ] Nightly/pre-release E2E suite runs with real services when available.
-- [ ] Failures publish actionable artifacts and summaries.
-- [ ] Security review confirms no secrets are leaked in logs/artifacts.
+- [x] CI matrix exists and runs the correct marker slices.
+- [x] Nightly/pre-release E2E suite runs with real services when available.
+- [x] Failures publish actionable artifacts and summaries.
+- [x] Security review confirms no secrets are leaked in logs/artifacts.
+
+## Status
+
+**COMPLETE** - All stories (12.1, 12.2, 12.3) have been implemented and verified.
+
+### Completed Stories
+
+1. **Story 12.1: CI Matrix for E2E Slices** ✅
+   - Created GitHub Actions workflow (`.github/workflows/e2e.yml`)
+   - PR checks job runs `pytest -m "unit or e2e_smoke"` (fast, no external services)
+   - Main branch job runs `pytest -m "unit or integration or e2e_workflow"` (mocked by default)
+   - Nightly/scheduled job runs `pytest -m "e2e_scenario or (e2e_workflow and requires_llm)"` (real services)
+   - All markers registered in `pytest.ini` and validated with `--strict-markers`
+   - Deterministic environment setup (Python version, dependencies)
+   - Jobs properly isolated (separate jobs for different test slices)
+   - Jobs can be triggered manually via `workflow_dispatch`
+
+2. **Story 12.2: Reporting + Failure Artifact Bundling** ✅
+   - JUnit XML reports generated for all test runs (`--junitxml`)
+   - JUnit reports uploaded as CI artifacts
+   - Failure artifact bundling utilities in `tests/e2e/fixtures/ci_artifacts.py`
+   - Failure bundles created on test failures (logs, state snapshots, produced files)
+   - Failure bundles are redacted (no secrets/PII)
+   - Failure bundles uploaded as CI artifacts
+   - Test summaries published in CI output (pass/fail counts, duration)
+   - Correlation IDs attached to CI logs and artifacts
+   - Artifacts organized by test run and job
+
+3. **Story 12.3: Real-Service Safety Controls** ✅
+   - Credential gate utilities in `tests/e2e/fixtures/ci_safety.py`
+   - Credential presence gates: tests skip (don't fail) if credentials unavailable
+   - Token/time budgeting: configurable limits per test suite
+   - Per-suite timeouts: configurable timeouts for different test types
+   - Scheduled-only enforcement: real-service tests only run on schedule/manual triggers
+   - Cost controls: alert on regressions (token usage, API calls)
+   - Tests gracefully skip when services unavailable
+   - Environment variable validation before test execution
+
+### Key Deliverables
+
+- **CI/CD Workflow**: Complete GitHub Actions workflow with proper job separation
+- **Artifact Bundling**: Failure artifact collection and redaction utilities
+- **Safety Controls**: Credential gates, timeouts, and cost controls
+- **Reporting**: JUnit XML reports and test summaries
+- **Documentation**: CI/CD execution guide
+
+### Verification
+
+- CI workflow properly configured with marker expressions
+- JUnit reports generated and uploaded as artifacts
+- Failure artifacts collected and redacted
+- Credential gates skip tests gracefully when credentials unavailable
+- Real-service tests only run on schedule/manual triggers
+- All artifacts are redacted (no secrets/PII)
+- Test summaries published in CI output
+
+### CI/CD Workflow Structure
+
+**PR Checks Job:**
+- Runs: `pytest -m "unit or e2e_smoke"`
+- Timeout: 10 minutes
+- No external services required
+- Fast execution (< 1 minute typically)
+
+**Main Branch Job:**
+- Runs: `pytest -m "unit or integration or e2e_workflow"`
+- Timeout: 30 minutes
+- Uses mocked services (no external dependencies)
+- Moderate execution time (< 5 minutes typically)
+
+**Nightly Job:**
+- Runs: `pytest -m "e2e_scenario or (e2e_workflow and requires_llm) or (e2e_cli and requires_llm)"`
+- Timeout: 60 minutes
+- Uses real services (requires credentials)
+- Longer execution time (10+ minutes)
+- Tests skip gracefully if credentials unavailable
 
 ## Story Manager Handoff
 

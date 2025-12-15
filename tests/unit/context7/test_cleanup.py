@@ -223,53 +223,106 @@ class TestKBCleanup:
 
     def test_cleanup_by_age(self, cleanup, kb_cache, sample_entries):
         """Test cleanup by age."""
+        # Create entries with known ages
+        now = datetime.now(UTC)
+        
+        # Create old entry (60 days ago) - should be removed
+        old_date = now - timedelta(days=60)
+        kb_cache.store(
+            library="old_lib",
+            topic="old_topic",
+            content="Old content",
+            context7_id="/old/lib",
+        )
+        
+        # Create recent entry (5 days ago) - should be kept
+        recent_date = now - timedelta(days=5)
+        kb_cache.store(
+            library="recent_lib",
+            topic="recent_topic",
+            content="Recent content",
+            context7_id="/recent/lib",
+        )
+        
         # Update metadata to set old dates
         metadata = cleanup.metadata_manager.load_cache_index()
-        now = datetime.now(UTC)
-
-        # Make vue entry old
-        if "vue" in metadata.libraries:
-            topics = metadata.libraries["vue"].get("topics", {})
-            if "composition-api" in topics:
-                old_date_str = (now - timedelta(days=60)).isoformat() + "Z"
-                topics["composition-api"]["last_updated"] = old_date_str
+        if "old_lib" in metadata.libraries:
+            topics = metadata.libraries["old_lib"].get("topics", {})
+            if "old_topic" in topics:
+                old_date_str = old_date.isoformat() + "Z"
+                topics["old_topic"]["last_updated"] = old_date_str
 
         result = cleanup.cleanup_by_age(max_age_days=30)
 
         # Should remove entries older than 30 days
-        assert result.entries_removed >= 0
+        assert result.entries_removed >= 1  # At least the old entry should be removed
         assert result.reason == "age_cleanup"
+        
+        # Verify old entry was actually removed
+        metadata_after = cleanup.metadata_manager.load_cache_index()
+        if "old_lib" in metadata_after.libraries:
+            assert "old_topic" not in metadata_after.libraries["old_lib"].get("topics", {})
 
     def test_cleanup_by_age_ignores_policy(self, cleanup, kb_cache):
         """Test cleanup by age with ignore_staleness_policy."""
-        # Create old entry
+        # Create old entry (2 days ago) - should be removed with max_age_days=1
+        now = datetime.now(UTC)
+        old_date = now - timedelta(days=2)
         kb_cache.store(
             library="old_lib",
             topic="old_topic",
             content="Content",
             context7_id="/old/lib",
         )
+        
+        # Update metadata to set old date
+        metadata = cleanup.metadata_manager.load_cache_index()
+        if "old_lib" in metadata.libraries:
+            topics = metadata.libraries["old_lib"].get("topics", {})
+            if "old_topic" in topics:
+                old_date_str = old_date.isoformat() + "Z"
+                topics["old_topic"]["last_updated"] = old_date_str
 
         result = cleanup.cleanup_by_age(max_age_days=1, ignore_staleness_policy=True)
 
-        # Should check based on max_age_days only
-        assert result.entries_removed >= 0
+        # Should check based on max_age_days only and remove old entry
+        assert result.entries_removed >= 1  # Old entry should be removed
+        assert result.reason == "age_cleanup"
 
     def test_cleanup_unused(self, cleanup, kb_cache):
         """Test cleanup of unused entries."""
-        # Create entry
+        # Create entry that won't be accessed
         kb_cache.store(
             library="unused_lib",
             topic="unused_topic",
             content="Content",
             context7_id="/unused/lib",
         )
+        
+        # Create entry that will be accessed (to verify it's not removed)
+        kb_cache.store(
+            library="used_lib",
+            topic="used_topic",
+            content="Content",
+            context7_id="/used/lib",
+        )
+        
+        # Access the used entry to update its access time
+        try:
+            kb_cache.retrieve("used_lib", "used_topic")
+        except Exception:
+            pass  # May not exist yet, that's okay
 
         result = cleanup.cleanup_unused(min_access_days=1)
 
         # Should remove entries not accessed recently
-        assert result.entries_removed >= 0
+        assert result.entries_removed >= 1  # At least unused entry should be removed
         assert result.reason == "unused_cleanup"
+        
+        # Verify unused entry was actually removed
+        metadata_after = cleanup.metadata_manager.load_cache_index()
+        if "unused_lib" in metadata_after.libraries:
+            assert "unused_topic" not in metadata_after.libraries["unused_lib"].get("topics", {})
 
     def test_cleanup_all(self, cleanup, kb_cache):
         """Test comprehensive cleanup."""
@@ -329,3 +382,235 @@ class TestKBCleanup:
         assert any(
             r["type"] == "size_cleanup" for r in recommendations["recommendations"]
         )
+
+    def test_cleanup_size_calculation_correctness(self, cleanup, kb_cache):
+        """Test that cleanup size calculations are mathematically correct (Story 18.3)."""
+        # Create entries with known sizes
+        entry1_content = "X" * 100  # 100 bytes
+        entry2_content = "Y" * 200  # 200 bytes
+        entry3_content = "Z" * 150  # 150 bytes
+        
+        kb_cache.store(
+            library="lib1",
+            topic="topic1",
+            content=entry1_content,
+            context7_id="/org/lib1",
+        )
+        kb_cache.store(
+            library="lib2",
+            topic="topic2",
+            content=entry2_content,
+            context7_id="/org/lib2",
+        )
+        kb_cache.store(
+            library="lib3",
+            topic="topic3",
+            content=entry3_content,
+            context7_id="/org/lib3",
+        )
+        
+        # Get actual cache size
+        current_size = cleanup.get_cache_size()
+        assert current_size > 0, "Cache should have some size"
+        
+        # Set target size to be less than current
+        target_size = current_size - 100  # Free 100 bytes
+        
+        # Calculate expected bytes to free
+        expected_bytes_to_free = current_size - target_size
+        
+        result = cleanup.cleanup_by_size(target_size_bytes=target_size)
+        
+        # Verify bytes freed calculation is correct
+        assert result.bytes_freed >= 0, \
+            f"Bytes freed should be non-negative, got {result.bytes_freed}"
+        assert result.bytes_freed >= expected_bytes_to_free - 50, \
+            f"Should free approximately {expected_bytes_to_free} bytes, got {result.bytes_freed}" \
+            " (allowing 50 bytes tolerance for file overhead)"
+        
+        # Verify new size is at or below target
+        new_size = cleanup.get_cache_size()
+        assert new_size <= target_size + 50, \
+            f"After cleanup, size should be <= target ({target_size}), got {new_size}"
+
+    def test_cleanup_age_calculation_correctness(self, cleanup, kb_cache):
+        """Test that cleanup age calculations are correct (Story 18.3)."""
+        from datetime import UTC, datetime, timedelta
+        
+        # Create entry with known age
+        now = datetime.now(UTC)
+        old_date = now - timedelta(days=45)  # 45 days old
+        
+        kb_cache.store(
+            library="old_lib",
+            topic="old_topic",
+            content="Old content",
+            context7_id="/old/lib",
+        )
+        
+        # Manually set metadata to old date (simulating old entry)
+        metadata = cleanup.metadata_manager.load_cache_index()
+        if "old_lib" in metadata.libraries:
+            topics = metadata.libraries["old_lib"].get("topics", {})
+            if "old_topic" in topics:
+                old_date_str = old_date.isoformat() + "Z"
+                topics["old_topic"]["last_updated"] = old_date_str
+                topics["old_topic"]["last_accessed"] = old_date_str
+                # Save the metadata
+                cleanup.metadata_manager.save_cache_index(metadata)
+        
+        # Test cleanup with max_age_days=30 (should remove 45-day-old entry)
+        result = cleanup.cleanup_by_age(max_age_days=30)
+        
+        # Verify age calculation: 45 days > 30 days, so should be removed
+        assert result.entries_removed >= 1, \
+            f"Entry older than max_age_days (30) should be removed, entry age is 45 days"
+        assert result.reason == "age_cleanup", \
+            f"Cleanup reason should be 'age_cleanup', got {result.reason}"
+
+    def test_cache_hit_miss_logic(self, kb_cache):
+        """Test cache hit/miss logic with known cache states (Story 18.3)."""
+        # Initially, cache should be empty (miss)
+        entry = kb_cache.get("nonexistent_lib", "nonexistent_topic")
+        assert entry is None, \
+            "Getting non-existent entry should return None (cache miss)"
+        
+        # Store an entry
+        kb_cache.store(
+            library="test_lib",
+            topic="test_topic",
+            content="Test content",
+            context7_id="/test/lib",
+        )
+        
+        # Now retrieve it (should be a hit)
+        entry = kb_cache.get("test_lib", "test_topic")
+        assert entry is not None, \
+            "Getting stored entry should return entry (cache hit)"
+        assert entry.library == "test_lib", \
+            f"Retrieved entry should have correct library, got {entry.library}"
+        assert entry.topic == "test_topic", \
+            f"Retrieved entry should have correct topic, got {entry.topic}"
+        assert entry.content == "Test content", \
+            f"Retrieved entry should have correct content, got {entry.content[:50]}"
+        
+        # Retrieve again - should increment cache hits
+        entry2 = kb_cache.get("test_lib", "test_topic")
+        assert entry2 is not None, \
+            "Second retrieval should also be a hit"
+        # Cache hits should be tracked (may require metadata check)
+        
+    def test_cleanup_preserves_recent_entries(self, cleanup, kb_cache):
+        """Test that cleanup preserves recent entries correctly (Story 18.3)."""
+        from datetime import UTC, datetime, timedelta
+        
+        # Create old entry (60 days ago)
+        old_date = datetime.now(UTC) - timedelta(days=60)
+        kb_cache.store(
+            library="old_lib",
+            topic="old_topic",
+            content="X" * 300,
+            context7_id="/old/lib",
+        )
+        
+        # Create recent entry (5 days ago)
+        recent_date = datetime.now(UTC) - timedelta(days=5)
+        kb_cache.store(
+            library="recent_lib",
+            topic="recent_topic",
+            content="Y" * 300,
+            context7_id="/recent/lib",
+        )
+        
+        # Set metadata dates
+        metadata = cleanup.metadata_manager.load_cache_index()
+        if "old_lib" in metadata.libraries:
+            topics = metadata.libraries["old_lib"].get("topics", {})
+            if "old_topic" in topics:
+                old_date_str = old_date.isoformat() + "Z"
+                topics["old_topic"]["last_updated"] = old_date_str
+                topics["old_topic"]["last_accessed"] = old_date_str
+        
+        if "recent_lib" in metadata.libraries:
+            topics = metadata.libraries["recent_lib"].get("topics", {})
+            if "recent_topic" in topics:
+                recent_date_str = recent_date.isoformat() + "Z"
+                topics["recent_topic"]["last_updated"] = recent_date_str
+                topics["recent_topic"]["last_accessed"] = recent_date_str
+        
+        cleanup.metadata_manager.save_cache_index(metadata)
+        
+        # Set low size limit and preserve recent (min_access_days=30)
+        cleanup.max_cache_size_bytes = 400
+        cleanup.min_access_days = 30
+        result = cleanup.cleanup_by_size(target_size_bytes=400, preserve_recent=True)
+        
+        # Old entry (60 days) should be considered for removal (60 > 30)
+        # Recent entry (5 days) should be preserved (5 < 30)
+        # Verify recent entry still exists
+        metadata_after = cleanup.metadata_manager.load_cache_index()
+        if "recent_lib" in metadata_after.libraries:
+            assert "recent_topic" in metadata_after.libraries["recent_lib"].get("topics", {}), \
+                "Recent entry (5 days old) should be preserved when preserve_recent=True and min_access_days=30"
+
+    def test_cleanup_lru_eviction_order(self, cleanup, kb_cache):
+        """Test that cleanup uses LRU (Least Recently Used) eviction order (Story 18.3)."""
+        from datetime import UTC, datetime, timedelta
+        
+        # Create multiple entries with different access times
+        now = datetime.now(UTC)
+        
+        # Entry 1: accessed 10 days ago
+        kb_cache.store(
+            library="lib1",
+            topic="topic1",
+            content="X" * 100,
+            context7_id="/org/lib1",
+        )
+        date1 = now - timedelta(days=10)
+        
+        # Entry 2: accessed 20 days ago
+        kb_cache.store(
+            library="lib2",
+            topic="topic2",
+            content="Y" * 100,
+            context7_id="/org/lib2",
+        )
+        date2 = now - timedelta(days=20)
+        
+        # Entry 3: accessed 5 days ago (most recent)
+        kb_cache.store(
+            library="lib3",
+            topic="topic3",
+            content="Z" * 100,
+            context7_id="/org/lib3",
+        )
+        date3 = now - timedelta(days=5)
+        
+        # Set metadata access times
+        metadata = cleanup.metadata_manager.load_cache_index()
+        for lib, topic, access_date in [("lib1", "topic1", date1), 
+                                         ("lib2", "topic2", date2), 
+                                         ("lib3", "topic3", date3)]:
+            if lib in metadata.libraries:
+                topics = metadata.libraries[lib].get("topics", {})
+                if topic in topics:
+                    date_str = access_date.isoformat() + "Z"
+                    topics[topic]["last_accessed"] = date_str
+        
+        cleanup.metadata_manager.save_cache_index(metadata)
+        
+        # Set low size limit to force cleanup
+        cleanup.max_cache_size_bytes = 150
+        cleanup.min_access_days = 7  # Consider entries > 7 days old
+        
+        result = cleanup.cleanup_by_size(target_size_bytes=150, preserve_recent=True)
+        
+        # With LRU eviction, oldest entries should be removed first
+        # Entry 2 (20 days) should be removed before entry 1 (10 days)
+        # Entry 3 (5 days) should be preserved (within min_access_days)
+        # Verify entry 3 (most recent) still exists
+        metadata_after = cleanup.metadata_manager.load_cache_index()
+        if "lib3" in metadata_after.libraries:
+            assert "topic3" in metadata_after.libraries["lib3"].get("topics", {}), \
+                "Most recently accessed entry (5 days) should be preserved in LRU eviction"

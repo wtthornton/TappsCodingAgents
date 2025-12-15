@@ -112,12 +112,14 @@ class TestContext7AgentHelper:
             context7_id="/facebook/react",
         )
 
-        # Search with slight variation
+        # Search with slight variation (typo: "reakt" instead of "react")
         result = await helper.get_documentation("reakt", "hook", use_fuzzy_match=True)
 
-        # May or may not match depending on fuzzy threshold
-        # Just test it doesn't crash
-        assert result is None or result is not None
+        # Fuzzy match should find the entry despite typo
+        assert result is not None
+        assert result["library"] == "react"  # Should match to correct library
+        assert result["topic"] == "hooks"  # Should match to correct topic
+        assert result["source"] == "cache"
 
     @pytest.mark.asyncio
     async def test_search_libraries_disabled(self, disabled_helper):
