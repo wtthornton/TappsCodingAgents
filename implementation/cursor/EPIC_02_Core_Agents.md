@@ -45,10 +45,11 @@ Implement all 11 specialized agents (5 background cloud + 5 foreground + 1 orche
 
 ## Stories
 
-1. **Story 2.1: Background Cloud Agents - Quality & Testing**
-   - Implement Quality & Analysis Agent (Ruff, mypy, Bandit, Radon)
-   - Implement Testing & Coverage Agent (pytest, coverage)
-   - Configure Cursor cloud execution
+1. ✅ **Story 2.1: Background Cloud Agents - Quality & Testing** (Completed 2025-12-14)
+   - ✅ Implement Quality & Analysis Agent (Ruff, mypy, security, complexity, duplication)
+   - ✅ Implement Testing & Coverage Agent (pytest, coverage)
+   - ✅ Configure Cursor cloud execution with fallback support
+   - **Status**: All acceptance criteria met, 15 unit tests + 6 integration tests passing
 
 2. **Story 2.2: Background Cloud Agents - Docs, Ops, Context**
    - Implement Documentation Agent (markdown, API docs)
