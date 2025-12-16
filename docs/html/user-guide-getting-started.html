@@ -45,27 +45,68 @@
                 <h3>Prerequisites</h3>
                 <ul>
                     <li><strong>Python 3.13+</strong> (recommended: latest stable Python)</li>
+                    <li><strong>Git</strong> (to clone the repository)</li>
                     <li><strong>Ollama</strong> (optional, for local LLM execution)</li>
                 </ul>
 
-                <h3>Install TappsCodingAgents</h3>
+                <div class="alert alert-info" style="margin: 1.5rem 0;">
+                    <strong>Project-Scoped Installation:</strong> All installation steps use a virtual environment (venv) to ensure dependencies are installed only for your project scope, not globally.
+                </div>
+
+                <h3>Get the Source Code</h3>
+                <p>First, clone or download the TappsCodingAgents repository:</p>
                 <div class="code-block">
                     <div class="code-header">
-                        <span>Installation</span>
+                        <span>Clone Repository</span>
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                     </div>
-                    <pre><code># Create virtual environment (recommended)
+                    <pre><code># Clone the repository
+git clone https://github.com/wtthornton/TappsCodingAgents.git
+cd TappsCodingAgents
+
+# Or download and extract the ZIP file from GitHub releases</code></pre>
+                </div>
+
+                <h3>Install TappsCodingAgents</h3>
+                <p>Install the package in editable mode (recommended for development) or regular mode:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Installation (Editable Mode - Recommended)</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Create virtual environment (project-scoped, not global)
 python -m venv .venv
 
 # Activate virtual environment
-# Windows:
+# Windows PowerShell:
 .venv\Scripts\activate
+# Windows CMD:
+.venv\Scripts\activate.bat
 # macOS/Linux:
 source .venv/bin/activate
 
-# Install TappsCodingAgents
-pip install tapps-agents</code></pre>
+# Upgrade pip to latest version (2025 best practice)
+python -m pip install --upgrade pip
+
+# Install TappsCodingAgents in editable mode (recommended for development)
+# This allows you to modify the code and see changes immediately
+pip install -e .
+
+# Alternative: Regular installation (if you don't need to modify the code)
+# pip install .</code></pre>
                 </div>
+
+                <div class="alert alert-success" style="margin: 1.5rem 0;">
+                    <strong>Why Editable Mode (-e)?</strong> Editable mode installs the package in "development mode" so changes to the source code are immediately available without reinstalling. This is the 2025 standard for local development.
+                </div>
+
+                <p><strong>What Gets Installed:</strong> The installation process will automatically install all required dependencies from <code>pyproject.toml</code>, including:</p>
+                <ul>
+                    <li>Core framework dependencies (pydantic, httpx, pyyaml, aiohttp, psutil)</li>
+                    <li>Code analysis tools (radon, bandit, coverage)</li>
+                    <li>Reporting tools (jinja2, plotly)</li>
+                    <li>The <code>tapps-agents</code> CLI command</li>
+                </ul>
 
                 <h3>Verify Installation</h3>
                 <div class="code-block">
@@ -73,10 +114,50 @@ pip install tapps-agents</code></pre>
                         <span>Verify CLI</span>
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                     </div>
-                    <pre><code>tapps-agents --help
+                    <pre><code># Verify the CLI command is available
+tapps-agents --help
 
 # Check version
-tapps-agents --version</code></pre>
+tapps-agents --version
+
+# Run the doctor command to verify environment
+tapps-agents doctor</code></pre>
+                </div>
+
+                <h3>Troubleshooting Installation</h3>
+                <div class="alert alert-info" style="margin: 1.5rem 0;">
+                    <strong>Common Issues:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li><strong>"Command not found" or "CommandNotFoundException"</strong> - Ensure your virtual environment is activated. Check that your prompt shows <code>(.venv)</code>. On Windows PowerShell, use <code>.venv\Scripts\activate</code>.</li>
+                        <li><strong>"Could not find a version that satisfies the requirement tapps-agents"</strong> - This package is not published to PyPI. You must install from source using <code>pip install -e .</code> from within the TappsCodingAgents directory.</li>
+                        <li><strong>"No module named 'tapps_agents'"</strong> - Make sure you're in the TappsCodingAgents directory and have run <code>pip install -e .</code> successfully.</li>
+                        <li><strong>"Python version not supported"</strong> - TappsCodingAgents requires Python 3.13+. Check your version: <code>python --version</code> and upgrade if needed.</li>
+                        <li><strong>Dependency conflicts</strong> - Ensure you're using a fresh virtual environment. Delete <code>.venv</code> and recreate: <code>python -m venv .venv</code></li>
+                    </ul>
+                </div>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Complete Installation Verification</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># 1. Verify Python version (must be 3.13+)
+python --version
+
+# 2. Verify virtual environment is active
+# Your prompt should show (.venv)
+# Windows PowerShell:
+$env:VIRTUAL_ENV
+# Linux/macOS:
+echo $VIRTUAL_ENV
+
+# 3. Verify installation
+tapps-agents --version
+tapps-agents doctor
+
+# 4. Check installed packages
+pip list | findstr tapps-agents  # Windows
+pip list | grep tapps-agents     # Linux/macOS</code></pre>
                 </div>
             </section>
 

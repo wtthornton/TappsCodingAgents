@@ -106,11 +106,29 @@
             <h2>Quick Start</h2>
             <div class="code-block">
                 <div class="code-header">
-                    <span>Installation</span>
+                    <span>Installation (From Source)</span>
                     <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                 </div>
-                <pre><code>pip install tapps-agents</code></pre>
+                <pre><code># 1. Clone the repository
+git clone https://github.com/wtthornton/TappsCodingAgents.git
+cd TappsCodingAgents
+
+# 2. Create and activate virtual environment
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# 3. Upgrade pip
+python -m pip install --upgrade pip
+
+# 4. Install in editable mode (recommended)
+pip install -e .</code></pre>
             </div>
+            <p style="margin-top: 1rem; color: var(--text-muted); font-size: 0.9rem;">
+                <strong>Note:</strong> This package is installed from source. Ensure you have Python 3.13+ and are in the project directory before installing. Installation is project-scoped using a virtual environment.
+            </p>
             <div class="code-block">
                 <div class="code-header">
                     <span>Basic Usage</span>
