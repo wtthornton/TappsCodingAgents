@@ -919,7 +919,9 @@ def init_project(
     mcp_status = detect_mcp_servers(project_root)
     results["mcp_servers"] = mcp_status
 
-    if pre_populate_cache and tech_stack["libraries"]:
+    # Pre-populate cache with expert libraries even if no project libraries detected
+    # Expert libraries should always be cached for built-in experts
+    if pre_populate_cache:
         try:
             cache_result = asyncio.run(
                 pre_populate_context7_cache(project_root, tech_stack["libraries"])

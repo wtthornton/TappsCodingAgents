@@ -436,12 +436,18 @@ def handle_init_command(args: object) -> None:
         
         if tech_stack.get("languages"):
             print(f"  Languages: {', '.join(tech_stack['languages'])}")
+        else:
+            print("  Languages: None detected")
         
         if tech_stack.get("frameworks"):
             print(f"  Frameworks: {', '.join(tech_stack['frameworks'])}")
+        else:
+            print("  Frameworks: None detected")
         
         if tech_stack.get("package_managers"):
             print(f"  Package Managers: {', '.join(tech_stack['package_managers'])}")
+        else:
+            print("  Package Managers: None detected")
         
         if tech_stack.get("libraries"):
             lib_count = len(tech_stack["libraries"])
@@ -451,9 +457,14 @@ def handle_init_command(args: object) -> None:
             elif lib_count > 20:
                 print(f"    {', '.join(tech_stack['libraries'][:20])} ...")
                 print(f"    (and {lib_count - 20} more)")
+        else:
+            print("  Libraries Detected: 0")
+            print("    Note: No dependency files (requirements.txt, pyproject.toml, package.json) found")
         
         if tech_stack.get("detected_files"):
             print(f"  Detected Files: {', '.join(tech_stack['detected_files'])}")
+        else:
+            print("  Detected Files: None")
 
     # Show cache pre-population results
     if results.get("cache_prepopulated") is not None:
@@ -482,6 +493,24 @@ def handle_init_command(args: object) -> None:
                 print(f"  Errors: {error_count} (showing first 5)")
                 for error in cache_result["errors"][:5]:
                     print(f"    - {error}")
+        else:
+            # Show why cache prepopulation failed
+            cache_result = results.get("cache_result", {})
+            cache_error = results.get("cache_error")
+            
+            if cache_error:
+                print(f"  Status: ❌ Failed")
+                print(f"  Error: {cache_error}")
+            elif cache_result:
+                error_msg = cache_result.get("error", "Unknown error")
+                print(f"  Status: ❌ Failed")
+                print(f"  Error: {error_msg}")
+                if cache_result.get("cached") == 0 and cache_result.get("total") == 0:
+                    print("  Note: Context7 may not be enabled in configuration")
+                    print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
+            else:
+                print(f"  Status: ⚠️  Skipped")
+                print("  Note: Cache pre-population was not attempted")
 
     # Run environment diagnostics
     print("\n" + "=" * 60)
