@@ -130,6 +130,8 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_score_command(args)
     elif args.agent == "doctor":
         top_level.handle_doctor_command(args)
+    elif args.agent == "install-dev":
+        top_level.handle_install_dev_command(args)
     elif args.agent == "hardware-profile" or args.agent == "hardware":
         top_level.hardware_profile_command(
             set_profile=getattr(args, "set", None),

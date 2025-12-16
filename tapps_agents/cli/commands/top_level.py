@@ -579,6 +579,52 @@ def handle_doctor_command(args: object) -> None:
             print("-" * 60)
 
 
+def handle_install_dev_command(args: object) -> None:
+    """Handle install-dev command"""
+    import subprocess  # nosec B404
+
+    project_root = Path.cwd()
+    pyproject_path = project_root / "pyproject.toml"
+    is_dev_context = pyproject_path.exists()
+    dry_run = getattr(args, "dry_run", False)
+
+    if is_dev_context:
+        install_cmd = ['pip', 'install', '-e', '.[dev]']
+        context_note = "development context (found pyproject.toml)"
+    else:
+        install_cmd = ['pip', 'install', 'tapps-agents[dev]']
+        context_note = "installed package context"
+
+    print(f"Detected: {context_note}")
+    print(f"Command: {' '.join(install_cmd)}")
+    
+    if dry_run:
+        print("\n[DRY RUN] Would run the above command to install:")
+        print("  - ruff (code formatting & linting)")
+        print("  - mypy (type checking)")
+        print("  - pytest (testing framework)")
+        print("  - pip-audit (security auditing)")
+        print("  - pipdeptree (dependency analysis)")
+        print("\nRun without --dry-run to actually install.")
+    else:
+        print("\nInstalling development tools...")
+        try:
+            result = subprocess.run(  # nosec B603
+                install_cmd,
+                check=False,
+                capture_output=False,
+            )
+            if result.returncode == 0:
+                print("\n✅ Development tools installed successfully!")
+                print("Run 'python -m tapps_agents.cli doctor' to verify installation.")
+            else:
+                print(f"\n❌ Installation failed with exit code {result.returncode}")
+                sys.exit(1)
+        except Exception as e:
+            print(f"\n❌ Error installing development tools: {e}")
+            sys.exit(1)
+
+
 def handle_setup_experts_command(args: object) -> None:
     """Handle setup-experts command"""
     from ...experts.setup_wizard import ExpertSetupWizard, NonInteractiveInputRequired

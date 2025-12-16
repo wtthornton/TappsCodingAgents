@@ -155,6 +155,18 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
         "--config-path", help="Optional explicit path to .tapps-agents/config.yaml"
     )
 
+    # Install dev tools command
+    install_dev_parser = subparsers.add_parser(
+        "install-dev",
+        help="Install development tools (ruff, mypy, pytest, pip-audit, pipdeptree)",
+        description="Install all development dependencies via pip. Detects if you're in a development context (has pyproject.toml) or using the installed package.",
+    )
+    install_dev_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be installed without actually installing",
+    )
+
     # Hardware profile command
     hardware_parser = subparsers.add_parser(
         "hardware-profile",
