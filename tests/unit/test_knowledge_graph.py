@@ -13,6 +13,10 @@ from tapps_agents.core.knowledge_graph import (
 )
 from tapps_agents.core.task_memory import TaskMemory, TaskOutcome
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 class TestRelationshipEdge:
     """Tests for RelationshipEdge."""

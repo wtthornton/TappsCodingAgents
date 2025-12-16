@@ -24,6 +24,8 @@ from tests.e2e.fixtures.e2e_harness import (
 )
 from tests.e2e.fixtures.project_templates import create_minimal_template, create_small_template, create_medium_template
 
+pytestmark = pytest.mark.unit
+
 
 class TestProjectTemplates:
     """Test project template creation."""

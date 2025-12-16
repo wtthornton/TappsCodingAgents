@@ -6,6 +6,8 @@ import pytest
 
 from tapps_agents.core.task_state import TaskState, TaskStateManager
 
+pytestmark = pytest.mark.unit
+
 
 class TestTaskState:
     """Tests for TaskState enum."""

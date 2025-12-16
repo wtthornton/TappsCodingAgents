@@ -10,6 +10,10 @@ from pathlib import Path
 from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry
 from tapps_agents.experts.expert_config import ExpertConfigModel
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 class TestBuiltinExpertRegistry:
     """Test built-in expert registry functionality."""

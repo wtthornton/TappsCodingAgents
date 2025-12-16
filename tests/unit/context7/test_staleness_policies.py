@@ -11,6 +11,8 @@ from tapps_agents.context7.staleness_policies import (
     StalenessPolicyManager,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestStalenessPolicy:
     def test_policy_creation(self):

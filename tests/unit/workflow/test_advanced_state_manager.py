@@ -17,6 +17,8 @@ from tapps_agents.workflow.state_manager import (
     StateValidator,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestStateValidator:
     """Tests for StateValidator."""

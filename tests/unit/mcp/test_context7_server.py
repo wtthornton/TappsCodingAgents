@@ -9,6 +9,8 @@ import pytest
 from tapps_agents.mcp.servers.context7 import Context7MCPServer
 from tapps_agents.mcp.tool_registry import ToolCategory, ToolRegistry
 
+pytestmark = pytest.mark.unit
+
 
 class TestContext7MCPServer:
     """Test Context7MCPServer functionality."""

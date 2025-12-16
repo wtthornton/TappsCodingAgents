@@ -11,6 +11,8 @@ from tapps_agents.core.best_practice_consultant import (
     BestPracticeConsultant,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestBestPracticeConsultant:
     """Test BestPracticeConsultant."""

@@ -15,6 +15,8 @@ from tapps_agents.core.agent_learning import (
 from tapps_agents.core.capability_registry import CapabilityRegistry, LearningIntensity
 from tapps_agents.core.hardware_profiler import HardwareProfile
 
+pytestmark = pytest.mark.unit
+
 
 class TestPatternExtractor:
     """Tests for PatternExtractor."""

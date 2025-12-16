@@ -5,6 +5,8 @@ Tests for Project Profile System.
 import tempfile
 from pathlib import Path
 
+import pytest
+
 from tapps_agents.core.project_profile import (
     ComplianceRequirement,
     ProjectProfile,
@@ -12,6 +14,8 @@ from tapps_agents.core.project_profile import (
     load_project_profile,
     save_project_profile,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestProjectProfile:

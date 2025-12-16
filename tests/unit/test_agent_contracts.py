@@ -22,6 +22,8 @@ from tapps_agents.workflow.enhancement_artifact import EnhancementArtifact, Enha
 from tapps_agents.workflow.planning_artifact import PlanningArtifact, UserStory
 from tapps_agents.workflow.review_artifact import ReviewArtifact, ReviewComment
 
+pytestmark = pytest.mark.unit
+
 
 class TestArtifactSchemas:
     """Test that artifact schemas are valid and versioned."""

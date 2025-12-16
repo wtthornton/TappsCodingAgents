@@ -14,6 +14,8 @@ from tapps_agents.workflow.recommender import (
     WorkflowRecommender,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestWorkflowRecommender:
     """Test workflow recommendation."""

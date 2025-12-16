@@ -10,6 +10,8 @@ import pytest
 
 from tapps_agents.context7.refresh_queue import RefreshQueue, RefreshTask
 
+pytestmark = pytest.mark.unit
+
 
 class TestRefreshTask:
     def test_task_creation(self):

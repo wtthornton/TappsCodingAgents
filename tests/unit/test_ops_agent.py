@@ -10,6 +10,8 @@ import pytest
 from tapps_agents.agents.ops.agent import OpsAgent
 from tapps_agents.core.config import MALConfig, ProjectConfig
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_config():

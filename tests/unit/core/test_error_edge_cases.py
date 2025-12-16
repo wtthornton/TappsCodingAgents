@@ -101,8 +101,8 @@ class TestNetworkFailureHandling:
             ollama_url="http://unreachable-host:11434",
             default_model="test-model",
             default_provider="ollama",
-            connect_timeout=0.1,  # Very short timeout
-            read_timeout=0.1,
+            connect_timeout=1.0,  # Short timeout
+            read_timeout=1.0,
         )
         mal = MAL(config=config)
 

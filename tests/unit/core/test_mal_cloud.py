@@ -10,6 +10,8 @@ import pytest
 from tapps_agents.core.config import CloudProviderConfig, MALConfig
 from tapps_agents.core.mal import MAL
 
+pytestmark = pytest.mark.unit
+
 
 class TestCloudMAL:
     """Test cloud provider integration."""

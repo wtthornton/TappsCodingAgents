@@ -10,6 +10,8 @@ import pytest
 
 from tapps_agents.experts.simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 
+pytestmark = pytest.mark.unit
+
 
 class TestSimpleKnowledgeBase:
     """Test SimpleKnowledgeBase functionality."""

@@ -19,6 +19,8 @@ from tapps_agents.core.task_memory import (
     TaskOutcome,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestTaskMemory:
     """Tests for TaskMemory dataclass."""

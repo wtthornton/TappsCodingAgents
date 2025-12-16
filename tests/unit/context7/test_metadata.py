@@ -11,6 +11,8 @@ import pytest
 from tapps_agents.context7.cache_structure import CacheStructure
 from tapps_agents.context7.metadata import CacheIndex, LibraryMetadata, MetadataManager
 
+pytestmark = pytest.mark.unit
+
 
 class TestMetadataModels:
     """Test metadata dataclasses."""

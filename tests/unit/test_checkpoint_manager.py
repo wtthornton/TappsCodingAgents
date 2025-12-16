@@ -17,6 +17,8 @@ from tapps_agents.core.checkpoint_manager import (
 from tapps_agents.core.hardware_profiler import HardwareProfile
 from tapps_agents.core.task_state import TaskState, TaskStateManager
 
+pytestmark = pytest.mark.unit
+
 
 class TestTaskCheckpoint:
     """Tests for TaskCheckpoint dataclass."""

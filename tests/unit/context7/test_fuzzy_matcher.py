@@ -6,6 +6,8 @@ import pytest
 
 from tapps_agents.context7.fuzzy_matcher import FuzzyMatch, FuzzyMatcher
 
+pytestmark = pytest.mark.unit
+
 
 class TestFuzzyMatcher:
     @pytest.fixture

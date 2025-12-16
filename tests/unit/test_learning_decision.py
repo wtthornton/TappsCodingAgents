@@ -16,6 +16,8 @@ from tapps_agents.core.learning_decision import (
     LearningDecisionEngine,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestLearningDecisionEngine:
     """Test LearningDecisionEngine."""

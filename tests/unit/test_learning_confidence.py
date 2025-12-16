@@ -7,6 +7,10 @@ from tapps_agents.core.learning_confidence import (
     LearningConfidenceCalculator,
 )
 
+import pytest
+
+pytestmark = pytest.mark.unit
+
 
 class TestLearningConfidenceCalculator:
     """Test LearningConfidenceCalculator."""

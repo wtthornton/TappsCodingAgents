@@ -15,6 +15,8 @@ from tapps_agents.experts.expert_config import (
     load_expert_configs,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestExpertConfigModel:
     """Test ExpertConfigModel Pydantic model."""

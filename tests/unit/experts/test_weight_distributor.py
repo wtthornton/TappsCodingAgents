@@ -8,6 +8,8 @@ from tapps_agents.experts.weight_distributor import (
     WeightDistributor,
 )
 
+pytestmark = pytest.mark.unit
+
 
 class TestWeightDistributor:
     """Test weight distribution calculations."""

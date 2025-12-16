@@ -11,6 +11,8 @@ import pytest
 from tapps_agents.experts.base_expert import BaseExpert
 from tapps_agents.experts.expert_registry import ExpertRegistry
 
+pytestmark = pytest.mark.unit
+
 
 class TestBuiltinExpertIntegration:
     """Test built-in expert integration with registry."""

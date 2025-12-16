@@ -10,6 +10,8 @@ import pytest
 
 from tapps_agents.context7.cache_structure import CacheStructure
 
+pytestmark = pytest.mark.unit
+
 
 class TestCacheStructure:
     """Test CacheStructure functionality."""

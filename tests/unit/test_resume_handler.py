@@ -17,6 +17,8 @@ from tapps_agents.core.resume_handler import (
 )
 from tapps_agents.core.task_state import TaskState
 
+pytestmark = pytest.mark.unit
+
 
 class TestArtifactValidator:
     """Tests for ArtifactValidator."""

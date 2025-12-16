@@ -15,6 +15,8 @@ from tapps_agents.core.capability_registry import (
 )
 from tapps_agents.core.hardware_profiler import HardwareProfile
 
+pytestmark = pytest.mark.unit
+
 
 class TestCapabilityMetric:
     """Tests for CapabilityMetric."""
