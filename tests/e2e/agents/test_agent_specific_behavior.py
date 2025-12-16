@@ -299,6 +299,7 @@ class TestTesterAgentSpecificBehavior:
             assert result is not None
 
     @pytest.mark.asyncio
+    @pytest.mark.timeout(60)
     async def test_test_execution_and_results(self, e2e_project, mock_mal, tmp_path):
         """Test that tester executes tests and reports results."""
         agent = create_test_agent("tester", mock_mal)

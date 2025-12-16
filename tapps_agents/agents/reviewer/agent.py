@@ -170,7 +170,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     include_scoring=True,
                     include_llm_feedback=True,
                 )
-            except FileNotFoundError as e:
+            except (FileNotFoundError, ValueError) as e:
                 return {"error": str(e)}
 
         elif command == "score":
@@ -182,7 +182,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 return await self.review_file(
                     Path(file_path), include_scoring=True, include_llm_feedback=False
                 )
-            except FileNotFoundError as e:
+            except (FileNotFoundError, ValueError) as e:
                 return {"error": str(e)}
 
         elif command == "lint":

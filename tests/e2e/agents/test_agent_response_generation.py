@@ -239,8 +239,11 @@ class TestAgentResponseGeneration:
                 agent, "*plan", description="Feature implementation plan"
             )
         else:
+            # Implementer requires specification and file_path
             result = await execute_command(
-                agent, "*implement", description="Implement a feature"
+                agent, "*implement", 
+                specification="Implement a feature",
+                file_path="test_feature.py"
             )
 
         # Artifact-generating commands should produce content

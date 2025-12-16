@@ -146,6 +146,10 @@ class BaseAgent(ABC):
         - "review file.py" -> ("review", {"file": "file.py"})
         """
         user_input = user_input.strip()
+        
+        # Handle empty input
+        if not user_input:
+            return "", {}
 
         # Handle numbered command
         if user_input.isdigit():
@@ -159,19 +163,25 @@ class BaseAgent(ABC):
         # Handle star-prefixed command
         if user_input.startswith("*"):
             parts = user_input[1:].split(maxsplit=1)
+            if not parts or not parts[0]:
+                return "", {}
             command = parts[0]
             args_str = parts[1] if len(parts) > 1 else ""
         else:
             parts = user_input.split(maxsplit=1)
+            if not parts or not parts[0]:
+                return "", {}
             command = parts[0]
             args_str = parts[1] if len(parts) > 1 else ""
 
         # Parse arguments (simple space-separated for now)
         args = {}
         if args_str:
-            # For commands like "review file.py", treat first arg as file
-            if command in ["review", "score"]:
+            # For commands that take file arguments
+            file_commands = ["review", "score", "plan", "implement", "test"]
+            if command in file_commands:
                 args["file"] = args_str.strip()
+            # Could also handle other argument patterns here
 
         return command, args
 

@@ -114,6 +114,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         file: str | None = None,
         test_file: str | None = None,
         integration: bool = False,
+        **kwargs,  # Accept additional kwargs to be more flexible
     ) -> dict[str, Any]:
         """
         Generate and run tests for a file.

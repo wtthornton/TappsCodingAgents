@@ -7,7 +7,7 @@ when required dependencies are missing, instead of skipping tests.
 
 import inspect
 from pathlib import Path
-from typing import List, Optional
+from typing import Any, List, Optional
 
 import pytest
 
