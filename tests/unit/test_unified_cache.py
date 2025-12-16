@@ -143,8 +143,9 @@ class TestUnifiedCacheInterface:
             assert "content" in response.data or "context" in response.data
         # Test that cache hit/miss stats are tracked
         stats = unified_cache_real.get_stats()
-        assert stats.total_hits >= 0
-        assert stats.total_misses >= 0
+        # Stats should be non-negative integers (valid boundary check)
+        assert isinstance(stats.total_hits, int) and stats.total_hits >= 0
+        assert isinstance(stats.total_misses, int) and stats.total_misses >= 0
 
     def test_get_tiered_context_mock(self, unified_cache_mock):
         """Test getting tiered context from cache using mocks (for comparison)."""
@@ -277,8 +278,9 @@ class TestUnifiedCacheInterface:
         assert isinstance(stats, UnifiedCacheStats)
         assert stats.hardware_profile == "development"
         assert "caches" in stats.cache_stats or "hardware_profile" in stats.cache_stats
-        assert stats.total_hits >= 0
-        assert stats.total_misses >= 0
+        # Stats should be non-negative integers (valid boundary check)
+        assert isinstance(stats.total_hits, int) and stats.total_hits >= 0
+        assert isinstance(stats.total_misses, int) and stats.total_misses >= 0
 
     def test_get_hardware_profile(self, unified_cache):
         """Test getting hardware profile."""

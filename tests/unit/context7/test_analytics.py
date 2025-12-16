@@ -52,9 +52,11 @@ class TestLibraryMetrics:
 
 class TestAnalytics:
     @pytest.fixture
-    def temp_cache_root(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            yield Path(tmpdir)
+    def temp_cache_root(self, tmp_path):
+        """Use pytest's tmp_path for better test isolation and cleanup."""
+        cache_root = tmp_path / "context7-cache"
+        cache_root.mkdir()
+        return cache_root
 
     @pytest.fixture
     def cache_structure(self, temp_cache_root):
@@ -228,21 +230,18 @@ class TestAnalytics:
         assert analytics.metrics["fuzzy_matches"] == 0
         assert len(analytics.metrics["response_times"]) == 0
 
-    @pytest.mark.skip(reason="TODO: Fix file operation timeout - needs proper tmp_path usage")
     def test_response_times_limit(self, analytics):
+        """Test that response times are limited to 1000 entries (removes oldest)."""
         # Record many response times (should keep only last 1000)
-        print("\n[TEST] Recording 1500 response times (testing limit enforcement)...")
-        for i in range(1500):
-            if i % 300 == 0:
-                print(f"[TEST] Progress: {i}/1500 records...")
+        # Using 1100 iterations to exceed limit but still be fast enough
+        for i in range(1100):
             analytics.record_cache_hit(response_time_ms=float(i))
 
-        print("[TEST] Verifying response times limit...")
         response_times = analytics.metrics.get("response_times", [])
-        assert len(response_times) == 1000
-        # Should have the latest values (1000-1499)
-        assert min(response_times) >= 500  # First 500 should be removed
-        print("[TEST] Response times limit test passed OK")
+        assert len(response_times) == 1000, "Should limit to 1000 entries"
+        # Should have the latest values (100-1099), first 100 should be removed
+        assert min(response_times) >= 100, "Oldest entries should be removed"
+        assert max(response_times) == 1099, "Newest entry should be present"
 
     def test_average_response_time_calculation(self, analytics):
         analytics.record_cache_hit(response_time_ms=10.0)

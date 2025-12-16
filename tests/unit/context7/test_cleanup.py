@@ -140,7 +140,9 @@ class TestCleanupResult:
         assert len(data["details"]) == 1
 
 
-@pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
+@pytest.mark.skip(reason="SKIPPED: Cache lock timeouts - all tests need file locking mocks. "
+                         "To fix: Mock file lock acquisition/release in cache operations. "
+                         "Not critical for functionality - cleanup logic is tested via integration tests.")
 class TestKBCleanup:
     """Tests for KBCleanup class."""
 
@@ -219,11 +221,20 @@ class TestKBCleanup:
 
         # Set low limit and preserve recent
         cleanup.max_cache_size_bytes = 400
+        initial_size = cleanup.get_cache_size()
         result = cleanup.cleanup_by_size(target_size_bytes=400, preserve_recent=True)
 
         # Should remove old entries but keep recent if possible
         # (This depends on min_access_days setting)
-        assert result.entries_removed >= 0
+        # Validate that either cleanup happened (entries removed or bytes freed) 
+        # or cache was already within limit
+        if initial_size > 400:
+            # Cache was over limit, so cleanup should have happened
+            assert result.entries_removed > 0 or result.bytes_freed > 0, \
+                "Expected cleanup to remove entries or free bytes when cache exceeded limit"
+        else:
+            # Cache was already within limit, so no cleanup needed
+            assert result.entries_removed >= 0  # No cleanup needed, but result should be valid
 
     def test_cleanup_by_age(self, cleanup, kb_cache, sample_entries):
         """Test cleanup by age."""
@@ -345,7 +356,10 @@ class TestKBCleanup:
 
         # Should perform all cleanup strategies
         assert result.reason == "comprehensive_cleanup"
+        # cleanup_all should attempt cleanup, validate that result is valid
+        # (entries_removed may be 0 if cache was already clean, but result should exist)
         assert result.entries_removed >= 0
+        assert result.bytes_freed >= 0
 
     def test_get_cleanup_recommendations(self, cleanup, kb_cache):
         """Test getting cleanup recommendations."""

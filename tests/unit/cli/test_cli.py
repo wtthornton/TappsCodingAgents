@@ -237,7 +237,8 @@ class TestListStoriesCommand:
         
         captured = capsys.readouterr()
         # Should output something (even if "No stories found")
-        assert len(captured.out) >= 0
+        # captured.out is always a string (could be empty), so just verify it's a string
+        assert isinstance(captured.out, str)
 
 
 class TestMainFunction:

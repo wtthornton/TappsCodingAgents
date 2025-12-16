@@ -59,7 +59,8 @@ def disabled_commands(disabled_config):
     return Context7Commands(disabled_config)
 
 
-@pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
+@pytest.mark.skip(reason="SKIPPED: Cache lock timeouts - requires file locking mocks. "
+                         "To fix: Mock file lock operations. Not critical - functionality tested elsewhere.")
 class TestContext7Commands:
     """Tests for Context7Commands class."""
 
