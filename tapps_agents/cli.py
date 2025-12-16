@@ -1949,6 +1949,18 @@ Examples:
         "--config-path", help="Optional explicit path to .tapps-agents/config.yaml"
     )
 
+    # Install dev tools command
+    install_dev_parser = subparsers.add_parser(
+        "install-dev",
+        help="Install development tools (ruff, mypy, pytest, pip-audit, pipdeptree)",
+        description="Install all development dependencies via pip. Detects if you're in a development context (has pyproject.toml) or using the installed package.",
+    )
+    install_dev_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be installed without actually installing",
+    )
+
     # Hardware profile command
     hardware_parser = subparsers.add_parser(
         "hardware-profile",
@@ -2716,6 +2728,7 @@ Examples:
                 f"Policy: external_tools_mode={policy.get('external_tools_mode')} mypy_staged={policy.get('mypy_staged')}"
             )
             print("\nFindings:")
+            missing_tools = []
             for f in report.get("findings", []):
                 sev = (f.get("severity") or "warn").upper()
                 code = f.get("code") or ""
@@ -2724,6 +2737,60 @@ Examples:
                 remediation = f.get("remediation")
                 if remediation:
                     print(f"         remediation: {remediation}")
+                # Track missing tools for summary
+                if code == "TOOL_MISSING":
+                    tool_name = msg.replace("Tool not found on PATH: ", "")
+                    missing_tools.append(tool_name)
+            
+            # Show helpful summary if tools are missing
+            if missing_tools:
+                print("\n" + "-" * 60)
+                print("💡 Quick Fix: Install all missing development tools with:")
+                print("   python -m tapps_agents.cli install-dev")
+                print("-" * 60)
+    elif args.agent == "install-dev":
+        import subprocess  # nosec B404
+
+        project_root = Path.cwd()
+        pyproject_path = project_root / "pyproject.toml"
+        is_dev_context = pyproject_path.exists()
+        dry_run = getattr(args, "dry_run", False)
+
+        if is_dev_context:
+            install_cmd = ['pip', 'install', '-e', '.[dev]']
+            context_note = "development context (found pyproject.toml)"
+        else:
+            install_cmd = ['pip', 'install', 'tapps-agents[dev]']
+            context_note = "installed package context"
+
+        print(f"Detected: {context_note}")
+        print(f"Command: {' '.join(install_cmd)}")
+        
+        if dry_run:
+            print("\n[DRY RUN] Would run the above command to install:")
+            print("  - ruff (code formatting & linting)")
+            print("  - mypy (type checking)")
+            print("  - pytest (testing framework)")
+            print("  - pip-audit (security auditing)")
+            print("  - pipdeptree (dependency analysis)")
+            print("\nRun without --dry-run to actually install.")
+        else:
+            print("\nInstalling development tools...")
+            try:
+                result = subprocess.run(  # nosec B603
+                    install_cmd,
+                    check=False,
+                    capture_output=False,
+                )
+                if result.returncode == 0:
+                    print("\n✅ Development tools installed successfully!")
+                    print("Run 'python -m tapps_agents.cli doctor' to verify installation.")
+                else:
+                    print(f"\n❌ Installation failed with exit code {result.returncode}")
+                    sys.exit(EXIT_GENERAL_ERROR)
+            except Exception as e:
+                print(f"\n❌ Error installing development tools: {e}")
+                sys.exit(EXIT_GENERAL_ERROR)
     elif args.agent == "setup-experts":
         # Expert setup wizard
         from .experts.setup_wizard import ExpertSetupWizard, NonInteractiveInputRequired

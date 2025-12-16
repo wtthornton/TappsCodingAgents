@@ -557,6 +557,7 @@ def handle_doctor_command(args: object) -> None:
             f"Policy: external_tools_mode={policy.get('external_tools_mode')} mypy_staged={policy.get('mypy_staged')}"
         )
         print("\nFindings:")
+        missing_tools = []
         for f in report.get("findings", []):
             sev = (f.get("severity") or "warn").upper()
             code = f.get("code") or ""
@@ -565,6 +566,17 @@ def handle_doctor_command(args: object) -> None:
             remediation = f.get("remediation")
             if remediation:
                 print(f"         remediation: {remediation}")
+            # Track missing tools for summary
+            if code == "TOOL_MISSING":
+                tool_name = msg.replace("Tool not found on PATH: ", "")
+                missing_tools.append(tool_name)
+        
+        # Show helpful summary if tools are missing
+        if missing_tools:
+            print("\n" + "-" * 60)
+            print("💡 Quick Fix: Install all missing development tools with:")
+            print("   python -m tapps_agents.cli install-dev")
+            print("-" * 60)
 
 
 def handle_setup_experts_command(args: object) -> None:

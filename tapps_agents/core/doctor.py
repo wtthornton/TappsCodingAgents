@@ -193,10 +193,33 @@ def collect_doctor_report(
         
         # Report findings
         if not found_on_path and not found_via_python_m:
-            remediation_msg = "Install the tool or disable the feature in .tapps-agents/config.yaml."
+            # Determine installation command based on context
+            root = project_root or Path.cwd()
+            pyproject_path = root / "pyproject.toml"
+            is_dev_context = pyproject_path.exists()
+            
             if tool in python_tools:
                 module_name = _get_python_module_name(tool)
-                remediation_msg += f" If installed, try: python -m {module_name} --version"
+                if is_dev_context:
+                    # In development context (has pyproject.toml)
+                    install_cmd = 'pip install -e ".[dev]"'
+                    remediation_msg = (
+                        f"Install dev dependencies: {install_cmd}\n"
+                        f"         Or install individually: pip install {exe}\n"
+                        f"         Or disable the feature in .tapps-agents/config.yaml.\n"
+                        f"         If installed, verify with: python -m {module_name} --version"
+                    )
+                else:
+                    # Using installed package
+                    install_cmd = "pip install tapps-agents[dev]"
+                    remediation_msg = (
+                        f"Install dev dependencies: {install_cmd}\n"
+                        f"         Or install individually: pip install {exe}\n"
+                        f"         Or disable the feature in .tapps-agents/config.yaml.\n"
+                        f"         If installed, verify with: python -m {module_name} --version"
+                    )
+            else:
+                remediation_msg = "Install the tool or disable the feature in .tapps-agents/config.yaml."
             
             findings.append(
                 DoctorFinding(
