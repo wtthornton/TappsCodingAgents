@@ -1,6 +1,6 @@
 # Migration Guide: 1.x to 2.0
 
-**Version:** 2.0.1  
+**Version:** 2.0.2  
 **Last Updated:** December 2025
 
 ## Overview

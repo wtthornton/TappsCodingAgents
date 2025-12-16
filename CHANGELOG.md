@@ -5,6 +5,13 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.2] - 2025-12-16
+
+### Changed
+- Updated project documentation and README files to reflect current project state
+- Version numbers updated across documentation to 2.0.2
+- Documentation review and consistency improvements
+
 ## [2.0.1] - 2025-12-13
 
 ### Added
@@ -285,6 +292,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Features |
 |---------|------|--------------|
+| 2.0.2 | Jan 2026 | Documentation review and updates; version consistency improvements |
 | 2.0.1 | Dec 2025 | Packaged init assets for PyPI installs; docs alignment; doctor targets aligned |
 | 2.0.0 | Jan 2026 | Complete Built-in Expert System (16 experts), Dual-Layer Architecture, All 7 Cursor AI Integration Phases Complete |
 | 1.6.1 | Dec 2025 | Dependencies Updated, Test Performance Optimization |
