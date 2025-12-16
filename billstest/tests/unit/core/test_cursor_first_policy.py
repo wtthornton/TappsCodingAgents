@@ -3,12 +3,12 @@ Tests that enforce Cursor-first policy:
 - MAL must be disabled when running under Cursor/Background Agents.
 """
 
-import pytest
 from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from tapps_agents.core.exceptions import MALDisabledInCursorModeError
 from tapps_agents.core.mal import MAL
-
 
 pytestmark = pytest.mark.unit
 

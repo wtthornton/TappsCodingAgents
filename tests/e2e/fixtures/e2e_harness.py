@@ -17,7 +17,7 @@ import shutil
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .project_templates import TemplateType, create_template
 
@@ -54,8 +54,8 @@ def create_test_project(template_type: TemplateType, tmp_path: Path) -> Path:
 def capture_artifacts(
     project_path: Path,
     test_name: str,
-    correlation_id: Optional[str] = None,
-) -> Dict[str, Any]:
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
     """
     Capture artifacts from a test project for debugging.
 
@@ -76,7 +76,7 @@ def capture_artifacts(
     if correlation_id is None:
         correlation_id = generate_correlation_id()
 
-    artifacts: Dict[str, Any] = {
+    artifacts: dict[str, Any] = {
         "correlation_id": correlation_id,
         "test_name": test_name,
         "project_path": str(project_path),
@@ -164,8 +164,8 @@ def assert_artifact_content(project_path: Path, artifact_path: str, expected_con
 def assert_json_artifact_shape(
     project_path: Path,
     artifact_path: str,
-    required_keys: List[str],
-) -> Dict[str, Any]:
+    required_keys: list[str],
+) -> dict[str, Any]:
     """
     Assert that a JSON artifact exists and has the required shape.
 
@@ -214,7 +214,7 @@ def cleanup_project(project_path: Path) -> None:
         logger.warning(f"Error cleaning up project {project_path}: {e}")
 
 
-def capture_state_snapshot(project_path: Path, snapshot_name: str) -> Dict[str, Any]:
+def capture_state_snapshot(project_path: Path, snapshot_name: str) -> dict[str, Any]:
     """
     Capture a state snapshot at a specific point in test execution.
 
@@ -225,7 +225,7 @@ def capture_state_snapshot(project_path: Path, snapshot_name: str) -> Dict[str, 
     Returns:
         Dictionary containing snapshot data
     """
-    snapshot: Dict[str, Any] = {
+    snapshot: dict[str, Any] = {
         "name": snapshot_name,
         "timestamp": datetime.now().isoformat(),
         "project_structure": {},
@@ -275,9 +275,9 @@ def create_failure_bundle(
     project_path: Path,
     test_name: str,
     correlation_id: str,
-    error: Optional[Exception] = None,
-    snapshots: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
+    error: Exception | None = None,
+    snapshots: list[dict[str, Any]] | None = None,
+) -> dict[str, Any]:
     """
     Create a failure bundle with all debugging information.
 
@@ -291,7 +291,7 @@ def create_failure_bundle(
     Returns:
         Dictionary containing complete failure bundle
     """
-    bundle: Dict[str, Any] = {
+    bundle: dict[str, Any] = {
         "correlation_id": correlation_id,
         "test_name": test_name,
         "failed_at": datetime.now().isoformat(),
@@ -307,7 +307,7 @@ def create_failure_bundle(
     return bundle
 
 
-def redact_secrets(content: str, secrets: Optional[List[str]] = None) -> str:
+def redact_secrets(content: str, secrets: list[str] | None = None) -> str:
     """
     Redact secrets from content (for safe logging/artifact capture).
 

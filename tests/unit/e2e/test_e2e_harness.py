@@ -5,24 +5,27 @@ Tests project template creation, artifact capture, and cleanup utilities.
 """
 
 import json
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from tests.e2e.fixtures.e2e_harness import (
-    create_test_project,
-    capture_artifacts,
-    assert_artifact_exists,
     assert_artifact_content,
+    assert_artifact_exists,
     assert_json_artifact_shape,
-    cleanup_project,
-    generate_correlation_id,
+    capture_artifacts,
     capture_state_snapshot,
+    cleanup_project,
     create_failure_bundle,
+    create_test_project,
+    generate_correlation_id,
     redact_secrets,
 )
-from tests.e2e.fixtures.project_templates import create_minimal_template, create_small_template, create_medium_template
+from tests.e2e.fixtures.project_templates import (
+    create_medium_template,
+    create_minimal_template,
+    create_small_template,
+)
 
 pytestmark = pytest.mark.unit
 

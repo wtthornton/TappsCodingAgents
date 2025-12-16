@@ -12,18 +12,18 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
-from .timeline import generate_timeline, save_timeline
-from .parser import WorkflowParser
-from .recommender import WorkflowRecommendation, WorkflowRecommender
-from .state_manager import AdvancedStateManager
-from .parallel_executor import ParallelStepExecutor
-from .logging_helper import WorkflowLogger
-from .event_log import WorkflowEventLog
-from .progress_monitor import WorkflowProgressMonitor
+from ..core.error_envelope import ErrorEnvelopeBuilder
 from ..core.runtime_mode import is_cursor_mode
 from ..quality.quality_gates import QualityGate, QualityThresholds
-from ..core.error_envelope import ErrorEnvelopeBuilder, create_error_result
+from .event_log import WorkflowEventLog
+from .logging_helper import WorkflowLogger
+from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .parallel_executor import ParallelStepExecutor
+from .parser import WorkflowParser
+from .progress_monitor import WorkflowProgressMonitor
+from .recommender import WorkflowRecommendation, WorkflowRecommender
+from .state_manager import AdvancedStateManager
+from .timeline import generate_timeline, save_timeline
 
 
 class WorkflowExecutor:
@@ -938,7 +938,7 @@ class WorkflowExecutor:
                 artifacts_dict[art["name"]] = art
             return artifacts_dict if artifacts_dict else None
 
-        except Exception as e:
+        except Exception:
             # Re-raise exception - ParallelStepExecutor will handle it
             raise
 

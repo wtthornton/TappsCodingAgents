@@ -9,18 +9,15 @@ Provides:
 - Integration with E2E foundation
 """
 
-import asyncio
-import json
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import Workflow, WorkflowState
 from tapps_agents.workflow.parser import WorkflowParser
 
-from .e2e_harness import capture_artifacts, generate_correlation_id
-from .project_templates import TemplateType, create_template
+from .e2e_harness import generate_correlation_id
 
 # Configure logging for workflow runner
 logger = logging.getLogger(__name__)
@@ -31,7 +28,7 @@ class GateController:
 
     def __init__(self):
         """Initialize gate controller with empty outcome map."""
-        self._outcomes: Dict[str, bool] = {}  # gate_id -> pass (True) or fail (False)
+        self._outcomes: dict[str, bool] = {}  # gate_id -> pass (True) or fail (False)
 
     def set_outcome(self, gate_id: str, outcome: bool) -> None:
         """
@@ -69,7 +66,7 @@ class WorkflowRunner:
         self,
         project_path: Path,
         use_mocks: bool = True,
-        gate_controller: Optional[GateController] = None,
+        gate_controller: GateController | None = None,
     ):
         """
         Initialize workflow runner.
@@ -82,9 +79,9 @@ class WorkflowRunner:
         self.project_path = project_path
         self.use_mocks = use_mocks
         self.gate_controller = gate_controller or GateController()
-        self.executor: Optional[WorkflowExecutor] = None
-        self.workflow: Optional[Workflow] = None
-        self.state_snapshots: List[Dict[str, Any]] = []
+        self.executor: WorkflowExecutor | None = None
+        self.workflow: Workflow | None = None
+        self.state_snapshots: list[dict[str, Any]] = []
         self.correlation_id = generate_correlation_id()
 
     def load_workflow(self, workflow_path: Path) -> Workflow:
@@ -127,7 +124,7 @@ class WorkflowRunner:
         expert_registry: Any = None,
         max_steps: int = 50,
         **kwargs: Any,
-    ) -> Tuple[WorkflowState, Dict[str, Any]]:
+    ) -> tuple[WorkflowState, dict[str, Any]]:
         """
         Run a workflow to completion.
 
@@ -174,10 +171,10 @@ class WorkflowRunner:
         self,
         workflow_path: Path,
         expert_registry: Any = None,
-        max_steps: Optional[int] = None,
+        max_steps: int | None = None,
         capture_after_each_step: bool = True,
         **kwargs: Any,
-    ) -> Tuple[WorkflowState, List[Dict[str, Any]], Dict[str, Any]]:
+    ) -> tuple[WorkflowState, list[dict[str, Any]], dict[str, Any]]:
         """
         Run a workflow step-by-step with state capture.
 
@@ -241,8 +238,8 @@ class WorkflowRunner:
         return final_state, self.state_snapshots, results
 
     def capture_workflow_state(
-        self, executor: WorkflowExecutor, step_id: Optional[str] = None
-    ) -> Dict[str, Any]:
+        self, executor: WorkflowExecutor, step_id: str | None = None
+    ) -> dict[str, Any]:
         """
         Capture a workflow state snapshot.
 
@@ -285,7 +282,7 @@ class WorkflowRunner:
         return snapshot
 
     def assert_workflow_artifacts(
-        self, expected_artifacts: List[str], project_path: Optional[Path] = None
+        self, expected_artifacts: list[str], project_path: Path | None = None
     ) -> None:
         """
         Assert that expected workflow artifacts exist.
@@ -382,7 +379,7 @@ class WorkflowRunner:
                     if artifact_path.suffix == ".json":
                         try:
                             import json
-                            with open(artifact_path, "r", encoding="utf-8") as f:
+                            with open(artifact_path, encoding="utf-8") as f:
                                 json.load(f)
                         except json.JSONDecodeError as e:
                             raise AssertionError(f"Artifact is not valid JSON: {artifact_path} - {e}")
@@ -419,7 +416,7 @@ async def run_workflow(
     expert_registry: Any = None,
     max_steps: int = 50,
     **kwargs: Any,
-) -> Tuple[WorkflowState, Dict[str, Any]]:
+) -> tuple[WorkflowState, dict[str, Any]]:
     """
     Run a workflow to completion.
 
@@ -443,10 +440,10 @@ async def run_workflow_step_by_step(
     project_path: Path,
     use_mocks: bool = True,
     expert_registry: Any = None,
-    max_steps: Optional[int] = None,
+    max_steps: int | None = None,
     capture_after_each_step: bool = True,
     **kwargs: Any,
-) -> Tuple[WorkflowState, List[Dict[str, Any]], Dict[str, Any]]:
+) -> tuple[WorkflowState, list[dict[str, Any]], dict[str, Any]]:
     """
     Run a workflow step-by-step with state capture.
 
@@ -473,8 +470,8 @@ async def run_workflow_step_by_step(
 
 
 def capture_workflow_state(
-    executor: WorkflowExecutor, step_id: Optional[str] = None
-) -> Dict[str, Any]:
+    executor: WorkflowExecutor, step_id: str | None = None
+) -> dict[str, Any]:
     """
     Capture a workflow state snapshot.
 
@@ -490,7 +487,7 @@ def capture_workflow_state(
 
 
 def assert_workflow_artifacts(
-    project_path: Path, expected_artifacts: List[str], executor: Optional[WorkflowExecutor] = None
+    project_path: Path, expected_artifacts: list[str], executor: WorkflowExecutor | None = None
 ) -> None:
     """
     Assert that expected workflow artifacts exist.
@@ -506,7 +503,7 @@ def assert_workflow_artifacts(
     runner.assert_workflow_artifacts(expected_artifacts, project_path)
 
 
-def control_gate_outcome(gate_id: str, outcome: bool, gate_controller: Optional[GateController] = None) -> GateController:
+def control_gate_outcome(gate_id: str, outcome: bool, gate_controller: GateController | None = None) -> GateController:
     """
     Control the outcome of a gate.
 
@@ -526,7 +523,7 @@ def control_gate_outcome(gate_id: str, outcome: bool, gate_controller: Optional[
 # Agent behavior validation helpers for Epic 15.5
 
 def validate_agent_context(
-    agent: Any, workflow_state: WorkflowState, step_context: Dict[str, Any]
+    agent: Any, workflow_state: WorkflowState, step_context: dict[str, Any]
 ) -> None:
     """
     Validate that agent received correct context from workflow.
@@ -548,7 +545,7 @@ def validate_agent_context(
 
 
 def validate_agent_artifacts(
-    artifacts: Dict[str, Any], expected_artifacts: List[str]
+    artifacts: dict[str, Any], expected_artifacts: list[str]
 ) -> None:
     """
     Validate that agents produced artifacts that workflow expects.

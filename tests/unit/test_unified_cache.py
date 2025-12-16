@@ -5,7 +5,6 @@ Tests the unified cache API (get, put, invalidate, get_stats) across all cache t
 using real cache implementations to validate actual cache behavior.
 """
 
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest

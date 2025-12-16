@@ -4,9 +4,9 @@ E2E tests for workflow failure and resume functionality.
 Tests workflow state persistence, loading, and resuming from failure points.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import AsyncMock, patch
+
+import pytest
 
 from tests.e2e.fixtures.workflow_runner import WorkflowRunner
 
@@ -44,7 +44,7 @@ class TestWorkflowFailureResume:
 
         # Verify state file structure
         import json
-        with open(state_path, "r", encoding="utf-8") as f:
+        with open(state_path, encoding="utf-8") as f:
             state_data = json.load(f)
 
         assert "workflow_id" in state_data
@@ -76,7 +76,7 @@ class TestWorkflowFailureResume:
             # This is a fallback for testing
             if state_path.exists():
                 import json
-                with open(state_path, "r", encoding="utf-8") as f:
+                with open(state_path, encoding="utf-8") as f:
                     state_data = json.load(f)
                 assert state_data["workflow_id"] == state.workflow_id
 
@@ -101,7 +101,7 @@ class TestWorkflowFailureResume:
 
         # Verify state file contains expected fields
         import json
-        with open(state_path, "r", encoding="utf-8") as f:
+        with open(state_path, encoding="utf-8") as f:
             state_data = json.load(f)
 
         assert state_data["workflow_id"] == state1.workflow_id
@@ -121,8 +121,9 @@ class TestWorkflowFailureResume:
         state = executor.start(workflow)
 
         # Simulate creating an artifact
-        from tapps_agents.workflow.models import Artifact
         from datetime import datetime
+
+        from tapps_agents.workflow.models import Artifact
 
         test_artifact = Artifact(
             name="test-artifact.md",
@@ -142,7 +143,7 @@ class TestWorkflowFailureResume:
 
         # Verify artifact is in saved state
         import json
-        with open(state_path, "r", encoding="utf-8") as f:
+        with open(state_path, encoding="utf-8") as f:
             state_data = json.load(f)
 
         # Artifacts should be in state
@@ -215,6 +216,6 @@ class TestWorkflowFailureResume:
         # Verify both contain workflow_id
         import json
         for state_path in [state_path1, state_path2]:
-            with open(state_path, "r", encoding="utf-8") as f:
+            with open(state_path, encoding="utf-8") as f:
                 state_data = json.load(f)
             assert state_data["workflow_id"] == "quick-fix"

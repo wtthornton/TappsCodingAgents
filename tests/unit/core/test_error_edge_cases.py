@@ -9,13 +9,12 @@ Story 19.3: Add Error Handling Edge Cases
 - Test error handling with very large inputs
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import MagicMock, AsyncMock, patch
 
-from tapps_agents.core.error_envelope import ErrorEnvelopeBuilder, create_error_result
-from tapps_agents.core.exceptions import ConfigurationError, FileOperationError
+import pytest
+
 from tapps_agents.core.config import MALConfig
+from tapps_agents.core.error_envelope import ErrorEnvelopeBuilder
+from tapps_agents.core.exceptions import ConfigurationError
 
 pytestmark = pytest.mark.unit
 
@@ -66,7 +65,6 @@ class TestMissingDependenciesHandling:
 
     def test_missing_optional_dependency_handled_gracefully(self):
         """Test that missing optional dependencies are handled gracefully."""
-        from tapps_agents.core.agent_base import BaseAgent
         from tapps_agents.core.exceptions import Context7UnavailableError
 
         # Simulate missing Context7 dependency
@@ -94,8 +92,9 @@ class TestNetworkFailureHandling:
     @pytest.mark.asyncio
     async def test_connection_timeout_handling(self):
         """Test error handling when connection times out."""
+        from httpx import TimeoutException
+
         from tapps_agents.core.mal import MAL
-        from httpx import AsyncClient, TimeoutException
 
         config = MALConfig(
             ollama_url="http://unreachable-host:11434",

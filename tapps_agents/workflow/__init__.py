@@ -1,12 +1,36 @@
 """Workflow Engine - YAML-based workflow orchestration."""
 
+# Foreground Agent Artifacts (Epic 2)
+from .code_artifact import CodeArtifact, CodeChange
+from .context_artifact import (
+    ContextArtifact,
+    ContextQuery,
+    LibraryCacheEntry,
+    ProjectProfile,
+)
+from .dependency_resolver import DependencyGraph, DependencyResolver
+from .design_artifact import Component, DesignArtifact
 from .detector import (
     ProjectCharacteristics,
     ProjectDetector,
     ProjectType,
     WorkflowTrack,
 )
+
+# Background Agents (Epic 2) - Lazy imports to avoid circular dependencies
+# These are imported on-demand when needed
+# Background Agent Artifacts
+from .docs_artifact import DocFileResult, DocumentationArtifact
+from .enhancement_artifact import EnhancementArtifact, EnhancementStage
+from .event_log import WorkflowEvent, WorkflowEventLog
 from .executor import WorkflowExecutor
+from .logging_helper import WorkflowLogger
+from .messaging import (
+    FileMessageBus,
+    StatusUpdateMessage,
+    TaskAssignmentMessage,
+    TaskCompleteMessage,
+)
 from .models import (
     Artifact,
     Workflow,
@@ -15,53 +39,27 @@ from .models import (
     WorkflowStep,
     WorkflowType,
 )
+from .ops_artifact import (
+    ComplianceCheck,
+    DeploymentStep,
+    InfrastructureFile,
+    OperationsArtifact,
+    SecurityIssue,
+)
 from .parser import WorkflowParser
+from .planning_artifact import PlanningArtifact, UserStory
+from .progress_monitor import ProgressMetrics, WorkflowProgressMonitor
+from .quality_artifact import QualityArtifact, ToolResult
 from .recommender import (
     WorkflowRecommendation,
     WorkflowRecommender,
 )
-from .messaging import (
-    FileMessageBus,
-    TaskAssignmentMessage,
-    StatusUpdateMessage,
-    TaskCompleteMessage,
-)
-from .logging_helper import WorkflowLogger
-from .schema_validator import WorkflowSchemaValidator, SchemaVersion, ValidationError
-from .dependency_resolver import DependencyResolver, DependencyGraph
-from .event_log import WorkflowEventLog, WorkflowEvent
-from .progress_monitor import WorkflowProgressMonitor, ProgressMetrics
-
-# Background Agents (Epic 2) - Lazy imports to avoid circular dependencies
-# These are imported on-demand when needed
-
-# Background Agent Artifacts
-from .docs_artifact import DocumentationArtifact, DocFileResult
-from .ops_artifact import (
-    OperationsArtifact,
-    SecurityIssue,
-    ComplianceCheck,
-    DeploymentStep,
-    InfrastructureFile,
-)
-from .context_artifact import (
-    ContextArtifact,
-    LibraryCacheEntry,
-    ContextQuery,
-    ProjectProfile,
-)
-from .quality_artifact import QualityArtifact, ToolResult
-from .testing_artifact import TestingArtifact, TestResult, CoverageSummary
-
-# Foreground Agent Artifacts (Epic 2)
-from .code_artifact import CodeArtifact, CodeChange
-from .design_artifact import DesignArtifact, Component
-from .review_artifact import ReviewArtifact, ReviewComment
-from .planning_artifact import PlanningArtifact, UserStory
-from .enhancement_artifact import EnhancementArtifact, EnhancementStage
 
 # Result Aggregation (Epic 2)
 from .result_aggregator import Conflict, ResultAggregator
+from .review_artifact import ReviewArtifact, ReviewComment
+from .schema_validator import SchemaVersion, ValidationError, WorkflowSchemaValidator
+from .testing_artifact import CoverageSummary, TestingArtifact, TestResult
 
 __all__ = [
     "WorkflowParser",

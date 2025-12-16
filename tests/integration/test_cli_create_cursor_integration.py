@@ -11,7 +11,6 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 import yaml
@@ -229,7 +228,7 @@ class TestCLICreateCursorIntegration:
                     pass
 
             # Output success message with key info
-            print(f"\n✓ CLI create command executed in Cursor mode")
+            print("\n✓ CLI create command executed in Cursor mode")
             if timeline_file.exists():
                 print(f"✓ Timeline file created: {timeline_file}")
             if state_dir.exists():
@@ -348,7 +347,7 @@ class TestCLICreateCursorIntegration:
 
                     # Verify Cursor-specific state (if any)
                     # Cursor executor should create state similar to regular executor
-                    print(f"\n✓ Cursor mode workflow state validated")
+                    print("\n✓ Cursor mode workflow state validated")
                     print(f"  - Workflow ID: {state_data.get('workflow_id')}")
                     print(f"  - Status: {state_data.get('status')}")
 

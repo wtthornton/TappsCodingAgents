@@ -12,7 +12,6 @@ import logging
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +96,7 @@ class RAGEvaluator:
             return
 
         try:
-            with open(eval_file, "r", encoding="utf-8") as f:
+            with open(eval_file, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.questions = []

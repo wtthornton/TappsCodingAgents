@@ -8,28 +8,28 @@ Provides:
 - e2e_cleanup: Automatic cleanup
 """
 
-import pytest
+from collections.abc import Generator
 from pathlib import Path
-from typing import Generator
+
+import pytest
 
 from tests.e2e.fixtures.e2e_harness import (
-    create_test_project,
-    generate_correlation_id,
     capture_artifacts,
     cleanup_project,
-    create_failure_bundle,
+    create_test_project,
+    generate_correlation_id,
+)
+from tests.e2e.fixtures.mock_agents import (
+    MockImplementer,
+    MockPlanner,
+    MockReviewer,
+    MockTester,
+    create_behavioral_mock,
 )
 from tests.e2e.fixtures.project_templates import TemplateType
 from tests.e2e.fixtures.workflow_runner import (
-    WorkflowRunner,
     GateController,
-)
-from tests.e2e.fixtures.mock_agents import (
-    create_behavioral_mock,
-    MockPlanner,
-    MockImplementer,
-    MockReviewer,
-    MockTester,
+    WorkflowRunner,
 )
 
 
@@ -45,7 +45,7 @@ def e2e_correlation_id() -> str:
 
 
 @pytest.fixture
-def e2e_project(tmp_path: Path, request) -> Generator[Path, None, None]:
+def e2e_project(tmp_path: Path, request) -> Generator[Path]:
     """
     Create an isolated test project for E2E testing.
 
@@ -76,7 +76,7 @@ def e2e_project(tmp_path: Path, request) -> Generator[Path, None, None]:
 
 
 @pytest.fixture
-def e2e_artifact_capture(e2e_project: Path, e2e_correlation_id: str, request) -> Generator[None, None, None]:
+def e2e_artifact_capture(e2e_project: Path, e2e_correlation_id: str, request) -> Generator[None]:
     """
     Automatically capture artifacts on test failure.
 
@@ -105,7 +105,7 @@ def e2e_artifact_capture(e2e_project: Path, e2e_correlation_id: str, request) ->
 
 
 @pytest.fixture(autouse=True)
-def e2e_cleanup(e2e_project: Path, request) -> Generator[None, None, None]:
+def e2e_cleanup(e2e_project: Path, request) -> Generator[None]:
     """
     Automatically clean up test project after test completion.
 

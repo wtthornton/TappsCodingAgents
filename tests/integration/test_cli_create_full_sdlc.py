@@ -9,7 +9,6 @@ import json
 import os
 import subprocess
 import sys
-from pathlib import Path
 
 import pytest
 import yaml
@@ -194,7 +193,7 @@ class TestCLICreateFullSDLC:
                     pass
 
             # Output success message with key info
-            print(f"\n✓ CLI create command executed")
+            print("\n✓ CLI create command executed")
             if timeline_file.exists():
                 print(f"✓ Timeline file created: {timeline_file}")
             if state_dir.exists():

@@ -4,12 +4,10 @@ Tests for Workflow Detector.
 Tests project type detection and workflow recommendations.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tapps_agents.workflow.detector import ProjectDetector, ProjectCharacteristics, ProjectType
+from tapps_agents.workflow.detector import ProjectDetector, ProjectType
 
 pytestmark = pytest.mark.unit
 

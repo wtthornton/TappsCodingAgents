@@ -115,6 +115,11 @@ python -m tapps_agents.cli reviewer review path/to/file.py
 python -m tapps_agents.cli reviewer lint path/to/file.py
 python -m tapps_agents.cli reviewer type-check path/to/file.py
 python -m tapps_agents.cli reviewer report path/to/dir json markdown html
+python -m tapps_agents.cli reviewer duplication path/to/dir
+python -m tapps_agents.cli reviewer analyze-project
+
+# Quick shortcut (same as reviewer score)
+python -m tapps_agents.cli score path/to/file.py
 ```
 
 ### Generate / refactor code
@@ -155,6 +160,24 @@ python -m tapps_agents.cli setup-experts list
 ```bash
 python -m tapps_agents.cli analytics dashboard
 python -m tapps_agents.cli analytics system
+```
+
+### Create new project (primary use case)
+
+```bash
+# Create a complete project from description
+python -m tapps_agents.cli create "Build a task management web app"
+python -m tapps_agents.cli create "Create a REST API" --workflow rapid
+```
+
+### Hardware profile (optional)
+
+```bash
+# Check current hardware profile
+python -m tapps_agents.cli hardware-profile
+
+# Set hardware profile (for NUC/low-power systems)
+python -m tapps_agents.cli hardware-profile --set nuc
 ```
 
 ---

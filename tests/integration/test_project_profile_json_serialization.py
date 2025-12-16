@@ -8,7 +8,7 @@ This fixes the issue: "Object of type ComplianceRequirement is not JSON serializ
 
 import shutil
 import tempfile
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -17,13 +17,12 @@ from tapps_agents.core.project_profile import (
     ComplianceRequirement,
     ProjectProfile,
 )
+from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import WorkflowState
 from tapps_agents.workflow.state_manager import (
     AdvancedStateManager,
     StateValidator,
 )
-from tapps_agents.workflow.executor import WorkflowExecutor
-
 
 pytestmark = pytest.mark.integration
 
@@ -72,7 +71,7 @@ class TestProjectProfileJsonSerialization:
                     indicators=["health_data.md"],
                 ),
             ],
-            detected_at=datetime.now(timezone.utc).isoformat(),
+            detected_at=datetime.now(UTC).isoformat(),
         )
 
     def test_state_manager_saves_profile_in_variables(

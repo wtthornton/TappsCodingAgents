@@ -16,8 +16,8 @@ from .quality_gates import (
 )
 from .secret_scanner import (
     SecretFinding,
-    SecretScanResult,
     SecretScanner,
+    SecretScanResult,
 )
 
 __all__ = [

@@ -8,7 +8,6 @@ full workflow execution or Skill invocation.
 import asyncio
 from pathlib import Path
 
-from tapps_agents.core.project_profile import ProjectProfileDetector, load_project_profile
 from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
 from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowType
 from tapps_agents.workflow.parser import WorkflowParser
@@ -116,7 +115,6 @@ async def test_skill_invoker():
     
     try:
         from tapps_agents.workflow.skill_invoker import SkillInvoker
-        from tapps_agents.workflow.models import WorkflowState, WorkflowStep
         
         invoker = SkillInvoker(project_root=Path("."))
         

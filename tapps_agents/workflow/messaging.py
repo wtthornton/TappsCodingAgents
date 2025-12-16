@@ -24,7 +24,6 @@ from typing import Any, Literal, TypeAlias
 
 from pydantic import BaseModel, Field, ValidationError
 
-
 SCHEMA_VERSION: str = "1.0"
 
 

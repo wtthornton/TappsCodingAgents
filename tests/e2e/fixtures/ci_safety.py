@@ -12,7 +12,6 @@ Provides:
 import logging
 import os
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -22,11 +21,11 @@ logger = logging.getLogger(__name__)
 class CredentialGate:
     """Configuration for credential gating."""
 
-    required_vars: List[str]
+    required_vars: list[str]
     skip_on_missing: bool = True
     fail_on_missing: bool = False
 
-    def check(self) -> Tuple[bool, Optional[str]]:
+    def check(self) -> tuple[bool, str | None]:
         """
         Check if required credentials are available.
 
@@ -54,9 +53,9 @@ class TimeoutConfig:
 class CostConfig:
     """Configuration for cost controls."""
 
-    max_tokens_per_run: Optional[int] = None
-    max_api_calls_per_run: Optional[int] = None
-    max_cost_per_run: Optional[float] = None
+    max_tokens_per_run: int | None = None
+    max_api_calls_per_run: int | None = None
+    max_cost_per_run: float | None = None
     alert_on_regression: bool = True
 
 
@@ -65,9 +64,9 @@ class SafetyController:
 
     def __init__(
         self,
-        credential_gate: Optional[CredentialGate] = None,
-        timeout_config: Optional[TimeoutConfig] = None,
-        cost_config: Optional[CostConfig] = None,
+        credential_gate: CredentialGate | None = None,
+        timeout_config: TimeoutConfig | None = None,
+        cost_config: CostConfig | None = None,
     ):
         """
         Initialize safety controller.
@@ -83,7 +82,7 @@ class SafetyController:
         self._token_count = 0
         self._api_call_count = 0
 
-    def check_credentials(self) -> Tuple[bool, Optional[str]]:
+    def check_credentials(self) -> tuple[bool, str | None]:
         """
         Check if required credentials are available.
 
@@ -92,7 +91,7 @@ class SafetyController:
         """
         return self.credential_gate.check()
 
-    def should_skip(self) -> Tuple[bool, Optional[str]]:
+    def should_skip(self) -> tuple[bool, str | None]:
         """
         Determine if tests should be skipped.
 
@@ -150,7 +149,7 @@ class SafetyController:
                 f"API call count exceeded limit: {self._api_call_count} > {self.cost_config.max_api_calls_per_run}"
             )
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """
         Get usage statistics.
 
@@ -163,7 +162,7 @@ class SafetyController:
         }
 
 
-def check_ci_environment() -> Dict[str, bool]:
+def check_ci_environment() -> dict[str, bool]:
     """
     Check CI environment variables.
 
@@ -179,7 +178,7 @@ def check_ci_environment() -> Dict[str, bool]:
     }
 
 
-def should_run_real_service_tests() -> Tuple[bool, str]:
+def should_run_real_service_tests() -> tuple[bool, str]:
     """
     Determine if real-service tests should run.
 

@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import subprocess  # nosec B404 - fixed args, no shell
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-import re
 
 from .models import Artifact, WorkflowStep
 
@@ -116,7 +116,7 @@ class WorktreeManager:
                 text=True,
                 check=True,
             )
-        except subprocess.CalledProcessError as e:
+        except subprocess.CalledProcessError:
             # If branch already exists, attach the worktree to it.
             try:
                 git_path = shutil.which("git") or "git"

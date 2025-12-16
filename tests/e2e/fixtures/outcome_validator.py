@@ -14,7 +14,7 @@ import logging
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class CodeCorrectnessValidator:
     """Validates code correctness (syntax, logic, style)."""
 
     @staticmethod
-    def validate_syntax(file_path: Path) -> Tuple[bool, Optional[str]]:
+    def validate_syntax(file_path: Path) -> tuple[bool, str | None]:
         """
         Validate Python syntax using AST parsing.
 
@@ -34,7 +34,7 @@ class CodeCorrectnessValidator:
             Tuple of (is_valid, error_message)
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
             ast.parse(source)
             return True, None
@@ -44,7 +44,7 @@ class CodeCorrectnessValidator:
             return False, f"Error parsing {file_path}: {e}"
 
     @staticmethod
-    def validate_multiple_files(file_paths: List[Path]) -> Tuple[bool, List[str]]:
+    def validate_multiple_files(file_paths: list[Path]) -> tuple[bool, list[str]]:
         """
         Validate syntax for multiple files.
 
@@ -62,7 +62,7 @@ class CodeCorrectnessValidator:
         return len(errors) == 0, errors
 
     @staticmethod
-    def validate_style(file_path: Path, use_ruff: bool = True) -> Tuple[bool, Optional[str]]:
+    def validate_style(file_path: Path, use_ruff: bool = True) -> tuple[bool, str | None]:
         """
         Validate code style using ruff (if available).
 
@@ -104,9 +104,9 @@ class TestExecutionValidator:
     @staticmethod
     def run_tests(
         project_path: Path,
-        test_path: Optional[Path] = None,
+        test_path: Path | None = None,
         timeout: int = 300,
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Run pytest tests and validate results.
 
@@ -162,7 +162,7 @@ class TestExecutionValidator:
             return False, {"error": f"Error running tests: {e}"}
 
     @staticmethod
-    def _parse_pytest_output(output: str) -> Dict[str, int]:
+    def _parse_pytest_output(output: str) -> dict[str, int]:
         """Parse pytest output to extract test counts."""
         counts = {"passed": 0, "failed": 0, "skipped": 0, "total": 0}
 
@@ -191,8 +191,8 @@ class BugFixValidator:
     def validate_bug_fix(
         project_path: Path,
         bug_description: str,
-        test_path: Optional[Path] = None,
-    ) -> Tuple[bool, Dict[str, Any]]:
+        test_path: Path | None = None,
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate that a bug fix is correct.
 
@@ -227,8 +227,8 @@ class FeatureValidator:
     def validate_feature(
         project_path: Path,
         feature_description: str,
-        test_path: Optional[Path] = None,
-    ) -> Tuple[bool, Dict[str, Any]]:
+        test_path: Path | None = None,
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate that a feature is correctly implemented.
 
@@ -270,10 +270,10 @@ class CodeQualityValidator:
     @staticmethod
     def validate_quality(
         project_path: Path,
-        file_paths: Optional[List[Path]] = None,
+        file_paths: list[Path] | None = None,
         use_ruff: bool = True,
         use_mypy: bool = False,
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate code quality using linting and type checking.
 
@@ -346,8 +346,8 @@ class OutcomeValidator:
         self.quality_validator = CodeQualityValidator()
 
     def validate_code_correctness(
-        self, file_paths: Optional[List[Path]] = None
-    ) -> Tuple[bool, List[str]]:
+        self, file_paths: list[Path] | None = None
+    ) -> tuple[bool, list[str]]:
         """
         Validate code correctness.
 
@@ -363,8 +363,8 @@ class OutcomeValidator:
         return CodeCorrectnessValidator.validate_multiple_files(file_paths)
 
     def validate_tests(
-        self, test_path: Optional[Path] = None, timeout: int = 300
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, test_path: Path | None = None, timeout: int = 300
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate test execution.
 
@@ -378,8 +378,8 @@ class OutcomeValidator:
         return TestExecutionValidator.run_tests(self.project_path, test_path, timeout)
 
     def validate_bug_fix(
-        self, bug_description: str, test_path: Optional[Path] = None
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, bug_description: str, test_path: Path | None = None
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate bug fix.
 
@@ -393,8 +393,8 @@ class OutcomeValidator:
         return BugFixValidator.validate_bug_fix(self.project_path, bug_description, test_path)
 
     def validate_feature(
-        self, feature_description: str, test_path: Optional[Path] = None
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, feature_description: str, test_path: Path | None = None
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate feature implementation.
 
@@ -409,10 +409,10 @@ class OutcomeValidator:
 
     def validate_quality(
         self,
-        file_paths: Optional[List[Path]] = None,
+        file_paths: list[Path] | None = None,
         use_ruff: bool = True,
         use_mypy: bool = False,
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate code quality.
 

@@ -21,7 +21,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -42,13 +42,13 @@ class CLIResult:
     exit_code: int
     stdout: str
     stderr: str
-    command: List[str]
-    cwd: Optional[Path]
-    env: Optional[Dict[str, str]]
+    command: list[str]
+    cwd: Path | None
+    env: dict[str, str] | None
     duration_seconds: float
     timed_out: bool = False
 
-    def json_output(self) -> Optional[Dict[str, Any]]:
+    def json_output(self) -> dict[str, Any] | None:
         """
         Parse stdout as JSON if possible.
 
@@ -94,9 +94,9 @@ class CLIHarness:
 
     def __init__(
         self,
-        base_path: Optional[Path] = None,
+        base_path: Path | None = None,
         default_timeout: float = 300.0,
-        default_env: Optional[Dict[str, str]] = None,
+        default_env: dict[str, str] | None = None,
     ):
         """
         Initialize CLI harness.
@@ -110,10 +110,10 @@ class CLIHarness:
         self.base_path.mkdir(parents=True, exist_ok=True)
         self.default_timeout = default_timeout
         self.default_env = default_env or {}
-        self._temp_projects: List[Path] = []
+        self._temp_projects: list[Path] = []
 
     def create_isolated_project(
-        self, template_type: str = "minimal", project_name: Optional[str] = None
+        self, template_type: str = "minimal", project_name: str | None = None
     ) -> Path:
         """
         Create an isolated test project directory.
@@ -147,10 +147,10 @@ class CLIHarness:
 
     def run_command(
         self,
-        command: List[str],
-        cwd: Optional[Path] = None,
-        env: Optional[Dict[str, str]] = None,
-        timeout: Optional[float] = None,
+        command: list[str],
+        cwd: Path | None = None,
+        env: dict[str, str] | None = None,
+        timeout: float | None = None,
         capture_output: bool = True,
         check: bool = False,
     ) -> CLIResult:
@@ -261,7 +261,7 @@ class CLIExecutionError(Exception):
         self.result = result
 
 
-def assert_json_output(result: CLIResult, required_keys: Optional[List[str]] = None) -> Dict[str, Any]:
+def assert_json_output(result: CLIResult, required_keys: list[str] | None = None) -> dict[str, Any]:
     """
     Assert that CLI result has valid JSON output with required keys.
 
@@ -335,9 +335,9 @@ def assert_failure(result: CLIResult, min_exit_code: int = 1):
 
 def capture_cli_artifacts(
     result: CLIResult,
-    project_path: Optional[Path] = None,
+    project_path: Path | None = None,
     test_name: str = "cli_test",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Capture artifacts from a failed CLI run for debugging.
 
@@ -349,7 +349,7 @@ def capture_cli_artifacts(
     Returns:
         Dictionary containing captured artifacts
     """
-    artifacts: Dict[str, Any] = {
+    artifacts: dict[str, Any] = {
         "test_name": test_name,
         "command": " ".join(result.command),
         "exit_code": result.exit_code,

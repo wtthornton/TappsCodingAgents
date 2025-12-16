@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
 
 from ..agents.documenter.agent import DocumenterAgent
 from ..core.config import load_config
@@ -93,7 +92,7 @@ class BackgroundDocsAgent:
                 if self.documenter_agent:
                     await self.documenter_agent.close()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             artifact.mark_timeout()
         except asyncio.CancelledError:
             artifact.mark_cancelled()

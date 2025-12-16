@@ -5,12 +5,11 @@ Provides atomic write operations to prevent cache corruption under parallel agen
 """
 
 import logging
-import os
 import sys
 import time
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Generator
 
 logger = logging.getLogger(__name__)
 
@@ -79,7 +78,7 @@ class CacheLock:
                         self.lock_fd.write(str(os.getpid()))
                         self.lock_fd.flush()
                         return True
-                    except (IOError, OSError, PermissionError):
+                    except (OSError, PermissionError):
                         if self.lock_fd:
                             try:
                                 self.lock_fd.close()
@@ -96,7 +95,7 @@ class CacheLock:
                     try:
                         fcntl.flock(self.lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                         return True
-                    except (IOError, OSError):
+                    except OSError:
                         self.lock_fd.close()
                         self.lock_fd = None
                         time.sleep(0.1)
@@ -144,7 +143,7 @@ class CacheLock:
 
 
 @contextmanager
-def cache_lock(lock_file: Path, timeout: float = 30.0) -> Generator[CacheLock, None, None]:
+def cache_lock(lock_file: Path, timeout: float = 30.0) -> Generator[CacheLock]:
     """
     Context manager for cache locking.
 

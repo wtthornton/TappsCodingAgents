@@ -9,8 +9,6 @@ Story 6.3: Coverage Analysis & Reporting
 """
 
 import json
-import subprocess  # nosec B404
-import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -205,7 +203,7 @@ class CoverageAnalyzer:
                 missing_areas=missing_areas,
             )
 
-        except (json.JSONDecodeError, FileNotFoundError, KeyError) as e:
+        except (json.JSONDecodeError, FileNotFoundError, KeyError):
             # Return empty report on error
             return CoverageReport(
                 total_files=0,

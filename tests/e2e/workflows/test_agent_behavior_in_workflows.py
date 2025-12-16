@@ -8,8 +8,9 @@ Tests validate:
 - Agents integrate correctly with workflow state
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from tests.e2e.fixtures.agent_test_helpers import create_test_agent
 from tests.e2e.fixtures.workflow_runner import (
@@ -58,8 +59,9 @@ steps:
             await agent.activate(e2e_project)
 
             # Create workflow state
-            from tapps_agents.workflow.models import WorkflowState
             from datetime import datetime
+
+            from tapps_agents.workflow.models import WorkflowState
 
             workflow_state = WorkflowState(
                 workflow_id=workflow.id, started_at=datetime.now()
@@ -96,8 +98,9 @@ steps:
         runner = WorkflowRunner(e2e_project, use_mocks=True)
         workflow = runner.load_workflow(workflow_yaml)
 
-        from tapps_agents.workflow.models import WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import WorkflowState
 
         workflow_state = WorkflowState(
             workflow_id=workflow.id,
@@ -141,8 +144,9 @@ steps:
         runner = WorkflowRunner(e2e_project, use_mocks=True)
         workflow = runner.load_workflow(workflow_yaml)
 
-        from tapps_agents.workflow.models import WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import WorkflowState
 
         workflow_state = WorkflowState(
             workflow_id=workflow.id, started_at=datetime.now()
@@ -207,8 +211,9 @@ steps:
         self, e2e_project, mock_mal, tmp_path
     ):
         """Test that artifacts are registered in workflow state."""
-        from tapps_agents.workflow.models import Artifact, WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import Artifact, WorkflowState
 
         artifact_file = e2e_project / "output.txt"
         artifact_file.write_text("Test output\n")
@@ -235,8 +240,9 @@ steps:
         self, e2e_project, mock_mal, tmp_path
     ):
         """Test that artifacts are accessible to subsequent workflow steps."""
-        from tapps_agents.workflow.models import Artifact, WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import Artifact, WorkflowState
 
         # Create artifact from first step
         artifact1 = e2e_project / "step1_output.txt"
@@ -277,8 +283,9 @@ steps:
         self, e2e_project, mock_mal, tmp_path
     ):
         """Test that agents handle invalid workflow state gracefully."""
-        from tapps_agents.workflow.models import WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import WorkflowState
 
         # Create invalid state (missing required fields)
         invalid_state = WorkflowState(
@@ -299,8 +306,9 @@ steps:
         self, e2e_project, mock_mal
     ):
         """Test that agents read workflow state correctly."""
-        from tapps_agents.workflow.models import WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import WorkflowState
 
         workflow_state = WorkflowState(
             workflow_id="test-workflow",
@@ -321,8 +329,9 @@ steps:
         self, e2e_project, mock_mal
     ):
         """Test that agents update workflow state correctly."""
-        from tapps_agents.workflow.models import WorkflowState, Artifact
         from datetime import datetime
+
+        from tapps_agents.workflow.models import Artifact, WorkflowState
 
         workflow_state = WorkflowState(
             workflow_id="test-workflow", started_at=datetime.now()
@@ -347,8 +356,9 @@ steps:
         self, e2e_project, mock_mal
     ):
         """Test that agents maintain state consistency during execution."""
-        from tapps_agents.workflow.models import WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import WorkflowState
 
         workflow_state = WorkflowState(
             workflow_id="test-workflow", started_at=datetime.now()
@@ -391,8 +401,9 @@ steps:
             agent = create_test_agent(step.agent, mock_mal)
             await agent.activate(e2e_project)
 
-            from tapps_agents.workflow.models import WorkflowState
             from datetime import datetime
+
+            from tapps_agents.workflow.models import WorkflowState
 
             workflow_state = WorkflowState(
                 workflow_id=workflow.id, started_at=datetime.now()
@@ -429,8 +440,9 @@ steps:
         runner = WorkflowRunner(e2e_project, use_mocks=True)
         workflow = runner.load_workflow(workflow_yaml)
 
-        from tapps_agents.workflow.models import WorkflowState, Artifact
         from datetime import datetime
+
+        from tapps_agents.workflow.models import Artifact, WorkflowState
 
         workflow_state = WorkflowState(
             workflow_id=workflow.id, started_at=datetime.now()

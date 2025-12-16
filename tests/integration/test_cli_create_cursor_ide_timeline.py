@@ -264,7 +264,7 @@ class TestCLICreateCursorIDETimeline:
                     )
                     
                     # Print step details
-                    print(f"\nFirst step execution details:")
+                    print("\nFirst step execution details:")
                     print(f"  Agent: {step.get('agent')}")
                     print(f"  Action: {step.get('action')}")
                     print(f"  Started: {step.get('started_at')}")

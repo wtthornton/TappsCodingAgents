@@ -9,14 +9,12 @@ This module tests:
 - Missing optional dependencies
 """
 
-import json
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from tapps_agents.agents.reviewer.scoring import CodeScorer
-from tapps_agents.core.agent_base import BaseAgent
 
 
 @pytest.mark.unit
@@ -290,6 +288,7 @@ class TestMissingOptionalDependencies:
         """Test scoring when radon is not available."""
         # Reimport to get the patched version
         from importlib import reload
+
         import tapps_agents.agents.reviewer.scoring as scoring_module
         
         # Force reload to pick up the patch
@@ -309,6 +308,7 @@ class TestMissingOptionalDependencies:
     def test_scorer_without_bandit(self, tmp_path: Path):
         """Test scoring when bandit is not available."""
         from importlib import reload
+
         import tapps_agents.agents.reviewer.scoring as scoring_module
         
         reload(scoring_module)
@@ -327,6 +327,7 @@ class TestMissingOptionalDependencies:
     def test_scorer_without_ruff(self, tmp_path: Path):
         """Test scoring when ruff is not available."""
         from importlib import reload
+
         import tapps_agents.agents.reviewer.scoring as scoring_module
         
         reload(scoring_module)
@@ -345,6 +346,7 @@ class TestMissingOptionalDependencies:
     def test_scorer_without_mypy(self, tmp_path: Path):
         """Test scoring when mypy is not available."""
         from importlib import reload
+
         import tapps_agents.agents.reviewer.scoring as scoring_module
         
         reload(scoring_module)
@@ -366,6 +368,7 @@ class TestMissingOptionalDependencies:
              patch("tapps_agents.agents.reviewer.scoring.HAS_MYPY", False):
             
             from importlib import reload
+
             import tapps_agents.agents.reviewer.scoring as scoring_module
             
             reload(scoring_module)

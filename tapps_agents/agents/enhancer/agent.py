@@ -69,8 +69,8 @@ class EnhancerAgent(BaseAgent):
 
         # Expert registry (lazy load)
         if TYPE_CHECKING:
-            from ...experts.expert_registry import ExpertRegistry
-        self.expert_registry: "ExpertRegistry | None" = None
+            pass
+        self.expert_registry: ExpertRegistry | None = None
 
         # Context manager
         self.context_manager = ContextManager()

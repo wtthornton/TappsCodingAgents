@@ -11,16 +11,15 @@ This module tests:
 """
 
 import json
-import yaml
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
+import yaml
 
-from tapps_agents.core.agent_base import BaseAgent
-from tapps_agents.core.config import load_config
-from tapps_agents.workflow import WorkflowParser, WorkflowExecutor
 from tapps_agents.agents.reviewer.scoring import CodeScorer
+from tapps_agents.core.config import load_config
+from tapps_agents.workflow import WorkflowExecutor, WorkflowParser
 
 
 @pytest.mark.unit

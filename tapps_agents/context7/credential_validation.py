@@ -7,8 +7,6 @@ Validates Context7 API credentials and provides actionable error messages.
 import logging
 import os
 from dataclasses import dataclass
-from pathlib import Path
-from typing import Any
 
 from ..mcp.gateway import MCPGateway
 

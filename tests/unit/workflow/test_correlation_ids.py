@@ -4,15 +4,20 @@ Tests for correlation IDs and structured logging.
 Epic 1 / Story 1.6: Correlation IDs & Baseline Observability
 """
 
-import pytest
 from datetime import datetime
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
-from tapps_agents.workflow.models import Workflow, WorkflowState, WorkflowStep, WorkflowType
-from tapps_agents.workflow.executor import WorkflowExecutor
+import pytest
+
 from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
+from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.logging_helper import WorkflowLogger
+from tapps_agents.workflow.models import (
+    Workflow,
+    WorkflowStep,
+    WorkflowType,
+)
 
 
 @pytest.mark.unit

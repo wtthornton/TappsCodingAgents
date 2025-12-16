@@ -8,16 +8,16 @@ and actionable suggestions for fixing issues.
 import inspect
 import traceback
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 
 def build_error_context(
-    test_name: Optional[str] = None,
-    scenario_type: Optional[str] = None,
-    workflow_id: Optional[str] = None,
-    step_id: Optional[str] = None,
-    operation: Optional[str] = None,
-) -> Dict[str, Any]:
+    test_name: str | None = None,
+    scenario_type: str | None = None,
+    workflow_id: str | None = None,
+    step_id: str | None = None,
+    operation: str | None = None,
+) -> dict[str, Any]:
     """
     Build error context dictionary.
     
@@ -66,10 +66,10 @@ def build_error_context(
 def format_validation_error(
     error_type: str,
     message: str,
-    expected: Optional[Any] = None,
-    actual: Optional[Any] = None,
-    context: Optional[Dict[str, Any]] = None,
-    suggestion: Optional[str] = None,
+    expected: Any | None = None,
+    actual: Any | None = None,
+    context: dict[str, Any] | None = None,
+    suggestion: str | None = None,
 ) -> str:
     """
     Format a validation error message.
@@ -124,8 +124,8 @@ def format_validation_error(
 def format_dependency_error(
     dependency_type: str,
     dependency_name: str,
-    expected_path: Optional[Path] = None,
-    context: Optional[Dict[str, Any]] = None,
+    expected_path: Path | None = None,
+    context: dict[str, Any] | None = None,
 ) -> str:
     """
     Format a missing dependency error message.
@@ -169,7 +169,7 @@ def format_dependency_error(
 def format_execution_error(
     operation: str,
     error: Exception,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
     include_traceback: bool = True,
 ) -> str:
     """
@@ -205,7 +205,7 @@ def format_artifact_error(
     artifact_type: str,
     artifact_name: str,
     expected_path: Path,
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
 ) -> str:
     """
     Format a missing artifact error message.
@@ -239,7 +239,7 @@ def format_artifact_error(
 def format_file_error(
     file_path: Path,
     file_type: str = "file",
-    context: Optional[Dict[str, Any]] = None,
+    context: dict[str, Any] | None = None,
 ) -> str:
     """
     Format a missing file error message.

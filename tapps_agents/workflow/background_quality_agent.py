@@ -10,7 +10,6 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
 
 from ..agents.reviewer.agent import ReviewerAgent
 from ..core.config import load_config
@@ -90,7 +89,7 @@ class BackgroundQualityAgent:
                 if self.reviewer_agent:
                     await self.reviewer_agent.close()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             artifact.mark_timeout()
         except asyncio.CancelledError:
             artifact.mark_cancelled()

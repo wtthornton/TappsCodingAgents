@@ -482,7 +482,7 @@ class TestKBCleanup:
         
         # Verify age calculation: 45 days > 30 days, so should be removed
         assert result.entries_removed >= 1, \
-            f"Entry older than max_age_days (30) should be removed, entry age is 45 days"
+            "Entry older than max_age_days (30) should be removed, entry age is 45 days"
         assert result.reason == "age_cleanup", \
             f"Cleanup reason should be 'age_cleanup', got {result.reason}"
 

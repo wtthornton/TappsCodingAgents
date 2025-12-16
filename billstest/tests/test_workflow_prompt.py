@@ -2,15 +2,13 @@
 Test workflow prompt and auto mode functionality.
 """
 
-import asyncio
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowType
-from tapps_agents.workflow.timeline import generate_timeline, format_timeline_markdown
+from tapps_agents.workflow.timeline import format_timeline_markdown, generate_timeline
 
 
 @pytest.fixture
@@ -118,8 +116,9 @@ async def test_timeline_generation(temp_project, simple_workflow):
     state = executor.start(workflow=simple_workflow)
 
     # Add some mock step executions
-    from tapps_agents.workflow.models import StepExecution
     from datetime import datetime, timedelta
+
+    from tapps_agents.workflow.models import StepExecution
 
     step1_start = datetime.now()
     step1_end = step1_start + timedelta(seconds=5)
@@ -149,8 +148,9 @@ async def test_timeline_generation(temp_project, simple_workflow):
 
 def test_timeline_markdown_formatting(temp_project, simple_workflow):
     """Test timeline markdown formatting."""
-    from tapps_agents.workflow.models import WorkflowState, StepExecution
     from datetime import datetime, timedelta
+
+    from tapps_agents.workflow.models import StepExecution, WorkflowState
 
     started_at = datetime.now()
     step1_start = started_at
@@ -219,8 +219,9 @@ def test_step_execution_tracking(temp_project, simple_workflow):
 
     # After executing a step, should have one execution
     # (This would normally happen in _execute_step, but we can test the structure)
-    from tapps_agents.workflow.models import StepExecution
     from datetime import datetime
+
+    from tapps_agents.workflow.models import StepExecution
 
     state.step_executions.append(
         StepExecution(

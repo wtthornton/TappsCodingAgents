@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Reference - TappsCodingAgents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="user-guide.html">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html" class="active">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-content">
+            <h1>API Reference</h1>
+            <p class="lead">Complete API documentation for Python and CLI interfaces</p>
+
+            <section id="cli-reference">
+                <h2>CLI Commands</h2>
+                
+                <h3>Agent Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>reviewer review</code></td>
+                            <td>Review code file</td>
+                            <td><code>tapps-agents reviewer review &lt;file&gt; [--model MODEL] [--format FORMAT]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>reviewer score</code></td>
+                            <td>Calculate quality scores</td>
+                            <td><code>tapps-agents reviewer score &lt;file&gt; [--format FORMAT]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>planner plan</code></td>
+                            <td>Create development plan</td>
+                            <td><code>tapps-agents planner plan &lt;description&gt; [--format FORMAT]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>planner create-story</code></td>
+                            <td>Generate user story</td>
+                            <td><code>tapps-agents planner create-story &lt;description&gt; [--epic EPIC] [--priority PRIORITY]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>implementer implement</code></td>
+                            <td>Implement feature</td>
+                            <td><code>tapps-agents implementer implement &lt;description&gt; [--file FILE]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>tester generate</code></td>
+                            <td>Generate tests</td>
+                            <td><code>tapps-agents tester generate &lt;file&gt;</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>tester run</code></td>
+                            <td>Run tests</td>
+                            <td><code>tapps-agents tester run &lt;test-file&gt;</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Workflow Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>workflow run</code></td>
+                            <td>Execute workflow</td>
+                            <td><code>tapps-agents workflow run &lt;workflow&gt; [--input KEY=VALUE]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>workflow list</code></td>
+                            <td>List available workflows</td>
+                            <td><code>tapps-agents workflow list</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>workflow validate</code></td>
+                            <td>Validate workflow file</td>
+                            <td><code>tapps-agents workflow validate &lt;workflow-file&gt;</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Utility Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Usage</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>init</code></td>
+                            <td>Initialize project</td>
+                            <td><code>tapps-agents init</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>doctor</code></td>
+                            <td>Check environment</td>
+                            <td><code>tapps-agents doctor [--format FORMAT]</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>hardware-profile</code></td>
+                            <td>Check/set hardware profile</td>
+                            <td><code>tapps-agents hardware-profile [--set PROFILE]</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="python-api">
+                <h2>Python API</h2>
+                
+                <h3>BaseAgent</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>BaseAgent Class</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.core.agent_base import BaseAgent
+
+class BaseAgent(ABC):
+    def __init__(
+        self,
+        agent_id: str,
+        agent_name: str,
+        config: ProjectConfig | None = None
+    )
+    
+    async def activate(self, project_root: Path | None = None)
+    async def run(self, command: str, **kwargs) -> dict[str, Any]
+    def get_commands(self) -> list[dict[str, str]]
+    def parse_command(self, user_input: str) -> tuple[str, dict[str, str]]</code></pre>
+                </div>
+
+                <h3>ReviewerAgent</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>ReviewerAgent API</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.agents.reviewer.agent import ReviewerAgent
+
+reviewer = ReviewerAgent()
+await reviewer.activate()
+
+# Review a file
+result = await reviewer.run("review", file="src/main.py")
+
+# Score a file
+result = await reviewer.run("score", file="src/main.py")
+
+# Result structure:
+# {
+#     "file": "src/main.py",
+#     "scoring": {
+#         "complexity_score": float,
+#         "security_score": float,
+#         "maintainability_score": float,
+#         "test_coverage_score": float,
+#         "performance_score": float,
+#         "overall_score": float
+#     },
+#     "feedback": {
+#         "summary": str,
+#         "issues": list,
+#         "recommendations": list
+#     },
+#     "passed": bool
+# }</code></pre>
+                </div>
+
+                <h3>Model Abstraction Layer (MAL)</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>MAL API</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.core.mal import MAL
+from tapps_agents.core.config import MALConfig
+
+config = MALConfig(
+    ollama_url="http://localhost:11434",
+    default_model="qwen2.5-coder:7b",
+    fallback_provider="anthropic"
+)
+
+mal = MAL(config)
+
+# Generate text
+response = await mal.generate(
+    prompt="Review this code...",
+    model="qwen2.5-coder:7b",
+    provider="ollama"
+)
+
+# With streaming
+response = await mal.generate(
+    prompt="...",
+    progress_callback=lambda token: print(token, end="")
+)</code></pre>
+                </div>
+
+                <h3>Workflow Executor</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>WorkflowExecutor API</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.workflow.executor import WorkflowExecutor
+
+executor = WorkflowExecutor()
+
+# Load workflow
+workflow = executor.load_workflow("workflows/my-workflow.yaml")
+
+# Execute workflow
+result = await executor.execute(
+    workflow,
+    inputs={"description": "Add feature"}
+)
+
+# Result structure:
+# {
+#     "status": "success" | "failed",
+#     "step_results": {
+#         "step_name": {
+#             "status": "success" | "failed",
+#             "output": dict,
+#             "artifacts": list
+#         }
+#     },
+#     "artifacts": {
+#         "step_name": list
+#     }
+# }</code></pre>
+                </div>
+
+                <h3>Expert Registry</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>ExpertRegistry API</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.experts.expert_registry import ExpertRegistry
+
+registry = ExpertRegistry()
+
+# Consult experts
+result = await registry.consult(
+    query="How should I design a REST API?",
+    domain="api-design",
+    include_all=True
+)
+
+# Result structure:
+# {
+#     "answer": str,  # Aggregated expert response
+#     "experts_consulted": list,
+#     "primary_expert": str,
+#     "responses": list
+# }</code></pre>
+                </div>
+
+                <h3>Tiered Context</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>ContextManager API</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.core.context_manager import ContextManager
+from tapps_agents.core.tiered_context import ContextTier
+
+context_manager = ContextManager()
+
+# Get context for a file
+context = context_manager.get_context(
+    file_path=Path("src/main.py"),
+    tier=ContextTier.TIER1,
+    include_related=True,
+    use_cache=True
+)
+
+# Context structure:
+# {
+#     "tier": "tier1",
+#     "file": "src/main.py",
+#     "content": {
+#         "structure": dict,
+#         "functions": list,
+#         "classes": list,
+#         "imports": list
+#     },
+#     "token_estimate": int,
+#     "cached": bool
+# }</code></pre>
+                </div>
+            </section>
+
+            <section id="configuration-api">
+                <h2>Configuration API</h2>
+                
+                <h3>Project Configuration</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Config Structure</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.core.config import ProjectConfig, load_config
+
+# Load configuration
+config = load_config(Path(".tapps-agents/config.yaml"))
+
+# Configuration structure:
+# {
+#     "project": {
+#         "name": str,
+#         "root": str
+#     },
+#     "mal": {
+#         "enabled": bool,
+#         "ollama_url": str,
+#         "default_model": str,
+#         "fallback_provider": str,
+#         "timeout": int,
+#         "enable_fallback": bool
+#     },
+#     "scoring": {
+#         "enabled": bool,
+#         "weights": dict,
+#         "thresholds": dict
+#     },
+#     "context": {
+#         "tiered_enabled": bool,
+#         "default_tier": str,
+#         "cache_ttl": int
+#     }
+# }</code></pre>
+                </div>
+            </section>
+
+            <section id="error-handling">
+                <h2>Error Handling</h2>
+                
+                <h3>Exception Hierarchy</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Exceptions</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from tapps_agents.core.exceptions import (
+    TappsAgentsError,
+    AgentError,
+    WorkflowError,
+    ConfigurationError,
+    MALError,
+    MALDisabledInCursorModeError
+)
+
+# Base exception
+class TappsAgentsError(Exception):
+    """Base exception for all TappsCodingAgents errors"""
+    pass
+
+# Agent errors
+class AgentError(TappsAgentsError):
+    """Agent execution errors"""
+    pass
+
+# Workflow errors
+class WorkflowError(TappsAgentsError):
+    """Workflow execution errors"""
+    pass
+
+# Configuration errors
+class ConfigurationError(TappsAgentsError):
+    """Configuration errors"""
+    pass
+
+# MAL errors
+class MALError(TappsAgentsError):
+    """Model Abstraction Layer errors"""
+    pass
+
+class MALDisabledInCursorModeError(MALError):
+    """MAL disabled in Cursor mode"""
+    pass</code></pre>
+                </div>
+            </section>
+
+            <section id="types">
+                <h2>Type Definitions</h2>
+                
+                <h3>Common Types</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Type Definitions</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>from typing import Any, Dict, List, Optional
+from pathlib import Path
+
+# Agent result type
+AgentResult = Dict[str, Any]
+
+# Workflow result type
+WorkflowResult = Dict[str, Any]
+
+# Scoring result type
+ScoringResult = Dict[str, float]
+
+# Expert consultation result
+ConsultationResult = Dict[str, Any]
+
+# Context tier enum
+class ContextTier(Enum):
+    TIER1 = "tier1"
+    TIER2 = "tier2"
+    TIER3 = "tier3"</code></pre>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

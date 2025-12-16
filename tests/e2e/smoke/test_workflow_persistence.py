@@ -8,8 +8,6 @@ Tests validate that:
 - State consistency is maintained (checksums, version)
 """
 
-import json
-from pathlib import Path
 
 import pytest
 

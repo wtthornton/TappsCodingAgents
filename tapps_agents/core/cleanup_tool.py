@@ -9,7 +9,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from .config import load_config, ProjectConfig
+from .config import ProjectConfig, load_config
 
 
 class CleanupTool:

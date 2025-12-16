@@ -4,12 +4,9 @@ Tests for Context7 KB Cache module.
 Tests cache operations, entry management, and cache policies.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
-
-from tapps_agents.context7.kb_cache import KBCache, CacheEntry
+from tapps_agents.context7.kb_cache import CacheEntry, KBCache
 
 
 class TestCacheEntry:

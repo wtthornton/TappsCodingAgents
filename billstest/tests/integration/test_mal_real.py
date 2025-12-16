@@ -11,10 +11,11 @@ if no LLM service is available.
 """
 
 import os
+
 import pytest
 
-from tapps_agents.core.mal import MAL
 from tapps_agents.core.config import MALConfig
+from tapps_agents.core.mal import MAL
 
 
 def check_ollama_available():

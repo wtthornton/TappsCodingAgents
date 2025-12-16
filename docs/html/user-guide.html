@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide - TappsCodingAgents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="user-guide.html" class="active">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-content">
+            <h1>User Guide</h1>
+            <p class="lead">Complete guide to using TappsCodingAgents for AI-powered software development</p>
+
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+                
+                <h3>Installation</h3>
+                <p>Install TappsCodingAgents using pip:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Installation</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Create virtual environment (recommended)
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Install TappsCodingAgents
+pip install tapps-agents</code></pre>
+                </div>
+
+                <h3>Quick Start: New Project</h3>
+                <p>If you're starting a <strong>new project</strong> from scratch:</p>
+                
+                <h4>Step 1: Initialize Your Project</h4>
+                <p>Run the initializer to set up your project with Cursor Rules, workflow presets, and configuration:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Initialize Project</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents init</code></pre>
+                </div>
+                <p>This creates:</p>
+                <ul>
+                    <li><code>.tapps-agents/config.yaml</code> - Project configuration</li>
+                    <li><code>.claude/skills/</code> - Cursor Skills for all 13 agents</li>
+                    <li><code>workflows/presets/</code> - Pre-configured workflow definitions</li>
+                    <li><code>.cursor/background-agents.yaml</code> - Background agent configuration</li>
+                </ul>
+
+                <h4>Step 2: Verify Installation</h4>
+                <p>Check your environment and installation:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Doctor Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check environment
+tapps-agents doctor
+
+# JSON output
+tapps-agents doctor --format json</code></pre>
+                </div>
+
+                <h4>Step 3: Start Using</h4>
+                <p>You're ready! See the <a href="#using-agents">Using Agents</a> section below to get started.</p>
+
+                <h3>Quick Start: Existing Project</h3>
+                <p>If you're adding TappsCodingAgents to an <strong>existing project</strong>:</p>
+                
+                <h4>Step 1: Check if Already Initialized (Optional)</h4>
+                <p>Check if your project already has TappsCodingAgents setup:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Check Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check for existing configuration
+# Windows PowerShell:
+Test-Path .tapps-agents\config.yaml
+
+# macOS/Linux:
+ls .tapps-agents/config.yaml 2>/dev/null || echo "Not initialized"</code></pre>
+                </div>
+
+                <h4>Step 2: Initialize (if needed)</h4>
+                <p>If not initialized, or to add missing components, run the initializer:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Initialize Project</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents init</code></pre>
+                </div>
+                <p><strong>Note:</strong> The init command is safe to run multiple times - it won't overwrite existing files. It will only add missing components.</p>
+
+                <h4>Step 3: Verify Configuration</h4>
+                <p>Check your environment and review your existing configuration:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Verify Setup</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check environment
+tapps-agents doctor
+
+# Review current config (optional)
+# Windows PowerShell:
+Get-Content .tapps-agents\config.yaml
+
+# macOS/Linux:
+cat .tapps-agents/config.yaml</code></pre>
+                </div>
+
+                <h4>Step 4: Start Using</h4>
+                <p>You're ready! See the <a href="#using-agents">Using Agents</a> section below to get started.</p>
+            </section>
+
+            <section id="using-agents">
+                <h2>Using Agents</h2>
+                
+                <h3>Reviewer Agent</h3>
+                <p>The Reviewer Agent analyzes code quality, calculates scores, and provides feedback.</p>
+                
+                <h4>Review a File</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Review Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Review a Python file
+tapps-agents reviewer review src/main.py
+
+# Review with specific model
+tapps-agents reviewer review src/main.py --model qwen2.5-coder:7b
+
+# Output as JSON
+tapps-agents reviewer review src/main.py --format json</code></pre>
+                </div>
+
+                <h4>Score Code Quality</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Score Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Calculate quality scores
+tapps-agents reviewer score src/main.py
+
+# Output includes:
+# - Complexity Score (0-10)
+# - Security Score (0-10)
+# - Maintainability Score (0-10)
+# - Test Coverage Score (0-10)
+# - Performance Score (0-10)
+# - Overall Score (0-100)</code></pre>
+                </div>
+
+                <h3>Implementer Agent</h3>
+                <p>The Implementer Agent generates code, implements features, and performs refactoring.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Implement Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Implement a feature
+tapps-agents implementer implement "Add user authentication endpoint"
+
+# Implement with file context
+tapps-agents implementer implement "Add validation" --file src/api.py</code></pre>
+                </div>
+
+                <h3>Planner Agent</h3>
+                <p>The Planner Agent creates development plans and generates user stories.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Planning Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Create a plan
+tapps-agents planner plan "Add payment processing"
+
+# Generate a user story
+tapps-agents planner create-story \
+    "User can reset password" \
+    --epic "Authentication" \
+    --priority high</code></pre>
+                </div>
+
+                <h3>Tester Agent</h3>
+                <p>The Tester Agent generates and executes tests.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Testing Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Generate tests for a file
+tapps-agents tester generate src/main.py
+
+# Run tests
+tapps-agents tester run tests/test_main.py</code></pre>
+                </div>
+
+                <h3>Enhancer Agent</h3>
+                <p>The Enhancer Agent transforms simple prompts into comprehensive, context-aware prompts using a 7-stage pipeline.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Enhance Prompt</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Full enhancement (all 7 stages)
+tapps-agents enhancer enhance "Create a login system"
+
+# Quick enhancement (stages 1-3)
+tapps-agents enhancer enhance-quick "Add user authentication"
+
+# Output formats
+tapps-agents enhancer enhance "..." --format json
+tapps-agents enhancer enhance "..." --format yaml</code></pre>
+                </div>
+                <p>The 7-stage pipeline includes:</p>
+                <ol>
+                    <li><strong>Analysis</strong> - Detect intent, scope, domains</li>
+                    <li><strong>Requirements</strong> - Gather functional/non-functional requirements</li>
+                    <li><strong>Architecture</strong> - System design guidance</li>
+                    <li><strong>Codebase Context</strong> - Inject relevant code context</li>
+                    <li><strong>Quality Standards</strong> - Define security and testing thresholds</li>
+                    <li><strong>Implementation Strategy</strong> - Task breakdown and order</li>
+                    <li><strong>Synthesis</strong> - Combine into enhanced prompt</li>
+                </ol>
+
+                <h3>All 13 Agents</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Agent</th>
+                            <th>Purpose</th>
+                            <th>Key Commands</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Analyst</strong></td>
+                            <td>Requirements analysis</td>
+                            <td><code>analyze</code>, <code>requirements</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Planner</strong></td>
+                            <td>Story generation</td>
+                            <td><code>plan</code>, <code>create-story</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Architect</strong></td>
+                            <td>System design</td>
+                            <td><code>design</code>, <code>architecture</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Designer</strong></td>
+                            <td>API contracts</td>
+                            <td><code>design-api</code>, <code>data-model</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Implementer</strong></td>
+                            <td>Code generation</td>
+                            <td><code>implement</code>, <code>refactor</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tester</strong></td>
+                            <td>Test generation</td>
+                            <td><code>generate</code>, <code>run</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Debugger</strong></td>
+                            <td>Error analysis</td>
+                            <td><code>debug</code>, <code>trace</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Documenter</strong></td>
+                            <td>Documentation</td>
+                            <td><code>document</code>, <code>api-docs</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reviewer</strong></td>
+                            <td>Code review</td>
+                            <td><code>review</code>, <code>score</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Improver</strong></td>
+                            <td>Refactoring</td>
+                            <td><code>improve</code>, <code>optimize</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ops</strong></td>
+                            <td>Security & deployment</td>
+                            <td><code>audit</code>, <code>deploy</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Orchestrator</strong></td>
+                            <td>Workflow coordination</td>
+                            <td><code>orchestrate</code>, <code>gate</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Enhancer</strong></td>
+                            <td>Prompt enhancement</td>
+                            <td><code>enhance</code>, <code>enhance-quick</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="workflows">
+                <h2>Workflows</h2>
+                
+                <h3>What are Workflows?</h3>
+                <p>Workflows are YAML-defined multi-step processes that orchestrate multiple agents to complete complex tasks. They support conditional steps, quality gates, and artifact tracking.</p>
+
+                <h3>Running Workflows</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Run Workflow</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Run a preset workflow
+tapps-agents workflow run workflow-full-sdlc
+
+# Run a custom workflow
+tapps-agents workflow run workflows/my-workflow.yaml
+
+# List available workflows
+tapps-agents workflow list</code></pre>
+                </div>
+
+                <h3>Workflow Structure</h3>
+                <p>A workflow YAML file defines steps, agents, and conditions:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Example Workflow</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>name: Feature Implementation
+description: Complete feature development workflow
+
+steps:
+  - name: plan
+    agent: planner
+    command: plan
+    args:
+      description: "{{ input.description }}"
+    
+  - name: design
+    agent: architect
+    command: design
+    depends_on: [plan]
+    
+  - name: implement
+    agent: implementer
+    command: implement
+    depends_on: [design]
+    
+  - name: test
+    agent: tester
+    command: generate
+    depends_on: [implement]
+    
+  - name: review
+    agent: reviewer
+    command: review
+    depends_on: [implement, test]
+    
+  - name: gate
+    agent: orchestrator
+    command: gate
+    condition:
+      review.overall_score >= 70</code></pre>
+                </div>
+
+                <h3>Available Preset Workflows</h3>
+                <ul>
+                    <li><strong>workflow-full-sdlc</strong> - Complete software development lifecycle</li>
+                    <li><strong>workflow-quality</strong> - Quality assurance and code review</li>
+                    <li><strong>workflow-quick-fix</strong> - Rapid bug fixes and small changes</li>
+                    <li><strong>workflow-rapid-dev</strong> - Fast development iteration</li>
+                    <li><strong>workflow-maintenance</strong> - Code maintenance and refactoring</li>
+                </ul>
+            </section>
+
+            <section id="project-profiling">
+                <h2>Project Profiling</h2>
+                
+                <h3>Automatic Project Detection</h3>
+                <p>The framework automatically detects project characteristics for context-aware expert guidance:</p>
+                <ul>
+                    <li><strong>Deployment Type</strong> - local, cloud, enterprise</li>
+                    <li><strong>Tenancy</strong> - single-tenant, multi-tenant</li>
+                    <li><strong>User Scale</strong> - single-user, small-team, department, enterprise</li>
+                    <li><strong>Compliance</strong> - GDPR, HIPAA, PCI, SOC2</li>
+                    <li><strong>Security Level</strong> - basic, standard, high, critical</li>
+                </ul>
+                <p>The profile is automatically generated and stored in <code>.tapps-agents/project-profile.yaml</code>.</p>
+            </section>
+
+            <section id="configuration">
+                <h2>Configuration</h2>
+                
+                <h3>Project Configuration</h3>
+                <p>The main configuration file is located at <code>.tapps-agents/config.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Config Example</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>project:
+  name: "My Project"
+  root: "."
+
+mal:
+  enabled: true
+  ollama_url: "http://localhost:11434"
+  default_model: "qwen2.5-coder:7b"
+  fallback_provider: "anthropic"
+  timeout: 60
+
+scoring:
+  enabled: true
+  weights:
+    complexity: 0.20
+    security: 0.30
+    maintainability: 0.25
+    test_coverage: 0.15
+    performance: 0.10
+  thresholds:
+    overall_score: 70
+
+context:
+  tiered_enabled: true
+  default_tier: "tier1"
+  cache_ttl: 300</code></pre>
+                </div>
+
+                <h3>Hardware Profile</h3>
+                <p>Configure hardware profile for optimal performance:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Hardware Profile</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check current profile
+tapps-agents hardware-profile
+
+# Set profile (auto, nuc, development, workstation, server)
+tapps-agents hardware-profile --set auto</code></pre>
+                </div>
+            </section>
+
+            <section id="experts">
+                <h2>Industry Experts</h2>
+                
+                <h3>What are Experts?</h3>
+                <p>Industry Experts provide domain-specific knowledge and weighted decision-making. They can be business domain experts (configured per project) or built-in technical experts (16 total).</p>
+
+                <h3>Built-in Experts</h3>
+                <p>The framework includes 16 built-in technical experts:</p>
+                <ul>
+                    <li><strong>Security</strong> - Security best practices and vulnerability detection</li>
+                    <li><strong>Performance</strong> - Performance optimization and profiling</li>
+                    <li><strong>Testing</strong> - Testing strategies and test design</li>
+                    <li><strong>Data Privacy</strong> - Privacy compliance and data protection</li>
+                    <li><strong>Accessibility</strong> - Accessibility standards and WCAG compliance</li>
+                    <li><strong>UX</strong> - User experience design principles</li>
+                    <li><strong>Code Quality</strong> - Code quality metrics and standards</li>
+                    <li><strong>Software Architecture</strong> - Architectural patterns and design</li>
+                    <li><strong>DevOps</strong> - CI/CD and deployment practices</li>
+                    <li><strong>Documentation</strong> - Documentation standards and best practices</li>
+                    <li><strong>AI Frameworks</strong> - AI/ML framework guidance</li>
+                    <li><strong>Observability</strong> - Monitoring and observability</li>
+                    <li><strong>API Design</strong> - API design patterns and REST principles</li>
+                    <li><strong>Cloud Infrastructure</strong> - Cloud architecture and services</li>
+                    <li><strong>Database</strong> - Database design and optimization</li>
+                    <li><strong>Agent Learning</strong> - Agent learning and improvement</li>
+                </ul>
+
+                <h3>Configuring Industry Experts</h3>
+                <p>Define business domain experts in <code>.tapps-agents/experts.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Experts Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>experts:
+  - id: "finance-expert"
+    name: "Finance Domain Expert"
+    domain: "finance"
+    knowledge_base: "experts/knowledge/finance/"
+    weight: 0.51  # Primary expert
+    
+  - id: "healthcare-expert"
+    name: "Healthcare Domain Expert"
+    domain: "healthcare"
+    knowledge_base: "experts/knowledge/healthcare/"
+    weight: 0.24  # Secondary expert</code></pre>
+                </div>
+            </section>
+
+            <section id="cursor-integration">
+                <h2>Cursor AI Integration</h2>
+                
+                <h3>Cursor Skills</h3>
+                <p>All 13 agents are available as Cursor Skills. After running <code>tapps-agents init</code>, Skills are installed in <code>.claude/skills/</code>.</p>
+                <p>Use Skills in Cursor by mentioning the agent name:</p>
+                <ul>
+                    <li>"@reviewer review this file"</li>
+                    <li>"@implementer add authentication"</li>
+                    <li>"@tester generate tests"</li>
+                </ul>
+
+                <h3>Background Agents</h3>
+                <p>Background Agents offload heavy tasks to cloud/remote agents. Configure in <code>.cursor/background-agents.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Background Agents Config</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>background_agents:
+  - name: "Quality Agent"
+    agent: "reviewer"
+    description: "Code quality review and scoring"
+    triggers:
+      - "review code"
+      - "check quality"
+    
+  - name: "Testing Agent"
+    agent: "tester"
+    description: "Generate and run tests"
+    triggers:
+      - "generate tests"
+      - "run tests"</code></pre>
+                </div>
+            </section>
+
+            <section id="best-practices">
+                <h2>Best Practices</h2>
+                
+                <h3>1. Use Appropriate Context Tiers</h3>
+                <p>Let the framework automatically select context tiers based on task complexity. Most tasks use Tier 1 (core context), saving 90%+ tokens.</p>
+
+                <h3>2. Leverage Workflows for Complex Tasks</h3>
+                <p>For multi-step processes, use workflows instead of running agents individually. Workflows provide better coordination and artifact tracking.</p>
+
+                <h3>3. Configure Experts for Domain-Specific Projects</h3>
+                <p>Add industry experts for projects with specific domain requirements (finance, healthcare, etc.). Experts provide weighted decision-making.</p>
+
+                <h3>4. Use Hardware Profiles</h3>
+                <p>Set appropriate hardware profiles (NUC, development, workstation) for optimal performance on your machine.</p>
+
+                <h3>5. Enable Tiered Context</h3>
+                <p>Keep tiered context enabled to maximize token savings. The system automatically selects the appropriate tier.</p>
+
+                <h3>6. Review Scores Regularly</h3>
+                <p>Use the Reviewer Agent's scoring system to track code quality over time. Aim for overall scores above 70.</p>
+            </section>
+
+            <section id="troubleshooting">
+                <h2>Troubleshooting</h2>
+                
+                <h3>Common Issues</h3>
+                
+                <h4>Agent Not Found</h4>
+                <p>Ensure the agent name is correct. List available agents:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>List Agents</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents --help</code></pre>
+                </div>
+
+                <h4>Model Not Available</h4>
+                <p>Check model availability and configuration:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Check Models</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># For Ollama
+ollama list
+
+# Check MAL configuration
+tapps-agents doctor</code></pre>
+                </div>
+
+                <h4>Workflow Fails</h4>
+                <p>Check workflow syntax and dependencies:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Validate Workflow</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Validate workflow file
+tapps-agents workflow validate workflows/my-workflow.yaml</code></pre>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

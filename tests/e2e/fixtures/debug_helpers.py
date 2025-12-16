@@ -1,9 +1,9 @@
 """Debug helpers for E2E tests."""
 import json
-from typing import Any, Dict
+from typing import Any
 
 
-def print_test_context(agent, command: str, response: Dict[str, Any]) -> None:
+def print_test_context(agent, command: str, response: dict[str, Any]) -> None:
     """Print test context for debugging."""
     print("\n" + "="*80)
     print(f"Agent: {agent.__class__.__name__}")

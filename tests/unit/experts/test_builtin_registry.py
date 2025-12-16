@@ -7,10 +7,10 @@ immutable experts.
 
 from pathlib import Path
 
+import pytest
+
 from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry
 from tapps_agents.experts.expert_config import ExpertConfigModel
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

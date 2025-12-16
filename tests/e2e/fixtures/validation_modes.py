@@ -7,7 +7,6 @@ Provides:
 """
 
 from enum import Enum
-from typing import Optional
 
 
 class ValidationMode(Enum):
@@ -21,7 +20,7 @@ class ValidationMode(Enum):
     RELAXED = "relaxed"
 
 
-def get_validation_mode(mode: Optional[ValidationMode] = None) -> ValidationMode:
+def get_validation_mode(mode: ValidationMode | None = None) -> ValidationMode:
     """
     Get validation mode, defaulting to STRICT.
     
@@ -34,7 +33,7 @@ def get_validation_mode(mode: Optional[ValidationMode] = None) -> ValidationMode
     return mode if mode is not None else ValidationMode.STRICT
 
 
-def is_strict_mode(mode: Optional[ValidationMode] = None) -> bool:
+def is_strict_mode(mode: ValidationMode | None = None) -> bool:
     """
     Check if validation mode is strict.
     
@@ -47,7 +46,7 @@ def is_strict_mode(mode: Optional[ValidationMode] = None) -> bool:
     return get_validation_mode(mode) == ValidationMode.STRICT
 
 
-def is_relaxed_mode(mode: Optional[ValidationMode] = None) -> bool:
+def is_relaxed_mode(mode: ValidationMode | None = None) -> bool:
     """
     Check if validation mode is relaxed.
     

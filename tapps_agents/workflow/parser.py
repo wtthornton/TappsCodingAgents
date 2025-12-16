@@ -2,11 +2,11 @@
 Workflow Parser - Parse YAML workflow definitions.
 """
 
+import re
 from pathlib import Path
 from typing import Any
 
 import yaml
-import re
 
 from .models import (
     Workflow,
@@ -14,7 +14,7 @@ from .models import (
     WorkflowStep,
     WorkflowType,
 )
-from .schema_validator import WorkflowSchemaValidator, SchemaVersion
+from .schema_validator import SchemaVersion, WorkflowSchemaValidator
 
 
 class WorkflowParser:

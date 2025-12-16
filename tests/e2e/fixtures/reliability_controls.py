@@ -11,8 +11,9 @@ Provides:
 import asyncio
 import logging
 import os
-from dataclasses import dataclass, field
-from typing import Any, Callable, Dict, Optional, TypeVar
+from collections.abc import Callable
+from dataclasses import dataclass
+from typing import Any, TypeVar
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -95,8 +96,8 @@ class RetryConfig:
 class CostConfig:
     """Configuration for cost guardrails."""
 
-    max_tokens_per_scenario: Optional[int] = None  # None = no limit
-    max_calls_per_scenario: Optional[int] = None  # None = no limit
+    max_tokens_per_scenario: int | None = None  # None = no limit
+    max_calls_per_scenario: int | None = None  # None = no limit
     max_parallel_scenarios: int = 2
     track_costs: bool = True
 
@@ -139,7 +140,7 @@ class CostTracker:
         """Record scenario run."""
         self.scenarios_run += 1
 
-    def check_budget(self, config: CostConfig) -> tuple[bool, Optional[str]]:
+    def check_budget(self, config: CostConfig) -> tuple[bool, str | None]:
         """
         Check if cost budget is exceeded.
 
@@ -163,7 +164,7 @@ class CostTracker:
 
         return (True, None)
 
-    def get_summary(self) -> Dict[str, Any]:
+    def get_summary(self) -> dict[str, Any]:
         """Get cost summary."""
         return {
             "tokens_used": self.tokens_used,
@@ -177,9 +178,9 @@ class ReliabilityController:
 
     def __init__(
         self,
-        timeout_config: Optional[TimeoutConfig] = None,
-        retry_config: Optional[RetryConfig] = None,
-        cost_config: Optional[CostConfig] = None,
+        timeout_config: TimeoutConfig | None = None,
+        retry_config: RetryConfig | None = None,
+        cost_config: CostConfig | None = None,
     ):
         """
         Initialize reliability controller.
@@ -197,7 +198,7 @@ class ReliabilityController:
     async def execute_with_timeout(
         self,
         coro: Callable[[], Any],
-        timeout_seconds: Optional[float] = None,
+        timeout_seconds: float | None = None,
         operation_name: str = "operation",
     ) -> Any:
         """
@@ -219,7 +220,7 @@ class ReliabilityController:
         try:
             result = await asyncio.wait_for(coro(), timeout=timeout)
             return result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(f"{operation_name} timed out after {timeout} seconds")
             raise
 
@@ -227,7 +228,7 @@ class ReliabilityController:
         self,
         coro: Callable[[], Any],
         operation_name: str = "operation",
-        capture_progress: Optional[Callable[[], None]] = None,
+        capture_progress: Callable[[], None] | None = None,
     ) -> Any:
         """
         Execute a coroutine with retry policy.
@@ -243,7 +244,7 @@ class ReliabilityController:
         Raises:
             Exception: Last exception if all retries fail
         """
-        last_exception: Optional[Exception] = None
+        last_exception: Exception | None = None
 
         for attempt in range(1, self.retry_config.max_attempts + 1):
             try:
@@ -279,7 +280,7 @@ class ReliabilityController:
         logger.error(f"{operation_name} failed after {self.retry_config.max_attempts} attempts")
         raise last_exception
 
-    def check_cost_budget(self) -> tuple[bool, Optional[str]]:
+    def check_cost_budget(self) -> tuple[bool, str | None]:
         """
         Check if cost budget is exceeded.
 
@@ -298,13 +299,13 @@ class ReliabilityController:
         if self.cost_config.track_costs:
             self.cost_tracker.record_call()
 
-    def get_cost_summary(self) -> Dict[str, Any]:
+    def get_cost_summary(self) -> dict[str, Any]:
         """Get cost summary."""
         return self.cost_tracker.get_summary()
 
 
 # Global reliability controller instance (can be overridden in tests)
-_default_controller: Optional[ReliabilityController] = None
+_default_controller: ReliabilityController | None = None
 
 
 def get_reliability_controller() -> ReliabilityController:

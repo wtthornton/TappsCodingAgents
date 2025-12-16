@@ -12,7 +12,6 @@ from .analytics import Analytics
 from .cache_structure import CacheStructure
 from .cache_warming import CacheWarmer
 from .cleanup import KBCleanup
-from .credential_validation import validate_context7_credentials
 from .cross_references import CrossReferenceManager
 from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import KBCache

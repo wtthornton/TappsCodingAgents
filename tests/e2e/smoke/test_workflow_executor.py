@@ -12,7 +12,6 @@ import pytest
 
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.parser import WorkflowParser
-from tapps_agents.workflow.models import Workflow, WorkflowStep
 
 
 @pytest.mark.e2e_smoke

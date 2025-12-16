@@ -14,13 +14,12 @@ They verify that the MCP Context7 integration actually calls the real API.
 
 import os
 import urllib.parse
-from pathlib import Path
 
 import httpx
 import pytest
 
-from tapps_agents.context7.lookup import KBLookup, LookupResult
 from tapps_agents.context7.kb_cache import KBCache
+from tapps_agents.context7.lookup import KBLookup, LookupResult
 from tapps_agents.mcp.gateway import MCPGateway
 from tapps_agents.mcp.servers.context7 import Context7MCPServer
 
@@ -128,7 +127,7 @@ def create_real_context7_client():
         except httpx.ConnectError:
             # API endpoint not reachable - might be using MCP server instead
             return None
-        except Exception as e:
+        except Exception:
             return None
     
     return resolve_library_client, get_docs_client

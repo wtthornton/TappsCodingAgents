@@ -22,7 +22,7 @@ from .agents.planner.agent import PlannerAgent
 from .agents.reviewer.agent import ReviewerAgent
 from .agents.tester.agent import TesterAgent
 from .core.doctor import collect_doctor_report
-from .core.hardware_profiler import HardwareProfile, HardwareProfiler
+from .core.hardware_profiler import HardwareProfiler
 from .core.unified_cache_config import UnifiedCacheConfigManager
 
 
@@ -2266,7 +2266,7 @@ Examples:
             print(f"Description: {workflow.description}")
             print(f"Your Prompt: {user_prompt}")
             print(f"Steps: {len(workflow.steps)}")
-            print(f"Mode: Auto (fully automated)")
+            print("Mode: Auto (fully automated)")
             print()
 
             # Execute workflow with auto mode and prompt
@@ -2279,7 +2279,7 @@ Examples:
                 print(f"\n{'='*60}")
                 print("Project created successfully!")
                 print(f"{'='*60}")
-                print(f"Timeline: project-timeline.md")
+                print("Timeline: project-timeline.md")
                 print(f"Status: {result.status}")
             elif result.status == "failed":
                 print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)

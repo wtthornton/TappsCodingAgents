@@ -8,18 +8,17 @@ Story 19.2: Add Error Propagation Tests
 - Verify error envelope propagation
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
 
 from tapps_agents.core.error_envelope import ErrorEnvelopeBuilder, create_error_result
 from tapps_agents.core.exceptions import (
     AgentError,
     ConfigurationError,
     MALError,
-    TappsAgentsError,
 )
 from tapps_agents.core.mal import MAL
-from tapps_agents.core.config import MALConfig
 
 pytestmark = pytest.mark.unit
 
@@ -114,7 +113,6 @@ class TestErrorPropagationThroughLayers:
     @pytest.mark.asyncio
     async def test_mal_error_propagates_to_agent(self):
         """Test that MAL errors propagate correctly to agents."""
-        from tapps_agents.core.agent_base import BaseAgent
         from tapps_agents.agents.reviewer.agent import ReviewerAgent
 
         # Create a MAL that raises an error

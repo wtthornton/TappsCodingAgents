@@ -117,7 +117,7 @@ class BackgroundContextAgent:
 
             artifact.mark_completed()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             artifact.mark_timeout()
         except asyncio.CancelledError:
             artifact.mark_cancelled()

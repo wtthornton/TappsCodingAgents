@@ -233,6 +233,7 @@ def pytest_configure(config):
 def pytest_collection_modifyitems(config, items):
     """Automatically skip requires_llm and requires_context7 tests if services unavailable."""
     import os
+
     import httpx
     
     # Check LLM availability

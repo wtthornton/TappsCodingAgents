@@ -9,10 +9,8 @@ Provides utilities for testing agent behavior:
 """
 
 import ast
-import json
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pytest
 
@@ -54,7 +52,7 @@ def create_test_agent(agent_type: str, mock_mal: MAL, config=None) -> BaseAgent:
 
 async def execute_command(
     agent: BaseAgent, command: str, **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Execute a command on an agent and return the response.
 
@@ -75,9 +73,9 @@ async def execute_command(
 
 
 def assert_command_parsed(
-    parsed_result: tuple[str, Dict[str, str]],
+    parsed_result: tuple[str, dict[str, str]],
     expected_command: str,
-    expected_args: Optional[Dict[str, str]] = None,
+    expected_args: dict[str, str] | None = None,
 ) -> None:
     """
     Assert that a command was parsed correctly.
@@ -100,7 +98,7 @@ def assert_command_parsed(
 
 
 def assert_error_message(
-    error_response: Dict[str, Any], expected_keywords: List[str]
+    error_response: dict[str, Any], expected_keywords: list[str]
 ) -> None:
     """
     Assert that an error message contains expected keywords.
@@ -115,7 +113,7 @@ def assert_error_message(
         assert keyword.lower() in error_msg, f"Error message should contain '{keyword}'"
 
 
-def validate_help_output(help_response: Dict[str, Any]) -> None:
+def validate_help_output(help_response: dict[str, Any]) -> None:
     """
     Validate that help output has correct structure.
 
@@ -131,7 +129,7 @@ def validate_help_output(help_response: Dict[str, Any]) -> None:
 
 
 def validate_response_structure(
-    response: Dict[str, Any], required_fields: List[str]
+    response: dict[str, Any], required_fields: list[str]
 ) -> None:
     """
     Validate that response has required fields.
@@ -145,7 +143,7 @@ def validate_response_structure(
 
 
 def validate_response_content(
-    response: Dict[str, Any], expected_data: Dict[str, Any]
+    response: dict[str, Any], expected_data: dict[str, Any]
 ) -> None:
     """
     Validate that response contains expected data.
@@ -169,7 +167,7 @@ def validate_response_content(
 
 
 def validate_response_context(
-    response: Dict[str, Any], command: str, agent_type: str
+    response: dict[str, Any], command: str, agent_type: str
 ) -> None:
     """
     Validate that response is contextually appropriate for command and agent.
@@ -191,7 +189,7 @@ def validate_response_context(
 
 
 def assert_response_quality(
-    response: Dict[str, Any], metrics: Optional[Dict[str, Any]] = None
+    response: dict[str, Any], metrics: dict[str, Any] | None = None
 ) -> None:
     """
     Assert response quality metrics.
@@ -280,7 +278,7 @@ def create_network_error_scenario(mock_mal: MAL, error_type: str = "connection")
 
 
 def validate_error_response(
-    response: Dict[str, Any], expected_error_type: Optional[str] = None, strict: bool = False
+    response: dict[str, Any], expected_error_type: str | None = None, strict: bool = False
 ) -> None:
     """
     Validate that an error response is properly formatted.
@@ -342,7 +340,7 @@ def validate_error_response(
 
 
 def assert_error_message_quality(
-    error_message: str, criteria: Dict[str, Any]
+    error_message: str, criteria: dict[str, Any]
 ) -> None:
     """
     Assert error message quality based on criteria.
@@ -370,7 +368,7 @@ def assert_error_message_quality(
         )
 
 
-def validate_plan_structure(plan: Any, required_components: List[str] = None) -> None:
+def validate_plan_structure(plan: Any, required_components: list[str] = None) -> None:
     """
     Validate that a plan has required components.
 
@@ -443,7 +441,7 @@ def validate_plan_structure(plan: Any, required_components: List[str] = None) ->
         )
 
 
-def validate_plan_completeness(plan: Any, criteria: Dict[str, Any] = None) -> None:
+def validate_plan_completeness(plan: Any, criteria: dict[str, Any] = None) -> None:
     """
     Validate plan completeness based on criteria.
 
@@ -509,7 +507,7 @@ def validate_plan_completeness(plan: Any, criteria: Dict[str, Any] = None) -> No
             )
 
 
-def validate_code_quality(code: str, standards: Optional[Dict[str, Any]] = None) -> None:
+def validate_code_quality(code: str, standards: dict[str, Any] | None = None) -> None:
     """
     Validate code quality (syntax, basic structure).
 
@@ -533,7 +531,7 @@ def validate_code_quality(code: str, standards: Optional[Dict[str, Any]] = None)
             assert "def " in code, "Code should contain function definitions"
 
 
-def validate_review_feedback(review: Dict[str, Any], criteria: Dict[str, Any]) -> None:
+def validate_review_feedback(review: dict[str, Any], criteria: dict[str, Any]) -> None:
     """
     Validate review feedback quality.
 
@@ -570,7 +568,7 @@ def validate_review_feedback(review: Dict[str, Any], criteria: Dict[str, Any]) -
         )
 
 
-def validate_test_results(results: Dict[str, Any], criteria: Dict[str, Any]) -> None:
+def validate_test_results(results: dict[str, Any], criteria: dict[str, Any]) -> None:
     """
     Validate test results.
 

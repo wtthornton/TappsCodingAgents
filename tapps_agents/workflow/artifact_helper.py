@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 from .code_artifact import CodeArtifact
 from .design_artifact import DesignArtifact
@@ -156,7 +155,7 @@ def load_artifact(artifact_path: Path) -> (
     Returns:
         Loaded artifact object
     """
-    with open(artifact_path, "r", encoding="utf-8") as f:
+    with open(artifact_path, encoding="utf-8") as f:
         data = json.load(f)
 
     # Determine artifact type from schema or filename

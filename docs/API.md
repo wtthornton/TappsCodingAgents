@@ -91,8 +91,8 @@ Both of these are supported:
 
 From `python -m tapps_agents.cli --help`, the CLI exposes:
 
-- agent subcommands: `reviewer`, `planner`, `implementer`, `tester`, `debugger`, `documenter`, `analyst`, `architect`, `designer`, `improver`, `ops`, `enhancer`, `orchestrator`
-- utility subcommands: `workflow`, `init`, `doctor`, `score`, `setup-experts`, `analytics`
+- **Agent subcommands**: `reviewer`, `planner`, `implementer`, `tester`, `debugger`, `documenter`, `analyst`, `architect`, `designer`, `improver`, `ops`, `enhancer`, `orchestrator`
+- **Utility subcommands**: `workflow`, `init`, `doctor`, `score`, `setup-experts`, `analytics`, `create`, `hardware-profile` (or `hardware`)
 
 ### Command Naming (with and without `*`)
 
@@ -137,6 +137,15 @@ python -m tapps_agents.cli analytics agents
 python -m tapps_agents.cli analytics workflows
 python -m tapps_agents.cli analytics trends --metric-type agent_duration --days 30
 python -m tapps_agents.cli analytics system
+
+# Create new project (primary use case)
+python -m tapps_agents.cli create "Build a task management web app"
+python -m tapps_agents.cli create "Create a REST API for user management" --workflow rapid
+
+# Hardware profile management
+python -m tapps_agents.cli hardware-profile
+python -m tapps_agents.cli hardware-profile --set nuc
+python -m tapps_agents.cli hardware-profile --set auto
 ```
 
 ## Related Documentation

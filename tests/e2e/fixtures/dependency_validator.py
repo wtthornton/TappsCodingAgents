@@ -7,7 +7,7 @@ when required dependencies are missing, instead of skipping tests.
 
 import inspect
 from pathlib import Path
-from typing import Any, List, Optional
+from typing import Any
 
 import pytest
 
@@ -15,7 +15,7 @@ from .error_helpers import build_error_context, format_dependency_error
 from .validation_modes import ValidationMode, get_validation_mode
 
 
-def validate_workflow_file(workflow_path: Path, mode: Optional[ValidationMode] = None) -> None:
+def validate_workflow_file(workflow_path: Path, mode: ValidationMode | None = None) -> None:
     """
     Validate that a workflow file exists.
     
@@ -44,7 +44,7 @@ def validate_workflow_file(workflow_path: Path, mode: Optional[ValidationMode] =
             raise FileNotFoundError(error_msg)
 
 
-def validate_scenario_template(template_path: Path, mode: Optional[ValidationMode] = None) -> None:
+def validate_scenario_template(template_path: Path, mode: ValidationMode | None = None) -> None:
     """
     Validate that a scenario template exists.
     
@@ -75,9 +75,9 @@ def validate_scenario_template(template_path: Path, mode: Optional[ValidationMod
 
 def validate_project_structure(
     project_path: Path,
-    required_dirs: Optional[List[str]] = None,
-    required_files: Optional[List[str]] = None,
-    mode: Optional[ValidationMode] = None,
+    required_dirs: list[str] | None = None,
+    required_files: list[str] | None = None,
+    mode: ValidationMode | None = None,
 ) -> None:
     """
     Validate that project structure has required directories and files.
@@ -122,7 +122,7 @@ def validate_project_structure(
             raise FileNotFoundError(error_msg)
 
 
-def validate_required_fixtures(fixture_names: List[str], request: Optional[Any] = None) -> None:
+def validate_required_fixtures(fixture_names: list[str], request: Any | None = None) -> None:
     """
     Validate that required pytest fixtures are available.
     
@@ -171,14 +171,14 @@ def validate_required_fixtures(fixture_names: List[str], request: Optional[Any] 
 
 
 def validate_dependencies(
-    workflow_path: Optional[Path] = None,
-    template_path: Optional[Path] = None,
-    project_path: Optional[Path] = None,
-    required_dirs: Optional[List[str]] = None,
-    required_files: Optional[List[str]] = None,
-    required_fixtures: Optional[List[str]] = None,
-    request: Optional[Any] = None,
-    mode: Optional[ValidationMode] = None,
+    workflow_path: Path | None = None,
+    template_path: Path | None = None,
+    project_path: Path | None = None,
+    required_dirs: list[str] | None = None,
+    required_files: list[str] | None = None,
+    required_fixtures: list[str] | None = None,
+    request: Any | None = None,
+    mode: ValidationMode | None = None,
 ) -> None:
     """
     Validate all dependencies in one call.

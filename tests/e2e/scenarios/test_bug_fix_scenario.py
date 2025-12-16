@@ -10,8 +10,9 @@ Tests a complete user journey for fixing a bug end-to-end:
 - Artifact validation
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from tests.e2e.fixtures.dependency_validator import validate_workflow_file
 from tests.e2e.fixtures.scenario_templates import create_small_scenario_template
@@ -67,9 +68,9 @@ def test_bug_fix_scenario(
 
         if not is_valid:
             errors = validator.get_validation_errors()
-            pytest.fail(f"Scenario validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
+            pytest.fail("Scenario validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
 
-    except Exception as e:
+    except Exception:
         # Capture artifacts on failure
         runner.capture_state_snapshot("failure")
         raise
@@ -115,9 +116,9 @@ def test_bug_fix_scenario_real_llm(
 
         if not is_valid:
             errors = validator.get_validation_errors()
-            pytest.fail(f"Scenario validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
+            pytest.fail("Scenario validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
 
-    except Exception as e:
+    except Exception:
         # Capture artifacts on failure
         runner.capture_state_snapshot("failure")
         raise

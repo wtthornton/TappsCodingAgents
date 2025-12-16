@@ -2,12 +2,12 @@
 Unit tests for Learning Confidence Calculator.
 """
 
+import pytest
+
 from tapps_agents.core.learning_confidence import (
     LearnedExperienceMetrics,
     LearningConfidenceCalculator,
 )
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

@@ -10,11 +10,10 @@ from __future__ import annotations
 import asyncio
 import json
 from pathlib import Path
-from typing import Any
 
 from ..agents.tester.agent import TesterAgent
 from ..core.config import load_config
-from .testing_artifact import CoverageSummary, TestingArtifact, TestResult
+from .testing_artifact import CoverageSummary, TestingArtifact
 
 
 class BackgroundTestingAgent:
@@ -93,7 +92,7 @@ class BackgroundTestingAgent:
                 if self.tester_agent:
                     await self.tester_agent.close()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             artifact.mark_timeout()
         except asyncio.CancelledError:
             artifact.mark_cancelled()

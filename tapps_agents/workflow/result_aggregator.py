@@ -6,7 +6,6 @@ Epic 2 / Story 2.5: Parallel Execution & Result Aggregation
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any

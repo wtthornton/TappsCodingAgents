@@ -14,7 +14,7 @@ import re
 import subprocess  # nosec B404
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ class CodeQualityValidator:
     """Validates code quality using linting, type checking, and complexity metrics."""
 
     @staticmethod
-    def validate_with_ruff(file_path: Path) -> Tuple[bool, List[str]]:
+    def validate_with_ruff(file_path: Path) -> tuple[bool, list[str]]:
         """
         Validate code quality using ruff.
 
@@ -55,7 +55,7 @@ class CodeQualityValidator:
             return True, []
 
     @staticmethod
-    def validate_with_mypy(file_path: Path) -> Tuple[bool, List[str]]:
+    def validate_with_mypy(file_path: Path) -> tuple[bool, list[str]]:
         """
         Validate type checking using mypy.
 
@@ -87,7 +87,7 @@ class CodeQualityValidator:
             return True, []
 
     @staticmethod
-    def calculate_complexity(file_path: Path) -> Dict[str, Any]:
+    def calculate_complexity(file_path: Path) -> dict[str, Any]:
         """
         Calculate code complexity metrics.
 
@@ -98,7 +98,7 @@ class CodeQualityValidator:
             Dictionary with complexity metrics
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
             tree = ast.parse(source)
 
@@ -129,7 +129,7 @@ class DocumentationValidator:
     """Validates documentation completeness and quality."""
 
     @staticmethod
-    def validate_docstrings(file_path: Path) -> Tuple[bool, Dict[str, Any]]:
+    def validate_docstrings(file_path: Path) -> tuple[bool, dict[str, Any]]:
         """
         Validate that functions and classes have docstrings.
 
@@ -140,7 +140,7 @@ class DocumentationValidator:
             Tuple of (is_valid, validation_results)
         """
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 source = f.read()
             tree = ast.parse(source)
 
@@ -178,7 +178,7 @@ class DocumentationValidator:
             return True, {"error": str(e)}
 
     @staticmethod
-    def validate_readme(project_path: Path) -> Tuple[bool, Optional[str]]:
+    def validate_readme(project_path: Path) -> tuple[bool, str | None]:
         """
         Validate that README exists and has content.
 
@@ -211,7 +211,7 @@ class TestCoverageValidator:
     @staticmethod
     def validate_coverage(
         project_path: Path, coverage_threshold: float = 70.0
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate test coverage using pytest-cov.
 
@@ -271,7 +271,7 @@ class ArtifactStructureValidator:
     """Validates artifact structure and content."""
 
     @staticmethod
-    def validate_artifact_structure(artifact_path: Path) -> Tuple[bool, List[str]]:
+    def validate_artifact_structure(artifact_path: Path) -> tuple[bool, list[str]]:
         """
         Validate artifact file structure.
 
@@ -296,7 +296,7 @@ class ArtifactStructureValidator:
                 try:
                     import json
 
-                    with open(artifact_path, "r", encoding="utf-8") as f:
+                    with open(artifact_path, encoding="utf-8") as f:
                         json.load(f)
                 except json.JSONDecodeError as e:
                     errors.append(f"Invalid JSON in artifact {artifact_path}: {e}")
@@ -306,7 +306,7 @@ class ArtifactStructureValidator:
                 try:
                     import yaml
 
-                    with open(artifact_path, "r", encoding="utf-8") as f:
+                    with open(artifact_path, encoding="utf-8") as f:
                         yaml.safe_load(f)
                 except Exception as e:
                     errors.append(f"Invalid YAML in artifact {artifact_path}: {e}")
@@ -314,7 +314,7 @@ class ArtifactStructureValidator:
         return len(errors) == 0, errors
 
     @staticmethod
-    def validate_artifact_content(artifact_path: Path, min_size: int = 10) -> Tuple[bool, Optional[str]]:
+    def validate_artifact_content(artifact_path: Path, min_size: int = 10) -> tuple[bool, str | None]:
         """
         Validate artifact has meaningful content.
 
@@ -362,8 +362,8 @@ class ContentValidator:
         self.structure_validator = ArtifactStructureValidator()
 
     def validate_code_quality(
-        self, file_paths: Optional[List[Path]] = None, use_ruff: bool = True, use_mypy: bool = False
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, file_paths: list[Path] | None = None, use_ruff: bool = True, use_mypy: bool = False
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate code quality for files.
 
@@ -408,8 +408,8 @@ class ContentValidator:
         }
 
     def validate_documentation(
-        self, file_paths: Optional[List[Path]] = None
-    ) -> Tuple[bool, Dict[str, Any]]:
+        self, file_paths: list[Path] | None = None
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate documentation completeness.
 
@@ -446,7 +446,7 @@ class ContentValidator:
 
     def validate_test_coverage(
         self, coverage_threshold: float = 70.0
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate test coverage.
 
@@ -460,7 +460,7 @@ class ContentValidator:
 
     def validate_artifact(
         self, artifact_path: Path, validate_content: bool = True
-    ) -> Tuple[bool, Dict[str, Any]]:
+    ) -> tuple[bool, dict[str, Any]]:
         """
         Validate artifact structure and content.
 

@@ -2,8 +2,6 @@
 Unit tests for Context7 analytics.
 """
 
-import tempfile
-from pathlib import Path
 
 import pytest
 

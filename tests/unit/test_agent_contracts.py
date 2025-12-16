@@ -11,16 +11,17 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
 
 import pytest
 
 from tapps_agents.workflow.artifact_helper import load_artifact, write_artifact
 from tapps_agents.workflow.code_artifact import CodeArtifact, CodeChange
-from tapps_agents.workflow.design_artifact import DesignArtifact, Component
-from tapps_agents.workflow.enhancement_artifact import EnhancementArtifact, EnhancementStage
+from tapps_agents.workflow.design_artifact import Component, DesignArtifact
+from tapps_agents.workflow.enhancement_artifact import (
+    EnhancementArtifact,
+)
 from tapps_agents.workflow.planning_artifact import PlanningArtifact, UserStory
-from tapps_agents.workflow.review_artifact import ReviewArtifact, ReviewComment
+from tapps_agents.workflow.review_artifact import ReviewArtifact
 
 pytestmark = pytest.mark.unit
 

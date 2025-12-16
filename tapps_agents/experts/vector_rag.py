@@ -8,12 +8,11 @@ when vector dependencies are unavailable.
 import logging
 import time
 from pathlib import Path
-from typing import Any
 
 from .rag_chunker import Chunk, Chunker
 from .rag_embedder import Embedder, create_embedder
 from .rag_index import VectorIndex
-from .rag_safety import RAGSafetyHandler, create_safety_handler
+from .rag_safety import create_safety_handler
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 
 logger = logging.getLogger(__name__)
@@ -150,7 +149,7 @@ class VectorKnowledgeBase:
             if not metadata_path.exists():
                 return False
 
-            with open(metadata_path, "r", encoding="utf-8") as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 metadata = json.load(f)
 
             # Check schema version

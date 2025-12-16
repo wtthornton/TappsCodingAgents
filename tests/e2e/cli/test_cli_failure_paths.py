@@ -14,14 +14,12 @@ All tests validate:
 - Error messages are stable and testable
 """
 
+
 import pytest
-from pathlib import Path
 
 from tests.e2e.fixtures.cli_harness import (
     CLIHarness,
-    assert_exit_code,
     assert_failure,
-    capture_cli_artifacts,
 )
 
 

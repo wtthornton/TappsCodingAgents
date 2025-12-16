@@ -12,11 +12,10 @@ Provides utilities to validate scenario outcomes against expected outputs:
 import logging
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import pytest
 
-from .e2e_harness import assert_artifact_exists
 from .error_helpers import (
     build_error_context,
     format_artifact_error,
@@ -41,7 +40,7 @@ class ScenarioValidator:
         scenario_type: ScenarioType,
         template_size: TemplateType,
         run_tests: bool = True,
-        mode: Optional[ValidationMode] = None,
+        mode: ValidationMode | None = None,
     ):
         """
         Initialize scenario validator.
@@ -57,7 +56,7 @@ class ScenarioValidator:
         self.scenario_type = scenario_type
         self.template_size = template_size
         self.expected_outputs = get_expected_outputs(scenario_type, template_size)
-        self.validation_errors: List[str] = []
+        self.validation_errors: list[str] = []
         self.run_tests = run_tests and os.getenv("E2E_SKIP_TEST_EXECUTION") != "true"
         self.outcome_validator = OutcomeValidator(project_path)
         self.mode = get_validation_mode(mode)
@@ -390,7 +389,7 @@ class ScenarioValidator:
                     else:
                         self.validation_errors.append(error_msg)
 
-    def get_validation_errors(self) -> List[str]:
+    def get_validation_errors(self) -> list[str]:
         """
         Get list of validation errors.
 
@@ -399,7 +398,7 @@ class ScenarioValidator:
         """
         return self.validation_errors.copy()
 
-    def get_validation_summary(self) -> Dict[str, Any]:
+    def get_validation_summary(self) -> dict[str, Any]:
         """
         Get validation summary.
 

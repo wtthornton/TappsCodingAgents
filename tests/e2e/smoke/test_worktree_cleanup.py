@@ -8,8 +8,6 @@ Tests validate that:
 - Cleanup doesn't affect main working tree
 """
 
-import shutil
-from pathlib import Path
 
 import pytest
 

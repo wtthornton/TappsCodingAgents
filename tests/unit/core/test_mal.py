@@ -6,15 +6,15 @@ and response parsing. Uses httpx.MockTransport to test real HTTP behavior
 without requiring actual network calls.
 """
 
-import json
-import pytest
 from unittest.mock import patch
-from httpx import AsyncClient, Response, Request, MockTransport
+
+import pytest
+from httpx import AsyncClient, MockTransport, Request, Response
 
 pytestmark = pytest.mark.unit
 
-from tapps_agents.core.mal import MAL
 from tapps_agents.core.config import MALConfig
+from tapps_agents.core.mal import MAL
 
 
 @pytest.fixture(autouse=True)

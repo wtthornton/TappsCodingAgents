@@ -9,8 +9,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
 
-from .models import Workflow, WorkflowState
 from .event_log import WorkflowEventLog
+from .models import Workflow, WorkflowState
 
 
 @dataclass

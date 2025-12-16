@@ -14,7 +14,6 @@ from tests.e2e.fixtures.agent_test_helpers import (
     assert_response_quality,
     create_test_agent,
     execute_command,
-    validate_response_content,
     validate_response_context,
     validate_response_structure,
 )

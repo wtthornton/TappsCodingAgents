@@ -7,7 +7,6 @@ Epic 5 / Story 5.2: Dependency Graph Resolver
 
 from collections import defaultdict, deque
 from dataclasses import dataclass
-from typing import Any
 
 from .models import WorkflowStep
 

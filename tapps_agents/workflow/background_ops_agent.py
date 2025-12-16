@@ -101,7 +101,7 @@ class BackgroundOpsAgent:
                 if self.ops_agent:
                     await self.ops_agent.close()
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             artifact.mark_timeout()
         except asyncio.CancelledError:
             artifact.mark_cancelled()

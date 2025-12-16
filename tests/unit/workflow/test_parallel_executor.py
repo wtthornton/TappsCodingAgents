@@ -5,15 +5,12 @@ Unit tests for parallel workflow step execution.
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
-from pathlib import Path
 
 import pytest
 
 from tapps_agents.workflow.models import StepExecution, WorkflowStep
 from tapps_agents.workflow.parallel_executor import (
     ParallelStepExecutor,
-    StepExecutionResult,
 )
 
 pytestmark = pytest.mark.unit

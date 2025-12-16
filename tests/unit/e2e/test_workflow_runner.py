@@ -2,17 +2,13 @@
 Unit tests for workflow runner E2E harness.
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock, patch
+
+import pytest
 
 from tests.e2e.fixtures.workflow_runner import (
-    WorkflowRunner,
     GateController,
-    run_workflow,
-    run_workflow_step_by_step,
-    capture_workflow_state,
-    assert_workflow_artifacts,
+    WorkflowRunner,
     control_gate_outcome,
 )
 
@@ -114,8 +110,9 @@ workflow:
         executor = runner.create_executor()
 
         # Mock executor state
-        from tapps_agents.workflow.models import WorkflowState
         from datetime import datetime
+
+        from tapps_agents.workflow.models import WorkflowState
 
         executor.state = WorkflowState(
             workflow_id="test-workflow",

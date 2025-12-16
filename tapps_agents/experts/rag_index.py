@@ -269,7 +269,7 @@ class VectorIndex:
         if not chunks_path.exists():
             raise FileNotFoundError(f"Chunks file not found: {chunks_path}")
 
-        with open(chunks_path, "r", encoding="utf-8") as f:
+        with open(chunks_path, encoding="utf-8") as f:
             chunks_data = json.load(f)
 
         from .rag_chunker import Chunk
@@ -280,7 +280,7 @@ class VectorIndex:
         metadata_path = index_dir / "metadata.json"
         metadata = None
         if metadata_path.exists():
-            with open(metadata_path, "r", encoding="utf-8") as f:
+            with open(metadata_path, encoding="utf-8") as f:
                 metadata_data = json.load(f)
                 metadata = IndexMetadata.from_dict(metadata_data)
 

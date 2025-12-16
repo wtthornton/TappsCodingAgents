@@ -2,12 +2,10 @@
 Tests for runtime mode detection (Cursor-first policy).
 """
 
-import os
 
 import pytest
 
 from tapps_agents.core.runtime_mode import RuntimeMode, detect_runtime_mode
-
 
 pytestmark = pytest.mark.unit
 

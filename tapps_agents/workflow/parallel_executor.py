@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import math
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
-from .models import StepExecution, WorkflowStep, WorkflowState
+from .models import StepExecution, WorkflowState, WorkflowStep
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +237,7 @@ class ParallelStepExecutor:
                             attempts=attempts,
                         )
 
-                    except asyncio.TimeoutError as e:
+                    except TimeoutError as e:
                         last_error = e
                         # Use error envelope for structured error
                         from ..core.error_envelope import ErrorEnvelopeBuilder

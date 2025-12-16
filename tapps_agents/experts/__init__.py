@@ -14,10 +14,8 @@ from .builtin_registry import BuiltinExpertRegistry
 from .domain_config import DomainConfig, DomainConfigParser
 from .expert_config import ExpertConfigModel, ExpertsConfig, load_expert_configs
 from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
-from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .rag_chunker import Chunk, Chunker
 from .rag_embedder import Embedder, SentenceTransformerEmbedder, create_embedder
-from .rag_index import IndexMetadata, VectorIndex
 from .rag_evaluation import (
     EvaluationMetrics,
     EvaluationQuestion,
@@ -25,7 +23,9 @@ from .rag_evaluation import (
     RAGEvaluator,
     create_default_evaluation_set,
 )
+from .rag_index import IndexMetadata, VectorIndex
 from .rag_safety import RAGSafetyHandler, create_safety_handler
+from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
 from .weight_distributor import ExpertWeightMatrix, WeightDistributor
 

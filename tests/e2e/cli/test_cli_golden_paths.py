@@ -9,14 +9,13 @@ Tests the most commonly used CLI commands end-to-end:
 All tests validate JSON output shape and essential keys.
 """
 
+
 import pytest
-from pathlib import Path
 
 from tests.e2e.fixtures.cli_harness import (
     CLIHarness,
     assert_json_output,
     assert_success,
-    capture_cli_artifacts,
 )
 
 

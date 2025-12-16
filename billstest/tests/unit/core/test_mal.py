@@ -5,14 +5,14 @@ Tests provider initialization, fallback strategies, error handling,
 and response parsing. Uses mocks to avoid actual LLM calls.
 """
 
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from httpx import AsyncClient, Response
+
+import pytest
 
 pytestmark = pytest.mark.unit
 
-from tapps_agents.core.mal import MAL
 from tapps_agents.core.config import MALConfig
+from tapps_agents.core.mal import MAL
 
 
 @pytest.fixture(autouse=True)

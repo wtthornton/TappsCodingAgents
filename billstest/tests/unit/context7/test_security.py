@@ -5,9 +5,7 @@ Tests security audit, compliance verification, and API key management.
 """
 
 import os
-import tempfile
-from pathlib import Path
-from unittest.mock import patch, mock_open
+from unittest.mock import patch
 
 import pytest
 
@@ -15,8 +13,8 @@ pytestmark = pytest.mark.unit
 
 from tapps_agents.context7.security import (
     APIKeyManager,
-    SecurityAuditResult,
     ComplianceStatus,
+    SecurityAuditResult,
 )
 
 

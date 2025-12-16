@@ -7,15 +7,12 @@ and Background Agents instead of MAL for LLM operations.
 
 from __future__ import annotations
 
+import hashlib
 import json
-import os
-import subprocess  # nosec B404 - fixed args, no shell
-import sys
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-import hashlib
 
 from ..core.project_profile import (
     ProjectProfile,
@@ -23,13 +20,13 @@ from ..core.project_profile import (
     load_project_profile,
     save_project_profile,
 )
-from ..core.runtime_mode import RuntimeMode, detect_runtime_mode, is_cursor_mode
+from ..core.runtime_mode import is_cursor_mode
+from .logging_helper import WorkflowLogger
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .parallel_executor import ParallelStepExecutor
 from .skill_invoker import SkillInvoker
 from .state_manager import AdvancedStateManager
 from .worktree_manager import WorktreeManager
-from .parallel_executor import ParallelStepExecutor
-from .logging_helper import WorkflowLogger
 
 
 class CursorWorkflowExecutor:
@@ -462,8 +459,9 @@ class CursorWorkflowExecutor:
             )
 
             # Wait for Skill to complete (Background Agents execute automatically)
-            from .cursor_skill_helper import check_skill_completion
             import asyncio
+
+            from .cursor_skill_helper import check_skill_completion
             
             max_wait_time = 3600  # 1 hour max wait
             poll_interval = 2  # Check every 2 seconds
@@ -518,7 +516,7 @@ class CursorWorkflowExecutor:
 
             return artifacts_dict if artifacts_dict else None
 
-        except Exception as e:
+        except Exception:
             # Re-raise exception - ParallelStepExecutor will handle it
             raise
 
@@ -625,8 +623,9 @@ class CursorWorkflowExecutor:
 
             # Wait for Skill to complete (Background Agents execute automatically)
             # Poll for artifacts or completion marker
-            from .cursor_skill_helper import check_skill_completion
             import asyncio
+
+            from .cursor_skill_helper import check_skill_completion
             
             max_wait_time = 3600  # 1 hour max wait
             poll_interval = 2  # Check every 2 seconds

@@ -59,7 +59,6 @@ class TestCloudMAL:
         config = MALConfig(anthropic=None)
 
         # Remove env var if set
-        import os
 
         old_key = os.environ.pop("ANTHROPIC_API_KEY", None)
 
@@ -100,7 +99,6 @@ class TestCloudMAL:
         config = MALConfig(openai=None)
 
         # Remove env var if set
-        import os
 
         old_key = os.environ.pop("OPENAI_API_KEY", None)
 

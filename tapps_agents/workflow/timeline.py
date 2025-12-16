@@ -6,7 +6,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .models import StepExecution, Workflow, WorkflowState
+from .models import Workflow, WorkflowState
 
 
 def format_duration(seconds: float | None) -> str:

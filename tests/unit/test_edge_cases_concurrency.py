@@ -11,14 +11,12 @@ This module tests:
 
 import asyncio
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
 from tapps_agents.agents.reviewer.scoring import CodeScorer
-from tapps_agents.core.unified_cache import UnifiedCache
-from tapps_agents.core.context_manager import ContextManager, ContextTier
 from tapps_agents.core.cache_router import CacheType
+from tapps_agents.core.context_manager import ContextTier
 from tapps_agents.workflow import WorkflowExecutor, WorkflowParser
 
 

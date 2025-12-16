@@ -11,7 +11,6 @@ if no LLM service is available.
 """
 
 import os
-from pathlib import Path
 
 import pytest
 

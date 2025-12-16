@@ -4,6 +4,8 @@ Unit tests for Knowledge Graph.
 
 from datetime import UTC, datetime
 
+import pytest
+
 from tapps_agents.core.knowledge_graph import (
     GraphQuery,
     KnowledgeGraph,
@@ -12,8 +14,6 @@ from tapps_agents.core.knowledge_graph import (
     TaskNode,
 )
 from tapps_agents.core.task_memory import TaskMemory, TaskOutcome
-
-import pytest
 
 pytestmark = pytest.mark.unit
 

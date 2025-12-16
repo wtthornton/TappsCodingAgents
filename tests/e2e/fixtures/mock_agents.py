@@ -8,10 +8,8 @@ Provides agent-specific behavioral mocks that simulate real agent behavior:
 - Agent-specific behavior (planner plans, implementer implements, reviewer reviews)
 """
 
-import json
 import re
-from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
 from tapps_agents.core.mal import MAL
@@ -26,7 +24,7 @@ class BehavioralMock:
         self.mal = MagicMock(spec=MAL)
         self.mal.close = AsyncMock()
 
-    def parse_cursor_command(self, prompt: str) -> Dict[str, Any]:
+    def parse_cursor_command(self, prompt: str) -> dict[str, Any]:
         """
         Parse Cursor command from prompt.
 
@@ -53,7 +51,7 @@ class BehavioralMock:
             "prompt": prompt,
         }
 
-    def validate_command(self, parsed: Dict[str, Any], valid_commands: List[str]) -> bool:
+    def validate_command(self, parsed: dict[str, Any], valid_commands: list[str]) -> bool:
         """Validate that command is in list of valid commands."""
         if not parsed.get("command"):
             return False
@@ -64,7 +62,7 @@ class BehavioralMock:
         parsed = self.parse_cursor_command(prompt)
         return self._generate_response(parsed, **kwargs)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate response (to be overridden by subclasses)."""
         return "Mock LLM response"
 
@@ -77,7 +75,7 @@ class MockPlanner(BehavioralMock):
         super().__init__("planner")
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate planning response."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -128,7 +126,7 @@ Based on the requirements: {prompt[:100]}
         else:
             return "Planner mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate planner commands."""
         valid_commands = ["plan", "create-story", "list-stories", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -142,7 +140,7 @@ class MockImplementer(BehavioralMock):
         super().__init__("implementer")
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate code implementation response."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -192,7 +190,7 @@ def fixed_function():
         else:
             return "Implementer mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate implementer commands."""
         valid_commands = ["implement", "generate-code", "fix", "refactor", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -207,7 +205,7 @@ class MockReviewer(BehavioralMock):
         self.quality_score = quality_score
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate review response."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -241,7 +239,7 @@ class MockReviewer(BehavioralMock):
         else:
             return "Reviewer mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate reviewer commands."""
         valid_commands = ["review", "score", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -256,14 +254,14 @@ class MockTester(BehavioralMock):
         self.test_results = test_results
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate test code and results."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
 
         if command in ["generate-test", "test"]:
             # Generate test code
-            return f'''import pytest
+            return '''import pytest
 
 def test_example():
     """Test generated based on requirements."""
@@ -301,7 +299,7 @@ Failures:
         else:
             return "Tester mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate tester commands."""
         valid_commands = ["generate-test", "test", "run-tests", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -315,7 +313,7 @@ class MockDebugger(BehavioralMock):
         super().__init__("debugger")
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate debug analysis."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -350,7 +348,7 @@ except ValueError as e:
         else:
             return "Debugger mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate debugger commands."""
         valid_commands = ["debug", "analyze-error", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -364,7 +362,7 @@ class MockAnalyst(BehavioralMock):
         super().__init__("analyst")
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate analysis response."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -389,7 +387,7 @@ class MockAnalyst(BehavioralMock):
         else:
             return "Analyst mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate analyst commands."""
         valid_commands = ["gather-requirements", "analyze-stakeholders", "research-technology", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -403,7 +401,7 @@ class MockArchitect(BehavioralMock):
         super().__init__("architect")
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate architecture design."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -432,7 +430,7 @@ Based on requirements: {prompt[:100]}
         else:
             return "Architect mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate architect commands."""
         valid_commands = ["design", "analyze-architecture", "help"]
         return super().validate_command(parsed, valid_commands)
@@ -446,7 +444,7 @@ class MockDocumenter(BehavioralMock):
         super().__init__("documenter")
         self.mal.generate = AsyncMock(side_effect=self.generate)
 
-    def _generate_response(self, parsed: Dict[str, Any], **kwargs) -> str:
+    def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate documentation."""
         command = parsed.get("command")
         prompt = parsed.get("prompt", "")
@@ -475,7 +473,7 @@ result = example_function()
         else:
             return "Documenter mock response"
 
-    def validate_command(self, parsed: Dict[str, Any]) -> bool:
+    def validate_command(self, parsed: dict[str, Any]) -> bool:
         """Validate documenter commands."""
         valid_commands = ["document", "generate-docs", "help"]
         return super().validate_command(parsed, valid_commands)

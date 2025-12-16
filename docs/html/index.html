@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TappsCodingAgents - Documentation</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html" class="active">Home</a></li>
+                <li><a href="user-guide.html">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <section class="hero">
+            <div class="hero-content">
+                <h1 class="hero-title">TappsCodingAgents</h1>
+                <p class="hero-subtitle">A specification framework for defining, configuring, and orchestrating AI coding agents</p>
+                <div class="hero-badges">
+                    <span class="badge">Python 3.13+</span>
+                    <span class="badge">Production Ready</span>
+                    <span class="badge">MIT License</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">👥</div>
+                <h3>13 Workflow Agents</h3>
+                <p>Complete SDLC coverage from analysis to deployment with specialized agents for each phase</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🧠</div>
+                <h3>Industry Experts</h3>
+                <p>Weighted decision-making with business domain experts and 16 built-in technical experts</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">⚡</div>
+                <h3>90%+ Token Savings</h3>
+                <p>Tiered context system intelligently loads only the context needed for each task</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔀</div>
+                <h3>Hybrid Model Routing</h3>
+                <p>Model Abstraction Layer routes to local (Ollama) or cloud (Anthropic/OpenAI) models</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📊</div>
+                <h3>Code Scoring System</h3>
+                <p>Objective quality metrics: complexity, security, maintainability, test coverage, performance</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔄</div>
+                <h3>YAML Workflows</h3>
+                <p>Declarative multi-step task definitions with conditional steps and quality gates</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Cursor AI Integration</h3>
+                <p>Complete integration with Cursor AI including Skills, Background Agents, and orchestration</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔍</div>
+                <h3>Context7 Integration</h3>
+                <p>Knowledge base-first caching for library documentation with analytics and optimization</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">✨</div>
+                <h3>Enhancer Agent</h3>
+                <p>7-stage prompt enhancement pipeline transforms simple prompts into comprehensive, context-aware prompts</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🔧</div>
+                <h3>MCP Gateway</h3>
+                <p>Unified tool access across filesystem, Git, and analysis servers via Model Context Protocol</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">📈</div>
+                <h3>Project Profiling</h3>
+                <p>Automatic detection of project characteristics for context-aware expert guidance</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💾</div>
+                <h3>Unified Cache</h3>
+                <p>Hardware-adaptive caching system with automatic optimization for different hardware profiles</p>
+            </div>
+        </section>
+
+        <section class="quick-start">
+            <h2>Quick Start</h2>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Installation</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code>pip install tapps-agents</code></pre>
+            </div>
+            <div class="code-block">
+                <div class="code-header">
+                    <span>Basic Usage</span>
+                    <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                </div>
+                <pre><code># Review a code file
+tapps-agents reviewer review src/main.py
+
+# Score code quality
+tapps-agents reviewer score src/main.py
+
+# Run a workflow
+tapps-agents workflow run workflow-full-sdlc</code></pre>
+            </div>
+        </section>
+
+        <section class="documentation-links">
+            <h2>Documentation</h2>
+            <div class="doc-grid">
+                <a href="user-guide.html" class="doc-card">
+                    <h3>📖 User Guide</h3>
+                    <p>Learn how to use TappsCodingAgents with step-by-step tutorials and examples</p>
+                    <ul>
+                        <li>Getting Started</li>
+                        <li>Agent Usage</li>
+                        <li>Workflow Configuration</li>
+                        <li>Best Practices</li>
+                    </ul>
+                </a>
+                <a href="technical-spec.html" class="doc-card">
+                    <h3>🔧 Technical Specification</h3>
+                    <p>Deep dive into architecture, algorithms, and implementation details</p>
+                    <ul>
+                        <li>System Architecture</li>
+                        <li>Algorithms & Logic</li>
+                        <li>Component Details</li>
+                        <li>Performance Optimization</li>
+                    </ul>
+                </a>
+                <a href="examples.html" class="doc-card">
+                    <h3>💡 Examples</h3>
+                    <p>Real-world examples and use cases for common scenarios</p>
+                    <ul>
+                        <li>Code Review Workflow</li>
+                        <li>Multi-Agent Orchestration</li>
+                        <li>Custom Workflows</li>
+                        <li>Integration Patterns</li>
+                    </ul>
+                </a>
+                <a href="api-reference.html" class="doc-card">
+                    <h3>📚 API Reference</h3>
+                    <p>Complete API documentation for Python and CLI interfaces</p>
+                    <ul>
+                        <li>Agent API</li>
+                        <li>Workflow API</li>
+                        <li>Configuration API</li>
+                        <li>CLI Commands</li>
+                    </ul>
+                </a>
+            </div>
+        </section>
+
+        <section class="agents-overview">
+            <h2>13 Workflow Agents</h2>
+            <div class="agents-grid">
+                <div class="agent-card">
+                    <h4>Analyst</h4>
+                    <p>Requirements analysis and stakeholder analysis</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Planner</h4>
+                    <p>Story generation and task breakdown</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Architect</h4>
+                    <p>System design and architecture decisions</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Designer</h4>
+                    <p>API contracts and data modeling</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Implementer</h4>
+                    <p>Code generation and refactoring</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Tester</h4>
+                    <p>Test generation and execution</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Debugger</h4>
+                    <p>Error analysis and code tracing</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Documenter</h4>
+                    <p>API docs and README generation</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Reviewer</h4>
+                    <p>Code review with scoring and quality metrics</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Improver</h4>
+                    <p>Refactoring and optimization</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Ops</h4>
+                    <p>Security, compliance, and deployment</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Orchestrator</h4>
+                    <p>Workflow coordination and gate decisions</p>
+                </div>
+                <div class="agent-card">
+                    <h4>Enhancer</h4>
+                    <p>Prompt enhancement with expert integration</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

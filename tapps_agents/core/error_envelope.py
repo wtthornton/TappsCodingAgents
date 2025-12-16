@@ -5,18 +5,17 @@ Epic 7 / Story 7.2: Robust Error Handling
 """
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 from .exceptions import (
-    TappsAgentsError,
+    AgentError,
     ConfigurationError,
     Context7UnavailableError,
-    MALDisabledInCursorModeError,
-    WorkflowExecutionError,
-    AgentError,
     FileOperationError,
+    MALDisabledInCursorModeError,
     MALError,
+    WorkflowExecutionError,
 )
 
 

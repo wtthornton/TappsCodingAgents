@@ -7,9 +7,9 @@ workflow steps via Cursor Skills.
 
 from __future__ import annotations
 
-import yaml
 from pathlib import Path
-from typing import Any
+
+import yaml
 
 
 class BackgroundAgentGenerator:

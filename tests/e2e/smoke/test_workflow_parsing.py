@@ -7,12 +7,11 @@ Tests validate that:
 - Invalid workflows are handled gracefully
 """
 
-from pathlib import Path
 
 import pytest
 
-from tests.e2e.fixtures.dependency_validator import validate_workflow_file
 from tapps_agents.workflow.parser import WorkflowParser
+from tests.e2e.fixtures.dependency_validator import validate_workflow_file
 
 
 @pytest.mark.e2e_smoke

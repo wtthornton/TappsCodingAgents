@@ -13,31 +13,30 @@ This script validates that the framework is working correctly by testing:
 Run with: python scripts/validate_framework.py
 """
 
+import asyncio
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
-import asyncio
 
 # Add project root to path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from tapps_agents.core.config import load_config, get_default_config
+from tapps_agents.core.config import get_default_config, load_config
 from tapps_agents.core.mal import MAL
+from tapps_agents.core.project_profile import load_project_profile
 from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry
 from tapps_agents.experts.expert_registry import ExpertRegistry
-from tapps_agents.workflow.parser import WorkflowParser
 from tapps_agents.workflow.detector import ProjectDetector
-from tapps_agents.core.project_profile import ProjectProfile, load_project_profile
+from tapps_agents.workflow.parser import WorkflowParser
 
 
 class ValidationResult:
     """Track validation results."""
     
     def __init__(self):
-        self.passed: List[str] = []
-        self.failed: List[Tuple[str, str]] = []
-        self.warnings: List[str] = []
+        self.passed: list[str] = []
+        self.failed: list[tuple[str, str]] = []
+        self.warnings: list[str] = []
     
     def add_pass(self, test_name: str):
         self.passed.append(test_name)

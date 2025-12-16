@@ -4,8 +4,9 @@ E2E tests for full-sdlc preset workflow.
 Tests workflow parsing, execution, state transitions, and artifacts.
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from tests.e2e.fixtures.workflow_runner import WorkflowRunner
 

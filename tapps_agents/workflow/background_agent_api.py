@@ -89,7 +89,7 @@ class BackgroundAgentAPI:
             response = requests.get(url, headers=self._get_headers(), timeout=30)
             response.raise_for_status()
             return response.json().get("agents", [])
-        except requests.RequestException as e:
+        except requests.RequestException:
             # If API is not available, return empty list
             # This allows graceful degradation
             return []

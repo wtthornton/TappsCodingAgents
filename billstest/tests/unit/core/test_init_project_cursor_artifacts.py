@@ -8,7 +8,6 @@ import pytest
 
 from tapps_agents.core.init_project import init_project
 
-
 pytestmark = pytest.mark.unit
 
 

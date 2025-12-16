@@ -10,8 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from .cache_structure import CacheStructure
 from .kb_cache import KBCache
 from .lookup import KBLookup

@@ -7,7 +7,6 @@ This module translates workflow actions to Cursor Skill commands and executes th
 from __future__ import annotations
 
 import json
-import subprocess  # nosec B404 - fixed args, no shell
 from pathlib import Path
 from typing import Any
 
@@ -15,7 +14,6 @@ from .background_agent_api import BackgroundAgentAPI
 from .background_quality_agent import BackgroundQualityAgent
 from .background_testing_agent import BackgroundTestingAgent
 from .cursor_skill_helper import (
-    check_skill_completion,
     create_skill_command_file,
     create_skill_execution_instructions,
 )
@@ -510,7 +508,7 @@ class SkillInvoker:
                                 "worktree": str(worktree_path),
                                 "message": "Background Agent triggered via API",
                             }
-            except Exception as e:
+            except Exception:
                 # Fall back to file-based execution if API fails
                 pass
         

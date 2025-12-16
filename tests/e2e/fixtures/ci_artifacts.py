@@ -15,7 +15,7 @@ import os
 import shutil
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from .e2e_harness import redact_secrets
 
@@ -25,9 +25,9 @@ logger = logging.getLogger(__name__)
 
 def collect_failure_artifacts(
     project_path: Path,
-    correlation_id: Optional[str] = None,
-    test_name: Optional[str] = None,
-    output_dir: Optional[Path] = None,
+    correlation_id: str | None = None,
+    test_name: str | None = None,
+    output_dir: Path | None = None,
 ) -> Path:
     """
     Collect failure artifacts from a test project.
@@ -60,7 +60,7 @@ def collect_failure_artifacts(
 
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    artifacts: Dict[str, Any] = {
+    artifacts: dict[str, Any] = {
         "correlation_id": correlation_id,
         "test_name": test_name or "unknown",
         "project_path": str(project_path),
@@ -164,8 +164,8 @@ def collect_failure_artifacts(
 
 
 def create_test_summary(
-    test_results: Dict[str, Any],
-    output_file: Optional[Path] = None,
+    test_results: dict[str, Any],
+    output_file: Path | None = None,
 ) -> str:
     """
     Create a test summary in Markdown format.
@@ -219,7 +219,7 @@ def attach_correlation_id(correlation_id: str, env_var: str = "CI_CORRELATION_ID
     logger.info(f"Attached correlation ID: {correlation_id}")
 
 
-def get_correlation_id(env_var: str = "CI_CORRELATION_ID") -> Optional[str]:
+def get_correlation_id(env_var: str = "CI_CORRELATION_ID") -> str | None:
     """
     Get correlation ID from environment.
 
@@ -232,7 +232,7 @@ def get_correlation_id(env_var: str = "CI_CORRELATION_ID") -> Optional[str]:
     return os.environ.get(env_var)
 
 
-def create_junit_summary(junit_xml_path: Path) -> Dict[str, Any]:
+def create_junit_summary(junit_xml_path: Path) -> dict[str, Any]:
     """
     Parse JUnit XML and create summary.
 

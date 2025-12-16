@@ -5,9 +5,8 @@ Extends base project templates with scenario-specific initial state and
 expected outputs for feature implementation, bug fix, and refactor scenarios.
 """
 
-import json
 from pathlib import Path
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
 
 from .project_templates import TemplateType, create_template
 
@@ -264,7 +263,7 @@ def test_legacy_processor_cache():
     return project_path
 
 
-def get_expected_outputs(scenario_type: ScenarioType, template_size: TemplateType) -> Dict[str, Any]:
+def get_expected_outputs(scenario_type: ScenarioType, template_size: TemplateType) -> dict[str, Any]:
     """
     Get expected outputs for a scenario type.
 

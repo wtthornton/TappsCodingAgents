@@ -76,7 +76,7 @@ class WorkflowEventLog:
             if event_file.exists():
                 try:
                     last_seq = 0
-                    with open(event_file, "r", encoding="utf-8") as f:
+                    with open(event_file, encoding="utf-8") as f:
                         for line in f:
                             if line.strip():
                                 event_data = json.loads(line)
@@ -182,7 +182,7 @@ class WorkflowEventLog:
 
         events: list[WorkflowEvent] = []
         try:
-            with open(event_file, "r", encoding="utf-8") as f:
+            with open(event_file, encoding="utf-8") as f:
                 for line in f:
                     if line.strip():
                         try:
