@@ -36,6 +36,7 @@ class BaseAgent(ABC):
         self.context_manager: Any | None = None
         self.mcp_gateway: Any | None = None
         self._unified_cache: Any | None = None  # Optional unified cache instance
+        self._project_root: Path | None = None  # Cached project root
 
     async def activate(self, project_root: Path | None = None):
         """
@@ -52,6 +53,9 @@ class BaseAgent(ABC):
         """
         if project_root is None:
             project_root = Path.cwd()
+
+        # Store project root for path validation
+        self._project_root = project_root
 
         # Step 3: Load project configuration
         # If config not already loaded, load it now
@@ -266,33 +270,33 @@ class BaseAgent(ABC):
         self, file_path: Path, max_file_size: int = 10 * 1024 * 1024
     ) -> None:
         """
-        Validate file path for security and size.
-        Raises ValueError for invalid paths or FileNotFoundError if file doesn't exist.
+        Validate file path for security and size using centralized path validator.
+
+        This method uses root-based validation to ensure paths are within
+        allowed boundaries (project root and .tapps-agents/).
+
+        Args:
+            file_path: Path to validate
+            max_file_size: Maximum file size in bytes (default: 10MB)
+
+        Raises:
+            ValueError: If path validation fails (renamed from PathValidationError for backward compatibility)
+            FileNotFoundError: If file doesn't exist
         """
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+        from .path_validator import PathValidator, PathValidationError
 
-        file_size = file_path.stat().st_size
-        if file_size > max_file_size:
-            raise ValueError(
-                f"File too large: {file_size} bytes (max {max_file_size} bytes)"
-            )
+        # Use cached project root or let validator auto-detect
+        project_root = self._project_root
 
-        # Resolve path to check for path traversal
-        resolved_path = file_path.resolve()
+        # Create validator with project root
+        validator = PathValidator(project_root)
 
-        # Allow test files in temp directories
-        if "pytest" in str(resolved_path) and "tmp_path" in str(resolved_path):
-            return
-
-        # Basic path traversal check (more robust checks might involve comparing against project root)
-        if ".." in str(file_path) and not resolved_path.exists():
-            raise ValueError(f"Path traversal detected: {file_path}")
-
-        # Additional check: ensure path doesn't contain suspicious patterns
-        suspicious_patterns = ["%2e%2e", "%2f", "%5c"]  # URL-encoded traversal attempts
-        if any(pattern in str(file_path).lower() for pattern in suspicious_patterns):
-            raise ValueError(f"Suspicious path detected: {file_path}")
+        try:
+            # Validate path (will raise PathValidationError or FileNotFoundError)
+            validator.validate_read_path(file_path, max_file_size=max_file_size)
+        except PathValidationError as e:
+            # Convert to ValueError for backward compatibility
+            raise ValueError(str(e)) from e
 
     def get_unified_cache(self):
         """

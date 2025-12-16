@@ -4,6 +4,8 @@ This guide explains how to use TappsCodingAgents in a project.
 
 ## Install
 
+### For End Users (Runtime Install)
+
 ```bash
 python -m venv .venv
 # Windows:
@@ -11,8 +13,26 @@ python -m venv .venv
 # macOS/Linux:
 # source .venv/bin/activate
 
-pip install -e .
+pip install tapps-agents
 ```
+
+This installs only the runtime dependencies needed for CLI usage.
+
+### For Developers (Editable + Dev Tools)
+
+```bash
+python -m venv .venv
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+# source .venv/bin/activate
+
+pip install -e ".[dev]"
+```
+
+This installs the package in editable mode with all development tools (pytest, ruff, mypy, black, etc.).
+
+**Note**: `pyproject.toml` is the authoritative source for dependencies. See `docs/DEPENDENCY_POLICY.md` for details.
 
 ## Run the CLI
 

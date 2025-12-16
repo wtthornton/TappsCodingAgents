@@ -12,10 +12,16 @@ This project is designed to work **inside Cursor** with agents and background ag
 
 ### Key directories
 
-- **`.claude/skills/`**: Canonical Cursor Skills definitions (13 agents).
+**In this framework repo (shipped templates):**
+- **`tapps_agents/resources/claude/skills/`**: Packaged Skills templates (12 agent skills).
+- **`tapps_agents/resources/cursor/rules/*.mdc`**: Packaged Cursor Rules templates (5 rule files).
+- **`tapps_agents/resources/cursor/background-agents.yaml`**: Packaged Background Agents template.
+
+**In target repos (after `tapps-agents init`):**
+- **`.claude/skills/`**: Installed Cursor Skills definitions (copied from packaged templates).
 - **`.cursor/`**:
-  - `.cursor/rules/*.mdc`: Cursor Rules (project context + workflow/command reference).
-  - `.cursor/background-agents.yaml`: Cursor Background Agents definitions.
+  - `.cursor/rules/*.mdc`: Installed Cursor Rules (copied from packaged templates).
+  - `.cursor/background-agents.yaml`: Installed Background Agents config (copied from packaged template).
 - **`.tapps-agents/`**: Runtime state (config + caches + reports + worktrees).  
   Most of this is **machine-local** and should not be committed.
 
@@ -39,9 +45,10 @@ This project is designed to work **inside Cursor** with agents and background ag
 From the target project root (after installing `tapps-agents`):
 
 - `tapps-agents init`
-  - Installs Cursor Rules into `.cursor/rules/`
-  - Installs Skills into `.claude/skills/`
-  - Installs Background Agents into `.cursor/background-agents.yaml`
+  - Copies Cursor Rules templates from `tapps_agents/resources/cursor/rules/*.mdc` → `.cursor/rules/`
+  - Copies Skills templates from `tapps_agents/resources/claude/skills/` → `.claude/skills/`
+  - Copies Background Agents template from `tapps_agents/resources/cursor/background-agents.yaml` → `.cursor/background-agents.yaml`
+  - Copies workflow presets from `tapps_agents/resources/workflows/presets/*.yaml` → `workflows/presets/`
   - Optionally creates `.tapps-agents/config.yaml`
 
 ### Keeping Cursor fast

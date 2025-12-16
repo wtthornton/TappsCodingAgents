@@ -58,14 +58,24 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 5. **Run quality checks:**
    ```bash
+   # Validate dependency consistency (ensures no drift)
+   python scripts/validate_dependencies.py
+   
    # Lint code
    ruff check .
    
-   # Type checking
-   mypy tapps_agents/
+   # Format check (CI verifies formatting without modifying files)
+   ruff format --check .
    
-   # Run tests
-   python -m pytest
+   # Type checking (CI uses staged approach; you can check all or specific modules)
+   python -m mypy tapps_agents/core tapps_agents/workflow tapps_agents/context7
+   # Or check all: python -m mypy tapps_agents/
+   
+   # Run tests (CI uses parallel execution for faster runs)
+   python -m pytest tests/ -m unit -n auto
+   
+   # Verify documentation (check for broken links and file references)
+   python scripts/verify_docs.py
    ```
 
 6. **Commit messages:**
@@ -106,14 +116,12 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
-   pip install -r requirements-dev.txt  # If available
+   pip install -e ".[dev]"
    ```
-
-4. **Install development tools:**
-   ```bash
-   pip install ruff mypy pytest pytest-cov
-   ```
+   
+   This installs the package in editable mode with all development dependencies (pytest, ruff, mypy, black, etc.).
+   
+   **Note**: `pyproject.toml` is the authoritative source for dependencies. The `requirements.txt` file is a convenience artifact only. See `docs/DEPENDENCY_POLICY.md` for the dependency management policy.
 
 5. **Run tests:**
    ```bash
@@ -133,8 +141,8 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 - Follow **PEP 8** style guide
 - Use **type hints** for all function signatures
-- Maximum line length: **100 characters**
-- Use **black** or **ruff format** for formatting
+- Maximum line length: **88 characters** (matches Black and Ruff configuration in `pyproject.toml`)
+- Use **ruff format** or **black** for formatting (both configured to 88 characters)
 
 ### Code Organization
 
@@ -261,6 +269,21 @@ pytest tests/ -m unit  # No -n flag
 - Include **code examples**
 - Add **diagrams** where helpful
 - Keep **up-to-date** with code changes
+
+### Documentation Verification
+
+Before submitting a PR, verify that documentation references are valid:
+
+```bash
+python scripts/verify_docs.py
+```
+
+This script checks for:
+- Broken internal Markdown links
+- Broken file/path references
+- Missing referenced files
+
+**Note**: Some false positives may occur (e.g., placeholder paths like `path/to/file.py`, external URLs, code examples). Review each error and fix legitimate issues or add to exclusion list if needed.
 
 ## Agent Development
 

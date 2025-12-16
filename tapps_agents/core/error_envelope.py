@@ -10,6 +10,7 @@ from typing import Any
 
 from .exceptions import (
     AgentError,
+    AgentFileNotFoundError,
     ConfigurationError,
     Context7UnavailableError,
     FileOperationError,
@@ -214,6 +215,9 @@ class ErrorEnvelopeBuilder:
             return ("execution", "workflow_execution_error")
         elif isinstance(exc, AgentError):
             return ("execution", "agent_error")
+        elif isinstance(exc, AgentFileNotFoundError):
+            # Check custom exception before FileOperationError (its parent)
+            return ("validation", "file_not_found")
         elif isinstance(exc, FileOperationError):
             return ("permission", "file_operation_error")
         elif isinstance(exc, MALError):
@@ -225,6 +229,7 @@ class ErrorEnvelopeBuilder:
         elif isinstance(exc, ValueError):
             return ("validation", "validation_error")
         elif isinstance(exc, FileNotFoundError):
+            # Handle built-in FileNotFoundError (from stdlib)
             return ("validation", "file_not_found")
         else:
             return ("execution", "unknown_error")
@@ -327,7 +332,8 @@ class ErrorEnvelopeBuilder:
             return True
 
         # File not found may be recoverable (create file)
-        if isinstance(exc, FileNotFoundError):
+        # Handle both custom and built-in FileNotFoundError
+        if isinstance(exc, (AgentFileNotFoundError, FileNotFoundError)):
             return True
 
         # Most other errors are not recoverable without code changes

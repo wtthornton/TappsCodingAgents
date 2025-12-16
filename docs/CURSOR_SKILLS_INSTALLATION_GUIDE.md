@@ -48,38 +48,31 @@ tapps-agents init
 # (or) python -m tapps_agents.cli init
 ```
 
-This installs:
-- **Skills**: `.claude/skills/`
-- **Cursor Rules**: `.cursor/rules/*.mdc`
-- **Background Agents**: `.cursor/background-agents.yaml`
+This installs (by copying from packaged templates in `tapps_agents/resources/*`):
+- **Skills**: `.claude/skills/` (12 agent skills from `tapps_agents/resources/claude/skills/`)
+- **Cursor Rules**: `.cursor/rules/*.mdc` (5 rule files from `tapps_agents/resources/cursor/rules/`)
+- **Background Agents**: `.cursor/background-agents.yaml` (from `tapps_agents/resources/cursor/background-agents.yaml`)
+- **Workflow presets**: `workflows/presets/*.yaml` (5 presets from `tapps_agents/resources/workflows/presets/`)
 - **Optional config**: `.tapps-agents/config.yaml`
 
-> Important: Skills are **model-agnostic**. Cursor uses the developer’s configured model (Auto or pinned).
-> The framework’s MAL (Ollama/cloud) is intended for **headless usage** only.
+> **Important**: 
+> - Skills are **model-agnostic**. Cursor uses the developer's configured model (Auto or pinned).
+> - The framework's MAL (Ollama/cloud) is intended for **headless usage** only.
+> - Templates are shipped in the package under `tapps_agents/resources/*` and copied to your project during `init`.
 
-### Step 3: (Alternative) Copy Skills to Your Project Manually
+### Step 3: (Alternative) Manual Installation
 
-**Option A: Copy Skills to Your Project (Recommended)**
-
-```bash
-# In your project directory
-mkdir -p .claude/skills
-
-# Copy Skills from TappsCodingAgents
-cp -r TappsCodingAgents/.claude/skills/* .claude/skills/
-```
-
-**Option B: Use Skills from TappsCodingAgents Directory**
-
-If you want to use Skills directly from the TappsCodingAgents directory:
+If you prefer to install manually, you can copy from the installed package location:
 
 ```bash
-# Create symlink (Linux/Mac)
-ln -s /path/to/TappsCodingAgents/.claude/skills .claude/skills
+# Find the package location
+python -c "import tapps_agents.resources; import os; print(os.path.dirname(tapps_agents.resources.__file__))"
 
-# Or copy (Windows)
-xcopy /E /I TappsCodingAgents\.claude\skills .claude\skills
+# Then copy from that location to your project
+# (Skills are under tapps_agents/resources/claude/skills/)
 ```
+
+**Note**: The recommended approach is using `tapps-agents init`, which handles all installation steps automatically.
 
 ### Step 3: Configure Context7 (Optional but Recommended)
 

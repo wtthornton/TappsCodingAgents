@@ -6,10 +6,8 @@ We currently support the following versions with security updates:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 1.6.x   | :white_check_mark: |
-| 1.5.x   | :white_check_mark: |
-| 1.4.x   | :white_check_mark: |
-| < 1.4   | :x:                |
+| 2.0.x   | :white_check_mark: |
+| < 2.0   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -19,9 +17,12 @@ We currently support the following versions with security updates:
 
 **Never** report security vulnerabilities through public GitHub issues or discussions.
 
-### 2. Email Security Team
+### 2. Report via GitHub Security Advisories
 
-Email the security team at: `security@yourdomain.com`
+**Use GitHub Security Advisories** to report vulnerabilities privately:
+1. Go to the repository's Security tab
+2. Click "Report a vulnerability"
+3. Fill out the security advisory form
 
 **Include:**
 - Description of the vulnerability
@@ -97,9 +98,10 @@ Email the security team at: `security@yourdomain.com`
 ### Built-in Security
 
 1. **Path Validation:**
-   - All file operations validate paths
-   - Prevents directory traversal attacks
-   - Configurable allowed paths
+   - All file operations validate paths against allowed roots (project root and `.tapps-agents/`)
+   - Prevents directory traversal attacks through root-based validation
+   - Resolved paths are verified to be within allowed boundaries
+   - See [Filesystem Access Policy](docs/SECURITY_FILESYSTEM_ACCESS_POLICY.md) for details
 
 2. **Command Validation:**
    - Star-prefixed command system
@@ -131,9 +133,10 @@ Email the security team at: `security@yourdomain.com`
 
 ### File System Access
 
-- Agents have file system access by design
-- Use path validation and restrictions
-- Consider read-only configurations for untrusted code
+- Agents have file system access by design, restricted to project root and `.tapps-agents/` directory
+- Path validation enforces root-based boundaries (not just string heuristics)
+- All file operations are validated against allowed roots
+- See [Filesystem Access Policy](docs/SECURITY_FILESYSTEM_ACCESS_POLICY.md) for detailed rules
 
 ### External Tool Execution
 
@@ -144,8 +147,10 @@ Email the security team at: `security@yourdomain.com`
 ### Configuration Files
 
 - YAML configuration files can contain sensitive data
-- Use environment variable substitution
+- **Important**: The configuration loader does **not** automatically interpolate environment variables (e.g., `${ANTHROPIC_API_KEY}` is treated as a literal string)
+- If you need environment variable substitution, expand env vars before writing `config.yaml` or use environment variables directly in your code
 - Validate configuration schemas
+- Never commit API keys or credentials to version control
 
 ## Security Audit
 
@@ -191,7 +196,7 @@ We follow responsible disclosure practices:
 ## Security Updates
 
 Security updates are released as:
-- **Patch releases** (e.g., 1.5.0 → 1.5.1) for critical issues
+- **Patch releases** (e.g., 2.0.0 → 2.0.1) for critical issues
 - **Minor releases** for significant security improvements
 - **Security advisories** published on GitHub
 
@@ -219,9 +224,8 @@ Security updates are released as:
 
 ## Contact
 
-**Security Email**: `security@yourdomain.com`  
-**Security Issues**: Use GitHub Security Advisories  
-**General Questions**: Open a discussion
+**Security Issues**: Use [GitHub Security Advisories](https://github.com/wtthornton/TappsCodingAgents/security/advisories)  
+**General Questions**: Open a [discussion](https://github.com/wtthornton/TappsCodingAgents/discussions)
 
 ---
 

@@ -2,6 +2,22 @@
 Startup routines for TappsCodingAgents.
 
 Handles automatic documentation refresh and other startup tasks.
+
+Startup routines run automatically when the CLI starts, regardless of entrypoint:
+- Console script: `tapps-agents ...`
+- Module invocation: `python -m tapps_agents.cli ...`
+
+Characteristics:
+- Non-blocking: Routines run in background and don't delay command execution
+- Non-fatal: Failures don't prevent CLI execution
+- Bounded: Limited time/impact (e.g., max_refresh limits)
+- Consistent: Same behavior across all entrypoints
+
+Current routines:
+- Documentation refresh (Context7): Refreshes stale documentation entries
+
+To disable startup routines, modify `_run_startup_routines()` in `tapps_agents/cli.py`.
+See `docs/CLI_DEVELOPMENT_GUIDE.md` for details.
 """
 
 import asyncio

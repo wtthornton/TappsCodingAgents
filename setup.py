@@ -1,5 +1,10 @@
 """
 Setup script for TappsCodingAgents.
+
+NOTE: This file is a minimal stub. All package metadata and dependencies
+are defined in pyproject.toml, which is the authoritative source.
+
+See docs/DEPENDENCY_POLICY.md for the dependency management policy.
 """
 
 from pathlib import Path
@@ -12,38 +17,20 @@ long_description = (
     readme_file.read_text(encoding="utf-8") if readme_file.exists() else ""
 )
 
-# Read requirements
-requirements_file = Path(__file__).parent / "requirements.txt"
-requirements = []
-if requirements_file.exists():
-    requirements = [
-        line.strip()
-        for line in requirements_file.read_text(encoding="utf-8").splitlines()
-        if line.strip() and not line.startswith("#")
-    ]
+# NOTE: Dependencies are NOT defined here. They are read from pyproject.toml
+# by setuptools automatically. This prevents drift between setup.py and pyproject.toml.
+# See docs/DEPENDENCY_POLICY.md for details.
 
 setup(
-    name="tapps-agents",
-    version="2.0.1",
-    description="A specification framework for defining, configuring, and orchestrating coding agents",
-    long_description=long_description,
-    long_description_content_type="text/markdown",
-    author="Tapps",
-    url="https://github.com/wtthornton/TappsCodingAgents",
+    # Minimal metadata - most is in pyproject.toml
+    # Only include what's needed for backward compatibility or not in pyproject.toml
     include_package_data=True,
     packages=find_packages(exclude=["tests", "tests.*", "examples", "examples.*"]),
-    python_requires=">=3.13",
-    install_requires=requirements,
+    # Entry points are also defined in pyproject.toml [project.scripts],
+    # but we keep them here for backward compatibility
     entry_points={
         "console_scripts": [
             "tapps-agents=tapps_agents.cli:main",
         ],
     },
-    classifiers=[
-        "Development Status :: 4 - Beta",
-        "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.13",
-    ],
 )

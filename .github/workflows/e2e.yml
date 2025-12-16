@@ -15,6 +15,11 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege permissions: read-only access, write only for artifacts
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   # PR checks: Fast tests only (unit + smoke E2E)
   pr-checks:
@@ -44,7 +49,6 @@ jobs:
             --junitxml=junit-pr-checks.xml \
             --tb=short \
             -v
-        continue-on-error: true
 
       - name: Upload JUnit report
         if: always()
@@ -69,10 +73,15 @@ jobs:
         run: |
           echo "## PR Checks Test Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Unit and smoke E2E tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.test.outcome }}" != "success" ]; then
-            echo "❌ Some tests failed. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.test.outcome }}" == "success" ]; then
+            echo "✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Tests failed** - PR check will fail. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Debugging Tips:" >> $GITHUB_STEP_SUMMARY
+            echo "- Review the JUnit XML artifact for test failure details" >> $GITHUB_STEP_SUMMARY
+            echo "- Check test output in the workflow logs" >> $GITHUB_STEP_SUMMARY
+            echo "- Run tests locally: \`pytest -m \"unit or e2e_smoke\"\`" >> $GITHUB_STEP_SUMMARY
           fi
 
   # Main branch: Unit + integration + workflow E2E (mocked)
@@ -106,7 +115,6 @@ jobs:
             --cov=tapps_agents \
             --cov-report=xml \
             --cov-report=term-missing
-        continue-on-error: true
 
       - name: Upload JUnit report
         if: always()
@@ -139,10 +147,15 @@ jobs:
         run: |
           echo "## Main Branch Test Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Unit, integration, and workflow E2E tests completed" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          if [ "${{ steps.test.outcome }}" != "success" ]; then
-            echo "❌ Some tests failed. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.test.outcome }}" == "success" ]; then
+            echo "✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Tests failed** - Build will fail. Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Debugging Tips:" >> $GITHUB_STEP_SUMMARY
+            echo "- Review the JUnit XML and coverage artifacts for details" >> $GITHUB_STEP_SUMMARY
+            echo "- Check test output in the workflow logs" >> $GITHUB_STEP_SUMMARY
+            echo "- Run tests locally: \`pytest -m \"unit or integration or e2e_workflow\"\`" >> $GITHUB_STEP_SUMMARY
           fi
 
   # Nightly: Scenario tests + real services

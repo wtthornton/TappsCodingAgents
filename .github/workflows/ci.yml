@@ -12,7 +12,33 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Least-privilege permissions: read-only for most jobs, write only for artifacts
+permissions:
+  contents: read
+  pull-requests: read
+  checks: write  # Required for Codecov status checks
+
 jobs:
+  dependency-check:
+    name: Dependency Drift Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install tomli (for Python < 3.11 compatibility)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tomli
+
+      - name: Validate dependency consistency
+        run: python scripts/validate_dependencies.py
+
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest
@@ -81,9 +107,34 @@ jobs:
           python -m pip install -e ".[dev]"
 
       - name: Run tests
-        run: python -m pytest -q --cov=tapps_agents --cov-report=xml --cov-report=term-missing
+        id: test
+        run: |
+          python -m pytest tests/ \
+            --junitxml=junit-ci.xml \
+            --cov=tapps_agents \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --tb=short \
+            -v
+
+      - name: Upload JUnit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-ci
+          path: junit-ci.xml
+          retention-days: 30
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-ci
+          path: coverage.xml
+          retention-days: 30
 
       - name: Upload coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@v4
         with:
           file: ./coverage.xml
@@ -91,5 +142,21 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Test Summary
+        if: always()
+        run: |
+          echo "## CI Test Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.test.outcome }}" == "success" ]; then
+            echo "✅ All tests passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Tests failed** - Check artifacts for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Debugging Tips:" >> $GITHUB_STEP_SUMMARY
+            echo "- Review the JUnit XML artifact for test failure details" >> $GITHUB_STEP_SUMMARY
+            echo "- Check test output in the workflow logs" >> $GITHUB_STEP_SUMMARY
+            echo "- Run tests locally: \`pytest tests/\`" >> $GITHUB_STEP_SUMMARY
+          fi
 
 

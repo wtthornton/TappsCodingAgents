@@ -255,7 +255,11 @@ class Analytics:
         health_status = "healthy"
         health_issues = []
 
-        if metrics.hit_rate < 70:
+        # Check if cache is empty first, but only set to "empty" if we have no activity
+        if metrics.total_entries == 0 and metrics.cache_hits == 0 and metrics.cache_misses == 0:
+            health_status = "empty"
+            health_issues.append("Cache is empty - consider running cache warming")
+        elif metrics.hit_rate < 70:
             health_status = "needs_attention"
             health_issues.append(f"Low hit rate: {metrics.hit_rate:.1f}% (target: >80%)")
 
@@ -264,10 +268,6 @@ class Analytics:
             health_issues.append(
                 f"High response time: {metrics.avg_response_time_ms:.1f}ms (target: <1s)"
             )
-
-        if metrics.total_entries == 0:
-            health_status = "empty"
-            health_issues.append("Cache is empty - consider running cache warming")
 
         if metrics.cache_misses > metrics.cache_hits * 2:
             health_status = "needs_attention"

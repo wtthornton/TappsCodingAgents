@@ -12,12 +12,8 @@ import pytest
 
 pytestmark = pytest.mark.unit
 
-from tapps_agents.cli import (
-    help_command,
-    list_stories_command,
-    review_command,
-    score_command,
-)
+from tapps_agents.cli.commands.planner import list_stories_command
+from tapps_agents.cli.commands.reviewer import help_command, review_command, score_command
 
 
 class TestReviewCommand:

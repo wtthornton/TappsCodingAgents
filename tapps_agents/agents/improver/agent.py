@@ -8,6 +8,7 @@ from typing import Any
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.mal import MAL
+from ...core.tiered_context import ContextTier
 
 
 class ImproverAgent(BaseAgent):
@@ -85,11 +86,7 @@ class ImproverAgent(BaseAgent):
         current_code = file_path_obj.read_text(encoding="utf-8")
 
         # Get context for refactoring
-        context_text = self.get_context_text(file_path_obj, tier=2)
-        # Get context for refactoring
-        context_text = self.get_context_text(file_path_obj, tier=2)
-        # Get context for refactoring
-        context_text = self.get_context_text(file_path_obj, tier=2)
+        context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
         # Build prompt for refactoring
         instruction_text = (
@@ -164,7 +161,7 @@ Return only the refactored code, wrapped in ```python code blocks."""
         current_code = file_path_obj.read_text(encoding="utf-8")
 
         # Get context
-        context_text = self.get_context_text(file_path_obj, tier=2)
+        context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
         optimization_prompts = {
             "performance": "Optimize for execution speed and efficiency",
@@ -238,7 +235,7 @@ Return only the optimized code, wrapped in ```python code blocks."""
         current_code = file_path_obj.read_text(encoding="utf-8")
 
         # Get context
-        context_text = self.get_context_text(file_path_obj, tier=2)
+        context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
         prompt = f"""Improve the overall code quality of the following code:
         

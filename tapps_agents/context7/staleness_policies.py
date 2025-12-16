@@ -8,6 +8,7 @@ and need refresh. Supports library-specific staleness rules.
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
+import re
 
 
 @dataclass
@@ -38,7 +39,13 @@ class StalenessPolicy:
             # Parse ISO format timestamp - handle both naive and timezone-aware
             updated_str = last_updated
             if updated_str.endswith("Z"):
-                updated_str = updated_str[:-1] + "+00:00"
+                # Remove Z
+                updated_str = updated_str[:-1]
+                # Check if timezone is already present by looking for timezone pattern at the end
+                # Pattern: ends with +HH:MM or -HH:MM where HH and MM are digits
+                timezone_pattern = r'[+-]\d{2}:\d{2}$'
+                if not re.search(timezone_pattern, updated_str):
+                    updated_str = updated_str + "+00:00"
 
             updated_dt = datetime.fromisoformat(updated_str)
             
@@ -85,7 +92,13 @@ class StalenessPolicy:
         try:
             updated_str = last_updated
             if updated_str.endswith("Z"):
-                updated_str = updated_str[:-1] + "+00:00"
+                # Remove Z
+                updated_str = updated_str[:-1]
+                # Check if timezone is already present by looking for timezone pattern at the end
+                # Pattern: ends with +HH:MM or -HH:MM where HH and MM are digits
+                timezone_pattern = r'[+-]\d{2}:\d{2}$'
+                if not re.search(timezone_pattern, updated_str):
+                    updated_str = updated_str + "+00:00"
 
             updated_dt = datetime.fromisoformat(updated_str)
             

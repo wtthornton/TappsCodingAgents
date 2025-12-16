@@ -6,8 +6,17 @@ import asyncio
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from . import __version__ as PACKAGE_VERSION
+from .cli.base import (
+    EXIT_GENERAL_ERROR,
+    format_output,
+    handle_agent_error,
+    run_agent_command,
+    run_async_command,
+    run_with_agent_lifecycle,
+)
 from .agents.analyst.agent import AnalystAgent
 from .agents.architect.agent import ArchitectAgent
 from .agents.debugger.agent import DebuggerAgent
@@ -33,41 +42,41 @@ async def review_command(
     path = Path(file_path)
 
     if not path.exists():
-        print(f"Error: File not found: {file_path}", file=sys.stderr)
-        sys.exit(1)
+        from .cli.base import format_error_output, EXIT_GENERAL_ERROR
+
+        format_error_output(
+            f"File not found: {file_path}",
+            error_type="file_not_found",
+            exit_code=EXIT_GENERAL_ERROR,
+            format_type=output_format,
+        )
 
     reviewer = ReviewerAgent()
-    try:
-        # Activate agent (load configs, etc.)
-        await reviewer.activate()
 
-        # Execute review command
-        result = await reviewer.run(
+    async def _run_review() -> dict[str, Any]:
+        return await reviewer.run(
             "review", file=file_path, model=model or "qwen2.5-coder:7b"
         )
 
-        if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
+    result = await run_with_agent_lifecycle(reviewer, _run_review)
+    handle_agent_error(result, format_type=output_format)
 
-        if output_format == "json":
-            print(json.dumps(result, indent=2))
-        else:
-            # Simple text format
-            print(f"Review: {result['file']}")
-            if "scoring" in result:
-                scores = result["scoring"]
-                print("\nScores:")
-                print(f"  Complexity: {scores['complexity_score']:.1f}/10")
-                print(f"  Security: {scores['security_score']:.1f}/10")
-                print(f"  Maintainability: {scores['maintainability_score']:.1f}/10")
-                print(f"  Overall: {scores['overall_score']:.1f}/100")
-                print(f"\nPassed: {result.get('passed', False)}")
+    if output_format == "json":
+        format_output(result, format_type="json")
+    else:
+        # Simple text format
+        print(f"Review: {result['file']}")
+        if "scoring" in result:
+            scores = result["scoring"]
+            print("\nScores:")
+            print(f"  Complexity: {scores['complexity_score']:.1f}/10")
+            print(f"  Security: {scores['security_score']:.1f}/10")
+            print(f"  Maintainability: {scores['maintainability_score']:.1f}/10")
+            print(f"  Overall: {scores['overall_score']:.1f}/100")
+            print(f"\nPassed: {result.get('passed', False)}")
 
-            if "feedback" in result and "summary" in result["feedback"]:
-                print(f"\nFeedback:\n{result['feedback']['summary']}")
-    finally:
-        await reviewer.close()
+        if "feedback" in result and "summary" in result["feedback"]:
+            print(f"\nFeedback:\n{result['feedback']['summary']}")
 
 
 async def score_command(file_path: str, output_format: str = "json"):
@@ -75,30 +84,33 @@ async def score_command(file_path: str, output_format: str = "json"):
     path = Path(file_path)
 
     if not path.exists():
-        print(f"Error: File not found: {file_path}", file=sys.stderr)
-        sys.exit(1)
+        from .cli.base import format_error_output, EXIT_GENERAL_ERROR
+
+        format_error_output(
+            f"File not found: {file_path}",
+            error_type="file_not_found",
+            exit_code=EXIT_GENERAL_ERROR,
+            format_type=output_format,
+        )
 
     reviewer = ReviewerAgent()
-    try:
-        await reviewer.activate()
-        result = await reviewer.run("score", file=file_path)
 
-        if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
+    async def _run_score() -> dict[str, Any]:
+        return await reviewer.run("score", file=file_path)
 
-        if output_format == "json":
-            print(json.dumps(result, indent=2))
-        else:
-            print(f"Scores for: {result['file']}")
-            if "scoring" in result:
-                scores = result["scoring"]
-                print(f"  Complexity: {scores['complexity_score']:.1f}/10")
-                print(f"  Security: {scores['security_score']:.1f}/10")
-                print(f"  Maintainability: {scores['maintainability_score']:.1f}/10")
-                print(f"  Overall: {scores['overall_score']:.1f}/100")
-    finally:
-        await reviewer.close()
+    result = await run_with_agent_lifecycle(reviewer, _run_score)
+    handle_agent_error(result, format_type=output_format)
+
+    if output_format == "json":
+        format_output(result, format_type="json")
+    else:
+        print(f"Scores for: {result['file']}")
+        if "scoring" in result:
+            scores = result["scoring"]
+            print(f"  Complexity: {scores['complexity_score']:.1f}/10")
+            print(f"  Security: {scores['security_score']:.1f}/10")
+            print(f"  Maintainability: {scores['maintainability_score']:.1f}/10")
+            print(f"  Overall: {scores['overall_score']:.1f}/100")
 
 
 async def help_command():
@@ -429,515 +441,488 @@ async def refactor_command(
 
 def _handle_planner_command(args: object) -> None:
     """Handle planner agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
+    
     if command == "plan":
-        asyncio.run(plan_command(args.description, getattr(args, "format", "json")))
+        run_async_command(plan_command(args.description, output_format))
     elif command == "create-story":
-        asyncio.run(
+        run_async_command(
             create_story_command(
                 args.description,
                 epic=getattr(args, "epic", None),
                 priority=getattr(args, "priority", "medium"),
-                output_format=getattr(args, "format", "json"),
+                output_format=output_format,
             )
         )
     elif command == "list-stories":
-        asyncio.run(
+        run_async_command(
             list_stories_command(
                 epic=getattr(args, "epic", None),
                 status=getattr(args, "status", None),
-                output_format=getattr(args, "format", "json"),
+                output_format=output_format,
             )
         )
-    elif command == "help":
+    elif command == "help" or command is None:
         planner = PlannerAgent()
-        asyncio.run(planner.activate())
-        result = asyncio.run(planner.run("help"))
-        print(result["content"])
-        asyncio.run(planner.close())
+        result = run_async_command(
+            run_agent_command(planner, "help", format_type=output_format, exit_on_error=False)
+        )
+        format_output(result.get("content", result), format_type=output_format)
     else:
         planner = PlannerAgent()
-        asyncio.run(planner.activate())
-        result = asyncio.run(planner.run("help"))
-        print(result["content"])
-        asyncio.run(planner.close())
+        result = run_async_command(
+            run_agent_command(planner, "help", format_type=output_format, exit_on_error=False)
+        )
+        format_output(result.get("content", result), format_type=output_format)
 
 
 def _handle_implementer_command(args: object) -> None:
     """Handle implementer agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
+    
     if command == "implement":
-        asyncio.run(
+        run_async_command(
             implement_command(
                 args.specification,
                 args.file_path,
                 context=getattr(args, "context", None),
                 language=getattr(args, "language", "python"),
-                output_format=getattr(args, "format", "json"),
+                output_format=output_format,
             )
         )
     elif command == "generate-code":
-        asyncio.run(
+        run_async_command(
             generate_code_command(
                 args.specification,
                 file_path=getattr(args, "file", None),
                 context=getattr(args, "context", None),
                 language=getattr(args, "language", "python"),
-                output_format=getattr(args, "format", "json"),
+                output_format=output_format,
             )
         )
     elif command == "refactor":
-        asyncio.run(
+        run_async_command(
             refactor_command(
                 args.file_path,
                 args.instruction,
-                output_format=getattr(args, "format", "json"),
+                output_format=output_format,
             )
         )
-    elif command == "help":
+    elif command == "help" or command is None:
         implementer = ImplementerAgent()
-        asyncio.run(implementer.activate())
-        result = asyncio.run(implementer.run("help"))
-        print(result["content"])
-        asyncio.run(implementer.close())
+        result = run_async_command(
+            run_agent_command(implementer, "help", format_type=output_format, exit_on_error=False)
+        )
+        format_output(result.get("content", result), format_type=output_format)
     else:
         implementer = ImplementerAgent()
-        asyncio.run(implementer.activate())
-        result = asyncio.run(implementer.run("help"))
-        print(result["content"])
-        asyncio.run(implementer.close())
+        result = run_async_command(
+            run_agent_command(implementer, "help", format_type=output_format, exit_on_error=False)
+        )
+        format_output(result.get("content", result), format_type=output_format)
 
 
 def _handle_tester_command(args: object) -> None:
     """Handle tester agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
     tester = TesterAgent()
-    asyncio.run(tester.activate())
-    try:
+    
+    async def _run_tester_command() -> dict[str, Any]:
         if command == "test":
-            result = asyncio.run(
-                tester.run(
-                    "test",
-                    file=args.file,
-                    test_file=getattr(args, "test_file", None),
-                    integration=getattr(args, "integration", False),
-                )
+            return await tester.run(
+                "test",
+                file=args.file,
+                test_file=getattr(args, "test_file", None),
+                integration=getattr(args, "integration", False),
             )
         elif command == "generate-tests":
-            result = asyncio.run(
-                tester.run(
-                    "generate-tests",
-                    file=args.file,
-                    test_file=getattr(args, "test_file", None),
-                    integration=getattr(args, "integration", False),
-                )
+            return await tester.run(
+                "generate-tests",
+                file=args.file,
+                test_file=getattr(args, "test_file", None),
+                integration=getattr(args, "integration", False),
             )
         elif command == "run-tests":
-            result = asyncio.run(
-                tester.run(
-                    "run-tests",
-                    test_path=getattr(args, "test_path", None),
-                    coverage=not getattr(args, "no_coverage", False),
-                )
+            return await tester.run(
+                "run-tests",
+                test_path=getattr(args, "test_path", None),
+                coverage=not getattr(args, "no_coverage", False),
             )
-        elif command == "help":
-            result = asyncio.run(tester.run("help"))
-            print(result["content"])
-            return
+        elif command == "help" or command is None:
+            return await tester.run("help")
         else:
-            result = asyncio.run(tester.run("help"))
-            print(result["content"])
-            return
-
+            return await tester.run("help")
+    
+    result = run_async_command(run_with_agent_lifecycle(tester, _run_tester_command))
+    
+    # Handle help output specially
+    if command == "help" or command is None or command not in ("test", "generate-tests", "run-tests"):
+        format_output(result.get("content", result), format_type=output_format)
+    else:
+        # Check for errors first (will exit if error found)
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(tester.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
 
 
 def _handle_debugger_command(args: object) -> None:
     """Handle debugger agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
     debugger = DebuggerAgent()
-    asyncio.run(debugger.activate())
-    try:
+    
+    async def _run_debugger_command() -> dict[str, Any]:
         if command == "debug":
-            result = asyncio.run(
-                debugger.run(
-                    "debug",
-                    error_message=args.error_message,
-                    file=getattr(args, "file", None),
-                    line=getattr(args, "line", None),
-                    stack_trace=getattr(args, "stack_trace", None),
-                )
+            return await debugger.run(
+                "debug",
+                error_message=args.error_message,
+                file=getattr(args, "file", None),
+                line=getattr(args, "line", None),
+                stack_trace=getattr(args, "stack_trace", None),
             )
         elif command == "analyze-error":
-            result = asyncio.run(
-                debugger.run(
-                    "analyze-error",
-                    error_message=args.error_message,
-                    stack_trace=getattr(args, "stack_trace", None),
-                    code_context=getattr(args, "code_context", None),
-                )
+            return await debugger.run(
+                "analyze-error",
+                error_message=args.error_message,
+                stack_trace=getattr(args, "stack_trace", None),
+                code_context=getattr(args, "code_context", None),
             )
         elif command == "trace":
-            result = asyncio.run(
-                debugger.run(
-                    "trace",
-                    file=args.file,
-                    function=getattr(args, "function", None),
-                    line=getattr(args, "line", None),
-                )
+            return await debugger.run(
+                "trace",
+                file=args.file,
+                function=getattr(args, "function", None),
+                line=getattr(args, "line", None),
             )
-        elif command == "help":
-            result = asyncio.run(debugger.run("help"))
-            print(result["content"])
-            return
+        elif command == "help" or command is None:
+            return await debugger.run("help")
         else:
-            result = asyncio.run(debugger.run("help"))
-            print(result["content"])
-            return
-
+            return await debugger.run("help")
+    
+    result = run_async_command(run_with_agent_lifecycle(debugger, _run_debugger_command))
+    
+    # Handle help output specially
+    if command == "help" or command is None or command not in ("debug", "analyze-error", "trace"):
+        format_output(result.get("content", result), format_type=output_format)
+    else:
+        # Check for errors first (will exit if error found)
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(debugger.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
 
 
 def _handle_documenter_command(args: object) -> None:
     """Handle documenter agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
     documenter = DocumenterAgent()
-    asyncio.run(documenter.activate())
-    try:
+    
+    async def _run_documenter_command() -> dict[str, Any]:
         if command == "document":
-            result = asyncio.run(
-                documenter.run(
-                    "document",
-                    file=args.file,
-                    output_format=getattr(args, "output_format", "markdown"),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await documenter.run(
+                "document",
+                file=args.file,
+                output_format=getattr(args, "output_format", "markdown"),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "generate-docs":
-            result = asyncio.run(
-                documenter.run(
-                    "generate-docs",
-                    file=args.file,
-                    output_format=getattr(args, "output_format", "markdown"),
-                )
+            return await documenter.run(
+                "generate-docs",
+                file=args.file,
+                output_format=getattr(args, "output_format", "markdown"),
             )
         elif command == "update-readme":
-            result = asyncio.run(
-                documenter.run(
-                    "update-readme",
-                    project_root=getattr(args, "project_root", None),
-                    context=getattr(args, "context", None),
-                )
+            return await documenter.run(
+                "update-readme",
+                project_root=getattr(args, "project_root", None),
+                context=getattr(args, "context", None),
             )
         elif command == "update-docstrings":
-            result = asyncio.run(
-                documenter.run(
-                    "update-docstrings",
-                    file=args.file,
-                    docstring_format=getattr(args, "docstring_format", None),
-                    write_file=getattr(args, "write_file", False),
-                )
+            return await documenter.run(
+                "update-docstrings",
+                file=args.file,
+                docstring_format=getattr(args, "docstring_format", None),
+                write_file=getattr(args, "write_file", False),
             )
-        elif command == "help":
-            result = asyncio.run(documenter.run("help"))
-            print(result["content"])
-            return
+        elif command == "help" or command is None:
+            return await documenter.run("help")
         else:
-            result = asyncio.run(documenter.run("help"))
-            print(result["content"])
-            return
-
+            return await documenter.run("help")
+    
+    result = run_async_command(run_with_agent_lifecycle(documenter, _run_documenter_command))
+    
+    # Handle help output specially
+    if command == "help" or command is None or command not in ("document", "generate-docs", "update-readme", "update-docstrings"):
+        format_output(result.get("content", result), format_type=output_format)
+    else:
+        # Check for errors first (will exit if error found)
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(documenter.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
 
 
 def _handle_orchestrator_command(args: object) -> None:
     """Handle orchestrator agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    # Orchestrator commands use "*" prefix, so preserve it
+    command = args.command if args.command else None
+    output_format = getattr(args, "format", "json")
     orchestrator = OrchestratorAgent()
-    asyncio.run(orchestrator.activate())
-    try:
-        if command == "workflow-list" or command == "*workflow-list":
-            result = asyncio.run(orchestrator.run("*workflow-list"))
-        elif command == "workflow-start" or command == "*workflow-start":
+    
+    async def _run_orchestrator_command() -> dict[str, Any]:
+        # Normalize command but preserve * prefix for orchestrator
+        normalized = normalize_command(command) if command else None
+        
+        if normalized == "workflow-list":
+            return await orchestrator.run("*workflow-list")
+        elif normalized == "workflow-start":
             workflow_id = getattr(args, "workflow_id", None)
             if not workflow_id:
-                print("Error: workflow_id required", file=sys.stderr)
-                sys.exit(1)
-            result = asyncio.run(
-                orchestrator.run("*workflow-start", workflow_id=workflow_id)
-            )
-        elif command == "workflow-status" or command == "*workflow-status":
-            result = asyncio.run(orchestrator.run("*workflow-status"))
-        elif command == "workflow-next" or command == "*workflow-next":
-            result = asyncio.run(orchestrator.run("*workflow-next"))
-        elif command == "workflow-skip" or command == "*workflow-skip":
+                format_error_output(
+                    "workflow_id required",
+                    error_type="usage_error",
+                    exit_code=EXIT_USAGE_ERROR,
+                    format_type=output_format,
+                )
+            return await orchestrator.run("*workflow-start", workflow_id=workflow_id)
+        elif normalized == "workflow-status":
+            return await orchestrator.run("*workflow-status")
+        elif normalized == "workflow-next":
+            return await orchestrator.run("*workflow-next")
+        elif normalized == "workflow-skip":
             step_id = getattr(args, "step_id", None)
             if not step_id:
-                print("Error: step_id required", file=sys.stderr)
-                sys.exit(1)
-            result = asyncio.run(orchestrator.run("*workflow-skip", step_id=step_id))
-        elif command == "workflow-resume" or command == "*workflow-resume":
-            result = asyncio.run(orchestrator.run("*workflow-resume"))
-        elif command == "gate" or command == "*gate":
+                format_error_output(
+                    "step_id required",
+                    error_type="usage_error",
+                    exit_code=EXIT_USAGE_ERROR,
+                    format_type=output_format,
+                )
+            return await orchestrator.run("*workflow-skip", step_id=step_id)
+        elif normalized == "workflow-resume":
+            return await orchestrator.run("*workflow-resume")
+        elif normalized == "gate":
             condition = getattr(args, "condition", None)
             scoring_data = getattr(args, "scoring_data", {})
             if isinstance(scoring_data, str):
                 scoring_data = json.loads(scoring_data)
-            result = asyncio.run(
-                orchestrator.run(
-                    "*gate", condition=condition, scoring_data=scoring_data
-                )
+            return await orchestrator.run(
+                "*gate", condition=condition, scoring_data=scoring_data
             )
-        elif command == "help" or command == "*help":
-            result = asyncio.run(orchestrator.run("*help"))
+        elif normalized == "help" or normalized is None:
+            return await orchestrator.run("*help")
         else:
-            result = asyncio.run(orchestrator.run("*help"))
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(orchestrator.close())
+            return await orchestrator.run("*help")
+    
+    result = run_async_command(run_with_agent_lifecycle(orchestrator, _run_orchestrator_command))
+    # Check for errors first (will exit if error found)
+    if "error" in result:
+        handle_agent_error(result, format_type=output_format)
+    format_output(result, format_type=output_format)
 
 
 def _handle_analyst_command(args: object) -> None:
     """Handle analyst agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
     analyst = AnalystAgent()
-    asyncio.run(analyst.activate())
-    try:
+    
+    async def _run_analyst_command() -> dict[str, Any]:
         if command == "gather-requirements":
-            result = asyncio.run(
-                analyst.run(
-                    "gather-requirements",
-                    description=args.description,
-                    context=getattr(args, "context", ""),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await analyst.run(
+                "gather-requirements",
+                description=args.description,
+                context=getattr(args, "context", ""),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "stakeholder-analysis":
-            result = asyncio.run(
-                analyst.run(
-                    "analyze-stakeholders",
-                    description=args.description,
-                    stakeholders=getattr(args, "stakeholders", []),
-                )
+            return await analyst.run(
+                "analyze-stakeholders",
+                description=args.description,
+                stakeholders=getattr(args, "stakeholders", []),
             )
         elif command == "tech-research":
-            result = asyncio.run(
-                analyst.run(
-                    "research-technology",
-                    requirement=args.requirement,
-                    context=getattr(args, "context", ""),
-                    criteria=getattr(args, "criteria", []),
-                )
+            return await analyst.run(
+                "research-technology",
+                requirement=args.requirement,
+                context=getattr(args, "context", ""),
+                criteria=getattr(args, "criteria", []),
             )
         elif command == "estimate-effort":
-            result = asyncio.run(
-                analyst.run(
-                    "estimate-effort",
-                    feature_description=args.feature_description,
-                    context=getattr(args, "context", ""),
-                )
+            return await analyst.run(
+                "estimate-effort",
+                feature_description=args.feature_description,
+                context=getattr(args, "context", ""),
             )
         elif command == "assess-risk":
-            result = asyncio.run(
-                analyst.run(
-                    "assess-risk",
-                    feature_description=args.feature_description,
-                    context=getattr(args, "context", ""),
-                )
+            return await analyst.run(
+                "assess-risk",
+                feature_description=args.feature_description,
+                context=getattr(args, "context", ""),
             )
         elif command == "competitive-analysis":
-            result = asyncio.run(
-                analyst.run(
-                    "competitive-analysis",
-                    product_description=args.product_description,
-                    competitors=getattr(args, "competitors", []),
-                )
+            return await analyst.run(
+                "competitive-analysis",
+                product_description=args.product_description,
+                competitors=getattr(args, "competitors", []),
             )
-        elif command == "help":
-            result = asyncio.run(analyst.run("help"))
-            print(result["content"])
-            return
+        elif command == "help" or command is None:
+            return await analyst.run("help")
         else:
-            result = asyncio.run(analyst.run("help"))
-            print(result["content"])
-            return
-
+            return await analyst.run("help")
+    
+    result = run_async_command(run_with_agent_lifecycle(analyst, _run_analyst_command))
+    
+    # Handle help output specially
+    if command == "help" or command is None or command not in ("gather-requirements", "stakeholder-analysis", "tech-research", "estimate-effort", "assess-risk", "competitive-analysis"):
+        format_output(result.get("content", result), format_type=output_format)
+    else:
+        # Check for errors first (will exit if error found)
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(analyst.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
 
 
 def _handle_architect_command(args: object) -> None:
     """Handle architect agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
     architect = ArchitectAgent()
-    asyncio.run(architect.activate())
-    try:
+    
+    async def _run_architect_command() -> dict[str, Any]:
         if command == "design-system":
-            result = asyncio.run(
-                architect.run(
-                    "design-system",
-                    requirements=args.requirements,
-                    context=getattr(args, "context", ""),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await architect.run(
+                "design-system",
+                requirements=args.requirements,
+                context=getattr(args, "context", ""),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "architecture-diagram":
-            result = asyncio.run(
-                architect.run(
-                    "create-diagram",
-                    architecture_description=args.architecture_description,
-                    diagram_type=getattr(args, "diagram_type", "component"),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await architect.run(
+                "create-diagram",
+                architecture_description=args.architecture_description,
+                diagram_type=getattr(args, "diagram_type", "component"),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "tech-selection":
-            result = asyncio.run(
-                architect.run(
-                    "select-technology",
-                    component_description=args.component_description,
-                    requirements=getattr(args, "requirements", ""),
-                    constraints=getattr(args, "constraints", []),
-                )
+            return await architect.run(
+                "select-technology",
+                component_description=args.component_description,
+                requirements=getattr(args, "requirements", ""),
+                constraints=getattr(args, "constraints", []),
             )
         elif command == "design-security":
-            result = asyncio.run(
-                architect.run(
-                    "design-security",
-                    system_description=args.system_description,
-                    threat_model=getattr(args, "threat_model", ""),
-                )
+            return await architect.run(
+                "design-security",
+                system_description=args.system_description,
+                threat_model=getattr(args, "threat_model", ""),
             )
         elif command == "define-boundaries":
-            result = asyncio.run(
-                architect.run(
-                    "define-boundaries",
-                    system_description=args.system_description,
-                    context=getattr(args, "context", ""),
-                )
+            return await architect.run(
+                "define-boundaries",
+                system_description=args.system_description,
+                context=getattr(args, "context", ""),
             )
-        elif command == "help":
-            result = asyncio.run(architect.run("help"))
-            print(result["content"])
-            return
+        elif command == "help" or command is None:
+            return await architect.run("help")
         else:
-            result = asyncio.run(architect.run("help"))
-            print(result["content"])
-            return
-
+            return await architect.run("help")
+    
+    result = run_async_command(run_with_agent_lifecycle(architect, _run_architect_command))
+    
+    # Handle help output specially
+    if command == "help" or command is None or command not in ("design-system", "architecture-diagram", "tech-selection", "design-security", "define-boundaries"):
+        format_output(result.get("content", result), format_type=output_format)
+    else:
+        # Check for errors first (will exit if error found)
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(architect.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
 
 
 def _handle_designer_command(args: object) -> None:
     """Handle designer agent commands"""
-    command = args.command.lstrip("*") if args.command else None
+    command = normalize_command(args.command) if args.command else None
+    output_format = getattr(args, "format", "json")
     designer = DesignerAgent()
-    asyncio.run(designer.activate())
-    try:
+    
+    async def _run_designer_command() -> dict[str, Any]:
         if command == "design-api":
-            result = asyncio.run(
-                designer.run(
-                    "design-api",
-                    requirements=args.requirements,
-                    api_type=getattr(args, "api_type", "REST"),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await designer.run(
+                "design-api",
+                requirements=args.requirements,
+                api_type=getattr(args, "api_type", "REST"),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "design-data-model":
-            result = asyncio.run(
-                designer.run(
-                    "design-data-model",
-                    requirements=args.requirements,
-                    data_source=getattr(args, "data_source", ""),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await designer.run(
+                "design-data-model",
+                requirements=args.requirements,
+                data_source=getattr(args, "data_source", ""),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "design-ui":
-            result = asyncio.run(
-                designer.run(
-                    "design-ui",
-                    feature_description=args.feature_description,
-                    user_stories=getattr(args, "user_stories", []),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await designer.run(
+                "design-ui",
+                feature_description=args.feature_description,
+                user_stories=getattr(args, "user_stories", []),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "create-wireframe":
-            result = asyncio.run(
-                designer.run(
-                    "create-wireframe",
-                    screen_description=args.screen_description,
-                    wireframe_type=getattr(args, "wireframe_type", "page"),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await designer.run(
+                "create-wireframe",
+                screen_description=args.screen_description,
+                wireframe_type=getattr(args, "wireframe_type", "page"),
+                output_file=getattr(args, "output_file", None),
             )
         elif command == "define-design-system":
-            result = asyncio.run(
-                designer.run(
-                    "define-design-system",
-                    project_description=args.project_description,
-                    brand_guidelines=getattr(args, "brand_guidelines", ""),
-                    output_file=getattr(args, "output_file", None),
-                )
+            return await designer.run(
+                "define-design-system",
+                project_description=args.project_description,
+                brand_guidelines=getattr(args, "brand_guidelines", ""),
+                output_file=getattr(args, "output_file", None),
             )
-        elif command == "help":
-            result = asyncio.run(designer.run("help"))
-            print(result["content"])
-            return
+        elif command == "help" or command is None:
+            return await designer.run("help")
         else:
-            result = asyncio.run(designer.run("help"))
-            print(result["content"])
-            return
-
+            return await designer.run("help")
+    
+    result = run_async_command(run_with_agent_lifecycle(designer, _run_designer_command))
+    
+    # Handle help output specially
+    if command == "help" or command is None or command not in ("design-api", "design-data-model", "design-ui", "create-wireframe", "define-design-system"):
+        format_output(result.get("content", result), format_type=output_format)
+    else:
+        # Check for errors first (will exit if error found)
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-    finally:
-        asyncio.run(designer.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
 
 
 def _handle_reviewer_command(args: object) -> None:
     """Handle reviewer agent commands"""
     command = args.command.lstrip("*") if args.command else None
+    output_format = getattr(args, "format", "json")
+    
     if command == "review":
-        asyncio.run(
-            review_command(args.file, args.model, getattr(args, "format", "json"))
+        run_async_command(
+            review_command(args.file, args.model, output_format)
         )
     elif command == "score":
-        asyncio.run(score_command(args.file, getattr(args, "format", "json")))
+        run_async_command(score_command(args.file, output_format))
     elif command == "lint":
         reviewer = ReviewerAgent()
-        asyncio.run(reviewer.activate())
-        result = asyncio.run(reviewer.run("lint", file=args.file))
-        if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        output_format = getattr(args, "format", "json")
+
+        async def _run_lint() -> dict[str, Any]:
+            return await reviewer.run("lint", file=args.file)
+
+        result = run_async_command(run_with_agent_lifecycle(reviewer, _run_lint))
+        handle_agent_error(result, format_type=output_format)
+        
         if output_format == "json":
-            print(json.dumps(result, indent=2))
+            format_output(result, format_type="json")
         else:
             if "issues" in result:
                 print(f"Linting issues for {args.file}:")
@@ -945,17 +930,18 @@ def _handle_reviewer_command(args: object) -> None:
                     print(
                         f"  {issue.get('code', '')}: {issue.get('message', '')} (line {issue.get('line', '?')})"
                     )
-        asyncio.run(reviewer.close())
     elif command == "type-check":
         reviewer = ReviewerAgent()
-        asyncio.run(reviewer.activate())
-        result = asyncio.run(reviewer.run("type-check", file=args.file))
-        if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
         output_format = getattr(args, "format", "json")
+        result = run_async_command(
+            run_with_agent_lifecycle(
+                reviewer, lambda: reviewer.run("type-check", file=args.file)
+            )
+        )
+        if "error" in result:
+            handle_agent_error(result, format_type=output_format)
         if output_format == "json":
-            print(json.dumps(result, indent=2))
+            format_output(result, format_type=output_format)
         else:
             if "errors" in result:
                 print(f"Type checking errors for {args.file}:")
@@ -963,62 +949,63 @@ def _handle_reviewer_command(args: object) -> None:
                     print(
                         f"  {error.get('message', '')} (line {error.get('line', '?')})"
                     )
-        asyncio.run(reviewer.close())
     elif command == "report":
         reviewer = ReviewerAgent()
-        asyncio.run(reviewer.activate())
+        output_format = getattr(args, "format", "json")
         formats = getattr(args, "formats", ["all"])
         if "all" in formats:
             format_type = "all"
         else:
             format_type = ",".join(formats)
-        result = asyncio.run(
-            reviewer.run(
-                "report",
-                target=args.target,
-                format=format_type,
-                output_dir=getattr(args, "output_dir", None),
+        result = run_async_command(
+            run_with_agent_lifecycle(
+                reviewer,
+                lambda: reviewer.run(
+                    "report",
+                    target=args.target,
+                    format=format_type,
+                    output_dir=getattr(args, "output_dir", None),
+                ),
             )
         )
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        print(json.dumps(result, indent=2))
-        asyncio.run(reviewer.close())
+            handle_agent_error(result, format_type=output_format)
+        format_output(result, format_type=output_format)
     elif command == "duplication":
         reviewer = ReviewerAgent()
-        asyncio.run(reviewer.activate())
-        result = asyncio.run(reviewer.run("duplication", file=args.target))
-        if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
         output_format = getattr(args, "format", "json")
+        result = run_async_command(
+            run_with_agent_lifecycle(
+                reviewer, lambda: reviewer.run("duplication", file=args.target)
+            )
+        )
+        if "error" in result:
+            handle_agent_error(result, format_type=output_format)
         if output_format == "json":
-            print(json.dumps(result, indent=2))
+            format_output(result, format_type=output_format)
         else:
             if "duplicates" in result:
                 print(f"Code duplication detected in {args.target}:")
                 print(f"  Total duplicates: {len(result.get('duplicates', []))}")
-        asyncio.run(reviewer.close())
     elif command == "analyze-project":
         reviewer = ReviewerAgent()
-        asyncio.run(reviewer.activate())
-        result = asyncio.run(
-            reviewer.run(
-                "analyze-project",
-                project_root=getattr(args, "project_root", None),
-                include_comparison=not getattr(args, "no_comparison", False),
+        output_format = getattr(args, "format", "json")
+        result = run_async_command(
+            run_with_agent_lifecycle(
+                reviewer,
+                lambda: reviewer.run(
+                    "analyze-project",
+                    project_root=getattr(args, "project_root", None),
+                    include_comparison=not getattr(args, "no_comparison", False),
+                ),
             )
         )
         if "error" in result:
-            print(f"Error: {result['error']}", file=sys.stderr)
-            sys.exit(1)
-        output_format = getattr(args, "format", "json")
+            handle_agent_error(result, format_type=output_format)
         if output_format == "json":
-            print(json.dumps(result, indent=2))
+            format_output(result, format_type=output_format)
         else:
             print("Project analysis complete. See JSON output for details.")
-        asyncio.run(reviewer.close())
     elif command == "analyze-services":
         reviewer = ReviewerAgent()
         asyncio.run(reviewer.activate())
@@ -1047,8 +1034,21 @@ def _handle_reviewer_command(args: object) -> None:
 
 
 def main():
-    """Main CLI entry point - supports both *command and command formats"""
+    """
+    Main CLI entry point - supports both *command and command formats.
+    
+    This function is the entry point for both:
+    - Console script: `tapps-agents` (via pyproject.toml entry_points)
+    - Module invocation: `python -m tapps_agents.cli`
+    
+    Startup routines are run at the beginning to ensure consistent behavior
+    across all entrypoints.
+    """
     import argparse
+
+    # Run startup routines at the beginning of main() to ensure
+    # consistent behavior regardless of entrypoint
+    _run_startup_routines()
 
     parser = argparse.ArgumentParser(
         description="TappsCodingAgents CLI - AI coding agents framework",
@@ -2858,8 +2858,18 @@ Examples:
         parser.print_help()
 
 
-if __name__ == "__main__":
-    # Run startup routines (documentation refresh) before main
+def _run_startup_routines() -> None:
+    """
+    Run startup routines (documentation refresh, etc.) before CLI execution.
+    
+    This function ensures startup routines run consistently regardless of
+    entrypoint (console script vs python -m tapps_agents.cli).
+    
+    Startup routines are:
+    - Bounded (time-limited, non-blocking)
+    - Non-fatal (failures don't prevent CLI execution)
+    - Documented (see tapps_agents/core/startup.py)
+    """
     import asyncio
 
     from .core.startup import startup_routines
@@ -2869,10 +2879,20 @@ if __name__ == "__main__":
         try:
             await startup_routines(refresh_docs=True, background_refresh=True)
         except Exception:
-            # Don't fail if startup routines fail
-            return
+            # Don't fail if startup routines fail - they're non-critical
+            pass
 
-    # Start startup routines in background
-    asyncio.run(startup())
+    try:
+        # Check if we're already in an event loop (shouldn't happen in CLI)
+        loop = asyncio.get_running_loop()
+        # If we're in a loop, create a task instead
+        asyncio.create_task(startup())
+    except RuntimeError:
+        # No running loop - safe to use asyncio.run()
+        asyncio.run(startup())
 
+
+if __name__ == "__main__":
+    # Run startup routines before main (ensures parity with console script)
+    _run_startup_routines()
     main()

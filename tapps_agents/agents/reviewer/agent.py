@@ -172,6 +172,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 )
             except (FileNotFoundError, ValueError) as e:
                 return {"error": str(e)}
+            except RuntimeError as e:
+                # Handle scorer errors and other runtime errors
+                return {"error": str(e)}
 
         elif command == "score":
             file_path = kwargs.get("file")
@@ -316,34 +319,13 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Returns:
             Review results with scores and feedback
         """
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
-
-        # Input validation: Check file size
+        # Use centralized path validation from BaseAgent
         reviewer_config = self.config.agents.reviewer if self.config else None
         max_file_size = (
-            reviewer_config.max_file_size if reviewer_config else (1024 * 1024)
+            reviewer_config.max_file_size if reviewer_config else (10 * 1024 * 1024)
         )
-        file_size = file_path.stat().st_size
-        if file_size > max_file_size:
-            raise ValueError(
-                f"File too large: {file_size} bytes (max {max_file_size} bytes)"
-            )
-
-        # Input validation: Check path traversal (allow absolute paths for testing)
-        # In production, we'd restrict to project directory
-        # For now, just ensure it's an absolute path or within reasonable bounds
-        resolved_path = file_path.resolve()
-
-        # Check for obvious path traversal patterns
-        path_str = str(resolved_path)
-        if ".." in str(file_path) and not resolved_path.exists():
-            raise ValueError(f"Path traversal detected: {file_path}")
-
-        # Additional check: ensure path doesn't contain suspicious patterns
-        suspicious_patterns = ["%2e%2e", "%2f", "%5c"]  # URL-encoded traversal attempts
-        if any(pattern in path_str.lower() for pattern in suspicious_patterns):
-            raise ValueError(f"Suspicious path detected: {file_path}")
+        # _validate_path handles existence, size, and path traversal checks
+        self._validate_path(file_path, max_file_size=max_file_size)
 
         # Read code
         try:
@@ -526,8 +508,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "fatal_count": int
             }
         """
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+        # Use centralized path validation from BaseAgent
+        self._validate_path(file_path)
 
         file_ext = file_path.suffix.lower()
 
@@ -619,8 +601,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "error_codes": List[str] (unique error codes found)
             }
         """
-        if not file_path.exists():
-            raise FileNotFoundError(f"File not found: {file_path}")
+        # Use centralized path validation from BaseAgent
+        self._validate_path(file_path)
 
         file_ext = file_path.suffix.lower()
 
