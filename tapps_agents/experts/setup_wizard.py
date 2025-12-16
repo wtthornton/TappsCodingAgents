@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from .domain_config import DomainConfigParser
+from .domain_utils import sanitize_domain_for_path
 from .expert_config import load_expert_configs
 
 
@@ -145,7 +146,8 @@ class ExpertSetupWizard:
 
     def _setup_rag_knowledge_base(self, domain: str, expert_name: str):
         """Help set up RAG knowledge base for an expert."""
-        domain_kb_dir = self.knowledge_base_dir / domain
+        sanitized_domain = sanitize_domain_for_path(domain)
+        domain_kb_dir = self.knowledge_base_dir / sanitized_domain
 
         print(f"\nSetting up knowledge base for {expert_name}...")
 
@@ -167,7 +169,7 @@ class ExpertSetupWizard:
 
         # Offer to create a template knowledge file
         if self._prompt_yes_no("Create a template knowledge file?", default=True):
-            template_file = domain_kb_dir / f"{domain}-knowledge.md"
+            template_file = domain_kb_dir / f"{sanitized_domain}-knowledge.md"
             template_content = f"""# {expert_name} Knowledge Base
 
 ## Domain: {domain}
@@ -323,7 +325,8 @@ Add your domain-specific knowledge here. This file will be used for RAG (Retriev
             # Check knowledge base
             domain = expert.get("primary_domain")
             if expert.get("rag_enabled") and domain:
-                kb_dir = self.knowledge_base_dir / domain
+                sanitized_domain = sanitize_domain_for_path(domain)
+                kb_dir = self.knowledge_base_dir / sanitized_domain
                 kb_files = list(kb_dir.glob("*.md")) if kb_dir.exists() else []
                 print(f"   Knowledge Files: {len(kb_files)}")
 

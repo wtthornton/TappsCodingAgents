@@ -13,6 +13,7 @@ from typing import TYPE_CHECKING, Any
 from ..core.agent_base import BaseAgent
 from ..core.config import ProjectConfig
 from ..core.mal import MAL
+from .domain_utils import sanitize_domain_for_path
 from .simple_rag import SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
 
@@ -108,7 +109,8 @@ class BaseExpert(BaseAgent):
 
         if self._is_builtin and self._builtin_knowledge_path:
             # Built-in expert: check built-in knowledge first
-            builtin_domain_dir = self._builtin_knowledge_path / self.primary_domain
+            sanitized_domain = sanitize_domain_for_path(self.primary_domain)
+            builtin_domain_dir = self._builtin_knowledge_path / sanitized_domain
             if builtin_domain_dir.exists():
                 knowledge_dirs.append(builtin_domain_dir)
             # Also check general built-in knowledge
@@ -117,8 +119,9 @@ class BaseExpert(BaseAgent):
 
         # Customer knowledge (project-specific)
         if self.project_root:
+            sanitized_domain = sanitize_domain_for_path(self.primary_domain)
             customer_domain_dir = (
-                self.project_root / ".tapps-agents" / "knowledge" / self.primary_domain
+                self.project_root / ".tapps-agents" / "knowledge" / sanitized_domain
             )
             if customer_domain_dir.exists():
                 knowledge_dirs.append(customer_domain_dir)
