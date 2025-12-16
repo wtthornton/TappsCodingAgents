@@ -258,12 +258,27 @@ class TestResourceAwareExecutor:
     def test_execute_task_success(self):
         """Test successful task execution."""
         executor = ResourceAwareExecutor()
+        
+        # Mock low CPU usage to prevent auto-pause
+        with patch.object(
+            executor.resource_monitor, "get_current_metrics"
+        ) as mock_metrics:
+            mock_metrics.return_value = ResourceMetrics(
+                timestamp="2025-01-01T00:00:00Z",
+                cpu_percent=30.0,  # Low CPU to prevent pause
+                memory_percent=50.0,
+                memory_used_mb=1000.0,
+                memory_available_mb=1000.0,
+                disk_percent=50.0,
+                disk_used_gb=100.0,
+                disk_free_gb=100.0,
+            )
 
-        def task():
-            return "result"
+            def task():
+                return "result"
 
-        result = executor.execute(task, task_name="test_task")
-        assert result == "result"
+            result = executor.execute(task, task_name="test_task")
+            assert result == "result"
 
     def test_execute_task_with_high_resources_raises(self):
         """Test that execution raises when resources are high."""

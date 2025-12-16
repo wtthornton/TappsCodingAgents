@@ -56,25 +56,162 @@
                 <h3>Running Workflows</h3>
                 <div class="code-block">
                     <div class="code-header">
-                        <span>Run Workflow</span>
+                        <span>Basic Workflow Commands</span>
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                     </div>
-                    <pre><code># Run a preset workflow
-tapps-agents workflow run workflow-full-sdlc
+                    <pre><code># List all available workflow presets
+tapps-agents workflow list
 
-# Or use short aliases
+# Run workflow presets (short aliases)
 tapps-agents workflow full
 tapps-agents workflow rapid
 tapps-agents workflow quality
 tapps-agents workflow fix
-tapps-agents workflow maintenance
+tapps-agents workflow hotfix
 
-# List all available workflows
-tapps-agents workflow list
-
-# Run custom workflow
-tapps-agents workflow run workflows/my-custom-workflow.yaml</code></pre>
+# Voice-friendly aliases (same as above)
+tapps-agents workflow enterprise  # same as "full"
+tapps-agents workflow feature      # same as "rapid"
+tapps-agents workflow refactor     # same as "fix"
+tapps-agents workflow improve      # same as "quality"
+tapps-agents workflow urgent       # same as "hotfix"</code></pre>
                 </div>
+            </section>
+
+            <section id="workflow-arguments">
+                <h2>Workflow Command Arguments</h2>
+                <p>All workflow presets support common arguments that control execution behavior and provide context to agents.</p>
+
+                <h3>Common Arguments</h3>
+                <p>These arguments apply to all workflow presets:</p>
+
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                    <h4>--prompt, -p</h4>
+                    <p><strong>Type:</strong> String (optional)</p>
+                    <p><strong>Description:</strong> User prompt or description for the project/task. This provides context to agents about what you want to accomplish.</p>
+                    <p><strong>Use Cases:</strong></p>
+                    <ul>
+                        <li>Greenfield projects: Describe what you want to build</li>
+                        <li>Feature development: Describe the feature to implement</li>
+                        <li>Refactoring: Describe what needs to be improved</li>
+                        <li>Bug fixes: Describe the issue to fix</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Examples</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Create a new project with description
+tapps-agents workflow full --prompt "Build a task management web app with user authentication"
+
+# Rapid feature development
+tapps-agents workflow rapid --prompt "Add user profile page with avatar upload"
+
+# Refactor existing code
+tapps-agents workflow refactor --prompt "Review and fix large classes over 1000 lines"
+
+# Fix a specific bug
+tapps-agents workflow hotfix --prompt "Fix authentication token expiration issue"
+
+# Using short form
+tapps-agents workflow quality -p "Improve code quality in src/api/ directory"</code></pre>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                    <h4>--file</h4>
+                    <p><strong>Type:</strong> File path (optional)</p>
+                    <p><strong>Description:</strong> Optional target file for workflows. Specifies which file or directory the workflow should focus on.</p>
+                    <p><strong>Default Behavior:</strong> For <code>hotfix</code> workflow, defaults to <code>example_bug.py</code> if present in project root.</p>
+                    <p><strong>Use Cases:</strong></p>
+                    <ul>
+                        <li>Focus workflow on a specific file</li>
+                        <li>Target a directory for bulk operations</li>
+                        <li>Override default file selection</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Examples</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Review and improve a specific file
+tapps-agents workflow quality --file src/api/auth.py
+
+# Fix a specific file
+tapps-agents workflow hotfix --file src/utils/validator.py
+
+# Work on entire directory
+tapps-agents workflow refactor --file src/api/
+
+# Combine with prompt
+tapps-agents workflow quality --file src/api/ --prompt "Improve error handling and add type hints"</code></pre>
+                    </div>
+                </div>
+
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                    <h4>--auto</h4>
+                    <p><strong>Type:</strong> Flag (optional)</p>
+                    <p><strong>Description:</strong> Enable auto mode for fully automated execution. No prompts or manual confirmations required.</p>
+                    <p><strong>Behavior:</strong></p>
+                    <ul>
+                        <li>Workflow runs without user interaction</li>
+                        <li>All steps execute automatically</li>
+                        <li>Quality gates are enforced automatically</li>
+                        <li>Perfect for CI/CD and background execution</li>
+                    </ul>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Examples</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Fully automated workflow execution
+tapps-agents workflow full --auto --prompt "Build REST API for user management"
+
+# Automated quality improvement
+tapps-agents workflow quality --auto --file src/
+
+# Automated hotfix (no prompts)
+tapps-agents workflow hotfix --auto --file src/api/auth.py</code></pre>
+                    </div>
+                </div>
+
+                <h3>Combining Arguments</h3>
+                <p>You can combine multiple arguments for precise control:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Combined Arguments Examples</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Full automation with prompt and target file
+tapps-agents workflow refactor --auto --prompt "Refactor authentication module" --file src/auth/
+
+# Rapid development with description
+tapps-agents workflow rapid --prompt "Add payment processing with Stripe" --auto
+
+# Quality improvement on specific directory
+tapps-agents workflow quality --file src/api/ --prompt "Improve code quality and add tests" --auto
+
+# Enterprise workflow with full context
+tapps-agents workflow enterprise --prompt "Build e-commerce platform with user auth, product catalog, and checkout" --auto</code></pre>
+                </div>
+
+                <h3>Create Command (Shortcut)</h3>
+                <p>The <code>create</code> command is a shortcut for creating new projects. It's equivalent to <code>workflow full --auto --prompt</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Create Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Create a new project (positional prompt argument)
+tapps-agents create "Build a task management web application"
+
+# Specify workflow preset
+tapps-agents create "Add user authentication" --workflow rapid
+
+# Available workflow choices: full, rapid, enterprise, feature
+tapps-agents create "Create REST API" --workflow feature</code></pre>
+                </div>
+                <p><strong>Note:</strong> The <code>create</code> command automatically enables <code>--auto</code> mode and executes the workflow fully automated.</p>
             </section>
 
             <section id="workflow-full-sdlc">
@@ -82,8 +219,25 @@ tapps-agents workflow run workflows/my-custom-workflow.yaml</code></pre>
                 
                 <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--primary); margin: 1.5rem 0;">
                     <p><strong>Best for:</strong> Enterprise projects, new applications, compliance-heavy systems, greenfield development</p>
-                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-full-sdlc</code> or <code>tapps-agents workflow full</code></p>
+                    <p><strong>Commands:</strong></p>
+                    <ul>
+                        <li><code>tapps-agents workflow full</code> - Basic execution</li>
+                        <li><code>tapps-agents workflow enterprise</code> - Alias for "full"</li>
+                        <li><code>tapps-agents workflow full --prompt "Your project description"</code> - With user prompt</li>
+                        <li><code>tapps-agents workflow full --auto --prompt "Your project description"</code> - Fully automated</li>
+                    </ul>
                     <p><strong>Duration:</strong> Typically 15-30 minutes depending on project complexity</p>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Example Usage</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Create a complete enterprise application
+tapps-agents workflow full --prompt "Build a task management web app with user authentication, task CRUD operations, team collaboration, and real-time notifications" --auto
+
+# Or use the create shortcut
+tapps-agents create "Build a task management web app with user authentication, task CRUD operations, team collaboration, and real-time notifications"</code></pre>
+                    </div>
                 </div>
 
                 <h3>Workflow Stages</h3>
@@ -639,8 +793,25 @@ def test_create_task():
                 
                 <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--success); margin: 1.5rem 0;">
                     <p><strong>Best for:</strong> Feature development, sprint work, iterative development, brownfield projects</p>
-                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-rapid-dev</code> or <code>tapps-agents workflow rapid</code></p>
+                    <p><strong>Commands:</strong></p>
+                    <ul>
+                        <li><code>tapps-agents workflow rapid</code> - Basic execution</li>
+                        <li><code>tapps-agents workflow feature</code> - Alias for "rapid"</li>
+                        <li><code>tapps-agents workflow rapid --prompt "Add user profile page"</code> - With feature description</li>
+                        <li><code>tapps-agents workflow rapid --auto --prompt "Add payment processing"</code> - Fully automated</li>
+                    </ul>
                     <p><strong>Duration:</strong> Typically 5-10 minutes</p>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Example Usage</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Add a new feature quickly
+tapps-agents workflow rapid --prompt "Add user profile management: users can view and edit their profile, upload avatar images (stored in S3), and update preferences" --auto
+
+# Feature development with specific context
+tapps-agents workflow feature --prompt "Add comment system: users can comment on posts, edit/delete their own comments, and reply to other comments"</code></pre>
+                    </div>
                 </div>
 
                 <h3>Workflow Stages</h3>
@@ -667,8 +838,25 @@ def test_create_task():
                 
                 <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--warning); margin: 1.5rem 0;">
                     <p><strong>Best for:</strong> Code quality initiatives, refactoring sprints, quality gates, improving existing codebases</p>
-                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-quality</code> or <code>tapps-agents workflow quality</code></p>
+                    <p><strong>Commands:</strong></p>
+                    <ul>
+                        <li><code>tapps-agents workflow quality</code> - Basic execution</li>
+                        <li><code>tapps-agents workflow improve</code> - Alias for "quality"</li>
+                        <li><code>tapps-agents workflow quality --file src/api/</code> - Target specific directory</li>
+                        <li><code>tapps-agents workflow quality --prompt "Refactor payment module" --file src/payments/</code> - With context</li>
+                    </ul>
                     <p><strong>Duration:</strong> Typically 10-20 minutes</p>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Example Usage</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Improve code quality in a specific module
+tapps-agents workflow quality --file src/api/ --prompt "Refactor the payment processing module to use dependency injection and improve testability" --auto
+
+# Quality improvement across entire project
+tapps-agents workflow improve --prompt "Improve code quality: add type hints, reduce complexity, improve error handling"</code></pre>
+                    </div>
                 </div>
 
                 <h3>Workflow Stages</h3>
@@ -695,8 +883,25 @@ def test_create_task():
                 
                 <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--error); margin: 1.5rem 0;">
                     <p><strong>Best for:</strong> Production bugs, hotfixes, urgent patches, critical issues</p>
-                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-quick-fix</code> or <code>tapps-agents workflow fix</code></p>
+                    <p><strong>Commands:</strong></p>
+                    <ul>
+                        <li><code>tapps-agents workflow hotfix</code> - Basic execution (uses example_bug.py if present)</li>
+                        <li><code>tapps-agents workflow urgent</code> - Alias for "hotfix"</li>
+                        <li><code>tapps-agents workflow hotfix --file src/api/auth.py</code> - Target specific file</li>
+                        <li><code>tapps-agents workflow hotfix --prompt "Fix token expiration bug" --file src/auth.py</code> - With description</li>
+                    </ul>
                     <p><strong>Duration:</strong> Typically 3-5 minutes</p>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Example Usage</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Fix a production bug quickly
+tapps-agents workflow hotfix --file src/api/auth.py --prompt "Fix the authentication token expiration issue where tokens expire too quickly" --auto
+
+# Urgent fix with minimal description
+tapps-agents workflow urgent --file src/utils/validator.py --prompt "Fix validation error causing 500 responses"</code></pre>
+                    </div>
                 </div>
 
                 <h3>Workflow Stages</h3>
@@ -722,8 +927,25 @@ def test_create_task():
                 
                 <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--secondary); margin: 1.5rem 0;">
                     <p><strong>Best for:</strong> Existing codebases, bug fixes, refactoring, technical debt, maintenance tasks</p>
-                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-maintenance</code> or <code>tapps-agents workflow maintenance</code></p>
+                    <p><strong>Commands:</strong></p>
+                    <ul>
+                        <li><code>tapps-agents workflow fix</code> - Basic execution</li>
+                        <li><code>tapps-agents workflow refactor</code> - Alias for "fix"</li>
+                        <li><code>tapps-agents workflow fix --file src/api/</code> - Target directory</li>
+                        <li><code>tapps-agents workflow refactor --prompt "Review and fix large classes" --file src/</code> - With context</li>
+                    </ul>
                     <p><strong>Duration:</strong> Typically 8-15 minutes</p>
+                    <div class="code-block" style="margin-top: 1rem;">
+                        <div class="code-header">
+                            <span>Example Usage</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code># Refactor existing codebase
+tapps-agents workflow refactor --prompt "Review and fix large classes over 1000 lines" --file src/ --auto
+
+# Maintenance on specific module
+tapps-agents workflow fix --file src/api/auth/ --prompt "Improve error handling and add logging"</code></pre>
+                    </div>
                 </div>
 
                 <h3>Workflow Stages</h3>
@@ -752,6 +974,7 @@ def test_create_task():
                     <thead>
                         <tr>
                             <th>Workflow</th>
+                            <th>Aliases</th>
                             <th>Best For</th>
                             <th>Stages</th>
                             <th>Quality Gates</th>
@@ -761,6 +984,7 @@ def test_create_task():
                     <tbody>
                         <tr>
                             <td><strong>Full SDLC</strong></td>
+                            <td><code>enterprise</code></td>
                             <td>Enterprise, new apps, compliance</td>
                             <td>9 stages</td>
                             <td>Overall ≥ 70, Security ≥ 7.0</td>
@@ -768,6 +992,7 @@ def test_create_task():
                         </tr>
                         <tr>
                             <td><strong>Rapid Dev</strong></td>
+                            <td><code>feature</code></td>
                             <td>Features, sprints, iteration</td>
                             <td>5 stages</td>
                             <td>Overall ≥ 65, Security ≥ 6.5</td>
@@ -775,6 +1000,7 @@ def test_create_task():
                         </tr>
                         <tr>
                             <td><strong>Quality</strong></td>
+                            <td><code>improve</code></td>
                             <td>Quality initiatives, refactoring</td>
                             <td>5 stages</td>
                             <td>Overall ≥ 75, Maintainability ≥ 8.0</td>
@@ -782,6 +1008,7 @@ def test_create_task():
                         </tr>
                         <tr>
                             <td><strong>Quick Fix</strong></td>
+                            <td><code>urgent</code></td>
                             <td>Production bugs, hotfixes</td>
                             <td>4 stages</td>
                             <td>Overall ≥ 60, Security ≥ 7.0</td>
@@ -789,6 +1016,7 @@ def test_create_task():
                         </tr>
                         <tr>
                             <td><strong>Maintenance</strong></td>
+                            <td><code>fix</code>, <code>refactor</code></td>
                             <td>Existing code, technical debt</td>
                             <td>5 stages</td>
                             <td>Overall ≥ 70, Maintainability ≥ 7.5</td>
@@ -796,6 +1024,83 @@ def test_create_task():
                         </tr>
                     </tbody>
                 </table>
+            </section>
+
+            <section id="workflow-quick-reference">
+                <h2>Quick Reference: Command Arguments</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Argument</th>
+                            <th>Short Form</th>
+                            <th>Type</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>--prompt</code></td>
+                            <td><code>-p</code></td>
+                            <td>String</td>
+                            <td>User description/prompt for the task</td>
+                            <td><code>--prompt "Add user authentication"</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--file</code></td>
+                            <td>-</td>
+                            <td>File path</td>
+                            <td>Target file or directory</td>
+                            <td><code>--file src/api/auth.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>--auto</code></td>
+                            <td>-</td>
+                            <td>Flag</td>
+                            <td>Enable fully automated execution</td>
+                            <td><code>--auto</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Common Command Patterns</h3>
+                <div class="code-block" style="margin-top: 1rem;">
+                    <div class="code-header">
+                        <span>Command Patterns</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Basic workflow execution
+tapps-agents workflow [preset]
+
+# With user prompt
+tapps-agents workflow [preset] --prompt "Your description"
+
+# With target file
+tapps-agents workflow [preset] --file path/to/file.py
+
+# Fully automated
+tapps-agents workflow [preset] --auto --prompt "Your description"
+
+# Combined: prompt + file + auto
+tapps-agents workflow [preset] --prompt "Description" --file path/ --auto
+
+# Create shortcut (auto-enabled)
+tapps-agents create "Your description" [--workflow preset]</code></pre>
+                </div>
+
+                <h3>Available Presets</h3>
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0;">
+                    <p><strong>Primary Presets:</strong></p>
+                    <ul>
+                        <li><code>full</code> / <code>enterprise</code> - Full SDLC Pipeline</li>
+                        <li><code>rapid</code> / <code>feature</code> - Rapid Development</li>
+                        <li><code>fix</code> / <code>refactor</code> - Maintenance & Bug Fixing</li>
+                        <li><code>quality</code> / <code>improve</code> - Quality Improvement</li>
+                        <li><code>hotfix</code> / <code>urgent</code> - Quick Fix</li>
+                        <li><code>list</code> - List all available presets</li>
+                    </ul>
+                </div>
             </section>
 
             <section id="custom-workflows">

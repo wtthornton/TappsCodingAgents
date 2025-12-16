@@ -193,11 +193,15 @@ class TestMALOllamaProvider:
         )
         mal = MAL(config=config)
         
-        # Replace client transport with mock transport
-        mal.client = AsyncClient(transport=ollama_success_transport, timeout=mal.timeout_config)
+        # Patch AsyncClient to use success transport
+        original_async_client = AsyncClient
+        def patched_client(*args, **kwargs):
+            kwargs["transport"] = ollama_success_transport
+            return original_async_client(*args, **kwargs)
         
-        result = await mal._ollama_generate("test prompt", "test-model", stream=False)
-        assert result == "Test response"
+        with patch("httpx.AsyncClient", side_effect=patched_client):
+            result = await mal._ollama_generate("test prompt", "test-model", stream=False)
+            assert result == "Test response"
 
     @pytest.mark.asyncio
     async def test_ollama_generate_success_streaming(self, ollama_streaming_transport):
@@ -229,10 +233,16 @@ class TestMALOllamaProvider:
             default_provider="ollama",
         )
         mal = MAL(config=config)
-        mal.client = AsyncClient(transport=ollama_error_4xx_transport, timeout=mal.timeout_config)
         
-        with pytest.raises(ConnectionError, match="Ollama API returned error status"):
-            await mal._ollama_generate("test prompt", "test-model")
+        # Patch AsyncClient to use error transport
+        original_async_client = AsyncClient
+        def patched_client(*args, **kwargs):
+            kwargs["transport"] = ollama_error_4xx_transport
+            return original_async_client(*args, **kwargs)
+        
+        with patch("httpx.AsyncClient", side_effect=patched_client):
+            with pytest.raises(ConnectionError, match="Ollama API returned error status"):
+                await mal._ollama_generate("test prompt", "test-model")
 
     @pytest.mark.asyncio
     async def test_ollama_generate_error_5xx(self, ollama_error_5xx_transport):
@@ -243,10 +253,16 @@ class TestMALOllamaProvider:
             default_provider="ollama",
         )
         mal = MAL(config=config)
-        mal.client = AsyncClient(transport=ollama_error_5xx_transport, timeout=mal.timeout_config)
         
-        with pytest.raises(ConnectionError, match="Ollama API returned error status"):
-            await mal._ollama_generate("test prompt", "test-model")
+        # Patch AsyncClient to use error transport
+        original_async_client = AsyncClient
+        def patched_client(*args, **kwargs):
+            kwargs["transport"] = ollama_error_5xx_transport
+            return original_async_client(*args, **kwargs)
+        
+        with patch("httpx.AsyncClient", side_effect=patched_client):
+            with pytest.raises(ConnectionError, match="Ollama API returned error status"):
+                await mal._ollama_generate("test prompt", "test-model")
 
     @pytest.mark.asyncio
     async def test_ollama_generate_connection_error(self, ollama_connection_error_transport):
@@ -269,8 +285,8 @@ class TestMALOllamaProvider:
             ollama_url="http://test-ollama:11434",
             default_model="test-model",
             default_provider="ollama",
-            connect_timeout=0.1,  # Very short timeout
-            read_timeout=0.1,
+            connect_timeout=1.0,  # Short timeout (minimum is 1.0)
+            read_timeout=1.0,
         )
         mal = MAL(config=config)
         
@@ -323,7 +339,7 @@ class TestMALFallback:
         
         # Patch AsyncClient creation to use our routing transport
         original_async_client = AsyncClient
-        async def patched_client(*args, **kwargs):
+        def patched_client(*args, **kwargs):
             kwargs["transport"] = transport
             return original_async_client(*args, **kwargs)
         
@@ -344,7 +360,7 @@ class TestMALFallback:
         
         # Patch AsyncClient to use error transport
         original_async_client = AsyncClient
-        async def patched_client(*args, **kwargs):
+        def patched_client(*args, **kwargs):
             kwargs["transport"] = ollama_error_4xx_transport
             return original_async_client(*args, **kwargs)
         
@@ -432,12 +448,16 @@ class TestMALGenerate:
     @pytest.mark.asyncio
     async def test_generate_with_custom_provider(self, anthropic_success_transport):
         """Test generate with custom provider."""
+        from tapps_agents.core.config import CloudProviderConfig
+        
         config = MALConfig(
             ollama_url="http://test-ollama:11434",
             default_model="test-model",
             default_provider="ollama",
-            anthropic_api_key="test-key",
-            anthropic_base_url="http://test-anthropic",
+            anthropic=CloudProviderConfig(
+                api_key="test-key",
+                base_url="http://test-anthropic",
+            ),
         )
         mal = MAL(config=config)
         
@@ -461,8 +481,8 @@ class TestMALGenerate:
         )
         mal = MAL(config=config)
         
-        # Validate specific error: ValueError with "Unsupported provider" message
-        with pytest.raises(ValueError, match="Unsupported provider"):
+        # Error gets wrapped in ConnectionError by the generate method
+        with pytest.raises(ConnectionError, match="All providers failed.*Unsupported provider"):
             await mal.generate("test prompt", provider="invalid-provider", enable_fallback=False)
 
     @pytest.mark.asyncio

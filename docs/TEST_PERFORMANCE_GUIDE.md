@@ -4,6 +4,14 @@
 
 The test suite has been optimized for faster execution while maintaining comprehensive coverage. This guide explains the optimizations and how to use them effectively.
 
+**Recent Improvements (January 2025)**:
+- ✅ **pytest-xdist added** to `requirements.txt` for parallel execution (5-10x speedup)
+- ✅ **Slow test fixed** - Analytics test optimized to avoid excessive file I/O
+- ✅ **Timeout increased** - From 10s to 30s to prevent false timeouts
+- ✅ **Parallel execution recommended** - Now the default way to run tests
+
+**Quick Start**: Run tests in parallel: `pytest tests/ -m unit -n auto`
+
 ## Performance Optimizations
 
 ### 1. Coverage Disabled by Default
@@ -44,54 +52,65 @@ pytest tests/ -m ""  # Run all tests (unit + integration)
 pytest tests/ -m integration
 ```
 
-### 3. Parallel Execution (Optional)
+### 3. Parallel Execution (Recommended)
 
-**Impact**: 2-4x faster on multi-core systems
+**Impact**: 5-10x faster on multi-core systems
 
-Install `pytest-xdist` for parallel test execution:
+`pytest-xdist` is now included in `requirements.txt` for parallel test execution. This is the **recommended way** to run tests for optimal performance.
 
+**Recommended** (parallel execution):
 ```bash
-pip install pytest-xdist
-pytest tests/ -n auto  # Auto-detect CPU cores
-pytest tests/ -n 4     # Use 4 workers
+pytest tests/ -m unit -n auto  # Auto-detect CPU cores (recommended)
+pytest tests/ -m unit -n 4     # Use 4 workers (adjust based on CPU)
+```
+
+**Sequential** (for debugging):
+```bash
+pytest tests/ -m unit  # No -n flag = sequential
 ```
 
 ## Performance Comparison
 
 | Configuration | Time | Use Case |
 |--------------|------|----------|
-| **Optimized (default)** | ~10-30s | Daily development, quick checks |
-| With coverage | ~60-120s | Pre-commit, CI/CD |
-| All tests (unit + integration) | ~30-60s | Full validation |
-| All tests + coverage | ~120-240s | Release preparation |
+| **Optimized (parallel, default)** | ~1-2 min | Daily development, quick checks |
+| **Sequential (no parallel)** | ~5-10 min | Debugging (when parallel causes issues) |
+| With coverage (parallel) | ~2-3 min | Pre-commit, CI/CD |
+| All tests (unit + integration, parallel) | ~2-4 min | Full validation |
+| All tests + coverage (parallel) | ~3-5 min | Release preparation |
+
+**Note**: Times are for 1200+ unit tests. Parallel execution provides 5-10x speedup on multi-core systems.
 
 ## Usage Examples
 
-### Daily Development (Fast)
+### Daily Development (Fast - Recommended)
 ```bash
-# Quick test run - unit tests only, no coverage
-pytest tests/
+# Quick test run - unit tests only, parallel execution, no coverage (FASTEST)
+pytest tests/ -m unit -n auto
 
 # Run specific test file
-pytest tests/unit/test_config.py
+pytest tests/unit/test_config.py -n auto
 
 # Run specific test
 pytest tests/unit/test_config.py::TestLoadConfig::test_load_config_from_file
+
+# Sequential (for debugging only)
+pytest tests/ -m unit  # No -n flag
 ```
 
 ### Pre-Commit Checks
 ```bash
-# Unit tests with coverage
-pytest tests/ -m unit --cov=tapps_agents --cov-report=term --cov-fail-under=55
+# Unit tests with coverage (parallel)
+pytest tests/ -m unit -n auto --cov=tapps_agents --cov-report=term --cov-fail-under=55
 ```
 
 ### Full Test Suite
 ```bash
-# All tests (unit + integration)
-pytest tests/ -m ""
+# All tests (unit + integration, parallel)
+pytest tests/ -m "" -n auto
 
-# All tests with coverage
-pytest tests/ -m "" --cov=tapps_agents --cov-report=html --cov-report=xml
+# All tests with coverage (parallel)
+pytest tests/ -m "" -n auto --cov=tapps_agents --cov-report=html --cov-report=xml
 ```
 
 ### CI/CD Pipeline
@@ -114,10 +133,12 @@ Tests are organized with markers for selective execution:
 
 ### Tests Still Slow?
 
-1. **Check if coverage is enabled**: Remove `--cov` flags
-2. **Verify you're running unit tests only**: Check `-m unit` is in effect
-3. **Install pytest-xdist**: `pip install pytest-xdist` for parallel execution
-4. **Check for slow tests**: Run with `--durations=10` to see slowest tests
+1. **Use parallel execution**: Always use `-n auto` for fastest results
+2. **Check if coverage is enabled**: Remove `--cov` flags for faster runs
+3. **Verify you're running unit tests only**: Check `-m unit` is in effect
+4. **Install pytest-xdist**: Should be in `requirements.txt`, but verify: `pip install pytest-xdist`
+5. **Check for slow tests**: Run with `--durations=10` to see slowest tests
+6. **Verify timeout settings**: Tests now have 30s timeout (increased from 10s)
 
 ### Need Coverage Reports?
 
@@ -154,10 +175,11 @@ To override defaults, use command-line flags:
 
 ## Best Practices
 
-1. **Daily development**: Use default (unit tests only, no coverage)
-2. **Before committing**: Run with coverage: `pytest tests/ -m unit --cov`
-3. **Before release**: Run full suite: `pytest tests/ -m "" --cov`
-4. **CI/CD**: Use parallel execution: `pytest tests/ -n auto --cov`
+1. **Daily development**: Use parallel execution: `pytest tests/ -m unit -n auto` (fastest)
+2. **Before committing**: Run with coverage: `pytest tests/ -m unit -n auto --cov`
+3. **Before release**: Run full suite: `pytest tests/ -m "" -n auto --cov`
+4. **CI/CD**: Always use parallel execution: `pytest tests/ -m unit -n auto --cov`
+5. **Debugging**: Use sequential mode: `pytest tests/ -m unit` (no `-n` flag)
 
 ## Additional Tips
 

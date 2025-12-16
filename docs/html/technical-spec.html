@@ -943,33 +943,72 @@ function aggregateResponses(responses, primaryExpert, secondaryExperts):
                 </ul>
 
                 <h3>MCP Server Support</h3>
-                <p>The gateway supports multiple MCP server types:</p>
+                <p>The gateway supports multiple MCP server types, divided into two categories:</p>
+                
+                <h4>Built-in MCP Servers</h4>
+                <p>These servers are included with TappsCodingAgents and are automatically available. No installation or configuration is required:</p>
                 <table>
                     <thead>
                         <tr>
                             <th>Server Type</th>
                             <th>Purpose</th>
                             <th>Tools Provided</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Filesystem</td>
+                            <td><strong>Filesystem</strong></td>
                             <td>File operations</td>
                             <td>read_file, write_file, list_directory, search_files</td>
+                            <td>✅ Always Available</td>
                         </tr>
                         <tr>
-                            <td>Git</td>
+                            <td><strong>Git</strong></td>
                             <td>Version control</td>
                             <td>git_status, git_diff, git_commit, git_branch</td>
+                            <td>✅ Always Available</td>
                         </tr>
                         <tr>
-                            <td>Analysis</td>
+                            <td><strong>Analysis</strong></td>
                             <td>Code analysis</td>
                             <td>analyze_code, find_patterns, detect_issues</td>
+                            <td>✅ Always Available</td>
                         </tr>
                     </tbody>
                 </table>
+
+                <h4>External MCP Servers</h4>
+                <p>These servers require separate installation and configuration in your MCP settings (e.g., <code>.cursor/mcp.json</code>):</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Server Type</th>
+                            <th>Purpose</th>
+                            <th>Installation</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Context7</strong></td>
+                            <td>Library documentation resolution and retrieval</td>
+                            <td>Configure in MCP settings with <code>@context7/mcp-server</code> or URL-based setup</td>
+                            <td>⚠️ Requires Setup</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Playwright</strong></td>
+                            <td>Browser automation (optional)</td>
+                            <td>Configure in MCP settings with <code>@playwright/mcp-server</code></td>
+                            <td>⚪ Optional</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="alert alert-info" style="margin: 1.5rem 0;">
+                    <p><strong>Note:</strong> The built-in servers (Filesystem, Git, Analysis) are Python classes that are automatically initialized when agents use the MCP Gateway. External servers (Context7, Playwright) are separate MCP server processes that need to be installed and configured in your editor's MCP settings file.</p>
+                    <p>Use <code>tapps-agents init</code> to check which external MCP servers are installed and configured.</p>
+                </div>
 
                 <h3>Gateway Architecture</h3>
                 <div class="code-block">

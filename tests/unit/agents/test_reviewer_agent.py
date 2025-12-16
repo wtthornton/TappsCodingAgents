@@ -151,20 +151,23 @@ class TestReviewerAgentErrorHandling:
         
         agent.scorer.score_file = failing_score_file
         
+        # Error should be raised or handled gracefully
         result = await agent.run("review", file=str(sample_python_file))
         
         # Should handle error gracefully and propagate error information
         assert isinstance(result, dict)
         # Validate that error information is included in result
+        # The error might be in the result dict or the scoring might be absent
+        assert "error" in result or "scoring" not in result
         if "error" in result:
             # Error should contain the original error message
             error_info = result.get("error", {})
             if isinstance(error_info, dict):
                 error_msg = error_info.get("message", "") or str(error_info)
                 assert error_message in error_msg or "error" in str(result).lower()
-        else:
-            # If no explicit error field, scoring should be absent
-            assert "scoring" not in result
+            else:
+                # Error might be a string
+                assert error_message in str(error_info) or "error" in str(result).lower()
 
     @pytest.mark.asyncio
     async def test_review_command_mal_error(self, sample_python_file):

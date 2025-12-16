@@ -36,8 +36,11 @@ env/
 # Testing
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 coverage.xml
+test-results.xml
+*.test-results.xml
 reports/
 
 # TappsCodingAgents

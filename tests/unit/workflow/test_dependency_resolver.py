@@ -147,10 +147,11 @@ class TestDependencyResolverBusinessLogic:
         assert set(ready) == {"step2", "step3"}, \
             f"After step1, step2 and step3 should be ready, got {ready}"
         
-        # After step1 and step2 complete, step4 should be ready
+        # After step1 and step2 complete, step3 and step4 should be ready
+        # (step3 requires artifact1 from step1, step4 requires artifact2 from step2)
         ready = resolver.get_ready_steps({"step1", "step2"})
-        assert ready == ["step4"], \
-            f"After step1 and step2, step4 should be ready, got {ready}"
+        assert set(ready) == {"step3", "step4"}, \
+            f"After step1 and step2, step3 and step4 should be ready, got {ready}"
         
         # After all steps complete, nothing should be ready
         ready = resolver.get_ready_steps({"step1", "step2", "step3", "step4"})

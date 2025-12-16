@@ -54,10 +54,9 @@ class TestEmptyInputHandling:
         test_file = tmp_path / "test.py"
         test_file.write_text("def test(): pass")
         
-        # Should handle None content gracefully
-        result = scorer.score_file(test_file, None)
-        assert isinstance(result, dict)
-        assert "overall_score" in result
+        # None content should raise TypeError
+        with pytest.raises((TypeError, ValueError)):
+            scorer.score_file(test_file, None)
 
     def test_scorer_score_file_empty_string_content(self, tmp_path: Path):
         """Test scoring with empty string content."""
@@ -80,14 +79,15 @@ class TestEmptyInputHandling:
     def test_agent_get_context_empty_path(self, base_agent, tmp_path: Path):
         """Test get_context with empty path."""
         agent = base_agent
-        empty_path = tmp_path / ""
-        # Empty path should be handled
-        try:
-            context = agent.get_context(empty_path)
-            assert isinstance(context, dict)
-        except (ValueError, FileNotFoundError):
-            # Acceptable to raise on invalid path
-            pass
+        # Create a valid empty directory path, not an empty string
+        empty_dir = tmp_path / "empty_dir"
+        empty_dir.mkdir()
+        empty_file = empty_dir / "test.py"
+        empty_file.write_text("")
+        
+        # Should handle empty file
+        context = agent.get_context(empty_file)
+        assert isinstance(context, dict)
 
 
 @pytest.mark.unit

@@ -74,45 +74,58 @@ class TestUnifiedCacheInterface:
         )
 
     @pytest.fixture
-    def unified_cache_mock(
-        self, tmp_cache_root
-    ):
-        """Create UnifiedCache instance with mocks for comparison."""
-        mock_context_manager = Mock(spec=ContextManager)
-        mock_context_manager.get_context.return_value = {
+    def mock_context_manager(self):
+        """Create mock ContextManager for testing."""
+        mock_cm = Mock(spec=ContextManager)
+        mock_cm.get_context.return_value = {
             "content": "test context",
             "cached": True,
             "token_estimate": 100,
         }
-        mock_context_manager.caches = {
+        mock_cm.caches = {
             ContextTier.TIER1: Mock(max_size=100),
             ContextTier.TIER2: Mock(max_size=100),
             ContextTier.TIER3: Mock(max_size=100),
         }
-        mock_context_manager.get_cache_stats.return_value = {"hits": 10, "misses": 5}
-        mock_context_manager.clear_cache.return_value = None
+        mock_cm.get_cache_stats.return_value = {"hits": 10, "misses": 5}
+        mock_cm.clear_cache.return_value = None
+        return mock_cm
 
-        mock_kb_cache = Mock(spec=KBCache)
-        mock_kb_cache.get.return_value = Mock(
+    @pytest.fixture
+    def mock_kb_cache(self):
+        """Create mock KBCache for testing."""
+        mock_kb = Mock(spec=KBCache)
+        mock_kb.get.return_value = Mock(
             content="test KB content",
             context7_id="test-id",
             trust_score=0.9,
             token_count=200,
             cache_hits=5,
         )
-        mock_kb_cache.store.return_value = Mock(content="stored content", token_count=150)
-        mock_kb_cache.delete.return_value = True
-        mock_kb_cache.metadata_manager = Mock()
-        mock_kb_cache.metadata_manager.load_cache_index.return_value = Mock(
+        mock_kb.store.return_value = Mock(content="stored content", token_count=150)
+        mock_kb.delete.return_value = True
+        mock_kb.metadata_manager = Mock()
+        mock_kb.metadata_manager.load_cache_index.return_value = Mock(
             libraries={"test-lib": {"topics": {"test-topic": {}}}}
         )
+        return mock_kb
 
-        mock_knowledge_base = Mock(spec=SimpleKnowledgeBase)
-        mock_knowledge_base.search.return_value = [{"chunk": "test chunk", "score": 0.8}]
-        mock_knowledge_base.get_context.return_value = "test context from knowledge base"
-        mock_knowledge_base.get_sources.return_value = ["source1.md", "source2.md"]
-        mock_knowledge_base.list_all_files.return_value = ["file1.md", "file2.md"]
-        mock_knowledge_base.domain = "test-domain"
+    @pytest.fixture
+    def mock_knowledge_base(self):
+        """Create mock SimpleKnowledgeBase for testing."""
+        mock_kb = Mock(spec=SimpleKnowledgeBase)
+        mock_kb.search.return_value = [{"chunk": "test chunk", "score": 0.8}]
+        mock_kb.get_context.return_value = "test context from knowledge base"
+        mock_kb.get_sources.return_value = ["source1.md", "source2.md"]
+        mock_kb.list_all_files.return_value = ["file1.md", "file2.md"]
+        mock_kb.domain = "test-domain"
+        return mock_kb
+
+    @pytest.fixture
+    def unified_cache_mock(
+        self, tmp_cache_root, mock_context_manager, mock_kb_cache, mock_knowledge_base
+    ):
+        """Create UnifiedCache instance with mocks for comparison."""
 
         return UnifiedCache(
             cache_root=tmp_cache_root,
@@ -121,6 +134,11 @@ class TestUnifiedCacheInterface:
             knowledge_base=mock_knowledge_base,
             hardware_profile=HardwareProfile.DEVELOPMENT,
         )
+
+    @pytest.fixture
+    def unified_cache(self, unified_cache_mock):
+        """Alias for unified_cache_mock for backward compatibility."""
+        return unified_cache_mock
 
     @pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
     def test_get_tiered_context_real(self, unified_cache_real, real_context_manager, tmp_path):

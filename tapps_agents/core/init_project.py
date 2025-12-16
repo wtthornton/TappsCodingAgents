@@ -7,8 +7,10 @@ Cursor Rules, and workflow presets.
 
 import asyncio
 import json
+import os
 import re
 import shutil
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -505,6 +507,195 @@ def get_builtin_expert_libraries() -> list[str]:
     return sorted(list(expert_libraries))
 
 
+def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
+    """
+    Detect installed and configured EXTERNAL MCP servers.
+    
+    Note: This only checks for external MCP servers that need installation.
+    Built-in MCP servers (Filesystem, Git, Analysis) are always available
+    as part of the TappsCodingAgents framework and don't need detection.
+
+    Args:
+        project_root: Project root directory
+
+    Returns:
+        Dictionary with MCP server detection results
+    """
+    mcp_status: dict[str, Any] = {
+        "note": "Checking external MCP servers only. Built-in servers (Filesystem, Git, Analysis) are always available.",
+        "required_servers": [],
+        "optional_servers": [],
+        "detected_servers": [],
+        "missing_servers": [],
+        "configuration_files": [],
+        "setup_instructions": {},
+    }
+
+    # Required MCP servers
+    required_servers = {
+        "Context7": {
+            "name": "Context7 MCP Server",
+            "package": "@context7/mcp-server",
+            "command": "npx",
+            "description": "Library documentation resolution and retrieval",
+            "required": True,
+        }
+    }
+
+    # Optional MCP servers
+    optional_servers = {
+        "Playwright": {
+            "name": "Playwright MCP Server",
+            "package": "@playwright/mcp-server",
+            "command": "npx",
+            "description": "Browser automation (optional, Cursor may provide this)",
+            "required": False,
+        }
+    }
+
+    all_servers = {**required_servers, **optional_servers}
+
+    # Check for MCP configuration files
+    mcp_config_paths = [
+        project_root / ".cursor" / "mcp.json",
+        project_root / ".vscode" / "mcp.json",
+        Path.home() / ".cursor" / "mcp.json",
+        Path.home() / ".config" / "cursor" / "mcp.json",
+    ]
+
+    mcp_config = None
+    for config_path in mcp_config_paths:
+        if config_path.exists():
+            mcp_status["configuration_files"].append(str(config_path))
+            try:
+                with open(config_path, encoding="utf-8") as f:
+                    mcp_config = json.load(f)
+                    break
+            except Exception:
+                pass
+
+    # Check for npx (required for Context7 MCP server)
+    npx_available = False
+    try:
+        result = subprocess.run(
+            ["npx", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        npx_available = result.returncode == 0
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Check each server
+    for server_id, server_info in all_servers.items():
+        detected = False
+        reason = ""
+
+        # Check if server is in MCP config
+        if mcp_config:
+            mcp_servers = mcp_config.get("mcpServers", {})
+            # Check for exact server ID or name match
+            if server_id in mcp_servers or server_info["name"] in mcp_servers:
+                detected = True
+                reason = "Configured in MCP settings"
+            else:
+                # Check all configured servers for matches
+                for server_name, server_config in mcp_servers.items():
+                    # Check for package name in args (npx format)
+                    args = server_config.get("args", [])
+                    if server_info["package"] in args:
+                        detected = True
+                        reason = f"Configured as '{server_name}' in MCP settings (npx)"
+                        break
+                    
+                    # Check for URL-based configuration (Context7 can use URL format)
+                    if server_id == "Context7":
+                        url = server_config.get("url", "")
+                        if url and ("context7.com" in url.lower() or "context7" in url.lower()):
+                            detected = True
+                            reason = f"Configured as '{server_name}' in MCP settings (URL)"
+                            break
+                        
+                        # Also check for Context7 in server name (case-insensitive)
+                        if "context7" in server_name.lower():
+                            detected = True
+                            reason = f"Configured as '{server_name}' in MCP settings"
+                            break
+                        
+                        # Check headers for Context7 API key
+                        headers = server_config.get("headers", {})
+                        if "CONTEXT7_API_KEY" in headers or "context7" in str(headers).lower():
+                            detected = True
+                            reason = f"Configured as '{server_name}' in MCP settings (with API key)"
+                            break
+
+        # Check environment variables for Context7
+        if server_id == "Context7":
+            if os.getenv("CONTEXT7_API_KEY"):
+                detected = True
+                reason = "API key found in environment"
+            elif not npx_available:
+                reason = "npx not available (required for installation)"
+
+        if detected:
+            mcp_status["detected_servers"].append(
+                {
+                    "id": server_id,
+                    "name": server_info["name"],
+                    "status": "installed",
+                    "reason": reason,
+                    "required": server_info["required"],
+                }
+            )
+        else:
+            status_entry = {
+                "id": server_id,
+                "name": server_info["name"],
+                "status": "missing",
+                "required": server_info["required"],
+                "package": server_info["package"],
+                "description": server_info["description"],
+            }
+            mcp_status["missing_servers"].append(status_entry)
+
+            # Generate setup instructions
+            if server_id == "Context7":
+                mcp_status["setup_instructions"][server_id] = {
+                    "method": "npx",
+                    "steps": [
+                        "1. Install Node.js and npm (if not already installed)",
+                        "2. Configure Context7 MCP server in your MCP settings:",
+                        "   Location: ~/.cursor/mcp.json or .cursor/mcp.json",
+                        "   Configuration:",
+                        "   {",
+                        '     "mcpServers": {',
+                        '       "Context7": {',
+                        '         "command": "npx",',
+                        '         "args": ["-y", "@context7/mcp-server"],',
+                        '         "env": {',
+                        '           "CONTEXT7_API_KEY": "your-api-key-here"',
+                        "         }",
+                        "       }",
+                        "     }",
+                        "   }",
+                        "3. Set CONTEXT7_API_KEY environment variable:",
+                        "   export CONTEXT7_API_KEY='your-api-key'",
+                        "4. Restart Cursor/VS Code",
+                    ],
+                    "alternative": "Set CONTEXT7_API_KEY environment variable for direct API access",
+                }
+
+    # Categorize servers
+    for server in mcp_status["detected_servers"] + mcp_status["missing_servers"]:
+        if server["required"]:
+            mcp_status["required_servers"].append(server)
+        else:
+            mcp_status["optional_servers"].append(server)
+
+    return mcp_status
+
+
 async def pre_populate_context7_cache(
     project_root: Path, libraries: list[str] | None = None
 ) -> dict[str, Any]:
@@ -723,6 +914,10 @@ def init_project(
     # Detect tech stack and pre-populate cache for existing projects
     tech_stack = detect_tech_stack(project_root)
     results["tech_stack"] = tech_stack
+
+    # Detect MCP servers
+    mcp_status = detect_mcp_servers(project_root)
+    results["mcp_servers"] = mcp_status
 
     if pre_populate_cache and tech_stack["libraries"]:
         try:

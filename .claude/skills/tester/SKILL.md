@@ -212,6 +212,42 @@ You are a senior QA engineer focused on creating comprehensive, maintainable tes
 *run-tests tests/test_calculator.py
 ```
 
+## Running Unit Tests (For Agents)
+
+When running unit tests directly (not through the `*run-tests` command), agents should:
+
+1. **Always use parallel execution** for optimal performance (5-10x faster):
+   ```bash
+   python -m pytest tests/ -m unit -n auto
+   ```
+
+2. **Use unit test marker** to run only fast unit tests:
+   ```bash
+   python -m pytest tests/ -m unit -n auto
+   ```
+
+3. **For specific test files**:
+   ```bash
+   python -m pytest tests/unit/test_file.py -n auto
+   ```
+
+4. **With coverage** (when needed):
+   ```bash
+   python -m pytest tests/ -m unit -n auto --cov=tapps_agents --cov-report=term
+   ```
+
+5. **Sequential mode** (only for debugging test isolation issues):
+   ```bash
+   python -m pytest tests/ -m unit  # No -n flag
+   ```
+
+**Important Notes:**
+- `pytest-xdist` is required for parallel execution (included in `requirements.txt`)
+- Parallel execution (`-n auto`) provides 5-10x speedup on multi-core systems
+- Always use `-m unit` to run only unit tests (faster, excludes integration/e2e tests)
+- Sequential mode should only be used when debugging test isolation issues
+- See `docs/TEST_PERFORMANCE_GUIDE.md` for complete performance optimization guide
+
 **Refresh Framework Docs:**
 ```
 *docs-refresh pytest

@@ -149,7 +149,7 @@ See:
 - **Configuration-Only Experts** (YAML-based expert definition, no code classes required)
 - **Simple File-Based RAG** (Knowledge base retrieval for experts)
 - **Scale-Adaptive Workflow Selection** (Project type auto-detection, workflow recommendation)
-- **Comprehensive test suite** (see `tests/`)
+- **Comprehensive test suite** (1200+ unit tests with parallel execution support - see `tests/`)
 
 ✅ **Enhancer Agent - Prompt Enhancement Utility (v1.6.0)**
 - **7-Stage Enhancement Pipeline** - Transforms simple prompts into comprehensive, context-aware prompts
@@ -259,6 +259,7 @@ TappsCodingAgents/
 ### Operations
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Test Performance Guide](docs/TEST_PERFORMANCE_GUIDE.md)** - Optimize test execution (5-10x faster with parallel execution)
 - **[Hardware Recommendations](docs/HARDWARE_RECOMMENDATIONS.md)** - Optimal computer specs for fast development
 - **[Security Policy](SECURITY.md)** - Security guidelines
 

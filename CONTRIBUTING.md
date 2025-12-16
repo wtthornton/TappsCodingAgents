@@ -117,7 +117,14 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 5. **Run tests:**
    ```bash
-   python -m pytest
+   # Fast parallel execution (recommended)
+   python -m pytest tests/ -m unit -n auto
+   
+   # With coverage
+   python -m pytest tests/ -m unit -n auto --cov=tapps_agents --cov-report=term
+   
+   # Sequential (for debugging)
+   python -m pytest tests/ -m unit
    ```
 
 ## Coding Standards
@@ -215,18 +222,23 @@ def test_calculate_score_raises_error_for_invalid_file():
 ### Running Tests
 
 ```bash
-# Run all tests
-pytest
+# Run all unit tests in parallel (recommended - fastest)
+pytest tests/ -m unit -n auto
 
 # Run specific test file
-pytest tests/unit/test_scoring.py
+pytest tests/unit/test_scoring.py -n auto
 
-# Run with coverage
-pytest --cov=tapps_agents --cov-report=html
+# Run with coverage (parallel)
+pytest tests/ -m unit -n auto --cov=tapps_agents --cov-report=html
 
 # Run with verbose output
-pytest -v
+pytest tests/ -m unit -n auto -v
+
+# Sequential mode (for debugging only)
+pytest tests/ -m unit  # No -n flag
 ```
+
+**Performance Note**: Parallel execution (`-n auto`) provides 5-10x speedup. Always use it unless debugging test isolation issues. See [Test Performance Guide](docs/TEST_PERFORMANCE_GUIDE.md) for details.
 
 ## Documentation Standards
 

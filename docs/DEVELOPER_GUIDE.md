@@ -143,8 +143,46 @@ If you’re using Cursor, see:
 - **Add a new agent**: implement a new agent under `tapps_agents/agents/<agent>/agent.py` and wire it into the CLI if you want CLI access.
 - **Add a new project expert**: use `.tapps-agents/experts.yaml` + `.tapps-agents/domains.md` + `.tapps-agents/knowledge/<domain>/*.md`.
 
+## Running Tests (For Agents)
+
+When agents need to run unit tests directly (e.g., via terminal commands), they should follow these guidelines:
+
+### Recommended: Parallel Execution
+
+**Always use parallel execution** for optimal performance (5-10x faster):
+
+```bash
+# Run all unit tests in parallel (recommended)
+python -m pytest tests/ -m unit -n auto
+
+# Run specific test file in parallel
+python -m pytest tests/unit/test_file.py -n auto
+
+# With coverage (when needed)
+python -m pytest tests/ -m unit -n auto --cov=tapps_agents --cov-report=term
+```
+
+### Key Points
+
+- **`-n auto`**: Enables parallel execution using all CPU cores (requires `pytest-xdist`, included in `requirements.txt`)
+- **`-m unit`**: Runs only unit tests (faster, excludes integration/e2e tests)
+- **Sequential mode**: Only use when debugging test isolation issues: `python -m pytest tests/ -m unit` (no `-n` flag)
+
+### Performance
+
+- **Parallel execution**: ~1-2 minutes for 1200+ unit tests
+- **Sequential execution**: ~5-10 minutes for 1200+ unit tests
+- **Speedup**: 5-10x faster with parallel execution
+
+### Using Tester Agent
+
+The Tester Agent automatically uses parallel execution when running tests via `*run-tests` command. For direct test execution, use the commands above.
+
+See `docs/TEST_PERFORMANCE_GUIDE.md` for complete performance optimization guide.
+
 ## Related Docs
 
 - `docs/API.md`
 - `docs/ARCHITECTURE.md`
 - `docs/CONFIGURATION.md`
+- `docs/TEST_PERFORMANCE_GUIDE.md` - Test execution performance optimization

@@ -366,6 +366,22 @@ class TestSessionManager:
         """Test pausing and resuming a session."""
         session = self.manager.create_session("test-agent")
 
+        # Mock resource monitor to prevent auto-pausing
+        mock_metrics = ResourceMetrics(
+            timestamp=datetime.now(UTC).isoformat(),
+            cpu_percent=30.0,  # Low CPU to prevent auto-pause
+            memory_percent=50.0,
+            memory_used_mb=1000.0,
+            memory_available_mb=1000.0,
+            disk_percent=50.0,
+            disk_used_gb=100.0,
+            disk_free_gb=100.0,
+        )
+        self.manager.monitor.resource_monitor.get_current_metrics = Mock(
+            return_value=mock_metrics
+        )
+        self.manager.monitor.should_pause = Mock(return_value=False)
+
         # Pause
         self.manager.pause_session(session.session_id, "test reason")
         paused = self.manager.get_session(session.session_id)
@@ -375,7 +391,11 @@ class TestSessionManager:
         # Resume
         resumed = self.manager.resume_session(session.session_id)
         assert resumed is not None
+        # Verify the resumed session has ACTIVE state
         assert resumed.state == SessionState.ACTIVE
+        # Also verify by getting the session again
+        resumed_check = self.manager.get_session(session.session_id)
+        assert resumed_check.state == SessionState.ACTIVE
 
     def test_add_checkpoint(self):
         """Test adding checkpoint to session."""

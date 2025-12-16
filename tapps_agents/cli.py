@@ -2538,6 +2538,54 @@ Examples:
             if tech_stack.get("detected_files"):
                 print(f"  Detected Files: {', '.join(tech_stack['detected_files'])}")
 
+        # Show MCP server detection
+        if results.get("mcp_servers"):
+            mcp_status = results["mcp_servers"]
+            print("\n" + "=" * 60)
+            print("External MCP Server Detection")
+            print("=" * 60)
+            
+            if mcp_status.get("note"):
+                print(f"\n  ℹ️  {mcp_status['note']}")
+
+            if mcp_status.get("configuration_files"):
+                print("\n  MCP Configuration Files Found:")
+                for config_file in mcp_status["configuration_files"]:
+                    print(f"    - {config_file}")
+
+            if mcp_status.get("detected_servers"):
+                print("\n  ✅ Installed MCP Servers:")
+                for server in mcp_status["detected_servers"]:
+                    status_icon = "✅" if server.get("status") == "installed" else "⚠️"
+                    required = " (Required)" if server.get("required") else " (Optional)"
+                    print(f"    {status_icon} {server['name']}{required}")
+                    if server.get("reason"):
+                        print(f"      → {server['reason']}")
+
+            if mcp_status.get("missing_servers"):
+                print("\n  ❌ Missing MCP Servers:")
+                for server in mcp_status["missing_servers"]:
+                    required = " (Required)" if server.get("required") else " (Optional)"
+                    print(f"    ❌ {server['name']}{required}")
+                    if server.get("description"):
+                        print(f"      → {server['description']}")
+                    if server.get("package"):
+                        print(f"      → Package: {server['package']}")
+
+            # Show setup instructions for missing required servers
+            missing_required = [
+                s for s in mcp_status.get("missing_servers", []) if s.get("required")
+            ]
+            if missing_required and mcp_status.get("setup_instructions"):
+                print("\n  📋 Setup Instructions:")
+                for server in missing_required:
+                    server_id = server.get("id")
+                    if server_id in mcp_status["setup_instructions"]:
+                        instructions = mcp_status["setup_instructions"][server_id]
+                        print(f"\n    {server['name']}:")
+                        for step in instructions.get("steps", []):
+                            print(f"      {step}")
+
         # Show cache pre-population results
         if results.get("cache_prepopulated") is not None:
             print("\n" + "=" * 60)

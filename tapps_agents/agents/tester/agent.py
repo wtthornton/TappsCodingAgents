@@ -446,6 +446,14 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             cmd: list[str] = ["pytest", "-v"]
         else:
             cmd = [sys.executable, "-m", "pytest", "-v"]
+        
+        # Use parallel execution and unit test marker when running all tests
+        # (not when a specific test_path is provided, as it might be integration/e2e)
+        if not test_path:
+            cmd.extend(["-m", "unit", "-n", "auto"])
+        else:
+            # Still use parallel execution for specific paths (faster)
+            cmd.extend(["-n", "auto"])
 
         if coverage and source_paths:
             # Add coverage options

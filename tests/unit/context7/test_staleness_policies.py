@@ -23,21 +23,25 @@ class TestStalenessPolicy:
     def test_is_stale_fresh_entry(self):
         policy = StalenessPolicy(max_age_days=30)
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=10)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=10)
+        # Format correctly: remove timezone info and add Z
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         assert policy.is_stale(last_updated, now) is False
 
     def test_is_stale_old_entry(self):
         policy = StalenessPolicy(max_age_days=30)
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=31)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=31)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         assert policy.is_stale(last_updated, now) is True
 
     def test_is_stale_exactly_at_threshold(self):
         policy = StalenessPolicy(max_age_days=30)
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=30)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=30)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         # Exactly at threshold should not be stale (age <= max_age)
         assert policy.is_stale(last_updated, now) is False
@@ -50,7 +54,8 @@ class TestStalenessPolicy:
     def test_days_until_stale_fresh(self):
         policy = StalenessPolicy(max_age_days=30)
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=10)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=10)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         days = policy.days_until_stale(last_updated, now)
         assert days == 20  # 30 - 10
@@ -118,7 +123,8 @@ class TestStalenessPolicyManager:
 
     def test_is_entry_stale_fresh(self, manager):
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=10)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=10)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         assert (
             manager.is_entry_stale("react", last_updated, reference_date=now) is False
@@ -126,13 +132,15 @@ class TestStalenessPolicyManager:
 
     def test_is_entry_stale_old(self, manager):
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=31)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=31)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         assert manager.is_entry_stale("react", last_updated, reference_date=now) is True
 
     def test_is_entry_stale_critical_library(self, manager):
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=8)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=8)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         # Critical libraries stale after 7 days
         assert (
@@ -141,16 +149,18 @@ class TestStalenessPolicyManager:
 
     def test_get_refresh_recommendation_keep(self, manager):
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=10)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=10)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
-        rec = manager.get_refresh_recommendation("react", last_updated)
+        rec = manager.get_refresh_recommendation("react", last_updated, reference_date=now)
         assert rec["is_stale"] is False
         assert rec["recommendation"] == "keep"
         assert rec["library_type"] == "stable"
 
     def test_get_refresh_recommendation_refresh(self, manager):
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=31)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=31)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         rec = manager.get_refresh_recommendation(
             "react", last_updated, reference_date=now
@@ -160,7 +170,8 @@ class TestStalenessPolicyManager:
 
     def test_get_refresh_recommendation_consider_refresh(self, manager):
         now = datetime.now(UTC)
-        last_updated = (now - timedelta(days=25)).isoformat() + "Z"
+        last_updated_dt = now - timedelta(days=25)
+        last_updated = last_updated_dt.isoformat().replace("+00:00", "") + "Z"
 
         rec = manager.get_refresh_recommendation(
             "react", last_updated, reference_date=now

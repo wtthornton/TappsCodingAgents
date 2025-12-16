@@ -2,6 +2,7 @@
 Unit tests for Context7 analytics.
 """
 
+from unittest.mock import patch
 
 import pytest
 
@@ -230,10 +231,12 @@ class TestAnalytics:
 
     def test_response_times_limit(self, analytics):
         """Test that response times are limited to 1000 entries (removes oldest)."""
-        # Record many response times (should keep only last 1000)
-        # Using 1100 iterations to exceed limit but still be fast enough
-        for i in range(1100):
-            analytics.record_cache_hit(response_time_ms=float(i))
+        # Mock _save_metrics to avoid 1100 file I/O operations (performance optimization)
+        with patch.object(analytics, '_save_metrics'):
+            # Record many response times (should keep only last 1000)
+            # Using 1100 iterations to exceed limit but still be fast enough
+            for i in range(1100):
+                analytics.record_cache_hit(response_time_ms=float(i))
 
         response_times = analytics.metrics.get("response_times", [])
         assert len(response_times) == 1000, "Should limit to 1000 entries"

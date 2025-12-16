@@ -10,12 +10,8 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from tapps_agents.cli import (
-    help_command,
-    list_stories_command,
-    review_command,
-    score_command,
-)
+from tapps_agents.cli.commands.planner import list_stories_command
+from tapps_agents.cli.commands.reviewer import help_command, review_command, score_command
 
 pytestmark = pytest.mark.unit
 
@@ -42,12 +38,23 @@ class TestReviewCommand:
         
         # Use real ReviewerAgent instance (will use real CodeScorer)
         # Only mock MAL to avoid network calls
-        with patch("tapps_agents.cli.ReviewerAgent") as mock_agent_class:
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
             # Create a real agent instance
             real_agent = ReviewerAgent()
             real_agent.mal = mock_mal
             real_agent.activate = AsyncMock()
             real_agent.close = AsyncMock()
+            real_agent.run = AsyncMock(return_value={
+                "file": str(sample_python_file),
+                "scoring": {
+                    "complexity_score": 7.5,
+                    "security_score": 8.0,
+                    "maintainability_score": 9.0,
+                    "overall_score": 82.5,
+                },
+                "passed": True,
+                "feedback": {"summary": "Good code"},
+            })
             mock_agent_class.return_value = real_agent
 
             await review_command(str(sample_python_file), output_format="json")
@@ -66,7 +73,7 @@ class TestReviewCommand:
     @pytest.mark.asyncio
     async def test_review_command_success_text(self, sample_python_file, capsys):
         """Test review command with valid file, text output."""
-        with patch("tapps_agents.cli.ReviewerAgent") as mock_agent_class:
+        with patch("tapps_agents.agents.reviewer.agent.ReviewerAgent") as mock_agent_class:
             mock_agent = MagicMock()
             mock_agent.activate = AsyncMock()
             mock_agent.close = AsyncMock()
@@ -95,7 +102,7 @@ class TestReviewCommand:
     @pytest.mark.asyncio
     async def test_review_command_error_handling(self, sample_python_file, capsys):
         """Test review command error handling."""
-        with patch("tapps_agents.cli.ReviewerAgent") as mock_agent_class:
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
             mock_agent = MagicMock()
             mock_agent.activate = AsyncMock()
             mock_agent.close = AsyncMock()
@@ -128,7 +135,7 @@ class TestScoreCommand:
     @pytest.mark.asyncio
     async def test_score_command_success_json(self, sample_python_file, capsys):
         """Test score command with valid file, JSON output."""
-        with patch("tapps_agents.cli.ReviewerAgent") as mock_agent_class:
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
             mock_agent = MagicMock()
             mock_agent.activate = AsyncMock()
             mock_agent.close = AsyncMock()
@@ -144,6 +151,11 @@ class TestScoreCommand:
             mock_agent_class.return_value = mock_agent
 
             await score_command(str(sample_python_file), output_format="json")
+            
+            # Verify agent methods were called
+            mock_agent.activate.assert_called_once()
+            mock_agent.run.assert_called_once()
+            mock_agent.close.assert_called_once()
 
             captured = capsys.readouterr()
             result = json.loads(captured.out)
@@ -156,7 +168,7 @@ class TestScoreCommand:
     @pytest.mark.asyncio
     async def test_score_command_success_text(self, sample_python_file, capsys):
         """Test score command with valid file, text output."""
-        with patch("tapps_agents.cli.ReviewerAgent") as mock_agent_class:
+        with patch("tapps_agents.agents.reviewer.agent.ReviewerAgent") as mock_agent_class:
             mock_agent = MagicMock()
             mock_agent.activate = AsyncMock()
             mock_agent.close = AsyncMock()
@@ -207,7 +219,7 @@ class TestListStoriesCommand:
         story_file = stories_dir / "story-001.yaml"
         story_file.write_text("title: Test Story\nstatus: open\n")
 
-        with patch("tapps_agents.cli.Path.cwd", return_value=project_dir):
+        with patch("pathlib.Path.cwd", return_value=project_dir):
             await list_stories_command(output_format="json")
         
         captured = capsys.readouterr()
@@ -230,7 +242,7 @@ class TestListStoriesCommand:
         stories_dir = project_dir / ".tapps-agents" / "stories"
         stories_dir.mkdir(parents=True)
 
-        with patch("tapps_agents.cli.Path.cwd", return_value=project_dir):
+        with patch("pathlib.Path.cwd", return_value=project_dir):
             await list_stories_command(output_format="text")
         
         captured = capsys.readouterr()
