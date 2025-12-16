@@ -21,13 +21,14 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from tapps_agents.core.config import get_default_config, load_config
-from tapps_agents.core.mal import MAL
-from tapps_agents.core.project_profile import load_project_profile
-from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry
-from tapps_agents.experts.expert_registry import ExpertRegistry
-from tapps_agents.workflow.detector import ProjectDetector
-from tapps_agents.workflow.parser import WorkflowParser
+# Imports after sys.path modification are intentional
+from tapps_agents.core.config import get_default_config, load_config  # noqa: E402
+from tapps_agents.core.mal import MAL  # noqa: E402
+from tapps_agents.core.project_profile import load_project_profile  # noqa: E402
+from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry  # noqa: E402
+from tapps_agents.experts.expert_registry import ExpertRegistry  # noqa: E402
+from tapps_agents.workflow.detector import ProjectDetector  # noqa: E402
+from tapps_agents.workflow.parser import WorkflowParser  # noqa: E402
 
 
 class ValidationResult:

@@ -5,6 +5,9 @@ Helps initialize a new project with TappsCodingAgents configuration,
 Cursor Rules, and workflow presets.
 """
 
+import asyncio
+import json
+import re
 import shutil
 from pathlib import Path
 from typing import Any
@@ -297,6 +300,340 @@ def init_background_agents_config(
     return False, None
 
 
+def init_cursorignore(project_root: Path | None = None, source_file: Path | None = None):
+    """
+    Initialize .cursorignore file for a project.
+
+    Copies `.cursorignore` into the target project if it doesn't exist.
+    This file helps keep Cursor fast by excluding large/generated artifacts from indexing.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    if source_file is None:
+        packaged = _resource_at("cursor", ".cursorignore")
+        if packaged is not None and packaged.exists() and not packaged.is_dir():
+            source_file = None  # type: ignore[assignment]
+            packaged_ignore = packaged
+        else:
+            packaged_ignore = None
+            current_file = Path(__file__)
+            framework_root = current_file.parent.parent.parent
+            source_file = framework_root / ".cursorignore"
+    else:
+        packaged_ignore = None
+
+    dest_file = project_root / ".cursorignore"
+
+    if dest_file.exists():
+        return False, str(dest_file)
+
+    if packaged_ignore is not None:
+        dest_file.write_bytes(packaged_ignore.read_bytes())
+        return True, str(dest_file)
+
+    if source_file and source_file.exists():
+        shutil.copy2(source_file, dest_file)
+        return True, str(dest_file)
+
+    return False, None
+
+
+def detect_tech_stack(project_root: Path) -> dict[str, Any]:
+    """
+    Detect technology stack from project files.
+
+    Args:
+        project_root: Project root directory
+
+    Returns:
+        Dictionary with detected technologies and libraries
+    """
+    tech_stack: dict[str, Any] = {
+        "languages": [],
+        "frameworks": [],
+        "libraries": set(),
+        "package_managers": [],
+        "detected_files": [],
+    }
+
+    # Python projects
+    requirements_txt = project_root / "requirements.txt"
+    if requirements_txt.exists():
+        tech_stack["package_managers"].append("pip")
+        tech_stack["languages"].append("python")
+        tech_stack["detected_files"].append("requirements.txt")
+        try:
+            content = requirements_txt.read_text(encoding="utf-8")
+            for line in content.splitlines():
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                if line.startswith("git+") or line.startswith("http"):
+                    continue
+                match = re.match(r"^([a-zA-Z0-9_-]+)", line)
+                if match:
+                    lib_name = match.group(1).lower().replace("_", "-")
+                    tech_stack["libraries"].add(lib_name)
+        except Exception:
+            pass
+
+    pyproject_toml = project_root / "pyproject.toml"
+    if pyproject_toml.exists():
+        tech_stack["package_managers"].append("pip")
+        tech_stack["languages"].append("python")
+        tech_stack["detected_files"].append("pyproject.toml")
+        try:
+            content = pyproject_toml.read_text(encoding="utf-8")
+            # Try to parse as TOML (simple regex-based extraction)
+            deps_pattern = r'(?:dependencies|dev-dependencies)\s*=\s*\[(.*?)\]'
+            matches = re.findall(deps_pattern, content, re.DOTALL)
+            for match in matches:
+                pkg_names = re.findall(r'["\']([^"\']+)["\']', match)
+                for pkg_name in pkg_names:
+                    tech_stack["libraries"].add(pkg_name.lower())
+        except Exception:
+            pass
+
+    # Node.js/TypeScript projects
+    package_json = project_root / "package.json"
+    if package_json.exists():
+        tech_stack["package_managers"].append("npm")
+        tech_stack["languages"].append("javascript")
+        tech_stack["detected_files"].append("package.json")
+        try:
+            with open(package_json, encoding="utf-8") as f:
+                data = json.load(f)
+                deps = data.get("dependencies", {})
+                dev_deps = data.get("devDependencies", {})
+                all_deps = {**deps, **dev_deps}
+                for dep_name in all_deps.keys():
+                    normalized = dep_name.replace("@types/", "").replace("@", "")
+                    tech_stack["libraries"].add(normalized)
+        except Exception:
+            pass
+
+    # Convert set to sorted list
+    tech_stack["libraries"] = sorted(list(tech_stack["libraries"]))
+
+    # Detect frameworks from libraries
+    frameworks_map = {
+        "fastapi": "FastAPI",
+        "django": "Django",
+        "flask": "Flask",
+        "starlette": "Starlette",
+        "react": "React",
+        "vue": "Vue.js",
+        "angular": "Angular",
+        "next": "Next.js",
+        "express": "Express",
+        "nestjs": "NestJS",
+    }
+
+    for lib in tech_stack["libraries"]:
+        lib_lower = lib.lower()
+        for key, framework in frameworks_map.items():
+            if key in lib_lower:
+                if framework not in tech_stack["frameworks"]:
+                    tech_stack["frameworks"].append(framework)
+
+    return tech_stack
+
+
+def get_builtin_expert_libraries() -> list[str]:
+    """
+    Get libraries commonly used by built-in experts that should be pre-populated.
+
+    Returns:
+        List of library names used by built-in experts
+    """
+    expert_libraries = {
+        # Security Expert
+        "bandit",  # Security linter
+        "safety",  # Dependency vulnerability scanner
+        "cryptography",  # Cryptographic library
+        "pyjwt",  # JWT handling
+        "bcrypt",  # Password hashing
+        # Performance Expert
+        "cprofile",  # Profiling
+        "memory-profiler",  # Memory profiling
+        "line-profiler",  # Line-by-line profiling
+        "cachetools",  # Caching utilities
+        "diskcache",  # Disk-based caching
+        # Testing Expert
+        "pytest",  # Testing framework
+        "pytest-cov",  # Coverage plugin
+        "pytest-mock",  # Mocking plugin
+        "pytest-asyncio",  # Async testing
+        "coverage",  # Coverage analysis
+        "unittest",  # Standard library testing
+        "mock",  # Mocking library
+        # Code Quality Expert
+        "ruff",  # Fast linter
+        "mypy",  # Type checker
+        "pylint",  # Linter
+        "black",  # Code formatter
+        "radon",  # Complexity analysis
+        # Database Expert
+        "sqlalchemy",  # ORM
+        "pymongo",  # MongoDB driver
+        "psycopg2",  # PostgreSQL driver
+        "redis",  # Redis client
+        "sqlite3",  # SQLite (built-in, but docs available)
+        # API Design Expert
+        "fastapi",  # Web framework
+        "flask",  # Web framework
+        "django",  # Web framework
+        "starlette",  # ASGI framework
+        "httpx",  # HTTP client
+        "requests",  # HTTP library
+        "aiohttp",  # Async HTTP
+        # Observability Expert
+        "prometheus-client",  # Prometheus metrics
+        "opentelemetry",  # Observability framework
+        "structlog",  # Structured logging
+        "sentry-sdk",  # Error tracking
+        # Cloud Infrastructure Expert
+        "boto3",  # AWS SDK
+        "kubernetes",  # Kubernetes client
+        "docker",  # Docker SDK
+        # Data Processing (for various experts)
+        "pandas",  # Data analysis
+        "numpy",  # Numerical computing
+        "pydantic",  # Data validation
+    }
+    return sorted(list(expert_libraries))
+
+
+async def pre_populate_context7_cache(
+    project_root: Path, libraries: list[str] | None = None
+) -> dict[str, Any]:
+    """
+    Pre-populate Context7 cache with project dependencies.
+
+    Args:
+        project_root: Project root directory
+        libraries: Optional list of libraries to cache (auto-detected if None)
+
+    Returns:
+        Dictionary with pre-population results
+    """
+    try:
+        from tapps_agents.context7.commands import Context7Commands
+        from tapps_agents.core.config import load_config
+
+        # Load configuration
+        try:
+            config = load_config(project_root)
+            if not config.context7 or not config.context7.enabled:
+                return {
+                    "success": False,
+                    "error": "Context7 is not enabled in configuration",
+                    "cached": 0,
+                }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Error loading config: {e}",
+                "cached": 0,
+            }
+
+        # Initialize Context7 commands
+        context7_commands = Context7Commands(project_root=project_root, config=config)
+
+        if not context7_commands.enabled:
+            return {
+                "success": False,
+                "error": "Context7 is not enabled",
+                "cached": 0,
+            }
+
+        # Auto-detect libraries if not provided
+        project_libraries = []
+        if libraries is None:
+            tech_stack = detect_tech_stack(project_root)
+            project_libraries = tech_stack["libraries"]
+        else:
+            project_libraries = libraries
+
+        # Get built-in expert libraries
+        expert_libraries = get_builtin_expert_libraries()
+
+        # Combine project libraries with expert libraries (remove duplicates)
+        all_libraries = sorted(list(set(project_libraries + expert_libraries)))
+
+        if not all_libraries:
+            return {
+                "success": False,
+                "error": "No libraries to cache",
+                "cached": 0,
+            }
+
+        # Common topics to cache for popular libraries
+        common_topics_map = {
+            "fastapi": ["routing", "dependency-injection", "middleware", "errors"],
+            "pytest": ["fixtures", "parametrize", "markers", "async"],
+            "sqlalchemy": ["models", "queries", "sessions", "relationships"],
+            "django": ["models", "views", "urls", "middleware"],
+            "pydantic": ["models", "validation", "serialization"],
+        }
+
+        success_count = 0
+        fail_count = 0
+        errors: list[str] = []
+
+        for library in all_libraries:
+            # Cache overview
+            result = await context7_commands.cmd_docs(library)
+            if result.get("success"):
+                success_count += 1
+            else:
+                fail_count += 1
+                errors.append(f"{library}: {result.get('error', 'Unknown error')}")
+
+            # Cache common topics if available
+            lib_lower = library.lower()
+            topics = None
+            for key, topic_list in common_topics_map.items():
+                if key in lib_lower:
+                    topics = topic_list
+                    break
+
+            if topics:
+                for topic in topics:
+                    result = await context7_commands.cmd_docs(library, topic=topic)
+                    if result.get("success"):
+                        success_count += 1
+                    else:
+                        fail_count += 1
+                        errors.append(
+                            f"{library}/{topic}: {result.get('error', 'Unknown error')}"
+                        )
+
+        return {
+            "success": success_count > 0,
+            "cached": success_count,
+            "failed": fail_count,
+            "total": len(all_libraries),
+            "project_libraries": len(project_libraries),
+            "expert_libraries": len(expert_libraries),
+            "errors": errors[:10],  # Limit errors shown
+        }
+
+    except ImportError:
+        return {
+            "success": False,
+            "error": "Context7 module not available",
+            "cached": 0,
+        }
+    except Exception as e:
+        return {
+            "success": False,
+            "error": f"Error during cache pre-population: {e}",
+            "cached": 0,
+        }
+
+
 def init_project(
     project_root: Path | None = None,
     include_cursor_rules: bool = True,
@@ -304,6 +641,8 @@ def init_project(
     include_config: bool = True,
     include_skills: bool = True,
     include_background_agents: bool = True,
+    include_cursorignore: bool = True,
+    pre_populate_cache: bool = True,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -312,6 +651,11 @@ def init_project(
         project_root: Project root directory (defaults to cwd)
         include_cursor_rules: Whether to copy Cursor Rules
         include_workflow_presets: Whether to copy workflow presets
+        include_config: Whether to create project config
+        include_skills: Whether to install Cursor Skills
+        include_background_agents: Whether to install Background Agents config
+        include_cursorignore: Whether to install .cursorignore file
+        pre_populate_cache: Whether to pre-populate Context7 cache with detected tech stack
 
     Returns:
         Dictionary with initialization results
@@ -326,6 +670,9 @@ def init_project(
         "config": False,
         "skills": False,
         "background_agents": False,
+        "cursorignore": False,
+        "tech_stack": None,
+        "cache_prepopulated": False,
         "files_created": [],
     }
 
@@ -365,5 +712,36 @@ def init_project(
         results["background_agents"] = success
         if bg_path:
             results["files_created"].append(bg_path)
+
+    # Initialize .cursorignore file
+    if include_cursorignore:
+        success, ignore_path = init_cursorignore(project_root)
+        results["cursorignore"] = success
+        if ignore_path:
+            results["files_created"].append(ignore_path)
+
+    # Detect tech stack and pre-populate cache for existing projects
+    tech_stack = detect_tech_stack(project_root)
+    results["tech_stack"] = tech_stack
+
+    if pre_populate_cache and tech_stack["libraries"]:
+        try:
+            cache_result = asyncio.run(
+                pre_populate_context7_cache(project_root, tech_stack["libraries"])
+            )
+            results["cache_prepopulated"] = cache_result.get("success", False)
+            results["cache_result"] = cache_result
+        except Exception as e:
+            results["cache_prepopulated"] = False
+            results["cache_error"] = str(e)
+
+    # Validate setup
+    try:
+        from .validate_cursor_setup import validate_cursor_setup
+
+        validation = validate_cursor_setup(project_root)
+        results["validation"] = validation
+    except Exception as e:
+        results["validation_error"] = str(e)
 
     return results

@@ -173,7 +173,7 @@ class TestAgentCommandProcessing:
         commands = agent.get_commands()
         # Try a number way out of range
         out_of_range = str(len(commands) + 100)
-        parsed = agent.parse_command(out_of_range)
+        agent.parse_command(out_of_range)
         # parse_command may return empty or handle gracefully
         # The actual error would come from run()
         result = await execute_command(agent, out_of_range)
@@ -234,7 +234,7 @@ class TestAgentCommandProcessing:
 
         # Verify help content contains command descriptions
         content = result["content"]
-        commands = agent.get_commands()
+        agent.get_commands()
         # Should mention at least some commands
         assert len(content) > 50, "Help content should be substantial"
 

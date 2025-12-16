@@ -188,7 +188,7 @@ class TestFullSDLCWorkflow:
         self, workflow_runner: WorkflowRunner, workflow_path: Path
     ):
         """Test workflow gate routing (pass/fail paths)."""
-        workflow = workflow_runner.load_workflow(workflow_path)
+        workflow_runner.load_workflow(workflow_path)
 
         # Test pass path
         workflow_runner.control_gate_outcome("quality_gate", True)

@@ -116,7 +116,7 @@ class TestErrorPropagationThroughLayers:
         from tapps_agents.agents.reviewer.agent import ReviewerAgent
 
         # Create a MAL that raises an error
-        mal = MAL()
+        MAL()
         mock_mal = MagicMock()
         mock_mal.generate = AsyncMock(
             side_effect=ConnectionError("Ollama connection failed")
@@ -194,7 +194,7 @@ class TestErrorRecoveryMechanisms:
         ]
 
         for error in non_recoverable_errors:
-            envelope = ErrorEnvelopeBuilder.from_exception(error)
+            ErrorEnvelopeBuilder.from_exception(error)
             # Most errors are not recoverable by default
             # Configuration, Timeout, Permission errors are exceptions
             if not isinstance(error, (ConfigurationError, TimeoutError, PermissionError)):

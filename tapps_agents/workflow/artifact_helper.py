@@ -159,7 +159,7 @@ def load_artifact(artifact_path: Path) -> (
         data = json.load(f)
 
     # Determine artifact type from schema or filename
-    artifact_type = data.get("schema_version", "1.0")
+    data.get("schema_version", "1.0")
     filename = artifact_path.name.lower()
 
     if "code" in filename or "CodeArtifact" in str(type(data)):

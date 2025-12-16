@@ -288,7 +288,7 @@ steps:
         from tapps_agents.workflow.models import WorkflowState
 
         # Create invalid state (missing required fields)
-        invalid_state = WorkflowState(
+        WorkflowState(
             workflow_id="", started_at=datetime.now()
         )
 
@@ -296,7 +296,6 @@ steps:
         await agent.activate(e2e_project)
 
         # Agent should still function even with invalid state
-        step_context = {"workflow_state": invalid_state}
         # Should not crash
         assert agent is not None
         assert agent.config is not None

@@ -255,12 +255,12 @@ class CoverageAnalyzer:
 
                 # Count executable lines (simplified)
                 file_total = len(lines)
-                file_covered = len([l for l in lines if data.line_data(file_path, l)])
+                file_covered = len([line_num for line_num in lines if data.line_data(file_path, line_num)])
 
                 total_lines += file_total
                 covered_lines += file_covered
 
-                file_missing = [l for l in lines if not data.line_data(file_path, l)]
+                file_missing = [line_num for line_num in lines if not data.line_data(file_path, line_num)]
                 file_coverage_pct = (file_covered / file_total * 100.0) if file_total > 0 else 0.0
 
                 files[file_path] = CoverageMetrics(

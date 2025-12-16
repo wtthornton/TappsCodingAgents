@@ -8,15 +8,38 @@ TappsCodingAgents can automatically set up Cursor Rules that provide context abo
 
 ## What Gets Installed
 
+### Understanding `.claude` vs `.cursor`
+
+TappsCodingAgents sets up two complementary directory structures:
+
+- **`.claude/skills/`**: Cursor Skills (agent_requestable_workspace_rules)
+  - Contains SKILL.md files for each agent
+  - Used by Cursor's Skills system to provide agent capabilities
+  - Each skill has YAML frontmatter with name, description, and allowed tools
+
+- **`.cursor/rules/`**: Cursor Rules (.mdc files for AI context)
+  - Contains markdown documentation files that provide context to Cursor AI
+  - Each rule has YAML frontmatter with description and alwaysApply settings
+  - Helps Cursor AI understand project-specific workflows and commands
+
+- **`.cursor/background-agents.yaml`**: Background Agents configuration
+  - Defines background agents that run autonomously
+  - Configured for quality analysis, testing, security scanning, and PR mode
+
+- **`.cursorignore`**: Indexing optimization
+  - Excludes large/generated artifacts from Cursor's indexing
+  - Improves performance by preventing unnecessary file indexing
+
 ### Cursor Rules
 
 **Location:** `.cursor/rules/`
 
 **Files installed by `tapps-agents init`:**
-- `workflow-presets.mdc`
-- `quick-reference.mdc`
-- `agent-capabilities.mdc`
-- `project-context.mdc`
+- `workflow-presets.mdc` - Workflow preset documentation
+- `quick-reference.mdc` - Quick command reference
+- `agent-capabilities.mdc` - Agent capabilities guide
+- `project-context.mdc` - Project context (always applied)
+- `project-profiling.mdc` - Project profiling system documentation
 
 **Content:**
 - Documentation of all 5 workflow presets
@@ -55,7 +78,8 @@ This will:
 2. Copy workflow presets to `workflows/presets/`
 3. Install Skills into `.claude/skills/` (unless `--no-skills`)
 4. Install Background Agents config into `.cursor/background-agents.yaml` (unless `--no-background-agents`)
-5. Optionally create `.tapps-agents/config.yaml` (unless `--no-config`)
+5. Install `.cursorignore` file (unless `--no-cursorignore`)
+6. Optionally create `.tapps-agents/config.yaml` (unless `--no-config`)
 
 **Options:**
 ```bash
@@ -74,6 +98,9 @@ python -m tapps_agents.cli init --no-skills
 
 # Skip installing Background Agents config
 python -m tapps_agents.cli init --no-background-agents
+
+# Skip installing .cursorignore
+python -m tapps_agents.cli init --no-cursorignore
 ```
 
 ### Method 2: During Expert Setup
@@ -201,8 +228,29 @@ python -m tapps_agents.cli setup-experts init
 
 **Solution:**
 1. Verify `.cursor/rules/workflow-presets.mdc` exists
-2. Restart Cursor IDE
-3. Check rule file syntax (should be valid markdown)
+2. Check that rule files have proper YAML frontmatter (should start with `---`)
+3. Restart Cursor IDE
+4. Check rule file syntax (should be valid markdown with YAML frontmatter)
+
+### Skills Not Available
+
+**Problem:** Cursor Skills are not showing up in agent_requestable_workspace_rules
+
+**Solution:**
+1. Verify `.claude/skills/` directory exists
+2. Check that each skill directory contains `SKILL.md` with YAML frontmatter
+3. Verify frontmatter includes `name`, `description`, and `allowed-tools` fields
+4. Restart Cursor IDE
+
+### Background Agents Not Working
+
+**Problem:** Background agents are not available in Cursor
+
+**Solution:**
+1. Verify `.cursor/background-agents.yaml` exists
+2. Check YAML syntax is valid
+3. Verify the file contains an `agents` key with agent definitions
+4. Restart Cursor IDE
 
 ### Presets Not Found
 

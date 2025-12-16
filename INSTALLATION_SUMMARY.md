@@ -25,11 +25,18 @@ python -m tapps_agents.cli setup-experts init
 
 ### Project Initialization (`python -m tapps_agents.cli init`)
 
-- ✅ Cursor Rules (`.cursor/rules/*.mdc`)
-- ✅ Cursor Skills (`.claude/skills/`)
-- ✅ Cursor Background Agents config (`.cursor/background-agents.yaml`)
+- ✅ Cursor Rules (`.cursor/rules/*.mdc`) - AI context documentation
+- ✅ Cursor Skills (`.claude/skills/`) - Agent capabilities for Cursor Skills system
+- ✅ Cursor Background Agents config (`.cursor/background-agents.yaml`) - Background agent definitions
+- ✅ `.cursorignore` - Indexing optimization file
 - ✅ Workflow presets (`workflows/presets/*.yaml`)
 - ✅ Starter config (`.tapps-agents/config.yaml`)
+
+**Understanding the Setup:**
+- **`.claude/skills/`**: Cursor Skills (agent_requestable_workspace_rules) - provides agent capabilities
+- **`.cursor/rules/`**: Cursor Rules (.mdc files) - provides AI context and documentation
+- **`.cursor/background-agents.yaml`**: Background Agents configuration - defines autonomous agents
+- **`.cursorignore`**: Excludes large/generated files from Cursor indexing for better performance
 
 ### Expert Setup (`python -m tapps_agents.cli setup-experts init`)
 

@@ -20,7 +20,7 @@ async def test_cursor_executor_initialization():
     print("=" * 60)
     
     try:
-        executor = CursorWorkflowExecutor(project_root=Path("."))
+        CursorWorkflowExecutor(project_root=Path("."))
         print("[OK] CursorWorkflowExecutor initialized successfully")
         return True
     except Exception as e:

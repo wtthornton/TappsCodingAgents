@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Topics - TappsCodingAgents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="user-guide-index.html" class="active">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-content">
+            <nav style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                <a href="user-guide-index.html">← Back to User Guide</a>
+            </nav>
+
+            <h1>Advanced Topics</h1>
+            <p class="lead">Advanced configuration, custom workflows, context tiers, hardware profiles, and optimization techniques for power users.</p>
+
+            <section id="custom-workflows">
+                <h2>Custom Workflows</h2>
+                
+                <p>Create custom workflows by defining YAML files in your <code>workflows/</code> directory.</p>
+
+                <h3>Workflow Structure</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Custom Workflow Example</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>workflow:
+  id: my-custom-workflow
+  name: "My Custom Workflow"
+  description: "Custom workflow for specific needs"
+  version: "1.0.0"
+  
+  type: brownfield  # or greenfield
+  auto_detect: true
+  
+  settings:
+    quality_gates: true
+    code_scoring: true
+    context_tier_default: 2
+  
+  steps:
+    - id: step1
+      agent: planner
+      action: create_stories
+      context_tier: 1
+      creates:
+        - stories/
+      requires: []
+      next: step2
+      
+    - id: step2
+      agent: implementer
+      action: write_code
+      context_tier: 3
+      requires:
+        - stories/
+      creates:
+        - src/
+      next: review
+      
+    - id: review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - src/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 70
+      gate:
+        condition: "scoring.passed == true"
+        on_pass: complete
+        on_fail: step2
+        
+    - id: complete
+      agent: orchestrator
+      action: finalize
+      context_tier: 1</code></pre>
+                </div>
+
+                <h3>Running Custom Workflows</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Run Custom Workflow</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents workflow run workflows/my-custom-workflow.yaml</code></pre>
+                </div>
+            </section>
+
+            <section id="context-tiers">
+                <h2>Context Tiers</h2>
+                
+                <p>Context tiers control how much code context is provided to agents, balancing completeness with token efficiency.</p>
+
+                <h3>Tier 1: Core Context (~500 tokens)</h3>
+                <ul>
+                    <li>File structure</li>
+                    <li>Function signatures</li>
+                    <li>Class definitions</li>
+                    <li>Imports/exports</li>
+                </ul>
+                <p><strong>Used by:</strong> Analyst, Planner, Reviewer (initial), Ops</p>
+
+                <h3>Tier 2: Extended Context (~2000 tokens)</h3>
+                <ul>
+                    <li>Everything in Tier 1</li>
+                    <li>Function bodies</li>
+                    <li>Related files</li>
+                    <li>Test files</li>
+                </ul>
+                <p><strong>Used by:</strong> Architect, Designer, Reviewer (detailed), Tester</p>
+
+                <h3>Tier 3: Full Context (~10000 tokens)</h3>
+                <ul>
+                    <li>Everything in Tier 2</li>
+                    <li>Complete file contents</li>
+                    <li>Git history</li>
+                    <li>Documentation</li>
+                    <li>Cross-references</li>
+                </ul>
+                <p><strong>Used by:</strong> Implementer, Improver</p>
+
+                <h3>Configuring Context Tiers</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Context Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># In .tapps-agents/config.yaml
+context:
+  tiered_enabled: true
+  default_tier: "tier1"  # tier1, tier2, or tier3
+  cache_ttl: 300  # Cache time-to-live in seconds</code></pre>
+                </div>
+            </section>
+
+            <section id="hardware-profiles">
+                <h2>Hardware Profiles</h2>
+                
+                <p>Hardware profiles optimize performance for different system configurations, especially important for low-power systems like Intel NUCs.</p>
+
+                <h3>Available Profiles</h3>
+                <ul>
+                    <li><strong>auto</strong> - Auto-detect (default)</li>
+                    <li><strong>nuc</strong> - Intel NUC / low-power systems</li>
+                    <li><strong>development</strong> - Development machines</li>
+                    <li><strong>workstation</strong> - High-performance workstations</li>
+                    <li><strong>server</strong> - Server environments</li>
+                </ul>
+
+                <h3>Setting Hardware Profile</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Hardware Profile Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check current profile
+tapps-agents hardware-profile
+
+# Set profile
+tapps-agents hardware-profile --set nuc</code></pre>
+                </div>
+            </section>
+
+            <section id="performance-tuning">
+                <h2>Performance Tuning</h2>
+                
+                <h3>Token Optimization</h3>
+                <ul>
+                    <li>Use appropriate context tiers (Tier 1 for most tasks)</li>
+                    <li>Enable tiered context caching</li>
+                    <li>Break large tasks into smaller workflows</li>
+                    <li>Use local models (Ollama) when possible</li>
+                </ul>
+
+                <h3>Caching Strategy</h3>
+                <p>Context caching reduces redundant processing:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Cache Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># In .tapps-agents/config.yaml
+context:
+  cache_ttl: 300  # 5 minutes for Tier 1
+  # Tier 2: 120 seconds (2 minutes)
+  # Tier 3: 60 seconds (1 minute)</code></pre>
+                </div>
+
+                <h3>Model Selection</h3>
+                <p>Choose models based on your needs:</p>
+                <ul>
+                    <li><strong>Local (Ollama):</strong> Fast, private, but may have quality limitations</li>
+                    <li><strong>Cloud (Anthropic, OpenAI):</strong> Higher quality, but requires API keys and costs</li>
+                </ul>
+            </section>
+
+            <section id="integration-patterns">
+                <h2>Integration Patterns</h2>
+                
+                <h3>CI/CD Integration</h3>
+                <p>Integrate workflows into your CI/CD pipeline:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>CI/CD Example</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># .github/workflows/quality-check.yml
+- name: Run Quality Workflow
+  run: |
+    tapps-agents workflow quality
+    # Check exit code for quality gate results</code></pre>
+                </div>
+
+                <h3>Pre-commit Hooks</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Pre-commit Hook</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># .git/hooks/pre-commit
+#!/bin/bash
+tapps-agents reviewer score $(git diff --cached --name-only --diff-filter=ACM | grep '\.py$')
+# Exit with error if score below threshold</code></pre>
+                </div>
+            </section>
+
+            <section style="margin-top: 3rem; padding: 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border);">
+                <h2>Learn More</h2>
+                <ul>
+                    <li><a href="user-guide-workflows.html">Workflows Guide</a> - Understanding workflow structure</li>
+                    <li><a href="technical-spec.html">Technical Specification</a> - Deep dive into architecture</li>
+                    <li><a href="api-reference.html">API Reference</a> - Complete API documentation</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

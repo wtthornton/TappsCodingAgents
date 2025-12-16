@@ -46,7 +46,7 @@ workflow:
         
         workflow = WorkflowParser.parse_file(workflow_file)
         executor.load_workflow(workflow_file)
-        state = executor.start(workflow=workflow)
+        executor.start(workflow=workflow)
         
         # Save state
         state_path = executor.save_state()
@@ -144,7 +144,7 @@ workflow:
         )
         
         executor2.load_workflow(workflow_file)
-        state2 = executor2.load_last_state()
+        executor2.load_last_state()
         
         # Verify workflow can be resumed
         assert executor2.workflow is not None
@@ -178,7 +178,7 @@ workflow:
         
         workflow = WorkflowParser.parse_file(workflow_file)
         executor.load_workflow(workflow_file)
-        state = executor.start(workflow=workflow)
+        executor.start(workflow=workflow)
         executor.save_state()
         
         # Load state and verify consistency
@@ -220,7 +220,7 @@ workflow:
         
         workflow = WorkflowParser.parse_file(workflow_file)
         executor.load_workflow(workflow_file)
-        state = executor.start(workflow=workflow)
+        executor.start(workflow=workflow)
         executor.save_state()
         
         # Load state and validate contract

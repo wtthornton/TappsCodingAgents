@@ -145,7 +145,6 @@ class TestReviewerAgentErrorHandling:
         # Patch the scorer's score_file method to raise a specific error
         # This tests error propagation through real agent code
         error_message = "Scorer error: File parsing failed"
-        original_score_file = agent.scorer.score_file
         
         def failing_score_file(*args, **kwargs):
             raise RuntimeError(error_message)

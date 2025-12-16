@@ -10,6 +10,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from .rag_chunker import Chunk
+from .rag_embedder import Embedder
+
 logger = logging.getLogger(__name__)
 
 # Try to import FAISS (optional dependency)
@@ -20,9 +23,6 @@ try:
 except ImportError:
     FAISS_AVAILABLE = False
     faiss = None  # type: ignore
-
-from .rag_chunker import Chunk
-from .rag_embedder import Embedder
 
 # Schema version for index metadata
 INDEX_SCHEMA_VERSION = "1.0"
@@ -189,7 +189,7 @@ class VectorIndex:
         # similarity = 1 - (distance^2 / 2)
         # This approximates cosine similarity
         results: list[tuple[Chunk, float]] = []
-        for i, (distance, idx) in enumerate(zip(distances[0], indices[0])):
+        for _i, (distance, idx) in enumerate(zip(distances[0], indices[0], strict=False)):
             if idx < 0 or idx >= len(self.chunks):  # Invalid index
                 continue
 

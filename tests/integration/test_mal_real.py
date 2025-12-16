@@ -83,7 +83,7 @@ class TestMALRealOllama:
         """Test Ollama error handling - fast failure test."""
         mal = MAL(config=ollama_config)
         try:
-            with pytest.raises(Exception):
+            with pytest.raises((ConnectionError, ValueError)):
                 await mal.generate("OK", model="nonexistent-model-12345")
         finally:
             await mal.close()
@@ -165,7 +165,7 @@ class TestMALRealFallback:
         
         mal = MAL(config=config)
         try:
-            with pytest.raises(Exception):
+            with pytest.raises((ConnectionError, ValueError)):
                 await mal.generate("OK")
         finally:
             await mal.close()

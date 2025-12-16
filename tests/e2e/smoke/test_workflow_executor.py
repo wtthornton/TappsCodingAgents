@@ -60,7 +60,7 @@ workflow:
             advanced_state=False,
         )
         
-        workflow = WorkflowParser.parse_file(workflow_file)
+        WorkflowParser.parse_file(workflow_file)
         executor.load_workflow(workflow_file)
         
         assert executor.workflow is not None

@@ -86,7 +86,7 @@ class TestQuickFixWorkflow:
         assert "review" in step_ids
 
         # Verify step dependencies
-        debug_step = next(step for step in workflow.steps if step.id == "debug")
+        next(step for step in workflow.steps if step.id == "debug")
         fix_step = next(step for step in workflow.steps if step.id == "fix")
 
         # Fix step should require debug-report.md

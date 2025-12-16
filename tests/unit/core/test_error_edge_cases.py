@@ -182,7 +182,7 @@ class TestLargeInputHandling:
         # But we can test that if it occurs, it's categorized correctly
         try:
             # Attempt to create an extremely large list (will fail on most systems)
-            huge_list = [0] * (10 ** 10)  # This will likely fail
+            [0] * (10 ** 10)  # This will likely fail
         except MemoryError:
             # MemoryError should be categorized appropriately
             error = MemoryError("Out of memory")

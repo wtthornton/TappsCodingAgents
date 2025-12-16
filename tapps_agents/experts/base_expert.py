@@ -135,7 +135,7 @@ class BaseExpert(BaseAgent):
             try:
                 from ..core.config import get_expert_config
 
-                expert_config = get_expert_config()
+                get_expert_config()
                 self.knowledge_base = VectorKnowledgeBase(
                     knowledge_dir=primary_dir,
                     domain=self.primary_domain,

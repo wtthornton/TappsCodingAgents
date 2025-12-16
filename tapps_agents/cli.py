@@ -1926,6 +1926,16 @@ Examples:
         action="store_true",
         help="Skip installing .cursor/background-agents.yaml",
     )
+    init_parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Skip Context7 cache pre-population",
+    )
+    init_parser.add_argument(
+        "--no-cursorignore",
+        action="store_true",
+        help="Skip installing .cursorignore file",
+    )
 
     # Environment diagnostics
     doctor_parser = subparsers.add_parser(
@@ -2417,6 +2427,8 @@ Examples:
             include_config=not getattr(args, "no_config", False),
             include_skills=not getattr(args, "no_skills", False),
             include_background_agents=not getattr(args, "no_background_agents", False),
+            include_cursorignore=not getattr(args, "no_cursorignore", False),
+            pre_populate_cache=not getattr(args, "no_cache", False),
         )
 
         print("Initialization Results:")
@@ -2460,11 +2472,180 @@ Examples:
         else:
             print("  Background Agents: Skipped or already exists")
 
-        print("\nNext Steps:")
+        if results.get("cursorignore"):
+            print("  .cursorignore: Installed")
+            print("    - .cursorignore")
+        else:
+            print("  .cursorignore: Skipped or already exists")
+
+        # Show validation results
+        if results.get("validation"):
+            validation = results["validation"]
+            print("\n" + "=" * 60)
+            print("Setup Validation")
+            print("=" * 60)
+            
+            if validation.get("overall_valid"):
+                print("  Status: ✓ All validations passed")
+            else:
+                print("  Status: ✗ Some validations failed")
+            
+            if validation.get("all_errors"):
+                print("\n  Errors:")
+                for error in validation["all_errors"]:
+                    print(f"    ✗ {error}")
+            
+            if validation.get("all_warnings"):
+                print("\n  Warnings:")
+                for warning in validation["all_warnings"]:
+                    print(f"    ⚠ {warning}")
+            
+            # Show summary
+            cursor_rules = validation.get("cursor_rules", {})
+            claude_skills = validation.get("claude_skills", {})
+            bg_agents = validation.get("background_agents", {})
+            
+            print("\n  Summary:")
+            print(f"    Cursor Rules: {len(cursor_rules.get('rules_found', []))} found")
+            print(f"    Claude Skills: {len(claude_skills.get('skills_found', []))} found")
+            print(f"    Background Agents: {'✓' if bg_agents.get('valid') else '✗'}")
+        
+        # Show tech stack detection
+        if results.get("tech_stack"):
+            tech_stack = results["tech_stack"]
+            print("\n" + "=" * 60)
+            print("Tech Stack Detection")
+            print("=" * 60)
+            
+            if tech_stack.get("languages"):
+                print(f"  Languages: {', '.join(tech_stack['languages'])}")
+            
+            if tech_stack.get("frameworks"):
+                print(f"  Frameworks: {', '.join(tech_stack['frameworks'])}")
+            
+            if tech_stack.get("package_managers"):
+                print(f"  Package Managers: {', '.join(tech_stack['package_managers'])}")
+            
+            if tech_stack.get("libraries"):
+                lib_count = len(tech_stack["libraries"])
+                print(f"  Libraries Detected: {lib_count}")
+                if lib_count > 0 and lib_count <= 20:
+                    print(f"    {', '.join(tech_stack['libraries'][:20])}")
+                elif lib_count > 20:
+                    print(f"    {', '.join(tech_stack['libraries'][:20])} ...")
+                    print(f"    (and {lib_count - 20} more)")
+            
+            if tech_stack.get("detected_files"):
+                print(f"  Detected Files: {', '.join(tech_stack['detected_files'])}")
+
+        # Show cache pre-population results
+        if results.get("cache_prepopulated") is not None:
+            print("\n" + "=" * 60)
+            print("Context7 Cache Pre-population")
+            print("=" * 60)
+            
+            if results.get("cache_prepopulated"):
+                cache_result = results.get("cache_result", {})
+                cached = cache_result.get("cached", 0)
+                total = cache_result.get("total", 0)
+                failed = cache_result.get("failed", 0)
+                project_libs = cache_result.get("project_libraries", 0)
+                expert_libs = cache_result.get("expert_libraries", 0)
+                print(f"  Status: ✅ Success")
+                print(f"  Cached Entries: {cached}")
+                print(f"  Total Libraries: {total}")
+                if project_libs > 0:
+                    print(f"    - Project Libraries: {project_libs}")
+                if expert_libs > 0:
+                    print(f"    - Built-in Expert Libraries: {expert_libs}")
+                if failed > 0:
+                    print(f"  Failed: {failed}")
+                if cache_result.get("errors"):
+                    error_count = len(cache_result["errors"])
+                    print(f"  Errors: {error_count} (showing first 5)")
+                    for error in cache_result["errors"][:5]:
+                        print(f"    - {error}")
+            elif results.get("cache_error"):
+                print(f"  Status: ❌ Error")
+                print(f"  Error: {results['cache_error']}")
+            else:
+                cache_result = results.get("cache_result", {})
+                error_msg = cache_result.get("error", "Unknown error")
+                print(f"  Status: ❌ Failed")
+                print(f"  Error: {error_msg}")
+
+        # Run environment diagnostics
+        print("\n" + "=" * 60)
+        print("Environment Check")
+        print("=" * 60)
+        print()
+
+        try:
+            doctor_report = collect_doctor_report(
+                project_root=Path(results["project_root"])
+            )
+            
+            # Count findings by severity
+            findings = doctor_report.get("findings", [])
+            ok_count = sum(1 for f in findings if f.get("severity") == "ok")
+            warn_count = sum(1 for f in findings if f.get("severity") == "warn")
+            error_count = sum(1 for f in findings if f.get("severity") == "error")
+            
+            # Show summary
+            print(f"Status: {ok_count} OK, {warn_count} warnings, {error_count} errors")
+            print()
+            
+            # Show critical findings (warnings and errors)
+            critical_findings = [f for f in findings if f.get("severity") in ("warn", "error")]
+            
+            if critical_findings:
+                print("Findings requiring attention:")
+                for f in critical_findings:
+                    sev = (f.get("severity") or "warn").upper()
+                    code = f.get("code", "")
+                    msg = f.get("message", "")
+                    print(f"  [{sev}] {code}: {msg}")
+                    remediation = f.get("remediation")
+                    if remediation:
+                        print(f"         -> {remediation}")
+                print()
+            
+            # Check for tools that work via python -m even if not on PATH
+            # Map command names to their Python module names
+            tool_module_map = {
+                "pip-audit": "pip_audit",
+                "pipdeptree": "pipdeptree",
+            }
+            
+            missing_tools = []
+            for f in findings:
+                if f.get("code") == "TOOL_MISSING":
+                    tool_name = f.get("message", "").replace("Tool not found on PATH: ", "")
+                    if tool_name:
+                        # Use module name if different, otherwise use command name
+                        module_name = tool_module_map.get(tool_name, tool_name.replace("-", "_"))
+                        missing_tools.append((tool_name, module_name))
+            
+            if missing_tools:
+                print("Note: Some tools may work via 'python -m' even if not on PATH:")
+                for cmd_name, module_name in missing_tools:
+                    print(f"  - Try: python -m {module_name} --version")
+                print()
+            
+            if warn_count == 0 and error_count == 0:
+                print("All checks passed! Your environment is ready.")
+                print()
+        except Exception as e:
+            # Don't fail init if doctor has issues
+            print(f"  Note: Could not run environment check: {e}")
+            print("  Run 'python -m tapps_agents.cli doctor' manually for details.")
+            print()
+
+        print("Next Steps:")
         print("  1. Set up experts: python -m tapps_agents.cli setup-experts init")
         print("  2. List workflows: python -m tapps_agents.cli workflow list")
         print("  3. Run a workflow: python -m tapps_agents.cli workflow rapid")
-        print("  4. Check environment: python -m tapps_agents.cli doctor")
+        print("  4. Full environment check: python -m tapps_agents.cli doctor")
         print()
     elif args.agent == "doctor":
         config_path = getattr(args, "config_path", None)

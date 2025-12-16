@@ -550,7 +550,7 @@ class WorktreeManager:
 
         # Attempt merge
         try:
-            result = subprocess.run(
+            subprocess.run(
                 [git_path, "merge", "--no-ff", "--no-commit", branch_name],
                 cwd=self.project_root,
                 capture_output=True,

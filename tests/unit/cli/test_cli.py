@@ -10,14 +10,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-pytestmark = pytest.mark.unit
-
 from tapps_agents.cli import (
     help_command,
     list_stories_command,
     review_command,
     score_command,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestReviewCommand:

@@ -48,13 +48,56 @@ def _run_version_cmd(argv: list[str]) -> str | None:
             capture_output=True,
             text=True,
             check=False,
+            timeout=10,  # Add timeout to prevent hanging
         )
-    except Exception:
+    except (subprocess.TimeoutExpired, Exception):
         return None
     out = (proc.stdout or "").strip()
     err = (proc.stderr or "").strip()
     # Some tools print version to stderr (e.g., older node/npm)
     return out if out else (err if err else None)
+
+
+def _check_tool_via_python_m(module_name: str) -> tuple[bool, str | None]:
+    """
+    Check if a tool is available via 'python -m <module_name>'.
+    
+    Returns:
+        (is_available, version_output)
+    """
+    try:
+        proc = subprocess.run(  # nosec B603
+            [sys.executable, "-m", module_name, "--version"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+        if proc.returncode == 0:
+            out = (proc.stdout or "").strip()
+            err = (proc.stderr or "").strip()
+            version = out if out else (err if err else None)
+            return True, version
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        pass
+    return False, None
+
+
+def _get_python_module_name(tool_name: str) -> str:
+    """
+    Map command-line tool names to their Python module names.
+    
+    Examples:
+        pip-audit -> pip_audit
+        pipdeptree -> pipdeptree
+        ruff -> ruff
+    """
+    # Map of command names to module names
+    module_map = {
+        "pip-audit": "pip_audit",
+        "pipdeptree": "pipdeptree",
+    }
+    return module_map.get(tool_name, tool_name.replace("-", "_"))
 
 
 def collect_doctor_report(
@@ -115,6 +158,9 @@ def collect_doctor_report(
         "npm": ["npm", "--version"],
         "npx": ["npx", "--version"],
     }
+    
+    # Python tools that can be checked via 'python -m' as fallback
+    python_tools = {"ruff", "mypy", "pytest", "pip-audit", "pipdeptree"}
 
     typescript_enabled = bool(
         config.quality_tools and config.quality_tools.typescript_enabled
@@ -126,19 +172,41 @@ def collect_doctor_report(
             continue
 
         exe = argv[0]
-        if shutil.which(exe) is None:
+        found_on_path = shutil.which(exe) is not None
+        found_via_python_m = False
+        version_out = None
+        detection_method = None
+        
+        # Try PATH first
+        if found_on_path:
+            version_out = _run_version_cmd(argv)
+            if version_out:
+                detection_method = "PATH"
+        
+        # If not found on PATH (or version check failed) and it's a Python tool, try python -m
+        if (not found_on_path or not version_out) and tool in python_tools:
+            module_name = _get_python_module_name(tool)
+            found_via_python_m, python_m_version = _check_tool_via_python_m(module_name)
+            if found_via_python_m and python_m_version:
+                version_out = python_m_version
+                detection_method = "python -m"
+        
+        # Report findings
+        if not found_on_path and not found_via_python_m:
+            remediation_msg = "Install the tool or disable the feature in .tapps-agents/config.yaml."
+            if tool in python_tools:
+                module_name = _get_python_module_name(tool)
+                remediation_msg += f" If installed, try: python -m {module_name} --version"
+            
             findings.append(
                 DoctorFinding(
                     severity="warn" if soft_degrade else "error",
                     code="TOOL_MISSING",
                     message=f"Tool not found on PATH: {exe}",
-                    remediation="Install the tool or disable the feature in .tapps-agents/config.yaml.",
+                    remediation=remediation_msg,
                 )
             )
-            continue
-
-        version_out = _run_version_cmd(argv)
-        if version_out is None:
+        elif version_out is None:
             findings.append(
                 DoctorFinding(
                     severity="warn" if soft_degrade else "error",
@@ -147,11 +215,13 @@ def collect_doctor_report(
                 )
             )
         else:
+            # Tool found - report with detection method
+            method_note = f" (via {detection_method})" if detection_method and detection_method != "PATH" else ""
             findings.append(
                 DoctorFinding(
                     severity="ok",
                     code="TOOL_VERSION",
-                    message=f"{exe}: {version_out}",
+                    message=f"{exe}: {version_out}{method_note}",
                 )
             )
 

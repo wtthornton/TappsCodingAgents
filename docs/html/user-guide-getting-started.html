@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getting Started - TappsCodingAgents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="user-guide-index.html" class="active">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-content">
+            <nav style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                <a href="user-guide-index.html">← Back to User Guide</a>
+            </nav>
+
+            <h1>Getting Started</h1>
+            <p class="lead">Follow these steps in order to set up TappsCodingAgents for your project. The setup process is designed to be logical and progressive.</p>
+
+            <div class="alert alert-info" style="margin: 2rem 0;">
+                <strong>Recommended Flow:</strong> Initialize → Profile → Configure → Setup Experts → Start Coding
+            </div>
+
+            <section id="installation">
+                <h2>Step 1: Installation</h2>
+                
+                <h3>Prerequisites</h3>
+                <ul>
+                    <li><strong>Python 3.13+</strong> (recommended: latest stable Python)</li>
+                    <li><strong>Ollama</strong> (optional, for local LLM execution)</li>
+                </ul>
+
+                <h3>Install TappsCodingAgents</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Installation</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Create virtual environment (recommended)
+python -m venv .venv
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Install TappsCodingAgents
+pip install tapps-agents</code></pre>
+                </div>
+
+                <h3>Verify Installation</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Verify CLI</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents --help
+
+# Check version
+tapps-agents --version</code></pre>
+                </div>
+            </section>
+
+            <section id="initialization">
+                <h2>Step 2: Initialize Your Project</h2>
+                
+                <p>The <code>init</code> command sets up your project with all necessary configuration files, Cursor Rules, workflow presets, and integration files.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Initialize Project</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents init</code></pre>
+                </div>
+
+                <h3>What Gets Created</h3>
+                <p>Running <code>init</code> creates the following structure:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Project Structure</span>
+                    </div>
+                    <pre><code>your-project/
+├── .tapps-agents/
+│   ├── config.yaml          # Main configuration file
+│   └── project-profile.yaml # Auto-generated project profile
+├── .claude/
+│   └── skills/              # Cursor Skills for all 13 agents
+│       ├── analyst/
+│       ├── architect/
+│       ├── designer/
+│       ├── implementer/
+│       ├── tester/
+│       ├── reviewer/
+│       └── ... (8 more)
+├── workflows/
+│   └── presets/             # Pre-configured workflow definitions
+│       ├── full-sdlc.yaml
+│       ├── rapid-dev.yaml
+│       ├── quality.yaml
+│       ├── quick-fix.yaml
+│       └── maintenance.yaml
+└── .cursor/
+    └── background-agents.yaml  # Background agent configuration</code></pre>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>Safe to Run Multiple Times:</strong> The <code>init</code> command is idempotent. It won't overwrite existing files, only adds missing components.
+                </div>
+            </section>
+
+            <section id="profiling">
+                <h2>Step 3: Project Profiling</h2>
+                
+                <p><strong>Project profiling happens automatically</strong> when you initialize your project. The framework detects your project characteristics to provide context-aware expert guidance.</p>
+
+                <h3>Automatic Detection</h3>
+                <p>The profiler analyzes your project and detects:</p>
+                <ul>
+                    <li><strong>Deployment Type:</strong> local, cloud, enterprise</li>
+                    <li><strong>Tenancy Model:</strong> single-tenant, multi-tenant</li>
+                    <li><strong>User Scale:</strong> single-user, small-team, department, enterprise</li>
+                    <li><strong>Compliance Requirements:</strong> GDPR, HIPAA, PCI, SOC2</li>
+                    <li><strong>Security Level:</strong> basic, standard, high, critical</li>
+                    <li><strong>Technology Stack:</strong> frameworks, libraries, databases</li>
+                </ul>
+
+                <h3>View Your Project Profile</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>View Profile</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># View profile file
+# Windows PowerShell:
+Get-Content .tapps-agents\project-profile.yaml
+
+# macOS/Linux:
+cat .tapps-agents/project-profile.yaml</code></pre>
+                </div>
+
+                <h3>Example Profile</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Example Project Profile</span>
+                    </div>
+                    <pre><code>project:
+  name: "E-Commerce Platform"
+  type: "web-application"
+  
+deployment:
+  type: "cloud"
+  platform: "aws"
+  tenancy: "multi-tenant"
+  
+scale:
+  user_scale: "enterprise"
+  expected_users: "10000+"
+  
+compliance:
+  - "GDPR"
+  - "PCI-DSS"
+  
+security:
+  level: "high"
+  requirements:
+    - "encryption-at-rest"
+    - "encryption-in-transit"
+    - "audit-logging"
+  
+technology:
+  languages: ["Python", "TypeScript"]
+  frameworks: ["FastAPI", "React"]
+  databases: ["PostgreSQL", "Redis"]</code></pre>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Why Profiling Matters:</strong> The profile influences which experts are consulted, what security checks are performed, and which quality gates are applied. It ensures agents make contextually appropriate decisions.
+                </div>
+            </section>
+
+            <section id="configuration">
+                <h2>Step 4: Configuration</h2>
+                
+                <p>Configure TappsCodingAgents to match your environment and preferences. The main configuration file is <code>.tapps-agents/config.yaml</code>.</p>
+
+                <h3>Basic Configuration</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Basic Config Example</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>project:
+  name: "My Project"
+  root: "."
+
+# Model Abstraction Layer (MAL)
+mal:
+  enabled: true
+  ollama_url: "http://localhost:11434"
+  default_model: "qwen2.5-coder:7b"
+  fallback_provider: "anthropic"
+  timeout: 60
+
+# Code Scoring
+scoring:
+  enabled: true
+  weights:
+    complexity: 0.20
+    security: 0.30
+    maintainability: 0.25
+    test_coverage: 0.15
+    performance: 0.10
+  thresholds:
+    overall_score: 70
+
+# Context Management
+context:
+  tiered_enabled: true
+  default_tier: "tier1"
+  cache_ttl: 300</code></pre>
+                </div>
+
+                <h3>Hardware Profile</h3>
+                <p>Set your hardware profile for optimal performance, especially important for NUC or low-power systems.</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Hardware Profile</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check current profile
+tapps-agents hardware-profile
+
+# Set profile (auto, nuc, development, workstation, server)
+tapps-agents hardware-profile --set nuc
+
+# Available profiles:
+# - auto: Auto-detect (default)
+# - nuc: Intel NUC / low-power systems
+# - development: Development machines
+# - workstation: High-performance workstations
+# - server: Server environments</code></pre>
+                </div>
+
+                <h3>Verify Configuration</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Doctor Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check environment and configuration
+tapps-agents doctor
+
+# JSON output
+tapps-agents doctor --format json</code></pre>
+                </div>
+            </section>
+
+            <section id="experts">
+                <h2>Step 5: Setup Experts</h2>
+                
+                <p>Industry Experts provide domain-specific knowledge and weighted decision-making. You can configure business domain experts and leverage 16 built-in technical experts.</p>
+
+                <h3>Built-in Technical Experts</h3>
+                <p>The framework includes 16 built-in technical experts that are automatically available:</p>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Security</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Security best practices and vulnerability detection</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Performance</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Performance optimization and profiling</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Testing</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Testing strategies and test design</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Data Privacy</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Privacy compliance and data protection</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Accessibility</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">WCAG compliance and accessibility standards</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>UX</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">User experience design principles</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Code Quality</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Code quality metrics and standards</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Software Architecture</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Architectural patterns and design</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>DevOps</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">CI/CD and deployment practices</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Documentation</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Documentation standards and best practices</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>AI Frameworks</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">AI/ML framework guidance</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Observability</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Monitoring and observability</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>API Design</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">API design patterns and REST principles</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Cloud Infrastructure</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Cloud architecture and services</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Database</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Database design and optimization</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>Agent Learning</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Agent learning and improvement</span>
+                    </div>
+                </div>
+
+                <h3>Configure Business Domain Experts</h3>
+                <p>For projects with specific domain requirements (finance, healthcare, etc.), configure business domain experts:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Setup Experts Wizard</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Interactive wizard
+tapps-agents setup-experts init
+
+# Add expert manually
+tapps-agents setup-experts add
+
+# List configured experts
+tapps-agents setup-experts list</code></pre>
+                </div>
+
+                <h3>Expert Configuration File</h3>
+                <p>Experts are configured in <code>.tapps-agents/experts.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Experts Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>experts:
+  - id: "finance-expert"
+    name: "Finance Domain Expert"
+    domain: "finance"
+    knowledge_base: "experts/knowledge/finance/"
+    weight: 0.51  # Primary expert (must sum to 1.0)
+    
+  - id: "healthcare-expert"
+    name: "Healthcare Domain Expert"
+    domain: "healthcare"
+    knowledge_base: "experts/knowledge/healthcare/"
+    weight: 0.24  # Secondary expert
+    
+  - id: "compliance-expert"
+    name: "Compliance Expert"
+    domain: "compliance"
+    knowledge_base: "experts/knowledge/compliance/"
+    weight: 0.25  # Tertiary expert</code></pre>
+                </div>
+            </section>
+
+            <section id="ready-to-code">
+                <h2>Step 6: Start Coding</h2>
+                
+                <p>You're now ready to start using TappsCodingAgents! The recommended approach is to use <strong>workflows</strong> for most development tasks.</p>
+
+                <div class="alert alert-success">
+                    <strong>Next Steps:</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>Learn about <a href="user-guide-workflows.html">workflows</a> - the primary way to use TappsCodingAgents</li>
+                        <li>Understand <a href="user-guide-coding-practices.html">Vibe coding</a> - working with multiple files contextually</li>
+                        <li>Review <a href="user-guide-capabilities.html">capabilities and limitations</a> - what you can and cannot do</li>
+                    </ul>
+                </div>
+
+                <h3>Quick Start: Run Your First Workflow</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Run Full SDLC Workflow</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Run the complete SDLC workflow
+tapps-agents workflow run workflow-full-sdlc
+
+# Or use the short alias
+tapps-agents workflow full</code></pre>
+                </div>
+
+                <p>This will guide you through the entire software development lifecycle. See the <a href="user-guide-workflows.html">Workflows guide</a> for detailed information about all available workflows.</p>
+            </section>
+
+            <section style="margin-top: 3rem; padding: 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border);">
+                <h3>Setup Checklist</h3>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Install TappsCodingAgents
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Run <code>tapps-agents init</code>
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Review project profile
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Configure <code>.tapps-agents/config.yaml</code>
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Set hardware profile (if needed)
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Setup domain experts (optional)
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Run <code>tapps-agents doctor</code> to verify
+                    </li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

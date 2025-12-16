@@ -11,10 +11,10 @@ from unittest.mock import patch
 import pytest
 from httpx import AsyncClient, MockTransport, Request, Response
 
-pytestmark = pytest.mark.unit
-
 from tapps_agents.core.config import MALConfig
 from tapps_agents.core.mal import MAL
+
+pytestmark = pytest.mark.unit
 
 
 @pytest.fixture(autouse=True)

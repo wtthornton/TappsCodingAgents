@@ -93,7 +93,7 @@ class TestWorkflowFailureResume:
         state1 = executor.start(workflow)
 
         # Capture initial state snapshot
-        snapshot1 = workflow_runner.capture_workflow_state(executor, step_id=None)
+        workflow_runner.capture_workflow_state(executor, step_id=None)
 
         # Save state
         state_path = executor.save_state()
@@ -198,7 +198,7 @@ class TestWorkflowFailureResume:
         executor.load_workflow(workflow_path)
 
         # Start workflow
-        state = executor.start(workflow)
+        executor.start(workflow)
 
         # Test 1: Save state immediately after start
         state_path1 = executor.save_state()

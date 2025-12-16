@@ -75,7 +75,7 @@ class ExpertSetupWizard:
                 return response
             except (EOFError, KeyboardInterrupt):
                 if self.non_interactive:
-                    raise NonInteractiveInputRequired(question)
+                    raise NonInteractiveInputRequired(question) from None
                 print("\nCancelled.")
                 sys.exit(0)
 

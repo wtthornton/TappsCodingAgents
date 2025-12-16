@@ -101,7 +101,7 @@ class TestWorktreeCleanup:
         
         # Create worktree
         worktree_name = "test-worktree-main"
-        worktree_path = await manager.create_worktree(worktree_name)
+        await manager.create_worktree(worktree_name)
         
         # Remove worktree
         await manager.remove_worktree(worktree_name)

@@ -68,7 +68,7 @@ async def test_analyst_agent_receives_prompt(temp_project, simple_workflow):
     )
     executor.user_prompt = "Create a web application for task management"
 
-    state = executor.start(workflow=simple_workflow)
+    executor.start(workflow=simple_workflow)
 
     # Mock the analyst agent
     with patch(

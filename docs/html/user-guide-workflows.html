@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workflows - TappsCodingAgents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="user-guide-index.html" class="active">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-content">
+            <nav style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                <a href="user-guide-index.html">← Back to User Guide</a>
+            </nav>
+
+            <h1>Workflows</h1>
+            <p class="lead">Workflows are the primary way to use TappsCodingAgents. They orchestrate multiple agents in sequence to complete complex development tasks. Most of your development work will use workflows rather than individual agents.</p>
+
+            <div class="alert alert-info" style="margin: 2rem 0;">
+                <strong>Workflow-First Approach:</strong> Workflows provide better coordination, artifact tracking, and quality gates than running agents individually. Use workflows for 90% of your development tasks.
+            </div>
+
+            <section id="workflow-overview">
+                <h2>Workflow Overview</h2>
+                
+                <h3>What are Workflows?</h3>
+                <p>Workflows are YAML-defined multi-step processes that:</p>
+                <ul>
+                    <li><strong>Orchestrate multiple agents</strong> in a logical sequence</li>
+                    <li><strong>Manage dependencies</strong> between steps</li>
+                    <li><strong>Enforce quality gates</strong> with automatic scoring</li>
+                    <li><strong>Track artifacts</strong> created at each stage</li>
+                    <li><strong>Support conditional logic</strong> for branching workflows</li>
+                    <li><strong>Provide context tiers</strong> for efficient token usage</li>
+                </ul>
+
+                <h3>Running Workflows</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Run Workflow</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Run a preset workflow
+tapps-agents workflow run workflow-full-sdlc
+
+# Or use short aliases
+tapps-agents workflow full
+tapps-agents workflow rapid
+tapps-agents workflow quality
+tapps-agents workflow fix
+tapps-agents workflow maintenance
+
+# List all available workflows
+tapps-agents workflow list
+
+# Run custom workflow
+tapps-agents workflow run workflows/my-custom-workflow.yaml</code></pre>
+                </div>
+            </section>
+
+            <section id="workflow-full-sdlc">
+                <h2>Full SDLC Pipeline</h2>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--primary); margin: 1.5rem 0;">
+                    <p><strong>Best for:</strong> Enterprise projects, new applications, compliance-heavy systems, greenfield development</p>
+                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-full-sdlc</code> or <code>tapps-agents workflow full</code></p>
+                    <p><strong>Duration:</strong> Typically 15-30 minutes depending on project complexity</p>
+                </div>
+
+                <h3>Workflow Stages</h3>
+                <p>The Full SDLC Pipeline consists of 9 stages, each calling a specific agent with a clear purpose:</p>
+
+                <div style="margin: 2rem 0;">
+                    <h4>Stage 1: Requirements Gathering</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Analyst</p>
+                        <p><strong>Action:</strong> gather_requirements</p>
+                        <p><strong>Context Tier:</strong> Tier 1 (Core context - ~500 tokens)</p>
+                        <p><strong>Why:</strong> Analyzes user input and project context to extract functional and non-functional requirements. This stage establishes the foundation for all subsequent work.</p>
+                        <p><strong>Creates:</strong> <code>requirements.md</code></p>
+                        <p><strong>Prompt Example:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>Analyst Prompt</span>
+                            </div>
+                            <pre><code>You are an Analyst agent. Analyze the following project request and extract comprehensive requirements.
+
+User Request: "Build a task management web application with user authentication"
+
+Project Context:
+- Type: Web Application
+- Stack: Python, FastAPI, React
+- Deployment: Cloud (AWS)
+- Security Level: High
+
+Tasks:
+1. Identify functional requirements
+2. Identify non-functional requirements
+3. Extract compliance needs (GDPR, security)
+4. Define success criteria
+5. Identify risks and constraints
+
+Output a structured requirements document in requirements.md</code></pre>
+                        </div>
+                        <p><strong>Mock Output:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>requirements.md (Example)</span>
+                            </div>
+                            <pre><code># Requirements: Task Management Web Application
+
+## Functional Requirements
+
+### FR1: User Authentication
+- Users can register with email/password
+- Users can log in securely
+- Password reset functionality
+- Session management
+
+### FR2: Task Management
+- Create, read, update, delete tasks
+- Assign tasks to users
+- Set due dates and priorities
+- Task status tracking (todo, in-progress, done)
+
+### FR3: User Interface
+- Responsive web interface
+- Real-time updates
+- Task filtering and search
+
+## Non-Functional Requirements
+
+### NFR1: Security
+- Encryption at rest and in transit
+- OAuth 2.0 / JWT authentication
+- Rate limiting
+- Input validation
+
+### NFR2: Performance
+- API response time < 200ms
+- Support 1000+ concurrent users
+- Database query optimization
+
+### NFR3: Compliance
+- GDPR compliance
+- Audit logging
+- Data retention policies</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 2: Story Planning</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Planner</p>
+                        <p><strong>Action:</strong> create_stories</p>
+                        <p><strong>Context Tier:</strong> Tier 1</p>
+                        <p><strong>Why:</strong> Breaks down requirements into actionable user stories with acceptance criteria. Enables iterative development and clear deliverables.</p>
+                        <p><strong>Requires:</strong> <code>requirements.md</code></p>
+                        <p><strong>Creates:</strong> <code>stories/</code> directory with story files</p>
+                        <p><strong>Prompt Example:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>Planner Prompt</span>
+                            </div>
+                            <pre><code>You are a Planner agent. Create user stories from the requirements document.
+
+Input: requirements.md (from previous stage)
+
+Tasks:
+1. Break down requirements into user stories
+2. Define acceptance criteria for each story
+3. Estimate story points
+4. Prioritize stories
+5. Identify dependencies between stories
+
+Create story files in stories/ directory, one file per epic.</code></pre>
+                        </div>
+                        <p><strong>Mock Output:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>stories/authentication-epic.md (Example)</span>
+                            </div>
+                            <pre><code># Authentication Epic
+
+## Story 1: User Registration
+**As a** new user  
+**I want to** create an account  
+**So that** I can access the application
+
+**Acceptance Criteria:**
+- User can register with email and password
+- Email validation is performed
+- Password meets security requirements (min 8 chars, special chars)
+- Confirmation email is sent
+- Duplicate email registration is prevented
+
+**Story Points:** 5  
+**Priority:** High  
+**Dependencies:** None
+
+## Story 2: User Login
+**As a** registered user  
+**I want to** log in securely  
+**So that** I can access my tasks
+
+**Acceptance Criteria:**
+- User can log in with email/password
+- Failed login attempts are rate-limited
+- JWT token is issued on successful login
+- Session timeout after 24 hours
+
+**Story Points:** 3  
+**Priority:** High  
+**Dependencies:** Story 1</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 3: System Design</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Architect</p>
+                        <p><strong>Action:</strong> design_system</p>
+                        <p><strong>Context Tier:</strong> Tier 2 (Extended context - ~2000 tokens)</p>
+                        <p><strong>Why:</strong> Designs the overall system architecture, including component structure, data flow, and technology choices. Ensures scalability and maintainability.</p>
+                        <p><strong>Requires:</strong> <code>requirements.md</code>, <code>stories/</code></p>
+                        <p><strong>Creates:</strong> <code>architecture.md</code></p>
+                        <p><strong>Prompt Example:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>Architect Prompt</span>
+                            </div>
+                            <pre><code>You are an Architect agent. Design the system architecture based on requirements and stories.
+
+Input:
+- requirements.md
+- stories/ directory
+
+Project Profile:
+- Deployment: Cloud (AWS)
+- Security Level: High
+- Scale: Enterprise (10000+ users)
+
+Tasks:
+1. Design system architecture
+2. Define component boundaries
+3. Choose technology stack
+4. Design data models
+5. Define API structure
+6. Plan for scalability and security
+
+Output architecture.md with diagrams (ASCII/Mermaid) and detailed design.</code></pre>
+                        </div>
+                        <p><strong>Mock Output:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>architecture.md (Example Excerpt)</span>
+                            </div>
+                            <pre><code># System Architecture
+
+## Overview
+Three-tier architecture: Frontend (React), Backend (FastAPI), Database (PostgreSQL)
+
+## Component Diagram
+
+```
+┌─────────────┐      ┌──────────────┐      ┌─────────────┐
+│   React     │──────│   FastAPI    │──────│ PostgreSQL  │
+│  Frontend   │      │   Backend    │      │  Database   │
+└─────────────┘      └──────────────┘      └─────────────┘
+                            │
+                            │
+                     ┌──────┴──────┐
+                     │             │
+                ┌────▼────┐   ┌───▼────┐
+                │  Redis  │   │  S3    │
+                │  Cache  │   │ Storage│
+                └─────────┘   └────────┘
+```
+
+## Data Models
+
+### User Model
+- id: UUID (primary key)
+- email: String (unique, indexed)
+- password_hash: String (bcrypt)
+- created_at: Timestamp
+- last_login: Timestamp
+
+### Task Model
+- id: UUID (primary key)
+- user_id: UUID (foreign key)
+- title: String
+- description: Text
+- status: Enum (todo, in_progress, done)
+- priority: Enum (low, medium, high)
+- due_date: Timestamp
+- created_at: Timestamp</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 4: API Design</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Designer</p>
+                        <p><strong>Action:</strong> api_design</p>
+                        <p><strong>Context Tier:</strong> Tier 2</p>
+                        <p><strong>Why:</strong> Designs RESTful API contracts, request/response schemas, and API documentation. Ensures consistent API design across the application.</p>
+                        <p><strong>Requires:</strong> <code>architecture.md</code></p>
+                        <p><strong>Creates:</strong> <code>api-specs/</code> directory</p>
+                        <p><strong>Prompt Example:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>Designer Prompt</span>
+                            </div>
+                            <pre><code>You are a Designer agent. Create API specifications based on the architecture.
+
+Input: architecture.md
+
+Tasks:
+1. Design RESTful API endpoints
+2. Define request/response schemas
+3. Specify authentication requirements
+4. Document error responses
+5. Create OpenAPI/Swagger specification
+
+Output API specs in api-specs/ directory.</code></pre>
+                        </div>
+                        <p><strong>Mock Output:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>api-specs/tasks-api.yaml (Example)</span>
+                            </div>
+                            <pre><code># Tasks API Specification
+
+## POST /api/v1/tasks
+Create a new task
+
+**Request:**
+```json
+{
+  "title": "Complete project documentation",
+  "description": "Write comprehensive docs",
+  "priority": "high",
+  "due_date": "2026-02-01T00:00:00Z"
+}
+```
+
+**Response (201):**
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Complete project documentation",
+  "status": "todo",
+  "created_at": "2026-01-15T10:30:00Z"
+}
+```
+
+## GET /api/v1/tasks
+List all tasks for authenticated user
+
+**Query Parameters:**
+- status: filter by status (optional)
+- priority: filter by priority (optional)
+- limit: pagination limit (default: 20)
+- offset: pagination offset (default: 0)
+
+**Response (200):**
+```json
+{
+  "tasks": [...],
+  "total": 42,
+  "limit": 20,
+  "offset": 0
+}
+```</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 5: Implementation</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Implementer</p>
+                        <p><strong>Action:</strong> write_code</p>
+                        <p><strong>Context Tier:</strong> Tier 3 (Full context - ~10000 tokens)</p>
+                        <p><strong>Why:</strong> Implements the actual code based on architecture, API specs, and stories. This is where the actual application code is generated.</p>
+                        <p><strong>Requires:</strong> <code>architecture.md</code>, <code>api-specs/</code>, <code>stories/</code></p>
+                        <p><strong>Creates:</strong> <code>src/</code> directory with application code</p>
+                        <p><strong>Prompt Example:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>Implementer Prompt</span>
+                            </div>
+                            <pre><code>You are an Implementer agent. Write production-quality code based on the design documents.
+
+Input:
+- architecture.md
+- api-specs/ directory
+- stories/ directory
+
+Project Context:
+- Language: Python 3.13+
+- Framework: FastAPI
+- Database: PostgreSQL
+- Security: High (encryption, JWT, rate limiting)
+
+Tasks:
+1. Implement API endpoints according to api-specs
+2. Create data models matching architecture
+3. Implement authentication and authorization
+4. Add input validation and error handling
+5. Follow project coding standards
+6. Write clean, maintainable code
+
+Create source code in src/ directory with proper structure.</code></pre>
+                        </div>
+                        <p><strong>Mock Output:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>src/api/tasks.py (Example)</span>
+                            </div>
+                            <pre><code>from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from datetime import datetime
+
+from ..database import get_db
+from ..models import Task, User
+from ..schemas import TaskCreate, TaskResponse, TaskUpdate
+from ..auth import get_current_user
+
+router = APIRouter(prefix="/api/v1/tasks", tags=["tasks"])
+
+@router.post("", response_model=TaskResponse, status_code=status.HTTP_201_CREATED)
+async def create_task(
+    task_data: TaskCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Create a new task for the authenticated user."""
+    task = Task(
+        user_id=current_user.id,
+        title=task_data.title,
+        description=task_data.description,
+        priority=task_data.priority,
+        due_date=task_data.due_date,
+        status="todo"
+    )
+    db.add(task)
+    db.commit()
+    db.refresh(task)
+    return TaskResponse.from_orm(task)
+
+@router.get("", response_model=List[TaskResponse])
+async def list_tasks(
+    status_filter: Optional[str] = None,
+    priority_filter: Optional[str] = None,
+    limit: int = 20,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """List all tasks for the authenticated user."""
+    query = db.query(Task).filter(Task.user_id == current_user.id)
+    
+    if status_filter:
+        query = query.filter(Task.status == status_filter)
+    if priority_filter:
+        query = query.filter(Task.priority == priority_filter)
+    
+    tasks = query.limit(limit).offset(offset).all()
+    return [TaskResponse.from_orm(task) for task in tasks]</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 6: Code Review</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Reviewer</p>
+                        <p><strong>Action:</strong> review_code</p>
+                        <p><strong>Context Tier:</strong> Tier 2</p>
+                        <p><strong>Why:</strong> Reviews code quality, calculates scores, and provides feedback. This stage includes quality gates that can trigger re-implementation if thresholds aren't met.</p>
+                        <p><strong>Requires:</strong> <code>src/</code></p>
+                        <p><strong>Quality Gates:</strong></p>
+                        <ul>
+                            <li>Overall Score: ≥ 70</li>
+                            <li>Security Score: ≥ 7.0</li>
+                            <li>Maintainability Score: ≥ 7.0</li>
+                        </ul>
+                        <p><strong>Gate Behavior:</strong> If gates pass → proceed to testing. If gates fail → loop back to implementation stage.</p>
+                        <p><strong>Prompt Example:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>Reviewer Prompt</span>
+                            </div>
+                            <pre><code>You are a Reviewer agent. Review the code in src/ directory and calculate quality scores.
+
+Tasks:
+1. Review code quality (complexity, maintainability)
+2. Check security vulnerabilities
+3. Verify test coverage
+4. Assess performance
+5. Calculate scores for each dimension
+6. Provide actionable feedback
+
+Quality Gate Thresholds:
+- Overall Score: ≥ 70
+- Security Score: ≥ 7.0
+- Maintainability Score: ≥ 7.0
+
+If thresholds are not met, provide specific recommendations for improvement.</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 7: Testing</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Tester</p>
+                        <p><strong>Action:</strong> write_tests</p>
+                        <p><strong>Context Tier:</strong> Tier 2</p>
+                        <p><strong>Why:</strong> Generates comprehensive test suites including unit tests, integration tests, and API tests. Ensures code reliability and maintainability.</p>
+                        <p><strong>Requires:</strong> <code>src/</code></p>
+                        <p><strong>Creates:</strong> <code>tests/</code> directory</p>
+                        <p><strong>Mock Output:</strong></p>
+                        <div class="code-block" style="margin-top: 1rem;">
+                            <div class="code-header">
+                                <span>tests/test_tasks.py (Example)</span>
+                            </div>
+                            <pre><code>import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+
+from ..main import app
+from ..database import Base, get_db
+
+# Test database
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def override_get_db():
+    try:
+        db = TestingSessionLocal()
+        yield db
+    finally:
+        db.close()
+
+app.dependency_overrides[get_db] = override_get_db
+Base.metadata.create_all(bind=engine)
+
+client = TestClient(app)
+
+def test_create_task():
+    """Test creating a new task."""
+    response = client.post(
+        "/api/v1/tasks",
+        json={
+            "title": "Test task",
+            "description": "Test description",
+            "priority": "high"
+        },
+        headers={"Authorization": "Bearer test_token"}
+    )
+    assert response.status_code == 201
+    assert response.json()["title"] == "Test task"
+    assert response.json()["status"] == "todo"</code></pre>
+                        </div>
+                    </div>
+
+                    <h4>Stage 8: Security Scan</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Ops</p>
+                        <p><strong>Action:</strong> security_scan</p>
+                        <p><strong>Context Tier:</strong> Tier 1</p>
+                        <p><strong>Why:</strong> Performs security vulnerability scanning, dependency checks, and compliance validation. Critical for production-ready code.</p>
+                        <p><strong>Requires:</strong> <code>src/</code></p>
+                        <p><strong>Checks:</strong></p>
+                        <ul>
+                            <li>Dependency vulnerabilities (via safety, npm audit)</li>
+                            <li>Code security issues (SQL injection, XSS, etc.)</li>
+                            <li>Secrets exposure</li>
+                            <li>Compliance with security standards</li>
+                        </ul>
+                    </div>
+
+                    <h4>Stage 9: Documentation</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Documenter</p>
+                        <p><strong>Action:</strong> generate_docs</p>
+                        <p><strong>Context Tier:</strong> Tier 1</p>
+                        <p><strong>Why:</strong> Generates comprehensive documentation including API docs, code documentation, and user guides.</p>
+                        <p><strong>Requires:</strong> <code>src/</code></p>
+                        <p><strong>Creates:</strong> <code>docs/</code> directory</p>
+                    </div>
+
+                    <h4>Stage 10: Finalization</h4>
+                    <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 8px; margin: 1rem 0;">
+                        <p><strong>Agent:</strong> Orchestrator</p>
+                        <p><strong>Action:</strong> finalize</p>
+                        <p><strong>Context Tier:</strong> Tier 1</p>
+                        <p><strong>Why:</strong> Finalizes the workflow, creates summary reports, and prepares artifacts for deployment or review.</p>
+                    </div>
+                </div>
+
+                <h3>Workflow Visualization</h3>
+                <div style="background: var(--bg-secondary); padding: 2rem; border-radius: 12px; margin: 2rem 0;">
+                    <pre style="color: var(--text-primary); font-family: 'JetBrains Mono', monospace; line-height: 1.8;"><code>Requirements → Planning → Design → API Design → Implementation
+                                                                    ↓
+                                                              Code Review
+                                                                    ↓
+                                                              [Quality Gate]
+                                                          Pass / Fail
+                                                          ↓      ↓
+                                                      Testing  Implementation (retry)
+                                                          ↓
+                                                      Security Scan
+                                                          ↓
+                                                      Documentation
+                                                          ↓
+                                                      Finalization</code></pre>
+                </div>
+            </section>
+
+            <section id="workflow-rapid-dev">
+                <h2>Rapid Development Workflow</h2>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--success); margin: 1.5rem 0;">
+                    <p><strong>Best for:</strong> Feature development, sprint work, iterative development, brownfield projects</p>
+                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-rapid-dev</code> or <code>tapps-agents workflow rapid</code></p>
+                    <p><strong>Duration:</strong> Typically 5-10 minutes</p>
+                </div>
+
+                <h3>Workflow Stages</h3>
+                <ol>
+                    <li><strong>Enhance Prompt</strong> (Enhancer) - Optional prompt enhancement for better context</li>
+                    <li><strong>Create Stories</strong> (Planner) - Quick story breakdown</li>
+                    <li><strong>Write Code</strong> (Implementer) - Fast implementation</li>
+                    <li><strong>Review Code</strong> (Reviewer) - Quick review with lower thresholds (Overall ≥ 65, Security ≥ 6.5)</li>
+                    <li><strong>Write Tests</strong> (Tester) - Generate tests</li>
+                    <li><strong>Finalize</strong> (Orchestrator) - Complete workflow</li>
+                </ol>
+
+                <p><strong>Key Differences from Full SDLC:</strong></p>
+                <ul>
+                    <li>Skips architecture and API design (assumes existing structure)</li>
+                    <li>Lower quality gate thresholds for faster iteration</li>
+                    <li>No security scan or documentation stages</li>
+                    <li>Optimized for speed over comprehensiveness</li>
+                </ul>
+            </section>
+
+            <section id="workflow-quality">
+                <h2>Quality Improvement Workflow</h2>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--warning); margin: 1.5rem 0;">
+                    <p><strong>Best for:</strong> Code quality initiatives, refactoring sprints, quality gates, improving existing codebases</p>
+                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-quality</code> or <code>tapps-agents workflow quality</code></p>
+                    <p><strong>Duration:</strong> Typically 10-20 minutes</p>
+                </div>
+
+                <h3>Workflow Stages</h3>
+                <ol>
+                    <li><strong>Initial Review</strong> (Reviewer) - Comprehensive code review and scoring</li>
+                    <li><strong>Improve Code</strong> (Improver) - Refactoring and optimization</li>
+                    <li><strong>Re-Review</strong> (Reviewer) - Validation with higher thresholds (Overall ≥ 75, Maintainability ≥ 8.0, Security ≥ 7.5)</li>
+                    <li><strong>Write Tests</strong> (Tester) - Update/add tests for improved code</li>
+                    <li><strong>Security Scan</strong> (Ops) - Security validation</li>
+                    <li><strong>Finalize</strong> (Orchestrator) - Complete workflow</li>
+                </ol>
+
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Double-review cycle ensures quality improvements</li>
+                    <li>Higher quality thresholds than other workflows</li>
+                    <li>Focus on maintainability and code quality</li>
+                    <li>Can loop back to improvement stage if gates fail</li>
+                </ul>
+            </section>
+
+            <section id="workflow-quick-fix">
+                <h2>Quick Fix Workflow</h2>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--error); margin: 1.5rem 0;">
+                    <p><strong>Best for:</strong> Production bugs, hotfixes, urgent patches, critical issues</p>
+                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-quick-fix</code> or <code>tapps-agents workflow fix</code></p>
+                    <p><strong>Duration:</strong> Typically 3-5 minutes</p>
+                </div>
+
+                <h3>Workflow Stages</h3>
+                <ol>
+                    <li><strong>Analyze Error</strong> (Debugger) - Error analysis and root cause identification</li>
+                    <li><strong>Write Code</strong> (Implementer) - Fix implementation</li>
+                    <li><strong>Review Code</strong> (Reviewer) - Quick review with minimal thresholds (Overall ≥ 60, Security ≥ 7.0)</li>
+                    <li><strong>Write Tests</strong> (Tester) - Regression tests</li>
+                    <li><strong>Finalize</strong> (Orchestrator) - Complete workflow</li>
+                </ol>
+
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Minimal overhead for fast turnaround</li>
+                    <li>Focus on fixing the specific issue</li>
+                    <li>Lower quality thresholds (but security still enforced)</li>
+                    <li>No documentation or architecture stages</li>
+                </ul>
+            </section>
+
+            <section id="workflow-maintenance">
+                <h2>Maintenance & Bug Fixing Workflow</h2>
+                
+                <div style="background: var(--bg-secondary); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--secondary); margin: 1.5rem 0;">
+                    <p><strong>Best for:</strong> Existing codebases, bug fixes, refactoring, technical debt, maintenance tasks</p>
+                    <p><strong>Command:</strong> <code>tapps-agents workflow run workflow-maintenance</code> or <code>tapps-agents workflow maintenance</code></p>
+                    <p><strong>Duration:</strong> Typically 8-15 minutes</p>
+                </div>
+
+                <h3>Workflow Stages</h3>
+                <ol>
+                    <li><strong>Analyze Error</strong> (Debugger) - Optional error analysis</li>
+                    <li><strong>Refactor</strong> (Improver) - Code improvement and refactoring</li>
+                    <li><strong>Review Code</strong> (Reviewer) - Code review (Overall ≥ 70, Maintainability ≥ 7.5)</li>
+                    <li><strong>Write Tests</strong> (Tester) - Test updates</li>
+                    <li><strong>Update Documentation</strong> (Documenter) - Documentation updates</li>
+                    <li><strong>Finalize</strong> (Orchestrator) - Complete workflow</li>
+                </ol>
+
+                <p><strong>Key Features:</strong></p>
+                <ul>
+                    <li>Balanced approach between speed and quality</li>
+                    <li>Includes documentation updates</li>
+                    <li>Focus on maintainability</li>
+                    <li>Good for ongoing maintenance work</li>
+                </ul>
+            </section>
+
+            <section id="workflow-comparison">
+                <h2>Workflow Comparison</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Workflow</th>
+                            <th>Best For</th>
+                            <th>Stages</th>
+                            <th>Quality Gates</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Full SDLC</strong></td>
+                            <td>Enterprise, new apps, compliance</td>
+                            <td>9 stages</td>
+                            <td>Overall ≥ 70, Security ≥ 7.0</td>
+                            <td>15-30 min</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Rapid Dev</strong></td>
+                            <td>Features, sprints, iteration</td>
+                            <td>5 stages</td>
+                            <td>Overall ≥ 65, Security ≥ 6.5</td>
+                            <td>5-10 min</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Quality</strong></td>
+                            <td>Quality initiatives, refactoring</td>
+                            <td>5 stages</td>
+                            <td>Overall ≥ 75, Maintainability ≥ 8.0</td>
+                            <td>10-20 min</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Quick Fix</strong></td>
+                            <td>Production bugs, hotfixes</td>
+                            <td>4 stages</td>
+                            <td>Overall ≥ 60, Security ≥ 7.0</td>
+                            <td>3-5 min</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Maintenance</strong></td>
+                            <td>Existing code, technical debt</td>
+                            <td>5 stages</td>
+                            <td>Overall ≥ 70, Maintainability ≥ 7.5</td>
+                            <td>8-15 min</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="custom-workflows">
+                <h2>Custom Workflows</h2>
+                
+                <p>You can create custom workflows by defining YAML files. See the <a href="user-guide-advanced.html">Advanced Topics</a> guide for detailed information on creating custom workflows.</p>
+
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Custom Workflow Example</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>workflow:
+  id: my-custom-workflow
+  name: "My Custom Workflow"
+  description: "Custom workflow for specific needs"
+  
+  steps:
+    - id: step1
+      agent: planner
+      action: create_stories
+      context_tier: 1
+      creates:
+        - stories/
+      next: step2
+      
+    - id: step2
+      agent: implementer
+      action: write_code
+      context_tier: 3
+      requires:
+        - stories/
+      creates:
+        - src/
+      next: complete
+        
+    - id: complete
+      agent: orchestrator
+      action: finalize
+      context_tier: 1</code></pre>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

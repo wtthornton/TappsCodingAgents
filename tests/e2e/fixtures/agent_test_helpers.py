@@ -203,7 +203,7 @@ def assert_response_quality(
     assert isinstance(response, dict), "Response should be a dictionary"
     # If metrics provided, check them
     if metrics:
-        for metric, expected_value in metrics.items():
+        for metric, _expected_value in metrics.items():
             if metric == "has_content":
                 # Check for various content fields
                 content_fields = ["content", "plan", "code", "implementation", "result", "output", "response"]

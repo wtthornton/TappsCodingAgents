@@ -147,7 +147,7 @@ class WorkflowRunner:
         executor.load_workflow(workflow_path)
 
         # Start workflow
-        state = executor.start(workflow)
+        executor.start(workflow)
 
         # Capture initial state
         self.capture_workflow_state(executor, step_id=None)
@@ -198,7 +198,7 @@ class WorkflowRunner:
         executor.load_workflow(workflow_path)
 
         # Start workflow
-        state = executor.start(workflow)
+        executor.start(workflow)
 
         # Capture initial state
         self.capture_workflow_state(executor, step_id=None)
@@ -368,12 +368,12 @@ class WorkflowRunner:
         except ImportError:
             # Fallback to basic validation if content validator not available
             if not artifact_path.exists():
-                raise AssertionError(f"Artifact does not exist: {artifact_path}")
+                raise AssertionError(f"Artifact does not exist: {artifact_path}") from None
 
             if artifact_path.is_file():
                 # Check file is not empty
                 if artifact_path.stat().st_size == 0:
-                    raise AssertionError(f"Artifact is empty: {artifact_path}")
+                    raise AssertionError(f"Artifact is empty: {artifact_path}") from None
 
                     # If JSON, validate structure
                     if artifact_path.suffix == ".json":
@@ -382,7 +382,7 @@ class WorkflowRunner:
                             with open(artifact_path, encoding="utf-8") as f:
                                 json.load(f)
                         except json.JSONDecodeError as e:
-                            raise AssertionError(f"Artifact is not valid JSON: {artifact_path} - {e}")
+                            raise AssertionError(f"Artifact is not valid JSON: {artifact_path} - {e}") from e
 
     def control_gate_outcome(self, gate_id: str, outcome: bool) -> None:
         """

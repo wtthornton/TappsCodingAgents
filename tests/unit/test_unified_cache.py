@@ -218,7 +218,7 @@ class TestUnifiedCacheInterface:
         assert response is not None
         assert response.cache_type == CacheType.TIERED_CONTEXT
         # Verify we can retrieve what we stored (real cache behavior)
-        retrieved = unified_cache_real.get(
+        unified_cache_real.get(
             cache_type=CacheType.TIERED_CONTEXT,
             key=str(test_file),
             tier=ContextTier.TIER1,
@@ -240,7 +240,7 @@ class TestUnifiedCacheInterface:
         assert response is not None
         assert response.cache_type == CacheType.CONTEXT7_KB
         # Verify real cache behavior - try to retrieve what we stored
-        retrieved = unified_cache_real.get(
+        unified_cache_real.get(
             cache_type=CacheType.CONTEXT7_KB,
             key="test-key",
             library="test-lib",

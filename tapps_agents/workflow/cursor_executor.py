@@ -449,7 +449,7 @@ class CursorWorkflowExecutor:
             )
 
             # Invoke Skill via SkillInvoker (creates command files for Background Agents)
-            result = await self.skill_invoker.invoke_skill(
+            await self.skill_invoker.invoke_skill(
                 agent_name=agent_name,
                 action=action,
                 step=step,

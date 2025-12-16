@@ -259,7 +259,7 @@ class CacheWarmer:
         stale_libraries = []
         for library_name, library_data in index.libraries.items():
             topics = library_data.get("topics", {})
-            for topic_name, topic_data in topics.items():
+            for _topic_name, topic_data in topics.items():
                 last_updated = topic_data.get("last_updated") or topic_data.get(
                     "cached_at"
                 )

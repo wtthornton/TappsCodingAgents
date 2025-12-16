@@ -136,7 +136,7 @@ class TestCorruptedData:
         
         # Should handle corrupted data gracefully
         try:
-            workflow = WorkflowParser.parse(workflow_dict)
+            WorkflowParser.parse(workflow_dict)
             # May succeed with partial data or raise
         except (ValueError, KeyError, TypeError):
             # Acceptable to raise on corrupted data
@@ -264,7 +264,7 @@ class TestInvalidLibraryIDs:
         """Test handling invalid Context7 library ID."""
         from tapps_agents.context7.mal import MAL
         
-        mal = MAL()
+        MAL()
         
         # Invalid library ID format
         invalid_ids = [
@@ -278,7 +278,7 @@ class TestInvalidLibraryIDs:
             "a/b/c/d/e",  # Too many segments
         ]
         
-        for invalid_id in invalid_ids:
+        for _invalid_id in invalid_ids:
             # Should handle invalid IDs gracefully
             try:
                 # This would normally make an API call, but we're just testing
@@ -300,7 +300,7 @@ class TestInvalidLibraryIDs:
             "/org/project\ttab",
         ]
         
-        for malformed_id in malformed_ids:
+        for _malformed_id in malformed_ids:
             # Should handle malformed IDs
             try:
                 pass
@@ -326,7 +326,7 @@ class TestNetworkTimeoutHandling:
             
             # Should handle timeout gracefully
             try:
-                result = await mal.get_library_docs("test-library", timeout=0.1)
+                await mal.get_library_docs("test-library", timeout=0.1)
                 # May return None or raise
             except (httpx.TimeoutException, TimeoutError):
                 # Acceptable to raise on timeout
@@ -349,7 +349,7 @@ class TestNetworkTimeoutHandling:
             
             # Should handle partial response
             try:
-                result = await mal.get_library_docs("test-library")
+                await mal.get_library_docs("test-library")
                 # May return None or raise
             except (json.JSONDecodeError, ValueError):
                 # Acceptable to raise on partial response
@@ -399,7 +399,7 @@ class TestPermissionErrors:
             
             # Should handle permission error
             try:
-                result = scorer.score_file(test_file, "def test(): pass")
+                scorer.score_file(test_file, "def test(): pass")
                 # May succeed if content is provided
             except PermissionError:
                 # Acceptable to raise on permission error
@@ -420,7 +420,7 @@ class TestPermissionErrors:
             os.chmod(tmp_path, 0o444)
             
             try:
-                executor = WorkflowExecutor(project_root=tmp_path)
+                WorkflowExecutor(project_root=tmp_path)
                 # May fail on initialization or later
             except PermissionError:
                 # Acceptable to raise on permission error

@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from .config import ProjectConfig, load_config
+from .error_envelope import ErrorEnvelope
 
 
 class BaseAgent(ABC):

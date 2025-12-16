@@ -205,7 +205,7 @@ class TestContext7LookupReal:
         resolve_client, get_docs_client = create_real_context7_client()
         
         # Create Context7 server with real clients
-        server = Context7MCPServer(
+        Context7MCPServer(
             registry=gateway.registry,
             resolve_library_client=resolve_client,
             get_docs_client=get_docs_client,
@@ -258,7 +258,7 @@ class TestContext7MCPGatewayReal:
         gateway = MCPGateway()
         resolve_client, get_docs_client = create_real_context7_client()
         
-        server = Context7MCPServer(
+        Context7MCPServer(
             registry=gateway.registry,
             resolve_library_client=resolve_client,
             get_docs_client=get_docs_client,

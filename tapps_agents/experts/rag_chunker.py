@@ -117,7 +117,7 @@ class Chunker:
                 overlap_lines = self._calculate_overlap_lines(current_content)
                 current_content = overlap_lines + [line]
                 current_start_line = i - len(overlap_lines) + 1
-                current_chars = sum(len(l) + 1 for l in current_content)
+                current_chars = sum(len(line) + 1 for line in current_content)
             else:
                 # Add line to current chunk
                 current_content.append(line)
@@ -153,7 +153,7 @@ class Chunker:
 
         # Start from the end and work backwards
         for line in reversed(lines):
-            if sum(len(l) + 1 for l in overlap_lines) + len(line) + 1 <= overlap_chars_needed:
+            if sum(len(overlap_line) + 1 for overlap_line in overlap_lines) + len(line) + 1 <= overlap_chars_needed:
                 overlap_lines.insert(0, line)
             else:
                 break

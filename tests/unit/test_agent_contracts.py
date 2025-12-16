@@ -259,7 +259,7 @@ class TestArtifactAggregation:
             },
         ]
 
-        aggregated = aggregator.aggregate_artifacts(agent_results)
+        aggregator.aggregate_artifacts(agent_results)
 
         # Should detect conflict
         assert aggregator.has_conflicts()

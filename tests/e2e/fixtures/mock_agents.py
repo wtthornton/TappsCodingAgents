@@ -148,7 +148,7 @@ class MockImplementer(BehavioralMock):
 
         if command in ["implement", "generate-code"]:
             # Generate code based on prompt
-            target_file = file_paths[0] if file_paths else "generated_code.py"
+            file_paths[0] if file_paths else "generated_code.py"
             
             # Extract function/class name from prompt
             func_match = re.search(r'(?:function|def|class)\s+(\w+)', prompt, re.IGNORECASE)
@@ -208,7 +208,7 @@ class MockReviewer(BehavioralMock):
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate review response."""
         command = parsed.get("command")
-        prompt = parsed.get("prompt", "")
+        parsed.get("prompt", "")
 
         if command in ["review", "score"]:
             # Generate review with score
@@ -257,7 +257,7 @@ class MockTester(BehavioralMock):
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate test code and results."""
         command = parsed.get("command")
-        prompt = parsed.get("prompt", "")
+        parsed.get("prompt", "")
 
         if command in ["generate-test", "test"]:
             # Generate test code

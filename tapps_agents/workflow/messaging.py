@@ -20,7 +20,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Literal, TypeAlias
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
@@ -96,7 +96,7 @@ class TaskCompleteMessage(BaseMessage):
     results: dict[str, Any] = Field(default_factory=dict)
 
 
-Message: TypeAlias = TaskAssignmentMessage | StatusUpdateMessage | TaskCompleteMessage
+type Message = TaskAssignmentMessage | StatusUpdateMessage | TaskCompleteMessage
 
 
 def parse_message(data: dict[str, Any]) -> Message:

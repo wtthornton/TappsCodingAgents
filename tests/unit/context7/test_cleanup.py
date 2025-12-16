@@ -251,7 +251,7 @@ class TestKBCleanup:
         )
         
         # Create recent entry (5 days ago) - should be kept
-        recent_date = now - timedelta(days=5)
+        now - timedelta(days=5)
         kb_cache.store(
             library="recent_lib",
             topic="recent_topic",
@@ -561,7 +561,7 @@ class TestKBCleanup:
         # Set low size limit and preserve recent (min_access_days=30)
         cleanup.max_cache_size_bytes = 400
         cleanup.min_access_days = 30
-        result = cleanup.cleanup_by_size(target_size_bytes=400, preserve_recent=True)
+        cleanup.cleanup_by_size(target_size_bytes=400, preserve_recent=True)
         
         # Old entry (60 days) should be considered for removal (60 > 30)
         # Recent entry (5 days) should be preserved (5 < 30)
@@ -622,7 +622,7 @@ class TestKBCleanup:
         cleanup.max_cache_size_bytes = 150
         cleanup.min_access_days = 7  # Consider entries > 7 days old
         
-        result = cleanup.cleanup_by_size(target_size_bytes=150, preserve_recent=True)
+        cleanup.cleanup_by_size(target_size_bytes=150, preserve_recent=True)
         
         # With LRU eviction, oldest entries should be removed first
         # Entry 2 (20 days) should be removed before entry 1 (10 days)

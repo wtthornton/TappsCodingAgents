@@ -86,7 +86,6 @@ def e2e_artifact_capture(e2e_project: Path, e2e_correlation_id: str, request) ->
         None (this is a setup/teardown fixture)
     """
     test_name = request.node.name
-    snapshots = []
 
     yield
 

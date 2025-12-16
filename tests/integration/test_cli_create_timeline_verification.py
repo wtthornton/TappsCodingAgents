@@ -76,7 +76,7 @@ class TestCLICreateTimelineVerification:
         
         # Initialize as Git repo if not already (required for worktrees)
         import subprocess as sp
-        git_init_result = sp.run(
+        sp.run(
             ["git", "init"],
             cwd=str(test_project_dir),
             capture_output=True,

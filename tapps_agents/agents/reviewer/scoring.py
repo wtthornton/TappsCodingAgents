@@ -31,8 +31,26 @@ try:
 except ImportError:
     HAS_BANDIT = False
 
-# Check if ruff is available in PATH
-HAS_RUFF = shutil.which("ruff") is not None
+# Check if ruff is available in PATH or via python -m ruff
+def _check_ruff_available() -> bool:
+    """Check if ruff is available via 'ruff' command or 'python -m ruff'"""
+    # Check for ruff command directly
+    if shutil.which("ruff"):
+        return True
+    # Check for python -m ruff
+    try:
+        result = subprocess.run(  # nosec B603 - fixed args
+            [sys.executable, "-m", "ruff", "--version"],
+            capture_output=True,
+            timeout=5,
+            check=False,
+        )
+        return result.returncode == 0
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        return False
+
+
+HAS_RUFF = _check_ruff_available()
 
 # Check if mypy is available in PATH
 HAS_MYPY = shutil.which("mypy") is not None

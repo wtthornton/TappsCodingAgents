@@ -5,6 +5,7 @@ Provides semantic search capabilities with automatic fallback to SimpleKnowledge
 when vector dependencies are unavailable.
 """
 
+import importlib.util
 import logging
 import time
 from pathlib import Path
@@ -18,12 +19,7 @@ from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 logger = logging.getLogger(__name__)
 
 # Try to check if FAISS is available
-try:
-    import faiss
-
-    FAISS_AVAILABLE = True
-except ImportError:
-    FAISS_AVAILABLE = False
+FAISS_AVAILABLE = importlib.util.find_spec("faiss") is not None
 
 
 class VectorKnowledgeBase:

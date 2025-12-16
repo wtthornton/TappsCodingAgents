@@ -9,13 +9,13 @@ from unittest.mock import patch
 
 import pytest
 
-pytestmark = pytest.mark.unit
-
 from tapps_agents.context7.security import (
     APIKeyManager,
     ComplianceStatus,
     SecurityAuditResult,
 )
+
+pytestmark = pytest.mark.unit
 
 
 class TestAPIKeyManager:

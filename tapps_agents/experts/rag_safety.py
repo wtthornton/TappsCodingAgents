@@ -90,7 +90,6 @@ class RAGSafetyHandler:
         if not content:
             return "", True
 
-        original_content = content
         is_safe = True
 
         # Detect prompt injection

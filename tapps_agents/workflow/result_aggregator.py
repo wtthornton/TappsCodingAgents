@@ -226,7 +226,7 @@ class ResultAggregator:
 
         # Merge by agent type with stable ordering
         for result in agent_results:
-            agent_type = result.get("agent_type", "unknown")
+            result.get("agent_type", "unknown")
             artifact_path = result.get("artifact_path")
 
             if not artifact_path or not Path(artifact_path).exists():

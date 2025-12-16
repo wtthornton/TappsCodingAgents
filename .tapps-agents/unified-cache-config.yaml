@@ -1,0 +1,19 @@
+unified_cache:
+  enabled: true
+  storage_root: .tapps-agents/kb/unified-cache
+  hardware:
+    auto_detect: false
+    profile: development
+    detected_profile: development
+  adaptive:
+    enabled: true
+    check_interval: 60
+  tiered_context:
+    enabled: true
+    namespace: tiered-context
+  context7_kb:
+    enabled: true
+    namespace: context7-kb
+  rag_knowledge:
+    enabled: true
+    namespace: rag-knowledge

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agents Reference - TappsCodingAgents</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <h1>🤖 TappsCodingAgents</h1>
+                <span class="version">v2.0.1</span>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="user-guide-index.html" class="active">User Guide</a></li>
+                <li><a href="technical-spec.html">Technical Spec</a></li>
+                <li><a href="examples.html">Examples</a></li>
+                <li><a href="api-reference.html">API Reference</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-content">
+            <nav style="margin-bottom: 2rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px;">
+                <a href="user-guide-index.html">← Back to User Guide</a>
+            </nav>
+
+            <h1>Agents Reference</h1>
+            <p class="lead">Complete reference for all 13 TappsCodingAgents agents, their commands, use cases, and how to use them individually or in workflows.</p>
+
+            <div class="alert alert-info" style="margin: 2rem 0;">
+                <strong>Note:</strong> While individual agents can be used directly, workflows are the recommended approach for most development tasks. See the <a href="user-guide-workflows.html">Workflows guide</a> for details.
+            </div>
+
+            <section id="agents-overview">
+                <h2>All 13 Agents</h2>
+                
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Agent</th>
+                            <th>Purpose</th>
+                            <th>Key Commands</th>
+                            <th>Common Use Cases</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Analyst</strong></td>
+                            <td>Requirements analysis and stakeholder analysis</td>
+                            <td><code>analyze</code>, <code>requirements</code></td>
+                            <td>Gathering requirements, analyzing needs</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Planner</strong></td>
+                            <td>Story generation and task breakdown</td>
+                            <td><code>plan</code>, <code>create-story</code></td>
+                            <td>Creating user stories, planning sprints</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Architect</strong></td>
+                            <td>System design and architecture</td>
+                            <td><code>design</code>, <code>architecture</code></td>
+                            <td>System architecture, component design</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Designer</strong></td>
+                            <td>API contracts and data modeling</td>
+                            <td><code>design-api</code>, <code>data-model</code></td>
+                            <td>API design, data schemas</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Implementer</strong></td>
+                            <td>Code generation and implementation</td>
+                            <td><code>implement</code>, <code>refactor</code></td>
+                            <td>Writing code, implementing features</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tester</strong></td>
+                            <td>Test generation and execution</td>
+                            <td><code>generate</code>, <code>run</code></td>
+                            <td>Creating tests, test execution</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Debugger</strong></td>
+                            <td>Error analysis and debugging</td>
+                            <td><code>debug</code>, <code>trace</code></td>
+                            <td>Finding bugs, analyzing errors</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Documenter</strong></td>
+                            <td>Documentation generation</td>
+                            <td><code>document</code>, <code>api-docs</code></td>
+                            <td>API docs, code documentation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Reviewer</strong></td>
+                            <td>Code review and quality scoring</td>
+                            <td><code>review</code>, <code>score</code></td>
+                            <td>Code reviews, quality metrics</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Improver</strong></td>
+                            <td>Refactoring and optimization</td>
+                            <td><code>improve</code>, <code>optimize</code></td>
+                            <td>Code improvement, refactoring</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Ops</strong></td>
+                            <td>Security and deployment</td>
+                            <td><code>audit</code>, <code>deploy</code></td>
+                            <td>Security scans, compliance checks</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Orchestrator</strong></td>
+                            <td>Workflow coordination</td>
+                            <td><code>orchestrate</code>, <code>gate</code></td>
+                            <td>Workflow management, quality gates</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Enhancer</strong></td>
+                            <td>Prompt enhancement</td>
+                            <td><code>enhance</code>, <code>enhance-quick</code></td>
+                            <td>Enhancing prompts, improving clarity</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="using-agents">
+                <h2>Using Individual Agents</h2>
+                
+                <p>While workflows are recommended, you can use individual agents for specific tasks:</p>
+
+                <h3>Reviewer Agent</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Reviewer Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Review a file
+tapps-agents reviewer review src/main.py
+
+# Calculate quality scores
+tapps-agents reviewer score src/main.py
+
+# Review with specific model
+tapps-agents reviewer review src/main.py --model qwen2.5-coder:7b</code></pre>
+                </div>
+
+                <h3>Implementer Agent</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Implementer Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Implement a feature
+tapps-agents implementer implement "Add user authentication endpoint"
+
+# Refactor code
+tapps-agents implementer refactor src/api.py "Extract helper functions"</code></pre>
+                </div>
+
+                <h3>Tester Agent</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Tester Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Generate tests
+tapps-agents tester generate src/main.py
+
+# Run tests
+tapps-agents tester run tests/test_main.py</code></pre>
+                </div>
+
+                <p>For complete command reference, see the <a href="api-reference.html">API Reference</a>.</p>
+            </section>
+
+            <section id="cursor-integration">
+                <h2>Cursor Integration</h2>
+                
+                <p>All 13 agents are available as Cursor Skills. After running <code>tapps-agents init</code>, Skills are installed in <code>.claude/skills/</code>.</p>
+
+                <h3>Using Skills in Cursor</h3>
+                <p>Use Skills in Cursor by mentioning the agent name:</p>
+                <ul>
+                    <li>"@reviewer review this file"</li>
+                    <li>"@implementer add authentication"</li>
+                    <li>"@tester generate tests"</li>
+                    <li>"@architect design the system architecture"</li>
+                </ul>
+
+                <h3>Background Agents</h3>
+                <p>Background Agents offload heavy tasks to cloud/remote agents. Configure in <code>.cursor/background-agents.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Background Agents Config</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>background_agents:
+  - name: "Quality Agent"
+    agent: "reviewer"
+    description: "Code quality review and scoring"
+    triggers:
+      - "review code"
+      - "check quality"
+    
+  - name: "Testing Agent"
+    agent: "tester"
+    description: "Generate and run tests"
+    triggers:
+      - "generate tests"
+      - "run tests"</code></pre>
+                </div>
+            </section>
+
+            <section style="margin-top: 3rem; padding: 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border);">
+                <h2>Learn More</h2>
+                <ul>
+                    <li><a href="user-guide-workflows.html">Workflows Guide</a> - How agents work together in workflows</li>
+                    <li><a href="user-guide-coding-practices.html">Coding Practices</a> - Best practices for using agents</li>
+                    <li><a href="api-reference.html">API Reference</a> - Complete command reference</li>
+                </ul>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="footer-content">
+            <p>&copy; 2025 TappsCodingAgents. MIT License.</p>
+            <p>Version 2.0.1 | Last Updated: January 2026</p>
+        </div>
+    </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
+

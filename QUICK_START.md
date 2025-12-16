@@ -44,7 +44,15 @@ python -m tapps_agents.cli --help
 
 ## Initialize Your Project (recommended)
 
-Run the initializer to install **Cursor Rules**, **workflow presets**, **Cursor Skills**, **Background Agents config**, and a starter `.tapps-agents/config.yaml`:
+Run the initializer to install **Cursor Rules**, **workflow presets**, **Cursor Skills**, **Background Agents config**, **.cursorignore**, and a starter `.tapps-agents/config.yaml`:
+
+**What gets installed:**
+- **`.cursor/rules/`**: Cursor Rules (.mdc files) - AI context documentation
+- **`.claude/skills/`**: Cursor Skills - Agent capabilities for Cursor's Skills system
+- **`.cursor/background-agents.yaml`**: Background Agents configuration
+- **`.cursorignore`**: Indexing optimization (excludes large/generated files)
+- **`workflows/presets/`**: Workflow preset definitions
+- **`.tapps-agents/config.yaml`**: Framework configuration
 
 ```bash
 tapps-agents init
