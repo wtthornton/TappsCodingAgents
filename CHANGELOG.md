@@ -5,6 +5,30 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.3] - 2025-12-16
+
+### Added
+- **Install Dev Tools Command** - New `install-dev` CLI command to easily install all development tools
+  - Automatically detects development vs installed package context
+  - Supports `--dry-run` flag for preview
+  - Installs ruff, mypy, pytest, pip-audit, pipdeptree via dev extra
+  - Usage: `python -m tapps_agents.cli install-dev`
+
+### Changed
+- **Enhanced Doctor Command** - Improved tool installation guidance
+  - Context-aware remediation messages (dev vs installed package)
+  - Specific pip installation commands for each scenario
+  - Summary suggestion to use `install-dev` when tools are missing
+  - Better user experience for resolving missing tool warnings
+
+### Fixed
+- **RAG Knowledge Base Directory Creation** - Fixed `OSError` when enabling RAG for experts with URL-based domain names
+  - Added `sanitize_domain_for_path()` utility function to handle URLs and invalid filename characters
+  - Domain names containing URLs (e.g., `https://www.home-assistant.io/docs/`) are now properly sanitized for cross-platform directory creation
+  - Windows compatibility improved by replacing invalid characters (`:`, `/`, `\`, etc.) with hyphens
+  - Created `tapps_agents/experts/domain_utils.py` for shared domain path sanitization
+  - Updated `setup_wizard.py` and `base_expert.py` to use sanitized domain names for knowledge base directories
+
 ## [2.0.2] - 2025-12-16
 
 ### Changed
@@ -292,6 +316,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Features |
 |---------|------|--------------|
+| 2.0.3 | Jan 2025 | Fixed RAG knowledge base directory creation for URL-based domain names (Windows compatibility) |
 | 2.0.2 | Jan 2026 | Documentation review and updates; version consistency improvements |
 | 2.0.1 | Dec 2025 | Packaged init assets for PyPI installs; docs alignment; doctor targets aligned |
 | 2.0.0 | Jan 2026 | Complete Built-in Expert System (16 experts), Dual-Layer Architecture, All 7 Cursor AI Integration Phases Complete |
