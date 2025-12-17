@@ -1,0 +1,128 @@
+# User Role Template Format Example
+# This file demonstrates the complete structure of a user role template
+# Copy this file and customize it for your role needs
+
+# ============================================================================
+# METADATA SECTION
+# ============================================================================
+
+# Role identifier (required)
+# Must be unique, lowercase, hyphenated (e.g., "senior-developer")
+role_id: example-role
+
+# Human-readable description (required)
+description: "Brief description of this role and when to use it"
+
+# Use cases (required)
+# List of scenarios where this role template is appropriate
+use_cases:
+  - "Use case 1"
+  - "Use case 2"
+  - "Use case 3"
+
+# ============================================================================
+# CONFIGURATION SECTIONS
+# ============================================================================
+
+# Communication verbosity and detail level
+verbosity:
+  # Verbosity level: "concise" | "balanced" | "verbose"
+  # - concise: Minimal explanations, assumes expertise
+  # - balanced: Standard explanations, good for most users
+  # - verbose: Detailed explanations, good for learning
+  level: balanced
+  
+  # Include detailed explanations (default: true)
+  explanations: true
+  
+  # Include code examples in responses (default: true)
+  examples: true
+  
+  # Learning-focused explanations (default: false)
+  # When true, explains "why" in addition to "what" and "how"
+  learning_focus: false
+
+# Workflow defaults
+workflow_defaults:
+  # Auto-approve code changes without confirmation (default: false)
+  auto_approve: false
+  
+  # Require code review before committing (default: true)
+  require_review: true
+  
+  # Emphasize test-first development approach (default: true)
+  test_first: true
+  
+  # Use progressive code review during development (default: true)
+  progressive_review: true
+  
+  # Documentation emphasis: "minimal" | "standard" | "comprehensive"
+  # - minimal: Generate only essential documentation
+  # - standard: Generate standard documentation
+  # - comprehensive: Generate detailed, thorough documentation
+  documentation_emphasis: standard
+
+# Expert priorities (0.0 = no priority, 1.0 = highest priority)
+# These values influence which experts are consulted more frequently
+# Values are normalized, so relative differences matter more than absolute values
+expert_priorities:
+  # Analysis and requirements
+  expert-analyst: 0.5
+  expert-planner: 0.5
+  
+  # Architecture and design
+  expert-architect: 0.5
+  expert-designer: 0.5
+  
+  # Implementation
+  expert-implementer: 0.5
+  
+  # Quality and testing
+  expert-tester: 0.5
+  expert-reviewer: 0.5
+  
+  # Operations and observability
+  expert-ops: 0.5
+  expert-observability: 0.5
+  
+  # Specialized domains (adjust based on role needs)
+  expert-api-design: 0.5
+  expert-security: 0.5
+  expert-performance: 0.5
+  expert-database: 0.5
+  expert-software-architecture: 0.5
+
+# Documentation preferences
+documentation_preferences:
+  # Detail level: "minimal" | "standard" | "comprehensive"
+  # - minimal: Essential documentation only
+  # - standard: Complete but concise documentation
+  # - comprehensive: Detailed documentation with context
+  detail_level: standard
+  
+  # Include code examples in documentation (default: true)
+  include_examples: true
+  
+  # Include diagrams where applicable (default: false)
+  include_diagrams: false
+  
+  # Docstring format: "google" | "numpy" | "sphinx"
+  docstring_format: google
+
+# Code review depth
+review_depth:
+  # Review level: "light" | "standard" | "thorough"
+  # - light: Quick review, catch obvious issues
+  # - standard: Comprehensive review, standard checks
+  # - thorough: Deep review, extensive analysis
+  level: standard
+  
+  # Emphasize security in reviews (default: true)
+  security_focus: true
+  
+  # Emphasize performance in reviews (default: false)
+  performance_focus: false
+  
+  # Emphasize test coverage in reviews (default: true)
+  test_coverage_focus: true
+

@@ -1,0 +1,77 @@
+# Express Tech Stack Template
+# This template provides optimal default configuration for Express.js projects
+# Template version: 1.0
+
+# Agent configuration overrides for Express projects
+agent_config:
+  # Reviewer agent - Node.js API quality checks
+  reviewer:
+    quality_threshold: 75.0  # Higher threshold for API code
+    min_confidence_threshold: 0.8  # Higher confidence for API design reviews
+  
+  # Implementer agent - Express patterns
+  implementer:
+    min_confidence_threshold: 0.7  # Medium-high for Node.js patterns
+    auto_approve_threshold: 80.0
+  
+  # Tester agent - Node.js testing defaults
+  tester:
+    test_framework: "jest"  # Common for Express projects
+    coverage_threshold: 80.0
+    min_confidence_threshold: 0.7
+  
+  # Debugger agent - Node.js debugging
+  debugger:
+    max_context_lines: 65  # Moderate context for async code
+    min_confidence_threshold: 0.7
+
+# Context7 pre-population libraries for Express projects
+context7_prepop:
+  libraries:
+    - express
+    - node
+    - jest
+    - supertest
+    - typescript
+  
+  # Topics to pre-cache for each library
+  topics:
+    express:
+      - routing
+      - middleware
+      - error-handling
+      - authentication
+    jest:
+      - testing
+      - mocking
+      - async
+      - coverage
+    node:
+      - async
+      - streams
+      - events
+      - http
+
+# Expert priorities for Express projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-api-design: 1.0              # API design most critical
+  expert-software-architecture: 0.8   # Node.js architecture patterns
+  expert-observability: 0.7           # Observability for APIs
+  expert-security: 0.7                # Security important for APIs
+  expert-performance: 0.6             # Performance optimization
+  expert-database: 0.5               # Database integration
+
+# Test framework defaults for Express projects
+test_frameworks:
+  primary: jest
+  plugins:
+    - supertest
+    - @types/jest
+  default_markers:
+    - unit
+    - integration
+    - api
+  coverage_target: 80.0
+  test_pattern: "**/*.{test,spec}.{js,ts}"
+

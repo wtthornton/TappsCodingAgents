@@ -33,6 +33,7 @@ class BaseAgent(ABC):
         self.config = config  # ProjectConfig instance
         self.domain_config: str | None = None
         self.customizations: Any | None = None
+        self.role_file: Any | None = None  # Agent role file data
         self.context_manager: Any | None = None
         self.mcp_gateway: Any | None = None
         self._unified_cache: Any | None = None  # Optional unified cache instance
@@ -46,10 +47,11 @@ class BaseAgent(ABC):
         1. Read agent definition
         2. Load project config
         3. Load domain config
-        4. Load customizations
-        5. Greet user
-        6. Run *help
-        7. Wait for commands
+        4. Load role file (optional)
+        5. Load customizations
+        6. Greet user
+        7. Run *help
+        8. Wait for commands
         """
         if project_root is None:
             project_root = Path.cwd()
@@ -76,19 +78,24 @@ class BaseAgent(ABC):
             except OSError:
                 self.domain_config = None
 
-        # Step 5: Load customizations
-        custom_path = (
-            project_root
-            / ".tapps-agents"
-            / "customizations"
-            / f"{self.agent_id}-custom.yaml"
-        )
-        if custom_path.exists():
-            try:
-                with open(custom_path, encoding="utf-8") as f:
-                    self.customizations = yaml.safe_load(f)
-            except (OSError, yaml.YAMLError):
-                self.customizations = None
+        # Step 5: Load role file (if available)
+        from .role_loader import load_role_file
+
+        self.role_file = load_role_file(self.agent_id, project_root)
+
+        # Step 5b: Load user role template (if available)
+        from .role_template_loader import get_role_from_config, load_and_apply_role_template
+
+        user_role_id = get_role_from_config(project_root)
+        self.user_role_template = None
+        if user_role_id:
+            from .role_template_loader import load_role_template
+            self.user_role_template = load_role_template(user_role_id, project_root)
+
+        # Step 6: Load customizations (customizations can override role file and role template)
+        from .customization_loader import load_customization
+
+        self.customizations = load_customization(self.agent_id, project_root)
 
     def get_commands(self) -> list[dict[str, str]]:
         """

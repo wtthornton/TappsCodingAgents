@@ -1,0 +1,83 @@
+# Agent Customization File Template
+# File: .tapps-agents/customizations/{agent-id}-custom.yaml
+#
+# This file allows you to customize agent behaviors without modifying
+# the base agent definitions. Customizations persist through framework updates.
+
+agent_id: example  # Must match filename (e.g., "example-custom.yaml" -> "example")
+
+# Override agent persona
+persona_overrides:
+  # Add additional core principles (appended to base principles)
+  additional_principles:
+    - "Always use type hints in Python"
+    - "Follow PEP 8 strictly"
+    - "Use async/await for I/O operations"
+  
+  # Modify communication style (overrides base values)
+  communication_style:
+    tone: "technical"  # Options: "professional" | "casual" | "friendly" | "technical"
+    formality: "balanced"  # Options: "formal" | "informal"
+    verbosity: "detailed"  # Options: "concise" | "detailed" | "balanced"
+  
+  # Custom expertise areas
+  expertise_areas:
+    # Add new expertise areas (appended to base)
+    add:
+      - "Python"
+      - "FastAPI"
+      - "Async programming"
+    # Emphasize existing areas (prioritized in responses)
+    emphasize:
+      - "Backend development"
+      - "API design"
+  
+  # Custom instructions (appended to base instructions)
+  custom_instructions: |
+    This project uses Python 3.11+ with FastAPI.
+    Always use async/await for database operations.
+    Follow the project's performance patterns document.
+
+# Override commands
+command_overrides:
+  # Add custom commands
+  add:
+    - name: "custom-command"
+      description: "Description of custom command"
+      handler: "task-name"  # References a task file in .tapps-agents/tasks/
+  
+  # Modify existing commands
+  modify:
+    - name: "help"
+      description: "Custom help description"
+
+# Override dependencies
+dependency_overrides:
+  # Add custom tasks
+  tasks:
+    add:
+      - "custom-task.md"
+  
+  # Add custom templates
+  templates:
+    add:
+      - "custom-template.yaml"
+  
+  # Add custom data files
+  data:
+    add:
+      - "custom-data.md"
+
+# Project-specific context
+project_context:
+  # Always load these files for this agent
+  always_load:
+    - "docs/architecture/performance-patterns.md"
+    - "docs/team-guidelines.md"
+  
+  # Project-specific preferences
+  preferences:
+    coding_style: "Pythonic with type hints"
+    architecture_patterns: ["Microservices", "Event-driven"]
+    technology_preferences: ["FastAPI", "SQLAlchemy", "Pydantic"]
+

@@ -1,0 +1,54 @@
+# Product Manager Role Template
+# Optimized for product managers who need business-focused, verbose communication
+
+# Role metadata
+role_id: product-manager
+description: "Optimized for product managers who need business-focused, verbose communication with emphasis on planning and analysis"
+use_cases:
+  - "Product managers gathering requirements"
+  - "Business analysts working with technical teams"
+  - "Project managers coordinating development"
+
+# Communication verbosity
+verbosity:
+  level: verbose
+  explanations: true
+  examples: true
+  learning_focus: true
+
+# Workflow defaults
+workflow_defaults:
+  auto_approve: false
+  require_review: true
+  test_first: false
+  progressive_review: false
+  documentation_emphasis: comprehensive
+
+# Expert priorities (0.0 = no priority, 1.0 = highest priority)
+# Product managers prioritize analysis, planning, and user experience
+# Note: Analyst and Planner are agents, not experts, but we prioritize
+# experts that support planning and analysis work
+expert_priorities:
+  expert-user-experience: 1.0
+  expert-software-architecture: 0.7
+  expert-api-design: 0.6
+  expert-testing: 0.5
+  expert-documentation: 0.8
+  expert-data-privacy: 0.7
+  expert-security: 0.6
+  expert-accessibility: 0.7
+
+# Documentation preferences
+documentation_preferences:
+  detail_level: comprehensive
+  include_examples: true
+  include_diagrams: true
+  docstring_format: google
+
+# Review depth
+review_depth:
+  level: standard
+  security_focus: true
+  performance_focus: false
+  test_coverage_focus: false
+

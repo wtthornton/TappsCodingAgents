@@ -87,6 +87,30 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
 
     # List command
     workflow_subparsers.add_parser("list", help="List all available workflow presets")
+    
+    # Recommend command
+    recommend_parser = workflow_subparsers.add_parser(
+        "recommend",
+        help="Get interactive workflow recommendation based on project analysis",
+        description="Analyze the project and recommend the most appropriate workflow. "
+        "Supports interactive mode with Q&A for ambiguous cases, or non-interactive mode for programmatic usage.",
+    )
+    recommend_parser.add_argument(
+        "--non-interactive",
+        action="store_true",
+        help="Non-interactive mode: return structured output without prompts",
+    )
+    recommend_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    recommend_parser.add_argument(
+        "--auto-load",
+        action="store_true",
+        help="Automatically load the recommended workflow after confirmation",
+    )
 
     # Short command for primary use case: create new project from prompt
     create_parser = subparsers.add_parser(
@@ -282,5 +306,30 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
     system_parser = analytics_subparsers.add_parser("system", help="Show system status")
     system_parser.add_argument(
         "--format", choices=["json", "text"], default="text", help="Output format"
+    )
+
+    # Customization template generator command
+    customize_parser = subparsers.add_parser(
+        "customize",
+        help="Generate agent customization file templates",
+        description="Generate customization file templates for agents. Customizations allow you to override agent behaviors without modifying base agent definitions.",
+    )
+    customize_subparsers = customize_parser.add_subparsers(
+        dest="command", help="Customization commands"
+    )
+
+    init_customize_parser = customize_subparsers.add_parser(
+        "init",
+        aliases=["generate"],
+        help="Generate customization file template for an agent",
+    )
+    init_customize_parser.add_argument(
+        "agent_id",
+        help="Agent ID (e.g., 'dev', 'implementer', 'reviewer', 'tester')",
+    )
+    init_customize_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing customization file if it exists",
     )
 

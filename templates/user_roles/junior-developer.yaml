@@ -1,0 +1,52 @@
+# Junior Developer Role Template
+# Optimized for learning-focused developers who need detailed explanations and examples
+
+# Role metadata
+role_id: junior-developer
+description: "Optimized for learning-focused developers who need detailed explanations and examples"
+use_cases:
+  - "Junior engineers learning best practices"
+  - "Developers new to the codebase or technology stack"
+  - "Interns or entry-level developers"
+
+# Communication verbosity
+verbosity:
+  level: verbose
+  explanations: true
+  examples: true
+  learning_focus: true
+
+# Workflow defaults
+workflow_defaults:
+  auto_approve: false
+  require_review: true
+  test_first: true
+  progressive_review: true
+  documentation_emphasis: comprehensive
+
+# Expert priorities (0.0 = no priority, 1.0 = highest priority)
+# Junior developers prioritize learning resources and code quality guidance
+expert_priorities:
+  expert-code-quality: 0.9
+  expert-testing: 0.8
+  expert-documentation: 0.8
+  expert-software-architecture: 0.7
+  expert-security: 0.7
+  expert-api-design: 0.6
+  expert-devops: 0.6
+  expert-performance: 0.5
+
+# Documentation preferences
+documentation_preferences:
+  detail_level: comprehensive
+  include_examples: true
+  include_diagrams: true
+  docstring_format: google
+
+# Review depth
+review_depth:
+  level: thorough
+  security_focus: true
+  performance_focus: true
+  test_coverage_focus: true
+

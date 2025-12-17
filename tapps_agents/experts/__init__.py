@@ -14,6 +14,39 @@ from .builtin_registry import BuiltinExpertRegistry
 from .domain_config import DomainConfig, DomainConfigParser
 from .expert_config import ExpertConfigModel, ExpertsConfig, load_expert_configs
 from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
+from .expert_engine import (
+    ExpertEngine,
+    ExpertEngineMetrics,
+    ExpertRoutingPlan,
+    KnowledgeNeed,
+    KnowledgeRetrievalPlan,
+    KnowledgeWriteRequest,
+)
+from .domain_detector import (
+    DomainMapping,
+    DomainStackDetector,
+    RepoSignal,
+    StackDetectionResult,
+)
+from .expert_synthesizer import ExpertSynthesizer, ExpertSynthesisResult
+from .knowledge_ingestion import (
+    IngestionResult,
+    KnowledgeEntry,
+    KnowledgeIngestionPipeline,
+)
+from .governance import (
+    FilterResult,
+    GovernanceLayer,
+    GovernancePolicy,
+)
+from .observability import (
+    ConsultationMetrics,
+    Context7Metrics,
+    KBImprovementProposal,
+    ObservabilitySystem,
+    RAGMetrics,
+    WeakArea,
+)
 from .rag_chunker import Chunk, Chunker
 from .rag_embedder import Embedder, SentenceTransformerEmbedder, create_embedder
 from .rag_evaluation import (
@@ -61,4 +94,28 @@ __all__ = [
     "BuiltinExpertRegistry",
     "ExpertSupportMixin",
     "create_agent_with_expert_support",
+    "ExpertEngine",
+    "ExpertEngineMetrics",
+    "ExpertRoutingPlan",
+    "KnowledgeNeed",
+    "KnowledgeRetrievalPlan",
+    "KnowledgeWriteRequest",
+    "DomainStackDetector",
+    "DomainMapping",
+    "RepoSignal",
+    "StackDetectionResult",
+    "ExpertSynthesizer",
+    "ExpertSynthesisResult",
+    "KnowledgeIngestionPipeline",
+    "KnowledgeEntry",
+    "IngestionResult",
+    "GovernanceLayer",
+    "GovernancePolicy",
+    "FilterResult",
+    "ObservabilitySystem",
+    "ConsultationMetrics",
+    "Context7Metrics",
+    "RAGMetrics",
+    "WeakArea",
+    "KBImprovementProposal",
 ]

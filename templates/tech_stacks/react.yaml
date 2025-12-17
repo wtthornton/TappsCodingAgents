@@ -1,0 +1,82 @@
+# React Tech Stack Template
+# This template provides optimal default configuration for React projects
+# Template version: 1.0
+
+# Agent configuration overrides for React projects
+agent_config:
+  # Reviewer agent - frontend-focused quality checks
+  reviewer:
+    quality_threshold: 75.0  # Higher threshold for frontend code
+    min_confidence_threshold: 0.8  # Higher confidence for UX reviews
+  
+  # Implementer agent - React patterns
+  implementer:
+    min_confidence_threshold: 0.7  # Medium-high for frontend patterns
+    auto_approve_threshold: 80.0
+  
+  # Tester agent - frontend testing defaults
+  tester:
+    test_framework: "vitest"  # Modern frontend testing
+    coverage_threshold: 80.0
+    min_confidence_threshold: 0.7
+  
+  # Debugger agent - frontend debugging
+  debugger:
+    max_context_lines: 60  # Moderate context for component debugging
+    min_confidence_threshold: 0.7
+
+# Context7 pre-population libraries for React projects
+context7_prepop:
+  libraries:
+    - react
+    - typescript
+    - vitest
+    - testing-library
+    - jest
+    - playwright
+  
+  # Topics to pre-cache for each library
+  topics:
+    react:
+      - hooks
+      - components
+      - state-management
+      - performance
+      - context
+    typescript:
+      - types
+      - interfaces
+      - generics
+      - utility-types
+    vitest:
+      - testing
+      - mocking
+      - coverage
+      - ui-testing
+
+# Expert priorities for React projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-user-experience: 1.0          # UX most critical for frontend
+  expert-software-architecture: 0.9     # Frontend architecture patterns
+  expert-performance: 0.8               # Performance matters for client-side apps
+  expert-accessibility: 0.7             # Accessibility important for web apps
+  expert-testing: 0.6                   # Testing frontend code
+
+# Test framework defaults for React projects
+test_frameworks:
+  primary: vitest
+  e2e: playwright
+  async_support: true
+  plugins:
+    - @testing-library/react
+    - @testing-library/jest-dom
+    - @vitest/ui
+  default_markers:
+    - unit
+    - component
+    - integration
+    - e2e
+  coverage_target: 80.0
+  test_pattern: "**/*.{test,spec}.{js,ts,tsx}"
+

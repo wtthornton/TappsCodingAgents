@@ -200,6 +200,35 @@ The Tester Agent automatically uses parallel execution when running tests via `*
 
 See `docs/TEST_PERFORMANCE_GUIDE.md` for complete performance optimization guide.
 
+## Planned Enhancements
+
+### SDLC Quality Engine Improvements
+
+The framework is being enhanced with a **self-correcting quality engine** that achieves "zero issues" consistently across any codebase.
+
+**Key Features (Planned):**
+- **Pluggable Validation Layer**: Stack-agnostic validation that adapts to your project's detected stack
+- **Comprehensive Verification**: Expansion beyond unit tests to include linters, type checks, security scans, dependency audits, artifact integrity checks
+- **Standardized Issues Manifest**: Machine-actionable issue schema for deterministic remediation
+- **Composite Gating Model**: Gates evaluate issues + verification outcomes, not just numeric scores
+- **Bounded Loopback Protocol**: Automatic remediation with structured fix plans and re-validation
+- **Traceability Matrix**: Requirements → stories → validations mapping for completeness verification
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 1: SDLC Quality Engine](prd/epic-1-sdlc-quality-engine.md)
+
+### Dynamic Expert & RAG Engine
+
+An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detects project domains, creates experts, and populates knowledge bases.
+
+**Key Features (Planned):**
+- **Automatic Expert Creation**: Technical experts (framework-controlled) + project/business experts (generated from repo signals)
+- **Knowledge Ingestion Pipeline**: Auto-fills RAG from project sources, dependency sources (Context7 KB), and operational sources
+- **Expert Engine Runtime**: Continuously detects needed domain knowledge and proactively consults experts
+- **Governance & Safety**: Do-not-index filters, prompt-injection handling, retention controls, optional human approval mode
+- **Observability**: Metrics tracking with scheduled KB maintenance jobs
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
 ## Related Docs
 
 - `docs/API.md`

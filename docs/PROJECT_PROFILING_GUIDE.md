@@ -106,3 +106,25 @@ Experts can incorporate project context by using `ProjectProfile.format_context(
 
 - The file name is **`project-profile.yaml`** (hyphenated), not `project_profile.yaml`.
 - This module does **not** provide profile-template matching utilities; it only detects and persists the profile.
+
+## Planned Enhancements
+
+### SDLC Quality Engine Integration
+
+The project profile will be used by the planned **Pluggable Validation Layer** to:
+
+- Load appropriate validators based on detected project characteristics
+- Adapt validation checks to deployment type, security level, and compliance requirements
+- Provide context for composite gating decisions (e.g., stricter gates for critical security projects)
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 1: SDLC Quality Engine](prd/epic-1-sdlc-quality-engine.md)
+
+### Dynamic Expert Engine Integration
+
+The project profile will be used by the planned **Dynamic Expert & RAG Engine** to:
+
+- Pre-load relevant expert guidance (e.g., security/compliance guidance for high/critical security projects)
+- Route to appropriate experts based on detected project characteristics
+- Populate knowledge bases with project-appropriate patterns and constraints
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)

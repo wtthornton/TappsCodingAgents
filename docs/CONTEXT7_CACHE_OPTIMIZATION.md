@@ -481,9 +481,24 @@ context7:
 
 ---
 
+## Planned Enhancements
+
+### Dynamic Expert & RAG Engine Integration
+
+The Context7 KB cache will be enhanced as part of the planned **Dynamic Expert & RAG Engine**:
+
+- **Automatic Dependency Detection**: When the engine detects a library/framework is used, automatically fetch overview, patterns, pitfalls, and security notes from Context7 KB
+- **Knowledge Distillation**: Optionally distill Context7 docs into project KB as "how we use X here" notes
+- **Metrics Integration**: Context7 KB metrics (hit rate, latency) will be tracked as part of the Expert Engine observability system
+- **Cache Pre-population**: Automatic cache warming when new dependencies are detected during workflow execution
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
 ## See Also
 
 - [Security & Privacy Guide](CONTEXT7_SECURITY_PRIVACY.md)
 - [API Key Management Guide](CONTEXT7_API_KEY_MANAGEMENT.md)
 - [CURSOR_AI_INTEGRATION_PLAN_2025.md](CURSOR_AI_INTEGRATION_PLAN_2025.md)
+- [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) - Comprehensive analysis of planned improvements
+- [Unified Cache Architecture](UNIFIED_CACHE.md) - Single interface for all caching systems
 

@@ -1,0 +1,92 @@
+# FastAPI Tech Stack Template
+# This template provides optimal default configuration for FastAPI projects
+# Template version: 1.0
+
+# Agent configuration overrides for FastAPI projects
+agent_config:
+  # Reviewer agent - higher threshold for async code quality
+  reviewer:
+    quality_threshold: 75.0  # Slightly higher for API code
+    min_confidence_threshold: 0.85  # Higher confidence for API design reviews
+  
+  # Implementer agent - async-aware settings
+  implementer:
+    min_confidence_threshold: 0.75  # Higher for async patterns
+    auto_approve_threshold: 85.0  # Higher bar for async code
+  
+  # Tester agent - pytest-asyncio defaults
+  tester:
+    test_framework: "pytest"
+    coverage_threshold: 85.0  # Higher coverage target for APIs
+    min_confidence_threshold: 0.75
+  
+  # Debugger agent - async debugging focus
+  debugger:
+    max_context_lines: 75  # More context for async code flow
+    min_confidence_threshold: 0.75
+
+# Context7 pre-population libraries for FastAPI projects
+context7_prepop:
+  libraries:
+    - fastapi
+    - uvicorn
+    - pydantic
+    - starlette
+    - httpx
+    - aiohttp
+    - sqlalchemy
+    - pytest
+    - pytest-asyncio
+    - pytest-cov
+  
+  # Topics to pre-cache for each library
+  topics:
+    fastapi:
+      - routing
+      - dependency-injection
+      - middleware
+      - errors
+      - async
+      - background-tasks
+    pydantic:
+      - models
+      - validation
+      - serialization
+      - settings
+    pytest:
+      - fixtures
+      - parametrize
+      - async
+      - markers
+    sqlalchemy:
+      - async
+      - sessions
+      - queries
+      - relationships
+
+# Expert priorities for FastAPI projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-api-design: 1.0          # Most critical for FastAPI
+  expert-observability: 0.9        # Very important for API services
+  expert-performance: 0.8          # Performance matters for APIs
+  expert-security: 0.7              # Security important for APIs
+  expert-database: 0.6              # Database design relevant
+  expert-software-architecture: 0.5  # Architecture matters but secondary
+  expert-testing: 0.7              # Testing important for APIs
+
+# Test framework defaults for FastAPI projects
+test_frameworks:
+  primary: pytest
+  async_support: true
+  plugins:
+    - pytest-asyncio
+    - pytest-cov
+    - pytest-mock
+  default_markers:
+    - unit
+    - integration
+    - api
+  coverage_target: 85.0
+  async_test_pattern: "test_*.py"
+

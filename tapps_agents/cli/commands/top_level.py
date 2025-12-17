@@ -1,5 +1,5 @@
 """
-Top-level command handlers (create, init, workflow, score, doctor, hardware-profile, analytics, setup-experts)
+Top-level command handlers (create, init, workflow, score, doctor, hardware-profile, analytics, setup-experts, customize)
 """
 import asyncio
 import json
@@ -215,14 +215,223 @@ def handle_create_command(args: object) -> None:
         sys.exit(1)
 
 
+def _is_ambiguous(recommendation) -> bool:
+    """Check if recommendation is ambiguous (low confidence or multiple valid options)"""
+    # Low confidence threshold
+    if recommendation.confidence < 0.7:
+        return True
+    # Multiple alternative workflows might indicate ambiguity
+    if len(recommendation.alternative_workflows) > 3:
+        return True
+    return False
+
+
+def _ask_clarifying_questions(recommendation, non_interactive: bool) -> dict[str, str]:
+    """Ask clarifying questions for ambiguous cases"""
+    answers = {}
+    
+    if non_interactive:
+        return answers
+    
+    print("\n" + "-" * 60)
+    print("Clarifying Questions")
+    print("-" * 60)
+    
+    # Question 1: Project scope
+    try:
+        print("\n1. What is the scope of your change?")
+        print("   [1] Bug fix or small feature (< 5 files)")
+        print("   [2] New feature or enhancement (5-20 files)")
+        print("   [3] Major feature or refactoring (20+ files)")
+        print("   [4] Enterprise/compliance work")
+        response = input("   Your choice [1-4]: ").strip()
+        if response in ("1", "2", "3", "4"):
+            answers["scope"] = response
+    except (EOFError, KeyboardInterrupt):
+        return answers
+    
+    # Question 2: Time constraint
+    try:
+        print("\n2. What is your time constraint?")
+        print("   [1] Quick fix needed ASAP")
+        print("   [2] Standard development timeline")
+        print("   [3] No rush, quality is priority")
+        response = input("   Your choice [1-3]: ").strip()
+        if response in ("1", "2", "3"):
+            answers["time_constraint"] = response
+    except (EOFError, KeyboardInterrupt):
+        return answers
+    
+    # Question 3: Documentation needs
+    try:
+        print("\n3. How much documentation is needed?")
+        print("   [1] Minimal (code comments only)")
+        print("   [2] Standard (README updates)")
+        print("   [3] Comprehensive (full docs, architecture)")
+        response = input("   Your choice [1-3]: ").strip()
+        if response in ("1", "2", "3"):
+            answers["documentation"] = response
+    except (EOFError, KeyboardInterrupt):
+        return answers
+    
+    return answers
+
+
+def _refine_recommendation(recommendation, answers: dict[str, str]) -> None:
+    """Refine recommendation based on Q&A answers"""
+    # This is a simplified refinement - in a full implementation,
+    # we would re-run detection with the answers as context
+    # For now, we just note the answers for display
+    if answers:
+        recommendation.characteristics.indicators["qa_answers"] = answers
+
+
+def _estimate_time(workflow_file: str | None, track) -> str:
+    """Estimate time for workflow (simplified heuristic)"""
+    if not workflow_file:
+        return "Unknown"
+    
+    # Simple heuristic based on track
+    time_estimates = {
+        "quick_flow": "5-15 minutes",
+        "bmad_method": "15-30 minutes",
+        "enterprise": "30-60 minutes",
+    }
+    
+    track_value = track.value if hasattr(track, "value") else str(track)
+    return time_estimates.get(track_value, "15-30 minutes")
+
+
+def handle_workflow_recommend_command(args: object) -> None:
+    """Handle workflow recommend command"""
+    from ...workflow.recommender import WorkflowRecommender
+    
+    non_interactive = getattr(args, "non_interactive", False)
+    output_format = getattr(args, "format", "text")
+    auto_load = getattr(args, "auto_load", False)
+    
+    try:
+        # Initialize recommender
+        recommender = WorkflowRecommender()
+        
+        # Get initial recommendation
+        recommendation = recommender.recommend(auto_load=False)
+        
+        # Check for ambiguity and ask Q&A if needed (Story 33.2)
+        is_ambiguous = _is_ambiguous(recommendation)
+        qa_answers = {}
+        
+        if is_ambiguous and not non_interactive:
+            qa_answers = _ask_clarifying_questions(recommendation, non_interactive)
+            if qa_answers:
+                _refine_recommendation(recommendation, qa_answers)
+        
+        # Calculate time estimate (Story 33.3)
+        time_estimate = _estimate_time(recommendation.workflow_file, recommendation.track)
+        
+        # Format output
+        if output_format == "json":
+            result = {
+                "workflow_file": recommendation.workflow_file,
+                "track": recommendation.track.value,
+                "confidence": recommendation.confidence,
+                "message": recommendation.message,
+                "time_estimate": time_estimate,
+                "alternative_workflows": recommendation.alternative_workflows,
+                "is_ambiguous": is_ambiguous,
+                "qa_answers": qa_answers,
+                "characteristics": {
+                    "project_type": recommendation.characteristics.project_type.value,
+                    "workflow_track": recommendation.characteristics.workflow_track.value,
+                    "confidence": recommendation.characteristics.confidence,
+                },
+            }
+            print(json.dumps(result, indent=2))
+        else:
+            # Text output (Story 33.3: Time estimates & alternatives)
+            print("\n" + "=" * 60)
+            print("Workflow Recommendation")
+            print("=" * 60)
+            print()
+            
+            # Enhanced recommendation message (Story 33.4)
+            print(recommendation.message)
+            print()
+            
+            # Time estimate
+            print(f"⏱️  Estimated Time: {time_estimate} (approximate)")
+            print()
+            
+            # Alternatives with brief comparison (Story 33.3)
+            if recommendation.alternative_workflows:
+                print("Alternative Workflows:")
+                for alt in recommendation.alternative_workflows[:5]:  # Show top 5
+                    print(f"  • {alt}")
+                print()
+            
+            # Confirmation prompt (Story 33.4)
+            if not non_interactive:
+                try:
+                    if auto_load and recommendation.workflow_file:
+                        response = input("Load recommended workflow? [y/N]: ").strip().lower()
+                    else:
+                        response = input("Accept this recommendation? [y/N/o] (o=override): ").strip().lower()
+                    
+                    if response in ("y", "yes"):
+                        if auto_load and recommendation.workflow_file:
+                            from ...workflow.executor import WorkflowExecutor
+                            executor = WorkflowExecutor(auto_detect=False)
+                            workflow_path = Path("workflows") / f"{recommendation.workflow_file}.yaml"
+                            if workflow_path.exists():
+                                workflow = executor.load_workflow(workflow_path)
+                                print(f"\n✅ Loaded workflow: {workflow.name}")
+                            else:
+                                print(f"\n⚠️  Workflow file not found: {workflow_path}")
+                    elif response == "o":
+                        # Override: show available workflows
+                        print("\nAvailable workflows:")
+                        available = recommender.list_available_workflows()
+                        for i, wf in enumerate(available[:10], 1):
+                            print(f"  [{i}] {wf['name']} - {wf.get('description', 'No description')}")
+                        try:
+                            choice = input("\nSelect workflow number: ").strip()
+                            idx = int(choice) - 1
+                            if 0 <= idx < len(available):
+                                selected = available[idx]
+                                print(f"\n✅ Selected: {selected['name']}")
+                                if auto_load:
+                                    workflow_path = Path("workflows") / selected["file"]
+                                    if workflow_path.exists():
+                                        from ...workflow.executor import WorkflowExecutor
+                                        executor = WorkflowExecutor(auto_detect=False)
+                                        workflow = executor.load_workflow(workflow_path)
+                                        print(f"✅ Loaded workflow: {workflow.name}")
+                        except (ValueError, IndexError, EOFError, KeyboardInterrupt):
+                            print("\nInvalid selection or cancelled.")
+                except (EOFError, KeyboardInterrupt):
+                    print("\nCancelled.")
+                    sys.exit(0)
+    
+    except Exception as e:
+        print(f"Error getting workflow recommendation: {e}", file=sys.stderr)
+        if output_format == "json":
+            print(json.dumps({"error": str(e)}, indent=2))
+        sys.exit(1)
+
+
 def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
 
-    loader = PresetLoader()
-
     preset_name = getattr(args, "preset", None)
+    
+    # Handle recommend subcommand
+    if preset_name == "recommend":
+        handle_workflow_recommend_command(args)
+        return
+
+    loader = PresetLoader()
 
     if not preset_name or preset_name == "list":
         # List all presets
@@ -331,6 +540,46 @@ def handle_score_command(args: object) -> None:
     asyncio.run(score_command(file_path, output_format=output_format))
 
 
+def handle_customize_command(args: object) -> None:
+    """Handle customize command"""
+    from pathlib import Path
+    from ...core.customization_template import generate_customization_template
+
+    command = getattr(args, "command", None)
+    if command == "init" or command == "generate":
+        agent_id = getattr(args, "agent_id", None)
+        if not agent_id:
+            print("Error: agent_id is required", file=sys.stderr)
+            sys.exit(1)
+
+        overwrite = getattr(args, "overwrite", False)
+        project_root = Path.cwd()
+
+        try:
+            result = generate_customization_template(
+                agent_id, project_root, overwrite=overwrite
+            )
+            if result["success"]:
+                print(f"\n{'='*60}")
+                print("Customization Template Generated")
+                print(f"{'='*60}")
+                print(f"Agent ID: {agent_id}")
+                print(f"File: {result['file_path']}")
+                print("\nNext steps:")
+                print(f"  1. Edit {result['file_path']} to customize your agent")
+                print("  2. See docs/CUSTOMIZATION_GUIDE.md for examples")
+                print("  3. Customizations are gitignored by default")
+            else:
+                print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
+                sys.exit(1)
+        except Exception as e:
+            print(f"Error generating template: {e}", file=sys.stderr)
+            sys.exit(1)
+    else:
+        print("Error: Unknown customize command", file=sys.stderr)
+        sys.exit(1)
+
+
 def handle_init_command(args: object) -> None:
     """Handle init command"""
     from ...core.init_project import init_project
@@ -374,6 +623,22 @@ def handle_init_command(args: object) -> None:
     if results.get("config"):
         print("  Project Config: Created")
         print("    - .tapps-agents/config.yaml")
+        # Show template application info if available
+        if results.get("template_applied"):
+            template_name = results.get("template_name")
+            template_reason = results.get("template_reason", "")
+            if template_name:
+                print(f"    - Template applied: {template_name}")
+                if template_reason:
+                    print(f"      ({template_reason})")
+        elif results.get("template_name") is not None:
+            # Template was selected but not applied (e.g., file not found)
+            template_name = results.get("template_name")
+            template_reason = results.get("template_reason", "")
+            if template_name:
+                print(f"    - Template selected: {template_name} (not applied)")
+                if template_reason:
+                    print(f"      ({template_reason})")
     else:
         print("  Project Config: Skipped or already exists")
 

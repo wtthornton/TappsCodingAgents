@@ -1,0 +1,55 @@
+# Tech Lead Role Template
+# Optimized for technical leaders who need architecture-focused, strategic thinking
+
+# Role metadata
+role_id: tech-lead
+description: "Optimized for technical leaders who need architecture-focused, strategic thinking"
+use_cases:
+  - "Technical leads making architectural decisions"
+  - "Engineering managers reviewing technical designs"
+  - "Senior architects planning system evolution"
+
+# Communication verbosity
+verbosity:
+  level: balanced
+  explanations: true
+  examples: true
+  learning_focus: false
+
+# Workflow defaults
+workflow_defaults:
+  auto_approve: false
+  require_review: true
+  test_first: true
+  progressive_review: true
+  documentation_emphasis: comprehensive
+
+# Expert priorities (0.0 = no priority, 1.0 = highest priority)
+# Tech leads prioritize architecture, security, observability, and scalability
+expert_priorities:
+  expert-software-architecture: 1.0
+  expert-security: 0.9
+  expert-observability: 0.9
+  expert-cloud-infrastructure: 0.8
+  expert-api-design: 0.8
+  expert-performance: 0.8
+  expert-database: 0.7
+  expert-devops: 0.7
+  expert-code-quality: 0.6
+  expert-testing: 0.6
+  expert-data-privacy: 0.5
+
+# Documentation preferences
+documentation_preferences:
+  detail_level: comprehensive
+  include_examples: true
+  include_diagrams: true
+  docstring_format: google
+
+# Review depth
+review_depth:
+  level: thorough
+  security_focus: true
+  performance_focus: true
+  test_coverage_focus: true
+

@@ -2,15 +2,19 @@
 Cache Router - Routes cache requests to appropriate cache adapters.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Protocol
+from typing import TYPE_CHECKING, Any, Protocol
 
 from ..context7.kb_cache import KBCache
-from ..experts.simple_rag import SimpleKnowledgeBase
 from .context_manager import ContextManager, ContextTier
 from .hardware_profiler import CacheOptimizationProfile, HardwareProfiler
+
+if TYPE_CHECKING:
+    from ..experts.simple_rag import SimpleKnowledgeBase
 
 
 class CacheType(Enum):

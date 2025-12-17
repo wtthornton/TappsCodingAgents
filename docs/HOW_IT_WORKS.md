@@ -55,4 +55,82 @@ From the target project root (after installing `tapps-agents`):
 
 This repo includes `.cursorignore` to prevent Cursor from indexing large/generated directories (venv, caches, reports, worktrees).
 
+## SDLC Quality Engine (Planned)
+
+The framework is being enhanced with a **self-correcting quality engine** that achieves "zero issues" consistently across any codebase.
+
+### Current State
+
+- Workflows execute linearly with score-based gates
+- Quality checks primarily evaluate numeric scoring
+- Limited automatic remediation loopback
+
+### Planned Enhancements
+
+**Pluggable Validation Layer:**
+- Adapts to detected project stack (languages, frameworks, tooling)
+- Loads appropriate validators based on project profile and repo signals
+- Emits standardized Issues Manifest for machine-actionable remediation
+
+**Comprehensive Verification:**
+- Expansion beyond unit tests to include: build/compile checks, integration tests, static analysis (linters/type checks), dependency audits, security scans, policy checks, artifact integrity checks
+
+**Composite Gating Model:**
+- Gates evaluate issues + verification outcomes, not just scores
+- Hard fail conditions: critical issues, verification failures, missing artifacts
+- Soft fail/loopback conditions: high issues above threshold, regression vs baseline, low expert confidence
+
+**Bounded Loopback Protocol:**
+- When issues exist, workflow loops back with structured fix plan
+- Applies changes, re-runs validations, only proceeds when clean
+- Bounded retries with escalation rules
+
+**Traceability Matrix:**
+- Lightweight mapping: requirements → stories → validations
+- Enables machine-checkable completeness verification
+
+See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 1: SDLC Quality Engine](prd/epic-1-sdlc-quality-engine.md) for details.
+
+## Dynamic Expert & RAG Engine (Planned)
+
+An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically enriches agents with project-relevant information.
+
+### Current State
+
+- Built-in technical experts (16 domains)
+- Configuration-only experts via `.tapps-agents/experts.yaml`
+- RAG backends (VectorKnowledgeBase with SimpleKnowledgeBase fallback)
+- Context7 KB cache integration
+- Unified Cache for tiered context
+
+### Planned Enhancements
+
+**Automatic Expert Creation:**
+- Technical experts: Framework-controlled, automatically consulted based on detected domains
+- Project/business experts: Generated automatically from repo signals as config-only experts
+- Creates `.tapps-agents/domains.md` and `.tapps-agents/experts.yaml` automatically
+
+**Knowledge Ingestion Pipeline:**
+- Project sources: requirements, architecture docs, ADRs, runbooks, prior SDLC reports
+- Dependency sources: Context7 KB (library/framework docs, patterns, pitfalls, security notes)
+- Operational sources: CI failures, runtime exceptions, monitoring alerts → "known issues" KB entries
+
+**Expert Engine Runtime:**
+- Continuously detects what domain knowledge is needed
+- Proactively consults the right experts
+- Populates knowledge stores as agents learn
+- Measures and improves retrieval quality over time
+
+**Governance & Safety:**
+- Do-not-index filters: secrets, tokens, credentials, PII
+- Prompt-injection handling: retrieved text treated as untrusted, labeled with sources
+- Retention & scope: project-local KB remains local
+- Optional human approval mode for new experts/KB entries
+
+**Observability & Quality Improvement:**
+- Metrics: expert consultation confidence, RAG quality, Context7 KB hit rate
+- Scheduled KB maintenance: identifies weak areas, proposes KB additions
+
+See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md) for details.
+
 

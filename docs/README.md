@@ -31,6 +31,12 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Deployment Guide](DEPLOYMENT.md)**
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)**
 
+### SDLC & Quality Engine (Planned)
+- **[SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md)** - Comprehensive analysis of SDLC improvements and Dynamic Expert Engine
+- **[Epic 1: SDLC Quality Engine](prd/epic-1-sdlc-quality-engine.md)** - Self-correcting quality engine with pluggable validation, composite gating, and bounded loopback
+- **[Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)** - Always-on orchestrator for automatic expert creation and knowledge ingestion
+- **[Epic Summary: SDLC Improvements](prd/EPIC_SUMMARY_SDLC_IMPROVEMENTS.md)** - High-level overview of all planned improvements
+
 ---
 
 **Documentation Version**: 2.0.2  

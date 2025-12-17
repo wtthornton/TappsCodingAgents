@@ -1,0 +1,90 @@
+# Next.js Tech Stack Template
+# This template provides optimal default configuration for Next.js projects
+# Template version: 1.0
+
+# Agent configuration overrides for Next.js projects
+agent_config:
+  # Reviewer agent - frontend-focused quality checks
+  reviewer:
+    quality_threshold: 75.0  # Higher threshold for frontend code
+    min_confidence_threshold: 0.8  # Higher confidence for UX reviews
+  
+  # Implementer agent - React/Next.js patterns
+  implementer:
+    min_confidence_threshold: 0.7  # Medium-high for frontend patterns
+    auto_approve_threshold: 80.0
+  
+  # Tester agent - frontend testing defaults
+  tester:
+    test_framework: "vitest"  # Modern frontend testing
+    coverage_threshold: 80.0
+    min_confidence_threshold: 0.7
+  
+  # Debugger agent - frontend debugging
+  debugger:
+    max_context_lines: 60  # Moderate context for component debugging
+    min_confidence_threshold: 0.7
+
+# Context7 pre-population libraries for Next.js projects
+context7_prepop:
+  libraries:
+    - next
+    - react
+    - typescript
+    - vitest
+    - playwright
+    - testing-library
+    - jest
+  
+  # Topics to pre-cache for each library
+  topics:
+    next:
+      - routing
+      - server-components
+      - api-routes
+      - middleware
+      - optimization
+    react:
+      - hooks
+      - components
+      - state-management
+      - performance
+    typescript:
+      - types
+      - interfaces
+      - generics
+      - utility-types
+    vitest:
+      - testing
+      - mocking
+      - coverage
+      - ui-testing
+
+# Expert priorities for Next.js projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-software-architecture: 1.0  # Fullstack architecture most critical
+  expert-user-experience: 0.9          # UX very important for frontend
+  expert-performance: 0.8              # Performance critical for Next.js
+  expert-api-design: 0.7               # API design if using API routes
+  expert-observability: 0.6           # Observability for SSR
+  expert-accessibility: 0.5            # Accessibility important
+  expert-testing: 0.7                 # Testing important for frontend
+
+# Test framework defaults for Next.js projects
+test_frameworks:
+  primary: vitest
+  e2e: playwright
+  async_support: true
+  plugins:
+    - @testing-library/react
+    - @testing-library/jest-dom
+    - @vitest/ui
+  default_markers:
+    - unit
+    - component
+    - integration
+    - e2e
+  coverage_target: 80.0
+  test_pattern: "**/*.{test,spec}.{js,ts,tsx}"
+

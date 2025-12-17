@@ -1,0 +1,85 @@
+# Django Tech Stack Template
+# This template provides optimal default configuration for Django projects
+# Template version: 1.0
+
+# Agent configuration overrides for Django projects
+agent_config:
+  # Reviewer agent - web framework quality checks
+  reviewer:
+    quality_threshold: 75.0  # Higher threshold for web framework code
+    min_confidence_threshold: 0.8  # Higher confidence for Django patterns
+  
+  # Implementer agent - Django patterns
+  implementer:
+    min_confidence_threshold: 0.75  # Medium-high for Django patterns
+    auto_approve_threshold: 80.0
+  
+  # Tester agent - Django testing defaults
+  tester:
+    test_framework: "pytest"
+    coverage_threshold: 80.0
+    min_confidence_threshold: 0.7
+  
+  # Debugger agent - Django debugging
+  debugger:
+    max_context_lines: 70  # More context for Django ORM queries
+    min_confidence_threshold: 0.75
+
+# Context7 pre-population libraries for Django projects
+context7_prepop:
+  libraries:
+    - django
+    - django-rest-framework
+    - pytest
+    - pytest-django
+    - pytest-cov
+    - factory-boy
+    - faker
+    - sqlalchemy
+    - psycopg2
+  
+  # Topics to pre-cache for each library
+  topics:
+    django:
+      - models
+      - views
+      - urls
+      - middleware
+      - admin
+      - migrations
+      - testing
+    pytest:
+      - fixtures
+      - parametrize
+      - django
+      - markers
+    django-rest-framework:
+      - serializers
+      - viewsets
+      - routers
+      - permissions
+
+# Expert priorities for Django projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-software-architecture: 1.0  # Web framework patterns most critical
+  expert-database: 0.9                # Database management very important
+  expert-security: 0.8                # Security crucial for web apps
+  expert-performance: 0.7            # Performance optimization matters
+  expert-testing: 0.6                 # Testing strategies important
+  expert-api-design: 0.5              # API design if using Django REST
+
+# Test framework defaults for Django projects
+test_frameworks:
+  primary: pytest
+  plugins:
+    - pytest-django
+    - pytest-cov
+    - pytest-factoryboy
+  default_markers:
+    - unit
+    - integration
+    - django
+  coverage_target: 80.0
+  test_pattern: "test_*.py"
+

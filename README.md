@@ -161,6 +161,37 @@ See:
 
 🎉 **All Core Framework Features Complete!**
 
+## Upcoming Enhancements (Planned)
+
+### SDLC Quality Engine Improvements
+
+The framework is being enhanced to transform the SDLC from a linear pipeline with score-only gates into a **self-correcting quality engine** that achieves "zero issues" consistently across any codebase.
+
+**Key Improvements:**
+- **Pluggable Validation Layer**: Stack-agnostic validation that adapts to detected project profile and repository signals
+- **Comprehensive Verification**: Expansion of "testing" into verification bundle (tests + linters + config checks + security scans + artifact integrity)
+- **Standardized Issues Manifest**: Machine-actionable issue schema (id, severity, category, evidence, repro, suggested_fix, owner_step) for deterministic remediation
+- **Composite Gating Model**: Gates evaluate issues + verification outcomes, not just numeric scores
+  - Hard fail conditions: critical issues, verification failures, missing artifacts
+  - Soft fail/loopback conditions: high issues above threshold, regression vs baseline, low expert confidence
+- **Bounded Loopback Protocol**: Deterministic remediation with structured fix plans, re-validation, and bounded retries
+- **Traceability Matrix**: Lightweight requirements → stories → validations mapping for completeness verification
+
+**Status**: Design phase - See [SDLC Improvements Analysis](SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 1: SDLC Quality Engine](docs/prd/epic-1-sdlc-quality-engine.md)
+
+### Dynamic Expert & RAG Engine
+
+An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detects project domains, creates and curates experts/knowledge for the current project, and continuously enriches agents with the best available, project-relevant information.
+
+**Key Features:**
+- **Automatic Expert Creation**: Framework-controlled technical experts + project-controlled business/domain experts generated from repo signals
+- **Knowledge Ingestion Pipeline**: Auto-fills RAG from project sources (requirements, architecture docs, ADRs), dependency sources (Context7 KB), and operational sources (CI failures, runtime exceptions)
+- **Expert Engine Runtime**: Continuously detects what domain knowledge is needed, proactively consults the right experts, and populates knowledge stores as agents learn
+- **Governance & Safety**: Do-not-index filters for secrets/PII, prompt-injection handling, retention & scope controls, optional human approval mode
+- **Observability & Quality Improvement**: Metrics tracking (expert confidence, RAG quality, Context7 KB hit rate) with scheduled KB maintenance jobs
+
+**Status**: Design phase - See [SDLC Improvements Analysis](SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](docs/prd/epic-2-dynamic-expert-rag-engine.md)
+
 ## Key Features
 
 ### Two-Layer Agent Model

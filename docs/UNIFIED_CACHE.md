@@ -157,9 +157,23 @@ For custom configuration, see [Configuration Guide](CONFIGURATION.md#unified-cac
 - CLI commands
 - Performance monitoring
 
+## Planned Enhancements
+
+### Dynamic Expert & RAG Engine Integration
+
+The Unified Cache will be enhanced to support the planned **Dynamic Expert & RAG Engine**:
+
+- **Expert Engine Metrics**: Cache hit rate, retrieval quality, confidence trends for expert consultations
+- **Knowledge Ingestion Caching**: Automatic caching of Context7 KB entries when new dependencies are detected
+- **RAG Quality Tracking**: Metrics for retrieval hit rate and identification of low-quality queries
+- **KB Maintenance**: Scheduled maintenance jobs that identify weak areas and propose KB additions
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
 ## See Also
 
 - [Context7 Cache Optimization](CONTEXT7_CACHE_OPTIMIZATION.md) - Context7-specific optimization
 - [Architecture Overview](ARCHITECTURE.md) - System architecture
 - [API Reference](API.md) - Complete API documentation
+- [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) - Comprehensive analysis of planned improvements
 

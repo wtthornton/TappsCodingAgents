@@ -140,6 +140,8 @@ def route_command(args: argparse.Namespace) -> None:
         )
     elif args.agent == "analytics":
         top_level.handle_analytics_command(args)
+    elif args.agent == "customize":
+        top_level.handle_customize_command(args)
     elif args.agent == "setup-experts":
         top_level.handle_setup_experts_command(args)
     else:

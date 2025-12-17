@@ -17,6 +17,7 @@ from typing import Any
 import yaml
 
 from .config import get_default_config
+from .tech_stack_priorities import get_priorities_for_frameworks
 
 try:
     # Python 3.9+: importlib.resources is the canonical way to ship non-code assets.
@@ -66,12 +67,26 @@ def _copy_traversable_tree(src: "Traversable", dest: Path) -> list[str]:
     return created
 
 
-def init_project_config(project_root: Path | None = None) -> tuple[bool, str | None]:
+def init_project_config(
+    project_root: Path | None = None,
+    tech_stack: dict[str, Any] | None = None,
+    apply_template: bool = True,
+) -> tuple[bool, str | None, dict[str, Any] | None]:
     """
     Initialize `.tapps-agents/config.yaml` with a canonical default config.
+    
+    Optionally applies tech stack template if detected and apply_template is True.
+
+    Args:
+        project_root: Project root directory
+        tech_stack: Pre-detected tech stack (optional, will detect if None)
+        apply_template: Whether to apply tech stack template (default: True)
 
     Returns:
-        (created, path)
+        Tuple of (created, path, template_info) where:
+        - created: True if file was created, False if already existed
+        - path: Path to config file
+        - template_info: Dict with template selection info (template_name, reason) or None
     """
     if project_root is None:
         project_root = Path.cwd()
@@ -80,15 +95,96 @@ def init_project_config(project_root: Path | None = None) -> tuple[bool, str | N
     config_dir.mkdir(parents=True, exist_ok=True)
 
     config_file = config_dir / "config.yaml"
-    if config_file.exists():
-        return False, str(config_file)
+    file_existed = config_file.exists()
+    
+    # Load existing user config if it exists (to preserve overrides)
+    user_config: dict[str, Any] | None = None
+    if file_existed:
+        try:
+            existing_content = config_file.read_text(encoding="utf-8")
+            user_config = yaml.safe_load(existing_content) or {}
+        except Exception:
+            # If parsing fails, start fresh
+            user_config = None
 
+    # Get default config
     default_config = get_default_config()
+    
+    # Apply template if enabled and tech stack detected
+    template_info: dict[str, Any] | None = None
+    final_config = default_config
+    
+    if apply_template:
+        # Detect tech stack if not provided
+        if tech_stack is None:
+            tech_stack = detect_tech_stack(project_root)
+        
+        # Select and apply template
+        if tech_stack.get("frameworks"):
+            try:
+                from .template_selector import select_template, get_template_path
+                from .template_merger import apply_template_to_config
+                
+                # Select template
+                template_name, reason = select_template(tech_stack)
+                
+                if template_name:
+                    # Get template path
+                    template_path = get_template_path(template_name)
+                    
+                    if template_path:
+                        # Apply template
+                        final_config = apply_template_to_config(
+                            template_path=template_path,
+                            default_config=default_config,
+                            user_config=user_config,
+                            project_root=project_root,
+                            tech_stack=tech_stack,
+                            project_name=project_root.name,
+                        )
+                        
+                        template_info = {
+                            "template_name": template_name,
+                            "reason": reason,
+                            "applied": True,
+                        }
+                    else:
+                        template_info = {
+                            "template_name": template_name,
+                            "reason": f"{reason} (template file not found)",
+                            "applied": False,
+                        }
+                else:
+                    template_info = {
+                        "template_name": None,
+                        "reason": reason,
+                        "applied": False,
+                    }
+            except ImportError:
+                # Template modules not available, skip template application
+                logger.warning("Template modules not available, skipping template application")
+                template_info = None
+            except Exception as e:
+                # Template application failed, use defaults
+                logger.warning(f"Template application failed: {e}, using default config")
+                template_info = {
+                    "template_name": None,
+                    "reason": f"Template application failed: {e}",
+                    "applied": False,
+                }
+    
+    # Merge user config if it existed (user config has highest priority)
+    if user_config:
+        from .template_merger import deep_merge_dict
+        final_config = deep_merge_dict(final_config, user_config)
+    
+    # Write config file
     config_file.write_text(
-        yaml.safe_dump(default_config, sort_keys=False),
+        yaml.safe_dump(final_config, sort_keys=False, default_flow_style=False),
         encoding="utf-8",
     )
-    return True, str(config_file)
+    
+    return not file_existed, str(config_file), template_info
 
 
 def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None = None):
@@ -302,12 +398,43 @@ def init_background_agents_config(
     return False, None
 
 
+def init_customizations_directory(project_root: Path | None = None) -> tuple[bool, str | None]:
+    """
+    Initialize `.tapps-agents/customizations/` directory for agent customizations.
+
+    Creates the directory structure if it doesn't exist. This directory is
+    gitignored by default to allow project-specific agent customizations.
+
+    Args:
+        project_root: Project root directory (defaults to cwd)
+
+    Returns:
+        Tuple of (created, directory_path)
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    customizations_dir = project_root / ".tapps-agents" / "customizations"
+    
+    # Create directory if it doesn't exist
+    if not customizations_dir.exists():
+        try:
+            customizations_dir.mkdir(parents=True, exist_ok=True)
+            return True, str(customizations_dir)
+        except OSError as e:
+            # Permission error or other OS error
+            return False, None
+    else:
+        return False, str(customizations_dir)
+
+
 def init_cursorignore(project_root: Path | None = None, source_file: Path | None = None):
     """
     Initialize .cursorignore file for a project.
 
     Copies `.cursorignore` into the target project if it doesn't exist.
     This file helps keep Cursor fast by excluding large/generated artifacts from indexing.
+    Also adds `.tapps-agents/customizations/` to gitignore patterns.
     """
     if project_root is None:
         project_root = Path.cwd()
@@ -326,19 +453,122 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
         packaged_ignore = None
 
     dest_file = project_root / ".cursorignore"
+    created = False
 
+    if not dest_file.exists():
+        if packaged_ignore is not None:
+            dest_file.write_bytes(packaged_ignore.read_bytes())
+            created = True
+        elif source_file and source_file.exists():
+            shutil.copy2(source_file, dest_file)
+            created = True
+        else:
+            # Create new .cursorignore file
+            dest_file.write_text("# Cursor ignore patterns\n", encoding="utf-8")
+            created = True
+
+    # Add customizations directory to gitignore if not already present
     if dest_file.exists():
-        return False, str(dest_file)
+        content = dest_file.read_text(encoding="utf-8")
+        customizations_pattern = ".tapps-agents/customizations/"
+        if customizations_pattern not in content:
+            # Append to file
+            with open(dest_file, "a", encoding="utf-8") as f:
+                f.write(f"\n# Agent customizations (project-specific, gitignored by default)\n")
+                f.write(f"{customizations_pattern}\n")
+            created = True  # Mark as created if we modified it
 
-    if packaged_ignore is not None:
-        dest_file.write_bytes(packaged_ignore.read_bytes())
-        return True, str(dest_file)
+    return created, str(dest_file)
 
-    if source_file and source_file.exists():
-        shutil.copy2(source_file, dest_file)
-        return True, str(dest_file)
 
-    return False, None
+def init_tech_stack_config(
+    project_root: Path | None = None,
+    tech_stack: dict[str, Any] | None = None,
+) -> tuple[bool, str | None]:
+    """
+    Initialize `.tapps-agents/tech-stack.yaml` with detected tech stack and expert priorities.
+
+    If tech_stack is provided, uses it. Otherwise, detects tech stack from project.
+
+    The config file structure:
+    ```yaml
+    frameworks:
+      - FastAPI
+      - React
+    expert_priorities:
+      expert-api-design: 1.0
+      expert-observability: 0.9
+      expert-performance: 0.8
+    overrides:
+      # User can override priorities here
+      # expert-api-design: 0.8
+    ```
+
+    Args:
+        project_root: Project root directory
+        tech_stack: Optional pre-detected tech stack dict
+
+    Returns:
+        (created, path) tuple - created is True if file was created, False if updated
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    config_dir = project_root / ".tapps-agents"
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    config_file = config_dir / "tech-stack.yaml"
+    file_existed = config_file.exists()
+
+    # Detect tech stack if not provided
+    if tech_stack is None:
+        tech_stack = detect_tech_stack(project_root)
+
+    # Load existing config if it exists to preserve user overrides
+    existing_config: dict[str, Any] = {}
+    if file_existed:
+        try:
+            existing_content = config_file.read_text(encoding="utf-8")
+            existing_config = yaml.safe_load(existing_content) or {}
+        except Exception:
+            # If parsing fails, start fresh
+            existing_config = {}
+
+    # Build config structure
+    config: dict[str, Any] = {
+        "frameworks": tech_stack.get("frameworks", []),
+    }
+
+    # Add expert priorities if available
+    if "expert_priorities" in tech_stack and tech_stack["expert_priorities"]:
+        # Merge with existing priorities, preserving user overrides
+        default_priorities = tech_stack["expert_priorities"]
+        existing_priorities = existing_config.get("expert_priorities", {})
+        existing_overrides = existing_config.get("overrides", {})
+
+        # Start with defaults, apply existing config, then apply overrides
+        merged_priorities = default_priorities.copy()
+        merged_priorities.update(existing_priorities)
+        merged_priorities.update(existing_overrides)
+
+        config["expert_priorities"] = merged_priorities
+
+        # Preserve overrides section if it exists
+        if existing_overrides:
+            config["overrides"] = existing_overrides
+    elif "expert_priorities" in existing_config:
+        # Preserve existing priorities if no new ones detected
+        config["expert_priorities"] = existing_config["expert_priorities"]
+        if "overrides" in existing_config:
+            config["overrides"] = existing_config["overrides"]
+
+    # Write config file
+    config_file.write_text(
+        yaml.safe_dump(config, default_flow_style=False, sort_keys=False),
+        encoding="utf-8",
+    )
+
+    return not file_existed, str(config_file)
 
 
 def detect_tech_stack(project_root: Path) -> dict[str, Any]:
@@ -438,6 +668,12 @@ def detect_tech_stack(project_root: Path) -> dict[str, Any]:
             if key in lib_lower:
                 if framework not in tech_stack["frameworks"]:
                     tech_stack["frameworks"].append(framework)
+
+    # Add expert priorities based on detected frameworks
+    if tech_stack["frameworks"]:
+        expert_priorities = get_priorities_for_frameworks(tech_stack["frameworks"])
+        if expert_priorities:
+            tech_stack["expert_priorities"] = expert_priorities
 
     return tech_stack
 
@@ -861,18 +1097,29 @@ def init_project(
         "config": False,
         "skills": False,
         "background_agents": False,
+        "customizations": False,
         "cursorignore": False,
         "tech_stack": None,
         "cache_prepopulated": False,
         "files_created": [],
     }
 
-    # Initialize project config
+    # Detect tech stack early (needed for template application)
+    tech_stack = detect_tech_stack(project_root)
+    results["tech_stack"] = tech_stack
+    
+    # Initialize project config (with template application)
     if include_config:
-        success, config_path = init_project_config(project_root)
+        success, config_path, template_info = init_project_config(
+            project_root, tech_stack=tech_stack, apply_template=True
+        )
         results["config"] = success
         if config_path:
             results["files_created"].append(config_path)
+        if template_info:
+            results["template_applied"] = template_info.get("applied", False)
+            results["template_name"] = template_info.get("template_name")
+            results["template_reason"] = template_info.get("reason")
 
     # Initialize Cursor Rules
     if include_cursor_rules:
@@ -904,6 +1151,12 @@ def init_project(
         if bg_path:
             results["files_created"].append(bg_path)
 
+    # Initialize customizations directory
+    success, customizations_path = init_customizations_directory(project_root)
+    results["customizations"] = success
+    if customizations_path:
+        results["files_created"].append(customizations_path)
+
     # Initialize .cursorignore file
     if include_cursorignore:
         success, ignore_path = init_cursorignore(project_root)
@@ -911,9 +1164,13 @@ def init_project(
         if ignore_path:
             results["files_created"].append(ignore_path)
 
-    # Detect tech stack and pre-populate cache for existing projects
-    tech_stack = detect_tech_stack(project_root)
-    results["tech_stack"] = tech_stack
+    # Tech stack already detected above, use it for tech stack config
+
+    # Initialize tech stack config with expert priorities
+    success, tech_stack_path = init_tech_stack_config(project_root, tech_stack)
+    results["tech_stack_config"] = success
+    if tech_stack_path:
+        results["files_created"].append(tech_stack_path)
 
     # Detect MCP servers
     mcp_status = detect_mcp_servers(project_root)

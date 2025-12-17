@@ -1,0 +1,52 @@
+# QA Engineer Role Template
+# Optimized for QA engineers who need test-first approach and edge case focus
+
+# Role metadata
+role_id: qa-engineer
+description: "Optimized for QA engineers who need test-first approach, edge case focus, and thorough validation"
+use_cases:
+  - "QA engineers writing test cases"
+  - "Test engineers validating functionality"
+  - "Quality assurance specialists reviewing code"
+
+# Communication verbosity
+verbosity:
+  level: balanced
+  explanations: true
+  examples: true
+  learning_focus: false
+
+# Workflow defaults
+workflow_defaults:
+  auto_approve: false
+  require_review: true
+  test_first: true
+  progressive_review: true
+  documentation_emphasis: comprehensive
+
+# Expert priorities (0.0 = no priority, 1.0 = highest priority)
+# QA engineers prioritize testing, code quality, security, and accessibility
+expert_priorities:
+  expert-testing: 1.0
+  expert-code-quality: 0.9
+  expert-security: 0.8
+  expert-accessibility: 0.8
+  expert-performance: 0.7
+  expert-user-experience: 0.6
+  expert-api-design: 0.6
+  expert-observability: 0.5
+
+# Documentation preferences
+documentation_preferences:
+  detail_level: comprehensive
+  include_examples: true
+  include_diagrams: true
+  docstring_format: google
+
+# Review depth
+review_depth:
+  level: thorough
+  security_focus: true
+  performance_focus: true
+  test_coverage_focus: true
+

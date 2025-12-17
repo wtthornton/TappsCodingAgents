@@ -6,6 +6,7 @@ Manages expert instances and provides consultation services with weighted decisi
 
 from __future__ import annotations
 
+import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -73,10 +74,14 @@ class ExpertRegistry:
         )
         self.project_root = project_root or Path.cwd()
         self._cached_profile: ProjectProfile | None = None
+        self._tech_stack_priorities: dict[str, float] | None = None
 
         # Auto-load built-in experts if enabled
         if load_builtin:
             self._load_builtin_experts()
+
+        # Load tech stack priorities if available
+        self._load_tech_stack_priorities()
 
     def _get_project_profile(self) -> ProjectProfile | None:
         """
@@ -88,6 +93,36 @@ class ExpertRegistry:
         if self._cached_profile is None:
             self._cached_profile = load_project_profile(project_root=self.project_root)
         return self._cached_profile
+
+    def _load_tech_stack_priorities(self) -> None:
+        """
+        Load expert priorities from tech-stack.yaml config file.
+
+        Priorities are loaded from `.tapps-agents/tech-stack.yaml` if it exists.
+        Priorities from `expert_priorities` section are merged with `overrides` section
+        (overrides take precedence).
+        """
+        tech_stack_config = self.project_root / ".tapps-agents" / "tech-stack.yaml"
+        if not tech_stack_config.exists():
+            return
+
+        try:
+            content = tech_stack_config.read_text(encoding="utf-8")
+            config = yaml.safe_load(content) or {}
+
+            # Get expert priorities (defaults)
+            expert_priorities = config.get("expert_priorities", {}).copy()
+
+            # Apply overrides (overrides take precedence)
+            overrides = config.get("overrides", {})
+            expert_priorities.update(overrides)
+
+            if expert_priorities:
+                self._tech_stack_priorities = expert_priorities
+        except Exception:
+            # Silently fail if config file can't be loaded
+            # Registry will work without priorities (backward compatible)
+            pass
 
     @classmethod
     def from_domains_file(cls, domains_file: Path) -> ExpertRegistry:
@@ -631,4 +666,44 @@ class ExpertRegistry:
                 expert_ids.extend(list(self.customer_experts.keys()))
                 expert_ids.extend(list(self.builtin_experts.keys()))
 
+        # Apply tech stack priorities if available
+        if self._tech_stack_priorities and expert_ids:
+            expert_ids = self._apply_priorities(expert_ids)
+
         return expert_ids
+
+    def _apply_priorities(self, expert_ids: list[str]) -> list[str]:
+        """
+        Apply tech stack priorities to expert ID list.
+
+        Experts are sorted by priority (higher first), with experts not in
+        priority mapping appearing at the end.
+
+        Args:
+            expert_ids: List of expert IDs to prioritize
+
+        Returns:
+            List of expert IDs sorted by priority (higher first)
+        """
+        if not self._tech_stack_priorities:
+            return expert_ids
+
+        # Separate experts into prioritized and unprioritized
+        prioritized: list[tuple[str, float]] = []
+        unprioritized: list[str] = []
+
+        for expert_id in expert_ids:
+            priority = self._tech_stack_priorities.get(expert_id)
+            if priority is not None:
+                prioritized.append((expert_id, priority))
+            else:
+                unprioritized.append(expert_id)
+
+        # Sort prioritized experts by priority (higher first)
+        prioritized.sort(key=lambda x: x[1], reverse=True)
+
+        # Combine: prioritized experts first (sorted), then unprioritized
+        result = [expert_id for expert_id, _ in prioritized]
+        result.extend(unprioritized)
+
+        return result

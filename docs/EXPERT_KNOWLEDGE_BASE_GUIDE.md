@@ -359,9 +359,24 @@ If RAG returns low-quality results:
 3. Use clearer headings
 4. Include more keywords
 
+## Planned Enhancements
+
+### Dynamic Knowledge Ingestion
+
+The framework is being enhanced with a **Knowledge Ingestion Pipeline** that will automatically populate knowledge bases from:
+
+- **Project Sources**: Requirements, architecture docs, ADRs, runbooks, prior SDLC reports, "lessons learned" captured automatically
+- **Dependency Sources (Context7)**: When a library/framework is detected, automatically fetch overview, patterns, pitfalls, and security notes from Context7 KB
+- **Operational Sources**: CI failures, runtime exceptions, monitoring alerts → converted to "known issues" KB entries with reproduction + fix
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
+When implemented, the Knowledge Ingestion Pipeline will automatically populate your project knowledge bases, reducing manual setup while maintaining governance and safety controls.
+
 ## Related Documentation
 
 - [Built-in Experts Guide](./BUILTIN_EXPERTS_GUIDE.md)
 - [Expert Configuration Guide](./EXPERT_CONFIG_GUIDE.md)
 - [API Documentation](./API.md)
+- [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) - Comprehensive analysis of planned improvements
 

@@ -1,0 +1,80 @@
+# NestJS Tech Stack Template
+# This template provides optimal default configuration for NestJS projects
+# Template version: 1.0
+
+# Agent configuration overrides for NestJS projects
+agent_config:
+  # Reviewer agent - enterprise API quality checks
+  reviewer:
+    quality_threshold: 75.0  # Higher threshold for enterprise code
+    min_confidence_threshold: 0.85  # Higher confidence for architecture reviews
+  
+  # Implementer agent - NestJS patterns
+  implementer:
+    min_confidence_threshold: 0.75  # Higher for enterprise patterns
+    auto_approve_threshold: 85.0  # Higher bar for enterprise code
+  
+  # Tester agent - NestJS testing defaults
+  tester:
+    test_framework: "jest"  # Standard for NestJS
+    coverage_threshold: 85.0  # Higher coverage target
+    min_confidence_threshold: 0.75
+  
+  # Debugger agent - NestJS debugging
+  debugger:
+    max_context_lines: 70  # More context for dependency injection
+    min_confidence_threshold: 0.75
+
+# Context7 pre-population libraries for NestJS projects
+context7_prepop:
+  libraries:
+    - nestjs
+    - typescript
+    - jest
+    - rxjs
+    - class-validator
+    - class-transformer
+  
+  # Topics to pre-cache for each library
+  topics:
+    nestjs:
+      - modules
+      - controllers
+      - providers
+      - dependency-injection
+      - decorators
+      - interceptors
+    typescript:
+      - types
+      - interfaces
+      - decorators
+      - generics
+    jest:
+      - testing
+      - mocking
+      - async
+      - coverage
+
+# Expert priorities for NestJS projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-api-design: 1.0              # API design most critical
+  expert-software-architecture: 0.9   # Architecture patterns important
+  expert-observability: 0.8            # Observability for enterprise APIs
+  expert-security: 0.7                 # Security important for APIs
+  expert-performance: 0.6              # Performance optimization
+  expert-database: 0.5                 # Database integration
+
+# Test framework defaults for NestJS projects
+test_frameworks:
+  primary: jest
+  plugins:
+    - @nestjs/testing
+    - @types/jest
+  default_markers:
+    - unit
+    - integration
+    - e2e
+  coverage_target: 85.0
+  test_pattern: "**/*.{test,spec}.{ts}"
+

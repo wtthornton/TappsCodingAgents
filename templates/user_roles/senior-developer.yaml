@@ -1,0 +1,53 @@
+# Senior Developer Role Template
+# Optimized for experienced developers who prefer concise communication and assume expertise
+
+# Role metadata
+role_id: senior-developer
+description: "Optimized for experienced developers who prefer concise communication and assume expertise"
+use_cases:
+  - "Senior engineers writing production code"
+  - "Experienced developers working on complex features"
+  - "Team leads implementing architectural patterns"
+
+# Communication verbosity
+verbosity:
+  level: concise
+  explanations: false
+  examples: true
+  learning_focus: false
+
+# Workflow defaults
+workflow_defaults:
+  auto_approve: true
+  require_review: false
+  test_first: true
+  progressive_review: true
+  documentation_emphasis: standard
+
+# Expert priorities (0.0 = no priority, 1.0 = highest priority)
+# Senior developers prioritize architecture, performance, and quality
+expert_priorities:
+  expert-software-architecture: 0.9
+  expert-api-design: 0.8
+  expert-performance: 0.7
+  expert-security: 0.6
+  expert-testing: 0.5
+  expert-code-quality: 0.7
+  expert-observability: 0.6
+  expert-cloud-infrastructure: 0.5
+  expert-database: 0.5
+
+# Documentation preferences
+documentation_preferences:
+  detail_level: standard
+  include_examples: true
+  include_diagrams: false
+  docstring_format: google
+
+# Review depth
+review_depth:
+  level: standard
+  security_focus: true
+  performance_focus: true
+  test_coverage_focus: true
+

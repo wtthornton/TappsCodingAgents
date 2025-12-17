@@ -263,9 +263,25 @@ python -m tapps_agents.cli setup-experts remove
 2. Check file path is correct
 3. Ensure YAML syntax is valid
 
+## Planned Enhancements
+
+### Dynamic Expert & RAG Engine
+
+The framework is being enhanced with a **Dynamic Knowledge/Expert Orchestrator** that will automatically:
+
+- **Automatic Expert Creation**: Generate project/business experts from repo signals (dependency manifests, config files, build tooling, CI workflows)
+- **Knowledge Ingestion Pipeline**: Auto-fill RAG from project sources (requirements, architecture docs, ADRs), dependency sources (Context7 KB), and operational sources (CI failures, runtime exceptions)
+- **Expert Engine Runtime**: Continuously detect needed domain knowledge and proactively consult experts
+- **Governance & Safety**: Do-not-index filters, prompt-injection handling, retention controls, optional human approval mode
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
+When implemented, the Expert Engine will complement the manual setup wizard by automatically creating and curating experts/knowledge for your project based on detected signals.
+
 ## See Also
 
 - [Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md) - Detailed configuration reference
-- [Knowledge Base Guide](KNOWLEDGE_BASE_GUIDE.md) - Setting up knowledge bases
+- [Knowledge Base Guide](EXPERT_KNOWLEDGE_BASE_GUIDE.md) - Setting up knowledge bases
 - [Domain Configuration](../requirements/PROJECT_REQUIREMENTS.md#12-domain-configuration) - Domain definitions
+- [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) - Comprehensive analysis of planned improvements
 

@@ -1,0 +1,78 @@
+# Flask Tech Stack Template
+# This template provides optimal default configuration for Flask projects
+# Template version: 1.0
+
+# Agent configuration overrides for Flask projects
+agent_config:
+  # Reviewer agent - lightweight web framework quality checks
+  reviewer:
+    quality_threshold: 75.0  # Higher threshold for web code
+    min_confidence_threshold: 0.8  # Higher confidence for Flask patterns
+  
+  # Implementer agent - Flask patterns
+  implementer:
+    min_confidence_threshold: 0.7  # Medium-high for Flask patterns
+    auto_approve_threshold: 80.0
+  
+  # Tester agent - Flask testing defaults
+  tester:
+    test_framework: "pytest"
+    coverage_threshold: 80.0
+    min_confidence_threshold: 0.7
+  
+  # Debugger agent - Flask debugging
+  debugger:
+    max_context_lines: 65  # Moderate context for request handling
+    min_confidence_threshold: 0.7
+
+# Context7 pre-population libraries for Flask projects
+context7_prepop:
+  libraries:
+    - flask
+    - pytest
+    - pytest-cov
+    - flask-sqlalchemy
+    - flask-migrate
+    - werkzeug
+  
+  # Topics to pre-cache for each library
+  topics:
+    flask:
+      - routing
+      - blueprints
+      - request-context
+      - extensions
+      - testing
+    pytest:
+      - fixtures
+      - parametrize
+      - markers
+      - coverage
+    flask-sqlalchemy:
+      - models
+      - queries
+      - sessions
+
+# Expert priorities for Flask projects
+# Values range from 0.0 (no priority) to 1.0 (highest priority)
+expert_priorities:
+  expert-software-architecture: 1.0  # Web framework patterns most critical
+  expert-api-design: 0.8              # API design if using Flask-RESTful
+  expert-security: 0.7                # Security important for web apps
+  expert-performance: 0.6              # Performance optimization
+  expert-database: 0.6                # Database integration
+  expert-testing: 0.6                 # Testing strategies
+
+# Test framework defaults for Flask projects
+test_frameworks:
+  primary: pytest
+  plugins:
+    - pytest-cov
+    - pytest-flask
+  default_markers:
+    - unit
+    - integration
+    - api
+  coverage_target: 80.0
+  test_pattern: "test_*.py"
+

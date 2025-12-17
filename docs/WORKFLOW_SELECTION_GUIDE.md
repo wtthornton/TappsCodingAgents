@@ -488,10 +488,29 @@ When this step executes, experts are automatically consulted with a query like:
 - Check that expert IDs match registered experts
 - Ensure expert registry has experts loaded
 
+## Planned Enhancements
+
+### SDLC Quality Engine Improvements
+
+Workflows will be enhanced with a **self-correcting quality engine** that achieves "zero issues" consistently:
+
+- **Pluggable Validation Layer**: Stack-agnostic validation that adapts to detected project profile and repository signals
+- **Comprehensive Verification**: Expansion beyond unit tests to include linters, type checks, security scans, dependency audits, artifact integrity checks
+- **Composite Gating Model**: Gates will evaluate issues + verification outcomes, not just numeric scores
+  - Hard fail: critical issues, verification failures, missing artifacts
+  - Soft fail/loopback: high issues above threshold, regression vs baseline, low expert confidence
+- **Bounded Loopback Protocol**: When issues exist, workflow loops back with structured fix plan, applies changes, re-runs validations
+- **Traceability Matrix**: Requirements → stories → validations mapping for completeness verification
+
+**Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 1: SDLC Quality Engine](prd/epic-1-sdlc-quality-engine.md)
+
+When implemented, workflows will automatically detect and remediate issues, ensuring higher quality outcomes with minimal manual intervention.
+
 ## See Also
 
 - [Workflow Models](../tapps_agents/workflow/models.py) - Workflow data structures
 - [Workflow Executor](../tapps_agents/workflow/executor.py) - Workflow execution
 - [Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md) - Configuring domain experts
 - [Project Requirements](../requirements/PROJECT_REQUIREMENTS.md#174-scale-adaptive-workflow-selection) - Full specification
+- [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) - Comprehensive analysis of planned improvements
 

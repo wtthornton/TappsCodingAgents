@@ -2,19 +2,23 @@
 Unified Cache - Single interface for all caching systems.
 """
 
+from __future__ import annotations
+
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ..context7.cache_structure import CacheStructure
 from ..context7.kb_cache import KBCache
 from ..context7.metadata import MetadataManager
-from ..experts.simple_rag import SimpleKnowledgeBase
 from .adaptive_cache_config import AdaptiveCacheConfig
 from .cache_router import CacheRequest, CacheResponse, CacheRouter, CacheType
 from .context_manager import ContextManager, ContextTier
 from .hardware_profiler import HardwareProfile, HardwareProfiler
+
+if TYPE_CHECKING:
+    from ..experts.simple_rag import SimpleKnowledgeBase
 
 logger = logging.getLogger(__name__)
 
