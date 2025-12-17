@@ -19,6 +19,6 @@ class TestCliVersionFlag:
 
         assert exc.value.code == 0
         captured = capsys.readouterr()
-        assert "2.0.1" in captured.out
+        assert "2.0.3" in captured.out
 
 

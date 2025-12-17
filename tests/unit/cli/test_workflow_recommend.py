@@ -109,7 +109,7 @@ class TestWorkflowRecommendCommand:
         estimate = _estimate_time(None, WorkflowTrack.BMAD_METHOD)
         assert estimate == "Unknown" or "15-30" in estimate
 
-    @patch("tapps_agents.cli.commands.top_level.WorkflowRecommender")
+    @patch("tapps_agents.workflow.recommender.WorkflowRecommender")
     @patch("sys.stdout")
     def test_recommend_command_json_output(self, mock_stdout, mock_recommender_class, mock_recommendation):
         """Test recommend command with JSON output."""
@@ -127,7 +127,7 @@ class TestWorkflowRecommendCommand:
         # Verify recommender was called
         mock_recommender.recommend.assert_called_once_with(auto_load=False)
 
-    @patch("tapps_agents.cli.commands.top_level.WorkflowRecommender")
+    @patch("tapps_agents.workflow.recommender.WorkflowRecommender")
     @patch("sys.stdout")
     def test_recommend_command_text_output(self, mock_stdout, mock_recommender_class, mock_recommendation):
         """Test recommend command with text output."""
@@ -145,7 +145,7 @@ class TestWorkflowRecommendCommand:
         # Verify recommender was called
         mock_recommender.recommend.assert_called_once_with(auto_load=False)
 
-    @patch("tapps_agents.cli.commands.top_level.WorkflowRecommender")
+    @patch("tapps_agents.workflow.recommender.WorkflowRecommender")
     @patch("builtins.input")
     def test_recommend_command_interactive_qa(self, mock_input, mock_recommender_class, mock_low_confidence_recommendation):
         """Test recommend command with interactive Q&A for ambiguous cases."""
@@ -166,7 +166,7 @@ class TestWorkflowRecommendCommand:
         # Verify Q&A was triggered (input called multiple times)
         assert mock_input.call_count >= 3
 
-    @patch("tapps_agents.cli.commands.top_level.WorkflowRecommender")
+    @patch("tapps_agents.workflow.recommender.WorkflowRecommender")
     def test_recommend_command_error_handling(self, mock_recommender_class):
         """Test error handling in recommend command."""
         mock_recommender = MagicMock()
