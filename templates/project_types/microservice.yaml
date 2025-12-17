@@ -1,0 +1,57 @@
+# Microservice Project Type Template
+# This template provides optimal defaults for microservice architectures
+# Template version: 1.0
+
+# Workflow recommendations for microservices
+workflow_defaults:
+  recommended_track: "enterprise"
+  recommended_workflow: "brownfield-service.yaml"
+  reasoning: "Microservices require service boundaries, contracts, and observability"
+
+# Quality thresholds for microservices
+quality_thresholds:
+  reviewer:
+    quality_threshold: 75.0
+    min_confidence_threshold: 0.85
+  tester:
+    coverage_threshold: 85.0
+    contract_test_required: true
+    integration_test_required: true
+  ops:
+    observability_required: true
+    service_mesh_considerations: true
+    distributed_tracing_required: true
+
+# Documentation skeleton recommendations
+docs_skeleton:
+  required_sections:
+    - service-boundaries
+    - api-contracts
+    - deployment
+    - monitoring
+    - runbooks
+  recommended_format: "architecture-docs"
+
+# Expert priorities for microservices
+expert_priorities:
+  expert-software-architecture: 1.0
+  expert-observability: 0.9
+  expert-api-design: 0.9
+  expert-security: 0.8
+  expert-performance: 0.8
+  expert-testing: 0.7
+
+# Testing strategy
+testing_strategy:
+  focus_areas:
+    - service-contracts
+    - integration-testing
+    - chaos-testing
+    - load-testing
+  test_types:
+    - unit
+    - integration
+    - contract
+    - e2e
+  mock_strategy: "service-stubs"
+

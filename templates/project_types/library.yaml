@@ -1,0 +1,50 @@
+# Library Project Type Template
+# This template provides optimal defaults for reusable libraries/packages
+# Template version: 1.0
+
+# Workflow recommendations for libraries
+workflow_defaults:
+  recommended_track: "bmad-method"
+  recommended_workflow: "brownfield-service.yaml"
+  reasoning: "Libraries require comprehensive API design and backward compatibility"
+
+# Quality thresholds for libraries
+quality_thresholds:
+  reviewer:
+    quality_threshold: 80.0  # Higher bar for reusable code
+    min_confidence_threshold: 0.90
+  tester:
+    coverage_threshold: 90.0  # Very high coverage for libraries
+    backward_compat_test_required: true
+  ops:
+    api_stability_check_required: true
+    versioning_strategy_required: true
+
+# Documentation skeleton recommendations
+docs_skeleton:
+  required_sections:
+    - api-reference
+    - examples
+    - migration-guides
+    - changelog
+  recommended_format: "api-docs"
+
+# Expert priorities for libraries
+expert_priorities:
+  expert-software-architecture: 1.0
+  expert-api-design: 0.9
+  expert-testing: 0.9
+  expert-documentation: 0.8
+  expert-performance: 0.7
+
+# Testing strategy
+testing_strategy:
+  focus_areas:
+    - api-contracts
+    - edge-cases
+    - performance-benchmarks
+  test_types:
+    - unit
+    - property-based
+  mock_strategy: "minimal"
+

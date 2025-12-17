@@ -433,6 +433,199 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
         "--format", choices=["json", "text"], default="text", help="Output format"
     )
 
+    # Background Agent configuration commands
+    bg_agent_parser = subparsers.add_parser(
+        "background-agent-config",
+        aliases=["bg-config"],
+        help="Manage Background Agent configuration for auto-execution",
+        description="Generate and validate Background Agent configuration files for automatic workflow command execution.",
+    )
+    bg_agent_subparsers = bg_agent_parser.add_subparsers(
+        dest="command", help="Background Agent config commands", required=True
+    )
+
+    bg_generate_parser = bg_agent_subparsers.add_parser(
+        "generate",
+        aliases=["gen", "init"],
+        help="Generate Background Agent configuration file",
+        description="Generate a Background Agent configuration file from template or with minimal defaults.",
+    )
+    bg_generate_parser.add_argument(
+        "--template",
+        help="Path to custom template file (defaults to framework template)",
+    )
+    bg_generate_parser.add_argument(
+        "--minimal",
+        action="store_true",
+        help="Generate minimal configuration instead of full template",
+    )
+    bg_generate_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing configuration file",
+    )
+    bg_generate_parser.add_argument(
+        "--config-path",
+        help="Custom path for configuration file (defaults to .cursor/background-agents.yaml)",
+    )
+
+    bg_validate_parser = bg_agent_subparsers.add_parser(
+        "validate",
+        aliases=["check"],
+        help="Validate Background Agent configuration file",
+        description="Validate the Background Agent configuration file for syntax and schema errors.",
+    )
+    bg_validate_parser.add_argument(
+        "--config-path",
+        help="Path to configuration file (defaults to .cursor/background-agents.yaml)",
+    )
+    bg_validate_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # Governance & Approval Queue command (Story 28.5)
+    governance_parser = subparsers.add_parser(
+        "governance",
+        aliases=["approval"],
+        help="Manage governance approval queue for knowledge entries",
+        description="Manage the approval queue for knowledge entries that require human approval before being added to the KB.",
+    )
+    governance_subparsers = governance_parser.add_subparsers(
+        dest="command", help="Governance commands"
+    )
+    
+    approval_list_parser = governance_subparsers.add_parser(
+        "list",
+        aliases=["ls"],
+        help="List pending approval requests",
+    )
+    approval_list_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    
+    approval_show_parser = governance_subparsers.add_parser(
+        "show",
+        help="Show details of a specific approval request",
+    )
+    approval_show_parser.add_argument(
+        "request_id",
+        help="Approval request ID (filename or path)",
+    )
+    
+    approval_approve_parser = governance_subparsers.add_parser(
+        "approve",
+        aliases=["accept"],
+        help="Approve a knowledge entry request",
+    )
+    approval_approve_parser.add_argument(
+        "request_id",
+        help="Approval request ID (filename or path)",
+    )
+    approval_approve_parser.add_argument(
+        "--auto-ingest",
+        action="store_true",
+        help="Automatically ingest the approved entry into the KB",
+    )
+    
+    approval_reject_parser = governance_subparsers.add_parser(
+        "reject",
+        aliases=["deny"],
+        help="Reject a knowledge entry request",
+    )
+    approval_reject_parser.add_argument(
+        "request_id",
+        help="Approval request ID (filename or path)",
+    )
+    approval_reject_parser.add_argument(
+        "--reason",
+        help="Reason for rejection",
+    )
+
+    # Auto-execution monitoring commands (Story 7.9)
+    auto_exec_parser = subparsers.add_parser(
+        "auto-execution",
+        aliases=["auto-exec", "ae"],
+        help="Monitor Background Agent auto-execution",
+        description="Monitor and manage Background Agent auto-execution status, metrics, and health.",
+    )
+    auto_exec_subparsers = auto_exec_parser.add_subparsers(
+        dest="command", help="Auto-execution commands"
+    )
+
+    auto_exec_status_parser = auto_exec_subparsers.add_parser(
+        "status",
+        help="Show current execution status",
+    )
+    auto_exec_status_parser.add_argument(
+        "--workflow-id",
+        help="Filter by workflow ID",
+    )
+    auto_exec_status_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    auto_exec_history_parser = auto_exec_subparsers.add_parser(
+        "history",
+        help="Show execution history",
+    )
+    auto_exec_history_parser.add_argument(
+        "--workflow-id",
+        help="Filter by workflow ID",
+    )
+    auto_exec_history_parser.add_argument(
+        "--limit",
+        type=int,
+        default=20,
+        help="Maximum number of executions to show (default: 20)",
+    )
+    auto_exec_history_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    auto_exec_metrics_parser = auto_exec_subparsers.add_parser(
+        "metrics",
+        help="Show execution metrics summary",
+    )
+    auto_exec_metrics_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    auto_exec_health_parser = auto_exec_subparsers.add_parser(
+        "health",
+        help="Run health checks",
+    )
+    auto_exec_health_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    auto_exec_debug_parser = auto_exec_subparsers.add_parser(
+        "debug",
+        help="Enable or disable debug mode",
+    )
+    auto_exec_debug_parser.add_argument(
+        "action",
+        choices=["on", "off", "status"],
+        help="Debug action: on, off, or status",
+    )
+
     # Customization template generator command
     customize_parser = subparsers.add_parser(
         "customize",
@@ -458,12 +651,93 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
         help="Overwrite existing customization file if it exists",
     )
 
-    # Custom Skill template generator command
-    skill_template_parser = subparsers.add_parser(
-        "skill-template",
+    # Custom Skill commands
+    skill_parser = subparsers.add_parser(
+        "skill",
+        help="Custom Skill management commands",
+        description="Manage custom Skills: validate, generate templates, and more.",
+    )
+    skill_subparsers = skill_parser.add_subparsers(
+        dest="skill_command",
+        help="Skill commands",
+    )
+
+    # Skill validation command
+    skill_validate_parser = skill_subparsers.add_parser(
+        "validate",
+        help="Validate custom Skills",
+        description="Validate custom Skills for format and capability correctness.",
+    )
+    skill_validate_parser.add_argument(
+        "--skill",
+        help="Path to specific Skill directory or SKILL.md file to validate (defaults to all Skills)",
+    )
+    skill_validate_parser.add_argument(
+        "--no-warnings",
+        action="store_true",
+        help="Only show errors, hide warnings",
+    )
+    skill_validate_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # Custom Skill template generator command (as subcommand)
+    skill_template_parser = skill_subparsers.add_parser(
+        "template",
         help="Generate custom Skill template for Cursor Skills",
         description="Generate a custom Skill template that can be used in Cursor. Skills extend the framework's capabilities with domain-specific agents.",
     )
+    
+    # Also keep the old skill-template command for backward compatibility
+    skill_template_legacy_parser = subparsers.add_parser(
+        "skill-template",
+        help="Generate custom Skill template for Cursor Skills (legacy command)",
+        description="Generate a custom Skill template that can be used in Cursor. Skills extend the framework's capabilities with domain-specific agents. (Use 'skill template' for new code.)",
+    )
+    # Copy arguments to legacy parser
+    skill_template_legacy_parser.add_argument(
+        "skill_name",
+        help="Name of the Skill (e.g., 'my-custom-skill')",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--type",
+        choices=AGENT_TYPES,
+        help="Agent type for template defaults (analyst, architect, implementer, etc.)",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--description",
+        help="Custom description for the Skill",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--tools",
+        nargs="+",
+        choices=TOOL_OPTIONS,
+        help="Allowed tools (space-separated list)",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--capabilities",
+        nargs="+",
+        choices=CAPABILITY_CATEGORIES,
+        help="Capabilities (space-separated list)",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--model-profile",
+        help="Model profile name (defaults to {skill_name}_profile)",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing Skill file if it exists",
+    )
+    skill_template_legacy_parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Interactive mode: prompt for all options",
+    )
+    
     skill_template_parser.add_argument(
         "skill_name",
         help="Name of the Skill (e.g., 'my-custom-skill')",

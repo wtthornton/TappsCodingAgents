@@ -46,3 +46,6 @@ tapps_agents.egg-info/
 /*.ps1
 /example_*.py
 
+
+# Agent customizations (project-specific, gitignored by default)
+.tapps-agents/customizations/

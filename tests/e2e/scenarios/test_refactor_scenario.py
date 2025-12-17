@@ -22,7 +22,8 @@ from tests.e2e.fixtures.workflow_runner import WorkflowRunner
 
 @pytest.mark.e2e_scenario
 @pytest.mark.template_type("medium")
-def test_refactor_scenario(
+@pytest.mark.asyncio
+async def test_refactor_scenario(
     e2e_project: Path,
     e2e_correlation_id: str,
     e2e_artifact_capture,
@@ -50,11 +51,10 @@ def test_refactor_scenario(
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=True)
-    workflow = runner.load_workflow(workflow_path)
 
     # Execute workflow (mocked mode)
     try:
-        result = runner.run_workflow(workflow, timeout_seconds=300)
+        state, result = await runner.run_workflow(workflow_path, max_steps=50)
         
         # Validate workflow completed
         assert result["status"] in ["completed", "success"], f"Workflow did not complete: {result.get('error')}"
@@ -68,15 +68,15 @@ def test_refactor_scenario(
             pytest.fail("Scenario validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
 
     except Exception:
-        # Capture artifacts on failure
-        runner.capture_state_snapshot("failure")
+        # Artifacts are automatically captured by e2e_artifact_capture fixture on failure
         raise
 
 
 @pytest.mark.e2e_scenario
 @pytest.mark.template_type("medium")
 @pytest.mark.requires_llm
-def test_refactor_scenario_real_llm(
+@pytest.mark.asyncio
+async def test_refactor_scenario_real_llm(
     e2e_project: Path,
     e2e_correlation_id: str,
     e2e_artifact_capture,
@@ -94,11 +94,10 @@ def test_refactor_scenario_real_llm(
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=False)
-    workflow = runner.load_workflow(workflow_path)
 
     # Execute workflow with real LLM (longer timeout)
     try:
-        result = runner.run_workflow(workflow, timeout_seconds=1800)  # 30 minutes
+        state, result = await runner.run_workflow(workflow_path, max_steps=50)
 
         # Validate workflow completed
         assert result["status"] in ["completed", "success"], f"Workflow did not complete: {result.get('error')}"
@@ -112,7 +111,6 @@ def test_refactor_scenario_real_llm(
             pytest.fail("Scenario validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
 
     except Exception:
-        # Capture artifacts on failure
-        runner.capture_state_snapshot("failure")
+        # Artifacts are automatically captured by e2e_artifact_capture fixture on failure
         raise
 

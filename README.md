@@ -24,10 +24,13 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
 - **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases)
   - **13 Cursor Skills** (All agents available as Cursor Skills)
+  - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
   - **Background Agents** (Offload heavy tasks to cloud/remote)
+  - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with polling)
   - **Multi-Agent Orchestration** (Parallel execution with conflict resolution)
   - **Context7 Integration** (KB-first caching + analytics)
   - **NUC Optimization** (Resource monitoring, fallback strategy)
+  - **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow)
 - **User Role Templates** ✅: Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
   - Customize agent behavior based on user role
   - 5 built-in role templates with sensible defaults
@@ -81,7 +84,11 @@ See:
 - **Project Profiling System** ✅ (Auto-detection of project characteristics for context-aware expert guidance)
 - **Modernize Project Configuration** ✅ (Migrated to pyproject.toml with build system)
 - **Advanced Workflow State Persistence** ✅ (State validation, migration, versioning, enhanced recovery)
+- **State Persistence Configuration** ✅ (Configurable checkpoint frequency, cleanup policies, runtime reload)
 - **Advanced Analytics Dashboard** ✅ (Performance metrics, historical trends, CLI commands)
+- **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
+- **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with polling and monitoring)
+- **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow)
 
 ✅ **P3 Low Priority Enhancements - Critical Items Complete**
 - **Error Handling Improvements** ✅ (Custom exception types, improved error messages)
@@ -153,7 +160,7 @@ See:
 - **Configuration-Only Experts** (YAML-based expert definition, no code classes required)
 - **Simple File-Based RAG** (Knowledge base retrieval for experts)
 - **Scale-Adaptive Workflow Selection** (Project type auto-detection, workflow recommendation)
-- **Comprehensive test suite** (1200+ unit tests with parallel execution support - see `tests/`)
+- **Comprehensive test suite** (1200+ unit tests, integration tests, and E2E tests with parallel execution support - see `tests/`)
 
 ✅ **Enhancer Agent - Prompt Enhancement Utility (v1.6.0)**
 - **7-Stage Enhancement Pipeline** - Transforms simple prompts into comprehensive, context-aware prompts
@@ -164,6 +171,12 @@ See:
 - See [Enhancer Agent Guide](docs/ENHANCER_AGENT.md) for details
 
 🎉 **All Core Framework Features Complete!**
+
+✅ **January 2026 Critical Features Complete:**
+- **Custom Skills Support** ✅ - Create, validate, and integrate custom Skills
+- **Background Agent Auto-Execution** ✅ - Automatic workflow execution with monitoring
+- **State Persistence Configuration** ✅ - Configurable checkpointing and cleanup policies
+- **Governance & Safety Layer** ✅ - Security and safety controls for knowledge ingestion
 
 ## Upcoming Enhancements (Planned)
 
@@ -264,6 +277,9 @@ TappsCodingAgents/
 ├── docs/                          # Comprehensive documentation
 ├── requirements/                 # Project specifications
 └── tests/                         # Test suite
+    ├── unit/                      # Unit tests (fast, isolated)
+    ├── integration/               # Integration tests (with real services)
+    └── e2e/                       # End-to-end tests (see tests/e2e/README.md)
 ```
 
 ## Documentation
@@ -285,7 +301,9 @@ TappsCodingAgents/
 
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills
+- **[Custom Skills Guide](docs/CUSTOM_SKILLS_GUIDE.md)** - Create, validate, and manage custom Skills
 - **[Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks
+- **[Background Agent Auto-Execution Guide](docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md)** - Automatic workflow execution
 - **[Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
 - **[Unified Cache Architecture](implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Single interface for all caching systems
 - **[Unified Cache Integration Guide](implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
@@ -296,6 +314,9 @@ TappsCodingAgents/
 ### Operations
 - **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
+- **[Checkpoint & Resume Guide](docs/CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
+- **[Test Suite Documentation](tests/README.md)** - Complete test suite overview and E2E test guide
+- **[E2E Test Suite](tests/e2e/README.md)** - End-to-end test documentation (smoke, workflow, scenario, CLI tests)
 - **[Test Performance Guide](docs/TEST_PERFORMANCE_GUIDE.md)** - Optimize test execution (5-10x faster with parallel execution)
 - **[Hardware Recommendations](docs/HARDWARE_RECOMMENDATIONS.md)** - Optimal computer specs for fast development
 - **[Security Policy](SECURITY.md)** - Security guidelines

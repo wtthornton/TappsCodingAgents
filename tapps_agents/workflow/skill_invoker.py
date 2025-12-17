@@ -10,6 +10,11 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ..core.skill_integration import (
+    SkillContext,
+    SkillIntegrationManager,
+    get_skill_integration_manager,
+)
 from .background_agent_api import BackgroundAgentAPI
 from .background_quality_agent import BackgroundQualityAgent
 from .background_testing_agent import BackgroundTestingAgent
@@ -39,6 +44,7 @@ class SkillInvoker:
         self.project_root = project_root or Path.cwd()
         self.use_api = use_api
         self.background_agent_api = BackgroundAgentAPI() if use_api else None
+        self.skill_integration = get_skill_integration_manager(project_root=self.project_root)
 
     # Command mapping: (agent_name, action) -> (skill_command, parameters)
     COMMAND_MAPPING: dict[tuple[str, str], tuple[str, dict[str, Any]]] = {
@@ -224,6 +230,8 @@ class SkillInvoker:
         """
         Invoke a Cursor Skill for a workflow step.
 
+        Supports both built-in and custom Skills. Custom Skills are checked first.
+
         Args:
             agent_name: Name of the agent (e.g., "analyst")
             action: Action to perform (e.g., "gather-requirements")
@@ -235,7 +243,44 @@ class SkillInvoker:
         Returns:
             Result dictionary from Skill execution
         """
-        # Get command mapping
+        # Check if step specifies a custom Skill (in metadata or as attribute)
+        custom_skill_name = None
+        if step:
+            # Check metadata first
+            if hasattr(step, "metadata") and step.metadata:
+                custom_skill_name = step.metadata.get("skill")
+            # Also check direct attribute (for future extension)
+            if not custom_skill_name:
+                custom_skill_name = getattr(step, "skill", None)
+        
+        # If custom Skill is specified, use it
+        if custom_skill_name and self.skill_integration.is_custom_skill(custom_skill_name):
+            return await self._invoke_custom_skill(
+                skill_name=custom_skill_name,
+                action=action,
+                step=step,
+                target_path=target_path,
+                worktree_path=worktree_path,
+                state=state,
+            )
+        
+        # Check for custom Skills that match agent/action pattern
+        custom_skills = self.skill_integration.get_skills_for_agent(agent_name.lower())
+        for skill in custom_skills:
+            # Try to match action to Skill commands (simplified matching)
+            # In a full implementation, we'd parse the Skill's command definitions
+            # For now, we'll use the Skill name as the agent name if it matches
+            if skill.name.lower().startswith(agent_name.lower()) or agent_name.lower() in skill.name.lower():
+                return await self._invoke_custom_skill(
+                    skill_name=skill.name,
+                    action=action,
+                    step=step,
+                    target_path=target_path,
+                    worktree_path=worktree_path,
+                    state=state,
+                )
+        
+        # Fall back to built-in command mapping
         key = (agent_name.lower(), action.lower())
         if key not in self.COMMAND_MAPPING:
             raise ValueError(
@@ -674,4 +719,74 @@ exit 0
             "agent": agent_name,
             "error": f"Unknown agent: {agent_name}",
         }
+
+    async def _invoke_custom_skill(
+        self,
+        skill_name: str,
+        action: str,
+        step: WorkflowStep,
+        target_path: Path | None,
+        worktree_path: Path,
+        state: WorkflowState,
+    ) -> dict[str, Any]:
+        """
+        Invoke a custom Skill for a workflow step.
+
+        Args:
+            skill_name: Name of the custom Skill
+            action: Action/command to perform
+            step: Workflow step definition
+            target_path: Optional target file path
+            worktree_path: Path to worktree for this step
+            state: Current workflow state
+
+        Returns:
+            Result dictionary from Skill execution
+        """
+        # Get Skill metadata
+        skill_metadata = self.skill_integration.get_skill_metadata(skill_name)
+        if not skill_metadata:
+            raise ValueError(f"Custom Skill not found: {skill_name}")
+
+        # Create Skill context
+        skill_context = self.skill_integration.create_skill_context(
+            workflow_id=getattr(step, "workflow_id", None) if step else None,
+            step_id=getattr(step, "id", None) if step else None,
+            state=state.variables if state else None,
+            artifacts={k: v.to_dict() if hasattr(v, "to_dict") else str(v) for k, v in state.artifacts.items()} if state else None,
+            project_profile=state.variables.get("project_profile") if state else None,
+        )
+
+        # Build parameters from step params and state
+        params: dict[str, Any] = {}
+        if step and hasattr(step, "params") and step.params:
+            params.update(step.params)
+        
+        # Add common parameters
+        if target_path:
+            params["file"] = str(target_path)
+            params["target"] = str(target_path)
+        
+        # Add context as JSON string for Skills to parse
+        params["context"] = json.dumps(skill_context.to_dict())
+
+        # Build command string using custom Skill name
+        command_str = self._build_command(
+            agent_name=skill_name,  # Use Skill name as agent name
+            skill_command=action,
+            params=params,
+        )
+
+        # Execute via Cursor (using Background Agent or direct invocation)
+        result = await self._execute_skill_command(
+            command=command_str,
+            worktree_path=worktree_path,
+            step=step,
+        )
+        
+        # Store result in state for tracking
+        if state:
+            state.variables[f"{skill_name}_{action}_result"] = result
+
+        return result
 

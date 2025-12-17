@@ -37,6 +37,7 @@ The configuration file is located at `.cursor/background-agents.yaml`. It define
 - Triggers (natural language prompts)
 - Output locations
 - Context7 cache paths
+- **Auto-execution settings** (watch paths for automatic command execution)
 
 **Example Configuration:**
 
@@ -52,6 +53,100 @@ agents:
       - "Analyze project quality"
       - "Generate quality report"
 ```
+
+### 1.1. Auto-Execution Configuration
+
+Background Agents can be configured for automatic workflow command execution. This allows workflows to automatically progress through steps without manual intervention.
+
+**Auto-Execution Configuration Example:**
+
+```yaml
+agents:
+  - name: "TappsCodingAgents Workflow Executor"
+    type: "background"  # Required: must be "background"
+    description: "Automatically execute workflow commands from .cursor-skill-command.txt files"
+    
+    # Required: List of commands to execute when command file is detected
+    commands:
+      - "python -m tapps_agents.cli cursor-invoke \"{command}\""
+    
+    # Required: List of paths/patterns to watch for command files
+    watch_paths:
+      - "**/.cursor-skill-command.txt"
+      - ".tapps-agents/workflow-state/**/.cursor-skill-command.txt"
+    
+    # Optional: Timeout in seconds (default: 3600)
+    timeout_seconds: 3600
+    
+    # Optional: Retry count for failed executions (default: 0)
+    retry_count: 0
+    
+    # Optional: Enable/disable this agent (default: true)
+    enabled: true
+```
+
+**Configuration Schema:**
+
+- **Required Fields:**
+  - `name`: Agent name (string)
+  - `type`: Must be `"background"` (string)
+  - `commands`: List of commands to execute (list of strings)
+  - `watch_paths`: List of file paths/patterns to watch (list of strings, supports glob patterns)
+
+- **Optional Fields:**
+  - `description`: Agent description (string)
+  - `context7_cache`: Context7 cache location (string)
+  - `environment`: Environment variables (list of strings)
+  - `triggers`: Natural language triggers (list of strings)
+  - `timeout_seconds`: Timeout in seconds (integer, default: 3600)
+  - `retry_count`: Retry count for failures (integer, default: 0)
+  - `enabled`: Enable/disable agent (boolean, default: true)
+  - `working_directory`: Working directory (string)
+  - `output`: Output configuration (object)
+
+**Generating Configuration:**
+
+Use the CLI command to generate a configuration file:
+
+```bash
+# Generate from template
+python -m tapps_agents.cli background-agent-config generate
+
+# Generate minimal configuration
+python -m tapps_agents.cli background-agent-config generate --minimal
+
+# Use custom template
+python -m tapps_agents.cli background-agent-config generate --template /path/to/template.yaml
+
+# Overwrite existing configuration
+python -m tapps_agents.cli background-agent-config generate --overwrite
+```
+
+**Validating Configuration:**
+
+Validate your configuration file:
+
+```bash
+# Validate default configuration
+python -m tapps_agents.cli background-agent-config validate
+
+# Validate custom configuration file
+python -m tapps_agents.cli background-agent-config validate --config-path /path/to/config.yaml
+
+# JSON output format
+python -m tapps_agents.cli background-agent-config validate --format json
+```
+
+**Configuration Validation:**
+
+The validator checks:
+- File existence and permissions
+- YAML syntax correctness
+- Required fields presence
+- Field types and formats
+- Schema compliance
+
+Validation errors provide clear guidance on what needs to be fixed.
 
 ### 2. Available Background Agents
 

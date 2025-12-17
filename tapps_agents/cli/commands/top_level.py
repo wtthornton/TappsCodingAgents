@@ -4,6 +4,7 @@ Top-level command handlers (create, init, workflow, score, doctor, hardware-prof
 import asyncio
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 from .reviewer import score_command
@@ -602,6 +603,520 @@ def handle_customize_command(args: object) -> None:
     else:
         print("Error: Unknown customize command", file=sys.stderr)
         sys.exit(1)
+
+
+def handle_governance_command(args: object) -> None:
+    """Handle governance/approval command (Story 28.5)"""
+    from pathlib import Path
+    import json
+    import sys
+    
+    command = getattr(args, "command", None)
+    if not command:
+        print("Error: subcommand is required (list, show, approve, reject)", file=sys.stderr)
+        sys.exit(1)
+    
+    project_root = Path.cwd()
+    approval_queue_dir = project_root / ".tapps-agents" / "approval_queue"
+    
+    if command in ["list", "ls"]:
+        # List pending approvals
+        format_type = getattr(args, "format", "text")
+        
+        if not approval_queue_dir.exists():
+            if format_type == "json":
+                print(json.dumps({"requests": []}))
+            else:
+                print("No pending approval requests.")
+            return
+        
+        requests = []
+        for approval_file in approval_queue_dir.glob("*.json"):
+            try:
+                data = json.loads(approval_file.read_text(encoding="utf-8"))
+                if data.get("status") == "pending":
+                    requests.append({
+                        "id": approval_file.name,
+                        "title": data.get("entry", {}).get("title", "Unknown"),
+                        "domain": data.get("entry", {}).get("domain", "unknown"),
+                        "queued_at": data.get("queued_at", ""),
+                    })
+            except Exception:
+                continue
+        
+        if format_type == "json":
+            print(json.dumps({"requests": requests}, indent=2))
+        else:
+            if not requests:
+                print("No pending approval requests.")
+            else:
+                print(f"Pending Approval Requests ({len(requests)}):")
+                print()
+                for req in requests:
+                    print(f"  ID: {req['id']}")
+                    print(f"  Title: {req['title']}")
+                    print(f"  Domain: {req['domain']}")
+                    print(f"  Queued: {req['queued_at']}")
+                    print()
+    
+    elif command == "show":
+        # Show approval request details
+        request_id = getattr(args, "request_id", None)
+        if not request_id:
+            print("Error: request_id is required", file=sys.stderr)
+            sys.exit(1)
+        
+        # Find the approval file
+        approval_file = approval_queue_dir / request_id
+        if not approval_file.exists():
+            # Try without extension
+            approval_file = approval_queue_dir / f"{request_id}.json"
+        
+        if not approval_file.exists():
+            print(f"Error: Approval request '{request_id}' not found", file=sys.stderr)
+            sys.exit(1)
+        
+        try:
+            data = json.loads(approval_file.read_text(encoding="utf-8"))
+            print(f"Approval Request: {approval_file.name}")
+            print("=" * 60)
+            print(f"Title: {data.get('entry', {}).get('title', 'Unknown')}")
+            print(f"Domain: {data.get('entry', {}).get('domain', 'unknown')}")
+            print(f"Source: {data.get('entry', {}).get('source', 'unknown')}")
+            print(f"Source Type: {data.get('entry', {}).get('source_type', 'unknown')}")
+            print(f"Status: {data.get('status', 'unknown')}")
+            print(f"Queued At: {data.get('queued_at', 'unknown')}")
+            print()
+            print("Content Preview:")
+            print("-" * 60)
+            print(data.get('content_preview', 'No preview available'))
+            print()
+            print("Metadata:")
+            print(json.dumps(data.get('entry', {}).get('metadata', {}), indent=2))
+        except Exception as e:
+            print(f"Error reading approval request: {e}", file=sys.stderr)
+            sys.exit(1)
+    
+    elif command in ["approve", "accept"]:
+        # Approve a request
+        request_id = getattr(args, "request_id", None)
+        auto_ingest = getattr(args, "auto_ingest", False)
+        
+        if not request_id:
+            print("Error: request_id is required", file=sys.stderr)
+            sys.exit(1)
+        
+        # Find the approval file
+        approval_file = approval_queue_dir / request_id
+        if not approval_file.exists():
+            approval_file = approval_queue_dir / f"{request_id}.json"
+        
+        if not approval_file.exists():
+            print(f"Error: Approval request '{request_id}' not found", file=sys.stderr)
+            sys.exit(1)
+        
+        try:
+            data = json.loads(approval_file.read_text(encoding="utf-8"))
+            data["status"] = "approved"
+            data["approved_at"] = datetime.now().isoformat()
+            approval_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            
+            print(f"Approved: {data.get('entry', {}).get('title', 'Unknown')}")
+            
+            if auto_ingest:
+                # TODO: Integrate with knowledge ingestion pipeline to auto-ingest
+                print("Note: Auto-ingestion not yet implemented. Manually ingest the approved entry.")
+        except Exception as e:
+            print(f"Error approving request: {e}", file=sys.stderr)
+            sys.exit(1)
+    
+    elif command in ["reject", "deny"]:
+        # Reject a request
+        request_id = getattr(args, "request_id", None)
+        reason = getattr(args, "reason", None)
+        
+        if not request_id:
+            print("Error: request_id is required", file=sys.stderr)
+            sys.exit(1)
+        
+        # Find the approval file
+        approval_file = approval_queue_dir / request_id
+        if not approval_file.exists():
+            approval_file = approval_queue_dir / f"{request_id}.json"
+        
+        if not approval_file.exists():
+            print(f"Error: Approval request '{request_id}' not found", file=sys.stderr)
+            sys.exit(1)
+        
+        try:
+            data = json.loads(approval_file.read_text(encoding="utf-8"))
+            data["status"] = "rejected"
+            data["rejected_at"] = datetime.now().isoformat()
+            if reason:
+                data["rejection_reason"] = reason
+            approval_file.write_text(json.dumps(data, indent=2), encoding="utf-8")
+            
+            print(f"Rejected: {data.get('entry', {}).get('title', 'Unknown')}")
+            if reason:
+                print(f"Reason: {reason}")
+        except Exception as e:
+            print(f"Error rejecting request: {e}", file=sys.stderr)
+            sys.exit(1)
+
+
+def handle_auto_execution_command(args: object) -> None:
+    """Handle auto-execution monitoring command (Story 7.9)"""
+    from pathlib import Path
+    import json
+    import sys
+
+    command = getattr(args, "command", None)
+    if not command:
+        print("Error: subcommand is required (status, history, metrics, health, debug)", file=sys.stderr)
+        sys.exit(1)
+
+    project_root = Path.cwd()
+
+    if command == "status":
+        # Show current execution status
+        from ...workflow.execution_metrics import ExecutionMetricsCollector
+
+        format_type = getattr(args, "format", "text")
+        workflow_id = getattr(args, "workflow_id", None)
+
+        collector = ExecutionMetricsCollector(project_root=project_root)
+        metrics = collector.get_metrics(workflow_id=workflow_id, limit=10)
+
+        if format_type == "json":
+            print(json.dumps([m.to_dict() for m in metrics], indent=2))
+        else:
+            if not metrics:
+                print("No recent executions found.")
+            else:
+                print("Recent Executions:")
+                print("-" * 80)
+                for metric in metrics:
+                    status_icon = "✅" if metric.status == "success" else "❌"
+                    print(f"{status_icon} {metric.workflow_id}/{metric.step_id}")
+                    print(f"   Command: {metric.command}")
+                    print(f"   Status: {metric.status}")
+                    print(f"   Duration: {metric.duration_ms:.0f}ms")
+                    if metric.retry_count > 0:
+                        print(f"   Retries: {metric.retry_count}")
+                    print()
+
+    elif command == "history":
+        # Show execution history
+        from ...workflow.execution_metrics import ExecutionMetricsCollector
+
+        format_type = getattr(args, "format", "text")
+        workflow_id = getattr(args, "workflow_id", None)
+        limit = getattr(args, "limit", 20)
+
+        collector = ExecutionMetricsCollector(project_root=project_root)
+        metrics = collector.get_metrics(workflow_id=workflow_id, limit=limit)
+
+        if format_type == "json":
+            print(json.dumps([m.to_dict() for m in metrics], indent=2))
+        else:
+            if not metrics:
+                print("No execution history found.")
+            else:
+                print(f"Execution History (showing {len(metrics)} most recent):")
+                print("=" * 80)
+                for metric in metrics:
+                    status_icon = "✅" if metric.status == "success" else "❌"
+                    print(f"{status_icon} {metric.started_at}")
+                    print(f"   Workflow: {metric.workflow_id}")
+                    print(f"   Step: {metric.step_id}")
+                    print(f"   Command: {metric.command}")
+                    print(f"   Status: {metric.status}")
+                    print(f"   Duration: {metric.duration_ms:.0f}ms")
+                    if metric.error_message:
+                        print(f"   Error: {metric.error_message}")
+                    print()
+
+    elif command == "metrics":
+        # Show metrics summary
+        from ...workflow.execution_metrics import ExecutionMetricsCollector
+
+        format_type = getattr(args, "format", "text")
+
+        collector = ExecutionMetricsCollector(project_root=project_root)
+        summary = collector.get_summary()
+
+        if format_type == "json":
+            print(json.dumps(summary, indent=2))
+        else:
+            print("Execution Metrics Summary")
+            print("=" * 80)
+            print(f"Total Executions: {summary['total_executions']}")
+            print(f"Success Rate: {summary['success_rate']:.1%}")
+            print(f"Average Duration: {summary['average_duration_ms']:.0f}ms")
+            print(f"Total Retries: {summary['total_retries']}")
+            if summary.get("by_status"):
+                print("\nBy Status:")
+                for status, count in summary["by_status"].items():
+                    if count > 0:
+                        print(f"  {status}: {count}")
+
+    elif command == "health":
+        # Run health checks
+        from ...workflow.health_checker import HealthChecker
+
+        format_type = getattr(args, "format", "text")
+
+        checker = HealthChecker(project_root=project_root)
+        results = checker.check_all()
+        overall = checker.get_overall_status()
+
+        if format_type == "json":
+            print(json.dumps({
+                "overall_status": overall,
+                "checks": [
+                    {
+                        "name": r.name,
+                        "status": r.status,
+                        "message": r.message,
+                        "details": r.details,
+                    }
+                    for r in results
+                ],
+            }, indent=2))
+        else:
+            status_icon = "✅" if overall == "healthy" else "⚠️" if overall == "degraded" else "❌"
+            print(f"{status_icon} Overall Status: {overall.upper()}")
+            print("=" * 80)
+            for result in results:
+                icon = "✅" if result.status == "healthy" else "⚠️" if result.status == "degraded" else "❌"
+                print(f"{icon} {result.name}: {result.status.upper()}")
+                print(f"   {result.message}")
+                if result.details:
+                    for key, value in result.details.items():
+                        print(f"   {key}: {value}")
+                print()
+
+    elif command == "debug":
+        # Enable/disable debug mode
+        from ...workflow.auto_execution_config import AutoExecutionConfigManager
+
+        action = getattr(args, "action", "status")
+        manager = AutoExecutionConfigManager(project_root=project_root)
+        config = manager.load()
+
+        if action == "on":
+            # Enable debug logging
+            import logging
+            logging.getLogger("tapps_agents.workflow").setLevel(logging.DEBUG)
+            print("Debug mode enabled (verbose logging)")
+        elif action == "off":
+            # Disable debug logging
+            import logging
+            logging.getLogger("tapps_agents.workflow").setLevel(logging.INFO)
+            print("Debug mode disabled")
+        else:  # status
+            # Show debug status
+            import logging
+            level = logging.getLogger("tapps_agents.workflow").level
+            is_debug = level <= logging.DEBUG
+            print(f"Debug mode: {'ON' if is_debug else 'OFF'}")
+            print(f"Log level: {logging.getLevelName(level)}")
+
+    else:
+        print(f"Error: Unknown command: {command}", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_background_agent_config_command(args: object) -> None:
+    """Handle background-agent-config command"""
+    from pathlib import Path
+    from ...workflow.background_agent_config import (
+        BackgroundAgentConfigGenerator,
+        BackgroundAgentConfigValidator,
+    )
+
+    command = getattr(args, "command", None)
+    if not command:
+        print("Error: subcommand is required (generate, validate)", file=sys.stderr)
+        sys.exit(1)
+
+    config_path = getattr(args, "config_path", None)
+    project_root = Path.cwd()
+
+    if command in ["generate", "gen", "init"]:
+        # Generate configuration
+        template_path = getattr(args, "template", None)
+        minimal = getattr(args, "minimal", False)
+        overwrite = getattr(args, "overwrite", False)
+
+        generator = BackgroundAgentConfigGenerator(project_root=project_root)
+        if config_path:
+            generator.config_path = Path(config_path)
+
+        if minimal:
+            result = generator.generate_minimal_config(overwrite=overwrite)
+        else:
+            template_file = Path(template_path) if template_path else None
+            result = generator.generate_from_template(
+                template_path=template_file, overwrite=overwrite
+            )
+
+        if result["success"]:
+            print(f"✓ Configuration file generated: {result['file_path']}")
+            if "template_path" in result:
+                print(f"  Template: {result['template_path']}")
+        else:
+            print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
+            sys.exit(1)
+
+    elif command in ["validate", "check"]:
+        # Validate configuration
+        output_format = getattr(args, "format", "text")
+
+        validator = BackgroundAgentConfigValidator()
+        if config_path:
+            validator.config_path = Path(config_path)
+
+        is_valid, errors = validator.validate()
+
+        if output_format == "json":
+            result = {
+                "valid": is_valid,
+                "config_path": str(validator.config_path),
+                "errors": errors,
+            }
+            print(json.dumps(result, indent=2))
+        else:
+            if is_valid:
+                print(f"✓ Configuration file is valid: {validator.config_path}")
+            else:
+                print(f"✗ Configuration file has errors: {validator.config_path}", file=sys.stderr)
+                print("\nErrors:", file=sys.stderr)
+                for error in errors:
+                    print(f"  - {error}", file=sys.stderr)
+                sys.exit(1)
+
+
+def handle_skill_command(args: object) -> None:
+    """Handle skill command (validate, template, etc.)"""
+    command = getattr(args, "skill_command", None)
+    
+    if command == "validate":
+        handle_skill_validate_command(args)
+    elif command == "template":
+        handle_skill_template_command(args)
+    else:
+        print(f"Error: Unknown skill command: {command}", file=sys.stderr)
+        print("Available commands: validate, template", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_skill_validate_command(args: object) -> None:
+    """Handle skill validate command"""
+    from pathlib import Path
+    from ...core.skill_validator import SkillValidator, ValidationSeverity
+
+    project_root = Path.cwd()
+    validator = SkillValidator(project_root=project_root)
+
+    skill_path = getattr(args, "skill", None)
+    no_warnings = getattr(args, "no_warnings", False)
+    output_format = getattr(args, "format", "text")
+
+    # Validate specific skill or all skills
+    if skill_path:
+        skill_path = Path(skill_path)
+        if not skill_path.is_absolute():
+            skill_path = project_root / skill_path
+        results = [validator.validate_skill(skill_path)]
+    else:
+        results = validator.validate_all_skills()
+
+    # Filter warnings if requested
+    if no_warnings:
+        for result in results:
+            result.errors = [e for e in result.errors if e.severity != ValidationSeverity.WARNING]
+
+    # Output results
+    if output_format == "json":
+        output_json(results)
+    else:
+        output_text(results)
+
+    # Exit with error code if any validation failed
+    if any(not r.is_valid for r in results):
+        sys.exit(1)
+
+
+def output_json(results: list) -> None:
+    """Output validation results in JSON format."""
+    import json
+    from ...core.skill_validator import ValidationSeverity
+
+    output = {
+        "valid": all(r.is_valid for r in results),
+        "results": [
+            {
+                "skill_path": str(r.skill_path),
+                "skill_name": r.skill_name,
+                "is_valid": r.is_valid,
+                "errors": [
+                    {
+                        "severity": e.severity.value,
+                        "field": e.field,
+                        "message": e.message,
+                        "suggestion": e.suggestion,
+                        "line_number": e.line_number,
+                    }
+                    for e in r.errors
+                ],
+            }
+            for r in results
+        ],
+    }
+    print(json.dumps(output, indent=2))
+
+
+def output_text(results: list) -> None:
+    """Output validation results in text format."""
+    from ...core.skill_validator import ValidationSeverity, ValidationError
+
+    if not results:
+        print("No Skills found to validate.")
+        return
+
+    print("\n" + "=" * 60)
+    print("Custom Skill Validation Results")
+    print("=" * 60)
+    print()
+
+    all_valid = True
+    for result in results:
+        print(f"Skill: {result.skill_name or result.skill_path.name}")
+        print(f"Path: {result.skill_path}")
+        print()
+
+        if result.is_valid and not result.has_warnings():
+            print("  ✅ Valid")
+        else:
+            all_valid = False
+            if result.has_errors():
+                print("  ❌ Errors found:")
+                for error in result.errors:
+                    if error.severity == ValidationSeverity.ERROR:
+                        print(f"    - {error}")
+            if result.has_warnings():
+                print("  ⚠️  Warnings:")
+                for error in result.errors:
+                    if error.severity == ValidationSeverity.WARNING:
+                        print(f"    - {error}")
+
+        print()
+
+    if all_valid:
+        print("✅ All Skills are valid!")
+    else:
+        print("❌ Some Skills have validation errors.")
 
 
 def handle_skill_template_command(args: object) -> None:

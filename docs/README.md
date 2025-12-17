@@ -27,13 +27,18 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)**
+- **[Custom Skills Guide](CUSTOM_SKILLS_GUIDE.md)** - Creating, validating, and managing custom Skills
 - **[Background Agents Guide](BACKGROUND_AGENTS_GUIDE.md)**
+- **[Background Agent Auto-Execution Guide](BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md)** - Automatic workflow execution
 - **[PR Mode Guide](PR_MODE_GUIDE.md)** - When you explicitly want a PR from Background Agents
 - **[Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)**
 
 ### Operations
 - **[Deployment Guide](DEPLOYMENT.md)**
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)**
+- **[Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
+- **[Test Suite Documentation](../tests/README.md)** - Complete test suite overview
+- **[E2E Test Suite](../tests/e2e/README.md)** - End-to-end test documentation
 
 ### SDLC & Quality Engine (Planned)
 - **[SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md)** - Comprehensive analysis of SDLC improvements and Dynamic Expert Engine

@@ -23,7 +23,9 @@ from ..core.project_profile import (
 )
 from ..core.runtime_mode import is_cursor_mode
 from .auto_progression import AutoProgressionManager, ProgressionAction
+from .background_auto_executor import BackgroundAgentAutoExecutor
 from .checkpoint_manager import CheckpointConfig, CheckpointFrequency, WorkflowCheckpointManager
+from .state_persistence_config import StatePersistenceConfigManager
 from .error_recovery import ErrorContext, ErrorRecoveryManager
 from .logging_helper import WorkflowLogger
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
@@ -91,10 +93,21 @@ class CursorWorkflowExecutor:
             max_retries=3,
         ) if error_recovery_enabled else None
         
+        # Initialize state persistence configuration manager (Epic 12 - Story 12.6)
+        self.state_config_manager = StatePersistenceConfigManager(project_root=self.project_root)
+        
         # Initialize checkpoint manager (Epic 12)
-        checkpoint_frequency = os.getenv("TAPPS_AGENTS_CHECKPOINT_FREQUENCY", "every_step")
-        checkpoint_interval = int(os.getenv("TAPPS_AGENTS_CHECKPOINT_INTERVAL", "1"))
-        checkpoint_enabled = os.getenv("TAPPS_AGENTS_CHECKPOINT_ENABLED", "true").lower() == "true"
+        # Use configuration from state persistence config if available
+        state_config = self.state_config_manager.config
+        if state_config and state_config.checkpoint:
+            checkpoint_frequency = state_config.checkpoint.mode
+            checkpoint_interval = state_config.checkpoint.interval
+            checkpoint_enabled = state_config.checkpoint.enabled
+        else:
+            # Fall back to environment variables
+            checkpoint_frequency = os.getenv("TAPPS_AGENTS_CHECKPOINT_FREQUENCY", "every_step")
+            checkpoint_interval = int(os.getenv("TAPPS_AGENTS_CHECKPOINT_INTERVAL", "1"))
+            checkpoint_enabled = os.getenv("TAPPS_AGENTS_CHECKPOINT_ENABLED", "true").lower() == "true"
         
         try:
             frequency = CheckpointFrequency(checkpoint_frequency)
@@ -109,8 +122,29 @@ class CursorWorkflowExecutor:
         self.checkpoint_manager = WorkflowCheckpointManager(config=checkpoint_config)
         
         # Initialize state manager
-        state_dir = self._state_dir()
-        self.state_manager = AdvancedStateManager(state_dir, compression=False)
+        # Use storage location from config
+        if state_config and state_config.enabled:
+            state_dir = self.state_config_manager.get_storage_path()
+            compression = state_config.compression
+        else:
+            state_dir = self._state_dir()
+            compression = False
+        self.state_manager = AdvancedStateManager(state_dir, compression=compression)
+        
+        # Initialize Background Agent auto-executor (Epic 7)
+        # Load config to check if auto-execution is enabled
+        from ..core.config import load_config
+        config = load_config()
+        self.auto_execution_enabled = config.workflow.auto_execution_enabled
+        
+        # Also check workflow metadata for per-workflow override
+        self.auto_execution_enabled_workflow: bool | None = None
+        
+        # Initialize auto-executor (will be used if enabled)
+        self.auto_executor = BackgroundAgentAutoExecutor(
+            polling_interval=config.workflow.polling_interval,
+            timeout_seconds=config.workflow.timeout_seconds,
+        ) if self.auto_execution_enabled else None
 
     def _state_dir(self) -> Path:
         """Get state directory path."""
@@ -139,6 +173,8 @@ class CursorWorkflowExecutor:
     ) -> WorkflowState:
         """
         Start a new workflow execution.
+        
+        Also executes state cleanup if configured for "on_startup" schedule.
 
         Args:
             workflow: Workflow to execute
@@ -147,7 +183,42 @@ class CursorWorkflowExecutor:
         Returns:
             Initial workflow state
         """
+        # Execute cleanup on startup if configured (Epic 12 - Story 12.6)
+        if self.state_config_manager.config and self.state_config_manager.config.cleanup:
+            if self.state_config_manager.config.cleanup.cleanup_schedule == "on_startup":
+                cleanup_result = self.state_config_manager.execute_cleanup()
+                if self.logger:
+                    self.logger.info(
+                        f"State cleanup on startup: {cleanup_result}",
+                        cleanup_result=cleanup_result,
+                    )
+        
         self.workflow = workflow
+        
+        # Check workflow metadata for auto-execution override (per-workflow config)
+        if workflow.metadata and "auto_execution" in workflow.metadata:
+            self.auto_execution_enabled_workflow = bool(workflow.metadata["auto_execution"])
+        else:
+            self.auto_execution_enabled_workflow = None  # Use global config
+        
+        # Determine if auto-execution should be used for this workflow
+        use_auto_execution = (
+            self.auto_execution_enabled_workflow
+            if self.auto_execution_enabled_workflow is not None
+            else self.auto_execution_enabled
+        )
+        
+        # Initialize auto-executor if needed (if not already initialized or config changed)
+        if use_auto_execution and not self.auto_executor:
+            from ..core.config import load_config
+            config = load_config()
+            self.auto_executor = BackgroundAgentAutoExecutor(
+                polling_interval=config.workflow.polling_interval,
+                timeout_seconds=config.workflow.timeout_seconds,
+            )
+        elif not use_auto_execution:
+            self.auto_executor = None
+        
         # Use consistent workflow_id format: {workflow.id}-{timestamp}
         workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
@@ -665,47 +736,128 @@ class CursorWorkflowExecutor:
                 artifacts=artifacts_list,
             )
 
-            # Invoke Skill via SkillInvoker (creates command files for Background Agents)
-            await self.skill_invoker.invoke_skill(
-                agent_name=agent_name,
-                action=action,
-                step=step,
-                target_path=target_path,
-                worktree_path=worktree_path,
-                state=self.state,
-            )
+            # Determine if auto-execution should be used
+            use_auto_execution = (
+                self.auto_execution_enabled_workflow
+                if self.auto_execution_enabled_workflow is not None
+                else self.auto_execution_enabled
+            ) and self.auto_executor is not None
 
-            # Wait for Skill to complete (Background Agents execute automatically)
-            import asyncio
-
-            from .cursor_skill_helper import check_skill_completion
-            
-            max_wait_time = 3600  # 1 hour max wait
-            poll_interval = 2  # Check every 2 seconds
-            elapsed = 0
-            
-            print(f"Waiting for {agent_name}/{action} to complete...")
-            while elapsed < max_wait_time:
-                completion_status = check_skill_completion(
+            if use_auto_execution:
+                # Use Background Agent auto-execution (Epic 7)
+                # Build command using skill_invoker's parameter extraction
+                # Get command mapping from skill_invoker
+                key = (agent_name.lower(), action.lower())
+                if key not in self.skill_invoker.COMMAND_MAPPING:
+                    raise ValueError(
+                        f"Unknown command for auto-execution: {agent_name}/{action}. "
+                        f"Available: {list(self.skill_invoker.COMMAND_MAPPING.keys())}"
+                    )
+                
+                skill_command, _ = self.skill_invoker.COMMAND_MAPPING[key]
+                
+                # Build parameters from state (same as skill_invoker does)
+                params = self.skill_invoker._build_parameters(
+                    step=step,
+                    param_mapping={},  # Will be extracted from state
+                    target_path=target_path,
+                    state=self.state,
+                )
+                
+                # Build command string
+                command = self.skill_invoker._build_command(
+                    agent_name=agent_name,
+                    skill_command=skill_command,
+                    params=params,
+                )
+                
+                # Execute via auto-executor (creates command file and polls for completion)
+                execution_result = await self.auto_executor.execute_command(
+                    command=command,
                     worktree_path=worktree_path,
+                    workflow_id=self.state.workflow_id,
+                    step_id=step.id,
                     expected_artifacts=step.creates,
                 )
                 
-                if completion_status["completed"]:
-                    print(f"✓ {agent_name}/{action} completed - found artifacts: {completion_status['found_artifacts']}")
-                    break
+                # Check execution result
+                if execution_result.get("status") == "failed":
+                    error_msg = execution_result.get("error", "Unknown error")
+                    raise RuntimeError(
+                        f"Auto-execution failed for {agent_name}/{action}: {error_msg}"
+                    )
+                elif execution_result.get("status") == "timeout":
+                    raise TimeoutError(
+                        f"Auto-execution timeout for {agent_name}/{action}: "
+                        f"{execution_result.get('error', 'Timeout')}"
+                    )
+                elif execution_result.get("status") != "completed":
+                    raise RuntimeError(
+                        f"Auto-execution returned unexpected status: {execution_result.get('status')}"
+                    )
                 
-                await asyncio.sleep(poll_interval)
-                elapsed += poll_interval
-                
-                # Print progress every 10 seconds
-                if elapsed % 10 == 0:
-                    print(f"  Still waiting... ({elapsed}s elapsed)")
+                if self.logger:
+                    self.logger.info(
+                        f"Step {step.id} completed via auto-execution",
+                        agent=agent_name,
+                        action=action,
+                        duration=execution_result.get("duration_seconds"),
+                    )
             else:
-                raise TimeoutError(
-                    f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
-                    f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}"
+                # Manual execution mode (backward compatibility)
+                # Invoke Skill via SkillInvoker (creates command files for Background Agents)
+                await self.skill_invoker.invoke_skill(
+                    agent_name=agent_name,
+                    action=action,
+                    step=step,
+                    target_path=target_path,
+                    worktree_path=worktree_path,
+                    state=self.state,
                 )
+
+                # Wait for Skill to complete (manual polling for artifacts)
+                import asyncio
+
+                from .cursor_skill_helper import check_skill_completion
+                
+                max_wait_time = 3600  # 1 hour max wait
+                poll_interval = 2  # Check every 2 seconds
+                elapsed = 0
+                
+                if self.logger:
+                    self.logger.info(
+                        f"Waiting for {agent_name}/{action} to complete (manual mode)...",
+                        step_id=step.id,
+                    )
+                
+                while elapsed < max_wait_time:
+                    completion_status = check_skill_completion(
+                        worktree_path=worktree_path,
+                        expected_artifacts=step.creates,
+                    )
+                    
+                    if completion_status["completed"]:
+                        if self.logger:
+                            self.logger.info(
+                                f"Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}",
+                                agent=agent_name,
+                                action=action,
+                            )
+                        break
+                    
+                    await asyncio.sleep(poll_interval)
+                    elapsed += poll_interval
+                    
+                    # Log progress every 10 seconds
+                    if elapsed % 10 == 0 and self.logger:
+                        self.logger.debug(
+                            f"Still waiting for step {step.id}... ({elapsed}s elapsed)",
+                        )
+                else:
+                    raise TimeoutError(
+                        f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
+                        f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}"
+                    )
 
             # Extract artifacts from worktree
             artifacts = await self.worktree_manager.extract_artifacts(
@@ -907,6 +1059,37 @@ class CursorWorkflowExecutor:
     def _normalize_action(self, action: str) -> str:
         """Normalize action name."""
         return action.replace("_", "-").lower()
+    
+    def _get_step_params(self, step: WorkflowStep, target_path: Path | None) -> dict[str, Any]:
+        """
+        Extract parameters for step execution.
+        
+        Args:
+            step: Workflow step
+            target_path: Optional target file path
+            
+        Returns:
+            Dictionary of parameters for command building
+        """
+        params: dict[str, Any] = {}
+        
+        # Add target file if provided
+        if target_path:
+            params["target_file"] = str(target_path.relative_to(self.project_root))
+        
+        # Add step metadata
+        if step.metadata:
+            params.update(step.metadata)
+        
+        # Add workflow variables
+        if self.state and self.state.variables:
+            # Include relevant variables (avoid exposing everything)
+            if "user_prompt" in self.state.variables:
+                params["user_prompt"] = self.state.variables["user_prompt"]
+            if "target_file" in self.state.variables:
+                params["target_file"] = self.state.variables["target_file"]
+        
+        return params
 
     def _advance_step(self) -> None:
         """Advance to the next workflow step."""

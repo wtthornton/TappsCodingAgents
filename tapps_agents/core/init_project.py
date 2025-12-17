@@ -110,8 +110,9 @@ def init_project_config(
     # Get default config
     default_config = get_default_config()
     
-    # Apply template if enabled and tech stack detected
+    # Apply templates if enabled (project-type first, then tech-stack)
     template_info: dict[str, Any] | None = None
+    project_type_info: dict[str, Any] | None = None
     final_config = default_config
     
     if apply_template:
@@ -119,64 +120,126 @@ def init_project_config(
         if tech_stack is None:
             tech_stack = detect_tech_stack(project_root)
         
-        # Select and apply template
-        if tech_stack.get("frameworks"):
+        try:
+            from .template_merger import apply_template_to_config
+            
+            # Step 1: Detect and apply project type template (if detected)
             try:
-                from .template_selector import select_template, get_template_path
-                from .template_merger import apply_template_to_config
+                from .project_type_detector import (
+                    detect_project_type,
+                    get_project_type_template_path,
+                )
                 
-                # Select template
-                template_name, reason = select_template(tech_stack)
+                project_type, confidence, reason = detect_project_type(project_root, tech_stack)
                 
-                if template_name:
-                    # Get template path
-                    template_path = get_template_path(template_name)
+                if project_type and confidence >= 0.3:
+                    project_type_path = get_project_type_template_path(project_type)
                     
-                    if template_path:
-                        # Apply template
-                        final_config = apply_template_to_config(
-                            template_path=template_path,
+                    if project_type_path:
+                        # Apply project type template (merge: defaults < project-type)
+                        final_config, _ = apply_template_to_config(
+                            template_path=project_type_path,
                             default_config=default_config,
-                            user_config=user_config,
+                            user_config=None,  # Don't apply user config yet
                             project_root=project_root,
                             tech_stack=tech_stack,
                             project_name=project_root.name,
+                            enable_trace=False,
                         )
                         
-                        template_info = {
-                            "template_name": template_name,
+                        project_type_info = {
+                            "project_type": project_type,
+                            "confidence": confidence,
                             "reason": reason,
                             "applied": True,
                         }
                     else:
-                        template_info = {
-                            "template_name": template_name,
+                        project_type_info = {
+                            "project_type": project_type,
+                            "confidence": confidence,
                             "reason": f"{reason} (template file not found)",
                             "applied": False,
                         }
                 else:
-                    template_info = {
-                        "template_name": None,
+                    project_type_info = {
+                        "project_type": None,
+                        "confidence": confidence if project_type else 0.0,
                         "reason": reason,
                         "applied": False,
                     }
             except ImportError:
-                # Template modules not available, skip template application
-                logger.warning("Template modules not available, skipping template application")
-                template_info = None
+                # Project type detector not available, skip
+                logger.debug("Project type detector not available, skipping project type template")
+                project_type_info = None
             except Exception as e:
-                # Template application failed, use defaults
-                logger.warning(f"Template application failed: {e}, using default config")
-                template_info = {
-                    "template_name": None,
-                    "reason": f"Template application failed: {e}",
-                    "applied": False,
-                }
-    
-    # Merge user config if it existed (user config has highest priority)
-    if user_config:
-        from .template_merger import deep_merge_dict
-        final_config = deep_merge_dict(final_config, user_config)
+                logger.debug(f"Project type detection failed: {e}, continuing without project type template")
+                project_type_info = None
+            
+            # Step 2: Apply tech stack template (merge: current config < tech-stack)
+            if tech_stack.get("frameworks"):
+                try:
+                    from .template_selector import select_template, get_template_path
+                    
+                    # Select tech stack template
+                    template_name, reason = select_template(tech_stack)
+                    
+                    if template_name:
+                        # Get template path
+                        template_path = get_template_path(template_name)
+                        
+                        if template_path:
+                            # Apply tech stack template (merge: current < tech-stack)
+                            # Note: final_config already has project-type applied (if any)
+                            final_config, _ = apply_template_to_config(
+                                template_path=template_path,
+                                default_config=final_config,  # Use current config as base
+                                user_config=None,  # Don't apply user config yet
+                                project_root=project_root,
+                                tech_stack=tech_stack,
+                                project_name=project_root.name,
+                                enable_trace=False,
+                            )
+                            
+                            template_info = {
+                                "template_name": template_name,
+                                "reason": reason,
+                                "applied": True,
+                            }
+                        else:
+                            template_info = {
+                                "template_name": template_name,
+                                "reason": f"{reason} (template file not found)",
+                                "applied": False,
+                            }
+                    else:
+                        template_info = {
+                            "template_name": None,
+                            "reason": reason,
+                            "applied": False,
+                        }
+                except ImportError:
+                    # Template selector not available, skip
+                    logger.debug("Template selector not available, skipping tech stack template")
+                    template_info = None
+                except Exception as e:
+                    logger.debug(f"Tech stack template application failed: {e}, continuing without template")
+                    template_info = None
+            
+            # Step 3: Apply user config last (highest precedence)
+            if user_config:
+                from .template_merger import deep_merge_dict
+                final_config = deep_merge_dict(final_config, user_config)
+                
+        except ImportError:
+            # Template modules not available, skip template application
+            logger.warning("Template modules not available, skipping template application")
+            template_info = None
+            project_type_info = None
+        except Exception as e:
+            # Template application failed, use defaults
+            logger.warning(f"Template application failed: {e}, using default config")
+            template_info = None
+            project_type_info = None
     
     # Write config file
     config_file.write_text(
@@ -184,7 +247,13 @@ def init_project_config(
         encoding="utf-8",
     )
     
-    return not file_existed, str(config_file), template_info
+    # Combine template info (project-type + tech-stack)
+    combined_info = {
+        "tech_stack_template": template_info,
+        "project_type_template": project_type_info,
+    }
+    
+    return not file_existed, str(config_file), combined_info
 
 
 def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None = None):
@@ -1143,6 +1212,18 @@ def init_project(
         results["skills"] = success
         if copied_skills:
             results["files_created"].extend(copied_skills)
+        
+        # Load and register custom Skills
+        try:
+            from .skill_loader import initialize_skill_registry
+            registry = initialize_skill_registry(project_root=project_root)
+            custom_skills = registry.get_custom_skills()
+            if custom_skills:
+                results["custom_skills"] = [skill.name for skill in custom_skills]
+                results["custom_skills_count"] = len(custom_skills)
+        except Exception as e:
+            # Non-fatal: custom Skills loading failed, but built-in Skills still work
+            results["custom_skills_error"] = str(e)
 
     # Initialize Cursor Background Agents config
     if include_background_agents:

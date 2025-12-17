@@ -1,0 +1,48 @@
+# CLI Tool Project Type Template
+# This template provides optimal defaults for command-line tools
+# Template version: 1.0
+
+# Workflow recommendations for CLI tools
+workflow_defaults:
+  recommended_track: "quick-flow"
+  recommended_workflow: "quick-fix.yaml"
+  reasoning: "CLI tools often benefit from quick iteration and focused workflows"
+
+# Quality thresholds for CLI tools
+quality_thresholds:
+  reviewer:
+    quality_threshold: 70.0
+    min_confidence_threshold: 0.75
+  tester:
+    coverage_threshold: 75.0
+    cli_contract_test_required: true
+  ops:
+    cross_platform_test_required: true
+
+# Documentation skeleton recommendations
+docs_skeleton:
+  required_sections:
+    - usage-examples
+    - command-reference
+    - installation
+    - configuration
+  recommended_format: "markdown"
+
+# Expert priorities for CLI tools
+expert_priorities:
+  expert-software-architecture: 0.8
+  expert-testing: 0.7
+  expert-user-experience: 0.6
+  expert-performance: 0.5
+
+# Testing strategy
+testing_strategy:
+  focus_areas:
+    - command-parsing
+    - output-formatting
+    - error-handling
+  test_types:
+    - unit
+    - integration
+  mock_strategy: "filesystem"
+

@@ -176,7 +176,9 @@ If you’re using Cursor, see:
 
 ## Running Tests (For Agents)
 
-When agents need to run unit tests directly (e.g., via terminal commands), they should follow these guidelines:
+When agents need to run tests directly (e.g., via terminal commands), they should follow these guidelines:
+
+**📖 For complete test suite documentation, see [Test Suite README](../tests/README.md) and [E2E Test Suite](../tests/e2e/README.md).**
 
 ### Recommended: Parallel Execution
 
@@ -210,6 +212,28 @@ python -m pytest tests/ -m unit -n auto --cov=tapps_agents --cov-report=term
 The Tester Agent automatically uses parallel execution when running tests via `*run-tests` command. For direct test execution, use the commands above.
 
 See `docs/TEST_PERFORMANCE_GUIDE.md` for complete performance optimization guide.
+
+### Test Suite Overview
+
+The test suite includes:
+- **Unit Tests** (`tests/unit/`): Fast, isolated tests (1200+ tests, ~1-2 minutes with parallel execution)
+- **Integration Tests** (`tests/integration/`): Tests with real services (LLM, Context7, etc.)
+- **E2E Tests** (`tests/e2e/`): Complete end-to-end validation
+  - **Smoke Tests**: Fast, deterministic (< 30 seconds, no external services)
+  - **Workflow Tests**: Workflow execution validation
+  - **Scenario Tests**: Complete user journey validation
+  - **CLI Tests**: CLI command validation
+
+**Quick E2E Test Commands:**
+```bash
+# Run smoke tests (fastest)
+pytest tests/e2e/smoke/ -m e2e_smoke
+
+# Run all E2E tests
+pytest tests/e2e/ -m "e2e_smoke or e2e_workflow or e2e_scenario or e2e_cli"
+```
+
+See [E2E Test Suite Documentation](../tests/e2e/README.md) for complete details.
 
 ## Planned Enhancements
 
@@ -246,3 +270,5 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 - `docs/ARCHITECTURE.md`
 - `docs/CONFIGURATION.md`
 - `docs/TEST_PERFORMANCE_GUIDE.md` - Test execution performance optimization
+- `tests/README.md` - Complete test suite overview
+- `tests/e2e/README.md` - E2E test suite documentation

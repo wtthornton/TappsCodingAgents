@@ -36,6 +36,7 @@ pip install -e ".[dev]"
 - Testing: `pytest`, `pytest-asyncio`, `pytest-cov`, `pytest-mock`, `pytest-timeout`
 - Security auditing: `pip-audit`
 - Dependency analysis: `pipdeptree`
+- Lock file generation: `pip-tools`
 
 ### Test Dependencies
 
@@ -58,6 +59,14 @@ Currently, test dependencies are included in the `dev` extra. If needed, a separ
 - **Non-authoritative** - may be generated from `pyproject.toml` or kept in sync manually
 - Should match `dependencies + dev` extras for development convenience
 - CI workflows should prefer `pip install -e ".[dev]"` over `requirements.txt`
+
+### Lock Files (`requirements-lock.txt`, `requirements-dev-lock.txt`)
+- **Reproducible builds** - Pinned exact versions of all dependencies and transitive dependencies
+- **Generated from `pyproject.toml`** using `pip-tools` (pip-compile)
+- **Should be committed** to version control for reproducibility
+- Use for production deployments and CI/CD where exact versions are critical
+- Generated with: `python scripts/generate_lock_files.py`
+- Install from lock file: `pip install -r requirements-lock.txt` (runtime) or `pip install -r requirements-dev-lock.txt` (dev)
 
 ### `MANIFEST.in`
 - Defines non-Python files to include in distributions
@@ -82,6 +91,14 @@ pip install -e ".[dev]"
 
 All CI workflows should use this command for consistency.
 
+### For Reproducible Builds (Production/CI)
+```bash
+# Install from lock file for exact version reproducibility
+pip install -r requirements-dev-lock.txt
+```
+
+Lock files ensure all environments (dev, CI, production) use identical dependency versions.
+
 ## Dependency Drift Prevention
 
 ### Drift Check
@@ -99,12 +116,14 @@ The check is implemented in `scripts/validate_dependencies.py` and runs automati
 2. Add dev/test dependencies to `[project.optional-dependencies.dev]`
 3. Run `scripts/validate_dependencies.py` to verify no drift
 4. Update `requirements.txt` if it's maintained (optional, for convenience)
+5. Regenerate lock files: `python scripts/generate_lock_files.py` (if using lock files)
 
 ### Removing Dependencies
 
 1. Remove from `pyproject.toml`
 2. Run drift check
 3. Update `requirements.txt` if maintained
+4. Regenerate lock files: `python scripts/generate_lock_files.py` (if using lock files)
 
 ## Policy Enforcement
 

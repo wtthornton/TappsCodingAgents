@@ -1,0 +1,52 @@
+# API Service Project Type Template
+# This template provides optimal defaults for REST/GraphQL API services
+# Template version: 1.0
+
+# Workflow recommendations for API services
+workflow_defaults:
+  recommended_track: "bmad-method"
+  recommended_workflow: "brownfield-service.yaml"
+  reasoning: "API services benefit from comprehensive testing and documentation workflows"
+
+# Quality thresholds for API services
+quality_thresholds:
+  reviewer:
+    quality_threshold: 75.0
+    min_confidence_threshold: 0.85
+  tester:
+    coverage_threshold: 85.0  # High coverage for APIs
+    integration_test_required: true
+  ops:
+    security_scan_required: true
+    dependency_audit_required: true
+
+# Documentation skeleton recommendations
+docs_skeleton:
+  required_sections:
+    - api-endpoints
+    - authentication
+    - error-handling
+    - rate-limiting
+  recommended_format: "openapi"  # OpenAPI/Swagger for APIs
+
+# Expert priorities for API services
+expert_priorities:
+  expert-api-design: 1.0
+  expert-security: 0.9
+  expert-observability: 0.8
+  expert-performance: 0.8
+  expert-testing: 0.7
+  expert-software-architecture: 0.6
+
+# Testing strategy
+testing_strategy:
+  focus_areas:
+    - endpoint-testing
+    - integration-testing
+    - contract-testing
+  test_types:
+    - unit
+    - integration
+    - e2e
+  mock_strategy: "external-services"
+

@@ -1,0 +1,52 @@
+# Web Application Project Type Template
+# This template provides optimal defaults for full-stack web applications
+# Template version: 1.0
+
+# Workflow recommendations for web apps
+workflow_defaults:
+  recommended_track: "bmad-method"
+  recommended_workflow: "brownfield-fullstack.yaml"
+  reasoning: "Web apps require frontend + backend coordination and UX considerations"
+
+# Quality thresholds for web apps
+quality_thresholds:
+  reviewer:
+    quality_threshold: 70.0
+    min_confidence_threshold: 0.80
+  tester:
+    coverage_threshold: 80.0
+    e2e_test_required: true
+  ops:
+    accessibility_check_required: true
+    performance_budget_required: true
+
+# Documentation skeleton recommendations
+docs_skeleton:
+  required_sections:
+    - user-guide
+    - setup-instructions
+    - feature-documentation
+    - troubleshooting
+  recommended_format: "markdown"
+
+# Expert priorities for web apps
+expert_priorities:
+  expert-user-experience: 1.0
+  expert-software-architecture: 0.9
+  expert-performance: 0.8
+  expert-accessibility: 0.7
+  expert-testing: 0.7
+  expert-api-design: 0.6
+
+# Testing strategy
+testing_strategy:
+  focus_areas:
+    - component-testing
+    - e2e-testing
+    - visual-regression
+  test_types:
+    - unit
+    - integration
+    - e2e
+  mock_strategy: "ui-components"
+

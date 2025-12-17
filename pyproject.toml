@@ -59,6 +59,8 @@ dev = [
     # Security & Dependency Management
     "pip-audit>=2.10.0",
     "pipdeptree>=2.30.0",
+    # Lock File Generation
+    "pip-tools>=7.4.1",
 ]
 
 [project.urls]

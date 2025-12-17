@@ -639,6 +639,104 @@ class AgentsConfig(BaseModel):
     )
 
 
+class CheckpointFrequencyConfig(BaseModel):
+    """Configuration for checkpoint frequency"""
+
+    mode: str = Field(
+        default="every_step",
+        description="Checkpoint frequency mode: every_step, every_n_steps, on_gates, time_based, manual",
+    )
+    interval: int = Field(
+        default=1,
+        ge=1,
+        description="Interval for every_n_steps (step count) or time_based (seconds)",
+    )
+    enabled: bool = Field(
+        default=True,
+        description="Enable checkpointing",
+    )
+
+
+class StateCleanupPolicyConfig(BaseModel):
+    """Configuration for state cleanup policies"""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable automatic state cleanup",
+    )
+    retention_days: int | None = Field(
+        default=None,
+        ge=1,
+        description="Delete states older than N days (None = no retention limit)",
+    )
+    max_size_mb: int | None = Field(
+        default=None,
+        ge=1,
+        description="Maximum total state size in MB (None = no size limit)",
+    )
+    cleanup_schedule: str = Field(
+        default="daily",
+        description="Cleanup schedule: daily, weekly, monthly, on_startup, manual",
+    )
+    keep_latest: int = Field(
+        default=10,
+        ge=1,
+        description="Always keep the N most recent states",
+    )
+
+
+class StatePersistenceConfig(BaseModel):
+    """Configuration for state persistence and checkpointing"""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable state persistence",
+    )
+    storage_location: str = Field(
+        default=".tapps-agents/workflow-state",
+        description="Directory for storing workflow state",
+    )
+    format: str = Field(
+        default="json",
+        description="State storage format: json, json_gzip",
+    )
+    compression: bool = Field(
+        default=False,
+        description="Enable compression for state files",
+    )
+    checkpoint: CheckpointFrequencyConfig = Field(
+        default_factory=CheckpointFrequencyConfig,
+        description="Checkpoint frequency configuration",
+    )
+    cleanup: StateCleanupPolicyConfig = Field(
+        default_factory=StateCleanupPolicyConfig,
+        description="State cleanup policy configuration",
+    )
+
+
+class WorkflowConfig(BaseModel):
+    """Configuration for workflow execution"""
+
+    auto_execution_enabled: bool = Field(
+        default=False,
+        description="Enable Background Agent auto-execution for workflow steps",
+    )
+    polling_interval: float = Field(
+        default=5.0,
+        ge=1.0,
+        description="Seconds between status checks when polling for completion",
+    )
+    timeout_seconds: float = Field(
+        default=3600.0,
+        ge=1.0,
+        description="Maximum time to wait for step completion (seconds)",
+    )
+    state_persistence: StatePersistenceConfig = Field(
+        default_factory=StatePersistenceConfig,
+        description="State persistence and checkpointing configuration",
+    )
+
+
 class ProjectConfig(BaseModel):
     """Root configuration model for TappsCodingAgents project"""
 
@@ -664,6 +762,10 @@ class ProjectConfig(BaseModel):
     quality_tools: QualityToolsConfig | None = Field(
         default_factory=QualityToolsConfig,
         description="Quality analysis tools configuration (Phase 6)",
+    )
+    workflow: WorkflowConfig = Field(
+        default_factory=WorkflowConfig,
+        description="Workflow execution configuration",
     )
 
     model_config = {

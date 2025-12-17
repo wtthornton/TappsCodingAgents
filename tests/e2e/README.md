@@ -2,6 +2,11 @@
 
 This directory contains end-to-end tests for TappsCodingAgents, organized by test type.
 
+**📖 Quick Links:**
+- **[Test Suite Overview](../README.md)** - All test types (unit, integration, E2E)
+- **[Marker Taxonomy](MARKER_TAXONOMY.md)** - Complete marker reference and execution matrix
+- **[CI/CD Execution Guide](CI_CD_EXECUTION.md)** - CI/CD integration and execution strategies
+
 ## Directory Structure
 
 ```
@@ -198,22 +203,23 @@ Secrets are automatically redacted from captured artifacts:
 
 ## Running E2E Tests
 
-### Run All E2E Tests
+### Quick Start
 
 ```bash
-pytest tests/e2e/ -m ""
-```
+# Run all E2E tests
+pytest tests/e2e/ -m "e2e_smoke or e2e_workflow or e2e_scenario or e2e_cli"
 
-### Run Smoke Tests Only
-
-```bash
+# Run smoke tests only (fastest, < 30 seconds, no external services)
 pytest tests/e2e/smoke/ -m e2e_smoke
-```
 
-### Run Workflow Tests
-
-```bash
+# Run workflow tests
 pytest tests/e2e/workflows/ -m e2e_workflow
+
+# Run scenario tests
+pytest tests/e2e/scenarios/ -m e2e_scenario
+
+# Run CLI tests
+pytest tests/e2e/cli/ -m e2e_cli
 ```
 
 ### Run with Real Services
@@ -224,6 +230,13 @@ pytest tests/e2e/ -m "e2e_workflow and requires_llm"
 
 # Requires Context7
 pytest tests/e2e/ -m "e2e_workflow and requires_context7"
+```
+
+### Run All E2E Tests (Alternative)
+
+```bash
+# Run all tests including E2E (removes default unit-only filter)
+pytest tests/e2e/ -m ""
 ```
 
 ## Marker Taxonomy

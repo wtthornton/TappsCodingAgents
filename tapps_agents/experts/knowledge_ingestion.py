@@ -21,6 +21,7 @@ import yaml
 from ..context7.agent_integration import Context7AgentHelper
 from ..core.project_profile import ProjectProfile
 from .domain_detector import DomainStackDetector
+from .governance import GovernanceLayer, GovernancePolicy
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
 
@@ -71,6 +72,7 @@ class KnowledgeIngestionPipeline:
         self,
         project_root: Path,
         context7_helper: Context7AgentHelper | None = None,
+        governance_policy: GovernancePolicy | None = None,
     ):
         """
         Initialize Knowledge Ingestion Pipeline.
@@ -78,12 +80,22 @@ class KnowledgeIngestionPipeline:
         Args:
             project_root: Project root directory
             context7_helper: Optional Context7 helper for library docs
+            governance_policy: Optional governance policy configuration
         """
         self.project_root = project_root
         self.config_dir = project_root / ".tapps-agents"
         self.knowledge_base_dir = self.config_dir / "knowledge"
         self.context7_helper = context7_helper
         self.domain_detector = DomainStackDetector(project_root=project_root)
+        
+        # Initialize governance layer (Story 28.5)
+        if governance_policy is None:
+            # Default policy: enable all filters, approval queue in config dir
+            approval_queue_path = self.config_dir / "approval_queue"
+            governance_policy = GovernancePolicy(
+                approval_queue_path=approval_queue_path
+            )
+        self.governance = GovernanceLayer(policy=governance_policy)
 
     async def ingest_all_sources(
         self, include_context7: bool = True, include_operational: bool = True
@@ -368,7 +380,7 @@ class KnowledgeIngestionPipeline:
         return entries
 
     def _store_knowledge_entries(self, entries: list[KnowledgeEntry]):
-        """Store knowledge entries in appropriate KB backends."""
+        """Store knowledge entries in appropriate KB backends with governance checks."""
         # Group entries by domain
         entries_by_domain: dict[str, list[KnowledgeEntry]] = {}
         for entry in entries:
@@ -387,8 +399,32 @@ class KnowledgeIngestionPipeline:
             except Exception:
                 kb = SimpleKnowledgeBase(knowledge_dir=domain_kb_dir, domain=domain)
 
-            # Convert entries to knowledge chunks and add
+            # Convert entries to knowledge chunks and add with governance checks
             for entry in domain_entries:
+                # Apply governance layer (Story 28.5)
+                # 1. Filter content for secrets/PII
+                filter_result = self.governance.filter_content(entry.content, entry.source)
+                
+                # 2. Use filtered content if available
+                if filter_result.filtered_content:
+                    entry.content = filter_result.filtered_content
+                
+                # 3. Validate entry against governance policies
+                is_valid, reason = self.governance.validate_knowledge_entry(entry)
+                
+                if not is_valid:
+                    # Entry failed validation - log and skip
+                    print(f"Governance validation failed for {entry.title}: {reason}")
+                    continue
+                
+                # 4. Check if approval is required
+                if self.governance.requires_approval(entry):
+                    # Queue for approval instead of storing directly
+                    approval_file = self.governance.queue_for_approval(entry)
+                    print(f"Entry '{entry.title}' queued for approval: {approval_file}")
+                    continue
+                
+                # 5. Entry passed all checks - store it
                 chunk = KnowledgeChunk(
                     content=entry.content,
                     metadata={

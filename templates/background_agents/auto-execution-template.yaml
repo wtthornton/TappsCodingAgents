@@ -1,0 +1,82 @@
+# Background Agent Auto-Execution Configuration Template
+#
+# This template configures Background Agents for automatic workflow command execution.
+# Background Agents monitor watch paths for command files and execute them automatically.
+#
+# Usage:
+#   1. Copy this template to `.cursor/background-agents.yaml`
+#   2. Configure agents with appropriate watch paths and commands
+#   3. Use the validation tool to verify configuration
+#
+# For more information, see: docs/BACKGROUND_AGENTS_GUIDE.md
+
+agents:
+  # Example: Auto-execution agent for workflow commands
+  - name: "TappsCodingAgents Workflow Executor"
+    type: "background"  # Required: must be "background"
+    description: "Automatically execute workflow commands from .cursor-skill-command.txt files"
+    
+    # Required: List of commands to execute when command file is detected
+    commands:
+      - "python -m tapps_agents.cli cursor-invoke \"{command}\""
+    
+    # Required: List of paths/patterns to watch for command files
+    # Supports glob patterns like "**/.cursor-skill-command.txt"
+    watch_paths:
+      - "**/.cursor-skill-command.txt"
+      - ".tapps-agents/workflow-state/**/.cursor-skill-command.txt"
+    
+    # Optional: Context7 cache location
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    
+    # Optional: Environment variables
+    environment:
+      - "TAPPS_AGENTS_MODE=cursor"
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+    
+    # Optional: Natural language triggers (for manual invocation)
+    triggers:
+      - "Execute workflow command"
+      - "Run workflow step"
+    
+    # Optional: Timeout in seconds (default: 3600)
+    timeout_seconds: 3600
+    
+    # Optional: Retry count for failed executions (default: 0)
+    retry_count: 0
+    
+    # Optional: Enable/disable this agent (default: true)
+    enabled: true
+    
+    # Optional: Working directory (default: project root)
+    working_directory: "${PROJECT_ROOT}"
+    
+    # Optional: Output configuration
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file"]
+
+# Global Configuration (optional)
+global:
+  # Default Context7 cache location
+  context7_cache: ".tapps-agents/kb/context7-cache"
+  
+  # Default output directory
+  output_directory: ".tapps-agents/reports"
+  
+  # Default worktree base directory
+  worktree_base: ".tapps-agents/worktrees"
+  
+  # Enable progress reporting
+  progress_reporting: true
+  
+  # Default result delivery methods
+  result_delivery: ["file"]
+  
+  # Maximum parallel agents
+  max_parallel_agents: 4
+  
+  # Default timeout in seconds
+  timeout_seconds: 3600
+
