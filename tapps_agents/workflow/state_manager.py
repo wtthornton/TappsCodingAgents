@@ -34,6 +34,11 @@ class StateMetadata:
     state_file: str
     workflow_path: str | None = None
     compression: bool = False
+    # Epic 12: Enhanced checkpoint metadata
+    current_step: str | None = None
+    completed_steps_count: int = 0
+    progress_percentage: float = 0.0
+    trigger_step_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -216,6 +221,9 @@ class AdvancedStateManager:
         if self.compression:
             state_file += ".gz"
 
+        # Epic 12: Extract checkpoint metadata from state if available
+        checkpoint_metadata = state.variables.get("_checkpoint_metadata", {})
+        
         metadata = StateMetadata(
             version=CURRENT_STATE_VERSION,
             saved_at=datetime.now(),
@@ -224,6 +232,10 @@ class AdvancedStateManager:
             state_file=state_file,
             workflow_path=str(workflow_path) if workflow_path else None,
             compression=self.compression,
+            current_step=checkpoint_metadata.get("current_step") or state.current_step,
+            completed_steps_count=checkpoint_metadata.get("completed_steps", len(state.completed_steps)),
+            progress_percentage=checkpoint_metadata.get("progress_percentage", 0.0),
+            trigger_step_id=checkpoint_metadata.get("trigger_step_id"),
         )
 
         # Save state file
@@ -398,6 +410,133 @@ class AdvancedStateManager:
                     logger.warning(f"Failed to read metadata {metadata_file}: {e}")
 
         return sorted(states, key=lambda x: x.get("saved_at", 0), reverse=True)
+
+    def cleanup_old_states(
+        self,
+        retention_days: int = 30,
+        max_states_per_workflow: int = 10,
+        remove_completed: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Clean up old workflow states.
+
+        Epic 12: State cleanup functionality
+
+        Args:
+            retention_days: Keep states newer than this many days
+            max_states_per_workflow: Maximum states to keep per workflow
+            remove_completed: Whether to remove states for completed workflows
+
+        Returns:
+            Dictionary with cleanup statistics
+        """
+        from datetime import timedelta
+
+        cutoff_date = datetime.now() - timedelta(days=retention_days)
+        removed_count = 0
+        removed_size = 0
+        workflows_cleaned = set()
+
+        # Group states by workflow_id
+        workflow_states: dict[str, list[dict[str, Any]]] = {}
+        for state_info in self.list_states():
+            workflow_id = state_info.get("workflow_id", "unknown")
+            if workflow_id not in workflow_states:
+                workflow_states[workflow_id] = []
+            workflow_states[workflow_id].append(state_info)
+
+        # Clean up each workflow
+        for workflow_id, states in workflow_states.items():
+            # Sort by saved_at (newest first)
+            states_sorted = sorted(
+                states,
+                key=lambda x: datetime.fromisoformat(x.get("saved_at", "1970-01-01"))
+                if isinstance(x.get("saved_at"), str)
+                else datetime.fromtimestamp(0),
+                reverse=True,
+            )
+
+            # Check if workflow is completed
+            is_completed = False
+            if remove_completed:
+                # Try to load latest state to check status
+                try:
+                    state, _ = self.load_state(workflow_id=workflow_id, validate=False)
+                    is_completed = state.status in ("completed", "failed", "cancelled")
+                except Exception:
+                    pass
+
+            # Remove old states
+            for state_info in states_sorted:
+                state_file = state_info.get("state_file", "")
+                if not state_file:
+                    continue
+
+                state_path = self.state_dir / state_file
+                if not state_path.exists():
+                    continue
+
+                # Check retention period
+                saved_at_str = state_info.get("saved_at", "")
+                try:
+                    if isinstance(saved_at_str, str):
+                        saved_at = datetime.fromisoformat(saved_at_str)
+                    else:
+                        saved_at = datetime.fromtimestamp(saved_at_str)
+                except (ValueError, TypeError):
+                    saved_at = datetime.fromtimestamp(0)
+
+                should_remove = False
+                reason = ""
+
+                # Remove if older than retention period
+                if saved_at < cutoff_date:
+                    should_remove = True
+                    reason = "retention_period"
+                # Remove if completed workflow and remove_completed is True
+                elif is_completed and remove_completed:
+                    # Keep only the most recent completed state
+                    if states_sorted.index(state_info) > 0:
+                        should_remove = True
+                        reason = "completed_workflow"
+                # Remove if exceeds max_states_per_workflow
+                elif len([s for s in states_sorted if not should_remove]) > max_states_per_workflow:
+                    if states_sorted.index(state_info) >= max_states_per_workflow:
+                        should_remove = True
+                        reason = "max_states_limit"
+
+                if should_remove:
+                    try:
+                        # Get file size before removal
+                        file_size = state_path.stat().st_size
+                        state_path.unlink()
+                        removed_size += file_size
+                        removed_count += 1
+                        workflows_cleaned.add(workflow_id)
+
+                        # Also remove from history if exists
+                        history_path = self.history_dir / state_file
+                        if history_path.exists():
+                            history_path.unlink()
+
+                        logger.debug(
+                            f"Removed state {state_file} (reason: {reason})"
+                        )
+                    except Exception as e:
+                        logger.warning(f"Failed to remove state {state_file}: {e}")
+
+        result = {
+            "removed_count": removed_count,
+            "removed_size_mb": round(removed_size / (1024 * 1024), 2),
+            "workflows_cleaned": len(workflows_cleaned),
+        }
+
+        logger.info(
+            f"State cleanup completed: removed {removed_count} states "
+            f"({result['removed_size_mb']} MB) from {len(workflows_cleaned)} workflows"
+        )
+
+        return result
 
     def _recover_from_history(
         self, corrupted_path: Path, workflow_id: str

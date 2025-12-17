@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
@@ -21,9 +22,13 @@ from ..core.project_profile import (
     save_project_profile,
 )
 from ..core.runtime_mode import is_cursor_mode
+from .auto_progression import AutoProgressionManager, ProgressionAction
+from .checkpoint_manager import CheckpointConfig, CheckpointFrequency, WorkflowCheckpointManager
+from .error_recovery import ErrorContext, ErrorRecoveryManager
 from .logging_helper import WorkflowLogger
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
+from .progress_manager import ProgressUpdateManager
 from .skill_invoker import SkillInvoker
 from .state_manager import AdvancedStateManager
 from .worktree_manager import WorktreeManager
@@ -69,6 +74,39 @@ class CursorWorkflowExecutor:
         self.project_profile: ProjectProfile | None = None
         self.parallel_executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=3600.0)
         self.logger: WorkflowLogger | None = None  # Initialized in start() with workflow_id
+        self.progress_manager: ProgressUpdateManager | None = None  # Initialized in start() with workflow
+        
+        # Initialize auto-progression manager (Epic 10)
+        auto_progression_enabled = os.getenv("TAPPS_AGENTS_AUTO_PROGRESSION", "true").lower() == "true"
+        self.auto_progression = AutoProgressionManager(
+            auto_progression_enabled=auto_progression_enabled,
+            auto_retry_enabled=True,
+            max_retries=3,
+        )
+        
+        # Initialize error recovery manager (Epic 14)
+        error_recovery_enabled = os.getenv("TAPPS_AGENTS_ERROR_RECOVERY", "true").lower() == "true"
+        self.error_recovery = ErrorRecoveryManager(
+            enable_auto_retry=error_recovery_enabled,
+            max_retries=3,
+        ) if error_recovery_enabled else None
+        
+        # Initialize checkpoint manager (Epic 12)
+        checkpoint_frequency = os.getenv("TAPPS_AGENTS_CHECKPOINT_FREQUENCY", "every_step")
+        checkpoint_interval = int(os.getenv("TAPPS_AGENTS_CHECKPOINT_INTERVAL", "1"))
+        checkpoint_enabled = os.getenv("TAPPS_AGENTS_CHECKPOINT_ENABLED", "true").lower() == "true"
+        
+        try:
+            frequency = CheckpointFrequency(checkpoint_frequency)
+        except ValueError:
+            frequency = CheckpointFrequency.EVERY_STEP
+        
+        checkpoint_config = CheckpointConfig(
+            frequency=frequency,
+            interval=checkpoint_interval,
+            enabled=checkpoint_enabled,
+        )
+        self.checkpoint_manager = WorkflowCheckpointManager(config=checkpoint_config)
         
         # Initialize state manager
         state_dir = self._state_dir()
@@ -137,6 +175,18 @@ class CursorWorkflowExecutor:
             workflow_version=workflow.version,
             step_count=len(workflow.steps),
         )
+        
+        # Initialize progress update manager
+        self.progress_manager = ProgressUpdateManager(
+            workflow=workflow,
+            state=self.state,
+            project_root=self.project_root,
+            enable_updates=True,
+        )
+        # Start progress monitoring (non-blocking)
+        import asyncio
+        asyncio.create_task(self.progress_manager.start())
+        
         self.save_state()
         return self.state
 
@@ -339,7 +389,90 @@ class CursorWorkflowExecutor:
                     ) if self.logger else None
                     
                     if result.error:
-                        # Step failed - mark as failed and stop workflow
+                        # Step failed - use error recovery and auto-progression (Epic 14)
+                        error_context = ErrorContext(
+                            workflow_id=self.state.workflow_id,
+                            step_id=result.step.id,
+                            agent=result.step.agent,
+                            action=result.step.action,
+                            step_number=None,
+                            total_steps=len(self.workflow.steps),
+                            workflow_status=self.state.status,
+                        )
+                        
+                        # Handle error with recovery manager (Epic 14)
+                        recovery_result = None
+                        if self.error_recovery:
+                            recovery_result = self.error_recovery.handle_error(
+                                error=result.error,
+                                context=error_context,
+                                attempt=result.step_execution.attempts or 1,
+                            )
+                            
+                            # Use user-friendly message
+                            if recovery_result.get("user_message"):
+                                result.error = recovery_result["user_message"]
+                        
+                        if self.auto_progression.should_auto_progress():
+                            # Get review result if this was a reviewer step
+                            review_result = None
+                            if result.step.agent == "reviewer":
+                                review_result = self.state.variables.get("reviewer_result")
+                            
+                            decision = self.auto_progression.handle_step_completion(
+                                step=result.step,
+                                state=self.state,
+                                step_execution=result.step_execution,
+                                review_result=review_result,
+                            )
+                            
+                            if decision.action == ProgressionAction.RETRY:
+                                # Retry the step - remove from completed and add back to ready
+                                completed_step_ids.discard(result.step.id)
+                                running_step_ids.discard(result.step.id)
+                                # Apply backoff if specified
+                                if decision.metadata.get("backoff_seconds"):
+                                    await asyncio.sleep(decision.metadata["backoff_seconds"])
+                                if step_logger:
+                                    step_logger.info(
+                                        f"Retrying step {result.step.id} (attempt {decision.retry_count})",
+                                    )
+                                continue
+                            elif decision.action == ProgressionAction.SKIP:
+                                # Skip this step
+                                completed_step_ids.add(result.step.id)
+                                running_step_ids.discard(result.step.id)
+                                if result.step.id not in self.state.skipped_steps:
+                                    self.state.skipped_steps.append(result.step.id)
+                                if step_logger:
+                                    step_logger.warning(
+                                        f"Skipping step {result.step.id}: {decision.reason}",
+                                    )
+                                continue
+                            elif decision.action == ProgressionAction.ABORT:
+                                # Abort workflow
+                                self.state.status = "failed"
+                                self.state.error = decision.reason
+                                if step_logger:
+                                    step_logger.error(
+                                        f"Workflow aborted: {decision.reason}",
+                                    )
+                                self.save_state()
+                                if self.progress_manager:
+                                    await self.progress_manager.send_workflow_failed(decision.reason)
+                                    await self.progress_manager.stop()
+                                break
+                            elif decision.action == ProgressionAction.CONTINUE:
+                                # Continue despite error (recoverable)
+                                completed_step_ids.add(result.step.id)
+                                running_step_ids.discard(result.step.id)
+                                if step_logger:
+                                    step_logger.warning(
+                                        f"Step {result.step.id} failed but continuing: {decision.reason}",
+                                    )
+                                continue
+                        
+                        # Fallback: mark as failed and stop workflow (if auto-progression disabled)
                         self.state.status = "failed"
                         self.state.error = f"Step {result.step.id} failed: {result.error}"
                         if step_logger:
@@ -349,19 +482,98 @@ class CursorWorkflowExecutor:
                                 action=result.step.action,
                             )
                         self.save_state()
+                        
+                        # Send failure update
+                        if self.progress_manager:
+                            await self.progress_manager.send_workflow_failed(
+                                str(result.error)
+                            )
+                            await self.progress_manager.stop()
                         break
                     
                     # Mark step as completed
                     completed_step_ids.add(result.step.id)
                     running_step_ids.discard(result.step.id)
                     
-                    if step_logger:
-                        step_logger.info(
-                            "Step completed",
-                            action=result.step.action,
-                            duration_seconds=result.step_execution.duration_seconds,
-                            artifact_count=len(result.artifacts) if result.artifacts else 0,
+                    # Get review result if this was a reviewer step (for gate evaluation)
+                    review_result = None
+                    if result.step.agent == "reviewer":
+                        review_result = self.state.variables.get("reviewer_result")
+                    
+                    # Use auto-progression to handle step completion and gate evaluation
+                    if self.auto_progression.should_auto_progress():
+                        decision = self.auto_progression.handle_step_completion(
+                            step=result.step,
+                            state=self.state,
+                            step_execution=result.step_execution,
+                            review_result=review_result,
                         )
+                        
+                        # Update current step based on gate decision if needed
+                        if decision.next_step_id:
+                            self.state.current_step = decision.next_step_id
+                        
+                        if step_logger:
+                            step_logger.info(
+                                f"Step completed: {decision.reason}",
+                                action=result.step.action,
+                                duration_seconds=result.step_execution.duration_seconds,
+                                artifact_count=len(result.artifacts) if result.artifacts else 0,
+                                next_step=decision.next_step_id,
+                            )
+                    else:
+                        if step_logger:
+                            step_logger.info(
+                                "Step completed",
+                                action=result.step.action,
+                                duration_seconds=result.step_execution.duration_seconds,
+                                artifact_count=len(result.artifacts) if result.artifacts else 0,
+                            )
+                    
+                    # Send step completed update (Epic 11: Include gate result for quality dashboard)
+                    is_gate_step = result.step.agent == "reviewer" and result.step.gate is not None
+                    if self.progress_manager:
+                        # Extract gate result if this was a reviewer step
+                        gate_result = None
+                        if result.step.agent == "reviewer" and review_result:
+                            # Get gate result from state variables (set by auto-progression)
+                            gate_last = self.state.variables.get("gate_last", {})
+                            if gate_last:
+                                gate_result = gate_last
+                        
+                        await self.progress_manager.send_step_completed(
+                            step_id=result.step.id,
+                            agent=result.step.agent,
+                            action=result.step.action,
+                            duration=result.step_execution.duration_seconds,
+                            gate_result=gate_result,
+                        )
+                    
+                    # Epic 12: Automatic checkpointing after step completion
+                    if self.checkpoint_manager.should_checkpoint(
+                        step=result.step,
+                        state=self.state,
+                        is_gate_step=is_gate_step,
+                    ):
+                        # Enhance state with checkpoint metadata before saving
+                        checkpoint_metadata = self.checkpoint_manager.get_checkpoint_metadata(
+                            state=self.state,
+                            step=result.step,
+                        )
+                        # Store metadata in state variables for persistence
+                        if "_checkpoint_metadata" not in self.state.variables:
+                            self.state.variables["_checkpoint_metadata"] = {}
+                        self.state.variables["_checkpoint_metadata"].update(checkpoint_metadata)
+                        
+                        # Save checkpoint
+                        self.save_state()
+                        self.checkpoint_manager.record_checkpoint(result.step.id)
+                        
+                        if self.logger:
+                            self.logger.info(
+                                f"Checkpoint created after step {result.step.id}",
+                                checkpoint_metadata=checkpoint_metadata,
+                            )
                     
                     # Update artifacts from result
                     if result.artifacts and isinstance(result.artifacts, dict):
@@ -405,6 +617,11 @@ class CursorWorkflowExecutor:
                     total_steps=len(self.workflow.steps) if self.workflow else 0,
                 )
             self.save_state()
+            
+            # Send completion summary
+            if self.progress_manager:
+                await self.progress_manager.send_workflow_completed()
+                await self.progress_manager.stop()
 
         # Best-effort cleanup of worktrees created during this run
         try:
@@ -696,6 +913,43 @@ class CursorWorkflowExecutor:
         if not self.workflow or not self.state:
             return
 
+        # Use auto-progression if enabled
+        if self.auto_progression.should_auto_progress():
+            current_step = self.get_current_step()
+            if current_step:
+                # Get progression decision
+                step_execution = next(
+                    (se for se in self.state.step_executions if se.step_id == current_step.id),
+                    None
+                )
+                if step_execution:
+                    review_result = None
+                    if current_step.agent == "reviewer":
+                        review_result = self.state.variables.get("reviewer_result")
+                    
+                    decision = self.auto_progression.handle_step_completion(
+                        step=current_step,
+                        state=self.state,
+                        step_execution=step_execution,
+                        review_result=review_result,
+                    )
+                    
+                    next_step_id = self.auto_progression.get_next_step_id(
+                        step=current_step,
+                        decision=decision,
+                        workflow_steps=self.workflow.steps,
+                    )
+                    
+                    if next_step_id:
+                        self.state.current_step = next_step_id
+                    else:
+                        # Workflow complete
+                        self.state.status = "completed"
+                        self.state.completed_at = datetime.now()
+                        self.state.current_step = None
+                    return
+
+        # Fallback to sequential progression
         current_index = None
         for i, step in enumerate(self.workflow.steps):
             if step.id == self.state.current_step:
@@ -715,4 +969,125 @@ class CursorWorkflowExecutor:
             self.state.status = "completed"
             self.state.completed_at = datetime.now()
             self.state.current_step = None
+
+    def get_progression_status(self) -> dict[str, Any]:
+        """
+        Get current progression status and visibility information.
+        
+        Returns:
+            Dictionary with progression status
+        """
+        if not self.workflow or not self.state:
+            return {"status": "not_started"}
+        
+        return self.auto_progression.get_progression_status(
+            state=self.state,
+            workflow_steps=self.workflow.steps,
+        )
+
+    def get_progression_history(self, step_id: str | None = None) -> list[dict[str, Any]]:
+        """
+        Get progression history.
+        
+        Args:
+            step_id: Optional step ID to filter by
+            
+        Returns:
+            List of progression history entries
+        """
+        history = self.auto_progression.get_progression_history(step_id=step_id)
+        return [
+            {
+                "step_id": h.step_id,
+                "timestamp": h.timestamp.isoformat(),
+                "action": h.action.value,
+                "reason": h.reason,
+                "gate_result": h.gate_result,
+                "metadata": h.metadata,
+            }
+            for h in history
+        ]
+
+    def pause_workflow(self) -> None:
+        """
+        Pause workflow execution.
+        
+        Epic 10: Progression Control
+        """
+        if not self.state:
+            raise ValueError("Workflow not started")
+        
+        if self.state.status == "running":
+            self.state.status = "paused"
+            self.save_state()
+            if self.logger:
+                self.logger.info("Workflow paused by user")
+            self.auto_progression.record_progression(
+                step_id=self.state.current_step or "unknown",
+                action=ProgressionAction.PAUSE,
+                reason="Workflow paused by user",
+            )
+
+    def resume_workflow(self) -> None:
+        """
+        Resume paused workflow execution.
+        
+        Epic 10: Progression Control
+        """
+        if not self.state:
+            raise ValueError("Workflow not started")
+        
+        if self.state.status == "paused":
+            self.state.status = "running"
+            self.save_state()
+            if self.logger:
+                self.logger.info("Workflow resumed by user")
+            self.auto_progression.record_progression(
+                step_id=self.state.current_step or "unknown",
+                action=ProgressionAction.CONTINUE,
+                reason="Workflow resumed by user",
+            )
+
+    def skip_step(self, step_id: str | None = None) -> None:
+        """
+        Skip a workflow step.
+        
+        Args:
+            step_id: Step ID to skip (defaults to current step)
+        
+        Epic 10: Progression Control
+        """
+        if not self.state or not self.workflow:
+            raise ValueError("Workflow not started")
+        
+        step_id = step_id or self.state.current_step
+        if not step_id:
+            raise ValueError("No step to skip")
+        
+        # Find the step
+        step = next((s for s in self.workflow.steps if s.id == step_id), None)
+        if not step:
+            raise ValueError(f"Step {step_id} not found")
+        
+        # Record skip in progression history
+        self.auto_progression.record_progression(
+            step_id=step_id,
+            action=ProgressionAction.SKIP,
+            reason="Step skipped by user",
+        )
+        
+        # Advance to next step
+        if step.next:
+            self.state.current_step = step.next
+            self.save_state()
+            if self.logger:
+                self.logger.info(f"Step {step_id} skipped, advancing to {step.next}")
+        else:
+            # No next step - workflow complete
+            self.state.status = "completed"
+            self.state.completed_at = datetime.now()
+            self.state.current_step = None
+            self.save_state()
+            if self.logger:
+                self.logger.info(f"Step {step_id} skipped, workflow completed")
 

@@ -33,6 +33,12 @@ If no config file is found, the framework uses default values.
 project_name: "MyProject"
 version: "1.0.0"
 
+# User role template (optional)
+# Selects a role template to customize agent behavior based on your role
+# Available roles: senior-developer, junior-developer, tech-lead, product-manager, qa-engineer
+# See docs/USER_ROLE_TEMPLATES_GUIDE.md for details
+user_role: senior-developer
+
 # Tooling targets/policy (optional, used by `doctor`)
 tooling:
   targets:

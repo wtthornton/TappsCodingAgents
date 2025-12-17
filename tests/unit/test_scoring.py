@@ -55,8 +55,9 @@ class TestCodeScorer:
         result = scorer.score_file(test_file, SIMPLE_CODE)
 
         # Simple code should have low complexity (low complexity_score means low complexity, good)
-        assert result["complexity_score"] >= 0.0  # Simple code should have low complexity score
-        assert result["complexity_score"] <= 3.0  # Simple code should score low (good)
+        # Complexity score should be in valid range and low for simple code
+        assert 0.0 <= result["complexity_score"] <= 3.0, \
+            f"Simple code should have low complexity score (0-3), got {result['complexity_score']}"
 
         # Simple code should have good security (no issues)
         assert result["security_score"] >= 8.0  # Simple code with no security issues should score high
@@ -86,14 +87,18 @@ class TestCodeScorer:
         
         # Complex code should have higher complexity_score than simple code
         # (higher complexity_score = more complex = worse)
-        assert result["complexity_score"] > simple_result["complexity_score"]
-        assert result["complexity_score"] >= 0.0
-        assert result["complexity_score"] <= 10.0
+        assert result["complexity_score"] > simple_result["complexity_score"], \
+            f"Complex code should have higher complexity score than simple code. " \
+            f"Complex: {result['complexity_score']}, Simple: {simple_result['complexity_score']}"
+        assert 0.0 <= result["complexity_score"] <= 10.0, \
+            f"Complexity score should be in valid range (0-10), got {result['complexity_score']}"
 
         # Overall score should reflect complexity (lower than simple code)
-        assert result["overall_score"] < simple_result["overall_score"]
-        assert result["overall_score"] >= 0.0
-        assert result["overall_score"] <= 100.0
+        assert result["overall_score"] < simple_result["overall_score"], \
+            f"Complex code should have lower overall score than simple code. " \
+            f"Complex: {result['overall_score']}, Simple: {simple_result['overall_score']}"
+        assert 0.0 <= result["overall_score"] <= 100.0, \
+            f"Overall score should be in valid range (0-100), got {result['overall_score']}"
 
     def test_score_file_insecure_code(self, tmp_path: Path):
         """Test scoring code with security issues."""
@@ -110,15 +115,18 @@ class TestCodeScorer:
         simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
         
         # Insecure code should score significantly lower on security
-        assert result["security_score"] < simple_result["security_score"]
-        assert result["security_score"] < 5.0  # Insecure code should score low
-        assert result["security_score"] >= 0.0
-        assert result["security_score"] <= 10.0
+        assert result["security_score"] < simple_result["security_score"], \
+            f"Insecure code should have lower security score than simple code. " \
+            f"Insecure: {result['security_score']}, Simple: {simple_result['security_score']}"
+        assert 0.0 <= result["security_score"] < 5.0, \
+            f"Insecure code should have low security score (0-5), got {result['security_score']}"
 
         # Security issues should lower overall score
-        assert result["overall_score"] < simple_result["overall_score"]
-        assert result["overall_score"] >= 0.0
-        assert result["overall_score"] <= 100.0
+        assert result["overall_score"] < simple_result["overall_score"], \
+            f"Insecure code should have lower overall score than simple code. " \
+            f"Insecure: {result['overall_score']}, Simple: {simple_result['overall_score']}"
+        assert 0.0 <= result["overall_score"] <= 100.0, \
+            f"Overall score should be in valid range (0-100), got {result['overall_score']}"
 
     def test_score_file_maintainable_code(self, tmp_path: Path):
         """Test scoring well-documented, maintainable code."""
@@ -687,14 +695,35 @@ test.py:2: error: Incompatible return type (got "int", expected "None") [return-
         
         # Business logic validation: Maintainable code should score well
         assert maintainable_result["maintainability_score"] >= 5.0, \
-            "Well-documented, typed code should score reasonably on maintainability"
-        # Note: Simple code might score similarly or higher due to lower complexity
+            f"Well-documented, typed code should score reasonably on maintainability, " \
+            f"got {maintainable_result['maintainability_score']}"
+        # Maintainable code (with docs, type hints, error handling) should score higher than complex code
+        assert maintainable_result["maintainability_score"] > complex_result["maintainability_score"], \
+            f"Maintainable code should have higher maintainability score than complex code. " \
+            f"Maintainable: {maintainable_result['maintainability_score']}, " \
+            f"Complex: {complex_result['maintainability_score']}"
         
         # Business logic validation: Overall score relationships
         assert maintainable_result["overall_score"] > complex_result["overall_score"], \
-            "Maintainable code should score higher overall than complex code"
+            f"Maintainable code should score higher overall than complex code. " \
+            f"Maintainable: {maintainable_result['overall_score']}, " \
+            f"Complex: {complex_result['overall_score']}"
         assert simple_result["overall_score"] > insecure_result["overall_score"], \
-            "Simple secure code should score higher overall than insecure code"
+            f"Simple secure code should score higher overall than insecure code. " \
+            f"Simple: {simple_result['overall_score']}, " \
+            f"Insecure: {insecure_result['overall_score']}"
+        
+        # Additional validation: Verify all scores are in valid ranges
+        for code_type, result in [("simple", simple_result), ("complex", complex_result), 
+                                  ("insecure", insecure_result), ("maintainable", maintainable_result)]:
+            assert 0.0 <= result["complexity_score"] <= 10.0, \
+                f"{code_type} code complexity_score should be 0-10, got {result['complexity_score']}"
+            assert 0.0 <= result["security_score"] <= 10.0, \
+                f"{code_type} code security_score should be 0-10, got {result['security_score']}"
+            assert 0.0 <= result["maintainability_score"] <= 10.0, \
+                f"{code_type} code maintainability_score should be 0-10, got {result['maintainability_score']}"
+            assert 0.0 <= result["overall_score"] <= 100.0, \
+                f"{code_type} code overall_score should be 0-100, got {result['overall_score']}"
 
     def test_overall_score_formula_with_known_values(self, tmp_path: Path):
         """Test that overall score formula matches specification with known values (Story 18.1)."""
@@ -876,3 +905,124 @@ test.py:2: error: Incompatible return type (got "int", expected "None") [return-
             f"Formula should be: ((10 - {complexity}) * {default_complexity} + " \
             f"{security} * {default_security} + {maintainability} * {default_maintainability} + " \
             f"{coverage} * {default_coverage} + {performance} * {default_performance}) * 10"
+    
+    def test_overall_score_formula_edge_cases(self, tmp_path: Path):
+        """Test overall score formula with edge cases (Story 16.3)."""
+        scorer = CodeScorer()
+        
+        # Test with custom weights for edge case testing
+        class EdgeCaseWeights:
+            complexity = 0.20
+            security = 0.30
+            maintainability = 0.25
+            test_coverage = 0.15
+            performance = 0.10
+        
+        scorer.weights = EdgeCaseWeights()
+        
+        # Test case: Verify formula handles all metrics correctly
+        test_file = tmp_path / "test.py"
+        test_file.write_text(SIMPLE_CODE)
+        result = scorer.score_file(test_file, SIMPLE_CODE)
+        
+        # Verify formula handles all metrics correctly
+        complexity = result["complexity_score"]
+        security = result["security_score"]
+        maintainability = result["maintainability_score"]
+        coverage = result["test_coverage_score"]
+        performance = result["performance_score"]
+        
+        # Calculate expected using formula
+        expected = (
+            (10 - complexity) * EdgeCaseWeights.complexity +
+            security * EdgeCaseWeights.security +
+            maintainability * EdgeCaseWeights.maintainability +
+            coverage * EdgeCaseWeights.test_coverage +
+            performance * EdgeCaseWeights.performance
+        ) * 10
+        
+        assert abs(result["overall_score"] - expected) < 0.01, \
+            f"Formula should handle all metrics correctly. Expected {expected}, got {result['overall_score']}"
+        
+        # Verify complexity inversion: lower complexity_score = better overall score
+        # (complexity_score is inverted in formula: (10 - complexity_score))
+        assert (10 - complexity) >= 0, \
+            f"Complexity inversion (10 - complexity_score) should be non-negative, got {10 - complexity}"
+        assert (10 - complexity) <= 10, \
+            f"Complexity inversion (10 - complexity_score) should be <= 10, got {10 - complexity}"
+    
+    def test_weighted_average_with_different_weight_configs(self, tmp_path: Path):
+        """Test that changing weights produces expected changes in overall score (Story 16.3)."""
+        scorer = CodeScorer()
+        test_file = tmp_path / "test.py"
+        test_file.write_text(SIMPLE_CODE)
+        
+        # Test with security-focused weights (higher security weight)
+        class SecurityFocusedWeights:
+            complexity = 0.10
+            security = 0.50  # Higher weight on security
+            maintainability = 0.20
+            test_coverage = 0.10
+            performance = 0.10
+        
+        scorer.weights = SecurityFocusedWeights()
+        security_focused_result = scorer.score_file(test_file, SIMPLE_CODE)
+        
+        # Test with complexity-focused weights (higher complexity weight)
+        class ComplexityFocusedWeights:
+            complexity = 0.40  # Higher weight on complexity
+            security = 0.20
+            maintainability = 0.20
+            test_coverage = 0.10
+            performance = 0.10
+        
+        scorer.weights = ComplexityFocusedWeights()
+        complexity_focused_result = scorer.score_file(test_file, SIMPLE_CODE)
+        
+        # Verify weights sum to 1.0
+        assert abs(
+            SecurityFocusedWeights.complexity + SecurityFocusedWeights.security +
+            SecurityFocusedWeights.maintainability + SecurityFocusedWeights.test_coverage +
+            SecurityFocusedWeights.performance - 1.0
+        ) < 0.0001, "Security-focused weights must sum to 1.0"
+        
+        assert abs(
+            ComplexityFocusedWeights.complexity + ComplexityFocusedWeights.security +
+            ComplexityFocusedWeights.maintainability + ComplexityFocusedWeights.test_coverage +
+            ComplexityFocusedWeights.performance - 1.0
+        ) < 0.0001, "Complexity-focused weights must sum to 1.0"
+        
+        # With security-focused weights, security score should have more impact
+        # With complexity-focused weights, complexity score should have more impact
+        # The overall scores may differ based on which metric is weighted more
+        # (This validates that weights actually affect the calculation)
+        assert security_focused_result["overall_score"] > 0, \
+            "Security-focused weights should produce valid overall score"
+        assert complexity_focused_result["overall_score"] > 0, \
+            "Complexity-focused weights should produce valid overall score"
+        
+        # Both should use the same formula, just with different weights
+        # Verify both calculations are correct
+        security_expected = (
+            (10 - security_focused_result["complexity_score"]) * SecurityFocusedWeights.complexity +
+            security_focused_result["security_score"] * SecurityFocusedWeights.security +
+            security_focused_result["maintainability_score"] * SecurityFocusedWeights.maintainability +
+            security_focused_result["test_coverage_score"] * SecurityFocusedWeights.test_coverage +
+            security_focused_result["performance_score"] * SecurityFocusedWeights.performance
+        ) * 10
+        
+        complexity_expected = (
+            (10 - complexity_focused_result["complexity_score"]) * ComplexityFocusedWeights.complexity +
+            complexity_focused_result["security_score"] * ComplexityFocusedWeights.security +
+            complexity_focused_result["maintainability_score"] * ComplexityFocusedWeights.maintainability +
+            complexity_focused_result["test_coverage_score"] * ComplexityFocusedWeights.test_coverage +
+            complexity_focused_result["performance_score"] * ComplexityFocusedWeights.performance
+        ) * 10
+        
+        assert abs(security_focused_result["overall_score"] - security_expected) < 0.01, \
+            f"Security-focused weighted average calculation incorrect. " \
+            f"Expected {security_expected}, got {security_focused_result['overall_score']}"
+        
+        assert abs(complexity_focused_result["overall_score"] - complexity_expected) < 0.01, \
+            f"Complexity-focused weighted average calculation incorrect. " \
+            f"Expected {complexity_expected}, got {complexity_focused_result['overall_score']}"

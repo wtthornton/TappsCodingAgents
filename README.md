@@ -28,6 +28,10 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
   - **Multi-Agent Orchestration** (Parallel execution with conflict resolution)
   - **Context7 Integration** (KB-first caching + analytics)
   - **NUC Optimization** (Resource monitoring, fallback strategy)
+- **User Role Templates** ✅: Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
+  - Customize agent behavior based on user role
+  - 5 built-in role templates with sensible defaults
+  - Fully customizable and extensible
 - **Claude Code Compatible**: Native Agent Skills format
 - **Prompt Enhancement Utility**: Transform simple prompts into comprehensive, context-aware prompts
 - **Project Profiling**: Automatic detection of project characteristics for context-aware expert advice
@@ -276,6 +280,8 @@ TappsCodingAgents/
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - System architecture and design
 - **[Configuration Guide](docs/CONFIGURATION.md)** - Complete configuration reference
 - **[Developer Guide](docs/DEVELOPER_GUIDE.md)** - Development setup and workflows
+- **[User Role Templates Guide](docs/USER_ROLE_TEMPLATES_GUIDE.md)** - Customize agents by role (senior-dev, junior-dev, tech-lead, PM, QA)
+- **[Customization Guide](docs/CUSTOMIZATION_GUIDE.md)** - Project-specific agent customizations
 
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills

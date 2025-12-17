@@ -273,11 +273,24 @@ class TestWorkflowExecutor:
         # Consult experts for step
         result = await executor.consult_experts_for_step()
 
-        assert result is not None
-        assert result["domain"] == "security"
-        assert result["experts_consulted"] == ["expert-security"]
-        assert result["weighted_answer"] == "Use secure protocols"
-        assert result["confidence"] == 0.9
+        # Result should be a dict with expected structure when experts are consulted
+        assert result is not None, "Expert consultation should return a result dict when consults are configured"
+        assert isinstance(result, dict), \
+            f"Result should be a dict, got {type(result)}"
+        assert "domain" in result, "Result should contain 'domain' key"
+        assert "experts_consulted" in result, "Result should contain 'experts_consulted' key"
+        assert "weighted_answer" in result, "Result should contain 'weighted_answer' key"
+        assert "confidence" in result, "Result should contain 'confidence' key"
+        
+        # Validate specific values
+        assert result["domain"] == "security", \
+            f"Expected domain to be 'security', got {result.get('domain')}"
+        assert result["experts_consulted"] == ["expert-security"], \
+            f"Expected experts_consulted to be ['expert-security'], got {result.get('experts_consulted')}"
+        assert result["weighted_answer"] == "Use secure protocols", \
+            f"Expected weighted_answer to be 'Use secure protocols', got {result.get('weighted_answer')}"
+        assert result["confidence"] == 0.9, \
+            f"Expected confidence to be 0.9, got {result.get('confidence')}"
 
         # Verify consultation was stored in state
         assert "expert_consultations" in executor.state.variables
@@ -292,12 +305,15 @@ class TestWorkflowExecutor:
         executor.start(workflow)
 
         # Verify step has no consults configured
-        assert executor.step_requires_expert_consultation() is False
+        assert executor.step_requires_expert_consultation() is False, \
+            "Step should not require expert consultation when no consults are configured"
         
         result = await executor.consult_experts_for_step()
 
-        # Should return None when step has no consults
-        assert result is None
+        # Should return None when step has no consults (no consultation needed)
+        assert result is None, \
+            "Result should be None when step has no expert consults configured, " \
+            f"got {type(result)}: {result}"
 
     @pytest.mark.asyncio
     async def test_consult_experts_for_step_with_custom_query(self, executor, tmp_path):

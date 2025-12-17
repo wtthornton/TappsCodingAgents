@@ -114,9 +114,16 @@ class TestContext7Commands:
         result = await commands.cmd_docs("nonexistent", "topic")
 
         # Should return error since MCP Gateway is not set
-        assert result["success"] is False
-        assert "error" in result
-        assert "MCP Gateway" in result["error"] or "gateway" in result["error"].lower()
+        assert result["success"] is False, \
+            f"Expected success=False when MCP Gateway is not set, got {result.get('success')}"
+        assert "error" in result, \
+            "Result should contain 'error' key when operation fails"
+        # Validate specific error message about MCP Gateway
+        error_msg = result["error"].lower()
+        assert "mcp" in error_msg or "gateway" in error_msg, \
+            f"Error message should mention MCP Gateway, got: {result.get('error')}"
+        assert len(result["error"]) > 0, \
+            "Error message should not be empty"
 
     @pytest.mark.asyncio
     async def test_cmd_resolve_disabled(self, disabled_commands):
@@ -227,8 +234,15 @@ class TestContext7Commands:
 
         result = await commands.cmd_search("lib", limit=2)
 
-        assert result["success"] is True
-        assert result["count"] <= 2
+        assert result["success"] is True, \
+            f"Search should succeed, got success={result.get('success')}"
+        # With 5 entries stored and limit=2, should return exactly 2 results
+        assert result["count"] == 2, \
+            f"With limit=2 and 5 entries stored, should return exactly 2 results, got {result.get('count')}"
+        assert "results" in result, \
+            "Search result should contain 'results' key"
+        assert len(result.get("results", [])) == 2, \
+            f"Results list should contain exactly 2 items, got {len(result.get('results', []))}"
 
     @pytest.mark.asyncio
     async def test_cmd_refresh_disabled(self, disabled_commands):

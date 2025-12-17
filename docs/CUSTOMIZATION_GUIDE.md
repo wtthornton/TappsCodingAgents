@@ -1,10 +1,31 @@
 # Agent Customization Guide
 
-This guide explains how to customize agent behaviors using customization files. Customizations allow you to override agent personas, commands, and dependencies without modifying base agent definitions, ensuring your customizations persist through framework updates.
+This guide explains how to customize agent behaviors using customization files and user role templates. Customizations allow you to override agent personas, commands, and dependencies without modifying base agent definitions, ensuring your customizations persist through framework updates.
+
+## Customization Options
+
+TappsCodingAgents provides two ways to customize agent behavior:
+
+1. **User Role Templates** - Role-specific defaults (senior-dev, junior-dev, tech-lead, PM, QA)
+   - See [User Role Templates Guide](USER_ROLE_TEMPLATES_GUIDE.md) for details
+   - Applied before project customizations
+   - Provides sensible defaults based on your role
+
+2. **Project Customizations** - Project-specific overrides
+   - This guide covers project customizations
+   - Applied after role templates (can override role template settings)
+   - Stored in `.tapps-agents/customizations/`
+
+**Precedence Order:**
+1. Base agent configuration
+2. User role template (if selected)
+3. Project customizations (highest priority)
 
 ## Overview
 
 Agent customizations are stored in `.tapps-agents/customizations/` directory as YAML files. Each agent can have its own customization file following the naming pattern: `{agent-id}-custom.yaml`.
+
+> **Note**: If you're using a user role template, it will be applied first, and then your customizations will override any role template settings. This allows you to start with sensible role-based defaults and fine-tune as needed.
 
 ### Key Benefits
 

@@ -3,6 +3,47 @@ Top-level command parser definitions
 """
 import argparse
 
+# Constants for skill-template command
+AGENT_TYPES = [
+    "analyst",
+    "architect",
+    "debugger",
+    "designer",
+    "documenter",
+    "enhancer",
+    "implementer",
+    "improver",
+    "ops",
+    "orchestrator",
+    "planner",
+    "reviewer",
+    "tester",
+]
+
+TOOL_OPTIONS = [
+    "Read",
+    "Write",
+    "Edit",
+    "Grep",
+    "Glob",
+    "Bash",
+    "CodebaseSearch",
+    "Terminal",
+]
+
+CAPABILITY_CATEGORIES = [
+    "code_generation",
+    "code_review",
+    "testing",
+    "documentation",
+    "debugging",
+    "refactoring",
+    "analysis",
+    "architecture",
+    "design",
+    "planning",
+]
+
 
 def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
     """Add all top-level command parsers"""
@@ -87,6 +128,90 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
 
     # List command
     workflow_subparsers.add_parser("list", help="List all available workflow presets")
+    
+    # State management commands (Epic 12)
+    state_parser = workflow_subparsers.add_parser(
+        "state",
+        help="Workflow state management (list, show, cleanup, resume)",
+        description="Manage workflow state persistence and resume capabilities.",
+    )
+    state_subparsers = state_parser.add_subparsers(
+        dest="state_command", help="State management commands", required=True
+    )
+    
+    state_list_parser = state_subparsers.add_parser(
+        "list",
+        help="List all persisted workflow states",
+    )
+    state_list_parser.add_argument(
+        "--workflow-id",
+        help="Filter by specific workflow ID",
+    )
+    state_list_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    
+    state_show_parser = state_subparsers.add_parser(
+        "show",
+        help="Show details of a specific workflow state",
+    )
+    state_show_parser.add_argument(
+        "workflow_id",
+        help="Workflow ID to show",
+    )
+    state_show_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    
+    state_cleanup_parser = state_subparsers.add_parser(
+        "cleanup",
+        help="Clean up old workflow states",
+    )
+    state_cleanup_parser.add_argument(
+        "--retention-days",
+        type=int,
+        default=30,
+        help="Keep states newer than this many days (default: 30)",
+    )
+    state_cleanup_parser.add_argument(
+        "--max-states-per-workflow",
+        type=int,
+        default=10,
+        help="Maximum states to keep per workflow (default: 10)",
+    )
+    state_cleanup_parser.add_argument(
+        "--remove-completed",
+        action="store_true",
+        default=True,
+        help="Remove states for completed workflows (default: True)",
+    )
+    state_cleanup_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be removed without actually removing",
+    )
+    
+    state_resume_parser = workflow_subparsers.add_parser(
+        "resume",
+        help="Resume a workflow from last checkpoint",
+        description="Resume workflow execution from the last saved checkpoint.",
+    )
+    state_resume_parser.add_argument(
+        "--workflow-id",
+        help="Specific workflow ID to resume (defaults to last workflow)",
+    )
+    state_resume_parser.add_argument(
+        "--validate",
+        action="store_true",
+        default=True,
+        help="Validate state integrity before resuming (default: True)",
+    )
     
     # Recommend command
     recommend_parser = workflow_subparsers.add_parser(
@@ -331,5 +456,51 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
         "--overwrite",
         action="store_true",
         help="Overwrite existing customization file if it exists",
+    )
+
+    # Custom Skill template generator command
+    skill_template_parser = subparsers.add_parser(
+        "skill-template",
+        help="Generate custom Skill template for Cursor Skills",
+        description="Generate a custom Skill template that can be used in Cursor. Skills extend the framework's capabilities with domain-specific agents.",
+    )
+    skill_template_parser.add_argument(
+        "skill_name",
+        help="Name of the Skill (e.g., 'my-custom-skill')",
+    )
+    skill_template_parser.add_argument(
+        "--type",
+        choices=AGENT_TYPES,
+        help="Agent type for template defaults (analyst, architect, implementer, etc.)",
+    )
+    skill_template_parser.add_argument(
+        "--description",
+        help="Custom description for the Skill",
+    )
+    skill_template_parser.add_argument(
+        "--tools",
+        nargs="+",
+        choices=TOOL_OPTIONS,
+        help="Allowed tools (space-separated list)",
+    )
+    skill_template_parser.add_argument(
+        "--capabilities",
+        nargs="+",
+        choices=CAPABILITY_CATEGORIES,
+        help="Capabilities (space-separated list)",
+    )
+    skill_template_parser.add_argument(
+        "--model-profile",
+        help="Model profile name (defaults to {skill_name}_profile)",
+    )
+    skill_template_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite existing Skill file if it exists",
+    )
+    skill_template_parser.add_argument(
+        "--interactive",
+        action="store_true",
+        help="Interactive mode: prompt for all options",
     )
 

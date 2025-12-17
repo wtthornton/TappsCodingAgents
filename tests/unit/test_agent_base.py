@@ -101,8 +101,14 @@ class TestBaseAgent:
         await agent.activate(temp_project_dir)
 
         # Config should be loaded and contain the values we wrote
-        assert agent.config is not None
-        assert agent.config.project_name == "test-project"
+        assert agent.config is not None, "Config should be loaded after activate"
+        # Verify config is a Pydantic model instance (ProjectConfig)
+        assert hasattr(agent.config, 'project_name'), \
+            "Config should have project_name attribute"
+        assert agent.config.project_name == "test-project", \
+            f"Config should contain project_name='test-project', got {agent.config.project_name}"
+        # Note: ProjectConfig ignores extra fields (model_config: extra="ignore")
+        # So 'test' and 'another' fields are ignored, only defined fields like project_name are loaded
 
     @pytest.mark.asyncio
     async def test_activate_loads_domain_config(
@@ -130,13 +136,32 @@ class TestBaseAgent:
         config_dir.mkdir(exist_ok=True)
         customizations_dir = config_dir / "customizations"
         customizations_dir.mkdir(exist_ok=True)
-        custom_file = customizations_dir / "test-custom.yaml"
-        custom_file.write_text("custom: value")
+        # Loader expects {agent_id}-custom.yaml format (agent_id is "test-agent")
+        # Create a valid customization file according to schema
+        custom_file = customizations_dir / "test-agent-custom.yaml"
+        custom_file.write_text("""agent_id: test-agent
+persona_overrides:
+  additional_principles:
+    - "Test principle"
+  custom_instructions: "Test custom instructions"
+""")
 
         agent = base_agent
         await agent.activate(temp_project_dir)
 
-        # Customizations should be attempted to load
+        # Customizations should be loaded as a dict when valid customization file exists
+        assert agent.customizations is not None, \
+            "Customizations should be loaded when valid customization file exists"
+        assert isinstance(agent.customizations, dict), \
+            f"Customizations should be a dict, got {type(agent.customizations)}"
+        assert "agent_id" in agent.customizations, \
+            f"Customizations dict should contain 'agent_id' key, got keys: {list(agent.customizations.keys())}"
+        assert agent.customizations["agent_id"] == "test-agent", \
+            f"Customizations should contain agent_id='test-agent', got {agent.customizations.get('agent_id')}"
+        assert "persona_overrides" in agent.customizations, \
+            "Customizations should contain 'persona_overrides' key"
+        assert "custom_instructions" in agent.customizations.get("persona_overrides", {}), \
+            "Customizations persona_overrides should contain 'custom_instructions'"
 
     @pytest.mark.asyncio
     async def test_activate_no_config_files(self, temp_project_dir: Path, base_agent):
@@ -279,7 +304,7 @@ class TestBaseAgent:
         # Create a suspicious path with path traversal
         suspicious = tmp_path / ".." / ".." / "etc" / "passwd"
         
-        # Should raise FileNotFoundError for path traversal attempts (file doesn't exist)
-        # or ValueError if path traversal is detected
-        with pytest.raises((ValueError, FileNotFoundError)):
+        # Should raise ValueError for path traversal attempts (path validation should detect this)
+        # FileNotFoundError would only occur if the file doesn't exist, but path validation should catch traversal first
+        with pytest.raises(ValueError, match=r".*path.*traversal|.*outside.*allowed|.*invalid.*path"):
             agent._validate_path(suspicious)

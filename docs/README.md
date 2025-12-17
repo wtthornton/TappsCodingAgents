@@ -21,6 +21,10 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md)** - Expert configuration details
 - **[Built-in Experts Guide](BUILTIN_EXPERTS_GUIDE.md)** - Built-in technical domains
 
+### Customization
+- **[User Role Templates Guide](USER_ROLE_TEMPLATES_GUIDE.md)** - Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
+- **[Customization Guide](CUSTOMIZATION_GUIDE.md)** - Project-specific agent customizations
+
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)**
 - **[Background Agents Guide](BACKGROUND_AGENTS_GUIDE.md)**

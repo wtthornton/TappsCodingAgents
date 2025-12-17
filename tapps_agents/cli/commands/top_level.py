@@ -423,8 +423,32 @@ def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
+    from ...workflow.state_manager import AdvancedStateManager
+    from pathlib import Path
+    import json
 
     preset_name = getattr(args, "preset", None)
+    
+    # Handle state management subcommands (Epic 12)
+    if preset_name == "state":
+        state_command = getattr(args, "state_command", None)
+        if state_command == "list":
+            handle_workflow_state_list_command(args)
+            return
+        elif state_command == "show":
+            handle_workflow_state_show_command(args)
+            return
+        elif state_command == "cleanup":
+            handle_workflow_state_cleanup_command(args)
+            return
+        else:
+            print("Error: Unknown state command. Use 'list', 'show', or 'cleanup'.", file=sys.stderr)
+            sys.exit(1)
+    
+    # Handle resume subcommand (Epic 12)
+    if preset_name == "resume":
+        handle_workflow_resume_command(args)
+        return
     
     # Handle recommend subcommand
     if preset_name == "recommend":
@@ -577,6 +601,134 @@ def handle_customize_command(args: object) -> None:
             sys.exit(1)
     else:
         print("Error: Unknown customize command", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_skill_template_command(args: object) -> None:
+    """Handle skill-template command"""
+    from pathlib import Path
+    from ...core.skill_template import create_skill_file
+
+    skill_name = getattr(args, "skill_name", None)
+    if not skill_name:
+        print("Error: skill_name is required", file=sys.stderr)
+        sys.exit(1)
+
+    # Get options
+    agent_type = getattr(args, "type", None)
+    description = getattr(args, "description", None)
+    tools = getattr(args, "tools", None)
+    capabilities = getattr(args, "capabilities", None)
+    model_profile = getattr(args, "model_profile", None)
+    overwrite = getattr(args, "overwrite", False)
+    interactive = getattr(args, "interactive", False)
+
+    project_root = Path.cwd()
+
+    # Interactive mode: prompt for options
+    if interactive:
+        try:
+            print("\n" + "=" * 60)
+            print("Custom Skill Template Generator (Interactive Mode)")
+            print("=" * 60)
+            print()
+
+            # Agent type
+            if not agent_type:
+                print("Available agent types:")
+                from ...core.skill_template import AGENT_TYPES
+                agent_types_list = AGENT_TYPES
+                for i, at in enumerate(agent_types_list, 1):
+                    print(f"  [{i}] {at}")
+                print("  [0] Custom (no defaults)")
+                try:
+                    choice = input("\nSelect agent type (0 for custom): ").strip()
+                    if choice and choice != "0":
+                        idx = int(choice) - 1
+                        if 0 <= idx < len(agent_types_list):
+                            agent_type = agent_types_list[idx]
+                except (ValueError, IndexError, EOFError, KeyboardInterrupt):
+                    pass
+
+            # Description
+            if not description:
+                try:
+                    desc_input = input("\nDescription (press Enter for default): ").strip()
+                    if desc_input:
+                        description = desc_input
+                except (EOFError, KeyboardInterrupt):
+                    pass
+
+            # Tools
+            if not tools:
+                print("\nAvailable tools (space-separated, press Enter for defaults):")
+                from ...core.skill_template import TOOL_OPTIONS
+                tool_options_list = TOOL_OPTIONS
+                print(f"  Options: {', '.join(tool_options_list)}")
+                try:
+                    tools_input = input("Tools: ").strip()
+                    if tools_input:
+                        tools = tools_input.split()
+                except (EOFError, KeyboardInterrupt):
+                    pass
+
+            # Capabilities
+            if not capabilities:
+                print("\nAvailable capabilities (space-separated, press Enter for defaults):")
+                from ...core.skill_template import CAPABILITY_CATEGORIES
+                capability_categories_list = CAPABILITY_CATEGORIES
+                print(f"  Options: {', '.join(capability_categories_list)}")
+                try:
+                    caps_input = input("Capabilities: ").strip()
+                    if caps_input:
+                        capabilities = caps_input.split()
+                except (EOFError, KeyboardInterrupt):
+                    pass
+
+            # Model profile
+            if not model_profile:
+                try:
+                    profile_input = input(f"\nModel profile (press Enter for '{skill_name}_profile'): ").strip()
+                    if profile_input:
+                        model_profile = profile_input
+                except (EOFError, KeyboardInterrupt):
+                    pass
+
+        except (EOFError, KeyboardInterrupt):
+            print("\nCancelled.", file=sys.stderr)
+            sys.exit(0)
+
+    try:
+        result = create_skill_file(
+            skill_name=skill_name,
+            project_root=project_root,
+            agent_type=agent_type,
+            description=description,
+            allowed_tools=tools,
+            capabilities=capabilities,
+            model_profile=model_profile,
+            overwrite=overwrite,
+        )
+
+        if result["success"]:
+            print(f"\n{'='*60}")
+            print("Custom Skill Template Generated")
+            print(f"{'='*60}")
+            print(f"Skill Name: {skill_name}")
+            print(f"File: {result['file_path']}")
+            print(f"Directory: {result['skill_dir']}")
+            print("\nNext steps:")
+            print(f"  1. Edit {result['file_path']} to customize your Skill")
+            print("  2. Add any additional files needed for your Skill")
+            print("  3. Test your Skill in Cursor")
+            print("  4. See docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md for usage")
+        else:
+            print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
+            sys.exit(1)
+    except Exception as e:
+        print(f"Error generating Skill template: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 
@@ -1043,4 +1195,214 @@ def handle_analytics_command(args: object) -> None:
             print(f"  Active Workflows: {status['active_workflows']}")
             print(f"  Completed Today: {status['completed_workflows_today']}")
             print(f"  Failed Today: {status['failed_workflows_today']}")
+
+
+# Epic 12: State Management Commands
+
+def handle_workflow_state_list_command(args: object) -> None:
+    """Handle 'workflow state list' command (Epic 12)"""
+    from ...workflow.state_manager import AdvancedStateManager
+    from pathlib import Path
+    import json
+    from datetime import datetime
+
+    state_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+    manager = AdvancedStateManager(state_dir)
+    
+    workflow_id = getattr(args, "workflow_id", None)
+    output_format = getattr(args, "format", "text")
+    
+    states = manager.list_states(workflow_id=workflow_id)
+    
+    if output_format == "json":
+        print(json.dumps(states, indent=2, default=str))
+        return
+    
+    # Text format
+    if not states:
+        print("No workflow states found.")
+        return
+    
+    print(f"\n{'='*80}")
+    print("Workflow States")
+    print(f"{'='*80}\n")
+    
+    for state in states:
+        workflow_id_val = state.get("workflow_id", "unknown")
+        saved_at = state.get("saved_at", "")
+        status = state.get("status", "unknown")
+        current_step = state.get("current_step", "N/A")
+        
+        # Format saved_at
+        if isinstance(saved_at, str):
+            try:
+                saved_at_dt = datetime.fromisoformat(saved_at)
+                saved_at_str = saved_at_dt.strftime("%Y-%m-%d %H:%M:%S")
+            except ValueError:
+                saved_at_str = saved_at
+        else:
+            saved_at_str = str(saved_at)
+        
+        print(f"Workflow ID: {workflow_id_val}")
+        print(f"  Status: {status}")
+        print(f"  Current Step: {current_step}")
+        print(f"  Saved At: {saved_at_str}")
+        print()
+
+
+def handle_workflow_state_show_command(args: object) -> None:
+    """Handle 'workflow state show' command (Epic 12)"""
+    from ...workflow.state_manager import AdvancedStateManager
+    from pathlib import Path
+    import json
+
+    workflow_id = getattr(args, "workflow_id", None)
+    if not workflow_id:
+        print("Error: workflow_id is required", file=sys.stderr)
+        sys.exit(1)
+    
+    output_format = getattr(args, "format", "text")
+    
+    state_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+    manager = AdvancedStateManager(state_dir)
+    
+    try:
+        state, metadata = manager.load_state(workflow_id=workflow_id, validate=False)
+        
+        if output_format == "json":
+            result = {
+                "workflow_id": state.workflow_id,
+                "status": state.status,
+                "current_step": state.current_step,
+                "completed_steps": state.completed_steps,
+                "skipped_steps": state.skipped_steps,
+                "metadata": metadata.to_dict() if hasattr(metadata, "to_dict") else str(metadata),
+            }
+            print(json.dumps(result, indent=2, default=str))
+            return
+        
+        # Text format
+        print(f"\n{'='*80}")
+        print(f"Workflow State: {workflow_id}")
+        print(f"{'='*80}\n")
+        print(f"Status: {state.status}")
+        print(f"Current Step: {state.current_step or 'N/A'}")
+        print(f"Completed Steps: {len(state.completed_steps)}")
+        print(f"Skipped Steps: {len(state.skipped_steps)}")
+        if state.error:
+            print(f"Error: {state.error}")
+        print()
+        
+    except Exception as e:
+        print(f"Error loading state: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_workflow_state_cleanup_command(args: object) -> None:
+    """Handle 'workflow state cleanup' command (Epic 12)"""
+    from ...workflow.state_manager import AdvancedStateManager
+    from pathlib import Path
+
+    state_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+    manager = AdvancedStateManager(state_dir)
+    
+    retention_days = getattr(args, "retention_days", 30)
+    max_states = getattr(args, "max_states_per_workflow", 10)
+    remove_completed = getattr(args, "remove_completed", True)
+    dry_run = getattr(args, "dry_run", False)
+    
+    if dry_run:
+        print("DRY RUN: Would clean up states with the following settings:")
+        print(f"  Retention: {retention_days} days")
+        print(f"  Max states per workflow: {max_states}")
+        print(f"  Remove completed: {remove_completed}")
+        print()
+        # TODO: Implement dry-run preview
+        print("Dry-run preview not yet implemented. Use without --dry-run to perform cleanup.")
+        return
+    
+    try:
+        result = manager.cleanup_old_states(
+            retention_days=retention_days,
+            max_states_per_workflow=max_states,
+            remove_completed=remove_completed,
+        )
+        
+        print(f"\n{'='*80}")
+        print("State Cleanup Complete")
+        print(f"{'='*80}\n")
+        print(f"Removed: {result['removed_count']} states")
+        print(f"Freed: {result['removed_size_mb']} MB")
+        print(f"Workflows cleaned: {result['workflows_cleaned']}")
+        print()
+        
+    except Exception as e:
+        print(f"Error during cleanup: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_workflow_resume_command(args: object) -> None:
+    """Handle 'workflow resume' command (Epic 12)"""
+    from ...workflow.executor import WorkflowExecutor
+    from pathlib import Path
+
+    workflow_id = getattr(args, "workflow_id", None)
+    validate = getattr(args, "validate", True)
+    
+    executor = WorkflowExecutor(auto_detect=False, auto_mode=True)
+    
+    try:
+        # Load state
+        if workflow_id:
+            # Load specific workflow state
+            state_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+            from ...workflow.state_manager import AdvancedStateManager
+            manager = AdvancedStateManager(state_dir)
+            state, metadata = manager.load_state(workflow_id=workflow_id, validate=validate)
+            executor.state = state
+            # Load workflow from metadata
+            if metadata.workflow_path:
+                from ...workflow.parser import WorkflowParser
+                parser = WorkflowParser()
+                executor.workflow = parser.parse_file(Path(metadata.workflow_path))
+        else:
+            # Load last state
+            executor.state = executor.load_last_state(validate=validate)
+            # Load workflow from state variables
+            workflow_path = executor.state.variables.get("_workflow_path")
+            if workflow_path:
+                from ...workflow.parser import WorkflowParser
+                parser = WorkflowParser()
+                executor.workflow = parser.parse_file(Path(workflow_path))
+        
+        if not executor.state or not executor.workflow:
+            print("Error: Could not load workflow state or workflow definition", file=sys.stderr)
+            sys.exit(1)
+        
+        print(f"\n{'='*60}")
+        print(f"Resuming: {executor.workflow.name}")
+        print(f"{'='*60}")
+        print(f"Workflow ID: {executor.state.workflow_id}")
+        print(f"Status: {executor.state.status}")
+        print(f"Current Step: {executor.state.current_step or 'N/A'}")
+        print()
+        
+        # Resume execution
+        result = asyncio.run(executor.run())
+        
+        if result.status == "completed":
+            print(f"\n{'='*60}")
+            print("Workflow completed successfully!")
+            print(f"{'='*60}")
+        elif result.status == "failed":
+            print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)
+            sys.exit(1)
+        else:
+            print(f"\nWorkflow status: {result.status}")
+            
+    except Exception as e:
+        print(f"Error resuming workflow: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
 

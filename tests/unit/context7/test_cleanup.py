@@ -232,9 +232,16 @@ class TestKBCleanup:
             # Cache was over limit, so cleanup should have happened
             assert result.entries_removed > 0 or result.bytes_freed > 0, \
                 "Expected cleanup to remove entries or free bytes when cache exceeded limit"
+            assert result.reason == "size_cleanup", \
+                f"Expected cleanup reason to be 'size_cleanup' when cache exceeded limit, got {result.reason}"
         else:
             # Cache was already within limit, so no cleanup needed
-            assert result.entries_removed >= 0  # No cleanup needed, but result should be valid
+            assert result.entries_removed == 0, \
+                "When cache is within limit, no entries should be removed"
+            assert result.bytes_freed == 0, \
+                "When cache is within limit, no bytes should be freed"
+            assert result.reason == "cache_size_ok", \
+                f"Expected cleanup reason to be 'cache_size_ok' when within limit, got {result.reason}"
 
     def test_cleanup_by_age(self, cleanup, kb_cache, sample_entries):
         """Test cleanup by age."""
@@ -270,13 +277,23 @@ class TestKBCleanup:
         result = cleanup.cleanup_by_age(max_age_days=30)
 
         # Should remove entries older than 30 days
-        assert result.entries_removed >= 1  # At least the old entry should be removed
-        assert result.reason == "age_cleanup"
+        # The old entry (60 days old) should be removed, recent entry (5 days old) should be kept
+        assert result.entries_removed == 1, \
+            f"Expected exactly 1 entry to be removed (old entry 60 days > 30 days), got {result.entries_removed}"
+        assert result.reason == "age_cleanup", \
+            f"Expected cleanup reason to be 'age_cleanup', got {result.reason}"
         
-        # Verify old entry was actually removed
+        # Verify old entry was actually removed from cache
         metadata_after = cleanup.metadata_manager.load_cache_index()
-        if "old_lib" in metadata_after.libraries:
-            assert "old_topic" not in metadata_after.libraries["old_lib"].get("topics", {})
+        assert "old_lib" not in metadata_after.libraries or \
+               "old_topic" not in metadata_after.libraries.get("old_lib", {}).get("topics", {}), \
+            "Old entry (60 days old) should be removed from cache when max_age_days=30"
+        
+        # Verify recent entry was preserved
+        assert "recent_lib" in metadata_after.libraries, \
+            "Recent entry (5 days old) should be preserved when max_age_days=30"
+        assert "recent_topic" in metadata_after.libraries["recent_lib"].get("topics", {}), \
+            "Recent entry topic should still exist in cache"
 
     def test_cleanup_by_age_ignores_policy(self, cleanup, kb_cache):
         """Test cleanup by age with ignore_staleness_policy."""
@@ -301,8 +318,17 @@ class TestKBCleanup:
         result = cleanup.cleanup_by_age(max_age_days=1, ignore_staleness_policy=True)
 
         # Should check based on max_age_days only and remove old entry
-        assert result.entries_removed >= 1  # Old entry should be removed
-        assert result.reason == "age_cleanup"
+        # Entry is 2 days old, max_age_days=1, so it should be removed
+        assert result.entries_removed == 1, \
+            f"Expected exactly 1 entry to be removed (2 days old > 1 day max), got {result.entries_removed}"
+        assert result.reason == "age_cleanup", \
+            f"Expected cleanup reason to be 'age_cleanup', got {result.reason}"
+        
+        # Verify old entry was actually removed from cache
+        metadata_after = cleanup.metadata_manager.load_cache_index()
+        assert "old_lib" not in metadata_after.libraries or \
+               "old_topic" not in metadata_after.libraries.get("old_lib", {}).get("topics", {}), \
+            "Old entry (2 days old) should be removed from cache when max_age_days=1"
 
     def test_cleanup_unused(self, cleanup, kb_cache):
         """Test cleanup of unused entries."""
@@ -331,13 +357,23 @@ class TestKBCleanup:
         result = cleanup.cleanup_unused(min_access_days=1)
 
         # Should remove entries not accessed recently
-        assert result.entries_removed >= 1  # At least unused entry should be removed
-        assert result.reason == "unused_cleanup"
+        # Unused entry should be removed, used entry should be preserved
+        assert result.entries_removed == 1, \
+            f"Expected exactly 1 entry to be removed (unused entry), got {result.entries_removed}"
+        assert result.reason == "unused_cleanup", \
+            f"Expected cleanup reason to be 'unused_cleanup', got {result.reason}"
         
-        # Verify unused entry was actually removed
+        # Verify unused entry was actually removed from cache
         metadata_after = cleanup.metadata_manager.load_cache_index()
-        if "unused_lib" in metadata_after.libraries:
-            assert "unused_topic" not in metadata_after.libraries["unused_lib"].get("topics", {})
+        assert "unused_lib" not in metadata_after.libraries or \
+               "unused_topic" not in metadata_after.libraries.get("unused_lib", {}).get("topics", {}), \
+            "Unused entry should be removed from cache when not accessed recently"
+        
+        # Verify used entry was preserved
+        assert "used_lib" in metadata_after.libraries, \
+            "Used entry should be preserved when accessed recently"
+        assert "used_topic" in metadata_after.libraries["used_lib"].get("topics", {}), \
+            "Used entry topic should still exist in cache"
 
     def test_cleanup_all(self, cleanup, kb_cache):
         """Test comprehensive cleanup."""
@@ -355,11 +391,18 @@ class TestKBCleanup:
         result = cleanup.cleanup_all()
 
         # Should perform all cleanup strategies
-        assert result.reason == "comprehensive_cleanup"
-        # cleanup_all should attempt cleanup, validate that result is valid
-        # (entries_removed may be 0 if cache was already clean, but result should exist)
-        assert result.entries_removed >= 0
-        assert result.bytes_freed >= 0
+        assert result.reason == "comprehensive_cleanup", \
+            f"Expected cleanup reason to be 'comprehensive_cleanup', got {result.reason}"
+        # With 5 entries and max_cache_size_bytes=100 (very low), cleanup should remove entries
+        # Validate that cleanup actually occurred (entries removed or bytes freed)
+        assert result.entries_removed > 0 or result.bytes_freed > 0, \
+            f"Expected cleanup_all to remove entries or free bytes with 5 entries and 100 byte limit, " \
+            f"got entries_removed={result.entries_removed}, bytes_freed={result.bytes_freed}"
+        # Verify cleanup result is valid (non-negative)
+        assert result.entries_removed >= 0, \
+            f"Entries removed should be non-negative, got {result.entries_removed}"
+        assert result.bytes_freed >= 0, \
+            f"Bytes freed should be non-negative, got {result.bytes_freed}"
 
     def test_get_cleanup_recommendations(self, cleanup, kb_cache):
         """Test getting cleanup recommendations."""

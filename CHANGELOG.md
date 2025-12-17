@@ -5,6 +5,18 @@ All notable changes to TappsCodingAgents will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **User Role Templates** - Role-specific agent customization system
+  - 5 built-in role templates: senior-developer, junior-developer, tech-lead, product-manager, qa-engineer
+  - Customize agent verbosity, workflow defaults, expert priorities, documentation preferences, and review depth
+  - Role templates provide sensible defaults that can be overridden by project customizations
+  - Configuration via `user_role` field in `.tapps-agents/config.yaml`
+  - Comprehensive guide: [User Role Templates Guide](docs/USER_ROLE_TEMPLATES_GUIDE.md)
+  - Template format documentation and examples in `templates/user_roles/`
+  - Role template loader integrated into agent activation system
+
 ## [2.0.3] - 2025-12-16
 
 ### Added

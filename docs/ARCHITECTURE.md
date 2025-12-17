@@ -58,7 +58,13 @@ See `docs/HOW_IT_WORKS.md` for the full “brain vs hands” model.
 
 Configuration is defined by Pydantic models in `tapps_agents/core/config.py` and loaded from `.tapps-agents/config.yaml` (searched upward from the working directory).
 
-See `docs/CONFIGURATION.md`.
+**User Role Templates:**
+- Role templates customize agent behavior based on user role (senior-dev, junior-dev, tech-lead, PM, QA)
+- Templates stored in `templates/user_roles/` and loaded via `tapps_agents/core/role_template_loader.py`
+- Applied during agent activation before project customizations
+- Configuration via `user_role` field in `.tapps-agents/config.yaml`
+
+See `docs/CONFIGURATION.md` and `docs/USER_ROLE_TEMPLATES_GUIDE.md`.
 
 ### 5) Workflow Engine
 

@@ -202,7 +202,24 @@ class TestContext7AgentHelper:
         result = helper.get_cache_statistics()
 
         assert result["enabled"] is True
-        assert "total_entries" in result or "error" in result
+        # Result should contain either success data or error, but not both
+        # Validate specific expected structure based on operation success
+        assert "total_entries" in result or "error" in result, \
+            f"Result should contain either 'total_entries' (success) or 'error' (failure), " \
+            f"got keys: {list(result.keys())}"
+        # If successful, should have total_entries; if failed, should have error
+        if "error" in result:
+            assert result["success"] is False, \
+                f"When error is present, success should be False, got {result.get('success')}"
+            assert len(result["error"]) > 0, \
+                "Error message should not be empty"
+        else:
+            assert "total_entries" in result, \
+                "When no error, result should contain 'total_entries'"
+            assert isinstance(result["total_entries"], int), \
+                f"total_entries should be an integer, got {type(result['total_entries'])}"
+            assert result["total_entries"] >= 0, \
+                f"total_entries should be non-negative, got {result['total_entries']}"
 
     def test_should_use_context7_disabled(self, disabled_helper):
         """Test should_use_context7 when Context7 is disabled."""

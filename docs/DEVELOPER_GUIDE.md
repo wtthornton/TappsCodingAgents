@@ -62,7 +62,18 @@ mkdir -p .tapps-agents
 cp templates/default_config.yaml .tapps-agents/config.yaml
 ```
 
-See `docs/CONFIGURATION.md`.
+### User Role Templates
+
+You can customize agent behavior based on your role by setting the `user_role` field in your config:
+
+```yaml
+# .tapps-agents/config.yaml
+user_role: senior-developer  # Options: senior-developer, junior-developer, tech-lead, product-manager, qa-engineer
+```
+
+This applies role-specific defaults for verbosity, workflow preferences, expert priorities, and more. See [User Role Templates Guide](USER_ROLE_TEMPLATES_GUIDE.md) for details.
+
+See `docs/CONFIGURATION.md` for complete configuration reference.
 
 ## Core Usage
 
