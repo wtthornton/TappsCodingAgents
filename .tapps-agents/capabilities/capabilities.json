@@ -12,6 +12,127 @@
       "last_improved": null,
       "refinement_history": [],
       "metadata": {}
+    },
+    {
+      "capability_id": "code_generation",
+      "agent_id": "unknown",
+      "success_rate": 0.6275074929884414,
+      "average_duration": 1.1293992829830475,
+      "quality_score": 0.973049387113673,
+      "usage_count": 37,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "data_processing",
+      "agent_id": "unknown",
+      "success_rate": 0.8587852317595001,
+      "average_duration": 0.0,
+      "quality_score": 3.887033412000002,
+      "usage_count": 12,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "helper_functions",
+      "agent_id": "unknown",
+      "success_rate": 0.8062897554999999,
+      "average_duration": 0.0,
+      "quality_score": 5.051528000000001,
+      "usage_count": 9,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "explainability_test",
+      "agent_id": "unknown",
+      "success_rate": 0.8062897554999999,
+      "average_duration": 0.0,
+      "quality_score": 5.051528000000001,
+      "usage_count": 9,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "meta_learning_test",
+      "agent_id": "unknown",
+      "success_rate": 0.9709251314984799,
+      "average_duration": 0.0,
+      "quality_score": 2.2613041854503617,
+      "usage_count": 27,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "rejection_test",
+      "agent_id": "unknown",
+      "success_rate": 0.15690529804500009,
+      "average_duration": 0.0,
+      "quality_score": 0.4,
+      "usage_count": 11,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "quality_test",
+      "agent_id": "unknown",
+      "success_rate": 0.8062897554999999,
+      "average_duration": 0.0,
+      "quality_score": 2.2100435000000007,
+      "usage_count": 9,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "security_test",
+      "agent_id": "unknown",
+      "success_rate": 0.9908759981842996,
+      "average_duration": 0.0,
+      "quality_score": 1.0431476415409549,
+      "usage_count": 38,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "persistence_test",
+      "agent_id": "unknown",
+      "success_rate": 0.5950000000000001,
+      "average_duration": 0.0,
+      "quality_score": 8.0,
+      "usage_count": 2,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "failure_test",
+      "agent_id": "unknown",
+      "success_rate": 0.23914845000000007,
+      "average_duration": 0.0,
+      "quality_score": 1.2628820000000003,
+      "usage_count": 7,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
+    },
+    {
+      "capability_id": "failure_analysis_test",
+      "agent_id": "unknown",
+      "success_rate": 0.04431469059826254,
+      "average_duration": 0.0,
+      "quality_score": 0.48832188690071693,
+      "usage_count": 23,
+      "last_improved": null,
+      "refinement_history": [],
+      "metadata": {}
     }
   ]
 }

@@ -181,6 +181,10 @@ pytest tests/e2e/cli/ -m e2e_cli
 
 ```bash
 # All E2E tests (mocked by default)
+# The generic 'e2e' marker is automatically added to all tests in tests/e2e/
+pytest tests/e2e/ -m e2e
+
+# Alternative: explicit marker combination
 pytest tests/e2e/ -m "e2e_smoke or e2e_workflow or e2e_scenario or e2e_cli"
 ```
 

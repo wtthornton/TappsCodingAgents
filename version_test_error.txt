@@ -1,0 +1,49 @@
+﻿============================= test session starts =============================
+platform win32 -- Python 3.13.3, pytest-9.0.2, pluggy-1.6.0 -- C:\Python313\python.exe
+cachedir: .pytest_cache
+hypothesis profile 'default'
+rootdir: C:\cursor\TappsAgentsTest\TappsCodingAgents
+configfile: pytest.ini (WARNING: ignoring pytest config in pyproject.toml!)
+plugins: anyio-4.9.0, hypothesis-6.148.0, asyncio-1.3.0, cov-7.0.0, httpx-0.36.0, mock-3.15.1, timeout-2.4.0, xdist-3.8.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+timeout: 30.0s
+timeout method: thread
+timeout func_only: False
+collecting ... collected 1 item
+
+tests/unit/cli/test_cli_version_flag.py::TestCliVersionFlag::test_cli_version_flag_prints_version_and_exits FAILED [100%]
+
+================================== FAILURES ===================================
+______ TestCliVersionFlag.test_cli_version_flag_prints_version_and_exits ______
+
+self = <unit.cli.test_cli_version_flag.TestCliVersionFlag object at 0x00000215C8102710>
+capsys = <_pytest.capture.CaptureFixture object at 0x00000215C81612B0>
+
+    def test_cli_version_flag_prints_version_and_exits(self, capsys):
+        from tapps_agents.cli import main
+    
+        with patch("sys.argv", ["tapps_agents", "--version"]):
+            with pytest.raises(SystemExit) as exc:
+                main()
+    
+        assert exc.value.code == 0
+        captured = capsys.readouterr()
+>       assert "2.0.3" in captured.out
+E       AssertionError: assert '2.0.3' in 'tapps_agents 2.0.5\n'
+E        +  where 'tapps_agents 2.0.5\n' = CaptureResult(out='tapps_agents 2.0.5\n', err='').out
+
+tests\unit\cli\test_cli_version_flag.py:22: AssertionError
+============================== warnings summary ===============================
+..\..\..\Users\tappt\AppData\Roaming\Python\Python313\site-packages\stevedore\extension.py:187
+..\..\..\Users\tappt\AppData\Roaming\Python\Python313\site-packages\stevedore\extension.py:187
+..\..\..\Users\tappt\AppData\Roaming\Python\Python313\site-packages\stevedore\extension.py:187
+  The verify_requirements argument is now a no-op and is deprecated for removal. Remove the argument from calls.
+
+..\..\..\Users\tappt\AppData\Roaming\Python\Python313\site-packages\bandit\core\utils.py:384
+  ast.Str is deprecated and will be removed in Python 3.14; use ast.Constant instead
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ===========================
+FAILED tests/unit/cli/test_cli_version_flag.py::TestCliVersionFlag::test_cli_version_flag_prints_version_and_exits - AssertionError: assert '2.0.3' in 'tapps_agents 2.0.5\n'
+ +  where 'tapps_agents 2.0.5\n' = CaptureResult(out='tapps_agents 2.0.5\n', err='').out
+======================= 1 failed, 4 warnings in 12.14s ========================

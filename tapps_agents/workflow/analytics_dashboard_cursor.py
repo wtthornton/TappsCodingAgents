@@ -82,6 +82,43 @@ class CursorAnalyticsDashboard:
         lines.append(f"- **Disk Usage:** {sys_data.get('disk_usage', 0.0):.1f}%")
         lines.append("")
         
+        # Health Summary
+        try:
+            from ...health.checks.automation import AutomationHealthCheck
+            from ...health.checks.environment import EnvironmentHealthCheck
+            from ...health.checks.execution import ExecutionHealthCheck
+            from ...health.orchestrator import HealthOrchestrator
+            from ...health.registry import HealthCheckRegistry
+            from pathlib import Path
+            
+            registry = HealthCheckRegistry()
+            project_root = Path.cwd()
+            registry.register(EnvironmentHealthCheck(project_root=project_root))
+            registry.register(ExecutionHealthCheck(project_root=project_root))
+            
+            orchestrator = HealthOrchestrator(registry=registry, project_root=project_root)
+            overall = orchestrator.get_overall_health()
+            
+            status_emoji = {
+                "healthy": "✓",
+                "degraded": "⚠",
+                "unhealthy": "✗",
+            }
+            emoji = status_emoji.get(overall["status"], "?")
+            
+            lines.append("## 💚 Health Status")
+            lines.append("")
+            lines.append(f"- **Overall Health:** {emoji} {overall['status'].upper()} ({overall['score']:.1f}/100)")
+            lines.append(f"- **Checks:** {overall['checks_count']}")
+            if overall.get("remediation"):
+                lines.append(f"- **Top Issue:** {overall['remediation'][0] if overall['remediation'] else 'None'}")
+            lines.append("")
+            lines.append("Run `tapps-agents health dashboard` for detailed health information.")
+            lines.append("")
+        except Exception:
+            # If health checks fail, just skip this section
+            pass
+        
         # Agent Performance
         lines.append("## 🤖 Agent Performance (Top 10)")
         lines.append("")

@@ -352,10 +352,12 @@ class AdvancedStateManager:
                 state_data = StateMigrator.migrate_state(
                     state_data, metadata.version, CURRENT_STATE_VERSION
                 )
+                # Update metadata version after migration
+                metadata.version = CURRENT_STATE_VERSION
         else:
             # Legacy state without metadata
             metadata = StateMetadata(
-                version="1.0",
+                version=CURRENT_STATE_VERSION,  # Use current version for legacy states
                 saved_at=datetime.fromisoformat(
                     state_data.get("started_at", datetime.now().isoformat())
                 ),

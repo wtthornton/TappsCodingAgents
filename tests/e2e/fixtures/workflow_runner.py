@@ -7,17 +7,25 @@ Provides:
 - Artifact assertions
 - Controlled gate outcomes
 - Integration with E2E foundation
+- Real-time progress monitoring and hang detection
 """
 
+import asyncio
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, List
 
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import Workflow, WorkflowState
 from tapps_agents.workflow.parser import WorkflowParser
 
 from .e2e_harness import generate_correlation_id
+from .workflow_monitor import (
+    HangDetectionConfig,
+    MonitoringConfig,
+    WorkflowActivityMonitor,
+    create_progress_logger_callback,
+)
 
 # Configure logging for workflow runner
 logger = logging.getLogger(__name__)
@@ -83,6 +91,8 @@ class WorkflowRunner:
         self.workflow: Workflow | None = None
         self.state_snapshots: list[dict[str, Any]] = []
         self.correlation_id = generate_correlation_id()
+        self._monitor: WorkflowActivityMonitor | None = None
+        self._observers: list[Any] = []  # Custom observers from fixture
 
     def load_workflow(self, workflow_path: Path) -> Workflow:
         """
@@ -123,6 +133,13 @@ class WorkflowRunner:
         workflow_path: Path,
         expert_registry: Any = None,
         max_steps: int = 50,
+        user_prompt: str | None = None,
+        enable_monitoring: bool = True,  # Legacy parameter
+        progress_callback: Callable | None = None,  # Legacy parameter
+        hang_config: HangDetectionConfig | None = None,  # Legacy parameter
+        monitoring_config: MonitoringConfig | None = None,  # New parameter
+        custom_observers: list[Any] | None = None,  # New parameter
+        validators: dict[str, Any] | None = None,  # New parameter: {"phase": validator}
         **kwargs: Any,
     ) -> tuple[WorkflowState, dict[str, Any]]:
         """
@@ -132,6 +149,13 @@ class WorkflowRunner:
             workflow_path: Path to workflow YAML file
             expert_registry: Optional expert registry
             max_steps: Maximum number of steps to execute
+            user_prompt: Optional user prompt to pass to workflow
+            enable_monitoring: Legacy - whether to enable monitoring (use monitoring_config instead)
+            progress_callback: Legacy - callback for progress (use monitoring_config instead)
+            hang_config: Legacy - hang detection config (use monitoring_config instead)
+            monitoring_config: New - MonitoringConfig for event-driven monitoring
+            custom_observers: New - List of WorkflowObserver instances to register
+            validators: New - Dict of {"phase": validator} to register validators
             **kwargs: Additional arguments for executor
 
         Returns:
@@ -146,24 +170,112 @@ class WorkflowRunner:
         # Load workflow into executor
         executor.load_workflow(workflow_path)
 
+        # Register validators if provided
+        if validators:
+            for phase, validator in validators.items():
+                executor.register_validator(phase, validator)
+
+        # Register pre-configured monitor if available
+        if self._monitor:
+            if hasattr(self._monitor, 'set_executor'):
+                self._monitor.set_executor(executor)
+            executor.register_observer(self._monitor)
+
+        # Register custom observers if available
+        if custom_observers:
+            for observer in custom_observers:
+                if hasattr(observer, 'set_executor'):
+                    observer.set_executor(executor)
+                executor.register_observer(observer)
+
+        # Register observers from instance
+        for observer in self._observers:
+            if hasattr(observer, 'set_executor'):
+                observer.set_executor(executor)
+            executor.register_observer(observer)
+
+        # Set user prompt if provided
+        if user_prompt:
+            executor.user_prompt = user_prompt
+
         # Start workflow
         executor.start(workflow)
 
         # Capture initial state
         self.capture_workflow_state(executor, step_id=None)
 
-        # Execute workflow to completion
-        final_state = await executor.execute(workflow=workflow, max_steps=max_steps, **kwargs)
+        # Set up event-driven monitoring
+        monitor: WorkflowActivityMonitor | None = None
+
+        # Use new monitoring_config if provided, otherwise fall back to legacy parameters
+        if monitoring_config:
+            monitor = WorkflowActivityMonitor(
+                executor=executor,
+                project_path=self.project_path,
+                hang_config=monitoring_config.hang_config,
+                progress_callback=monitoring_config.progress_callback,
+            )
+            executor.register_observer(monitor)
+            # Monitor automatically receives events when registered as observer
+        elif enable_monitoring:
+            # Legacy monitoring setup
+            if progress_callback is None:
+                progress_callback = create_progress_logger_callback(logger)
+
+            # Create legacy monitor
+            from .workflow_monitor import MonitoringConfig as MC
+            legacy_config = MC(
+                hang_config=hang_config or HangDetectionConfig(),
+                progress_callback=progress_callback,
+            )
+            monitor = WorkflowActivityMonitor(
+                executor=executor,
+                project_path=self.project_path,
+                hang_config=legacy_config.hang_config,
+                progress_callback=legacy_config.progress_callback,
+            )
+            executor.register_observer(monitor)
+            # Monitor automatically receives events when registered as observer
+
+        try:
+            # Execute workflow to completion (monitoring happens via events)
+            final_state = await executor.execute(workflow=workflow, max_steps=max_steps, **kwargs)
+        finally:
+            # Stop monitoring if it was started
+            if monitor:
+                # Monitor stops automatically when unregistered
+                executor.unregister_observer(monitor)
 
         # Capture final state
         self.capture_workflow_state(executor, step_id=None)
+
+        # Build results
+        completed_step_ids = [
+            exec.step_id for exec in final_state.step_executions 
+            if exec.status == "completed"
+        ]
+        failed_step_ids = [
+            exec.step_id for exec in final_state.step_executions 
+            if exec.status == "failed"
+        ]
 
         results = {
             "workflow_id": final_state.workflow_id,
             "status": final_state.status,
             "correlation_id": self.correlation_id,
-            "steps_completed": len([e for e in final_state.executions if e.status == "completed"]),
+            "steps_completed": len(completed_step_ids),
+            "completed_steps_ids": completed_step_ids,
+            "failed_steps_ids": failed_step_ids,
         }
+
+        # Add monitoring results if available
+        if monitor:
+            results["monitoring"] = {
+                "activity_summary": monitor.get_activity_summary(),
+                "snapshots_count": len(monitor.snapshots),
+                "hang_detected": monitor.check_for_hang()[0],
+                "observed_events_count": len(monitor.get_observed_events()),
+            }
 
         return final_state, results
 
@@ -173,6 +285,12 @@ class WorkflowRunner:
         expert_registry: Any = None,
         max_steps: int | None = None,
         capture_after_each_step: bool = True,
+        enable_monitoring: bool = True,  # Legacy parameter
+        progress_callback: Callable | None = None,  # Legacy parameter
+        hang_config: HangDetectionConfig | None = None,  # Legacy parameter
+        monitoring_config: MonitoringConfig | None = None,  # New parameter
+        custom_observers: list[Any] | None = None,  # New parameter
+        validators: dict[str, Any] | None = None,  # New parameter
         **kwargs: Any,
     ) -> tuple[WorkflowState, list[dict[str, Any]], dict[str, Any]]:
         """
@@ -183,6 +301,12 @@ class WorkflowRunner:
             expert_registry: Optional expert registry
             max_steps: Maximum number of steps to execute (None = all)
             capture_after_each_step: Whether to capture state after each step
+            enable_monitoring: Legacy - whether to enable monitoring (use monitoring_config instead)
+            progress_callback: Legacy - callback for progress (use monitoring_config instead)
+            hang_config: Legacy - hang detection config (use monitoring_config instead)
+            monitoring_config: New - MonitoringConfig for event-driven monitoring
+            custom_observers: New - List of WorkflowObserver instances to register
+            validators: New - Dict of {"phase": validator} to register validators
             **kwargs: Additional arguments for executor
 
         Returns:
@@ -197,30 +321,88 @@ class WorkflowRunner:
         # Load workflow into executor
         executor.load_workflow(workflow_path)
 
+        # Register validators if provided
+        if validators:
+            for phase, validator in validators.items():
+                executor.register_validator(phase, validator)
+
+        # Register pre-configured monitor if available
+        if self._monitor:
+            if hasattr(self._monitor, 'set_executor'):
+                self._monitor.set_executor(executor)
+            executor.register_observer(self._monitor)
+
+        # Register custom observers if provided
+        if custom_observers:
+            for observer in custom_observers:
+                if hasattr(observer, 'set_executor'):
+                    observer.set_executor(executor)
+                executor.register_observer(observer)
+
+        # Register observers from instance
+        for observer in self._observers:
+            if hasattr(observer, 'set_executor'):
+                observer.set_executor(executor)
+            executor.register_observer(observer)
+
         # Start workflow
         executor.start(workflow)
 
         # Capture initial state
         self.capture_workflow_state(executor, step_id=None)
 
+        # Set up event-driven monitoring
+        monitor: WorkflowActivityMonitor | None = None
+
+        # Use new monitoring_config if provided, otherwise fall back to legacy parameters
+        if monitoring_config:
+            monitor = WorkflowActivityMonitor(
+                executor=executor,
+                project_path=self.project_path,
+                hang_config=monitoring_config.hang_config,
+                progress_callback=monitoring_config.progress_callback,
+            )
+            executor.register_observer(monitor)
+            # Monitor automatically receives events when registered as observer
+        elif enable_monitoring:
+            # Legacy monitoring setup
+            if progress_callback is None:
+                progress_callback = create_progress_logger_callback(logger)
+
+            # Create legacy monitor
+            from .workflow_monitor import MonitoringConfig as MC
+            legacy_config = MC(
+                hang_config=hang_config or HangDetectionConfig(),
+                progress_callback=progress_callback,
+            )
+            monitor = WorkflowActivityMonitor(
+                executor=executor,
+                project_path=self.project_path,
+                hang_config=legacy_config.hang_config,
+                progress_callback=legacy_config.progress_callback,
+            )
+            executor.register_observer(monitor)
+            # Monitor automatically receives events when registered as observer
+
         # Track previous completed steps to detect step transitions
         previous_completed = set()
 
-        # Execute workflow with step-level monitoring
-        # NOTE: The executor.execute() runs all steps to completion in a loop.
-        # State is saved after each batch of steps, but we capture snapshots
-        # after execution completes. For true step-by-step capture, we would
-        # need to implement a custom execution loop or use executor callbacks.
-        # For now, we capture the final state which includes all step executions.
-        max_execution_steps = max_steps or 50
-        final_state = await executor.execute(workflow=workflow, max_steps=max_execution_steps, **kwargs)
+        try:
+            # Execute workflow with step-level monitoring (monitoring happens via events)
+            max_execution_steps = max_steps or 50
+            final_state = await executor.execute(workflow=workflow, max_steps=max_execution_steps, **kwargs)
+        finally:
+            # Stop monitoring if it was started
+            if monitor:
+                # Monitor stops automatically when unregistered
+                executor.unregister_observer(monitor)
 
         # Capture state after execution
         # The final_state contains all step executions, so we can capture
         # snapshots for each completed step from the final state
         if capture_after_each_step:
             # Capture state for each completed step
-            for execution in final_state.executions:
+            for execution in final_state.step_executions:
                 if execution.status == "completed" and execution.step_id not in previous_completed:
                     self.capture_workflow_state(executor, step_id=execution.step_id)
                     previous_completed.add(execution.step_id)
@@ -231,9 +413,18 @@ class WorkflowRunner:
         results = {
             "workflow_id": final_state.workflow_id,
             "status": final_state.status,
-            "steps_executed": len([e for e in final_state.executions if e.status in ["completed", "failed"]]),
+            "steps_executed": len([e for e in final_state.step_executions if e.status in ["completed", "failed"]]),
             "correlation_id": self.correlation_id,
         }
+
+        # Add monitoring results if available
+        if monitor:
+            results["monitoring"] = {
+                "activity_summary": monitor.get_activity_summary(),
+                "snapshots_count": len(monitor.snapshots),
+                "hang_detected": monitor.check_for_hang()[0],
+                "observed_events_count": len(monitor.get_observed_events()),
+            }
 
         return final_state, self.state_snapshots, results
 
@@ -260,10 +451,10 @@ class WorkflowRunner:
             "current_step": executor.state.current_step,
             "step_id": step_id,
             "completed_steps": [
-                exec.step_id for exec in executor.state.executions if exec.status == "completed"
+                exec.step_id for exec in executor.state.step_executions if exec.status == "completed"
             ],
             "failed_steps": [
-                exec.step_id for exec in executor.state.executions if exec.status == "failed"
+                exec.step_id for exec in executor.state.step_executions if exec.status == "failed"
             ],
             "artifacts": [
                 {

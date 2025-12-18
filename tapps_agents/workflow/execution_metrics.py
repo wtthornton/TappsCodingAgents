@@ -27,8 +27,8 @@ class ExecutionMetric:
     command: str
     status: str  # "success", "failed", "timeout", "cancelled"
     duration_ms: float
-    retry_count: int = 0
     started_at: str  # ISO timestamp
+    retry_count: int = 0
     completed_at: str | None = None  # ISO timestamp
     error_message: str | None = None
 

@@ -97,7 +97,8 @@ workflow:
         state = executor.start(workflow=workflow)
         
         assert state is not None
-        assert state.workflow_id == "test-workflow"
+        # Workflow ID includes timestamp suffix: {workflow.id}-{timestamp}
+        assert state.workflow_id.startswith("test-workflow")
         assert state.status == "running"
         assert state.current_step == "step1"
         assert len(state.completed_steps) == 0

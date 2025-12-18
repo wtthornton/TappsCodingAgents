@@ -23,6 +23,8 @@ from .checkpoint_manager import (
 from .error_recovery import ErrorRecoveryManager
 from .event_log import WorkflowEventLog
 from .logging_helper import WorkflowLogger
+from .observer import ObserverRegistry, WorkflowObserver
+from .validation import ValidatorRegistry, WorkflowValidator
 from .agent_handlers.registry import AgentHandlerRegistry
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
@@ -112,6 +114,15 @@ class WorkflowExecutor:
         events_dir = state_dir / "events"
         self.event_log = WorkflowEventLog(events_dir)
 
+        # Initialize observer registry for event-driven monitoring
+        self.observer_registry = ObserverRegistry()
+
+        # Progress monitor will be initialized in start() method
+        self.progress_monitor: WorkflowProgressMonitor | None = None
+
+        # Initialize validator registry for SDLC phase validation
+        self.validator_registry = ValidatorRegistry()
+
         if auto_detect:
             self.recommender = WorkflowRecommender(
                 project_root=self.project_root,
@@ -149,6 +160,66 @@ class WorkflowExecutor:
             scope_description=scope_description,
             auto_load=True,
         )
+
+    def register_observer(
+        self, observer: WorkflowObserver, filter: Any | None = None
+    ) -> None:
+        """
+        Register an observer for workflow events.
+
+        Args:
+            observer: Observer instance to register
+            filter: Optional EventFilter to limit which events the observer receives
+        """
+        from .observer import EventFilter
+
+        # Convert dict filter to EventFilter if needed
+        if filter is not None and not isinstance(filter, EventFilter):
+            if isinstance(filter, dict):
+                filter = EventFilter(**filter)
+            else:
+                raise TypeError(f"Filter must be EventFilter or dict, got {type(filter)}")
+
+        self.observer_registry.register(observer, filter)
+
+    def unregister_observer(self, observer: WorkflowObserver) -> None:
+        """
+        Unregister an observer.
+
+        Args:
+            observer: Observer instance to unregister
+        """
+        self.observer_registry.unregister(observer)
+
+    def register_validator(self, phase: str, validator: WorkflowValidator) -> None:
+        """
+        Register a validator for a specific SDLC phase.
+
+        Args:
+            phase: Phase name (requirements, architecture, implementation, quality_gate)
+            validator: Validator instance to register
+        """
+        self.validator_registry.register(phase, validator)
+
+    def _notify_observers(self, event: Any) -> None:
+        """
+        Notify observers of a workflow event.
+
+        Args:
+            event: WorkflowEvent to notify observers about
+        """
+        self.observer_registry.notify(event)
+
+    def get_current_progress(self) -> Any | None:
+        """
+        Get current workflow progress metrics.
+
+        Returns:
+            ProgressMetrics if workflow is running, None otherwise
+        """
+        if not self.progress_monitor or not self.state:
+            return None
+        return self.progress_monitor.get_progress()
 
     def load_workflow(self, workflow_path: Path) -> Workflow:
         """
@@ -218,8 +289,15 @@ class WorkflowExecutor:
             step_count=len(self.workflow.steps),
         )
 
+        # Initialize progress monitor
+        self.progress_monitor = WorkflowProgressMonitor(
+            workflow=self.workflow,
+            state=self.state,
+            event_log=self.event_log,
+        )
+
         # Emit workflow_start event
-        self.event_log.emit_event(
+        event = self.event_log.emit_event(
             event_type="workflow_start",
             workflow_id=workflow_id,
             status="running",
@@ -229,6 +307,7 @@ class WorkflowExecutor:
                 "step_count": len(self.workflow.steps),
             },
         )
+        self._notify_observers(event)
 
         self.save_state()
 
@@ -437,12 +516,13 @@ class WorkflowExecutor:
         if steps_executed >= max_steps:
             self.state.status = "failed"
             self.state.error = f"Max steps exceeded ({max_steps}). Aborting."
-            self.event_log.emit_event(
+            event = self.event_log.emit_event(
                 event_type="workflow_end",
                 workflow_id=self.state.workflow_id,
                 status="failed",
                 error=self.state.error,
             )
+            self._notify_observers(event)
             self.save_state()
             return True
         return False
@@ -467,30 +547,32 @@ class WorkflowExecutor:
             # Workflow is complete
             self.state.status = "completed"
             self.state.current_step = None
-            self.event_log.emit_event(
+            event = self.event_log.emit_event(
                 event_type="workflow_end",
                 workflow_id=self.state.workflow_id,
                 status="completed",
             )
+            self._notify_observers(event)
             self.save_state()
             return True
         else:
             # Workflow is blocked (dependencies not met)
             self.state.status = "failed"
             self.state.error = "Workflow blocked: no ready steps and workflow not complete"
-            self.event_log.emit_event(
+            event = self.event_log.emit_event(
                 event_type="workflow_end",
                 workflow_id=self.state.workflow_id,
                 status="failed",
                 error=self.state.error,
             )
+            self._notify_observers(event)
             self.save_state()
             return True
 
     def _emit_step_start_events(self, ready_steps: list[WorkflowStep]) -> None:
         """Emit step_start events for all ready steps."""
         for step in ready_steps:
-            self.event_log.emit_event(
+            event = self.event_log.emit_event(
                 event_type="step_start",
                 workflow_id=self.state.workflow_id,
                 step_id=step.id,
@@ -498,6 +580,7 @@ class WorkflowExecutor:
                 action=step.action,
                 status="running",
             )
+            self._notify_observers(event)
 
     async def _process_parallel_results(
         self,
@@ -592,7 +675,7 @@ class WorkflowExecutor:
                 return False
         
         # Fallback: emit event and mark as failed (if auto-progression disabled)
-        self.event_log.emit_event(
+        event = self.event_log.emit_event(
             event_type="step_fail",
             workflow_id=self.state.workflow_id,
             step_id=result.step.id,
@@ -601,6 +684,7 @@ class WorkflowExecutor:
             status="failed",
             error=str(result.error),
         )
+        self._notify_observers(event)
         # Mark as failed and stop workflow
         self.state.status = "failed"
         self.state.error = f"Step {result.step.id} failed: {result.error}"
@@ -645,7 +729,7 @@ class WorkflowExecutor:
                     }
         
         # Emit step_finish event
-        self.event_log.emit_event(
+        event = self.event_log.emit_event(
             event_type="step_finish",
             workflow_id=self.state.workflow_id,
             step_id=result.step.id,
@@ -654,6 +738,21 @@ class WorkflowExecutor:
             status="completed",
             artifacts=artifact_summaries,
         )
+        self._notify_observers(event)
+        
+        # Emit artifact_created events for each artifact
+        if artifact_summaries:
+            for art_name, art_summary in artifact_summaries.items():
+                artifact_event = self.event_log.emit_event(
+                    event_type="artifact_created",
+                    workflow_id=self.state.workflow_id,
+                    step_id=result.step.id,
+                    agent=result.step.agent,
+                    action=result.step.action,
+                    status="created",
+                    artifacts={art_name: art_summary},
+                )
+                self._notify_observers(artifact_event)
         
         if step_logger:
             step_logger.info(
@@ -663,11 +762,63 @@ class WorkflowExecutor:
                 artifact_count=len(result.artifacts) if result.artifacts else 0,
             )
         
+        # Run validators for this step's phase
+        self._run_validators_for_step(result)
+        
         # Handle gate evaluation and step progression
         self._handle_gate_evaluation(result)
         
         # Create checkpoint if needed
         self._create_checkpoint_if_needed(result)
+
+    def _run_validators_for_step(self, result: Any) -> None:
+        """Run validators for the completed step's phase."""
+        if not self.state:
+            return
+
+        step = result.step
+        step_id = step.id.lower()
+        agent = step.agent.lower()
+
+        # Determine phase based on step ID or agent
+        phase: str | None = None
+        if "requirements" in step_id or (agent == "analyst" and "requirements" in step_id):
+            phase = "requirements"
+        elif "architecture" in step_id or "design" in step_id or agent == "architect":
+            phase = "architecture"
+        elif "implementation" in step_id or agent in ("implementer", "developer"):
+            phase = "implementation"
+        elif agent == "reviewer" and step.gate is not None:
+            # Quality gate validation
+            scoring_result = self.state.variables.get("reviewer_result", {})
+            if scoring_result:
+                validation_results = self.validator_registry.validate(
+                    phase="quality_gate",
+                    step=step,
+                    scoring_result=scoring_result,
+                    state=self.state,
+                )
+                # Store validation results in state
+                if validation_results:
+                    self.state.variables["validation_results"] = {
+                        "quality_gate": [r.to_dict() for r in validation_results]
+                    }
+            return
+
+        # Run validators for requirements/architecture/implementation phases
+        if phase:
+            validation_results = self.validator_registry.validate(
+                phase=phase,
+                artifacts=self.state.artifacts,
+                state=self.state,
+            )
+            # Store validation results in state
+            if validation_results:
+                if "validation_results" not in self.state.variables:
+                    self.state.variables["validation_results"] = {}
+                self.state.variables["validation_results"][phase] = [
+                    r.to_dict() for r in validation_results
+                ]
 
     def _handle_gate_evaluation(self, result: Any) -> None:
         """Handle gate evaluation for reviewer steps."""
@@ -744,12 +895,13 @@ class WorkflowExecutor:
         )
         self.state.error = envelope.to_user_message()
         # Emit workflow_end event
-        self.event_log.emit_event(
+        event = self.event_log.emit_event(
             event_type="workflow_end",
             workflow_id=self.state.workflow_id,
             status="failed",
             error=str(e),
         )
+        self._notify_observers(event)
         if self.logger:
             self.logger.error(
                 "Workflow execution failed",

@@ -6,63 +6,152 @@ import argparse
 
 def add_analyst_parser(subparsers: argparse._SubParsersAction) -> None:
     """Add analyst agent parser and subparsers"""
-    analyst_parser = subparsers.add_parser("analyst", help="Analyst Agent commands")
-    analyst_subparsers = analyst_parser.add_subparsers(dest="command", help="Commands")
+    analyst_parser = subparsers.add_parser(
+        "analyst",
+        help="Analyst Agent commands",
+        description="""Requirements analysis and research agent.
+        
+The Analyst Agent performs business and technical analysis:
+  • Gather and document requirements
+  • Stakeholder analysis
+  • Technology research and evaluation
+  • Effort estimation
+  • Risk assessment
+  • Competitive analysis
+
+Use this agent at the beginning of projects to understand requirements
+and make informed technology decisions.""",
+    )
+    analyst_subparsers = analyst_parser.add_subparsers(
+        dest="command", help="Analyst agent subcommand (use 'help' to see all available commands)"
+    )
 
     gather_req_parser = analyst_subparsers.add_parser(
         "gather-requirements",
         aliases=["*gather-requirements"],
-        help="Gather requirements for a project",
+        help="Gather and document requirements for a project",
+        description="""Gather comprehensive requirements from a description.
+        
+Analyzes the description and extracts:
+  • Functional requirements
+  • Non-functional requirements
+  • Constraints and assumptions
+  • Success criteria
+  • Dependencies
+
+Example:
+  tapps-agents analyst gather-requirements "Build a REST API for inventory management"
+  tapps-agents analyst gather-requirements "E-commerce platform" --context "Must support 10k users\"""",
     )
-    gather_req_parser.add_argument("description", help="Requirement description")
-    gather_req_parser.add_argument("--context", help="Additional context")
-    gather_req_parser.add_argument("--output-file", help="Output file path")
+    gather_req_parser.add_argument("description", help="Natural language description of the project, feature, or requirement to analyze. Be specific about goals, constraints, and desired outcomes.")
+    gather_req_parser.add_argument("--context", help="Additional context, background information, or constraints that should be considered during requirements gathering (e.g., existing systems, technical limitations, business rules)")
+    gather_req_parser.add_argument("--output-file", help="Path to output file where requirements will be saved. If not provided, requirements are printed to stdout. Supports .md, .txt, or .json formats.")
 
     stakeholder_parser = analyst_subparsers.add_parser(
         "stakeholder-analysis",
         aliases=["*stakeholder-analysis"],
-        help="Perform stakeholder analysis",
+        help="Perform comprehensive stakeholder analysis for a project or feature",
+        description="""Analyze stakeholders and their interests, influence, and requirements.
+        
+Identifies:
+  • Key stakeholders and their roles
+  • Stakeholder interests and concerns
+  • Influence and power dynamics
+  • Communication requirements
+  • Conflicting requirements and priorities
+  • Stakeholder engagement strategies
+
+Use this at the beginning of projects to understand who is affected and how to manage their expectations.""",
     )
     stakeholder_parser.add_argument(
-        "description", help="Project or feature description"
+        "description", help="Description of the project or feature for which to perform stakeholder analysis. Include project scope, goals, and any known stakeholder groups."
     )
     stakeholder_parser.add_argument(
-        "--stakeholders", nargs="+", help="List of stakeholders"
+        "--stakeholders", nargs="+", help="Optional list of known stakeholders to include in the analysis (e.g., 'product-owner', 'end-users', 'devops-team'). If not provided, stakeholders will be identified from the project description."
     )
 
     tech_research_parser = analyst_subparsers.add_parser(
-        "tech-research", aliases=["*tech-research"], help="Perform technology research"
+        "tech-research",
+        aliases=["*tech-research"],
+        help="Research and evaluate technologies",
+        description="""Research and evaluate technology options for a requirement.
+        
+Provides:
+  • Technology recommendations
+  • Pros and cons analysis
+  • Comparison with alternatives
+  • Implementation considerations
+  • Community and ecosystem analysis
+
+Example:
+  tapps-agents analyst tech-research "Database for high-traffic web app"
+  tapps-agents analyst tech-research "Authentication solution" --criteria security scalability""",
     )
-    tech_research_parser.add_argument("requirement", help="Technology requirement")
-    tech_research_parser.add_argument("--context", help="Additional context")
+    tech_research_parser.add_argument("requirement", help="Description of the technology need or requirement (e.g., 'database for high-traffic web app', 'authentication solution', 'API framework'). Be specific about use case and constraints.")
+    tech_research_parser.add_argument("--context", help="Additional context about the project, existing tech stack, constraints, or specific requirements that should influence technology selection")
     tech_research_parser.add_argument(
-        "--criteria", nargs="+", help="Evaluation criteria"
+        "--criteria", nargs="+", help="Space-separated list of evaluation criteria to prioritize (e.g., 'performance', 'security', 'scalability', 'cost', 'ease-of-use'). If not provided, uses standard criteria."
     )
 
     estimate_parser = analyst_subparsers.add_parser(
         "estimate-effort",
         aliases=["*estimate-effort"],
-        help="Estimate effort for tasks",
+        help="Estimate development effort and complexity for features or tasks",
+        description="""Estimate the effort required to implement a feature or complete a task.
+        
+Provides:
+  • Time estimates (hours, days, story points)
+  • Complexity assessment
+  • Risk factors affecting estimates
+  • Breakdown by component or phase
+  • Dependencies and prerequisites
+  • Resource requirements
+
+Use this for sprint planning, project estimation, and resource allocation.""",
     )
-    estimate_parser.add_argument("feature_description", help="Feature description")
-    estimate_parser.add_argument("--context", help="Additional context")
+    estimate_parser.add_argument("feature_description", help="Description of the feature, task, or work item to estimate. Include functional requirements, technical complexity, and any known constraints.")
+    estimate_parser.add_argument("--context", help="Additional context affecting estimation such as team experience, existing codebase complexity, technical debt, or external dependencies")
 
     assess_risk_parser = analyst_subparsers.add_parser(
-        "assess-risk", aliases=["*assess-risk"], help="Assess project risks"
+        "assess-risk", 
+        aliases=["*assess-risk"], 
+        help="Assess risks and potential issues for a project or feature",
+        description="""Identify and assess risks that could impact project success.
+        
+Analyzes:
+  • Technical risks (complexity, dependencies, unknowns)
+  • Schedule risks (timeline, resource availability)
+  • Quality risks (testing, maintainability)
+  • Business risks (requirements changes, stakeholder alignment)
+  • External risks (dependencies, third-party services)
+  • Mitigation strategies and recommendations
+
+Use this early in projects to proactively identify and address potential problems.""",
     )
     assess_risk_parser.add_argument(
-        "feature_description", help="Feature or project description"
+        "feature_description", help="Description of the feature or project to assess for risks. Include scope, timeline, team composition, and any known constraints or challenges."
     )
-    assess_risk_parser.add_argument("--context", help="Additional context")
+    assess_risk_parser.add_argument("--context", help="Additional context such as project history, team experience, organizational constraints, or external factors that could affect risk assessment")
 
     competitive_parser = analyst_subparsers.add_parser(
         "competitive-analysis",
         aliases=["*competitive-analysis"],
-        help="Perform competitive analysis",
+        help="Perform competitive analysis and market research",
+        description="""Analyze competitive landscape and market positioning.
+        
+Provides:
+  • Competitor identification and analysis
+  • Feature comparison
+  • Market positioning
+  • Strengths and weaknesses assessment
+  • Differentiation opportunities
+  • Market gaps and opportunities
+
+Use this for product planning, feature prioritization, and strategic decision-making.""",
     )
-    competitive_parser.add_argument("product_description", help="Product description")
+    competitive_parser.add_argument("product_description", help="Description of your product, feature, or service to analyze competitively. Include key features, target market, and value proposition.")
     competitive_parser.add_argument(
-        "--competitors", nargs="+", help="List of competitors"
+        "--competitors", nargs="+", help="Optional list of specific competitors to analyze (e.g., 'competitor-a', 'competitor-b'). If not provided, competitors will be identified from the product description and market context."
     )
 
     analyst_subparsers.add_parser(

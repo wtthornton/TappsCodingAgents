@@ -57,7 +57,15 @@ def multiply(a: int, b: int) -> int:
 
 def _run_console_script(command: list[str], cwd: Path, timeout: float = 60.0) -> dict:
     """Run command using console script entrypoint (tapps-agents)."""
-    full_command = ["tapps-agents"] + command
+    import shutil
+    # Check if console script is available, fall back to module invocation if not
+    console_script = shutil.which("tapps-agents")
+    if console_script:
+        full_command = ["tapps-agents"] + command
+    else:
+        # Fall back to module invocation if console script not installed
+        full_command = [sys.executable, "-m", "tapps_agents.cli"] + command
+    
     result = subprocess.run(
         full_command,
         capture_output=True,

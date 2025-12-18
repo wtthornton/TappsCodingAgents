@@ -59,5 +59,12 @@ def handle_orchestrator_command(args: object) -> None:
         else:
             print(result)
     finally:
-        asyncio.run(orchestrator.close())
+        if orchestrator:
+            try:
+                # Close agent if it has a close method
+                if hasattr(orchestrator, 'close'):
+                    asyncio.run(orchestrator.close())
+            except Exception:
+                # Ignore errors during cleanup
+                pass
 

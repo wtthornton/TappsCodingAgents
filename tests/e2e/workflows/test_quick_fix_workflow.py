@@ -41,7 +41,7 @@ class TestQuickFixWorkflow:
 
         state = executor.start(workflow)
 
-        assert state.workflow_id == "quick-fix"
+        assert state.workflow_id.startswith("quick-fix")
         assert state.status == "running"
         assert state.current_step is not None
 
@@ -55,7 +55,7 @@ class TestQuickFixWorkflow:
         state, results = await workflow_runner.run_workflow(workflow_path, max_steps=3)
 
         assert state is not None
-        assert state.workflow_id == "quick-fix"
+        assert state.workflow_id.startswith("quick-fix")
         assert results["correlation_id"] is not None
 
     @pytest.mark.asyncio
@@ -103,7 +103,7 @@ class TestQuickFixWorkflow:
         state, results = await workflow_runner.run_workflow(workflow_path, max_steps=None)
 
         assert state is not None
-        assert state.workflow_id == "quick-fix"
+        assert state.workflow_id.startswith("quick-fix")
         assert results["correlation_id"] is not None
 
         # Validate workflow completed

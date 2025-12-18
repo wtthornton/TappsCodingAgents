@@ -82,18 +82,80 @@ def create_root_parser() -> argparse.ArgumentParser:
         >>> parser.parse_args(['--version'])
     """
     parser = argparse.ArgumentParser(
-        description="TappsCodingAgents CLI - AI coding agents framework",
-        epilog="""Quick shortcuts:
-  create <description>  - Create new project from description (PRIMARY USE CASE)
-  score <file>          - Score a code file (shortcut for 'reviewer score')
-  init                  - Initialize project (Cursor Rules + workflow presets)
-  workflow <preset>     - Run preset workflows (rapid, full, fix, quality, hotfix)
+        description="""TappsCodingAgents CLI - AI Coding Agents Framework
+
+A comprehensive framework for defining, configuring, and orchestrating AI coding agents
+with 13 workflow agents, industry experts, and full Cursor AI integration.
+
+Key Features:
+  • 13 Workflow Agents: Analyst, Architect, Debugger, Designer, Documenter, Enhancer,
+    Implementer, Improver, Ops, Orchestrator, Planner, Reviewer, Tester
+  • Industry Experts: Domain-specific knowledge with weighted decision-making
+  • Workflow Presets: Rapid development, full SDLC, bug fixes, quality improvement
+  • Code Quality Tools: Scoring, linting, type checking, duplication detection
+  • Cursor Integration: Skills, Background Agents, and natural language commands
+
+For detailed documentation, visit: https://github.com/your-repo/docs""",
+        epilog="""QUICK START COMMANDS:
+  create <description>     Create a new project from description (PRIMARY USE CASE)
+  score <file>             Score a code file (shortcut for 'reviewer score')
+  init                     Initialize project (Cursor Rules + workflow presets)
+  workflow <preset>         Run preset workflows (rapid, full, fix, quality, hotfix)
+  doctor                    Validate local environment and tools
+  setup-experts            Interactive expert setup wizard
+
+WORKFLOW PRESETS:
+  rapid / feature          Rapid development for sprint work and features
+  full / enterprise        Full SDLC pipeline for complete lifecycle management
+  fix / refactor           Maintenance and bug fixing workflows
+  quality / improve         Quality improvement and code review cycles
+  hotfix / urgent          Quick fixes for urgent production bugs
+
+AGENT COMMANDS:
+  Use 'tapps-agents <agent> help' to see available commands for each agent:
+  • analyst      - Requirements gathering, stakeholder analysis, tech research
+  • architect    - System design, architecture diagrams, tech selection
+  • debugger     - Error debugging, stack trace analysis, code tracing
+  • designer     - API design, data models, UI/UX design, wireframes
+  • documenter   - Generate documentation, update README, docstrings
+  • enhancer     - Transform simple prompts into comprehensive specifications
+  • implementer  - Code generation, refactoring, file writing
+  • improver     - Code refactoring, performance optimization, quality improvement
+  • ops          - Security scanning, compliance checks, deployment
+  • orchestrator - Workflow management, step coordination, gate decisions
+  • planner      - Create plans, user stories, task breakdowns
+  • reviewer     - Code review, scoring, linting, type checking, reports
+  • tester       - Generate and run tests, test coverage
+
+EXAMPLES:
+  # Create a new project
+  tapps-agents create "Build a task management web app with React and FastAPI"
   
-Examples:
-  python -m tapps_agents.cli create "Build a task management web app"
-  python -m tapps_agents.cli score example.py
-  python -m tapps_agents.cli init
-  python -m tapps_agents.cli workflow rapid""",
+  # Score code quality
+  tapps-agents score src/main.py
+  
+  # Initialize project setup
+  tapps-agents init
+  
+  # Run rapid development workflow
+  tapps-agents workflow rapid --prompt "Add user authentication"
+  
+  # Review code with detailed analysis
+  tapps-agents reviewer review src/app.py --format json
+  
+  # Generate tests
+  tapps-agents tester test src/utils.py
+  
+  # Get workflow recommendation
+  tapps-agents workflow recommend
+  
+  # Check environment
+  tapps-agents doctor
+
+For more information on a specific command, use:
+  tapps-agents <command> --help
+  tapps-agents <agent> help""",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
         "--version",
@@ -195,6 +257,32 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_score_command(args)
     elif args.agent == "doctor":
         top_level.handle_doctor_command(args)
+    elif args.agent == "health":
+        from .commands import health
+        if hasattr(args, "command"):
+            if args.command == "check":
+                health.handle_health_check_command(
+                    check_name=getattr(args, "check", None),
+                    output_format=getattr(args, "format", "text"),
+                    save=getattr(args, "save", True),
+                )
+            elif args.command == "dashboard" or args.command == "show":
+                health.handle_health_dashboard_command(
+                    output_format=getattr(args, "format", "text"),
+                )
+            elif args.command == "metrics":
+                health.handle_health_metrics_command(
+                    check_name=getattr(args, "check_name", None),
+                    status=getattr(args, "status", None),
+                    days=getattr(args, "days", 30),
+                    output_format=getattr(args, "format", "text"),
+                )
+            elif args.command == "trends":
+                health.handle_health_trends_command(
+                    check_name=getattr(args, "check_name", None) or "",
+                    days=getattr(args, "days", 7),
+                    output_format=getattr(args, "format", "text"),
+                )
     elif args.agent == "install-dev":
         top_level.handle_install_dev_command(args)
     elif args.agent == "hardware-profile" or args.agent == "hardware":

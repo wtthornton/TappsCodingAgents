@@ -16,6 +16,10 @@ The Agent Learning System enables agents to autonomously improve their capabilit
 - **Prompt Optimization**: A/B tests and optimizes prompts based on outcomes
 - **Feedback Analysis**: Analyzes code scores to identify improvement areas
 - **Hardware-Aware**: Adjusts learning intensity based on hardware profile
+- **Security Integration**: Security scanning prevents learning from vulnerable code
+- **Negative Feedback Learning**: Learns from failures, rejections, and low-quality code
+- **Explainability**: Full transparency into learning decisions and pattern selection
+- **Meta-Learning**: Self-improving system that optimizes its own learning parameters
 
 ---
 
@@ -26,9 +30,21 @@ The Agent Learning System enables agents to autonomously improve their capabilit
 1. **CapabilityRegistry** - Tracks agent capabilities and metrics
 2. **AgentLearner** - Core learning engine
 3. **PatternExtractor** - Extracts patterns from successful code
-4. **PromptOptimizer** - Optimizes prompts via A/B testing
-5. **FeedbackAnalyzer** - Analyzes code scoring feedback
-6. **LearningAwareMixin** - Easy integration with agents
+4. **AntiPatternExtractor** - Extracts anti-patterns from failures
+5. **SecurityScanner** - Security scanning for pattern validation
+6. **NegativeFeedbackHandler** - Handles rejections and corrections
+7. **FailureModeAnalyzer** - Analyzes and categorizes failures
+8. **PromptOptimizer** - Optimizes prompts via A/B testing
+9. **FeedbackAnalyzer** - Analyzes code scoring feedback
+10. **DecisionReasoningLogger** - Logs all learning decisions
+11. **PatternSelectionExplainer** - Explains pattern selection
+12. **LearningImpactReporter** - Tracks learning effectiveness
+13. **LearningEffectivenessTracker** - Tracks effectiveness over time
+14. **LearningSelfAssessor** - Assesses learning quality
+15. **AdaptiveLearningRate** - Adjusts learning intensity
+16. **LearningStrategySelector** - Selects optimal strategies
+17. **LearningDashboard** - Aggregates metrics for visualization
+18. **LearningAwareMixin** - Easy integration with agents
 
 ### Learning Flow
 
@@ -408,6 +424,46 @@ logger.info(f"Learning intensity: {intensity.value}")
 
 ---
 
+## Security Integration
+
+The learning system now includes comprehensive security scanning to prevent learning from vulnerable code. See [Learning Security Guide](LEARNING_SECURITY.md) for details.
+
+**Key Features:**
+- Automatic security scanning before pattern extraction
+- Security threshold filtering (default: 7.0/10)
+- Vulnerability detection and reporting
+- Security scores stored with patterns
+
+## Negative Feedback Learning
+
+The system learns from failures, rejections, and low-quality code by extracting anti-patterns. See [Negative Feedback Learning Guide](LEARNING_NEGATIVE_FEEDBACK.md) for details.
+
+**Key Features:**
+- Automatic anti-pattern extraction from failures
+- Failure mode analysis and categorization
+- User rejection tracking
+- Anti-pattern retrieval to avoid mistakes
+
+## Explainability
+
+Full transparency into learning decisions and pattern selection. See [Explainability Guide](LEARNING_EXPLAINABILITY.md) for details.
+
+**Key Features:**
+- Decision reasoning logs
+- Pattern selection explanations
+- Learning impact reports
+- Dashboard metrics
+
+## Meta-Learning
+
+The system optimizes its own learning parameters autonomously. See [Meta-Learning Guide](LEARNING_META_LEARNING.md) for details.
+
+**Key Features:**
+- Effectiveness tracking over time
+- Self-assessment and gap identification
+- Adaptive learning rate adjustment
+- Strategy selection and optimization
+
 ## See Also
 
 - [Capability Registry](../tapps_agents/core/capability_registry.py)
@@ -415,4 +471,8 @@ logger.info(f"Learning intensity: {intensity.value}")
 - [Learning Integration](../tapps_agents/core/learning_integration.py)
 - [Task Memory Guide](TASK_MEMORY_GUIDE.md)
 - [Code Scoring System](../tapps_agents/agents/reviewer/scoring.py)
+- [Learning Security Guide](LEARNING_SECURITY.md)
+- [Negative Feedback Learning Guide](LEARNING_NEGATIVE_FEEDBACK.md)
+- [Explainability Guide](LEARNING_EXPLAINABILITY.md)
+- [Meta-Learning Guide](LEARNING_META_LEARNING.md)
 

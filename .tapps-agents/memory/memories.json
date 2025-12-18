@@ -1,0 +1,149 @@
+[
+  {
+    "task_id": "task_1",
+    "agent_id": "unknown",
+    "command": "meta_learning_test",
+    "timestamp": "2025-12-18T18:26:54.960518",
+    "outcome": "success",
+    "quality_score": 0.8,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_function_1_471"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_learn",
+    "agent_id": "unknown",
+    "command": "helper_functions",
+    "timestamp": "2025-12-18T18:26:54.344083",
+    "outcome": "success",
+    "quality_score": 0.8,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_helper_function_2224"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_explain",
+    "agent_id": "unknown",
+    "command": "explainability_test",
+    "timestamp": "2025-12-18T18:26:54.618311",
+    "outcome": "success",
+    "quality_score": 0.8,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_explained_function_840"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_0",
+    "agent_id": "unknown",
+    "command": "meta_learning_test",
+    "timestamp": "2025-12-18T18:26:54.925657",
+    "outcome": "success",
+    "quality_score": 0.75,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_function_0_2467"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_2",
+    "agent_id": "unknown",
+    "command": "meta_learning_test",
+    "timestamp": "2025-12-18T18:26:55.015043",
+    "outcome": "success",
+    "quality_score": 0.85,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_function_2_7281"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_low_quality",
+    "agent_id": "unknown",
+    "command": "quality_test",
+    "timestamp": "2025-12-18T18:26:55.612245",
+    "outcome": "success",
+    "quality_score": 0.35,
+    "key_learnings": [],
+    "patterns_used": [],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_secure",
+    "agent_id": "unknown",
+    "command": "security_test",
+    "timestamp": "2025-12-18T18:26:56.482413",
+    "outcome": "success",
+    "quality_score": 0.85,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_secure_function_7804"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_moderate",
+    "agent_id": "unknown",
+    "command": "security_test",
+    "timestamp": "2025-12-18T18:26:56.756247",
+    "outcome": "success",
+    "quality_score": 0.7,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_moderate_security_function_9486",
+      "imports_710"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_vulnerable",
+    "agent_id": "unknown",
+    "command": "security_test",
+    "timestamp": "2025-12-18T18:26:56.208564",
+    "outcome": "success",
+    "quality_score": 0.5,
+    "key_learnings": [],
+    "patterns_used": [],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  },
+  {
+    "task_id": "task_success_1",
+    "agent_id": "unknown",
+    "command": "code_generation",
+    "timestamp": "2025-12-18T18:26:54.061531",
+    "outcome": "success",
+    "quality_score": 0.85,
+    "key_learnings": [],
+    "patterns_used": [
+      "func_safe_function_3388"
+    ],
+    "similar_tasks": [],
+    "context": {},
+    "metadata": {}
+  }
+]

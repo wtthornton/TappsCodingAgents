@@ -393,6 +393,259 @@ improvement = (after_quality - before_quality) / before_quality * 100
 logger.info(f"Quality improved by {improvement:.1f}%")
 ```
 
+## Security Best Practices
+
+### 21. Security-Aware Pattern Learning
+
+**Best Practice:** Always scan code for security vulnerabilities before learning.
+
+```python
+# Security scanning is automatic, but verify results
+result = await learner.learn_from_task(
+    capability_id="test",
+    task_id="task_1",
+    code=code,
+    quality_scores=scores,
+    success=True,
+)
+
+# Check security results
+if result["security_checked"]:
+    if result["security_score"] < 7.0:
+        logger.warning("Code was too insecure to learn from")
+        # Review vulnerabilities
+        for vuln in result["security_vulnerabilities"]:
+            logger.warning(f"Vulnerability: {vuln['test_name']} at line {vuln['line']}")
+```
+
+**Benefits:**
+- Prevents learning vulnerable patterns
+- Maintains security standards
+- Protects against security regressions
+
+### 22. Security Threshold Configuration
+
+**Best Practice:** Set appropriate security thresholds for your security requirements.
+
+```python
+# For high-security environments
+extractor = PatternExtractor(
+    security_threshold=8.0,  # Stricter threshold
+)
+
+# For general development
+extractor = PatternExtractor(
+    security_threshold=7.0,  # Standard threshold
+)
+```
+
+## Negative Feedback Learning Best Practices
+
+### 23. Learn from Failures
+
+**Best Practice:** Always learn from failed tasks to avoid repeating mistakes.
+
+```python
+# Automatic anti-pattern extraction from failures
+result = await learner.learn_from_task(
+    capability_id="test",
+    task_id="task_1",
+    code=failed_code,
+    success=False,  # Task failed
+)
+
+# Review failure analysis
+if result["failure_analyzed"]:
+    failure_mode = result["failure_analysis"]["failure_mode"]
+    suggestions = result["failure_analysis"]["suggestions"]
+    logger.info(f"Failure mode: {failure_mode}")
+    for suggestion in suggestions:
+        logger.info(f"Prevention: {suggestion}")
+```
+
+**Benefits:**
+- Avoids repeating mistakes
+- Identifies common failure patterns
+- Provides prevention strategies
+
+### 24. Track User Rejections
+
+**Best Practice:** Explicitly record user rejections for learning.
+
+```python
+# When user rejects code
+result = await learner.learn_from_rejection(
+    capability_id="test",
+    task_id="task_2",
+    code=rejected_code,
+    rejection_reason="Code contains security vulnerabilities",
+    quality_score=0.4,
+)
+
+# Anti-patterns are automatically extracted and stored
+```
+
+**Benefits:**
+- Learns from explicit feedback
+- Tracks rejection patterns
+- Improves based on user preferences
+
+### 25. Review Anti-Patterns
+
+**Best Practice:** Regularly review anti-patterns to understand what to avoid.
+
+```python
+# Get anti-patterns for context
+anti_patterns = learner.negative_feedback_handler.get_anti_patterns_for_context(
+    context="security",
+    limit=10,
+)
+
+# Review what to avoid
+for pattern in anti_patterns:
+    logger.warning(f"Avoid: {pattern.code_snippet[:100]}")
+    logger.warning(f"Reasons: {', '.join(pattern.failure_reasons)}")
+    logger.warning(f"Rejected {pattern.rejection_count} times")
+```
+
+## Explainability Best Practices
+
+### 26. Review Decision Logs
+
+**Best Practice:** Regularly review decision logs to understand learning behavior.
+
+```python
+# Get decision history
+history = learner.decision_logger.get_decision_history(
+    decision_type="pattern_extraction_threshold",
+    limit=20,
+)
+
+# Review decisions
+for decision in history:
+    print(f"Decision: {decision.decision_type}")
+    print(f"Reasoning: {decision.reasoning}")
+    print(f"Confidence: {decision.confidence:.2%}")
+    print(f"Sources: {', '.join(decision.sources)}")
+```
+
+**Benefits:**
+- Understand learning decisions
+- Identify decision patterns
+- Debug learning issues
+
+### 27. Explain Pattern Selection
+
+**Best Practice:** Use pattern selection explanations to understand recommendations.
+
+```python
+# Get patterns with explanations
+patterns = learner.get_learned_patterns(context="test")
+explanation = learner.pattern_explainer.explain_pattern_selection(
+    selected_patterns=patterns,
+    context="test",
+)
+
+# Review why patterns were selected
+for pattern_info in explanation["patterns"]:
+    print(f"Pattern: {pattern_info['pattern_id']}")
+    print(f"Relevance: {pattern_info['relevance_score']:.2f}")
+    print(f"Justification: {pattern_info['justification']}")
+```
+
+### 28. Monitor Learning Impact
+
+**Best Practice:** Track learning impact to measure effectiveness.
+
+```python
+# Impact is automatically tracked, but review reports
+result = await learner.learn_from_task(...)
+
+if "learning_impact" in result:
+    impact = result["learning_impact"]
+    print(f"Effectiveness: {impact['effectiveness']:.2f}")
+    print(f"Overall Improvement: {impact['overall_improvement']:.2f}")
+    
+    # Review improvements by metric
+    for metric, data in impact["improvements"].items():
+        print(f"{metric}: {data['improvement_percent']:.1f}% improvement")
+```
+
+## Meta-Learning Best Practices
+
+### 29. Regular Optimization
+
+**Best Practice:** Run meta-learning optimization periodically.
+
+```python
+# Optimize learning system
+optimization = await learner.optimize_learning(
+    capability_id="test",
+)
+
+# Review optimization results
+print(f"Quality Assessment: {optimization['quality_assessment']['quality_score']:.2f}")
+print(f"Learning Gaps: {optimization['learning_gaps']}")
+print(f"Optimal Strategy: {optimization['optimal_strategy']}")
+
+# Implement suggestions
+for suggestion in optimization["improvement_suggestions"]:
+    logger.info(f"Improvement: {suggestion}")
+```
+
+**Benefits:**
+- Autonomous optimization
+- Identifies learning gaps
+- Suggests improvements
+
+### 30. Monitor Effectiveness
+
+**Best Practice:** Track learning effectiveness over time.
+
+```python
+# Get effectiveness metrics
+roi = learner.effectiveness_tracker.get_learning_roi(
+    capability_id="test",
+)
+
+print(f"Total Sessions: {roi['total_sessions']}")
+print(f"Average Effectiveness: {roi['average_effectiveness']:.2f}")
+print(f"ROI Score: {roi['roi_score']:.2f}")
+
+# Get effective strategies
+strategies = learner.effectiveness_tracker.get_effective_strategies(
+    capability_id="test",
+)
+
+# Use most effective strategies
+best_strategy = max(strategies.items(), key=lambda x: x[1])
+print(f"Best Strategy: {best_strategy[0]} ({best_strategy[1]:.2f})")
+```
+
+### 31. Self-Assessment
+
+**Best Practice:** Regularly assess learning quality.
+
+```python
+# Assess learning quality
+assessment = learner.self_assessor.assess_learning_quality(
+    pattern_count=len(learner.pattern_extractor.patterns),
+    anti_pattern_count=len(learner.anti_pattern_extractor.anti_patterns),
+    average_quality=0.85,
+    average_security=8.0,
+)
+
+# Identify gaps
+gaps = learner.self_assessor.identify_learning_gaps(
+    capability_metrics={"success_rate": 0.75},
+    pattern_statistics={"total_patterns": 50, "average_quality": 0.8},
+)
+
+# Address gaps
+for gap in gaps:
+    logger.warning(f"Learning Gap: {gap}")
+```
+
 ## Common Pitfalls to Avoid
 
 ### ❌ Learning from All Tasks
@@ -425,9 +678,37 @@ logger.info(f"Quality improved by {improvement:.1f}%")
 
 **Solution:** Maintain diverse pattern library, use multiple patterns.
 
+### ❌ Ignoring Security
+
+**Problem:** Learning from vulnerable code introduces security risks.
+
+**Solution:** Always use security scanning, set appropriate thresholds.
+
+### ❌ Not Learning from Failures
+
+**Problem:** Repeating the same mistakes without learning.
+
+**Solution:** Always extract anti-patterns from failures and rejections.
+
+### ❌ Lack of Explainability
+
+**Problem:** Can't understand why learning decisions were made.
+
+**Solution:** Review decision logs and pattern selection explanations.
+
+### ❌ No Meta-Learning
+
+**Problem:** Learning system doesn't improve itself.
+
+**Solution:** Run optimization periodically, monitor effectiveness.
+
 ## References
 
 - [Agent Learning Guide](../../../docs/AGENT_LEARNING_GUIDE.md)
+- [Learning Security Guide](../../../docs/LEARNING_SECURITY.md)
+- [Negative Feedback Learning Guide](../../../docs/LEARNING_NEGATIVE_FEEDBACK.md)
+- [Explainability Guide](../../../docs/LEARNING_EXPLAINABILITY.md)
+- [Meta-Learning Guide](../../../docs/LEARNING_META_LEARNING.md)
 - [Task Memory Guide](../../../docs/TASK_MEMORY_GUIDE.md)
 - [Capability Registry](../../../tapps_agents/core/capability_registry.py)
 - [Agent Learning System](../../../tapps_agents/core/agent_learning.py)

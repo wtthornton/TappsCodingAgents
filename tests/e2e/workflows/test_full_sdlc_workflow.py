@@ -2,13 +2,18 @@
 E2E tests for full-sdlc preset workflow.
 
 Tests workflow parsing, execution, state transitions, and artifacts.
+Includes real-time progress monitoring and hang detection.
 """
 
+import logging
 from pathlib import Path
 
 import pytest
 
+from tests.e2e.fixtures.workflow_monitor import MonitoringConfig, WorkflowActivityMonitor
 from tests.e2e.fixtures.workflow_runner import WorkflowRunner
+
+logger = logging.getLogger(__name__)
 
 
 @pytest.mark.e2e_workflow
@@ -41,7 +46,7 @@ class TestFullSDLCWorkflow:
 
         state = executor.start(workflow)
 
-        assert state.workflow_id == "full-sdlc"
+        assert state.workflow_id.startswith("full-sdlc")
         assert state.status == "running"
         assert state.current_step is not None
 
@@ -55,35 +60,51 @@ class TestFullSDLCWorkflow:
         state, results = await workflow_runner.run_workflow(workflow_path, max_steps=3)
 
         assert state is not None
-        assert state.workflow_id == "full-sdlc"
+        assert state.workflow_id.startswith("full-sdlc")
         assert results["correlation_id"] is not None
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(300)
     @pytest.mark.behavioral_mock
+    @pytest.mark.monitoring_config(
+        max_seconds_without_activity=90.0,
+        max_seconds_without_progress=180.0,
+        max_seconds_total=600.0,
+        check_interval_seconds=5.0,
+        log_progress=True,
+    )
     async def test_full_workflow_execution(
-        self, workflow_runner: WorkflowRunner, workflow_path: Path
+        self,
+        workflow_runner: WorkflowRunner,
+        workflow_path: Path,
+        workflow_monitor: WorkflowActivityMonitor,
+        workflow_monitoring_config: MonitoringConfig,
     ):
-        """Test complete workflow execution end-to-end."""
-        # Execute full workflow (no step limit)
-        state, results = await workflow_runner.run_workflow(workflow_path, max_steps=None)
+        """Test complete workflow execution end-to-end with monitoring."""
+        # Execute full workflow (no step limit) with monitoring
+        state, results = await workflow_runner.run_workflow(
+            workflow_path,
+            max_steps=None,
+            monitoring_config=workflow_monitoring_config,
+            custom_observers=[workflow_monitor],
+        )
 
         assert state is not None
-        assert state.workflow_id == "full-sdlc"
+        assert state.workflow_id.startswith("full-sdlc")
         assert results["correlation_id"] is not None
 
         # Validate workflow completed successfully
         assert state.status in ["completed", "success"], f"Workflow did not complete: {state.status}"
 
         # Validate step execution order
-        executed_steps = results.get("steps_executed", [])
-        assert len(executed_steps) > 0, "No steps were executed"
+        completed_steps = results.get("completed_steps_ids", [])
+        assert len(completed_steps) > 0, "No steps were executed"
 
-        # Validate intermediate state correctness (if available)
-        if "intermediate_states" in results:
-            for intermediate_state in results["intermediate_states"]:
-                assert "workflow_id" in intermediate_state
-                assert "status" in intermediate_state
+        # Validate monitoring results
+        monitoring_results = results.get("monitoring")
+        if monitoring_results:
+            assert monitoring_results.get("snapshots_count", 0) > 0, "Monitoring should have captured snapshots"
+            assert not monitoring_results.get("hang_detected", True), "No hang should be detected"
 
         # Validate final outcome
         assert state.current_step is None or state.status == "completed", "Workflow should be completed"
@@ -103,18 +124,33 @@ class TestFullSDLCWorkflow:
         assert results["steps_executed"] >= 0
 
         # Verify initial state snapshot
-        assert snapshots[0]["workflow_id"] == "full-sdlc"
+        assert snapshots[0]["workflow_id"].startswith("full-sdlc")
         assert snapshots[0]["status"] == "running"
 
     @pytest.mark.asyncio
     @pytest.mark.timeout(300)
     @pytest.mark.behavioral_mock
+    @pytest.mark.monitoring_config(
+        max_seconds_without_activity=90.0,
+        max_seconds_without_progress=180.0,
+        max_seconds_total=600.0,
+        check_interval_seconds=5.0,
+        log_progress=True,
+    )
     async def test_full_workflow_step_by_step_execution(
-        self, workflow_runner: WorkflowRunner, workflow_path: Path
+        self,
+        workflow_runner: WorkflowRunner,
+        workflow_path: Path,
+        workflow_monitor: WorkflowActivityMonitor,
+        workflow_monitoring_config: MonitoringConfig,
     ):
-        """Test complete step-by-step workflow execution with full state validation."""
+        """Test complete step-by-step workflow execution with full state validation and monitoring."""
         state, snapshots, results = await workflow_runner.run_workflow_step_by_step(
-            workflow_path, max_steps=None, capture_after_each_step=True
+            workflow_path,
+            max_steps=None,
+            capture_after_each_step=True,
+            monitoring_config=workflow_monitoring_config,
+            custom_observers=[workflow_monitor],
         )
 
         assert state is not None
@@ -143,7 +179,7 @@ class TestFullSDLCWorkflow:
         for snapshot in snapshots:
             assert "workflow_id" in snapshot
             assert "status" in snapshot
-            assert snapshot["workflow_id"] == "full-sdlc"
+            assert snapshot["workflow_id"].startswith("full-sdlc")
 
         # Validate final outcome
         assert state.status in ["completed", "success"], f"Workflow did not complete: {state.status}"

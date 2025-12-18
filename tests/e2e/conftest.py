@@ -27,9 +27,21 @@ from tests.e2e.fixtures.mock_agents import (
     create_behavioral_mock,
 )
 from tests.e2e.fixtures.project_templates import TemplateType
+from tests.e2e.fixtures.workflow_monitor import (
+    HangDetectionConfig,
+    MonitoringConfig,
+    WorkflowActivityMonitor,
+    create_progress_logger_callback,
+)
 from tests.e2e.fixtures.workflow_runner import (
     GateController,
     WorkflowRunner,
+)
+
+# Import fixtures from background_agent_fixtures for auto-execution tests
+from tests.fixtures.background_agent_fixtures import (
+    auto_execution_config_file,
+    temp_project_root,
 )
 
 
@@ -200,6 +212,126 @@ def behavioral_mock_tester() -> MockTester:
 def behavioral_mock_factory():
     """Factory fixture for creating behavioral mocks by agent type."""
     return create_behavioral_mock
+
+
+@pytest.fixture
+def workflow_monitoring_config(request) -> MonitoringConfig:
+    """
+    Configuration for workflow monitoring.
+    
+    Can be customized via pytest markers:
+    @pytest.mark.monitoring_config(max_seconds_without_activity=120)
+    
+    Yields:
+        MonitoringConfig instance
+    """
+    # Get custom config from marker
+    marker = request.node.get_closest_marker("monitoring_config")
+    hang_config_kwargs = {}
+    if marker:
+        # Filter out log_progress as it's not a HangDetectionConfig parameter
+        hang_config_kwargs = {
+            k: v for k, v in (marker.kwargs or {}).items()
+            if k != "log_progress"
+        }
+    
+    hang_config = HangDetectionConfig(**hang_config_kwargs)
+    
+    # Get progress callback from marker or use default
+    progress_callback = None
+    if marker and "progress_callback" in marker.kwargs:
+        progress_callback = marker.kwargs["progress_callback"]
+    else:
+        import logging
+        progress_callback = create_progress_logger_callback(logging.getLogger(__name__))
+    
+    return MonitoringConfig(
+        hang_config=hang_config,
+        progress_callback=progress_callback,
+    )
+
+
+@pytest.fixture
+def workflow_monitor(workflow_runner: WorkflowRunner, workflow_monitoring_config: MonitoringConfig) -> WorkflowActivityMonitor:
+    """
+    Automatically set up workflow monitoring for any test.
+    
+    This fixture creates a WorkflowActivityMonitor that automatically
+    registers as an observer on any WorkflowExecutor created by workflow_runner.
+    
+    Yields:
+        WorkflowActivityMonitor instance for test assertions
+        
+    Example:
+        @pytest.mark.e2e_workflow
+        async def test_my_workflow(workflow_runner, workflow_monitor):
+            state, results = await workflow_runner.run_workflow(workflow_path)
+            # Monitor automatically tracked all events
+            assert workflow_monitor.get_activity_summary()["steps_completed"] > 0
+    """
+    # The monitor will be registered when workflow_runner creates an executor
+    # We create it here but it will be registered in run_workflow
+    monitor = WorkflowActivityMonitor(
+        executor=None,  # Will be set when executor is created
+        project_path=workflow_runner.project_path,
+        hang_config=workflow_monitoring_config.hang_config,
+        progress_callback=workflow_monitoring_config.progress_callback,
+    )
+    
+    # Store monitor in runner for later registration
+    workflow_runner._monitor = monitor
+    
+    yield monitor
+    
+    # Cleanup: unregister observer if executor exists
+    if workflow_runner.executor and monitor in workflow_runner.executor.observer_registry.get_observers():
+        workflow_runner.executor.unregister_observer(monitor)
+
+
+@pytest.fixture
+def workflow_observers() -> list:
+    """
+    List for registering custom observers in tests.
+    
+    Tests can append custom observers to this list, and they will be
+    automatically registered on any WorkflowExecutor created by workflow_runner.
+    
+    Yields:
+        List that tests can append observers to
+        
+    Example:
+        @pytest.mark.e2e_workflow
+        async def test_with_custom_observer(workflow_runner, workflow_observers):
+            custom_observer = MyCustomObserver()
+            workflow_observers.append(custom_observer)
+            
+            state, results = await workflow_runner.run_workflow(workflow_path)
+            
+            # Access custom observer data
+            assert len(custom_observer.get_observed_events()) > 0
+    """
+    observers = []
+    yield observers
+    
+    # Cleanup: unregister all observers if executor exists
+    # (This will be handled by workflow_runner cleanup)
+
+
+# Hook to automatically add 'e2e' marker to all tests in e2e directory
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(config, items):
+    """
+    Automatically add the generic 'e2e' marker to all tests in the e2e directory.
+    
+    This ensures that 'pytest tests/e2e -m e2e' selects all e2e tests, regardless
+    of whether they have specific markers (e2e_workflow, e2e_scenario, etc.) or not.
+    """
+    for item in items:
+        # Check if test is in the e2e directory
+        if "tests/e2e" in str(item.fspath) or "tests\\e2e" in str(item.fspath):
+            # Only add marker if it doesn't already have it
+            if not item.get_closest_marker("e2e"):
+                item.add_marker(pytest.mark.e2e)
 
 
 # Hook to capture test results for artifact capture

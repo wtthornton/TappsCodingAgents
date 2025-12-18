@@ -6,38 +6,90 @@ import argparse
 
 def add_improver_parser(subparsers: argparse._SubParsersAction) -> None:
     """Add improver agent parser and subparsers"""
-    improver_parser = subparsers.add_parser("improver", help="Improver Agent commands")
+    improver_parser = subparsers.add_parser(
+        "improver",
+        help="Improver Agent commands",
+        description="""Code improvement and optimization agent.
+        
+The Improver Agent enhances existing code:
+  • Refactor code for better structure
+  • Optimize performance and memory usage
+  • Improve overall code quality
+  • Apply best practices
+  • Reduce technical debt
+
+Use this agent to improve existing code without changing functionality.""",
+    )
     improver_subparsers = improver_parser.add_subparsers(
-        dest="command", help="Commands"
+        dest="command", help="Improver agent subcommand (use 'help' to see all available commands)"
     )
 
     refactor_improver_parser = improver_subparsers.add_parser(
-        "refactor", aliases=["*refactor"], help="Refactor existing code"
+        "refactor", 
+        aliases=["*refactor"], 
+        help="Refactor existing code to improve structure and maintainability",
+        description="""Refactor code to improve structure, readability, and maintainability.
+        
+Improves code by:
+  • Extracting common patterns
+  • Reducing complexity
+  • Improving naming and organization
+  • Applying design patterns
+  • Reducing duplication
+
+Use --instruction to specify particular refactoring goals, or let the agent identify improvement opportunities automatically.""",
     )
-    refactor_improver_parser.add_argument("file_path", help="Path to file to refactor")
+    refactor_improver_parser.add_argument("file_path", help="Path to the source code file to refactor. The file will be analyzed for improvement opportunities.")
     refactor_improver_parser.add_argument(
-        "--instruction", help="Specific refactoring instructions"
+        "--instruction", help="Optional specific refactoring instructions (e.g., 'extract methods', 'simplify conditionals', 'improve error handling'). If not provided, the agent will identify and apply general improvements."
     )
 
     optimize_parser = improver_subparsers.add_parser(
         "optimize",
         aliases=["*optimize"],
-        help="Optimize code for performance or memory",
+        help="Optimize code for performance, memory usage, or both",
+        description="""Optimize code for better performance or reduced memory usage.
+        
+Performance optimizations:
+  • Algorithm improvements
+  • Caching strategies
+  • Loop optimizations
+  • Lazy evaluation
+  • Parallel processing opportunities
+
+Memory optimizations:
+  • Reducing object allocations
+  • Memory-efficient data structures
+  • Garbage collection improvements
+  • Resource cleanup
+
+Use --type to specify the optimization focus.""",
     )
-    optimize_parser.add_argument("file_path", help="Path to file to optimize")
+    optimize_parser.add_argument("file_path", help="Path to the source code file to optimize. The file will be analyzed for optimization opportunities.")
     optimize_parser.add_argument(
         "--type",
         choices=["performance", "memory", "both"],
         default="performance",
-        help="Optimization type",
+        help="Type of optimization to focus on: 'performance' for speed improvements (default), 'memory' for memory usage reduction, 'both' for comprehensive optimization",
     )
 
     improve_quality_parser = improver_subparsers.add_parser(
         "improve-quality",
         aliases=["*improve-quality"],
-        help="Improve overall code quality",
+        help="Improve overall code quality through comprehensive analysis",
+        description="""Perform comprehensive code quality improvements.
+        
+Addresses multiple quality aspects:
+  • Code structure and organization
+  • Readability and maintainability
+  • Best practices and patterns
+  • Error handling
+  • Documentation
+  • Testability
+
+This is a general quality improvement that addresses multiple concerns simultaneously.""",
     )
-    improve_quality_parser.add_argument("file_path", help="Path to file to improve")
+    improve_quality_parser.add_argument("file_path", help="Path to the source code file to improve. The file will be comprehensively analyzed and improved across multiple quality dimensions.")
 
     improver_subparsers.add_parser(
         "help", aliases=["*help"], help="Show improver commands"

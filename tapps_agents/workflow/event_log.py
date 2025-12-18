@@ -8,10 +8,11 @@ Epic 5 / Story 5.4: Workflow State Management
 import json
 import logging
 import os
+import threading
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 logger = logging.getLogger(__name__)
 
@@ -50,19 +51,171 @@ class WorkflowEvent:
         return cls(**data)
 
 
+@dataclass
+class EventFilter:
+    """Filter for selecting which events a subscriber should receive."""
+
+    event_types: list[str] | None = None  # None = all types
+    step_ids: list[str] | None = None  # None = all steps
+    agents: list[str] | None = None  # None = all agents
+    custom_filter: Callable[[WorkflowEvent], bool] | None = None  # Custom filter function
+
+    def matches(self, event: WorkflowEvent) -> bool:
+        """Check if event matches this filter."""
+        if self.event_types and event.event_type not in self.event_types:
+            return False
+        if self.step_ids and event.step_id not in self.step_ids:
+            return False
+        if self.agents and event.agent not in self.agents:
+            return False
+        if self.custom_filter and not self.custom_filter(event):
+            return False
+        return True
+
+
+@dataclass
+class Subscription:
+    """Represents an event subscription."""
+
+    callback: Callable[[WorkflowEvent], None]
+    filter: EventFilter | None
+    subscription_id: str
+
+
+class EventStream:
+    """Real-time event stream for consuming workflow events."""
+
+    def __init__(self):
+        """Initialize event stream."""
+        self._subscribers: list[Subscription] = []
+        self._lock = threading.Lock()
+        self._event_buffer: dict[str, list[WorkflowEvent]] = {}  # workflow_id -> events
+        self._buffer_limit = 1000  # Keep last 1000 events per workflow in memory
+
+    def subscribe(
+        self,
+        callback: Callable[[WorkflowEvent], None],
+        filter: EventFilter | None = None,
+        subscription_id: str | None = None,
+    ) -> Subscription:
+        """
+        Subscribe to events with optional filter.
+
+        Args:
+            callback: Function to call when matching events occur
+            filter: Optional filter to limit which events trigger callback
+            subscription_id: Optional ID for this subscription
+
+        Returns:
+            Subscription object that can be used to unsubscribe
+        """
+        if subscription_id is None:
+            import uuid
+
+            subscription_id = str(uuid.uuid4())
+
+        subscription = Subscription(
+            callback=callback, filter=filter, subscription_id=subscription_id
+        )
+
+        with self._lock:
+            self._subscribers.append(subscription)
+
+        logger.debug(f"Subscribed to event stream: {subscription_id}")
+        return subscription
+
+    def unsubscribe(self, subscription: Subscription) -> None:
+        """
+        Unsubscribe from events.
+
+        Args:
+            subscription: Subscription to remove
+        """
+        with self._lock:
+            self._subscribers = [
+                s for s in self._subscribers if s.subscription_id != subscription.subscription_id
+            ]
+        logger.debug(f"Unsubscribed from event stream: {subscription.subscription_id}")
+
+    def emit(self, event: WorkflowEvent) -> None:
+        """
+        Emit an event to all subscribers.
+
+        Args:
+            event: Event to emit
+        """
+        # Add to in-memory buffer
+        with self._lock:
+            if event.workflow_id not in self._event_buffer:
+                self._event_buffer[event.workflow_id] = []
+            self._event_buffer[event.workflow_id].append(event)
+
+            # Limit buffer size
+            if len(self._event_buffer[event.workflow_id]) > self._buffer_limit:
+                self._event_buffer[event.workflow_id] = self._event_buffer[
+                    event.workflow_id
+                ][-self._buffer_limit :]
+
+            # Get subscribers to notify (copy to avoid holding lock during callback)
+            subscribers_to_notify = list(self._subscribers)
+
+        # Notify subscribers (outside lock to avoid deadlocks)
+        for subscription in subscribers_to_notify:
+            try:
+                if subscription.filter is None or subscription.filter.matches(event):
+                    subscription.callback(event)
+            except Exception as e:
+                # Don't let one subscriber's exception break others
+                logger.error(
+                    f"Subscriber {subscription.subscription_id} raised exception: {e}",
+                    exc_info=True,
+                    extra={"event_type": event.event_type, "workflow_id": event.workflow_id},
+                )
+
+    def get_latest_events(self, workflow_id: str, limit: int = 100) -> list[WorkflowEvent]:
+        """
+        Get latest events for a workflow from in-memory buffer.
+
+        Args:
+            workflow_id: Workflow ID
+            limit: Maximum number of events to return
+
+        Returns:
+            List of events, most recent first
+        """
+        with self._lock:
+            events = self._event_buffer.get(workflow_id, [])
+            return list(reversed(events[-limit:]))
+
+    def clear_buffer(self, workflow_id: str | None = None) -> None:
+        """
+        Clear event buffer.
+
+        Args:
+            workflow_id: If provided, clear only this workflow's buffer. Otherwise clear all.
+        """
+        with self._lock:
+            if workflow_id:
+                self._event_buffer.pop(workflow_id, None)
+            else:
+                self._event_buffer.clear()
+
+
 class WorkflowEventLog:
     """Manages append-only event log for workflow execution."""
 
-    def __init__(self, events_dir: Path):
+    def __init__(self, events_dir: Path, enable_streaming: bool = True):
         """
         Initialize event log.
 
         Args:
             events_dir: Directory to store event log files
+            enable_streaming: Whether to enable in-memory event streaming
         """
         self.events_dir = Path(events_dir)
         self.events_dir.mkdir(parents=True, exist_ok=True)
         self._sequence_counter: dict[str, int] = {}
+        self._stream: EventStream | None = EventStream() if enable_streaming else None
 
     def _get_event_file(self, workflow_id: str) -> Path:
         """Get event log file path for a workflow."""
@@ -160,6 +313,10 @@ class WorkflowEventLog:
                     "step_id": step_id,
                 },
             )
+
+        # Emit to stream subscribers (real-time notification)
+        if self._stream:
+            self._stream.emit(event)
 
         return event
 
@@ -295,3 +452,41 @@ class WorkflowEventLog:
                 for e in events
             ],
         }
+
+    def subscribe(
+        self,
+        callback: Callable[[WorkflowEvent], None],
+        filter: EventFilter | None = None,
+        subscription_id: str | None = None,
+    ) -> Subscription | None:
+        """
+        Subscribe to real-time workflow events.
+
+        Args:
+            callback: Function to call when matching events occur
+            filter: Optional filter to limit which events trigger callback
+            subscription_id: Optional ID for this subscription
+
+        Returns:
+            Subscription object that can be used to unsubscribe, or None if streaming disabled
+        """
+        if not self._stream:
+            logger.warning("Event streaming is disabled")
+            return None
+        return self._stream.subscribe(callback, filter, subscription_id)
+
+    def get_latest_events(self, workflow_id: str, limit: int = 100) -> list[WorkflowEvent]:
+        """
+        Get latest events for a workflow from in-memory buffer.
+
+        Args:
+            workflow_id: Workflow ID
+            limit: Maximum number of events to return
+
+        Returns:
+            List of events, most recent first
+        """
+        if not self._stream:
+            # Fallback to reading from file
+            return list(reversed(self.read_events(workflow_id, limit=limit)))
+        return self._stream.get_latest_events(workflow_id, limit)

@@ -12,6 +12,7 @@ from typing import Any
 
 from .best_practice_consultant import BestPracticeAdvice, BestPracticeConsultant
 from .learning_confidence import LearningConfidenceCalculator
+from .learning_explainability import DecisionReasoningLogger
 
 logger = logging.getLogger(__name__)
 
@@ -37,6 +38,9 @@ class DecisionResult:
     learned_confidence: float | None = None
     best_practice_confidence: float | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    reasoning_chain: list[str] = field(default_factory=list)  # Decision reasoning chain
+    explanation: str = ""  # Human-readable explanation
+    decision_id: str = ""  # Decision identifier for logging
 
 
 @dataclass
@@ -74,6 +78,7 @@ class LearningDecisionEngine:
         capability_registry: Any,  # CapabilityRegistry
         best_practice_consultant: BestPracticeConsultant | None,
         confidence_calculator: LearningConfidenceCalculator | None = None,
+        decision_logger: DecisionReasoningLogger | None = None,
     ):
         """
         Initialize learning decision engine.
@@ -82,12 +87,14 @@ class LearningDecisionEngine:
             capability_registry: CapabilityRegistry instance
             best_practice_consultant: BestPracticeConsultant instance (optional)
             confidence_calculator: LearningConfidenceCalculator instance (optional)
+            decision_logger: DecisionReasoningLogger instance (optional)
         """
         self.capability_registry = capability_registry
         self.best_practice_consultant = best_practice_consultant
         self.confidence_calculator = (
             confidence_calculator or LearningConfidenceCalculator()
         )
+        self.decision_logger = decision_logger or DecisionReasoningLogger()
         self._decision_count = 0
         self._decision_metrics: dict[str, list[DecisionResult]] = {}
 
@@ -163,6 +170,23 @@ class LearningDecisionEngine:
         if decision_type not in self._decision_metrics:
             self._decision_metrics[decision_type] = []
         self._decision_metrics[decision_type].append(result)
+
+        # Log decision with reasoning
+        sources = [result.source.value]
+        if best_practice_advice:
+            sources.append("best_practice")
+
+        decision_id = self.decision_logger.log_decision(
+            decision_type=decision_type,
+            reasoning=result.reasoning,
+            sources=sources,
+            confidence=result.confidence,
+            outcome=result.value,
+            context=context,
+        )
+
+        # Add decision_id to result metadata
+        result.metadata["decision_id"] = decision_id
 
         return LearningDecision(
             decision_type=decision_type,

@@ -48,7 +48,7 @@ class TestWorkflowFailureResume:
             state_data = json.load(f)
 
         assert "workflow_id" in state_data
-        assert state_data["workflow_id"] == "quick-fix"
+        assert state_data["workflow_id"].startswith("quick-fix")
 
     @pytest.mark.asyncio
     async def test_state_loading(
@@ -218,4 +218,4 @@ class TestWorkflowFailureResume:
         for state_path in [state_path1, state_path2]:
             with open(state_path, encoding="utf-8") as f:
                 state_data = json.load(f)
-            assert state_data["workflow_id"] == "quick-fix"
+            assert state_data["workflow_id"].startswith("quick-fix")
