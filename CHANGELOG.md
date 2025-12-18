@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.5] - 2025-01-20
+
+### Changed
+- Runtime-only release: Excluded development files, tests, and documentation from distribution packages
+- Updated MANIFEST.in to exclude non-runtime directories (.bmad-core, .claude, .cursor, .ruff_cache, billstest, docs, examples, scripts, workflows, requirements, templates, implementation, reports)
+
 ## [2.0.4] - 2025-01-20
 
 ### Changed
