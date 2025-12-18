@@ -1,6 +1,6 @@
 # Operational Runbooks
 
-**Version**: 2.0.2  
+**Version**: 2.0.4  
 **Last Updated**: January 2026
 
 This document provides operational procedures for common failure scenarios and data management in TappsCodingAgents.
