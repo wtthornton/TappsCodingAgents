@@ -178,18 +178,16 @@ class TestLargeInputHandling:
 
     def test_memory_error_handling(self):
         """Test that memory errors are handled appropriately."""
-        # We can't easily simulate MemoryError in tests without causing issues
-        # But we can test that if it occurs, it's categorized correctly
-        try:
-            # Attempt to create an extremely large list (will fail on most systems)
-            [0] * (10 ** 10)  # This will likely fail
-        except MemoryError:
-            # MemoryError should be categorized appropriately
-            error = MemoryError("Out of memory")
-            envelope = ErrorEnvelopeBuilder.from_exception(error)
-            # MemoryError is not in our standard categories, so should default
-            assert envelope.category == "execution"  # Default category
-            assert envelope.code == "unknown_error"  # Default code
+        # Instead of trying to trigger MemoryError by allocating huge memory
+        # (which may hang or timeout), directly create a MemoryError and test
+        # that ErrorEnvelopeBuilder handles it correctly.
+        # This tests the error handling logic without risking timeouts.
+        error = MemoryError("Out of memory")
+        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        
+        # MemoryError is not in our standard categories, so should default
+        assert envelope.category == "execution"  # Default category
+        assert envelope.code == "unknown_error"  # Default code
 
 
 class TestPathTraversalHandling:

@@ -11,9 +11,9 @@ Reviewed and fixed unit tests in the TappsCodingAgents project.
 ## Fixes Applied
 
 ### 1. Version Flag Test (`test_cli_version_flag.py`)
-**Issue**: Test expected version "2.0.1" but actual version is "2.0.3"
-**Fix**: Updated test assertion to expect "2.0.3"
-**Status**: ✅ Fixed and passing
+**Issue**: Test expected hardcoded version "2.0.3" but actual version is "2.0.5"
+**Fix**: Updated test to use dynamic version checking from `tapps_agents.__version__` instead of hardcoded value
+**Status**: ✅ Fixed and passing (now future-proof for version changes)
 
 ### 2. Workflow Recommend Tests (`test_workflow_recommend.py`)
 **Issue**: Tests were patching `WorkflowRecommender` at incorrect import path
@@ -42,12 +42,11 @@ Reviewed and fixed unit tests in the TappsCodingAgents project.
 ## Known Issues
 
 ### Test Timeout Problems
-Some tests experience timeouts during execution, particularly:
-- Tests in `tests/unit/core/` directory
-- The timeout appears to be related to pytest's output capture mechanism on Windows
-- May be related to test `test_memory_error_handling` in `test_error_edge_cases.py`
+✅ **RESOLVED**: The `test_memory_error_handling` timeout issue has been fixed by refactoring the test to directly test error handling without memory allocation.
 
-**Workaround**: Tests can be run in smaller batches by directory to avoid timeouts.
+**Previous Issue**: Test attempted to allocate huge memory (`[0] * (10 ** 10)`) which would timeout on some systems.
+
+**Fix Applied**: Test now directly creates a `MemoryError` and validates error handling, avoiding timeout issues while maintaining test coverage.
 
 ## Test Configuration
 

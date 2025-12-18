@@ -12,6 +12,7 @@ pytestmark = pytest.mark.unit
 class TestCliVersionFlag:
     def test_cli_version_flag_prints_version_and_exits(self, capsys):
         from tapps_agents.cli import main
+        from tapps_agents import __version__ as actual_version
 
         with patch("sys.argv", ["tapps_agents", "--version"]):
             with pytest.raises(SystemExit) as exc:
@@ -19,6 +20,8 @@ class TestCliVersionFlag:
 
         assert exc.value.code == 0
         captured = capsys.readouterr()
-        assert "2.0.3" in captured.out
+        
+        # Use dynamic version instead of hardcoded value
+        assert actual_version in captured.out
 
 
