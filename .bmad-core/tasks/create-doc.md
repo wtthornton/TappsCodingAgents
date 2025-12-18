@@ -28,7 +28,7 @@ Before starting document creation, you should be aware of:
 - **Coding Standards**: `docs/architecture/coding-standards.md` - For naming conventions and code quality standards
 - **Existing Docs**: Check `docs/` folder for related documentation to reference
 - **PRD Location**: Configured in core-config.yaml → prd.prdFile (usually `docs/prd.md`)
-- **Architecture Location**: Configured in core-config.yaml → architecture.architectureFile (usually `docs/architecture.md`)
+- **Architecture Location**: Configured in core-config.yaml → architecture.architectureFile (in this repo: `docs/ARCHITECTURE.md`)
 
 ## CRITICAL: Mandatory Elicitation Format
 

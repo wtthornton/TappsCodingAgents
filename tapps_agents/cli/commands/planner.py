@@ -2,8 +2,6 @@
 Planner agent command handlers
 """
 import asyncio
-import json
-import sys
 
 from ...agents.planner.agent import PlannerAgent
 from ..base import normalize_command

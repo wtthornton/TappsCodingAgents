@@ -5,7 +5,6 @@ Handles confirmation step before workflow execution.
 Epic 9 / Story 9.4: Confirmation and Execution
 """
 
-from typing import Any
 
 from .models import Workflow
 from .nlp_parser import WorkflowIntentResult

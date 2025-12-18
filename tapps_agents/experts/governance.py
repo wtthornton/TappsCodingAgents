@@ -10,9 +10,10 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
 
-from .knowledge_ingestion import KnowledgeEntry
+if TYPE_CHECKING:
+    from .knowledge_ingestion import KnowledgeEntry
 
 
 @dataclass

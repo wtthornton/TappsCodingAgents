@@ -778,3 +778,28 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
         help="Interactive mode: prompt for all options",
     )
 
+    # Cursor integration verification command
+    cursor_parser = subparsers.add_parser(
+        "cursor",
+        help="Cursor integration verification and management",
+        description="Verify Cursor integration components (Skills, Rules, Background Agents).",
+    )
+    cursor_subparsers = cursor_parser.add_subparsers(
+        dest="cursor_command",
+        help="Cursor commands",
+        required=True,
+    )
+
+    cursor_verify_parser = cursor_subparsers.add_parser(
+        "verify",
+        aliases=["check"],
+        help="Verify Cursor integration",
+        description="Verify that all Cursor integration components are properly installed and configured.",
+    )
+    cursor_verify_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+

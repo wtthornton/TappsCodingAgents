@@ -4,7 +4,7 @@ Unit tests for natural language parser (Story 9.1, 9.2).
 
 import pytest
 
-from tapps_agents.workflow.nlp_parser import NaturalLanguageParser, WorkflowIntent, WorkflowIntentResult
+from tapps_agents.workflow.nlp_parser import NaturalLanguageParser
 
 
 @pytest.mark.unit

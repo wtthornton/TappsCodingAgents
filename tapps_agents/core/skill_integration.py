@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .skill_loader import SkillMetadata, SkillRegistry, get_skill_registry, initialize_skill_registry
+from .skill_loader import SkillMetadata, initialize_skill_registry
 
 logger = logging.getLogger(__name__)
 

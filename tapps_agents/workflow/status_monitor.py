@@ -8,14 +8,12 @@ Epic 8 / Story 8.2: Real-Time Status Monitoring
 import asyncio
 import json
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
-
-from .models import WorkflowState
-from .progress_updates import ProgressUpdate, UpdateType
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +274,7 @@ class StatusFileMonitor:
             State dictionary or None if failed
         """
         try:
-            with open(state_file, "r", encoding="utf-8") as f:
+            with open(state_file, encoding="utf-8") as f:
                 return json.load(f)
         except FileNotFoundError:
             return None

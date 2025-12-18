@@ -93,6 +93,151 @@ class IterativeRefinement:
             self.browser_controller.stop()
             self.browser_controller = None
 
+    def _load_and_capture_iteration(
+        self, current_html: str, iteration: int
+    ) -> tuple[bool, str | None]:
+        """Load HTML in browser and capture screenshot."""
+        browser_controller = self.browser_controller
+        if not browser_controller:
+            return False, None
+
+        # Load HTML in browser
+        if not browser_controller.load_html(current_html):
+            logger.error(f"Failed to load HTML in iteration {iteration}")
+            return False, None
+
+        # Capture screenshot
+        screenshot_path = None
+        if self.config.screenshot_dir:
+            screenshot_path = str(
+                Path(self.config.screenshot_dir) / f"iteration_{iteration}.png"
+            )
+            browser_controller.capture_screenshot(screenshot_path)
+
+        return True, screenshot_path
+
+    def _analyze_ui_quality(
+        self, current_html: str, visual_elements: list[VisualElement], requirements: dict[str, Any]
+    ) -> tuple[Any, Any, float]:
+        """Analyze layout, accessibility, and calculate quality score."""
+        # Analyze layout
+        layout_metrics = None
+        if self.config.enable_layout_analysis:
+            layout_metrics = self.visual_analyzer.analyze_layout(
+                visual_elements, design_spec=requirements.get("design_spec")
+            )
+
+        # Analyze accessibility
+        accessibility_metrics = None
+        if self.config.enable_accessibility_check:
+            accessibility_metrics = self.visual_analyzer.analyze_accessibility(
+                visual_elements, html_content=current_html
+            )
+
+        # Calculate quality score
+        quality_score = 0.0
+        if layout_metrics and accessibility_metrics:
+            quality_score = self.visual_analyzer.calculate_quality_score(
+                layout_metrics, accessibility_metrics
+            )
+        elif layout_metrics:
+            # Simplified score if only layout available
+            quality_score = (
+                layout_metrics.spacing_consistency * 0.2
+                + layout_metrics.alignment_score * 0.2
+                + layout_metrics.visual_hierarchy * 0.2
+                + layout_metrics.whitespace_balance * 0.2
+                + layout_metrics.grid_consistency * 0.2
+            )
+
+        return layout_metrics, accessibility_metrics, quality_score
+
+    def _generate_ui_suggestions(
+        self, layout_metrics: Any, accessibility_metrics: Any
+    ) -> list[str]:
+        """Generate suggestions based on layout and accessibility metrics."""
+        suggestions = []
+        if layout_metrics:
+            if layout_metrics.spacing_consistency < 0.7:
+                suggestions.append("Improve spacing consistency")
+            if layout_metrics.alignment_score < 0.7:
+                suggestions.append("Improve element alignment")
+            if layout_metrics.visual_hierarchy < 0.7:
+                suggestions.append("Enhance visual hierarchy")
+
+        if accessibility_metrics:
+            if not accessibility_metrics.aria_labels_present:
+                suggestions.append("Add ARIA labels for screen readers")
+            if not accessibility_metrics.focus_indicators_present:
+                suggestions.append("Add focus indicators for keyboard navigation")
+            if accessibility_metrics.color_contrast_score < 0.7:
+                suggestions.append("Improve color contrast")
+
+        return suggestions
+
+    def _compare_with_previous_iteration(
+        self, iteration: int, feedback: VisualFeedback
+    ) -> tuple[list[str], list[str]]:
+        """Compare current iteration with previous iteration."""
+        improvements = []
+        regressions = []
+        if iteration > 1:
+            previous_feedback = self.feedback_collector.get_feedback_history(limit=1)[0]
+            comparison = self.ui_comparator.compare_iterations(previous_feedback, feedback)
+            improvements = comparison["improvements"]
+            regressions = comparison["regressions"]
+        return improvements, regressions
+
+    def _create_iteration_result(
+        self,
+        iteration: int,
+        current_html: str,
+        feedback: VisualFeedback,
+        quality_score: float,
+        improvements: list[str],
+        regressions: list[str],
+    ) -> IterationResult:
+        """Create iteration result."""
+        return IterationResult(
+            iteration=iteration,
+            html_content=current_html,
+            feedback=feedback,
+            quality_score=quality_score,
+            improvements=improvements,
+            regressions=regressions,
+            should_continue=self._should_continue_iteration(
+                quality_score, improvements, iteration
+            ),
+        )
+
+    async def _refine_html_if_needed(
+        self,
+        current_html: str,
+        feedback: VisualFeedback,
+        suggestions: list[str],
+        requirements: dict[str, Any],
+        refinement_callback: (
+            Callable[[str, VisualFeedback, list[str], dict[str, Any]], Awaitable[str]]
+            | None
+        ),
+    ) -> tuple[str, bool]:
+        """Refine HTML using callback if provided."""
+        if not refinement_callback:
+            return current_html, False
+
+        try:
+            refined_html = await refinement_callback(
+                current_html, feedback, suggestions, requirements
+            )
+            if refined_html and refined_html != current_html:
+                return refined_html, True
+            else:
+                logger.warning("Refinement callback did not produce new HTML")
+                return current_html, False
+        except Exception as e:
+            logger.error(f"Refinement callback failed: {e}")
+            return current_html, False
+
     async def refine_ui(
         self,
         initial_html: str,
@@ -129,53 +274,20 @@ class IterativeRefinement:
             iteration += 1
             logger.info(f"Starting iteration {iteration}")
 
-            browser_controller = self.browser_controller
-
-            # Load HTML in browser
-            if not browser_controller.load_html(current_html):
-                logger.error(f"Failed to load HTML in iteration {iteration}")
+            # Load HTML and capture screenshot
+            success, screenshot_path = self._load_and_capture_iteration(
+                current_html, iteration
+            )
+            if not success:
                 break
 
-            # Capture screenshot
-            screenshot_path = None
-            if self.config.screenshot_dir:
-                screenshot_path = str(
-                    Path(self.config.screenshot_dir) / f"iteration_{iteration}.png"
-                )
-                browser_controller.capture_screenshot(screenshot_path)
-
-            # Extract visual elements (simplified - would use actual DOM analysis)
+            # Extract visual elements
             visual_elements = self._extract_visual_elements(current_html)
 
-            # Analyze layout
-            layout_metrics = None
-            if self.config.enable_layout_analysis:
-                layout_metrics = self.visual_analyzer.analyze_layout(
-                    visual_elements, design_spec=requirements.get("design_spec")
-                )
-
-            # Analyze accessibility
-            accessibility_metrics = None
-            if self.config.enable_accessibility_check:
-                accessibility_metrics = self.visual_analyzer.analyze_accessibility(
-                    visual_elements, html_content=current_html
-                )
-
-            # Calculate quality score
-            quality_score = 0.0
-            if layout_metrics and accessibility_metrics:
-                quality_score = self.visual_analyzer.calculate_quality_score(
-                    layout_metrics, accessibility_metrics
-                )
-            elif layout_metrics:
-                # Simplified score if only layout available
-                quality_score = (
-                    layout_metrics.spacing_consistency * 0.2
-                    + layout_metrics.alignment_score * 0.2
-                    + layout_metrics.visual_hierarchy * 0.2
-                    + layout_metrics.whitespace_balance * 0.2
-                    + layout_metrics.grid_consistency * 0.2
-                )
+            # Analyze UI quality
+            layout_metrics, accessibility_metrics, quality_score = (
+                self._analyze_ui_quality(current_html, visual_elements, requirements)
+            )
 
             # Collect feedback
             feedback = self.feedback_collector.collect_feedback(
@@ -189,55 +301,30 @@ class IterativeRefinement:
             feedback.quality_score = quality_score
 
             # Generate suggestions
-            suggestions = []
-            if layout_metrics:
-                if layout_metrics.spacing_consistency < 0.7:
-                    suggestions.append("Improve spacing consistency")
-                if layout_metrics.alignment_score < 0.7:
-                    suggestions.append("Improve element alignment")
-                if layout_metrics.visual_hierarchy < 0.7:
-                    suggestions.append("Enhance visual hierarchy")
-
-            if accessibility_metrics:
-                if not accessibility_metrics.aria_labels_present:
-                    suggestions.append("Add ARIA labels for screen readers")
-                if not accessibility_metrics.focus_indicators_present:
-                    suggestions.append("Add focus indicators for keyboard navigation")
-                if accessibility_metrics.color_contrast_score < 0.7:
-                    suggestions.append("Improve color contrast")
-
+            suggestions = self._generate_ui_suggestions(
+                layout_metrics, accessibility_metrics
+            )
             feedback.suggestions = suggestions
             feedback.issues = (layout_metrics.issues if layout_metrics else []) + (
                 accessibility_metrics.issues if accessibility_metrics else []
             )
 
             # Compare with previous iteration
-            improvements = []
-            regressions = []
-            if iteration > 1:
-                previous_feedback = self.feedback_collector.get_feedback_history(
-                    limit=1
-                )[0]
-                comparison = self.ui_comparator.compare_iterations(
-                    previous_feedback, feedback
-                )
-                improvements = comparison["improvements"]
-                regressions = comparison["regressions"]
+            improvements, regressions = self._compare_with_previous_iteration(
+                iteration, feedback
+            )
 
             # Learn from feedback
             self.pattern_learner.learn_from_feedback(feedback)
 
             # Create iteration result
-            result = IterationResult(
-                iteration=iteration,
-                html_content=current_html,
-                feedback=feedback,
-                quality_score=quality_score,
-                improvements=improvements,
-                regressions=regressions,
-                should_continue=self._should_continue_iteration(
-                    quality_score, improvements, iteration
-                ),
+            result = self._create_iteration_result(
+                iteration,
+                current_html,
+                feedback,
+                quality_score,
+                improvements,
+                regressions,
             )
 
             self.iteration_history.append(result)
@@ -252,22 +339,12 @@ class IterativeRefinement:
                 break
 
             # Generate refined HTML if callback provided
-            if refinement_callback:
-                try:
-                    refined_html = await refinement_callback(
-                        current_html, feedback, suggestions, requirements
-                    )
-                    if refined_html and refined_html != current_html:
-                        current_html = refined_html
-                    else:
-                        logger.warning("Refinement callback did not produce new HTML")
-                        break
-                except Exception as e:
-                    logger.error(f"Refinement callback failed: {e}")
-                    break
-            else:
-                # No callback, stop after first iteration
+            refined_html, should_continue = await self._refine_html_if_needed(
+                current_html, feedback, suggestions, requirements, refinement_callback
+            )
+            if not should_continue:
                 break
+            current_html = refined_html
 
         return self.iteration_history[-1] if self.iteration_history else None
 

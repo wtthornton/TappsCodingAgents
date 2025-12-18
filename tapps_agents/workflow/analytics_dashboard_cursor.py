@@ -10,7 +10,6 @@ from __future__ import annotations
 import os
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 from .analytics_accessor import CursorAnalyticsAccessor
 from .analytics_visualizer import AnalyticsVisualizer

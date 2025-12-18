@@ -98,7 +98,7 @@ The architect creates:
 
 - **One comprehensive architecture document** following fullstack-architecture template
 - **Covers all system aspects** in a single file
-- **Easy to copy and save** as `docs/architecture.md`
+- **Easy to copy and save** as `docs/ARCHITECTURE.md`
 - **Can be sharded later** in IDE if desired
 
 For example, if you say "Add payment processing to user service":
@@ -117,7 +117,9 @@ For example, if you say "Add payment processing to user service":
 2. **Upload your project**:
    - **Option A**: Paste your GitHub repository URL directly
    - **Option B**: Upload your flattened-codebase.xml file
-3. **Load the architect agent**: Upload `dist/agents/architect.txt`
+3. **Load the architect agent**:
+   - If you have a generated web bundle, upload the Architect bundle from `dist/agents/`
+   - In this repository (source form), use `.bmad-core/agents/architect.md`
 4. **Run documentation**: Type `*document-project`
 
 The architect will generate comprehensive documentation of everything.
@@ -216,19 +218,19 @@ The PO ensures:
 
 1. Save your PRD and Architecture as:
    docs/prd.md
-   docs/architecture.md
+   docs/ARCHITECTURE.md
    (Note: You can optionally prefix with 'brownfield-' if managing multiple versions)
 2. Shard your docs:
    In your IDE
 
    ```bash
    @po
-   shard docs/prd.md
+   *shard-doc docs/prd.md docs/prd
    ```
 
    ```bash
    @po
-   shard docs/architecture.md
+   *shard-doc docs/ARCHITECTURE.md docs/architecture
    ```
 
 ### Phase 5: Transition to Development

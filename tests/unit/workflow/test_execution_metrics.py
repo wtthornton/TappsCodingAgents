@@ -6,8 +6,6 @@ from __future__ import annotations
 
 import pytest
 from pathlib import Path
-import tempfile
-import json
 from datetime import datetime
 
 from tapps_agents.workflow.execution_metrics import (

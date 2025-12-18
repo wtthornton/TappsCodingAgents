@@ -77,11 +77,6 @@ class AgentFileNotFoundError(FileOperationError):
     pass
 
 
-# Backwards compatibility alias (deprecated)
-# Deprecated: Use AgentFileNotFoundError instead. This alias will be removed in a future version.
-FileNotFoundError = AgentFileNotFoundError
-
-
 class FileReadError(FileOperationError):
     """Raised when file reading fails."""
 

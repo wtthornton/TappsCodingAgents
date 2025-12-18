@@ -20,7 +20,7 @@ Analyze the current project to determine its characteristics:
 
 1. **Check for existing documentation:**
    - Look for `docs/prd.md` or `docs/prd/` directory
-   - Look for `docs/architecture.md` or `docs/architecture/` directory
+   - Look for `docs/ARCHITECTURE.md` (this repo) or `docs/architecture/` directory
    - Look for `docs/stories/` directory
    - Check for existing `.bmad-core/` configuration
 

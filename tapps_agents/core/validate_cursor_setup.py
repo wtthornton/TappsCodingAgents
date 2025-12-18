@@ -5,9 +5,10 @@ Verifies that all required files and directories are properly configured
 according to Cursor IDE best practices.
 """
 
-import yaml
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 
 def validate_cursor_rules(project_root: Path) -> dict[str, Any]:

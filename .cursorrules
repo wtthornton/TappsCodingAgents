@@ -1,0 +1,117 @@
+# TappsCodingAgents Cursor Rules
+
+This project uses Cursor Skills and Rules for AI assistance.
+
+## Quick Reference
+
+- **Skills**: Use `@agent-name` in chat (e.g., `@reviewer`, `@implementer`)
+- **Rules**: See `.cursor/rules/` for detailed project context
+- **Background Agents**: See `.cursor/background-agents.yaml` for autonomous task execution
+
+## Available Skills (13 Agents)
+
+### Core Development
+- `@reviewer` - Code review with objective quality metrics (5 metrics: complexity, security, maintainability, test coverage, performance)
+- `@implementer` - Code generation and refactoring
+- `@tester` - Test generation and execution
+- `@debugger` - Error analysis and code tracing
+
+### Planning & Design
+- `@analyst` - Requirements gathering and analysis
+- `@planner` - Story creation and task breakdown
+- `@architect` - System design and architecture
+- `@designer` - API contracts and data model design
+
+### Quality & Operations
+- `@improver` - Code refactoring and optimization
+- `@ops` - Security scanning, compliance, deployment
+- `@documenter` - API documentation and README generation
+
+### Orchestration & Enhancement
+- `@orchestrator` - Workflow coordination and multi-agent orchestration
+- `@enhancer` - Prompt enhancement utility with expert integration
+
+## Quick Commands
+
+### Code Review
+```
+@reviewer *review {file}
+@reviewer *score {file}
+@reviewer *lint {file}
+@reviewer *type-check {file}
+@reviewer *security-scan {file}
+```
+
+### Code Generation
+```
+@implementer *implement "description" {file}
+@implementer *refactor {file} "instructions"
+```
+
+### Testing
+```
+@tester *test {file}
+@tester *generate-tests {file}
+@tester *run-tests
+```
+
+### Context7 Library Docs
+```
+@reviewer *docs {library}
+@implementer *docs {library} {topic}
+```
+
+## Workflow Presets
+
+This project includes 5 workflow presets:
+
+1. **Full SDLC** (`workflow full`) - Complete enterprise pipeline
+2. **Rapid Development** (`workflow rapid`) - Fast feature development
+3. **Maintenance** (`workflow fix`) - Bug fixes and refactoring
+4. **Quality Improvement** (`workflow quality`) - Code quality focus
+5. **Quick Fix** (`workflow quick`) - Hotfix workflow
+
+See `.cursor/rules/workflow-presets.mdc` for details.
+
+## Background Agents
+
+Available background agents (see `.cursor/background-agents.yaml`):
+
+- **Quality Analyzer** - Full project quality analysis
+- **Test Runner** - Execute test suite
+- **Security Auditor** - Security scanning and dependency auditing
+- **PR Mode** - Verify changes and create PRs
+
+Trigger with natural language: "Analyze project quality", "Run security scan", etc.
+
+## Project Context
+
+**Important:** This project has dual roles:
+1. **Framework Development** - Developing the TappsCodingAgents framework itself
+2. **Self-Hosting** - Using the framework for its own development
+
+See `.cursor/rules/project-context.mdc` for full context.
+
+## Documentation
+
+- **Skills Installation**: `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md`
+- **Rules Setup**: `docs/CURSOR_RULES_SETUP.md`
+- **Background Agents**: `docs/BACKGROUND_AGENTS_GUIDE.md`
+- **Integration Plan**: `docs/CURSOR_AI_INTEGRATION_PLAN_2025.md`
+
+## Configuration
+
+- **Skills**: `.claude/skills/` (13 agent skills)
+- **Rules**: `.cursor/rules/` (5 rule files)
+- **Background Agents**: `.cursor/background-agents.yaml`
+- **Indexing**: `.cursorignore` (performance optimization)
+
+## Getting Started
+
+1. Skills are already installed in `.claude/skills/`
+2. Try: `@reviewer *help` in Cursor chat
+3. Try: `@implementer *help` for code generation
+4. Try: `@tester *help` for testing commands
+
+For full setup instructions, see `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md`.
+

@@ -9,12 +9,11 @@ status badges, timelines, quality dashboards, and artifact summaries.
 from __future__ import annotations
 
 import os
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from ..quality.quality_gates import QualityGateResult
-from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .models import Artifact, Workflow, WorkflowState
 
 
 class VisualFeedbackGenerator:

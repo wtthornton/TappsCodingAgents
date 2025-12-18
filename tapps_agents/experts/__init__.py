@@ -12,8 +12,13 @@ from .agent_integration import ExpertSupportMixin, create_agent_with_expert_supp
 from .base_expert import BaseExpert
 from .builtin_registry import BuiltinExpertRegistry
 from .domain_config import DomainConfig, DomainConfigParser
+from .domain_detector import (
+    DomainMapping,
+    DomainStackDetector,
+    RepoSignal,
+    StackDetectionResult,
+)
 from .expert_config import ExpertConfigModel, ExpertsConfig, load_expert_configs
-from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
 from .expert_engine import (
     ExpertEngine,
     ExpertEngineMetrics,
@@ -22,22 +27,17 @@ from .expert_engine import (
     KnowledgeRetrievalPlan,
     KnowledgeWriteRequest,
 )
-from .domain_detector import (
-    DomainMapping,
-    DomainStackDetector,
-    RepoSignal,
-    StackDetectionResult,
-)
-from .expert_synthesizer import ExpertSynthesizer, ExpertSynthesisResult
-from .knowledge_ingestion import (
-    IngestionResult,
-    KnowledgeEntry,
-    KnowledgeIngestionPipeline,
-)
+from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
+from .expert_synthesizer import ExpertSynthesisResult, ExpertSynthesizer
 from .governance import (
     FilterResult,
     GovernanceLayer,
     GovernancePolicy,
+)
+from .knowledge_ingestion import (
+    IngestionResult,
+    KnowledgeEntry,
+    KnowledgeIngestionPipeline,
 )
 from .observability import (
     ConsultationMetrics,

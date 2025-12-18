@@ -4,7 +4,6 @@ Multi-agent integration tests.
 Tests workflows that involve multiple agents working together.
 """
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -36,7 +35,6 @@ class TestMultiAgentWorkflow:
         """Test workflow from analyst to planner."""
         from tapps_agents.agents.analyst.agent import AnalystAgent
         from tapps_agents.agents.planner.agent import PlannerAgent
-        from tapps_agents.core.config import ProjectConfig
         
         with patch("tapps_agents.agents.analyst.agent.MAL") as mock_mal_class:
             mock_mal = MagicMock()

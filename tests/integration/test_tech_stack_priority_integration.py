@@ -4,7 +4,6 @@ Integration tests for tech stack priority system.
 Tests the full flow: detection → config → registry → consultation.
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest

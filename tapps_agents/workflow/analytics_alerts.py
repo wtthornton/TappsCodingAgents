@@ -8,12 +8,10 @@ Manages alerts for analytics thresholds and exports analytics data.
 from __future__ import annotations
 
 import json
-import os
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any
 
 from .analytics_accessor import CursorAnalyticsAccessor
 from .cursor_chat import ChatUpdateSender

@@ -12,6 +12,15 @@ from ...core.mal import MAL
 from ...experts.agent_integration import ExpertSupportMixin
 from ..ops.dependency_analyzer import DependencyAnalyzer
 from .aggregator import QualityAggregator
+from .progressive_review import (
+    ProgressiveReview,
+    ProgressiveReviewPolicy,
+    ProgressiveReviewRollup,
+    ProgressiveReviewStorage,
+    ReviewFinding,
+    ReviewMetrics,
+    Severity,
+)
 from .report_generator import ReportGenerator
 from .scoring import CodeScorer
 from .service_discovery import ServiceDiscovery
@@ -819,8 +828,18 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     + aggregated_scores["test_coverage_score"] * 0.15
                     + aggregated_scores["performance_score"] * 0.10
                 ) * 10  # Scale from 0-10 weighted sum to 0-100
+            else:
+                # Files were provided but none could be analyzed
+                logger.warning(
+                    "No files could be analyzed. Generated report will have zero scores."
+                )
+                aggregated_scores["overall_score"] = 0.0
         else:
             # No target/files provided or no files found - keep scores at 0.
+            logger.warning(
+                "No files to analyze. Provide a target directory or file list. "
+                "Generated report will have zero scores."
+            )
             aggregated_scores["overall_score"] = 0.0
 
         # Prepare metadata
@@ -1118,6 +1137,280 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         result["services"] = service_results
 
         return result
+
+    async def progressive_review_task(
+        self,
+        story_id: str,
+        task_number: int,
+        task_title: str = "",
+        changed_files: list[Path] | None = None,
+        project_root: Path | None = None,
+    ) -> ProgressiveReview:
+        """
+        Perform progressive task-level review (Epic 5).
+
+        Reviews code changes for a specific task, catching issues early.
+        Aligned with BMAD's progressive review automation.
+
+        Args:
+            story_id: Story identifier (e.g., "1.3")
+            task_number: Task number
+            task_title: Optional task title
+            changed_files: List of files changed in this task
+            project_root: Project root directory
+
+        Returns:
+            ProgressiveReview with decision and findings
+        """
+        if project_root is None:
+            project_root = self.project_root or Path.cwd()
+
+        # Initialize storage and policy
+        storage = ProgressiveReviewStorage(project_root)
+        policy = ProgressiveReviewPolicy(severity_blocks=["high"])
+
+        # If no files provided, try to detect from git
+        if not changed_files:
+            changed_files = []
+            # TODO: Add git diff detection if needed
+
+        # Review each changed file
+        findings: list[ReviewFinding] = []
+        metrics = ReviewMetrics()
+
+        for file_path in changed_files:
+            if not file_path.exists():
+                continue
+
+            try:
+                # Review file using existing review_file method
+                review_result = await self.review_file(
+                    file_path,
+                    include_scoring=True,
+                    include_llm_feedback=False,  # Faster for progressive reviews
+                )
+
+                # Extract findings from review - Enhanced version
+                extracted_findings = await self._extract_findings_from_review(
+                    review_result, file_path, task_number
+                )
+                findings.extend(extracted_findings)
+
+                metrics.files_reviewed += 1
+
+            except Exception as e:
+                logger.warning(f"Failed to review {file_path}: {e}")
+
+        # Determine decision
+        decision, reason = policy.determine_decision(findings)
+
+        # Create review
+        review = ProgressiveReview(
+            story_id=story_id,
+            task_number=task_number,
+            task_title=task_title,
+            reviewer="TappsCodingAgents Progressive Review",
+            model="reviewer-agent",
+            decision=decision,
+            decision_reason=reason,
+            findings=findings,
+            metrics=metrics,
+        )
+
+        # Save review
+        storage.save_review(review)
+
+        return review
+
+    async def rollup_story_reviews(
+        self, story_id: str, project_root: Path | None = None
+    ) -> dict[str, Any]:
+        """
+        Rollup all progressive reviews for a story (Story 37.4).
+
+        Args:
+            story_id: Story identifier
+            project_root: Project root directory
+
+        Returns:
+            Rollup summary for final QA
+        """
+        if project_root is None:
+            project_root = self.project_root or Path.cwd()
+
+        storage = ProgressiveReviewStorage(project_root)
+        rollup = ProgressiveReviewRollup(storage)
+
+        return rollup.rollup_story_reviews(story_id)
+
+    async def _extract_findings_from_review(
+        self, review_result: dict[str, Any], file_path: Path, task_number: int
+    ) -> list[ReviewFinding]:
+        """
+        Extract specific findings from review results (Enhanced Findings).
+
+        Parses linting errors, security warnings, type errors, and other
+        specific issues from review output instead of just generic score messages.
+
+        Args:
+            review_result: Result from review_file()
+            file_path: File being reviewed
+            task_number: Task number for finding IDs
+
+        Returns:
+            List of ReviewFinding objects
+        """
+        findings: list[ReviewFinding] = []
+        file_str = str(file_path)
+        finding_counter = {"security": 0, "linting": 0, "type": 0, "quality": 0}
+
+        # Extract scoring data
+        scoring = review_result.get("scoring", {})
+        security_score = scoring.get("security_score", 10.0)
+        maintainability_score = scoring.get("maintainability_score", 10.0)
+        complexity_score = scoring.get("complexity_score", 10.0)
+
+        # 1. Extract linting errors (specific issues)
+        try:
+            lint_result = await self.lint_file(file_path)
+            lint_issues = lint_result.get("issues", [])
+            error_count = lint_result.get("error_count", 0)
+            fatal_count = lint_result.get("fatal_count", 0)
+
+            # Extract specific linting errors
+            for issue in lint_issues[:10]:  # Limit to first 10 issues
+                finding_counter["linting"] += 1
+                code_name = issue.get("code", {})
+                if isinstance(code_name, dict):
+                    code = code_name.get("name", "UNKNOWN")
+                else:
+                    code = str(code_name)
+
+                message = issue.get("message", "Linting issue found")
+                line = issue.get("location", {}).get("row", None)
+                if line is None:
+                    line = issue.get("line", None)
+
+                # Determine severity based on error type
+                if code.startswith("F") or fatal_count > 0:
+                    severity = Severity.HIGH
+                elif code.startswith("E") or error_count > 0:
+                    severity = Severity.HIGH
+                elif code.startswith("W"):
+                    severity = Severity.MEDIUM
+                else:
+                    severity = Severity.LOW
+
+                findings.append(
+                    ReviewFinding(
+                        id=f"TASK-{task_number}-LINT-{finding_counter['linting']:03d}",
+                        severity=severity,
+                        category="standards",
+                        file=file_str,
+                        line=line,
+                        finding=f"[{code}] {message}",
+                        impact="Code does not meet linting standards",
+                        suggested_fix=f"Fix linting error: {code} - {message}",
+                    )
+                )
+        except Exception as e:
+            logger.debug(f"Failed to extract linting issues: {e}")
+
+        # 2. Extract security issues (from bandit if available)
+        if security_score < 7.0:
+            # Try to get specific security issues from bandit
+            try:
+                # Check if scorer has bandit issues
+                if hasattr(self.scorer, "get_bandit_issues"):
+                    bandit_issues = self.scorer.get_bandit_issues(file_path)
+                    for issue in bandit_issues[:5]:  # Limit to first 5
+                        finding_counter["security"] += 1
+                        findings.append(
+                            ReviewFinding(
+                                id=f"TASK-{task_number}-SEC-{finding_counter['security']:03d}",
+                                severity=Severity.HIGH
+                                if issue.get("severity") == "HIGH"
+                                else Severity.MEDIUM,
+                                category="security",
+                                file=file_str,
+                                line=issue.get("line_number"),
+                                finding=issue.get("test_id", "Security issue"),
+                                impact=issue.get("issue_text", "Potential security vulnerability"),
+                                suggested_fix=issue.get("more_info", "Review security best practices"),
+                            )
+                        )
+                else:
+                    # Fallback to score-based finding
+                    finding_counter["security"] += 1
+                    findings.append(
+                        ReviewFinding(
+                            id=f"TASK-{task_number}-SEC-{finding_counter['security']:03d}",
+                            severity=Severity.HIGH if security_score < 5.0 else Severity.MEDIUM,
+                            category="security",
+                            file=file_str,
+                            finding=f"Security score below threshold: {security_score:.1f}/10.0",
+                            impact="Potential security vulnerabilities detected",
+                            suggested_fix="Run security scan and review security best practices",
+                        )
+                    )
+            except Exception as e:
+                logger.debug(f"Failed to extract security issues: {e}")
+                # Fallback to score-based finding
+                finding_counter["security"] += 1
+                findings.append(
+                    ReviewFinding(
+                        id=f"TASK-{task_number}-SEC-{finding_counter['security']:03d}",
+                        severity=Severity.HIGH if security_score < 5.0 else Severity.MEDIUM,
+                        category="security",
+                        file=file_str,
+                        finding=f"Security score below threshold: {security_score:.1f}/10.0",
+                        impact="Potential security vulnerabilities",
+                        suggested_fix="Review security best practices and fix identified issues",
+                    )
+                )
+
+        # 3. Extract type checking errors (mypy)
+        try:
+            type_result = await self.type_check_file(file_path)
+            type_errors = type_result.get("errors", [])
+            if type_errors:
+                for error in type_errors[:5]:  # Limit to first 5
+                    finding_counter["type"] += 1
+                    findings.append(
+                        ReviewFinding(
+                            id=f"TASK-{task_number}-TYPE-{finding_counter['type']:03d}",
+                            severity=Severity.MEDIUM,
+                            category="standards",
+                            file=file_str,
+                            line=error.get("line"),
+                            finding=error.get("message", "Type checking error"),
+                            impact="Type safety issue may cause runtime errors",
+                            suggested_fix=error.get("suggestion", "Fix type annotations"),
+                        )
+                    )
+        except Exception as e:
+            logger.debug(f"Failed to extract type errors: {e}")
+
+        # 4. Extract maintainability/complexity issues (if significant)
+        if maintainability_score < 6.0:
+            finding_counter["quality"] += 1
+            complexity_note = ""
+            if complexity_score > 7.0:
+                complexity_note = " High cyclomatic complexity detected."
+
+            findings.append(
+                ReviewFinding(
+                    id=f"TASK-{task_number}-MAINT-{finding_counter['quality']:03d}",
+                    severity=Severity.MEDIUM,
+                    category="code_quality",
+                    file=file_str,
+                    finding=f"Maintainability score below threshold: {maintainability_score:.1f}/10.0.{complexity_note}",
+                    impact="Code may be difficult to maintain and refactor",
+                    suggested_fix="Refactor to improve maintainability: reduce complexity, improve naming, add documentation",
+                )
+            )
+
+        return findings
 
     async def close(self):
         """Clean up resources"""

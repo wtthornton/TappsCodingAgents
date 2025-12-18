@@ -9,16 +9,15 @@ from __future__ import annotations
 
 import json
 import logging
-import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from ..core.project_profile import ProjectProfile, ProjectProfileDetector
 from .context_analyzer import ContextAnalyzer, ProjectContext
-from .recommender import WorkflowRecommender, WorkflowRecommendation
+from .recommender import WorkflowRecommendation, WorkflowRecommender
 
 logger = logging.getLogger(__name__)
 
@@ -537,7 +536,7 @@ class ContextAwareSuggestionEngine:
             return {}
 
         try:
-            with open(self.learning_data_path, "r") as f:
+            with open(self.learning_data_path) as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Failed to load learning data: {e}")

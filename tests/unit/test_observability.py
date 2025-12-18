@@ -2,14 +2,10 @@
 Tests for Observability & Quality Improvement Loop.
 """
 
-import tempfile
-from pathlib import Path
 
 import pytest
 
 from tapps_agents.experts.observability import (
-    ConsultationMetrics,
-    KBImprovementProposal,
     ObservabilitySystem,
     WeakArea,
 )

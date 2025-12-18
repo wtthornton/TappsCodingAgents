@@ -5,7 +5,7 @@
 ✅ **Configuration Added** to `core-config.yaml`:
 - Progressive review settings (enabled by default)
 - Background review settings (disabled by default)
-- Performance check patterns (HomeIQ-specific)
+- Performance check patterns (project-defined baseline via `CLAUDE.md`)
 - CLAUDE.md loaded for dev and qa agents
 
 ✅ **QA Agent Updated** (`agents/qa.md`):
@@ -158,7 +158,7 @@ Options:
 - XSS vulnerabilities
 - Exposed secrets
 
-**Performance (HIGH - HomeIQ Specific):**
+**Performance (HIGH - Project Baseline):**
 - Blocking async operations → CLAUDE.md#api-performance
 - N+1 database queries → CLAUDE.md#database-performance
 - Unbatched writes → CLAUDE.md#event-processing

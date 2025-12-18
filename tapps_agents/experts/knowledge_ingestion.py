@@ -9,17 +9,13 @@ Automatically populates project KB from multiple sources:
 
 from __future__ import annotations
 
-import json
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from ..context7.agent_integration import Context7AgentHelper
-from ..core.project_profile import ProjectProfile
 from .domain_detector import DomainStackDetector
 from .governance import GovernanceLayer, GovernancePolicy
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
@@ -165,7 +161,6 @@ class KnowledgeIngestionPipeline:
         for pattern in patterns:
             if "**" in pattern:
                 # Recursive glob
-                base_pattern = pattern.split("**")[0]
                 for path in self.project_root.rglob(pattern.replace("**/", "")):
                     if path.is_file():
                         entries.extend(self._parse_source_file(path, source_type, domains))
@@ -395,11 +390,12 @@ class KnowledgeIngestionPipeline:
 
             # Try VectorKnowledgeBase first, fallback to SimpleKnowledgeBase
             try:
-                kb = VectorKnowledgeBase(knowledge_dir=domain_kb_dir, domain=domain)
+                _kb = VectorKnowledgeBase(knowledge_dir=domain_kb_dir, domain=domain)
             except Exception:
-                kb = SimpleKnowledgeBase(knowledge_dir=domain_kb_dir, domain=domain)
+                _kb = SimpleKnowledgeBase(knowledge_dir=domain_kb_dir, domain=domain)
 
             # Convert entries to knowledge chunks and add with governance checks
+            # Note: KB is created but currently using markdown file fallback
             for entry in domain_entries:
                 # Apply governance layer (Story 28.5)
                 # 1. Filter content for secrets/PII
@@ -425,7 +421,7 @@ class KnowledgeIngestionPipeline:
                     continue
                 
                 # 5. Entry passed all checks - store it
-                chunk = KnowledgeChunk(
+                _chunk = KnowledgeChunk(
                     content=entry.content,
                     metadata={
                         "title": entry.title,
@@ -436,6 +432,7 @@ class KnowledgeIngestionPipeline:
                 )
                 # Add to knowledge base (implementation depends on KB backend)
                 # For now, write to markdown files
+                # TODO: Use _kb.add_chunk(_chunk) when KB backend is fully implemented
                 self._write_knowledge_file(domain_kb_dir, entry)
 
     def _write_knowledge_file(self, domain_dir: Path, entry: KnowledgeEntry):

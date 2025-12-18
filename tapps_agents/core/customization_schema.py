@@ -11,7 +11,6 @@ from typing import Any
 
 import yaml
 
-
 # Schema structure for customization files
 CUSTOMIZATION_SCHEMA = {
     "agent_id": str,

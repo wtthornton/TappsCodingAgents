@@ -7,10 +7,7 @@ Provides mock Background Agent simulators and test utilities.
 from __future__ import annotations
 
 import json
-import time
 from pathlib import Path
-from typing import Any
-from uuid import uuid4
 
 import pytest
 

@@ -9,8 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-from .models import Artifact, Workflow, WorkflowState
-from .step_details import format_duration, get_step_status_emoji
+from .models import Workflow, WorkflowState
+from .step_details import format_duration
 from .visual_feedback import VisualFeedbackGenerator
 
 

@@ -3,13 +3,11 @@ Tests for Expert Engine runtime component.
 """
 
 import pytest
-from pathlib import Path
 
 from tapps_agents.experts.expert_engine import (
     ExpertEngine,
     KnowledgeNeed,
     ExpertRoutingPlan,
-    KnowledgeRetrievalPlan,
 )
 from tapps_agents.experts.expert_registry import ExpertRegistry
 

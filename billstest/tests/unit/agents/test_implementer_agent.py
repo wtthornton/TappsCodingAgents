@@ -2,7 +2,6 @@
 Unit tests for Implementer Agent.
 """
 
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest

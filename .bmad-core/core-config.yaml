@@ -34,9 +34,9 @@ qa:
       estimated_hours: 4
 
     file_patterns:
-      - "services/**/*.py"
-      - "services/**/*.ts"
-      - "services/**/*.tsx"
+      - "tapps_agents/**/*.py"
+      - "scripts/**/*.py"
+      - "examples/**/*.py"
 
     exclude_patterns:
       - "**/tests/**"
@@ -59,7 +59,7 @@ qa:
       skip_minor_changes: true
       batch_threshold: 3
 
-  # Performance-specific review settings (HomeIQ)
+  # Performance-specific review settings (project-defined baseline)
   performance_checks:
     enabled: true
     reference_doc: "CLAUDE.md"
@@ -101,7 +101,7 @@ prd:
   prdShardedLocation: docs/prd
   epicFilePattern: epic-{n}*.md
 architecture:
-  architectureFile: docs/architecture.md
+  architectureFile: docs/ARCHITECTURE.md
   architectureVersion: v4
   architectureSharded: true
   architectureShardedLocation: docs/architecture

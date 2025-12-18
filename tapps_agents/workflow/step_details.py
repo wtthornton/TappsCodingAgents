@@ -5,7 +5,7 @@ Extracts and formats detailed step information for progress updates.
 Epic 8 / Story 8.4: Step-Level Progress Details
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Any
 
 from .models import StepExecution, WorkflowStep

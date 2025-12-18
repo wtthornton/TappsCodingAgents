@@ -9,7 +9,6 @@ Priority values range from 0.0 to 1.0, where:
 - 0.0 = No priority (expert not relevant)
 """
 
-from typing import Any
 
 # Type definition for expert priorities: expert_id -> priority (0.0-1.0)
 ExpertPriorities = dict[str, float]

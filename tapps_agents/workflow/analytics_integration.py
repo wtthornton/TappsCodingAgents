@@ -8,7 +8,6 @@ Provides easy access to analytics features from Cursor chat.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from .analytics_alerts import AnalyticsAlertManager, AnalyticsExporter
 from .analytics_dashboard_cursor import CursorAnalyticsDashboard

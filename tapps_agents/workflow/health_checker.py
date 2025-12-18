@@ -71,9 +71,7 @@ class HealthChecker:
             validator = BackgroundAgentConfigValidator(self.background_agents_config)
             is_valid, errors = validator.validate()
             
-            if not is_valid:
-
-            if errors:
+            if not is_valid and errors:
                 return HealthCheckResult(
                     name="configuration",
                     status="unhealthy",

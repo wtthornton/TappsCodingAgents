@@ -2,7 +2,6 @@
 Unit tests for workflow artifacts.
 """
 
-from datetime import datetime
 
 import pytest
 

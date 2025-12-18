@@ -50,6 +50,37 @@ See:
 - `docs/CURRENT_DEFAULTS.md`
 - `docs/PR_MODE_GUIDE.md`
 
+### 🚀 Cursor Quick Start (5 minutes)
+
+If you're using **Cursor IDE**, get started quickly:
+
+1. **Install the framework:**
+   ```bash
+   pip install -e .
+   ```
+
+2. **Initialize Cursor integration:**
+   ```bash
+   tapps-agents init
+   ```
+   This installs Skills, Rules, and Background Agents configuration.
+
+3. **Try it in Cursor:**
+   - Open Cursor chat
+   - Type: `@reviewer *help`
+   - Type: `@implementer *help`
+   - Type: `@tester *help`
+
+4. **Use Background Agents:**
+   - Say: "Analyze project quality"
+   - Say: "Run security scan"
+
+**Full Documentation:**
+- [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)
+- [Cursor Rules Setup Guide](docs/CURSOR_RULES_SETUP.md)
+- [Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)
+- [Cursor Integration Review](CURSOR_INTEGRATION_REVIEW.md) - Comprehensive integration status
+
 ### Enhanced Features (v1.6.0+)
 
 - **Code Scoring System**: Objective quality metrics (complexity, security, maintainability)
@@ -177,6 +208,11 @@ See:
 - **Background Agent Auto-Execution** ✅ - Automatic workflow execution with monitoring
 - **State Persistence Configuration** ✅ - Configurable checkpointing and cleanup policies
 - **Governance & Safety Layer** ✅ - Security and safety controls for knowledge ingestion
+- **Epic 20: Complexity Reduction** ✅ - Refactored high-complexity functions (122→C, 114→C, 66→C, 60→C, 64→A/B)
+  - Agent handler extraction using Strategy Pattern
+  - Workflow execution control flow simplification
+  - Zero code duplication between execution paths
+  - See [Complexity Reduction Summary](docs/COMPLEXITY_REDUCTION_EPIC_20.md)
 
 ## Upcoming Enhancements (Planned)
 

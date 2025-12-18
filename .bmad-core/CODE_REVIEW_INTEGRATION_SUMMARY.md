@@ -22,7 +22,7 @@ I've analyzed your `.bmad-core` workflow and created a comprehensive code review
    - Comprehensive decision guide
    - ROI analysis
    - Implementation roadmap
-   - Performance-specific checks for HomeIQ
+   - Project-specific checks via `CLAUDE.md` baseline (customizable)
 
 4. **`.bmad-core/data/code-review-config-template.yaml`**
    - Ready-to-use configuration
@@ -32,7 +32,7 @@ I've analyzed your `.bmad-core` workflow and created a comprehensive code review
 5. **`.bmad-core/utils/progressive-review-implementation-example.md`**
    - Concrete before/after example
    - Technical implementation details
-   - Real HomeIQ story example
+   - Example you can adapt to your repo
 
 ## The Problem You Identified
 
@@ -124,7 +124,7 @@ After the story, track:
 - Time saved vs finding in final QA: ___
 - Developer experience: Good / Neutral / Bad
 
-## What Makes This Special for HomeIQ
+## What Makes This Special
 
 Your `CLAUDE.md` contains comprehensive performance guidelines. The reviews specifically check for:
 
@@ -158,11 +158,11 @@ findings:
     file: "services/auth-api/src/login.py"
     line: 67
     finding: "Synchronous database query in async endpoint"
-    impact: "Blocks event loop, violates CLAUDE.md target of <100ms response"
+    impact: "Blocks event loop; violates CLAUDE.md async-first guidance"
     suggested_fix: "Use await session.execute() instead of session.query()"
     references:
       - "CLAUDE.md#api-performance (Async Everything)"
-      - "CLAUDE.md#performance-targets (API <100ms)"
+      - "CLAUDE.md#performance-targets"
 ```
 
 ## Implementation Options
@@ -288,7 +288,7 @@ Keep your hook as a safety net, but progressive reviews are the primary defense.
 1. ⏳ Analyze patterns (common issues caught)
 2. ⏳ Enhance prompts based on findings
 3. ⏳ Train team on common issues
-4. ⏳ Consider custom review rules for HomeIQ
+4. ⏳ Consider custom review rules for your project
 
 ## Support Files
 
@@ -351,7 +351,7 @@ You identified a real problem: code review happens too late in BMAD workflow.
 **Solution:** Progressive task-level reviews
 - Integrates natively with BMAD
 - Provides immediate feedback
-- Uses your CLAUDE.md for HomeIQ-specific checks
+- Uses `CLAUDE.md` as a project-defined performance/quality baseline
 - 20x ROI minimum
 
 **Action:** Add config, test on one story, measure results.

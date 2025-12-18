@@ -5,10 +5,10 @@ Defines policies for determining when cached entries should be considered stale
 and need refresh. Supports library-specific staleness rules.
 """
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
-import re
 
 
 @dataclass

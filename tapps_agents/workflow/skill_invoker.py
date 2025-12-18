@@ -11,8 +11,6 @@ from pathlib import Path
 from typing import Any
 
 from ..core.skill_integration import (
-    SkillContext,
-    SkillIntegrationManager,
     get_skill_integration_manager,
 )
 from .background_agent_api import BackgroundAgentAPI

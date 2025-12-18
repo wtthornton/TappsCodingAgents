@@ -6,10 +6,11 @@ Manages expert instances and provides consultation services with weighted decisi
 
 from __future__ import annotations
 
-import yaml
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 from ..core.config import get_expert_config
 from ..core.project_profile import ProjectProfile, load_project_profile

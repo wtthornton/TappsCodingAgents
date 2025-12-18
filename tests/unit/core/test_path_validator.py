@@ -10,7 +10,6 @@ Tests cover:
 
 import pytest
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 from tapps_agents.core.path_validator import (
     PathValidator,

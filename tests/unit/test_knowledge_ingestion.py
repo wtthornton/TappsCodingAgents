@@ -2,7 +2,6 @@
 Tests for Knowledge Ingestion Pipeline.
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest

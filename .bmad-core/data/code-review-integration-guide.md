@@ -123,7 +123,7 @@ git commit → Hook triggers → AI reviews staged changes → Pass/Fail → Com
 
 ## Recommended Hybrid Approach
 
-**For HomeIQ and similar projects:**
+**For performance-sensitive projects:**
 
 ```
 1. Progressive task reviews (primary)
@@ -287,11 +287,11 @@ qa:
 - Issues caught early per story: 2-4
 - **ROI: 40-80x** (save $42-84 in dev time, spend $0.30-1.00 on reviews)
 
-## Performance-Specific Reviews (HomeIQ)
+## Performance-Specific Reviews (Project Baseline)
 
 Your `CLAUDE.md` contains comprehensive performance guidelines. Reviews should reference it:
 
-**Key checks for HomeIQ:**
+**Key checks (customize to your repo):**
 
 1. **Async/Await:**
    - Flag: Blocking operations in async functions
@@ -312,20 +312,19 @@ Your `CLAUDE.md` contains comprehensive performance guidelines. Reviews should r
 **Review prompt template:**
 
 ```
-Review this code for HomeIQ performance requirements:
+Review this code against the project performance baseline (see `CLAUDE.md`):
 
-PERFORMANCE TARGETS (from CLAUDE.md):
-- API response: <100ms
-- Device queries: <10ms (SQLite)
-- Event processing: 1000+ events/sec
-- Memory: <512MB per service
+PERFORMANCE BASELINE (from CLAUDE.md):
+- Avoid obvious regressions (blocking I/O in async, missing timeouts)
+- Avoid unbounded growth / memory leaks
+- Batch work when it matches the surrounding architecture
 
 CODE CHANGE:
 {diff}
 
 Check for:
 1. Blocking async operations (violates "Async Everything")
-2. Unbatched database writes (should batch 100-1000 points)
+2. Unbatched work where batching is appropriate
 3. Missing caching for expensive operations
 4. Memory leaks or unbounded growth
 
@@ -423,7 +422,7 @@ Before implementing:
 
 ## Conclusion
 
-**For HomeIQ specifically, I recommend:**
+**Recommendation (general):**
 
 ```
 Phase 1 (Now): Progressive task-level reviews

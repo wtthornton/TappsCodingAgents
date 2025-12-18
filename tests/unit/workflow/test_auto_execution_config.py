@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import pytest
 from pathlib import Path
-import tempfile
 import yaml
 
 from tapps_agents.workflow.auto_execution_config import (

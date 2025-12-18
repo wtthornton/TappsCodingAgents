@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 from .cursor_chat import ChatUpdateSender
+from .models import Workflow, WorkflowState
 from .progress_updates import (
     ProgressCalculator,
     ProgressUpdateGenerator,
@@ -20,17 +21,11 @@ from .progress_updates import (
 )
 from .status_monitor import StatusChange, StatusChangeEvent, StatusFileMonitor
 from .step_details import (
-    StepDetailExtractor,
     StepSummaryGenerator,
-    calculate_step_duration,
     format_duration,
-    get_elapsed_time,
-    get_step_status_emoji,
 )
 from .visual_feedback import VisualFeedbackGenerator
 from .workflow_summary import WorkflowSummaryGenerator
-
-from .models import Workflow, WorkflowState
 
 logger = logging.getLogger(__name__)
 
@@ -164,7 +159,7 @@ class ProgressUpdateManager:
             return
 
         duration_str = format_duration(duration) if duration else None
-        message = f"Step completed"
+        message = "Step completed"
         if duration_str:
             message += f" in {duration_str}"
 

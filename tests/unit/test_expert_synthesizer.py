@@ -2,14 +2,13 @@
 Tests for Expert Synthesizer.
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest
 import yaml
 
 from tapps_agents.experts.domain_detector import DomainMapping, RepoSignal, StackDetectionResult
-from tapps_agents.experts.expert_config import ExpertConfigModel, load_expert_configs
+from tapps_agents.experts.expert_config import load_expert_configs
 from tapps_agents.experts.expert_synthesizer import ExpertSynthesizer, ExpertSynthesisResult
 
 

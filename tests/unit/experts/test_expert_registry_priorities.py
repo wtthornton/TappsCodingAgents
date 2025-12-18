@@ -4,7 +4,6 @@ Tests for expert registry priority integration.
 Tests that expert registry loads and applies tech stack priorities.
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest

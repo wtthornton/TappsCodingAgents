@@ -6,7 +6,6 @@ Epic 8 / Story 8.3: Cursor Chat Integration
 """
 
 import logging
-from typing import Any
 
 from .progress_updates import ProgressUpdate
 

@@ -2,7 +2,6 @@
 Unit tests for Preset Loader.
 """
 
-from pathlib import Path
 
 import pytest
 import yaml

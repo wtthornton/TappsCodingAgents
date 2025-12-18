@@ -45,7 +45,7 @@ Then proceed with the manual method below ONLY if markdownExploder is false.]]
    md-tree explode docs/prd.md docs/prd
 
    # For Architecture
-   md-tree explode docs/architecture.md docs/architecture
+   md-tree explode docs/ARCHITECTURE.md docs/architecture
 
    # For any document
    md-tree explode [source-document] [destination-folder]

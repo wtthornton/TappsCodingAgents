@@ -5,7 +5,6 @@ Tests for template merging, conditional blocks, and variable expansion.
 from pathlib import Path
 
 import pytest
-import yaml
 
 from tapps_agents.core.template_merger import (
     ConditionalTrace,

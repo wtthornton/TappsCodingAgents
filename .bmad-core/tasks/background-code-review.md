@@ -113,7 +113,7 @@ class BackgroundReviewer:
         diff = self.get_file_diff(file_path)
 
         prompt = f"""
-        Review this code change in context of HomeIQ project.
+        Review this code change in context of the current project.
 
         FILE: {file_path}
         STORY: {self.story_id}
@@ -315,7 +315,7 @@ qa:
 2. **Real-time** - Critical issues flagged immediately
 3. **Context preservation** - Reviews happen while code fresh in mind
 4. **Accumulates evidence** - Background findings feed final QA
-5. **Performance-aware** - Uses CLAUDE.md for HomeIQ-specific checks
+5. **Performance-aware** - Uses CLAUDE.md as the project-defined performance baseline
 
 ## Trade-offs
 

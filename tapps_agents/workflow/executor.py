@@ -4,7 +4,6 @@ Workflow Executor - Execute YAML workflow definitions.
 
 import json
 import os
-import shutil
 import subprocess  # nosec B404 - fixed args, no shell
 import sys
 from dataclasses import asdict
@@ -16,10 +15,15 @@ from ..core.error_envelope import ErrorEnvelopeBuilder
 from ..core.runtime_mode import is_cursor_mode
 from ..quality.quality_gates import QualityGate, QualityThresholds
 from .auto_progression import AutoProgressionManager, ProgressionAction
-from .checkpoint_manager import CheckpointConfig, CheckpointFrequency, WorkflowCheckpointManager
-from .error_recovery import ErrorContext, ErrorRecoveryManager
+from .checkpoint_manager import (
+    CheckpointConfig,
+    CheckpointFrequency,
+    WorkflowCheckpointManager,
+)
+from .error_recovery import ErrorRecoveryManager
 from .event_log import WorkflowEventLog
 from .logging_helper import WorkflowLogger
+from .agent_handlers.registry import AgentHandlerRegistry
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
 from .parser import WorkflowParser
@@ -292,62 +296,11 @@ class WorkflowExecutor:
         """
         # Route to Cursor executor if in Cursor mode
         if is_cursor_mode():
-            from .cursor_executor import CursorWorkflowExecutor
-            
-            cursor_executor = CursorWorkflowExecutor(
-                project_root=self.project_root,
-                expert_registry=self.expert_registry,
-                auto_mode=self.auto_mode,
-            )
-            
-            # Load workflow if provided
-            if workflow:
-                cursor_executor.workflow = workflow
-            elif self.workflow:
-                cursor_executor.workflow = self.workflow
-            else:
-                raise ValueError(
-                    "No workflow loaded. Call load_workflow() or pass workflow."
-                )
-            
-            # Start workflow if needed
-            if not cursor_executor.state:
-                user_prompt = self.user_prompt or self.state.variables.get("user_prompt") if self.state else None
-                cursor_executor.start(workflow=cursor_executor.workflow, user_prompt=user_prompt)
-            
-            # Execute workflow
-            return await cursor_executor.run(
-                workflow=None,  # Already loaded
-                target_file=target_file,
-                max_steps=max_steps,
-            )
+            return await self._route_to_cursor_executor(workflow, target_file, max_steps)
         
-        # Continue with original MAL-based execution for headless mode
-        if workflow:
-            self.workflow = workflow
-        if not self.workflow:
-            raise ValueError(
-                "No workflow loaded. Call load_workflow() or pass workflow."
-            )
-
-        # Ensure we have a state
-        if not self.state or self.state.workflow_id != self.workflow.id:
-            self.start(workflow=self.workflow)
-
-        # Establish target file (best-effort for demo workflows)
-        target_path: Path | None
-        if target_file:
-            target_path = (
-                (self.project_root / target_file)
-                if not Path(target_file).is_absolute()
-                else Path(target_file)
-            )
-        else:
-            target_path = self._default_target_file()
-
-        if target_path and self.state:
-            self.state.variables["target_file"] = str(target_path)
-
+        # Initialize execution
+        target_path = self._initialize_execution(workflow, target_file)
+        
         # Use parallel execution for independent steps
         steps_executed = 0
         completed_step_ids = set(self.state.completed_steps)
@@ -358,68 +311,22 @@ class WorkflowExecutor:
             and self.workflow
             and self.state.status == "running"
         ):
-            if steps_executed >= max_steps:
-                self.state.status = "failed"
-                self.state.error = f"Max steps exceeded ({max_steps}). Aborting."
-                # Emit workflow_end event
-                self.event_log.emit_event(
-                    event_type="workflow_end",
-                    workflow_id=self.state.workflow_id,
-                    status="failed",
-                    error=self.state.error,
-                )
-                self.save_state()
+            # Check max steps
+            if self._check_max_steps(steps_executed, max_steps):
                 break
 
-            # Find steps ready to execute (dependencies met)
-            available_artifacts = set(self.state.artifacts.keys())
-            ready_steps = self.parallel_executor.find_ready_steps(
-                workflow_steps=self.workflow.steps,
-                completed_step_ids=completed_step_ids,
-                running_step_ids=running_step_ids,
-                available_artifacts=available_artifacts,
-            )
-
+            # Find steps ready to execute
+            ready_steps = self._find_ready_steps(completed_step_ids, running_step_ids)
+            
+            # Handle case when no steps are ready
             if not ready_steps:
-                # No ready steps - check if workflow is complete or blocked
-                if len(completed_step_ids) >= len(self.workflow.steps):
-                    self.state.status = "completed"
-                    self.state.current_step = None
-                    # Emit workflow_end event
-                    self.event_log.emit_event(
-                        event_type="workflow_end",
-                        workflow_id=self.state.workflow_id,
-                        status="completed",
-                    )
-                    self.save_state()
+                if self._handle_no_ready_steps(completed_step_ids):
                     break
-                else:
-                    # Workflow is blocked (dependencies not met)
-                    self.state.status = "failed"
-                    self.state.error = "Workflow blocked: no ready steps and workflow not complete"
-                    # Emit workflow_end event
-                    self.event_log.emit_event(
-                        event_type="workflow_end",
-                        workflow_id=self.state.workflow_id,
-                        status="failed",
-                        error=self.state.error,
-                    )
-                    self.save_state()
-                    break
+                continue
 
             # Execute ready steps in parallel
             running_step_ids.update(step.id for step in ready_steps)
-            
-            # Emit step_start events
-            for step in ready_steps:
-                self.event_log.emit_event(
-                    event_type="step_start",
-                    workflow_id=self.state.workflow_id,
-                    step_id=step.id,
-                    agent=step.agent,
-                    action=step.action,
-                    status="running",
-                )
+            self._emit_step_start_events(ready_steps)
             
             async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
                 """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
@@ -434,224 +341,425 @@ class WorkflowExecutor:
                 )
 
                 # Process results and update state
-                for result in results:
-                    step_logger = self.logger.with_context(
-                        step_id=result.step.id,
-                        agent=result.step.agent,
-                    ) if self.logger else None
-                    
-                    if result.error:
-                        # Step failed - use auto-progression to determine action
-                        if self.auto_progression.should_auto_progress():
-                            decision = self.auto_progression.handle_step_completion(
-                                step=result.step,
-                                state=self.state,
-                                step_execution=result.step_execution,
-                                review_result=None,
-                            )
-                            
-                            if decision.action == ProgressionAction.RETRY:
-                                # Retry the step
-                                completed_step_ids.discard(result.step.id)
-                                running_step_ids.discard(result.step.id)
-                                # Apply backoff if specified
-                                if decision.metadata.get("backoff_seconds"):
-                                    import asyncio
-                                    await asyncio.sleep(decision.metadata["backoff_seconds"])
-                                if step_logger:
-                                    step_logger.info(
-                                        f"Retrying step {result.step.id} (attempt {decision.retry_count})",
-                                    )
-                                continue
-                            elif decision.action == ProgressionAction.SKIP:
-                                # Skip this step
-                                completed_step_ids.add(result.step.id)
-                                running_step_ids.discard(result.step.id)
-                                if result.step.id not in self.state.skipped_steps:
-                                    self.state.skipped_steps.append(result.step.id)
-                                if step_logger:
-                                    step_logger.warning(
-                                        f"Skipping step {result.step.id}: {decision.reason}",
-                                    )
-                                continue
-                            elif decision.action == ProgressionAction.ABORT:
-                                # Abort workflow
-                                self.state.status = "failed"
-                                self.state.error = decision.reason
-                                if step_logger:
-                                    step_logger.error(
-                                        f"Workflow aborted: {decision.reason}",
-                                    )
-                                self.save_state()
-                                break
-                            elif decision.action == ProgressionAction.CONTINUE:
-                                # Continue despite error (recoverable)
-                                completed_step_ids.add(result.step.id)
-                                running_step_ids.discard(result.step.id)
-                                if step_logger:
-                                    step_logger.warning(
-                                        f"Step {result.step.id} failed but continuing: {decision.reason}",
-                                    )
-                                continue
-                        
-                        # Fallback: emit event and mark as failed (if auto-progression disabled)
-                        self.event_log.emit_event(
-                            event_type="step_fail",
-                            workflow_id=self.state.workflow_id,
-                            step_id=result.step.id,
-                            agent=result.step.agent,
-                            action=result.step.action,
-                            status="failed",
-                            error=str(result.error),
-                        )
-                        # Mark as failed and stop workflow
-                        self.state.status = "failed"
-                        self.state.error = f"Step {result.step.id} failed: {result.error}"
-                        if step_logger:
-                            step_logger.error(
-                                "Step execution failed",
-                                error=str(result.error),
-                                action=result.step.action,
-                            )
-                        self.save_state()
-                        break
-                    
-                    # Mark step as completed
-                    completed_step_ids.add(result.step.id)
-                    running_step_ids.discard(result.step.id)
-                    
-                    # Prepare artifact summaries for event
-                    artifact_summaries = {}
-                    if result.artifacts and isinstance(result.artifacts, dict):
-                        for art_name, art_data in result.artifacts.items():
-                            if isinstance(art_data, dict):
-                                artifact = Artifact(
-                                    name=art_data.get("name", art_name),
-                                    path=art_data.get("path", ""),
-                                    status="complete",
-                                    created_by=result.step.id,
-                                    created_at=datetime.now(),
-                                    metadata=art_data.get("metadata", {}),
-                                )
-                                self.state.artifacts[artifact.name] = artifact
-                                artifact_summaries[artifact.name] = {
-                                    "path": artifact.path,
-                                    "status": artifact.status,
-                                }
-                    
-                    # Emit step_finish event
-                    self.event_log.emit_event(
-                        event_type="step_finish",
-                        workflow_id=self.state.workflow_id,
-                        step_id=result.step.id,
-                        agent=result.step.agent,
-                        action=result.step.action,
-                        status="completed",
-                        artifacts=artifact_summaries,
-                    )
-                    
-                    if step_logger:
-                        step_logger.info(
-                            "Step completed",
-                            action=result.step.action,
-                            duration_seconds=result.step_execution.duration_seconds,
-                            artifact_count=len(result.artifacts) if result.artifacts else 0,
-                        )
-                    
-                    # Use auto-progression for gate evaluation and step progression
-                    is_gate_step = result.step.agent == "reviewer" and result.step.gate is not None
-                    if self.auto_progression.should_auto_progress():
-                        # Get review result if this was a reviewer step
-                        review_result = None
-                        if result.step.agent == "reviewer":
-                            review_result = self.state.variables.get("reviewer_result")
-                        
-                        decision = self.auto_progression.handle_step_completion(
-                            step=result.step,
-                            state=self.state,
-                            step_execution=result.step_execution,
-                            review_result=review_result,
-                        )
-                        
-                        # Update current step based on gate decision if needed
-                        if decision.next_step_id:
-                            self.state.current_step = decision.next_step_id
-                    else:
-                        # Fallback: Handle gate evaluation for reviewer steps (legacy behavior)
-                        if is_gate_step:
-                            gate = result.step.gate
-                            gate_last = self.state.variables.get("gate_last", {})
-                            if gate_last.get("step") == result.step.id:
-                                passed = gate_last.get("passed", False)
-                                on_pass = gate.get("on_pass") or gate.get("on-pass")
-                                on_fail = gate.get("on_fail") or gate.get("on-fail")
-                                
-                                # Update current step based on gate result
-                                if passed and on_pass:
-                                    self.state.current_step = on_pass
-                                elif (not passed) and on_fail:
-                                    self.state.current_step = on_fail
-                                
-                                # Note: Gate-based step advancement handled in next iteration
-                                # when finding ready steps
-                    
-                    # Epic 12: Automatic checkpointing after step completion
-                    if self.checkpoint_manager.should_checkpoint(
-                        step=result.step,
-                        state=self.state,
-                        is_gate_step=is_gate_step,
-                    ):
-                        # Enhance state with checkpoint metadata before saving
-                        checkpoint_metadata = self.checkpoint_manager.get_checkpoint_metadata(
-                            state=self.state,
-                            step=result.step,
-                        )
-                        # Store metadata in state variables for persistence
-                        if "_checkpoint_metadata" not in self.state.variables:
-                            self.state.variables["_checkpoint_metadata"] = {}
-                        self.state.variables["_checkpoint_metadata"].update(checkpoint_metadata)
-                        
-                        # Save checkpoint
-                        self.save_state()
-                        self.checkpoint_manager.record_checkpoint(result.step.id)
-                        
-                        if self.logger:
-                            self.logger.info(
-                                f"Checkpoint created after step {result.step.id}",
-                                checkpoint_metadata=checkpoint_metadata,
-                            )
+                should_break = await self._process_parallel_results(
+                    results, completed_step_ids, running_step_ids
+                )
+                if should_break:
+                    break
 
                 steps_executed += len(ready_steps)
                 # Always save state at end of iteration (fallback)
                 self.save_state()
 
             except Exception as e:
-                self.state.status = "failed"
-                envelope = ErrorEnvelopeBuilder.from_exception(
-                    e,
-                    workflow_id=self.state.workflow_id,
-                )
-                self.state.error = envelope.to_user_message()
-                # Emit workflow_end event
-                self.event_log.emit_event(
-                    event_type="workflow_end",
-                    workflow_id=self.state.workflow_id,
-                    status="failed",
-                    error=str(e),
-                )
-                if self.logger:
-                    self.logger.error(
-                        "Workflow execution failed",
-                        error=str(e),
-                        exc_info=True,
-                    )
-                self.save_state()
+                self._handle_execution_exception(e)
                 break
 
         if not self.state:
             raise RuntimeError("Workflow state lost during execution")
         
         # Generate timeline if workflow completed
+        self._generate_timeline_if_complete(completed_step_ids)
+        
+        return self.state
+
+    async def _route_to_cursor_executor(
+        self,
+        workflow: Workflow | None,
+        target_file: str | None,
+        max_steps: int,
+    ) -> WorkflowState:
+        """Route execution to CursorWorkflowExecutor if in Cursor mode."""
+        from .cursor_executor import CursorWorkflowExecutor
+        
+        cursor_executor = CursorWorkflowExecutor(
+            project_root=self.project_root,
+            expert_registry=self.expert_registry,
+            auto_mode=self.auto_mode,
+        )
+        
+        # Load workflow if provided
+        if workflow:
+            cursor_executor.workflow = workflow
+        elif self.workflow:
+            cursor_executor.workflow = self.workflow
+        else:
+            raise ValueError(
+                "No workflow loaded. Call load_workflow() or pass workflow."
+            )
+        
+        # Start workflow if needed
+        if not cursor_executor.state:
+            user_prompt = self.user_prompt or self.state.variables.get("user_prompt") if self.state else None
+            cursor_executor.start(workflow=cursor_executor.workflow, user_prompt=user_prompt)
+        
+        # Execute workflow
+        return await cursor_executor.run(
+            workflow=None,  # Already loaded
+            target_file=target_file,
+            max_steps=max_steps,
+        )
+
+    def _initialize_execution(
+        self,
+        workflow: Workflow | None,
+        target_file: str | None,
+    ) -> Path | None:
+        """Initialize workflow execution and return target path."""
+        if workflow:
+            self.workflow = workflow
+        if not self.workflow:
+            raise ValueError(
+                "No workflow loaded. Call load_workflow() or pass workflow."
+            )
+
+        # Ensure we have a state
+        if not self.state or self.state.workflow_id != self.workflow.id:
+            self.start(workflow=self.workflow)
+
+        # Establish target file (best-effort for demo workflows)
+        if target_file:
+            target_path = (
+                (self.project_root / target_file)
+                if not Path(target_file).is_absolute()
+                else Path(target_file)
+            )
+        else:
+            target_path = self._default_target_file()
+
+        if target_path and self.state:
+            self.state.variables["target_file"] = str(target_path)
+
+        return target_path
+
+    def _check_max_steps(self, steps_executed: int, max_steps: int) -> bool:
+        """Check if max steps exceeded and handle accordingly."""
+        if steps_executed >= max_steps:
+            self.state.status = "failed"
+            self.state.error = f"Max steps exceeded ({max_steps}). Aborting."
+            self.event_log.emit_event(
+                event_type="workflow_end",
+                workflow_id=self.state.workflow_id,
+                status="failed",
+                error=self.state.error,
+            )
+            self.save_state()
+            return True
+        return False
+
+    def _find_ready_steps(
+        self,
+        completed_step_ids: set[str],
+        running_step_ids: set[str],
+    ) -> list[WorkflowStep]:
+        """Find steps ready to execute (dependencies met)."""
+        available_artifacts = set(self.state.artifacts.keys())
+        return self.parallel_executor.find_ready_steps(
+            workflow_steps=self.workflow.steps,
+            completed_step_ids=completed_step_ids,
+            running_step_ids=running_step_ids,
+            available_artifacts=available_artifacts,
+        )
+
+    def _handle_no_ready_steps(self, completed_step_ids: set[str]) -> bool:
+        """Handle case when no steps are ready. Returns True if workflow should stop."""
+        if len(completed_step_ids) >= len(self.workflow.steps):
+            # Workflow is complete
+            self.state.status = "completed"
+            self.state.current_step = None
+            self.event_log.emit_event(
+                event_type="workflow_end",
+                workflow_id=self.state.workflow_id,
+                status="completed",
+            )
+            self.save_state()
+            return True
+        else:
+            # Workflow is blocked (dependencies not met)
+            self.state.status = "failed"
+            self.state.error = "Workflow blocked: no ready steps and workflow not complete"
+            self.event_log.emit_event(
+                event_type="workflow_end",
+                workflow_id=self.state.workflow_id,
+                status="failed",
+                error=self.state.error,
+            )
+            self.save_state()
+            return True
+
+    def _emit_step_start_events(self, ready_steps: list[WorkflowStep]) -> None:
+        """Emit step_start events for all ready steps."""
+        for step in ready_steps:
+            self.event_log.emit_event(
+                event_type="step_start",
+                workflow_id=self.state.workflow_id,
+                step_id=step.id,
+                agent=step.agent,
+                action=step.action,
+                status="running",
+            )
+
+    async def _process_parallel_results(
+        self,
+        results: list[Any],
+        completed_step_ids: set[str],
+        running_step_ids: set[str],
+    ) -> bool:
+        """
+        Process results from parallel execution.
+        Returns True if workflow should stop (failed or aborted).
+        """
+        for result in results:
+            step_logger = self.logger.with_context(
+                step_id=result.step.id,
+                agent=result.step.agent,
+            ) if self.logger else None
+            
+            if result.error:
+                should_break = await self._handle_step_error(
+                    result, step_logger, completed_step_ids, running_step_ids
+                )
+                if should_break:
+                    return True
+                continue
+            
+            # Handle successful step completion
+            self._handle_step_success(
+                result, step_logger, completed_step_ids, running_step_ids
+            )
+        
+        return False
+
+    async def _handle_step_error(
+        self,
+        result: Any,
+        step_logger: Any,
+        completed_step_ids: set[str],
+        running_step_ids: set[str],
+    ) -> bool:
+        """Handle step error. Returns True if workflow should stop."""
+        # Step failed - use auto-progression to determine action
+        if self.auto_progression.should_auto_progress():
+            decision = self.auto_progression.handle_step_completion(
+                step=result.step,
+                state=self.state,
+                step_execution=result.step_execution,
+                review_result=None,
+            )
+            
+            if decision.action == ProgressionAction.RETRY:
+                # Retry the step
+                completed_step_ids.discard(result.step.id)
+                running_step_ids.discard(result.step.id)
+                # Apply backoff if specified
+                if decision.metadata.get("backoff_seconds"):
+                    import asyncio
+                    await asyncio.sleep(decision.metadata["backoff_seconds"])
+                if step_logger:
+                    step_logger.info(
+                        f"Retrying step {result.step.id} (attempt {decision.retry_count})",
+                    )
+                return False
+            elif decision.action == ProgressionAction.SKIP:
+                # Skip this step
+                completed_step_ids.add(result.step.id)
+                running_step_ids.discard(result.step.id)
+                if result.step.id not in self.state.skipped_steps:
+                    self.state.skipped_steps.append(result.step.id)
+                if step_logger:
+                    step_logger.warning(
+                        f"Skipping step {result.step.id}: {decision.reason}",
+                    )
+                return False
+            elif decision.action == ProgressionAction.ABORT:
+                # Abort workflow
+                self.state.status = "failed"
+                self.state.error = decision.reason
+                if step_logger:
+                    step_logger.error(
+                        f"Workflow aborted: {decision.reason}",
+                    )
+                self.save_state()
+                return True
+            elif decision.action == ProgressionAction.CONTINUE:
+                # Continue despite error (recoverable)
+                completed_step_ids.add(result.step.id)
+                running_step_ids.discard(result.step.id)
+                if step_logger:
+                    step_logger.warning(
+                        f"Step {result.step.id} failed but continuing: {decision.reason}",
+                    )
+                return False
+        
+        # Fallback: emit event and mark as failed (if auto-progression disabled)
+        self.event_log.emit_event(
+            event_type="step_fail",
+            workflow_id=self.state.workflow_id,
+            step_id=result.step.id,
+            agent=result.step.agent,
+            action=result.step.action,
+            status="failed",
+            error=str(result.error),
+        )
+        # Mark as failed and stop workflow
+        self.state.status = "failed"
+        self.state.error = f"Step {result.step.id} failed: {result.error}"
+        if step_logger:
+            step_logger.error(
+                "Step execution failed",
+                error=str(result.error),
+                action=result.step.action,
+            )
+        self.save_state()
+        return True
+
+    def _handle_step_success(
+        self,
+        result: Any,
+        step_logger: Any,
+        completed_step_ids: set[str],
+        running_step_ids: set[str],
+    ) -> None:
+        """Handle successful step completion."""
+        # Mark step as completed
+        completed_step_ids.add(result.step.id)
+        running_step_ids.discard(result.step.id)
+        
+        # Prepare artifact summaries for event
+        artifact_summaries = {}
+        if result.artifacts and isinstance(result.artifacts, dict):
+            for art_name, art_data in result.artifacts.items():
+                if isinstance(art_data, dict):
+                    artifact = Artifact(
+                        name=art_data.get("name", art_name),
+                        path=art_data.get("path", ""),
+                        status="complete",
+                        created_by=result.step.id,
+                        created_at=datetime.now(),
+                        metadata=art_data.get("metadata", {}),
+                    )
+                    self.state.artifacts[artifact.name] = artifact
+                    artifact_summaries[artifact.name] = {
+                        "path": artifact.path,
+                        "status": artifact.status,
+                    }
+        
+        # Emit step_finish event
+        self.event_log.emit_event(
+            event_type="step_finish",
+            workflow_id=self.state.workflow_id,
+            step_id=result.step.id,
+            agent=result.step.agent,
+            action=result.step.action,
+            status="completed",
+            artifacts=artifact_summaries,
+        )
+        
+        if step_logger:
+            step_logger.info(
+                "Step completed",
+                action=result.step.action,
+                duration_seconds=result.step_execution.duration_seconds,
+                artifact_count=len(result.artifacts) if result.artifacts else 0,
+            )
+        
+        # Handle gate evaluation and step progression
+        self._handle_gate_evaluation(result)
+        
+        # Create checkpoint if needed
+        self._create_checkpoint_if_needed(result)
+
+    def _handle_gate_evaluation(self, result: Any) -> None:
+        """Handle gate evaluation for reviewer steps."""
+        is_gate_step = result.step.agent == "reviewer" and result.step.gate is not None
+        if self.auto_progression.should_auto_progress():
+            # Get review result if this was a reviewer step
+            review_result = None
+            if result.step.agent == "reviewer":
+                review_result = self.state.variables.get("reviewer_result")
+            
+            decision = self.auto_progression.handle_step_completion(
+                step=result.step,
+                state=self.state,
+                step_execution=result.step_execution,
+                review_result=review_result,
+            )
+            
+            # Update current step based on gate decision if needed
+            if decision.next_step_id:
+                self.state.current_step = decision.next_step_id
+        else:
+            # Fallback: Handle gate evaluation for reviewer steps (legacy behavior)
+            if is_gate_step:
+                gate = result.step.gate
+                gate_last = self.state.variables.get("gate_last", {})
+                if gate_last.get("step") == result.step.id:
+                    passed = gate_last.get("passed", False)
+                    on_pass = gate.get("on_pass") or gate.get("on-pass")
+                    on_fail = gate.get("on_fail") or gate.get("on-fail")
+                    
+                    # Update current step based on gate result
+                    if passed and on_pass:
+                        self.state.current_step = on_pass
+                    elif (not passed) and on_fail:
+                        self.state.current_step = on_fail
+                    
+                    # Note: Gate-based step advancement handled in next iteration
+                    # when finding ready steps
+
+    def _create_checkpoint_if_needed(self, result: Any) -> None:
+        """Create checkpoint after step completion if needed."""
+        is_gate_step = result.step.agent == "reviewer" and result.step.gate is not None
+        if self.checkpoint_manager.should_checkpoint(
+            step=result.step,
+            state=self.state,
+            is_gate_step=is_gate_step,
+        ):
+            # Enhance state with checkpoint metadata before saving
+            checkpoint_metadata = self.checkpoint_manager.get_checkpoint_metadata(
+                state=self.state,
+                step=result.step,
+            )
+            # Store metadata in state variables for persistence
+            if "_checkpoint_metadata" not in self.state.variables:
+                self.state.variables["_checkpoint_metadata"] = {}
+            self.state.variables["_checkpoint_metadata"].update(checkpoint_metadata)
+            
+            # Save checkpoint
+            self.save_state()
+            self.checkpoint_manager.record_checkpoint(result.step.id)
+            
+            if self.logger:
+                self.logger.info(
+                    f"Checkpoint created after step {result.step.id}",
+                    checkpoint_metadata=checkpoint_metadata,
+                )
+
+    def _handle_execution_exception(self, e: Exception) -> None:
+        """Handle exception during workflow execution."""
+        self.state.status = "failed"
+        envelope = ErrorEnvelopeBuilder.from_exception(
+            e,
+            workflow_id=self.state.workflow_id,
+        )
+        self.state.error = envelope.to_user_message()
+        # Emit workflow_end event
+        self.event_log.emit_event(
+            event_type="workflow_end",
+            workflow_id=self.state.workflow_id,
+            status="failed",
+            error=str(e),
+        )
+        if self.logger:
+            self.logger.error(
+                "Workflow execution failed",
+                error=str(e),
+                exc_info=True,
+            )
+        self.save_state()
+
+    def _generate_timeline_if_complete(self, completed_step_ids: set[str]) -> None:
+        """Generate timeline if workflow completed."""
         if self.state.status == "completed" and self.workflow:
             if self.logger:
                 self.logger.info(
@@ -666,8 +774,6 @@ class WorkflowExecutor:
                 print(f"\nTimeline saved to: {timeline_path}")
             except Exception as e:
                 print(f"Warning: Failed to generate timeline: {e}", file=sys.stderr)
-        
-        return self.state
 
     async def _execute_step_for_parallel(
         self, step: WorkflowStep, target_path: Path | None
@@ -677,6 +783,9 @@ class WorkflowExecutor:
         
         This is similar to _execute_step but returns artifacts instead of updating state.
         State updates (step_execution tracking) are handled by ParallelStepExecutor.
+        
+        Uses agent handlers (Strategy Pattern) to delegate agent-specific logic,
+        reducing duplication with _execute_step.
         """
         if not self.state or not self.workflow:
             raise ValueError("Workflow not started")
@@ -701,367 +810,47 @@ class WorkflowExecutor:
         created_artifacts: list[dict[str, Any]] = []
 
         try:
-            # ---- Step execution mappings (same as _execute_step) ----
-            if agent_name == "debugger" and action in {
-                "analyze_error",
-                "analyze-error",
-                "analyze",
-            }:
-                if not target_path or not target_path.exists():
-                    raise ValueError(
-                        "Debugger step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
-                    )
-
-                error_message, stack_trace = self._capture_python_exception(target_path)
-                if not error_message:
-                    error_message = f"Bug(s) reported in {target_path.name} (no runtime traceback captured)."
-
-                debug_result = await run_agent(
-                    "debugger",
-                    "analyze-error",
-                    error_message=error_message,
-                    stack_trace=stack_trace,
-                )
-                self.state.variables["debugger_result"] = debug_result
-
-                if "debug-report.md" in (step.creates or []):
-                    report_path = self.project_root / "debug-report.md"
-                    report_lines = [
-                        "# Debug Report",
-                        "",
-                        f"## Target: `{target_path}`",
-                        "",
-                        "## Error message",
-                        "```",
-                        error_message or "",
-                        "```",
-                    ]
-                    if stack_trace:
-                        report_lines += ["", "## Stack trace", "```", stack_trace, "```"]
-                    report_lines += [
-                        "",
-                        "## Analysis (DebuggerAgent)",
-                        "```json",
-                        json.dumps(debug_result, indent=2),
-                        "```",
-                    ]
-                    report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-                    created_artifacts.append(
-                        {"name": "debug-report.md", "path": str(report_path)}
-                    )
-
-            elif agent_name == "implementer" and action in {
-                "write_code",
-                "fix",
-                "implement",
-            }:
-                from .models import WorkflowType
-                workflow_type = getattr(self.workflow, "type", None) if self.workflow else None
-                is_greenfield = (
-                    workflow_type == WorkflowType.GREENFIELD
-                    or (isinstance(workflow_type, str) and workflow_type.lower() == "greenfield")
-                    or (hasattr(workflow_type, "value") and workflow_type.value == "greenfield")
-                )
-                user_prompt = self.state.variables.get("user_prompt", "")
-
-                if is_greenfield and (not target_path or not target_path.exists()):
-                    requirements_path = self.project_root / "requirements.md"
-                    architecture_path = self.project_root / "architecture.md"
-                    
-                    spec_parts = []
-                    if user_prompt:
-                        spec_parts.append(user_prompt)
-                    if requirements_path.exists():
-                        req_content = requirements_path.read_text(encoding='utf-8')
-                        spec_parts.append(f"\n\nRequirements:\n{req_content[:3000]}")
-                    if architecture_path.exists():
-                        arch_content = architecture_path.read_text(encoding='utf-8')
-                        spec_parts.append(f"\n\nArchitecture:\n{arch_content[:3000]}")
-                    
-                    specification = "\n".join(spec_parts) or "Create the application based on requirements and architecture"
-                    
-                    stories_dir = self.project_root / "stories"
-                    context_parts = []
-                    if stories_dir.exists():
-                        story_files = list(stories_dir.glob("*.md"))
-                        if story_files:
-                            context_parts.append("User Stories:")
-                            for story_file in story_files[:5]:
-                                context_parts.append(story_file.read_text(encoding='utf-8')[:500])
-                    context = "\n\n".join(context_parts) if context_parts else None
-                    
-                    output_dir = self.project_root / "src"
-                    if step.creates:
-                        for create_item in step.creates:
-                            if create_item.endswith("/") or create_item.endswith("\\"):
-                                output_dir = self.project_root / create_item.rstrip("/\\")
-                                break
-                    
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                    main_file = output_dir / "app.py"
-                    
-                    implement_result = await run_agent(
-                        "implementer",
-                        "implement",
-                        specification=specification,
-                        file_path=str(main_file),
-                        context=context,
-                    )
-                    self.state.variables["implementer_result"] = implement_result
-                    self.state.variables["target_file"] = str(main_file)
-                    created_artifacts.append(
-                        {"name": "src/", "path": str(output_dir)}
-                    )
-                    
-                elif target_path and target_path.exists():
-                    debug_report_path = self.project_root / "debug-report.md"
-                    debug_context = (
-                        debug_report_path.read_text(encoding="utf-8")
-                        if debug_report_path.exists()
-                        else ""
-                    )
-                    instruction = (
-                        f"Fix the bugs in {target_path.name}. "
-                        "Add robust input validation and handle missing keys safely. "
-                        "Do not change behavior beyond fixing the crashes.\n\n"
-                        "Context:\n"
-                        f"{debug_context[:4000]}"
-                    )
-
-                    fix_result = await run_agent(
-                        "implementer",
-                        "refactor",
-                        file=str(target_path),
-                        instruction=instruction,
-                    )
-                    self.state.variables["implementer_result"] = fix_result
-
-                    if "fixed-code/" in (step.creates or []):
-                        fixed_dir = self.project_root / "fixed-code"
-                        fixed_dir.mkdir(parents=True, exist_ok=True)
-                        fixed_copy = fixed_dir / target_path.name
-                        shutil.copy2(target_path, fixed_copy)
-                        self.state.variables["fixed_file"] = str(fixed_copy)
-                        created_artifacts.append(
-                            {"name": "fixed-code/", "path": str(fixed_dir)}
-                        )
-                else:
-                    raise ValueError(
-                        "Implementer step requires either a target file for brownfield projects "
-                        "or a greenfield workflow type for new projects."
-                    )
-
-            elif agent_name == "reviewer" and action in {"review_code", "review", "score"}:
-                fixed_file = self.state.variables.get("fixed_file")
-                implementer_file = self.state.variables.get("target_file")
-                review_target = None
+            # Create handler registry and find appropriate handler
+            registry = AgentHandlerRegistry.create_registry(
+                project_root=self.project_root,
+                state=self.state,
+                workflow=self.workflow,
+                run_agent_fn=run_agent,
+                executor=self,
+            )
+            
+            handler = registry.find_handler(agent_name, action)
+            
+            if handler:
+                # Execute handler to get artifacts
+                created_artifacts = await handler.execute(step, action, target_path)
                 
-                if fixed_file:
-                    review_target = Path(fixed_file)
-                elif implementer_file:
-                    review_target = Path(implementer_file)
-                elif target_path:
-                    review_target = target_path
-                
-                if not review_target or not review_target.exists():
-                    raise ValueError("Reviewer step requires a target file to review.")
-
-                review_result = await run_agent(
-                    "reviewer", "score", file=str(review_target)
-                )
-                self.state.variables["reviewer_result"] = review_result
-
-                # Note: Gate evaluation handled separately in parallel execution flow
-                gate = step.gate or {}
-                if gate:
-                    # Extract scoring thresholds from step configuration
-                    scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
-                    thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
-                    
-                    # Create quality thresholds from step config or use defaults
-                    thresholds = QualityThresholds.from_dict(thresholds_config)
-                    
-                    # Extract scores from review result
-                    scores = review_result.get("scores", {})
-                    if not scores:
-                        scoring = review_result.get("scoring", {})
-                        if scoring:
-                            scores = scoring.get("scores", {})
-                    
-                    # Evaluate quality gate
-                    quality_gate = QualityGate(thresholds=thresholds)
-                    gate_result = quality_gate.evaluate_from_review_result(review_result, thresholds)
-                    
-                    passed = gate_result.passed
-                    self.state.variables["gate_last"] = {
-                        "step": step.id,
-                        "passed": passed,
-                        "scoring": scores,
-                        "gate_result": gate_result.to_dict(),
-                    }
-
-            elif agent_name == "tester" and action in {"write_tests", "test"}:
-                fixed_file = self.state.variables.get("fixed_file")
-                implementer_file = self.state.variables.get("target_file")
-                test_target = None
-                
-                if fixed_file:
-                    test_target = Path(fixed_file)
-                elif implementer_file:
-                    test_target = Path(implementer_file)
-                elif target_path:
-                    test_target = target_path
-                
-                if not test_target or not test_target.exists():
-                    raise ValueError("Tester step requires a target file to test.")
-
-                test_result = await run_agent("tester", "test", file=str(test_target))
-                self.state.variables["tester_result"] = test_result
-
-                if "tests/" in (step.creates or []):
-                    tests_dir = self.project_root / "tests"
-                    created_artifacts.append({"name": "tests/", "path": str(tests_dir)})
-
-            elif agent_name == "orchestrator" and action in {"finalize", "complete"}:
-                pass
-
-            elif agent_name == "analyst" and action in {"gather_requirements", "gather-requirements", "analyze"}:
-                user_prompt = self.state.variables.get("user_prompt", "")
-                if not user_prompt and not self.auto_mode:
-                    user_prompt = "Generate requirements for this project"
-                
-                requirements_result = await run_agent(
-                    "analyst",
-                    "gather-requirements",
-                    description=user_prompt,
-                    output_file="requirements.md"
-                )
-                self.state.variables["analyst_result"] = requirements_result
-                
-                if "requirements.md" in (step.creates or []):
-                    req_path = self.project_root / "requirements.md"
-                    if req_path.exists():
-                        created_artifacts.append({"name": "requirements.md", "path": str(req_path)})
-
-            elif agent_name == "planner" and action in {"create_stories", "create-stories", "plan", "breakdown"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                
-                plan_description = requirements if requirements else "Create user stories for this project"
-                
-                planner_result = await run_agent(
-                    "planner",
-                    "plan",
-                    description=plan_description
-                )
-                self.state.variables["planner_result"] = planner_result
-                
-                stories_dir = self.project_root / "stories"
-                stories_dir.mkdir(parents=True, exist_ok=True)
-                
-                if "stories/" in (step.creates or []):
-                    if stories_dir.exists():
-                        created_artifacts.append({"name": "stories/", "path": str(stories_dir)})
-
-            elif agent_name == "architect" and action in {"design_system", "design-system", "design_architecture"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                stories_dir = self.project_root / "stories"
-                
-                context_parts = []
-                if stories_dir.exists():
-                    story_files = list(stories_dir.glob("*.md"))
-                    if story_files:
-                        context_parts.append("User Stories:")
-                        for story_file in story_files[:10]:
-                            context_parts.append(story_file.read_text(encoding="utf-8")[:1000])
-                context = "\n\n".join(context_parts) if context_parts else ""
-                
-                architect_result = await run_agent(
-                    "architect",
-                    "design-system",
-                    requirements=requirements,
-                    context=context,
-                    output_file="architecture.md"
-                )
-                self.state.variables["architect_result"] = architect_result
-                
-                if "architecture.md" in (step.creates or []):
-                    arch_path = self.project_root / "architecture.md"
-                    if arch_path.exists():
-                        created_artifacts.append({"name": "architecture.md", "path": str(arch_path)})
-
-            elif agent_name == "designer" and action in {"api_design", "api-design", "design_api"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                arch_path = self.project_root / "architecture.md"
-                architecture = arch_path.read_text(encoding="utf-8") if arch_path.exists() else ""
-                
-                api_requirements = f"{requirements}\n\nArchitecture:\n{architecture}" if architecture else requirements
-                
-                designer_result = await run_agent(
-                    "designer",
-                    "design-api",
-                    requirements=api_requirements
-                )
-                self.state.variables["designer_result"] = designer_result
-                
-                if "api-design.md" in (step.creates or []):
-                    api_design_path = self.project_root / "api-design.md"
-                    if api_design_path.exists():
-                        created_artifacts.append({"name": "api-design.md", "path": str(api_design_path)})
-
-            elif agent_name == "ops" and action in {"security_scan", "security-scan", "audit"}:
-                ops_result = await run_agent(
-                    "ops",
-                    "security-scan",
-                    project_root=str(self.project_root)
-                )
-                self.state.variables["ops_result"] = ops_result
-                
-                if "security-report.md" in (step.creates or []):
-                    security_path = self.project_root / "security-report.md"
-                    if security_path.exists():
-                        created_artifacts.append({"name": "security-report.md", "path": str(security_path)})
-
-            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document", "generate_project_docs", "generate-project-docs"}:
-                # Support both single-file and project-level documentation
-                if action in {"generate_project_docs", "generate-project-docs"}:
-                    # Project-level documentation
-                    output_dir = step.metadata.get("output_dir") if step.metadata else None
-                    output_format = step.metadata.get("output_format", "markdown") if step.metadata else "markdown"
-                    
-                    doc_result = await run_agent(
-                        "documenter",
-                        "generate-project-docs",
-                        project_root=str(self.project_root),
-                        output_dir=output_dir,
-                        output_format=output_format,
-                    )
-                    self.state.variables["documenter_result"] = doc_result
-                    
-                    # Capture docs/api/ directory as artifact
-                    docs_api_dir = self.project_root / "docs" / "api"
-                    if docs_api_dir.exists():
-                        created_artifacts.append({"name": "docs/api/", "path": str(docs_api_dir)})
-                else:
-                    # Single-file documentation (backward compatible)
-                    requirements_path = self.project_root / "requirements.md"
-                    requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                    
-                    doc_result = await run_agent(
-                        "documenter",
-                        "generate-docs",
-                        requirements=requirements,
-                        project_root=str(self.project_root)
-                    )
-                    self.state.variables["documenter_result"] = doc_result
-                    
-                    if "docs/" in (step.creates or []):
-                        docs_dir = self.project_root / "docs"
-                        if docs_dir.exists():
-                            created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
-
+                # Special handling for reviewer gate evaluation (parallel execution)
+                # Gate evaluation doesn't mark step complete here - that's handled by ParallelStepExecutor
+                if agent_name == "reviewer" and step.gate:
+                    # Gate evaluation is already handled by ReviewerHandler,
+                    # but we need to ensure gate result is stored for parallel execution
+                    review_result = self.state.variables.get("reviewer_result", {})
+                    if review_result:
+                        scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
+                        thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
+                        thresholds = QualityThresholds.from_dict(thresholds_config)
+                        
+                        quality_gate = QualityGate(thresholds=thresholds)
+                        gate_result = quality_gate.evaluate_from_review_result(review_result, thresholds)
+                        
+                        scores = review_result.get("scores", {})
+                        if not scores:
+                            scoring = review_result.get("scoring", {})
+                            if scoring:
+                                scores = scoring.get("scores", {})
+                        
+                        self.state.variables["gate_last"] = {
+                            "step": step.id,
+                            "passed": gate_result.passed,
+                            "scoring": scores,
+                            "gate_result": gate_result.to_dict(),
+                        }
             else:
                 # Unknown mapping: return empty artifacts
                 return {}
@@ -1080,8 +869,8 @@ class WorkflowExecutor:
         """
         Execute a single workflow step and advance state.
 
-        This is intentionally pragmatic: it supports the shipped preset workflows
-        by mapping `step.action` to each agent's real CLI/API commands.
+        Uses agent handlers (Strategy Pattern) to delegate agent-specific logic,
+        significantly reducing complexity from the original if/elif chain.
         """
         if not self.state or not self.workflow:
             raise ValueError("Workflow not started")
@@ -1115,406 +904,34 @@ class WorkflowExecutor:
         created_artifacts: list[dict[str, Any]] = []
 
         try:
-            # ---- Step execution mappings ----
-            if agent_name == "debugger" and action in {
-                "analyze_error",
-                "analyze-error",
-                "analyze",
-            }:
-                if not target_path or not target_path.exists():
-                    raise ValueError(
-                        "Debugger step requires a target file. Provide --file <path> (or ensure example_bug.py exists)."
-                    )
-
-                error_message, stack_trace = self._capture_python_exception(target_path)
-                if not error_message:
-                    # Fall back to a generic message for static analysis
-                    error_message = f"Bug(s) reported in {target_path.name} (no runtime traceback captured)."
-
-                debug_result = await run_agent(
-                    "debugger",
-                    "analyze-error",
-                    error_message=error_message,
-                    stack_trace=stack_trace,
-                )
-                self.state.variables["debugger_result"] = debug_result
-
-                # Write debug report artifact if requested
-                if "debug-report.md" in (step.creates or []):
-                    report_path = self.project_root / "debug-report.md"
-                    report_lines = [
-                        "# Debug Report",
-                        "",
-                        f"## Target: `{target_path}`",
-                        "",
-                        "## Error message",
-                        "```",
-                        error_message or "",
-                        "```",
-                    ]
-                    if stack_trace:
-                        report_lines += ["", "## Stack trace", "```", stack_trace, "```"]
-                    report_lines += [
-                        "",
-                        "## Analysis (DebuggerAgent)",
-                        "```json",
-                        json.dumps(debug_result, indent=2),
-                        "```",
-                    ]
-                    report_path.write_text("\n".join(report_lines) + "\n", encoding="utf-8")
-                    created_artifacts.append(
-                        {"name": "debug-report.md", "path": str(report_path)}
-                    )
-
-            elif agent_name == "implementer" and action in {
-                "write_code",
-                "fix",
-                "implement",
-            }:
-                # Check if this is a greenfield project (new project from scratch)
-                from .models import WorkflowType
-                workflow_type = getattr(self.workflow, "type", None) if self.workflow else None
-                is_greenfield = (
-                    workflow_type == WorkflowType.GREENFIELD
-                    or (isinstance(workflow_type, str) and workflow_type.lower() == "greenfield")
-                    or (hasattr(workflow_type, "value") and workflow_type.value == "greenfield")
-                )
-                user_prompt = self.state.variables.get("user_prompt", "")
-
-                if is_greenfield and (not target_path or not target_path.exists()):
-                    # Greenfield project: create new code from scratch
-                    # Use requirements and architecture from previous steps
-                    requirements_path = self.project_root / "requirements.md"
-                    architecture_path = self.project_root / "architecture.md"
-                    
-                    # Build implementation specification
-                    spec_parts = []
-                    if user_prompt:
-                        spec_parts.append(user_prompt)
-                    if requirements_path.exists():
-                        req_content = requirements_path.read_text(encoding='utf-8')
-                        spec_parts.append(f"\n\nRequirements:\n{req_content[:3000]}")
-                    if architecture_path.exists():
-                        arch_content = architecture_path.read_text(encoding='utf-8')
-                        spec_parts.append(f"\n\nArchitecture:\n{arch_content[:3000]}")
-                    
-                    specification = "\n".join(spec_parts) or "Create the application based on requirements and architecture"
-                    
-                    # Build context from stories if available
-                    stories_dir = self.project_root / "stories"
-                    context_parts = []
-                    if stories_dir.exists():
-                        story_files = list(stories_dir.glob("*.md"))
-                        if story_files:
-                            context_parts.append("User Stories:")
-                            for story_file in story_files[:5]:  # Limit to first 5 stories
-                                context_parts.append(story_file.read_text(encoding='utf-8')[:500])
-                    context = "\n\n".join(context_parts) if context_parts else None
-                    
-                    # Determine output directory and main file from step.creates
-                    output_dir = self.project_root / "src"
-                    if step.creates:
-                        for create_item in step.creates:
-                            if create_item.endswith("/") or create_item.endswith("\\"):
-                                output_dir = self.project_root / create_item.rstrip("/\\")
-                                break
-                    
-                    output_dir.mkdir(parents=True, exist_ok=True)
-                    
-                    # Create main application file
-                    main_file = output_dir / "app.py"
-                    
-                    # Use implement command for greenfield projects
-                    implement_result = await run_agent(
-                        "implementer",
-                        "implement",
-                        specification=specification,
-                        file_path=str(main_file),
-                        context=context,
-                    )
-                    self.state.variables["implementer_result"] = implement_result
-                    self.state.variables["target_file"] = str(main_file)
-                    created_artifacts.append(
-                        {"name": "src/", "path": str(output_dir)}
-                    )
-                    
-                elif target_path and target_path.exists():
-                    # Brownfield project: refactor existing code
-                    debug_report_path = self.project_root / "debug-report.md"
-                    debug_context = (
-                        debug_report_path.read_text(encoding="utf-8")
-                        if debug_report_path.exists()
-                        else ""
-                    )
-                    instruction = (
-                        f"Fix the bugs in {target_path.name}. "
-                        "Add robust input validation and handle missing keys safely. "
-                        "Do not change behavior beyond fixing the crashes.\n\n"
-                        "Context:\n"
-                        f"{debug_context[:4000]}"
-                    )
-
-                    fix_result = await run_agent(
-                        "implementer",
-                        "refactor",
-                        file=str(target_path),
-                        instruction=instruction,
-                    )
-                    self.state.variables["implementer_result"] = fix_result
-
-                    # Create fixed-code/ artifact if requested by preset
-                    if "fixed-code/" in (step.creates or []):
-                        fixed_dir = self.project_root / "fixed-code"
-                        fixed_dir.mkdir(parents=True, exist_ok=True)
-                        fixed_copy = fixed_dir / target_path.name
-                        shutil.copy2(target_path, fixed_copy)
-                        self.state.variables["fixed_file"] = str(fixed_copy)
-                        created_artifacts.append(
-                            {"name": "fixed-code/", "path": str(fixed_dir)}
-                        )
-                else:
-                    raise ValueError(
-                        "Implementer step requires either a target file for brownfield projects "
-                        "or a greenfield workflow type for new projects."
-                    )
-
-            elif agent_name == "reviewer" and action in {"review_code", "review", "score"}:
-                # Prefer the fixed copy if available, then check implementer result, then target_path
-                fixed_file = self.state.variables.get("fixed_file")
-                implementer_file = self.state.variables.get("target_file")
-                review_target = None
+            # Create handler registry and find appropriate handler
+            registry = AgentHandlerRegistry.create_registry(
+                project_root=self.project_root,
+                state=self.state,
+                workflow=self.workflow,
+                run_agent_fn=run_agent,
+                executor=self,
+            )
+            
+            handler = registry.find_handler(agent_name, action)
+            
+            if handler:
+                # Store current step ID to detect if handler modifies it (gate evaluation)
+                original_current_step = self.state.current_step
                 
-                if fixed_file:
-                    review_target = Path(fixed_file)
-                elif implementer_file:
-                    review_target = Path(implementer_file)
-                elif target_path:
-                    review_target = target_path
+                # Execute handler
+                created_artifacts = await handler.execute(step, action, target_path)
                 
-                if not review_target or not review_target.exists():
-                    raise ValueError("Reviewer step requires a target file to review.")
-
-                review_result = await run_agent(
-                    "reviewer", "score", file=str(review_target)
-                )
-                self.state.variables["reviewer_result"] = review_result
-
-                # Evaluate gate if configured
-                gate = step.gate or {}
-                if gate:
-                    # Extract scoring thresholds from step configuration
-                    scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
-                    thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
-                    
-                    # Create quality thresholds from step config or use defaults
-                    thresholds = QualityThresholds.from_dict(thresholds_config)
-                    
-                    # Extract scores from review result
-                    scores = review_result.get("scores", {})
-                    if not scores:
-                        scoring = review_result.get("scoring", {})
-                        if scoring:
-                            scores = scoring.get("scores", {})
-                    
-                    # Evaluate quality gate
-                    quality_gate = QualityGate(thresholds=thresholds)
-                    gate_result = quality_gate.evaluate_from_review_result(review_result, thresholds)
-                    
-                    passed = gate_result.passed
-                    self.state.variables["gate_last"] = {
-                        "step": step.id,
-                        "passed": passed,
-                        "scoring": scores,
-                        "gate_result": gate_result.to_dict(),
-                    }
-                    on_pass = gate.get("on_pass") or gate.get("on-pass")
-                    on_fail = gate.get("on_fail") or gate.get("on-fail")
-
-                    # Mark review complete, but override next step based on gate decision
-                    self.mark_step_complete(
-                        step_id=step.id, artifacts=created_artifacts or None
-                    )
-                    if passed and on_pass:
-                        self.state.current_step = on_pass
-                    elif (not passed) and on_fail:
-                        self.state.current_step = on_fail
-                    self.save_state()
+                # Check if handler handled completion (e.g., reviewer gate evaluation)
+                # If current_step was modified, handler already called mark_step_complete
+                if self.state.current_step != original_current_step:
+                    # Handler handled completion (e.g., gate evaluation changed next step)
+                    step_execution.completed_at = datetime.now()
+                    step_execution.duration_seconds = (
+                        step_execution.completed_at - step_execution.started_at
+                    ).total_seconds()
+                    step_execution.status = "completed"
                     return
-
-            elif agent_name == "tester" and action in {"write_tests", "test"}:
-                # Prefer the fixed copy if available, then check implementer result, then target_path
-                fixed_file = self.state.variables.get("fixed_file")
-                implementer_file = self.state.variables.get("target_file")
-                test_target = None
-                
-                if fixed_file:
-                    test_target = Path(fixed_file)
-                elif implementer_file:
-                    test_target = Path(implementer_file)
-                elif target_path:
-                    test_target = target_path
-                
-                if not test_target or not test_target.exists():
-                    raise ValueError("Tester step requires a target file to test.")
-
-                test_result = await run_agent("tester", "test", file=str(test_target))
-                self.state.variables["tester_result"] = test_result
-
-                if "tests/" in (step.creates or []):
-                    tests_dir = self.project_root / "tests"
-                    created_artifacts.append({"name": "tests/", "path": str(tests_dir)})
-
-            elif agent_name == "orchestrator" and action in {"finalize", "complete"}:
-                # Nothing to do other than marking completion.
-                pass
-
-            elif agent_name == "analyst" and action in {"gather_requirements", "gather-requirements", "analyze"}:
-                user_prompt = self.state.variables.get("user_prompt", "")
-                if not user_prompt and not self.auto_mode:
-                    # In non-auto mode, could prompt user, but for now use generic
-                    user_prompt = "Generate requirements for this project"
-                
-                requirements_result = await run_agent(
-                    "analyst",
-                    "gather-requirements",
-                    description=user_prompt,
-                    output_file="requirements.md"
-                )
-                self.state.variables["analyst_result"] = requirements_result
-                
-                # Create requirements.md artifact if requested
-                if "requirements.md" in (step.creates or []):
-                    req_path = self.project_root / "requirements.md"
-                    # Analyst agent should have created this, but verify
-                    if req_path.exists():
-                        created_artifacts.append({"name": "requirements.md", "path": str(req_path)})
-
-            elif agent_name == "planner" and action in {"create_stories", "create-stories", "plan", "breakdown"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                
-                # Use "plan" command which creates a plan with multiple stories
-                # The plan command accepts description parameter
-                plan_description = requirements if requirements else "Create user stories for this project"
-                
-                planner_result = await run_agent(
-                    "planner",
-                    "plan",
-                    description=plan_description
-                )
-                self.state.variables["planner_result"] = planner_result
-                
-                # Create stories directory if it doesn't exist
-                stories_dir = self.project_root / "stories"
-                stories_dir.mkdir(parents=True, exist_ok=True)
-                
-                if "stories/" in (step.creates or []):
-                    if stories_dir.exists():
-                        created_artifacts.append({"name": "stories/", "path": str(stories_dir)})
-
-            elif agent_name == "architect" and action in {"design_system", "design-system", "design_architecture"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                stories_dir = self.project_root / "stories"
-                
-                # Build context from stories if available
-                context_parts = []
-                if stories_dir.exists():
-                    story_files = list(stories_dir.glob("*.md"))
-                    if story_files:
-                        context_parts.append("User Stories:")
-                        for story_file in story_files[:10]:  # Limit to first 10 stories
-                            context_parts.append(story_file.read_text(encoding="utf-8")[:1000])
-                context = "\n\n".join(context_parts) if context_parts else ""
-                
-                architect_result = await run_agent(
-                    "architect",
-                    "design-system",
-                    requirements=requirements,
-                    context=context,
-                    output_file="architecture.md"
-                )
-                self.state.variables["architect_result"] = architect_result
-                
-                if "architecture.md" in (step.creates or []):
-                    arch_path = self.project_root / "architecture.md"
-                    if arch_path.exists():
-                        created_artifacts.append({"name": "architecture.md", "path": str(arch_path)})
-
-            elif agent_name == "designer" and action in {"api_design", "api-design", "design_api"}:
-                requirements_path = self.project_root / "requirements.md"
-                requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                arch_path = self.project_root / "architecture.md"
-                architecture = arch_path.read_text(encoding="utf-8") if arch_path.exists() else ""
-                
-                # Combine requirements and architecture for the design-api command
-                # The design-api command expects requirements parameter
-                api_requirements = f"{requirements}\n\nArchitecture:\n{architecture}" if architecture else requirements
-                
-                designer_result = await run_agent(
-                    "designer",
-                    "design-api",
-                    requirements=api_requirements
-                )
-                self.state.variables["designer_result"] = designer_result
-                
-                if "api-design.md" in (step.creates or []):
-                    api_design_path = self.project_root / "api-design.md"
-                    if api_design_path.exists():
-                        created_artifacts.append({"name": "api-design.md", "path": str(api_design_path)})
-
-            elif agent_name == "ops" and action in {"security_scan", "security-scan", "audit"}:
-                # Ops agent security scan
-                ops_result = await run_agent(
-                    "ops",
-                    "security-scan",
-                    project_root=str(self.project_root)
-                )
-                self.state.variables["ops_result"] = ops_result
-                
-                if "security-report.md" in (step.creates or []):
-                    security_path = self.project_root / "security-report.md"
-                    if security_path.exists():
-                        created_artifacts.append({"name": "security-report.md", "path": str(security_path)})
-
-            elif agent_name == "documenter" and action in {"generate_docs", "generate-docs", "document", "generate_project_docs", "generate-project-docs"}:
-                # Support both single-file and project-level documentation
-                if action in {"generate_project_docs", "generate-project-docs"}:
-                    # Project-level documentation
-                    output_dir = step.metadata.get("output_dir") if step.metadata else None
-                    output_format = step.metadata.get("output_format", "markdown") if step.metadata else "markdown"
-                    
-                    doc_result = await run_agent(
-                        "documenter",
-                        "generate-project-docs",
-                        project_root=str(self.project_root),
-                        output_dir=output_dir,
-                        output_format=output_format,
-                    )
-                    self.state.variables["documenter_result"] = doc_result
-                    
-                    # Capture docs/api/ directory as artifact
-                    docs_api_dir = self.project_root / "docs" / "api"
-                    if docs_api_dir.exists():
-                        created_artifacts.append({"name": "docs/api/", "path": str(docs_api_dir)})
-                else:
-                    # Single-file documentation (backward compatible)
-                    requirements_path = self.project_root / "requirements.md"
-                    requirements = requirements_path.read_text(encoding="utf-8") if requirements_path.exists() else ""
-                    
-                    doc_result = await run_agent(
-                        "documenter",
-                        "generate-docs",
-                        requirements=requirements,
-                        project_root=str(self.project_root)
-                    )
-                    self.state.variables["documenter_result"] = doc_result
-                    
-                    if "docs/" in (step.creates or []):
-                        docs_dir = self.project_root / "docs"
-                        if docs_dir.exists():
-                            created_artifacts.append({"name": "docs/", "path": str(docs_dir)})
-
             else:
                 # Unknown mapping: mark as skipped rather than hard-failing (best-effort).
                 # This keeps the executor resilient as presets evolve.
@@ -1533,6 +950,22 @@ class WorkflowExecutor:
 
             # Default: mark step complete and advance to its `next`
             self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)
+
+        except Exception as e:
+            # Mark step execution as failed
+            step_execution.completed_at = datetime.now()
+            step_execution.duration_seconds = (
+                step_execution.completed_at - step_execution.started_at
+            ).total_seconds()
+            step_execution.status = "failed"
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                e,
+                workflow_id=self.state.workflow_id if self.state else None,
+                step_id=step.id,
+                agent=step.agent or "",
+            )
+            step_execution.error = envelope.to_user_message()
+            raise
 
         except Exception as e:
             # Mark step execution as failed
@@ -1650,24 +1083,6 @@ class WorkflowExecutor:
             # Workflow complete
             self.state.current_step = None
             self.state.status = "completed"
-
-        self.save_state()
-
-    def skip_step(self, step_id: str):
-        """Skip a step."""
-        if not self.state:
-            raise ValueError("Workflow not started")
-        if not self.workflow:
-            raise ValueError("No workflow loaded. Call load_workflow() first.")
-
-        if step_id not in self.state.skipped_steps:
-            self.state.skipped_steps.append(step_id)
-
-        # Find the step and move to next
-        for step in self.workflow.steps:
-            if step.id == step_id and step.next:
-                self.state.current_step = step.next
-                break
 
         self.save_state()
 

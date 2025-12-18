@@ -9,13 +9,9 @@ from __future__ import annotations
 import pytest
 from pathlib import Path
 import asyncio
-import yaml
 
 from tests.fixtures.background_agent_fixtures import (
-    temp_project_root,
-    mock_background_agent,
     MockBackgroundAgent,
-    auto_execution_config_file,
 )
 
 

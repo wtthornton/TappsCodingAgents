@@ -11,10 +11,7 @@ from pathlib import Path
 import asyncio
 
 from tests.fixtures.background_agent_fixtures import (
-    temp_project_root,
-    mock_background_agent,
     MockBackgroundAgent,
-    auto_execution_config_file,
 )
 
 

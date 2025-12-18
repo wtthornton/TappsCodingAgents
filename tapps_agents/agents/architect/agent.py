@@ -149,99 +149,124 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
         else:
             return {"error": f"Unknown command: {command}"}
 
-    async def _design_system(
-        self, requirements: str, context: str = "", output_file: str | None = None
+    async def _consult_experts_for_design(
+        self, requirements: str, context: str
     ) -> dict[str, Any]:
-        """Design system architecture."""
-        if not requirements:
-            return {"error": "requirements is required"}
-
-        # Consult experts for architecture guidance
+        """Consult experts for architecture guidance."""
         expert_guidance: dict[str, Any] = {}
-        if self.expert_registry:
-            # Consult Software Architecture expert
-            try:
-                arch_consultation = await self.expert_registry.consult(
-                    query=f"Design system architecture for: {requirements}. Context: {context}",
-                    domain="software-architecture",
-                    include_all=True,
-                    prioritize_builtin=True,
-                    agent_id="architect",
-                )
-                expert_guidance["architecture"] = arch_consultation.weighted_answer
-                expert_guidance["architecture_confidence"] = (
-                    arch_consultation.confidence
-                )
-            except Exception:
-                logger.debug("Architecture expert consultation failed", exc_info=True)
+        if not self.expert_registry:
+            return expert_guidance
 
-            # Consult Performance expert
-            try:
-                perf_consultation = await self.expert_registry.consult(
-                    query=f"Performance considerations for architecture: {requirements}",
-                    domain="performance-optimization",
-                    include_all=True,
-                    prioritize_builtin=True,
-                    agent_id="architect",
+        # Consult Software Architecture expert
+        try:
+            arch_consultation = await self.expert_registry.consult(
+                query=f"Design system architecture for: {requirements}. Context: {context}",
+                domain="software-architecture",
+                include_all=True,
+                prioritize_builtin=True,
+                agent_id="architect",
+            )
+            expert_guidance["architecture"] = arch_consultation.weighted_answer
+            expert_guidance["architecture_confidence"] = arch_consultation.confidence
+        except Exception:
+            logger.debug("Architecture expert consultation failed", exc_info=True)
+
+        # Consult Performance expert
+        try:
+            perf_consultation = await self.expert_registry.consult(
+                query=f"Performance considerations for architecture: {requirements}",
+                domain="performance-optimization",
+                include_all=True,
+                prioritize_builtin=True,
+                agent_id="architect",
+            )
+            expert_guidance["performance"] = perf_consultation.weighted_answer
+        except Exception:
+            logger.debug("Performance expert consultation failed", exc_info=True)
+
+        # Consult Security expert
+        try:
+            sec_consultation = await self.expert_registry.consult(
+                query=f"Security architecture considerations: {requirements}",
+                domain="security",
+                include_all=True,
+                prioritize_builtin=True,
+                agent_id="architect",
+            )
+            expert_guidance["security"] = sec_consultation.weighted_answer
+        except Exception:
+            logger.debug("Security expert consultation failed", exc_info=True)
+
+        return expert_guidance
+
+    def _format_expert_guidance(self, expert_guidance: dict[str, Any]) -> str:
+        """Format expert guidance into a prompt section."""
+        if not expert_guidance:
+            return ""
+
+        expert_section = "\n\nExpert Guidance:\n"
+        if "architecture" in expert_guidance:
+            expert_section += (
+                f"\nArchitecture Expert:\n{expert_guidance['architecture'][:500]}...\n"
+            )
+        if "performance" in expert_guidance:
+            expert_section += (
+                f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}...\n"
+            )
+        if "security" in expert_guidance:
+            expert_section += (
+                f"\nSecurity Expert:\n{expert_guidance['security'][:300]}...\n"
+            )
+        return expert_section
+
+    async def _get_context7_docs_for_design(
+        self, requirements: str, context: str
+    ) -> dict[str, str]:
+        """Get Context7 documentation for mentioned technologies."""
+        context7_docs: dict[str, str] = {}
+        if not self.context7:
+            return context7_docs
+
+        full_text = f"{requirements} {context}"
+        if not self.context7.should_use_context7(full_text):
+            return context7_docs
+
+        # Extract potential library names and get docs
+        libraries = await self.context7.search_libraries(requirements, limit=5)
+        for lib_info in libraries:
+            lib_name = (
+                lib_info.get("id", "").split("/")[-1]
+                if isinstance(lib_info, dict)
+                else str(lib_info)
+            )
+            if lib_name:
+                doc = await self.context7.get_documentation(
+                    lib_name, topic="architecture"
                 )
-                expert_guidance["performance"] = perf_consultation.weighted_answer
-            except Exception:
-                logger.debug("Performance expert consultation failed", exc_info=True)
+                if doc:
+                    context7_docs[lib_name] = doc.get("content", "")[:500]
 
-            # Consult Security expert
-            try:
-                sec_consultation = await self.expert_registry.consult(
-                    query=f"Security architecture considerations: {requirements}",
-                    domain="security",
-                    include_all=True,
-                    prioritize_builtin=True,
-                    agent_id="architect",
-                )
-                expert_guidance["security"] = sec_consultation.weighted_answer
-            except Exception:
-                logger.debug("Security expert consultation failed", exc_info=True)
+        return context7_docs
 
-        expert_section = ""
-        if expert_guidance:
-            expert_section = "\n\nExpert Guidance:\n"
-            if "architecture" in expert_guidance:
-                expert_section += f"\nArchitecture Expert:\n{expert_guidance['architecture'][:500]}...\n"
-            if "performance" in expert_guidance:
-                expert_section += f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}...\n"
-            if "security" in expert_guidance:
-                expert_section += (
-                    f"\nSecurity Expert:\n{expert_guidance['security'][:300]}...\n"
-                )
+    def _format_context7_docs(self, context7_docs: dict[str, str]) -> str:
+        """Format Context7 documentation into a prompt section."""
+        if not context7_docs:
+            return ""
 
-        # Use Context7 to get documentation for mentioned technologies
-        context7_docs = {}
-        if self.context7:
-            full_text = f"{requirements} {context}"
-            if self.context7.should_use_context7(full_text):
-                # Extract potential library names and get docs
-                libraries = await self.context7.search_libraries(requirements, limit=5)
-                for lib_info in libraries:
-                    lib_name = (
-                        lib_info.get("id", "").split("/")[-1]
-                        if isinstance(lib_info, dict)
-                        else str(lib_info)
-                    )
-                    if lib_name:
-                        doc = await self.context7.get_documentation(
-                            lib_name, topic="architecture"
-                        )
-                        if doc:
-                            context7_docs[lib_name] = doc.get("content", "")[:500]
+        context7_section = "\n\nRelevant Architecture Documentation:\n"
+        for lib_name, doc_content in context7_docs.items():
+            context7_section += f"\n{lib_name} Architecture:\n{doc_content[:300]}...\n"
+        return context7_section
 
-        context7_section = ""
-        if context7_docs:
-            context7_section = "\n\nRelevant Architecture Documentation:\n"
-            for lib_name, doc_content in context7_docs.items():
-                context7_section += (
-                    f"\n{lib_name} Architecture:\n{doc_content[:300]}...\n"
-                )
-
-        prompt = f"""Design a system architecture based on the following requirements.
+    def _build_design_prompt(
+        self,
+        requirements: str,
+        context: str,
+        expert_section: str,
+        context7_section: str,
+    ) -> str:
+        """Build the architecture design prompt."""
+        return f"""Design a system architecture based on the following requirements.
 {expert_section}
 
 Requirements:
@@ -263,6 +288,38 @@ Provide a comprehensive architecture design including:
 
 Format as structured JSON with detailed architecture specification."""
 
+    def _save_architecture_result(
+        self, architecture: dict[str, Any], output_file: str | None
+    ) -> None:
+        """Save architecture result to file if specified."""
+        if not output_file:
+            return
+
+        output_path = Path(output_file)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(architecture, indent=2))
+        architecture["output_file"] = str(output_path)
+
+    async def _design_system(
+        self, requirements: str, context: str = "", output_file: str | None = None
+    ) -> dict[str, Any]:
+        """Design system architecture."""
+        if not requirements:
+            return {"error": "requirements is required"}
+
+        # Consult experts for architecture guidance
+        expert_guidance = await self._consult_experts_for_design(requirements, context)
+        expert_section = self._format_expert_guidance(expert_guidance)
+
+        # Get Context7 documentation
+        context7_docs = await self._get_context7_docs_for_design(requirements, context)
+        context7_section = self._format_context7_docs(context7_docs)
+
+        # Build prompt
+        prompt = self._build_design_prompt(
+            requirements, context, expert_section, context7_section
+        )
+
         try:
             response = await self.mal.generate(
                 prompt=prompt,
@@ -283,11 +340,7 @@ Format as structured JSON with detailed architecture specification."""
             }
 
             # Save to file if specified
-            if output_file:
-                output_path = Path(output_file)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(json.dumps(architecture, indent=2))
-                architecture["output_file"] = str(output_path)
+            self._save_architecture_result(architecture, output_file)
 
             result = {"success": True, "architecture": architecture}
             if expert_guidance:

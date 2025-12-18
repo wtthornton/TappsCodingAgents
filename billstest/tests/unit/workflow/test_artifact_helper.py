@@ -2,7 +2,6 @@
 Unit tests for Artifact Helper.
 """
 
-from pathlib import Path
 
 import pytest
 

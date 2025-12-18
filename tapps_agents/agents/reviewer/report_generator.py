@@ -256,6 +256,25 @@ class ReportGenerator:
         overall_score = scores.get("overall_score", 0.0)
         passed = overall_score >= thresholds.get("overall", 70.0)
 
+        # Validate that scores are populated (not all zeros)
+        score_keys = [
+            "complexity_score",
+            "security_score",
+            "maintainability_score",
+            "test_coverage_score",
+            "performance_score",
+            "linting_score",
+            "type_checking_score",
+        ]
+        all_zeros = all(
+            scores.get(key, 0.0) == 0.0 for key in score_keys
+        ) and overall_score == 0.0
+
+        if all_zeros and not files:
+            # If all scores are zero and no files were analyzed, this might be an error
+            # But we'll still generate the report with a warning in the HTML
+            pass
+
         # Generate HTML using Jinja2 if available, otherwise use simple template
         if HAS_JINJA2:
             # Try to use Jinja2 template (would need to create templates directory)
@@ -265,7 +284,7 @@ class ReportGenerator:
         else:
             # Fallback to simple HTML
             html_content = self._generate_simple_html(
-                scores, files, metadata, timestamp, thresholds, passed
+                scores, files, metadata, timestamp, thresholds, passed, all_zeros
             )
 
         report_path = self.quality_dir / "quality-dashboard.html"
@@ -282,12 +301,33 @@ class ReportGenerator:
         timestamp: datetime,
         thresholds: dict[str, float],
         passed: bool,
+        all_zeros: bool = False,
     ) -> str:
         """Generate simple HTML without Jinja2."""
         status_color = "#28a745" if passed else "#dc3545"
         status_text = "PASSED" if passed else "FAILED"
         overall_score = float(scores.get("overall_score", 0.0))
+        
+        # Ensure we're using the actual scores from the dictionary
+        # Double-check that scores are being read correctly
+        complexity = float(scores.get("complexity_score", 0.0))
+        security = float(scores.get("security_score", 0.0))
+        maintainability = float(scores.get("maintainability_score", 0.0))
+        test_coverage = float(scores.get("test_coverage_score", 0.0))
+        performance = float(scores.get("performance_score", 0.0))
+        linting = float(scores.get("linting_score", 0.0))
+        type_checking = float(scores.get("type_checking_score", 0.0))
 
+        # Add warning if all scores are zero
+        warning_html = ""
+        if all_zeros and not files:
+            warning_html = """
+    <div style="background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+        <strong>Warning:</strong> No files were analyzed. All scores are zero. 
+        Please ensure you provide a valid target directory or file list when generating reports.
+    </div>
+"""
+        
         html = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -374,35 +414,35 @@ class ReportGenerator:
         <div class="status">{status_text}</div>
         <p><strong>Overall Score:</strong> {overall_score:.2f}/100 (Threshold: {thresholds.get('overall', 70.0)})</p>
     </div>
-    
+    {warning_html}
     <div class="metrics">
         <div class="metric-card">
             <div class="metric-label">Complexity</div>
-            <div class="metric-value">{scores.get('complexity_score', 0.0):.2f}</div>
+            <div class="metric-value">{complexity:.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Security</div>
-            <div class="metric-value">{scores.get('security_score', 0.0):.2f}</div>
+            <div class="metric-value">{security:.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Maintainability</div>
-            <div class="metric-value">{scores.get('maintainability_score', 0.0):.2f}</div>
+            <div class="metric-value">{maintainability:.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Test Coverage</div>
-            <div class="metric-value">{scores.get('test_coverage_score', 0.0):.2f}</div>
+            <div class="metric-value">{test_coverage:.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Performance</div>
-            <div class="metric-value">{scores.get('performance_score', 0.0):.2f}</div>
+            <div class="metric-value">{performance:.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Linting</div>
-            <div class="metric-value">{scores.get('linting_score', 0.0):.2f}</div>
+            <div class="metric-value">{linting:.2f}</div>
         </div>
         <div class="metric-card">
             <div class="metric-label">Type Checking</div>
-            <div class="metric-value">{scores.get('type_checking_score', 0.0):.2f}</div>
+            <div class="metric-value">{type_checking:.2f}</div>
         </div>
     </div>
 """
@@ -525,8 +565,21 @@ class ReportGenerator:
             return inline_template.render(**context)
         except Exception:
             # Any rendering errors should not break report generation.
+            # Check if all scores are zero
+            score_keys = [
+                "complexity_score",
+                "security_score",
+                "maintainability_score",
+                "test_coverage_score",
+                "performance_score",
+                "linting_score",
+                "type_checking_score",
+            ]
+            all_zeros = all(
+                scores.get(key, 0.0) == 0.0 for key in score_keys
+            ) and scores.get("overall_score", 0.0) == 0.0
             return self._generate_simple_html(
-                scores, files, metadata, timestamp, thresholds, passed
+                scores, files, metadata, timestamp, thresholds, passed, all_zeros
             )
 
     def save_historical_data(

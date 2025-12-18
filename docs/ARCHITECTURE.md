@@ -1,3 +1,28 @@
+---
+title: Architecture Index (BMAD Standard Path)
+---
+
+# Architecture (BMAD Standard Path)
+
+BMAD expects an architecture document at `docs/architecture.md`.
+
+## Canonical Source (this repo)
+
+- **Architecture overview**: `docs/ARCHITECTURE.md`
+
+## BMAD “Always-Loaded” Shards
+
+BMAD is configured (via `.bmad-core/core-config.yaml`) to always load lean architecture shards from:
+
+- `docs/architecture/tech-stack.md`
+- `docs/architecture/source-tree.md`
+- `docs/architecture/coding-standards.md`
+- `docs/architecture/performance-guide.md`
+- `docs/architecture/performance-checklist.md`
+- `docs/architecture/testing-strategy.md`
+
+These shard files exist to keep agent context small while remaining accurate.
+
 # Architecture Overview
 
 **Version**: 2.0.2  
@@ -75,6 +100,11 @@ Key pieces:
 - **Workflow parsing**: `tapps_agents/workflow/parser.py`
 - **Workflow execution**: `tapps_agents/workflow/executor.py`
 - **Workflow recommendations**: `tapps_agents/workflow/recommender.py`
+- **Agent handlers**: `tapps_agents/workflow/agent_handlers/` (Epic 20)
+  - Strategy Pattern implementation for agent-specific execution logic
+  - 11 handler classes (one per agent type)
+  - `AgentHandlerRegistry` for handler management
+  - Reduces complexity and eliminates code duplication
 
 #### Workflow State Persistence
 

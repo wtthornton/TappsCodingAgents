@@ -2,12 +2,10 @@
 Unit tests for Parallel Step Executor.
 """
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from tapps_agents.workflow.models import StepExecution, WorkflowStep
+from tapps_agents.workflow.models import WorkflowStep
 from tapps_agents.workflow.parallel_executor import (
     ParallelStepExecutor,
     RetryConfig,

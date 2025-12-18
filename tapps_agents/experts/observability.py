@@ -8,11 +8,9 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-from .expert_engine import ExpertEngineMetrics
 
 
 @dataclass

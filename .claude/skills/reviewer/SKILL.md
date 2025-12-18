@@ -47,6 +47,48 @@ You are an expert code reviewer providing **objective, quantitative quality metr
 - `*docs-refresh {library} [topic]` - Refresh library docs in cache
 - `*docs-search {query}` - Search for libraries in Context7
 
+## Usage Examples
+
+### Example 1: Quick Code Review
+```
+@reviewer *review src/api/auth.py
+```
+**What it does:** Performs a full review with scoring, quality tools, and actionable feedback.
+
+### Example 2: Score Only (Fast)
+```
+@reviewer *score src/utils/helpers.py
+```
+**What it does:** Calculates objective scores (complexity, security, maintainability, test coverage, performance) without LLM feedback. Faster for quick checks.
+
+### Example 3: Security-Focused Review
+```
+@reviewer *security-scan src/
+@reviewer *audit-deps
+```
+**What it does:** Runs bandit security analysis and audits dependencies for vulnerabilities.
+
+### Example 4: Quality Tools Check
+```
+@reviewer *lint src/
+@reviewer *type-check src/
+@reviewer *duplication src/
+```
+**What it does:** Runs Ruff linting, mypy type checking, and jscpd duplication detection in parallel.
+
+### Example 5: Review with Library Documentation
+```
+@reviewer *docs fastapi security
+@reviewer *review src/api/endpoints.py
+```
+**What it does:** First looks up FastAPI security documentation from Context7 cache, then reviews code with that context.
+
+### Example 6: Full Project Analysis
+```
+@reviewer *review . --format json
+```
+**What it does:** Reviews entire project and outputs structured JSON report.
+
 ## Capabilities
 
 ### Code Scoring System

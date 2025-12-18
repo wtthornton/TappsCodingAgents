@@ -9,13 +9,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import yaml
 
 from .domain_detector import DomainStackDetector, StackDetectionResult
 from .domain_utils import sanitize_domain_for_path
-from .expert_config import ExpertConfigModel, ExpertsConfig, load_expert_configs
+from .expert_config import ExpertConfigModel, load_expert_configs
 
 
 @dataclass

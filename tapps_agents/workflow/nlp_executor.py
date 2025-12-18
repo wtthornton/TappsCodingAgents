@@ -11,13 +11,12 @@ from typing import Any
 
 from .confirmation_handler import ConfirmationHandler
 from .context_analyzer import ContextAnalyzer
-from .nlp_config import NLPConfig, LearningSystem
+from .executor import WorkflowExecutor
+from .nlp_config import LearningSystem, NLPConfig
 from .nlp_error_handler import AmbiguityResolver, ErrorHandler, ParseErrorType
-from .nlp_parser import NaturalLanguageParser, WorkflowIntentResult
+from .nlp_parser import NaturalLanguageParser
 from .preset_loader import PresetLoader
 from .suggestion_engine import SuggestionEngine
-
-from .executor import WorkflowExecutor
 
 logger = logging.getLogger(__name__)
 

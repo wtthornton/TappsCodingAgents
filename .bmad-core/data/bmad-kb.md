@@ -76,8 +76,9 @@ BMad transforms you into a "Vibe CEO" - directing a team of specialized AI agent
 
 **Best for**: ChatGPT, Claude, Gemini users who want to start immediately
 
-1. Navigate to `dist/teams/`
-2. Copy `team-fullstack.txt` content
+1. Use an appropriate team bundle:
+   - If you installed BMAD via npm and have generated bundle files, use `dist/teams/` (example: `team-fullstack.txt`)
+   - In this repository (source form), use `.bmad-core/agent-teams/` (example: `team-fullstack.yaml`)
 3. Create new Gemini Gem or CustomGPT
 4. Upload file with instructions: "Your critical operating instructions are attached, do not break character as directed"
 5. Type `/help` to see available commands
@@ -130,7 +131,7 @@ npx bmad-method install
 - Document sharding and story management
 - Implementation workflow (SM/Dev cycles)
 
-**Cost-Saving Tip**: Create large documents (PRDs, architecture) in web UI, then copy to `docs/prd.md` and `docs/architecture.md` in your project before switching to IDE for development.
+**Cost-Saving Tip**: Create large documents (PRDs, architecture) in web UI, then copy to `docs/prd.md` and `docs/ARCHITECTURE.md` (this repo) before switching to IDE for development.
 
 ### IDE-Only Workflow Considerations
 
@@ -317,7 +318,7 @@ You are the "Vibe CEO" - thinking like a CEO with unlimited resources and a sing
 - `*status` - Show current context/progress
 - `*exit` - Exit the agent mode
 - `*shard-doc docs/prd.md prd` - Shard PRD into manageable pieces
-- `*shard-doc docs/architecture.md architecture` - Shard architecture document
+- `*shard-doc docs/ARCHITECTURE.md docs/architecture` - Shard architecture document (this repo)
 - `*create` - Run create-next-story task (SM agent)
 
 **In Web UI**:
@@ -360,20 +361,20 @@ The BMAD-METHOD™ is built around a modular architecture centered on the `bmad-
 
 ### Key Architectural Components
 
-#### 1. Agents (`bmad-core/agents/`)
+#### 1. Agents (`.bmad-core/agents/`)
 
 - **Purpose**: Each markdown file defines a specialized AI agent for a specific Agile role (PM, Dev, Architect, etc.)
 - **Structure**: Contains YAML headers specifying the agent's persona, capabilities, and dependencies
 - **Dependencies**: Lists of tasks, templates, checklists, and data files the agent can use
 - **Startup Instructions**: Can load project-specific documentation for immediate context
 
-#### 2. Agent Teams (`bmad-core/agent-teams/`)
+#### 2. Agent Teams (`.bmad-core/agent-teams/`)
 
 - **Purpose**: Define collections of agents bundled together for specific purposes
 - **Examples**: `team-all.yaml` (comprehensive bundle), `team-fullstack.yaml` (full-stack development)
 - **Usage**: Creates pre-packaged contexts for web UI environments
 
-#### 3. Workflows (`bmad-core/workflows/`)
+#### 3. Workflows (`.bmad-core/workflows/`)
 
 - **Purpose**: YAML files defining prescribed sequences of steps for specific project types
 - **Types**: Greenfield (new projects) and Brownfield (existing projects) for UI, service, and fullstack development
@@ -381,10 +382,10 @@ The BMAD-METHOD™ is built around a modular architecture centered on the `bmad-
 
 #### 4. Reusable Resources
 
-- **Templates** (`bmad-core/templates/`): Markdown templates for PRDs, architecture specs, user stories
-- **Tasks** (`bmad-core/tasks/`): Instructions for specific repeatable actions like "shard-doc" or "create-next-story"
-- **Checklists** (`bmad-core/checklists/`): Quality assurance checklists for validation and review
-- **Data** (`bmad-core/data/`): Core knowledge base and technical preferences
+- **Templates** (`.bmad-core/templates/`): YAML document templates (PRDs, architecture specs, stories)
+- **Tasks** (`.bmad-core/tasks/`): Executable workflows like `shard-doc` and `create-next-story`
+- **Checklists** (`.bmad-core/checklists/`): Validation and review checklists
+- **Data** (`.bmad-core/data/`): Knowledge base and technical preferences
 
 ### Dual Environment Architecture
 
@@ -397,8 +398,8 @@ The BMAD-METHOD™ is built around a modular architecture centered on the `bmad-
 
 #### Web UI Environment
 
-- Uses pre-built bundles from `dist/teams` for stand alone 1 upload files for all agents and their assets with an orchestrating agent
-- Single text files containing all agent dependencies are in `dist/agents/` - these are unnecessary unless you want to create a web agent that is only a single agent and not a team
+- If you have generated bundles, use pre-built bundles from `dist/teams/` for single-file uploads (team + orchestrator).
+- `dist/agents/` single-agent bundles are optional (only needed if you want a single agent instead of a team).
 - Created by the web-builder tool for upload to web interfaces
 - Provides complete context in one package
 
@@ -449,7 +450,7 @@ This architecture enables seamless operation across environments while maintaini
 3. **PRD Creation**: `/pm create-doc prd` - Comprehensive product requirements
 4. **Architecture Design**: `/architect create-doc architecture` - Technical foundation
 5. **Validation & Alignment**: `/po` run master checklist to ensure document consistency
-6. **Document Preparation**: Copy final documents to project as `docs/prd.md` and `docs/architecture.md`
+6. **Document Preparation**: Copy final documents to project as `docs/prd.md` and `docs/ARCHITECTURE.md` (this repo)
 
 #### Example Planning Prompts
 
@@ -473,7 +474,7 @@ that can handle [specific requirements]."
 
 - **Why**: Development workflow requires file operations, real-time project integration, and document sharding
 - **Cost Benefit**: Web UI is more cost-effective for large document creation; IDE is optimized for development tasks
-- **Required Files**: Ensure `docs/prd.md` and `docs/architecture.md` exist in your project
+- **Required Files**: Ensure `docs/prd.md` and `docs/ARCHITECTURE.md` exist in your project (this repo)
 
 ### IDE Development Workflow
 
@@ -485,7 +486,7 @@ that can handle [specific requirements]."
      a) **Manual**: Drag `shard-doc` task + document file into chat
      b) **Agent**: Ask `@bmad-master` or `@po` to shard documents
    - Shards `docs/prd.md` → `docs/prd/` folder
-   - Shards `docs/architecture.md` → `docs/architecture/` folder
+   - Shards `docs/ARCHITECTURE.md` → `docs/architecture/` folder
    - **WARNING**: Do NOT shard in Web UI - copying many small files is painful!
 
 2. **Verify Sharded Content**:
@@ -590,8 +591,8 @@ Each status change requires user verification and approval before proceeding.
 
 **Templates**:
 
-- `brownfield-prd-tmpl.md`: Comprehensive enhancement planning with existing system analysis
-- `brownfield-architecture-tmpl.md`: Integration-focused architecture for existing systems
+- `brownfield-prd-tmpl.yaml`: Comprehensive enhancement planning with existing system analysis
+- `brownfield-architecture-tmpl.yaml`: Integration-focused architecture for existing systems
 
 **Tasks**:
 
@@ -622,14 +623,14 @@ Each status change requires user verification and approval before proceeding.
 3. **Integration Focus**: Emphasize compatibility and non-breaking changes
 4. **Incremental Approach**: Plan for gradual rollout and testing
 
-**For detailed guide**: See `docs/working-in-the-brownfield.md`
+**For detailed guide**: See `.bmad-core/working-in-the-brownfield.md`
 
 ## Document Creation Best Practices
 
 ### Required File Naming for Framework Integration
 
 - `docs/prd.md` - Product Requirements Document
-- `docs/architecture.md` - System Architecture Document
+- `docs/ARCHITECTURE.md` - System Architecture Document (this repository)
 
 **Why These Names Matter**:
 
@@ -643,7 +644,7 @@ Each status change requires user verification and approval before proceeding.
 
 1. **Use Web UI**: Create documents in web interface for cost efficiency
 2. **Copy Final Output**: Save complete markdown to your project
-3. **Standard Names**: Save as `docs/prd.md` and `docs/architecture.md`
+3. **Standard Names**: Save as `docs/prd.md` and `docs/ARCHITECTURE.md` (this repository)
 4. **Switch to IDE**: Use IDE agents for development and smaller documents
 
 ### Document Sharding

@@ -8,8 +8,6 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Any
 
-import yaml
-
 from .config import ProjectConfig, load_config
 from .error_envelope import ErrorEnvelope
 
@@ -28,6 +26,18 @@ class BaseAgent(ABC):
     def __init__(
         self, agent_id: str, agent_name: str, config: ProjectConfig | None = None
     ):
+        """
+        Initialize a base agent instance.
+        
+        Args:
+            agent_id: Unique identifier for the agent (e.g., "reviewer", "planner")
+            agent_name: Human-readable name for the agent (e.g., "Code Reviewer")
+            config: Optional project configuration. If None, will be loaded during activation.
+            
+        Note:
+            Most agent attributes are initialized to None and populated during the
+            activate() method. This allows for lazy initialization and proper error handling.
+        """
         self.agent_id = agent_id
         self.agent_name = agent_name
         self.config = config  # ProjectConfig instance
@@ -43,6 +53,9 @@ class BaseAgent(ABC):
         """
         Follow activation instructions sequence.
 
+        This method initializes the agent by loading all necessary configuration
+        and context. It follows the BMAD-METHOD pattern for agent activation.
+
         BMAD-METHOD pattern:
         1. Read agent definition
         2. Load project config
@@ -52,6 +65,14 @@ class BaseAgent(ABC):
         6. Greet user
         7. Run *help
         8. Wait for commands
+        
+        Args:
+            project_root: Optional project root path. If None, will be detected
+                automatically from the current working directory or config.
+                
+        Raises:
+            FileNotFoundError: If required configuration files are missing
+            ValueError: If configuration is invalid
         """
         if project_root is None:
             project_root = Path.cwd()
@@ -84,7 +105,7 @@ class BaseAgent(ABC):
         self.role_file = load_role_file(self.agent_id, project_root)
 
         # Step 5b: Load user role template (if available)
-        from .role_template_loader import get_role_from_config, load_and_apply_role_template
+        from .role_template_loader import get_role_from_config
 
         user_role_id = get_role_from_config(project_root)
         self.user_role_template = None
@@ -290,7 +311,7 @@ class BaseAgent(ABC):
             ValueError: If path validation fails (renamed from PathValidationError for backward compatibility)
             FileNotFoundError: If file doesn't exist
         """
-        from .path_validator import PathValidator, PathValidationError
+        from .path_validator import PathValidationError, PathValidator
 
         # Use cached project root or let validator auto-detect
         project_root = self._project_root

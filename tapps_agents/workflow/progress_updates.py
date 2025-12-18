@@ -11,7 +11,6 @@ from enum import Enum
 from typing import Any
 
 from .models import WorkflowState
-from .progress_monitor import ProgressMetrics, WorkflowProgressMonitor
 from .visual_feedback import VisualFeedbackGenerator
 
 

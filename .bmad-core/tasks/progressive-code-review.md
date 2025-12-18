@@ -286,15 +286,15 @@ FILES CHANGED:
 
 REVIEW CRITERIA:
 1. Security vulnerabilities (auth, injection, XSS, data exposure)
-2. Performance anti-patterns (check CLAUDE.md for HomeIQ performance requirements)
+2. Performance anti-patterns (check CLAUDE.md baseline)
 3. Code quality (complexity, duplication, naming, error handling)
 4. Test coverage (edge cases, error scenarios, mocking appropriateness)
 5. Standards compliance (coding-standards.md, architecture constraints)
 
 CONTEXT:
-- Project: HomeIQ - Home automation data ingestion platform
-- Performance targets: See CLAUDE.md (async-first, <100ms responses, batch operations)
-- Stack: Python 3.11 FastAPI, SQLAlchemy 2.0 async, InfluxDB, SQLite
+- Project: Current repository / current story scope
+- Performance baseline: See CLAUDE.md (avoid regressions; no hard-coded SLAs unless explicitly defined)
+- Tech context: docs/architecture/tech-stack.md + docs/architecture/source-tree.md
 
 OUTPUT FORMAT: YAML with findings array, metrics, and decision (PASS/CONCERNS/BLOCK)
 

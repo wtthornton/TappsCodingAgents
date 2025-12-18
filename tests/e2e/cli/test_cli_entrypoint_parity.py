@@ -19,7 +19,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.e2e.fixtures.cli_harness import CLIHarness, assert_json_output, assert_success
+from tests.e2e.fixtures.cli_harness import CLIHarness
 
 
 @pytest.fixture

@@ -105,6 +105,30 @@ def collect_doctor_report(
     project_root: Path | None = None,
     config_path: Path | None = None,
 ) -> dict[str, Any]:
+    """
+    Collect a comprehensive environment health check report.
+    
+    This function validates the current environment against the project's
+    canonical configuration, checking for:
+    - Required tools and their versions
+    - Python version compatibility
+    - Configuration file presence
+    - Tool availability on PATH or via python -m
+    
+    Args:
+        project_root: Root directory of the project. If None, uses current directory.
+        config_path: Path to config file. If None, uses default location.
+        
+    Returns:
+        Dictionary containing:
+        - "findings": List of DoctorFinding objects
+        - "summary": Summary statistics (ok, warn, error counts)
+        - "config": Configuration that was checked against
+        
+    Example:
+        >>> report = collect_doctor_report()
+        >>> print(f"Found {len(report['findings'])} issues")
+    """
     config: ProjectConfig = load_config(config_path)
     policy_mode = (config.tooling.policy.external_tools_mode or "soft").lower()
     soft_degrade = policy_mode != "hard"

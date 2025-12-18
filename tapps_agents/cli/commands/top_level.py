@@ -6,9 +6,14 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
-from .reviewer import score_command
+from ...core.cursor_verification import (
+    format_verification_results,
+    verify_cursor_integration,
+)
 from .common import format_json_output
+from .reviewer import score_command
 
 
 def hardware_profile_command(
@@ -403,7 +408,9 @@ def handle_workflow_recommend_command(args: object) -> None:
                                 if auto_load:
                                     workflow_path = Path("workflows") / selected["file"]
                                     if workflow_path.exists():
-                                        from ...workflow.executor import WorkflowExecutor
+                                        from ...workflow.executor import (
+                                            WorkflowExecutor,
+                                        )
                                         executor = WorkflowExecutor(auto_detect=False)
                                         workflow = executor.load_workflow(workflow_path)
                                         print(f"✅ Loaded workflow: {workflow.name}")
@@ -424,9 +431,6 @@ def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
-    from ...workflow.state_manager import AdvancedStateManager
-    from pathlib import Path
-    import json
 
     preset_name = getattr(args, "preset", None)
     
@@ -568,6 +572,7 @@ def handle_score_command(args: object) -> None:
 def handle_customize_command(args: object) -> None:
     """Handle customize command"""
     from pathlib import Path
+
     from ...core.customization_template import generate_customization_template
 
     command = getattr(args, "command", None)
@@ -607,9 +612,9 @@ def handle_customize_command(args: object) -> None:
 
 def handle_governance_command(args: object) -> None:
     """Handle governance/approval command (Story 28.5)"""
-    from pathlib import Path
     import json
     import sys
+    from pathlib import Path
     
     command = getattr(args, "command", None)
     if not command:
@@ -766,9 +771,9 @@ def handle_governance_command(args: object) -> None:
 
 def handle_auto_execution_command(args: object) -> None:
     """Handle auto-execution monitoring command (Story 7.9)"""
-    from pathlib import Path
     import json
     import sys
+    from pathlib import Path
 
     command = getattr(args, "command", None)
     if not command:
@@ -902,7 +907,7 @@ def handle_auto_execution_command(args: object) -> None:
 
         action = getattr(args, "action", "status")
         manager = AutoExecutionConfigManager(project_root=project_root)
-        config = manager.load()
+        manager.load()  # Load config (may be used in future)
 
         if action == "on":
             # Enable debug logging
@@ -930,6 +935,7 @@ def handle_auto_execution_command(args: object) -> None:
 def handle_background_agent_config_command(args: object) -> None:
     """Handle background-agent-config command"""
     from pathlib import Path
+
     from ...workflow.background_agent_config import (
         BackgroundAgentConfigGenerator,
         BackgroundAgentConfigValidator,
@@ -1014,6 +1020,7 @@ def handle_skill_command(args: object) -> None:
 def handle_skill_validate_command(args: object) -> None:
     """Handle skill validate command"""
     from pathlib import Path
+
     from ...core.skill_validator import SkillValidator, ValidationSeverity
 
     project_root = Path.cwd()
@@ -1051,7 +1058,6 @@ def handle_skill_validate_command(args: object) -> None:
 def output_json(results: list) -> None:
     """Output validation results in JSON format."""
     import json
-    from ...core.skill_validator import ValidationSeverity
 
     output = {
         "valid": all(r.is_valid for r in results),
@@ -1079,7 +1085,7 @@ def output_json(results: list) -> None:
 
 def output_text(results: list) -> None:
     """Output validation results in text format."""
-    from ...core.skill_validator import ValidationSeverity, ValidationError
+    from ...core.skill_validator import ValidationSeverity
 
     if not results:
         print("No Skills found to validate.")
@@ -1122,6 +1128,7 @@ def output_text(results: list) -> None:
 def handle_skill_template_command(args: object) -> None:
     """Handle skill-template command"""
     from pathlib import Path
+
     from ...core.skill_template import create_skill_file
 
     skill_name = getattr(args, "skill_name", None)
@@ -1247,25 +1254,16 @@ def handle_skill_template_command(args: object) -> None:
         sys.exit(1)
 
 
-def handle_init_command(args: object) -> None:
-    """Handle init command"""
-    from ...core.init_project import init_project
-
+def _print_init_header() -> None:
+    """Print initialization header."""
     print("\n" + "=" * 60)
     print("TappsCodingAgents Project Initialization")
     print("=" * 60)
     print()
 
-    results = init_project(
-        include_cursor_rules=not getattr(args, "no_rules", False),
-        include_workflow_presets=not getattr(args, "no_presets", False),
-        include_config=not getattr(args, "no_config", False),
-        include_skills=not getattr(args, "no_skills", False),
-        include_background_agents=not getattr(args, "no_background_agents", False),
-        include_cursorignore=not getattr(args, "no_cursorignore", False),
-        pre_populate_cache=not getattr(args, "no_cache", False),
-    )
 
+def _print_init_results(results: dict[str, Any]) -> None:
+    """Print initialization results summary."""
     print("Initialization Results:")
     print(f"  Project Root: {results['project_root']}")
 
@@ -1327,124 +1325,143 @@ def handle_init_command(args: object) -> None:
     else:
         print("  .cursorignore: Skipped or already exists")
 
-    # Show validation results
-    if results.get("validation"):
-        validation = results["validation"]
-        print("\n" + "=" * 60)
-        print("Setup Validation")
-        print("=" * 60)
-        
-        if validation.get("overall_valid"):
-            print("  Status: ✓ All validations passed")
-        else:
-            print("  Status: ✗ Some validations failed")
-        
-        if validation.get("all_errors"):
-            print("\n  Errors:")
-            for error in validation["all_errors"]:
-                print(f"    ✗ {error}")
-        
-        if validation.get("all_warnings"):
-            print("\n  Warnings:")
-            for warning in validation["all_warnings"]:
-                print(f"    ⚠ {warning}")
-        
-        # Show summary
-        cursor_rules = validation.get("cursor_rules", {})
-        claude_skills = validation.get("claude_skills", {})
-        bg_agents = validation.get("background_agents", {})
-        
-        print("\n  Summary:")
-        print(f"    Cursor Rules: {len(cursor_rules.get('rules_found', []))} found")
-        print(f"    Claude Skills: {len(claude_skills.get('skills_found', []))} found")
-        print(f"    Background Agents: {'✓' if bg_agents.get('valid') else '✗'}")
+
+def _print_validation_results(validation: dict[str, Any]) -> None:
+    """Print validation results."""
+    print("\n" + "=" * 60)
+    print("Setup Validation")
+    print("=" * 60)
     
-    # Show tech stack detection
-    if results.get("tech_stack"):
-        tech_stack = results["tech_stack"]
-        print("\n" + "=" * 60)
-        print("Tech Stack Detection")
-        print("=" * 60)
-        
-        if tech_stack.get("languages"):
-            print(f"  Languages: {', '.join(tech_stack['languages'])}")
-        else:
-            print("  Languages: None detected")
-        
-        if tech_stack.get("frameworks"):
-            print(f"  Frameworks: {', '.join(tech_stack['frameworks'])}")
-        else:
-            print("  Frameworks: None detected")
-        
-        if tech_stack.get("package_managers"):
-            print(f"  Package Managers: {', '.join(tech_stack['package_managers'])}")
-        else:
-            print("  Package Managers: None detected")
-        
-        if tech_stack.get("libraries"):
-            lib_count = len(tech_stack["libraries"])
-            print(f"  Libraries Detected: {lib_count}")
-            if lib_count > 0 and lib_count <= 20:
-                print(f"    {', '.join(tech_stack['libraries'][:20])}")
-            elif lib_count > 20:
-                print(f"    {', '.join(tech_stack['libraries'][:20])} ...")
-                print(f"    (and {lib_count - 20} more)")
-        else:
-            print("  Libraries Detected: 0")
-            print("    Note: No dependency files (requirements.txt, pyproject.toml, package.json) found")
-        
-        if tech_stack.get("detected_files"):
-            print(f"  Detected Files: {', '.join(tech_stack['detected_files'])}")
-        else:
-            print("  Detected Files: None")
+    if validation.get("overall_valid"):
+        print("  Status: [OK] All validations passed")
+    else:
+        print("  Status: [X] Some validations failed")
+    
+    # Show errors
+    errors = validation.get("errors", [])
+    if errors:
+        print("\n  Errors:")
+        for error in errors:
+            print(f"    [X] {error}")
+    
+    # Show warnings
+    warnings = validation.get("warnings", [])
+    if warnings:
+        print("\n  Warnings:")
+        for warning in warnings:
+            print(f"    [!] {warning}")
+    
+    # Show component summary
+    verification_results = validation.get("verification_results", {})
+    components = verification_results.get("components", {})
+    
+    print("\n  Summary:")
+    if "skills" in components:
+        skills_info = components["skills"]
+        skills_found = len(skills_info.get("skills_found", []))
+        skills_expected = len(skills_info.get("expected_skills", []))
+        print(f"    Skills: {skills_found}/{skills_expected} found")
+    
+    if "rules" in components:
+        rules_info = components["rules"]
+        rules_found = len(rules_info.get("rules_found", []))
+        rules_expected = len(rules_info.get("expected_rules", []))
+        print(f"    Rules: {rules_found}/{rules_expected} found")
+    
+    if "background_agents" in components:
+        bg_info = components["background_agents"]
+        agents_count = bg_info.get("agents_count", 0)
+        print(f"    Background Agents: {agents_count} configured")
 
-    # Show cache pre-population results
-    if results.get("cache_prepopulated") is not None:
-        print("\n" + "=" * 60)
-        print("Context7 Cache Pre-population")
-        print("=" * 60)
-        
-        if results.get("cache_prepopulated"):
-            cache_result = results.get("cache_result", {})
-            cached = cache_result.get("cached", 0)
-            total = cache_result.get("total", 0)
-            failed = cache_result.get("failed", 0)
-            project_libs = cache_result.get("project_libraries", 0)
-            expert_libs = cache_result.get("expert_libraries", 0)
-            print(f"  Status: ✅ Success")
-            print(f"  Cached Entries: {cached}")
-            print(f"  Total Libraries: {total}")
-            if project_libs > 0:
-                print(f"    - Project Libraries: {project_libs}")
-            if expert_libs > 0:
-                print(f"    - Built-in Expert Libraries: {expert_libs}")
-            if failed > 0:
-                print(f"  Failed: {failed}")
-            if cache_result.get("errors"):
-                error_count = len(cache_result["errors"])
-                print(f"  Errors: {error_count} (showing first 5)")
-                for error in cache_result["errors"][:5]:
-                    print(f"    - {error}")
-        else:
-            # Show why cache prepopulation failed
-            cache_result = results.get("cache_result", {})
-            cache_error = results.get("cache_error")
-            
-            if cache_error:
-                print(f"  Status: ❌ Failed")
-                print(f"  Error: {cache_error}")
-            elif cache_result:
-                error_msg = cache_result.get("error", "Unknown error")
-                print(f"  Status: ❌ Failed")
-                print(f"  Error: {error_msg}")
-                if cache_result.get("cached") == 0 and cache_result.get("total") == 0:
-                    print("  Note: Context7 may not be enabled in configuration")
-                    print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
-            else:
-                print(f"  Status: ⚠️  Skipped")
-                print("  Note: Cache pre-population was not attempted")
 
-    # Run environment diagnostics
+def _print_tech_stack(tech_stack: dict[str, Any]) -> None:
+    """Print tech stack detection results."""
+    print("\n" + "=" * 60)
+    print("Tech Stack Detection")
+    print("=" * 60)
+    
+    if tech_stack.get("languages"):
+        print(f"  Languages: {', '.join(tech_stack['languages'])}")
+    else:
+        print("  Languages: None detected")
+    
+    if tech_stack.get("frameworks"):
+        print(f"  Frameworks: {', '.join(tech_stack['frameworks'])}")
+    else:
+        print("  Frameworks: None detected")
+    
+    if tech_stack.get("package_managers"):
+        print(f"  Package Managers: {', '.join(tech_stack['package_managers'])}")
+    else:
+        print("  Package Managers: None detected")
+    
+    if tech_stack.get("libraries"):
+        lib_count = len(tech_stack["libraries"])
+        print(f"  Libraries Detected: {lib_count}")
+        if lib_count > 0 and lib_count <= 20:
+            print(f"    {', '.join(tech_stack['libraries'][:20])}")
+        elif lib_count > 20:
+            print(f"    {', '.join(tech_stack['libraries'][:20])} ...")
+            print(f"    (and {lib_count - 20} more)")
+    else:
+        print("  Libraries Detected: 0")
+        print("    Note: No dependency files (requirements.txt, pyproject.toml, package.json) found")
+    
+    if tech_stack.get("detected_files"):
+        print(f"  Detected Files: {', '.join(tech_stack['detected_files'])}")
+    else:
+        print("  Detected Files: None")
+
+
+def _print_cache_results(results: dict[str, Any]) -> None:
+    """Print cache pre-population results."""
+    print("\n" + "=" * 60)
+    print("Context7 Cache Pre-population")
+    print("=" * 60)
+    
+    if results.get("cache_prepopulated"):
+        cache_result = results.get("cache_result", {})
+        cached = cache_result.get("cached", 0)
+        total = cache_result.get("total", 0)
+        failed = cache_result.get("failed", 0)
+        project_libs = cache_result.get("project_libraries", 0)
+        expert_libs = cache_result.get("expert_libraries", 0)
+        print("  Status: ✅ Success")
+        print(f"  Cached Entries: {cached}")
+        print(f"  Total Libraries: {total}")
+        if project_libs > 0:
+            print(f"    - Project Libraries: {project_libs}")
+        if expert_libs > 0:
+            print(f"    - Built-in Expert Libraries: {expert_libs}")
+        if failed > 0:
+            print(f"  Failed: {failed}")
+        if cache_result.get("errors"):
+            error_count = len(cache_result["errors"])
+            print(f"  Errors: {error_count} (showing first 5)")
+            for error in cache_result["errors"][:5]:
+                print(f"    - {error}")
+    else:
+        # Show why cache prepopulation failed
+        cache_result = results.get("cache_result", {})
+        cache_error = results.get("cache_error")
+        
+        if cache_error:
+            print("  Status: ❌ Failed")
+            print(f"  Error: {cache_error}")
+        elif cache_result:
+            error_msg = cache_result.get("error", "Unknown error")
+            print("  Status: ❌ Failed")
+            print(f"  Error: {error_msg}")
+            if cache_result.get("cached") == 0 and cache_result.get("total") == 0:
+                print("  Note: Context7 may not be enabled in configuration")
+                print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
+        else:
+            print("  Status: ⚠️  Skipped")
+            print("  Note: Cache pre-population was not attempted")
+
+
+def _run_environment_check(project_root: str) -> None:
+    """Run and display environment diagnostics."""
     print("\n" + "=" * 60)
     print("Environment Check")
     print("=" * 60)
@@ -1454,7 +1471,7 @@ def handle_init_command(args: object) -> None:
         from ...core.doctor import collect_doctor_report
         
         doctor_report = collect_doctor_report(
-            project_root=Path(results["project_root"])
+            project_root=Path(project_root)
         )
         
         # Count findings by severity
@@ -1486,12 +1503,51 @@ def handle_init_command(args: object) -> None:
         print("  Run 'python -m tapps_agents.cli doctor' manually for details.")
         print()
 
+
+def _print_next_steps() -> None:
+    """Print next steps instructions."""
     print("Next Steps:")
     print("  1. Set up experts: python -m tapps_agents.cli setup-experts init")
     print("  2. List workflows: python -m tapps_agents.cli workflow list")
     print("  3. Run a workflow: python -m tapps_agents.cli workflow rapid")
     print("  4. Full environment check: python -m tapps_agents.cli doctor")
     print()
+
+
+def handle_init_command(args: object) -> None:
+    """Handle init command"""
+    from ...core.init_project import init_project
+
+    _print_init_header()
+
+    results = init_project(
+        include_cursor_rules=not getattr(args, "no_rules", False),
+        include_workflow_presets=not getattr(args, "no_presets", False),
+        include_config=not getattr(args, "no_config", False),
+        include_skills=not getattr(args, "no_skills", False),
+        include_background_agents=not getattr(args, "no_background_agents", False),
+        include_cursorignore=not getattr(args, "no_cursorignore", False),
+        pre_populate_cache=not getattr(args, "no_cache", False),
+    )
+
+    _print_init_results(results)
+
+    # Show validation results
+    if results.get("validation"):
+        _print_validation_results(results["validation"])
+    
+    # Show tech stack detection
+    if results.get("tech_stack"):
+        _print_tech_stack(results["tech_stack"])
+
+    # Show cache pre-population results
+    if results.get("cache_prepopulated") is not None:
+        _print_cache_results(results)
+
+    # Run environment diagnostics
+    _run_environment_check(results["project_root"])
+
+    _print_next_steps()
 
 
 def handle_doctor_command(args: object) -> None:
@@ -1716,10 +1772,11 @@ def handle_analytics_command(args: object) -> None:
 
 def handle_workflow_state_list_command(args: object) -> None:
     """Handle 'workflow state list' command (Epic 12)"""
-    from ...workflow.state_manager import AdvancedStateManager
-    from pathlib import Path
     import json
     from datetime import datetime
+    from pathlib import Path
+
+    from ...workflow.state_manager import AdvancedStateManager
 
     state_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
     manager = AdvancedStateManager(state_dir)
@@ -1767,9 +1824,10 @@ def handle_workflow_state_list_command(args: object) -> None:
 
 def handle_workflow_state_show_command(args: object) -> None:
     """Handle 'workflow state show' command (Epic 12)"""
-    from ...workflow.state_manager import AdvancedStateManager
-    from pathlib import Path
     import json
+    from pathlib import Path
+
+    from ...workflow.state_manager import AdvancedStateManager
 
     workflow_id = getattr(args, "workflow_id", None)
     if not workflow_id:
@@ -1815,8 +1873,9 @@ def handle_workflow_state_show_command(args: object) -> None:
 
 def handle_workflow_state_cleanup_command(args: object) -> None:
     """Handle 'workflow state cleanup' command (Epic 12)"""
-    from ...workflow.state_manager import AdvancedStateManager
     from pathlib import Path
+
+    from ...workflow.state_manager import AdvancedStateManager
 
     state_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
     manager = AdvancedStateManager(state_dir)
@@ -1858,8 +1917,9 @@ def handle_workflow_state_cleanup_command(args: object) -> None:
 
 def handle_workflow_resume_command(args: object) -> None:
     """Handle 'workflow resume' command (Epic 12)"""
-    from ...workflow.executor import WorkflowExecutor
     from pathlib import Path
+
+    from ...workflow.executor import WorkflowExecutor
 
     workflow_id = getattr(args, "workflow_id", None)
     validate = getattr(args, "validate", True)
@@ -1919,5 +1979,29 @@ def handle_workflow_resume_command(args: object) -> None:
         print(f"Error resuming workflow: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
+        sys.exit(1)
+
+
+def handle_cursor_command(args: object) -> None:
+    """Handle cursor verification command"""
+    cursor_command = getattr(args, "cursor_command", None)
+    output_format = getattr(args, "format", "text")
+    
+    if cursor_command == "verify" or cursor_command == "check":
+        try:
+            is_valid, results = verify_cursor_integration()
+            output = format_verification_results(results, format=output_format)
+            print(output)
+            
+            # Exit with error code if invalid
+            if not is_valid:
+                sys.exit(1)
+        except Exception as e:
+            print(f"Error verifying Cursor integration: {e}", file=sys.stderr)
+            import traceback
+            traceback.print_exc()
+            sys.exit(1)
+    else:
+        print(f"Unknown cursor command: {cursor_command}", file=sys.stderr)
         sys.exit(1)
 

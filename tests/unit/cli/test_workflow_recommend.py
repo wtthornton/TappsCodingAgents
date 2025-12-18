@@ -4,7 +4,6 @@ Tests for workflow recommend command.
 Tests the interactive CLI command for workflow recommendation.
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

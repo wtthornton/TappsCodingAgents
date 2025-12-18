@@ -13,8 +13,6 @@ import pytest
 import yaml
 
 from tapps_agents.core.config import (
-    CheckpointFrequencyConfig,
-    StateCleanupPolicyConfig,
     StatePersistenceConfig,
 )
 from tapps_agents.workflow.state_persistence_config import StatePersistenceConfigManager

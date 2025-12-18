@@ -4,10 +4,7 @@ Unit tests for audit logging.
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
-import tempfile
-import json
 
 from tapps_agents.workflow.audit_logger import AuditLogger
 

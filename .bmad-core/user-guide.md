@@ -77,7 +77,7 @@ graph TD
 
 **Critical Transition Point**: Once the PO confirms document alignment, you must switch from web UI to IDE to begin the development workflow:
 
-1. **Copy Documents to Project**: Ensure `docs/prd.md` and `docs/architecture.md` are in your project's docs folder (or a custom location you can specify during installation)
+1. **Copy Documents to Project**: Ensure `docs/prd.md` and your architecture document are in your project's docs folder (or a custom location you can specify during installation). In this repository the architecture doc is `docs/ARCHITECTURE.md`.
 2. **Switch to IDE**: Open your project in your preferred Agentic IDE
 3. **Document Sharding**: Use the PO agent to shard the PRD and then the Architecture
 4. **Begin Development**: Start the Core Development Cycle that follows
@@ -86,7 +86,7 @@ graph TD
 
 ```text
 PRD              → docs/prd.md
-Architecture     → docs/architecture.md
+Architecture     → docs/ARCHITECTURE.md (this repository) / docs/architecture.md (standard BMAD)
 Sharded Epics    → docs/epics/
 Sharded Stories  → docs/stories/
 QA Assessments   → docs/qa/assessments/
@@ -174,8 +174,9 @@ Before installing BMad Method, ensure you have:
 
 If you want to do the planning on the web with Claude (Sonnet 4 or Opus), Gemini Gem (2.5 Pro), or Custom GPTs:
 
-1. Navigate to `dist/teams/`
-2. Copy `team-fullstack.txt`
+1. Use an appropriate team bundle:
+   - If you installed BMAD via npm and have generated bundle files, use `dist/teams/` (example: `team-fullstack.txt`)
+   - In this repository (source form), use `.bmad-core/agent-teams/` (example: `team-fullstack.yaml`)
 3. Create new Gemini Gem or CustomGPT
 4. Upload file with instructions: "Your critical operating instructions are attached, do not break character as directed"
 5. Type `/help` to see available commands
@@ -293,8 +294,8 @@ Each agent has a YAML section that defines its dependencies:
 ```yaml
 dependencies:
   templates:
-    - prd-template.md
-    - user-story-template.md
+    - prd-tmpl.yaml
+    - story-tmpl.yaml
   tasks:
     - create-doc.md
     - shard-doc.md

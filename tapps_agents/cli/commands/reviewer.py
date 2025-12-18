@@ -2,7 +2,6 @@
 Reviewer agent command handlers
 """
 import asyncio
-import json
 import sys
 from pathlib import Path
 

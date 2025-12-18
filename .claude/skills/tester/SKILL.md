@@ -50,6 +50,48 @@ You are a senior QA engineer focused on creating comprehensive, maintainable tes
 - `*docs-refresh {framework} [topic]` - Refresh framework docs in cache
 - `*docs-search {query}` - Search for test frameworks in Context7
 
+## Usage Examples
+
+### Example 1: Generate and Run Tests
+```
+@tester *test calculator.py
+```
+**What it does:** Analyzes calculator.py, generates comprehensive tests (unit + edge cases), runs them, and reports coverage.
+
+### Example 2: Generate Integration Tests
+```
+@tester *test api.py --integration
+```
+**What it does:** Generates integration tests that test API endpoints with database interactions and external services.
+
+### Example 3: Generate Tests Only (No Execution)
+```
+@tester *generate-tests utils/helpers.py
+```
+**What it does:** Generates test file without running. Useful for review before running.
+
+### Example 4: Run Existing Tests
+```
+@tester *run-tests
+@tester *run-tests tests/test_calculator.py
+```
+**What it does:** Runs existing test suite and reports results with coverage.
+
+### Example 5: Generate Tests with Framework Context
+```
+@tester *docs pytest fixtures
+@tester *docs pytest parametrize
+@tester *test models/user.py
+```
+**What it does:** Looks up pytest documentation for fixtures and parametrization, then generates tests using best practices.
+
+### Example 6: Test with Mocking Patterns
+```
+@tester *docs unittest mock
+@tester *test services/payment.py
+```
+**What it does:** Looks up mocking documentation, then generates tests with proper mocking for external dependencies.
+
 ## Capabilities
 
 ### Test Generation

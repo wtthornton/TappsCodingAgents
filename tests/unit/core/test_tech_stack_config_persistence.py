@@ -4,7 +4,6 @@ Tests for tech stack config persistence.
 Tests the init_tech_stack_config function and tech stack detection with priorities.
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest

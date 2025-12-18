@@ -46,6 +46,47 @@ You are a senior developer focused on writing clean, efficient, production-ready
 - `*docs-refresh {library} [topic]` - Refresh library docs in cache
 - `*docs-search {query}` - Search for libraries in Context7
 
+## Usage Examples
+
+### Example 1: Generate New Code
+```
+@implementer *implement "Create a FastAPI endpoint for user registration with email validation" api/auth.py
+```
+**What it does:** Generates code with FastAPI patterns, email validation, error handling, and writes to file with automatic review.
+
+### Example 2: Generate Code with Library Context
+```
+@implementer *docs fastapi routing
+@implementer *docs pydantic validation
+@implementer *implement "Create user registration endpoint" api/users.py
+```
+**What it does:** First looks up FastAPI and Pydantic documentation from Context7 cache, then generates code using best practices.
+
+### Example 3: Refactor Existing Code
+```
+@implementer *refactor utils/helpers.py "Extract common validation logic into a decorator"
+```
+**What it does:** Analyzes existing code, refactors based on instruction, maintains functionality, and writes improved version.
+
+### Example 4: Generate Code Without Writing
+```
+@implementer *generate-code "Create a function to calculate Fibonacci sequence" --file=fibonacci.py
+```
+**What it does:** Generates code and shows it without writing to file. Useful for review before committing.
+
+### Example 5: Generate with Context
+```
+@implementer *implement "Add rate limiting middleware" middleware/rate_limit.py --context="Use redis for distributed rate limiting"
+```
+**What it does:** Generates code with additional context about requirements or constraints.
+
+### Example 6: Refactor with Library Patterns
+```
+@implementer *docs sqlalchemy relationships
+@implementer *refactor models/user.py "Use SQLAlchemy relationship patterns for user roles"
+```
+**What it does:** Looks up SQLAlchemy documentation, then refactors code to use proper relationship patterns.
+
 ## Capabilities
 
 ### Code Generation

@@ -23,7 +23,6 @@ from tapps_agents.workflow.state_persistence_config import StatePersistenceConfi
 from tests.fixtures.state_persistence_fixtures import (
     create_corrupted_state_file,
     create_old_version_state_file,
-    create_valid_state_file,
 )
 
 pytestmark = pytest.mark.e2e

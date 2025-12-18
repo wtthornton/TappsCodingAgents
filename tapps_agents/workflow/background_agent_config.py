@@ -7,7 +7,6 @@ auto-execution setup.
 
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Any
 
@@ -73,7 +72,7 @@ class BackgroundAgentConfigValidator:
             return False, f"Configuration path is not a file: {self.config_path}"
 
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 f.read(1)  # Try to read at least one byte
         except PermissionError:
             return False, f"Permission denied reading configuration file: {self.config_path}"
@@ -90,7 +89,7 @@ class BackgroundAgentConfigValidator:
             Tuple of (is_valid, error_message, parsed_config)
         """
         try:
-            with open(self.config_path, "r", encoding="utf-8") as f:
+            with open(self.config_path, encoding="utf-8") as f:
                 config = yaml.safe_load(f)
             return True, "", config
         except yaml.YAMLError as e:

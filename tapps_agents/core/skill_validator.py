@@ -154,10 +154,8 @@ class SkillValidator:
         # Resolve Skill file path
         if skill_path.is_dir():
             skill_file = skill_path / "SKILL.md"
-            skill_dir = skill_path
         else:
             skill_file = skill_path
-            skill_dir = skill_path.parent
 
         if not skill_file.exists():
             errors.append(

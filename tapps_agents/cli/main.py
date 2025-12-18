@@ -3,7 +3,6 @@ Main CLI entry point
 """
 import argparse
 import asyncio
-import sys
 
 from .. import __version__ as PACKAGE_VERSION
 from .commands import (
@@ -26,24 +25,62 @@ from .commands import (
 # Import all parser registration functions
 from .parsers import (
     analyst as analyst_parsers,
+)
+from .parsers import (
     architect as architect_parsers,
+)
+from .parsers import (
     debugger as debugger_parsers,
+)
+from .parsers import (
     designer as designer_parsers,
+)
+from .parsers import (
     documenter as documenter_parsers,
+)
+from .parsers import (
     enhancer as enhancer_parsers,
+)
+from .parsers import (
     implementer as implementer_parsers,
+)
+from .parsers import (
     improver as improver_parsers,
+)
+from .parsers import (
     ops as ops_parsers,
+)
+from .parsers import (
     orchestrator as orchestrator_parsers,
+)
+from .parsers import (
     planner as planner_parsers,
+)
+from .parsers import (
     reviewer as reviewer_parsers,
+)
+from .parsers import (
     tester as tester_parsers,
+)
+from .parsers import (
     top_level as top_level_parsers,
 )
 
 
 def create_root_parser() -> argparse.ArgumentParser:
-    """Create the root ArgumentParser"""
+    """
+    Create the root ArgumentParser for the TappsCodingAgents CLI.
+    
+    Sets up the main parser with version information and helpful epilog
+    showing common usage examples and shortcuts.
+    
+    Returns:
+        Configured ArgumentParser instance ready for subparser registration.
+        
+    Example:
+        >>> parser = create_root_parser()
+        >>> parser.parse_args(['--version'])
+    """
     parser = argparse.ArgumentParser(
         description="TappsCodingAgents CLI - AI coding agents framework",
         epilog="""Quick shortcuts:
@@ -68,7 +105,19 @@ Examples:
 
 
 def register_all_parsers(parser: argparse.ArgumentParser) -> None:
-    """Register all subparsers"""
+    """
+    Register all agent and top-level command subparsers.
+    
+    This function sets up the complete command structure by registering:
+    - Agent parsers (reviewer, planner, implementer, tester, etc.)
+    - Top-level command parsers (create, init, workflow, score, etc.)
+    
+    Args:
+        parser: Root ArgumentParser to attach subparsers to.
+        
+    Note:
+        This must be called after create_root_parser() and before parsing arguments.
+    """
     subparsers = parser.add_subparsers(dest="agent", help="Agent or command to use")
 
     # Register agent parsers
@@ -91,7 +140,23 @@ def register_all_parsers(parser: argparse.ArgumentParser) -> None:
 
 
 def route_command(args: argparse.Namespace) -> None:
-    """Route command to appropriate handler"""
+    """
+    Route parsed command arguments to the appropriate handler function.
+    
+    This function acts as the central dispatcher, examining the 'agent' attribute
+    from parsed arguments and calling the corresponding handler function.
+    
+    Supported routes:
+    - Agent commands: reviewer, planner, implementer, tester, debugger, etc.
+    - Top-level commands: create, init, workflow, score, doctor, etc.
+    - Special commands: hardware-profile, analytics, customize, skill, etc.
+    
+    Args:
+        args: Parsed command-line arguments with 'agent' attribute indicating the command.
+        
+    Note:
+        If no agent is specified, prints the main help message.
+    """
     # Route agent commands
     if args.agent == "reviewer":
         reviewer.handle_reviewer_command(args)
@@ -154,6 +219,8 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_auto_execution_command(args)
     elif args.agent == "setup-experts":
         top_level.handle_setup_experts_command(args)
+    elif args.agent == "cursor":
+        top_level.handle_cursor_command(args)
     else:
         # Show main help if no agent specified
         parser = create_root_parser()

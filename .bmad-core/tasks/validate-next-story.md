@@ -26,7 +26,7 @@ Validate against:
   - **Story file**: The drafted story to validate (provided by user or discovered in `devStoryLocation`)
   - **Parent epic**: The epic containing this story's requirements
   - **Architecture documents**: Based on configuration (sharded or monolithic)
-  - **Story template**: `bmad-core/templates/story-tmpl.md` for completeness validation
+  - **Story template**: `.bmad-core/templates/story-tmpl.yaml` for completeness validation
 
 ### 1. Template Completeness Validation
 

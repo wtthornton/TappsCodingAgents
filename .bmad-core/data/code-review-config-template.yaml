@@ -82,7 +82,7 @@ qa:
       skip_minor_changes: true       # Skip if <10 lines changed
       batch_threshold: 3             # Batch if 3+ files queued
 
-  # Performance-specific review settings (HomeIQ)
+  # Performance-specific review settings (project-defined baseline)
   performance_checks:
     enabled: true
     reference_doc: "CLAUDE.md"       # Performance guide to reference

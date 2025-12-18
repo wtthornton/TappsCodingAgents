@@ -14,7 +14,7 @@ from typing import Any
 
 from ..core.project_profile import ProjectProfile
 from ..core.unified_cache import CacheType, UnifiedCache
-from .expert_registry import ExpertRegistry, ConsultationResult
+from .expert_registry import ConsultationResult, ExpertRegistry
 
 
 @dataclass

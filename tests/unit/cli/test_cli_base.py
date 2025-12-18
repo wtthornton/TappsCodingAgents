@@ -10,9 +10,7 @@ Tests standardized utilities in tapps_agents/cli/base.py:
 """
 
 import json
-import sys
-from io import StringIO
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 

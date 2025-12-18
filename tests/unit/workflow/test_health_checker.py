@@ -4,9 +4,7 @@ Unit tests for health checking.
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
-import tempfile
 import yaml
 
 from tapps_agents.workflow.health_checker import HealthChecker, HealthCheckResult

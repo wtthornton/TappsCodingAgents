@@ -40,11 +40,19 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Test Suite Documentation](../tests/README.md)** - Complete test suite overview
 - **[E2E Test Suite](../tests/e2e/README.md)** - End-to-end test documentation
 
+### Quality Improvements (Completed)
+- **[Quality Improvements - Epic 19](QUALITY_IMPROVEMENTS_EPIC_19.md)** - Maintainability improvements summary
+- **[Complexity Reduction - Epic 20](COMPLEXITY_REDUCTION_EPIC_20.md)** - Complexity reduction achievements and refactoring details
+
 ### SDLC & Quality Engine (Planned)
 - **[SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md)** - Comprehensive analysis of SDLC improvements and Dynamic Expert Engine
 - **[Epic 1: SDLC Quality Engine](prd/epic-1-sdlc-quality-engine.md)** - Self-correcting quality engine with pluggable validation, composite gating, and bounded loopback
 - **[Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)** - Always-on orchestrator for automatic expert creation and knowledge ingestion
 - **[Epic Summary: SDLC Improvements](prd/EPIC_SUMMARY_SDLC_IMPROVEMENTS.md)** - High-level overview of all planned improvements
+
+### Quality Improvements (Completed)
+- **[Quality Improvements - Epic 19](QUALITY_IMPROVEMENTS_EPIC_19.md)** - Maintainability improvements summary
+- **[Complexity Reduction - Epic 20](COMPLEXITY_REDUCTION_EPIC_20.md)** - Complexity reduction achievements and refactoring details
 
 ---
 

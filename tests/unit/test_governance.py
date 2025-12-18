@@ -2,13 +2,11 @@
 Tests for Governance & Safety Layer.
 """
 
-import pytest
 from pathlib import Path
 import tempfile
 import json
 
 from tapps_agents.experts.governance import (
-    FilterResult,
     GovernanceLayer,
     GovernancePolicy,
 )

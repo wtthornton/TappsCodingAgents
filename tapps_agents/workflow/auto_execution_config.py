@@ -7,7 +7,6 @@ and runtime reload for Background Agent auto-execution.
 
 from __future__ import annotations
 
-import json
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -264,7 +263,7 @@ class AutoExecutionConfigManager:
             errors.append("polling must be enabled when auto_execution is enabled")
 
         if errors:
-            raise ValueError(f"Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
+            raise ValueError("Configuration validation failed:\n" + "\n".join(f"  - {e}" for e in errors))
 
     def reload(self) -> AutoExecutionConfig:
         """

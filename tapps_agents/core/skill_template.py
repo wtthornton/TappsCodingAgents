@@ -9,7 +9,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-
 # Built-in agent types for template customization
 AGENT_TYPES = [
     "analyst",

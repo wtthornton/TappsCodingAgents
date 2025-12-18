@@ -8,7 +8,6 @@ and ensure all file operations occur within allowed boundaries.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional
 
 
 class PathValidationError(ValueError):
@@ -27,7 +26,7 @@ class PathValidator:
     - Test temporary directories (pytest)
     """
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         """
         Initialize path validator.
 
@@ -145,7 +144,7 @@ class PathValidator:
         self,
         file_path: Path,
         must_exist: bool = True,
-        max_file_size: Optional[int] = 10 * 1024 * 1024,
+        max_file_size: int | None = 10 * 1024 * 1024,
         allow_write: bool = True,
     ) -> Path:
         """
@@ -229,7 +228,7 @@ class PathValidator:
         )
 
     def validate_read_path(
-        self, file_path: Path, max_file_size: Optional[int] = 10 * 1024 * 1024
+        self, file_path: Path, max_file_size: int | None = 10 * 1024 * 1024
     ) -> Path:
         """
         Validate a path for read operations.
@@ -251,10 +250,10 @@ class PathValidator:
 
 
 # Global validator instance (lazy initialization)
-_global_validator: Optional[PathValidator] = None
+_global_validator: PathValidator | None = None
 
 
-def get_path_validator(project_root: Optional[Path] = None) -> PathValidator:
+def get_path_validator(project_root: Path | None = None) -> PathValidator:
     """
     Get or create global path validator instance.
 

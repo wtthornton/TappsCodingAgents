@@ -8,7 +8,6 @@ Manages configuration for state persistence, checkpointing, and cleanup policies
 from __future__ import annotations
 
 import logging
-import shutil
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -240,13 +239,6 @@ class StatePersistenceConfigManager:
         if self.config.cleanup.max_size_mb:
             max_size_bytes = self.config.cleanup.max_size_mb * 1024 * 1024
             total_size = sum(f.stat().st_size for f in state_files if f.exists())
-            
-            # Calculate current size excluding files to keep
-            current_size = sum(
-                f.stat().st_size
-                for f in state_files
-                if f.exists() and f not in files_to_keep
-            )
 
             # Delete oldest files until under limit
             if total_size > max_size_bytes:

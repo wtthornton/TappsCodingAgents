@@ -7,6 +7,7 @@ Cursor Rules, and workflow presets.
 
 import asyncio
 import json
+import logging
 import os
 import re
 import shutil
@@ -18,6 +19,8 @@ import yaml
 
 from .config import get_default_config
 from .tech_stack_priorities import get_priorities_for_frameworks
+
+logger = logging.getLogger(__name__)
 
 try:
     # Python 3.9+: importlib.resources is the canonical way to ship non-code assets.
@@ -178,7 +181,7 @@ def init_project_config(
             # Step 2: Apply tech stack template (merge: current config < tech-stack)
             if tech_stack.get("frameworks"):
                 try:
-                    from .template_selector import select_template, get_template_path
+                    from .template_selector import get_template_path, select_template
                     
                     # Select tech stack template
                     template_name, reason = select_template(tech_stack)
@@ -490,7 +493,7 @@ def init_customizations_directory(project_root: Path | None = None) -> tuple[boo
         try:
             customizations_dir.mkdir(parents=True, exist_ok=True)
             return True, str(customizations_dir)
-        except OSError as e:
+        except OSError:
             # Permission error or other OS error
             return False, None
     else:
@@ -543,7 +546,7 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
         if customizations_pattern not in content:
             # Append to file
             with open(dest_file, "a", encoding="utf-8") as f:
-                f.write(f"\n# Agent customizations (project-specific, gitignored by default)\n")
+                f.write("\n# Agent customizations (project-specific, gitignored by default)\n")
                 f.write(f"{customizations_pattern}\n")
             created = True  # Mark as created if we modified it
 
@@ -1270,12 +1273,23 @@ def init_project(
             results["cache_prepopulated"] = False
             results["cache_error"] = str(e)
 
-    # Validate setup
+    # Validate setup using comprehensive verification
     try:
-        from .validate_cursor_setup import validate_cursor_setup
+        from .cursor_verification import verify_cursor_integration
 
-        validation = validate_cursor_setup(project_root)
-        results["validation"] = validation
+        is_valid, verification_results = verify_cursor_integration(project_root)
+        results["validation"] = {
+            "overall_valid": is_valid,
+            "verification_results": verification_results,
+            "errors": verification_results.get("errors", []),
+            "warnings": verification_results.get("warnings", []),
+        }
+        # Also include component-level results for backward compatibility
+        if "components" in verification_results:
+            results["validation"]["cursor_rules"] = verification_results["components"].get("rules", {})
+            results["validation"]["claude_skills"] = verification_results["components"].get("skills", {})
+            results["validation"]["background_agents"] = verification_results["components"].get("background_agents", {})
+            results["validation"]["cursorignore"] = verification_results["components"].get("cursorignore", {})
     except Exception as e:
         results["validation_error"] = str(e)
 

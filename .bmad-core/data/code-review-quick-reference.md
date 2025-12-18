@@ -56,11 +56,11 @@ Track for first story:
 - Exposed secrets
 - Crypto issues
 
-### Performance (Priority: HIGH - HomeIQ Specific)
+### Performance (Priority: HIGH - Project Baseline)
 Uses `CLAUDE.md` as reference:
 - ✗ Blocking async operations
 - ✗ N+1 database queries
-- ✗ Unbatched writes (<100 points)
+- ✗ Unbatched writes (when batching is appropriate)
 - ✗ Missing caching
 - ✗ Unbounded queries (no LIMIT)
 - ✗ Sync HTTP in async (requests vs aiohttp)
@@ -163,7 +163,7 @@ progressive_review:
   severity_blocks: [high]
 ```
 
-### Medium Projects (5-10 tasks, HomeIQ typical)
+### Medium Projects (5-10 tasks)
 ```yaml
 progressive_review:
   enabled: true
@@ -184,12 +184,12 @@ background_review:
     min_tasks: 5
 ```
 
-## 🎯 HomeIQ-Specific Checks
+## 🎯 Project-Specific Checks
 
 Reviews automatically check against `CLAUDE.md`:
 
 ```python
-# Example findings for HomeIQ
+# Example findings (customize for your repo)
 
 PERF-001: Blocking async operation
   → CLAUDE.md#api-performance (Async Everything)
@@ -237,7 +237,7 @@ DB-001: N+1 query in device lookup
 ## 💡 Pro Tips
 
 1. **Start conservative:** Only block on HIGH, learn patterns
-2. **Use CLAUDE.md:** HomeIQ-specific performance checks
+2. **Use CLAUDE.md:** project-defined performance baseline checks
 3. **Fix immediately:** 5 min now vs 30 min later
 4. **Track metrics:** Measure to improve
 5. **Iterate prompts:** Add project context based on findings
