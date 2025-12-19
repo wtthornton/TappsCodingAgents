@@ -42,17 +42,20 @@ class ExpertWeightMatrix:
         return self.weights.get(expert_id, {}).get(domain, 0.0)
 
     def get_primary_expert(self, domain: str) -> str | None:
-        """Get the primary expert (51%) for a domain."""
+        """Get the primary expert (51% or 100% for single expert) for a domain."""
         for expert_id, domain_weights in self.weights.items():
-            if domain_weights.get(domain, 0.0) >= 0.51:
+            weight = domain_weights.get(domain, 0.0)
+            # Primary is >= 0.51 for multiple experts, or == 1.0 for single expert
+            if weight >= 0.51 or (len(self.experts) == 1 and weight >= 0.99):
                 return expert_id
         return None
 
     def get_primary_expert_domain(self, expert_id: str) -> str | None:
-        """Get the primary domain (51%) for an expert."""
+        """Get the primary domain (51% or 100% for single expert) for an expert."""
         expert_weights = self.weights.get(expert_id, {})
         for domain, weight in expert_weights.items():
-            if weight >= 0.51:
+            # Primary is >= 0.51 for multiple experts, or == 1.0 for single expert
+            if weight >= 0.51 or (len(self.experts) == 1 and weight >= 0.99):
                 return domain
         return None
 
@@ -65,16 +68,18 @@ class ExpertWeightMatrix:
         """
         errors = []
 
-        # Check: Each domain has exactly one primary (51%)
+        # Check: Each domain has exactly one primary (51% or 100% for single expert)
         for domain in self.domains:
             primaries = []
             for expert_id, domain_weights in self.weights.items():
                 weight = domain_weights.get(domain, 0.0)
-                if weight >= 0.51:
+                # Primary is >= 0.51 for multiple experts, or >= 0.99 for single expert
+                if weight >= 0.51 or (len(self.experts) == 1 and weight >= 0.99):
                     primaries.append(expert_id)
 
             if len(primaries) == 0:
-                errors.append(f"Domain '{domain}' has no primary expert (51%)")
+                expected = "100%" if len(self.experts) == 1 else "51%"
+                errors.append(f"Domain '{domain}' has no primary expert ({expected})")
             elif len(primaries) > 1:
                 errors.append(
                     f"Domain '{domain}' has multiple primary experts: {primaries}"
@@ -91,15 +96,18 @@ class ExpertWeightMatrix:
                     f"Domain '{domain}' column sum is {total:.3f}, expected 1.000"
                 )
 
-        # Check: Primary weight is exactly 51%
+        # Check: Primary weight is 51% (or 100% for single expert)
         for domain in self.domains:
             primary_expert = self.get_primary_expert(domain)
             if primary_expert:
                 weight = self.weights[primary_expert][domain]
-                if abs(weight - 0.51) > 0.001:
+                # Single expert case: weight should be 1.0
+                # Multiple experts case: weight should be 0.51
+                expected_weight = 1.0 if len(self.experts) == 1 else 0.51
+                if abs(weight - expected_weight) > 0.001:
                     errors.append(
                         f"Domain '{domain}' primary expert '{primary_expert}' "
-                        f"has weight {weight:.3f}, expected 0.510"
+                        f"has weight {weight:.3f}, expected {expected_weight:.3f}"
                     )
 
         # Check: Number of domains equals number of experts
@@ -166,15 +174,23 @@ class WeightDistributor:
 
         # Calculate weights
         num_experts = len(experts)
-        other_weight = (
-            WeightDistributor.OTHER_WEIGHT / (num_experts - 1)
-            if num_experts > 1
-            else 0.0
-        )
+        
+        # Special case: single expert gets 100% weight for their domain
+        if num_experts == 1:
+            primary_weight = 1.0
+            other_weight = 0.0
+        else:
+            primary_weight = WeightDistributor.PRIMARY_WEIGHT
+            other_weight = WeightDistributor.OTHER_WEIGHT / (num_experts - 1)
 
         # Round to avoid floating-point issues
         other_weight = float(
             Decimal(str(other_weight)).quantize(
+                Decimal("0.001"), rounding=ROUND_HALF_UP
+            )
+        )
+        primary_weight = float(
+            Decimal(str(primary_weight)).quantize(
                 Decimal("0.001"), rounding=ROUND_HALF_UP
             )
         )
@@ -186,8 +202,8 @@ class WeightDistributor:
 
             for domain in domains:
                 if domain == expert_primary_map[expert_id]:
-                    # Primary domain: 51%
-                    expert_weights[domain] = WeightDistributor.PRIMARY_WEIGHT
+                    # Primary domain: 51% (or 100% for single expert)
+                    expert_weights[domain] = primary_weight
                 else:
                     # Other domains: equal share of 49%
                     expert_weights[domain] = other_weight
