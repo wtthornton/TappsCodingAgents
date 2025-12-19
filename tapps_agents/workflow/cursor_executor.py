@@ -11,10 +11,11 @@ import asyncio
 import hashlib
 import json
 import os
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, AsyncIterator
 
 from ..core.project_profile import (
     ProjectProfile,
@@ -817,20 +818,8 @@ class CursorWorkflowExecutor:
             # Return empty artifacts for completion steps
             return {}
 
-        try:
-            # Create worktree for this step
-            worktree_name = self._worktree_name_for_step(step.id)
-            worktree_path = await self.worktree_manager.create_worktree(
-                worktree_name=worktree_name
-            )
-
-            # Copy artifacts from previous steps to worktree
-            artifacts_list = list(self.state.artifacts.values())
-            await self.worktree_manager.copy_artifacts(
-                worktree_path=worktree_path,
-                artifacts=artifacts_list,
-            )
-
+        # Use context manager for worktree lifecycle (guaranteed cleanup)
+        async with self._worktree_context(step) as worktree_path:
             # Determine if auto-execution should be used
             use_auto_execution = (
                 self.auto_execution_enabled_workflow
@@ -999,17 +988,61 @@ class CursorWorkflowExecutor:
                     "metadata": artifact.metadata or {},
                 }
 
-            # Remove the worktree on success (keep on failure for debugging)
-            try:
-                await self.worktree_manager.remove_worktree(worktree_name)
-            except Exception:
-                pass
-
+            # Worktree cleanup is handled by context manager
             return artifacts_dict if artifacts_dict else None
 
-        except Exception:
-            # Re-raise exception - ParallelStepExecutor will handle it
-            raise
+    @asynccontextmanager
+    async def _worktree_context(
+        self, step: WorkflowStep
+    ) -> AsyncIterator[Path]:
+        """
+        Context manager for worktree lifecycle management.
+        
+        Ensures worktree is properly cleaned up even on cancellation or exceptions.
+        This is a 2025 best practice for resource management in async code.
+        
+        Args:
+            step: Workflow step that needs a worktree
+            
+        Yields:
+            Path to the worktree
+            
+        Example:
+            async with self._worktree_context(step) as worktree_path:
+                # Use worktree_path here
+                # Worktree automatically cleaned up on exit
+        """
+        worktree_name = self._worktree_name_for_step(step.id)
+        worktree_path: Path | None = None
+        
+        try:
+            # Create worktree
+            worktree_path = await self.worktree_manager.create_worktree(
+                worktree_name=worktree_name
+            )
+            
+            # Copy artifacts from previous steps to worktree
+            artifacts_list = list(self.state.artifacts.values())
+            await self.worktree_manager.copy_artifacts(
+                worktree_path=worktree_path,
+                artifacts=artifacts_list,
+            )
+            
+            # Yield worktree path
+            yield worktree_path
+            
+        finally:
+            # Always cleanup, even on cancellation or exception
+            if worktree_path:
+                try:
+                    await self.worktree_manager.remove_worktree(worktree_name)
+                except Exception as e:
+                    # Log but don't raise - cleanup failures shouldn't break workflow
+                    if self.logger:
+                        self.logger.warning(
+                            f"Failed to cleanup worktree {worktree_name}: {e}",
+                            step_id=step.id,
+                        )
 
     def _worktree_name_for_step(self, step_id: str) -> str:
         """

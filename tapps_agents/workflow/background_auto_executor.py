@@ -10,6 +10,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import random
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,65 @@ from .cursor_skill_helper import check_skill_completion, create_skill_command_fi
 from .execution_metrics import ExecutionMetricsCollector
 
 logger = logging.getLogger(__name__)
+
+
+class AdaptivePolling:
+    """
+    Adaptive polling with exponential backoff to reduce unnecessary checks.
+    
+    Polling interval increases when no activity is detected, and resets
+    when activity is found. This reduces resource usage while maintaining
+    responsiveness.
+    """
+    
+    def __init__(
+        self,
+        initial_interval: float = 1.0,
+        max_interval: float = 30.0,
+        backoff_multiplier: float = 1.5,
+        jitter: bool = True,
+    ):
+        """
+        Initialize adaptive polling.
+        
+        Args:
+            initial_interval: Initial polling interval in seconds (default: 1.0)
+            max_interval: Maximum polling interval in seconds (default: 30.0)
+            backoff_multiplier: Multiplier for exponential backoff (default: 1.5)
+            jitter: Whether to add random jitter to prevent thundering herd (default: True)
+        """
+        self.initial_interval = initial_interval
+        self.max_interval = max_interval
+        self.backoff_multiplier = backoff_multiplier
+        self.jitter = jitter
+        self.current_interval = initial_interval
+    
+    def get_next_interval(self) -> float:
+        """
+        Get next polling interval with exponential backoff.
+        
+        Returns:
+            Next polling interval in seconds
+        """
+        interval = self.current_interval
+        
+        # Increase interval for next time (exponential backoff)
+        self.current_interval = min(
+            self.current_interval * self.backoff_multiplier,
+            self.max_interval
+        )
+        
+        # Add jitter to prevent thundering herd
+        if self.jitter:
+            jitter_amount = interval * 0.1  # 10% jitter
+            interval += random.uniform(-jitter_amount, jitter_amount)
+            interval = max(0.1, interval)  # Ensure minimum 0.1s
+        
+        return interval
+    
+    def reset(self) -> None:
+        """Reset to initial interval (e.g., after finding activity)."""
+        self.current_interval = self.initial_interval
 
 
 class BackgroundAgentAutoExecutor:
@@ -38,22 +98,36 @@ class BackgroundAgentAutoExecutor:
         project_root: Path | None = None,
         enable_metrics: bool = True,
         enable_audit: bool = True,
+        use_adaptive_polling: bool = True,
     ):
         """
         Initialize Background Agent Auto-Executor.
 
         Args:
-            polling_interval: Seconds between status checks (default: 5.0)
+            polling_interval: Initial seconds between status checks (default: 5.0)
             timeout_seconds: Maximum time to wait for completion (default: 3600.0 = 1 hour)
             status_file_name: Name of status file to poll for (default: .cursor-skill-status.json)
             project_root: Project root directory (for metrics/audit)
             enable_metrics: Enable metrics collection (default: True)
             enable_audit: Enable audit logging (default: True)
+            use_adaptive_polling: Use adaptive polling with exponential backoff (default: True)
         """
         self.polling_interval = polling_interval
         self.timeout_seconds = timeout_seconds
         self.status_file_name = status_file_name
         self.project_root = project_root or Path.cwd()
+        self.use_adaptive_polling = use_adaptive_polling
+
+        # Initialize adaptive polling if enabled
+        if use_adaptive_polling:
+            self.adaptive_polling = AdaptivePolling(
+                initial_interval=polling_interval,
+                max_interval=30.0,
+                backoff_multiplier=1.5,
+                jitter=True,
+            )
+        else:
+            self.adaptive_polling = None
 
         # Initialize metrics and audit logging (Story 7.9)
         self.metrics_collector = (
@@ -221,6 +295,10 @@ class BackgroundAgentAutoExecutor:
             # Check status file first (preferred method)
             status_result = self.check_status(status_file)
             if status_result["completed"]:
+                # Reset adaptive polling on activity
+                if self.adaptive_polling:
+                    self.adaptive_polling.reset()
+                
                 logger.info(
                     f"Command completed (status file): {status_file}",
                     extra={
@@ -237,6 +315,10 @@ class BackgroundAgentAutoExecutor:
                     expected_artifacts=expected_artifacts,
                 )
                 if artifact_result["completed"]:
+                    # Reset adaptive polling on activity
+                    if self.adaptive_polling:
+                        self.adaptive_polling.reset()
+                    
                     logger.info(
                         f"Command completed (artifacts detected): {worktree_path}",
                         extra={
@@ -251,15 +333,24 @@ class BackgroundAgentAutoExecutor:
                         "completion_method": "artifact_detection",
                     }
 
+            # Get next polling interval (adaptive or fixed)
+            if self.adaptive_polling:
+                poll_interval = self.adaptive_polling.get_next_interval()
+            else:
+                poll_interval = self.polling_interval
+            
             # Wait before next poll
-            await asyncio.sleep(self.polling_interval)
+            await asyncio.sleep(poll_interval)
             elapsed = (datetime.now() - start_time).total_seconds()
 
             # Log progress periodically
             if elapsed - last_log_time >= log_interval:
                 logger.debug(
-                    f"Still waiting for completion... ({elapsed:.1f}s elapsed)",
-                    extra={"worktree": str(worktree_path)},
+                    f"Still waiting for completion... ({elapsed:.1f}s elapsed, interval: {poll_interval:.2f}s)",
+                    extra={
+                        "worktree": str(worktree_path),
+                        "polling_interval": poll_interval,
+                    },
                 )
                 last_log_time = elapsed
 

@@ -12,9 +12,10 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Core Concepts
 - **[Project Context](PROJECT_CONTEXT.md)** - Framework development vs. self-hosting
-- **[How It Works (Cursor-first)](HOW_IT_WORKS.md)** - The “brain vs hands” model, directories, and runtime policy
+- **[How It Works (Cursor-first)](HOW_IT_WORKS.md)** - The "brain vs hands" model, directories, and runtime policy
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture and key modules
 - **[Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)** - Choosing and running workflows
+- **[Workflow Execution Summary](WORKFLOW_EXECUTION_SUMMARY.md)** - Quick reference for parallel execution and Background Agents
 
 ### Experts
 - **[Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)** - CLI wizard for experts and knowledge base
@@ -32,6 +33,8 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Background Agent Auto-Execution Guide](BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md)** - Automatic workflow execution
 - **[PR Mode Guide](PR_MODE_GUIDE.md)** - When you explicitly want a PR from Background Agents
 - **[Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)**
+- **[Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md)** - How Full SDLC workflow uses parallel execution and Background Agents
+- **[Parallel Execution Optimization 2025](PARALLEL_EXECUTION_OPTIMIZATION_2025.md)** - Optimization recommendations and 2025 best practices
 
 ### Operations
 - **[Deployment Guide](DEPLOYMENT.md)**

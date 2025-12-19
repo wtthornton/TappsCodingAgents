@@ -217,10 +217,10 @@ class ParallelStepExecutor:
                 while attempts < retry_config.max_attempts:
                     attempts += 1
                     try:
+                        # Use asyncio.timeout (Python 3.11+) for better cancellation support
                         if timeout:
-                            artifacts = await asyncio.wait_for(
-                                execute_fn(step), timeout=timeout
-                            )
+                            async with asyncio.timeout(timeout):
+                                artifacts = await execute_fn(step)
                         else:
                             artifacts = await execute_fn(step)
 
@@ -268,6 +268,13 @@ class ParallelStepExecutor:
                         backoff = retry_config.get_backoff_seconds(attempts)
                         await asyncio.sleep(backoff)
                         continue
+
+                    except asyncio.CancelledError:
+                        # Task was cancelled - don't retry, propagate cancellation
+                        step_execution.status = "cancelled"
+                        step_execution.error = "Step execution was cancelled"
+                        step_execution.completed_at = datetime.now()
+                        raise  # Re-raise to propagate cancellation
 
                     except Exception as e:
                         last_error = e
@@ -319,44 +326,93 @@ class ParallelStepExecutor:
                 )
 
         # Execute all steps concurrently with bounded concurrency
-        # Use gather with return_exceptions=True to collect all results even if some fail
-        tasks = [execute_with_retries(step) for step in steps]
-        task_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-        # Collect results, handling both successes and exceptions
+        # Use TaskGroup (Python 3.11+) for structured concurrency and automatic cancellation
         results: list[StepExecutionResult] = []
-        for i, result in enumerate(task_results):
-            if isinstance(result, Exception):
-                # Task raised an exception
-                failed_step = steps[i]
-                logger.error(
-                    f"Step {failed_step.id} raised exception: {result}",
-                    exc_info=result,
-                    extra={
-                        "workflow_id": state.workflow_id,
-                        "step_id": failed_step.id,
-                        "agent": failed_step.agent or "",
-                        "action": failed_step.action or "",
-                    },
-                )
-                results.append(
-                    StepExecutionResult(
-                        step=failed_step,
-                        step_execution=StepExecution(
-                            step_id=failed_step.id,
-                            agent=failed_step.agent or "",
-                            action=failed_step.action or "",
-                            started_at=datetime.now(),
-                            completed_at=datetime.now(),
-                            status="failed",
-                            error=str(result),
-                        ),
-                        error=result,
-                    )
-                )
-            else:
-                # Task completed successfully (result is StepExecutionResult)
+        tasks_map: dict[asyncio.Task[StepExecutionResult], WorkflowStep] = {}
+        
+        try:
+            async with asyncio.TaskGroup() as tg:
+                # Create tasks for all steps
+                for step in steps:
+                    task = tg.create_task(execute_with_retries(step))
+                    tasks_map[task] = step
+            
+            # All tasks completed successfully - collect results
+            for task, step in tasks_map.items():
+                result = await task
                 results.append(result)
+        
+        except* Exception as eg:
+            # Handle ExceptionGroup (Python 3.11+)
+            # TaskGroup automatically cancels all tasks if any task raises an exception
+            logger.error(
+                f"Parallel execution encountered {len(eg.exceptions)} exceptions",
+                extra={
+                    "workflow_id": state.workflow_id,
+                    "exception_count": len(eg.exceptions),
+                },
+            )
+            
+            # Collect results from completed tasks and handle cancelled/failed ones
+            for task, step in tasks_map.items():
+                if task.done():
+                    try:
+                        result = await task
+                        results.append(result)
+                    except Exception as e:
+                        # Task completed but raised exception
+                        logger.error(
+                            f"Step {step.id} failed: {e}",
+                            exc_info=e,
+                            extra={
+                                "workflow_id": state.workflow_id,
+                                "step_id": step.id,
+                                "agent": step.agent or "",
+                                "action": step.action or "",
+                            },
+                        )
+                        results.append(
+                            StepExecutionResult(
+                                step=step,
+                                step_execution=StepExecution(
+                                    step_id=step.id,
+                                    agent=step.agent or "",
+                                    action=step.action or "",
+                                    started_at=datetime.now(),
+                                    completed_at=datetime.now(),
+                                    status="failed",
+                                    error=str(e),
+                                ),
+                                error=e,
+                            )
+                        )
+                else:
+                    # Task was cancelled by TaskGroup
+                    logger.warning(
+                        f"Step {step.id} was cancelled due to another step's failure",
+                        extra={
+                            "workflow_id": state.workflow_id,
+                            "step_id": step.id,
+                        },
+                    )
+                    results.append(
+                        StepExecutionResult(
+                            step=step,
+                            step_execution=StepExecution(
+                                step_id=step.id,
+                                agent=step.agent or "",
+                                action=step.action or "",
+                                started_at=datetime.now(),
+                                completed_at=datetime.now(),
+                                status="cancelled",
+                                error="Step execution was cancelled",
+                            ),
+                        )
+                    )
+            
+            # Re-raise the first exception for upstream handling
+            if eg.exceptions:
+                raise eg.exceptions[0]
 
         # Sort by step.id for deterministic ordering
         results.sort(key=lambda r: r.step.id)

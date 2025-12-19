@@ -548,9 +548,24 @@ output:
 
 ---
 
+## Workflow Integration
+
+Background Agents are automatically used by workflows when running in Cursor mode:
+
+- **Full SDLC Workflow**: Uses Background Agents for parallel step execution
+- **Auto-Execution**: Workflow steps execute automatically via Background Agents when enabled
+- **Parallel Execution**: Multiple Background Agents can run simultaneously for different workflow steps
+
+For detailed information about how workflows use Background Agents, see:
+- [Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md) - Complete workflow execution with Background Agents
+- [Background Agent Auto-Execution Guide](BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md) - Auto-execution setup
+
+---
+
 ## See Also
 
 - [CURSOR_SKILLS_INSTALLATION_GUIDE.md](CURSOR_SKILLS_INSTALLATION_GUIDE.md) - Skills setup
 - [CURSOR_AI_INTEGRATION_PLAN_2025.md](CURSOR_AI_INTEGRATION_PLAN_2025.md) - Full integration plan
 - [QUICK_START.md](../QUICK_START.md) - Quick start guide
+- [Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md) - Workflow execution with Background Agents
 

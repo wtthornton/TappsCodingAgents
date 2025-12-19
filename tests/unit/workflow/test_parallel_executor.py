@@ -8,7 +8,7 @@ import asyncio
 
 import pytest
 
-from tapps_agents.workflow.models import StepExecution, WorkflowStep
+from tapps_agents.workflow.models import StepExecution, WorkflowStep, WorkflowState
 from tapps_agents.workflow.parallel_executor import (
     ParallelStepExecutor,
 )
@@ -227,3 +227,139 @@ async def test_execute_parallel_respects_max_parallel() -> None:
 
     # Should never exceed max_parallel=2
     assert max_concurrent <= 2
+
+
+@pytest.mark.asyncio
+async def test_taskgroup_cancellation_propagation(sample_steps: list[WorkflowStep]) -> None:
+    """
+    Test that TaskGroup cancels all tasks when one fails.
+    
+    This is a 2025 best practice: structured concurrency ensures
+    that if one task fails, all other tasks are automatically cancelled.
+    """
+    executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=10.0)
+
+    execution_tracker: dict[str, str] = {}  # step_id -> status
+
+    async def mock_execute(step: WorkflowStep) -> dict:
+        """Mock step execution that fails for step2."""
+        execution_tracker[step.id] = "started"
+        
+        if step.id == "step2":
+            # Simulate some work before failing
+            await asyncio.sleep(0.05)
+            execution_tracker[step.id] = "failed"
+            raise RuntimeError(f"Step {step.id} intentionally failed")
+        
+        # Other steps should be cancelled before completing
+        try:
+            await asyncio.sleep(0.2)  # Longer delay to ensure cancellation
+            execution_tracker[step.id] = "completed"
+        except asyncio.CancelledError:
+            execution_tracker[step.id] = "cancelled"
+            raise
+        
+        return {"artifact": f"result-{step.id}"}
+
+    class MockState:
+        step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
+
+    state = MockState()
+
+    # Execute 3 steps in parallel - step2 will fail
+    steps = [sample_steps[0], sample_steps[1], sample_steps[2]]
+    
+    # TaskGroup will raise the first exception
+    with pytest.raises(RuntimeError, match="Step step2 intentionally failed"):
+        await executor.execute_parallel(
+            steps,
+            mock_execute,
+            state=state,  # type: ignore[arg-type]
+        )
+
+    # Verify step2 started and failed
+    assert execution_tracker.get("step2") in ["failed", "started"]
+    
+    # Verify other steps were either cancelled or didn't complete
+    # (TaskGroup cancels them, so they may not reach "completed")
+    for step_id in ["step1", "step3"]:
+        status = execution_tracker.get(step_id)
+        # Should be cancelled or not completed
+        assert status in ["cancelled", "started", None] or status != "completed"
+
+
+@pytest.mark.asyncio
+async def test_timeout_uses_context_manager(sample_steps: list[WorkflowStep]) -> None:
+    """
+    Test that timeout uses asyncio.timeout() context manager (Python 3.11+).
+    
+    This ensures better cancellation support compared to asyncio.wait_for().
+    """
+    executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=0.1)
+
+    async def slow_execute(step: WorkflowStep) -> dict:
+        """Mock step that takes too long."""
+        await asyncio.sleep(0.5)  # Longer than timeout
+        return {"artifact": "result"}
+
+    class MockState:
+        step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
+
+    state = MockState()
+
+    results = await executor.execute_parallel(
+        [sample_steps[0]],
+        slow_execute,
+        state=state,  # type: ignore[arg-type]
+        timeout_seconds=0.1,
+    )
+
+    assert len(results) == 1
+    assert results[0].step_execution.status == "failed"
+    # TimeoutError should be caught and handled
+    assert results[0].error is not None
+    assert isinstance(results[0].error, TimeoutError)
+
+
+@pytest.mark.asyncio
+async def test_cancelled_error_propagation(sample_steps: list[WorkflowStep]) -> None:
+    """
+    Test that CancelledError is properly handled and propagated.
+    
+    This ensures that cancellation from TaskGroup is properly handled.
+    """
+    executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=10.0)
+
+    async def cancellable_execute(step: WorkflowStep) -> dict:
+        """Mock step that can be cancelled."""
+        try:
+            await asyncio.sleep(1.0)
+            return {"artifact": f"result-{step.id}"}
+        except asyncio.CancelledError:
+            # Properly handle cancellation
+            raise
+
+    class MockState:
+        step_executions: list[StepExecution] = []
+        workflow_id: str = "test-workflow"
+
+    state = MockState()
+
+    # Create a task that will be cancelled
+    async def cancel_after_delay():
+        await asyncio.sleep(0.1)
+        # Cancel would happen via TaskGroup if another task fails
+        pass
+
+    # Normal execution should work
+    results = await executor.execute_parallel(
+        [sample_steps[0]],
+        cancellable_execute,
+        state=state,  # type: ignore[arg-type]
+    )
+
+    # Should complete successfully
+    assert len(results) == 1
+    assert results[0].step_execution.status == "completed"

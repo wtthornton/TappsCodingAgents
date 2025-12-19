@@ -98,6 +98,15 @@ Workflow definition + execution lives under `tapps_agents/workflow/`.
 Key pieces:
 
 - **Workflow parsing**: `tapps_agents/workflow/parser.py`
+- **Parallel execution**: `tapps_agents/workflow/parallel_executor.py` - Executes independent steps in parallel (up to 8 concurrent)
+- **Background Agent integration**: `tapps_agents/workflow/background_auto_executor.py` - Auto-execution via Background Agents
+- **Cursor executor**: `tapps_agents/workflow/cursor_executor.py` - Cursor-native execution with parallel support
+
+**Execution Features:**
+- Automatic parallel execution of independent workflow steps
+- Background Agent integration for asynchronous step execution
+- Worktree isolation for concurrent step execution
+- See [Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md) for complete execution flow documentation
 - **Workflow execution**: `tapps_agents/workflow/executor.py`
 - **Workflow recommendations**: `tapps_agents/workflow/recommender.py`
 - **Agent handlers**: `tapps_agents/workflow/agent_handlers/` (Epic 20)
