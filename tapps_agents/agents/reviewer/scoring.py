@@ -587,6 +587,8 @@ class CodeScorer:
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=30,  # 30 second timeout
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -673,6 +675,8 @@ class CodeScorer:
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -720,6 +724,8 @@ class CodeScorer:
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=60,  # 60 second timeout (mypy can be slower than Ruff)
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -782,6 +788,8 @@ class CodeScorer:
                 ],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=60,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -892,6 +900,8 @@ class CodeScorer:
                 wrap_windows_cmd_shim(cmd),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=120,  # 2 minute timeout (jscpd can be slow on large codebases)
                 cwd=target_dir if Path(target_dir).exists() else None,
             )
@@ -1020,6 +1030,8 @@ class CodeScorer:
                 wrap_windows_cmd_shim(cmd),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=120,
                 cwd=target_dir if Path(target_dir).exists() else None,
             )

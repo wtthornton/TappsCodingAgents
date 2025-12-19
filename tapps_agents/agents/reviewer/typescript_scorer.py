@@ -233,6 +233,8 @@ class TypeScriptScorer:
                 wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -310,6 +312,8 @@ class TypeScriptScorer:
                 wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -446,6 +450,8 @@ class TypeScriptScorer:
                 wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
@@ -494,6 +500,8 @@ class TypeScriptScorer:
                 wrap_windows_cmd_shim(command),
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
                 timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
