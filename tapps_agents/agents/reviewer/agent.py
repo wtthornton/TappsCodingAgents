@@ -725,8 +725,11 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "metrics": {},
         }
 
-        def _discover_code_files(root: Path) -> list[Path]:
-            """Discover code files under a directory, excluding common non-source directories."""
+        def _discover_code_files(root: Path, max_files: int = 500) -> list[Path]:
+            """Discover code files under a directory, excluding common non-source directories.
+            
+            Optimized to use pattern-based globbing and early directory pruning for performance.
+            """
             exclude_dir_names = {
                 ".git",
                 "__pycache__",
@@ -741,20 +744,35 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "build",
                 "htmlcov",
                 "reports",
+                ".tapps-agents",
+                "tapps_agents.egg-info",
+                ".egg-info",
+                "MagicMock",
             }
             allowed_suffixes = {".py", ".ts", ".tsx", ".js", ".jsx"}
 
             discovered: list[Path] = []
-            for path in root.rglob("*"):
-                if path.is_dir():
-                    # Quick prune on directory name; rglob still descends, but this keeps filtering simple.
-                    continue
-                if path.suffix.lower() not in allowed_suffixes:
-                    continue
-                # Exclude paths containing any excluded directory segment
-                if any(part in exclude_dir_names for part in path.parts):
-                    continue
-                discovered.append(path)
+            
+            # Use pattern-based globbing instead of rglob("*") for better performance
+            # This avoids scanning every file, only matching code file patterns
+            for pattern in ["*.py", "*.ts", "*.tsx", "*.js", "*.jsx"]:
+                if len(discovered) >= max_files:
+                    break
+                    
+                for path in root.rglob(pattern):
+                    if len(discovered) >= max_files:
+                        break
+                    
+                    # Skip if path contains any excluded directory segment (early pruning)
+                    if any(part in exclude_dir_names for part in path.parts):
+                        continue
+                    
+                    # Double-check suffix (should already match pattern, but be safe)
+                    if path.suffix.lower() not in allowed_suffixes:
+                        continue
+                    
+                    discovered.append(path)
+            
             return discovered
 
         # If no explicit file list is provided, derive it from target (file or directory) if present.
