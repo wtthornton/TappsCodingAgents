@@ -5,6 +5,7 @@ Tests for Weight Distribution Algorithm
 import pytest
 
 from tapps_agents.experts.weight_distributor import (
+    ExpertWeightMatrix,
     WeightDistributor,
 )
 
@@ -126,3 +127,161 @@ class TestWeightDistributor:
         # Validate
         errors = new_matrix.validate()
         assert len(errors) == 0
+
+    def test_calculate_weights_single_expert(self):
+        """Test weight calculation for single expert (100% weight)."""
+        domains = ["domain-a"]
+        expert_primary_map = {"expert-a": "domain-a"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        # Single expert should have 100% weight
+        assert matrix.get_expert_weight("expert-a", "domain-a") == 1.0
+
+        # Validate
+        errors = matrix.validate()
+        assert len(errors) == 0
+
+    def test_get_primary_expert_domain(self):
+        """Test getting primary domain for an expert."""
+        domains = ["domain-a", "domain-b"]
+        expert_primary_map = {"expert-a": "domain-a", "expert-b": "domain-b"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        assert matrix.get_primary_expert_domain("expert-a") == "domain-a"
+        assert matrix.get_primary_expert_domain("expert-b") == "domain-b"
+        assert matrix.get_primary_expert_domain("nonexistent") is None
+
+    def test_get_expert_weight_nonexistent(self):
+        """Test getting weight for nonexistent expert/domain."""
+        domains = ["domain-a", "domain-b"]
+        expert_primary_map = {"expert-a": "domain-a", "expert-b": "domain-b"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        # Should return 0.0 for nonexistent combinations
+        assert matrix.get_expert_weight("nonexistent", "domain-a") == 0.0
+        assert matrix.get_expert_weight("expert-a", "nonexistent") == 0.0
+
+    def test_get_primary_expert_nonexistent_domain(self):
+        """Test getting primary expert for nonexistent domain."""
+        domains = ["domain-a", "domain-b"]
+        expert_primary_map = {"expert-a": "domain-a", "expert-b": "domain-b"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        assert matrix.get_primary_expert("nonexistent") is None
+
+    def test_recalculate_on_domain_add_duplicate_domain(self):
+        """Test recalculating with duplicate domain raises error."""
+        domains = ["domain-a", "domain-b"]
+        expert_primary_map = {"expert-a": "domain-a", "expert-b": "domain-b"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        with pytest.raises(ValueError, match="already exists"):
+            WeightDistributor.recalculate_on_domain_add(
+                matrix, "domain-a", "expert-c"
+            )
+
+    def test_recalculate_on_domain_add_duplicate_expert(self):
+        """Test recalculating with duplicate expert raises error."""
+        domains = ["domain-a", "domain-b"]
+        expert_primary_map = {"expert-a": "domain-a", "expert-b": "domain-b"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        with pytest.raises(ValueError, match="already exists"):
+            WeightDistributor.recalculate_on_domain_add(
+                matrix, "domain-c", "expert-a"
+            )
+
+    def test_format_matrix(self):
+        """Test formatting weight matrix as table."""
+        domains = ["domain-a", "domain-b"]
+        expert_primary_map = {"expert-a": "domain-a", "expert-b": "domain-b"}
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+        formatted = WeightDistributor.format_matrix(matrix)
+
+        assert "Expert/Domain" in formatted
+        assert "expert-a" in formatted
+        assert "expert-b" in formatted
+        assert "domain-a" in formatted
+        assert "domain-b" in formatted
+        assert "TOTAL" in formatted
+        assert "0.510" in formatted or "0.51" in formatted
+
+    def test_validate_column_sums(self):
+        """Test validation checks column sums."""
+        # Create invalid matrix with wrong column sum
+        weights = {
+            "expert-a": {"domain-a": 0.51, "domain-b": 0.49},
+            "expert-b": {"domain-a": 0.49, "domain-b": 0.40},  # Wrong sum
+        }
+        matrix = ExpertWeightMatrix(
+            weights=weights, domains=["domain-a", "domain-b"], experts=["expert-a", "expert-b"]
+        )
+
+        errors = matrix.validate()
+        assert len(errors) > 0
+        assert any("column sum" in error.lower() for error in errors)
+
+    def test_validate_no_primary_expert(self):
+        """Test validation catches missing primary expert."""
+        # Create invalid matrix without primary expert
+        weights = {
+            "expert-a": {"domain-a": 0.40, "domain-b": 0.60},
+            "expert-b": {"domain-a": 0.60, "domain-b": 0.40},  # No primary (>= 0.51)
+        }
+        matrix = ExpertWeightMatrix(
+            weights=weights, domains=["domain-a", "domain-b"], experts=["expert-a", "expert-b"]
+        )
+
+        errors = matrix.validate()
+        assert len(errors) > 0
+        assert any("no primary expert" in error.lower() for error in errors)
+
+    def test_validate_multiple_primaries(self):
+        """Test validation catches multiple primary experts."""
+        # Create invalid matrix with multiple primaries
+        weights = {
+            "expert-a": {"domain-a": 0.51, "domain-b": 0.49},
+            "expert-b": {"domain-a": 0.51, "domain-b": 0.49},  # Both primary for domain-a
+        }
+        matrix = ExpertWeightMatrix(
+            weights=weights, domains=["domain-a", "domain-b"], experts=["expert-a", "expert-b"]
+        )
+
+        errors = matrix.validate()
+        assert len(errors) > 0
+        assert any("multiple primary experts" in error.lower() for error in errors)
+
+    def test_calculate_weights_4_experts(self):
+        """Test weight calculation for 4 experts/domains."""
+        domains = ["domain-a", "domain-b", "domain-c", "domain-d"]
+        expert_primary_map = {
+            "expert-a": "domain-a",
+            "expert-b": "domain-b",
+            "expert-c": "domain-c",
+            "expert-d": "domain-d",
+        }
+
+        matrix = WeightDistributor.calculate_weights(domains, expert_primary_map)
+
+        # Check primary weights (51%)
+        assert matrix.get_expert_weight("expert-a", "domain-a") == 0.51
+        assert matrix.get_expert_weight("expert-b", "domain-b") == 0.51
+
+        # Check other weights (49% / 3 = ~16.33%)
+        other_weight = 0.49 / 3
+        assert abs(matrix.get_expert_weight("expert-a", "domain-b") - other_weight) < 0.001
+
+        # Validate column sums
+        for domain in domains:
+            total = sum(
+                matrix.get_expert_weight(expert_id, domain)
+                for expert_id in ["expert-a", "expert-b", "expert-c", "expert-d"]
+            )
+            assert abs(total - 1.0) < 0.001

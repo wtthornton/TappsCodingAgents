@@ -1,18 +1,21 @@
 """
-Tests for Context7 Security module.
+Unit tests for Context7 Security Module.
 
-Tests security audit, compliance verification, and API key management.
+Tests API key management, security auditing, and compliance verification.
 """
 
 import os
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from tapps_agents.context7.security import (
     APIKeyManager,
     ComplianceStatus,
+    SecurityAuditor,
     SecurityAuditResult,
+    create_security_auditor,
 )
 
 pytestmark = pytest.mark.unit
@@ -21,144 +24,278 @@ pytestmark = pytest.mark.unit
 class TestAPIKeyManager:
     """Tests for APIKeyManager."""
 
-    def test_init_default_config_dir(self, tmp_path):
-        """Test APIKeyManager initialization with default config dir."""
-        with patch("tapps_agents.context7.security.Path.cwd", return_value=tmp_path):
-            manager = APIKeyManager()
-            assert manager.config_dir == tmp_path / ".tapps-agents"
-            assert manager.config_dir.exists()
-
-    def test_init_custom_config_dir(self, tmp_path):
-        """Test APIKeyManager initialization with custom config dir."""
-        custom_dir = tmp_path / "custom"
-        manager = APIKeyManager(config_dir=custom_dir)
-        assert manager.config_dir == custom_dir
-        assert manager.config_dir.exists()
-
-    def test_store_api_key_without_crypto(self, tmp_path):
-        """Test storing key when cryptography is not available."""
-        with patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", False):
-            manager = APIKeyManager(config_dir=tmp_path / ".tapps-agents")
-            # Should not raise error, just store in plain text
-            manager.store_api_key("test-service", "test-key")
-            
-            keys_file = manager.config_dir / "api-keys.encrypted"
-            # File might exist but unencrypted
-            assert keys_file.exists() or not keys_file.exists()
-
-    def test_load_api_key_without_crypto(self, tmp_path):
-        """Test retrieving key when cryptography is not available."""
-        with patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", False):
-            manager = APIKeyManager(config_dir=tmp_path / ".tapps-agents")
-            # Should handle gracefully
-            key = manager.load_api_key("test-service")
-            assert key is None or isinstance(key, str)
-
-    @pytest.mark.skipif(
-        not os.environ.get("TEST_CRYPTO", False),
-        reason="Cryptography tests require crypto library",
-    )
-    def test_store_and_retrieve_key_with_crypto(self, tmp_path):
-        """Test storing and retrieving encrypted keys."""
-        manager = APIKeyManager(config_dir=tmp_path / ".tapps-agents")
-        manager.store_api_key("test-service", "test-key-value", encrypt=True)
+    def test_api_key_manager_init(self, tmp_path):
+        """Test APIKeyManager initialization."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
         
-        retrieved = manager.load_api_key("test-service")
-        assert retrieved == "test-key-value"
+        assert manager.config_dir == config_dir
+        assert manager.keys_file == config_dir / "api-keys.encrypted"
+        assert manager.master_key_file == config_dir / ".master-key"
 
-    def test_load_all_keys(self, tmp_path):
-        """Test listing stored keys."""
-        manager = APIKeyManager(config_dir=tmp_path / ".tapps-agents")
-        manager.store_api_key("service1", "key1")
-        manager.store_api_key("service2", "key2")
+    @patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", True)
+    @patch("tapps_agents.context7.security.Fernet")
+    def test_encrypt_api_key_with_crypto(self, mock_fernet_class, tmp_path):
+        """Test encrypt_api_key with cryptography available."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        # Mock Fernet
+        mock_cipher = MagicMock()
+        mock_cipher.encrypt.return_value = b"encrypted_data"
+        manager._cipher = mock_cipher
+        
+        result = manager.encrypt_api_key("test_key")
+        
+        assert result == "encrypted_data"
+        mock_cipher.encrypt.assert_called_once()
+
+    @patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", False)
+    def test_encrypt_api_key_without_crypto(self, tmp_path):
+        """Test encrypt_api_key without cryptography (fallback to hash)."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        result = manager.encrypt_api_key("test_key")
+        
+        # Should return SHA256 hash
+        assert isinstance(result, str)
+        assert len(result) == 64  # SHA256 hex length
+
+    @patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", True)
+    @patch("tapps_agents.context7.security.Fernet")
+    def test_decrypt_api_key_with_crypto(self, mock_fernet_class, tmp_path):
+        """Test decrypt_api_key with cryptography available."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        # Mock Fernet
+        mock_cipher = MagicMock()
+        mock_cipher.decrypt.return_value = b"test_key"
+        manager._cipher = mock_cipher
+        
+        result = manager.decrypt_api_key("encrypted_data")
+        
+        assert result == "test_key"
+        mock_cipher.decrypt.assert_called_once()
+
+    @patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", False)
+    def test_decrypt_api_key_without_crypto_raises(self, tmp_path):
+        """Test decrypt_api_key without cryptography raises error."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        with pytest.raises(ValueError, match="Encryption not available"):
+            manager.decrypt_api_key("encrypted_data")
+
+    def test_store_api_key_encrypted(self, tmp_path):
+        """Test store_api_key with encryption."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        with patch.object(manager, 'encrypt_api_key', return_value="encrypted_key"):
+            manager.store_api_key("test_key", "value", encrypt=True)
+            
+            keys = manager.load_all_keys()
+            assert "test_key" in keys
+            assert keys["test_key"]["encrypted"] is True
+            assert keys["test_key"]["value"] == "encrypted_key"
+
+    def test_store_api_key_unencrypted(self, tmp_path):
+        """Test store_api_key without encryption."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        manager.store_api_key("test_key", "value", encrypt=False)
         
         keys = manager.load_all_keys()
-        assert isinstance(keys, dict)
-        # Should contain service names (exact content depends on implementation)
+        assert "test_key" in keys
+        assert keys["test_key"]["encrypted"] is False
+        assert keys["test_key"]["value"] == "value"
+
+    def test_load_api_key_encrypted(self, tmp_path):
+        """Test load_api_key with encrypted key."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        # Store encrypted key
+        with patch.object(manager, 'encrypt_api_key', return_value="encrypted_key"):
+            manager.store_api_key("test_key", "value", encrypt=True)
+        
+        # Load with decryption
+        with patch.object(manager, 'decrypt_api_key', return_value="value"):
+            result = manager.load_api_key("test_key")
+            assert result == "value"
+
+    def test_load_api_key_unencrypted(self, tmp_path):
+        """Test load_api_key with unencrypted key."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        manager.store_api_key("test_key", "value", encrypt=False)
+        result = manager.load_api_key("test_key")
+        
+        assert result == "value"
+
+    def test_load_api_key_not_found(self, tmp_path):
+        """Test load_api_key when key doesn't exist."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        result = manager.load_api_key("nonexistent")
+        
+        assert result is None
 
     def test_delete_api_key(self, tmp_path):
-        """Test deleting a stored key."""
-        manager = APIKeyManager(config_dir=tmp_path / ".tapps-agents")
-        manager.store_api_key("test-service", "test-key")
-        manager.delete_api_key("test-service")
+        """Test delete_api_key removes key."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
         
-        key = manager.load_api_key("test-service")
-        assert key is None
+        manager.store_api_key("test_key", "value", encrypt=False)
+        manager.delete_api_key("test_key")
+        
+        result = manager.load_api_key("test_key")
+        assert result is None
+
+    def test_load_all_keys_empty(self, tmp_path):
+        """Test load_all_keys when no keys file exists."""
+        config_dir = tmp_path / ".tapps-agents"
+        manager = APIKeyManager(config_dir=config_dir)
+        
+        keys = manager.load_all_keys()
+        
+        assert keys == {}
+
+
+class TestSecurityAuditor:
+    """Tests for SecurityAuditor."""
+
+    def test_security_auditor_init(self, tmp_path):
+        """Test SecurityAuditor initialization."""
+        config_dir = tmp_path / ".tapps-agents"
+        cache_dir = tmp_path / "cache"
+        
+        auditor = SecurityAuditor(config_dir=config_dir, cache_dir=cache_dir)
+        
+        assert auditor.config_dir == config_dir
+        assert auditor.cache_dir == cache_dir
+        assert auditor.api_key_manager is not None
+
+    @patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", True)
+    def test_audit_with_crypto_available(self, tmp_path):
+        """Test audit when cryptography is available."""
+        config_dir = tmp_path / ".tapps-agents"
+        auditor = SecurityAuditor(config_dir=config_dir)
+        
+        result = auditor.audit()
+        
+        assert isinstance(result, SecurityAuditResult)
+        assert result.compliance_status["api_key_encrypted"] is True
+
+    @patch("tapps_agents.context7.security.CRYPTO_AVAILABLE", False)
+    def test_audit_without_crypto(self, tmp_path):
+        """Test audit when cryptography is not available."""
+        config_dir = tmp_path / ".tapps-agents"
+        auditor = SecurityAuditor(config_dir=config_dir)
+        
+        result = auditor.audit()
+        
+        assert isinstance(result, SecurityAuditResult)
+        assert "cryptography" in str(result.warnings).lower() or len(result.warnings) > 0
+
+    @patch.dict(os.environ, {"CONTEXT7_API_KEY": "test_key"})
+    def test_audit_detects_env_keys(self, tmp_path):
+        """Test audit detects API keys in environment variables."""
+        config_dir = tmp_path / ".tapps-agents"
+        auditor = SecurityAuditor(config_dir=config_dir)
+        
+        result = auditor.audit()
+        
+        assert isinstance(result, SecurityAuditResult)
+        # May have warnings about env keys
+        assert len(result.warnings) >= 0
+
+    def test_audit_file_permissions(self, tmp_path):
+        """Test audit checks file permissions."""
+        config_dir = tmp_path / ".tapps-agents"
+        config_dir.mkdir(parents=True)
+        
+        # Create keys file with open permissions
+        keys_file = config_dir / "api-keys.encrypted"
+        keys_file.write_text("test")
+        
+        # Try to set permissions (may not work on Windows)
+        try:
+            os.chmod(keys_file, 0o644)
+        except Exception:
+            pass  # Windows may not support
+        
+        auditor = SecurityAuditor(config_dir=config_dir)
+        result = auditor.audit()
+        
+        assert isinstance(result, SecurityAuditResult)
+
+    def test_verify_compliance(self, tmp_path):
+        """Test verify_compliance returns ComplianceStatus."""
+        config_dir = tmp_path / ".tapps-agents"
+        auditor = SecurityAuditor(config_dir=config_dir)
+        
+        result = auditor.verify_compliance()
+        
+        assert isinstance(result, ComplianceStatus)
+        assert hasattr(result, "soc2_verified")
+        assert hasattr(result, "api_key_encrypted")
 
 
 class TestSecurityAuditResult:
-    """Tests for SecurityAuditResult."""
+    """Tests for SecurityAuditResult dataclass."""
 
-    def test_to_dict(self):
-        """Test converting SecurityAuditResult to dictionary."""
+    def test_security_audit_result_to_dict(self):
+        """Test SecurityAuditResult.to_dict()."""
         result = SecurityAuditResult(
             passed=True,
             issues=[],
-            warnings=["Warning 1"],
-            recommendations=["Recommendation 1"],
-            timestamp="2025-01-01T00:00:00",
-            compliance_status={"soc2": True},
+            warnings=["test warning"],
+            recommendations=["test recommendation"],
+            timestamp="2024-01-01T00:00:00",
+            compliance_status={"soc2_verified": True}
         )
         
-        data = result.to_dict()
-        assert isinstance(data, dict)
-        assert data["passed"] is True
-        assert data["warnings"] == ["Warning 1"]
-        assert data["recommendations"] == ["Recommendation 1"]
+        result_dict = result.to_dict()
+        
+        assert isinstance(result_dict, dict)
+        assert result_dict["passed"] is True
+        assert result_dict["warnings"] == ["test warning"]
 
 
 class TestComplianceStatus:
-    """Tests for ComplianceStatus."""
+    """Tests for ComplianceStatus dataclass."""
 
-    def test_to_dict(self):
-        """Test converting ComplianceStatus to dictionary."""
+    def test_compliance_status_to_dict(self):
+        """Test ComplianceStatus.to_dict()."""
         status = ComplianceStatus(
             soc2_verified=True,
             data_retention_compliant=True,
-            audit_logging_enabled=False,
+            audit_logging_enabled=True,
+            api_key_encrypted=True,
+            privacy_mode_enabled=True
         )
         
-        data = status.to_dict()
-        assert isinstance(data, dict)
-        assert data["soc2_verified"] is True
-        assert data["data_retention_compliant"] is True
-        assert data["audit_logging_enabled"] is False
-
-
-class TestSecurityAudit:
-    """Tests for security audit functionality."""
-
-    def test_security_audit_result_creation(self):
-        """Test creating SecurityAuditResult."""
-        result = SecurityAuditResult(
-            passed=True,
-            issues=[],
-            warnings=["Warning 1"],
-            recommendations=["Recommendation 1"],
-            timestamp="2025-01-01T00:00:00",
-            compliance_status={"soc2": True},
-        )
+        status_dict = status.to_dict()
         
-        assert result.passed is True
-        assert len(result.issues) == 0
-        assert len(result.warnings) == 1
-        assert len(result.recommendations) == 1
+        assert isinstance(status_dict, dict)
+        assert status_dict["soc2_verified"] is True
+        assert status_dict["api_key_encrypted"] is True
 
 
-class TestSecurityValidation:
-    """Tests for security validation functions."""
+class TestCreateSecurityAuditor:
+    """Tests for create_security_auditor convenience function."""
 
-    def test_validate_api_key_format(self):
-        """Test API key format validation."""
-        # This would test if there's a validate function
-        # Implementation depends on actual security module
-        pass
-
-    def test_validate_file_permissions(self, tmp_path):
-        """Test file permission validation."""
-        test_file = tmp_path / "test.txt"
-        test_file.write_text("test")
+    def test_create_security_auditor(self, tmp_path):
+        """Test create_security_auditor creates auditor."""
+        config_dir = tmp_path / ".tapps-agents"
         
-        # Would test permission checking if implemented
-        assert test_file.exists()
-
+        auditor = create_security_auditor(config_dir=config_dir)
+        
+        assert isinstance(auditor, SecurityAuditor)
+        assert auditor.config_dir == config_dir

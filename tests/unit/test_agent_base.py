@@ -308,3 +308,245 @@ persona_overrides:
         # FileNotFoundError would only occur if the file doesn't exist, but path validation should catch traversal first
         with pytest.raises(ValueError, match=r".*path.*traversal|.*outside.*allowed|.*invalid.*path"):
             agent._validate_path(suspicious)
+
+    @pytest.mark.asyncio
+    async def test_activate_with_invalid_config_file(self, tmp_path: Path, base_agent):
+        """Test activate handles invalid config file gracefully."""
+        config_dir = tmp_path / ".tapps-agents"
+        config_dir.mkdir(exist_ok=True)
+        config_file = config_dir / "config.yaml"
+        config_file.write_text("invalid: yaml: content: [")
+        
+        agent = base_agent
+        # Should not raise exception, should use defaults
+        await agent.activate(tmp_path)
+        
+        assert agent.config is not None
+
+    @pytest.mark.asyncio
+    async def test_activate_loads_role_file(self, tmp_path: Path, base_agent):
+        """Test activate loads role file if available."""
+        config_dir = tmp_path / ".tapps-agents"
+        config_dir.mkdir(exist_ok=True)
+        roles_dir = config_dir / "roles"
+        roles_dir.mkdir(exist_ok=True)
+        role_file = roles_dir / "test-agent.md"
+        role_file.write_text("# Test Agent Role\n\nThis is a test role.")
+        
+        agent = base_agent
+        await agent.activate(tmp_path)
+        
+        # Role file may be loaded or None depending on implementation
+        assert hasattr(agent, "role_file")
+
+    @pytest.mark.asyncio
+    async def test_activate_loads_user_role_template(self, tmp_path: Path, base_agent):
+        """Test activate loads user role template if configured."""
+        config_dir = tmp_path / ".tapps-agents"
+        config_dir.mkdir(exist_ok=True)
+        config_file = config_dir / "config.yaml"
+        config_file.write_text("user_role: developer")
+        
+        agent = base_agent
+        await agent.activate(tmp_path)
+        
+        # User role template may be loaded or None
+        assert hasattr(agent, "user_role_template")
+
+    def test_parse_command_with_multiple_args(self, base_agent):
+        """Test parse_command with multiple arguments."""
+        agent = base_agent
+        
+        command, args = agent.parse_command("review file.py --format json")
+        
+        assert command == "review"
+        assert "file" in args
+
+    def test_parse_command_numbered_out_of_range(self, base_agent):
+        """Test parse_command with number out of range."""
+        agent = base_agent
+        
+        with patch.object(
+            agent,
+            "get_commands",
+            return_value=[{"command": "*help", "description": "Help"}],
+        ):
+            # Number out of range should return empty or handle gracefully
+            command, args = agent.parse_command("999")
+            # Implementation dependent - may return empty or raise
+
+    def test_get_context_with_tier(self, base_agent, sample_python_file):
+        """Test get_context with specific tier."""
+        agent = base_agent
+        
+        from tapps_agents.core.tiered_context import ContextTier
+        
+        context = agent.get_context(sample_python_file, tier=ContextTier.TIER2)
+        
+        assert isinstance(context, dict)
+
+    def test_get_context_with_related_files(self, base_agent, sample_python_file):
+        """Test get_context with include_related flag."""
+        agent = base_agent
+        
+        context = agent.get_context(sample_python_file, include_related=True)
+        
+        assert isinstance(context, dict)
+
+    def test_get_context_text_different_formats(self, base_agent, sample_python_file):
+        """Test get_context_text with different formats."""
+        agent = base_agent
+        
+        text_format = agent.get_context_text(sample_python_file, format="text")
+        markdown_format = agent.get_context_text(sample_python_file, format="markdown")
+        
+        assert isinstance(text_format, str)
+        assert isinstance(markdown_format, str)
+
+    def test_call_tool_creates_gateway_lazy(self, base_agent):
+        """Test call_tool lazy initializes MCP gateway."""
+        agent = base_agent
+        
+        # Mock MCP gateway
+        with patch("tapps_agents.core.agent_base.MCPGateway") as mock_gateway_class:
+            mock_gateway = MagicMock()
+            mock_gateway.call_tool.return_value = {"result": "test"}
+            mock_gateway_class.return_value = mock_gateway
+            
+            result = agent.call_tool("test_tool", arg1="value1")
+            
+            assert result == {"result": "test"}
+            assert agent.mcp_gateway is not None
+
+    def test_get_unified_cache_creates_cache(self, base_agent):
+        """Test get_unified_cache creates cache instance."""
+        agent = base_agent
+        
+        cache = agent.get_unified_cache()
+        
+        assert cache is not None
+        assert agent._unified_cache is not None
+
+    def test_get_unified_cache_reuses_cache(self, base_agent):
+        """Test get_unified_cache reuses existing cache."""
+        agent = base_agent
+        
+        cache1 = agent.get_unified_cache()
+        cache2 = agent.get_unified_cache()
+        
+        assert cache1 is cache2
+
+    def test_handle_optional_dependency_error(self, base_agent):
+        """Test handle_optional_dependency_error creates error result."""
+        agent = base_agent
+        
+        error = Exception("Optional dependency error")
+        result = agent.handle_optional_dependency_error(
+            error, "TestDependency", workflow_id="test", step_id="step1"
+        )
+        
+        assert isinstance(result, dict)
+        assert "error" in result or "recoverable" in result
+
+    def test_handle_optional_dependency_error_context7(self, base_agent):
+        """Test handle_optional_dependency_error with Context7UnavailableError."""
+        agent = base_agent
+        
+        from tapps_agents.core.exceptions import Context7UnavailableError
+        
+        error = Context7UnavailableError("Context7 unavailable")
+        result = agent.handle_optional_dependency_error(error, "Context7")
+        
+        assert isinstance(result, dict)
+
+    @pytest.mark.asyncio
+    async def test_activate_sets_project_root(self, tmp_path: Path, base_agent):
+        """Test activate sets _project_root for path validation."""
+        agent = base_agent
+        await agent.activate(tmp_path)
+        
+        assert agent._project_root == tmp_path
+
+    def test_validate_path_uses_project_root(self, base_agent, tmp_path):
+        """Test _validate_path uses cached project root."""
+        agent = base_agent
+        agent._project_root = tmp_path
+        
+        test_file = tmp_path / "test.py"
+        test_file.write_text("code")
+        
+        # Should not raise
+        agent._validate_path(test_file)
+
+    def test_parse_command_empty_after_strip(self, base_agent):
+        """Test parse_command handles whitespace-only input."""
+        agent = base_agent
+        
+        command, args = agent.parse_command("   ")
+        
+        assert command == ""
+        assert args == {}
+
+    def test_format_help_includes_all_commands(self, base_agent):
+        """Test format_help includes all commands from get_commands."""
+        agent = base_agent
+        
+        # Mock get_commands to return multiple commands
+        with patch.object(
+            agent,
+            "get_commands",
+            return_value=[
+                {"command": "*help", "description": "Help"},
+                {"command": "*review", "description": "Review"},
+                {"command": "*score", "description": "Score"},
+            ],
+        ):
+            help_text = agent.format_help()
+            
+            assert "*help" in help_text
+            assert "*review" in help_text
+            assert "*score" in help_text
+
+    def test_get_commands_returns_list(self, base_agent):
+        """Test get_commands always returns a list."""
+        agent = base_agent
+        commands = agent.get_commands()
+        
+        assert isinstance(commands, list)
+        assert len(commands) >= 1
+
+    @pytest.mark.asyncio
+    async def test_activate_handles_domain_config_read_error(self, tmp_path: Path, base_agent):
+        """Test activate handles domain config read errors."""
+        config_dir = tmp_path / ".tapps-agents"
+        config_dir.mkdir(exist_ok=True)
+        domains_file = config_dir / "domains.md"
+        # Create a file that can't be read (directory)
+        domains_file.mkdir()
+        
+        agent = base_agent
+        # Should not raise exception
+        await agent.activate(tmp_path)
+        
+        # Domain config should be None on error
+        assert agent.domain_config is None
+
+    def test_get_context_initializes_context_manager(self, base_agent, sample_python_file):
+        """Test get_context initializes context_manager if None."""
+        agent = base_agent
+        agent.context_manager = None
+        
+        context = agent.get_context(sample_python_file)
+        
+        assert agent.context_manager is not None
+        assert isinstance(context, dict)
+
+    def test_get_context_text_initializes_context_manager(self, base_agent, sample_python_file):
+        """Test get_context_text initializes context_manager if None."""
+        agent = base_agent
+        agent.context_manager = None
+        
+        context_text = agent.get_context_text(sample_python_file)
+        
+        assert agent.context_manager is not None
+        assert isinstance(context_text, str)

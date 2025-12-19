@@ -251,3 +251,69 @@ def get_expected_artifacts_from_metadata(worktree_path: Path) -> list[str]:
     workflow_context = metadata.get("workflow_context", {})
     return workflow_context.get("expected_artifacts", [])
 
+
+def write_structured_status_file(
+    status_file: Path,
+    status: str,
+    progress: dict[str, Any] | None = None,
+    partial_results: dict[str, Any] | None = None,
+    error: dict[str, Any] | None = None,
+    artifacts: list[str] | None = None,
+    output: str | None = None,
+    metadata: dict[str, Any] | None = None,
+    started_at: str | None = None,
+    completed_at: str | None = None,
+) -> None:
+    """
+    Write structured status file (Phase 4 - Enhanced format).
+
+    This function creates a structured status file that includes:
+    - Progress updates (percentage, current step, message)
+    - Partial results (artifacts, output)
+    - Error details (message, code, retryable, retry_count)
+    - Metadata (workflow_id, step_id, command)
+
+    Args:
+        status_file: Path to status file to write
+        status: Status string ("running", "completed", "failed", "pending")
+        progress: Optional progress information
+        partial_results: Optional partial results
+        error: Optional error information
+        artifacts: Optional list of artifact paths
+        output: Optional execution output
+        metadata: Optional metadata (workflow_id, step_id, command)
+        started_at: Optional ISO datetime string for start time
+        completed_at: Optional ISO datetime string for completion time
+    """
+    status_data = {
+        "version": "1.0",
+        "status": status,
+    }
+    
+    if started_at:
+        status_data["started_at"] = started_at
+    if completed_at:
+        status_data["completed_at"] = completed_at
+    
+    if progress:
+        status_data["progress"] = progress
+    
+    if partial_results:
+        status_data["partial_results"] = partial_results
+    
+    if error:
+        status_data["error"] = error
+    
+    if artifacts:
+        status_data["artifacts"] = artifacts
+    
+    if output:
+        status_data["output"] = output
+    
+    if metadata:
+        status_data["metadata"] = metadata
+    
+    status_file.write_text(
+        json.dumps(status_data, indent=2), encoding="utf-8"
+    )
+

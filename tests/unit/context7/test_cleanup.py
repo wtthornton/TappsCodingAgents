@@ -6,6 +6,7 @@ import shutil
 import tempfile
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
+from unittest.mock import Mock, patch
 
 import pytest
 
@@ -140,15 +141,15 @@ class TestCleanupResult:
         assert len(data["details"]) == 1
 
 
-@pytest.mark.skip(reason="SKIPPED: Cache lock timeouts - all tests need file locking mocks. "
-                         "To fix: Mock file lock acquisition/release in cache operations. "
-                         "Not critical for functionality - cleanup logic is tested via integration tests.")
 class TestKBCleanup:
     """Tests for KBCleanup class."""
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeout - needs mock for file locking")
-    def test_get_cache_size(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_get_cache_size(self, mock_lock, cleanup, kb_cache):
         """Test getting cache size."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         kb_cache.store(
             library="react",
             topic="hooks",
@@ -159,8 +160,12 @@ class TestKBCleanup:
         size = cleanup.get_cache_size()
         assert size > 0
 
-    def test_get_entry_access_info(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_get_entry_access_info(self, mock_lock, cleanup, kb_cache):
         """Test getting entry access information."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         kb_cache.store(
             library="react",
             topic="hooks",
@@ -180,8 +185,12 @@ class TestKBCleanup:
         assert result.bytes_freed == 0
         assert result.reason == "cache_size_ok"
 
-    def test_cleanup_by_size_over_limit(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_by_size_over_limit(self, mock_lock, cleanup, kb_cache):
         """Test cleanup when size is over limit."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create multiple entries to exceed limit
         for i in range(10):
             kb_cache.store(
@@ -201,8 +210,12 @@ class TestKBCleanup:
         assert result.bytes_freed > 0
         assert result.reason == "size_cleanup"
 
-    def test_cleanup_by_size_preserves_recent(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_by_size_preserves_recent(self, mock_lock, cleanup, kb_cache):
         """Test that recent entries are preserved."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create old entry
         kb_cache.store(
             library="old_lib",
@@ -243,8 +256,13 @@ class TestKBCleanup:
             assert result.reason == "cache_size_ok", \
                 f"Expected cleanup reason to be 'cache_size_ok' when within limit, got {result.reason}"
 
-    def test_cleanup_by_age(self, cleanup, kb_cache, sample_entries):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_by_age(self, mock_lock, cleanup, kb_cache, sample_entries):
         """Test cleanup by age."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create entries with known ages
         now = datetime.now(UTC)
         
@@ -295,8 +313,12 @@ class TestKBCleanup:
         assert "recent_topic" in metadata_after.libraries["recent_lib"].get("topics", {}), \
             "Recent entry topic should still exist in cache"
 
-    def test_cleanup_by_age_ignores_policy(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_by_age_ignores_policy(self, mock_lock, cleanup, kb_cache):
         """Test cleanup by age with ignore_staleness_policy."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create old entry (2 days ago) - should be removed with max_age_days=1
         now = datetime.now(UTC)
         old_date = now - timedelta(days=2)
@@ -330,8 +352,12 @@ class TestKBCleanup:
                "old_topic" not in metadata_after.libraries.get("old_lib", {}).get("topics", {}), \
             "Old entry (2 days old) should be removed from cache when max_age_days=1"
 
-    def test_cleanup_unused(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_unused(self, mock_lock, cleanup, kb_cache):
         """Test cleanup of unused entries."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create entry that won't be accessed
         kb_cache.store(
             library="unused_lib",
@@ -375,8 +401,12 @@ class TestKBCleanup:
         assert "used_topic" in metadata_after.libraries["used_lib"].get("topics", {}), \
             "Used entry topic should still exist in cache"
 
-    def test_cleanup_all(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_all(self, mock_lock, cleanup, kb_cache):
         """Test comprehensive cleanup."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create entries
         for i in range(5):
             kb_cache.store(
@@ -404,8 +434,12 @@ class TestKBCleanup:
         assert result.bytes_freed >= 0, \
             f"Bytes freed should be non-negative, got {result.bytes_freed}"
 
-    def test_get_cleanup_recommendations(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_get_cleanup_recommendations(self, mock_lock, cleanup, kb_cache):
         """Test getting cleanup recommendations."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create entries
         kb_cache.store(
             library="test_lib",
@@ -423,8 +457,12 @@ class TestKBCleanup:
         assert "recommendations" in recommendations
         assert isinstance(recommendations["recommendations"], list)
 
-    def test_get_cleanup_recommendations_size_limit(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_get_cleanup_recommendations_size_limit(self, mock_lock, cleanup, kb_cache):
         """Test recommendations when over size limit."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create large entries
         for i in range(10):
             kb_cache.store(
@@ -444,8 +482,12 @@ class TestKBCleanup:
             r["type"] == "size_cleanup" for r in recommendations["recommendations"]
         )
 
-    def test_cleanup_size_calculation_correctness(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_size_calculation_correctness(self, mock_lock, cleanup, kb_cache):
         """Test that cleanup size calculations are mathematically correct (Story 18.3)."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Create entries with known sizes
         entry1_content = "X" * 100  # 100 bytes
         entry2_content = "Y" * 200  # 200 bytes
@@ -494,8 +536,12 @@ class TestKBCleanup:
         assert new_size <= target_size + 50, \
             f"After cleanup, size should be <= target ({target_size}), got {new_size}"
 
-    def test_cleanup_age_calculation_correctness(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_age_calculation_correctness(self, mock_lock, cleanup, kb_cache):
         """Test that cleanup age calculations are correct (Story 18.3)."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         from datetime import UTC, datetime, timedelta
         
         # Create entry with known age
@@ -529,8 +575,12 @@ class TestKBCleanup:
         assert result.reason == "age_cleanup", \
             f"Cleanup reason should be 'age_cleanup', got {result.reason}"
 
-    def test_cache_hit_miss_logic(self, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cache_hit_miss_logic(self, mock_lock, kb_cache):
         """Test cache hit/miss logic with known cache states (Story 18.3)."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         # Initially, cache should be empty (miss)
         entry = kb_cache.get("nonexistent_lib", "nonexistent_topic")
         assert entry is None, \
@@ -561,8 +611,12 @@ class TestKBCleanup:
             "Second retrieval should also be a hit"
         # Cache hits should be tracked (may require metadata check)
         
-    def test_cleanup_preserves_recent_entries(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_preserves_recent_entries(self, mock_lock, cleanup, kb_cache):
         """Test that cleanup preserves recent entries correctly (Story 18.3)."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         from datetime import UTC, datetime, timedelta
         
         # Create old entry (60 days ago)
@@ -614,8 +668,12 @@ class TestKBCleanup:
             assert "recent_topic" in metadata_after.libraries["recent_lib"].get("topics", {}), \
                 "Recent entry (5 days old) should be preserved when preserve_recent=True and min_access_days=30"
 
-    def test_cleanup_lru_eviction_order(self, cleanup, kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cleanup_lru_eviction_order(self, mock_lock, cleanup, kb_cache):
         """Test that cleanup uses LRU (Least Recently Used) eviction order (Story 18.3)."""
+        # Mock cache_lock to avoid file locking issues
+        mock_lock.return_value.__enter__ = Mock(return_value=Mock())
+        mock_lock.return_value.__exit__ = Mock(return_value=None)
         from datetime import UTC, datetime, timedelta
         
         # Create multiple entries with different access times

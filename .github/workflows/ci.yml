@@ -115,6 +115,7 @@ jobs:
             --cov=tapps_agents \
             --cov-report=xml \
             --cov-report=term-missing \
+            --cov-fail-under=75 \
             --tb=short \
             -v
 
@@ -144,6 +145,26 @@ jobs:
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
 
+      - name: Extract coverage percentage
+        if: always()
+        id: coverage
+        run: |
+          if [ -f coverage.xml ]; then
+            # Extract total coverage percentage from coverage.xml
+            COVERAGE=$(python -c "
+            import xml.etree.ElementTree as ET
+            tree = ET.parse('coverage.xml')
+            root = tree.getroot()
+            total = float(root.get('line-rate', 0)) * 100
+            print(f'{total:.2f}')
+            ")
+            echo "percentage=$COVERAGE" >> $GITHUB_OUTPUT
+            echo "Coverage: $COVERAGE%"
+          else
+            echo "percentage=0.00" >> $GITHUB_OUTPUT
+            echo "Coverage: No coverage file found"
+          fi
+
       - name: Test Summary
         if: always()
         run: |
@@ -159,5 +180,18 @@ jobs:
             echo "- Check test output in the workflow logs" >> $GITHUB_STEP_SUMMARY
             echo "- Run tests locally: \`pytest tests/\`" >> $GITHUB_STEP_SUMMARY
           fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Coverage Report" >> $GITHUB_STEP_SUMMARY
+          COVERAGE="${{ steps.coverage.outputs.percentage }}"
+          echo "**Coverage: $COVERAGE%**" >> $GITHUB_STEP_SUMMARY
+          python -c "
+          coverage = float('$COVERAGE')
+          if coverage < 75.0:
+              print('⚠️ **Coverage below 75% threshold**') >> $GITHUB_STEP_SUMMARY
+          else:
+              print('✅ Coverage meets 75% threshold') >> $GITHUB_STEP_SUMMARY
+          "
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed coverage report in the coverage-ci artifact or on [Codecov](https://codecov.io/gh/${{ github.repository }})." >> $GITHUB_STEP_SUMMARY
 
 

@@ -411,10 +411,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         # Generate LLM feedback
         if include_llm_feedback:
+            # Model parameter deprecated - use default for Cursor Skills
+            model_name = "reviewer-agent"
             feedback = await self._generate_feedback(
                 code,
                 scores if include_scoring else None,
-                model,
+                model_name,
                 expert_guidance=expert_guidance,
             )
             result["feedback"] = feedback

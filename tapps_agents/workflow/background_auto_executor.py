@@ -506,4 +506,85 @@ class BackgroundAgentAutoExecutor:
                 # Add metadata
                 metadata = status_data.get("metadata", {})
                 if metadata:
-                    res
+                    result["metadata"] = metadata
+                
+                return result
+            else:
+                # Old format (backward compatibility)
+                status = status_data.get("status", "unknown")
+
+            if status == "completed":
+                return {
+                    "completed": True,
+                    "status": "completed",
+                    "status_file_exists": True,
+                    "artifacts": status_data.get("artifacts", []),
+                    "output": status_data.get("output"),
+                    "started_at": status_data.get("started_at"),
+                    "completed_at": status_data.get("completed_at"),
+                }
+            elif status == "failed":
+                return {
+                    "completed": True,  # Failed is a completion state
+                    "status": "failed",
+                    "status_file_exists": True,
+                    "error": status_data.get("error", "Unknown error"),
+                    "started_at": status_data.get("started_at"),
+                    "completed_at": status_data.get("completed_at"),
+                }
+            else:
+                # Still running
+                return {
+                    "completed": False,
+                    "status": status,
+                    "status_file_exists": True,
+                    "started_at": status_data.get("started_at"),
+                }
+
+        except (json.JSONDecodeError, KeyError, OSError) as e:
+            logger.warning(
+                f"Error reading status file {status_file}: {e}",
+                extra={"status_file": str(status_file)},
+                exc_info=True,
+            )
+            return {
+                "completed": False,
+                "status": "error",
+                "status_file_exists": True,
+                "error": f"Error reading status file: {e}",
+            }
+
+    def handle_completion(
+        self,
+        result: dict[str, Any],
+        step_execution: Any | None = None,
+    ) -> dict[str, Any]:
+        """
+        Handle completion result and update step execution if provided.
+
+        Args:
+            result: Result from poll_for_completion or execute_command
+            step_execution: Optional StepExecution object to update
+
+        Returns:
+            Processed result dictionary
+        """
+        if step_execution:
+            if result.get("status") == "completed":
+                step_execution.status = "completed"
+                step_execution.completed_at = datetime.now()
+            elif result.get("status") == "failed":
+                step_execution.status = "failed"
+                step_execution.error = result.get("error", "Unknown error")
+                step_execution.completed_at = datetime.now()
+            elif result.get("status") == "timeout":
+                step_execution.status = "failed"
+                step_execution.error = result.get("error", "Execution timeout")
+                step_execution.completed_at = datetime.now()
+
+            # Calculate duration if available
+            if result.get("duration_seconds"):
+                step_execution.duration_seconds = result["duration_seconds"]
+
+        return result
+
