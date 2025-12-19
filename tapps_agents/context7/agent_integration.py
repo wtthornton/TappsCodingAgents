@@ -2,6 +2,7 @@
 Context7 Agent Integration - Helper functions for agents to use Context7 KB.
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +15,8 @@ from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import KBCache
 from .lookup import KBLookup
 from .metadata import MetadataManager
+
+logger = logging.getLogger(__name__)
 
 
 class Context7AgentHelper:
@@ -49,15 +52,11 @@ class Context7AgentHelper:
         try:
             cred_result = validate_context7_credentials(mcp_gateway=mcp_gateway)
             if not cred_result.valid:
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.warning(
                     f"Context7 credentials validation failed: {cred_result.error}\n"
                     f"{cred_result.actionable_message}"
                 )
         except Exception as e:
-            import logging
-            logger = logging.getLogger(__name__)
             logger.debug(f"Context7 credential validation error: {e}", exc_info=True)
 
         self.enabled = True
@@ -113,9 +112,19 @@ class Context7AgentHelper:
                     "matched_topic": result.matched_topic,
                     "response_time_ms": result.response_time_ms,
                 }
+            elif result.error:
+                # Log Context7 unavailability but continue
+                logger.info(
+                    f"Context7 lookup unavailable for library '{library}' "
+                    f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
+                )
         except Exception as e:
             # Log error but don't fail the agent
-            print(f"Context7 lookup error: {e}")
+            logger.warning(
+                f"Context7 lookup error for library '{library}' (topic: {topic}): {e}. "
+                f"Continuing without Context7 documentation.",
+                exc_info=True
+            )
 
         return None
 
@@ -144,8 +153,19 @@ class Context7AgentHelper:
             if result.get("success"):
                 matches = result.get("result", {}).get("matches", [])
                 return matches[:limit]
+            else:
+                # Log Context7 unavailability but continue
+                error_msg = result.get("error", "Unknown error")
+                logger.info(
+                    f"Context7 search unavailable for query '{query}': {error_msg}. "
+                    f"Continuing without Context7 library search."
+                )
         except Exception as e:
-            print(f"Context7 search error: {e}")
+            logger.warning(
+                f"Context7 search error for query '{query}': {e}. "
+                f"Continuing without Context7 library search.",
+                exc_info=True
+            )
 
         return []
 

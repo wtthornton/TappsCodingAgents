@@ -9,6 +9,7 @@ Pattern:
 2. Fallback to direct HTTP calls if MCP not available - requires CONTEXT7_API_KEY
 """
 
+import logging
 import os
 import urllib.parse
 from typing import Any, Callable
@@ -17,13 +18,28 @@ import httpx
 
 from ..mcp.gateway import MCPGateway
 
+logger = logging.getLogger(__name__)
+
 
 def check_mcp_tools_available(gateway: MCPGateway | None = None) -> bool:
     """
     Check if Context7 MCP tools are available via Cursor's MCP server.
     
+    When running in Cursor mode, MCP tools are available through Cursor's MCP interface.
+    This function checks if we're in Cursor mode and assumes MCP tools are available.
+    
     Returns True if MCP tools are available (no API key needed).
     """
+    # First, check if we're running in Cursor mode
+    from ..core.runtime_mode import is_cursor_mode
+    if is_cursor_mode():
+        # In Cursor mode, MCP tools should be available through Cursor's MCP server
+        # We can't directly check Cursor's MCP registry from Python, but if we're
+        # in Cursor mode, we should try to use MCP tools
+        logger.debug("Running in Cursor mode - assuming Context7 MCP tools are available")
+        return True
+    
+    # If not in Cursor mode, check the custom gateway registry
     if gateway is None:
         try:
             gateway = MCPGateway()
@@ -31,7 +47,7 @@ def check_mcp_tools_available(gateway: MCPGateway | None = None) -> bool:
             return False
     
     try:
-        # Check if Context7 MCP tools are registered
+        # Check if Context7 MCP tools are registered in custom gateway
         tools = gateway.list_available_tools()
         tool_names = [tool.get("name", "") for tool in tools]
         
@@ -466,6 +482,10 @@ def get_context7_client_with_fallback(
     # #endregion
     if not api_available:
         # Neither MCP nor API key available
+        logger.info(
+            "Context7 not available: MCP tools not found and CONTEXT7_API_KEY not set. "
+            "Continuing without Context7 functionality."
+        )
         # #region agent log
         try:
             with open(log_path, "a", encoding="utf-8") as f:
@@ -536,15 +556,44 @@ async def call_context7_resolve_with_fallback(
     if use_mcp and gateway:
         # Use MCP Gateway - Cursor's MCP server handles API key
         try:
+            # In Cursor mode, the custom gateway may not have the tools registered
+            # Try to call the tool, but if it fails, fall back to HTTP
             result = await gateway.call_tool(
                 "mcp_Context7_resolve-library-id",
                 libraryName=library_name,
             )
             return result
-        except Exception as e:
-            # If MCP call fails, try fallback
+        except (ValueError, KeyError) as e:
+            # Tool not found in custom gateway registry - this is expected in Cursor mode
+            # The tools are in Cursor's MCP server, not the custom gateway
+            # Fall back to HTTP client if available
+            logger.debug(
+                f"Context7 MCP tool not found in custom gateway for library '{library_name}'. "
+                f"This is expected in Cursor mode where tools are in Cursor's MCP server. "
+                f"Falling back to HTTP client if available."
+            )
             if resolve_client:
                 return resolve_client(library_name)
+            # If no HTTP fallback, indicate MCP tools should be used by AI assistant
+            logger.info(
+                f"Context7 MCP tools are available in Cursor but cannot be called directly from Python. "
+                f"AI assistant should use MCP tools: mcp_Context7_resolve-library-id with libraryName='{library_name}'. "
+                f"Continuing without Context7 documentation in this Python process."
+            )
+            return {
+                "success": False,
+                "error": "Context7 MCP tools available in Cursor but require AI assistant to call them",
+                "result": {"matches": []},
+            }
+        except Exception as e:
+            # Other errors - try fallback
+            logger.debug(f"Context7 MCP Gateway call failed for library '{library_name}': {e}. Trying fallback.", exc_info=True)
+            if resolve_client:
+                return resolve_client(library_name)
+            logger.info(
+                f"Context7 not available for library '{library_name}': MCP Gateway call failed and no fallback available. "
+                f"Continuing without Context7 documentation."
+            )
             return {
                 "success": False,
                 "error": f"MCP Gateway call failed: {e}",
@@ -554,6 +603,10 @@ async def call_context7_resolve_with_fallback(
         # Fallback: Use direct HTTP client
         return resolve_client(library_name)
     else:
+        logger.info(
+            f"Context7 not available for library '{library_name}': MCP tools not found and CONTEXT7_API_KEY not set. "
+            f"Continuing without Context7 documentation."
+        )
         return {
             "success": False,
             "error": "Context7 not available: MCP tools not found and CONTEXT7_API_KEY not set",
@@ -586,6 +639,8 @@ async def call_context7_get_docs_with_fallback(
     if use_mcp and gateway:
         # Use MCP Gateway - Cursor's MCP server handles API key
         try:
+            # In Cursor mode, the custom gateway may not have the tools registered
+            # Try to call the tool, but if it fails, fall back to HTTP
             result = await gateway.call_tool(
                 "mcp_Context7_get-library-docs",
                 context7CompatibleLibraryID=context7_id,
@@ -594,10 +649,41 @@ async def call_context7_get_docs_with_fallback(
                 page=page,
             )
             return result
-        except Exception as e:
-            # If MCP call fails, try fallback
+        except (ValueError, KeyError) as e:
+            # Tool not found in custom gateway registry - this is expected in Cursor mode
+            # The tools are in Cursor's MCP server, not the custom gateway
+            # Fall back to HTTP client if available
+            logger.debug(
+                f"Context7 MCP tool not found in custom gateway for library '{context7_id}' (topic: {topic}). "
+                f"This is expected in Cursor mode where tools are in Cursor's MCP server. "
+                f"Falling back to HTTP client if available."
+            )
             if get_docs_client:
                 return get_docs_client(context7_id, topic, mode, page)
+            # If no HTTP fallback, indicate MCP tools should be used by AI assistant
+            logger.info(
+                f"Context7 MCP tools are available in Cursor but cannot be called directly from Python. "
+                f"AI assistant should use MCP tools: mcp_Context7_get-library-docs with "
+                f"context7CompatibleLibraryID='{context7_id}', topic='{topic}', mode='{mode}', page={page}. "
+                f"Continuing without Context7 documentation in this Python process."
+            )
+            return {
+                "success": False,
+                "error": "Context7 MCP tools available in Cursor but require AI assistant to call them",
+                "result": {},
+            }
+        except Exception as e:
+            # Other errors - try fallback
+            logger.debug(
+                f"Context7 MCP Gateway call failed for library '{context7_id}' (topic: {topic}): {e}. Trying fallback.",
+                exc_info=True
+            )
+            if get_docs_client:
+                return get_docs_client(context7_id, topic, mode, page)
+            logger.info(
+                f"Context7 not available for library '{context7_id}' (topic: {topic}): "
+                f"MCP Gateway call failed and no fallback available. Continuing without Context7 documentation."
+            )
             return {
                 "success": False,
                 "error": f"MCP Gateway call failed: {e}",
@@ -607,6 +693,10 @@ async def call_context7_get_docs_with_fallback(
         # Fallback: Use direct HTTP client
         return get_docs_client(context7_id, topic, mode, page)
     else:
+        logger.info(
+            f"Context7 not available for library '{context7_id}' (topic: {topic}): "
+            f"MCP tools not found and CONTEXT7_API_KEY not set. Continuing without Context7 documentation."
+        )
         return {
             "success": False,
             "error": "Context7 not available: MCP tools not found and CONTEXT7_API_KEY not set",

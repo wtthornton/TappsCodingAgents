@@ -177,27 +177,41 @@ class KBLookup:
             )
             if resolve_result.get("success"):
                 matches = resolve_result.get("result", {}).get("matches", [])
-            elif "quota exceeded" in resolve_result.get("error", "").lower():
-                # Quota exceeded - return early with specific error
-                response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
-                return LookupResult(
-                    success=False,
-                    source="api",
-                    library=library,
-                    topic=topic,
-                    error=resolve_result.get("error", "Context7 API quota exceeded"),
-                    response_time_ms=response_time,
-                )
                 if matches and len(matches) > 0:
                     context7_id = (
                         matches[0].get("id")
                         if isinstance(matches[0], dict)
                         else str(matches[0])
                     )
+            elif "quota exceeded" in resolve_result.get("error", "").lower():
+                # Quota exceeded - log and return early with specific error
+                error_msg = resolve_result.get("error", "Context7 API quota exceeded")
+                logger.warning(
+                    f"Context7 API quota exceeded for library '{library}' (topic: {topic}): {error_msg}. "
+                    f"Continuing without Context7 documentation."
+                )
+                response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+                return LookupResult(
+                    success=False,
+                    source="api",
+                    library=library,
+                    topic=topic,
+                    error=error_msg,
+                    response_time_ms=response_time,
+                )
+            else:
+                # Context7 unavailable - log and continue
+                error_msg = resolve_result.get("error", "Context7 not available")
+                logger.info(
+                    f"Context7 not available for library '{library}' (topic: {topic}): {error_msg}. "
+                    f"Continuing without Context7 documentation."
+                )
         except Exception as e:
             # Continue without context7_id if resolution fails
-            logger.debug(
-                f"Failed to resolve Context7 library id: {e}", exc_info=True
+            logger.warning(
+                f"Failed to resolve Context7 library id for '{library}' (topic: {topic}): {e}. "
+                f"Continuing without Context7 documentation.",
+                exc_info=True
             )
 
         # Step 4: Fetch from Context7 API
@@ -218,8 +232,20 @@ class KBLookup:
                         if isinstance(result_data, dict)
                         else result_data
                     )
+                else:
+                    # Context7 unavailable - log and continue
+                    error_msg = api_result.get("error", "Context7 not available")
+                    logger.info(
+                        f"Context7 not available for library '{library}' (topic: {topic}): {error_msg}. "
+                        f"Continuing without Context7 documentation."
+                    )
+                    content = None
             except Exception as e:
-                logger.debug(f"Failed to fetch Context7 docs: {e}", exc_info=True)
+                logger.warning(
+                    f"Failed to fetch Context7 docs for library '{library}' (topic: {topic}): {e}. "
+                    f"Continuing without Context7 documentation.",
+                    exc_info=True
+                )
                 content = None
 
             # Step 5: Store in cache if we got content
@@ -245,11 +271,16 @@ class KBLookup:
 
         # If we reach here, lookup failed
         response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+        error_msg = "No documentation found in cache or API unavailable"
+        logger.info(
+            f"Context7 lookup failed for library '{library}' (topic: {topic}): {error_msg}. "
+            f"Continuing without Context7 documentation."
+        )
         return LookupResult(
             success=False,
             source="cache",
             library=library,
             topic=topic,
-            error="No documentation found in cache or API unavailable",
+            error=error_msg,
             response_time_ms=response_time,
         )
