@@ -51,7 +51,8 @@ async def check_dependencies() -> dict[str, Any]:
 
 async def create_improvement_plan(analysis_results: dict[str, Any]) -> dict[str, Any]:
     """Create a plan to fix identified issues."""
-    print("📋 Creating improvement plan...")
+    from tapps_agents.core.unicode_safe import safe_print
+    safe_print("[PLAN] Creating improvement plan...")
 
     analyst = AnalystAgent()
     planner = PlannerAgent()
@@ -111,8 +112,9 @@ async def execute_fixes(plan: dict[str, Any]) -> list[dict[str, Any]]:
         await implementer.activate()
 
         # Execute fixes for each story
+        from tapps_agents.core.unicode_safe import safe_print
         for story in plan.get("stories", []):
-            print(f"\n📝 Working on: {story.get('title', 'Unknown story')}")
+            safe_print(f"\n[WORK] Working on: {story.get('title', 'Unknown story')}")
 
             # Use implementer to fix issues
             fix_result = await implementer.run(
@@ -169,7 +171,8 @@ async def main():
     plan_file.parent.mkdir(exist_ok=True)
     with open(plan_file, "w") as f:
         json.dump(plan, f, indent=2)
-    print(f"\n💾 Plan saved to: {plan_file}")
+    from tapps_agents.core.unicode_safe import safe_print
+    safe_print(f"\n[SAVE] Plan saved to: {plan_file}")
 
     # Step 4: Ask for confirmation before executing
     print("\n" + "=" * 60)

@@ -1,8 +1,25 @@
 """Execute full SDLC workflow for Amazon HTML page creation."""
 import asyncio
 import sys
+import os
 import logging
 from pathlib import Path
+
+# Windows compatibility: Set UTF-8 encoding for console output
+if sys.platform == "win32":
+    # Set environment variable for subprocess calls
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    # Reconfigure stdout/stderr if available (Python 3.7+)
+    if hasattr(sys.stdout, 'reconfigure'):
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+        except Exception:
+            pass  # Ignore if reconfigure fails
+
+# Force headless mode to see terminal output and run fully automated
+# This bypasses Cursor mode which uses Background Agents and manual execution
+os.environ["TAPPS_AGENTS_MODE"] = "headless"
 
 # Add the project to the path
 sys.path.insert(0, str(Path(__file__).parent))

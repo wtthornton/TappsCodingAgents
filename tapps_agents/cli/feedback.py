@@ -313,15 +313,14 @@ class FeedbackManager:
                 output["percentage"] = percentage
             print(json.dumps(output), file=sys.stderr)
         else:
-            # Text format
+            # Text format - use ASCII-safe characters for Windows compatibility
+            from ..core.unicode_safe import safe_print, safe_format_progress_bar
             if show_progress_bar and percentage is not None:
-                bar_length = 30
-                filled = int(bar_length * percentage / 100)
-                bar = "█" * filled + "░" * (bar_length - filled)
-                print(f"→ {message} [{bar}] {percentage}%", file=sys.stderr, end="\r")
+                bar = safe_format_progress_bar(percentage, width=30)
+                safe_print(f"-> {message} {bar}", file=sys.stderr, end="\r")
                 sys.stderr.flush()
             else:
-                print(f"→ {message}", file=sys.stderr, end="\r")
+                safe_print(f"-> {message}", file=sys.stderr, end="\r")
                 sys.stderr.flush()
     
     def clear_progress(self) -> None:

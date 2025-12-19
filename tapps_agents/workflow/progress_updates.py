@@ -292,11 +292,10 @@ class ProgressUpdateGenerator:
             width: Width of progress bar in characters
 
         Returns:
-            Formatted progress bar string
+            Formatted progress bar string (ASCII-safe)
         """
-        filled = int((percentage / 100.0) * width)
-        bar = "█" * filled + "░" * (width - filled)
-        return f"`[{bar}] {percentage:.1f}%`"
+        from ..core.unicode_safe import safe_format_progress_bar
+        return safe_format_progress_bar(percentage, width)
 
 
 class UpdateQueue:

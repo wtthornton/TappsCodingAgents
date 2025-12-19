@@ -7,6 +7,7 @@ Epic 8 / Story 8.3: Cursor Chat Integration
 
 import logging
 
+from ..core.unicode_safe import safe_print, _unicode_to_ascii
 from .progress_updates import ProgressUpdate
 
 logger = logging.getLogger(__name__)
@@ -40,12 +41,7 @@ class ChatUpdateSender:
         # Cursor chat doesn't have a direct API, so we use print()
         # which appears in the chat interface
         # Note: Message replacement not supported without API, so we always send new messages
-        try:
-            print(f"\n{formatted_message}\n")
-        except UnicodeEncodeError:
-            # Handle Windows console encoding issues by replacing problematic characters
-            safe_message = formatted_message.encode('ascii', 'replace').decode('ascii')
-            print(f"\n{safe_message}\n")
+        safe_print(f"\n{formatted_message}\n")
         self.message_count += 1
 
     def send_progress_update(self, update: ProgressUpdate, formatted: str) -> None:
@@ -91,9 +87,8 @@ def format_progress_bar(percentage: float, width: int = 30) -> str:
         width: Width of progress bar in characters
 
     Returns:
-        Formatted progress bar string
+        Formatted progress bar string (ASCII-safe)
     """
-    filled = int((percentage / 100.0) * width)
-    bar = "█" * filled + "░" * (width - filled)
-    return f"`[{bar}] {percentage:.1f}%`"
+    from ..core.unicode_safe import safe_format_progress_bar
+    return safe_format_progress_bar(percentage, width)
 

@@ -407,6 +407,15 @@ class WorkflowExecutor:
             running_step_ids.update(step.id for step in ready_steps)
             self._emit_step_start_events(ready_steps)
             
+            # Print progress to terminal in headless mode (for CLI visibility)
+            if not is_cursor_mode():
+                from ..core.unicode_safe import safe_print
+                step_names = [f"{s.agent}/{s.action}" for s in ready_steps]
+                completed = len(completed_step_ids)
+                total = len(self.workflow.steps)
+                progress_pct = int((completed / total) * 100) if total > 0 else 0
+                safe_print(f"-> Step {completed + 1}/{total} ({progress_pct}%): Executing {', '.join(step_names)}", flush=True)
+            
             async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
                 """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
                 artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
@@ -427,6 +436,15 @@ class WorkflowExecutor:
                     break
 
                 steps_executed += len(ready_steps)
+                
+                # Print completion status in headless mode
+                if not is_cursor_mode():
+                    from ..core.unicode_safe import safe_print
+                    completed = len(completed_step_ids)
+                    total = len(self.workflow.steps)
+                    progress_pct = int((completed / total) * 100) if total > 0 else 0
+                    safe_print(f"[OK] Completed {completed}/{total} steps ({progress_pct}%)", flush=True)
+                
                 # Always save state at end of iteration (fallback)
                 self.save_state()
 

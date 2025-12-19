@@ -91,12 +91,14 @@ class VisualFeedbackGenerator:
         # Clamp percentage
         percentage = max(0.0, min(100.0, percentage))
         
-        filled = int((percentage / 100.0) * width)
-        bar = "█" * filled + "░" * (width - filled)
-        
+        # Use ASCII-safe progress bar for Windows compatibility
+        from ..core.unicode_safe import safe_format_progress_bar
         if show_percentage:
-            return f"`[{bar}] {percentage:.1f}%`"
-        return f"`[{bar}]`"
+            return safe_format_progress_bar(percentage, width)
+        else:
+            filled = int((percentage / 100.0) * width)
+            bar = "=" * filled + "-" * (width - filled)
+            return f"[{bar}]"
 
     def format_step_indicator(
         self, step_number: int, total_steps: int, step_id: str | None = None

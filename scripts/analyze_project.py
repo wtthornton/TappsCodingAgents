@@ -68,7 +68,8 @@ async def check_security() -> dict[str, Any]:
 
 async def create_improvement_plan(analysis: dict[str, Any]) -> dict[str, Any]:
     """Create improvement plan using Analyst and Planner agents."""
-    print("\n📋 Step 3: Creating improvement plan...")
+    from tapps_agents.core.unicode_safe import safe_print
+    safe_print("\n[PLAN] Step 3: Creating improvement plan...")
 
     analyst = AnalystAgent()
     planner = PlannerAgent()
@@ -146,8 +147,9 @@ async def main():
     print("\n" + "=" * 70)
     print("ANALYSIS COMPLETE")
     print("=" * 70)
-    print(f"\n📊 Results saved to: {output_file}")
-    print(f"\n📋 Found {len(plan.get('stories', []))} improvement stories")
+    from tapps_agents.core.unicode_safe import safe_print
+    safe_print(f"\n[REPORT] Results saved to: {output_file}")
+    safe_print(f"\n[INFO] Found {len(plan.get('stories', []))} improvement stories")
     print("\nNext steps:")
     print("  1. Review the analysis in the JSON file")
     print("  2. Prioritize stories from the plan")

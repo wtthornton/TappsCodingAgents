@@ -23,6 +23,10 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
+# Setup Windows encoding compatibility
+from tapps_agents.core.unicode_safe import setup_windows_encoding, safe_print
+setup_windows_encoding()
+
 from tapps_agents.context7.commands import Context7Commands
 from tapps_agents.core.config import load_config
 
@@ -87,7 +91,7 @@ def parse_requirements_file(requirements_path: Path) -> set[str]:
     libraries = set()
 
     if not requirements_path.exists():
-        print(f"⚠️  Requirements file not found: {requirements_path}")
+        safe_print(f"[WARN] Requirements file not found: {requirements_path}")
         return libraries
 
     try:
@@ -117,7 +121,7 @@ def parse_requirements_file(requirements_path: Path) -> set[str]:
                 libraries.add(lib_name)
 
     except Exception as e:
-        print(f"⚠️  Error parsing requirements file: {e}")
+        safe_print(f"[WARN] Error parsing requirements file: {e}")
 
     return libraries
 
@@ -139,30 +143,30 @@ async def pre_populate_library(
         True if successful, False otherwise
     """
     if not context7_commands.enabled:
-        print(f"⚠️  Context7 is not enabled, skipping {library}")
+        safe_print(f"[WARN] Context7 is not enabled, skipping {library}")
         return False
 
     success_count = 0
 
     # Cache overview first
-    print(f"  📚 Caching {library} (overview)...", end=" ", flush=True)
+    safe_print(f"  [CACHE] Caching {library} (overview)...", end=" ", flush=True)
     result = await context7_commands.cmd_docs(library)
     if result.get("success"):
-        print("✅")
+        safe_print("[OK]", flush=True)
         success_count += 1
     else:
-        print(f"❌ ({result.get('error', 'Unknown error')})")
+        safe_print(f"[FAIL] ({result.get('error', 'Unknown error')})", flush=True)
 
     # Cache specific topics
     if topics:
         for topic in topics:
-            print(f"  📚 Caching {library} ({topic})...", end=" ", flush=True)
+            safe_print(f"  [CACHE] Caching {library} ({topic})...", end=" ", flush=True)
             result = await context7_commands.cmd_docs(library, topic=topic)
             if result.get("success"):
-                print("✅")
+                safe_print("[OK]", flush=True)
                 success_count += 1
             else:
-                print(f"❌ ({result.get('error', 'Unknown error')})")
+                safe_print(f"[FAIL] ({result.get('error', 'Unknown error')})", flush=True)
 
     return success_count > 0
 
@@ -198,26 +202,26 @@ async def main():
     else:
         project_root = Path.cwd()
 
-    print("🚀 Context7 KB Cache Pre-population")
-    print("=" * 60)
+    safe_print("[START] Context7 KB Cache Pre-population")
+    safe_print("=" * 60)
 
     # Load configuration
     try:
         config = load_config(project_root)
         if not config.context7 or not config.context7.enabled:
-            print("❌ Context7 is not enabled in configuration")
-            print("   Enable it in .tapps-agents/config.yaml")
+            safe_print("[FAIL] Context7 is not enabled in configuration")
+            safe_print("   Enable it in .tapps-agents/config.yaml")
             return 1
     except Exception as e:
-        print(f"⚠️  Error loading config: {e}")
-        print("   Continuing with default settings...")
+        safe_print(f"[WARN] Error loading config: {e}")
+        safe_print("   Continuing with default settings...")
         config = None
 
     # Initialize Context7 commands
     context7_commands = Context7Commands(project_root=project_root, config=config)
 
     if not context7_commands.enabled:
-        print("❌ Context7 is not enabled")
+        safe_print("[FAIL] Context7 is not enabled")
         return 1
 
     # Collect libraries to cache
@@ -226,25 +230,25 @@ async def main():
     # Add libraries from requirements.txt
     requirements_path = project_root / args.requirements
     if requirements_path.exists():
-        print(f"\n📦 Parsing {args.requirements}...")
+        safe_print(f"\n[PARSE] Parsing {args.requirements}...")
         req_libraries = parse_requirements_file(requirements_path)
         libraries_to_cache.update(req_libraries)
-        print(f"   Found {len(req_libraries)} libraries in requirements.txt")
+        safe_print(f"   Found {len(req_libraries)} libraries in requirements.txt")
 
     # Add explicitly specified libraries
     if args.libraries:
         libraries_to_cache.update(args.libraries)
-        print(f"   Added {len(args.libraries)} explicitly specified libraries")
+        safe_print(f"   Added {len(args.libraries)} explicitly specified libraries")
 
-    print(f"\n📚 Total libraries to cache: {len(libraries_to_cache)}")
-    print("=" * 60)
+    safe_print(f"\n[INFO] Total libraries to cache: {len(libraries_to_cache)}")
+    safe_print("=" * 60)
 
     # Pre-populate cache
     success_count = 0
     fail_count = 0
 
     for library in sorted(libraries_to_cache):
-        print(f"\n🔍 Processing {library}...")
+        safe_print(f"\n[PROCESS] Processing {library}...")
 
         topics = None
         if args.topics and library in COMMON_TOPICS:
@@ -258,27 +262,28 @@ async def main():
             fail_count += 1
 
     # Summary
-    print("\n" + "=" * 60)
-    print("📊 Pre-population Summary")
-    print("=" * 60)
-    print(f"✅ Successfully cached: {success_count} libraries")
-    print(f"❌ Failed to cache: {fail_count} libraries")
-    print(f"📈 Success rate: {success_count / (success_count + fail_count) * 100:.1f}%")
+    safe_print("\n" + "=" * 60)
+    safe_print("[REPORT] Pre-population Summary")
+    safe_print("=" * 60)
+    safe_print(f"[OK] Successfully cached: {success_count} libraries")
+    safe_print(f"[FAIL] Failed to cache: {fail_count} libraries")
+    if success_count + fail_count > 0:
+        safe_print(f"[STATS] Success rate: {success_count / (success_count + fail_count) * 100:.1f}%")
 
     # Get cache statistics
-    print("\n📊 Cache Statistics:")
+    safe_print("\n[REPORT] Cache Statistics:")
     stats = context7_commands.cmd_status()
     if isinstance(stats, dict) and stats.get("success"):
         metrics = stats.get("metrics", {})
-        print(f"   Total entries: {metrics.get('total_entries', 'N/A')}")
-        print(f"   Total libraries: {metrics.get('total_libraries', 'N/A')}")
-        print(f"   Cache size: {metrics.get('cache_size_mb', 'N/A')} MB")
+        safe_print(f"   Total entries: {metrics.get('total_entries', 'N/A')}")
+        safe_print(f"   Total libraries: {metrics.get('total_libraries', 'N/A')}")
+        safe_print(f"   Cache size: {metrics.get('cache_size_mb', 'N/A')} MB")
     else:
-        print("   (Statistics unavailable)")
+        safe_print("   (Statistics unavailable)")
 
-    print("\n✅ Pre-population complete!")
-    print("\n💡 Tip: Run this script periodically to keep cache up-to-date")
-    print("   or use Context7 auto-refresh feature.")
+    safe_print("\n[OK] Pre-population complete!")
+    safe_print("\n[TIP] Run this script periodically to keep cache up-to-date")
+    safe_print("   or use Context7 auto-refresh feature.")
 
     return 0 if fail_count == 0 else 1
 

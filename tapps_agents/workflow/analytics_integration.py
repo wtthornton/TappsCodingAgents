@@ -83,10 +83,11 @@ def check_analytics_alerts(project_root: Path | None = None) -> None:
     manager = AnalyticsAlertManager()
     alerts = manager.check_alerts()
     
+    from ..core.unicode_safe import safe_print
     if alerts:
         manager.send_alerts(alerts)
     else:
-        print("\n✅ No alerts triggered.\n")
+        safe_print("\n[OK] No alerts triggered.\n")
 
 
 def export_analytics(

@@ -579,9 +579,36 @@ def handle_workflow_command(args: object) -> None:
         if user_prompt:
             executor.user_prompt = user_prompt
         
+        # Check runtime mode and warn user
+        from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
+        runtime_mode = detect_runtime_mode()
+        
+        print("Executing workflow steps...")
+        print(f"Runtime mode: {runtime_mode.value}")
+        
+        from ...core.unicode_safe import safe_print
+        if is_cursor_mode():
+            safe_print("WARNING: Running in Cursor mode - workflow will use Background Agents")
+            safe_print("   If auto-execution is disabled, workflow will wait for manual execution")
+            safe_print("   To force headless mode: set TAPPS_AGENTS_MODE=headless\n")
+        else:
+            safe_print("[OK] Running in headless mode - direct execution with terminal output\n")
+        
+        sys.stdout.flush()
+        
         result = asyncio.run(
             executor.execute(workflow=workflow, target_file=target_file)
         )
+        
+        # Print intermediate status
+        from ...core.unicode_safe import safe_print
+        if result.status == "running":
+            safe_print(f"\nWorkflow is still running. Current step: {result.current_step}")
+        elif result.status == "completed":
+            safe_print(f"\n[OK] Workflow completed! Processed {len(result.completed_steps)} steps.")
+        elif result.status == "failed":
+            safe_print(f"\n[FAIL] Workflow failed: {result.error}")
+        sys.stdout.flush()
 
         if result.status == "completed":
             print(f"\n{'='*60}")

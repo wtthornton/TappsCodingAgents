@@ -56,7 +56,8 @@ class AnalyticsVisualizer:
         for label, value in data:
             # Calculate bar width
             bar_width = int((value / max_value) * max_width) if max_value > 0 else 0
-            bar = "█" * bar_width + "░" * (max_width - bar_width)
+            # Use ASCII-safe characters for Windows compatibility
+            bar = "=" * bar_width + "-" * (max_width - bar_width)
             
             if show_values:
                 lines.append(f"{label:20} [{bar}] {value:.2f}")

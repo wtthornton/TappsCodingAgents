@@ -224,7 +224,8 @@ Add your domain-specific knowledge here. This file will be used for RAG (Retriev
             else:
                 primary_domain = self._prompt("Primary domain name")
         else:
-            print("\n⚠️  No domains found in domains.md")
+            from ..core.unicode_safe import safe_print
+            safe_print("\n[WARN] No domains found in domains.md")
             if self._prompt_yes_no("Create domain entry later?", default=True):
                 primary_domain = self._prompt(
                     "Primary domain name (will need to match domains.md)"

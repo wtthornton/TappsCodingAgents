@@ -901,6 +901,8 @@ class CursorWorkflowExecutor:
             else:
                 # Manual execution mode (backward compatibility)
                 # Invoke Skill via SkillInvoker (creates command files for Background Agents)
+                from ..core.unicode_safe import safe_print
+                safe_print(f"\n[FILE] Creating command file for {agent_name}/{action}...", flush=True)
                 await self.skill_invoker.invoke_skill(
                     agent_name=agent_name,
                     action=action,
@@ -909,6 +911,17 @@ class CursorWorkflowExecutor:
                     worktree_path=worktree_path,
                     state=self.state,
                 )
+                command_file = worktree_path / ".cursor-skill-command.txt"
+                if command_file.exists():
+                    safe_print(f"[OK] Command file created: {command_file}", flush=True)
+                    # Show first few lines of command
+                    try:
+                        with open(command_file, 'r', encoding='utf-8') as f:
+                            first_line = f.readline().strip()
+                            if first_line:
+                                safe_print(f"   Command: {first_line[:80]}...", flush=True)
+                    except Exception:
+                        pass
 
                 # Wait for Skill to complete (manual polling for artifacts)
                 import asyncio
@@ -918,6 +931,15 @@ class CursorWorkflowExecutor:
                 max_wait_time = 3600  # 1 hour max wait
                 poll_interval = 2  # Check every 2 seconds
                 elapsed = 0
+                
+                # Print to terminal for visibility
+                command_file = worktree_path / ".cursor-skill-command.txt"
+                safe_print(f"\n{'='*60}", flush=True)
+                safe_print(f"[WAIT] Waiting for {agent_name}/{action} to complete (manual mode)", flush=True)
+                safe_print(f"[FILE] Command file: {command_file}", flush=True)
+                safe_print(f"[LIST] Expected artifacts: {step.creates}", flush=True)
+                safe_print(f"[TIP] Enable auto-execution or run in headless mode for automatic execution", flush=True)
+                safe_print(f"{'='*60}\n", flush=True)
                 
                 if self.logger:
                     self.logger.info(
@@ -932,6 +954,8 @@ class CursorWorkflowExecutor:
                     )
                     
                     if completion_status["completed"]:
+                        from ..core.unicode_safe import safe_print
+                        safe_print(f"[OK] Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}", flush=True)
                         if self.logger:
                             self.logger.info(
                                 f"Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}",
@@ -943,10 +967,13 @@ class CursorWorkflowExecutor:
                     await asyncio.sleep(poll_interval)
                     elapsed += poll_interval
                     
-                    # Log progress every 10 seconds
-                    if elapsed % 10 == 0 and self.logger:
-                        self.logger.debug(
-                            f"Still waiting for step {step.id}... ({elapsed}s elapsed)",
+                    # Print progress every 10 seconds to terminal
+                    if elapsed % 10 == 0:
+                        from ..core.unicode_safe import safe_print
+                        safe_print(f"  [WAIT] Still waiting... ({elapsed}s elapsed) - Checking for artifacts...", flush=True)
+                        if self.logger:
+                            self.logger.debug(
+                                f"Still waiting for step {step.id}... ({elapsed}s elapsed)",
                         )
                 else:
                     raise TimeoutError(
@@ -1103,7 +1130,8 @@ class CursorWorkflowExecutor:
                 )
                 
                 if completion_status["completed"]:
-                    print(f"✓ {agent_name}/{action} completed - found artifacts: {completion_status['found_artifacts']}")
+                    from ..core.unicode_safe import safe_print
+                    safe_print(f"[OK] {agent_name}/{action} completed - found artifacts: {completion_status['found_artifacts']}")
                     break
                 
                 await asyncio.sleep(poll_interval)

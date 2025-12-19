@@ -181,7 +181,6 @@ class WorkflowProgressMonitor:
         Returns:
             Formatted progress bar string
         """
+        from ..core.unicode_safe import safe_format_progress_bar
         metrics = self.get_progress()
-        filled = int((metrics.progress_percentage / 100.0) * width)
-        bar = "█" * filled + "░" * (width - filled)
-        return f"[{bar}] {metrics.progress_percentage:.1f}%"
+        return safe_format_progress_bar(metrics.progress_percentage, width)
