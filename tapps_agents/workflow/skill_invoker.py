@@ -185,6 +185,14 @@ class SkillInvoker:
             "enhance",
             {"prompt": "user_prompt", "format": "markdown"},
         ),
+        ("enhancer", "enhance_prompt"): (
+            "enhance",
+            {"prompt": "user_prompt", "format": "markdown"},
+        ),
+        ("enhancer", "enhance-prompt"): (
+            "enhance",
+            {"prompt": "user_prompt", "format": "markdown"},
+        ),
         
         # Quality Agent (Background Cloud)
         ("quality", "analyze"): (
