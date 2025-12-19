@@ -11,18 +11,32 @@ When running workflows, you may see:
 
 The framework detects **Cursor mode** automatically and uses `CursorWorkflowExecutor`, which:
 1. Uses Background Agents (file-based coordination)
-2. Requires `auto_execution_enabled: true` in config to run automatically
-3. Defaults to **manual mode** (creates command files, waits for execution)
+2. **Auto-execution is now enabled by default** (since v2.0.8)
+3. If auto-execution is disabled, defaults to **manual mode** (creates command files, waits for execution)
 4. Output goes to log files, not terminal
+
+**Note:** CLI commands now default to **headless mode** for direct execution, so they work out of the box without requiring environment variables.
 
 ## Solutions
 
-### Solution 1: Force Headless Mode (Recommended for CLI)
+### Solution 1: Use CLI Commands (Recommended - Now Default)
 
-Force headless mode to use the regular `WorkflowExecutor` which:
-- Shows output in terminal
-- Runs fully automated
-- Doesn't require Background Agents
+**CLI commands now default to headless mode automatically!** No configuration needed.
+
+```bash
+# This now works out of the box - runs in headless mode by default
+python -m tapps_agents.cli create "Your project description"
+python -m tapps_agents.cli workflow rapid
+```
+
+If you want to explicitly use Cursor mode with Background Agents, use the `--cursor-mode` flag:
+```bash
+python -m tapps_agents.cli create "Your project description" --cursor-mode
+```
+
+### Solution 2: Force Headless Mode (For Scripts)
+
+If you're writing a script and want to ensure headless mode:
 
 **In your script:**
 ```python
@@ -36,14 +50,14 @@ $env:TAPPS_AGENTS_MODE="headless"
 python run_amazon_workflow.py
 ```
 
-### Solution 2: Enable Auto-Execution (For Cursor Mode)
+### Solution 3: Auto-Execution (Now Enabled by Default)
 
-If you want to use Cursor mode with Background Agents:
+Auto-execution is **enabled by default** in Cursor mode (since v2.0.8). If you need to configure it:
 
-1. **Edit `.tapps-agents/config.yaml`:**
+1. **Edit `.tapps-agents/config.yaml`** (auto-execution is already `true` by default):
 ```yaml
 workflow:
-  auto_execution_enabled: true
+  auto_execution_enabled: true  # Default: true
   polling_interval: 5.0
   timeout_seconds: 3600
 ```
@@ -125,10 +139,24 @@ workflow:
 
 ## Summary
 
-For **CLI execution with terminal output**, always use:
+### For CLI Commands (Recommended)
+**CLI commands now default to headless mode automatically!** Just run:
+```bash
+python -m tapps_agents.cli create "Your project description"
+python -m tapps_agents.cli workflow rapid
+```
+
+No environment variables or configuration needed - they work out of the box.
+
+### For Scripts
+If you're writing a script, you can still force headless mode:
 ```python
 os.environ["TAPPS_AGENTS_MODE"] = "headless"
 ```
 
-This bypasses Cursor mode and uses the direct executor that shows output and runs automatically.
+### For Cursor Mode
+Auto-execution is enabled by default. If you want to use Cursor mode explicitly:
+```bash
+python -m tapps_agents.cli create "Your project description" --cursor-mode
+```
 

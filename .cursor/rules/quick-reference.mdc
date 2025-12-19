@@ -25,12 +25,15 @@ python -m tapps_agents.cli reviewer report <dir> json markdown html
 # List all workflows
 python -m tapps_agents.cli workflow list
 
-# Run workflows
+# Run workflows (defaults to headless mode - works out of the box)
 python -m tapps_agents.cli workflow rapid      # Feature development
 python -m tapps_agents.cli workflow full       # Enterprise SDLC
 python -m tapps_agents.cli workflow quality    # Quality improvement
 python -m tapps_agents.cli workflow fix         # Bug fixes & refactoring
 python -m tapps_agents.cli workflow hotfix     # Urgent fixes
+
+# Use --cursor-mode flag to explicitly use Cursor mode with Background Agents
+python -m tapps_agents.cli workflow rapid --cursor-mode
 ```
 
 ### Code Generation

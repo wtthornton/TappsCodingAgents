@@ -33,14 +33,16 @@ This creates `.cursor/background-agents.yaml` with default settings.
 
 ### 2. Enable Auto-Execution
 
-Enable auto-execution in your project configuration (`.tapps-agents/config.yaml`):
+Auto-execution is **enabled by default** (since v2.0.8). Your project configuration (`.tapps-agents/config.yaml`) should already have:
 
 ```yaml
 workflow:
-  auto_execution_enabled: true
+  auto_execution_enabled: true  # Default: true (enabled by default)
   polling_interval: 5.0
   timeout_seconds: 3600
 ```
+
+If you need to disable it, set `auto_execution_enabled: false`.
 
 Or enable it per-workflow in your workflow YAML:
 
@@ -55,6 +57,8 @@ steps:
     params:
       target_file: requirements.md
 ```
+
+**Note**: Adaptive polling is enabled by default (since v2.0.7). The `polling_interval` is the initial interval, which increases exponentially when no activity is detected (1s → 1.5s → 2.25s → ...). This reduces unnecessary polling by 30-50% while maintaining responsiveness. To disable adaptive polling, set `use_adaptive_polling: false` when creating `BackgroundAgentAutoExecutor`.
 
 ### 3. Run a Workflow
 
@@ -123,7 +127,12 @@ auto_execution:
 - `enabled`: Enable/disable auto-execution globally
 - `retry`: Retry configuration for failed executions
 - `polling`: Polling interval and timeout settings
+  - **Adaptive Polling** (default: enabled): Polling interval increases exponentially when no activity is detected (1s → 1.5s → 2.25s → ...), reducing unnecessary checks by 30-50%
+  - Resets to initial interval when activity is detected
+  - Can be disabled by setting `use_adaptive_polling: false` in `BackgroundAgentAutoExecutor`
 - `features`: Feature flags for various capabilities
+
+**Performance Note**: Adaptive polling is enabled by default and provides significant performance improvements by reducing unnecessary polling operations. The initial `polling_interval` is used as the starting point, with exponential backoff applied when no activity is detected.
 
 ---
 
