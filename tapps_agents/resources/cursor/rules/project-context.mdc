@@ -13,7 +13,6 @@ alwaysApply: true
 **TappsCodingAgents is a framework** that provides:
 - 13 workflow agents (analyst, planner, architect, implementer, tester, reviewer, etc.)
 - Industry Experts system
-- Model Abstraction Layer (MAL)
 - Code quality analysis tools
 - Workflow orchestration
 

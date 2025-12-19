@@ -3,12 +3,11 @@ Unit tests for DocGenerator.
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from tapps_agents.agents.documenter.doc_generator import DocGenerator
-from tapps_agents.core.mal import MAL
+from tapps_agents.core.instructions import DocumentationInstruction
 
 
 @pytest.mark.unit
@@ -16,18 +15,9 @@ class TestDocGenerator:
     """Test cases for DocGenerator."""
 
     @pytest.fixture
-    def mock_mal(self):
-        """Create a mock MAL."""
-        mal = MagicMock(spec=MAL)
-        mal.generate = AsyncMock(
-            return_value="# API Documentation\n\n## Functions\n\n### func1\n..."
-        )
-        return mal
-
-    @pytest.fixture
-    def doc_generator(self, mock_mal):
+    def doc_generator(self):
         """Create a DocGenerator instance."""
-        return DocGenerator(mock_mal)
+        return DocGenerator()
 
     @pytest.fixture
     def sample_code_file(self, tmp_path: Path):
@@ -45,49 +35,31 @@ class Calculator:
         )
         return code_file
 
-    @pytest.mark.asyncio
-    async def test_generate_api_docs(self, doc_generator, sample_code_file, mock_mal):
-        """Test API documentation generation."""
-        result = await doc_generator.generate_api_docs(sample_code_file, "markdown")
+    def test_prepare_api_docs(self, doc_generator, sample_code_file):
+        """Test API documentation instruction preparation."""
+        result = doc_generator.prepare_api_docs(sample_code_file, "markdown")
 
-        assert isinstance(result, str)
-        assert "API" in result or "Documentation" in result
-        mock_mal.generate.assert_called_once()
+        assert isinstance(result, DocumentationInstruction)
+        assert result.target_file == str(sample_code_file)
+        assert result.docstring_format == "google"
+        assert result.include_examples is True
 
-        call_args = mock_mal.generate.call_args[0][0]
-        assert "calculator.py" in call_args or "add" in call_args
+    def test_prepare_readme(self, doc_generator, tmp_path: Path):
+        """Test README generation instruction preparation."""
+        result = doc_generator.prepare_readme(tmp_path)
 
-    @pytest.mark.asyncio
-    async def test_generate_readme(self, doc_generator, tmp_path: Path, mock_mal):
-        """Test README generation."""
-        result = await doc_generator.generate_readme(tmp_path)
+        assert isinstance(result, DocumentationInstruction)
+        assert result.target_file is not None
 
-        assert isinstance(result, str)
-        assert len(result) > 0
-        mock_mal.generate.assert_called_once()
+    def test_prepare_docstring_update(self, doc_generator, sample_code_file):
+        """Test docstring update instruction preparation."""
+        result = doc_generator.prepare_docstring_update(
+            sample_code_file, "google"
+        )
 
-    @pytest.mark.asyncio
-    async def test_update_docstrings(self, doc_generator, sample_code_file, mock_mal):
-        """Test docstring update."""
-        # Update mock to return code with docstrings
-        mock_mal.generate.return_value = '''
-def add(a, b):
-    """Add two numbers.
-    
-    Args:
-        a: First number
-        b: Second number
-    
-    Returns:
-        Sum of a and b
-    """
-    return a + b
-'''
-        result = await doc_generator.update_docstrings(sample_code_file, "google")
-
-        assert isinstance(result, str)
-        assert "def add" in result
-        mock_mal.generate.assert_called_once()
+        assert isinstance(result, DocumentationInstruction)
+        assert result.target_file == str(sample_code_file)
+        assert result.docstring_format == "google"
 
     def test_analyze_code_structure(self, doc_generator, sample_code_file):
         """Test code structure analysis."""

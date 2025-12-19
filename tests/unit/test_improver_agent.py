@@ -3,12 +3,12 @@ Unit tests for Improver Agent.
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from tapps_agents.agents.improver.agent import ImproverAgent
-from tapps_agents.core.config import MALConfig, ProjectConfig
+from tapps_agents.core.config import ProjectConfig
 
 pytestmark = pytest.mark.unit
 
@@ -16,9 +16,6 @@ pytestmark = pytest.mark.unit
 @pytest.fixture
 def mock_config():
     return ProjectConfig(
-        mal=MALConfig(
-            default_model="test-model", default_local_model="test-local-model"
-        ),
         agents={},
     )
 
@@ -28,16 +25,9 @@ def improver_agent(mock_config):
     with patch(
         "tapps_agents.agents.improver.agent.load_config", return_value=mock_config
     ):
-        with patch("tapps_agents.agents.improver.agent.MAL") as mock_mal_class:
-            mock_mal = MagicMock()
-            mock_mal.generate = AsyncMock(
-                return_value="```python\ndef refactored_code():\n    pass\n```"
-            )
-            mock_mal_class.return_value = mock_mal
-            agent = ImproverAgent(config=mock_config)
-            agent.mal = mock_mal
-            agent.project_root = Path("/mock/project")
-            return agent
+        agent = ImproverAgent(config=mock_config)
+        agent.project_root = Path("/mock/project")
+        return agent
 
 
 @pytest.mark.asyncio
@@ -46,25 +36,19 @@ class TestImproverAgent:
         assert improver_agent.agent_id == "improver"
         assert improver_agent.agent_name == "Improver Agent"
         assert improver_agent.config is not None
-        assert improver_agent.mal is not None
 
     async def test_activate(self, mock_config):
         with patch(
             "tapps_agents.agents.improver.agent.load_config", return_value=mock_config
         ):
-            with patch("tapps_agents.agents.improver.agent.MAL") as mock_mal_class:
-                mock_mal = MagicMock()
-                mock_mal.generate = AsyncMock(return_value="")
-                mock_mal_class.return_value = mock_mal
-                agent = ImproverAgent(config=mock_config)
-                agent.mal = mock_mal
-                with (
-                    patch.object(agent, "greet") as mock_greet,
-                    patch.object(agent, "run", new_callable=AsyncMock) as mock_run,
-                ):
-                    await agent.activate()
-                    mock_greet.assert_called_once()
-                    mock_run.assert_called_once_with("help")
+            agent = ImproverAgent(config=mock_config)
+            with (
+                patch.object(agent, "greet") as mock_greet,
+                patch.object(agent, "run", new_callable=pytest.AsyncMock) as mock_run,
+            ):
+                await agent.activate()
+                mock_greet.assert_called_once()
+                mock_run.assert_called_once_with("help")
 
     async def test_refactor_success(self, improver_agent, tmp_path):
         test_file = tmp_path / "test_code.py"
@@ -72,16 +56,14 @@ class TestImproverAgent:
         improver_agent.project_root = tmp_path
         with (
             patch.object(
-                improver_agent, "get_context", new_callable=AsyncMock
+                improver_agent, "get_context", new_callable=pytest.AsyncMock
             ) as mock_context,
             patch.object(improver_agent, "get_context_text", return_value=""),
         ):
             mock_context.return_value = {}
             result = await improver_agent.run("refactor", file_path=str(test_file))
 
-        assert "message" in result
-        assert "refactored" in result
-        assert result["refactored"] is True
+        assert "message" in result or "instruction" in result
 
     async def test_refactor_file_not_found(self, improver_agent):
         # Use a file that doesn't exist relative to project root
@@ -105,7 +87,7 @@ class TestImproverAgent:
         improver_agent.project_root = tmp_path
         with (
             patch.object(
-                improver_agent, "get_context", new_callable=AsyncMock
+                improver_agent, "get_context", new_callable=pytest.AsyncMock
             ) as mock_context,
             patch.object(improver_agent, "get_context_text", return_value=""),
         ):
@@ -114,10 +96,7 @@ class TestImproverAgent:
                 "optimize", file_path=str(test_file), optimization_type="performance"
             )
 
-        assert "message" in result
-        assert "optimized" in result
-        assert result["optimized"] is True
-        assert result["optimization_type"] == "performance"
+        assert "message" in result or "instruction" in result
 
     async def test_optimize_file_not_found(self, improver_agent):
         result = await improver_agent.run("optimize", file_path="does/not/exist.py")
@@ -140,7 +119,7 @@ class TestImproverAgent:
         improver_agent.project_root = tmp_path
         with (
             patch.object(
-                improver_agent, "get_context", new_callable=AsyncMock
+                improver_agent, "get_context", new_callable=pytest.AsyncMock
             ) as mock_context,
             patch.object(improver_agent, "get_context_text", return_value=""),
         ):
@@ -149,9 +128,7 @@ class TestImproverAgent:
                 "improve-quality", file_path=str(test_file)
             )
 
-        assert "message" in result
-        assert "improved" in result
-        assert result["improved"] is True
+        assert "message" in result or "instruction" in result
 
     async def test_improve_quality_file_not_found(self, improver_agent):
         result = await improver_agent.run(
@@ -186,19 +163,3 @@ class TestImproverAgent:
 
         assert "error" in result
         assert "Unknown command" in result["error"]
-
-    async def test_extract_code_from_response(self, improver_agent):
-        # Test with Python code block
-        response = "```python\ndef code():\n    pass\n```"
-        code = improver_agent._extract_code_from_response(response)
-        assert "def code():" in code
-
-        # Test with generic code block
-        response = "```\ndef code():\n    pass\n```"
-        code = improver_agent._extract_code_from_response(response)
-        assert "def code():" in code
-
-        # Test with no code block
-        response = "def code():\n    pass"
-        code = improver_agent._extract_code_from_response(response)
-        assert "def code():" in code

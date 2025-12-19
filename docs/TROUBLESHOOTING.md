@@ -173,7 +173,7 @@ python -m tapps_agents.cli reviewer type-check path/to/file.py
 
 ### Confusion between Cursor mode and headless mode
 
-**Symptoms**: Errors like `MALDisabledInCursorModeError` or tools not working as expected.
+**Symptoms**: Tools not working as expected or incorrect mode detection.
 
 **Solution**:
 - Ensure Cursor Skills are properly installed and configured.

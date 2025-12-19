@@ -15,15 +15,10 @@ class TestDesignerAgent:
 
     @pytest.fixture
     def designer(self):
-        """Create a DesignerAgent instance with mocked MAL."""
+        """Create a DesignerAgent instance."""
         with patch("tapps_agents.agents.designer.agent.load_config"):
-            with patch("tapps_agents.agents.designer.agent.MAL") as mock_mal_class:
-                mock_mal = MagicMock()
-                mock_mal.generate = AsyncMock(return_value="Mocked design response")
-                mock_mal_class.return_value = mock_mal
-                agent = DesignerAgent()
-                agent.mal = mock_mal
-                return agent
+            agent = DesignerAgent()
+            return agent
 
     @pytest.mark.asyncio
     async def test_design_api_success(self, designer):

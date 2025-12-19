@@ -3,12 +3,11 @@ Unit tests for ErrorAnalyzer.
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from tapps_agents.agents.debugger.error_analyzer import ErrorAnalyzer
-from tapps_agents.core.mal import MAL
+from tapps_agents.core.instructions import ErrorAnalysisInstruction
 
 
 @pytest.mark.unit
@@ -16,72 +15,46 @@ class TestErrorAnalyzer:
     """Test cases for ErrorAnalyzer."""
 
     @pytest.fixture
-    def mock_mal(self):
-        """Create a mock MAL."""
-        mal = MagicMock(spec=MAL)
-        mal.generate = AsyncMock(
-            return_value="""
-ROOT_CAUSE: Missing import statement
-ISSUE: NameError occurs because module is not imported
-SUGGESTIONS:
-1. Add import statement at the top of the file
-2. Check if module name is correct
-FIX_EXAMPLES:
-```python
-import module_name
-```
-"""
-        )
-        return mal
-
-    @pytest.fixture
-    def error_analyzer(self, mock_mal):
+    def error_analyzer(self):
         """Create an ErrorAnalyzer instance."""
-        return ErrorAnalyzer(mock_mal)
+        return ErrorAnalyzer()
 
-    @pytest.mark.asyncio
-    async def test_analyze_error_basic(self, error_analyzer, mock_mal):
-        """Test basic error analysis."""
+    def test_prepare_error_analysis_basic(self, error_analyzer):
+        """Test basic error analysis instruction preparation."""
         error_msg = "NameError: name 'x' is not defined"
 
-        result = await error_analyzer.analyze_error(error_msg)
+        result = error_analyzer.prepare_error_analysis(error_msg)
 
-        assert "error_type" in result
-        assert "error_message" in result
-        assert "analysis" in result
-        assert "suggestions" in result
-        assert result["error_message"] == error_msg
-        mock_mal.generate.assert_called_once()
+        assert isinstance(result, ErrorAnalysisInstruction)
+        assert result.error_message == error_msg
+        assert result.context_lines == 50
 
-    @pytest.mark.asyncio
-    async def test_analyze_error_with_stack_trace(self, error_analyzer, mock_mal):
-        """Test error analysis with stack trace."""
+    def test_prepare_error_analysis_with_stack_trace(self, error_analyzer):
+        """Test error analysis instruction with stack trace."""
         error_msg = "ValueError: invalid literal"
         stack_trace = (
             'File "test.py", line 42, in function_name\n    result = int("abc")'
         )
 
-        result = await error_analyzer.analyze_error(error_msg, stack_trace=stack_trace)
+        result = error_analyzer.prepare_error_analysis(
+            error_msg, stack_trace=stack_trace
+        )
 
-        assert result["error_type"] == "ValueError"
-        assert result["file_location"] == "test.py"
-        assert result["line_number"] == 42
-        call_args = mock_mal.generate.call_args[0][0]
-        assert 'File "test.py"' in call_args
+        assert isinstance(result, ErrorAnalysisInstruction)
+        assert result.error_message == error_msg
+        assert result.stack_trace == stack_trace
 
-    @pytest.mark.asyncio
-    async def test_analyze_error_with_code_context(self, error_analyzer, mock_mal):
-        """Test error analysis with code context."""
+    def test_prepare_error_analysis_with_code_context(self, error_analyzer):
+        """Test error analysis instruction with code context."""
         error_msg = "IndexError: list index out of range"
         code_context = "def process(data):\n    return data[10]"
 
-        result = await error_analyzer.analyze_error(
+        result = error_analyzer.prepare_error_analysis(
             error_msg, code_context=code_context
         )
 
-        assert "suggestions" in result
-        call_args = mock_mal.generate.call_args[0][0]
-        assert "process(data)" in call_args
+        assert isinstance(result, ErrorAnalysisInstruction)
+        assert result.error_message == error_msg
 
     def test_parse_error_basic(self, error_analyzer):
         """Test error parsing."""
@@ -124,35 +97,12 @@ class MyClass:
         assert len(structure["functions"]) > 0
         assert len(structure["classes"]) > 0
 
-    def test_parse_llm_analysis(self, error_analyzer):
-        """Test LLM analysis parsing."""
-        analysis_text = """
-ROOT_CAUSE: Missing import
-ISSUE: Module not found
-SUGGESTIONS:
-1. Add import
-2. Check module name
-FIX_EXAMPLES:
-```python
-import module
-```
-"""
-        result = error_analyzer._parse_llm_analysis(analysis_text)
-
-        assert "root_cause" in result
-        assert "issue" in result
-        assert "suggestions" in result
-        assert len(result["suggestions"]) > 0
-
-    @pytest.mark.asyncio
-    async def test_trace_code_path(self, error_analyzer, tmp_path: Path, mock_mal):
-        """Test code path tracing."""
+    def test_prepare_code_trace(self, error_analyzer, tmp_path: Path):
+        """Test code trace instruction preparation."""
         code_file = tmp_path / "test.py"
         code_file.write_text("def func1():\n    return func2()\ndef func2():\n    pass")
 
-        result = await error_analyzer.trace_code_path(code_file, function_name="func1")
+        result = error_analyzer.prepare_code_trace(code_file, function_name="func1")
 
-        assert "file" in result
-        assert "function" in result
-        assert "trace_analysis" in result
-        assert result["function"] == "func1"
+        assert isinstance(result, ErrorAnalysisInstruction)
+        assert result.error_message is not None

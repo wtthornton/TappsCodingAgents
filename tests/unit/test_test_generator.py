@@ -3,12 +3,11 @@ Unit tests for TestGenerator.
 """
 
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
 from tapps_agents.agents.tester.test_generator import TestGenerator
-from tapps_agents.core.mal import MAL
+from tapps_agents.core.instructions import TestGenerationInstruction
 
 
 @pytest.mark.unit
@@ -16,16 +15,9 @@ class TestTestGenerator:
     """Test cases for TestGenerator."""
 
     @pytest.fixture
-    def mock_mal(self):
-        """Create a mock MAL."""
-        mal = MagicMock(spec=MAL)
-        mal.generate = AsyncMock(return_value="def test_function():\n    assert True")
-        return mal
-
-    @pytest.fixture
-    def test_generator(self, mock_mal):
+    def test_generator(self):
         """Create a TestGenerator instance."""
-        return TestGenerator(mock_mal)
+        return TestGenerator()
 
     @pytest.fixture
     def sample_code_file(self, tmp_path: Path):
@@ -46,69 +38,55 @@ class Calculator:
         )
         return code_file
 
-    @pytest.mark.asyncio
-    async def test_generate_unit_tests_basic(
-        self, test_generator, sample_code_file, mock_mal
+    def test_prepare_unit_tests_basic(
+        self, test_generator, sample_code_file
     ):
-        """Test basic unit test generation."""
-        result = await test_generator.generate_unit_tests(sample_code_file)
+        """Test basic unit test instruction preparation."""
+        result = test_generator.prepare_unit_tests(sample_code_file)
 
-        assert isinstance(result, str)
-        assert "test" in result.lower()
-        mock_mal.generate.assert_called_once()
+        assert isinstance(result, TestGenerationInstruction)
+        assert result.target_file == str(sample_code_file)
+        assert result.test_framework in ["pytest", "unittest", "nose"]
 
-        # Check prompt contains code
-        call_args = mock_mal.generate.call_args[0][0]
-        assert "sample.py" in call_args
-        assert "add" in call_args or "Calculator" in call_args
-
-    @pytest.mark.asyncio
-    async def test_generate_unit_tests_with_test_path(
-        self, test_generator, sample_code_file, mock_mal
+    def test_prepare_unit_tests_with_test_path(
+        self, test_generator, sample_code_file
     ):
-        """Test unit test generation with test file path."""
+        """Test unit test instruction with test file path."""
         test_path = Path("tests/test_sample.py")
-        result = await test_generator.generate_unit_tests(
+        result = test_generator.prepare_unit_tests(
             sample_code_file, test_path=test_path
         )
 
-        assert isinstance(result, str)
-        call_args = mock_mal.generate.call_args[0][0]
-        assert "test_sample.py" in call_args
+        assert isinstance(result, TestGenerationInstruction)
+        assert result.target_file == str(test_path)
 
-    @pytest.mark.asyncio
-    async def test_generate_unit_tests_with_context(
-        self, test_generator, sample_code_file, mock_mal
+    def test_prepare_unit_tests_with_context(
+        self, test_generator, sample_code_file
     ):
-        """Test unit test generation with context."""
+        """Test unit test instruction with context."""
         context = "Use pytest fixtures for setup"
-        result = await test_generator.generate_unit_tests(
+        result = test_generator.prepare_unit_tests(
             sample_code_file, context=context
         )
 
-        assert isinstance(result, str)
-        call_args = mock_mal.generate.call_args[0][0]
-        assert "pytest fixtures" in call_args
+        assert isinstance(result, TestGenerationInstruction)
+        assert result.coverage_requirements["context"] == context
 
-    @pytest.mark.asyncio
-    async def test_generate_integration_tests(
-        self, test_generator, tmp_path: Path, mock_mal
+    def test_prepare_integration_tests(
+        self, test_generator, tmp_path: Path
     ):
-        """Test integration test generation."""
+        """Test integration test instruction preparation."""
         file1 = tmp_path / "module1.py"
         file1.write_text("def func1(): return 1")
 
         file2 = tmp_path / "module2.py"
         file2.write_text("def func2(): return 2")
 
-        result = await test_generator.generate_integration_tests([file1, file2])
+        result = test_generator.prepare_integration_tests([file1, file2])
 
-        assert isinstance(result, str)
-        mock_mal.generate.assert_called_once()
-
-        call_args = mock_mal.generate.call_args[0][0]
-        assert "module1.py" in call_args
-        assert "module2.py" in call_args
+        assert isinstance(result, TestGenerationInstruction)
+        assert result.test_framework == "pytest"
+        assert "module1.py" in result.coverage_requirements.get("file_paths", []) or "module2.py" in result.coverage_requirements.get("file_paths", [])
 
     def test_analyze_code(self, test_generator, sample_code_file):
         """Test code analysis."""

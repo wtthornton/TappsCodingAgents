@@ -13,7 +13,7 @@ class ErrorAnalyzer:
     """Prepares error analysis instructions for Cursor Skills execution."""
 
     def __init__(self):
-        """Initialize error analyzer (no MAL dependency)."""
+        """Initialize error analyzer."""
         pass
 
     def prepare_error_analysis(

@@ -488,7 +488,7 @@ class WorkflowExecutor:
         # Start workflow if needed
         if not cursor_executor.state:
             user_prompt = self.user_prompt or self.state.variables.get("user_prompt") if self.state else None
-            cursor_executor.start(workflow=cursor_executor.workflow, user_prompt=user_prompt)
+            await cursor_executor.start(workflow=cursor_executor.workflow, user_prompt=user_prompt)
         
         # Execute workflow
         return await cursor_executor.run(

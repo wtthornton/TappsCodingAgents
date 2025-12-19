@@ -13,7 +13,7 @@ class TestGenerator:
     """Prepares test generation instructions for Cursor Skills execution."""
 
     def __init__(self):
-        """Initialize test generator (no MAL dependency)."""
+        """Initialize test generator."""
         pass
 
     def prepare_unit_tests(

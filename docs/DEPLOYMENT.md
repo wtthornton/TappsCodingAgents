@@ -138,7 +138,6 @@ Before deploying to production, ensure:
 ### Optional Components (Graceful Degradation)
 
 - **Context7**: Optional library documentation cache. If unavailable, agents continue without it.
-- **MAL (Model Abstraction Layer)**: Optional for headless mode. Required only if running outside Cursor.
 - **Playwright**: Optional for browser automation. Some features may be limited without it.
 - **External Quality Tools**: Ruff, mypy, pytest are optional but recommended for quality checks.
 

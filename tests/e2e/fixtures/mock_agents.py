@@ -12,8 +12,6 @@ import re
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-# MAL removed - agents now return instruction objects instead of calling LLMs directly
-
 
 class BehavioralMock:
     """Base class for behavioral mocks with command parsing utilities."""
@@ -21,7 +19,6 @@ class BehavioralMock:
     def __init__(self, agent_type: str):
         """Initialize behavioral mock."""
         self.agent_type = agent_type
-        # MAL removed - agents now return instruction objects
 
     def parse_cursor_command(self, prompt: str) -> dict[str, Any]:
         """
@@ -72,7 +69,6 @@ class MockPlanner(BehavioralMock):
     def __init__(self):
         """Initialize planner mock."""
         super().__init__("planner")
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate planning response."""
@@ -137,7 +133,6 @@ class MockImplementer(BehavioralMock):
     def __init__(self):
         """Initialize implementer mock."""
         super().__init__("implementer")
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate code implementation response."""
@@ -202,7 +197,6 @@ class MockReviewer(BehavioralMock):
         """Initialize reviewer mock."""
         super().__init__("reviewer")
         self.quality_score = quality_score
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate review response."""
@@ -251,7 +245,6 @@ class MockTester(BehavioralMock):
         """Initialize tester mock."""
         super().__init__("tester")
         self.test_results = test_results
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate test code and results."""
@@ -310,7 +303,6 @@ class MockDebugger(BehavioralMock):
     def __init__(self):
         """Initialize debugger mock."""
         super().__init__("debugger")
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate debug analysis."""
@@ -359,7 +351,6 @@ class MockAnalyst(BehavioralMock):
     def __init__(self):
         """Initialize analyst mock."""
         super().__init__("analyst")
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate analysis response."""
@@ -398,7 +389,6 @@ class MockArchitect(BehavioralMock):
     def __init__(self):
         """Initialize architect mock."""
         super().__init__("architect")
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate architecture design."""
@@ -441,7 +431,6 @@ class MockDocumenter(BehavioralMock):
     def __init__(self):
         """Initialize documenter mock."""
         super().__init__("documenter")
-        self.mal.generate = AsyncMock(side_effect=self.generate)
 
     def _generate_response(self, parsed: dict[str, Any], **kwargs) -> str:
         """Generate documentation."""

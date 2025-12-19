@@ -142,7 +142,7 @@ class OrchestratorAgent(BaseAgent):
             # Load and start workflow
             workflow = self.workflow_executor.load_workflow(workflow_file)
             self.current_workflow = workflow
-            state = self.workflow_executor.start()
+            state = await self.workflow_executor.start()
 
             return {
                 "success": True,

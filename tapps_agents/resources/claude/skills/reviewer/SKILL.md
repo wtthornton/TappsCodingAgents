@@ -30,7 +30,7 @@ You are an expert code reviewer providing **objective, quantitative quality metr
 ### Core Review Commands
 
 - `*review {file}` - Full review with scoring + feedback + quality tools  
-  - Note: In Cursor, feedback should be produced by Cursor using the user’s configured model. The framework’s MAL is headless-only.
+  - Note: In Cursor, feedback should be produced by Cursor using the user's configured model.
 - `*score {file}` - Calculate code scores only (no LLM feedback, faster)
 - `*lint {file}` - Run Ruff linting (10-100x faster than alternatives)
 - `*type-check {file}` - Run mypy type checking

@@ -2,7 +2,7 @@
 Instruction models for Cursor Skills integration.
 
 These models represent structured instructions that agents prepare for execution
-via Cursor Skills, replacing direct LLM calls through MAL.
+via Cursor Skills.
 """
 
 from dataclasses import dataclass

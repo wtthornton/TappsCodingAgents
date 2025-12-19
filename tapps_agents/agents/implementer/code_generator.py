@@ -11,7 +11,7 @@ class CodeGenerator:
     """Prepares code generation instructions for Cursor Skills execution."""
 
     def __init__(self):
-        """Initialize code generator (no MAL dependency)."""
+        """Initialize code generator."""
         pass
 
     def prepare_code_generation(

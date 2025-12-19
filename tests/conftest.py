@@ -106,10 +106,6 @@ def test_config(tmp_path: Path) -> dict[str, Any]:
                 "performance": 0.10,
             }
         },
-        "mal": {
-            "ollama_url": "http://localhost:11434",
-            "default_model": "qwen2.5-coder:7b",
-        },
     }
 
 

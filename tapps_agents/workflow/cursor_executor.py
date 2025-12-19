@@ -2,7 +2,7 @@
 Cursor-Native Workflow Executor.
 
 This module provides a Cursor-native execution model that uses Cursor Skills
-and Background Agents instead of MAL for LLM operations.
+and Background Agents for LLM operations.
 """
 
 from __future__ import annotations
@@ -49,7 +49,7 @@ class CursorWorkflowExecutor:
     Cursor-native workflow executor that uses Skills and Background Agents.
     
     This executor is used when running in Cursor mode (TAPPS_AGENTS_MODE=cursor).
-    It invokes Cursor Skills instead of using MAL for LLM operations.
+    It invokes Cursor Skills for LLM operations.
     """
 
     def __init__(
@@ -178,7 +178,7 @@ class CursorWorkflowExecutor:
             self.project_profile = detector.detect_profile()
             save_project_profile(profile=self.project_profile, project_root=self.project_root)
 
-    def start(
+    async def start(
         self,
         workflow: Workflow,
         user_prompt: str | None = None,
@@ -410,7 +410,7 @@ class CursorWorkflowExecutor:
             Final workflow state
         """
         # Initialize execution
-        target_path = self._initialize_run(workflow, target_file)
+        target_path = await self._initialize_run(workflow, target_file)
         
         # Use parallel execution for independent steps
         steps_executed = 0
@@ -467,7 +467,7 @@ class CursorWorkflowExecutor:
 
         return await self._finalize_run(completed_step_ids)
 
-    def _initialize_run(
+    async def _initialize_run(
         self,
         workflow: Workflow | None,
         target_file: str | None,
@@ -482,7 +482,7 @@ class CursorWorkflowExecutor:
 
         # Ensure we have a state
         if not self.state or not self.state.workflow_id.startswith(f"{self.workflow.id}-"):
-            self.start(workflow=self.workflow)
+            await self.start(workflow=self.workflow)
 
         # Establish target file
         target_path: Path | None = None

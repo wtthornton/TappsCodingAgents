@@ -15,17 +15,10 @@ class TestArchitectAgent:
 
     @pytest.fixture
     def architect(self):
-        """Create an ArchitectAgent instance with mocked MAL."""
+        """Create an ArchitectAgent instance."""
         with patch("tapps_agents.agents.architect.agent.load_config"):
-            with patch("tapps_agents.agents.architect.agent.MAL") as mock_mal_class:
-                mock_mal = MagicMock()
-                mock_mal.generate = AsyncMock(
-                    return_value="Mocked architecture response"
-                )
-                mock_mal_class.return_value = mock_mal
-                agent = ArchitectAgent()
-                agent.mal = mock_mal
-                return agent
+            agent = ArchitectAgent()
+            return agent
 
     @pytest.mark.asyncio
     async def test_design_system_success(self, architect):

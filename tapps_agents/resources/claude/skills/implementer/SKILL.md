@@ -117,7 +117,6 @@ You are a senior developer focused on writing clean, efficient, production-ready
 
 - **ReviewerAgent**: Used for code quality review before writing
 - **Context7**: KB-first library documentation lookup
-- **MAL (headless-only)**: The framework can use MAL for LLM code generation only when running headlessly (e.g., `TAPPS_AGENTS_MODE=headless`). When running under Cursor, Cursor’s configured model is the only LLM runtime.
 - **Config System**: Loads configuration from `.tapps-agents/config.yaml`
 
 ## Example Workflow

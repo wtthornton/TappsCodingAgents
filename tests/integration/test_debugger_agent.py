@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock
 import pytest
 
 from tapps_agents.agents.debugger import DebuggerAgent
-from tapps_agents.core.mal import MAL
 
 
 @pytest.mark.integration

@@ -9,7 +9,6 @@ import yaml
 
 from tapps_agents.core.config import (
     AgentsConfig,
-    MALConfig,
     ProjectConfig,
     ReviewerAgentConfig,
     ScoringWeightsConfig,
@@ -101,23 +100,6 @@ class TestReviewerAgentConfig:
 
 
 @pytest.mark.unit
-class TestMALConfig:
-    """Test MALConfig model"""
-
-    def test_default_values(self):
-        """Test default MAL configuration"""
-        config = MALConfig()
-        assert config.ollama_url == "http://localhost:11434"
-        assert config.default_model == "qwen2.5-coder:7b"
-        assert config.timeout == 60.0
-
-    def test_timeout_validation(self):
-        """Test timeout minimum validation"""
-        with pytest.raises(ValueError):
-            MALConfig(timeout=0.5)  # Below minimum 1.0
-
-
-@pytest.mark.unit
 class TestProjectConfig:
     """Test ProjectConfig root model"""
 
@@ -126,10 +108,8 @@ class TestProjectConfig:
         config = ProjectConfig()
         assert config.agents is not None
         assert config.scoring is not None
-        assert config.mal is not None
         assert isinstance(config.agents.reviewer, ReviewerAgentConfig)
         assert isinstance(config.scoring.weights, ScoringWeightsConfig)
-        assert isinstance(config.mal, MALConfig)
 
     def test_custom_config(self):
         """Test creating config with custom values"""
@@ -226,7 +206,6 @@ class TestLoadConfig:
         assert isinstance(config_dict, dict)
         assert "agents" in config_dict
         assert "scoring" in config_dict
-        assert "mal" in config_dict
 
 
 @pytest.mark.unit
@@ -258,11 +237,6 @@ class TestConfigIntegration:
                 },
                 "quality_threshold": 75.0,
             },
-            "mal": {
-                "ollama_url": "http://localhost:11434",
-                "default_model": "qwen2.5-coder:7b",
-                "timeout": 120.0,
-            },
         }
         with open(config_file, "w") as f:
             yaml.dump(config_data, f)
@@ -277,7 +251,6 @@ class TestConfigIntegration:
         assert config.agents.reviewer.max_file_size == 2097152
         assert config.scoring.weights.security == 0.35
         assert config.scoring.quality_threshold == 75.0
-        assert config.mal.timeout == 120.0
 
     def test_config_merging_partial_config(self, tmp_path: Path):
         """Test that partial config merges correctly with defaults (Story 18.3)."""

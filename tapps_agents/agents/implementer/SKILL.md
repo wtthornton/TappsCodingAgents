@@ -83,7 +83,6 @@ Refactor existing code file based on instruction.
 ## Integration
 
 - **ReviewerAgent**: Used for code quality review before writing
-- **MAL**: Uses Model Abstraction Layer for LLM code generation
 - **Config System**: Loads configuration from `.tapps-agents/config.yaml`
 
 ## Example Workflow

@@ -15,15 +15,10 @@ class TestAnalystAgent:
 
     @pytest.fixture
     def analyst(self):
-        """Create an AnalystAgent instance with mocked MAL."""
+        """Create an AnalystAgent instance."""
         with patch("tapps_agents.agents.analyst.agent.load_config"):
-            with patch("tapps_agents.agents.analyst.agent.MAL") as mock_mal_class:
-                mock_mal = MagicMock()
-                mock_mal.generate = AsyncMock(return_value="Mocked analysis response")
-                mock_mal_class.return_value = mock_mal
-                agent = AnalystAgent()
-                agent.mal = mock_mal
-                return agent
+            agent = AnalystAgent()
+            return agent
 
     @pytest.mark.asyncio
     async def test_gather_requirements_success(self, analyst):
@@ -35,7 +30,6 @@ class TestAnalystAgent:
         assert "success" in result
         assert result["success"] is True
         assert "requirements" in result
-        assert analyst.mal.generate.called
 
     @pytest.mark.asyncio
     async def test_gather_requirements_no_description(self, analyst):

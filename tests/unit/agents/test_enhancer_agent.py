@@ -78,7 +78,13 @@ class TestEnhancerAgentEnhanceCommand:
             mock_context.return_value = {"files": []}
             mock_quality.return_value = {"standards": []}
             mock_impl.return_value = {"plan": []}
-            mock_synth.return_value = "Enhanced prompt"
+            mock_synth.return_value = {
+                "instruction": {},
+                "skill_command": "",
+                "format": "markdown",
+                "metadata": {},
+                "enhanced_prompt": "Enhanced prompt"
+            }
             
             result = await agent.run("enhance", prompt="Test prompt")
             
@@ -122,7 +128,13 @@ class TestEnhancerAgentEnhanceCommand:
             mock_context.return_value = {"files": []}
             mock_quality.return_value = {"standards": []}
             mock_impl.return_value = {"plan": []}
-            mock_synth.return_value = "Enhanced prompt"
+            mock_synth.return_value = {
+                "instruction": {},
+                "skill_command": "",
+                "format": "markdown",
+                "metadata": {},
+                "enhanced_prompt": "Enhanced prompt"
+            }
             
             result = await agent.run("enhance", prompt="Test", output_file=str(output_file))
             
@@ -178,7 +190,13 @@ class TestEnhancerAgentEnhanceQuickCommand:
             mock_analysis.return_value = {"intent": "test"}
             mock_req.return_value = {"requirements": []}
             mock_arch.return_value = {"architecture": "simple"}
-            mock_synth.return_value = "Enhanced prompt"
+            mock_synth.return_value = {
+                "instruction": {},
+                "skill_command": "",
+                "format": "markdown",
+                "metadata": {},
+                "enhanced_prompt": "Enhanced prompt"
+            }
             
             result = await agent.run("enhance-quick", prompt="Test prompt")
             
@@ -292,7 +310,8 @@ class TestEnhancerAgentHelperMethods:
         assert agent.current_session is not None
         assert agent.current_session["prompt"] == "Test prompt"
 
-    def test_save_session(self, tmp_path):
+    @pytest.mark.asyncio
+    async def test_save_session(self, tmp_path):
         """Test _save_session saves session to file."""
         agent = EnhancerAgent()
         await agent.activate(tmp_path)

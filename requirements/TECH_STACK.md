@@ -177,63 +177,19 @@
 
 ---
 
-## 4. Model Abstraction Layer (MAL)
+## 4. LLM Integration via Cursor Skills
 
-### 4.1 Router Architecture
+The framework uses Cursor Skills for all LLM operations. Agents prepare instruction objects that are executed via Cursor Skills, which use the developer's configured model in Cursor. No local LLM (Ollama) or API keys are required when running in Cursor mode.
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                         MAL ROUTER                               │
-│                                                                  │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │   Request    │  │   Routing    │  │   Response   │          │
-│  │   Analyzer   │──▶│   Engine     │──▶│   Aggregator │          │
-│  └──────────────┘  └──────────────┘  └──────────────┘          │
-│         │                 │                   │                  │
-│         ▼                 ▼                   ▼                  │
-│  ┌──────────────────────────────────────────────────────────┐   │
-│  │                    PROVIDER POOL                          │   │
-│  │                                                           │   │
-│  │  ┌─────────┐  ┌─────────┐  ┌─────────┐  ┌─────────┐     │   │
-│  │  │ Ollama  │  │LM Studio│  │Anthropic│  │ OpenAI  │     │   │
-│  │  └─────────┘  └─────────┘  └─────────┘  └─────────┘     │   │
-│  └──────────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────┘
-```
+### 4.1 Instruction Objects
 
-### 4.2 Implementation Options
+Agents return instruction objects (e.g., `CodeGenerationInstruction`, `DocumentationInstruction`) that are executed by Cursor Skills. This provides a clean separation between agent logic and LLM execution.
 
-| Framework | Language | Pros | Cons |
-|-----------|----------|------|------|
-| **LiteLLM** | Python | 100+ providers, unified API | Dependency overhead |
-| **LangChain** | Python | Ecosystem, tools | Complexity |
-| **Custom Router** | Python | Full control, minimal deps | Development effort |
+### 4.2 Cursor Skills Integration
 
-**Recommendation:** **LiteLLM** for multi-provider support with unified OpenAI-compatible API.
-
-### 4.3 Routing Logic
-
-```yaml
-routing_rules:
-  default: local
-  
-  triggers:
-    use_cloud:
-      - complexity_score > 8
-      - context_length > 8000
-      - local_unavailable: true
-      - error_rate > 0.3
-      
-    use_local:
-      - default
-      - cost_limit_reached: true
-      
-  priority:
-    1: ollama
-    2: lm_studio
-    3: anthropic
-    4: openai
-```
+- **Skills**: Agent-specific skills (e.g., `@reviewer`, `@implementer`) handle LLM operations
+- **Background Agents**: Autonomous task execution via Cursor's background agent system
+- **No Configuration Required**: Uses the developer's configured model in Cursor
 
 ---
 
@@ -642,8 +598,8 @@ services:
 ┌─────────────────────────────────────────────────────────────────┐
 │                    DEPENDENCY GRAPH                              │
 │                                                                  │
-│  Agent Skills ──────┬──► MAL Router ──────┬──► Ollama           │
-│       │             │          │          └──► Anthropic        │
+│  Agent Skills ──────┬──► Cursor Skills ────┬──► Cursor LLM      │
+│       │             │          │          └──► Background Agents │
 │       │             │          │                                │
 │       ▼             │          ▼                                │
 │  Orchestrator ──────┤    LangChain ────────┬──► ChromaDB        │
@@ -893,7 +849,7 @@ ollama pull mxbai-embed-large      # 670MB
 
 | Term | Definition |
 |------|------------|
-| **MAL** | Model Abstraction Layer - Routes requests to appropriate LLM providers |
+| **Cursor Skills** | Cursor's skill system for executing agent instructions |
 | **RAG** | Retrieval-Augmented Generation - Enhances LLM with external knowledge |
 | **LoRA** | Low-Rank Adaptation - Efficient fine-tuning method |
 | **QLoRA** | Quantized LoRA - Memory-efficient fine-tuning (4-bit) |

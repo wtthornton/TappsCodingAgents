@@ -469,8 +469,6 @@ Return Dockerfile content and docker-compose.yml content."""
                 "infrastructure_type": infrastructure_type,
                 "status": "planned",
             }
-            except Exception as e:
-                return {"error": f"Failed to set up infrastructure: {str(e)}"}
         else:
             return {
                 "message": f"Infrastructure type {infrastructure_type} not yet implemented",

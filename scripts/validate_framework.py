@@ -23,7 +23,6 @@ sys.path.insert(0, str(project_root))
 
 # Imports after sys.path modification are intentional
 from tapps_agents.core.config import get_default_config, load_config  # noqa: E402
-from tapps_agents.core.mal import MAL  # noqa: E402
 from tapps_agents.core.project_profile import load_project_profile  # noqa: E402
 from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry  # noqa: E402
 from tapps_agents.experts.expert_registry import ExpertRegistry  # noqa: E402
@@ -108,22 +107,6 @@ def test_config_loading(result: ValidationResult):
         result.add_fail("Config: Configuration loading", str(e))
 
 
-def test_mal_initialization(result: ValidationResult):
-    """Test Model Abstraction Layer initialization."""
-    try:
-        mal = MAL()
-        assert mal is not None, "MAL should initialize"
-        result.add_pass("MAL: Initialization")
-        
-        # Test provider availability (without actually calling)
-        # MAL may initialize clients lazily, so just check it exists
-        result.add_pass("MAL: Initialized successfully")
-        
-        # Check for cloud fallback support (may be configured later)
-        result.add_warning("MAL", "Cloud fallback configuration not verified (optional)")
-        
-    except Exception as e:
-        result.add_fail("MAL: Initialization", str(e))
 
 
 def test_builtin_experts(result: ValidationResult):
@@ -254,10 +237,6 @@ async def main():
     # Run synchronous tests
     print("Running Configuration Tests...")
     test_config_loading(result)
-    print()
-    
-    print("Running MAL Tests...")
-    test_mal_initialization(result)
     print()
     
     print("Running Expert System Tests...")

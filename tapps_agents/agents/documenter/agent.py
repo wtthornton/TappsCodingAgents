@@ -33,7 +33,7 @@ class DocumenterAgent(BaseAgent):
             config = load_config()
         self.config = config
 
-        # Initialize doc generator (no MAL dependency)
+        # Initialize doc generator
         self.doc_generator = DocGenerator()
 
         # Get documenter config

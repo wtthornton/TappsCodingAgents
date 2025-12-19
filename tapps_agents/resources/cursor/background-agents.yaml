@@ -15,8 +15,8 @@
 
 agents:
   # Option A policy: Background Agents run deterministic tooling via the framework.
-  # LLM-driven work should be performed by Cursor itself (using the user's configured model),
-  # not by the framework via MAL. We enforce this by setting TAPPS_AGENTS_MODE=cursor.
+  # LLM-driven work should be performed by Cursor itself (using the user's configured model).
+  # We enforce this by setting TAPPS_AGENTS_MODE=cursor.
 
   - name: "TappsCodingAgents Quality Analyzer"
     type: "background"

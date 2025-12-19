@@ -51,7 +51,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             config = load_config()
         self.config = config
 
-        # Initialize code generator (no MAL dependency)
+        # Initialize code generator
         self.code_generator = CodeGenerator()
 
         # Get implementer config

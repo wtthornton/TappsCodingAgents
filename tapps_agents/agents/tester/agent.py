@@ -38,7 +38,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             config = load_config()
         self.config = config
 
-        # Initialize test generator (no MAL dependency)
+        # Initialize test generator
         self.test_generator = TestGenerator()
 
         # Get tester config

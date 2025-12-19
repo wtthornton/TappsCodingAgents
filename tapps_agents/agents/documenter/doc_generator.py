@@ -13,7 +13,7 @@ class DocGenerator:
     """Prepares documentation generation instructions for Cursor Skills execution."""
 
     def __init__(self):
-        """Initialize document generator (no MAL dependency)."""
+        """Initialize document generator."""
         pass
 
     def prepare_api_docs(
@@ -375,7 +375,6 @@ class DocGenerator:
             key_core_files = [
                 "agent_base.py",
                 "config.py",
-                "mal.py",
                 "exceptions.py",
             ]
             for filename in key_core_files:

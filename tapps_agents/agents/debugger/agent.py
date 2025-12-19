@@ -33,7 +33,7 @@ class DebuggerAgent(BaseAgent):
             config = load_config()
         self.config = config
 
-        # Initialize error analyzer (no MAL dependency)
+        # Initialize error analyzer
         self.error_analyzer = ErrorAnalyzer()
 
         # Get debugger config
@@ -131,7 +131,7 @@ class DebuggerAgent(BaseAgent):
 
     async def analyze_error_command(
         self,
-        error_message: str,
+        error_message: str | None = None,
         stack_trace: str | None = None,
         code_context: str | None = None,
     ) -> dict[str, Any]:

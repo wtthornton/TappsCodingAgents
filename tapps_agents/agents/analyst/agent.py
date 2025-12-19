@@ -164,11 +164,12 @@ Format as structured JSON with sections."""
             parameters={"description": description},
         )
 
-        requirements = {
-            "description": description,
-            "instruction": instruction.to_dict(),
-            "skill_command": instruction.to_skill_command(),
-        }
+        try:
+            requirements = {
+                "description": description,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+            }
 
             # Save to file if specified
             if output_file:
@@ -220,8 +221,6 @@ Format as structured JSON."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
         }
-        except Exception as e:
-            return {"error": f"Failed to analyze stakeholders: {str(e)}"}
 
     async def _research_technology(
         self, requirement: str, context: str = "", criteria: list[str] | None = None
@@ -271,8 +270,6 @@ Format as structured JSON with technology recommendations."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
         }
-        except Exception as e:
-            return {"error": f"Failed to research technology: {str(e)}"}
 
     async def _estimate_effort(
         self, feature_description: str, context: str = ""
@@ -308,8 +305,6 @@ Format as structured JSON."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
         }
-        except Exception as e:
-            return {"error": f"Failed to estimate effort: {str(e)}"}
 
     async def _assess_risk(
         self, feature_description: str, context: str = ""
@@ -345,8 +340,6 @@ Format as structured JSON with risk assessment."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
         }
-        except Exception as e:
-            return {"error": f"Failed to assess risk: {str(e)}"}
 
     async def _competitive_analysis(
         self, product_description: str, competitors: list[str] | None = None
@@ -394,5 +387,3 @@ Format as structured JSON."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
         }
-        except Exception as e:
-            return {"error": f"Failed to perform competitive analysis: {str(e)}"}
