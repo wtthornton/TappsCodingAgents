@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.6] - 2025-01-20
+
+### Added
+- Automated release process with version management
+- Release package verification script
+- Comprehensive release documentation
+
+### Changed
+- Updated release process to automatically update version numbers
+- Enhanced GitHub release script to build packages and verify contents
+- Improved MANIFEST.in with better comments and exclusions
+
 ## [2.0.5] - 2025-01-20
 
 ### Changed

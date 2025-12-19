@@ -1,10 +1,13 @@
-# Include package resources
+# Include package resources (required for runtime)
+# Resources include Cursor Skills, Rules, and workflow presets needed by the framework
 recursive-include tapps_agents/resources *
 recursive-exclude tapps_agents/resources __pycache__ *
 
 # Exclude development and test files
 global-exclude *.pyc
 global-exclude __pycache__
+global-exclude *.pyo
+global-exclude *.pyd
 recursive-exclude tests *
 recursive-exclude .bmad-core *
 recursive-exclude .claude *
@@ -23,3 +26,9 @@ recursive-exclude htmlcov *
 recursive-exclude .pytest_cache *
 recursive-exclude .mypy_cache *
 recursive-exclude *.egg-info *
+recursive-exclude build *
+recursive-exclude dist *
+recursive-exclude .venv *
+recursive-exclude venv *
+recursive-exclude ENV *
+recursive-exclude env *
