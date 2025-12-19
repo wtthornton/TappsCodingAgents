@@ -75,8 +75,9 @@ class TestSecretScanner:
         clean_file = tmp_path / "clean.py"
         clean_file.write_text("def hello(): pass\n")
         
+        # Use a longer secret that matches the pattern (20+ characters)
         secret_file = tmp_path / "secret.py"
-        secret_file.write_text("api_key = 'secret123'\n")
+        secret_file.write_text("api_key = 'AKIAIOSFODNN7EXAMPLE12345'\n")
         
         result = scanner.scan_directory(tmp_path)
         
@@ -90,7 +91,8 @@ class TestSecretScanner:
         excluded_dir = tmp_path / "venv"
         excluded_dir.mkdir()
         excluded_file = excluded_dir / "test.py"
-        excluded_file.write_text("api_key = 'secret'\n")
+        # Use a longer secret that matches the pattern (20+ characters)
+        excluded_file.write_text("api_key = 'AKIAIOSFODNN7EXAMPLE12345'\n")
         
         result = scanner.scan_directory(tmp_path, exclude_patterns=["venv/**"])
         

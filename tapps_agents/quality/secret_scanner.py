@@ -236,9 +236,16 @@ class SecretScanner:
 
                             severity = self.SEVERITY_MAP.get(secret_type, "medium")
 
+                            # Try to get relative path, fall back to absolute if outside project root
+                            try:
+                                rel_path = str(file_path.relative_to(self.project_root))
+                            except ValueError:
+                                # File is outside project root, use absolute path
+                                rel_path = str(file_path)
+
                             findings.append(
                                 SecretFinding(
-                                    file_path=str(file_path.relative_to(self.project_root)),
+                                    file_path=rel_path,
                                     line_number=line_num,
                                     secret_type=secret_type,
                                     pattern=match.group(0) if match.groups() else match.group(0),
@@ -252,6 +259,33 @@ class SecretScanner:
             pass
 
         return findings
+
+    def scan_file(self, file_path: Path) -> SecretScanResult:
+        """
+        Scan a single file for secrets.
+        
+        Args:
+            file_path: Path to file to scan
+            
+        Returns:
+            SecretScanResult with findings
+        """
+        return self.scan(target_path=file_path)
+
+    def scan_directory(
+        self, directory_path: Path, exclude_patterns: list[str] | None = None
+    ) -> SecretScanResult:
+        """
+        Scan a directory for secrets.
+        
+        Args:
+            directory_path: Path to directory to scan
+            exclude_patterns: Optional additional exclude patterns
+            
+        Returns:
+            SecretScanResult with findings
+        """
+        return self.scan(target_path=directory_path, exclude_patterns=exclude_patterns)
 
     def check_gate(
         self,
