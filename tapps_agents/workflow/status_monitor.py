@@ -122,17 +122,28 @@ class StatusFileMonitor:
 
     async def _check_status_files(self) -> None:
         """Check all monitored workflow status files for changes."""
+        from .file_utils import is_file_stable
+        
         # Find all state files
         if not self.state_dir.exists():
             return
 
         state_files = list(self.state_dir.glob("*.json"))
-        # Exclude history directory
-        state_files = [f for f in state_files if "history" not in str(f)]
+        # Exclude history directory, metadata files, and last.json
+        state_files = [
+            f for f in state_files
+            if "history" not in str(f)
+            and not f.name.endswith(".meta.json")
+            and f.name != "last.json"
+        ]
 
         for state_file in state_files:
             workflow_id = state_file.stem
             try:
+                # Skip files that are too new or too small (likely incomplete)
+                if not is_file_stable(state_file, min_age_seconds=2.0):
+                    continue
+                
                 # Check if file was modified
                 current_mtime = state_file.stat().st_mtime
 
@@ -148,7 +159,8 @@ class StatusFileMonitor:
                     await self.monitor_workflow(workflow_id)
 
             except Exception as e:
-                logger.error(f"Error checking status file {state_file}: {e}")
+                # Log as debug to avoid spam - some files may be in transition
+                logger.debug(f"Error checking status file {state_file}: {e}")
 
     async def _detect_changes(
         self, workflow_id: str, state_file: Path
@@ -265,7 +277,7 @@ class StatusFileMonitor:
 
     def _load_state(self, state_file: Path) -> dict[str, Any] | None:
         """
-        Load workflow state from file.
+        Load workflow state from file with safe loading and validation.
 
         Args:
             state_file: Path to state file
@@ -273,17 +285,26 @@ class StatusFileMonitor:
         Returns:
             State dictionary or None if failed
         """
-        try:
-            with open(state_file, encoding="utf-8") as f:
-                return json.load(f)
-        except FileNotFoundError:
+        from .file_utils import safe_load_json, is_file_stable
+        
+        # Skip files that are too new (likely still being written)
+        if not is_file_stable(state_file, min_age_seconds=2.0):
             return None
-        except json.JSONDecodeError as e:
-            logger.error(f"Failed to parse state file {state_file}: {e}")
-            return None
-        except Exception as e:
-            logger.error(f"Error loading state file {state_file}: {e}")
-            return None
+        
+        # Use safe loading with retry logic
+        state = safe_load_json(
+            state_file,
+            retries=2,  # Fewer retries for monitoring (we'll check again next poll)
+            backoff=0.5,
+            min_age_seconds=2.0,
+            min_size=100,  # Minimum reasonable state file size
+        )
+        
+        if state is None:
+            # Only log as debug to avoid spam - incomplete files are expected during writes
+            logger.debug(f"Could not load state file {state_file} (may be incomplete)")
+        
+        return state
 
 
 class BackgroundAgentMonitor:

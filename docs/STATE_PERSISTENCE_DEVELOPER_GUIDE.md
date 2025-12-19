@@ -1,8 +1,14 @@
 # State Persistence Developer Guide
 
-**Version:** 1.0  
+**Version:** 1.1  
 **Date:** January 2026  
+**Last Updated:** December 2025  
 **Status:** ✅ Complete
+
+**Recent Updates:**
+- Added atomic file writing to prevent corruption (v2.0.8+)
+- Added safe JSON loading with retry logic
+- Added file validation and stability checks
 
 ---
 
@@ -22,23 +28,30 @@ The state persistence system consists of several key components:
    - Handles persistent state storage
    - Manages state versioning and migration
    - Provides state validation and recovery
+   - Uses atomic file writing to prevent corruption
 
-2. **WorkflowCheckpointManager** (`tapps_agents/workflow/checkpoint_manager.py`)
+2. **File Utilities** (`tapps_agents/workflow/file_utils.py`)
+   - Provides atomic file writing (temp-then-rename pattern)
+   - Safe JSON loading with retry logic and validation
+   - File stability checks to prevent reading incomplete files
+   - Prevents race conditions during concurrent read/write operations
+
+3. **WorkflowCheckpointManager** (`tapps_agents/workflow/checkpoint_manager.py`)
    - Determines when checkpoints should be created
    - Manages checkpoint frequency configuration
    - Tracks checkpoint metadata
 
-3. **StatePersistenceConfigManager** (`tapps_agents/workflow/state_persistence_config.py`)
+4. **StatePersistenceConfigManager** (`tapps_agents/workflow/state_persistence_config.py`)
    - Manages configuration loading and validation
    - Handles configuration migration
    - Executes cleanup policies
 
-4. **StateValidator** (`tapps_agents/workflow/state_manager.py`)
+5. **StateValidator** (`tapps_agents/workflow/state_manager.py`)
    - Validates state integrity
    - Calculates checksums
    - Detects corruption
 
-5. **StateMigrator** (`tapps_agents/workflow/state_manager.py`)
+6. **StateMigrator** (`tapps_agents/workflow/state_manager.py`)
    - Migrates state between versions
    - Handles backward compatibility
 
@@ -310,6 +323,73 @@ Migrate state between versions.
 **Returns:**
 - Migrated state data
 
+### File Utilities
+
+#### `atomic_write_json(path: Path, data: dict[str, Any], compress: bool = False, indent: int = 2, **kwargs) -> None`
+
+Atomically write JSON data to a file using temp-then-rename pattern.
+
+**Parameters:**
+- `path`: Target file path
+- `data`: Data to write as JSON
+- `compress`: Whether to compress with gzip
+- `indent`: JSON indentation level
+- `**kwargs`: Additional arguments for json.dump()
+
+**Example:**
+```python
+from tapps_agents.workflow.file_utils import atomic_write_json
+from pathlib import Path
+
+atomic_write_json(Path("state.json"), {"key": "value"}, indent=2)
+```
+
+#### `safe_load_json(path: Path, retries: int = 3, backoff: float = 0.5, min_age_seconds: float = 2.0, min_size: int = 100) -> dict[str, Any] | None`
+
+Safely load JSON from a file with retry logic and validation.
+
+**Parameters:**
+- `path`: File path to load
+- `retries`: Number of retry attempts (default: 3)
+- `backoff`: Backoff multiplier between retries (default: 0.5)
+- `min_age_seconds`: Minimum file age before reading (default: 2.0)
+- `min_size`: Minimum file size in bytes (default: 100)
+
+**Returns:**
+- Parsed JSON data or None if loading fails
+
+**Example:**
+```python
+from tapps_agents.workflow.file_utils import safe_load_json
+from pathlib import Path
+
+data = safe_load_json(Path("state.json"))
+if data is None:
+    print("Failed to load or file is incomplete")
+```
+
+#### `is_valid_json_file(path: Path, min_size: int = 100) -> bool`
+
+Check if a file contains valid JSON and meets minimum size.
+
+**Parameters:**
+- `path`: File path to check
+- `min_size`: Minimum file size in bytes (default: 100)
+
+**Returns:**
+- True if file is valid JSON and meets size requirement
+
+#### `is_file_stable(path: Path, min_age_seconds: float = 2.0) -> bool`
+
+Check if a file has been stable (not modified recently).
+
+**Parameters:**
+- `path`: File path to check
+- `min_age_seconds`: Minimum age in seconds (default: 2.0)
+
+**Returns:**
+- True if file exists and hasn't been modified recently
+
 ---
 
 ## State Versioning and Migration
@@ -358,17 +438,21 @@ To add a new state version:
 3. **State Update**: Workflow state is updated with step results
 4. **Metadata Generation**: Checkpoint metadata is generated
 5. **State Save**: `AdvancedStateManager.save_state()` is called
+   - Uses atomic file writing (writes to temp file, then renames)
+   - Prevents partial file visibility during concurrent reads
 6. **Checkpoint Record**: `record_checkpoint()` is called
 
 ### Checkpoint Loading Flow
 
 1. **State Discovery**: Locate state file (by workflow_id or state_file)
-2. **File Loading**: Load JSON from file (with decompression if needed)
-3. **Version Check**: Check state version
-4. **Migration**: Migrate if needed
-5. **Validation**: Validate state integrity
-6. **State Reconstruction**: Create WorkflowState object
-7. **Metadata Extraction**: Extract StateMetadata
+2. **File Stability Check**: Verify file hasn't been modified recently (prevents reading incomplete files)
+3. **File Validation**: Check file size and JSON validity before parsing
+4. **File Loading**: Load JSON from file (with decompression if needed, with retry logic)
+5. **Version Check**: Check state version
+6. **Migration**: Migrate if needed
+7. **Validation**: Validate state integrity
+8. **State Reconstruction**: Create WorkflowState object
+9. **Metadata Extraction**: Extract StateMetadata
 
 ---
 
@@ -382,6 +466,19 @@ The system detects corruption through:
 2. **Checksum Mismatch**: Calculated checksum doesn't match stored checksum
 3. **Missing Required Fields**: Required fields are absent
 4. **Invalid Field Types**: Fields have incorrect types
+5. **Incomplete Files**: Files that are too small or fail JSON validation
+6. **File Stability**: Files modified too recently are considered potentially incomplete
+
+### Atomic File Writing
+
+All state file writes use atomic file operations to prevent corruption:
+
+- **Temp-then-Rename Pattern**: Files are written to temporary files first (`.tmp` extension)
+- **Atomic Rename**: Once write is complete, file is renamed atomically
+- **No Partial Visibility**: Readers never see incomplete files
+- **Automatic Cleanup**: Temp files are cleaned up on errors
+
+This prevents "Failed to parse state file" errors that occurred when files were read during writes.
 
 ### Recovery Mechanisms
 
@@ -488,6 +585,7 @@ def test_workflow_resume_after_interruption():
 ## References
 
 - [Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md) - User-facing documentation
+- [Workflow State File Operations](WORKFLOW_STATE_FILE_OPERATIONS.md) - Atomic file operations guide
 - [Epic 12: State Persistence and Resume](../implementation/EPIC_12_State_Persistence_and_Resume.md) - Epic definition
 - [Story 12.7: Testing and Documentation](../stories/12.7.testing-documentation.md) - Story definition
 

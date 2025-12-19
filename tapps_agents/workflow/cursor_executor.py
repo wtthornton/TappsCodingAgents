@@ -358,15 +358,15 @@ class CursorWorkflowExecutor:
             "error": self.state.error,
         }
 
-        with open(state_file, "w", encoding="utf-8") as f:
-            json.dump(state_dict, f, indent=2)
+        from .file_utils import atomic_write_json
+        
+        atomic_write_json(state_file, state_dict, indent=2)
 
         # Also save to history
         history_dir = state_file.parent / "history"
         history_dir.mkdir(exist_ok=True)
         history_file = history_dir / state_file.name
-        with open(history_file, "w", encoding="utf-8") as f:
-            json.dump(state_dict, f, indent=2)
+        atomic_write_json(history_file, state_dict, indent=2)
 
     async def run(
         self,

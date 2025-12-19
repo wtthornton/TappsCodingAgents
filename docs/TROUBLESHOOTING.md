@@ -83,6 +83,34 @@ If indicators are not showing:
 2. Check that output is not being redirected (indicators print to stderr)
 3. Verify `.cursor/background-agents.yaml` is properly configured
 
+## Workflow State Files
+
+### "Failed to parse state file" Errors
+
+**Problem:** You see repeated errors like:
+```
+Failed to parse state file .../full-sdlc-20251213-150718.json: Expecting value: line 26 column 9 (char 724)
+```
+
+**Status:** ✅ **Fixed in version 2.0.8+**
+
+This issue was caused by reading state files while they were still being written. The fix includes:
+
+1. **Atomic File Writing**: All state files are now written using a temp-then-rename pattern, ensuring files are only visible when fully written
+2. **File Validation**: Files are validated before parsing (size checks, JSON validation)
+3. **File Age Checks**: Files must be at least 2 seconds old before being read
+4. **Retry Logic**: Automatic retries with exponential backoff for files that may be in transition
+5. **Graceful Handling**: Incomplete or corrupted files return None instead of raising errors
+
+**If you still see these errors:**
+- Update to the latest version: `pip install --upgrade tapps-agents`
+- Old corrupted files are automatically skipped (they won't cause errors)
+- New state files are written atomically and won't have this issue
+
+**For Developers:**
+- See `docs/STATE_PERSISTENCE_DEVELOPER_GUIDE.md` for technical details
+- The fix is in `tapps_agents/workflow/file_utils.py` and all state file writers
+
 ## Configuration
 
 ### "Configuration file not found"

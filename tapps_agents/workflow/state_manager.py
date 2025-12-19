@@ -244,8 +244,8 @@ class AdvancedStateManager:
 
         # Save metadata
         metadata_path = self.state_dir / f"{state.workflow_id}.meta.json"
-        with open(metadata_path, "w", encoding="utf-8") as f:
-            json.dump(metadata.to_dict(), f, indent=2)
+        from .file_utils import atomic_write_json
+        atomic_write_json(metadata_path, metadata.to_dict(), indent=2)
 
         # Save to history
         history_path = self.history_dir / state_file
@@ -261,8 +261,8 @@ class AdvancedStateManager:
             "workflow_path": str(workflow_path) if workflow_path else None,
         }
         last_path = self.state_dir / "last.json"
-        with open(last_path, "w", encoding="utf-8") as f:
-            json.dump(last_data, f, indent=2)
+        from .file_utils import atomic_write_json
+        atomic_write_json(last_path, last_data, indent=2)
 
         logger.info(f"Saved workflow state: {state.workflow_id} to {state_path}")
         return state_path
@@ -572,22 +572,28 @@ class AdvancedStateManager:
         raise ValueError(f"Could not recover state for workflow {workflow_id}")
 
     def _write_state_file(self, path: Path, data: dict[str, Any], compress: bool):
-        """Write state file with optional compression."""
-        if compress:
-            with gzip.open(path, "wt", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
-        else:
-            with open(path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+        """Write state file with optional compression using atomic write."""
+        from .file_utils import atomic_write_json
+        
+        atomic_write_json(path, data, compress=compress, indent=2)
 
     def _read_state_file(self, path: Path) -> dict[str, Any]:
-        """Read state file with optional decompression."""
-        if path.suffix == ".gz" or path.name.endswith(".gz"):
-            with gzip.open(path, "rt", encoding="utf-8") as f:
-                return json.load(f)
-        else:
-            with open(path, encoding="utf-8") as f:
-                return json.load(f)
+        """Read state file with optional decompression and safe loading."""
+        from .file_utils import safe_load_json
+        
+        # Use safe loading with validation
+        result = safe_load_json(
+            path,
+            retries=3,
+            backoff=0.5,
+            min_age_seconds=1.0,  # Shorter wait for explicit loads
+            min_size=50,  # Smaller minimum for compressed files
+        )
+        
+        if result is None:
+            raise ValueError(f"Failed to load state file: {path}")
+        
+        return result
 
     def _state_to_dict(self, state: WorkflowState) -> dict[str, Any]:
         """Convert WorkflowState to dictionary."""

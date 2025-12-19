@@ -1431,8 +1431,9 @@ class WorkflowExecutor:
             state_path = self._state_path_for(self.state.workflow_id)
 
             data = self._state_to_dict(self.state)
-            with open(state_path, "w", encoding="utf-8") as f:
-                json.dump(data, f, indent=2)
+            from .file_utils import atomic_write_json
+            
+            atomic_write_json(state_path, data, indent=2)
 
             # Update last pointer for easy resume
             last_data = {
@@ -1441,8 +1442,7 @@ class WorkflowExecutor:
                 "saved_at": datetime.now().isoformat(),
                 "workflow_path": data.get("variables", {}).get("_workflow_path"),
             }
-            with open(self._last_state_path(), "w", encoding="utf-8") as f:
-                json.dump(last_data, f, indent=2)
+            atomic_write_json(self._last_state_path(), last_data, indent=2)
 
             return state_path
         except Exception:
