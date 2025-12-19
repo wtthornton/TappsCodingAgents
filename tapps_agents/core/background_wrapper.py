@@ -68,6 +68,12 @@ class BackgroundAgentWrapper:
         Returns:
             Setup result dictionary
         """
+        print(
+            f"[BACKGROUND AGENT] Setting up environment...",
+            file=sys.stderr,
+            flush=True,
+        )
+        
         self.progress_reporter.report_step(
             "setup", "in_progress", "Setting up background agent"
         )
@@ -95,6 +101,12 @@ class BackgroundAgentWrapper:
                 )
 
             self.progress_reporter.report_step("setup", "completed", "Setup complete")
+            
+            print(
+                f"[BACKGROUND AGENT] Setup complete",
+                file=sys.stderr,
+                flush=True,
+            )
 
             return {
                 "success": True,
@@ -106,6 +118,11 @@ class BackgroundAgentWrapper:
 
         except Exception as e:
             self.progress_reporter.report_step("setup", "failed", f"Setup failed: {e}")
+            print(
+                f"[BACKGROUND AGENT] Setup failed: {e}",
+                file=sys.stderr,
+                flush=True,
+            )
             return {"success": False, "error": str(e)}
 
     async def run_command(
@@ -127,6 +144,15 @@ class BackgroundAgentWrapper:
         Returns:
             Command result dictionary
         """
+        # Print visible start indicator
+        print(
+            f"\n{'='*60}\n"
+            f"[BACKGROUND AGENT] Starting: {agent} {command}\n"
+            f"{'='*60}",
+            file=sys.stderr,
+            flush=True,
+        )
+        
         self.progress_reporter.report_step(
             "command_start", "in_progress", f"Running {agent} {command}"
         )
@@ -141,6 +167,13 @@ class BackgroundAgentWrapper:
             # Create agent instance
             agent_instance = agent_class()
             await agent_instance.activate()
+
+            # Show running indicator for long operations
+            print(
+                f"[BACKGROUND AGENT] Running {agent} {command}...",
+                file=sys.stderr,
+                flush=True,
+            )
 
             # Run command
             result = await agent_instance.run(command, **args)
@@ -159,12 +192,33 @@ class BackgroundAgentWrapper:
 
             await agent_instance.close()
 
+            # Print visible end indicator
+            print(
+                f"\n{'='*60}\n"
+                f"[BACKGROUND AGENT] Completed: {agent} {command}\n"
+                f"Result saved to: {result_file}\n"
+                f"{'='*60}\n",
+                file=sys.stderr,
+                flush=True,
+            )
+
             return {"success": True, "result": result, "result_file": str(result_file)}
 
         except Exception as e:
             self.progress_reporter.report_step(
                 "command_failed", "failed", f"Command failed: {e}"
             )
+            
+            # Print visible error indicator
+            print(
+                f"\n{'='*60}\n"
+                f"[BACKGROUND AGENT] Failed: {agent} {command}\n"
+                f"Error: {e}\n"
+                f"{'='*60}\n",
+                file=sys.stderr,
+                flush=True,
+            )
+            
             return {"success": False, "error": str(e)}
 
     async def cleanup(self) -> dict[str, Any]:
@@ -228,12 +282,32 @@ async def run_background_task(
     Returns:
         Task result dictionary
     """
+    # Print visible task start indicator
+    print(
+        f"\n{'='*60}\n"
+        f"[BACKGROUND AGENT TASK] Starting\n"
+        f"Agent ID: {agent_id}\n"
+        f"Task ID: {task_id}\n"
+        f"Command: {agent} {command}\n"
+        f"{'='*60}\n",
+        file=sys.stderr,
+        flush=True,
+    )
+    
     wrapper = BackgroundAgentWrapper(agent_id, task_id, use_worktree=use_worktree)
 
     try:
         # Setup
         setup_result = await wrapper.setup()
         if not setup_result.get("success"):
+            print(
+                f"\n{'='*60}\n"
+                f"[BACKGROUND AGENT TASK] Setup Failed\n"
+                f"Error: {setup_result.get('error', 'Unknown error')}\n"
+                f"{'='*60}\n",
+                file=sys.stderr,
+                flush=True,
+            )
             return setup_result
 
         # Run command
@@ -242,10 +316,32 @@ async def run_background_task(
         # Complete
         wrapper.progress_reporter.complete(result)
 
+        # Print visible task completion indicator
+        print(
+            f"\n{'='*60}\n"
+            f"[BACKGROUND AGENT TASK] Completed Successfully\n"
+            f"Task ID: {task_id}\n"
+            f"{'='*60}\n",
+            file=sys.stderr,
+            flush=True,
+        )
+
         return result
 
     except Exception as e:
         wrapper.progress_reporter.fail(str(e))
+        
+        # Print visible task failure indicator
+        print(
+            f"\n{'='*60}\n"
+            f"[BACKGROUND AGENT TASK] Failed\n"
+            f"Task ID: {task_id}\n"
+            f"Error: {e}\n"
+            f"{'='*60}\n",
+            file=sys.stderr,
+            flush=True,
+        )
+        
         return {"success": False, "error": str(e)}
 
     finally:
