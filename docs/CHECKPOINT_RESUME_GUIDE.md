@@ -1,6 +1,6 @@
 # Checkpoint and Resume Guide
 
-**Version:** 2.0.5  
+**Version:** 2.0.6  
 **Date:** January 2026  
 **Status:** ✅ Complete
 

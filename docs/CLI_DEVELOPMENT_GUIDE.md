@@ -151,7 +151,7 @@ All JSON output follows this structure:
     "timestamp": "2024-01-01T12:00:00Z",
     "duration_ms": 1234,
     "command": "review",
-    "version": "2.0.5"
+    "version": "2.0.6"
   },
   "warnings": [
     // Array of warning messages (if any)
