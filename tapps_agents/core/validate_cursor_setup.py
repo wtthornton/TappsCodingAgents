@@ -64,6 +64,17 @@ def validate_cursor_rules(project_root: Path) -> dict[str, Any]:
                             results["warnings"].append(
                                 f"{mdc_file.name} frontmatter missing 'description' field"
                             )
+                        # Check for alwaysApply field (2025 best practice)
+                        if "alwaysApply" not in frontmatter:
+                            results["warnings"].append(
+                                f"{mdc_file.name} frontmatter missing 'alwaysApply' field (recommended for 2025 best practices)"
+                            )
+                        # Check file size (2025 best practice: keep under 500 lines)
+                        line_count = len(content.splitlines())
+                        if line_count > 500:
+                            results["warnings"].append(
+                                f"{mdc_file.name} is {line_count} lines (recommended: <500 lines for 2025 best practices)"
+                            )
                     except yaml.YAMLError as e:
                         results["warnings"].append(
                             f"{mdc_file.name} has invalid YAML frontmatter: {e}"

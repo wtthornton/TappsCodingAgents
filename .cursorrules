@@ -69,7 +69,7 @@ This project includes 5 workflow presets:
 2. **Rapid Development** (`workflow rapid`) - Fast feature development
 3. **Maintenance** (`workflow fix`) - Bug fixes and refactoring
 4. **Quality Improvement** (`workflow quality`) - Code quality focus
-5. **Quick Fix** (`workflow quick`) - Hotfix workflow
+5. **Quick Fix** (`workflow hotfix` / `workflow urgent`) - Hotfix workflow
 
 See `.cursor/rules/workflow-presets.mdc` for details.
 

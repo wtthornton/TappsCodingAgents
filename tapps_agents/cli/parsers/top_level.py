@@ -370,7 +370,7 @@ Example:
         description="""Initialize a new project with TappsCodingAgents configuration.
         
 Sets up all integration components for Cursor AI:
-  • Cursor Rules (.cursorrules) - Natural language workflow commands
+  • Cursor Rules (.cursor/rules/) - Natural language workflow commands and project context
   • Workflow Presets (workflows/presets/) - Reusable workflow definitions
   • Configuration (.tapps-agents/config.yaml) - Project settings
   • Cursor Skills (.claude/skills/) - Agent skill definitions
@@ -384,7 +384,7 @@ unless you use --overwrite flags. Use --no-<component> to skip specific setups.
 Example: tapps-agents init""",
     )
     init_parser.add_argument(
-        "--no-rules", action="store_true", help="Skip creating/updating .cursorrules file with natural language workflow commands"
+        "--no-rules", action="store_true", help="Skip creating/updating .cursor/rules/ directory with natural language workflow commands and project context"
     )
     init_parser.add_argument(
         "--no-presets", action="store_true", help="Skip creating workflow presets directory (workflows/presets/) with reusable workflow definitions"
@@ -1168,7 +1168,7 @@ NOTE: This is a legacy command. For new code, use 'skill template' instead. This
         
 Checks the status of:
   • Cursor Skills (.claude/skills/) - Agent capability definitions
-  • Cursor Rules (.cursorrules) - Natural language workflow commands
+  • Cursor Rules (.cursor/rules/) - Natural language workflow commands and project context
   • Background Agents (.cursor/background-agents.yaml) - Auto-execution configuration
   • Configuration files and directory structure
 
