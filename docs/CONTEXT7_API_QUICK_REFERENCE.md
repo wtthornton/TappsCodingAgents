@@ -22,10 +22,17 @@ Authorization: Bearer CONTEXT7_API_KEY
 
 ### Finding Your API Key
 
+**✨ NEW: Automatic API Key Loading!**
+
 The framework automatically checks for your API key in this order:
 
 1. **Environment Variable** (`CONTEXT7_API_KEY`) - Highest priority
-2. **Encrypted Storage** (`.tapps-agents/api-keys.encrypted`) - Automatic fallback
+2. **Encrypted Storage** (`.tapps-agents/api-keys.encrypted`) - **Automatically loaded if environment variable not set**
+
+**Key Benefits:**
+- ✅ **No manual key passing** - Agents automatically have access
+- ✅ **Automatic fallback** - Loads from encrypted storage when needed
+- ✅ **Seamless integration** - Works with all agents transparently
 
 **Quick Check:**
 ```python
@@ -56,7 +63,8 @@ export CONTEXT7_API_KEY="your-api-key-here"
 $env:CONTEXT7_API_KEY="your-api-key-here"
 ```
 
-**Or load from encrypted storage:**
+**Note:** If you store the key in encrypted storage, **you don't need to manually load it** - the framework automatically loads it when agents initialize. However, if you want to manually load it:
+
 ```bash
 # Windows PowerShell
 $env:CONTEXT7_API_KEY = (python -c "from tapps_agents.context7.security import APIKeyManager; mgr = APIKeyManager(); key = mgr.load_api_key('context7'); print(key if key else '')")

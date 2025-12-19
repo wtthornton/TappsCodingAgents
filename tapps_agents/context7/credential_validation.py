@@ -40,20 +40,28 @@ class CredentialValidator:
         Validate Context7 credentials.
 
         Checks:
-        1. Environment variables
+        1. Environment variables (or encrypted storage)
         2. MCP server availability
         3. Test API call (if MCP gateway available)
 
         Returns:
             CredentialValidationResult
         """
-        # Check environment variables
-        context7_key = os.getenv("CONTEXT7_API_KEY")
+        # Check environment variables or encrypted storage
+        # This automatically loads from encrypted storage if not in environment
+        try:
+            from .backup_client import _ensure_context7_api_key
+            context7_key = _ensure_context7_api_key()
+        except Exception:
+            context7_key = os.getenv("CONTEXT7_API_KEY")
+        
         if context7_key:
+            # Determine source (env or encrypted storage)
+            source = "env" if os.getenv("CONTEXT7_API_KEY") else "encrypted_storage"
             return CredentialValidationResult(
                 valid=True,
-                credential_source="env",
-                actionable_message="Context7 API key found in environment variable CONTEXT7_API_KEY",
+                credential_source=source,
+                actionable_message=f"Context7 API key found ({'environment variable' if source == 'env' else 'encrypted storage'})",
             )
 
         # Check MCP gateway availability

@@ -10,6 +10,7 @@ This guide covers managing API keys for Context7 integration, including storage 
 
 Context7 API keys are used to fetch library documentation from the Context7 API. This guide covers:
 
+- ✅ **Automatic API key loading** - No need to manually pass keys to agents
 - ✅ **Where to find your API key** (environment variable or encrypted storage)
 - ✅ Environment variable storage (recommended)
 - ✅ Encrypted file storage (automatic fallback)
@@ -18,12 +19,19 @@ Context7 API keys are used to fetch library documentation from the Context7 API.
 - ✅ Direct API usage (HTTP fallback)
 - ✅ Troubleshooting
 
-## Quick Start: Finding Your API Key
+## Quick Start: Automatic API Key Loading
+
+**✨ NEW: The framework automatically loads your API key when needed!**
 
 **The framework automatically checks for your API key in this order:**
 
 1. **Environment Variable** (`CONTEXT7_API_KEY`) - Checked first
-2. **Encrypted Storage** (`.tapps-agents/api-keys.encrypted`) - Used if environment variable not set
+2. **Encrypted Storage** (`.tapps-agents/api-keys.encrypted`) - **Automatically loaded if environment variable not set**
+
+**Key Benefits:**
+- ✅ **No manual key passing required** - Agents automatically have access to the API key
+- ✅ **Automatic fallback** - If not in environment, loads from encrypted storage automatically
+- ✅ **Seamless integration** - Works transparently with all agents (Architect, Designer, Implementer, Tester, etc.)
 
 **To quickly check where your key is:**
 
@@ -41,7 +49,8 @@ python -c "import os; from tapps_agents.context7.security import APIKeyManager; 
 python -c "import os; from tapps_agents.context7.security import APIKeyManager; env_key = os.getenv('CONTEXT7_API_KEY'); mgr = APIKeyManager(); enc_key = mgr.load_api_key('context7'); print('Environment:', 'SET' if env_key else 'NOT SET'); print('Encrypted:', 'FOUND' if enc_key else 'NOT FOUND'); print('Available:', 'YES' if (env_key or enc_key) else 'NO')"
 ```
 
-**If you have a key stored in encrypted storage, you can load it to the environment:**
+**Note:** If you have a key stored in encrypted storage, **you don't need to manually load it** - the framework will automatically load it when agents initialize. However, if you want to manually load it to the environment:
+
 ```bash
 # Windows PowerShell
 $env:CONTEXT7_API_KEY = (python -c "from tapps_agents.context7.security import APIKeyManager; mgr = APIKeyManager(); key = mgr.load_api_key('context7'); print(key if key else '')")
@@ -64,9 +73,10 @@ TappsCodingAgents supports two ways to access Context7:
    - Automatic fallback to HTTP if MCP unavailable
 
 2. **Direct HTTP API (Fallback)** - When MCP Gateway unavailable
-   - Requires `CONTEXT7_API_KEY` environment variable
+   - Automatically loads `CONTEXT7_API_KEY` from environment or encrypted storage
    - Makes direct HTTP requests to Context7 API
    - Used automatically when MCP Gateway is not available
+   - **No manual key passing required** - Framework handles it automatically
 
 ### Context7 API Endpoints
 
@@ -189,7 +199,7 @@ curl -X GET "https://context7.com/api/v2/docs/info/vercel/next.js?type=json&topi
 
 ### Automatic Fallback Mechanism
 
-The framework automatically uses the best available method:
+The framework automatically uses the best available method and **automatically loads the API key when needed**:
 
 ```python
 # 1. Try MCP Gateway first (no API key needed)
@@ -197,7 +207,8 @@ if mcp_gateway_available:
     result = await mcp_gateway.call_tool("mcp_Context7_resolve-library-id", ...)
     
 # 2. Fallback to HTTP API if MCP unavailable
-elif CONTEXT7_API_KEY:
+#    API key is automatically loaded from environment or encrypted storage
+elif api_key_available:  # Automatically checked and loaded
     result = await http_client.search(query="library-name")
     
 # 3. Error if neither available
@@ -205,15 +216,63 @@ else:
     return {"error": "Context7 not available: MCP Gateway and API key both unavailable"}
 ```
 
+### Automatic API Key Loading for Agents
+
+**✨ All agents automatically have access to the Context7 API key - no manual passing required!**
+
+When agents initialize with Context7 support, the framework:
+
+1. **Automatically checks** for `CONTEXT7_API_KEY` in environment
+2. **Automatically loads** from encrypted storage if not in environment
+3. **Sets environment variable** for future use (if loaded from storage)
+4. **Makes key available** to all Context7 operations
+
+**Example - Agent Usage (No API Key Passing Needed):**
+
+```python
+from tapps_agents.agents.architect import ArchitectAgent
+from tapps_agents.core.config import load_config
+
+# Initialize agent - API key is automatically loaded!
+config = load_config()
+agent = ArchitectAgent(config=config)
+
+# Context7 helper is automatically initialized with API key access
+# No need to pass API key manually!
+await agent.activate()
+
+# Use Context7 - API key is already available
+if agent.context7:
+    docs = await agent.context7.get_documentation("react", topic="hooks")
+```
+
+**Supported Agents:**
+- ✅ Architect Agent
+- ✅ Designer Agent
+- ✅ Implementer Agent
+- ✅ Tester Agent
+- ✅ Analyst Agent
+
+All of these agents automatically have Context7 API key access when initialized.
+
 ### Python Example: Direct API Usage
 
 If you need to call Context7 API directly (bypassing the framework):
+
+**Note:** The framework automatically loads the API key from encrypted storage if not in environment. For direct API usage, you can use the same helper:
 
 ```python
 import httpx
 import os
 
-api_key = os.getenv("CONTEXT7_API_KEY")
+# Option 1: Use automatic loading (recommended)
+from tapps_agents.context7.backup_client import _ensure_context7_api_key
+api_key = _ensure_context7_api_key()
+
+# Option 2: Manual check (fallback)
+if not api_key:
+    api_key = os.getenv("CONTEXT7_API_KEY")
+
 base_url = "https://context7.com/api/v2"
 
 # Search for a library
@@ -281,6 +340,8 @@ echo $env:CONTEXT7_API_KEY  # Windows PowerShell
 ### Option 2: Encrypted File Storage
 
 **Best for**: Local development, enhanced security
+
+**✨ Automatic Loading:** Keys stored in encrypted storage are **automatically loaded** when agents initialize - no manual steps required!
 
 Store API key in encrypted file:
 

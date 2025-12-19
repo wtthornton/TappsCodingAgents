@@ -10,6 +10,8 @@ This guide covers debugging Context7 integration issues, including API key loadi
 
 ### Step 1: Check API Key Status
 
+**✨ Note:** The framework automatically loads the API key from encrypted storage if not in environment - no manual steps needed!
+
 ```bash
 # Use the check script
 python docs/scripts/check_context7_key.py
@@ -19,6 +21,7 @@ python docs/scripts/check_context7_key.py
 ```
 [OK] API KEY AVAILABLE
    Source: Environment Variable (CONTEXT7_API_KEY) or Encrypted Storage
+   (Automatically loaded if in encrypted storage)
 ```
 
 ### Step 2: Test API Connectivity
@@ -40,8 +43,8 @@ print('Error:', result.get('error'))
 
 **If you see:**
 - ✅ "quota exceeded" → API key is working, but quota limit reached
-- ❌ "API key not set" → API key not found in environment or encrypted storage
-- ❌ "MCP Gateway not available" → Running outside Cursor, need API key
+- ❌ "API key not set" → API key not found in environment or encrypted storage (check both locations)
+- ❌ "MCP Gateway not available" → Running outside Cursor, API key will be automatically loaded from encrypted storage if available
 
 ---
 
@@ -87,8 +90,8 @@ curl -X GET "https://context7.com/api/v2/search?query=test" \
 - Cache pre-population fails
 
 **Diagnosis:**
-- Check if API key is actually available (may be misleading error message)
-- Verify API key is loaded from encrypted storage
+- **Note:** The framework automatically loads API keys from encrypted storage - this error usually means the key is not stored anywhere
+- Check if API key exists in either environment variable or encrypted storage
 
 **Solutions:**
 1. **Check API key location:**
@@ -96,7 +99,7 @@ curl -X GET "https://context7.com/api/v2/search?query=test" \
    python docs/scripts/check_context7_key.py
    ```
 
-2. **Load API key from encrypted storage:**
+2. **If key is in encrypted storage:** The framework should automatically load it. If you still see this error, try manually loading (for debugging):
    ```bash
    # Windows PowerShell
    $env:CONTEXT7_API_KEY = (python -c "from tapps_agents.context7.security import APIKeyManager; mgr = APIKeyManager(); key = mgr.load_api_key('context7'); print(key if key else '')")
@@ -105,7 +108,14 @@ curl -X GET "https://context7.com/api/v2/search?query=test" \
    export CONTEXT7_API_KEY=$(python -c "from tapps_agents.context7.security import APIKeyManager; mgr = APIKeyManager(); key = mgr.load_api_key('context7'); print(key if key else '')")
    ```
 
-3. **Verify API key is set:**
+3. **If key doesn't exist:** Store it in encrypted storage:
+   ```python
+   from tapps_agents.context7.security import APIKeyManager
+   key_manager = APIKeyManager()
+   key_manager.store_api_key("context7", "your-api-key-here", encrypt=True)
+   ```
+
+4. **Verify API key is set:**
    ```bash
    # Windows PowerShell
    echo $env:CONTEXT7_API_KEY

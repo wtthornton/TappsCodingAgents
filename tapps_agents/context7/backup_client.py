@@ -21,6 +21,39 @@ from ..mcp.gateway import MCPGateway
 logger = logging.getLogger(__name__)
 
 
+def _ensure_context7_api_key() -> str | None:
+    """
+    Ensure Context7 API key is available in environment.
+    
+    Checks environment variable first, then loads from encrypted storage if needed.
+    Automatically sets the environment variable if loaded from storage.
+    
+    Returns:
+        API key string if available, None otherwise
+    """
+    # First check environment variable
+    api_key = os.getenv("CONTEXT7_API_KEY")
+    if api_key:
+        return api_key
+    
+    # Try loading from encrypted storage
+    try:
+        from .security import APIKeyManager
+        
+        key_manager = APIKeyManager()
+        api_key = key_manager.load_api_key("context7")
+        
+        if api_key:
+            # Set in environment for future use
+            os.environ["CONTEXT7_API_KEY"] = api_key
+            logger.debug("Loaded Context7 API key from encrypted storage")
+            return api_key
+    except Exception as e:
+        logger.debug(f"Could not load API key from encrypted storage: {e}")
+    
+    return None
+
+
 def check_mcp_tools_available(gateway: MCPGateway | None = None) -> bool:
     """
     Check if Context7 MCP tools are available via Cursor's MCP server.
@@ -63,27 +96,11 @@ def check_context7_api_available() -> bool:
     """
     Check if Context7 API key is available (for fallback direct HTTP calls).
     
+    Automatically loads from encrypted storage if not in environment.
+    
     Returns True if API key is set, False otherwise.
     """
-    # #region agent log
-    import json
-    from datetime import datetime
-    from pathlib import Path
-    log_path = Path.cwd() / ".cursor" / "debug.log"
-    api_key = os.getenv("CONTEXT7_API_KEY")
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "C",
-                "location": "backup_client.py:52",
-                "message": "check_context7_api_available called",
-                "data": {"api_key_available": api_key is not None, "key_length": len(api_key) if api_key else 0},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except: pass
-    # #endregion
+    api_key = _ensure_context7_api_key()
     return api_key is not None
 
 
@@ -115,7 +132,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
             }) + "\n")
     except: pass
     # #endregion
-    api_key = os.getenv("CONTEXT7_API_KEY")
+    api_key = _ensure_context7_api_key()
     # #region agent log
     try:
         with open(log_path, "a", encoding="utf-8") as f:

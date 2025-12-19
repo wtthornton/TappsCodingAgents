@@ -48,6 +48,14 @@ class Context7AgentHelper:
             self.enabled = False
             return
 
+        # Ensure API key is available (loads from encrypted storage if needed)
+        # This ensures agents don't need to manually pass the API key
+        try:
+            from .backup_client import _ensure_context7_api_key
+            _ensure_context7_api_key()
+        except Exception as e:
+            logger.debug(f"Could not ensure Context7 API key availability: {e}")
+
         # Validate credentials (non-blocking, logs warnings if invalid)
         try:
             cred_result = validate_context7_credentials(mcp_gateway=mcp_gateway)
