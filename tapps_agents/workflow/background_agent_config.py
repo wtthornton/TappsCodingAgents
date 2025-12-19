@@ -22,13 +22,14 @@ class BackgroundAgentConfigError(Exception):
 class BackgroundAgentConfigValidator:
     """Validates Background Agent configuration files."""
 
-    REQUIRED_AGENT_FIELDS = ["name", "type", "commands", "watch_paths"]
+    REQUIRED_AGENT_FIELDS = ["name", "type", "commands"]
     REQUIRED_TYPE_VALUE = "background"
     OPTIONAL_AGENT_FIELDS = [
         "description",
         "context7_cache",
         "environment",
         "triggers",
+        "watch_paths",
         "timeout_seconds",
         "retry_count",
         "enabled",
@@ -146,6 +147,14 @@ class BackgroundAgentConfigValidator:
             if "type" in agent and agent["type"] != self.REQUIRED_TYPE_VALUE:
                 errors.append(
                     f"Agent {i+1}: Field 'type' must be '{self.REQUIRED_TYPE_VALUE}' (got: {agent['type']})"
+                )
+
+            # Validate that agent has either triggers (natural language) or watch_paths (auto-execution)
+            has_triggers = "triggers" in agent and agent.get("triggers")
+            has_watch_paths = "watch_paths" in agent and agent.get("watch_paths")
+            if not has_triggers and not has_watch_paths:
+                errors.append(
+                    f"Agent {i+1}: Must have either 'triggers' (for natural language prompts) or 'watch_paths' (for auto-execution)"
                 )
 
             # Validate commands field

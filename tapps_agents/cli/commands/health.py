@@ -102,10 +102,10 @@ def handle_health_check_command(
                 continue
 
             status_symbol = {
-                "healthy": "✓",
-                "degraded": "⚠",
-                "unhealthy": "✗",
-            }.get(result.status, "?")
+                "healthy": "[OK]",
+                "degraded": "[WARN]",
+                "unhealthy": "[FAIL]",
+            }.get(result.status, "[?]")
 
             print(f"\n[{status_symbol}] {name.upper()}: {result.status} ({result.score:.1f}/100)")
             print(f"   {result.message}")

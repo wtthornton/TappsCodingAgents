@@ -423,9 +423,9 @@ def handle_workflow_recommend_command(args: object) -> None:
                             workflow_path = Path("workflows") / f"{recommendation.workflow_file}.yaml"
                             if workflow_path.exists():
                                 workflow = executor.load_workflow(workflow_path)
-                                print(f"\n✅ Loaded workflow: {workflow.name}")
+                                print(f"\n[OK] Loaded workflow: {workflow.name}")
                             else:
-                                print(f"\n⚠️  Workflow file not found: {workflow_path}")
+                                print(f"\n[WARN] Workflow file not found: {workflow_path}")
                     elif response == "o":
                         # Override: show available workflows
                         print("\nAvailable workflows:")
@@ -437,7 +437,7 @@ def handle_workflow_recommend_command(args: object) -> None:
                             idx = int(choice) - 1
                             if 0 <= idx < len(available):
                                 selected = available[idx]
-                                print(f"\n✅ Selected: {selected['name']}")
+                                print(f"\n[OK] Selected: {selected['name']}")
                                 if auto_load:
                                     workflow_path = Path("workflows") / selected["file"]
                                     if workflow_path.exists():
@@ -446,7 +446,7 @@ def handle_workflow_recommend_command(args: object) -> None:
                                         )
                                         executor = WorkflowExecutor(auto_detect=False)
                                         workflow = executor.load_workflow(workflow_path)
-                                        print(f"✅ Loaded workflow: {workflow.name}")
+                                        print(f"[OK] Loaded workflow: {workflow.name}")
                         except (ValueError, IndexError, EOFError, KeyboardInterrupt):
                             print("\nInvalid selection or cancelled.")
                 except (EOFError, KeyboardInterrupt):
@@ -869,7 +869,7 @@ def handle_auto_execution_command(args: object) -> None:
                 print("Recent Executions:")
                 print("-" * 80)
                 for metric in metrics:
-                    status_icon = "✅" if metric.status == "success" else "❌"
+                    status_icon = "[OK]" if metric.status == "success" else "[FAIL]"
                     print(f"{status_icon} {metric.workflow_id}/{metric.step_id}")
                     print(f"   Command: {metric.command}")
                     print(f"   Status: {metric.status}")
@@ -898,7 +898,7 @@ def handle_auto_execution_command(args: object) -> None:
                 print(f"Execution History (showing {len(metrics)} most recent):")
                 print("=" * 80)
                 for metric in metrics:
-                    status_icon = "✅" if metric.status == "success" else "❌"
+                    status_icon = "[OK]" if metric.status == "success" else "[FAIL]"
                     print(f"{status_icon} {metric.started_at}")
                     print(f"   Workflow: {metric.workflow_id}")
                     print(f"   Step: {metric.step_id}")
@@ -957,11 +957,11 @@ def handle_auto_execution_command(args: object) -> None:
                 ],
             }, indent=2))
         else:
-            status_icon = "✅" if overall == "healthy" else "⚠️" if overall == "degraded" else "❌"
+            status_icon = "[OK]" if overall == "healthy" else "[WARN]" if overall == "degraded" else "[FAIL]"
             print(f"{status_icon} Overall Status: {overall.upper()}")
             print("=" * 80)
             for result in results:
-                icon = "✅" if result.status == "healthy" else "⚠️" if result.status == "degraded" else "❌"
+                icon = "[OK]" if result.status == "healthy" else "[WARN]" if result.status == "degraded" else "[FAIL]"
                 print(f"{icon} {result.name}: {result.status.upper()}")
                 print(f"   {result.message}")
                 if result.details:
@@ -1036,7 +1036,7 @@ def handle_background_agent_config_command(args: object) -> None:
             )
 
         if result["success"]:
-            print(f"✓ Configuration file generated: {result['file_path']}")
+            print(f"[OK] Configuration file generated: {result['file_path']}")
             if "template_path" in result:
                 print(f"  Template: {result['template_path']}")
         else:
@@ -1062,9 +1062,9 @@ def handle_background_agent_config_command(args: object) -> None:
             print(json.dumps(result, indent=2))
         else:
             if is_valid:
-                print(f"✓ Configuration file is valid: {validator.config_path}")
+                print(f"[OK] Configuration file is valid: {validator.config_path}")
             else:
-                print(f"✗ Configuration file has errors: {validator.config_path}", file=sys.stderr)
+                print(f"[ERROR] Configuration file has errors: {validator.config_path}", file=sys.stderr)
                 print("\nErrors:", file=sys.stderr)
                 for error in errors:
                     print(f"  - {error}", file=sys.stderr)
@@ -1171,16 +1171,16 @@ def output_text(results: list) -> None:
         print()
 
         if result.is_valid and not result.has_warnings():
-            print("  ✅ Valid")
+            print("  [OK] Valid")
         else:
             all_valid = False
             if result.has_errors():
-                print("  ❌ Errors found:")
+                print("  [FAIL] Errors found:")
                 for error in result.errors:
                     if error.severity == ValidationSeverity.ERROR:
                         print(f"    - {error}")
             if result.has_warnings():
-                print("  ⚠️  Warnings:")
+                print("  [WARN] Warnings:")
                 for error in result.errors:
                     if error.severity == ValidationSeverity.WARNING:
                         print(f"    - {error}")
@@ -1188,9 +1188,9 @@ def output_text(results: list) -> None:
         print()
 
     if all_valid:
-        print("✅ All Skills are valid!")
+        print("[OK] All Skills are valid!")
     else:
-        print("❌ Some Skills have validation errors.")
+        print("[FAIL] Some Skills have validation errors.")
 
 
 def handle_skill_template_command(args: object) -> None:
@@ -1705,13 +1705,13 @@ def handle_install_dev_command(args: object) -> None:
                 capture_output=False,
             )
             if result.returncode == 0:
-                print("\n✅ Development tools installed successfully!")
+                print("\n[OK] Development tools installed successfully!")
                 print("Run 'python -m tapps_agents.cli doctor' to verify installation.")
             else:
-                print(f"\n❌ Installation failed with exit code {result.returncode}")
+                print(f"\n[FAIL] Installation failed with exit code {result.returncode}")
                 sys.exit(1)
         except Exception as e:
-            print(f"\n❌ Error installing development tools: {e}")
+            print(f"\n[FAIL] Error installing development tools: {e}")
             sys.exit(1)
 
 

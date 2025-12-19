@@ -210,7 +210,7 @@ class FeedbackManager:
             print(json.dumps(output, indent=2))
         else:
             # Text format
-            print(f"✓ {message}", file=sys.stderr)
+            print(f"[OK] {message}", file=sys.stderr)
             if summary and self.verbosity != VerbosityLevel.QUIET:
                 for key, value in summary.items():
                     print(f"  {key}: {value}", file=sys.stderr)
@@ -239,7 +239,7 @@ class FeedbackManager:
             print(json.dumps(output), file=sys.stderr)
         else:
             # Text format
-            print(f"⚠ Warning: {message}", file=sys.stderr)
+            print(f"[WARN] Warning: {message}", file=sys.stderr)
             if remediation:
                 print(f"  Suggestion: {remediation}", file=sys.stderr)
     
@@ -276,7 +276,7 @@ class FeedbackManager:
             print(json.dumps(output, indent=2), file=sys.stderr)
         else:
             # Text format
-            print(f"✗ Error: {message}", file=sys.stderr)
+            print(f"[ERROR] Error: {message}", file=sys.stderr)
             if context:
                 for key, value in context.items():
                     print(f"  {key}: {value}", file=sys.stderr)
@@ -368,7 +368,7 @@ class FeedbackManager:
                 print(f"\n{message}", file=sys.stderr)
             if warnings and self.verbosity != VerbosityLevel.QUIET:
                 for warning in warnings:
-                    print(f"⚠ {warning}", file=sys.stderr)
+                    print(f"[WARN] {warning}", file=sys.stderr)
             # Data goes to stdout
             if isinstance(data, dict):
                 # For text mode, format dict nicely
