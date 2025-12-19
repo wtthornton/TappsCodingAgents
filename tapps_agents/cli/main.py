@@ -18,6 +18,7 @@ from .commands import (
     orchestrator,
     planner,
     reviewer,
+    simple_mode,
     tester,
     top_level,
 )
@@ -326,6 +327,8 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_setup_experts_command(args)
     elif args.agent == "cursor":
         top_level.handle_cursor_command(args)
+    elif args.agent == "simple-mode":
+        simple_mode.handle_simple_mode_command(args)
     else:
         # Show main help if no agent specified
         parser = create_root_parser()

@@ -1,0 +1,219 @@
+"""
+Intent Parser - Parse natural language input into structured intents.
+
+Maps user commands to agent sequences using keyword matching and
+simple NLP patterns.
+"""
+
+import re
+from dataclasses import dataclass
+from enum import Enum
+from typing import Any
+
+
+class IntentType(Enum):
+    """Types of user intents."""
+
+    BUILD = "build"
+    REVIEW = "review"
+    FIX = "fix"
+    TEST = "test"
+    UNKNOWN = "unknown"
+
+
+@dataclass
+class Intent:
+    """Structured intent parsed from user input."""
+
+    type: IntentType
+    confidence: float
+    parameters: dict[str, Any]
+    original_input: str
+
+    def get_agent_sequence(self) -> list[str]:
+        """Get the sequence of agents for this intent."""
+        if self.type == IntentType.BUILD:
+            return ["planner", "architect", "designer", "implementer"]
+        elif self.type == IntentType.REVIEW:
+            return ["reviewer", "improver"]
+        elif self.type == IntentType.FIX:
+            return ["debugger", "implementer", "tester"]
+        elif self.type == IntentType.TEST:
+            return ["tester"]
+        else:
+            return []
+
+
+class IntentParser:
+    """Parse natural language input into structured intents."""
+
+    def __init__(self):
+        """Initialize the intent parser with keyword mappings."""
+        # Build intent keywords
+        self.build_keywords = [
+            "build",
+            "create",
+            "make",
+            "generate",
+            "add",
+            "implement",
+            "develop",
+            "write",
+            "new",
+            "feature",
+        ]
+
+        # Review intent keywords
+        self.review_keywords = [
+            "review",
+            "check",
+            "analyze",
+            "inspect",
+            "examine",
+            "score",
+            "quality",
+            "audit",
+            "assess",
+            "evaluate",
+        ]
+
+        # Fix intent keywords
+        self.fix_keywords = [
+            "fix",
+            "repair",
+            "resolve",
+            "debug",
+            "error",
+            "bug",
+            "issue",
+            "problem",
+            "broken",
+            "correct",
+        ]
+
+        # Test intent keywords
+        self.test_keywords = [
+            "test",
+            "verify",
+            "validate",
+            "coverage",
+            "testing",
+            "tests",
+            "unit test",
+            "integration test",
+        ]
+
+    def parse(self, input_text: str) -> Intent:
+        """
+        Parse natural language input into a structured intent.
+
+        Args:
+            input_text: User's natural language command
+
+        Returns:
+            Intent object with type, confidence, and parameters
+        """
+        input_lower = input_text.lower().strip()
+
+        # Extract parameters
+        parameters = self._extract_parameters(input_text)
+
+        # Score each intent type
+        scores = {
+            IntentType.BUILD: self._score_intent(input_lower, self.build_keywords),
+            IntentType.REVIEW: self._score_intent(input_lower, self.review_keywords),
+            IntentType.FIX: self._score_intent(input_lower, self.fix_keywords),
+            IntentType.TEST: self._score_intent(input_lower, self.test_keywords),
+        }
+
+        # Find best match
+        best_intent = max(scores.items(), key=lambda x: x[1])
+        intent_type, confidence = best_intent
+
+        # If confidence is too low, mark as unknown
+        if confidence < 0.3:
+            intent_type = IntentType.UNKNOWN
+            confidence = 0.0
+
+        return Intent(
+            type=intent_type,
+            confidence=confidence,
+            parameters=parameters,
+            original_input=input_text,
+        )
+
+    def _score_intent(self, text: str, keywords: list[str]) -> float:
+        """
+        Score how well text matches an intent based on keywords.
+
+        Args:
+            text: Lowercase input text
+            keywords: List of keywords for this intent
+
+        Returns:
+            Confidence score between 0.0 and 1.0
+        """
+        matches = sum(1 for keyword in keywords if keyword in text)
+        if not matches:
+            return 0.0
+
+        # Normalize by number of keywords (max score is 1.0)
+        score = min(matches / len(keywords) * 2.0, 1.0)
+
+        # Boost score if keyword appears at start of sentence
+        for keyword in keywords:
+            if text.startswith(keyword):
+                score = min(score + 0.2, 1.0)
+                break
+
+        return score
+
+    def _extract_parameters(self, text: str) -> dict[str, Any]:
+        """
+        Extract parameters from user input.
+
+        Args:
+            text: User input text
+
+        Returns:
+            Dictionary of extracted parameters
+        """
+        parameters: dict[str, Any] = {}
+
+        # Extract file paths (quoted strings or common file extensions)
+        file_pattern = r'["\']?([^\s"\']+\.(py|ts|js|tsx|jsx|java|go|rs|rb|php|cs|sql|yaml|yml|json|md|txt))["\']?'
+        file_matches = re.findall(file_pattern, text, re.IGNORECASE)
+        if file_matches:
+            parameters["files"] = [match[0] for match in file_matches]
+
+        # Extract quoted descriptions
+        quoted_pattern = r'["\']([^"\']+)["\']'
+        quoted_matches = re.findall(quoted_pattern, text)
+        if quoted_matches:
+            parameters["description"] = quoted_matches[0]
+
+        # Extract feature/functionality mentions
+        feature_patterns = [
+            r"(?:add|create|build|implement)\s+(?:a\s+)?([a-z\s]+?)(?:\s+for|\s+in|\s+with|$)",
+            r"feature[:\s]+([a-z\s]+?)(?:\s+for|\s+in|\s+with|$)",
+        ]
+        for pattern in feature_patterns:
+            match = re.search(pattern, text.lower())
+            if match:
+                parameters["feature"] = match.group(1).strip()
+                break
+
+        return parameters
+
+    def get_agent_sequence(self, intent: Intent) -> list[str]:
+        """
+        Get the sequence of agents for an intent.
+
+        Args:
+            intent: Parsed intent
+
+        Returns:
+            List of agent names in execution order
+        """
+        return intent.get_agent_sequence()
+

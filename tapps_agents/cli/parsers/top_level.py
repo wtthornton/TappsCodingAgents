@@ -130,6 +130,29 @@ detailed quality reports. Focuses on improving existing code without adding feat
 Example: tapps-agents workflow quality --file src/legacy_code.py --auto""",
         parents=[common_workflow_args],
     )
+    # Simple Mode workflow aliases
+    new_feature_parser = workflow_subparsers.add_parser(
+        "new-feature",
+        help="Simple New Feature (build new features quickly)",
+        description="""Simplified workflow for building new features with automatic quality checks.
+        
+Coordinates: Enhancer → Planner → Implementer → Reviewer → Tester
+Quality gates: Overall ≥65, Security ≥6.5
+
+Example: tapps-agents workflow new-feature --prompt "Add user authentication" --auto""",
+        parents=[common_workflow_args],
+    )
+    improve_parser = workflow_subparsers.add_parser(
+        "improve",
+        help="Simple Improve Quality (code quality improvement)",
+        description="""Simplified workflow for improving code quality through review and refactoring.
+        
+Coordinates: Reviewer → Improver → Reviewer → Tester
+Quality gates: Overall ≥75, Maintainability ≥8.0
+
+Example: tapps-agents workflow improve --file src/legacy_code.py --auto""",
+        parents=[common_workflow_args],
+    )
     hotfix_parser = workflow_subparsers.add_parser(
         "hotfix",
         help="Quick Fix (urgent, production bugs)",
@@ -1205,5 +1228,82 @@ Reports any missing components, configuration errors, or issues that would preve
         choices=["json", "text"],
         default="text",
         help="Output format: 'text' for human-readable verification report, 'json' for structured validation data (default: text)",
+    )
+
+    # Simple Mode commands
+    simple_mode_parser = subparsers.add_parser(
+        "simple-mode",
+        help="Simple Mode commands (toggle, status)",
+        description="""Manage Simple Mode - a simplified interface that hides complexity while showcasing power.
+
+Simple Mode provides intent-based agent orchestration:
+  • Build: Create new features (planner → architect → designer → implementer)
+  • Review: Code review and quality checks (reviewer → improver)
+  • Fix: Debug and fix issues (debugger → implementer → tester)
+  • Test: Generate and run tests (tester)
+
+Use natural language commands instead of agent-specific syntax.""",
+    )
+    simple_mode_subparsers = simple_mode_parser.add_subparsers(
+        dest="command",
+        help="Simple Mode command",
+    )
+
+    # Simple Mode: on/off
+    simple_mode_on_parser = simple_mode_subparsers.add_parser(
+        "on",
+        help="Enable Simple Mode",
+    )
+    simple_mode_off_parser = simple_mode_subparsers.add_parser(
+        "off",
+        help="Disable Simple Mode",
+    )
+    simple_mode_status_parser = simple_mode_subparsers.add_parser(
+        "status",
+        help="Check Simple Mode status",
+    )
+    simple_mode_status_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    simple_mode_init_parser = simple_mode_subparsers.add_parser(
+        "init",
+        help="Initialize Simple Mode with guided onboarding",
+        description="""Run the Simple Mode onboarding wizard to get started quickly.
+
+The wizard will:
+  • Detect your project type automatically
+  • Configure Simple Mode settings
+  • Suggest your first command
+  • Show a quick demonstration
+  • Celebrate your success! 🎉
+""",
+    )
+    simple_mode_configure_parser = simple_mode_subparsers.add_parser(
+        "configure",
+        aliases=["config"],
+        help="Configure Simple Mode settings interactively",
+        description="""Run the configuration wizard to customize Simple Mode settings.
+
+The wizard will guide you through:
+  • Basic settings (enable/disable, natural language, etc.)
+  • Quality thresholds
+  • Advanced options
+""",
+    )
+    simple_mode_progress_parser = simple_mode_subparsers.add_parser(
+        "progress",
+        help="Show your Simple Mode learning progression",
+        description="""Display your learning progression, usage statistics, and unlocked features.
+
+Shows:
+  • Current level (Beginner, Intermediate, Advanced)
+  • Total commands used
+  • Commands to next level
+  • Features unlocked
+  • Usage breakdown by command type
+""",
     )
 

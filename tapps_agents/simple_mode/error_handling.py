@@ -1,0 +1,222 @@
+"""
+Error Handling for Simple Mode.
+
+Provides friendly error messages, automatic recovery strategies, and help suggestions
+to make Simple Mode more user-friendly when things go wrong.
+"""
+
+from pathlib import Path
+from typing import Any
+
+from ..cli.feedback import get_feedback
+
+
+class SimpleModeErrorHandler:
+    """Handles errors in Simple Mode with friendly messages and recovery suggestions."""
+
+    ERROR_TEMPLATES = {
+        "config_not_found": {
+            "message": "Simple Mode configuration not found",
+            "suggestion": "Run 'tapps-agents simple-mode init' to set up Simple Mode",
+            "recovery": "auto_init",
+        },
+        "intent_parsing_failed": {
+            "message": "Could not understand your command",
+            "suggestion": "Try using keywords like 'build', 'review', 'fix', or 'test'",
+            "recovery": "suggest_alternatives",
+        },
+        "file_not_found": {
+            "message": "File or directory not found",
+            "suggestion": "Check that the file path is correct and the file exists",
+            "recovery": "check_path",
+        },
+        "workflow_failed": {
+            "message": "Workflow execution failed",
+            "suggestion": "Check the error details above and try again",
+            "recovery": "retry_with_details",
+        },
+        "agent_unavailable": {
+            "message": "Required agent is not available",
+            "suggestion": "Verify your project configuration and agent setup",
+            "recovery": "check_config",
+        },
+        "permission_denied": {
+            "message": "Permission denied",
+            "suggestion": "Check file permissions and try again",
+            "recovery": "check_permissions",
+        },
+        "invalid_config": {
+            "message": "Invalid configuration",
+            "suggestion": "Run 'tapps-agents simple-mode configure' to fix settings",
+            "recovery": "run_config_wizard",
+        },
+    }
+
+    def __init__(self, project_root: Path | None = None):
+        self.project_root = project_root or Path.cwd()
+        self.feedback = get_feedback()
+
+    def handle_error(
+        self,
+        error_code: str,
+        error_message: str | None = None,
+        context: dict[str, Any] | None = None,
+        original_exception: Exception | None = None,
+    ) -> None:
+        """
+        Handle an error with friendly messaging and recovery suggestions.
+
+        Args:
+            error_code: Error code identifier
+            error_message: Optional custom error message
+            context: Additional context about the error
+            original_exception: Original exception if available
+        """
+        template = self.ERROR_TEMPLATES.get(error_code, {})
+        
+        message = error_message or template.get("message", "An error occurred")
+        suggestion = template.get("suggestion", "Please check the error and try again")
+        recovery = template.get("recovery", "none")
+
+        # Display friendly error message
+        print("\n" + "=" * 70)
+        print("❌ Error")
+        print("=" * 70)
+        print(f"\n{message}")
+
+        if context:
+            print("\nDetails:")
+            for key, value in context.items():
+                print(f"  • {key}: {value}")
+
+        if original_exception:
+            print(f"\nTechnical details: {str(original_exception)}")
+
+        print(f"\n💡 {suggestion}")
+
+        # Attempt automatic recovery if possible
+        if recovery != "none":
+            self._attempt_recovery(recovery, error_code, context)
+
+        print("=" * 70)
+        print()
+
+    def _attempt_recovery(
+        self, recovery_strategy: str, error_code: str, context: dict[str, Any] | None
+    ) -> None:
+        """Attempt automatic recovery based on strategy."""
+        if recovery_strategy == "auto_init":
+            print("\n🔄 Attempting automatic recovery...")
+            print("   Would you like to run the setup wizard? (This is a placeholder)")
+            # In a real implementation, this could prompt the user or auto-run init
+
+        elif recovery_strategy == "suggest_alternatives":
+            print("\n💡 Common command patterns:")
+            print("   • Build: 'build a user API', 'create a new feature'")
+            print("   • Review: 'review my code', 'check quality of auth.py'")
+            print("   • Fix: 'fix the error', 'debug the issue'")
+            print("   • Test: 'add tests', 'generate tests for service.py'")
+
+        elif recovery_strategy == "check_path":
+            if context and "file_path" in context:
+                file_path = Path(context["file_path"])
+                if not file_path.is_absolute():
+                    # Try relative to project root
+                    abs_path = self.project_root / file_path
+                    if abs_path.exists():
+                        print(f"\n💡 Found file at: {abs_path}")
+                    else:
+                        print(f"\n💡 Searched for: {abs_path} (not found)")
+
+        elif recovery_strategy == "retry_with_details":
+            print("\n💡 Try running with more details:")
+            print("   • Check the workflow logs in .tapps-agents/workflow-state/")
+            print("   • Run 'tapps-agents simple-mode status' to verify configuration")
+
+        elif recovery_strategy == "check_config":
+            print("\n💡 Configuration check:")
+            print("   • Run 'tapps-agents simple-mode status'")
+            print("   • Verify agents are properly installed")
+
+        elif recovery_strategy == "check_permissions":
+            if context and "file_path" in context:
+                file_path = Path(context["file_path"])
+                if file_path.exists():
+                    print(f"\n💡 File exists but may not be readable/writable")
+                    print(f"   Path: {file_path}")
+                    print(f"   Try: chmod +rw {file_path}")
+
+        elif recovery_strategy == "run_config_wizard":
+            print("\n💡 Run the configuration wizard:")
+            print("   tapps-agents simple-mode configure")
+
+    def format_friendly_error(
+        self, error: Exception, context: dict[str, Any] | None = None
+    ) -> str:
+        """
+        Format an exception into a friendly error message.
+
+        Args:
+            error: The exception that occurred
+            context: Additional context
+
+        Returns:
+            Friendly error message string
+        """
+        error_type = type(error).__name__
+        error_message = str(error)
+
+        # Map common exceptions to friendly messages
+        friendly_messages = {
+            "FileNotFoundError": "File not found",
+            "PermissionError": "Permission denied",
+            "ValueError": "Invalid value or configuration",
+            "KeyError": "Missing required configuration",
+            "AttributeError": "Configuration error",
+        }
+
+        friendly_type = friendly_messages.get(error_type, "An error occurred")
+
+        message = f"{friendly_type}: {error_message}"
+
+        if context:
+            context_str = ", ".join(f"{k}={v}" for k, v in context.items())
+            message += f" (Context: {context_str})"
+
+        return message
+
+    def get_help_suggestions(self, error_code: str) -> list[str]:
+        """
+        Get help suggestions for a specific error code.
+
+        Args:
+            error_code: Error code identifier
+
+        Returns:
+            List of help suggestion strings
+        """
+        suggestions = {
+            "config_not_found": [
+                "Run 'tapps-agents simple-mode init' to set up Simple Mode",
+                "Check that you're in a project directory",
+                "Verify .tapps-agents/config.yaml exists",
+            ],
+            "intent_parsing_failed": [
+                "Use explicit keywords: build, review, fix, test",
+                "Be more specific about what you want to do",
+                "Check command variations in docs/SIMPLE_MODE_GUIDE.md",
+            ],
+            "file_not_found": [
+                "Verify the file path is correct",
+                "Check that you're in the right directory",
+                "Use absolute paths if relative paths don't work",
+            ],
+            "workflow_failed": [
+                "Check workflow logs for details",
+                "Verify all required agents are available",
+                "Try a simpler command first",
+            ],
+        }
+
+        return suggestions.get(error_code, ["Check the error message and try again"])
+

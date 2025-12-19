@@ -629,6 +629,24 @@ class WorkflowConfig(BaseModel):
     )
 
 
+class SimpleModeConfig(BaseModel):
+    """Configuration for Simple Mode."""
+
+    enabled: bool = Field(
+        default=True, description="Enable Simple Mode (intent-based agent orchestration)"
+    )
+    auto_detect: bool = Field(
+        default=True,
+        description="Auto-enable Simple Mode for first-time users",
+    )
+    show_advanced: bool = Field(
+        default=False, description="Show advanced agent-specific options"
+    )
+    natural_language: bool = Field(
+        default=True, description="Enable natural language command parsing"
+    )
+
+
 class ProjectConfig(BaseModel):
     """Root configuration model for TappsCodingAgents project"""
 
@@ -657,6 +675,10 @@ class ProjectConfig(BaseModel):
     workflow: WorkflowConfig = Field(
         default_factory=WorkflowConfig,
         description="Workflow execution configuration",
+    )
+    simple_mode: SimpleModeConfig = Field(
+        default_factory=SimpleModeConfig,
+        description="Simple Mode configuration (intent-based orchestration)",
     )
 
     model_config = {
@@ -711,6 +733,47 @@ def load_config(config_path: Path | None = None) -> ProjectConfig:
         raise ValueError(f"Invalid YAML in config file {config_path}: {e}") from e
     except Exception as e:
         raise ValueError(f"Error loading config from {config_path}: {e}") from e
+
+
+def save_config(config_path: Path, config: ProjectConfig) -> None:
+    """
+    Save configuration to a YAML file.
+
+    Args:
+        config_path: Path to the config file
+        config: ProjectConfig instance to save
+
+    Raises:
+        OSError: If the file cannot be written
+    """
+    import yaml
+
+    config_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Load existing config to preserve other settings
+    existing_data: dict[str, Any] = {}
+    if config_path.exists():
+        try:
+            with open(config_path, encoding="utf-8") as f:
+                existing_data = yaml.safe_load(f) or {}
+        except Exception:
+            # If we can't read existing config, start fresh
+            existing_data = {}
+
+    # Merge with new config (convert to dict, preserving existing values)
+    new_data = config.model_dump(exclude_none=True, mode="json")
+    
+    # Deep merge: preserve existing top-level keys
+    for key, value in new_data.items():
+        if key in existing_data and isinstance(existing_data[key], dict) and isinstance(value, dict):
+            # Merge nested dictionaries
+            existing_data[key].update(value)
+        else:
+            existing_data[key] = value
+
+    # Save
+    with open(config_path, "w", encoding="utf-8") as f:
+        yaml.dump(existing_data, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
 
 
 def get_default_config() -> dict[str, Any]:

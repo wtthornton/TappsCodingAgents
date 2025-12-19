@@ -26,6 +26,11 @@ PRESET_ALIASES: dict[str, str] = {
     "refactor": "maintenance",
     "improve": "quality",
     "urgent": "quick-fix",
+    # Simple Mode workflows
+    "new-feature": "simple-new-feature",
+    "simple-new-feature": "simple-new-feature",
+    "simple-fix-issues": "simple-fix-issues",
+    "simple-improve-quality": "simple-improve-quality",
     # Full names
     "full-sdlc": "full-sdlc",
     "rapid-dev": "rapid-dev",
