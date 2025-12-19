@@ -19,6 +19,7 @@ from ...health.collector import HealthMetricsCollector
 from ...health.dashboard import HealthDashboard
 from ...health.orchestrator import HealthOrchestrator
 from ...health.registry import HealthCheckRegistry
+from ..feedback import get_feedback, ProgressTracker
 from .common import format_json_output
 
 
@@ -56,12 +57,19 @@ def handle_health_check_command(
     )
 
     # Run checks
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Health Check")
+    
     if check_name:
         check_names = [check_name]
+        feedback.info(f"Running health check: {check_name}...")
     else:
         check_names = None
+        feedback.info("Running all health checks...")
 
     results = orchestrator.run_all_checks(check_names=check_names, save_metrics=save)
+    feedback.clear_progress()
 
     # Format output
     if output_format == "json":
@@ -84,21 +92,26 @@ def handle_health_check_command(
                 if result
             }
         }
-        print(json.dumps(output, indent=2))
+        feedback.output_result(output, message="Health checks completed")
     else:
         # Text output
+        feedback.success("Health checks completed")
+        warnings = []
         for name, result in sorted(results.items()):
             if not result:
                 continue
 
             status_symbol = {
-                "healthy": "[✓]",
-                "degraded": "[⚠]",
-                "unhealthy": "[✗]",
-            }.get(result.status, "[?]")
+                "healthy": "✓",
+                "degraded": "⚠",
+                "unhealthy": "✗",
+            }.get(result.status, "?")
 
-            print(f"\n{status_symbol} {name.upper()}: {result.status} ({result.score:.1f}/100)")
+            print(f"\n[{status_symbol}] {name.upper()}: {result.status} ({result.score:.1f}/100)")
             print(f"   {result.message}")
+            
+            if result.status != "healthy":
+                warnings.append(f"{name}: {result.message}")
 
             if result.details:
                 # Show key metrics
@@ -130,6 +143,10 @@ def handle_health_check_command(
                         print(f"   Remediation: {result.remediation[0]}")
                 elif isinstance(result.remediation, str):
                     print(f"   Remediation: {result.remediation}")
+        
+        if warnings:
+            for warning_msg in warnings:
+                feedback.warning(warning_msg)
 
 
 def handle_health_dashboard_command(
@@ -162,11 +179,19 @@ def handle_health_dashboard_command(
     dashboard = HealthDashboard(orchestrator=orchestrator)
 
     # Render dashboard
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Health Dashboard")
+    feedback.info("Generating health dashboard...")
+    
     if output_format == "json":
         output = dashboard.render_json()
-        print(json.dumps(output, indent=2))
+        feedback.clear_progress()
+        feedback.output_result(output, message="Health dashboard generated")
     else:
         output = dashboard.render_text()
+        feedback.clear_progress()
+        feedback.success("Health dashboard generated")
         print(output)
 
 
@@ -191,17 +216,24 @@ def handle_health_metrics_command(
     collector = HealthMetricsCollector(project_root=project_root)
 
     # Get metrics
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Health Metrics")
+    feedback.info("Collecting health metrics...")
+    
     metrics = collector.get_metrics(check_name=check_name, status=status, days=days, limit=1000)
     summary = collector.get_summary(days=days)
+    feedback.clear_progress()
 
     if output_format == "json":
         output = {
             "summary": summary,
             "metrics": [m.to_dict() for m in metrics],
         }
-        print(json.dumps(output, indent=2))
+        feedback.output_result(output, message="Health metrics retrieved")
     else:
         # Text output
+        feedback.success("Health metrics retrieved")
         print(f"\nHealth Metrics Summary (last {days} days)")
         print("=" * 70)
         print(f"Total checks: {summary['total_checks']}")
@@ -244,7 +276,13 @@ def handle_health_trends_command(
     collector = HealthMetricsCollector(project_root=project_root)
 
     # Get trends
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Health Trends")
+    feedback.info(f"Analyzing trends for {check_name}...")
+    
     trends = collector.get_trends(check_name=check_name, days=days)
+    feedback.clear_progress()
 
     if output_format == "json":
         output = {
@@ -252,9 +290,10 @@ def handle_health_trends_command(
             "days": days,
             "trends": trends,
         }
-        print(json.dumps(output, indent=2))
+        feedback.output_result(output, message="Health trends analyzed")
     else:
         # Text output
+        feedback.success("Health trends analyzed")
         print(f"\nHealth Trends for '{check_name}' (last {days} days)")
         print("=" * 70)
         print(f"Direction: {trends['direction']}")

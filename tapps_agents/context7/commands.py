@@ -3,7 +3,7 @@ Context7 Commands - CLI commands for Context7 KB management.
 """
 
 import re
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -194,12 +194,12 @@ class Context7Commands:
         if not self.enabled:
             return {"error": "Context7 is not enabled"}
 
-        if not self.kb_lookup.mcp_gateway:
-            return {"error": "MCP Gateway not available"}
+        # Use backup client with automatic fallback (MCP Gateway -> HTTP)
+        from .backup_client import call_context7_resolve_with_fallback
 
         try:
-            result = await self.kb_lookup.mcp_gateway.call_tool(
-                "mcp_Context7_resolve-library-id", libraryName=library
+            result = await call_context7_resolve_with_fallback(
+                library, self.kb_lookup.mcp_gateway
             )
 
             if result.get("success"):
@@ -208,7 +208,7 @@ class Context7Commands:
             else:
                 return {
                     "success": False,
-                    "error": "Failed to resolve library",
+                    "error": result.get("error", "Failed to resolve library"),
                     "library": library,
                 }
         except Exception as e:
@@ -377,9 +377,14 @@ class Context7Commands:
 
             topic = task.topic or "overview"
             try:
-                # Resolve library -> Context7 ID
-                resolve = await self.kb_lookup.mcp_gateway.call_tool(
-                    "mcp_Context7_resolve-library-id", libraryName=task.library
+                # Resolve library -> Context7 ID (with backup fallback)
+                from .backup_client import (
+                    call_context7_get_docs_with_fallback,
+                    call_context7_resolve_with_fallback,
+                )
+
+                resolve = await call_context7_resolve_with_fallback(
+                    task.library, self.kb_lookup.mcp_gateway
                 )
                 matches = (
                     resolve.get("result", {}).get("matches", [])
@@ -396,11 +401,9 @@ class Context7Commands:
                 if not context7_id:
                     raise RuntimeError("Could not resolve Context7 library ID")
 
-                # Fetch docs
-                docs = await self.kb_lookup.mcp_gateway.call_tool(
-                    "mcp_Context7_get-library-docs",
-                    context7CompatibleLibraryID=context7_id,
-                    topic=topic,
+                # Fetch docs (with backup fallback)
+                docs = await call_context7_get_docs_with_fallback(
+                    context7_id, topic, mode="code", page=1, mcp_gateway=self.kb_lookup.mcp_gateway
                 )
                 if not docs.get("success"):
                     raise RuntimeError(docs.get("error") or "Failed to fetch docs")
@@ -592,7 +595,7 @@ class Context7Commands:
                         if doc_file.name != "index.md":  # Skip index files
                             topic = doc_file.stem
                             topics[topic] = {
-                                "cached_at": datetime.utcnow().isoformat() + "Z"
+                                "cached_at": datetime.now(UTC).isoformat() + "Z"
                             }
 
                     if topics:
@@ -698,9 +701,14 @@ class Context7Commands:
                     continue
 
                 try:
-                    # Resolve library -> Context7 ID
-                    resolve = await self.kb_lookup.mcp_gateway.call_tool(
-                        "mcp_Context7_resolve-library-id", libraryName=library
+                    # Resolve library -> Context7 ID (with backup fallback)
+                    from .backup_client import (
+                        call_context7_get_docs_with_fallback,
+                        call_context7_resolve_with_fallback,
+                    )
+
+                    resolve = await call_context7_resolve_with_fallback(
+                        library, self.kb_lookup.mcp_gateway
                     )
                     matches = (
                         resolve.get("result", {}).get("matches", [])
@@ -718,11 +726,9 @@ class Context7Commands:
                         errors.append(f"{library}/{topic}: Could not resolve library ID")
                         continue
 
-                    # Fetch docs
-                    docs = await self.kb_lookup.mcp_gateway.call_tool(
-                        "mcp_Context7_get-library-docs",
-                        context7CompatibleLibraryID=context7_id,
-                        topic=topic,
+                    # Fetch docs (with backup fallback)
+                    docs = await call_context7_get_docs_with_fallback(
+                        context7_id, topic, mode="code", page=1, mcp_gateway=self.kb_lookup.mcp_gateway
                     )
                     if not docs.get("success"):
                         errors.append(

@@ -1,6 +1,6 @@
 # Built-in Experts Guide
 
-**Version:** 2.0.4  
+**Version:** 2.0.5  
 **Last Updated:** January 2026
 
 ## Overview

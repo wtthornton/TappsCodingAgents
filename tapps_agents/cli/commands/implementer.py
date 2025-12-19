@@ -5,6 +5,7 @@ import asyncio
 
 from ...agents.implementer.agent import ImplementerAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
@@ -16,6 +17,11 @@ async def implement_command(
     output_format: str = "json",
 ):
     """Generate and write code to file (with review)"""
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Implement")
+    feedback.info(f"Implementing code in {file_path}...")
+    
     implementer = ImplementerAgent()
     try:
         await implementer.activate()
@@ -28,11 +34,13 @@ async def implement_command(
         )
 
         check_result_error(result)
+        feedback.clear_progress()
 
         if output_format == "json":
-            format_json_output(result)
+            feedback.output_result(result, message="Code implemented successfully")
         else:
-            print(f"Code implemented: {result['file']}")
+            feedback.success("Code implemented successfully")
+            print(f"\nCode implemented: {result['file']}")
             print(f"Approved: {result['approved']}")
             if result.get("backup"):
                 print(f"Backup created: {result['backup']}")

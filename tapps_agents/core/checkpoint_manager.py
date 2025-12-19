@@ -11,7 +11,7 @@ import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -329,7 +329,7 @@ class CheckpointManager:
             command=command,
             state=state_manager.current_state.value,
             progress=progress,
-            checkpoint_time=datetime.utcnow(),
+            checkpoint_time=datetime.now(UTC),
             context=context or {},
             artifacts=artifacts or [],
             metadata=metadata or {},

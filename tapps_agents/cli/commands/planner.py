@@ -5,22 +5,30 @@ import asyncio
 
 from ...agents.planner.agent import PlannerAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
 async def plan_command(description: str, output_format: str = "json"):
     """Create a plan for a feature/requirement"""
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Plan")
+    feedback.info("Creating plan...")
+    
     planner = PlannerAgent()
     try:
         await planner.activate()
         result = await planner.run("plan", description=description)
 
         check_result_error(result)
+        feedback.clear_progress()
 
         if output_format == "json":
-            format_json_output(result)
+            feedback.output_result(result, message="Plan created successfully")
         else:
-            print(f"Plan: {result['description']}")
+            feedback.success("Plan created successfully")
+            print(f"\nPlan: {result['description']}")
             print(f"\n{result.get('plan', '')}")
     finally:
         await planner.close()

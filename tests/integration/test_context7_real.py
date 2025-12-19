@@ -1,14 +1,14 @@
 """
 Real integration tests for Context7 with actual API calls.
 
-These tests use ACTUAL Context7 API calls via MCP and require:
-- CONTEXT7_API_KEY environment variable set
-- Context7 API accessible (may be via external MCP server)
+These tests use ACTUAL Context7 API calls via MCP and prefer:
+- MCP Gateway with Cursor's MCP Context7 server (no API key needed)
+- Fallback to direct HTTP calls (requires CONTEXT7_API_KEY)
 
 Tests are marked with @pytest.mark.requires_context7 and will be skipped
-if no API key is available.
+if neither MCP tools nor API key are available.
 
-IMPORTANT: These tests make REAL HTTP calls to Context7 API (or MCP server).
+IMPORTANT: These tests prefer MCP Gateway (Cursor's MCP server) over direct HTTP calls.
 They verify that the MCP Context7 integration actually calls the real API.
 """
 
@@ -24,38 +24,70 @@ from tapps_agents.mcp.gateway import MCPGateway
 from tapps_agents.mcp.servers.context7 import Context7MCPServer
 
 
+def check_mcp_tools_available(gateway: MCPGateway | None = None) -> bool:
+    """
+    Check if Context7 MCP tools are available via Cursor's MCP server.
+    
+    Returns True if MCP tools are available (no API key needed).
+    """
+    if gateway is None:
+        gateway = MCPGateway()
+    
+    # Check if Context7 MCP tools are registered
+    tools = gateway.list_available_tools()
+    tool_names = [tool.get("name", "") for tool in tools]
+    
+    return (
+        "mcp_Context7_resolve-library-id" in tool_names
+        and "mcp_Context7_get-library-docs" in tool_names
+    )
+
+
 def check_context7_api_available():
-    """Check if Context7 API key is available."""
+    """
+    Check if Context7 API key is available (for fallback direct HTTP calls).
+    
+    Returns True if API key is set, False otherwise.
+    """
     return os.getenv("CONTEXT7_API_KEY") is not None
 
 
-def create_real_context7_client():
+def check_context7_available():
     """
-    Create real Context7 API client functions that make actual HTTP calls.
+    Check if Context7 is available via either:
+    1. MCP Gateway (preferred, no API key needed)
+    2. Direct API with API key (fallback)
     
-    These functions will attempt to call the real Context7 API endpoints.
-    If the API is not available or endpoints are different, tests will handle gracefully.
+    Returns tuple: (mcp_available, api_key_available)
+    """
+    gateway = MCPGateway()
+    mcp_available = check_mcp_tools_available(gateway)
+    api_key_available = check_context7_api_available()
+    
+    return mcp_available, api_key_available
+
+
+def create_fallback_http_client():
+    """
+    Create fallback HTTP client functions for direct API calls.
+    
+    Only used if MCP Gateway tools are not available.
+    Requires CONTEXT7_API_KEY environment variable.
     """
     api_key = os.getenv("CONTEXT7_API_KEY")
     if not api_key:
         return None, None
     
     # Context7 API base URL - adjust if different
-    # Note: Context7 may be accessed via MCP server, so these endpoints
-    # might need to be configured based on your MCP server setup
     BASE_URL = os.getenv("CONTEXT7_API_URL", "https://api.context7.com")
     
     def resolve_library_client(library_name: str):
         """
-        Real client function that makes HTTP call to Context7 API to resolve library.
-        
-        This function makes an ACTUAL HTTP request to Context7 API.
+        Fallback HTTP client for library resolution.
+        Only used if MCP Gateway is not available.
         """
         try:
-            # Make synchronous HTTP call (Context7MCPServer expects sync functions)
             with httpx.Client(timeout=10.0) as client:
-                # Attempt to call Context7 API resolve endpoint
-                # Adjust endpoint path based on actual Context7 API documentation
                 response = client.get(
                     f"{BASE_URL}/v1/resolve",
                     headers={
@@ -68,18 +100,16 @@ def create_real_context7_client():
                 if response.status_code == 200:
                     return response.json()
                 else:
-                    # If endpoint doesn't exist or returns error, return structured error
                     return {
                         "library": library_name,
                         "matches": [],
                         "error": f"API returned status {response.status_code}",
                     }
         except httpx.ConnectError:
-            # API endpoint not reachable - might be using MCP server instead
             return {
                 "library": library_name,
                 "matches": [],
-                "error": "Context7 API endpoint not reachable (may need MCP server)",
+                "error": "Context7 API endpoint not reachable",
             }
         except Exception as e:
             return {"library": library_name, "matches": [], "error": str(e)}
@@ -88,20 +118,15 @@ def create_real_context7_client():
         context7_id: str, topic: str | None = None, mode: str = "code", page: int = 1
     ):
         """
-        Real client function that makes HTTP call to Context7 API to get docs.
-        
-        This function makes an ACTUAL HTTP request to Context7 API.
+        Fallback HTTP client for documentation fetch.
+        Only used if MCP Gateway is not available.
         """
         try:
-            # Make synchronous HTTP call
-            with httpx.Client(timeout=30.0) as client:  # Longer timeout for docs
-                # Attempt to call Context7 API docs endpoint
-                # Adjust endpoint path based on actual Context7 API documentation
+            with httpx.Client(timeout=30.0) as client:
                 params = {"mode": mode, "page": page}
                 if topic:
                     params["topic"] = topic
                 
-                # URL encode the library ID
                 encoded_id = urllib.parse.quote(context7_id, safe="")
                 
                 response = client.get(
@@ -114,7 +139,6 @@ def create_real_context7_client():
                 )
                 
                 if response.status_code == 200:
-                    # Try to parse as JSON first, fallback to text
                     try:
                         data = response.json()
                         if isinstance(data, dict) and "content" in data:
@@ -124,9 +148,6 @@ def create_real_context7_client():
                         return response.text
                 else:
                     return None
-        except httpx.ConnectError:
-            # API endpoint not reachable - might be using MCP server instead
-            return None
         except Exception:
             return None
     
@@ -138,79 +159,143 @@ pytestmark = pytest.mark.integration
 
 @pytest.mark.requires_context7
 class TestContext7MCPReal:
-    """Real integration tests for Context7 MCP Server with actual API calls."""
+    """
+    Real integration tests for Context7 MCP Server.
+    
+    Prefers MCP Gateway (Cursor's MCP server) - no API key needed.
+    Falls back to direct HTTP calls if MCP not available.
+    """
 
     @pytest.fixture
-    def real_context7_clients(self):
-        """Create real Context7 client functions."""
+    def mcp_gateway_or_fallback(self):
+        """
+        Create MCP Gateway or fallback HTTP clients.
+        
+        Returns: (gateway, use_mcp, resolve_client, get_docs_client)
+        - gateway: MCPGateway instance
+        - use_mcp: True if MCP tools are available, False if using fallback
+        - resolve_client: HTTP client function (only if use_mcp=False)
+        - get_docs_client: HTTP client function (only if use_mcp=False)
+        """
+        gateway = MCPGateway()
+        mcp_available = check_mcp_tools_available(gateway)
+        
+        if mcp_available:
+            # Use MCP Gateway - no API key needed!
+            return gateway, True, None, None
+        
+        # Fallback to direct HTTP - requires API key
         if not check_context7_api_available():
-            pytest.skip("CONTEXT7_API_KEY not available")
+            pytest.skip(
+                "Context7 not available: "
+                "MCP tools not found and CONTEXT7_API_KEY not set"
+            )
         
-        resolve_client, get_docs_client = create_real_context7_client()
-        return resolve_client, get_docs_client
+        resolve_client, get_docs_client = create_fallback_http_client()
+        return gateway, False, resolve_client, get_docs_client
 
-    def test_context7_resolve_library_real(self, real_context7_clients):
-        """Test real Context7 library resolution - makes actual API call."""
-        from tapps_agents.mcp.tool_registry import ToolRegistry
+    def test_context7_resolve_library_real(self, mcp_gateway_or_fallback):
+        """
+        Test real Context7 library resolution.
         
-        resolve_client, _ = real_context7_clients
+        Uses MCP Gateway if available (preferred, no API key needed),
+        otherwise falls back to direct HTTP calls.
+        """
+        gateway, use_mcp, resolve_client, _ = mcp_gateway_or_fallback
         
-        registry = ToolRegistry()
-        server = Context7MCPServer(
-            registry=registry,
-            resolve_library_client=resolve_client,
-        )
-        
-        # This makes a REAL API call via the client function
-        result = server.resolve_library_id("react")
-        
-        assert isinstance(result, dict)
-        assert "library" in result
-        # Result may have matches (if API works) or error (if API unavailable)
-        # Key is that it attempted the real API call
+        if use_mcp:
+            # Use MCP Gateway - Cursor's MCP server handles API key
+            result = gateway.call_tool(
+                "mcp_Context7_resolve-library-id",
+                libraryName="react",
+            )
+            assert isinstance(result, dict)
+            assert "success" in result
+        else:
+            # Fallback: Use direct HTTP client
+            from tapps_agents.mcp.tool_registry import ToolRegistry
+            
+            registry = ToolRegistry()
+            server = Context7MCPServer(
+                registry=registry,
+                resolve_library_client=resolve_client,
+            )
+            
+            result = server.resolve_library_id("react")
+            assert isinstance(result, dict)
+            assert "library" in result
 
-    def test_context7_get_docs_real(self, real_context7_clients):
-        """Test real Context7 documentation fetch - makes actual API call."""
-        from tapps_agents.mcp.tool_registry import ToolRegistry
+    def test_context7_get_docs_real(self, mcp_gateway_or_fallback):
+        """
+        Test real Context7 documentation fetch.
         
-        _, get_docs_client = real_context7_clients
+        Uses MCP Gateway if available (preferred, no API key needed),
+        otherwise falls back to direct HTTP calls.
+        """
+        gateway, use_mcp, _, get_docs_client = mcp_gateway_or_fallback
         
-        registry = ToolRegistry()
-        server = Context7MCPServer(
-            registry=registry,
-            get_docs_client=get_docs_client,
-        )
-        
-        # This makes a REAL API call via the client function
-        result = server.get_library_docs("/facebook/react", "hooks")
-        
-        assert isinstance(result, dict)
-        assert "library_id" in result
-        # Result may have content (if API works) or error (if API unavailable)
-        # Key is that it attempted the real API call
+        if use_mcp:
+            # Use MCP Gateway - Cursor's MCP server handles API key
+            result = gateway.call_tool(
+                "mcp_Context7_get-library-docs",
+                context7CompatibleLibraryID="/facebook/react",
+                topic="hooks",
+            )
+            assert isinstance(result, dict)
+            assert "success" in result
+        else:
+            # Fallback: Use direct HTTP client
+            from tapps_agents.mcp.tool_registry import ToolRegistry
+            
+            registry = ToolRegistry()
+            server = Context7MCPServer(
+                registry=registry,
+                get_docs_client=get_docs_client,
+            )
+            
+            result = server.get_library_docs("/facebook/react", "hooks")
+            assert isinstance(result, dict)
+            assert "library_id" in result
 
 
 @pytest.mark.requires_context7
 @pytest.mark.asyncio
 class TestContext7LookupReal:
-    """Real integration tests for Context7 lookup with actual API calls."""
+    """
+    Real integration tests for Context7 lookup.
+    
+    Prefers MCP Gateway (Cursor's MCP server) - no API key needed.
+    Falls back to direct HTTP calls if MCP not available.
+    """
 
     @pytest.fixture
     def real_mcp_gateway(self):
-        """Create MCP Gateway with real Context7 server."""
-        if not check_context7_api_available():
-            pytest.skip("CONTEXT7_API_KEY not available")
+        """
+        Create MCP Gateway with Context7 integration.
         
+        Prefers MCP tools from Cursor (no API key needed).
+        Falls back to HTTP clients if MCP not available.
+        """
         gateway = MCPGateway()
-        resolve_client, get_docs_client = create_real_context7_client()
+        mcp_available = check_mcp_tools_available(gateway)
         
-        # Create Context7 server with real clients
-        Context7MCPServer(
-            registry=gateway.registry,
-            resolve_library_client=resolve_client,
-            get_docs_client=get_docs_client,
-        )
+        if not mcp_available:
+            # MCP tools not available - need to register fallback server
+            if not check_context7_api_available():
+                pytest.skip(
+                    "Context7 not available: "
+                    "MCP tools not found and CONTEXT7_API_KEY not set"
+                )
+            
+            resolve_client, get_docs_client = create_fallback_http_client()
+            # Register fallback server with HTTP clients
+            Context7MCPServer(
+                registry=gateway.registry,
+                resolve_library_client=resolve_client,
+                get_docs_client=get_docs_client,
+            )
         
+        # If MCP tools are available, they're already registered by Cursor
         return gateway
 
     @pytest.fixture
@@ -247,23 +332,41 @@ class TestContext7LookupReal:
 
 @pytest.mark.requires_context7
 class TestContext7MCPGatewayReal:
-    """Real integration tests for MCP Gateway → Context7 API flow."""
+    """
+    Real integration tests for MCP Gateway → Context7 API flow.
+    
+    Prefers MCP Gateway (Cursor's MCP server) - no API key needed.
+    Falls back to direct HTTP calls if MCP not available.
+    """
 
     @pytest.fixture
     def real_context7_gateway(self):
-        """Create MCP Gateway with real Context7 server."""
-        if not check_context7_api_available():
-            pytest.skip("CONTEXT7_API_KEY not available")
+        """
+        Create MCP Gateway with Context7 integration.
         
+        Prefers MCP tools from Cursor (no API key needed).
+        Falls back to HTTP clients if MCP not available.
+        """
         gateway = MCPGateway()
-        resolve_client, get_docs_client = create_real_context7_client()
+        mcp_available = check_mcp_tools_available(gateway)
         
-        Context7MCPServer(
-            registry=gateway.registry,
-            resolve_library_client=resolve_client,
-            get_docs_client=get_docs_client,
-        )
+        if not mcp_available:
+            # MCP tools not available - need to register fallback server
+            if not check_context7_api_available():
+                pytest.skip(
+                    "Context7 not available: "
+                    "MCP tools not found and CONTEXT7_API_KEY not set"
+                )
+            
+            resolve_client, get_docs_client = create_fallback_http_client()
+            # Register fallback server with HTTP clients
+            Context7MCPServer(
+                registry=gateway.registry,
+                resolve_library_client=resolve_client,
+                get_docs_client=get_docs_client,
+            )
         
+        # If MCP tools are available, they're already registered by Cursor
         return gateway
 
     @pytest.mark.timeout(30)

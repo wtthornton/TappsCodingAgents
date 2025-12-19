@@ -7,7 +7,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from .fuzzy_matcher import FuzzyMatcher
@@ -100,7 +100,7 @@ class KBLookup:
         Returns:
             LookupResult with documentation content
         """
-        start_time = datetime.utcnow()
+        start_time = datetime.now(UTC)
 
         # Default topic if not provided
         if topic is None:
@@ -109,7 +109,7 @@ class KBLookup:
         # Step 1: Check KB cache (exact match)
         cached_entry = self.kb_cache.get(library, topic)
         if cached_entry:
-            response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+            response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
             return LookupResult(
                 success=True,
                 content=cached_entry.content,
@@ -150,7 +150,7 @@ class KBLookup:
                 fuzzy_entry = self.kb_cache.get(best_match.library, best_match.topic)
                 if fuzzy_entry:
                     response_time = (
-                        datetime.utcnow() - start_time
+                        datetime.now(UTC) - start_time
                     ).total_seconds() * 1000
                     return LookupResult(
                         success=True,
@@ -168,99 +168,59 @@ class KBLookup:
         # Step 3: Resolve library ID if needed
         context7_id = None
 
-        # Try MCP Gateway first
-        if self.mcp_gateway:
-            try:
-                resolve_result = await self.mcp_gateway.call_tool(
-                    "mcp_Context7_resolve-library-id", libraryName=library
-                )
-                if resolve_result.get("success"):
-                    matches = resolve_result.get("result", {}).get("matches", [])
-                    if matches and len(matches) > 0:
-                        context7_id = (
-                            matches[0].get("id")
-                            if isinstance(matches[0], dict)
-                            else str(matches[0])
-                        )
-            except Exception:
-                # Continue without context7_id if resolution fails
-                logger.debug(
-                    "Failed to resolve Context7 library id via MCP", exc_info=True
-                )
+        # Use backup client with automatic fallback (MCP Gateway -> HTTP)
+        from .backup_client import call_context7_resolve_with_fallback
 
-        # Fallback to provided function
-        if not context7_id and self.resolve_library_func:
-            try:
-                resolve_result = self.resolve_library_func(library)
-                if isinstance(resolve_result, dict):
-                    matches = resolve_result.get("matches", [])
-                    if matches and len(matches) > 0:
-                        context7_id = (
-                            matches[0].get("id")
-                            if isinstance(matches[0], dict)
-                            else str(matches[0])
-                        )
-                elif isinstance(resolve_result, list) and len(resolve_result) > 0:
-                    context7_id = (
-                        resolve_result[0].get("id")
-                        if isinstance(resolve_result[0], dict)
-                        else str(resolve_result[0])
-                    )
-            except Exception:
-                # Continue without context7_id if resolution fails
+        try:
+            resolve_result = await call_context7_resolve_with_fallback(
+                library, self.mcp_gateway
+            )
+            if resolve_result.get("success"):
+                matches = resolve_result.get("result", {}).get("matches", [])
+            elif "quota exceeded" in resolve_result.get("error", "").lower():
+                # Quota exceeded - return early with specific error
+                response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
                 return LookupResult(
                     success=False,
                     source="api",
                     library=library,
                     topic=topic,
-                    error="Failed to resolve library id",
-                    response_time_ms=(datetime.utcnow() - start_time).total_seconds()
-                    * 1000,
+                    error=resolve_result.get("error", "Context7 API quota exceeded"),
+                    response_time_ms=response_time,
                 )
+                if matches and len(matches) > 0:
+                    context7_id = (
+                        matches[0].get("id")
+                        if isinstance(matches[0], dict)
+                        else str(matches[0])
+                    )
+        except Exception as e:
+            # Continue without context7_id if resolution fails
+            logger.debug(
+                f"Failed to resolve Context7 library id: {e}", exc_info=True
+            )
 
         # Step 4: Fetch from Context7 API
         if context7_id:
             content = None
 
-            # Try MCP Gateway first
-            if self.mcp_gateway:
-                try:
-                    api_result = await self.mcp_gateway.call_tool(
-                        "mcp_Context7_get-library-docs",
-                        context7CompatibleLibraryID=context7_id,
-                        topic=topic,
-                    )
-                    if api_result.get("success"):
-                        result_data = api_result.get("result", {})
-                        content = (
-                            result_data.get("content")
-                            if isinstance(result_data, dict)
-                            else result_data
-                        )
-                except Exception:
-                    # Fall through to provided function
-                    content = None
+            # Use backup client with automatic fallback (MCP Gateway -> HTTP)
+            from .backup_client import call_context7_get_docs_with_fallback
 
-            # Fallback to provided function
-            if not content and self.get_docs_func:
-                try:
-                    api_result = self.get_docs_func(context7_id, topic)
-                    if isinstance(api_result, dict):
-                        content = api_result.get("content") or api_result.get("result")
-                    elif isinstance(api_result, str):
-                        content = api_result
-                except Exception as e:
-                    response_time = (
-                        datetime.utcnow() - start_time
-                    ).total_seconds() * 1000
-                    return LookupResult(
-                        success=False,
-                        source="api",
-                        library=library,
-                        topic=topic,
-                        error=str(e),
-                        response_time_ms=response_time,
+            try:
+                api_result = await call_context7_get_docs_with_fallback(
+                    context7_id, topic, mode="code", page=1, mcp_gateway=self.mcp_gateway
+                )
+                if api_result.get("success"):
+                    result_data = api_result.get("result", {})
+                    content = (
+                        result_data.get("content")
+                        if isinstance(result_data, dict)
+                        else result_data
                     )
+            except Exception as e:
+                logger.debug(f"Failed to fetch Context7 docs: {e}", exc_info=True)
+                content = None
 
             # Step 5: Store in cache if we got content
             if content:
@@ -271,7 +231,7 @@ class KBLookup:
                     context7_id=context7_id,
                 )
 
-                response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+                response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
                 return LookupResult(
                     success=True,
                     content=content,
@@ -284,7 +244,7 @@ class KBLookup:
                 )
 
         # If we reach here, lookup failed
-        response_time = (datetime.utcnow() - start_time).total_seconds() * 1000
+        response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
         return LookupResult(
             success=False,
             source="cache",

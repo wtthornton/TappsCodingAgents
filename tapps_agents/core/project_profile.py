@@ -14,7 +14,7 @@ The profile is used to provide context-aware expert guidance.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import yaml
@@ -154,7 +154,7 @@ class ProjectProfileDetector:
             ProjectProfile with all detected characteristics
         """
         profile = ProjectProfile()
-        profile.detected_at = datetime.utcnow().isoformat() + "Z"
+        profile.detected_at = datetime.now(UTC).isoformat() + "Z"
 
         # Detect deployment type
         deployment_type, deployment_conf, deployment_indicators = (

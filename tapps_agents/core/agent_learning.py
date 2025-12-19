@@ -7,7 +7,7 @@ Enables agents to learn from past tasks and improve over time.
 import logging
 import re
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .best_practice_consultant import BestPracticeConsultant
@@ -797,7 +797,7 @@ class PromptOptimizer:
             test_count=0,
             success_count=0,
             average_quality=0.0,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(UTC),
         )
 
         self.variants[variant_id] = variant
@@ -826,7 +826,7 @@ class PromptOptimizer:
         variant.average_quality = (
             alpha * quality_score + (1 - alpha) * variant.average_quality
         )
-        variant.last_tested = datetime.utcnow()
+        variant.last_tested = datetime.now(UTC)
 
     def get_best_variant(self, min_tests: int = 5) -> PromptVariant | None:
         """
@@ -913,7 +913,7 @@ class NegativeFeedbackHandler:
             "task_id": task_id,
             "reason": reason,
             "quality_score": quality_score,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         self.rejections.append(rejection)
 
@@ -965,7 +965,7 @@ class NegativeFeedbackHandler:
         correction = {
             "task_id": task_id,
             "reason": correction_reason,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         self.corrections.append(correction)
 
@@ -1236,7 +1236,7 @@ class FeedbackAnalyzer:
             "weak_areas": weak_areas,
             "improvement_potential": improvement_potential,
             "meets_threshold": overall_score >= threshold,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.feedback_history.append(analysis)
@@ -1866,7 +1866,7 @@ class AgentLearner:
             Optimization report
         """
         optimization: dict[str, Any] = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "capability_id": capability_id,
         }
 

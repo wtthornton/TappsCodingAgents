@@ -5,7 +5,7 @@ Metadata Management - Handles metadata files for Context7 KB cache.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 import yaml
@@ -144,7 +144,7 @@ class MetadataManager:
         if increment_hits:
             metadata.cache_hits += 1
 
-        metadata.last_accessed = datetime.utcnow().isoformat() + "Z"
+        metadata.last_accessed = datetime.now(UTC).isoformat() + "Z"
         self.save_library_metadata(metadata)
 
     def load_cache_index(self) -> CacheIndex:
@@ -171,7 +171,7 @@ class MetadataManager:
         Args:
             index: CacheIndex instance
         """
-        index.last_updated = datetime.utcnow().isoformat() + "Z"
+        index.last_updated = datetime.now(UTC).isoformat() + "Z"
         with open(self.cache_structure.index_file, "w", encoding="utf-8") as f:
             yaml.dump(index.to_dict(), f, default_flow_style=False, sort_keys=False)
 
@@ -207,7 +207,7 @@ class MetadataManager:
 
             if topic not in index.libraries[library]["topics"]:
                 index.libraries[library]["topics"][topic] = {
-                    "cached_at": datetime.utcnow().isoformat() + "Z"
+                    "cached_at": datetime.now(UTC).isoformat() + "Z"
                 }
                 index.total_entries += 1
 

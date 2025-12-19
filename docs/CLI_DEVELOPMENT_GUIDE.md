@@ -5,13 +5,14 @@ This guide explains how to develop and extend CLI commands in TappsCodingAgents 
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Standardized Utilities](#standardized-utilities)
-3. [Patterns for Adding Commands](#patterns-for-adding-commands)
-4. [Error Handling](#error-handling)
-5. [Exit Codes](#exit-codes)
-6. [Startup Routines](#startup-routines)
-7. [Best Practices](#best-practices)
-8. [Examples](#examples)
+2. [Feedback System](#feedback-system)
+3. [Standardized Utilities](#standardized-utilities)
+4. [Patterns for Adding Commands](#patterns-for-adding-commands)
+5. [Error Handling](#error-handling)
+6. [Exit Codes](#exit-codes)
+7. [Startup Routines](#startup-routines)
+8. [Best Practices](#best-practices)
+9. [Examples](#examples)
 
 ## Overview
 
@@ -22,6 +23,172 @@ The CLI uses standardized patterns to ensure:
 - **Centralized agent lifecycle management** (activate/run/close)
 
 All utilities are in `tapps_agents/cli/base.py`.
+
+## Feedback System
+
+The CLI uses a centralized feedback system to provide consistent, user-friendly output across all commands. This system supports multiple verbosity levels and both text and JSON output formats.
+
+### Verbosity Levels
+
+The feedback system supports three verbosity levels:
+
+- **QUIET** (`--quiet` / `-q`): Only errors and final results are shown. Ideal for scripts and automation.
+- **NORMAL** (default): Standard feedback with progress indicators for long operations.
+- **VERBOSE** (`--verbose` / `-v`): Detailed debugging information including all steps and internal state.
+
+### Using the Feedback System
+
+#### Basic Usage
+
+```python
+from tapps_agents.cli.feedback import get_feedback
+
+def handle_my_command(args):
+    feedback = get_feedback()
+    feedback.format_type = getattr(args, "format", "json")
+    
+    # Start operation timing
+    feedback.start_operation("My Operation")
+    
+    # Show informational message
+    feedback.info("Processing files...")
+    
+    # Show progress
+    feedback.progress("Processing file 3 of 10...", percentage=30)
+    
+    # Clear progress line
+    feedback.clear_progress()
+    
+    # Show success
+    feedback.success("Operation completed", summary={"files_processed": 10})
+    
+    # Output final result
+    feedback.output_result({"result": "data"}, message="Done")
+```
+
+#### Message Types
+
+**Info Messages**: Use for normal operational messages
+```python
+feedback.info("Loading configuration...")
+feedback.info("Found 5 files to process", details={"file_count": 5})
+```
+
+**Success Messages**: Use to confirm successful completion
+```python
+feedback.success("Review completed", 
+                 data={"score": 85}, 
+                 summary={"files_processed": 1})
+```
+
+**Warning Messages**: Use for non-fatal issues
+```python
+feedback.warning("Some dependencies are outdated", 
+                 remediation="Run 'pip install --upgrade package'")
+```
+
+**Error Messages**: Use for failures (exits automatically)
+```python
+feedback.error("File not found: example.py",
+               error_code="file_not_found",
+               context={"file_path": "example.py"},
+               remediation="Check that the file exists",
+               exit_code=1)
+```
+
+**Progress Messages**: Use for long-running operations
+```python
+# Simple progress
+feedback.progress("Processing... (step 3 of 10)")
+
+# Progress with bar
+feedback.progress("Processing...", percentage=75, show_progress_bar=True)
+```
+
+#### Progress Tracking
+
+For multi-step operations, use `ProgressTracker`:
+
+```python
+from tapps_agents.cli.feedback import ProgressTracker, get_feedback
+
+feedback = get_feedback()
+tracker = ProgressTracker(total_steps=10, operation_name="Processing", feedback_manager=feedback)
+
+for i in range(10):
+    # Do work...
+    tracker.update(step=i+1, message=f"Processing item {i+1}")
+
+tracker.complete("All items processed")
+```
+
+#### Output Formats
+
+The feedback system supports both text and JSON output:
+
+**Text Mode** (default for interactive use):
+- Human-readable messages
+- Progress indicators
+- Clear success/error formatting
+
+**JSON Mode** (for automation):
+- Structured output with standard envelope
+- All information in parseable format
+- Metadata including timestamps and duration
+
+#### Standard JSON Envelope
+
+All JSON output follows this structure:
+
+```json
+{
+  "success": true,
+  "message": "Human-readable summary",
+  "data": {
+    // Command-specific data
+  },
+  "metadata": {
+    "timestamp": "2024-01-01T12:00:00Z",
+    "duration_ms": 1234,
+    "command": "review",
+    "version": "2.0.5"
+  },
+  "warnings": [
+    // Array of warning messages (if any)
+  ],
+  "error": {
+    // Error details (only if success: false)
+    "code": "error_code",
+    "message": "Error message",
+    "context": {},
+    "remediation": "How to fix"
+  }
+}
+```
+
+#### Stream Separation
+
+- **stdout**: Final results and data (for JSON parsing)
+- **stderr**: Progress updates, info messages, warnings, errors
+
+This separation ensures that JSON output can be parsed cleanly while progress information is still visible.
+
+### Best Practices
+
+1. **Always provide feedback**: Never have silent operations. At minimum, show start and completion.
+
+2. **Use appropriate verbosity**: 
+   - Info messages only in normal/verbose mode
+   - Progress for operations > 5 seconds
+   - Detailed info only in verbose mode
+
+3. **Time operations**: Use `start_operation()` to track duration, which is included in JSON metadata.
+
+4. **Provide context**: Include file paths, counts, and other relevant details in messages.
+
+5. **Be actionable**: Error messages should suggest fixes, success messages should indicate next steps.
+
+6. **Respect format type**: Check `feedback.format_type` and output accordingly.
 
 ## Standardized Utilities
 

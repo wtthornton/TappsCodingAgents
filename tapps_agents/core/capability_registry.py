@@ -10,7 +10,7 @@ import gzip
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -145,7 +145,7 @@ class CapabilityMetric:
 
         # Create refinement record
         refinement = RefinementRecord(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             improvement_type=improvement_type,
             before_metric=before_metric,
             after_metric=before_metric.copy(),  # Will be updated after refinement
@@ -155,7 +155,7 @@ class CapabilityMetric:
         )
 
         self.refinement_history.append(refinement)
-        self.last_improved = datetime.utcnow()
+        self.last_improved = datetime.now(UTC)
 
         logger.info(
             f"Recorded refinement for {self.capability_id}: "

@@ -5,12 +5,16 @@ import asyncio
 
 from ...agents.architect.agent import ArchitectAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
 def handle_architect_command(args: object) -> None:
     """Handle architect agent commands"""
+    feedback = get_feedback()
     command = normalize_command(getattr(args, "command", None))
+    output_format = getattr(args, "format", "json")
+    feedback.format_type = output_format
     architect = ArchitectAgent()
     asyncio.run(architect.activate())
     try:
@@ -59,15 +63,15 @@ def handle_architect_command(args: object) -> None:
             )
         elif command == "help" or command is None:
             result = asyncio.run(architect.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
         else:
             result = asyncio.run(architect.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
 
         check_result_error(result)
-        format_json_output(result)
+        feedback.output_result(result, message="Architecture design completed successfully")
     finally:
         asyncio.run(architect.close())
 

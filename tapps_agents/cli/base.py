@@ -13,6 +13,8 @@ import sys
 from collections.abc import Callable
 from typing import Any, TypeVar
 
+from .feedback import FeedbackManager, get_feedback
+
 T = TypeVar("T")
 
 # Standard exit codes
@@ -58,17 +60,24 @@ def format_output(data: dict[str, Any] | str, format_type: str = "json") -> None
     """
     Format and print output based on format type.
     
+    Uses the feedback system for consistent output formatting.
+    
     Args:
         data: Data to output (dict for JSON, str for text)
         format_type: Output format ("json" or "text")
     """
-    if format_type == "json":
+    feedback = get_feedback()
+    # Temporarily set format type for this output
+    original_format = feedback.format_type
+    feedback.format_type = format_type
+    
+    try:
         if isinstance(data, dict):
-            print(json.dumps(data, indent=2))
+            feedback.output_result(data)
         else:
-            print(data)
-    else:
-        print(data)
+            feedback.output_result(data)
+    finally:
+        feedback.format_type = original_format
 
 
 def format_error_output(
@@ -81,6 +90,8 @@ def format_error_output(
     """
     Format and output error message with consistent structure.
     
+    Uses the feedback system for standardized error formatting.
+    
     Args:
         error: Error message
         error_type: Type of error (e.g., "error", "validation_error", "config_error")
@@ -88,23 +99,30 @@ def format_error_output(
         format_type: Output format ("json" or "text")
         details: Additional error details
     """
-    error_payload = {
-        "success": False,
-        "error": error,
-        "error_type": error_type,
-    }
-    if details:
-        error_payload["details"] = details
-
-    if format_type == "json":
-        print(json.dumps(error_payload, indent=2), file=sys.stderr)
-    else:
-        print(f"Error: {error}", file=sys.stderr)
-        if details:
-            for key, value in details.items():
-                print(f"  {key}: {value}", file=sys.stderr)
-
-    sys.exit(exit_code)
+    feedback = get_feedback()
+    # Temporarily set format type for this output
+    original_format = feedback.format_type
+    feedback.format_type = format_type
+    
+    try:
+        # Map error_type to remediation if it's a common error
+        remediation = None
+        if error_type == "file_not_found" or "not found" in error.lower():
+            remediation = "Check that the file exists and the path is correct"
+        elif error_type == "validation_error":
+            remediation = "Check your input and try again"
+        elif error_type == "config_error":
+            remediation = "Check your configuration file and settings"
+        
+        feedback.error(
+            message=error,
+            error_code=error_type,
+            context=details,
+            remediation=remediation,
+            exit_code=exit_code,
+        )
+    finally:
+        feedback.format_type = original_format
 
 
 def handle_agent_error(
@@ -271,4 +289,16 @@ async def run_agent_command(
         return result
 
     return result
+
+
+def get_verbosity_level() -> str:
+    """
+    Get current verbosity level as string.
+    
+    Returns:
+        Verbosity level: "quiet", "normal", or "verbose"
+    """
+    from .feedback import VerbosityLevel
+    verbosity = FeedbackManager.get_verbosity()
+    return verbosity.value
 

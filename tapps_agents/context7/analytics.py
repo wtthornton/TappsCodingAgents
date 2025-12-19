@@ -7,7 +7,7 @@ reporting functionality.
 
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import yaml
@@ -279,7 +279,7 @@ class Analytics:
             "status": health_status,
             "health_issues": health_issues,
             "metrics": metrics.to_dict(),
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
             "top_libraries": [m.to_dict() for m in self.get_top_libraries(5)],
         }
 
@@ -321,7 +321,7 @@ class Analytics:
                 ),
             },
             "recommendations": self._get_health_recommendations(metrics),
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
         }
 
     def _get_health_recommendations(self, metrics: CacheMetrics) -> list[str]:

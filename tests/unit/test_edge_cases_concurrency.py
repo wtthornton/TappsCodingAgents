@@ -277,7 +277,7 @@ class TestConcurrentWorkflowExecution:
         
         # Get current step concurrently
         async def get_step(executor):
-            return asyncio.to_thread(executor.get_current_step)
+            return await asyncio.to_thread(executor.get_current_step)
         
         tasks = [get_step(executor) for executor in executors]
         steps = await asyncio.gather(*tasks, return_exceptions=True)
@@ -303,7 +303,7 @@ class TestConcurrentScoringOperations:
         
         # Score all files concurrently
         async def score_file(file_path):
-            return asyncio.to_thread(
+            return await asyncio.to_thread(
                 scorer.score_file,
                 file_path,
                 file_path.read_text()

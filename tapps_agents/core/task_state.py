@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -132,7 +132,7 @@ class TaskStateManager:
         transition = StateTransition(
             from_state=self.current_state if self.transitions else state,
             to_state=state,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             reason=reason,
             metadata=metadata or {},
         )

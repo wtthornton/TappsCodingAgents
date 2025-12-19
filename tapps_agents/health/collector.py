@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -70,7 +70,7 @@ class HealthMetricsCollector:
         """Store metric to file."""
         try:
             # Store in daily files for easier management
-            date_str = datetime.utcnow().strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
             metrics_file = self.metrics_dir / f"health_{date_str}.jsonl"
 
             # Append to file (JSONL format)
@@ -102,7 +102,7 @@ class HealthMetricsCollector:
         metrics: list[HealthMetric] = []
 
         # Search recent cache first
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         for metric in reversed(self._recent_metrics):
             if len(metrics) >= limit:
                 break
@@ -152,7 +152,7 @@ class HealthMetricsCollector:
             reverse=True,
         )
 
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
 
         for metrics_file in metrics_files:
             if len(metrics) >= limit:

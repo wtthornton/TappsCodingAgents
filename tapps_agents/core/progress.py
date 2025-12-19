@@ -7,7 +7,7 @@ Provides utilities for reporting progress of long-running background tasks.
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -51,7 +51,7 @@ class ProgressReporter:
         step = {
             "step": step_name,
             "status": status,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "elapsed_seconds": time.time() - self.start_time,
         }
 
@@ -123,7 +123,7 @@ class ProgressReporter:
         progress_data = {
             "task_id": self.task_id,
             "start_time": datetime.fromtimestamp(self.start_time).isoformat(),
-            "current_time": datetime.utcnow().isoformat(),
+            "current_time": datetime.now(UTC).isoformat(),
             "elapsed_seconds": time.time() - self.start_time,
             "steps": self.steps,
             "status": self.steps[-1]["status"] if self.steps else "unknown",

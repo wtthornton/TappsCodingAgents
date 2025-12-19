@@ -5,7 +5,7 @@ Provides aggregated metrics and dashboard data for the learning system.
 """
 
 import logging
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 logger = logging.getLogger(__name__)
@@ -106,7 +106,7 @@ class LearningDashboard:
                 "quality_score": metrics.get("quality_score", 0.0) if capability_id else 0.0,
                 "usage_count": metrics.get("usage_count", 0) if capability_id else 0,
             },
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_pattern_statistics(self) -> dict[str, Any]:
@@ -138,7 +138,7 @@ class LearningDashboard:
             "total_patterns": pattern_count,
             "total_anti_patterns": anti_pattern_count,
             "patterns_by_type": pattern_types,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_security_metrics(self) -> dict[str, Any]:
@@ -168,7 +168,7 @@ class LearningDashboard:
             "secure_patterns": secure_patterns,
             "insecure_patterns": insecure_patterns,
             "average_security_score": average_security_score,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_failure_analysis(
@@ -195,7 +195,7 @@ class LearningDashboard:
         return {
             "common_failure_modes": common_modes,
             "total_failures": total_failures,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_dashboard_data(
@@ -218,7 +218,7 @@ class LearningDashboard:
             Complete dashboard data dictionary
         """
         dashboard: dict[str, Any] = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "capability_metrics": self.get_capability_metrics(capability_id=capability_id),
             "pattern_statistics": self.get_pattern_statistics(),
             "security_metrics": self.get_security_metrics(),

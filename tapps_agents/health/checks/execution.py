@@ -6,7 +6,7 @@ Checks workflow execution reliability and performance.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -54,7 +54,7 @@ class ExecutionHealthCheck(HealthCheck):
                 )
 
             # Filter to last 7 and 30 days
-            now = datetime.utcnow()
+            now = datetime.now(UTC)
             seven_days_ago = now - timedelta(days=7)
             thirty_days_ago = now - timedelta(days=30)
 

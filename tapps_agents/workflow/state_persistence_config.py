@@ -37,18 +37,38 @@ class StatePersistenceConfigManager:
         self.config_version: str = CONFIG_VERSION
         self._config_file: Path | None = None
         self._file_watcher: Any | None = None  # For future file watching implementation
-        self._load_configuration()
+        self._load_configuration()  # Ignore return value on init - defaults are OK
 
-    def _load_configuration(self) -> None:
-        """Load configuration from project config."""
+    def _load_configuration(self) -> bool:
+        """Load configuration from project config.
+        
+        Returns:
+            True if config was loaded successfully, False if defaults were used or config is invalid
+        """
         try:
-            project_config = load_config()
+            # Look for config file in project root
+            config_path = self.project_root / ".tapps-agents" / "config.yaml"
+            if config_path.exists():
+                project_config = load_config(config_path)
+            else:
+                project_config = load_config()
             self.config = project_config.workflow.state_persistence
+            
+            # Validate immediately after loading - if invalid, use defaults
+            # Note: We validate here to catch invalid values early
+            if not self.validate_configuration():
+                logger.warning(f"Loaded configuration is invalid (mode: {self.config.checkpoint.mode if self.config else 'None'}), using defaults")
+                from ..core.config import StatePersistenceConfig
+                self.config = StatePersistenceConfig()
+                return False
+            
             logger.info("State persistence configuration loaded")
+            return True
         except Exception as e:
             logger.warning(f"Failed to load state persistence config: {e}, using defaults")
             from ..core.config import StatePersistenceConfig
             self.config = StatePersistenceConfig()
+            return False
 
     def reload_configuration(self) -> bool:
         """
@@ -59,11 +79,11 @@ class StatePersistenceConfigManager:
         """
         try:
             old_config = self.config
-            self._load_configuration()
+            config_loaded = self._load_configuration()
             
-            # Validate new configuration
-            if not self.validate_configuration():
-                logger.error("Reloaded configuration is invalid, reverting")
+            # If we fell back to defaults or validation failed, that's a failure for reload
+            if not config_loaded:
+                logger.error("Failed to load or validate configuration, reverting to previous")
                 self.config = old_config
                 return False
             
@@ -71,6 +91,8 @@ class StatePersistenceConfigManager:
             return True
         except Exception as e:
             logger.error(f"Failed to reload configuration: {e}")
+            if old_config:
+                self.config = old_config
             return False
 
     def validate_configuration(self) -> bool:
@@ -169,8 +191,13 @@ class StatePersistenceConfigManager:
             Path to state storage directory
         """
         if self.config is None:
-            return self.project_root / ".tapps-agents" / "workflow-state"
-        return self.project_root / self.config.storage_location
+            path = self.project_root / ".tapps-agents" / "workflow-state"
+        else:
+            path = self.project_root / self.config.storage_location
+        
+        # Ensure directory exists
+        path.mkdir(parents=True, exist_ok=True)
+        return path
 
     def should_run_cleanup(self) -> bool:
         """

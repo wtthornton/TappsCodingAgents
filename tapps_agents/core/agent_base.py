@@ -21,6 +21,15 @@ class BaseAgent(ABC):
     - Command discovery
     - Configuration loading
     - Help system
+
+    ⚠️ CRITICAL ACCURACY REQUIREMENT:
+    All agents MUST maintain 100% accuracy:
+    - NEVER make up, invent, or fabricate information
+    - ALWAYS verify claims by checking actual results, not just test pass/fail
+    - Verify API calls succeed - inspect response data, status codes, error messages
+    - Distinguish between code paths executing and actual functionality working
+    - Admit uncertainty explicitly when you cannot verify
+    - Check actual return values, not just that functions were called
     """
 
     def __init__(

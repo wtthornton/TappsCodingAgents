@@ -7,7 +7,7 @@ Tracks and reports performance metrics for parallel agent execution.
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -54,7 +54,7 @@ class PerformanceMonitor:
     def start(self):
         """Start performance monitoring."""
         self.start_time = time.time()
-        self.metrics["start_time"] = datetime.utcnow().isoformat()
+        self.metrics["start_time"] = datetime.now(UTC).isoformat()
 
     def record_agent(
         self,
@@ -99,7 +99,7 @@ class PerformanceMonitor:
             max_parallel: Maximum number of parallel agents
         """
         end_time = time.time()
-        self.metrics["end_time"] = datetime.utcnow().isoformat()
+        self.metrics["end_time"] = datetime.now(UTC).isoformat()
 
         total_duration: float = 0.0
         if self.start_time is not None:

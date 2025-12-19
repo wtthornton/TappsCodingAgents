@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -91,8 +91,8 @@ class ExecutionMetricsCollector:
             Created ExecutionMetric
         """
         execution_id = str(uuid4())
-        started_at = started_at or datetime.utcnow()
-        completed_at = completed_at or datetime.utcnow()
+        started_at = started_at or datetime.now(UTC)
+        completed_at = completed_at or datetime.now(UTC)
 
         metric = ExecutionMetric(
             execution_id=execution_id,
@@ -121,7 +121,7 @@ class ExecutionMetricsCollector:
         """Store metric to file."""
         try:
             # Store in daily files for easier management
-            date_str = datetime.utcnow().strftime("%Y-%m-%d")
+            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
             metrics_file = self.metrics_dir / f"executions_{date_str}.jsonl"
 
             # Append to file (JSONL format)

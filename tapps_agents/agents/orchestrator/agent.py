@@ -13,6 +13,13 @@ class OrchestratorAgent(BaseAgent):
     """
     Orchestrator Agent - Coordinates YAML-defined workflows and makes gate decisions.
 
+    ⚠️ CRITICAL ACCURACY REQUIREMENT:
+    - NEVER make up, invent, or fabricate information - Only report verified facts
+    - ALWAYS verify claims by checking actual results, not just test pass/fail
+    - Verify API calls succeed - inspect response data, status codes, error messages
+    - Distinguish between code paths executing and actual functionality working
+    - Admit uncertainty explicitly when you cannot verify
+
     Responsibilities:
     - Load and execute workflows
     - Make gate decisions based on scoring/conditions

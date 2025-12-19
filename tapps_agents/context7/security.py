@@ -8,7 +8,7 @@ import hashlib
 import logging
 import os
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -162,13 +162,13 @@ class APIKeyManager:
             keys[key_name] = {
                 "encrypted": True,
                 "value": self.encrypt_api_key(api_key),
-                "stored_at": datetime.utcnow().isoformat(),
+                "stored_at": datetime.now(UTC).isoformat(),
             }
         else:
             keys[key_name] = {
                 "encrypted": False,
                 "value": api_key,
-                "stored_at": datetime.utcnow().isoformat(),
+                "stored_at": datetime.now(UTC).isoformat(),
             }
 
         # Save to file
@@ -332,7 +332,7 @@ class SecurityAuditor:
             issues=issues,
             warnings=warnings,
             recommendations=recommendations,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             compliance_status=compliance.to_dict(),
         )
 

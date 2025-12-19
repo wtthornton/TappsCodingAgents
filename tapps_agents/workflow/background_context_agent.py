@@ -177,12 +177,14 @@ class BackgroundContextAgent:
                 return
 
             try:
-                # Resolve library ID first
+                # Resolve library ID first (with backup fallback)
                 library_id = None
                 if self.mcp_gateway:
                     try:
-                        resolve_result = await self.mcp_gateway.call_tool(
-                            "mcp_Context7_resolve-library-id", libraryName=library
+                        from tapps_agents.context7.backup_client import call_context7_resolve_with_fallback
+                        
+                        resolve_result = await call_context7_resolve_with_fallback(
+                            library, self.mcp_gateway
                         )
                         if resolve_result.get("success"):
                             matches = resolve_result.get("result", {}).get("matches", [])

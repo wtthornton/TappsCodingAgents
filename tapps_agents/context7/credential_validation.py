@@ -112,9 +112,10 @@ class CredentialValidator:
 
         try:
             # Try to resolve a well-known library (this is a lightweight test)
-            result = await self.mcp_gateway.call_tool(
-                "mcp_Context7_resolve-library-id", libraryName="react"
-            )
+            # Use backup client with automatic fallback (MCP Gateway -> HTTP)
+            from .backup_client import call_context7_resolve_with_fallback
+            
+            result = await call_context7_resolve_with_fallback("react", self.mcp_gateway)
 
             if result.get("success"):
                 return CredentialValidationResult(

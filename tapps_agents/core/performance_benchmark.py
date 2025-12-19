@@ -7,7 +7,7 @@ Measures and compares performance before/after optimization.
 import json
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -32,7 +32,7 @@ class BenchmarkResult:
 
     def __post_init__(self):
         if not self.timestamp:
-            self.timestamp = datetime.utcnow().isoformat()
+            self.timestamp = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -186,13 +186,13 @@ class PerformanceBenchmark:
             filename: Optional filename (default: benchmarks-{timestamp}.json)
         """
         if not filename:
-            timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
             filename = f"benchmarks-{timestamp}.json"
 
         output_file = self.output_dir / filename
 
         data = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "results": [r.to_dict() for r in self.results],
             "summary": {
                 "total_benchmarks": len(self.results),
@@ -232,7 +232,7 @@ class PerformanceBenchmark:
         report.append("=" * 60)
         report.append("Performance Benchmark Report")
         report.append("=" * 60)
-        report.append(f"Generated: {datetime.utcnow().isoformat()}")
+        report.append(f"Generated: {datetime.now(UTC).isoformat()}")
         report.append("")
 
         if not self.results:

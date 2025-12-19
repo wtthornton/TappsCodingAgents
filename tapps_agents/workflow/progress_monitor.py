@@ -6,7 +6,7 @@ Epic 5 / Story 5.5: Standard Workflow Templates & Progress Monitoring
 """
 
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from .event_log import WorkflowEventLog
@@ -168,7 +168,7 @@ class WorkflowProgressMonitor:
                 "step_count": history.get("step_count", 0),
             },
             "recommendations": recommendations,
-            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "timestamp": datetime.now(UTC).isoformat() + "Z",
         }
 
     def format_progress_bar(self, width: int = 40) -> str:

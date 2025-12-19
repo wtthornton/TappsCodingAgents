@@ -10,7 +10,7 @@ import logging
 import os
 import threading
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Callable
 
@@ -281,7 +281,7 @@ class WorkflowEventLog:
             event_type=event_type,
             workflow_id=workflow_id,
             seq=seq,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             step_id=step_id,
             agent=agent,
             action=action,

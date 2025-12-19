@@ -5,7 +5,7 @@ Cross-References System - Topic-based cross-referencing for Context7 KB.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 import yaml
@@ -21,7 +21,7 @@ class CrossReference:
     target_topic: str
     relationship_type: str = "related"  # "related", "depends_on", "similar", "part_of"
     confidence: float = 1.0
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat() + "Z")
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat() + "Z")
 
     def to_dict(self) -> dict:
         """Convert to dictionary for YAML serialization."""
@@ -52,7 +52,7 @@ class TopicIndex:
     libraries: dict[str, list[str]] = field(default_factory=dict)  # library -> [topics]
     relationships: list[CrossReference] = field(default_factory=list)
     last_updated: str = field(
-        default_factory=lambda: datetime.utcnow().isoformat() + "Z"
+        default_factory=lambda: datetime.now(UTC).isoformat() + "Z"
     )
 
     def to_dict(self) -> dict:
@@ -79,7 +79,7 @@ class TopicIndex:
             topic=data["topic"],
             libraries=data.get("libraries", {}),
             relationships=relationships,
-            last_updated=data.get("last_updated", datetime.utcnow().isoformat() + "Z"),
+            last_updated=data.get("last_updated", datetime.now(UTC).isoformat() + "Z"),
         )
 
 
@@ -244,7 +244,7 @@ class CrossReferenceManager:
         if topic_name not in topic_index.libraries[library]:
             topic_index.libraries[library].append(topic_name)
 
-        topic_index.last_updated = datetime.utcnow().isoformat() + "Z"
+        topic_index.last_updated = datetime.now(UTC).isoformat() + "Z"
         self._save_topic_index(topic_index)
 
     def get_cross_references(

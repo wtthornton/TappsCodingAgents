@@ -23,6 +23,13 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
     Tester Agent - Test generation and execution.
 
     Permissions: Read, Write, Edit, Grep, Glob, Bash
+
+    ⚠️ CRITICAL ACCURACY REQUIREMENT:
+    - NEVER make up, invent, or fabricate information - Only report verified facts
+    - ALWAYS verify claims by checking actual results, not just test pass/fail
+    - Verify API calls succeed - inspect response data, status codes, error messages
+    - Distinguish between code paths executing and actual functionality working
+    - Admit uncertainty explicitly when you cannot verify
     """
 
     def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):

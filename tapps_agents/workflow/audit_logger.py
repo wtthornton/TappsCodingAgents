@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import logging.handlers
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -72,7 +72,7 @@ class AuditLogger:
             details: Additional event details
         """
         event = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "event_type": event_type,
             "workflow_id": workflow_id,
             "step_id": step_id,

@@ -5,16 +5,22 @@ import asyncio
 
 from ...agents.analyst.agent import AnalystAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
 def handle_analyst_command(args: object) -> None:
     """Handle analyst agent commands"""
+    feedback = get_feedback()
     command = normalize_command(getattr(args, "command", None))
+    output_format = getattr(args, "format", "json")
+    feedback.format_type = output_format
     analyst = AnalystAgent()
     asyncio.run(analyst.activate())
     try:
         if command == "gather-requirements":
+            feedback.start_operation("Gather Requirements")
+            feedback.info("Gathering requirements...")
             result = asyncio.run(
                 analyst.run(
                     "gather-requirements",
@@ -23,7 +29,10 @@ def handle_analyst_command(args: object) -> None:
                     output_file=getattr(args, "output_file", None),
                 )
             )
+            feedback.clear_progress()
         elif command == "stakeholder-analysis":
+            feedback.start_operation("Stakeholder Analysis")
+            feedback.info("Analyzing stakeholders...")
             result = asyncio.run(
                 analyst.run(
                     "analyze-stakeholders",
@@ -66,15 +75,15 @@ def handle_analyst_command(args: object) -> None:
             )
         elif command == "help" or command is None:
             result = asyncio.run(analyst.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
         else:
             result = asyncio.run(analyst.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
 
         check_result_error(result)
-        format_json_output(result)
+        feedback.output_result(result, message="Analysis completed successfully")
     finally:
         asyncio.run(analyst.close())
 

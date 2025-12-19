@@ -3,7 +3,7 @@ KB Cleanup Automation - Automated cleanup of old/unused Context7 KB entries.
 """
 
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from .analytics import Analytics
@@ -102,9 +102,9 @@ class KBCleanup:
                             last_accessed_str.replace("Z", "+00:00")
                         ).replace(tzinfo=None)
                     except (ValueError, TypeError):
-                        last_accessed = datetime.utcnow() - timedelta(days=365)
+                        last_accessed = datetime.now(UTC) - timedelta(days=365)
                 else:
-                    last_accessed = datetime.utcnow() - timedelta(days=365)
+                    last_accessed = datetime.now(UTC) - timedelta(days=365)
 
                 # Get file size
                 doc_file = self.cache_structure.get_library_doc_file(
@@ -151,7 +151,7 @@ class KBCleanup:
         # Sort by last accessed (oldest first), then by size (largest first for efficiency)
         if preserve_recent:
             # Only consider entries not accessed in min_access_days
-            cutoff_date = datetime.utcnow() - timedelta(days=self.min_access_days)
+            cutoff_date = datetime.now(UTC) - timedelta(days=self.min_access_days)
             entries = [e for e in entries if e[2] < cutoff_date]
 
         entries.sort(
@@ -220,7 +220,7 @@ class KBCleanup:
         if max_age_days is None:
             max_age_days = self.max_age_days
 
-        cutoff_date = datetime.utcnow() - timedelta(days=max_age_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=max_age_days)
         entries = self.get_entry_access_info()
 
         removed_entries = 0
@@ -298,7 +298,7 @@ class KBCleanup:
         if min_access_days is None:
             min_access_days = self.min_access_days
 
-        cutoff_date = datetime.utcnow() - timedelta(days=min_access_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=min_access_days)
         entries = self.get_entry_access_info()
 
         removed_entries = 0
@@ -433,7 +433,7 @@ class KBCleanup:
             )
 
         # Check for old entries
-        cutoff_date = datetime.utcnow() - timedelta(days=self.max_age_days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=self.max_age_days)
         old_entries = [e for e in entries if e[2] < cutoff_date]
         if old_entries:
             recs.append(
@@ -446,7 +446,7 @@ class KBCleanup:
             )
 
         # Check for unused entries
-        access_cutoff = datetime.utcnow() - timedelta(days=self.min_access_days)
+        access_cutoff = datetime.now(UTC) - timedelta(days=self.min_access_days)
         unused_entries = [e for e in entries if e[2] < access_cutoff]
         if unused_entries:
             recs.append(

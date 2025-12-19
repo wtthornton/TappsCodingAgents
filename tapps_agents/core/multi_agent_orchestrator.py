@@ -9,7 +9,7 @@ import asyncio
 import json
 import logging
 import time
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -288,7 +288,7 @@ class MultiAgentOrchestrator:
         """
         aggregated: dict[str, Any] = {
             "success": True,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "total_agents": len(agent_tasks),
             "successful_agents": 0,
             "failed_agents": 0,

@@ -1,6 +1,6 @@
 # Expert Knowledge Base Guide
 
-**Version:** 2.0.4  
+**Version:** 2.0.5  
 **Last Updated:** December 2025
 
 ## Overview

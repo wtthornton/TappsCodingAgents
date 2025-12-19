@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import pytest
 from pathlib import Path
-from datetime import datetime
+from datetime import UTC, datetime
 
 from tapps_agents.workflow.execution_metrics import (
     ExecutionMetric,
@@ -70,7 +70,7 @@ def test_metrics_collector_record_execution(tmp_path: Path):
     assert metric.duration_ms == 1000.0
 
     # Check file was created
-    date_str = datetime.utcnow().strftime("%Y-%m-%d")
+    date_str = datetime.now(UTC).strftime("%Y-%m-%d")
     metrics_file = tmp_path / "metrics" / f"executions_{date_str}.jsonl"
     assert metrics_file.exists()
 

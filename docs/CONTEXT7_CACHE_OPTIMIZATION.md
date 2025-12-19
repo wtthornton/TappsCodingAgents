@@ -36,6 +36,18 @@ python scripts/prepopulate_context7_cache.py --libraries fastapi pytest sqlalche
 python scripts/prepopulate_context7_cache.py --topics
 ```
 
+**Note**: Cache pre-population requires either:
+- **MCP Gateway** (when running from Cursor) - No API key needed
+- **CONTEXT7_API_KEY** environment variable (for HTTP fallback) - Required when running from CLI
+
+**Important**: Cache pre-population can consume significant API quota (64+ libraries × multiple topics). If you encounter "quota exceeded" errors:
+- Wait for daily quota reset (typically midnight UTC)
+- Upgrade your Context7 plan for higher limits
+- Use `--no-cache` flag during init to skip pre-population
+- Pre-populate in smaller batches with specific libraries
+
+See [API Key Management Guide](CONTEXT7_API_KEY_MANAGEMENT.md) for setup instructions and quota troubleshooting.
+
 ### Dependency-Based Warming
 
 The pre-population script automatically:

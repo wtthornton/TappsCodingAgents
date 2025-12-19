@@ -10,7 +10,7 @@ import gzip
 import json
 import logging
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -531,7 +531,7 @@ class TaskMemorySystem:
             task_id=task_id,
             agent_id=agent_id,
             command=command,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             outcome=outcome,
             quality_score=quality_score,
             key_learnings=key_learnings or [],

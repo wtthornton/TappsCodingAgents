@@ -6,7 +6,7 @@ Provides analytics dashboard functionality for Context7 KB usage in Skills.
 
 import json
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -123,7 +123,7 @@ class AnalyticsDashboard:
         """
         if skill_name not in self._skill_usage:
             self._skill_usage[skill_name] = SkillUsageMetrics(
-                skill_name=skill_name, last_used=datetime.utcnow().isoformat()
+                skill_name=skill_name, last_used=datetime.now(UTC).isoformat()
             )
 
         metrics = self._skill_usage[skill_name]
@@ -148,14 +148,14 @@ class AnalyticsDashboard:
                     + response_time_ms
                 ) / metrics.total_lookups
 
-        metrics.last_used = datetime.utcnow().isoformat()
+        metrics.last_used = datetime.now(UTC).isoformat()
         self._save_skill_usage()
 
     def record_skill_api_call(self, skill_name: str):
         """Record an API call from a Skill."""
         if skill_name not in self._skill_usage:
             self._skill_usage[skill_name] = SkillUsageMetrics(
-                skill_name=skill_name, last_used=datetime.utcnow().isoformat()
+                skill_name=skill_name, last_used=datetime.now(UTC).isoformat()
             )
 
         self._skill_usage[skill_name].api_calls += 1
@@ -204,7 +204,7 @@ class AnalyticsDashboard:
         }
 
         return DashboardMetrics(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             overall_metrics=cache_metrics.to_dict(),
             skill_usage=skill_usage,
             top_libraries=top_libraries,
@@ -223,7 +223,7 @@ class AnalyticsDashboard:
             Path to exported file
         """
         if output_file is None:
-            timestamp = datetime.utcnow().strftime("%Y%m%d-%H%M%S")
+            timestamp = datetime.now(UTC).strftime("%Y%m%d-%H%M%S")
             output_file = self.dashboard_dir / f"dashboard-{timestamp}.json"
 
         output_file = Path(output_file)

@@ -6,12 +6,16 @@ import json
 
 from ...agents.orchestrator.agent import OrchestratorAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
 def handle_orchestrator_command(args: object) -> None:
     """Handle orchestrator agent commands"""
+    feedback = get_feedback()
     command = normalize_command(getattr(args, "command", None))
+    output_format = getattr(args, "format", "json")
+    feedback.format_type = output_format
     orchestrator = OrchestratorAgent()
     asyncio.run(orchestrator.activate())
     try:
@@ -20,8 +24,11 @@ def handle_orchestrator_command(args: object) -> None:
         elif command == "workflow-start":
             workflow_id = getattr(args, "workflow_id", None)
             if not workflow_id:
-                print("Error: workflow_id required", file=__import__("sys").stderr)
-                __import__("sys").exit(1)
+                feedback.error(
+                    "workflow_id required",
+                    error_code="validation_error",
+                    exit_code=2,
+                )
             result = asyncio.run(
                 orchestrator.run("*workflow-start", workflow_id=workflow_id)
             )
@@ -32,8 +39,11 @@ def handle_orchestrator_command(args: object) -> None:
         elif command == "workflow-skip":
             step_id = getattr(args, "step_id", None)
             if not step_id:
-                print("Error: step_id required", file=__import__("sys").stderr)
-                __import__("sys").exit(1)
+                feedback.error(
+                    "step_id required",
+                    error_code="validation_error",
+                    exit_code=2,
+                )
             result = asyncio.run(orchestrator.run("*workflow-skip", step_id=step_id))
         elif command == "workflow-resume":
             result = asyncio.run(orchestrator.run("*workflow-resume"))
@@ -55,9 +65,9 @@ def handle_orchestrator_command(args: object) -> None:
         if isinstance(result, dict) and "error" in result:
             check_result_error(result)
         if isinstance(result, dict):
-            format_json_output(result)
+            feedback.output_result(result, message="Orchestration completed successfully")
         else:
-            print(result)
+            feedback.output_result(result)
     finally:
         if orchestrator:
             try:

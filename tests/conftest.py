@@ -248,8 +248,18 @@ def pytest_collection_modifyitems(config, items):
     openai_available = os.getenv("OPENAI_API_KEY") is not None
     has_llm = ollama_available or anthropic_available or openai_available
     
-    # Check Context7 API availability
-    context7_available = os.getenv("CONTEXT7_API_KEY") is not None
+    # Check Context7 availability (prefers MCP Gateway, falls back to API key)
+    from tapps_agents.mcp.gateway import MCPGateway
+    
+    gateway = MCPGateway()
+    tools = gateway.list_available_tools()
+    tool_names = [tool.get("name", "") for tool in tools]
+    mcp_tools_available = (
+        "mcp_Context7_resolve-library-id" in tool_names
+        and "mcp_Context7_get-library-docs" in tool_names
+    )
+    api_key_available = os.getenv("CONTEXT7_API_KEY") is not None
+    context7_available = mcp_tools_available or api_key_available
     
     # Skip requires_llm tests if no LLM available
     skip_llm = pytest.mark.skip(reason="No LLM service available (Ollama, Anthropic, or OpenAI)")
@@ -257,8 +267,11 @@ def pytest_collection_modifyitems(config, items):
         if "requires_llm" in item.keywords and not has_llm:
             item.add_marker(skip_llm)
     
-    # Skip requires_context7 tests if no API key available
-    skip_context7 = pytest.mark.skip(reason="CONTEXT7_API_KEY not set - real API tests require API key")
+    # Skip requires_context7 tests if neither MCP tools nor API key available
+    skip_context7 = pytest.mark.skip(
+        reason="Context7 not available: "
+        "MCP tools not found and CONTEXT7_API_KEY not set"
+    )
     for item in items:
         if "requires_context7" in item.keywords and not context7_available:
             item.add_marker(skip_context7)

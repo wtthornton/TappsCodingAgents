@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -35,7 +35,7 @@ class RefreshTask:
     def __post_init__(self):
         """Initialize timestamps if not provided."""
         if self.added_at is None:
-            self.added_at = datetime.utcnow().isoformat() + "Z"
+            self.added_at = datetime.now(UTC).isoformat() + "Z"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -91,7 +91,7 @@ class RefreshQueue:
 
         data = {
             "version": "1.0",
-            "last_updated": datetime.utcnow().isoformat() + "Z",
+            "last_updated": datetime.now(UTC).isoformat() + "Z",
             "tasks": [task.to_dict() for task in self.tasks],
         }
 
@@ -187,7 +187,7 @@ class RefreshQueue:
             RefreshTask or None if queue is empty
         """
         # Filter by priority and schedule
-        now = datetime.utcnow().isoformat() + "Z"
+        now = datetime.now(UTC).isoformat() + "Z"
         available_tasks = [
             task
             for task in self.tasks
@@ -220,7 +220,7 @@ class RefreshQueue:
         task = self._find_task(library, topic)
         if task:
             task.attempts += 1
-            task.last_attempt = datetime.utcnow().isoformat() + "Z"
+            task.last_attempt = datetime.now(UTC).isoformat() + "Z"
             if error:
                 task.error = error
                 # Keep task in queue if it failed (for retry)
@@ -267,9 +267,9 @@ class RefreshQueue:
                 # Determine priority based on staleness
                 # Use reference_date or current time for recommendations
                 if reference_date is None:
-                    from datetime import datetime
+                    from datetime import UTC, datetime
 
-                    reference_date = datetime.utcnow()
+                    reference_date = datetime.now(UTC)
                 recommendation = self.policy_manager.get_refresh_recommendation(
                     library, last_updated, library_type, reference_date=reference_date
                 )

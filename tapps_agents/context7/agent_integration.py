@@ -136,10 +136,10 @@ class Context7AgentHelper:
             return []
 
         try:
-            # Use MCP tool to resolve library
-            result = await self.mcp_gateway.call_tool(
-                "mcp_Context7_resolve-library-id", libraryName=query
-            )
+            # Use backup client with automatic fallback (MCP Gateway -> HTTP)
+            from .backup_client import call_context7_resolve_with_fallback
+            
+            result = await call_context7_resolve_with_fallback(query, self.mcp_gateway)
 
             if result.get("success"):
                 matches = result.get("result", {}).get("matches", [])

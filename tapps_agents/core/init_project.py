@@ -1020,10 +1020,129 @@ async def pre_populate_context7_cache(
     try:
         from tapps_agents.context7.commands import Context7Commands
         from tapps_agents.core.config import load_config
+        
+        # Load API key from encrypted storage if not in environment
+        # This ensures cache pre-population works even when run outside Cursor
+        # #region agent log
+        import json
+        from datetime import datetime
+        try:
+            log_path = project_root / ".cursor" / "debug.log"
+            log_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "init_project.py:1026",
+                    "message": "BEFORE API key check",
+                    "data": {"env_key_exists": os.getenv("CONTEXT7_API_KEY") is not None, "project_root": str(project_root)},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception as e: 
+            import traceback
+            try:
+                log_path = project_root / ".cursor" / "debug.log"
+                log_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "init_project.py:1026",
+                        "message": "LOG ERROR",
+                        "data": {"error": str(e), "traceback": traceback.format_exc()},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+        # #endregion
+        if not os.getenv("CONTEXT7_API_KEY"):
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "init_project.py:1027",
+                        "message": "API key NOT in env, attempting load",
+                        "data": {},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
+            try:
+                from tapps_agents.context7.security import APIKeyManager
+                api_key_manager = APIKeyManager()
+                api_key = api_key_manager.load_api_key("context7")
+                # #region agent log
+                try:
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        f.write(json.dumps({
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "E",
+                            "location": "init_project.py:1030",
+                            "message": "AFTER load_api_key",
+                            "data": {"api_key_loaded": api_key is not None, "key_length": len(api_key) if api_key else 0},
+                            "timestamp": int(datetime.now().timestamp() * 1000)
+                        }) + "\n")
+                except: pass
+                # #endregion
+                if api_key:
+                    os.environ["CONTEXT7_API_KEY"] = api_key
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "A",
+                                "location": "init_project.py:1032",
+                                "message": "API key SET in os.environ",
+                                "data": {"env_key_after_set": os.getenv("CONTEXT7_API_KEY") is not None, "key_length": len(api_key)},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
+                    logger.debug("Loaded Context7 API key from encrypted storage")
+            except Exception as e:
+                # #region agent log
+                try:
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        f.write(json.dumps({
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "E",
+                            "location": "init_project.py:1035",
+                            "message": "EXCEPTION loading API key",
+                            "data": {"error": str(e)},
+                            "timestamp": int(datetime.now().timestamp() * 1000)
+                        }) + "\n")
+                except: pass
+                # #endregion
+                logger.debug(f"Could not load API key from encrypted storage: {e}")
+        else:
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "A",
+                        "location": "init_project.py:1036",
+                        "message": "API key already in env",
+                        "data": {"key_length": len(os.getenv("CONTEXT7_API_KEY", ""))},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
 
         # Load configuration
         try:
-            config = load_config(project_root)
+            # load_config expects None (auto-detect) or a Path to the config file, not project root
+            # So we pass None and let it auto-detect from project_root
+            config = load_config(None)
             if not config.context7 or not config.context7.enabled:
                 return {
                     "success": False,
@@ -1038,6 +1157,20 @@ async def pre_populate_context7_cache(
             }
 
         # Initialize Context7 commands
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "location": "init_project.py:1056",
+                    "message": "BEFORE Context7Commands init",
+                    "data": {"env_key_at_init": os.getenv("CONTEXT7_API_KEY") is not None},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         context7_commands = Context7Commands(project_root=project_root, config=config)
 
         if not context7_commands.enabled:
@@ -1046,6 +1179,20 @@ async def pre_populate_context7_cache(
                 "error": "Context7 is not enabled",
                 "cached": 0,
             }
+
+        # Try to initialize MCP Gateway for cache pre-population
+        # Note: MCP Gateway is typically only available when running from Cursor
+        # Cache pre-population will work best when run from within Cursor
+        # But we'll try to use backup HTTP client if MCP is not available
+        mcp_gateway = None
+        try:
+            from ..mcp.gateway import MCPGateway
+            mcp_gateway = MCPGateway()
+            context7_commands.set_mcp_gateway(mcp_gateway)
+        except Exception:
+            # MCP Gateway not available - will use backup HTTP client via backup_client module
+            # The backup_client will handle fallback automatically
+            pass
 
         # Auto-detect libraries if not provided
         project_libraries = []
@@ -1083,12 +1230,17 @@ async def pre_populate_context7_cache(
 
         for library in all_libraries:
             # Cache overview
-            result = await context7_commands.cmd_docs(library)
-            if result.get("success"):
-                success_count += 1
-            else:
+            try:
+                result = await context7_commands.cmd_docs(library)
+                if result.get("success"):
+                    success_count += 1
+                else:
+                    fail_count += 1
+                    error_msg = result.get('error') or result.get('message') or 'Unknown error'
+                    errors.append(f"{library}: {error_msg}")
+            except Exception as e:
                 fail_count += 1
-                errors.append(f"{library}: {result.get('error', 'Unknown error')}")
+                errors.append(f"{library}: Exception - {str(e)}")
 
             # Cache common topics if available
             lib_lower = library.lower()
@@ -1100,16 +1252,47 @@ async def pre_populate_context7_cache(
 
             if topics:
                 for topic in topics:
-                    result = await context7_commands.cmd_docs(library, topic=topic)
-                    if result.get("success"):
-                        success_count += 1
-                    else:
+                    try:
+                        result = await context7_commands.cmd_docs(library, topic=topic)
+                        if result.get("success"):
+                            success_count += 1
+                        else:
+                            fail_count += 1
+                            error_msg = result.get('error') or result.get('message') or 'Unknown error'
+                            errors.append(f"{library}/{topic}: {error_msg}")
+                    except Exception as e:
                         fail_count += 1
-                        errors.append(
-                            f"{library}/{topic}: {result.get('error', 'Unknown error')}"
-                        )
+                        errors.append(f"{library}/{topic}: Exception - {str(e)}")
 
-        return {
+        # Determine overall error message
+        error_msg = None
+        if success_count == 0 and fail_count > 0:
+            # All failed - check if it's because Context7 is unavailable
+            # But first check if API key is actually available to avoid misleading error message
+            api_key_available = os.getenv("CONTEXT7_API_KEY") is not None
+            if not api_key_available:
+                # Try loading from encrypted storage
+                try:
+                    from tapps_agents.context7.security import APIKeyManager
+                    api_key_manager = APIKeyManager()
+                    api_key_available = api_key_manager.load_api_key("context7") is not None
+                except Exception:
+                    pass
+            
+            # Check for quota exceeded errors
+            quota_errors = [e for e in errors if "quota exceeded" in e.lower() or "429" in e]
+            if quota_errors:
+                error_msg = f"Context7 API quota exceeded. {quota_errors[0]}. Cache pre-population requires available API quota. Consider upgrading your plan or running pre-population later."
+            elif all("No documentation found in cache or API unavailable" in e for e in errors[:5]):
+                if not api_key_available:
+                    error_msg = "Context7 API unavailable: MCP Gateway not available and CONTEXT7_API_KEY not set. Cache pre-population requires either MCP Gateway (when running from Cursor) or CONTEXT7_API_KEY environment variable."
+                else:
+                    # API key is available but calls are still failing - different issue
+                    error_msg = f"Context7 API calls failed despite API key being available. This may indicate API connectivity issues, invalid library names, or API rate limits. First error: {errors[0] if errors else 'Unknown error'}"
+            elif errors:
+                error_msg = f"All {fail_count} library lookups failed. First error: {errors[0]}"
+        
+        result = {
             "success": success_count > 0,
             "cached": success_count,
             "failed": fail_count,
@@ -1118,18 +1301,29 @@ async def pre_populate_context7_cache(
             "expert_libraries": len(expert_libraries),
             "errors": errors[:10],  # Limit errors shown
         }
+        
+        if error_msg:
+            result["error"] = error_msg
+        
+        return result
 
-    except ImportError:
+    except ImportError as e:
         return {
             "success": False,
-            "error": "Context7 module not available",
+            "error": f"Context7 module not available: {e}",
             "cached": 0,
         }
     except Exception as e:
+        import traceback
+        error_msg = str(e) or "Unknown error"
+        # Provide more context for common errors
+        if "MCP" in error_msg or "gateway" in error_msg.lower():
+            error_msg = f"MCP Gateway not available: {error_msg}. Cache pre-population requires Context7 MCP server to be configured and running (typically available when running from Cursor)."
         return {
             "success": False,
-            "error": f"Error during cache pre-population: {e}",
+            "error": f"Error during cache pre-population: {error_msg}",
             "cached": 0,
+            "traceback": traceback.format_exc() if logger.isEnabledFor(logging.DEBUG) else None,
         }
 
 

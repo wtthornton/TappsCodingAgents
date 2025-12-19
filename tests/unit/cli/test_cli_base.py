@@ -285,12 +285,9 @@ class TestRunAsyncCommand:
         async def coro():
             return "result"
         
-        async def test():
-            # Try to call run_async_command from within async context
-            with pytest.raises(RuntimeError, match="cannot be called from a running event loop"):
-                run_async_command(coro())
-
-        await test()
+        # Try to call run_async_command from within async context
+        with pytest.raises(RuntimeError, match="cannot be called from a running event loop"):
+            run_async_command(coro())
 
 
 class TestRunAgentCommand:

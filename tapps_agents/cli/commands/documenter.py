@@ -5,12 +5,16 @@ import asyncio
 
 from ...agents.documenter.agent import DocumenterAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
 def handle_documenter_command(args: object) -> None:
     """Handle documenter agent commands"""
+    feedback = get_feedback()
     command = normalize_command(getattr(args, "command", None))
+    output_format = getattr(args, "format", "json")
+    feedback.format_type = output_format
     documenter = DocumenterAgent()
     asyncio.run(documenter.activate())
     try:
@@ -50,15 +54,15 @@ def handle_documenter_command(args: object) -> None:
             )
         elif command == "help" or command is None:
             result = asyncio.run(documenter.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
         else:
             result = asyncio.run(documenter.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
 
         check_result_error(result)
-        format_json_output(result)
+        feedback.output_result(result, message="Documentation completed successfully")
     finally:
         asyncio.run(documenter.close())
 

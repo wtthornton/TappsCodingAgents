@@ -3,9 +3,30 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-2.0.4-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.5-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
+
+## ⚠️ Critical Accuracy Requirement
+
+**ALL AGENTS AND SKILLS MUST ADHERE TO 100% ACCURACY:**
+
+- **NEVER make up, invent, or fabricate information** - Only report verified facts
+- **ALWAYS verify claims** - Check actual results, not just test pass/fail status
+- **Verify API calls succeed** - Don't assume success from error handling
+- **Check actual data** - Inspect return values, response codes, and error messages
+- **Admit uncertainty** - If you don't know or can't verify, say so explicitly
+- **Distinguish between code paths and actual results** - Tests passing ≠ functionality working
+
+**When reporting results:**
+- ✅ **DO**: "Test passed, but API call failed with connection error"
+- ❌ **DON'T**: "All tests passed - API key verified and working"
+
+**When making claims:**
+- ✅ **DO**: Verify the actual outcome, inspect response data, check error messages
+- ❌ **DON'T**: Assume success from test framework output or error handling
+
+Accuracy and honesty are non-negotiable. When in doubt, verify before claiming.
 
 ## Overview
 
@@ -321,7 +342,7 @@ TappsCodingAgents/
 ## Documentation
 
 ### Getting Started
-- **[Quick Start Guide](QUICK_START.md)** - 🚀 Get started in 10 minutes
+- **[Quick Start Guide](docs/guides/QUICK_START.md)** - 🚀 Get started in 10 minutes
 - **[Cursor AI Integration Plan 2025](docs/CURSOR_AI_INTEGRATION_PLAN_2025.md)** - Complete integration roadmap (all 7 phases complete)
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and use Cursor Skills
 - **[Documentation Index](docs/README.md)** - Complete documentation overview
@@ -368,7 +389,7 @@ TappsCodingAgents/
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 2.0.4  
+**Version**: 2.0.5  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

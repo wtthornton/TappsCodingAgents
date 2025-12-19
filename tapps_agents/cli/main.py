@@ -65,6 +65,7 @@ from .parsers import (
 from .parsers import (
     top_level as top_level_parsers,
 )
+from .feedback import FeedbackManager, VerbosityLevel
 
 
 def create_root_parser() -> argparse.ArgumentParser:
@@ -162,6 +163,22 @@ For more information on a specific command, use:
         action="version",
         version=f"%(prog)s {PACKAGE_VERSION}",
         help="Show version and exit",
+    )
+    parser.add_argument(
+        "--quiet",
+        "-q",
+        action="store_const",
+        const="quiet",
+        dest="verbosity",
+        help="Quiet mode: only show errors and final results",
+    )
+    parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_const",
+        const="verbose",
+        dest="verbosity",
+        help="Verbose mode: show detailed debugging information",
     )
     return parser
 
@@ -338,6 +355,20 @@ def main() -> None:
 
     # Parse arguments
     args = parser.parse_args()
+    
+    # Set verbosity level from arguments
+    verbosity_str = getattr(args, "verbosity", None)
+    if verbosity_str == "quiet":
+        FeedbackManager.set_verbosity(VerbosityLevel.QUIET)
+    elif verbosity_str == "verbose":
+        FeedbackManager.set_verbosity(VerbosityLevel.VERBOSE)
+    else:
+        FeedbackManager.set_verbosity(VerbosityLevel.NORMAL)
+    
+    # Set format type if specified (for commands that support it)
+    format_type = getattr(args, "format", None)
+    if format_type:
+        FeedbackManager.set_format(format_type)
 
     # Route to appropriate handler
     route_command(args)

@@ -7,7 +7,7 @@ Monitors CPU, memory, and disk usage for NUC optimization.
 import json
 import time
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -128,7 +128,7 @@ class ResourceMonitor:
             network_recv_mb = 0.0
 
         metrics = ResourceMetrics(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             cpu_percent=cpu_percent,
             memory_percent=memory_percent,
             memory_used_mb=memory_used_mb,
@@ -250,7 +250,7 @@ class ResourceMonitor:
         )
 
         return ResourceMetrics(
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(UTC).isoformat(),
             cpu_percent=avg_cpu,
             memory_percent=avg_memory,
             memory_used_mb=avg_memory_used,

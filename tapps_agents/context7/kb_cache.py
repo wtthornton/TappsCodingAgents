@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 from .cache_locking import cache_lock, get_cache_lock_file
@@ -49,7 +49,7 @@ class CacheEntry:
             "",
             f"**Source**: {self.context7_id or 'Unknown'} (Trust Score: {self.trust_score or 'N/A'})",
             f"**Snippets**: {self.snippet_count} | **Tokens**: {self.token_count}",
-            f"**Last Updated**: {self.cached_at or datetime.utcnow().isoformat() + 'Z'} | **Cache Hits**: {self.cache_hits}",
+            f"**Last Updated**: {self.cached_at or datetime.now(UTC).isoformat() + 'Z'} | **Cache Hits**: {self.cache_hits}",
             "",
             "---",
             "",
@@ -63,7 +63,7 @@ class CacheEntry:
             f"<!-- Context7 ID: {self.context7_id or 'Unknown'} -->",
             f"<!-- Trust Score: {self.trust_score or 'N/A'} -->",
             f"<!-- Snippet Count: {self.snippet_count} -->",
-            f"<!-- Last Updated: {self.cached_at or datetime.utcnow().isoformat() + 'Z'} -->",
+            f"<!-- Last Updated: {self.cached_at or datetime.now(UTC).isoformat() + 'Z'} -->",
             f"<!-- Cache Hits: {self.cache_hits} -->",
             f"<!-- Token Count: {self.token_count} -->",
         ]
@@ -142,7 +142,7 @@ class CacheEntry:
             snippet_count=snippet_count or int(metadata.get("snippet count", 0)),
             token_count=token_count or int(metadata.get("token count", 0)),
             cached_at=metadata.get("last updated")
-            or datetime.utcnow().isoformat() + "Z",
+            or datetime.now(UTC).isoformat() + "Z",
             cache_hits=cache_hits or int(metadata.get("cache hits", 0)),
         )
 
@@ -255,13 +255,13 @@ class KBCache:
                 trust_score=trust_score,
                 snippet_count=snippet_count or 0,
                 token_count=token_count,
-                cached_at=datetime.utcnow().isoformat() + "Z",
+                cached_at=datetime.now(UTC).isoformat() + "Z",
                 cache_hits=0,
             )
 
         # Update cached_at if not set
         if not entry.cached_at:
-            entry.cached_at = datetime.utcnow().isoformat() + "Z"
+            entry.cached_at = datetime.now(UTC).isoformat() + "Z"
 
         # Use file locking for atomic writes
         lock_file = get_cache_lock_file(self.cache_root, library=library)

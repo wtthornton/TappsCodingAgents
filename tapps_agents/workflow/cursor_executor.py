@@ -261,7 +261,12 @@ class CursorWorkflowExecutor:
         )
         # Start progress monitoring (non-blocking)
         import asyncio
-        asyncio.create_task(self.progress_manager.start())
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.create_task(self.progress_manager.start())
+        except RuntimeError:
+            # No running event loop - progress manager will start when event loop is available
+            pass
         
         self.save_state()
         return self.state

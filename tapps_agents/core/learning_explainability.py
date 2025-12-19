@@ -6,7 +6,7 @@ Provides transparency and explainability for the agent learning system.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 from uuid import uuid4
 
@@ -61,7 +61,7 @@ class DecisionReasoningLogger:
         decision_id = str(uuid4())
         log_entry = DecisionLog(
             decision_id=decision_id,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             decision_type=decision_type,
             reasoning=reasoning,
             sources=sources,
@@ -427,7 +427,7 @@ class LearningImpactReporter:
         report = {
             "capability_id": capability_id,
             "learning_session_id": learning_session_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "improvements": improvements,
             "overall_improvement": overall_improvement,
             "effectiveness": self._calculate_effectiveness(improvements),
@@ -467,7 +467,7 @@ class LearningImpactReporter:
             "after": after_value,
             "improvement": improvement,
             "improvement_percent": improvement_percent,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_learning_effectiveness(

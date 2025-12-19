@@ -229,6 +229,6 @@ Security updates are released as:
 
 ---
 
-**Last Updated**: December 2025  
+**Last Updated**: January 2026  
 **Policy Version**: 1.0
 

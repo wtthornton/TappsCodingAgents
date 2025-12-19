@@ -12,6 +12,7 @@ from ...core.cursor_verification import (
     format_verification_results,
     verify_cursor_integration,
 )
+from ..feedback import get_feedback
 from .common import format_json_output
 from .reviewer import score_command
 
@@ -45,17 +46,22 @@ def hardware_profile_command(
     configured_profile = config.hardware_profile
     detected_in_config = config.detected_profile
     
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    feedback.start_operation("Hardware Profile")
+    
     # If user wants to set a profile
     if set_profile:
         # Validate profile
         valid_profiles = ["auto", "nuc", "development", "workstation", "server"]
         if set_profile.lower() not in valid_profiles:
-            print(
-                f"Error: Invalid profile '{set_profile}'. "
-                f"Valid options: {', '.join(valid_profiles)}",
-                file=sys.stderr,
+            feedback.error(
+                f"Invalid profile '{set_profile}'",
+                error_code="validation_error",
+                context={"valid_options": valid_profiles},
+                remediation=f"Use one of: {', '.join(valid_profiles)}",
+                exit_code=2,
             )
-            sys.exit(1)
         
         # Update configuration
         config.hardware_profile = set_profile.lower()
@@ -67,6 +73,7 @@ def hardware_profile_command(
             config.detected_profile = set_profile.lower()
         
         config_manager.save(config)
+        feedback.clear_progress()
         
         if output_format == "json":
             result = {
@@ -92,8 +99,9 @@ def hardware_profile_command(
                     "disk_free_gb": round(current_resource_usage["disk_free_gb"], 2),
                 },
             }
-            print(json.dumps(result, indent=2))
+            feedback.output_result(result, message="Hardware profile set successfully")
         else:
+            feedback.success("Hardware profile set successfully")
             print(f"\nHardware profile set to: {set_profile.lower()}")
             if set_profile.lower() == "auto":
                 print(f"  Auto-detection enabled (detected: {detected_profile.value})")
@@ -102,6 +110,8 @@ def hardware_profile_command(
             print(f"\nConfiguration saved to: {config_manager.config_path}")
     else:
         # Just show current status
+        feedback.info("Retrieving hardware profile information...")
+        feedback.clear_progress()
         if output_format == "json":
             result = {
                 "detected_profile": detected_profile.value,
@@ -126,8 +136,9 @@ def hardware_profile_command(
                     "disk_free_gb": round(current_resource_usage["disk_free_gb"], 2),
                 },
             }
-            print(json.dumps(result, indent=2))
+            feedback.output_result(result, message="Hardware profile information retrieved")
         else:
+            feedback.success("Hardware profile information retrieved")
             print("\n" + "=" * 60)
             print("Hardware Profile Information")
             print("=" * 60)
@@ -174,51 +185,73 @@ def handle_create_command(args: object) -> None:
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
 
+    feedback = get_feedback()
     loader = PresetLoader()
     workflow_name = getattr(args, "workflow", "full")
     user_prompt = getattr(args, "prompt", "")
 
     if not user_prompt:
-        print("Error: Prompt/description required", file=sys.stderr)
-        print("Usage: python -m tapps_agents.cli create \"Your project description\"", file=sys.stderr)
-        sys.exit(1)
+        feedback.error(
+            "Prompt/description required",
+            error_code="validation_error",
+            remediation="Usage: tapps-agents create \"Your project description\"",
+            exit_code=2,
+        )
 
     try:
+        feedback.start_operation("Create Project")
+        feedback.info(f"Loading workflow preset: {workflow_name}...")
         workflow = loader.load_preset(workflow_name)
         if not workflow:
-            print(f"Error: Workflow preset '{workflow_name}' not found.", file=sys.stderr)
-            sys.exit(1)
+            feedback.error(
+                f"Workflow preset '{workflow_name}' not found",
+                error_code="config_error",
+                remediation="Use 'tapps-agents workflow list' to see available presets",
+                exit_code=3,
+            )
 
-        print(f"\n{'='*60}")
-        print(f"Creating Project: {workflow.name}")
-        print(f"{'='*60}")
-        print(f"Description: {workflow.description}")
-        print(f"Your Prompt: {user_prompt}")
-        print(f"Steps: {len(workflow.steps)}")
-        print("Mode: Auto (fully automated)")
-        print()
+        feedback.info(f"Creating project with workflow: {workflow.name}")
+        if feedback.verbosity.value == "verbose":
+            print(f"\n{'='*60}")
+            print(f"Creating Project: {workflow.name}")
+            print(f"{'='*60}")
+            print(f"Description: {workflow.description}")
+            print(f"Your Prompt: {user_prompt}")
+            print(f"Steps: {len(workflow.steps)}")
+            print("Mode: Auto (fully automated)")
+            print()
 
         # Execute workflow with auto mode and prompt
         executor = WorkflowExecutor(auto_detect=False, auto_mode=True)
         executor.user_prompt = user_prompt
 
+        feedback.progress("Executing workflow...")
         result = asyncio.run(executor.execute(workflow=workflow, target_file=None))
+        feedback.clear_progress()
 
         if result.status == "completed":
-            print(f"\n{'='*60}")
-            print("Project created successfully!")
-            print(f"{'='*60}")
-            print("Timeline: project-timeline.md")
-            print(f"Status: {result.status}")
+            feedback.success("Project created successfully", summary={"timeline": "project-timeline.md", "status": result.status})
+            if feedback.verbosity.value != "quiet":
+                print(f"\n{'='*60}")
+                print("Project created successfully!")
+                print(f"{'='*60}")
+                print("Timeline: project-timeline.md")
+                print(f"Status: {result.status}")
         elif result.status == "failed":
-            print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)
-            sys.exit(1)
+            feedback.error(
+                result.error or "Unknown error",
+                error_code="execution_error",
+                exit_code=1,
+            )
         else:
-            print(f"\nWorkflow status: {result.status}")
+            feedback.warning(f"Workflow status: {result.status}")
 
     except Exception as e:
-        print(f"Error creating project: {e}", file=sys.stderr)
-        sys.exit(1)
+        feedback.error(
+            f"Error creating project: {e}",
+            error_code="execution_error",
+            exit_code=1,
+        )
 
 
 def _is_ambiguous(recommendation) -> bool:
@@ -432,6 +465,7 @@ def handle_workflow_command(args: object) -> None:
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
 
+    feedback = get_feedback()
     preset_name = getattr(args, "preset", None)
     
     # Handle state management subcommands (Epic 12)
@@ -447,8 +481,12 @@ def handle_workflow_command(args: object) -> None:
             handle_workflow_state_cleanup_command(args)
             return
         else:
-            print("Error: Unknown state command. Use 'list', 'show', or 'cleanup'.", file=sys.stderr)
-            sys.exit(1)
+            feedback.error(
+                "Unknown state command. Use 'list', 'show', or 'cleanup'.",
+                error_code="validation_error",
+                remediation="Use: tapps-agents workflow state list|show|cleanup",
+                exit_code=2,
+            )
     
     # Handle resume subcommand (Epic 12)
     if preset_name == "resume":
@@ -464,7 +502,10 @@ def handle_workflow_command(args: object) -> None:
 
     if not preset_name or preset_name == "list":
         # List all presets
+        feedback.info("Loading workflow presets...")
         presets = loader.list_presets()
+        feedback.clear_progress()
+        feedback.success("Workflow presets loaded")
         print("\n" + "=" * 60)
         print("Available Workflow Presets")
         print("=" * 60)
@@ -1426,7 +1467,7 @@ def _print_cache_results(results: dict[str, Any]) -> None:
         failed = cache_result.get("failed", 0)
         project_libs = cache_result.get("project_libraries", 0)
         expert_libs = cache_result.get("expert_libraries", 0)
-        print("  Status: ✅ Success")
+        print("  Status: [OK] Success")
         print(f"  Cached Entries: {cached}")
         print(f"  Total Libraries: {total}")
         if project_libs > 0:
@@ -1446,17 +1487,22 @@ def _print_cache_results(results: dict[str, Any]) -> None:
         cache_error = results.get("cache_error")
         
         if cache_error:
-            print("  Status: ❌ Failed")
+            print("  Status: [FAILED] Failed")
             print(f"  Error: {cache_error}")
+            print("  Note: Exception occurred during cache pre-population.")
+            print("        Cache pre-population works best when run from within Cursor where MCP servers are available.")
         elif cache_result:
-            error_msg = cache_result.get("error", "Unknown error")
-            print("  Status: ❌ Failed")
+            error_msg = cache_result.get("error") or cache_result.get("message") or "Unknown error"
+            print("  Status: [FAILED] Failed")
             print(f"  Error: {error_msg}")
+            if cache_result.get("note"):
+                print(f"  Note: {cache_result.get('note')}")
             if cache_result.get("cached") == 0 and cache_result.get("total") == 0:
-                print("  Note: Context7 may not be enabled in configuration")
-                print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
+                if not cache_result.get("note"):
+                    print("  Note: Context7 may not be enabled in configuration")
+                    print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
         else:
-            print("  Status: ⚠️  Skipped")
+            print("  Status: [SKIPPED] Skipped")
             print("  Note: Cache pre-population was not attempted")
 
 

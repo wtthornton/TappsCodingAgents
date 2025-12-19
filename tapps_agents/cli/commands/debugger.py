@@ -5,12 +5,16 @@ import asyncio
 
 from ...agents.debugger.agent import DebuggerAgent
 from ..base import normalize_command
+from ..feedback import get_feedback
 from .common import check_result_error, format_json_output
 
 
 def handle_debugger_command(args: object) -> None:
     """Handle debugger agent commands"""
+    feedback = get_feedback()
     command = normalize_command(getattr(args, "command", None))
+    output_format = getattr(args, "format", "json")
+    feedback.format_type = output_format
     debugger = DebuggerAgent()
     asyncio.run(debugger.activate())
     try:
@@ -44,15 +48,15 @@ def handle_debugger_command(args: object) -> None:
             )
         elif command == "help" or command is None:
             result = asyncio.run(debugger.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
         else:
             result = asyncio.run(debugger.run("help"))
-            print(result["content"])
+            feedback.output_result(result["content"])
             return
 
         check_result_error(result)
-        format_json_output(result)
+        feedback.output_result(result, message="Debugging completed successfully")
     finally:
         asyncio.run(debugger.close())
 

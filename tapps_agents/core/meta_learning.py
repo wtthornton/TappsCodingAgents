@@ -7,7 +7,7 @@ and optimize learning parameters autonomously.
 
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from enum import Enum
 from typing import Any
 from uuid import uuid4
@@ -85,7 +85,7 @@ class LearningEffectivenessTracker:
 
         session = LearningSession(
             session_id=str(uuid4()),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(UTC),
             capability_id=capability_id,
             before_metrics=before_metrics.copy(),
             after_metrics=after_metrics.copy(),
@@ -125,7 +125,7 @@ class LearningEffectivenessTracker:
             sessions = [s for s in sessions if s.capability_id == capability_id]
 
         # Filter by time
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         sessions = [s for s in sessions if s.timestamp >= cutoff_date]
 
         if not sessions:
@@ -269,7 +269,7 @@ class LearningSelfAssessor:
             "anti_pattern_count": anti_pattern_count,
             "average_quality": average_quality,
             "average_security": average_security,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         self.assessments.append(assessment)
