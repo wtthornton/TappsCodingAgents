@@ -48,8 +48,11 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
             ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
         )
 
-        # Expert registry will be initialized in activate
-        self.expert_registry = None
+        # Expert registry initialization (required due to multiple inheritance MRO issue)
+        # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()
+        # is never called via MRO. We must manually initialize to avoid AttributeError.
+        # The registry will be properly initialized in activate() via _initialize_expert_support()
+        self.expert_registry: Any | None = None
 
         # Initialize Context7 helper
         self.context7: Context7AgentHelper | None = None
@@ -58,6 +61,12 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
 
     async def activate(self, project_root: Path | None = None):
         """Activate the designer agent with expert support."""
+        # Validate that expert_registry attribute exists (safety check)
+        if not hasattr(self, 'expert_registry'):
+            raise AttributeError(
+                f"{self.__class__.__name__}.expert_registry not initialized. "
+                "This should not happen if __init__() properly initializes the attribute."
+            )
         await super().activate(project_root)
         await self._initialize_expert_support(project_root)
 
@@ -155,7 +164,8 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
 
         # Consult Data Privacy expert for API design
         privacy_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             privacy_consultation = await self.expert_registry.consult(
                 query=f"Provide data privacy and security best practices for designing a {api_type} API with the following requirements: {requirements[:500]}",
                 domain="data-privacy-compliance",
@@ -239,7 +249,8 @@ Format as structured JSON with OpenAPI-style specification."""
 
         # Consult Data Privacy expert for data model design
         privacy_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             privacy_consultation = await self.expert_registry.consult(
                 query=f"Provide data privacy and security best practices for designing data models with the following requirements: {requirements[:500]}",
                 domain="data-privacy-compliance",
@@ -325,7 +336,8 @@ Format as structured JSON with detailed data model specification."""
         # Consult UX and Accessibility experts
         ux_guidance = ""
         accessibility_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             ux_consultation = await self.expert_registry.consult(
                 query=f"Provide UX best practices for designing UI for: {feature_description[:500]}",
                 domain="user-experience",
@@ -484,7 +496,8 @@ Format as structured content."""
         # Consult UX and Accessibility experts
         ux_guidance = ""
         accessibility_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             ux_consultation = await self.expert_registry.consult(
                 query=f"Provide UX best practices for defining a design system for: {project_description[:500]}",
                 domain="user-experience",

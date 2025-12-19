@@ -61,14 +61,23 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
         if config:
             self.context7 = get_context7_helper(self, config)
 
-        # Expert registry will be initialized in activate() via ExpertSupportMixin
-        # Allow manual override if provided
-        self.expert_registry = None
+        # Expert registry initialization (required due to multiple inheritance MRO issue)
+        # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()
+        # is never called via MRO. We must manually initialize to avoid AttributeError.
+        # The registry will be properly initialized in activate() via _initialize_expert_support()
+        self.expert_registry: Any | None = None
+        # Allow manual override if provided (for testing or special cases)
         if expert_registry:
             self.expert_registry = expert_registry
 
     async def activate(self, project_root: Path | None = None):
         """Activate the architect agent with expert support."""
+        # Validate that expert_registry attribute exists (safety check)
+        if not hasattr(self, 'expert_registry'):
+            raise AttributeError(
+                f"{self.__class__.__name__}.expert_registry not initialized. "
+                "This should not happen if __init__() properly initializes the attribute."
+            )
         await super().activate(project_root)
         # Initialize expert support via mixin
         await self._initialize_expert_support(project_root)
@@ -430,7 +439,8 @@ Format:
 
         # Consult Software Architecture expert for technology selection
         tech_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             try:
                 tech_consultation = await self.expert_registry.consult(
                     query=f"Select technology stack for: {component_description}. Requirements: {requirements}. Constraints: {', '.join(constraints) if constraints else 'None'}",
@@ -537,7 +547,8 @@ Format as structured JSON with technology recommendations."""
         # Consult Security expert
         security_guidance = ""
         security_confidence = 0.0
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             try:
                 security_consultation = await self.expert_registry.consult(
                     query=f"Design security architecture for: {system_description}. Threat model: {threat_model}",

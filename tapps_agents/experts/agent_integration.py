@@ -118,6 +118,7 @@ class ExpertSupportMixin:
         Returns:
             ConsultationResult if successful, None otherwise
         """
+        self._ensure_expert_registry_initialized()
         if not self.expert_registry:
             return None
 
@@ -174,18 +175,32 @@ class ExpertSupportMixin:
             include_all=include_all,
         )
 
+    def _ensure_expert_registry_initialized(self) -> None:
+        """
+        Ensure expert_registry attribute exists (idempotent).
+        
+        This is a safety check for the multiple inheritance MRO issue where
+        ExpertSupportMixin.__init__() may not be called. This method ensures
+        the attribute exists before access to prevent AttributeError.
+        """
+        if not hasattr(self, 'expert_registry'):
+            self.expert_registry: ExpertRegistry | None = None
+
     def _has_expert_support(self) -> bool:
         """Check if expert registry is available."""
+        self._ensure_expert_registry_initialized()
         return self.expert_registry is not None
 
     def _list_available_experts(self) -> list:
         """List all available expert IDs."""
+        self._ensure_expert_registry_initialized()
         if not self.expert_registry:
             return []
         return self.expert_registry.list_experts()
 
     def _get_expert(self, expert_id: str):
         """Get a specific expert by ID."""
+        self._ensure_expert_registry_initialized()
         if not self.expert_registry:
             return None
         return self.expert_registry.get_expert(expert_id)

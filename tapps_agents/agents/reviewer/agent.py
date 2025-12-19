@@ -57,8 +57,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             config = load_config()
         self.config = config
 
-        # Expert registry will be initialized in activate() via ExpertSupportMixin
-        # Allow manual override if provided
+        # Expert registry initialization (required due to multiple inheritance MRO issue)
+        # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()
+        # is never called via MRO. We must manually initialize to avoid AttributeError.
+        # The registry will be properly initialized in activate() via _initialize_expert_support()
+        self.expert_registry: Any | None = None
+        # Allow manual override if provided (for testing or special cases)
         if expert_registry:
             self.expert_registry = expert_registry
 
@@ -109,6 +113,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
     async def activate(self, project_root: Path | None = None):
         """Activate the reviewer agent with expert support."""
+        # Validate that expert_registry attribute exists (safety check)
+        if not hasattr(self, 'expert_registry'):
+            raise AttributeError(
+                f"{self.__class__.__name__}.expert_registry not initialized. "
+                "This should not happen if __init__() properly initializes the attribute."
+            )
         await super().activate(project_root)
         # Initialize expert support via mixin
         await self._initialize_expert_support(project_root)

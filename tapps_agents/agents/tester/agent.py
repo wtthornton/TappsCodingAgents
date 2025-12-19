@@ -73,8 +73,20 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         if config:
             self.context7 = get_context7_helper(self, config)
 
+        # Expert registry initialization (required due to multiple inheritance MRO issue)
+        # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()
+        # is never called via MRO. We must manually initialize to avoid AttributeError.
+        # The registry will be properly initialized in activate() via _initialize_expert_support()
+        self.expert_registry: Any | None = None
+
     async def activate(self, project_root: Path | None = None):
         """Activate the tester agent with expert support."""
+        # Validate that expert_registry attribute exists (safety check)
+        if not hasattr(self, 'expert_registry'):
+            raise AttributeError(
+                f"{self.__class__.__name__}.expert_registry not initialized. "
+                "This should not happen if __init__() properly initializes the attribute."
+            )
         await super().activate(project_root)
         # Initialize expert support
         await self._initialize_expert_support(project_root)
@@ -147,7 +159,8 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         # Consult Testing expert for test generation guidance
         expert_guidance = ""
         expert_advice = None
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             testing_consultation = await self.expert_registry.consult(
                 query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.",
                 domain="testing-strategies",
@@ -241,7 +254,8 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
 
         # Consult Testing expert for test generation guidance
         expert_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             testing_consultation = await self.expert_registry.consult(
                 query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.",
                 domain="testing-strategies",
@@ -313,7 +327,8 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         # Consult Testing expert for E2E test generation guidance
         expert_guidance = ""
         expert_advice = None
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             testing_consultation = await self.expert_registry.consult(
                 query="Provide best practices for generating end-to-end (E2E) tests. Focus on test coverage, user workflows, and maintainability.",
                 domain="testing-strategies",

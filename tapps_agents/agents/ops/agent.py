@@ -52,10 +52,19 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
         # Initialize dependency analyzer
         self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
 
-        # Expert registry will be initialized in activate
-        self.expert_registry = None
+        # Expert registry initialization (required due to multiple inheritance MRO issue)
+        # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()
+        # is never called via MRO. We must manually initialize to avoid AttributeError.
+        # The registry will be properly initialized in activate() via _initialize_expert_support()
+        self.expert_registry: Any | None = None
 
     async def activate(self, project_root: Path | None = None):
+        # Validate that expert_registry attribute exists (safety check)
+        if not hasattr(self, 'expert_registry'):
+            raise AttributeError(
+                f"{self.__class__.__name__}.expert_registry not initialized. "
+                "This should not happen if __init__() properly initializes the attribute."
+            )
         # Update project_root if provided
         if project_root is not None:
             self.project_root = Path(project_root).resolve()
@@ -104,7 +113,8 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
 
         # Consult Security expert for security scanning guidance
         security_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             security_consultation = await self.expert_registry.consult(
                 query=f"Provide security scanning best practices and vulnerability detection guidance for analyzing: {target_path.name if target_path.is_file() else 'directory'}",
                 domain="security",
@@ -207,7 +217,8 @@ Return findings in JSON format:
         # Consult Security and Data Privacy experts
         security_guidance = ""
         privacy_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             security_consultation = await self.expert_registry.consult(
                 query=f"Provide security compliance best practices for {compliance_type} compliance checking",
                 domain="security",
@@ -332,7 +343,8 @@ Return findings in JSON format:
 
         # Consult Security expert for secure deployment guidance
         security_guidance = ""
-        if self.expert_registry:
+        # Use defensive check to ensure attribute exists (safety for MRO issue)
+        if hasattr(self, 'expert_registry') and self.expert_registry:
             security_consultation = await self.expert_registry.consult(
                 query=f"Provide security best practices for deploying to {target} environment ({environment or 'default'})",
                 domain="security",
@@ -421,7 +433,8 @@ Return deployment steps in JSON format:
 
             # Consult Security expert for secure infrastructure setup
             security_guidance = ""
-            if self.expert_registry:
+            # Use defensive check to ensure attribute exists (safety for MRO issue)
+            if hasattr(self, 'expert_registry') and self.expert_registry:
                 security_consultation = await self.expert_registry.consult(
                     query=f"Provide security best practices for setting up {infrastructure_type} infrastructure",
                     domain="security",
