@@ -43,6 +43,46 @@ python -m pytest -q
 
 (And ensure you installed dependencies in your venv.)
 
+## Background Agents
+
+### Unicode Encoding Errors on Windows
+
+**Problem:** When running background agents or quality reports on Windows, you may encounter:
+```
+UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 3626: character maps to <undefined>
+```
+
+**Solution:** This has been fixed in version 2.0.6+. All subprocess calls now use UTF-8 encoding. If you still see this error:
+
+1. **Update to latest version:**
+   ```bash
+   pip install --upgrade tapps-agents
+   ```
+
+2. **Verify encoding fix is applied:**
+   - Check that `tapps_agents/agents/reviewer/scoring.py` has `encoding="utf-8"` in subprocess calls
+   - Check that `tapps_agents/agents/reviewer/typescript_scorer.py` has `encoding="utf-8"` in subprocess calls
+
+3. **Set environment variable (temporary workaround if needed):**
+   ```powershell
+   $env:PYTHONIOENCODING='utf-8'
+   ```
+
+### Background Agent Not Showing Progress
+
+**Problem:** Background agents run but you don't see when they start or complete.
+
+**Solution:** Execution indicators were added in version 2.0.6+. You should see:
+- Clear start indicators when tasks begin
+- Setup status messages
+- Running indicators during execution
+- Completion indicators when tasks finish
+
+If indicators are not showing:
+1. Ensure you're using version 2.0.6 or later
+2. Check that output is not being redirected (indicators print to stderr)
+3. Verify `.cursor/background-agents.yaml` is properly configured
+
 ## Configuration
 
 ### "Configuration file not found"

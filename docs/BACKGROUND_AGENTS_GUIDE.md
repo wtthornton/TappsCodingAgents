@@ -212,11 +212,47 @@ Background Agents are triggered via natural language prompts in Cursor AI:
 
 ### Monitoring Progress
 
-Progress is reported in real-time:
+Progress is reported in real-time with visible execution indicators:
 
-1. **Progress Files**: Located in `.tapps-agents/reports/progress-{task-id}.json`
-2. **Cursor UI**: Background Agents panel shows progress
-3. **Logs**: Check Cursor's Background Agents logs
+1. **Visible Execution Indicators**: Clear start/end indicators printed to stderr
+   - Task start indicator with agent ID, task ID, and command
+   - Setup status messages
+   - Command execution indicators
+   - Completion indicators with result file locations
+   - Error indicators if execution fails
+
+2. **Progress Files**: Located in `.tapps-agents/reports/progress-{task-id}.json`
+3. **Cursor UI**: Background Agents panel shows progress
+4. **Logs**: Check Cursor's Background Agents logs
+
+**Example Execution Output:**
+
+```
+============================================================
+[BACKGROUND AGENT TASK] Starting
+Agent ID: quality-analyzer
+Task ID: quality-analysis-2025-12-19
+Command: reviewer report
+============================================================
+
+[BACKGROUND AGENT] Setting up environment...
+[BACKGROUND AGENT] Setup complete
+
+============================================================
+[BACKGROUND AGENT] Starting: reviewer report
+============================================================
+[BACKGROUND AGENT] Running reviewer report...
+
+============================================================
+[BACKGROUND AGENT] Completed: reviewer report
+Result saved to: .tapps-agents/reports/quality-analysis-reviewer-report.json
+============================================================
+
+============================================================
+[BACKGROUND AGENT TASK] Completed Successfully
+Task ID: quality-analysis-2025-12-19
+============================================================
+```
 
 **Progress File Format:**
 
@@ -386,7 +422,11 @@ Break large tasks into smaller, focused tasks:
 
 ### 3. Monitoring
 
-- **Progress Files**: Check progress files for long-running tasks
+- **Execution Indicators**: Watch for visible start/end indicators in terminal output
+  - Start indicators show when tasks begin
+  - Running indicators show active execution
+  - Completion indicators show when tasks finish with result file locations
+- **Progress Files**: Check progress files for long-running tasks (`.tapps-agents/reports/progress-{task-id}.json`)
 - **Logs**: Monitor Cursor's Background Agents logs
 - **Results**: Review results before merging PRs
 

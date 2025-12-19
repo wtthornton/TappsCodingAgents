@@ -129,6 +129,37 @@ auto_execution:
 
 ## Monitoring
 
+### Visible Execution Indicators
+
+Background agents now display clear execution indicators when running:
+
+**Start Indicators:**
+```
+============================================================
+[BACKGROUND AGENT TASK] Starting
+Agent ID: {agent_id}
+Task ID: {task_id}
+Command: {agent} {command}
+============================================================
+```
+
+**During Execution:**
+```
+[BACKGROUND AGENT] Setting up environment...
+[BACKGROUND AGENT] Setup complete
+[BACKGROUND AGENT] Running {agent} {command}...
+```
+
+**Completion Indicators:**
+```
+============================================================
+[BACKGROUND AGENT] Completed: {agent} {command}
+Result saved to: {result_file}
+============================================================
+```
+
+All indicators are printed to `stderr`, so they remain visible even when output is redirected.
+
 ### Check Execution Status
 
 View current execution status:

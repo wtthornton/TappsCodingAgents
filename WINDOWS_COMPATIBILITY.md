@@ -21,6 +21,31 @@ UnicodeEncodeError: 'charmap' codec can't encode character '\U0001f680' in posit
 
 **Location:** `tapps_agents/workflow/cursor_chat.py:43-48`
 
+### 1.1. Subprocess Unicode Decoding Errors ✅ FIXED (v2.0.6+)
+
+**Problem:** When running quality analysis or report generation on Windows, subprocess calls would fail with:
+```
+UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 3626: character maps to <undefined>
+```
+
+This occurred because `subprocess.run()` with `text=True` defaults to system encoding (cp1252 on Windows), which cannot decode certain bytes in tool output.
+
+**Fix Applied:**
+- Added `encoding="utf-8"` and `errors="replace"` to all `subprocess.run()` calls with `text=True`
+- Fixed 6 instances in `tapps_agents/agents/reviewer/scoring.py`:
+  - 2 Ruff linting calls
+  - 2 mypy type checking calls
+  - 2 jscpd duplication detection calls
+- Fixed 4 instances in `tapps_agents/agents/reviewer/typescript_scorer.py`:
+  - 2 ESLint calls
+  - 2 TypeScript compiler calls
+
+**Location:** 
+- `tapps_agents/agents/reviewer/scoring.py` (lines 589, 675, 722, 784, 894, 1022)
+- `tapps_agents/agents/reviewer/typescript_scorer.py` (lines 235, 312, 448, 496)
+
+**Impact:** Quality report generation and all code analysis tools now work correctly on Windows without encoding errors.
+
 ### 2. Console Encoding Setup ✅ FIXED
 
 **Problem:** Python defaults to system encoding (cp1252 on Windows) which doesn't support full Unicode.
@@ -89,7 +114,19 @@ Or set system-wide environment variable:
    - Added UTF-8 encoding setup at startup
    - Sets environment variables for subprocess calls
 
-3. **`windows_compatibility_check.py`** (New)
+3. **`tapps_agents/agents/reviewer/scoring.py`** (v2.0.6+)
+   - Added UTF-8 encoding to all subprocess.run() calls
+   - Prevents UnicodeDecodeError when reading tool output
+
+4. **`tapps_agents/agents/reviewer/typescript_scorer.py`** (v2.0.6+)
+   - Added UTF-8 encoding to all subprocess.run() calls
+   - Prevents UnicodeDecodeError when reading tool output
+
+5. **`tapps_agents/core/background_wrapper.py`** (v2.0.6+)
+   - Added visible execution indicators for background agents
+   - Clear start/end indicators printed to stderr
+
+6. **`windows_compatibility_check.py`** (New)
    - Diagnostic tool to verify Windows compatibility
    - Checks encoding, Unicode support, and path handling
 

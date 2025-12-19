@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Background Agent Execution Indicators** - Visible start/end indicators for background agent execution
+  - Clear task start indicators with agent ID, task ID, and command information
+  - Setup status messages during environment initialization
+  - Command execution indicators showing when agents are running
+  - Completion indicators with result file locations
+  - Error indicators with detailed error messages
+  - All indicators printed to stderr for visibility even when output is redirected
+
+### Fixed
+- **Unicode Encoding Errors on Windows** - Fixed `UnicodeDecodeError` in subprocess calls
+  - Added `encoding="utf-8"` and `errors="replace"` to all `subprocess.run()` calls with `text=True`
+  - Fixed 6 instances in `tapps_agents/agents/reviewer/scoring.py` (Ruff, mypy, jscpd)
+  - Fixed 4 instances in `tapps_agents/agents/reviewer/typescript_scorer.py` (ESLint, TypeScript compiler)
+  - Prevents Windows cp1252 encoding errors when reading tool output containing Unicode characters
+  - Fixes issue where report generation would fail with `UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d`
+
 ## [2.0.6] - 2025-01-20
 
 ### Added

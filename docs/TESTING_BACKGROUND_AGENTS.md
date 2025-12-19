@@ -73,9 +73,14 @@ The easiest way to test Background Agents is using natural language triggers in 
 
 ### Monitoring Progress
 
-1. **Progress Files**: Check `.tapps-agents/reports/progress-{task-id}.json`
-2. **Cursor UI**: Background Agents panel shows real-time progress
-3. **Logs**: Review Cursor's Background Agents logs
+1. **Execution Indicators**: Watch for visible start/end indicators in terminal output
+   - Start indicators: `[BACKGROUND AGENT TASK] Starting` with agent and task details
+   - Running indicators: `[BACKGROUND AGENT] Running {agent} {command}...`
+   - Completion indicators: `[BACKGROUND AGENT] Completed` with result file locations
+   - All indicators printed to stderr for visibility
+2. **Progress Files**: Check `.tapps-agents/reports/progress-{task-id}.json`
+3. **Cursor UI**: Background Agents panel shows real-time progress
+4. **Logs**: Review Cursor's Background Agents logs
 
 ---
 
