@@ -218,7 +218,6 @@ def test_entrypoint_parity_invalid_command(cli_harness, test_project):
 
 
 @pytest.mark.e2e_cli
-@pytest.mark.requires_llm
 def test_entrypoint_parity_orchestrator_workflow_list(cli_harness, test_project):
     """
     Test that orchestrator workflow-list produces identical output across entrypoints.

@@ -12,7 +12,7 @@ import re
 from typing import Any
 from unittest.mock import AsyncMock, MagicMock
 
-from tapps_agents.core.mal import MAL
+# MAL removed - agents now return instruction objects instead of calling LLMs directly
 
 
 class BehavioralMock:
@@ -21,8 +21,7 @@ class BehavioralMock:
     def __init__(self, agent_type: str):
         """Initialize behavioral mock."""
         self.agent_type = agent_type
-        self.mal = MagicMock(spec=MAL)
-        self.mal.close = AsyncMock()
+        # MAL removed - agents now return instruction objects
 
     def parse_cursor_command(self, prompt: str) -> dict[str, Any]:
         """

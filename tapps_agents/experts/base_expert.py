@@ -12,7 +12,7 @@ from typing import TYPE_CHECKING, Any
 
 from ..core.agent_base import BaseAgent
 from ..core.config import ProjectConfig
-from ..core.mal import MAL
+from ..core.instructions import GenericInstruction
 from .domain_utils import sanitize_domain_for_path
 from .simple_rag import SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
@@ -41,7 +41,6 @@ class BaseExpert(BaseAgent):
         expert_name: str,
         primary_domain: str,
         confidence_matrix: dict[str, float] | None = None,
-        mal: MAL | None = None,
         config: ProjectConfig | None = None,
         rag_enabled: bool = False,
         fine_tuned: bool = False,
@@ -54,7 +53,6 @@ class BaseExpert(BaseAgent):
             expert_name: Human-readable name
             primary_domain: Domain where this expert has 51% authority
             confidence_matrix: Confidence weights per domain {domain: weight}
-            mal: Model Abstraction Layer instance
             config: Project configuration
             rag_enabled: Whether RAG is enabled for this expert
             fine_tuned: Whether this expert uses fine-tuned models
@@ -64,7 +62,6 @@ class BaseExpert(BaseAgent):
         self.expert_id = expert_id
         self.primary_domain = primary_domain
         self.confidence_matrix = confidence_matrix or {}
-        self.mal = mal
         self.rag_enabled = rag_enabled
         self.fine_tuned = fine_tuned
         self.project_root: Path | None = None
@@ -476,13 +473,12 @@ Validation:"""
         """Build context for validation."""
         return await self._build_domain_context(f"{artifact_type} validation", domain)
 
-    async def _query_llm(self, prompt: str) -> str:
-        """Query LLM using MAL."""
-        if self.mal is None:
-            from ..core.config import load_config
-
-            self.config = self.config or load_config()
-            self.mal = MAL(config=self.config.mal)
-
-        response = await self.mal.generate(prompt)
-        return response
+    async def _query_llm(self, prompt: str) -> GenericInstruction:
+        """Prepare instruction for Cursor Skills (experts don't call LLMs directly)."""
+        # Experts prepare instructions for Cursor Skills execution
+        return GenericInstruction(
+            agent_name="expert",
+            command="consult",
+            prompt=prompt,
+            parameters={"expert_id": self.expert_id, "domain": self.primary_domain},
+        )

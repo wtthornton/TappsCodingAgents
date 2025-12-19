@@ -52,6 +52,7 @@ class StatusFileMonitor:
         state_dir: Path,
         poll_interval_seconds: float = 2.0,
         on_status_change: Callable[[StatusChange], None] | None = None,
+        event_bus: Any | None = None,
     ):
         """
         Initialize status file monitor.
@@ -60,10 +61,12 @@ class StatusFileMonitor:
             state_dir: Directory containing workflow state files
             poll_interval_seconds: How often to check for changes
             on_status_change: Callback when status changes detected
+            event_bus: Optional event bus for publishing events (Phase 2)
         """
         self.state_dir = Path(state_dir)
         self.poll_interval = poll_interval_seconds
         self.on_status_change = on_status_change
+        self.event_bus = event_bus
         self.monitored_workflows: dict[str, dict[str, Any]] = {}
         self.running = False
         self._monitor_task: asyncio.Task | None = None
@@ -191,6 +194,18 @@ class StatusFileMonitor:
                             timestamp=datetime.now(),
                         )
                     )
+                # Publish event to event bus (Phase 2)
+                if self.event_bus:
+                    from .events import EventType, WorkflowEvent
+                    await self.event_bus.publish(
+                        WorkflowEvent(
+                            event_type=EventType.WORKFLOW_STARTED,
+                            workflow_id=workflow_id,
+                            step_id=None,
+                            data={},
+                            timestamp=datetime.now(),
+                        )
+                    )
                 return
 
             # Compare states to detect changes
@@ -207,6 +222,18 @@ class StatusFileMonitor:
                                 timestamp=datetime.now(),
                             )
                         )
+                    # Publish event to event bus (Phase 2)
+                    if self.event_bus:
+                        from .events import EventType, WorkflowEvent
+                        await self.event_bus.publish(
+                            WorkflowEvent(
+                                event_type=EventType.WORKFLOW_COMPLETED,
+                                workflow_id=workflow_id,
+                                step_id=None,
+                                data={},
+                                timestamp=datetime.now(),
+                            )
+                        )
                 elif new_state.get("status") == "failed":
                     if self.on_status_change:
                         self.on_status_change(
@@ -215,6 +242,18 @@ class StatusFileMonitor:
                                 workflow_id=workflow_id,
                                 timestamp=datetime.now(),
                                 error=new_state.get("error"),
+                            )
+                        )
+                    # Publish event to event bus (Phase 2)
+                    if self.event_bus:
+                        from .events import EventType, WorkflowEvent
+                        await self.event_bus.publish(
+                            WorkflowEvent(
+                                event_type=EventType.WORKFLOW_FAILED,
+                                workflow_id=workflow_id,
+                                step_id=None,
+                                data={"error": new_state.get("error")},
+                                timestamp=datetime.now(),
                             )
                         )
 
@@ -244,6 +283,21 @@ class StatusFileMonitor:
                                 action=step_exec.get("action"),
                             )
                         )
+                    # Publish event to event bus (Phase 2)
+                    if self.event_bus:
+                        from .events import EventType, WorkflowEvent
+                        await self.event_bus.publish(
+                            WorkflowEvent(
+                                event_type=EventType.STEP_STARTED,
+                                workflow_id=workflow_id,
+                                step_id=step_id,
+                                data={
+                                    "agent": step_exec.get("agent"),
+                                    "action": step_exec.get("action"),
+                                },
+                                timestamp=datetime.now(),
+                            )
+                        )
                 elif step_exec.get("status") != old_step_exec.get("status"):
                     # Step status changed
                     if step_exec.get("status") == "completed":
@@ -258,6 +312,21 @@ class StatusFileMonitor:
                                     action=step_exec.get("action"),
                                 )
                             )
+                        # Publish event to event bus (Phase 2)
+                        if self.event_bus:
+                            from .events import EventType, WorkflowEvent
+                            await self.event_bus.publish(
+                                WorkflowEvent(
+                                    event_type=EventType.STEP_COMPLETED,
+                                    workflow_id=workflow_id,
+                                    step_id=step_id,
+                                    data={
+                                        "agent": step_exec.get("agent"),
+                                        "action": step_exec.get("action"),
+                                    },
+                                    timestamp=datetime.now(),
+                                )
+                            )
                     elif step_exec.get("status") == "failed":
                         if self.on_status_change:
                             self.on_status_change(
@@ -269,6 +338,22 @@ class StatusFileMonitor:
                                     agent=step_exec.get("agent"),
                                     action=step_exec.get("action"),
                                     error=step_exec.get("error"),
+                                )
+                            )
+                        # Publish event to event bus (Phase 2)
+                        if self.event_bus:
+                            from .events import EventType, WorkflowEvent
+                            await self.event_bus.publish(
+                                WorkflowEvent(
+                                    event_type=EventType.STEP_FAILED,
+                                    workflow_id=workflow_id,
+                                    step_id=step_id,
+                                    data={
+                                        "agent": step_exec.get("agent"),
+                                        "action": step_exec.get("action"),
+                                        "error": step_exec.get("error"),
+                                    },
+                                    timestamp=datetime.now(),
                                 )
                             )
 

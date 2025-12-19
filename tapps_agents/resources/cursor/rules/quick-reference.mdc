@@ -44,7 +44,7 @@ python -m tapps_agents.cli workflow hotfix     # Urgent fixes
 python -m tapps_agents.cli create "Create a modern web application"
 
 # This is a shortcut for: workflow full --auto --prompt
-# Automatically runs in Cursor-native mode (no MAL required)
+# Automatically runs in Cursor-native mode
 # Uses Cursor Skills and Background Agents
 ```
 
@@ -182,10 +182,8 @@ python -m tapps_agents.cli enhancer enhance-quick "Add user authentication"
 ### Model Configuration
 Edit `.tapps-agents/config.yaml`:
 ```yaml
-mal:
-  default_provider: "ollama"  # or "anthropic", "openai"
-  ollama_url: "http://localhost:11434"
-  default_model: "qwen2.5-coder:7b"
+# MAL configuration removed - framework now uses Cursor Skills exclusively
+# All LLM operations are handled by Cursor via Skills
 ```
 
 ### Quality Thresholds
@@ -234,10 +232,11 @@ python -m playwright install
 ```
 
 ### Model Not Available
-**Issue:** LLM calls fail
+**Issue:** Agent operations not executing
 **Solution:** 
-- For Ollama: Ensure Ollama is running and model is pulled: `ollama pull qwen2.5-coder:7b`
-- For cloud: Set API keys in environment or config
+- Ensure Cursor Skills are properly installed and configured
+- Verify agents are creating instruction objects correctly
+- Check Cursor integration settings
 
 ## Quick Examples
 

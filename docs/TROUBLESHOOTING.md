@@ -140,29 +140,13 @@ See `docs/CONFIGURATION.md`.
 
 If you see an error about weights not summing to 1.0, ensure `scoring.weights.*` totals ~1.0.
 
-## Ollama / Local LLM
+## LLM Operations
 
-### Cannot connect to Ollama
+### All LLM operations handled by Cursor
 
-- Verify Ollama is installed and running:
+The framework no longer uses local LLMs (Ollama) or requires API keys. All LLM operations are handled by Cursor Skills, which use the developer's configured model in Cursor.
 
-```bash
-ollama list
-```
-
-- Ensure the URL in `.tapps-agents/config.yaml` matches your setup:
-
-```yaml
-mal:
-  ollama_url: "http://localhost:11434"
-```
-
-### MAL disabled while running inside Cursor
-
-If you see errors like **`MALDisabledInCursorModeError`**, that is expected when running the framework under Cursor
-(including Cursor Background Agents). In this setup, **Cursor is the only LLM runtime** and the framework runs tools-only.
-
-If you explicitly want to enable MAL for a headless CLI run, set:
+If you see issues with agent operations:
 
 ```bash
 export TAPPS_AGENTS_MODE=headless
@@ -192,8 +176,9 @@ python -m tapps_agents.cli reviewer type-check path/to/file.py
 **Symptoms**: Errors like `MALDisabledInCursorModeError` or tools not working as expected.
 
 **Solution**:
-- **In Cursor**: Framework runs tools-only. Use Cursor Skills/Background Agents for LLM operations.
-- **Headless CLI**: Set `TAPPS_AGENTS_MODE=headless` to enable MAL (if configured).
+- Ensure Cursor Skills are properly installed and configured.
+- Verify agents are creating instruction objects correctly.
+- Check Cursor integration settings.
 
 **Verify mode**:
 ```bash
@@ -216,15 +201,15 @@ python -c "from tapps_agents.core.runtime_mode import detect_runtime_mode; print
 2. Check MCP Gateway configuration if using Context7 via MCP.
 3. Context7 is optional; agents will continue without it.
 
-### MAL credentials missing (headless mode)
+### Instruction objects not being executed
 
-**Symptoms**: Connection errors when trying to use MAL in headless mode.
+**Symptoms**: Agents create instruction objects but Cursor Skills don't execute them.
 
 **Solution**:
-1. Verify MAL configuration in `.tapps-agents/config.yaml`.
-2. For Ollama: Ensure Ollama is running and accessible.
-3. For cloud providers: Verify API keys are set correctly.
-4. MAL is optional; only needed for headless CLI runs.
+1. Verify Cursor Skills are installed: check `.claude/skills/` directory exists.
+2. Ensure Cursor is properly configured and running.
+3. Check that instruction objects have valid `to_skill_command()` output.
+4. Review Cursor Skills logs for execution errors.
 
 ## Workflow Execution Issues
 

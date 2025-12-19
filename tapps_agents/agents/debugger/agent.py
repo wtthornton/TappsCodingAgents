@@ -7,7 +7,6 @@ from typing import Any
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
 from .error_analyzer import ErrorAnalyzer
 
 
@@ -25,7 +24,7 @@ class DebuggerAgent(BaseAgent):
     - Admit uncertainty explicitly when you cannot verify
     """
 
-    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
+    def __init__(self, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="debugger", agent_name="Debugger Agent", config=config
         )
@@ -34,14 +33,8 @@ class DebuggerAgent(BaseAgent):
             config = load_config()
         self.config = config
 
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
-
-        # Initialize error analyzer
-        self.error_analyzer = ErrorAnalyzer(self.mal)
+        # Initialize error analyzer (no MAL dependency)
+        self.error_analyzer = ErrorAnalyzer()
 
         # Get debugger config
         debugger_config = config.agents.debugger if config and config.agents else None
@@ -153,22 +146,18 @@ class DebuggerAgent(BaseAgent):
         if not error_message:
             return {"error": "Error message required"}
 
-        analysis = await self.error_analyzer.analyze_error(
+        instruction = self.error_analyzer.prepare_error_analysis(
             error_message=error_message,
             stack_trace=stack_trace,
             code_context=code_context,
+            file_path=None,
         )
 
         return {
             "type": "error_analysis",
-            "error_type": analysis["error_type"],
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "error_message": error_message,
-            "root_cause": analysis.get("root_cause"),
-            "issue": analysis.get("analysis", {}).get("issue"),
-            "suggestions": analysis.get("suggestions", []),
-            "fix_examples": (
-                analysis.get("fix_examples", []) if self.include_code_examples else []
-            ),
         }
 
     async def trace_command(
@@ -188,17 +177,17 @@ class DebuggerAgent(BaseAgent):
 
         self._validate_path(file_path)
 
-        trace_result = await self.error_analyzer.trace_code_path(
+        instruction = self.error_analyzer.prepare_code_trace(
             file_path=file_path, function_name=function, line_number=line
         )
 
         return {
             "type": "trace",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
             "function": function,
             "line": line,
-            "trace_analysis": trace_result.get("trace_analysis"),
-            "execution_path": trace_result.get("execution_path", []),
         }
 
     async def _help(self) -> dict[str, Any]:
@@ -212,5 +201,3 @@ class DebuggerAgent(BaseAgent):
 
     async def close(self):
         """Close agent and clean up resources."""
-        if self.mal:
-            await self.mal.close()

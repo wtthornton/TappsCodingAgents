@@ -1,44 +1,19 @@
 """
-Real integration tests for CLI with actual agents and LLM calls - optimized for speed.
+Integration tests for CLI with actual agents.
 
-These tests use ACTUAL LLM calls but are optimized to be faster:
-- Use 'score' instead of 'review' (faster, no LLM feedback)
-- Minimal test files
-- Reduced timeouts
+These tests verify CLI commands work correctly with instruction-based agents.
 """
 
 import json
-import os
 import subprocess
 import sys
 
 import pytest
 
 
-def check_ollama_available():
-    """Check if Ollama is available."""
-    import httpx
-    try:
-        response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
-        return response.status_code == 200
-    except Exception:
-        return False
-
-
-def check_anthropic_available():
-    """Check if Anthropic API key is available."""
-    return os.getenv("ANTHROPIC_API_KEY") is not None
-
-
-def has_any_llm():
-    """Check if any LLM service is available."""
-    return check_ollama_available() or check_anthropic_available() or os.getenv("OPENAI_API_KEY") is not None
-
-
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.requires_llm
 class TestCLIReal:
     """Real integration tests for CLI - optimized for speed."""
 

@@ -90,14 +90,18 @@ class AuditLogger:
         step_id: str,
         command: str,
         command_file: Path,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """Log command file detection."""
+        details = {"command_file": str(command_file)}
+        if metadata:
+            details["metadata"] = metadata
         self.log_event(
             event_type="command_detected",
             workflow_id=workflow_id,
             step_id=step_id,
             command=command,
-            details={"command_file": str(command_file)},
+            details=details,
         )
 
     def log_execution_started(

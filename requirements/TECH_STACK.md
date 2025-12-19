@@ -11,7 +11,7 @@
 1. [Overview](#1-overview)
 2. [Core Framework](#2-core-framework)
 3. [LLM Providers](#3-llm-providers)
-4. [Model Abstraction Layer (MAL)](#4-model-abstraction-layer-mal)
+4. [Instruction-Based Architecture](#4-instruction-based-architecture)
 5. [RAG Infrastructure](#5-rag-infrastructure)
 6. [Fine-Tuning Stack](#6-fine-tuning-stack)
 7. [Agent Orchestration](#7-agent-orchestration)
@@ -37,7 +37,7 @@
 
 | Principle | Implementation |
 |-----------|----------------|
-| **Local-First** | Run LLMs locally via Ollama; cloud only for complex tasks |
+| **Cursor-First** | All LLM operations handled by Cursor Skills |
 | **Agent-Native** | Agents as first-class citizens, not afterthoughts |
 | **Embedded Data** | ChromaDB, LanceDB embedded; no external DB services |
 | **IDE-Integrated** | Native Claude Code Skills, MCP protocol |
@@ -57,11 +57,11 @@
 │                    INTELLIGENCE LAYER                                │
 │   RAG (ChromaDB embedded) • Embeddings • Optional Fine-Tuning       │
 ├─────────────────────────────────────────────────────────────────────┤
-│                    MODEL ROUTER (MAL)                                │
-│   Local-First (Ollama) → Cloud Fallback (Anthropic/OpenAI)          │
+│                    INSTRUCTION LAYER                                 │
+│   Instruction Objects → Cursor Skills → LLM Execution               │
 ├─────────────────────────────────────────────────────────────────────┤
 │                    LOCAL INFRASTRUCTURE                              │
-│   Ollama (GPU) • Python venv • ChromaDB (disk) • Config (YAML)      │
+│   Python venv • ChromaDB (disk) • Config (YAML) • Cursor IDE        │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -84,7 +84,7 @@
 |---------|---------|---------|
 | **Pydantic** | 2.12.5+ | Data validation and configuration models |
 | **httpx** | 0.28.1+ | HTTP client (sync + async) |
-| **aiohttp** | 3.13.2+ | Async HTTP (Ollama integration) |
+| **aiohttp** | 3.13.2+ | Async HTTP (optional, for other integrations) |
 | **PyYAML** | 6.0.3+ | YAML parsing |
 | **psutil** | 5.9.0+ | Resource monitoring (NUC optimization) |
 | **radon** | 6.0.1+ | Complexity / maintainability analysis |

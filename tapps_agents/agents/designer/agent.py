@@ -9,7 +9,7 @@ from typing import Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 
 
@@ -34,19 +34,13 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
     - Define design systems
     """
 
-    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
+    def __init__(self, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="designer", agent_name="Designer Agent", config=config
         )
         if config is None:
             config = load_config()
         self.config = config
-
-        # Initialize MAL
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
 
         # Expert registry initialization (required due to multiple inheritance MRO issue)
         # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()
@@ -208,32 +202,23 @@ Provide a comprehensive API design including:
 Format as structured JSON with OpenAPI-style specification."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="designer",
+                command="design-api",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.2,
+                parameters={
+                    "api_type": api_type,
+                    "requirements": requirements,
+                    "output_file": str(output_file) if output_file else None,
+                },
             )
 
-            api_design = {
-                "api_type": api_type,
-                "requirements": requirements,
-                "specification": response,
-                "endpoints": [],
-                "schemas": {},
+            return {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            # Save to file if specified
-            if output_file:
-                output_path = Path(output_file)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(json.dumps(api_design, indent=2))
-                api_design["output_file"] = str(output_path)
-
-            return {"success": True, "api_design": api_design}
         except Exception as e:
             return {"error": f"Failed to design API: {str(e)}"}
 
@@ -291,32 +276,23 @@ Provide comprehensive data model design including:
 Format as structured JSON with detailed data model specification."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="designer",
+                command="design-data-model",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.2,
+                parameters={
+                    "requirements": requirements,
+                    "data_source": data_source,
+                    "output_file": str(output_file) if output_file else None,
+                },
             )
 
-            data_model = {
-                "requirements": requirements,
-                "data_source": data_source,
-                "models": response,
-                "entities": [],
-                "relationships": [],
+            return {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            # Save to file if specified
-            if output_file:
-                output_path = Path(output_file)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(json.dumps(data_model, indent=2))
-                data_model["output_file"] = str(output_path)
-
-            return {"success": True, "data_model": data_model}
         except Exception as e:
             return {"error": f"Failed to design data model: {str(e)}"}
 
@@ -393,32 +369,23 @@ Provide comprehensive UI/UX design including:
 Format as structured JSON with detailed UI/UX specification."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="designer",
+                command="design-ui",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
+                parameters={
+                    "feature": feature_description,
+                    "user_stories": user_stories,
+                    "output_file": str(output_file) if output_file else None,
+                },
             )
 
-            ui_design = {
-                "feature": feature_description,
-                "user_stories": user_stories,
-                "specification": response,
-                "screens": [],
-                "interactions": [],
+            return {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            # Save to file if specified
-            if output_file:
-                output_path = Path(output_file)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(json.dumps(ui_design, indent=2))
-                ui_design["output_file"] = str(output_path)
-
-            return {"success": True, "ui_design": ui_design}
         except Exception as e:
             return {"error": f"Failed to design UI: {str(e)}"}
 
@@ -456,30 +423,23 @@ Include:
 Format as structured content."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="designer",
+                command="create-wireframe",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.2,
+                parameters={
+                    "type": wireframe_type,
+                    "screen": screen_description,
+                    "output_file": str(output_file) if output_file else None,
+                },
             )
 
-            wireframe = {
-                "type": wireframe_type,
-                "screen": screen_description,
-                "wireframe": response,
+            return {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            # Save to file if specified
-            if output_file:
-                output_path = Path(output_file)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(wireframe["wireframe"])
-                wireframe["output_file"] = str(output_path)
-
-            return {"success": True, "wireframe": wireframe}
         except Exception as e:
             return {"error": f"Failed to create wireframe: {str(e)}"}
 
@@ -552,24 +512,17 @@ Provide comprehensive design system including:
 Format as structured JSON with detailed design system specification."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="designer",
+                command="create-design-system",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
+                parameters={
+                    "project": project_description,
+                    "brand_guidelines": brand_guidelines,
+                    "output_file": str(output_file) if output_file else None,
+                },
             )
-
-            design_system = {
-                "project": project_description,
-                "brand_guidelines": brand_guidelines,
-                "system": response,
-                "colors": {},
-                "typography": {},
-                "components": [],
-            }
 
             # Save to file if specified
             if output_file:

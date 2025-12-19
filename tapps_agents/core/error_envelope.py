@@ -14,8 +14,6 @@ from .exceptions import (
     ConfigurationError,
     Context7UnavailableError,
     FileOperationError,
-    MALDisabledInCursorModeError,
-    MALError,
     WorkflowExecutionError,
 )
 
@@ -209,8 +207,6 @@ class ErrorEnvelopeBuilder:
             return ("configuration", "config_error")
         elif isinstance(exc, Context7UnavailableError):
             return ("external_dependency", "context7_unavailable")
-        elif isinstance(exc, MALDisabledInCursorModeError):
-            return ("configuration", "mal_disabled_cursor_mode")
         elif isinstance(exc, WorkflowExecutionError):
             return ("execution", "workflow_execution_error")
         elif isinstance(exc, AgentError):
@@ -220,8 +216,6 @@ class ErrorEnvelopeBuilder:
             return ("validation", "file_not_found")
         elif isinstance(exc, FileOperationError):
             return ("permission", "file_operation_error")
-        elif isinstance(exc, MALError):
-            return ("external_dependency", "mal_error")
         elif isinstance(exc, TimeoutError):
             return ("timeout", "timeout_error")
         elif isinstance(exc, PermissionError):
@@ -320,7 +314,7 @@ class ErrorEnvelopeBuilder:
             return True
 
         # External dependency errors may be recoverable (service may come back)
-        if isinstance(exc, (Context7UnavailableError, MALError)):
+        if isinstance(exc, Context7UnavailableError):
             return True
 
         # Timeout errors are often recoverable

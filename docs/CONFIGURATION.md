@@ -59,9 +59,8 @@ agents:
 scoring:
   # Scoring settings (see below)
 
-# Model Abstraction Layer (MAL) configuration
-mal:
-  # MAL settings (see below)
+# Note: MAL configuration has been removed. All LLM operations are handled by Cursor Skills.
+# Agents prepare instruction objects that are executed via Cursor Skills.
 
 # Context7 integration (optional)
 context7:
@@ -85,62 +84,49 @@ The `doctor` command reads `.tapps-agents/config.yaml` and reports mismatches (P
 ```yaml
 agents:
   reviewer:
-    model: "qwen2.5-coder:7b"          # LLM model for code reviews
     quality_threshold: 70.0             # Minimum score (0-100) to pass review
     include_scoring: true               # Include code scoring in review
-    include_llm_feedback: true          # Include LLM-generated feedback
     max_file_size: 1048576              # Maximum file size in bytes (1MB)
     min_confidence_threshold: 0.8       # Minimum expert confidence (0.0-1.0)
 ```
 
 ### Agent Configuration: All Agents
 
-All agents support `model` and `min_confidence_threshold`.
+All agents support `min_confidence_threshold`. Note: `model` configuration has been removed as all LLM operations are handled by Cursor Skills.
 
 ```yaml
 agents:
   architect:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.75
 
   implementer:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.7
 
   designer:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.65
 
   tester:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.7
 
   ops:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.75
 
   enhancer:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.6
 
   analyst:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.65
 
   planner:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.6
 
   debugger:
-    model: "deepseek-coder:6.7b"
     min_confidence_threshold: 0.7
 
   documenter:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.5
 
   orchestrator:
-    model: "qwen2.5-coder:7b"
     min_confidence_threshold: 0.6
 ```
 
@@ -159,48 +145,9 @@ scoring:
 
 **Important:** The weights must sum to ~1.0 (a small floating point tolerance is allowed). If they don't, configuration loading will fail.
 
-### MAL Configuration
+### Note on LLM Configuration
 
-```yaml
-mal:
-  # Provider + model used by agents when they need an LLM
-  default_provider: "ollama"          # ollama | anthropic | openai
-  default_model: "qwen2.5-coder:7b"
-
-  # Ollama endpoint
-  ollama_url: "http://localhost:11434"
-
-  # Timeouts (seconds)
-  connect_timeout: 10
-  read_timeout: 600
-  write_timeout: 30
-  pool_timeout: 10
-
-  # Streaming
-  use_streaming: true
-  streaming_threshold: 5000
-
-  # Fallback behavior
-  enable_fallback: true
-  fallback_providers: ["anthropic", "openai"]
-
-  # Optional cloud provider configuration
-  anthropic:
-    api_key: "YOUR_KEY"              # stored in YAML (no automatic env-var expansion)
-    base_url: null
-    timeout: 60
-  openai:
-    api_key: "YOUR_KEY"
-    base_url: null
-    timeout: 60
-```
-
-**Important (Cursor-first policy):**
-- When the framework is invoked under Cursor (Skills / Background Agents), MAL is **disabled** (tools-only mode).
-  - Use `TAPPS_AGENTS_MODE=cursor` (set by default in this repo’s Background Agents config).
-- If you explicitly want MAL for a headless run, set `TAPPS_AGENTS_MODE=headless`.
-
-Note: the configuration loader **does not** interpolate environment variables (e.g., `${ANTHROPIC_API_KEY}` is treated as a literal string). If you want that behavior, expand env vars before writing `config.yaml`.
+**MAL configuration has been removed.** All LLM operations are now handled by Cursor Skills. Agents prepare instruction objects that are executed via Cursor Skills, which use the developer's configured model in Cursor. No local LLM (Ollama) or API keys are required.
 
 ### Context7 Configuration (optional)
 

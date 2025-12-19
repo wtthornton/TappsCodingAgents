@@ -53,7 +53,6 @@ def multiply(a: int, b: int) -> int:
 
 
 @pytest.mark.e2e_cli
-@pytest.mark.requires_llm
 def test_cli_reviewer_score_golden_path(cli_harness, test_project, test_file):
     """
     Test reviewer score command golden path.
@@ -89,7 +88,6 @@ def test_cli_reviewer_score_golden_path(cli_harness, test_project, test_file):
 
 
 @pytest.mark.e2e_cli
-@pytest.mark.requires_llm
 def test_cli_reviewer_review_golden_path(cli_harness, test_project, test_file):
     """
     Test reviewer review command golden path.
@@ -179,7 +177,6 @@ def test_cli_workflow_list_golden_path(cli_harness, test_project):
 
 
 @pytest.mark.e2e_cli
-@pytest.mark.requires_llm
 def test_cli_workflow_preset_golden_path(cli_harness, test_project):
     """
     Test workflow preset command golden path.

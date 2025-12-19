@@ -7,7 +7,7 @@ from typing import Any
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 from ...core.tiered_context import ContextTier
 
 
@@ -25,19 +25,13 @@ class ImproverAgent(BaseAgent):
     - Admit uncertainty explicitly when you cannot verify
     """
 
-    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
+    def __init__(self, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="improver", agent_name="Improver Agent", config=config
         )
         if config is None:
             config = load_config()
         self.config = config
-
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
         self.project_root: Path = Path.cwd()
 
     async def activate(self, project_root: Path | None = None):
@@ -122,21 +116,20 @@ Provide the refactored code that:
 
 Return only the refactored code, wrapped in ```python code blocks."""
 
-        # Generate refactored code using LLM
-        try:
-            response = await self.mal.generate(prompt)
-            refactored_code = self._extract_code_from_response(response)
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="improver",
+            command="refactor",
+            prompt=prompt,
+            parameters={"file_path": str(file_path)},
+        )
 
-            # Write refactored code back to file
-            file_path_obj.write_text(refactored_code, encoding="utf-8")
-
-            return {
-                "message": f"Successfully refactored {file_path}",
-                "file": str(file_path),
-                "refactored": True,
-            }
-        except Exception as e:
-            return {"error": f"Failed to refactor code: {str(e)}"}
+        return {
+            "message": f"Refactoring instruction prepared for {file_path}",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+            "file": str(file_path),
+        }
 
     async def _handle_optimize(
         self,
@@ -201,21 +194,24 @@ Provide the optimized code that:
 
 Return only the optimized code, wrapped in ```python code blocks."""
 
-        try:
-            response = await self.mal.generate(prompt)
-            optimized_code = self._extract_code_from_response(response)
-
-            # Write optimized code back to file
-            file_path_obj.write_text(optimized_code, encoding="utf-8")
-
-            return {
-                "message": f"Successfully optimized {file_path} for {optimization_type}",
-                "file": str(file_path),
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="improver",
+            command="optimize",
+            prompt=prompt,
+            parameters={
+                "file_path": str(file_path),
                 "optimization_type": optimization_type,
-                "optimized": True,
-            }
-        except Exception as e:
-            return {"error": f"Failed to optimize code: {str(e)}"}
+            },
+        )
+
+        return {
+            "message": f"Optimization instruction prepared for {file_path}",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+            "file": str(file_path),
+            "optimization_type": optimization_type,
+        }
 
     async def _handle_improve_quality(
         self, file_path: str | None = None, **kwargs: Any
@@ -265,20 +261,20 @@ Provide improved code that:
 
 Return only the improved code, wrapped in ```python code blocks."""
 
-        try:
-            response = await self.mal.generate(prompt)
-            improved_code = self._extract_code_from_response(response)
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="improver",
+            command="improve-quality",
+            prompt=prompt,
+            parameters={"file_path": str(file_path)},
+        )
 
-            # Write improved code back to file
-            file_path_obj.write_text(improved_code, encoding="utf-8")
-
-            return {
-                "message": f"Successfully improved code quality for {file_path}",
-                "file": str(file_path),
-                "improved": True,
-            }
-        except Exception as e:
-            return {"error": f"Failed to improve code quality: {str(e)}"}
+        return {
+            "message": f"Code quality improvement instruction prepared for {file_path}",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+            "file": str(file_path),
+        }
 
     async def _handle_help(self) -> dict[str, Any]:
         """Show this help message."""

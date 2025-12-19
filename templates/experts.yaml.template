@@ -15,11 +15,6 @@ experts:
     rag_enabled: true  # Enable RAG for knowledge base retrieval
     fine_tuned: false  # Future: Set to true when fine-tuning is available
     
-    # Optional: Custom MAL configuration
-    # mal_config:
-    #   primary_model: "qwen2.5-coder:7b"
-    #   fallback_models: ["claude-3-5-sonnet"]
-    
     # Optional: Custom confidence matrix (usually auto-calculated from weight matrix)
     # confidence_matrix:
     #   {domain-name}: 0.51

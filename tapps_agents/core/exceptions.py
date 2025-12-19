@@ -89,35 +89,6 @@ class FileWriteError(FileOperationError):
     pass
 
 
-class MALError(TappsAgentsError):
-    """Base exception for Model Abstraction Layer errors."""
-
-    pass
-
-
-class MALRequestError(MALError):
-    """Raised when MAL request fails."""
-
-    pass
-
-
-class MALTimeoutError(MALError):
-    """Raised when MAL request times out."""
-
-    pass
-
-
-class MALDisabledInCursorModeError(MALError):
-    """
-    Raised when MAL is invoked while running under Cursor/Background Agents.
-
-    Option A policy: Cursor is the only LLM runtime when running in Cursor.
-    The framework must run tools-only and must not call local/cloud LLMs via MAL.
-    """
-
-    pass
-
-
 class Context7Error(TappsAgentsError):
     """Base exception for Context7-related errors."""
 

@@ -41,9 +41,6 @@ class ExpertConfigModel(BaseModel):
         default=None,
         description="Custom confidence weights per domain (usually auto-calculated from weight matrix)",
     )
-    mal_config: dict[str, Any] | None = Field(
-        default=None, description="Optional MAL-specific configuration for this expert"
-    )
 
 
 @dataclass

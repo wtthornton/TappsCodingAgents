@@ -64,20 +64,23 @@ Experts live under `tapps_agents/experts/`.
 - **Built-in experts** (16): framework-provided technical domains (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning) with 83 knowledge files.
 - **Industry experts** (project-defined): configured in `.tapps-agents/experts.yaml` and optionally backed by a file-based knowledge base under `.tapps-agents/knowledge/<domain>/*.md`.
 
-### 3) Model Abstraction Layer (MAL)
+### 3) Instruction-Based Architecture
 
-MAL lives in `tapps_agents/core/mal.py` and is configured by `mal:` in `.tapps-agents/config.yaml`.
+Agents prepare structured instruction objects (defined in `tapps_agents/core/instructions.py`) that are executed via Cursor Skills.
 
-It supports:
+**Instruction Models:**
+- `CodeGenerationInstruction` - For code generation and refactoring
+- `TestGenerationInstruction` - For test generation
+- `DocumentationInstruction` - For documentation generation
+- `ErrorAnalysisInstruction` - For error analysis and debugging
+- `GenericInstruction` - For other agent operations
 
-- local provider: **Ollama**
-- optional cloud fallback providers: **Anthropic**, **OpenAI**
+**Runtime model:**
+- All agents prepare instruction objects instead of calling LLMs directly
+- Instructions are executed by Cursor Skills, which use the developer's configured model
+- No local LLM or API keys required - Cursor handles all LLM operations
 
-**Runtime policy (Cursor-first):**
-- When running under Cursor (Skills / Background Agents), the framework runs **tools-only** and MAL is **disabled**.
-- When running headlessly, MAL is optional and can be enabled explicitly.
-
-See `docs/HOW_IT_WORKS.md` for the full “brain vs hands” model.
+See `docs/HOW_IT_WORKS.md` for the full "brain vs hands" model.
 
 ### 4) Configuration System
 

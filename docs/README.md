@@ -16,6 +16,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture and key modules
 - **[Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)** - Choosing and running workflows
 - **[Workflow Execution Summary](WORKFLOW_EXECUTION_SUMMARY.md)** - Quick reference for parallel execution and Background Agents
+- **[Quick Start: 2025 Optimizations](QUICK_START_OPTIMIZATIONS.md)** - Quick reference for new performance optimizations
 
 ### Experts
 - **[Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)** - CLI wizard for experts and knowledge base

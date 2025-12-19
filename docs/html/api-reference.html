@@ -201,34 +201,38 @@ result = await reviewer.run("score", file="src/main.py")
 # }</code></pre>
                 </div>
 
-                <h3>Model Abstraction Layer (MAL)</h3>
+                <h3>Instruction-Based Architecture</h3>
                 <div class="code-block">
                     <div class="code-header">
-                        <span>MAL API</span>
+                        <span>Instruction Models</span>
                         <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                     </div>
-                    <pre><code>from tapps_agents.core.mal import MAL
-from tapps_agents.core.config import MALConfig
-
-config = MALConfig(
-    ollama_url="http://localhost:11434",
-    default_model="qwen2.5-coder:7b",
-    fallback_provider="anthropic"
+                    <pre><code>from tapps_agents.core.instructions import (
+    CodeGenerationInstruction,
+    TestGenerationInstruction,
+    GenericInstruction
 )
 
-mal = MAL(config)
-
-# Generate text
-response = await mal.generate(
-    prompt="Review this code...",
-    model="qwen2.5-coder:7b",
-    provider="ollama"
+# Agents prepare instruction objects
+instruction = CodeGenerationInstruction(
+    specification="Create a user authentication module",
+    file_path=Path("src/auth.py"),
+    context="Existing user model...",
+    language="python",
+    expert_guidance={"security": "Use bcrypt for password hashing"}
 )
 
-# With streaming
-response = await mal.generate(
-    prompt="...",
-    progress_callback=lambda token: print(token, end="")
+# Convert to Cursor Skill command
+command = instruction.to_skill_command(agent_name="implementer")
+# Result: "@implementer implement --file \"src/auth.py\" \"Create a user authentication module\""
+
+# Generic instruction for other operations
+instruction = GenericInstruction(
+    agent_name="analyst",
+    command="analyze-requirements",
+    prompt="Analyze the requirements for...",
+    parameters={"description": "..."}
+)
 )</code></pre>
                 </div>
 
@@ -348,11 +352,7 @@ config = load_config(Path(".tapps-agents/config.yaml"))
 #         "name": str,
 #         "root": str
 #     },
-#     "mal": {
-#         "enabled": bool,
-#         "ollama_url": str,
-#         "default_model": str,
-#         "fallback_provider": str,
+#     # MAL configuration removed - all LLM operations handled by Cursor Skills
 #         "timeout": int,
 #         "enable_fallback": bool
 #     },
@@ -384,8 +384,7 @@ config = load_config(Path(".tapps-agents/config.yaml"))
     AgentError,
     WorkflowError,
     ConfigurationError,
-    MALError,
-    MALDisabledInCursorModeError
+    # MAL exceptions removed
 )
 
 # Base exception
@@ -408,14 +407,7 @@ class ConfigurationError(TappsAgentsError):
     """Configuration errors"""
     pass
 
-# MAL errors
-class MALError(TappsAgentsError):
-    """Model Abstraction Layer errors"""
-    pass
-
-class MALDisabledInCursorModeError(MALError):
-    """MAL disabled in Cursor mode"""
-    pass</code></pre>
+# MAL exceptions removed - all LLM operations handled by Cursor Skills</code></pre>
                 </div>
             </section>
 

@@ -100,7 +100,6 @@ async def test_bug_fix_scenario(
 
 @pytest.mark.e2e_scenario
 @pytest.mark.template_type("small")
-@pytest.mark.requires_llm
 @pytest.mark.asyncio
 @pytest.mark.monitoring_config(
     max_seconds_without_activity=120.0,

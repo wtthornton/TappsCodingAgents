@@ -65,10 +65,12 @@ class ProgressUpdateManager:
 
         # Status monitoring
         state_dir = self.project_root / ".tapps-agents" / "workflow-state"
+        # Note: event_bus will be set by CursorWorkflowExecutor if available
         self.status_monitor = StatusFileMonitor(
             state_dir=state_dir,
             poll_interval_seconds=2.0,
             on_status_change=self._handle_status_change,
+            event_bus=None,  # Will be set by executor if available
         )
 
         self.monitoring_started = False

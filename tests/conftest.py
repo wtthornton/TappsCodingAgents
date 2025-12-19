@@ -17,50 +17,12 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from tapps_agents.core.agent_base import BaseAgent
-from tapps_agents.core.mal import MAL
 
 # ============================================================================
 # Async Fixtures
 # ============================================================================
 
 # Removed event_loop fixture - using pytest-asyncio's default instead
-
-
-# ============================================================================
-# Mock MAL Fixtures
-# ============================================================================
-
-
-@pytest.fixture
-def mock_mal() -> MagicMock:
-    """
-    Mock Model Abstraction Layer for testing without Ollama.
-
-    Returns a mock MAL that can be configured to return specific responses.
-    """
-    mal = MagicMock(spec=MAL)
-    mal.generate = AsyncMock(return_value="Mock LLM response")
-    mal.close = AsyncMock()
-    return mal
-
-
-@pytest.fixture
-def mock_mal_with_response() -> callable:
-    """
-    Factory fixture for creating a mock MAL with custom responses.
-
-    Usage:
-        mal = mock_mal_with_response("Custom response")
-        result = await mal.generate("prompt")
-    """
-
-    def _create_mock(response: str = "Mock LLM response"):
-        mal = MagicMock(spec=MAL)
-        mal.generate = AsyncMock(return_value=response)
-        mal.close = AsyncMock()
-        return mal
-
-    return _create_mock
 
 
 # ============================================================================

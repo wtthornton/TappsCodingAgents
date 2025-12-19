@@ -8,7 +8,7 @@ from typing import Any
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 from ..ops.dependency_analyzer import DependencyAnalyzer
 from .aggregator import QualityAggregator
@@ -45,7 +45,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
     def __init__(
         self,
-        mal: MAL | None = None,
         config: ProjectConfig | None = None,
         expert_registry: Any | None = None,
     ):
@@ -65,12 +64,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         # Allow manual override if provided (for testing or special cases)
         if expert_registry:
             self.expert_registry = expert_registry
-
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
         # Initialize scorer with config weights and quality tools
         scoring_config = config.scoring if config else None
         weights = scoring_config.weights if scoring_config else None
@@ -183,16 +176,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             if not file_path:
                 return {"error": "File path required. Usage: *review <file>"}
 
-            model = kwargs.get("model", "qwen2.5-coder:7b")
+            # Model parameter deprecated - all LLM operations handled by Cursor Skills
             try:
                 return await self.review_file(
                     Path(file_path),
-                    model=model
-                    or (
-                        self.config.agents.reviewer.model
-                        if self.config
-                        else "qwen2.5-coder:7b"
-                    ),
                     include_scoring=True,
                     include_llm_feedback=True,
                 )
@@ -329,7 +316,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
     async def review_file(
         self,
         file_path: Path,
-        model: str = "qwen2.5-coder:7b",
         include_scoring: bool = True,
         include_llm_feedback: bool = True,
     ) -> dict[str, Any]:
@@ -338,9 +324,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         Args:
             file_path: Path to code file
-            model: LLM model to use for feedback
             include_scoring: Include code scores
-            include_llm_feedback: Include LLM-generated feedback
+            include_llm_feedback: Include LLM-generated feedback (via Cursor Skills)
 
         Returns:
             Review results with scores and feedback
@@ -504,14 +489,18 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         prompt = "\n".join(prompt_parts)
 
-        try:
-            response = await self.mal.generate(prompt, model=model)
-            return {
-                "summary": response[:500],  # First 500 chars
-                "full_feedback": response,
-            }
-        except Exception as e:
-            return {"error": str(e), "summary": "Could not generate LLM feedback"}
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="reviewer",
+            command="generate-feedback",
+            prompt=prompt,
+            parameters={"model": model},
+        )
+
+        return {
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
 
     async def lint_file(self, file_path: Path) -> dict[str, Any]:
         """
@@ -1449,4 +1438,4 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
     async def close(self):
         """Clean up resources"""
-        await self.mal.close()
+        pass

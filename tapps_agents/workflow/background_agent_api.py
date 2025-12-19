@@ -75,23 +75,44 @@ class BackgroundAgentAPI:
         List all available Background Agents.
 
         Based on Cursor API documentation: GET /v0/agents
+        
+        Note: This endpoint may not exist publicly. If it fails,
+        the method returns an empty list for graceful degradation.
 
         Returns:
-            List of agent configurations
+            List of agent configurations (empty list if API unavailable)
 
         Raises:
-            requests.RequestException: If API request fails
+            requests.RequestException: Only if API key is invalid (401)
         """
         # Based on Cursor docs: GET /v0/agents
         url = f"{self.base_url}/agents"
         
         try:
             response = requests.get(url, headers=self._get_headers(), timeout=30)
+            
+            # Handle different status codes
+            if response.status_code == 404:
+                # Endpoint doesn't exist - graceful degradation
+                return []
+            elif response.status_code == 401:
+                # Invalid API key - raise exception
+                raise requests.RequestException(
+                    f"Unauthorized (401): Invalid API key for {url}"
+                )
+            
             response.raise_for_status()
             return response.json().get("agents", [])
-        except requests.RequestException:
-            # If API is not available, return empty list
-            # This allows graceful degradation
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                # Endpoint not found - graceful degradation
+                return []
+            raise
+        except requests.RequestException as e:
+            # Network errors, timeouts, etc. - log and degrade gracefully
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Background Agent API unavailable: {e}")
             return []
 
     def trigger_agent(
@@ -104,6 +125,9 @@ class BackgroundAgentAPI:
         """
         Trigger a Background Agent to execute a command.
 
+        Note: This endpoint needs verification. If unavailable,
+        returns a placeholder response for graceful degradation.
+
         Args:
             agent_id: ID of the Background Agent to trigger
             command: Command to execute (Skill command string)
@@ -111,14 +135,19 @@ class BackgroundAgentAPI:
             environment: Optional environment variables
 
         Returns:
-            Execution result with job_id and status
+            Execution result with job_id and status.
+            If API unavailable, returns placeholder with status "pending"
+            and message indicating fallback mode.
 
         Raises:
-            requests.RequestException: If API request fails
+            requests.RequestException: Only if API key is invalid (401)
         """
         # API endpoint structure (to be verified with actual Cursor API docs)
-        # For now, using a reasonable endpoint structure
-        url = f"{self.base_url}/agents/{agent_id}/trigger"
+        # Possible endpoints based on research:
+        # - POST /v0/background-agents/{id}/trigger
+        # - POST /v0/agents/{id}/trigger
+        # For now, try the most likely endpoint
+        url = f"{self.base_url}/background-agents/{agent_id}/trigger"
         
         payload = {
             "command": command,
@@ -134,44 +163,113 @@ class BackgroundAgentAPI:
             response = requests.post(
                 url, headers=self._get_headers(), json=payload, timeout=30
             )
+            
+            # Handle different status codes
+            if response.status_code == 404:
+                # Endpoint doesn't exist - graceful degradation
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.debug(f"Background Agent API endpoint not found: {url}")
+                return {
+                    "status": "pending",
+                    "job_id": f"local-{agent_id}",
+                    "message": "API endpoint not found, using file-based fallback",
+                    "fallback_mode": True,
+                }
+            elif response.status_code == 401:
+                # Invalid API key - raise exception
+                raise requests.RequestException(
+                    f"Unauthorized (401): Invalid API key for {url}"
+                )
+            
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                # Endpoint not found - graceful degradation
+                return {
+                    "status": "pending",
+                    "job_id": f"local-{agent_id}",
+                    "message": "API endpoint not found, using file-based fallback",
+                    "fallback_mode": True,
+                }
+            raise
         except requests.RequestException as e:
-            # Graceful degradation: return a placeholder response
+            # Network errors, timeouts, etc. - graceful degradation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Background Agent API request failed: {e}")
             return {
                 "status": "pending",
                 "job_id": f"local-{agent_id}",
-                "message": "API not available, using fallback mode",
+                "message": "API not available, using file-based fallback",
                 "error": str(e),
+                "fallback_mode": True,
             }
 
     def get_agent_status(self, job_id: str) -> dict[str, Any]:
         """
         Get the status of a Background Agent execution.
 
+        Note: This endpoint needs verification. If unavailable,
+        returns a placeholder response.
+
         Args:
             job_id: Job ID from trigger_agent response
 
         Returns:
-            Status information
+            Status information. If API unavailable, returns placeholder
+            with status "unknown".
 
         Raises:
-            requests.RequestException: If API request fails
+            requests.RequestException: Only if API key is invalid (401)
         """
-        # Note: This is a placeholder implementation
+        # Possible endpoints based on research:
+        # - GET /v0/background-agents/jobs/{job_id}
+        # - GET /v0/background-agents/{job_id}/status
         url = f"{self.base_url}/background-agents/jobs/{job_id}"
         
         try:
             response = requests.get(url, headers=self._get_headers(), timeout=30)
+            
+            # Handle different status codes
+            if response.status_code == 404:
+                # Endpoint doesn't exist - graceful degradation
+                return {
+                    "status": "unknown",
+                    "job_id": job_id,
+                    "message": "API endpoint not found",
+                    "fallback_mode": True,
+                }
+            elif response.status_code == 401:
+                # Invalid API key - raise exception
+                raise requests.RequestException(
+                    f"Unauthorized (401): Invalid API key for {url}"
+                )
+            
             response.raise_for_status()
             return response.json()
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                # Endpoint not found - graceful degradation
+                return {
+                    "status": "unknown",
+                    "job_id": job_id,
+                    "message": "API endpoint not found",
+                    "fallback_mode": True,
+                }
+            raise
         except requests.RequestException as e:
-            # Graceful degradation
+            # Network errors, timeouts, etc. - graceful degradation
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Background Agent API status check failed: {e}")
             return {
                 "status": "unknown",
                 "job_id": job_id,
                 "message": "API not available",
                 "error": str(e),
+                "fallback_mode": True,
             }
 
     def get_agent_results(self, job_id: str) -> dict[str, Any]:

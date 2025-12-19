@@ -1,29 +1,30 @@
 """
-Error Analyzer - Analyzes errors, stack traces, and suggests fixes
+Error Analyzer - Prepares error analysis instructions for Cursor Skills
 """
 
 import re
 from pathlib import Path
 from typing import Any
 
-from ...core.mal import MAL
+from ...core.instructions import ErrorAnalysisInstruction
 
 
 class ErrorAnalyzer:
-    """Analyzes errors, stack traces, and code paths to suggest fixes."""
+    """Prepares error analysis instructions for Cursor Skills execution."""
 
-    def __init__(self, mal: MAL):
-        self.mal = mal
+    def __init__(self):
+        """Initialize error analyzer (no MAL dependency)."""
+        pass
 
-    async def analyze_error(
+    def prepare_error_analysis(
         self,
         error_message: str,
         stack_trace: str | None = None,
         code_context: str | None = None,
         file_path: Path | None = None,
-    ) -> dict[str, Any]:
+    ) -> ErrorAnalysisInstruction:
         """
-        Analyze an error and provide insights.
+        Prepare error analysis instruction for Cursor Skills.
 
         Args:
             error_message: The error message
@@ -32,41 +33,26 @@ class ErrorAnalyzer:
             file_path: Optional file path where error occurred
 
         Returns:
-            Analysis result with error type, cause, and suggestions
+            ErrorAnalysisInstruction object for Cursor Skills execution
         """
-        # Extract error type and message
+        # Extract error info for context lines
         error_info = self._parse_error(error_message, stack_trace)
+        context_lines = 50  # Default context lines
 
-        # Build prompt for LLM analysis
-        prompt = self._build_analysis_prompt(
-            error_message, stack_trace, code_context, file_path
+        return ErrorAnalysisInstruction(
+            error_message=error_message,
+            stack_trace=stack_trace,
+            context_lines=context_lines,
         )
 
-        # Get LLM analysis
-        analysis_text = await self.mal.generate(prompt)
-
-        # Parse LLM response
-        parsed_analysis = self._parse_llm_analysis(analysis_text)
-
-        return {
-            "error_type": error_info["type"],
-            "error_message": error_message,
-            "file_location": error_info.get("file"),
-            "line_number": error_info.get("line"),
-            "analysis": parsed_analysis,
-            "suggestions": parsed_analysis.get("suggestions", []),
-            "root_cause": parsed_analysis.get("root_cause"),
-            "fix_examples": parsed_analysis.get("fix_examples", []),
-        }
-
-    async def trace_code_path(
+    def prepare_code_trace(
         self,
         file_path: Path,
         function_name: str | None = None,
         line_number: int | None = None,
-    ) -> dict[str, Any]:
+    ) -> ErrorAnalysisInstruction:
         """
-        Trace code execution path.
+        Prepare code trace instruction for Cursor Skills.
 
         Args:
             file_path: Path to the file
@@ -74,27 +60,19 @@ class ErrorAnalyzer:
             line_number: Optional line number to trace from
 
         Returns:
-            Code path analysis
+            ErrorAnalysisInstruction object for Cursor Skills execution
         """
-        code = file_path.read_text(encoding="utf-8")
+        error_message = f"Trace code path in {file_path}"
+        if function_name:
+            error_message += f" starting from function {function_name}"
+        if line_number:
+            error_message += f" at line {line_number}"
 
-        # Analyze code structure
-        structure = self._analyze_code_structure(code)
-
-        # Build trace prompt
-        prompt = self._build_trace_prompt(code, function_name, line_number, structure)
-
-        # Get LLM trace analysis
-        trace_analysis = await self.mal.generate(prompt)
-
-        return {
-            "file": str(file_path),
-            "function": function_name,
-            "line": line_number,
-            "code_structure": structure,
-            "trace_analysis": trace_analysis,
-            "execution_path": self._parse_execution_path(trace_analysis),
-        }
+        return ErrorAnalysisInstruction(
+            error_message=error_message,
+            stack_trace=None,
+            context_lines=100,  # More context for tracing
+        )
 
     def _parse_error(
         self, error_message: str, stack_trace: str | None = None

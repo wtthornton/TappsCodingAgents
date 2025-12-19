@@ -25,15 +25,14 @@ This project is designed to work **inside Cursor** with agents and background ag
 - **`.tapps-agents/`**: Runtime state (config + caches + reports + worktrees).  
   Most of this is **machine-local** and should not be committed.
 
-### Runtime model policy (prevents “double LLM”)
+### Runtime model policy (Cursor-first)
 
-**Option A policy (default in this repo):**
+**All execution modes:**
 
-- When running under Cursor (Skills / Background Agents), the framework runs **tools-only** and **must not call MAL**.
-  - Enforced by `TAPPS_AGENTS_MODE=cursor` and a runtime guard that blocks MAL usage.
-- When running headlessly (outside Cursor), MAL is **optional**:
-  - Enable with `TAPPS_AGENTS_MODE=headless`
-  - Configure via `.tapps-agents/config.yaml` (`mal:` section) if you want Ollama/cloud providers.
+- The framework runs **tools-only** and prepares instruction objects for Cursor Skills.
+- Agents never call LLMs directly - they create structured instruction objects.
+- Instructions are executed by Cursor Skills, which use the developer's configured model.
+- No local LLM (Ollama) or API keys required - Cursor handles all LLM operations.
 
 ### Background Agents: two modes
 

@@ -56,7 +56,6 @@ def is_cursor_environment():
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.requires_llm
 @pytest.mark.e2e
 class TestCLICreateCursorIntegration:
     """Integration tests for CLI create command with Cursor integration."""

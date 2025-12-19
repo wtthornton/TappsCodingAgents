@@ -32,16 +32,15 @@ class TestReviewCommand:
         assert "Error: File not found" in captured.err
 
     @pytest.mark.asyncio
-    async def test_review_command_success_json(self, sample_python_file, capsys, mock_mal):
+    async def test_review_command_success_json(self, sample_python_file, capsys):
         """Test review command with valid file, JSON output using real ReviewerAgent."""
         from tapps_agents.agents.reviewer.agent import ReviewerAgent
         
         # Use real ReviewerAgent instance (will use real CodeScorer)
-        # Only mock MAL to avoid network calls
+        # Agents now return instruction objects instead of calling LLMs
         with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
             # Create a real agent instance
             real_agent = ReviewerAgent()
-            real_agent.mal = mock_mal
             real_agent.activate = AsyncMock()
             real_agent.close = AsyncMock()
             real_agent.run = AsyncMock(return_value={

@@ -7,7 +7,7 @@
 ## Prerequisites
 
 - **Python 3.13+** (recommended: latest stable Python)
-- (Optional, for local LLM) **Ollama**
+- **Cursor IDE** (for LLM operations via Skills)
 
 ---
 
@@ -76,28 +76,10 @@ python -m tapps_agents.cli doctor --format json
 
 ---
 
-## Optional: Install Ollama + Pull a Model
+## Note on LLM Operations
 
-If you want local LLM execution:
-
-```bash
-# Pull a coding model
-ollama pull qwen2.5-coder:7b
-
-# Verify
-ollama list
-```
-
-### Note (Cursor-first policy)
-
-When running inside **Cursor** (Skills / Background Agents), Cursor uses the developer’s configured model.
-The framework’s MAL (including Ollama) is intended for **headless usage** only.
-
-If you explicitly want to enable MAL while running the CLI from a Cursor-launched shell, run with:
-
-```bash
-# Enable MAL for this process (optional)
-export TAPPS_AGENTS_MODE=headless
+All LLM operations are handled by Cursor Skills, which use the developer's configured model in Cursor.
+No local LLM (Ollama) or API keys are required. The framework prepares instruction objects that are executed via Cursor Skills.
 ```
 
 ### Windows PowerShell equivalent

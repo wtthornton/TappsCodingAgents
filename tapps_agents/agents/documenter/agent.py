@@ -7,7 +7,6 @@ from typing import Any
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
 from .doc_generator import DocGenerator
 
 
@@ -25,7 +24,7 @@ class DocumenterAgent(BaseAgent):
     - Admit uncertainty explicitly when you cannot verify
     """
 
-    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
+    def __init__(self, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="documenter", agent_name="Documenter Agent", config=config
         )
@@ -34,14 +33,8 @@ class DocumenterAgent(BaseAgent):
             config = load_config()
         self.config = config
 
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
-
-        # Initialize doc generator
-        self.doc_generator = DocGenerator(self.mal)
+        # Initialize doc generator (no MAL dependency)
+        self.doc_generator = DocGenerator()
 
         # Get documenter config
         documenter_config = (
@@ -128,8 +121,8 @@ class DocumenterAgent(BaseAgent):
 
         self._validate_path(file_path)
 
-        # Generate API docs
-        docs = await self.doc_generator.generate_api_docs(file_path, output_format)
+        # Prepare API docs instruction
+        instruction = self.doc_generator.prepare_api_docs(file_path, output_format)
 
         # Determine output file
         if output_file:
@@ -141,16 +134,13 @@ class DocumenterAgent(BaseAgent):
                 / f"{file_path.stem}_api.{'md' if output_format == 'markdown' else output_format}"
             )
 
-        # Write documentation
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(docs, encoding="utf-8")
-
         return {
             "type": "document",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
             "output_file": str(output_path),
             "format": output_format,
-            "documentation": docs[:500] + "..." if len(docs) > 500 else docs,  # Preview
         }
 
     async def generate_docs_command(
@@ -169,13 +159,14 @@ class DocumenterAgent(BaseAgent):
                 return {"error": f"File not found: {file_path}"}
 
             self._validate_path(file_path)
-            docs = await self.doc_generator.generate_api_docs(file_path, output_format)
+            instruction = self.doc_generator.prepare_api_docs(file_path, output_format)
 
             return {
                 "type": "api_docs",
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
                 "file": str(file_path),
                 "format": output_format,
-                "documentation": docs,
             }
         else:
             return {"error": "File path required"}
@@ -198,18 +189,17 @@ class DocumenterAgent(BaseAgent):
         if not root_path.exists():
             return {"error": f"Directory not found: {root_path}"}
 
-        # Generate README
-        readme = await self.doc_generator.generate_readme(root_path, context)
+        # Prepare README instruction
+        instruction = self.doc_generator.prepare_readme(root_path, context)
 
-        # Write README
         readme_path = root_path / "README.md"
-        readme_path.write_text(readme, encoding="utf-8")
 
         return {
             "type": "readme",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "project_root": str(root_path),
             "readme_file": str(readme_path),
-            "readme": readme[:500] + "..." if len(readme) > 500 else readme,  # Preview
         }
 
     async def update_docstrings_command(
@@ -234,24 +224,17 @@ class DocumenterAgent(BaseAgent):
 
         format_to_use = docstring_format or self.docstring_format
 
-        # Generate updated code with docstrings
-        updated_code = await self.doc_generator.update_docstrings(
+        # Prepare docstring update instruction
+        instruction = self.doc_generator.prepare_docstring_update(
             file_path, format_to_use
         )
 
-        # Write back to file if requested
-        if write_file:
-            file_path.write_text(updated_code, encoding="utf-8")
-
         return {
             "type": "docstrings",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
             "format": format_to_use,
-            "updated_code": (
-                updated_code[:1000] + "..."
-                if len(updated_code) > 1000
-                else updated_code
-            ),  # Preview
             "written": write_file,
         }
 
@@ -294,21 +277,20 @@ class DocumenterAgent(BaseAgent):
         # Ensure output directory exists
         output_path.mkdir(parents=True, exist_ok=True)
 
-        # Generate project documentation
-        result = await self.doc_generator.generate_project_api_docs(
-            project_root=root_path,
-            output_dir=output_path,
-            output_format=output_format,
-            include_modules=include_modules,
+        # Prepare project documentation instruction
+        # For project docs, we'll create a single instruction for the project root
+        instruction = self.doc_generator.prepare_api_docs(
+            root_path / "README.md" if (root_path / "README.md").exists() else root_path / "__init__.py",
+            output_format
         )
+        instruction.output_dir = str(output_path)
 
         return {
             "type": "project_docs",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "project_root": str(root_path),
             "output_dir": str(output_path),
-            "index_file": result["index_file"],
-            "generated_files": result["generated_files"],
-            "module_count": result["module_count"],
             "format": output_format,
         }
 
@@ -325,5 +307,3 @@ class DocumenterAgent(BaseAgent):
 
     async def close(self):
         """Close agent and clean up resources."""
-        if self.mal:
-            await self.mal.close()

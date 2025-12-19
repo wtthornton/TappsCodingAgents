@@ -245,3 +245,95 @@ async def test_poll_for_completion_resets_on_activity(tmp_path: Path):
     # Verify polling was reset
     assert executor.adaptive_polling.current_interval == 1.0
 
+
+@pytest.mark.asyncio
+async def test_execute_command_creates_metadata(tmp_path: Path):
+    """Test that execute_command creates structured metadata file."""
+    executor = BackgroundAgentAutoExecutor(
+        polling_interval=1.0,
+        timeout_seconds=5.0,
+        project_root=tmp_path,
+    )
+    
+    worktree_path = tmp_path / "worktree"
+    worktree_path.mkdir()
+    
+    command = "@analyst gather-requirements"
+    workflow_id = "test-workflow-123"
+    step_id = "requirements"
+    expected_artifacts = ["requirements.md"]
+    
+    # Create a status file that will be detected immediately
+    status_file = worktree_path / ".cursor-skill-status.json"
+    status_file.write_text('{"status": "completed"}', encoding="utf-8")
+    
+    # Execute command
+    result = await executor.execute_command(
+        command=command,
+        worktree_path=worktree_path,
+        workflow_id=workflow_id,
+        step_id=step_id,
+        expected_artifacts=expected_artifacts,
+    )
+    
+    # Verify metadata file was created
+    metadata_file = worktree_path / ".cursor-skill-metadata.json"
+    assert metadata_file.exists()
+    
+    # Verify metadata content
+    import json
+    metadata = json.loads(metadata_file.read_text(encoding="utf-8"))
+    assert metadata["version"] == "1.0"
+    assert metadata["workflow_context"]["workflow_id"] == workflow_id
+    assert metadata["workflow_context"]["step_id"] == step_id
+    assert metadata["workflow_context"]["expected_artifacts"] == expected_artifacts
+    
+    # Verify result
+    assert result["status"] == "completed"
+
+
+@pytest.mark.asyncio
+async def test_poll_for_completion_reads_metadata_artifacts(tmp_path: Path):
+    """Test that poll_for_completion reads expected artifacts from metadata."""
+    executor = BackgroundAgentAutoExecutor(
+        polling_interval=1.0,
+        timeout_seconds=5.0,
+        project_root=tmp_path,
+    )
+    
+    worktree_path = tmp_path / "worktree"
+    worktree_path.mkdir()
+    
+    # Create metadata file with expected artifacts
+    metadata_file = worktree_path / ".cursor-skill-metadata.json"
+    metadata_data = {
+        "version": "1.0",
+        "workflow_context": {
+            "expected_artifacts": ["requirements.md", "stories/"],
+        },
+    }
+    metadata_file.write_text(json.dumps(metadata_data), encoding="utf-8")
+    
+    # Create one of the expected artifacts
+    (worktree_path / "requirements.md").write_text("# Requirements", encoding="utf-8")
+    
+    status_file = worktree_path / ".cursor-skill-status.json"
+    
+    # Mock check_status to return incomplete
+    def mock_check_status(file: Path) -> dict:
+        return {"completed": False, "status": "pending"}
+    
+    executor.check_status = mock_check_status
+    
+    # Poll for completion (should detect artifact from metadata)
+    result = await executor.poll_for_completion(
+        worktree_path=worktree_path,
+        status_file=status_file,
+        expected_artifacts=None,  # Not provided, should read from metadata
+        start_time=None,
+    )
+    
+    # Should detect completion via artifact
+    assert result["completed"] is True
+    assert result["status"] == "completed"
+    assert "requirements.md" in result.get("artifacts", [])

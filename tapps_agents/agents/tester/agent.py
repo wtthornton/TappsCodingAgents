@@ -13,7 +13,6 @@ from typing import Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
 from ...experts.agent_integration import ExpertSupportMixin
 from .test_generator import TestGenerator
 
@@ -32,21 +31,15 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
     - Admit uncertainty explicitly when you cannot verify
     """
 
-    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
+    def __init__(self, config: ProjectConfig | None = None):
         super().__init__(agent_id="tester", agent_name="Tester Agent", config=config)
         # Use config if provided, otherwise load defaults
         if config is None:
             config = load_config()
         self.config = config
 
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
-
-        # Initialize test generator
-        self.test_generator = TestGenerator(self.mal)
+        # Initialize test generator (no MAL dependency)
+        self.test_generator = TestGenerator()
 
         # Get tester config
         tester_config = config.agents.tester if config and config.agents else None
@@ -184,18 +177,19 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                     "guidance": f"Low confidence expert advice: {testing_consultation.weighted_answer}",
                 }
 
-        # Generate tests
+        # Prepare test generation instruction
         if integration:
-            # For integration tests, use the file itself (could be extended to accept multiple files)
-            test_code = await self.test_generator.generate_integration_tests(
+            instruction = self.test_generator.prepare_integration_tests(
                 [file_path],
                 test_path=Path(test_file) if test_file else None,
+                context=None,
                 expert_guidance=expert_guidance,
             )
         else:
-            test_code = await self.test_generator.generate_unit_tests(
+            instruction = self.test_generator.prepare_unit_tests(
                 file_path,
                 test_path=Path(test_file) if test_file else None,
+                context=None,
                 expert_guidance=expert_guidance,
             )
 
@@ -206,22 +200,11 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             # Auto-generate test file path
             test_path = self._get_test_file_path(file_path)
 
-        # Write test file if auto_write is enabled
-        if self.auto_write_tests:
-            test_path.parent.mkdir(parents=True, exist_ok=True)
-            test_path.write_text(test_code, encoding="utf-8")
-
-        # Run tests
-        run_result = await self._run_pytest(
-            test_path if self.auto_write_tests else None, [str(file_path)]
-        )
-
         return {
             "type": "test",
-            "test_code": test_code,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
-            "written": self.auto_write_tests,
-            "run_result": run_result,
             "expert_advice": expert_advice,  # Include expert recommendations
         }
 
@@ -268,17 +251,19 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             ):
                 expert_guidance = testing_consultation.weighted_answer
 
-        # Generate tests
+        # Prepare test generation instruction
         if integration:
-            test_code = await self.test_generator.generate_integration_tests(
+            instruction = self.test_generator.prepare_integration_tests(
                 [file_path],
                 test_path=Path(test_file) if test_file else None,
+                context=None,
                 expert_guidance=expert_guidance,
             )
         else:
-            test_code = await self.test_generator.generate_unit_tests(
+            instruction = self.test_generator.prepare_unit_tests(
                 file_path,
                 test_path=Path(test_file) if test_file else None,
+                context=None,
                 expert_guidance=expert_guidance,
             )
 
@@ -288,16 +273,11 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         else:
             test_path = self._get_test_file_path(file_path)
 
-        # Write test file if auto_write is enabled
-        if self.auto_write_tests:
-            test_path.parent.mkdir(parents=True, exist_ok=True)
-            test_path.write_text(test_code, encoding="utf-8")
-
         return {
             "type": "test_generation",
-            "test_code": test_code,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
-            "written": self.auto_write_tests,
         }
 
     async def generate_e2e_tests_command(
@@ -346,22 +326,21 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                     "guidance": expert_guidance,
                 }
 
-        # Generate E2E tests
-        test_code = await self.test_generator.generate_e2e_tests(
+        # Prepare E2E test generation instruction
+        instruction = self.test_generator.prepare_e2e_tests(
             project_root=proj_root,
             test_path=Path(test_file) if test_file else None,
+            context=None,
             expert_guidance=expert_guidance,
         )
 
         # Check if E2E framework was detected
-        e2e_framework = self.test_generator._detect_e2e_framework(proj_root)
-        if not e2e_framework:
+        if instruction is None:
             return {
                 "type": "e2e_test_generation",
                 "error": "No E2E testing framework detected. Please install one of: playwright, pytest-playwright, selenium, or cypress.",
-                "test_code": None,
+                "instruction": None,
                 "test_file": None,
-                "written": False,
                 "framework_detected": False,
             }
 
@@ -372,17 +351,12 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             # Default E2E test location
             test_path = proj_root / "tests" / "e2e" / "test_e2e.py"
 
-        # Write test file if auto_write is enabled
-        if self.auto_write_tests and test_code:
-            test_path.parent.mkdir(parents=True, exist_ok=True)
-            test_path.write_text(test_code, encoding="utf-8")
-
         return {
             "type": "e2e_test_generation",
-            "test_code": test_code,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
-            "written": self.auto_write_tests and bool(test_code),
-            "framework_detected": e2e_framework,
+            "framework_detected": instruction.test_framework,
             "expert_advice": expert_advice,
         }
 
@@ -558,5 +532,3 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
 
     async def close(self):
         """Close agent and clean up resources."""
-        if self.mal:
-            await self.mal.close()

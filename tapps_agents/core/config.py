@@ -54,82 +54,9 @@ class ScoringConfig(BaseModel):
     )
 
 
-class CloudProviderConfig(BaseModel):
-    """Configuration for cloud LLM providers"""
-
-    api_key: str | None = Field(default=None, description="API key for cloud provider")
-    base_url: str | None = Field(default=None, description="Custom base URL (optional)")
-    timeout: float = Field(
-        default=60.0, ge=1.0, description="Request timeout in seconds"
-    )
-
-
-class MALConfig(BaseModel):
-    """Configuration for Model Abstraction Layer"""
-
-    ollama_url: str = Field(
-        default="http://localhost:11434", description="Ollama API URL"
-    )
-    default_model: str = Field(
-        default="qwen2.5-coder:7b", description="Default model name for LLM calls"
-    )
-    default_provider: str = Field(
-        default="ollama", description="Default provider (ollama/anthropic/openai)"
-    )
-    timeout: float = Field(
-        default=60.0,
-        ge=1.0,
-        description="Request timeout in seconds (legacy, use granular timeouts)",
-    )
-
-    # Granular timeout configuration (2025 best practice)
-    connect_timeout: float = Field(
-        default=10.0, ge=1.0, description="Connection timeout in seconds"
-    )
-    read_timeout: float = Field(
-        default=600.0,
-        ge=1.0,
-        description="Read timeout in seconds (10 min for large files)",
-    )
-    write_timeout: float = Field(
-        default=30.0, ge=1.0, description="Write timeout in seconds"
-    )
-    pool_timeout: float = Field(
-        default=10.0, ge=1.0, description="Pool timeout in seconds"
-    )
-
-    # Streaming configuration (2025 best practice)
-    use_streaming: bool = Field(
-        default=True, description="Use streaming for large prompts"
-    )
-    streaming_threshold: int = Field(
-        default=5000, ge=0, description="Prompt length (chars) to enable streaming"
-    )
-
-    # Cloud provider configurations
-    anthropic: CloudProviderConfig | None = Field(
-        default=None, description="Anthropic Claude configuration"
-    )
-    openai: CloudProviderConfig | None = Field(
-        default=None, description="OpenAI configuration"
-    )
-
-    # Fallback settings
-    enable_fallback: bool = Field(
-        default=True, description="Enable automatic fallback to cloud if local fails"
-    )
-    fallback_providers: list[str] = Field(
-        default_factory=lambda: ["anthropic", "openai"],
-        description="Fallback provider order",
-    )
-
-
 class ReviewerAgentConfig(BaseModel):
     """Configuration specific to Reviewer Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for reviews"
-    )
     quality_threshold: float = Field(
         default=70.0, ge=0.0, le=100.0, description="Minimum score to pass review"
     )
@@ -155,9 +82,6 @@ class ReviewerAgentConfig(BaseModel):
 class PlannerAgentConfig(BaseModel):
     """Configuration specific to Planner Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for planning"
-    )
     stories_dir: str | None = Field(
         default=None, description="Directory for storing stories (default: stories/)"
     )
@@ -176,9 +100,6 @@ class PlannerAgentConfig(BaseModel):
 class ImplementerAgentConfig(BaseModel):
     """Configuration specific to Implementer Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for code generation"
-    )
     require_review: bool = Field(
         default=True, description="Require code review before writing files"
     )
@@ -204,9 +125,6 @@ class ImplementerAgentConfig(BaseModel):
 class TesterAgentConfig(BaseModel):
     """Configuration specific to Tester Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for test generation"
-    )
     test_framework: str = Field(
         default="pytest", description="Test framework to use (pytest/unittest)"
     )
@@ -230,9 +148,6 @@ class TesterAgentConfig(BaseModel):
 class DebuggerAgentConfig(BaseModel):
     """Configuration specific to Debugger Agent"""
 
-    model: str = Field(
-        default="deepseek-coder:6.7b", description="LLM model to use for error analysis"
-    )
     include_code_examples: bool = Field(
         default=True, description="Include code examples in fix suggestions"
     )
@@ -253,10 +168,6 @@ class DebuggerAgentConfig(BaseModel):
 class DocumenterAgentConfig(BaseModel):
     """Configuration specific to Documenter Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b",
-        description="LLM model to use for documentation generation",
-    )
     docs_dir: str | None = Field(
         default=None, description="Directory for generated docs (default: docs/)"
     )
@@ -436,10 +347,6 @@ class ToolingConfig(BaseModel):
 class ArchitectAgentConfig(BaseModel):
     """Configuration specific to Architect Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b",
-        description="LLM model to use for architecture design",
-    )
     min_confidence_threshold: float = Field(
         default=0.75,
         ge=0.0,
@@ -451,9 +358,6 @@ class ArchitectAgentConfig(BaseModel):
 class DesignerAgentConfig(BaseModel):
     """Configuration specific to Designer Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for design"
-    )
     min_confidence_threshold: float = Field(
         default=0.65,
         ge=0.0,
@@ -465,9 +369,6 @@ class DesignerAgentConfig(BaseModel):
 class OpsAgentConfig(BaseModel):
     """Configuration specific to Ops Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for operations"
-    )
     min_confidence_threshold: float = Field(
         default=0.75,
         ge=0.0,
@@ -479,9 +380,6 @@ class OpsAgentConfig(BaseModel):
 class EnhancerAgentConfig(BaseModel):
     """Configuration specific to Enhancer Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for enhancements"
-    )
     min_confidence_threshold: float = Field(
         default=0.6,
         ge=0.0,
@@ -493,9 +391,6 @@ class EnhancerAgentConfig(BaseModel):
 class AnalystAgentConfig(BaseModel):
     """Configuration specific to Analyst Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for analysis"
-    )
     min_confidence_threshold: float = Field(
         default=0.65,
         ge=0.0,
@@ -507,9 +402,6 @@ class AnalystAgentConfig(BaseModel):
 class OrchestratorAgentConfig(BaseModel):
     """Configuration specific to Orchestrator Agent"""
 
-    model: str = Field(
-        default="qwen2.5-coder:7b", description="LLM model to use for orchestration"
-    )
     min_confidence_threshold: float = Field(
         default=0.6,
         ge=0.0,
@@ -751,7 +643,6 @@ class ProjectConfig(BaseModel):
     )
     agents: AgentsConfig = Field(default_factory=AgentsConfig)
     scoring: ScoringConfig = Field(default_factory=ScoringConfig)
-    mal: MALConfig = Field(default_factory=MALConfig)
     expert: ExpertConfig = Field(
         default_factory=ExpertConfig,
         description="Expert consultation system configuration",

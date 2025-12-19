@@ -2,7 +2,8 @@
 Tests for Reviewer Agent with real CodeScorer behavior.
 
 Tests agent initialization, command handling, and business logic
-using real CodeScorer instances. MAL is still mocked to avoid network calls.
+using real CodeScorer instances. Agents now return instruction objects
+instead of calling LLMs directly.
 """
 
 from pathlib import Path
@@ -51,13 +52,12 @@ class TestReviewerAgentReviewCommand:
     """Tests for review command with real CodeScorer behavior."""
 
     @pytest.mark.asyncio
-    async def test_review_command_success(self, sample_python_file, mock_mal):
+    async def test_review_command_success(self, sample_python_file):
         """Test review command with successful review using real CodeScorer."""
         agent = ReviewerAgent()
-        agent.mal = mock_mal
         
         # Use real CodeScorer instance (already created in ReviewerAgent.__init__)
-        # No need to mock - the agent already has a real scorer
+        # Agent now returns instruction objects instead of calling LLMs
         result = await agent.run("review", file=str(sample_python_file))
         
         assert "file" in result
@@ -83,10 +83,9 @@ class TestReviewerAgentReviewCommand:
         assert "not found" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_review_command_invalid_file(self, tmp_path, mock_mal):
+    async def test_review_command_invalid_file(self, tmp_path):
         """Test review command with invalid file."""
         agent = ReviewerAgent()
-        agent.mal = mock_mal
         invalid_file = tmp_path / "invalid.txt"
         invalid_file.write_text("not python code")
         
@@ -100,10 +99,9 @@ class TestReviewerAgentScoreCommand:
     """Tests for score command with real CodeScorer behavior."""
 
     @pytest.mark.asyncio
-    async def test_score_command_success(self, sample_python_file, mock_mal):
+    async def test_score_command_success(self, sample_python_file):
         """Test score command with successful scoring using real CodeScorer."""
         agent = ReviewerAgent()
-        agent.mal = mock_mal
         
         # Use real CodeScorer instance (already created in ReviewerAgent.__init__)
         result = await agent.run("score", file=str(sample_python_file))
@@ -137,10 +135,9 @@ class TestReviewerAgentErrorHandling:
     """Tests for error handling with real CodeScorer."""
 
     @pytest.mark.asyncio
-    async def test_review_command_scorer_error(self, sample_python_file, mock_mal):
+    async def test_review_command_scorer_error(self, sample_python_file):
         """Test review command handles scorer errors from real CodeScorer."""
         agent = ReviewerAgent()
-        agent.mal = mock_mal
         
         # Patch the scorer's score_file method to raise a specific error
         # This tests error propagation through real agent code
@@ -168,22 +165,4 @@ class TestReviewerAgentErrorHandling:
             else:
                 # Error might be a string
                 assert error_message in str(error_info) or "error" in str(result).lower()
-
-    @pytest.mark.asyncio
-    async def test_review_command_mal_error(self, sample_python_file):
-        """Test review command handles MAL errors with real CodeScorer."""
-        agent = ReviewerAgent()
-        
-        # Create a mock MAL that raises errors
-        mock_mal = MagicMock()
-        mock_mal.generate = AsyncMock(side_effect=Exception("MAL error"))
-        agent.mal = mock_mal
-        
-        # Use real CodeScorer - score command should work even if MAL fails
-        # because scoring doesn't require MAL (only review uses MAL)
-        result = await agent.run("score", file=str(sample_python_file))
-        assert isinstance(result, dict)
-        # Score command should succeed without MAL
-        assert "scoring" in result
-        assert "overall_score" in result["scoring"]
 

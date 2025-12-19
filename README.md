@@ -40,18 +40,19 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
 - **Project Profiling System** (v1.0.0+): Automatic detection of project characteristics (deployment type, tenancy, user scale, compliance, security) for context-aware expert guidance
 - **Improved Confidence System**: Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
-- **Model Abstraction Layer (MAL)**: Hybrid local/cloud model routing
+- **Cursor Skills Integration**: All agents prepare instruction objects for Cursor Skills execution
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
 - **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases)
   - **13 Cursor Skills** (All agents available as Cursor Skills)
   - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
   - **Background Agents** (Offload heavy tasks to cloud/remote)
-  - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with polling)
-  - **Multi-Agent Orchestration** (Parallel execution with conflict resolution)
+  - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with adaptive polling)
+  - **Multi-Agent Orchestration** (Parallel execution with structured concurrency via TaskGroup)
   - **Context7 Integration** (KB-first caching + analytics)
   - **NUC Optimization** (Resource monitoring, fallback strategy)
   - **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow)
+  - **2025 Optimizations** ✅ (TaskGroup migration, context managers, adaptive polling - 30-50% performance improvements)
 - **User Role Templates** ✅: Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
   - Customize agent behavior based on user role
   - 5 built-in role templates with sensible defaults
@@ -64,7 +65,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 
 - **Cursor is the LLM runtime**: Skills and Background Agents use the developer’s configured model in Cursor (Auto or pinned).
 - **This framework is the tooling layer**: workflows, quality tools, reporting, worktrees, caching.
-- **Local LLM is optional (headless-only)**: MAL (Ollama/cloud) is intended for CLI/CI usage outside Cursor.
+- **Cursor-native execution**: All LLM operations are handled by Cursor via Skills. No local LLM required.
 
 See:
 - `docs/HOW_IT_WORKS.md`
@@ -203,7 +204,7 @@ If you're using **Cursor IDE**, get started quickly:
 ✅ **Core Framework Complete:**
 - **All 13 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer)
 - **Complete Code Scoring System** (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
-- **Model Abstraction Layer (MAL)** - Ollama + Cloud Fallback (Anthropic & OpenAI)
+- **Instruction-Based Architecture** - Agents prepare structured instructions for Cursor Skills execution
 - **Tiered Context System** (90%+ token savings, 3 tiers with caching)
 - **Unified Cache Architecture** ✅ (Single interface for all caching systems with hardware auto-detection)
 - **MCP Gateway** (Unified tool access with filesystem, Git, and analysis servers)

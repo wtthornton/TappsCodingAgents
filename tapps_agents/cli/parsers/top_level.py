@@ -429,7 +429,7 @@ Checks for:
   • Required tools (ruff, mypy, pytest, etc.)
   • Configuration files (.tapps-agents/config.yaml)
   • Cursor integration components
-  • Model availability (Ollama, API keys)
+  • Cursor Skills configuration
   • File permissions and directory structure
 
 By default, soft-degrades with warnings for missing optional components.

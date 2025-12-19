@@ -42,14 +42,10 @@ Analyzes code for:
 
 Example:
   tapps-agents reviewer review src/app.py
-  tapps-agents reviewer review src/app.py --format text --model claude-3-5-sonnet""",
+  tapps-agents reviewer review src/app.py --format text""",
     )
     review_parser.add_argument("file", help="Path to the source code file to review. The file will be analyzed for quality, bugs, security issues, and best practices.")
-    review_parser.add_argument(
-        "--model",
-        help="LLM model to use for AI-powered review. Defaults to 'qwen2.5-coder:7b'. Can specify other models like 'claude-3-5-sonnet', 'gpt-4', or local Ollama models.",
-        default="qwen2.5-coder:7b",
-    )
+    # Model parameter removed - all LLM operations handled by Cursor Skills
     review_parser.add_argument(
         "--format",
         choices=["json", "text"],

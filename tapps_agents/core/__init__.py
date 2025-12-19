@@ -71,7 +71,6 @@ from .long_duration_support import (
     ProgressSnapshot,
     ProgressTracker,
 )
-from .mal import MAL
 from .memory_integration import MemoryAwareMixin, MemoryContextInjector, MemoryUpdater
 from .resource_aware_executor import (
     AutoPause,
@@ -121,7 +120,6 @@ from .visual_feedback import (
 
 __all__ = [
     "BaseAgent",
-    "MAL",
     "ContextManager",
     "ContextTier",
     "TieredContextBuilder",

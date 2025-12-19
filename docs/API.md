@@ -40,17 +40,18 @@ Configuration is loaded from `.tapps-agents/config.yaml` (searched upward from t
 from tapps_agents.core.config import load_config
 
 config = load_config()  # defaults if no file is found
-print(config.mal.default_provider)
+# MAL configuration removed - all LLM operations handled by Cursor Skills
 print(config.agents.reviewer.quality_threshold)
 ```
 
 See `docs/CONFIGURATION.md` for the full schema.
 
-### Note on MAL vs Cursor
+### Note on LLM Operations
 
-When invoked under Cursor (Skills / Background Agents), this repo’s default policy is **Cursor-only LLM**:
-- the framework runs tools-only
-- MAL calls are disabled unless you explicitly run with `TAPPS_AGENTS_MODE=headless`
+All LLM operations are handled by Cursor Skills, which use the developer's configured model in Cursor.
+- Agents prepare instruction objects that are executed via Cursor Skills
+- No local LLM or API keys required
+- Cursor handles all model selection and execution
 
 See `docs/HOW_IT_WORKS.md`.
 

@@ -286,8 +286,6 @@ class ExpertSynthesizer:
             }
             if expert.confidence_matrix:
                 expert_dict_data["confidence_matrix"] = expert.confidence_matrix
-            if expert.mal_config:
-                expert_dict_data["mal_config"] = expert.mal_config
 
             experts_list.append(expert_dict_data)
 

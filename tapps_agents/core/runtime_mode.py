@@ -1,12 +1,12 @@
 """
 Runtime mode detection for TappsCodingAgents.
 
-Design goal (Option A):
+Design goal:
 - When invoked from Cursor Skills / Cursor Background Agents, Cursor is the only "brain".
-  The framework should operate in tools-only mode and MUST NOT call MAL.
-- When invoked headlessly (CLI/CI/outside Cursor), MAL may be enabled (optional).
+  The framework operates in tools-only mode.
+- When invoked headlessly (CLI/CI/outside Cursor), the framework operates in headless mode.
 
-This module provides a single source of truth for that decision.
+This module provides a single source of truth for runtime mode detection.
 """
 
 from __future__ import annotations

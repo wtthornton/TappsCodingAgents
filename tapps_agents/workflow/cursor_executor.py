@@ -33,6 +33,8 @@ from .checkpoint_manager import (
 )
 from .error_recovery import ErrorContext, ErrorRecoveryManager
 from .logging_helper import WorkflowLogger
+from .event_bus import FileBasedEventBus
+from .events import EventType, WorkflowEvent
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
 from .progress_manager import ProgressUpdateManager
@@ -83,6 +85,9 @@ class CursorWorkflowExecutor:
         self.parallel_executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=3600.0)
         self.logger: WorkflowLogger | None = None  # Initialized in start() with workflow_id
         self.progress_manager: ProgressUpdateManager | None = None  # Initialized in start() with workflow
+        
+        # Initialize event bus for event-driven communication (Phase 2)
+        self.event_bus = FileBasedEventBus(project_root=self.project_root)
         
         # Initialize auto-progression manager (Epic 10)
         auto_progression_enabled = os.getenv("TAPPS_AGENTS_AUTO_PROGRESSION", "true").lower() == "true"
@@ -254,6 +259,22 @@ class CursorWorkflowExecutor:
             step_count=len(workflow.steps),
         )
         
+        # Publish workflow started event (Phase 2)
+        await self.event_bus.publish(
+            WorkflowEvent(
+                event_type=EventType.WORKFLOW_STARTED,
+                workflow_id=workflow_id,
+                step_id=None,
+                data={
+                    "workflow_name": workflow.name,
+                    "workflow_version": workflow.version,
+                    "step_count": len(workflow.steps),
+                    "user_prompt": user_prompt or "",
+                },
+                timestamp=datetime.now(),
+            )
+        )
+        
         # Initialize progress update manager
         self.progress_manager = ProgressUpdateManager(
             workflow=workflow,
@@ -261,6 +282,9 @@ class CursorWorkflowExecutor:
             project_root=self.project_root,
             enable_updates=True,
         )
+        # Connect event bus to status monitor (Phase 2)
+        if self.progress_manager.status_monitor:
+            self.progress_manager.status_monitor.event_bus = self.event_bus
         # Start progress monitoring (non-blocking)
         import asyncio
         try:
@@ -550,6 +574,22 @@ class CursorWorkflowExecutor:
         running_step_ids: set[str],
     ) -> bool:
         """Handle step error. Returns True if workflow should stop."""
+        # Publish step failed event (Phase 2)
+        await self.event_bus.publish(
+            WorkflowEvent(
+                event_type=EventType.STEP_FAILED,
+                workflow_id=self.state.workflow_id,
+                step_id=result.step.id,
+                data={
+                    "agent": result.step.agent,
+                    "action": result.step.action,
+                    "error": str(result.error),
+                    "attempts": result.step_execution.attempts or 1,
+                },
+                timestamp=datetime.now(),
+            )
+        )
+        
         # Step failed - use error recovery and auto-progression (Epic 14)
         error_context = ErrorContext(
             workflow_id=self.state.workflow_id,
@@ -618,6 +658,21 @@ class CursorWorkflowExecutor:
                     step_logger.error(
                         f"Workflow aborted: {decision.reason}",
                     )
+                
+                # Publish workflow failed event (Phase 2)
+                await self.event_bus.publish(
+                    WorkflowEvent(
+                        event_type=EventType.WORKFLOW_FAILED,
+                        workflow_id=self.state.workflow_id,
+                        step_id=result.step.id,
+                        data={
+                            "error": decision.reason,
+                            "step_id": result.step.id,
+                        },
+                        timestamp=datetime.now(),
+                    )
+                )
+                
                 self.save_state()
                 if self.progress_manager:
                     await self.progress_manager.send_workflow_failed(decision.reason)
@@ -642,6 +697,21 @@ class CursorWorkflowExecutor:
                 error=str(result.error),
                 action=result.step.action,
             )
+        
+        # Publish workflow failed event (Phase 2)
+        await self.event_bus.publish(
+            WorkflowEvent(
+                event_type=EventType.WORKFLOW_FAILED,
+                workflow_id=self.state.workflow_id,
+                step_id=result.step.id,
+                data={
+                    "error": str(result.error),
+                    "step_id": result.step.id,
+                },
+                timestamp=datetime.now(),
+            )
+        )
+        
         self.save_state()
         
         # Send failure update
@@ -668,6 +738,39 @@ class CursorWorkflowExecutor:
         review_result = None
         if result.step.agent == "reviewer":
             review_result = self.state.variables.get("reviewer_result")
+        
+        # Publish step completed event (Phase 2)
+        await self.event_bus.publish(
+            WorkflowEvent(
+                event_type=EventType.STEP_COMPLETED,
+                workflow_id=self.state.workflow_id,
+                step_id=result.step.id,
+                data={
+                    "agent": result.step.agent,
+                    "action": result.step.action,
+                    "duration_seconds": result.step_execution.duration_seconds,
+                    "artifact_count": len(result.artifacts) if result.artifacts else 0,
+                },
+                timestamp=datetime.now(),
+            )
+        )
+        
+        # Publish artifact created events (Phase 2)
+        if result.artifacts:
+            for artifact_name, artifact_data in result.artifacts.items():
+                await self.event_bus.publish(
+                    WorkflowEvent(
+                        event_type=EventType.ARTIFACT_CREATED,
+                        workflow_id=self.state.workflow_id,
+                        step_id=result.step.id,
+                        data={
+                            "artifact_name": artifact_name,
+                            "artifact_path": artifact_data.get("path", ""),
+                            "created_by": result.step.id,
+                        },
+                        timestamp=datetime.now(),
+                    )
+                )
         
         # Use auto-progression to handle step completion and gate evaluation
         if self.auto_progression.should_auto_progress():
@@ -709,6 +812,20 @@ class CursorWorkflowExecutor:
                 gate_last = self.state.variables.get("gate_last", {})
                 if gate_last:
                     gate_result = gate_last
+                    
+                    # Publish gate evaluated event (Phase 2)
+                    await self.event_bus.publish(
+                        WorkflowEvent(
+                            event_type=EventType.GATE_EVALUATED,
+                            workflow_id=self.state.workflow_id,
+                            step_id=result.step.id,
+                            data={
+                                "gate_result": gate_result,
+                                "passed": gate_result.get("passed", False),
+                            },
+                            timestamp=datetime.now(),
+                        )
+                    )
             
             await self.progress_manager.send_step_completed(
                 step_id=result.step.id,
@@ -784,6 +901,21 @@ class CursorWorkflowExecutor:
                     completed_steps=len(completed_step_ids),
                     total_steps=len(self.workflow.steps) if self.workflow else 0,
                 )
+            
+            # Publish workflow completed event (Phase 2)
+            await self.event_bus.publish(
+                WorkflowEvent(
+                    event_type=EventType.WORKFLOW_COMPLETED,
+                    workflow_id=self.state.workflow_id,
+                    step_id=None,
+                    data={
+                        "completed_steps": len(completed_step_ids),
+                        "total_steps": len(self.workflow.steps) if self.workflow else 0,
+                    },
+                    timestamp=datetime.now(),
+                )
+            )
+            
             self.save_state()
             
             # Send completion summary
@@ -813,6 +945,21 @@ class CursorWorkflowExecutor:
 
         action = self._normalize_action(step.action)
         agent_name = (step.agent or "").strip().lower()
+
+        # Publish step started event (Phase 2)
+        await self.event_bus.publish(
+            WorkflowEvent(
+                event_type=EventType.STEP_STARTED,
+                workflow_id=self.state.workflow_id,
+                step_id=step.id,
+                data={
+                    "agent": agent_name,
+                    "action": action,
+                    "step_id": step.id,
+                },
+                timestamp=datetime.now(),
+            )
+        )
 
         # Handle completion/finalization steps that don't require agent execution
         if agent_name == "orchestrator" and action in ["finalize", "complete"]:

@@ -12,7 +12,7 @@ from .common import check_result_error, format_json_output
 
 
 async def review_command(
-    file_path: str, model: str | None = None, output_format: str = "json"
+    file_path: str, output_format: str = "json"
 ):
     """Review a code file (supports both *review and review commands)"""
     feedback = get_feedback()
@@ -40,11 +40,10 @@ async def review_command(
 
         # Execute review command
         if feedback.verbosity.value == "verbose":
-            feedback.info(f"Loading model: {model or 'qwen2.5-coder:7b'}")
             feedback.info("Running code analysis...")
         
         result = await reviewer.run(
-            "review", file=file_path, model=model or "qwen2.5-coder:7b"
+            "review", file=file_path
         )
 
         check_result_error(result)
@@ -156,7 +155,7 @@ def handle_reviewer_command(args: object) -> None:
     try:
         if command == "review":
             asyncio.run(
-                review_command(args.file, getattr(args, "model", None), output_format)
+                review_command(args.file, output_format)
             )
         elif command == "score":
             asyncio.run(score_command(args.file, output_format))

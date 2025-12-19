@@ -70,12 +70,6 @@ scoring:
     performance: 0.10                    # Weight for performance score
   quality_threshold: 70.0                # Minimum overall score (0-100) to pass
 
-# Model Abstraction Layer (MAL) configuration
-mal:
-  ollama_url: "http://localhost:11434"   # Ollama API URL
-  default_model: "qwen2.5-coder:7b"      # Default model name
-  timeout: 60.0                          # Request timeout in seconds
-
 # Expert consultation system configuration
 expert:
   # Agent-specific confidence thresholds (0.0-1.0)

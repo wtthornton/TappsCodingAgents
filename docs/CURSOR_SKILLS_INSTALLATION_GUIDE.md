@@ -57,7 +57,7 @@ This installs (by copying from packaged templates in `tapps_agents/resources/*`)
 
 > **Important**: 
 > - Skills are **model-agnostic**. Cursor uses the developer's configured model (Auto or pinned).
-> - The framework's MAL (Ollama/cloud) is intended for **headless usage** only.
+> - All LLM operations are handled by Cursor Skills - no local LLM or API keys required.
 > - Templates are shipped in the package under `tapps_agents/resources/*` and copied to your project during `init`.
 
 ### Step 3: (Alternative) Manual Installation

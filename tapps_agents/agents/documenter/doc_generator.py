@@ -1,95 +1,81 @@
 """
-Document Generator - Generates documentation from code
+Document Generator - Prepares documentation generation instructions for Cursor Skills
 """
 
 import ast
 from pathlib import Path
 from typing import Any
 
-from ...core.mal import MAL
+from ...core.instructions import DocumentationInstruction
 
 
 class DocGenerator:
-    """Generates documentation from code analysis using LLM."""
+    """Prepares documentation generation instructions for Cursor Skills execution."""
 
-    def __init__(self, mal: MAL):
-        self.mal = mal
+    def __init__(self):
+        """Initialize document generator (no MAL dependency)."""
+        pass
 
-    async def generate_api_docs(
+    def prepare_api_docs(
         self, file_path: Path, output_format: str = "markdown"
-    ) -> str:
+    ) -> DocumentationInstruction:
         """
-        Generate API documentation for a file.
+        Prepare API documentation generation instruction for Cursor Skills.
 
         Args:
             file_path: Path to the source code file
             output_format: Output format (markdown/rst/html)
 
         Returns:
-            Generated documentation as string
+            DocumentationInstruction object for Cursor Skills execution
         """
-        code = file_path.read_text(encoding="utf-8")
+        return DocumentationInstruction(
+            target_file=str(file_path),
+            output_dir=None,
+            docstring_format="google",
+            include_examples=True,
+        )
 
-        # Analyze code structure
-        structure = self._analyze_code_structure(code)
-
-        # Build prompt for API docs
-        prompt = self._build_api_docs_prompt(code, structure, output_format)
-
-        # Generate documentation
-        docs = await self.mal.generate(prompt)
-
-        return docs
-
-    async def generate_readme(
+    def prepare_readme(
         self, project_root: Path, context: str | None = None
-    ) -> str:
+    ) -> DocumentationInstruction:
         """
-        Generate README.md for a project.
+        Prepare README generation instruction for Cursor Skills.
 
         Args:
             project_root: Project root directory
             context: Optional additional context
 
         Returns:
-            Generated README content
+            DocumentationInstruction object for Cursor Skills execution
         """
-        # Analyze project structure
-        project_info = self._analyze_project_structure(project_root)
+        readme_path = project_root / "README.md"
+        return DocumentationInstruction(
+            target_file=str(readme_path),
+            output_dir=str(project_root),
+            docstring_format="markdown",
+            include_examples=True,
+        )
 
-        # Build prompt for README
-        prompt = self._build_readme_prompt(project_info, context)
-
-        # Generate README
-        readme = await self.mal.generate(prompt)
-
-        return readme
-
-    async def update_docstrings(
+    def prepare_docstring_update(
         self, file_path: Path, docstring_format: str = "google"
-    ) -> str:
+    ) -> DocumentationInstruction:
         """
-        Update or add docstrings to code.
+        Prepare docstring update instruction for Cursor Skills.
 
         Args:
             file_path: Path to the source code file
             docstring_format: Docstring format (google/numpy/sphinx)
 
         Returns:
-            Updated code with docstrings
+            DocumentationInstruction object for Cursor Skills execution
         """
-        code = file_path.read_text(encoding="utf-8")
-
-        # Analyze code structure
-        structure = self._analyze_code_structure(code)
-
-        # Build prompt for docstring generation
-        prompt = self._build_docstring_prompt(code, structure, docstring_format)
-
-        # Generate updated code
-        updated_code = await self.mal.generate(prompt)
-
-        return updated_code
+        return DocumentationInstruction(
+            target_file=str(file_path),
+            output_dir=None,
+            docstring_format=docstring_format,
+            include_examples=True,
+        )
 
     def _analyze_code_structure(self, code: str) -> dict[str, Any]:
         """Analyze code structure to extract functions, classes, etc."""

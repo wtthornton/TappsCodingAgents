@@ -15,37 +15,37 @@ from typing import Any
 import pytest
 
 from tapps_agents.core.agent_base import BaseAgent
-from tapps_agents.core.mal import MAL
 
 
-def create_test_agent(agent_type: str, mock_mal: MAL, config=None) -> BaseAgent:
+def create_test_agent(agent_type: str, mock_mal=None, config=None) -> BaseAgent:
     """
-    Create a test agent instance with mocked MAL.
+    Create a test agent instance.
 
     Args:
         agent_type: Type of agent (planner, implementer, reviewer, tester)
-        mock_mal: Mocked MAL instance
+        mock_mal: Ignored (kept for backward compatibility with existing tests)
         config: Optional project config
 
     Returns:
         Agent instance
     """
+    # mock_mal parameter is ignored - agents no longer use MAL
     if agent_type == "planner":
         from tapps_agents.agents.planner.agent import PlannerAgent
 
-        return PlannerAgent(mal=mock_mal, config=config)
+        return PlannerAgent(config=config)
     elif agent_type == "implementer":
         from tapps_agents.agents.implementer.agent import ImplementerAgent
 
-        return ImplementerAgent(mal=mock_mal, config=config)
+        return ImplementerAgent(config=config)
     elif agent_type == "reviewer":
         from tapps_agents.agents.reviewer.agent import ReviewerAgent
 
-        return ReviewerAgent(mal=mock_mal, config=config)
+        return ReviewerAgent(config=config)
     elif agent_type == "tester":
         from tapps_agents.agents.tester.agent import TesterAgent
 
-        return TesterAgent(mal=mock_mal, config=config)
+        return TesterAgent(config=config)
     else:
         raise ValueError(f"Unsupported agent type: {agent_type}")
 
@@ -253,28 +253,8 @@ def create_permission_error_scenario(path: Path) -> Path:
     return path
 
 
-def create_network_error_scenario(mock_mal: MAL, error_type: str = "connection") -> None:
-    """
-    Configure mock_mal to simulate network errors.
-
-    Args:
-        mock_mal: Mocked MAL instance
-        error_type: Type of error (connection, timeout, rate_limit)
-    """
-    from unittest.mock import AsyncMock
-
-    async def raise_error(*args, **kwargs):
-        if error_type == "connection":
-            raise ConnectionError("Connection failed to LLM service")
-        elif error_type == "timeout":
-            raise TimeoutError("Request timed out")
-        elif error_type == "rate_limit":
-            # Use a more specific exception that might be caught by error handlers
-            raise Exception("Rate limit exceeded: 429 Too Many Requests")
-        else:
-            raise Exception(f"Network error: {error_type}")
-
-    mock_mal.generate = AsyncMock(side_effect=raise_error)
+# Network error scenario creation removed - agents no longer use MAL
+# Errors are now handled through instruction objects and Cursor Skills
 
 
 def validate_error_response(

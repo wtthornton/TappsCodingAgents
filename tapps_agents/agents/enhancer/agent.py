@@ -15,7 +15,7 @@ from ...agents.analyst.agent import AnalystAgent
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.context_manager import ContextManager
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 
 if TYPE_CHECKING:
     from ...experts.expert_registry import ExpertRegistry
@@ -60,14 +60,9 @@ class EnhancerAgent(BaseAgent):
             config = load_config()
         self.config = config
 
-        # Initialize MAL
-        mal_config = config.mal if config else None
-        self.mal = MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
 
         # Initialize sub-agents
-        self.analyst = AnalystAgent(mal=self.mal, config=config)
+        self.analyst = AnalystAgent(config=config)
         self.architect: ArchitectAgent | None = None  # Lazy load
         self.designer: DesignerAgent | None = None  # Lazy load
         self.planner: PlannerAgent | None = None  # Lazy load
@@ -616,29 +611,19 @@ Prompt: {prompt}
 
 Provide structured JSON response."""
 
-        try:
-            model_name = (
-                self.config.mal.default_model
-                if (self.config and self.config.mal)
-                else "qwen2.5-coder:7b"
-            )
-            response = await self.mal.generate(
-                prompt=analysis_prompt, model=model_name, temperature=0.3
-            )
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="enhancer",
+            command="analyze-prompt",
+            prompt=analysis_prompt,
+            parameters={"original_prompt": prompt},
+        )
 
-            # Parse response (simplified - in production use structured output)
-            return {
-                "original_prompt": prompt,
-                "intent": "feature",  # Would parse from response
-                "domains": [],  # Would extract from response
-                "scope": "medium",
-                "workflow_type": "greenfield",
-                "technologies": [],
-                "complexity": "medium",
-                "analysis": response,
-            }
-        except Exception as e:
-            return {"error": f"Analysis failed: {str(e)}"}
+        return {
+            "original_prompt": prompt,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
 
     async def _stage_requirements(
         self, prompt: str, analysis: dict[str, Any]
@@ -796,28 +781,28 @@ Implementation: {json.dumps(stages.get('implementation', {}), indent=2)}
 
 Create a comprehensive, context-aware enhanced prompt that includes all relevant information."""
 
-        try:
-            enhanced = await self.mal.generate(
-                prompt=synthesis_prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="enhancer",
+            command="synthesize-prompt",
+            prompt=synthesis_prompt,
+            parameters={
+                "original_prompt": prompt,
+                "output_format": output_format,
+                "stages_used": list(stages.keys()),
+            },
+        )
 
-            return {
-                "enhanced_prompt": enhanced,
-                "format": output_format,
-                "metadata": {
-                    "original_prompt": prompt,
-                    "stages_used": list(stages.keys()),
-                    "synthesized_at": datetime.now().isoformat(),
-                },
-            }
-        except Exception as e:
-            return {"error": f"Synthesis failed: {str(e)}"}
+        return {
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+            "format": output_format,
+            "metadata": {
+                "original_prompt": prompt,
+                "stages_used": list(stages.keys()),
+                "synthesized_at": datetime.now().isoformat(),
+            },
+        }
 
     # Helper methods
 

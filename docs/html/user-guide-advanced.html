@@ -194,7 +194,7 @@ tapps-agents hardware-profile --set nuc</code></pre>
                     <li>Use appropriate context tiers (Tier 1 for most tasks)</li>
                     <li>Enable tiered context caching</li>
                     <li>Break large tasks into smaller workflows</li>
-                    <li>Use local models (Ollama) when possible</li>
+                    <li>All LLM operations handled by Cursor Skills automatically</li>
                 </ul>
 
                 <h3>Caching Strategy</h3>
@@ -212,11 +212,7 @@ context:
                 </div>
 
                 <h3>Model Selection</h3>
-                <p>Choose models based on your needs:</p>
-                <ul>
-                    <li><strong>Local (Ollama):</strong> Fast, private, but may have quality limitations</li>
-                    <li><strong>Cloud (Anthropic, OpenAI):</strong> Higher quality, but requires API keys and costs</li>
-                </ul>
+                <p>All LLM operations are handled by Cursor Skills, which use the developer's configured model in Cursor. No model selection or API keys are required - Cursor handles all model management automatically.</p>
             </section>
 
             <section id="integration-patterns">

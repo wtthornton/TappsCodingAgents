@@ -8,20 +8,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from tapps_agents.agents.implementer import ImplementerAgent
-from tapps_agents.core.mal import MAL
+from tapps_agents.core.instructions import CodeGenerationInstruction
 
 
 @pytest.mark.integration
 class TestImplementerAgent:
     """Integration tests for ImplementerAgent."""
 
-    @pytest.fixture
-    def mock_mal(self):
-        """Create a mock MAL."""
-        mal = MagicMock(spec=MAL)
-        mal.generate = AsyncMock(return_value="def hello():\n    return 'world'")
-        mal.close = AsyncMock()
-        return mal
+    # MAL fixture removed - agents now return instruction objects
 
     @pytest.fixture
     def mock_reviewer(self):
@@ -39,17 +33,16 @@ class TestImplementerAgent:
         return reviewer
 
     @pytest.mark.asyncio
-    async def test_implementer_initialization(self, mock_mal):
+    async def test_implementer_initialization(self):
         """Test that ImplementerAgent initializes correctly."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         assert implementer.agent_id == "implementer"
         assert implementer.agent_name == "Implementer Agent"
-        assert implementer.mal is not None
 
     @pytest.mark.asyncio
-    async def test_implementer_help_command(self, mock_mal):
+    async def test_implementer_help_command(self):
         """Test help command returns help information."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run("help")
@@ -61,9 +54,9 @@ class TestImplementerAgent:
         assert "*refactor" in result["content"]
 
     @pytest.mark.asyncio
-    async def test_generate_code_command(self, mock_mal):
-        """Test generate-code command."""
-        implementer = ImplementerAgent(mal=mock_mal)
+    async def test_generate_code_command(self):
+        """Test generate-code command returns instruction object."""
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run(
@@ -71,13 +64,20 @@ class TestImplementerAgent:
         )
 
         assert result["type"] == "generate_code"
-        assert "code" in result
-        assert isinstance(result["code"], str)
+        assert "instruction" in result
+        assert "skill_command" in result
+        # Verify instruction object structure
+        instruction = result["instruction"]
+        assert "specification" in instruction
+        assert instruction["specification"] == "Create a hello function"
+        # Verify skill command is generated
+        assert isinstance(result["skill_command"], str)
+        assert "@implementer" in result["skill_command"]
 
     @pytest.mark.asyncio
-    async def test_generate_code_command_missing_specification(self, mock_mal):
+    async def test_generate_code_command_missing_specification(self):
         """Test generate-code command with missing specification."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run("generate-code")
@@ -86,9 +86,9 @@ class TestImplementerAgent:
         assert "specification" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_implement_command_without_review(self, mock_mal, tmp_path: Path):
+    async def test_implement_command_without_review(self, tmp_path: Path):
         """Test implement command without review requirement."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         implementer.require_review = False
         await implementer.activate()
 
@@ -105,9 +105,9 @@ class TestImplementerAgent:
         assert file_path.exists()
 
     @pytest.mark.asyncio
-    async def test_implement_command_missing_specification(self, mock_mal):
+    async def test_implement_command_missing_specification(self):
         """Test implement command with missing specification."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run("implement", file_path="test.py")
@@ -116,9 +116,9 @@ class TestImplementerAgent:
         assert "specification" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_implement_command_missing_file_path(self, mock_mal):
+    async def test_implement_command_missing_file_path(self):
         """Test implement command with missing file path."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run("implement", specification="Create a function")
@@ -132,7 +132,7 @@ class TestImplementerAgent:
     @pytest.mark.asyncio
     @patch("tapps_agents.agents.reviewer.agent.ReviewerAgent")
     async def test_implement_command_with_review_pass(
-        self, mock_reviewer_class, mock_mal, tmp_path: Path
+        self, mock_reviewer_class, tmp_path: Path
     ):
         """Test implement command with review that passes."""
         # Setup mock reviewer
@@ -148,7 +148,7 @@ class TestImplementerAgent:
         mock_reviewer_instance.close = AsyncMock()
         mock_reviewer_class.return_value = mock_reviewer_instance
 
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         implementer.require_review = True
         implementer.auto_approve_threshold = 80.0
         await implementer.activate()
@@ -167,7 +167,7 @@ class TestImplementerAgent:
     @pytest.mark.asyncio
     @patch("tapps_agents.agents.reviewer.agent.ReviewerAgent")
     async def test_implement_command_with_review_fail(
-        self, mock_reviewer_class, mock_mal, tmp_path: Path
+        self, mock_reviewer_class, tmp_path: Path
     ):
         """Test implement command with review that fails."""
         # Setup mock reviewer
@@ -183,7 +183,7 @@ class TestImplementerAgent:
         mock_reviewer_instance.close = AsyncMock()
         mock_reviewer_class.return_value = mock_reviewer_instance
 
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         implementer.require_review = True
         implementer.auto_approve_threshold = 80.0
         await implementer.activate()
@@ -200,13 +200,13 @@ class TestImplementerAgent:
         assert not file_path.exists()  # File should not be created
 
     @pytest.mark.asyncio
-    async def test_refactor_command(self, mock_mal, tmp_path: Path):
-        """Test refactor command."""
+    async def test_refactor_command(self, tmp_path: Path):
+        """Test refactor command returns instruction object."""
         # Create existing file
         file_path = tmp_path / "test.py"
         file_path.write_text("def add(a, b): return a + b")
 
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         implementer.require_review = False
         await implementer.activate()
 
@@ -216,13 +216,13 @@ class TestImplementerAgent:
 
         assert result["type"] == "refactor"
         assert result["file"] == str(file_path)
-        assert result["approved"] is True
-        assert "refactored_code" in result
+        assert "instruction" in result
+        assert "skill_command" in result
 
     @pytest.mark.asyncio
-    async def test_refactor_command_file_not_found(self, mock_mal):
+    async def test_refactor_command_file_not_found(self):
         """Test refactor command with non-existent file."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run(
@@ -233,12 +233,12 @@ class TestImplementerAgent:
         assert "not found" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_refactor_command_missing_instruction(self, mock_mal, tmp_path: Path):
+    async def test_refactor_command_missing_instruction(self, tmp_path: Path):
         """Test refactor command with missing instruction."""
         file_path = tmp_path / "test.py"
         file_path.write_text("def x(): pass")
 
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run("refactor", file_path=str(file_path))
@@ -247,12 +247,12 @@ class TestImplementerAgent:
         assert "instruction" in result["error"].lower()
 
     @pytest.mark.asyncio
-    async def test_backup_creation_on_overwrite(self, mock_mal, tmp_path: Path):
+    async def test_backup_creation_on_overwrite(self, tmp_path: Path):
         """Test that backup is created when overwriting existing file."""
         file_path = tmp_path / "test.py"
         file_path.write_text("original code")
 
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         implementer.require_review = False
         implementer.backup_files = True
         await implementer.activate()
@@ -267,9 +267,9 @@ class TestImplementerAgent:
         assert "original code" in backup_path.read_text()
 
     @pytest.mark.asyncio
-    async def test_unknown_command(self, mock_mal):
+    async def test_unknown_command(self):
         """Test that unknown commands return error."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run("unknown_command")
@@ -280,9 +280,9 @@ class TestImplementerAgent:
         )
 
     @pytest.mark.asyncio
-    async def test_path_validation(self, mock_mal):
+    async def test_path_validation(self):
         """Test path validation prevents unsafe paths."""
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         await implementer.activate()
 
         result = await implementer.run(
@@ -295,12 +295,12 @@ class TestImplementerAgent:
         )
 
     @pytest.mark.asyncio
-    async def test_detect_language_from_extension(self, mock_mal, tmp_path: Path):
+    async def test_detect_language_from_extension(self, tmp_path: Path):
         """Test language detection from file extension."""
         file_path = tmp_path / "test.js"
         file_path.write_text("function hello() { return 'world'; }")
 
-        implementer = ImplementerAgent(mal=mock_mal)
+        implementer = ImplementerAgent()
         implementer.require_review = False
         await implementer.activate()
 
@@ -308,6 +308,6 @@ class TestImplementerAgent:
             "refactor", file_path=str(file_path), instruction="Add JSDoc comments"
         )
 
-        # Check that language was detected (would be in the prompt sent to LLM)
-        # Since we can't easily check that, we just verify the command succeeds
+        # Verify the command succeeds and returns instruction object
         assert result["type"] == "refactor"
+        assert "instruction" in result

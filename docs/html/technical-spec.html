@@ -39,7 +39,7 @@
                 <ul>
                     <li><strong>Agent Layer</strong> - 13 specialized workflow agents</li>
                     <li><strong>Core Framework</strong> - Base classes, configuration, and utilities</li>
-                    <li><strong>Model Abstraction Layer (MAL)</strong> - Unified interface for LLM providers</li>
+                    <li><strong>Instruction-Based Architecture</strong> - Structured instructions for Cursor Skills execution</li>
                     <li><strong>Context System</strong> - Tiered context injection with caching</li>
                     <li><strong>Expert Framework</strong> - Industry experts with weighted decision-making</li>
                     <li><strong>Workflow Engine</strong> - YAML-based workflow orchestration</li>
@@ -68,11 +68,19 @@
 └────────────────────┬────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────┐
-│         Model Abstraction Layer (MAL)           │
-│  • Ollama (Local)                               │
-│  • Anthropic (Cloud)                           │
-│  • OpenAI (Cloud)                               │
-│  • Automatic Fallback                           │
+│         Instruction Layer                       │
+│  • CodeGenerationInstruction                    │
+│  • TestGenerationInstruction                    │
+│  • DocumentationInstruction                     │
+│  • ErrorAnalysisInstruction                     │
+│  • GenericInstruction                           │
+└────────────────────┬────────────────────────────┘
+                     │
+┌────────────────────▼────────────────────────────┐
+│         Cursor Skills Integration                │
+│  • SkillInvoker                                  │
+│  • Background Agents                             │
+│  • Command File Generation                       │
 └────────────────────┬────────────────────────────┘
                      │
 ┌────────────────────▼────────────────────────────┐
@@ -85,89 +93,81 @@
                 </div>
             </section>
 
-            <section id="model-abstraction-layer">
-                <h2>Model Abstraction Layer (MAL)</h2>
+            <section id="instruction-based-architecture">
+                <h2>Instruction-Based Architecture</h2>
                 
                 <h3>Purpose and Importance</h3>
-                <p>The Model Abstraction Layer provides a unified interface for multiple LLM providers, enabling seamless switching between local (Ollama) and cloud (Anthropic, OpenAI) models. This abstraction is critical for:</p>
+                <p>The framework uses an instruction-based architecture where agents prepare structured instruction objects that are executed via Cursor Skills. This approach is critical for:</p>
                 <ul>
-                    <li><strong>Cost Optimization</strong> - Use local models for routine tasks, cloud for complex ones</li>
-                    <li><strong>Reliability</strong> - Automatic fallback when primary provider fails</li>
-                    <li><strong>Flexibility</strong> - Easy integration of new providers</li>
-                    <li><strong>Performance</strong> - Route tasks to appropriate models based on complexity</li>
+                    <li><strong>Cursor Integration</strong> - All LLM operations handled by Cursor Skills</li>
+                    <li><strong>Model Agnostic</strong> - Uses developer's configured model in Cursor</li>
+                    <li><strong>No Local LLM Required</strong> - No Ollama or API keys needed</li>
+                    <li><strong>Structured Execution</strong> - Clear separation between instruction preparation and execution</li>
                 </ul>
 
-                <h3>Routing Algorithm</h3>
-                <p>The MAL routing algorithm follows this decision tree:</p>
+                <h3>Instruction Models</h3>
+                <p>The framework provides several instruction models for different agent operations:</p>
                 <div class="code-block">
                     <div class="code-header">
-                        <span>MAL Routing Logic</span>
+                        <span>Instruction Types</span>
                     </div>
-                    <pre><code>function routeRequest(task, config):
-    // Check runtime mode (Cursor vs headless)
-    if runtimeMode == CURSOR:
-        raise MALDisabledInCursorModeError()
-    
-    // Determine provider
-    provider = config.default_provider or "ollama"
-    model = task.model or config.default_model
-    
-    // Try primary provider
-    try:
-        result = generate(provider, model, task.prompt)
-        return result
-    except Exception as e:
-        // Fallback logic
-        if config.enable_fallback and provider == "ollama":
-            for fallback in config.fallback_providers:
-                try:
-                    result = generate(fallback, model, task.prompt)
-                    return result
-                except:
-                    continue
-        raise ConnectionError("All providers failed")</code></pre>
+                    <pre><code>// Code Generation
+CodeGenerationInstruction {
+    specification: string
+    file_path: Path | None
+    context: string | None
+    language: string
+    expert_guidance: dict | None
+}
+
+// Test Generation
+TestGenerationInstruction {
+    target_files: list[Path]
+    test_type: "unit" | "integration" | "e2e"
+    test_framework: string | None
+}
+
+// Documentation
+DocumentationInstruction {
+    target: Path | None
+    doc_type: "api" | "readme" | "docstrings" | "project"
+    output_format: string
+}
+
+// Error Analysis
+ErrorAnalysisInstruction {
+    error_message: string
+    stack_trace: string | None
+    code_context: string | None
+}
+
+// Generic (for other operations)
+GenericInstruction {
+    agent_name: string
+    command: string
+    prompt: string
+    parameters: dict
+}</code></pre>
                 </div>
 
-                <h3>Streaming Support</h3>
-                <p>MAL supports streaming for large responses to prevent timeouts and improve UX. The streaming algorithm:</p>
+                <h3>Execution Flow</h3>
+                <p>Instructions are executed via Cursor Skills using the following flow:</p>
                 <ol>
-                    <li>Detects if streaming should be used based on prompt size and config</li>
-                    <li>Uses newline-delimited JSON (ndjson) for Ollama streaming</li>
-                    <li>Accumulates tokens in real-time with progress callbacks</li>
-                    <li>Handles errors gracefully during streaming</li>
+                    <li>Agent prepares instruction object with task details</li>
+                    <li>Instruction is converted to Cursor Skill command via <code>to_skill_command()</code></li>
+                    <li>SkillInvoker executes command via Background Agents or file-based coordination</li>
+                    <li>Cursor Skills execute using developer's configured model</li>
+                    <li>Results are returned to the agent for processing</li>
                 </ol>
 
-                <h3>Provider-Specific Implementations</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Provider</th>
-                            <th>Endpoint</th>
-                            <th>Authentication</th>
-                            <th>Streaming</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Ollama</td>
-                            <td><code>http://localhost:11434/api/generate</code></td>
-                            <td>None (local)</td>
-                            <td>ndjson</td>
-                        </tr>
-                        <tr>
-                            <td>Anthropic</td>
-                            <td><code>https://api.anthropic.com/v1/messages</code></td>
-                            <td>API Key</td>
-                            <td>SSE</td>
-                        </tr>
-                        <tr>
-                            <td>OpenAI</td>
-                            <td><code>https://api.openai.com/v1/chat/completions</code></td>
-                            <td>API Key</td>
-                            <td>SSE</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <h3>SkillInvoker Integration</h3>
+                <p>The SkillInvoker component translates workflow actions to Cursor Skill commands:</p>
+                <ul>
+                    <li><strong>Command Mapping</strong> - Maps (agent_name, action) to Skill commands</li>
+                    <li><strong>Parameter Building</strong> - Extracts parameters from workflow state</li>
+                    <li><strong>Execution</strong> - Creates command files for Background Agents or direct invocation</li>
+                    <li><strong>Result Tracking</strong> - Stores execution results in workflow state</li>
+                </ul>
             </section>
 
             <section id="tiered-context">

@@ -10,7 +10,7 @@ from typing import Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 
 logger = logging.getLogger(__name__)
@@ -39,7 +39,6 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
 
     def __init__(
         self,
-        mal: MAL | None = None,
         config: ProjectConfig | None = None,
         expert_registry: Any | None = None,
     ):
@@ -49,12 +48,6 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
         if config is None:
             config = load_config()
         self.config = config
-
-        # Initialize MAL
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
 
         # Initialize Context7 helper
         self.context7: Context7AgentHelper | None = None
@@ -336,34 +329,25 @@ Format as structured JSON with detailed architecture specification."""
             requirements, context, expert_section, context7_section
         )
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.2,
-            )
-
-            architecture = {
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="architect",
+            command="design-system",
+            prompt=prompt,
+            parameters={
                 "requirements": requirements,
-                "architecture": response,
-                "components": [],
-                "technology_stack": [],
-                "data_flow": "",
-            }
+                "output_file": str(output_file) if output_file else None,
+            },
+        )
 
-            # Save to file if specified
-            self._save_architecture_result(architecture, output_file)
-
-            result = {"success": True, "architecture": architecture}
-            if expert_guidance:
-                result["expert_guidance"] = expert_guidance
-            return result
-        except Exception as e:
-            return {"error": f"Failed to design system: {str(e)}"}
+        result = {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
+        if expert_guidance:
+            result["expert_guidance"] = expert_guidance
+        return result
 
     async def _create_diagram(
         self,
@@ -399,33 +383,23 @@ Format:
 3. Key Relationships
 """
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.1,
-            )
-
-            diagram = {
-                "type": diagram_type,
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="architect",
+            command="create-diagram",
+            prompt=prompt,
+            parameters={
+                "diagram_type": diagram_type,
                 "architecture": architecture_description,
-                "diagram": response,
-            }
+                "output_file": str(output_file) if output_file else None,
+            },
+        )
 
-            # Save to file if specified
-            if output_file:
-                output_path = Path(output_file)
-                output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(diagram["diagram"])
-                diagram["output_file"] = str(output_path)
-
-            return {"success": True, "diagram": diagram}
-        except Exception as e:
-            return {"error": f"Failed to create diagram: {str(e)}"}
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
 
     async def _select_technology(
         self,
@@ -513,27 +487,23 @@ For each technology recommendation, provide:
 Format as structured JSON with technology recommendations."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="architect",
+                command="select-technology",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
+                parameters={
+                    "component": component_description,
+                    "requirements": requirements,
+                    "constraints": constraints,
+                },
             )
 
-            technology_selection = {
-                "component": component_description,
-                "requirements": requirements,
-                "constraints": constraints,
-                "recommendations": response,
-                "context7_docs_used": (
-                    list(context7_docs.keys()) if context7_docs else []
-                ),
+            return {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            return {"success": True, "technology_selection": technology_selection}
         except Exception as e:
             return {"error": f"Failed to select technology: {str(e)}"}
 
@@ -591,23 +561,22 @@ Provide a comprehensive security design including:
 Format as structured JSON with detailed security architecture."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="architect",
+                command="design-security",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.2,
+                parameters={
+                    "system": system_description,
+                    "threat_model": threat_model,
+                },
             )
 
-            security_design = {
-                "system": system_description,
-                "threat_model": threat_model,
-                "security_architecture": response,
+            result = {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            result = {"success": True, "security_design": security_design}
             if security_guidance:
                 result["expert_guidance"] = {
                     "security": security_guidance,
@@ -644,21 +613,21 @@ Provide:
 Format as structured JSON with boundary and interface definitions."""
 
         try:
-            response = await self.mal.generate(
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="architect",
+                command="define-boundaries",
                 prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.2,
+                parameters={
+                    "system": system_description,
+                    "context": context,
+                },
             )
 
-            boundaries = {
-                "system": system_description,
-                "boundaries_and_interfaces": response,
+            return {
+                "success": True,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
             }
-
-            return {"success": True, "boundaries": boundaries}
         except Exception as e:
             return {"error": f"Failed to define boundaries: {str(e)}"}

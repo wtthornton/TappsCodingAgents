@@ -97,7 +97,6 @@ async def test_refactor_scenario(
 
 @pytest.mark.e2e_scenario
 @pytest.mark.template_type("medium")
-@pytest.mark.requires_llm
 @pytest.mark.asyncio
 @pytest.mark.monitoring_config(
     max_seconds_without_activity=120.0,

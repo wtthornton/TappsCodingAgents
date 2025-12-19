@@ -12,7 +12,7 @@ Story 19.3: Add Error Handling Edge Cases
 
 import pytest
 
-from tapps_agents.core.config import MALConfig
+# MALConfig removed - MAL is no longer used
 from tapps_agents.core.error_envelope import ErrorEnvelopeBuilder
 from tapps_agents.core.exceptions import ConfigurationError
 
@@ -87,45 +87,14 @@ class TestMissingDependenciesHandling:
 
 
 class TestNetworkFailureHandling:
-    """Test error handling with network failures."""
-
-    @pytest.mark.asyncio
-    async def test_connection_timeout_handling(self):
-        """Test error handling when connection times out."""
-        from httpx import TimeoutException
-
-        from tapps_agents.core.mal import MAL
-
-        config = MALConfig(
-            ollama_url="http://unreachable-host:11434",
-            default_model="test-model",
-            default_provider="ollama",
-            connect_timeout=1.0,  # Short timeout
-            read_timeout=1.0,
-        )
-        mal = MAL(config=config)
-
-        # Connection should fail with timeout
-        # The exact exception type depends on httpx behavior
-        with pytest.raises((ConnectionError, TimeoutException, Exception)):
-            await mal._ollama_generate("test prompt", "test-model")
-
-    @pytest.mark.asyncio
-    async def test_connection_refused_handling(self):
-        """Test error handling when connection is refused."""
-        from tapps_agents.core.mal import MAL
-
-        config = MALConfig(
-            ollama_url="http://localhost:9999",  # Port that's not listening
-            default_model="test-model",
-            default_provider="ollama",
-            connect_timeout=1.0,
-        )
-        mal = MAL(config=config)
-
-        # Connection should fail with connection error
-        with pytest.raises(ConnectionError, match="Ollama request failed"):
-            await mal._ollama_generate("test prompt", "test-model")
+    """Test error handling with network failures.
+    
+    Note: MAL-specific network tests removed as MAL is no longer used.
+    Network errors are now handled by Cursor Skills integration layer.
+    """
+    
+    # MAL-specific tests removed - agents now return instruction objects
+    # Network errors are handled by Cursor Skills, not directly by agents
 
 
 class TestPermissionErrorHandling:

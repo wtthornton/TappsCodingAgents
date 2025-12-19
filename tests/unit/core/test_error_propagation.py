@@ -16,9 +16,8 @@ from tapps_agents.core.error_envelope import ErrorEnvelopeBuilder, create_error_
 from tapps_agents.core.exceptions import (
     AgentError,
     ConfigurationError,
-    MALError,
 )
-from tapps_agents.core.mal import MAL
+# MALError and MAL removed - agents now return instruction objects
 
 pytestmark = pytest.mark.unit
 
@@ -56,7 +55,7 @@ class TestErrorEnvelopePropagation:
         test_cases = [
             (ConfigurationError("Config error"), "configuration", "config_error"),
             (AgentError("Agent error"), "execution", "agent_error"),
-            (MALError("MAL error"), "external_dependency", "mal_error"),
+            # MALError removed - agents now return instruction objects
             (ValueError("Validation error"), "validation", "validation_error"),
         ]
 
@@ -110,29 +109,8 @@ class TestErrorEnvelopePropagation:
 class TestErrorPropagationThroughLayers:
     """Test error propagation through component layers."""
 
-    @pytest.mark.asyncio
-    async def test_mal_error_propagates_to_agent(self):
-        """Test that MAL errors propagate correctly to agents."""
-        from tapps_agents.agents.reviewer.agent import ReviewerAgent
-
-        # Create a MAL that raises an error
-        MAL()
-        mock_mal = MagicMock()
-        mock_mal.generate = AsyncMock(
-            side_effect=ConnectionError("Ollama connection failed")
-        )
-        mock_mal._ollama_generate = AsyncMock(
-            side_effect=ConnectionError("Ollama connection failed")
-        )
-
-        agent = ReviewerAgent()
-        agent.mal = mock_mal
-
-        # When agent tries to use MAL, error should propagate
-        # The exact behavior depends on agent implementation
-        # This test validates that errors are not silently swallowed
-        with pytest.raises(ConnectionError, match="Ollama connection failed"):
-            await mock_mal.generate("test prompt")
+    # MAL error propagation test removed - agents no longer use MAL
+    # Errors are now handled through instruction objects and Cursor Skills
 
     def test_error_propagation_preserves_stack_trace(self):
         """Test that error propagation preserves original exception context."""

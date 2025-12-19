@@ -171,21 +171,43 @@ class BackgroundAgentAutoExecutor:
         start_time = datetime.now()
         status_file = worktree_path / self.status_file_name
 
-        # Create command file (Background Agents watch for this)
-        command_file = create_skill_command_file(
+        # Create command file with structured metadata (Background Agents watch for this)
+        command_file, metadata_file = create_skill_command_file(
             command=command,
             worktree_path=worktree_path,
             workflow_id=workflow_id,
             step_id=step_id,
+            expected_artifacts=expected_artifacts,
         )
+        
+        # Read metadata for better context understanding
+        from .cursor_skill_helper import read_skill_metadata
+        metadata = read_skill_metadata(worktree_path)
+        if metadata:
+            logger.debug(
+                f"Read structured metadata for step {step_id}",
+                extra={
+                    "workflow_id": workflow_id,
+                    "step_id": step_id,
+                    "metadata_file": str(metadata_file),
+                    "expected_artifacts": metadata.get("workflow_context", {}).get("expected_artifacts", []),
+                },
+            )
 
-        # Audit log: command detected
+        # Audit log: command detected (include metadata if available)
         if self.audit_logger and workflow_id and step_id:
+            audit_metadata = None
+            if metadata:
+                audit_metadata = {
+                    "expected_artifacts": metadata.get("workflow_context", {}).get("expected_artifacts", []),
+                    "interaction_pattern": metadata.get("interaction_pattern", {}),
+                }
             self.audit_logger.log_command_detected(
                 workflow_id=workflow_id,
                 step_id=step_id,
                 command=command,
                 command_file=command_file,
+                metadata=audit_metadata,
             )
 
         logger.info(
@@ -195,6 +217,7 @@ class BackgroundAgentAutoExecutor:
                 "worktree": str(worktree_path),
                 "workflow_id": workflow_id,
                 "step_id": step_id,
+                "metadata_file": str(metadata_file) if metadata else None,
             },
         )
 
@@ -270,6 +293,8 @@ class BackgroundAgentAutoExecutor:
         """
         Poll for command completion by checking status file and artifacts.
 
+        Uses structured metadata if available to enhance completion detection.
+
         Args:
             worktree_path: Path to worktree
             status_file: Path to status file to check
@@ -281,6 +306,16 @@ class BackgroundAgentAutoExecutor:
         """
         if start_time is None:
             start_time = datetime.now()
+
+        # Try to read expected artifacts from metadata if not provided
+        if not expected_artifacts:
+            from .cursor_skill_helper import get_expected_artifacts_from_metadata
+            expected_artifacts = get_expected_artifacts_from_metadata(worktree_path)
+            if expected_artifacts:
+                logger.debug(
+                    f"Read expected artifacts from metadata: {expected_artifacts}",
+                    extra={"worktree": str(worktree_path)},
+                )
 
         elapsed = 0.0
         last_log_time = 0.0
@@ -374,21 +409,41 @@ class BackgroundAgentAutoExecutor:
         """
         Check status file for execution completion.
 
-        Status file format (JSON):
+        Enhanced status file format (Phase 4 - JSON):
         {
-            "status": "running" | "completed" | "failed",
+            "version": "1.0",
+            "status": "running" | "completed" | "failed" | "pending",
             "started_at": "ISO datetime",
             "completed_at": "ISO datetime" | null,
-            "error": "error message" | null,
+            "progress": {
+                "percentage": 0-100,
+                "current_step": "step description",
+                "message": "progress message"
+            },
+            "partial_results": {
+                "artifacts": ["artifact1", "artifact2"],
+                "output": "partial output"
+            },
+            "error": {
+                "message": "error message",
+                "code": "error_code",
+                "retryable": true/false,
+                "retry_count": 0
+            } | null,
             "artifacts": ["artifact1", "artifact2"],
-            "output": "execution output"
+            "output": "execution output",
+            "metadata": {
+                "workflow_id": "workflow-id",
+                "step_id": "step-id",
+                "command": "command string"
+            }
         }
 
         Args:
             status_file: Path to status file
 
         Returns:
-            Dictionary with status information
+            Dictionary with status information including progress and partial results
         """
         if not status_file.exists():
             return {
@@ -399,80 +454,56 @@ class BackgroundAgentAutoExecutor:
 
         try:
             status_data = json.loads(status_file.read_text(encoding="utf-8"))
-            status = status_data.get("status", "unknown")
-
-            if status == "completed":
-                return {
-                    "completed": True,
-                    "status": "completed",
-                    "status_file_exists": True,
-                    "artifacts": status_data.get("artifacts", []),
-                    "output": status_data.get("output"),
-                    "started_at": status_data.get("started_at"),
-                    "completed_at": status_data.get("completed_at"),
-                }
-            elif status == "failed":
-                return {
-                    "completed": True,  # Failed is a completion state
-                    "status": "failed",
-                    "status_file_exists": True,
-                    "error": status_data.get("error", "Unknown error"),
-                    "started_at": status_data.get("started_at"),
-                    "completed_at": status_data.get("completed_at"),
-                }
-            else:
-                # Still running
-                return {
-                    "completed": False,
+            
+            # Support both old and new format (backward compatibility)
+            version = status_data.get("version", "0.9")  # Old format
+            
+            if version == "1.0":
+                # New structured format (Phase 4)
+                status = status_data.get("status", "unknown")
+                progress = status_data.get("progress", {})
+                partial_results = status_data.get("partial_results", {})
+                error_info = status_data.get("error")
+                
+                result = {
+                    "completed": status in ["completed", "failed"],
                     "status": status,
                     "status_file_exists": True,
-                    "started_at": status_data.get("started_at"),
+                    "version": version,
                 }
-
-        except (json.JSONDecodeError, KeyError, OSError) as e:
-            logger.warning(
-                f"Error reading status file {status_file}: {e}",
-                extra={"status_file": str(status_file)},
-                exc_info=True,
-            )
-            return {
-                "completed": False,
-                "status": "error",
-                "status_file_exists": True,
-                "error": f"Error reading status file: {e}",
-            }
-
-    def handle_completion(
-        self,
-        result: dict[str, Any],
-        step_execution: Any | None = None,
-    ) -> dict[str, Any]:
-        """
-        Handle completion result and update step execution if provided.
-
-        Args:
-            result: Result from poll_for_completion or execute_command
-            step_execution: Optional StepExecution object to update
-
-        Returns:
-            Processed result dictionary
-        """
-        if step_execution:
-            if result.get("status") == "completed":
-                step_execution.status = "completed"
-                step_execution.completed_at = datetime.now()
-            elif result.get("status") == "failed":
-                step_execution.status = "failed"
-                step_execution.error = result.get("error", "Unknown error")
-                step_execution.completed_at = datetime.now()
-            elif result.get("status") == "timeout":
-                step_execution.status = "failed"
-                step_execution.error = result.get("error", "Execution timeout")
-                step_execution.completed_at = datetime.now()
-
-            # Calculate duration if available
-            if result.get("duration_seconds"):
-                step_execution.duration_seconds = result["duration_seconds"]
-
-        return result
-
+                
+                # Add progress information
+                if progress:
+                    result["progress"] = {
+                        "percentage": progress.get("percentage", 0),
+                        "current_step": progress.get("current_step"),
+                        "message": progress.get("message"),
+                    }
+                
+                # Add partial results
+                if partial_results:
+                    result["partial_results"] = partial_results
+                
+                # Add error details
+                if error_info:
+                    result["error"] = {
+                        "message": error_info.get("message"),
+                        "code": error_info.get("code"),
+                        "retryable": error_info.get("retryable", False),
+                        "retry_count": error_info.get("retry_count", 0),
+                    }
+                
+                # Add artifacts (from partial_results or top-level)
+                artifacts = partial_results.get("artifacts") or status_data.get("artifacts", [])
+                if artifacts:
+                    result["artifacts"] = artifacts
+                
+                # Add output
+                output = partial_results.get("output") or status_data.get("output")
+                if output:
+                    result["output"] = output
+                
+                # Add metadata
+                metadata = status_data.get("metadata", {})
+                if metadata:
+                    res

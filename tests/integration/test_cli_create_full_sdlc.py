@@ -6,7 +6,6 @@ SDLC workflow and produces expected artifacts (timeline, state files, etc.).
 """
 
 import json
-import os
 import subprocess
 import sys
 
@@ -14,34 +13,9 @@ import pytest
 import yaml
 
 
-def check_ollama_available():
-    """Check if Ollama is available."""
-    import httpx
-    try:
-        response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
-        return response.status_code == 200
-    except Exception:
-        return False
-
-
-def check_anthropic_available():
-    """Check if Anthropic API key is available."""
-    return os.getenv("ANTHROPIC_API_KEY") is not None
-
-
-def has_any_llm():
-    """Check if any LLM service is available."""
-    return (
-        check_ollama_available()
-        or check_anthropic_available()
-        or os.getenv("OPENAI_API_KEY") is not None
-    )
-
-
 pytestmark = pytest.mark.integration
 
 
-@pytest.mark.requires_llm
 @pytest.mark.e2e
 class TestCLICreateFullSDLC:
     """Integration tests for CLI create command with full SDLC workflow."""

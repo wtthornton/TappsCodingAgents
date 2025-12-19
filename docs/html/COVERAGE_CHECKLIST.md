@@ -22,7 +22,7 @@ This document verifies that all major components of TappsCodingAgents are covere
 - [x] **BaseAgent** - Documented in technical spec
 - [x] **BMAD-METHOD Pattern** - Explained in technical spec
 - [x] **Configuration System** - Covered in user guide and API reference
-- [x] **Model Abstraction Layer (MAL)** - Comprehensive coverage in technical spec
+- [x] **Instruction-Based Architecture** - Comprehensive coverage in technical spec
 - [x] **Tiered Context System** - Detailed algorithm explanation
 - [x] **Code Scoring System** - All 8 metrics documented with algorithms
 - [x] **MCP Gateway** - Added to technical spec

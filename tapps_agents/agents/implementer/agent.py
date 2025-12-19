@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import CodeGenerationInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 from .code_generator import CodeGenerator
 
@@ -40,7 +40,6 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
 
     def __init__(
         self,
-        mal: MAL | None = None,
         config: ProjectConfig | None = None,
         expert_registry: Any | None = None,
     ):
@@ -52,12 +51,8 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             config = load_config()
         self.config = config
 
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(config=mal_config)
-
-        # Initialize code generator
-        self.code_generator = CodeGenerator(self.mal)
+        # Initialize code generator (no MAL dependency)
+        self.code_generator = CodeGenerator()
 
         # Get implementer config
         implementer_config = (
@@ -243,9 +238,9 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             except Exception:
                 logger.debug("Performance expert consultation failed", exc_info=True)
 
-        # Generate code
+        # Prepare code generation instruction for Cursor Skills
         try:
-            generated_code = await self.code_generator.generate_code(
+            instruction = self.code_generator.prepare_code_generation(
                 specification=specification,
                 file_path=path,
                 context=context,
@@ -253,50 +248,14 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 expert_guidance=expert_guidance,
             )
         except Exception as e:
-            return {"error": f"Code generation failed: {str(e)}"}
+            return {"error": f"Failed to prepare code generation instruction: {str(e)}"}
 
-        # Review code if required
-        review_result = None
-        if self.require_review:
-            review_result = await self._review_code(generated_code, path)
-
-            # Check if review passed
-            if review_result and "scoring" in review_result:
-                overall_score = review_result["scoring"].get("overall_score", 0)
-                if overall_score < self.auto_approve_threshold:
-                    return {
-                        "error": f"Code review failed. Score: {overall_score:.1f} < {self.auto_approve_threshold}",
-                        "code": generated_code,
-                        "review": review_result,
-                        "approved": False,
-                    }
-
-        # Create backup if file exists and backup is enabled
-        backup_path = None
-        if file_exists and self.backup_files:
-            backup_path = self._create_backup(path)
-
-        # Write file
-        try:
-            # Ensure parent directory exists
-            path.parent.mkdir(parents=True, exist_ok=True)
-
-            # Write code to file
-            path.write_text(generated_code, encoding="utf-8")
-        except Exception as e:
-            # Restore backup if write failed
-            if backup_path and backup_path.exists():
-                shutil.copy2(backup_path, path)
-                backup_path.unlink()
-            return {"error": f"Failed to write file: {str(e)}"}
-
+        # Return instruction object for Cursor Skills execution
         result = {
             "type": "implement",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
             "file": str(path),
-            "code": generated_code,
-            "review": review_result,
-            "backup": str(backup_path) if backup_path else None,
-            "approved": True,
             "file_existed": file_exists,
         }
         if expert_guidance:
@@ -356,7 +315,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 logger.debug("Performance expert consultation failed", exc_info=True)
 
         try:
-            generated_code = await self.code_generator.generate_code(
+            instruction = self.code_generator.prepare_code_generation(
                 specification=specification,
                 file_path=path,
                 context=context,
@@ -366,7 +325,8 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
 
             result: dict[str, Any] = {
                 "type": "generate_code",
-                "code": generated_code,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
                 "file_path": str(path) if path else None,
                 "language": language,
             }
@@ -374,7 +334,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 result["expert_guidance"] = expert_guidance
             return result
         except Exception as e:
-            return {"error": f"Code generation failed: {str(e)}"}
+            return {"error": f"Failed to prepare code generation instruction: {str(e)}"}
 
     async def refactor(self, file_path: str, instruction: str) -> dict[str, Any]:
         """
@@ -405,53 +365,20 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         # Detect language from file extension
         language = self._detect_language(path)
 
-        # Generate refactored code
+        # Prepare refactoring instruction for Cursor Skills
         try:
-            refactored_code = await self.code_generator.refactor_code(
+            refactor_instruction = self.code_generator.prepare_refactoring(
                 code=existing_code, instruction=instruction, language=language
             )
         except Exception as e:
-            return {"error": f"Code refactoring failed: {str(e)}"}
-
-        # Review refactored code if required
-        review_result = None
-        if self.require_review:
-            review_result = await self._review_code(refactored_code, path)
-
-            # Check if review passed
-            if review_result and "scoring" in review_result:
-                overall_score = review_result["scoring"].get("overall_score", 0)
-                if overall_score < self.auto_approve_threshold:
-                    return {
-                        "error": f"Refactored code review failed. Score: {overall_score:.1f} < {self.auto_approve_threshold}",
-                        "code": refactored_code,
-                        "review": review_result,
-                        "approved": False,
-                    }
-
-        # Create backup
-        backup_path = None
-        if self.backup_files:
-            backup_path = self._create_backup(path)
-
-        # Write refactored code
-        try:
-            path.write_text(refactored_code, encoding="utf-8")
-        except Exception as e:
-            # Restore backup if write failed
-            if backup_path and backup_path.exists():
-                shutil.copy2(backup_path, path)
-                backup_path.unlink()
-            return {"error": f"Failed to write file: {str(e)}"}
+            return {"error": f"Failed to prepare refactoring instruction: {str(e)}"}
 
         return {
             "type": "refactor",
             "file": str(path),
             "original_code": existing_code,
-            "refactored_code": refactored_code,
-            "review": review_result,
-            "backup": str(backup_path) if backup_path else None,
-            "approved": True,
+            "instruction": refactor_instruction.to_dict(),
+            "skill_command": refactor_instruction.to_skill_command(),
         }
 
     async def _review_code(self, code: str, file_path: Path) -> dict[str, Any] | None:
@@ -596,6 +523,5 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
 
     async def close(self):
         """Clean up resources"""
-        await self.mal.close()
         if self.reviewer:
             await self.reviewer.close()

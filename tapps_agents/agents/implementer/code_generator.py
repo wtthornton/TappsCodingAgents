@@ -1,28 +1,29 @@
 """
-Code Generator - Generates code from specifications using LLM
+Code Generator - Prepares code generation instructions for Cursor Skills
 """
 
 from pathlib import Path
 
-from ...core.mal import MAL
+from ...core.instructions import CodeGenerationInstruction
 
 
 class CodeGenerator:
-    """Generates code from specifications using LLM."""
+    """Prepares code generation instructions for Cursor Skills execution."""
 
-    def __init__(self, mal: MAL):
-        self.mal = mal
+    def __init__(self):
+        """Initialize code generator (no MAL dependency)."""
+        pass
 
-    async def generate_code(
+    def prepare_code_generation(
         self,
         specification: str,
         file_path: Path | None = None,
         context: str | None = None,
         language: str = "python",
         expert_guidance: dict[str, str] | None = None,
-    ) -> str:
+    ) -> CodeGenerationInstruction:
         """
-        Generate code from specification.
+        Prepare code generation instruction for Cursor Skills.
 
         Args:
             specification: Description of what code to generate
@@ -32,23 +33,21 @@ class CodeGenerator:
             expert_guidance: Optional expert guidance dictionary
 
         Returns:
-            Generated code string
+            CodeGenerationInstruction object for Cursor Skills execution
         """
-        prompt = self._build_generation_prompt(
-            specification, file_path, context, language, expert_guidance
+        return CodeGenerationInstruction(
+            specification=specification,
+            file_path=file_path,
+            context=context,
+            language=language,
+            expert_guidance=expert_guidance,
         )
 
-        try:
-            response = await self.mal.generate(prompt, model="qwen2.5-coder:7b")
-            return self._extract_code(response, language)
-        except Exception as e:
-            raise RuntimeError(f"Code generation failed: {str(e)}") from e
-
-    async def refactor_code(
+    def prepare_refactoring(
         self, code: str, instruction: str, language: str = "python"
-    ) -> str:
+    ) -> CodeGenerationInstruction:
         """
-        Refactor existing code based on instruction.
+        Prepare refactoring instruction for Cursor Skills.
 
         Args:
             code: Existing code to refactor
@@ -56,96 +55,14 @@ class CodeGenerator:
             language: Programming language
 
         Returns:
-            Refactored code string
+            CodeGenerationInstruction object for Cursor Skills execution
         """
-        prompt = self._build_refactor_prompt(code, instruction, language)
-
-        try:
-            response = await self.mal.generate(prompt, model="qwen2.5-coder:7b")
-            return self._extract_code(response, language)
-        except Exception as e:
-            raise RuntimeError(f"Code refactoring failed: {str(e)}") from e
-
-    def _build_generation_prompt(
-        self,
-        specification: str,
-        file_path: Path | None,
-        context: str | None,
-        language: str,
-        expert_guidance: dict[str, str] | None = None,
-    ) -> str:
-        """Build prompt for code generation."""
-        prompt_parts = [
-            f"You are a senior {language} developer. Generate production-quality code.",
-            "",
-            "Requirements:",
-            "- Follow best practices and conventions",
-            "- Include error handling",
-            "- Add inline comments for complex logic",
-            "- Consider edge cases",
-            "- Write clean, maintainable code",
-            "",
-        ]
-
-        # Add expert guidance if available
-        if expert_guidance:
-            prompt_parts.append("Expert Guidance:")
-            if "security" in expert_guidance:
-                prompt_parts.append(
-                    f"\nSecurity Expert:\n{expert_guidance['security'][:500]}..."
-                )
-            if "performance" in expert_guidance:
-                prompt_parts.append(
-                    f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}..."
-                )
-            prompt_parts.append("")
-
-        prompt_parts.append(f"Specification:\n{specification}")
-
-        if file_path:
-            prompt_parts.append(f"\nTarget file: {file_path}")
-
-        if context:
-            prompt_parts.append(f"\nContext:\n{context}")
-
-        prompt_parts.append(
-            f"\nGenerate only the {language} code. Do not include explanations or markdown."
+        # Combine code and instruction into specification
+        specification = f"Refactor the following code:\n\n```{language}\n{code}\n```\n\nRefactoring instruction: {instruction}"
+        return CodeGenerationInstruction(
+            specification=specification,
+            file_path=None,
+            context=code,
+            language=language,
+            expert_guidance=None,
         )
-
-        return "\n".join(prompt_parts)
-
-    def _build_refactor_prompt(self, code: str, instruction: str, language: str) -> str:
-        """Build prompt for code refactoring."""
-        return f"""You are a senior {language} developer. Refactor the following code based on the instruction.
-
-Original Code:
-```{language}
-{code}
-```
-
-Refactoring Instruction:
-{instruction}
-
-Requirements:
-- Maintain functionality
-- Improve code quality
-- Follow best practices
-- Preserve comments and documentation
-- Keep the same API/interface if applicable
-
-Generate only the refactored {language} code. Do not include explanations or markdown."""
-
-    def _extract_code(self, response: str, language: str) -> str:
-        """Extract code from LLM response."""
-        # Try to extract code from code blocks
-        import re
-
-        # Look for code blocks
-        code_block_pattern = rf"```(?:{language}|python)?\n?(.*?)```"
-        matches = re.findall(code_block_pattern, response, re.DOTALL)
-
-        if matches:
-            return matches[0].strip()
-
-        # If no code blocks, return the response as-is (might be plain code)
-        return response.strip()

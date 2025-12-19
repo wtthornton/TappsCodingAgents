@@ -10,6 +10,8 @@ import json
 from pathlib import Path
 from typing import Any
 
+import requests  # type: ignore[import-untyped]
+
 from ..core.skill_integration import (
     get_skill_integration_manager,
 )
@@ -517,8 +519,11 @@ class SkillInvoker:
                 step=step,
             )
 
-        # Try API-based execution first if enabled
+        # Try API-based execution first if enabled (Phase 3)
         if self.use_api and self.background_agent_api:
+            import logging
+            logger = logging.getLogger(__name__)
+            
             try:
                 # Extract agent name from command (e.g., "@analyst" from "@analyst gather-requirements")
                 agent_name = None
@@ -530,6 +535,18 @@ class SkillInvoker:
                 if agent_name:
                     # Try to find or create a Background Agent for this skill
                     agents = self.background_agent_api.list_agents()
+                    
+                    # Log API availability status
+                    if agents:
+                        logger.debug(
+                            f"Background Agent API available: {len(agents)} agents found",
+                            extra={"agent_count": len(agents)},
+                        )
+                    else:
+                        logger.debug(
+                            "Background Agent API returned empty list - may not be available",
+                            extra={"fallback": "file-based"},
+                        )
                     
                     # Look for existing agent or use a default one
                     agent_id = None
@@ -550,7 +567,16 @@ class SkillInvoker:
                             },
                         )
                         
-                        if trigger_result.get("status") != "error":
+                        # Check if API call succeeded (not fallback mode)
+                        if trigger_result.get("status") != "error" and not trigger_result.get("fallback_mode"):
+                            logger.info(
+                                f"Background Agent triggered via API: {agent_id or agent_name}",
+                                extra={
+                                    "agent_id": agent_id or agent_name,
+                                    "job_id": trigger_result.get("job_id"),
+                                    "method": "api",
+                                },
+                            )
                             return {
                                 "status": "triggered",
                                 "method": "api",
@@ -559,20 +585,37 @@ class SkillInvoker:
                                 "worktree": str(worktree_path),
                                 "message": "Background Agent triggered via API",
                             }
-            except Exception:
-                # Fall back to file-based execution if API fails
-                pass
+                        else:
+                            # API returned fallback mode - log and continue to file-based
+                            logger.debug(
+                                f"Background Agent API returned fallback mode for {agent_id or agent_name}",
+                                extra={"fallback": "file-based"},
+                            )
+            except requests.RequestException as e:
+                # Network/HTTP errors - log and fall back
+                logger.debug(
+                    f"Background Agent API request failed: {e}",
+                    extra={"fallback": "file-based", "error": str(e)},
+                )
+            except Exception as e:
+                # Other errors - log and fall back
+                logger.warning(
+                    f"Unexpected error using Background Agent API: {e}",
+                    extra={"fallback": "file-based", "error": str(e)},
+                    exc_info=True,
+                )
         
-        # Fallback: Create structured command files
-        command_file = create_skill_command_file(
+        # Create execution instructions
+        expected_artifacts = step.creates if step else None
+        
+        # Fallback: Create structured command files with metadata
+        command_file, metadata_file = create_skill_command_file(
             command=command,
             worktree_path=worktree_path,
             workflow_id=getattr(step, "id", None) if step else None,
             step_id=getattr(step, "id", None) if step else None,
+            expected_artifacts=expected_artifacts,
         )
-        
-        # Create execution instructions
-        expected_artifacts = step.creates if step else None
         instructions_file = create_skill_execution_instructions(
             worktree_path=worktree_path,
             command=command,

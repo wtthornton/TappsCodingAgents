@@ -10,6 +10,7 @@ or manually executed in Cursor chat.
 from __future__ import annotations
 
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,27 +20,31 @@ def create_skill_command_file(
     worktree_path: Path,
     workflow_id: str | None = None,
     step_id: str | None = None,
-) -> Path:
+    expected_artifacts: list[str] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> tuple[Path, Path]:
     """
-    Create a Skill command file that can be executed by Cursor.
+    Create a Skill command file with structured metadata (webMCP pattern).
 
-    This file contains the command in a format that can be:
-    1. Copied into Cursor chat
-    2. Used by Background Agents
-    3. Processed by helper scripts
+    This function creates both:
+    1. A simple command file (`.cursor-skill-command.txt`) for backward compatibility
+    2. A structured metadata file (`.cursor-skill-metadata.json`) with workflow context
 
     Args:
         command: The Skill command (e.g., "@analyst gather-requirements ...")
         worktree_path: Path to the worktree where the command should be executed
         workflow_id: Optional workflow ID for tracking
         step_id: Optional step ID for tracking
+        expected_artifacts: List of expected artifact file paths (relative to worktree)
+        metadata: Optional additional metadata dictionary
 
     Returns:
-        Path to the created command file
+        Tuple of (command_file_path, metadata_file_path)
     """
+    # Existing command file (backward compatible)
     command_file = worktree_path / ".cursor-skill-command.txt"
     
-    # Create a structured command file
+    # Create a structured command file (maintains backward compatibility)
     command_data = {
         "command": command,
         "workflow_id": workflow_id,
@@ -53,14 +58,38 @@ def create_skill_command_file(
         ),
     }
     
-    # Write JSON format
+    # Write JSON format (backward compatible)
     command_file.write_text(json.dumps(command_data, indent=2), encoding="utf-8")
     
     # Also write a simple text version for easy copying
     simple_file = worktree_path / ".cursor-skill-command-simple.txt"
     simple_file.write_text(command, encoding="utf-8")
     
-    return command_file
+    # New structured metadata file (webMCP pattern)
+    metadata_file = worktree_path / ".cursor-skill-metadata.json"
+    structured_data = {
+        "version": "1.0",
+        "type": "skill_command",
+        "command": command,
+        "workflow_context": {
+            "workflow_id": workflow_id,
+            "step_id": step_id,
+            "expected_artifacts": expected_artifacts or [],
+        },
+        "interaction_pattern": {
+            "mode": "async",
+            "completion_detection": "status_file_and_artifacts",
+            "progress_updates": True,
+            "error_handling": "retry_with_backoff",
+        },
+        "metadata": metadata or {},
+        "timestamp": datetime.now().isoformat(),
+    }
+    metadata_file.write_text(
+        json.dumps(structured_data, indent=2), encoding="utf-8"
+    )
+    
+    return command_file, metadata_file
 
 
 def create_skill_execution_instructions(
@@ -177,4 +206,48 @@ def check_skill_completion(
         result["completed"] = True
     
     return result
+
+
+def read_skill_metadata(worktree_path: Path) -> dict[str, Any] | None:
+    """
+    Read structured metadata from a worktree.
+
+    Args:
+        worktree_path: Path to the worktree containing metadata
+
+    Returns:
+        Dictionary with metadata if found, None otherwise
+    """
+    metadata_file = worktree_path / ".cursor-skill-metadata.json"
+    
+    if not metadata_file.exists():
+        return None
+    
+    try:
+        metadata_content = metadata_file.read_text(encoding="utf-8")
+        return json.loads(metadata_content)
+    except (json.JSONDecodeError, OSError) as e:
+        # Log error but don't fail - metadata is optional
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Failed to read skill metadata from {metadata_file}: {e}")
+        return None
+
+
+def get_expected_artifacts_from_metadata(worktree_path: Path) -> list[str]:
+    """
+    Extract expected artifacts from metadata file.
+
+    Args:
+        worktree_path: Path to the worktree containing metadata
+
+    Returns:
+        List of expected artifact paths, empty list if metadata not found
+    """
+    metadata = read_skill_metadata(worktree_path)
+    if not metadata:
+        return []
+    
+    workflow_context = metadata.get("workflow_context", {})
+    return workflow_context.get("expected_artifacts", [])
 

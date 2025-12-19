@@ -386,17 +386,17 @@ class BaseAgent(ABC):
 
         Args:
             error: Exception that occurred
-            dependency_name: Name of the optional dependency (e.g., "Context7", "MAL")
+            dependency_name: Name of the optional dependency (e.g., "Context7")
             workflow_id: Optional workflow ID for correlation
             step_id: Optional step ID for correlation
 
         Returns:
             Error result dictionary with recoverable=True
         """
-        from .exceptions import Context7UnavailableError, MALDisabledInCursorModeError
+        from .exceptions import Context7UnavailableError
 
         # Create a user-friendly message
-        if isinstance(error, (Context7UnavailableError, MALDisabledInCursorModeError)):
+        if isinstance(error, Context7UnavailableError):
             message = f"{dependency_name} is not available: {str(error)}"
         else:
             message = f"{dependency_name} operation failed: {str(error)}"

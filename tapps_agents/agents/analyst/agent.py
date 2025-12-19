@@ -9,7 +9,7 @@ from typing import Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 
 
 class AnalystAgent(BaseAgent):
@@ -32,17 +32,11 @@ class AnalystAgent(BaseAgent):
     - Competitive analysis
     """
 
-    def __init__(self, mal: MAL | None = None, config: ProjectConfig | None = None):
+    def __init__(self, config: ProjectConfig | None = None):
         super().__init__(agent_id="analyst", agent_name="Analyst Agent", config=config)
         if config is None:
             config = load_config()
         self.config = config
-
-        # Initialize MAL
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
 
         # Initialize Context7 helper
         self.context7: Context7AgentHelper | None = None
@@ -162,28 +156,19 @@ Please provide:
 
 Format as structured JSON with sections."""
 
-        try:
-            # Use LLM to analyze requirements
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="analyze-requirements",
+            prompt=prompt,
+            parameters={"description": description},
+        )
 
-            # Parse response (simplified - in production, use structured output)
-            requirements = {
-                "description": description,
-                "functional_requirements": [],
-                "non_functional_requirements": [],
-                "technical_constraints": [],
-                "assumptions": [],
-                "open_questions": [],
-                "analysis": response,
-            }
+        requirements = {
+            "description": description,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
 
             # Save to file if specified
             if output_file:
@@ -219,24 +204,22 @@ For each stakeholder, provide:
 
 Format as structured JSON."""
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
-
-            analysis = {
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="analyze-stakeholders",
+            prompt=prompt,
+            parameters={
                 "description": description,
                 "stakeholders": stakeholders,
-                "stakeholder_analysis": response,
-            }
+            },
+        )
 
-            return {"success": True, "analysis": analysis}
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
         except Exception as e:
             return {"error": f"Failed to analyze stakeholders: {str(e)}"}
 
@@ -272,24 +255,22 @@ For each technology option, provide:
 
 Format as structured JSON with technology recommendations."""
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
-
-            research = {
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="research-technology",
+            prompt=prompt,
+            parameters={
                 "requirement": requirement,
                 "criteria": criteria,
-                "technology_options": response,
-            }
+            },
+        )
 
-            return {"success": True, "research": research}
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
         except Exception as e:
             return {"error": f"Failed to research technology: {str(e)}"}
 
@@ -314,20 +295,19 @@ Provide estimates for:
 
 Format as structured JSON."""
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="estimate-effort",
+            prompt=prompt,
+            parameters={"feature": feature_description},
+        )
 
-            estimate = {"feature": feature_description, "estimate": response}
-
-            return {"success": True, "estimate": estimate}
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
         except Exception as e:
             return {"error": f"Failed to estimate effort: {str(e)}"}
 
@@ -352,20 +332,19 @@ Identify and assess:
 
 Format as structured JSON with risk assessment."""
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="assess-risk",
+            prompt=prompt,
+            parameters={"feature": feature_description},
+        )
 
-            risk_assessment = {"feature": feature_description, "risks": response}
-
-            return {"success": True, "risk_assessment": risk_assessment}
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
         except Exception as e:
             return {"error": f"Failed to assess risk: {str(e)}"}
 
@@ -399,23 +378,21 @@ Provide:
 
 Format as structured JSON."""
 
-        try:
-            response = await self.mal.generate(
-                prompt=prompt,
-                model=(
-                    self.config.mal.default_model
-                    if (self.config and self.config.mal)
-                    else "qwen2.5-coder:7b"
-                ),
-                temperature=0.3,
-            )
-
-            analysis = {
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="competitive-analysis",
+            prompt=prompt,
+            parameters={
                 "product": product_description,
                 "competitors": competitors,
-                "competitive_analysis": response,
-            }
+            },
+        )
 
-            return {"success": True, "analysis": analysis}
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+        }
         except Exception as e:
             return {"error": f"Failed to perform competitive analysis: {str(e)}"}

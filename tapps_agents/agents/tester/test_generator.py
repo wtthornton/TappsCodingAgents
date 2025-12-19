@@ -1,29 +1,30 @@
 """
-Test Generator - Generates tests from code analysis using LLM
+Test Generator - Prepares test generation instructions for Cursor Skills
 """
 
 import ast
 from pathlib import Path
 from typing import Any
 
-from ...core.mal import MAL
+from ...core.instructions import TestGenerationInstruction
 
 
 class TestGenerator:
-    """Generates tests from code analysis using LLM."""
+    """Prepares test generation instructions for Cursor Skills execution."""
 
-    def __init__(self, mal: MAL):
-        self.mal = mal
+    def __init__(self):
+        """Initialize test generator (no MAL dependency)."""
+        pass
 
-    async def generate_unit_tests(
+    def prepare_unit_tests(
         self,
         code_path: Path,
         test_path: Path | None = None,
         context: str | None = None,
         expert_guidance: str | None = None,
-    ) -> str:
+    ) -> TestGenerationInstruction:
         """
-        Generate unit tests for a given code file.
+        Prepare unit test generation instruction for Cursor Skills.
 
         Args:
             code_path: Path to the source code file
@@ -31,7 +32,7 @@ class TestGenerator:
             context: Optional context (existing tests, patterns, etc.)
 
         Returns:
-            Generated test code as string
+            TestGenerationInstruction object for Cursor Skills execution
         """
         # Read source code
         code = code_path.read_text(encoding="utf-8")
@@ -39,25 +40,32 @@ class TestGenerator:
         # Analyze code structure
         analysis = self._analyze_code(code, code_path)
 
-        # Build prompt for LLM
-        prompt = self._build_unit_test_prompt(
-            code, analysis, test_path, context, expert_guidance
+        # Detect test framework
+        test_framework = analysis.get("test_framework", "pytest")
+
+        # Build coverage requirements
+        coverage_requirements = {
+            "target_coverage": 80.0,
+            "test_types": ["unit"],
+            "context": context,
+            "expert_guidance": expert_guidance,
+        }
+
+        return TestGenerationInstruction(
+            target_file=str(test_path) if test_path else str(code_path),
+            test_framework=test_framework,
+            coverage_requirements=coverage_requirements,
         )
 
-        # Generate test code
-        test_code = await self.mal.generate(prompt)
-
-        return test_code
-
-    async def generate_integration_tests(
+    def prepare_integration_tests(
         self,
         file_paths: list[Path],
         test_path: Path | None = None,
         context: str | None = None,
         expert_guidance: str | None = None,
-    ) -> str:
+    ) -> TestGenerationInstruction:
         """
-        Generate integration tests for multiple files/modules.
+        Prepare integration test generation instruction for Cursor Skills.
 
         Args:
             file_paths: List of source code file paths
@@ -65,35 +73,34 @@ class TestGenerator:
             context: Optional context
 
         Returns:
-            Generated test code as string
+            TestGenerationInstruction object for Cursor Skills execution
         """
-        # Read all source files
-        code_snippets = []
-        for path in file_paths:
-            code = path.read_text(encoding="utf-8")
-            code_snippets.append(f"# {path.name}\n{code}\n")
+        # Use first file path or test_path as target
+        target_file = str(test_path) if test_path else str(file_paths[0]) if file_paths else ""
 
-        combined_code = "\n".join(code_snippets)
+        coverage_requirements = {
+            "target_coverage": 80.0,
+            "test_types": ["integration"],
+            "file_paths": [str(p) for p in file_paths],
+            "context": context,
+            "expert_guidance": expert_guidance,
+        }
 
-        # Build prompt for LLM
-        prompt = self._build_integration_test_prompt(
-            combined_code, test_path, context, expert_guidance
+        return TestGenerationInstruction(
+            target_file=target_file,
+            test_framework="pytest",
+            coverage_requirements=coverage_requirements,
         )
 
-        # Generate test code
-        test_code = await self.mal.generate(prompt)
-
-        return test_code
-
-    async def generate_e2e_tests(
+    def prepare_e2e_tests(
         self,
         project_root: Path,
         test_path: Path | None = None,
         context: str | None = None,
         expert_guidance: str | None = None,
-    ) -> str:
+    ) -> TestGenerationInstruction | None:
         """
-        Generate end-to-end (E2E) tests for the project.
+        Prepare end-to-end (E2E) test generation instruction for Cursor Skills.
 
         Args:
             project_root: Root directory of the project
@@ -102,26 +109,32 @@ class TestGenerator:
             expert_guidance: Optional expert guidance
 
         Returns:
-            Generated test code as string, or empty string if E2E framework not detected
+            TestGenerationInstruction object for Cursor Skills execution, or None if E2E framework not detected
         """
         # Detect E2E framework
         e2e_framework = self._detect_e2e_framework(project_root)
         if not e2e_framework:
-            # Graceful degradation: return empty string with message in context
-            return ""
+            return None
 
         # Analyze project structure
         project_analysis = self._analyze_project_structure(project_root)
 
-        # Build prompt for LLM
-        prompt = self._build_e2e_test_prompt(
-            project_root, e2e_framework, project_analysis, test_path, context, expert_guidance
+        target_file = str(test_path) if test_path else str(project_root)
+
+        coverage_requirements = {
+            "target_coverage": 80.0,
+            "test_types": ["e2e"],
+            "e2e_framework": e2e_framework,
+            "project_analysis": project_analysis,
+            "context": context,
+            "expert_guidance": expert_guidance,
+        }
+
+        return TestGenerationInstruction(
+            target_file=target_file,
+            test_framework=e2e_framework,
+            coverage_requirements=coverage_requirements,
         )
-
-        # Generate test code
-        test_code = await self.mal.generate(prompt)
-
-        return test_code
 
     def _detect_e2e_framework(self, project_root: Path) -> str | None:
         """

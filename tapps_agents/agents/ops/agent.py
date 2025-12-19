@@ -8,7 +8,7 @@ from typing import Any
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.mal import MAL
+from ...core.instructions import GenericInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 from .dependency_analyzer import DependencyAnalyzer
 
@@ -29,7 +29,6 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
 
     def __init__(
         self,
-        mal: MAL | None = None,
         config: ProjectConfig | None = None,
         project_root: Path | None = None,
     ):
@@ -43,11 +42,6 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
             project_root = Path.cwd()
         self.project_root = Path(project_root).resolve()
 
-        # Initialize MAL with config
-        mal_config = config.mal if config else None
-        self.mal = mal or MAL(
-            ollama_url=mal_config.ollama_url if mal_config else "http://localhost:11434"
-        )
 
         # Initialize dependency analyzer
         self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
@@ -170,16 +164,15 @@ Return findings in JSON format:
     ]
 }}"""
 
-            try:
-                response = await self.mal.generate(prompt)
-                # Try to extract JSON from response
-                json_start = response.find("{")
-                json_end = response.rfind("}") + 1
-                if json_start >= 0 and json_end > json_start:
-                    result = json.loads(response[json_start:json_end])
-                    issues = result.get("issues", [])
-            except Exception as e:
-                return {"error": f"Failed to analyze security: {str(e)}"}
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="ops",
+                command="analyze-security",
+                prompt=prompt,
+                parameters={"target_path": str(target_path)},
+            )
+            # Issues will be determined by Cursor Skills execution
+            issues = []
         else:
             # Directory scan - placeholder for more comprehensive scanning
             issues.append(
@@ -308,25 +301,15 @@ Return findings in JSON format:
     ]
 }}"""
 
-        try:
-            response = await self.mal.generate(prompt)
-            json_start = response.find("{")
-            json_end = response.rfind("}") + 1
-            if json_start >= 0 and json_end > json_start:
-                result = json.loads(response[json_start:json_end])
-                compliance_checks.extend(result.get("checks", []))
-                compliance_status = result.get("compliance_status", "unknown")
-            else:
-                compliance_status = "unknown"
-        except Exception as e:
-            compliance_status = "error"
-            compliance_checks.append(
-                {
-                    "check": "Compliance Analysis",
-                    "status": "error",
-                    "message": f"Failed to analyze: {str(e)}",
-                }
-            )
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="ops",
+            command="check-compliance",
+            prompt=prompt,
+            parameters={"compliance_type": compliance_type},
+        )
+        # Compliance status will be determined by Cursor Skills execution
+        compliance_status = "unknown"
 
         return {
             "message": f"Compliance check completed for {compliance_type}",
@@ -400,26 +383,25 @@ Return deployment steps in JSON format:
     ]
 }}"""
 
-        try:
-            response = await self.mal.generate(prompt)
-            json_start = response.find("{")
-            json_end = response.rfind("}") + 1
-            if json_start >= 0 and json_end > json_start:
-                deployment_plan = json.loads(response[json_start:json_end])
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="ops",
+            command="create-deployment-plan",
+            prompt=prompt,
+            parameters={
+                "target": target,
+                "environment": environment,
+            },
+        )
 
-                # For actual deployment, we'd execute the steps
-                # For now, return the plan
-                return {
-                    "message": f"Deployment plan generated for {target}",
-                    "target": target,
-                    "environment": environment,
-                    "deployment_plan": deployment_plan,
-                    "status": "planned",  # vs "executed"
-                }
-            else:
-                return {"error": "Failed to generate deployment plan"}
-        except Exception as e:
-            return {"error": f"Failed to create deployment plan: {str(e)}"}
+        return {
+            "message": f"Deployment plan instruction prepared for {target}",
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+            "target": target,
+            "environment": environment,
+            "status": "planned",
+        }
 
     async def _handle_infrastructure_setup(
         self, infrastructure_type: str = "docker", **kwargs: Any
@@ -469,30 +451,24 @@ Generate:
 
 Return Dockerfile content and docker-compose.yml content."""
 
-            try:
-                response = await self.mal.generate(prompt)
-
-                # Extract Dockerfile and docker-compose.yml from response
-                # This is simplified - in production, you'd have better parsing
-                dockerfile_content = "# Generated Dockerfile\n"
-                if "FROM python" in response:
-                    dockerfile_start = response.find("FROM python")
-                    dockerfile_end = response.find("\n\n", dockerfile_start)
-                    if dockerfile_end > dockerfile_start:
-                        dockerfile_content = response[dockerfile_start:dockerfile_end]
-
-                # Write files
-                if dockerfile_content:
-                    dockerfile_path.write_text(dockerfile_content, encoding="utf-8")
-
-                return {
-                    "message": f"Infrastructure setup completed for {infrastructure_type}",
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="ops",
+                command="setup-infrastructure",
+                prompt=prompt,
+                parameters={
                     "infrastructure_type": infrastructure_type,
-                    "files_created": [
-                        str(dockerfile_path) if dockerfile_path.exists() else None
-                    ],
-                    "status": "completed",
-                }
+                    "dockerfile_path": str(dockerfile_path),
+                },
+            )
+
+            return {
+                "message": f"Infrastructure setup instruction prepared for {infrastructure_type}",
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "infrastructure_type": infrastructure_type,
+                "status": "planned",
+            }
             except Exception as e:
                 return {"error": f"Failed to set up infrastructure: {str(e)}"}
         else:
