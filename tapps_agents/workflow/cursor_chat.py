@@ -40,7 +40,12 @@ class ChatUpdateSender:
         # Cursor chat doesn't have a direct API, so we use print()
         # which appears in the chat interface
         # Note: Message replacement not supported without API, so we always send new messages
-        print(f"\n{formatted_message}\n")
+        try:
+            print(f"\n{formatted_message}\n")
+        except UnicodeEncodeError:
+            # Handle Windows console encoding issues by replacing problematic characters
+            safe_message = formatted_message.encode('ascii', 'replace').decode('ascii')
+            print(f"\n{safe_message}\n")
         self.message_count += 1
 
     def send_progress_update(self, update: ProgressUpdate, formatted: str) -> None:
