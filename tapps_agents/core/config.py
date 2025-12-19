@@ -718,8 +718,8 @@ class WorkflowConfig(BaseModel):
     """Configuration for workflow execution"""
 
     auto_execution_enabled: bool = Field(
-        default=False,
-        description="Enable Background Agent auto-execution for workflow steps",
+        default=True,
+        description="Enable Background Agent auto-execution for workflow steps. Defaults to True for better user experience.",
     )
     polling_interval: float = Field(
         default=5.0,

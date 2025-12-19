@@ -182,6 +182,7 @@ def hardware_profile_command(
 
 def handle_create_command(args: object) -> None:
     """Handle create command"""
+    import os
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
 
@@ -189,6 +190,7 @@ def handle_create_command(args: object) -> None:
     loader = PresetLoader()
     workflow_name = getattr(args, "workflow", "full")
     user_prompt = getattr(args, "prompt", "")
+    cursor_mode = getattr(args, "cursor_mode", False)
 
     if not user_prompt:
         feedback.error(
@@ -197,6 +199,14 @@ def handle_create_command(args: object) -> None:
             remediation="Usage: tapps-agents create \"Your project description\"",
             exit_code=2,
         )
+
+    # Force headless mode for CLI unless --cursor-mode specified
+    # This ensures CLI commands work out of the box without requiring environment variables
+    if not cursor_mode:
+        os.environ["TAPPS_AGENTS_MODE"] = "headless"
+        from ...core.unicode_safe import safe_print
+        if feedback.verbosity.value != "quiet":
+            safe_print("[OK] Running in headless mode - direct execution with terminal output")
 
     try:
         feedback.start_operation("Create Project")
@@ -219,6 +229,10 @@ def handle_create_command(args: object) -> None:
             print(f"Your Prompt: {user_prompt}")
             print(f"Steps: {len(workflow.steps)}")
             print("Mode: Auto (fully automated)")
+            if cursor_mode:
+                print("Runtime Mode: Cursor (uses Background Agents)")
+            else:
+                print("Runtime Mode: Headless (direct execution)")
             print()
 
         # Execute workflow with auto mode and prompt

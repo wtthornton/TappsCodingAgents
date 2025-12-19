@@ -139,9 +139,10 @@ class CursorWorkflowExecutor:
         
         # Initialize Background Agent auto-executor (Epic 7)
         # Load config to check if auto-execution is enabled
+        # Default to True for better user experience (can be overridden by config)
         from ..core.config import load_config
         config = load_config()
-        self.auto_execution_enabled = config.workflow.auto_execution_enabled
+        self.auto_execution_enabled = config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled is not None else True
         
         # Also check workflow metadata for per-workflow override
         self.auto_execution_enabled_workflow: bool | None = None
@@ -867,17 +868,30 @@ class CursorWorkflowExecutor:
                 # Check execution result
                 if execution_result.get("status") == "failed":
                     error_msg = execution_result.get("error", "Unknown error")
+                    from ..core.unicode_safe import safe_print
+                    safe_print(f"\n[ERROR] Auto-execution failed for {agent_name}/{action}", flush=True)
+                    safe_print(f"   Error: {error_msg}", flush=True)
+                    safe_print(f"[TIP] Check Background Agents are running and configured correctly", flush=True)
+                    safe_print(f"   See docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md for setup", flush=True)
                     raise RuntimeError(
                         f"Auto-execution failed for {agent_name}/{action}: {error_msg}"
                     )
                 elif execution_result.get("status") == "timeout":
+                    from ..core.unicode_safe import safe_print
+                    timeout_msg = execution_result.get('error', 'Timeout')
+                    safe_print(f"\n[ERROR] Auto-execution timeout for {agent_name}/{action}", flush=True)
+                    safe_print(f"   Timeout: {timeout_msg}", flush=True)
+                    safe_print(f"[TIP] Increase timeout in config: workflow.timeout_seconds", flush=True)
                     raise TimeoutError(
-                        f"Auto-execution timeout for {agent_name}/{action}: "
-                        f"{execution_result.get('error', 'Timeout')}"
+                        f"Auto-execution timeout for {agent_name}/{action}: {timeout_msg}"
                     )
                 elif execution_result.get("status") != "completed":
+                    from ..core.unicode_safe import safe_print
+                    status = execution_result.get('status', 'unknown')
+                    safe_print(f"\n[ERROR] Auto-execution returned unexpected status: {status}", flush=True)
+                    safe_print(f"[TIP] Check Background Agents configuration and logs", flush=True)
                     raise RuntimeError(
-                        f"Auto-execution returned unexpected status: {execution_result.get('status')}"
+                        f"Auto-execution returned unexpected status: {status}"
                     )
                 
                 if self.logger:
@@ -921,13 +935,16 @@ class CursorWorkflowExecutor:
                 poll_interval = 2  # Check every 2 seconds
                 elapsed = 0
                 
-                # Print to terminal for visibility
+                # Print to terminal for visibility with helpful guidance
                 command_file = worktree_path / ".cursor-skill-command.txt"
                 safe_print(f"\n{'='*60}", flush=True)
                 safe_print(f"[WAIT] Waiting for {agent_name}/{action} to complete (manual mode)", flush=True)
                 safe_print(f"[FILE] Command file: {command_file}", flush=True)
                 safe_print(f"[LIST] Expected artifacts: {step.creates}", flush=True)
-                safe_print(f"[TIP] Enable auto-execution or run in headless mode for automatic execution", flush=True)
+                safe_print(f"[TIP] Auto-execution is disabled. To enable automatic execution:", flush=True)
+                safe_print(f"   1. Enable in config: workflow.auto_execution_enabled: true", flush=True)
+                safe_print(f"   2. Or run in headless mode: set TAPPS_AGENTS_MODE=headless", flush=True)
+                safe_print(f"   3. Or use --cursor-mode flag with auto-execution enabled", flush=True)
                 safe_print(f"{'='*60}\n", flush=True)
                 
                 if self.logger:

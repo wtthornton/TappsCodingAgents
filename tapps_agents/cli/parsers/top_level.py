@@ -362,6 +362,11 @@ Example:
         choices=["full", "rapid", "enterprise", "feature"],
         help="Workflow preset to use: 'full' for complete SDLC (default), 'rapid'/'feature' for faster development, 'enterprise' for full pipeline with extra compliance checks (default: full)",
     )
+    create_parser.add_argument(
+        "--cursor-mode",
+        action="store_true",
+        help="Run in Cursor mode (uses Background Agents). By default, CLI commands run in headless mode for direct execution. Use this flag to explicitly enable Cursor mode.",
+    )
 
     # Project initialization command
     init_parser = subparsers.add_parser(

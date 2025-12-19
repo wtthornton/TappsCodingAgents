@@ -116,3 +116,9 @@ expert:
   # Supporting expert weight (0.0-1.0)
   supporting_expert_weight: 0.15   # Approximate weight for supporting experts
 
+# Workflow execution configuration
+workflow:
+  auto_execution_enabled: true      # Enable Background Agent auto-execution (default: true for better UX)
+  polling_interval: 5.0             # Seconds between status checks when polling for completion
+  timeout_seconds: 3600.0            # Maximum time to wait for step completion (seconds)
+
