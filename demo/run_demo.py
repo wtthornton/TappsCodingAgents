@@ -48,14 +48,37 @@ def get_cli_command() -> list[str]:
     return [sys.executable, "-m", "tapps_agents.cli"]
 
 
-def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
+def run_command(cmd: list[str], check: bool = True, stream: bool = False) -> subprocess.CompletedProcess:
     """Run a shell command."""
     print(f"Running: {' '.join(cmd)}")
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if check and result.returncode != 0:
-        print(f"Error: {result.stderr}")
-        sys.exit(1)
-    return result
+    if stream:
+        # Stream output in real-time for workflows (shows progress indicators)
+        # Use unbuffered output to see progress immediately
+        env = os.environ.copy()
+        if sys.platform == 'win32':
+            # Windows: ensure UTF-8 encoding
+            env['PYTHONIOENCODING'] = 'utf-8'
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                                       text=True, bufsize=1, universal_newlines=True, env=env,
+                                       encoding='utf-8', errors='replace')
+        else:
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, 
+                                       text=True, bufsize=1, universal_newlines=True, env=env)
+        output_lines = []
+        try:
+            for line in process.stdout:
+                print(line, end='', flush=True)
+                output_lines.append(line)
+        except Exception as e:
+            print(f"\n[WARNING] Error reading output: {e}")
+        process.wait()
+        return subprocess.CompletedProcess(cmd, process.returncode, ''.join(output_lines), '')
+    else:
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if check and result.returncode != 0:
+            print(f"Error: {result.stderr}")
+            sys.exit(1)
+        return result
 
 
 def check_prerequisites() -> bool:
@@ -88,11 +111,8 @@ def check_prerequisites() -> bool:
 def create_demo_project(demo_dir: Path) -> Path:
     """Create a demo project directory."""
     if demo_dir.exists():
-        response = input(f"\n{demo_dir} already exists. Remove it? (y/n): ")
-        if response.lower() == 'y':
-            shutil.rmtree(demo_dir)
-        else:
-            print("Using existing directory")
+        print(f"\n{demo_dir} already exists. Removing it for fresh demo...")
+        shutil.rmtree(demo_dir)
     
     demo_dir.mkdir(exist_ok=True)
     return demo_dir
@@ -238,14 +258,49 @@ def demo_quality_tools(demo_dir: Path):
     print(result.stdout)
 
 
-def demo_code_generation(demo_dir: Path):
-    """Demonstrate code generation."""
-    print_step(6, "Code Generation Demo")
+def demo_workflow_execution(demo_dir: Path):
+    """Demonstrate YAML workflow execution with progress indicators."""
+    print_step(6, "YAML Workflow Execution Demo")
     
-    print("\nThis would demonstrate code generation using Simple Mode.")
-    print("In a real demo, you would run:")
-    print("  tapps-agents simple-mode build -p 'Create a REST API endpoint'")
-    print("\nNote: This requires Cursor IDE with Skills configured.")
+    print("\nRunning a YAML workflow (rapid-dev) to demonstrate:")
+    print("  - Multi-agent orchestration")
+    print("  - Step-by-step progress tracking")
+    print("  - Quality gates and artifact generation")
+    print("  - YAML workflow definition (workflows/presets/rapid-dev.yaml)")
+    print("\nMode: Headless (direct execution with terminal progress indicators)")
+    print("Note: To use Cursor Skills, set TAPPS_AGENTS_MODE=cursor or use --cursor-mode flag\n")
+    
+    cli_cmd = get_cli_command()
+    
+    # Run workflow with a simple prompt
+    prompt = "Create a simple greeting function that takes a name and returns a personalized greeting"
+    
+    print(f"Workflow: rapid-dev")
+    print(f"Prompt: {prompt}")
+    print("\n[WORKFLOW STARTING]")
+    print("=" * 70)
+    
+    # Stream output in real-time to show progress indicators
+    result = run_command(
+        cli_cmd + ["workflow", "rapid", "--prompt", prompt],
+        check=False,
+        stream=True  # Stream output to see progress indicators in real-time
+    )
+    
+    print("\n[WORKFLOW COMPLETE]")
+    print("=" * 70)
+    
+    # Check if workflow artifacts were created
+    artifacts_dir = demo_dir / "stories"
+    src_dir = demo_dir / "src"
+    tests_dir = demo_dir / "tests"
+    
+    if artifacts_dir.exists():
+        print(f"\n✓ User stories created: {artifacts_dir}")
+    if src_dir.exists():
+        print(f"✓ Source code created: {src_dir}")
+    if tests_dir.exists():
+        print(f"✓ Tests created: {tests_dir}")
 
 
 def main():
@@ -261,7 +316,8 @@ This demo will show you:
   1. Code scoring with objective metrics
   2. Code review with detailed feedback
   3. Quality tools (linting, type checking)
-  4. Code generation (if Cursor IDE available)
+  4. YAML workflow execution with progress indicators
+  5. Multi-agent orchestration
 
 Let's get started!
 """)
@@ -289,11 +345,14 @@ Let's get started!
         # Run demos
         demo_code_scoring(demo_dir)
         
-        input("\nPress Enter to continue to code review demo...")
+        print("\nContinuing to code review demo...\n")
         demo_code_review(demo_dir)
         
-        input("\nPress Enter to continue to quality tools demo...")
+        print("\nContinuing to quality tools demo...\n")
         demo_quality_tools(demo_dir)
+        
+        print("\nContinuing to YAML workflow execution demo...\n")
+        demo_workflow_execution(demo_dir)
         
         # Wrap up
         print_header("Demo Complete!")
