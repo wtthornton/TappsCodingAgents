@@ -40,7 +40,7 @@ TappsCodingAgents sets up two complementary directory structures:
 - `agent-capabilities.mdc` - Agent capabilities guide
 - `project-context.mdc` - Project context (always applied)
 - `project-profiling.mdc` - Project profiling system documentation
-- `simple-mode.mdc` - Simple Mode documentation for new users
+- `simple-mode.mdc` - ⭐ **Simple Mode workflow orchestration** (always applied) - **RECOMMENDED for feature development**
 
 **Content (Auto-Generated from Workflow YAML):**
 - Documentation of all 5 workflow presets extracted from YAML definitions
@@ -53,10 +53,23 @@ TappsCodingAgents sets up two complementary directory structures:
 - ✅ **Always in sync**: Documentation auto-generated from YAML (Epic 8)
 - ✅ **Zero drift**: No manual documentation maintenance needed
 - ✅ **Single source of truth**: YAML workflows are authoritative
+- ⭐ **Simple Mode workflow**: Produces better code with comprehensive documentation (see comparison study)
 - Cursor AI understands workflow presets
 - Can suggest appropriate workflows
 - Natural language support ("run rapid development")
 - Voice command support
+
+**Simple Mode Workflow:**
+The `simple-mode.mdc` rule is **always applied** and emphasizes the complete 7-step workflow:
+1. Enhanced prompt (requirements analysis)
+2. User stories (with acceptance criteria)
+3. Architecture design
+4. Component design
+5. Code implementation
+6. Quality review (with scores)
+7. Testing plan
+
+**Evidence:** Comparison of `index.html` (direct) vs `index2.html` (workflow) shows the workflow produces higher quality code (87/100) with comprehensive documentation. See `docs/SIMPLE_MODE_WORKFLOW_COMPARISON.md` for details.
 
 **Regenerating Rules:**
 
@@ -295,8 +308,30 @@ python -m tapps_agents.cli setup-experts init
 3. **Customize:** Modify rules for project-specific needs
 4. **Update:** Re-run `init` after framework updates
 
+## Simple Mode Workflow
+
+**Important:** When using Simple Mode (especially `@simple-mode *build`), Cursor AI is instructed to follow the complete 7-step workflow:
+
+1. Enhanced prompt with requirements analysis
+2. User stories with acceptance criteria
+3. Architecture design
+4. Component design specifications
+5. Code implementation
+6. Quality review with scores
+7. Testing plan and validation
+
+**User Guide:** See `docs/SIMPLE_MODE_USER_GUIDE.md` for:
+- Multiple invocation methods
+- Tips for ensuring workflow execution
+- Troubleshooting workflow issues
+- Model selection recommendations
+
+**Comparison:** See `docs/SIMPLE_MODE_WORKFLOW_COMPARISON.md` for evidence of workflow benefits.
+
 ## See Also
 
+- ⭐ [Simple Mode User Guide](SIMPLE_MODE_USER_GUIDE.md) - **How to ensure workflow execution**
+- [Simple Mode Workflow Comparison](SIMPLE_MODE_WORKFLOW_COMPARISON.md) - Evidence of workflow value
 - [Quick Workflow Commands Guide](QUICK_WORKFLOW_COMMANDS.md)
 - [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)
 - [Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)

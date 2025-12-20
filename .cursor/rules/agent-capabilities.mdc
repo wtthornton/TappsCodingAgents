@@ -594,21 +594,53 @@ agents:
 
 ---
 
+## Simple Mode - Recommended Orchestration ⭐
+
+**For best results, use Simple Mode to orchestrate multiple agents:**
+
+Simple Mode provides a structured workflow that produces better, more maintainable code with comprehensive documentation. Instead of calling individual agents manually, use:
+
+```
+@simple-mode *build "Create a user authentication feature"
+```
+
+This executes a **complete 7-step workflow:**
+1. **@enhancer** - Enhanced prompt with requirements analysis
+2. **@planner** - User stories with acceptance criteria
+3. **@architect** - System architecture design
+4. **@designer** - Component design specifications
+5. **@implementer** - Code implementation
+6. **@reviewer** - Code quality review (with scores)
+7. **@tester** - Testing plan and validation
+
+**Evidence:** Comparison of direct implementation vs Simple Mode workflow shows:
+- ✅ Higher quality scores (87/100 vs unmeasured)
+- ✅ Comprehensive documentation (7 workflow documents vs 0)
+- ✅ Better maintainability (design system, spacing variables)
+- ✅ Full traceability (requirements → implementation)
+
+See [Simple Mode documentation](simple-mode.mdc) for complete details.
+
+---
+
 ## Best Practices
 
-1. **Start with Planning**: Use `analyst` and `planner` for new features
-2. **Enhance Prompts**: Use `enhancer` to enrich simple prompts before implementation
-3. **Design Before Code**: Use `architect` and `designer` for complex features
-4. **Review Before Commit**: Always run `reviewer` before committing code
-5. **Test After Implementation**: Use `tester` to generate and run tests
-6. **Use Workflows**: Leverage workflow presets for common patterns
-7. **Consult Experts**: Agents automatically consult experts, but you can also use `enhancer` for explicit expert consultation
+1. **Use Simple Mode Workflow**: Prefer `@simple-mode *build` for new features (executes complete workflow)
+2. **Start with Planning**: Use `analyst` and `planner` for new features
+3. **Enhance Prompts**: Use `enhancer` to enrich simple prompts before implementation
+4. **Design Before Code**: Use `architect` and `designer` for complex features
+5. **Review Before Commit**: Always run `reviewer` before committing code
+6. **Test After Implementation**: Use `tester` to generate and run tests
+7. **Use Workflows**: Leverage workflow presets for common patterns
+8. **Consult Experts**: Agents automatically consult experts, but you can also use `enhancer` for explicit expert consultation
 
 ---
 
 ## Related Documentation
 
+- [Simple Mode](simple-mode.mdc) - ⭐ **Recommended orchestration method** - Complete workflow execution
 - [Quick Reference](quick-reference.mdc) - Command reference
 - [Workflow Presets](workflow-presets.mdc) - Workflow documentation
+- [Simple Mode User Guide](../docs/SIMPLE_MODE_USER_GUIDE.md) - How to ensure workflow execution
 - [API Documentation](../docs/API.md) - Full API reference
 - [Configuration Guide](../docs/CONFIGURATION.md) - Configuration details

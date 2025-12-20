@@ -6,13 +6,42 @@ Simple Mode provides a simplified interface for TappsCodingAgents that hides com
 
 ## Quick Start
 
-### Enable Simple Mode
+### 1. Initialize Project (First Time)
+
+If you haven't initialized your project yet, run:
+
+```bash
+tapps-agents init
+```
+
+This sets up:
+- `.tapps-agents/config.yaml` - Project configuration
+- `.cursor/rules/` - Cursor Rules for AI assistance  
+- `workflows/presets/` - Workflow preset YAML files
+- `.claude/skills/` - Cursor Skills
+- `.cursor/background-agents.yaml` - Background Agents config
+
+### 2. Enable Simple Mode
 
 ```bash
 tapps-agents simple-mode on
 ```
 
-### Use Natural Language Commands
+Or run the interactive onboarding wizard:
+
+```bash
+tapps-agents simple-mode init
+```
+
+### 3. Verify Setup
+
+```bash
+tapps-agents simple-mode status
+```
+
+Should show `Enabled: Yes`
+
+### 4. Use Natural Language Commands
 
 In Cursor chat or CLI:
 
@@ -37,7 +66,16 @@ Create new features and functionality.
 - "Add login functionality"
 - "Implement user registration"
 
-**Workflow:** Enhancer → Planner → Architect → Designer → Implementer
+**Workflow:** Enhancer (Full Enhancement - 7 stages) → Planner → Architect → Designer → Implementer
+
+The Enhancer performs comprehensive prompt enhancement through all 7 stages:
+1. **Analysis** - Intent, domains, scope, workflow type
+2. **Requirements** - Functional/NFR + Expert consultation
+3. **Architecture** - Design patterns, technology recommendations
+4. **Codebase Context** - Related files, existing patterns
+5. **Quality Standards** - Security, testing, performance requirements
+6. **Implementation Strategy** - Task breakdown, dependencies
+7. **Synthesis** - Combined enhanced prompt
 
 ### 2. Review
 
@@ -178,6 +216,15 @@ User: Build a user registration API with email validation
 
 Simple Mode:
 ✅ Building user registration API...
+
+[Enhancer] Enhancing prompt with full analysis...
+  - Analysis: Intent and scope detection
+  - Requirements: Gathering functional/NFR requirements
+  - Architecture: System design guidance
+  - Codebase Context: Analyzing related files
+  - Quality Standards: Security and testing requirements
+  - Implementation Strategy: Task breakdown
+  - Synthesis: Creating enhanced prompt
 
 [Planner] Creating user stories...
 [Architect] Designing system architecture...

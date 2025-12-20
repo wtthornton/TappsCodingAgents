@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Amazing modern dark HTML page featuring ALL 2025 web technologies">
-    <title>2025 Modern Dark Experience - Ultimate Web Features</title>
+    <meta name="description" content="Amazing modern dark HTML page featuring ALL 2025 web technologies - Built with Simple Mode workflow">
+    <title>2025 Modern Dark Experience - Simple Mode Workflow</title>
     <style>
-        /* CSS Cascade Layers - 2025 Feature #1 */
+        /* CSS Cascade Layers - 2025 Feature #1 - Organized Architecture */
         @layer reset, base, components, utilities;
 
         @layer reset {
@@ -18,7 +18,7 @@
         }
 
         :root {
-            /* Dark theme color palette with CSS color-mix() - 2025 Feature #2 */
+            /* CSS Custom Properties with color-mix() - 2025 Feature #2 */
             --bg-primary: #0a0a0f;
             --bg-secondary: color-mix(in srgb, #151520 90%, #6366f1 10%);
             --bg-tertiary: #1e1e2e;
@@ -36,6 +36,17 @@
             --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.3);
             --shadow-glow-strong: 0 0 40px rgba(99, 102, 241, 0.5);
             --scroll-progress: 0%;
+            
+            /* Spacing System */
+            --padding-xs: 0.5rem;
+            --padding-sm: 1rem;
+            --padding-md: 1.5rem;
+            --padding-lg: 2rem;
+            --padding-xl: 2.5rem;
+            --padding-section: 6rem;
+            --gap-sm: 1rem;
+            --gap-md: 1.5rem;
+            --gap-lg: 2rem;
         }
 
         @layer base {
@@ -67,6 +78,7 @@
                     radial-gradient(circle at 80% 80%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
                     radial-gradient(circle at 40% 20%, rgba(236, 72, 153, 0.1) 0%, transparent 50%);
                 animation: bgShift 20s ease-in-out infinite;
+                will-change: transform;
                 
                 &::before {
                     content: '';
@@ -110,8 +122,9 @@
                 backdrop-filter: blur(20px) saturate(180%);
                 background: rgba(26, 26, 46, 0.7);
                 border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-                padding: 1.5rem 2rem;
+                padding: var(--padding-md) var(--padding-lg);
                 transition: all 0.3s ease;
+                will-change: background, box-shadow;
 
                 &.scrolled {
                     background: rgba(10, 10, 15, 0.95);
@@ -130,7 +143,7 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                gap: 2rem;
+                gap: var(--gap-lg);
             }
 
             .logo {
@@ -144,7 +157,7 @@
 
             .nav-links {
                 display: flex;
-                gap: 2rem;
+                gap: var(--gap-lg);
                 list-style: none;
 
                 a {
@@ -172,6 +185,12 @@
                             width: 100%;
                         }
                     }
+
+                    &:focus-visible {
+                        outline: 2px solid var(--accent-primary);
+                        outline-offset: 4px;
+                        border-radius: 2px;
+                    }
                 }
             }
 
@@ -180,7 +199,7 @@
                 background: transparent;
                 border: 2px solid var(--accent-primary);
                 color: var(--accent-primary);
-                padding: 0.5rem 1rem;
+                padding: var(--padding-xs) var(--padding-sm);
                 border-radius: 50px;
                 cursor: pointer;
                 font-size: 1.2rem;
@@ -197,6 +216,11 @@
                 &:active {
                     transform: scale(0.95);
                 }
+
+                &:focus-visible {
+                    outline: 2px solid var(--accent-primary);
+                    outline-offset: 4px;
+                }
             }
 
             /* Hero section with parallax */
@@ -206,7 +230,7 @@
                 align-items: center;
                 justify-content: center;
                 text-align: center;
-                padding: 2rem;
+                padding: var(--padding-lg);
                 position: relative;
                 overflow: hidden;
             }
@@ -231,7 +255,7 @@
             .hero h1 {
                 font-size: clamp(2.5rem, 8vw, 5rem);
                 font-weight: 800;
-                margin-bottom: 1.5rem;
+                margin-bottom: var(--padding-md);
                 background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
@@ -248,13 +272,24 @@
             .hero p {
                 font-size: clamp(1.1rem, 2vw, 1.5rem);
                 color: var(--text-secondary);
-                margin-bottom: 2rem;
+                margin-bottom: var(--padding-lg);
                 line-height: 1.8;
+            }
+
+            .hero .workflow-badge {
+                display: inline-block;
+                padding: var(--padding-xs) var(--padding-sm);
+                background: rgba(99, 102, 241, 0.2);
+                border: 1px solid var(--accent-primary);
+                border-radius: 20px;
+                font-size: 0.9rem;
+                color: var(--accent-primary);
+                margin-bottom: var(--padding-md);
             }
 
             .cta-button {
                 display: inline-block;
-                padding: 1rem 2.5rem;
+                padding: var(--padding-sm) var(--padding-xl);
                 background: var(--gradient-1);
                 color: white;
                 text-decoration: none;
@@ -264,6 +299,7 @@
                 box-shadow: var(--shadow-glow);
                 position: relative;
                 overflow: hidden;
+                will-change: transform, box-shadow;
 
                 &::before {
                     content: '';
@@ -287,11 +323,16 @@
                         height: 300px;
                     }
                 }
+
+                &:focus-visible {
+                    outline: 2px solid var(--accent-primary);
+                    outline-offset: 4px;
+                }
             }
 
             /* Features grid with Container Queries - 2025 Feature #6 */
             .features {
-                padding: 6rem 2rem;
+                padding: var(--padding-section) var(--padding-lg);
                 max-width: 1400px;
                 margin: 0 auto;
             }
@@ -309,7 +350,7 @@
             .features-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-                gap: 2rem;
+                gap: var(--gap-lg);
                 margin-top: 4rem;
             }
 
@@ -318,10 +359,11 @@
                 background: var(--bg-secondary);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 20px;
-                padding: 2.5rem;
+                padding: var(--padding-xl);
                 transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 overflow: hidden;
+                will-change: transform, border-color, box-shadow;
 
                 &::before {
                     content: '';
@@ -348,17 +390,21 @@
 
                 /* Container query - 2025 Feature */
                 @container (max-width: 350px) {
-                    padding: 1.5rem;
+                    padding: var(--padding-md);
 
                     .feature-icon {
                         font-size: 2rem;
+                    }
+
+                    h3 {
+                        font-size: 1.2rem;
                     }
                 }
             }
 
             .feature-icon {
                 font-size: 3rem;
-                margin-bottom: 1rem;
+                margin-bottom: var(--padding-sm);
                 display: inline-block;
                 background: var(--gradient-1);
                 -webkit-background-clip: text;
@@ -368,7 +414,7 @@
 
             .feature-card h3 {
                 font-size: 1.5rem;
-                margin-bottom: 1rem;
+                margin-bottom: var(--padding-sm);
                 color: var(--text-primary);
             }
 
@@ -379,7 +425,7 @@
 
             /* Interactive demo section */
             .demo-section {
-                padding: 6rem 2rem;
+                padding: var(--padding-section) var(--padding-lg);
                 background: var(--bg-secondary);
                 margin: 4rem 0;
             }
@@ -402,6 +448,7 @@
                 border: 2px solid transparent;
                 background-clip: padding-box;
                 cursor: pointer;
+                will-change: transform;
 
                 &::before {
                     content: '';
@@ -439,6 +486,7 @@
                 background: var(--accent-primary);
                 border-radius: 50%;
                 animation: float 6s ease-in-out infinite;
+                pointer-events: none;
             }
 
             @keyframes float {
@@ -451,7 +499,7 @@
                 perspective: 1000px;
                 width: 300px;
                 height: 400px;
-                margin: 2rem auto;
+                margin: var(--padding-lg) auto;
             }
 
             .card-inner {
@@ -460,6 +508,7 @@
                 position: relative;
                 transform-style: preserve-3d;
                 transition: transform 0.6s;
+                will-change: transform;
             }
 
             .card-3d:hover .card-inner {
@@ -500,7 +549,7 @@
 
             /* Modern button styles */
             .modern-button {
-                padding: 1rem 2rem;
+                padding: var(--padding-sm) var(--padding-lg);
                 background: transparent;
                 border: 2px solid var(--accent-primary);
                 color: var(--accent-primary);
@@ -510,6 +559,8 @@
                 position: relative;
                 overflow: hidden;
                 transition: color 0.3s ease;
+                font-family: inherit;
+                font-size: 1rem;
 
                 &::before {
                     content: '';
@@ -530,13 +581,18 @@
                         left: 0;
                     }
                 }
+
+                &:focus-visible {
+                    outline: 2px solid var(--accent-primary);
+                    outline-offset: 4px;
+                }
             }
 
             /* Advanced feature showcase grid */
             .showcase-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 1.5rem;
+                gap: var(--gap-md);
                 margin-top: 3rem;
             }
 
@@ -544,11 +600,12 @@
                 background: var(--bg-tertiary);
                 border: 1px solid rgba(255, 255, 255, 0.1);
                 border-radius: 15px;
-                padding: 1.5rem;
+                padding: var(--padding-md);
                 text-align: center;
                 transition: all 0.3s ease;
                 position: relative;
                 overflow: hidden;
+                will-change: transform, border-color, box-shadow;
 
                 &::before {
                     content: '';
@@ -574,13 +631,13 @@
 
                 .showcase-icon {
                     font-size: 2.5rem;
-                    margin-bottom: 1rem;
+                    margin-bottom: var(--padding-sm);
                 }
 
                 .showcase-title {
                     font-size: 1.1rem;
                     font-weight: 600;
-                    margin-bottom: 0.5rem;
+                    margin-bottom: var(--padding-xs);
                     color: var(--text-primary);
                 }
 
@@ -598,7 +655,7 @@
                 border-radius: 20px;
                 overflow: hidden;
                 background: var(--bg-tertiary);
-                margin: 2rem 0;
+                margin: var(--padding-lg) 0;
             }
 
             #animationCanvas {
@@ -613,11 +670,12 @@
             @media (max-width: 768px) {
                 nav {
                     flex-direction: column;
+                    gap: var(--gap-sm);
                 }
 
                 .nav-links {
                     flex-direction: column;
-                    gap: 1rem;
+                    gap: var(--gap-sm);
                 }
 
                 .features-grid,
@@ -626,24 +684,33 @@
                 }
 
                 .hero {
-                    padding: 1rem;
+                    padding: var(--padding-sm);
+                }
+
+                .card-3d {
+                    width: 250px;
+                    height: 350px;
                 }
             }
 
-            /* Accessibility */
+            /* Accessibility - Reduced Motion */
             @media (prefers-reduced-motion: reduce) {
-                * {
+                *,
+                *::before,
+                *::after {
                     animation-duration: 0.01ms !important;
                     animation-iteration-count: 1 !important;
                     transition-duration: 0.01ms !important;
+                    scroll-behavior: auto !important;
                 }
             }
 
             /* Focus styles for accessibility */
-            a:focus,
-            button:focus {
+            a:focus-visible,
+            button:focus-visible {
                 outline: 2px solid var(--accent-primary);
                 outline-offset: 4px;
+                border-radius: 2px;
             }
 
             /* Custom scrollbar */
@@ -696,11 +763,11 @@
 
     <section class="hero" id="home">
         <div class="hero-content">
+            <div class="workflow-badge">Built with Simple Mode Workflow</div>
             <h1>Welcome to 2025</h1>
             <p>Experience the future of web design with cutting-edge features, stunning visuals, and smooth interactions.</p>
             <p style="font-size: clamp(0.9rem, 1.5vw, 1.1rem); margin-top: 1rem; color: var(--text-muted);">
-                Featuring: CSS Cascade Layers, Container Queries, :has() Selector, color-mix(), CSS Nesting, 
-                Scroll-driven Animations, View Transitions API, Web Animations API, Canvas API, and more!
+                This page was built using the Simple Mode workflow: Enhanced Prompt → User Stories → Architecture → Design → Implementation → Review → Testing
             </p>
             <a href="#features" class="cta-button">Explore Features</a>
         </div>
@@ -851,11 +918,19 @@
     <section class="features" id="about">
         <h2 class="section-title fade-in">About This Page</h2>
         <div class="feature-card fade-in" style="max-width: 800px; margin: 0 auto;">
-            <h3 style="margin-bottom: 1rem;">Built with 2025 Web Technologies</h3>
+            <h3 style="margin-bottom: 1rem;">Built with Simple Mode Workflow</h3>
             <p style="margin-bottom: 1rem;">
-                This page demonstrates the latest and greatest web technologies available in 2025, 
-                showcasing what's possible with modern CSS and JavaScript.
+                This page was created using the complete Simple Mode workflow, demonstrating the value of structured development:
             </p>
+            <ol style="list-style: decimal; padding-left: 2rem; color: var(--text-secondary); margin-bottom: 1rem;">
+                <li style="margin-bottom: 0.5rem;"><strong>Enhanced Prompt:</strong> Detailed requirements analysis</li>
+                <li style="margin-bottom: 0.5rem;"><strong>User Stories:</strong> 15 stories with acceptance criteria</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Architecture:</strong> System design and component structure</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Design:</strong> Component specifications and styling guidelines</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Implementation:</strong> Code following all specifications</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Review:</strong> Quality checks and improvements</li>
+                <li style="margin-bottom: 0.5rem;"><strong>Testing:</strong> Validation and verification</li>
+            </ol>
             <p style="margin-bottom: 1rem;">
                 <strong>Key Features Implemented:</strong>
             </p>
@@ -899,13 +974,21 @@
             observer.observe(el);
         });
 
-        // Scroll progress tracking
-        window.addEventListener('scroll', () => {
+        // Scroll progress tracking with debouncing
+        let scrollTimeout;
+        function updateScrollProgress() {
             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
             const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-            const scrollProgress = (scrollTop / scrollHeight) * 100;
+            const scrollProgress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
             document.documentElement.style.setProperty('--scroll-progress', `${scrollProgress}%`);
-        });
+        }
+
+        window.addEventListener('scroll', () => {
+            if (scrollTimeout) {
+                cancelAnimationFrame(scrollTimeout);
+            }
+            scrollTimeout = requestAnimationFrame(updateScrollProgress);
+        }, { passive: true });
 
         // Header scroll effect
         const header = document.getElementById('header');
@@ -915,7 +998,7 @@
             } else {
                 header.classList.remove('scrolled');
             }
-        });
+        }, { passive: true });
 
         // Active navigation link tracking
         const sections = document.querySelectorAll('section[id]');
@@ -923,23 +1006,28 @@
 
         function updateActiveNav() {
             const scrollY = window.pageYOffset;
+            let currentSection = '';
+
             sections.forEach(section => {
                 const sectionHeight = section.offsetHeight;
-                const sectionTop = section.offsetTop - 100;
+                const sectionTop = section.offsetTop - 150;
                 const sectionId = section.getAttribute('id');
 
-                if (scrollY > sectionTop && scrollY <= sectionTop + sectionHeight) {
-                    navLinks.forEach(link => {
-                        link.classList.remove('active');
-                        if (link.getAttribute('href') === `#${sectionId}`) {
-                            link.classList.add('active');
-                        }
-                    });
+                if (scrollY >= sectionTop && scrollY < sectionTop + sectionHeight) {
+                    currentSection = sectionId;
+                }
+            });
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${currentSection}`) {
+                    link.classList.add('active');
                 }
             });
         }
 
-        window.addEventListener('scroll', updateActiveNav);
+        window.addEventListener('scroll', updateActiveNav, { passive: true });
+        updateActiveNav(); // Initial check
 
         // Interactive box effects with mouse tracking
         const interactiveBox = document.getElementById('interactiveBox');
@@ -971,7 +1059,7 @@
             animatedBg.style.setProperty('--mouse-y', `${y}%`);
         });
 
-        // Particle creation
+        // Particle creation function
         function createParticle() {
             const box = document.getElementById('interactiveBox');
             const particle = document.createElement('div');
@@ -991,15 +1079,24 @@
             box.appendChild(particle);
             
             setTimeout(() => {
-                particle.remove();
+                if (particle.parentNode) {
+                    particle.remove();
+                }
             }, 6000);
         }
 
         // Canvas animation - 2025 Feature
         const canvas = document.getElementById('animationCanvas');
         const ctx = canvas.getContext('2d');
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
+        let animationFrameId;
+        
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        }
+        
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
 
         let particles = [];
         const particleCount = 50;
@@ -1072,16 +1169,10 @@
                 });
             });
 
-            requestAnimationFrame(animateCanvas);
+            animationFrameId = requestAnimationFrame(animateCanvas);
         }
 
         animateCanvas();
-
-        // Resize canvas on window resize
-        window.addEventListener('resize', () => {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-        });
 
         // Web Animations API - 2025 Feature
         function triggerWebAnimation() {
@@ -1143,6 +1234,8 @@
         // Theme toggle (placeholder for future implementation)
         document.getElementById('themeToggle').addEventListener('click', () => {
             // Future: Implement theme switching
+            const button = document.getElementById('themeToggle');
+            button.textContent = button.textContent === '🌙' ? '☀️' : '🌙';
             alert('Theme toggle - Future implementation!');
         });
 
@@ -1152,6 +1245,14 @@
                 setTimeout(() => createParticle(), i * 200);
             }
         });
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+        });
     </script>
 </body>
 </html>
+

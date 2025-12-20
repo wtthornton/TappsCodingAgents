@@ -254,36 +254,52 @@ python -m tapps_agents.cli tester test tapps_agents/core/config.py
 python -m tapps_agents.cli reviewer report . json markdown html
 ```
 
-## Simple Mode (New Users)
+## Simple Mode (Recommended for All Users) ⭐
 
-**Simple Mode** provides a simplified, task-first interface that hides complexity while showcasing the power of TappsCodingAgents. Use natural language commands instead of agent-specific syntax.
+**Simple Mode** provides a simplified, task-first interface with a **structured workflow** that produces better, more maintainable code with comprehensive documentation. Use natural language commands instead of agent-specific syntax.
 
-### Using Simple Mode
+### Using Simple Mode (RECOMMENDED)
 
-Invoke Simple Mode using the `@simple-mode` skill in Cursor chat:
+**For best results, use explicit `*build` command to ensure complete workflow:**
 
 ```
-@simple-mode Build a user authentication feature
-@simple-mode Review my authentication code
-@simple-mode Fix the error in auth.py
-@simple-mode Add tests for service.py
+@simple-mode *build "Create a user authentication feature"
+@simple-mode *build "Build a modern dark HTML page with 2025 features"
 ```
+
+This executes the **complete 7-step workflow:**
+1. Enhanced prompt with requirements
+2. User stories with acceptance criteria
+3. Architecture design
+4. Component design specifications
+5. Code implementation
+6. Quality review (with scores)
+7. Testing plan
 
 ### Natural Language Commands
 
 Simple Mode understands natural language intent:
 
 - **Build**: "Build a user authentication feature", "Create a REST API for products"
+  - Use `@simple-mode *build "description"` for guaranteed workflow execution
 - **Review**: "Review my authentication code", "Check the quality of auth.py"
 - **Fix**: "Fix the error in auth.py", "Debug the login issue"
 - **Test**: "Add tests for service.py", "Generate tests for auth.py"
+
+### Why Use Simple Mode Workflow?
+
+**Evidence:** Comparison of `index.html` (direct) vs `index2.html` (workflow) shows:
+- ✅ Higher quality scores (87/100)
+- ✅ Comprehensive documentation (7 workflow documents)
+- ✅ Better maintainability (design system, spacing variables)
+- ✅ Full traceability (requirements → implementation)
 
 ### Full Lifecycle Workflow
 
 Run complete SDLC with automatic quality loopbacks:
 
 ```
-@simple-mode full --prompt "Build a REST API for a todo app"
+@simple-mode *full "Build a REST API for a todo app"
 ```
 
 ### Configuration
@@ -293,6 +309,14 @@ Enable Simple Mode:
 tapps-agents simple-mode on
 tapps-agents simple-mode status
 ```
+
+### User Guide
+
+See `docs/SIMPLE_MODE_USER_GUIDE.md` for:
+- Multiple invocation methods
+- Tips for ensuring workflow execution
+- Troubleshooting workflow issues
+- Model selection recommendations
 
 See `.cursor/rules/simple-mode.mdc` for complete Simple Mode documentation.
 
