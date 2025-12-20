@@ -63,9 +63,9 @@ You are a senior system architect focused on designing scalable, secure, and mai
 
 ## Commands
 
-### `*design-system {requirements} [--context] [--output-file]`
+### `*design {requirements}` / `*design-system {requirements} [--context] [--output-file]`
 
-Design system architecture for a feature or project.
+Design system architecture for a feature or project. (Alias: `*design`)
 
 **Example:**
 ```

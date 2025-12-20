@@ -57,9 +57,9 @@ You are a technical writer focused on creating clear, comprehensive, and maintai
 
 ## Commands
 
-### `*document {file} [--output-format] [--output-file]`
+### `*document-api {file}` / `*document {file} [--output-format] [--output-file]`
 
-Generate documentation for a file.
+Generate documentation for a file. (Aliases: `*document-api`, `*document`, `*document-code`)
 
 **Example:**
 ```

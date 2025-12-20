@@ -61,9 +61,9 @@ You are a senior business analyst and technical researcher focused on gathering 
 
 ## Commands
 
-### `*gather-requirements {description} [--context] [--output-file]`
+### `*requirements {description}` / `*gather-requirements {description} [--context] [--output-file]`
 
-Gather and extract detailed requirements from a description.
+Gather and extract detailed requirements from a description. (Alias: `*analyze`)
 
 **Example:**
 ```

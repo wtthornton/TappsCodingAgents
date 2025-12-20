@@ -265,6 +265,48 @@ python -m tapps_agents.cli tester test tapps_agents/core/config.py
 python -m tapps_agents.cli reviewer report . json markdown html
 ```
 
+## Simple Mode (New Users)
+
+**Simple Mode** provides a simplified, task-first interface that hides complexity while showcasing the power of TappsCodingAgents. Use natural language commands instead of agent-specific syntax.
+
+### Using Simple Mode
+
+Invoke Simple Mode using the `@simple-mode` skill in Cursor chat:
+
+```
+@simple-mode Build a user authentication feature
+@simple-mode Review my authentication code
+@simple-mode Fix the error in auth.py
+@simple-mode Add tests for service.py
+```
+
+### Natural Language Commands
+
+Simple Mode understands natural language intent:
+
+- **Build**: "Build a user authentication feature", "Create a REST API for products"
+- **Review**: "Review my authentication code", "Check the quality of auth.py"
+- **Fix**: "Fix the error in auth.py", "Debug the login issue"
+- **Test**: "Add tests for service.py", "Generate tests for auth.py"
+
+### Full Lifecycle Workflow
+
+Run complete SDLC with automatic quality loopbacks:
+
+```
+@simple-mode full --prompt "Build a REST API for a todo app"
+```
+
+### Configuration
+
+Enable Simple Mode:
+```bash
+tapps-agents simple-mode on
+tapps-agents simple-mode status
+```
+
+See `.cursor/rules/simple-mode.mdc` for complete Simple Mode documentation.
+
 ## Natural Language Commands for Cursor
 
 You can use these phrases in Cursor AI conversations:
@@ -281,6 +323,8 @@ You can use these phrases in Cursor AI conversations:
 - "Type check this file"
 - "Create a plan for [feature]"
 - "Debug this error"
+
+**Or use Simple Mode** (recommended for new users): `@simple-mode Build a feature`
 
 ## File Locations
 
