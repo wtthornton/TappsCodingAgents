@@ -59,19 +59,19 @@ When a user requests Simple Mode workflow, you MUST:
 When user requests `@simple-mode *build` or build-related commands:
 
 ### Step 1: @enhancer
-- Create: `simple-mode-workflow-step1-enhanced-prompt.md`
+- Create: `docs/workflows/simple-mode/step1-enhanced-prompt.md`
 - Enhanced prompt with requirements analysis
 
 ### Step 2: @planner
-- Create: `simple-mode-workflow-step2-user-stories.md`
+- Create: `docs/workflows/simple-mode/step2-user-stories.md`
 - User stories with acceptance criteria
 
 ### Step 3: @architect
-- Create: `simple-mode-workflow-step3-architecture.md`
+- Create: `docs/workflows/simple-mode/step3-architecture.md`
 - System architecture design
 
 ### Step 4: @designer
-- Create: `simple-mode-workflow-step4-design.md`
+- Create: `docs/workflows/simple-mode/step4-design.md`
 - Component specifications
 
 ### Step 5: @implementer
@@ -79,11 +79,11 @@ When user requests `@simple-mode *build` or build-related commands:
 - Use design system and patterns
 
 ### Step 6: @reviewer
-- Create: `simple-mode-workflow-step6-review.md`
+- Create: `docs/workflows/simple-mode/step6-review.md`
 - Quality scores and recommendations
 
 ### Step 7: @tester
-- Create: `simple-mode-workflow-step7-testing.md`
+- Create: `docs/workflows/simple-mode/step7-testing.md`
 - Test plan and validation
 
 ## Evidence: Why Workflow Matters

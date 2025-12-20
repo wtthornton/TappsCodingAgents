@@ -293,11 +293,11 @@ Both approaches produced high-quality code with feature parity. The Simple Mode 
 
 ### Simple Mode Workflow:
 - `index2.html` - Final implementation
-- `simple-mode-workflow-step1-enhanced-prompt.md`
-- `simple-mode-workflow-step2-user-stories.md`
-- `simple-mode-workflow-step3-architecture.md`
-- `simple-mode-workflow-step4-design.md`
-- `simple-mode-workflow-step6-review.md`
-- `simple-mode-workflow-step7-testing.md`
+- `docs/workflows/simple-mode/step1-enhanced-prompt.md`
+- `docs/workflows/simple-mode/step2-user-stories.md`
+- `docs/workflows/simple-mode/step3-architecture.md`
+- `docs/workflows/simple-mode/step4-design.md`
+- `docs/workflows/simple-mode/step6-review.md`
+- `docs/workflows/simple-mode/step7-testing.md`
 - `SIMPLE_MODE_WORKFLOW_COMPARISON.md` (this file)
 

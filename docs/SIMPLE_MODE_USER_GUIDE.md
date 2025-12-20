@@ -109,7 +109,7 @@ Use the complete Simple Mode build workflow to create [feature]
 Reference existing workflow documentation:
 
 ```
-Use the Simple Mode workflow as documented in simple-mode-workflow-step1-enhanced-prompt.md
+Use the Simple Mode workflow as documented in docs/workflows/simple-mode/step1-enhanced-prompt.md
 Follow the same workflow process used for index2.html
 ```
 
@@ -188,12 +188,12 @@ Make something for users
 ### ✅ Signs the Workflow Was Followed
 
 1. **Multiple Documentation Files Created:**
-   - `simple-mode-workflow-step1-enhanced-prompt.md`
-   - `simple-mode-workflow-step2-user-stories.md`
-   - `simple-mode-workflow-step3-architecture.md`
-   - `simple-mode-workflow-step4-design.md`
-   - `simple-mode-workflow-step6-review.md`
-   - `simple-mode-workflow-step7-testing.md`
+   - `docs/workflows/simple-mode/step1-enhanced-prompt.md`
+   - `docs/workflows/simple-mode/step2-user-stories.md`
+   - `docs/workflows/simple-mode/step3-architecture.md`
+   - `docs/workflows/simple-mode/step4-design.md`
+   - `docs/workflows/simple-mode/step6-review.md`
+   - `docs/workflows/simple-mode/step7-testing.md`
 
 2. **Implementation Shows:**
    - Design system with spacing variables

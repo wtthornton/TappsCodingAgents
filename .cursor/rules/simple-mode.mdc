@@ -80,19 +80,19 @@ Simple Mode detects intent from keywords:
 
 ```
 Step 1: @enhancer *enhance "{description}"
-  → Create: simple-mode-workflow-step1-enhanced-prompt.md
+  → Create: docs/workflows/simple-mode/step1-enhanced-prompt.md
   → Enhanced prompt with requirements analysis, architecture guidance, quality standards
 
 Step 2: @planner *plan "{enhanced prompt}"
-  → Create: simple-mode-workflow-step2-user-stories.md
+  → Create: docs/workflows/simple-mode/step2-user-stories.md
   → User stories with acceptance criteria, story points, estimates
 
 Step 3: @architect *design "{specification}"
-  → Create: simple-mode-workflow-step3-architecture.md
+  → Create: docs/workflows/simple-mode/step3-architecture.md
   → System architecture, component design, data flow, performance considerations
 
 Step 4: @designer *design-api "{specification}" OR design components
-  → Create: simple-mode-workflow-step4-design.md
+  → Create: docs/workflows/simple-mode/step4-design.md
   → Component specifications, color palette, typography, spacing system, animations
 
 Step 5: @implementer *implement "{specification}" {target_file}
@@ -100,11 +100,11 @@ Step 5: @implementer *implement "{specification}" {target_file}
   → Use design system, spacing variables, architecture patterns
 
 Step 6: @reviewer *review {target_file}
-  → Create: simple-mode-workflow-step6-review.md
+  → Create: docs/workflows/simple-mode/step6-review.md
   → Quality scores (5 metrics), issues found, recommendations
 
 Step 7: @tester *test {target_file}
-  → Create: simple-mode-workflow-step7-testing.md
+  → Create: docs/workflows/simple-mode/step7-testing.md
   → Test plan, browser compatibility, accessibility checklist, performance validation
 ```
 

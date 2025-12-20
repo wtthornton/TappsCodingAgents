@@ -49,21 +49,25 @@ When user wants to **build** something new:
 **Step 1: Enhance the prompt**
 ```
 @enhancer *enhance "{user's description}"
+→ Create: docs/workflows/simple-mode/step1-enhanced-prompt.md
 ```
 
 **Step 2: Create user stories**
 ```
 @planner *plan "{enhanced prompt}"
+→ Create: docs/workflows/simple-mode/step2-user-stories.md
 ```
 
 **Step 3: Design architecture**
 ```
 @architect *design "{specification}"
+→ Create: docs/workflows/simple-mode/step3-architecture.md
 ```
 
 **Step 4: Design API/data models**
 ```
 @designer *design-api "{specification}"
+→ Create: docs/workflows/simple-mode/step4-design.md
 ```
 
 **Step 5: Implement code**
@@ -74,11 +78,13 @@ When user wants to **build** something new:
 **Step 6: Review the code**
 ```
 @reviewer *review {target_file}
+→ Create: docs/workflows/simple-mode/step6-review.md
 ```
 
 **Step 7: Generate tests**
 ```
 @tester *test {target_file}
+→ Create: docs/workflows/simple-mode/step7-testing.md
 ```
 
 ### Review Intent
