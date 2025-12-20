@@ -746,8 +746,6 @@ def save_config(config_path: Path, config: ProjectConfig) -> None:
     Raises:
         OSError: If the file cannot be written
     """
-    import yaml
-
     config_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Load existing config to preserve other settings
@@ -763,13 +761,20 @@ def save_config(config_path: Path, config: ProjectConfig) -> None:
     # Merge with new config (convert to dict, preserving existing values)
     new_data = config.model_dump(exclude_none=True, mode="json")
     
-    # Deep merge: preserve existing top-level keys
-    for key, value in new_data.items():
-        if key in existing_data and isinstance(existing_data[key], dict) and isinstance(value, dict):
-            # Merge nested dictionaries
-            existing_data[key].update(value)
-        else:
-            existing_data[key] = value
+    def deep_merge(existing: dict[str, Any], new: dict[str, Any]) -> dict[str, Any]:
+        """Recursively merge new dict into existing dict."""
+        result = existing.copy()
+        for key, value in new.items():
+            if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+                # Recursively merge nested dictionaries
+                result[key] = deep_merge(result[key], value)
+            else:
+                # Overwrite with new value
+                result[key] = value
+        return result
+    
+    # Deep merge: preserve existing nested values
+    existing_data = deep_merge(existing_data, new_data)
 
     # Save
     with open(config_path, "w", encoding="utf-8") as f:

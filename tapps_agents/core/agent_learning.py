@@ -108,26 +108,7 @@ class PatternExtractor:
         Returns:
             List of extracted patterns
         """
-        # #region agent log
-        import json
-        import os
-        log_path = r"c:\cursor\TappsAgentsTest\.cursor\debug.log"
-        try:
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H2,H5", "location": "agent_learning.py:92", "message": "extract_patterns ENTRY", "data": {"quality_score": quality_score, "min_quality_threshold": self.min_quality_threshold, "code_length": len(code) if code else 0, "task_id": task_id}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except Exception as e:
-            import logging
-            logging.getLogger(__name__).error(f"Debug log write failed: {e}")
-        # #endregion
-        
         if quality_score < self.min_quality_threshold:
-            # #region agent log
-            try:
-                with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H2", "location": "agent_learning.py:111", "message": "Quality threshold FAILED", "data": {"quality_score": quality_score, "min_quality_threshold": self.min_quality_threshold}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             return []
 
         # Security check before extraction
@@ -136,22 +117,9 @@ class PatternExtractor:
         vulnerabilities = security_result["vulnerabilities"]
         is_safe = security_result.get("is_safe", True)
 
-        # #region agent log
-        try:
-            with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1,H5", "location": "agent_learning.py:118", "message": "Security scan result", "data": {"security_score": security_score, "security_threshold": self.security_threshold, "is_safe": is_safe, "vulnerability_count": len(vulnerabilities)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
-
         # Only extract if security score meets threshold
         # Check both score >= threshold AND is_safe flag
         if security_score < self.security_threshold or not is_safe:
-            # #region agent log
-            try:
-                with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1", "location": "agent_learning.py:122", "message": "Security check FAILED", "data": {"security_score": security_score, "security_threshold": self.security_threshold, "is_safe": is_safe}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             logger.debug(
                 f"Skipping pattern extraction: security score {security_score:.2f} "
                 f"below threshold {self.security_threshold:.2f} or is_safe={is_safe}"
@@ -162,21 +130,9 @@ class PatternExtractor:
 
         # Extract function patterns
         if not pattern_types or "function" in pattern_types:
-            # #region agent log
-            try:
-                with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H4", "location": "agent_learning.py:132", "message": "Before function extraction", "data": {"code_preview": code[:200] if code else None}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             func_patterns = self._extract_function_patterns(
                 code, quality_score, task_id
             )
-            # #region agent log
-            try:
-                with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H4,H5", "location": "agent_learning.py:136", "message": "After function extraction", "data": {"func_patterns_count": len(func_patterns)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             patterns.extend(func_patterns)
 
         # Extract class patterns
@@ -198,12 +154,6 @@ class PatternExtractor:
             )
             patterns.extend(struct_patterns)
 
-        # #region agent log
-        try:
-            with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H5", "location": "agent_learning.py:157", "message": "extract_patterns EXIT", "data": {"total_patterns": len(patterns)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         return patterns
 
     def _extract_function_patterns(
@@ -217,13 +167,6 @@ class PatternExtractor:
         # Pattern matches: def function_name(...) with optional type hints, handling multiline signatures
         func_def_pattern = r"def\s+(\w+)\s*\([^)]*\)\s*(?:->\s*[^:]+)?:"
         func_matches = list(re.finditer(func_def_pattern, code, re.MULTILINE | re.DOTALL))
-        # #region agent log
-        import json
-        try:
-            with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H4", "location": "agent_learning.py:167", "message": "Function regex matches", "data": {"match_count": len(func_matches), "pattern": func_def_pattern}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         
         for i, match in enumerate(func_matches):
             func_name = match.group(1)
@@ -481,12 +424,6 @@ class AntiPatternExtractor:
             )
             anti_patterns.extend(struct_patterns)
 
-        # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H2,H5", "location": "agent_learning.py:484", "message": "extract_anti_patterns EXIT", "data": {"total_anti_patterns": len(anti_patterns)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         return anti_patterns
 
     def _extract_function_anti_patterns(
@@ -502,16 +439,6 @@ class AntiPatternExtractor:
         # Match function definitions
         func_pattern = r"def\s+(\w+)\s*\([^)]*\):\s*\n((?:\s{4}.*\n?)*)"
         matches = list(re.finditer(func_pattern, code, re.MULTILINE))
-        # #region agent log
-        import json
-        import os
-        log_path = r"c:\cursor\TappsAgentsTest\.cursor\debug.log"
-        try:
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H2", "location": "agent_learning.py:498", "message": "Function anti-pattern regex match", "data": {"match_count": len(matches), "pattern": func_pattern, "code_preview": code[:200] if code else None}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
 
         for match in matches:
             func_name = match.group(1)
@@ -1420,17 +1347,6 @@ class AgentLearner:
             quality_score = (
                 quality_scores.get("overall_score", 50.0) / 100.0
             )  # Normalize to 0-1 (assumes 0-100 scale)
-        # #region agent log
-        import json
-        import os
-        log_path = r"c:\cursor\TappsAgentsTest\.cursor\debug.log"
-        try:
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H5", "location": "agent_learning.py:1406", "message": "Quality score normalized", "data": {"quality_score": quality_score, "overall_score": quality_scores.get("overall_score") if quality_scores else None, "success": success}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except Exception as e:
-            logger.error(f"Failed to write debug log: {e}")
-        # #endregion
 
         # Security check before learning
         security_scanner = SecurityScanner()
@@ -1472,13 +1388,6 @@ class AgentLearner:
         # Extract patterns if code provided and quality is good
         # Use decision engine for adaptive threshold, but ensure high-quality code is always extracted
         should_extract_patterns = False
-        # #region agent log
-        import json
-        try:
-            with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H3", "location": "agent_learning.py:1387", "message": "Pattern extraction decision START", "data": {"code_provided": code is not None, "code_length": len(code) if code else 0, "learning_intensity": self.learning_intensity.value if hasattr(self.learning_intensity, "value") else str(self.learning_intensity), "quality_score": quality_score}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         if code and self.learning_intensity != LearningIntensity.LOW:
             # Base threshold: extract if quality >= 0.7 (normalized 0-1 scale)
             base_threshold = 0.7
@@ -1531,34 +1440,16 @@ class AgentLearner:
             if quality_score >= 0.8:
                 should_extract_patterns = True
             
-            # #region agent log
-            try:
-                with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H2,H3", "location": "agent_learning.py:1434", "message": "Pattern extraction decision", "data": {"quality_score": quality_score, "threshold_value": threshold_value, "should_extract_patterns": should_extract_patterns, "quality_meets_threshold": quality_score >= threshold_value, "quality_high_enough": quality_score >= 0.8}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             logger.debug(
                 f"Pattern extraction decision: quality_score={quality_score:.3f}, "
                 f"threshold={threshold_value:.3f}, should_extract={should_extract_patterns}"
             )
 
-        # #region agent log
-        try:
-            with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H3", "location": "agent_learning.py:1445", "message": "Before extract_patterns call", "data": {"should_extract_patterns": should_extract_patterns, "code_is_not_none": code is not None}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except: pass
-        # #endregion
         if should_extract_patterns and code is not None:
             logger.debug(f"Attempting to extract patterns from code (length={len(code)})")
             patterns = self.pattern_extractor.extract_patterns(
                 code=code, quality_score=quality_score, task_id=task_id
             )
-            # #region agent log
-            try:
-                with open(r"c:\cursor\TappsAgentsTest\.cursor\debug.log", "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H5", "location": "agent_learning.py:1450", "message": "After extract_patterns call", "data": {"patterns_count": len(patterns)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             logger.debug(f"Extracted {len(patterns)} patterns from code")
 
             # Store patterns
@@ -1619,37 +1510,14 @@ class AgentLearner:
 
         # Also extract anti-patterns from low-quality code (even if success=True)
         logger.debug(f"Anti-pattern extraction check: code={code is not None}, quality_score={quality_score}, threshold={self.anti_pattern_extractor.max_quality_threshold}, success={success}")
-        # #region agent log
-        import json
-        import os
-        log_path = r"c:\cursor\TappsAgentsTest\.cursor\debug.log"
-        try:
-            os.makedirs(os.path.dirname(log_path), exist_ok=True)
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H1,H4", "location": "agent_learning.py:1618", "message": "Anti-pattern extraction branch check", "data": {"code_provided": code is not None, "quality_score": quality_score, "max_quality_threshold": self.anti_pattern_extractor.max_quality_threshold, "condition_met": code is not None and quality_score < self.anti_pattern_extractor.max_quality_threshold, "success": success}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-        except Exception as e:
-            logger.error(f"Failed to write debug log: {e}")
-        # #endregion
         if code and quality_score < self.anti_pattern_extractor.max_quality_threshold:
             failure_reasons = [f"Low quality score: {quality_score:.2f}"]
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H4", "location": "agent_learning.py:1594", "message": "Before extract_anti_patterns call", "data": {"code_length": len(code) if code else 0, "quality_score": quality_score, "failure_reasons": failure_reasons}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
             anti_patterns = self.anti_pattern_extractor.extract_anti_patterns(
                 code=code,
                 quality_score=quality_score,
                 task_id=task_id,
                 failure_reasons=failure_reasons,
             )
-            # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({"sessionId": "debug-session", "runId": "run1", "hypothesisId": "H4", "location": "agent_learning.py:1608", "message": "After extract_anti_patterns call", "data": {"anti_patterns_count": len(anti_patterns)}, "timestamp": int(__import__("time").time() * 1000)}) + "\n")
-            except: pass
-            # #endregion
 
             # Store anti-patterns
             for anti_pattern in anti_patterns:
