@@ -123,6 +123,11 @@ By participating in this project, you agree to maintain a respectful and inclusi
    
    **Note**: `pyproject.toml` is the authoritative source for dependencies. The `requirements.txt` file is a convenience artifact only. See `docs/DEPENDENCY_POLICY.md` for the dependency management policy.
 
+4. **Verify installation:**
+   ```bash
+   python -c "import tapps_agents; print(tapps_agents.__version__)"
+   ```
+
 5. **Run tests:**
    ```bash
    # Fast parallel execution (recommended)

@@ -122,35 +122,35 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 **New to TappsCodingAgents?** Try **Simple Mode** - a streamlined, task-first interface that hides complexity while showcasing the power of the framework:
 
-1. **Enable Simple Mode:**
+1. **Initialize project** (first time setup):
+   ```bash
+   tapps-agents init
+   ```
+   This sets up configuration, Cursor Rules, workflow presets, and Skills.
+
+2. **Enable Simple Mode:**
    ```bash
    tapps-agents simple-mode on
    ```
 
-2. **Run the onboarding wizard:**
+3. **Run the onboarding wizard** (optional, recommended for new users):
    ```bash
    tapps-agents simple-mode init
    ```
 
-3. **Use natural language commands:**
-   ```bash
-   # Build new features
-   tapps-agents simple-mode build -p "Create a user authentication module"
+4. **Use Simple Mode in Cursor chat:**
    
-   # Review code quality
-   tapps-agents simple-mode review --file src/main.py
-   
-   # Fix issues
-   tapps-agents simple-mode fix --file src/buggy.py -p "Fix the error"
-   
-   # Generate tests
-   tapps-agents simple-mode test --file src/api.py
+   Open Cursor chat and use natural language commands with `@simple-mode`:
    ```
+   @simple-mode Build a user authentication module
+   @simple-mode Review my authentication code
+   @simple-mode Fix the error in auth.py
+   @simple-mode Add tests for service.py
+   ```
+   
+   Simple Mode automatically detects your intent and orchestrates the right agents.
 
-4. **Or use natural language (auto-detects intent):**
-   ```bash
-   tapps-agents simple-mode run -p "Build a new REST API endpoint"
-   ```
+**Note:** Simple Mode natural language commands work in Cursor chat (via `@simple-mode` skill). CLI management commands (`on`, `off`, `status`, `init`) are available for configuration.
 
 **Simple Mode Features:**
 - ✅ **Task-first interface** - Focus on what you want to achieve
