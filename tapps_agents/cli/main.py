@@ -269,6 +269,8 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_create_command(args)
     elif args.agent == "init":
         top_level.handle_init_command(args)
+    elif args.agent == "generate-rules":
+        top_level.handle_generate_rules_command(args)
     elif args.agent == "workflow":
         top_level.handle_workflow_command(args)
     elif args.agent == "score":
@@ -329,11 +331,11 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_cursor_command(args)
     elif args.agent == "simple-mode":
         simple_mode.handle_simple_mode_command(args)
-    else:
+    elif args.agent is None:
         # Show main help if no agent specified
-        parser = create_root_parser()
-        register_all_parsers(parser)
-        parser.print_help()
+        help_parser = create_root_parser()
+        register_all_parsers(help_parser)
+        help_parser.print_help()
 
 
 def main() -> None:

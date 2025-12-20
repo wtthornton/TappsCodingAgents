@@ -193,6 +193,10 @@ pip list | grep tapps-agents     # Linux/macOS</code></pre>
             <section id="initialization">
                 <h2>Step 2: Initialize Your Project</h2>
                 
+                <div class="alert alert-info" style="margin: 1.5rem 0;">
+                    <strong>New Users:</strong> After initialization, consider trying <a href="#simple-mode" style="color: var(--primary-light);">Simple Mode</a> for a streamlined, task-first experience. You can always use individual agents and workflows later.
+                </div>
+                
                 <p>The <code>init</code> command sets up your project with all necessary configuration files, Cursor Rules, workflow presets, and integration files.</p>
 
                 <div class="code-block">
@@ -235,6 +239,192 @@ pip list | grep tapps-agents     # Linux/macOS</code></pre>
 
                 <div class="alert alert-success">
                     <strong>Safe to Run Multiple Times:</strong> The <code>init</code> command is idempotent. It won't overwrite existing files, only adds missing components.
+                </div>
+            </section>
+
+            <section id="simple-mode">
+                <h2>Step 2.5: Simple Mode (New Users) 🎯</h2>
+                
+                <div class="alert alert-info" style="margin: 1.5rem 0;">
+                    <strong>Perfect for New Users:</strong> Simple Mode provides a streamlined, task-first interface that hides complexity while showcasing the power of TappsCodingAgents. Use natural language commands instead of learning individual agents.
+                </div>
+
+                <h3>What is Simple Mode?</h3>
+                <p>Simple Mode abstracts away the complexity of 13 specialized agents and multiple workflows into four core actions:</p>
+                <ul>
+                    <li><strong>Build</strong> - Create new features and code</li>
+                    <li><strong>Review</strong> - Analyze code quality and best practices</li>
+                    <li><strong>Fix</strong> - Debug and fix issues in existing code</li>
+                    <li><strong>Test</strong> - Generate and run tests</li>
+                </ul>
+
+                <h3>Enable Simple Mode</h3>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Enable Simple Mode</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Enable Simple Mode
+tapps-agents simple-mode on
+
+# Check status
+tapps-agents simple-mode status</code></pre>
+                </div>
+
+                <h3>Run the Onboarding Wizard</h3>
+                <p>The onboarding wizard helps you get started with Simple Mode:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Onboarding Wizard</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Run the interactive onboarding wizard
+tapps-agents simple-mode init</code></pre>
+                </div>
+
+                <p>The wizard will:</p>
+                <ul>
+                    <li>Detect your project type automatically</li>
+                    <li>Configure Simple Mode settings</li>
+                    <li>Suggest your first command</li>
+                    <li>Show a quick demonstration</li>
+                    <li>Celebrate your success! 🎉</li>
+                </ul>
+
+                <h3>Using Simple Mode Commands</h3>
+                
+                <h4>Build New Features</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Build Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Build a new feature using natural language
+tapps-agents simple-mode build -p "Create a user authentication module"
+
+# Build with target file
+tapps-agents simple-mode build -p "Create a FastAPI endpoint for user registration" --file src/api/auth.py</code></pre>
+                </div>
+
+                <h4>Review Code Quality</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Review Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Review a file for quality and best practices
+tapps-agents simple-mode review --file src/main.py
+
+# Review with custom prompt
+tapps-agents simple-mode review --file src/auth.py -p "Check for security vulnerabilities"</code></pre>
+                </div>
+
+                <h4>Fix Issues</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Fix Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Fix issues in a file
+tapps-agents simple-mode fix --file src/buggy.py -p "Fix the NullPointerException"
+
+# Fix with auto mode (no prompts)
+tapps-agents simple-mode fix --file tests/test_utils.py -p "Fix the failing test" --auto</code></pre>
+                </div>
+
+                <h4>Generate Tests</h4>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Test Command</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Generate tests for a file
+tapps-agents simple-mode test --file src/api.py
+
+# Generate tests with custom prompt
+tapps-agents simple-mode test --file src/database.py -p "Generate unit tests for database operations"</code></pre>
+                </div>
+
+                <h4>Auto-Detect Intent</h4>
+                <p>Use the <code>run</code> command to automatically detect what you want to do:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Auto-Detect Intent</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Auto-detect intent from natural language
+tapps-agents simple-mode run -p "Build a new REST API endpoint for user profiles"
+
+# Review with auto-detection
+tapps-agents simple-mode run -p "Review the security of the auth module" --file src/auth.py
+
+# Fix with auto-detection
+tapps-agents simple-mode run -p "Fix the bug in payment processing" --file src/payments.py</code></pre>
+                </div>
+
+                <h3>Simple Mode Features</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0;">
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>🎯 Task-First Interface</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Focus on what you want to achieve, not which agent to use</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>💬 Natural Language</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Use plain English to describe your task</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>🤖 Automated Orchestration</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Automatically selects and coordinates the right agents</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>📈 Progressive Disclosure</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Advanced features revealed as you gain experience</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>🎓 Guided Onboarding</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Interactive wizard helps you get started</span>
+                    </div>
+                    <div style="background: var(--bg-secondary); padding: 1rem; border-radius: 8px; border: 1px solid var(--border);">
+                        <strong>⚙️ Zero-Config Mode</strong><br>
+                        <span style="color: var(--text-muted); font-size: 0.875rem;">Smart defaults with auto-detection</span>
+                    </div>
+                </div>
+
+                <h3>Configuration</h3>
+                <p>Simple Mode can be configured in <code>.tapps-agents/config.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Simple Mode Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>simple_mode:
+  enabled: true                      # Enable Simple Mode
+  default_orchestrator: "build"      # Default orchestrator
+  onboarding_enabled: true           # Enable onboarding wizard
+  natural_language_enabled: true     # Enable natural language parsing
+  progressive_disclosure_enabled: true # Gradually reveal advanced features
+  auto_detect_project_type: true    # Auto-detect project type
+  show_advanced_tips: true            # Show tips for advanced features
+  max_history_entries: 10            # Command history limit
+  feedback_collection_enabled: true  # Enable feedback collection</code></pre>
+                </div>
+
+                <h3>Learning Progression</h3>
+                <p>Track your progress and unlock advanced features:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>View Progress</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># View your learning progression
+tapps-agents simple-mode progress
+
+# Configure Simple Mode settings
+tapps-agents simple-mode configure</code></pre>
+                </div>
+
+                <div class="alert alert-success" style="margin: 1.5rem 0;">
+                    <strong>Ready to Advance?</strong> As you gain experience with Simple Mode, you'll unlock tips for advanced features. When you're ready, explore the full power of TappsCodingAgents with individual agents and custom workflows.
                 </div>
             </section>
 
@@ -542,6 +732,9 @@ tapps-agents workflow full</code></pre>
                     </li>
                     <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
                         <span style="position: absolute; left: 0;">☐</span> Run <code>tapps-agents init</code>
+                    </li>
+                    <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
+                        <span style="position: absolute; left: 0;">☐</span> Try Simple Mode (optional, for new users)
                     </li>
                     <li style="padding: 0.5rem 0; padding-left: 2rem; position: relative;">
                         <span style="position: absolute; left: 0;">☐</span> Review project profile

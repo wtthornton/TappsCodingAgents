@@ -77,7 +77,6 @@ class ProgressiveReview:
     task_title: str = ""
     reviewed_at: datetime = field(default_factory=datetime.utcnow)
     reviewer: str = "TappsCodingAgents Progressive Review"
-    model: str = ""
     decision: ReviewDecision = ReviewDecision.PASS
     decision_reason: str = ""
     findings: list[ReviewFinding] = field(default_factory=list)
@@ -94,7 +93,6 @@ class ProgressiveReview:
             "task_title": self.task_title,
             "reviewed_at": self.reviewed_at.isoformat(),
             "reviewer": self.reviewer,
-            "model": self.model,
             "decision": self.decision.value,
             "decision_reason": self.decision_reason,
             "findings": [
@@ -151,7 +149,6 @@ class ProgressiveReview:
             task_title=data.get("task_title", ""),
             reviewed_at=datetime.fromisoformat(data["reviewed_at"]),
             reviewer=data.get("reviewer", ""),
-            model=data.get("model", ""),
             decision=ReviewDecision(data["decision"]),
             decision_reason=data.get("decision_reason", ""),
             findings=findings,

@@ -1236,7 +1236,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             task_number=task_number,
             task_title=task_title,
             reviewer="TappsCodingAgents Progressive Review",
-            model="reviewer-agent",
             decision=decision,
             decision_reason=reason,
             findings=findings,

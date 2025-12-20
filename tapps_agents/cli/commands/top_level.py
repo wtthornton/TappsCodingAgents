@@ -3,6 +3,7 @@ Top-level command handlers (create, init, workflow, score, doctor, hardware-prof
 """
 import asyncio
 import json
+import logging
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -1635,6 +1636,49 @@ def handle_init_command(args: object) -> None:
     _run_environment_check(results["project_root"])
 
     _print_next_steps()
+
+
+def handle_generate_rules_command(args: object) -> None:
+    """Handle generate-rules command"""
+    from pathlib import Path
+    from ...workflow.rules_generator import CursorRulesGenerator
+
+    logger_instance = logging.getLogger(__name__)
+
+    print("Generating Cursor Rules documentation...")
+    print()
+
+    project_root = Path.cwd()
+    output_path = None
+    if hasattr(args, "output") and args.output:
+        output_path = Path(args.output)
+
+    try:
+        generator = CursorRulesGenerator(project_root=project_root)
+        result_path = generator.write(
+            output_path=output_path,
+            backup=not getattr(args, "no_backup", False),
+        )
+
+        print(f"✅ Successfully generated Cursor Rules at: {result_path}")
+        print()
+        print("The workflow-presets.mdc file has been updated with current workflow definitions.")
+    except ValueError as e:
+        print(f"❌ Error: {e}")
+        print()
+        print("Make sure workflow YAML files exist in:")
+        print("  - workflows/presets/*.yaml (project-specific)")
+        print("  - Framework resources (if installed from PyPI)")
+        if logger_instance.isEnabledFor(logging.DEBUG):
+            import traceback
+            traceback.print_exc()
+        sys.exit(1)
+    except Exception as e:
+        print(f"❌ Unexpected error generating rules: {e}")
+        import traceback
+        if logger_instance.isEnabledFor(logging.DEBUG):
+            traceback.print_exc()
+        sys.exit(1)
 
 
 def handle_doctor_command(args: object) -> None:

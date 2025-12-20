@@ -80,73 +80,68 @@ def __init__(
 
 ### 4. Explicitly Parallel Workflows
 
-**Two workflows are explicitly designed for parallel execution:**
+**Two workflows are explicitly designed for parallel execution using dependency-based parallelism:**
 
 #### A. `multi-agent-review-and-test.yaml`
 - **Purpose**: Review multiple services and generate tests in parallel
-- **Max Parallel**: 8 agents
-- **Structure**: Uses `parallel_tasks` section with independent tasks
+- **Max Parallel**: 8 agents (default)
+- **Structure**: Uses standard `steps` with dependency-based parallelism
 
 ```yaml
-parallel_execution: true
-settings:
-  max_parallel_agents: 8
-
-parallel_tasks:
-  - agent_id: auth-reviewer
+steps:
+  - id: auth-reviewer
     agent: reviewer
-    command: review
-    target: services/auth/
-    # No depends_on = runs immediately
+    action: review_code
+    requires: []  # No dependencies = runs immediately
     
-  - agent_id: api-reviewer
+  - id: api-reviewer
     agent: reviewer
-    command: review
-    target: services/api/
-    # No depends_on = runs in parallel with auth-reviewer
+    action: review_code
+    requires: []  # No dependencies = runs in parallel with auth-reviewer
     
-  - agent_id: payment-reviewer
+  - id: payment-reviewer
     agent: reviewer
-    command: review
-    target: services/payment/
+    action: review_code
+    requires: []  # No dependencies = runs in parallel with both
     # All three reviewers run simultaneously
 ```
 
 #### B. `multi-agent-refactor.yaml`
 - **Purpose**: Refactor multiple components concurrently
-- **Max Parallel**: 6 agents
-- **Structure**: Parallel refactoring with dependent reviews
+- **Max Parallel**: 8 agents (default)
+- **Structure**: Parallel refactoring with dependent reviews using `requires` dependencies
 
 ```yaml
-parallel_execution: true
-settings:
-  max_parallel_agents: 6
-
-parallel_tasks:
-  # These three refactors run in parallel
-  - agent_id: auth-refactor
+steps:
+  # These three refactors run in parallel (no dependencies)
+  - id: auth-refactor
     agent: improver
-    command: refactor
-    target: services/auth/
+    action: refactor_code
+    requires: []
+    creates: [services/auth/]
     
-  - agent_id: api-refactor
+  - id: api-refactor
     agent: improver
-    command: refactor
-    target: services/api/
+    action: refactor_code
+    requires: []
+    creates: [services/api/]
     
-  - agent_id: payment-refactor
+  - id: payment-refactor
     agent: improver
-    command: refactor
-    target: services/payment/
+    action: refactor_code
+    requires: []
+    creates: [services/payment/]
   
   # These reviews wait for their respective refactors
-  - agent_id: auth-review
+  - id: auth-review
     agent: reviewer
-    depends_on: [auth-refactor]  # Waits for auth-refactor
+    action: review_code
+    requires: [services/auth/]  # Waits for auth-refactor
     
-  - agent_id: api-review
+  - id: api-review
     agent: reviewer
-    depends_on: [api-refactor]  # Waits for api-refactor
+    action: review_code
+    requires: [services/api/]  # Waits for api-refactor
 ```
 
 ### 5. Sequential Workflows (Still Support Parallel)
@@ -262,8 +257,8 @@ def find_ready_steps(
 | `quality` | ✅ Automatic | 8 | Sequential by design (each step needs previous) |
 | `maintenance` | ✅ Automatic | 8 | Some steps can run in parallel |
 | `quick-fix` | ✅ Automatic | 8 | Sequential for quick fixes |
-| `multi-agent-review-and-test` | ✅ Explicit | 8 | Designed for parallel execution |
-| `multi-agent-refactor` | ✅ Explicit | 6 | Designed for parallel refactoring |
+| `multi-agent-review-and-test` | ✅ Automatic | 8 | Designed for parallel execution using dependency-based parallelism |
+| `multi-agent-refactor` | ✅ Automatic | 8 | Designed for parallel refactoring using dependency-based parallelism |
 
 ---
 

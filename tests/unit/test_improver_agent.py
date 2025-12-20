@@ -3,7 +3,7 @@ Unit tests for Improver Agent.
 """
 
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -44,7 +44,7 @@ class TestImproverAgent:
             agent = ImproverAgent(config=mock_config)
             with (
                 patch.object(agent, "greet") as mock_greet,
-                patch.object(agent, "run", new_callable=pytest.AsyncMock) as mock_run,
+                patch.object(agent, "run", new_callable=AsyncMock) as mock_run,
             ):
                 await agent.activate()
                 mock_greet.assert_called_once()
@@ -56,7 +56,7 @@ class TestImproverAgent:
         improver_agent.project_root = tmp_path
         with (
             patch.object(
-                improver_agent, "get_context", new_callable=pytest.AsyncMock
+                improver_agent, "get_context", new_callable=AsyncMock
             ) as mock_context,
             patch.object(improver_agent, "get_context_text", return_value=""),
         ):
@@ -87,7 +87,7 @@ class TestImproverAgent:
         improver_agent.project_root = tmp_path
         with (
             patch.object(
-                improver_agent, "get_context", new_callable=pytest.AsyncMock
+                improver_agent, "get_context", new_callable=AsyncMock
             ) as mock_context,
             patch.object(improver_agent, "get_context_text", return_value=""),
         ):
@@ -119,7 +119,7 @@ class TestImproverAgent:
         improver_agent.project_root = tmp_path
         with (
             patch.object(
-                improver_agent, "get_context", new_callable=pytest.AsyncMock
+                improver_agent, "get_context", new_callable=AsyncMock
             ) as mock_context,
             patch.object(improver_agent, "get_context_text", return_value=""),
         ):

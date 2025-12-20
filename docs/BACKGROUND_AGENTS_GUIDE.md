@@ -11,10 +11,12 @@ This guide explains how to use TappsCodingAgents with Cursor AI Background Agent
 Background Agents in Cursor AI allow you to run long-running tasks that complete autonomously without blocking your workflow. TappsCodingAgents provides:
 
 - ✅ **6 Pre-configured Background Agents** for common heavy tasks
+- ✅ **Auto-Generated Configs from Workflows** (Epic 9): Background Agent configs automatically generated from workflow steps
 - ✅ **Git Worktree Integration** to prevent file conflicts
 - ✅ **Progress Reporting** for long-running tasks
 - ✅ **Context7 Cache Sharing** between Sidebar Skills and Background Agents
 - ✅ **Result Delivery** via files, PRs, or web app
+- ✅ **Workflow Lifecycle Integration**: Configs generated on workflow start, cleaned up on completion
 
 ---
 
@@ -38,6 +40,8 @@ The configuration file is located at `.cursor/background-agents.yaml`. It define
 - Output locations
 - Context7 cache paths
 - **Auto-execution settings** (watch paths for automatic command execution)
+
+**Note:** Background Agent configs can be **auto-generated from workflow YAML files** (Epic 9 complete). When a workflow starts, configs are automatically generated for each workflow step. See [Auto-Generation from Workflows](#auto-generation-from-workflows) below.
 
 **Example Configuration:**
 
@@ -147,6 +151,36 @@ The validator checks:
 - Schema compliance
 
 Validation errors provide clear guidance on what needs to be fixed.
+
+### 1.2. Auto-Generation from Workflows (Epic 9)
+
+Background Agent configurations are **automatically generated from workflow YAML files** when workflows are executed. This ensures Background Agents are always aligned with active workflows.
+
+**How It Works:**
+
+1. **On Workflow Start**: Background Agent configs are generated for each workflow step
+2. **Config Structure**: Configs include watch paths from step `requires`/`creates` artifacts, natural language triggers from step metadata, and commands from step actions
+3. **Lifecycle Management**: Configs are automatically cleaned up when workflows complete or fail
+4. **Manual Configs Preserved**: Manual configurations in `.cursor/background-agents.yaml` are preserved during merge operations
+
+**Benefits:**
+
+- ✅ **Zero Configuration**: No need to manually create Background Agent configs for workflows
+- ✅ **Always Aligned**: Configs automatically match workflow steps
+- ✅ **Watch Path Integration**: Watch paths automatically derived from artifact dependencies
+- ✅ **Natural Language Triggers**: Triggers generated from step descriptions and agent actions
+
+**Configuration Location:**
+
+- Generated configs are merged into `.cursor/background-agents.yaml`
+- Configs are organized by workflow and step
+- Metadata includes workflow ID, step ID, and generation timestamp
+
+**Manual Override:**
+
+You can still manually configure Background Agents. Manual configs are preserved when workflows generate configs (configs are merged, not overwritten).
+
+For more details, see [Epic 9: Background Agent Auto-Generation](../prd/epic-9-background-agent-auto-generation.md).
 
 ### 2. Available Background Agents
 

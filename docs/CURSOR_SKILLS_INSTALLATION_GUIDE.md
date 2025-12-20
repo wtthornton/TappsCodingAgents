@@ -49,10 +49,10 @@ tapps-agents init
 ```
 
 This installs (by copying from packaged templates in `tapps_agents/resources/*`):
-- **Skills**: `.claude/skills/` (12 agent skills from `tapps_agents/resources/claude/skills/`)
-- **Cursor Rules**: `.cursor/rules/*.mdc` (5 rule files from `tapps_agents/resources/cursor/rules/`)
+- **Skills**: `.claude/skills/` (13 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
+- **Cursor Rules**: `.cursor/rules/*.mdc` (6 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc`)
 - **Background Agents**: `.cursor/background-agents.yaml` (from `tapps_agents/resources/cursor/background-agents.yaml`)
-- **Workflow presets**: `workflows/presets/*.yaml` (5 presets from `tapps_agents/resources/workflows/presets/`)
+- **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
 
 > **Important**: 
@@ -179,7 +179,7 @@ You should see the Reviewer agent respond with available commands.
    - Commands: `*debug`, `*analyze-error`, `*trace`, `*docs`
    - Features: Error analysis, code tracing, Context7 error patterns
 
-### Phase 2-3: Additional Agents (Coming Soon)
+### Phase 2-3: Additional Agents (Available)
 
 - @analyst - Requirements gathering
 - @planner - Story creation
@@ -190,6 +190,31 @@ You should see the Reviewer agent respond with available commands.
 - @ops - Security, deployment
 - @orchestrator - Workflow coordination
 - @enhancer - Prompt enhancement
+
+### Simple Mode Skill (New Users)
+
+**@simple-mode** - Simplified, task-first interface for new users
+- Commands: `*run`, `*build`, `*review`, `*fix`, `*test`, `*init`
+- Features: Natural language commands, guided onboarding, zero-config mode
+- Hides complexity while showcasing the power of TappsCodingAgents
+
+**Usage:**
+```bash
+# Enable Simple Mode
+tapps-agents simple-mode on
+
+# Run onboarding wizard
+tapps-agents simple-mode init
+
+# Use natural language commands
+@simple-mode *run "Build a user authentication module"
+@simple-mode *build "Create a FastAPI endpoint"
+@simple-mode *review src/main.py
+@simple-mode *fix src/buggy.py -p "Fix the error"
+@simple-mode *test src/api.py
+```
+
+See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 
 ---
 

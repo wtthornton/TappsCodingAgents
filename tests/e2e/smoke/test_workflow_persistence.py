@@ -20,7 +20,7 @@ from tapps_agents.workflow.parser import WorkflowParser
 class TestWorkflowPersistence:
     """Test workflow state persistence and resume."""
 
-    def test_save_workflow_state(self, e2e_project, tmp_path, mock_mal):
+    def test_save_workflow_state(self, e2e_project, tmp_path):
         """Test saving workflow state to disk."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(
@@ -58,7 +58,7 @@ workflow:
         state_dir = e2e_project / ".tapps-agents" / "workflow-state"
         assert state_dir.exists()
 
-    def test_load_workflow_state(self, e2e_project, tmp_path, mock_mal):
+    def test_load_workflow_state(self, e2e_project, tmp_path):
         """Test loading workflow state from disk."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(
@@ -102,7 +102,7 @@ workflow:
         assert state2.status == state1.status
         assert state2.current_step == state1.current_step
 
-    def test_resume_workflow_from_state(self, e2e_project, tmp_path, mock_mal):
+    def test_resume_workflow_from_state(self, e2e_project, tmp_path):
         """Test resuming workflow from saved state."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(
@@ -152,7 +152,7 @@ workflow:
         assert executor2.state.workflow_id == state1.workflow_id
         assert executor2.state.current_step == state1.current_step
 
-    def test_state_consistency(self, e2e_project, tmp_path, mock_mal):
+    def test_state_consistency(self, e2e_project, tmp_path):
         """Test state consistency (checksums, version)."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(
@@ -194,7 +194,7 @@ workflow:
         assert isinstance(loaded_state.completed_steps, list)
         assert isinstance(loaded_state.skipped_steps, list)
 
-    def test_state_contract_validation(self, e2e_project, tmp_path, mock_mal):
+    def test_state_contract_validation(self, e2e_project, tmp_path):
         """Test that state contract (required fields, structure) is validated."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(

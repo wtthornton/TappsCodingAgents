@@ -1,0 +1,53 @@
+﻿
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentDebugCommand::test_debug_command_missing_error_message 
+PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_success 
+PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_missing_erro
+r_message PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_with_stack_t
+race PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_with_code_co
+ntext PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_method 
+PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentErrorHandling::test_unknown_command PASSED [  1%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentErrorHandling::test_help_command PASSED [  1%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentErrorHandling::test_debug_command_path_validation_error 
+FAILED [  1%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentEnhanceResumeCommand::test_enhance_resume_command_success 
+FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_create_session FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_analysis FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_requirements FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_architecture FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_codebase_context FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_quality FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_implementation FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_format_output_markdown FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_format_output_json FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentErrorHandling::test_unknown_command PASSED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentErrorHandling::test_help_command PASSED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentErrorHandling::test_enhance_command_exception_handling 
+PASSED [  2%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentRefactorCommand::test_refactor_method_read_error 
+PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_unknown_command PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_help_command PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_implement_code_generation_error 
+PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_refactor_preparation_error PASSED 
+[  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentReviewIntegration::test_review_code_lazy_initializatio
+n FAILED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentReviewIntegration::test_review_code_error_handling 
+PASSED [  4%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandling::test_review_command_scorer_error PASSED [  
+5%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentLintCommand::test_lint_command_file_not_found FAILED [  5%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentTypeCheckCommand::test_type_check_command_file_not_found 
+FAILED [  5%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentAnalyzeProjectCommand::test_analyze_project_command_success 
+FAILED [  6%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentAnalyzeServicesCommand::test_analyze_services_command_succes
+s FAILED [  6%]

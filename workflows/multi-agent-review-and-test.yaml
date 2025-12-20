@@ -1,5 +1,5 @@
 # Multi-Agent Review and Test Workflow
-# Demonstrates parallel execution of multiple agents
+# Demonstrates parallel execution of multiple agents using dependency-based parallelism
 
 workflow:
   id: multi-agent-review-and-test
@@ -8,87 +8,86 @@ workflow:
   version: "1.0.0"
   
   type: brownfield
-  parallel_execution: true
   
   settings:
-    max_parallel_agents: 8
-    use_worktrees: true
-    aggregate_results: true
-    performance_monitoring: true
+    quality_gates: true
+    code_scoring: true
+    context_tier_default: 2
   
-  # Parallel agent tasks
-  parallel_tasks:
-    # Review tasks
-    - agent_id: auth-reviewer
-      agent: reviewer
-      command: review
-      target: services/auth/
-      args:
-        format: json
-      worktree: auth-review
-      
-    - agent_id: api-reviewer
-      agent: reviewer
-      command: review
-      target: services/api/
-      args:
-        format: json
-      worktree: api-review
-      
-    - agent_id: payment-reviewer
-      agent: reviewer
-      command: review
-      target: services/payment/
-      args:
-        format: json
-      worktree: payment-review
-    
-    # Test generation tasks
-    - agent_id: auth-tester
-      agent: tester
-      command: generate
-      target: services/auth/
-      args:
-        format: json
-      worktree: auth-tests
-      depends_on: []
-      
-    - agent_id: api-tester
-      agent: tester
-      command: generate
-      target: services/api/
-      args:
-        format: json
-      worktree: api-tests
-      depends_on: []
-      
-    - agent_id: payment-tester
-      agent: tester
-      command: generate
-      target: services/payment/
-      args:
-        format: json
-      worktree: payment-tests
-      depends_on: []
-    
-    # Documentation task
-    - agent_id: docs-generator
-      agent: documenter
-      command: generate-api
-      target: services/
-      args:
-        format: json
-      worktree: docs
-      depends_on: []
-  
-  # Sequential steps after parallel execution
+  # All steps with no dependencies run in parallel automatically
   steps:
+    # Review tasks - run in parallel (no dependencies)
+    - id: auth-reviewer
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires: []
+      creates:
+        - services/auth/review-report.json
+      
+    - id: api-reviewer
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires: []
+      creates:
+        - services/api/review-report.json
+      
+    - id: payment-reviewer
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires: []
+      creates:
+        - services/payment/review-report.json
+    
+    # Test generation tasks - run in parallel (no dependencies)
+    - id: auth-tester
+      agent: tester
+      action: write_tests
+      context_tier: 2
+      requires: []
+      creates:
+        - services/auth/tests/
+      
+    - id: api-tester
+      agent: tester
+      action: write_tests
+      context_tier: 2
+      requires: []
+      creates:
+        - services/api/tests/
+      
+    - id: payment-tester
+      agent: tester
+      action: write_tests
+      context_tier: 2
+      requires: []
+      creates:
+        - services/payment/tests/
+    
+    # Documentation task - runs in parallel with others
+    - id: docs-generator
+      agent: documenter
+      action: generate_docs
+      context_tier: 1
+      requires: []
+      creates:
+        - services/api-docs/
+  
+    # Aggregate step - waits for all review/test/doc steps
     - id: aggregate
       agent: orchestrator
       action: aggregate_results
       context_tier: 1
       requires:
-        - parallel_tasks
+        - services/auth/review-report.json
+        - services/api/review-report.json
+        - services/payment/review-report.json
+        - services/auth/tests/
+        - services/api/tests/
+        - services/payment/tests/
+        - services/api-docs/
       creates:
         - aggregated-results.json
       

@@ -318,10 +318,24 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
                 shutil.copy2(source_rule, dest_rule)
                 copied_rules.append(str(dest_rule))
 
-    if copied_rules:
-        return True, copied_rules
+    # Always generate workflow-presets.mdc from YAML files (auto-generated)
+    try:
+        from ...workflow.rules_generator import CursorRulesGenerator
 
-    return False, []
+        generator = CursorRulesGenerator(project_root=project_root)
+        rules_path = project_rules_dir / "workflow-presets.mdc"
+        generator.write(output_path=rules_path, backup=False)
+        if rules_path.exists() and str(rules_path) not in copied_rules:
+            copied_rules.append(str(rules_path))
+            logger.debug(f"Generated workflow-presets.mdc from YAML files")
+    except ValueError as e:
+        # ValueError means no workflows found - this is expected in some cases
+        logger.debug(f"Could not generate workflow-presets.mdc (no workflows found): {e}")
+    except Exception as e:
+        # Other errors should be logged but not fail init
+        logger.warning(f"Could not generate workflow-presets.mdc: {e}")
+
+    return True if copied_rules else False, copied_rules
 
 
 def init_workflow_presets(

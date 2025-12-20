@@ -330,8 +330,8 @@ class TestEnhancerAgentHelperMethods:
         agent = EnhancerAgent()
         await agent.activate(tmp_path)
         
-        with patch.object(agent.analyst, 'analyze', new_callable=AsyncMock) as mock_analyze:
-            mock_analyze.return_value = {"intent": "test", "scope": "small"}
+        with patch.object(agent.analyst, 'run', new_callable=AsyncMock) as mock_analyze:
+            mock_analyze.return_value = {"success": True, "instruction": {"intent": "test", "scope": "small"}}
             
             result = await agent._stage_analysis("Test prompt")
             
@@ -345,8 +345,8 @@ class TestEnhancerAgentHelperMethods:
         
         analysis = {"intent": "test"}
         
-        with patch.object(agent.analyst, 'gather_requirements', new_callable=AsyncMock) as mock_req:
-            mock_req.return_value = {"requirements": []}
+        with patch.object(agent.analyst, 'run', new_callable=AsyncMock) as mock_req:
+            mock_req.return_value = {"success": True, "requirements": []}
             
             result = await agent._stage_requirements("Test prompt", analysis)
             
@@ -361,9 +361,10 @@ class TestEnhancerAgentHelperMethods:
         requirements = {"requirements": []}
         
         # Mock lazy-loaded architect
-        with patch("tapps_agents.agents.enhancer.agent.ArchitectAgent") as mock_arch_class:
+        with patch("tapps_agents.agents.architect.agent.ArchitectAgent") as mock_arch_class:
             mock_arch = MagicMock()
-            mock_arch.design_system = AsyncMock(return_value={"architecture": "simple"})
+            mock_arch.run = AsyncMock(return_value={"architecture": "simple", "guidance": "test"})
+            mock_arch.activate = AsyncMock()
             mock_arch_class.return_value = mock_arch
             
             result = await agent._stage_architecture("Test prompt", requirements)
@@ -391,10 +392,12 @@ class TestEnhancerAgentHelperMethods:
         
         requirements = {"requirements": []}
         
-        # Mock lazy-loaded reviewer
-        with patch("tapps_agents.agents.enhancer.agent.ReviewerAgent") as mock_reviewer_class:
-            mock_reviewer = MagicMock()
-            mock_reviewer_class.return_value = mock_reviewer
+        # Mock lazy-loaded ops (used in _stage_quality, not ReviewerAgent)
+        with patch("tapps_agents.agents.ops.agent.OpsAgent") as mock_ops_class:
+            mock_ops = MagicMock()
+            mock_ops.run = AsyncMock(return_value={"requirements": []})
+            mock_ops.activate = AsyncMock()
+            mock_ops_class.return_value = mock_ops
             
             result = await agent._stage_quality("Test prompt", requirements)
             

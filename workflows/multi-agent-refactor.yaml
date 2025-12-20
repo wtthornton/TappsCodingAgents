@@ -1,5 +1,5 @@
 # Multi-Agent Refactoring Workflow
-# Refactors multiple components in parallel
+# Refactors multiple components in parallel using dependency-based parallelism
 
 workflow:
   id: multi-agent-refactor
@@ -8,76 +8,81 @@ workflow:
   version: "1.0.0"
   
   type: brownfield
-  parallel_execution: true
   
   settings:
-    max_parallel_agents: 6
-    use_worktrees: true
-    aggregate_results: true
-    performance_monitoring: true
+    quality_gates: true
+    code_scoring: true
+    context_tier_default: 2
   
-  parallel_tasks:
-    - agent_id: auth-refactor
-      agent: improver
-      command: refactor
-      target: services/auth/
-      args:
-        instruction: "Refactor to use dependency injection and improve error handling"
-        format: json
-      worktree: auth-refactor
-      
-    - agent_id: api-refactor
-      agent: improver
-      command: refactor
-      target: services/api/
-      args:
-        instruction: "Refactor to improve code organization and add type hints"
-        format: json
-      worktree: api-refactor
-      
-    - agent_id: payment-refactor
-      agent: improver
-      command: refactor
-      target: services/payment/
-      args:
-        instruction: "Refactor to improve security and error handling"
-        format: json
-      worktree: payment-refactor
-    
-    - agent_id: auth-review
-      agent: reviewer
-      command: review
-      target: services/auth/
-      args:
-        format: json
-      worktree: auth-review-after
-      depends_on: [auth-refactor]
-      
-    - agent_id: api-review
-      agent: reviewer
-      command: review
-      target: services/api/
-      args:
-        format: json
-      worktree: api-review-after
-      depends_on: [api-refactor]
-      
-    - agent_id: payment-review
-      agent: reviewer
-      command: review
-      target: services/payment/
-      args:
-        format: json
-      worktree: payment-review-after
-      depends_on: [payment-refactor]
-  
+  # Refactor steps - run in parallel (no dependencies)
   steps:
+    - id: auth-refactor
+      agent: improver
+      action: refactor
+      context_tier: 3
+      requires: []
+      creates:
+        - services/auth/refactored/
+      metadata:
+        instruction: "Refactor to use dependency injection and improve error handling"
+      
+    - id: api-refactor
+      agent: improver
+      action: refactor
+      context_tier: 3
+      requires: []
+      creates:
+        - services/api/refactored/
+      metadata:
+        instruction: "Refactor to improve code organization and add type hints"
+      
+    - id: payment-refactor
+      agent: improver
+      action: refactor
+      context_tier: 3
+      requires: []
+      creates:
+        - services/payment/refactored/
+      metadata:
+        instruction: "Refactor to improve security and error handling"
+    
+    # Review steps - run in parallel after refactors complete
+    - id: auth-review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - services/auth/refactored/
+      creates:
+        - services/auth/review-report.json
+      
+    - id: api-review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - services/api/refactored/
+      creates:
+        - services/api/review-report.json
+      
+    - id: payment-review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - services/payment/refactored/
+      creates:
+        - services/payment/review-report.json
+  
+    # Aggregate step - waits for all reviews
     - id: aggregate
       agent: orchestrator
       action: aggregate_results
       context_tier: 1
       requires:
-        - parallel_tasks
+        - services/auth/review-report.json
+        - services/api/review-report.json
+        - services/payment/review-report.json
       creates:
         - refactoring-results.json
 

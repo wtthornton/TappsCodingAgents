@@ -13,9 +13,10 @@ This project is designed to work **inside Cursor** with agents and background ag
 ### Key directories
 
 **In this framework repo (shipped templates):**
-- **`tapps_agents/resources/claude/skills/`**: Packaged Skills templates (12 agent skills).
-- **`tapps_agents/resources/cursor/rules/*.mdc`**: Packaged Cursor Rules templates (5 rule files).
+- **`tapps_agents/resources/claude/skills/`**: Packaged Skills templates (13 agent skills + Simple Mode skill).
+- **`tapps_agents/resources/cursor/rules/*.mdc`**: Packaged Cursor Rules templates (6 rule files, including `simple-mode.mdc`).
 - **`tapps_agents/resources/cursor/background-agents.yaml`**: Packaged Background Agents template.
+- **`tapps_agents/resources/workflows/presets/`**: Workflow presets (8 presets, including 3 Simple Mode workflows).
 
 **In target repos (after `tapps-agents init`):**
 - **`.claude/skills/`**: Installed Cursor Skills definitions (copied from packaged templates).
@@ -44,11 +45,16 @@ This project is designed to work **inside Cursor** with agents and background ag
 From the target project root (after installing `tapps-agents`):
 
 - `tapps-agents init`
-  - Copies Cursor Rules templates from `tapps_agents/resources/cursor/rules/*.mdc` → `.cursor/rules/`
-  - Copies Skills templates from `tapps_agents/resources/claude/skills/` → `.claude/skills/`
+  - Copies Cursor Rules templates from `tapps_agents/resources/cursor/rules/*.mdc` → `.cursor/rules/` (including `simple-mode.mdc`)
+  - Copies Skills templates from `tapps_agents/resources/claude/skills/` → `.claude/skills/` (including Simple Mode skill)
   - Copies Background Agents template from `tapps_agents/resources/cursor/background-agents.yaml` → `.cursor/background-agents.yaml`
-  - Copies workflow presets from `tapps_agents/resources/workflows/presets/*.yaml` → `workflows/presets/`
+  - Copies workflow presets from `tapps_agents/resources/workflows/presets/*.yaml` → `workflows/presets/` (including 3 Simple Mode workflows)
   - Optionally creates `.tapps-agents/config.yaml`
+
+**For new users:**
+- `tapps-agents simple-mode init` - Run the Simple Mode onboarding wizard
+- `tapps-agents simple-mode on` - Enable Simple Mode for streamlined, task-first interface
+- See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation
 
 ### Keeping Cursor fast
 

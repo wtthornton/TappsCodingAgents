@@ -58,14 +58,17 @@ class TestFormatOutput:
         format_output(data, format_type="json")
         captured = capsys.readouterr()
         result = json.loads(captured.out)
-        assert result == data
+        assert result["success"] is True
+        assert result["data"] == data
 
     def test_format_output_json_string(self, capsys):
-        """Test formatting string as JSON (prints as-is)."""
+        """Test formatting string as JSON (wraps in JSON structure)."""
         data = "simple string"
         format_output(data, format_type="json")
         captured = capsys.readouterr()
-        assert captured.out.strip() == data
+        result = json.loads(captured.out)
+        assert result["success"] is True
+        assert result["data"]["content"] == data
 
     def test_format_output_text(self, capsys):
         """Test formatting as text."""
@@ -91,8 +94,8 @@ class TestFormatErrorOutput:
         captured = capsys.readouterr()
         error_data = json.loads(captured.err)
         assert error_data["success"] is False
-        assert error_data["error"] == "Test error"
-        assert error_data["error_type"] == "test_error"
+        assert error_data["error"]["message"] == "Test error"
+        assert error_data["error"]["code"] == "test_error"
 
     def test_format_error_output_json_with_details(self, capsys):
         """Test formatting error as JSON with details."""
@@ -108,9 +111,9 @@ class TestFormatErrorOutput:
         captured = capsys.readouterr()
         error_data = json.loads(captured.err)
         assert error_data["success"] is False
-        assert error_data["error"] == "Validation failed"
-        assert error_data["error_type"] == "validation_error"
-        assert error_data["details"]["field"] == "email"
+        assert error_data["error"]["message"] == "Validation failed"
+        assert error_data["error"]["code"] == "validation_error"
+        assert error_data["error"]["context"]["field"] == "email"
 
     def test_format_error_output_text(self, capsys):
         """Test formatting error as text."""
@@ -162,8 +165,8 @@ class TestHandleAgentError:
         captured = capsys.readouterr()
         error_data = json.loads(captured.err)
         assert error_data["success"] is False
-        assert error_data["error"] == "Test error"
-        assert error_data["error_type"] == "test_error"
+        assert error_data["error"]["message"] == "Test error"
+        assert error_data["error"]["code"] == "test_error"
 
     def test_handle_agent_error_with_error_text(self, capsys):
         """Test handling result with error (text format)."""
@@ -339,10 +342,9 @@ class TestRunAgentCommand:
             format_type="json",
             exit_on_error=False,
             file="test.py",
-            model="test-model",
         )
 
-        agent.run.assert_called_once_with("test-command", file="test.py", model="test-model")
+        agent.run.assert_called_once_with("test-command", file="test.py")
 
     @pytest.mark.asyncio
     async def test_run_agent_command_exit_on_error(self, capsys):

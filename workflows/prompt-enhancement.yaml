@@ -8,14 +8,14 @@ steps:
   - id: analyze
     agent: analyst
     action: analyze-prompt
-    description: "Analyze prompt intent, scope, and domains"
+    notes: "Analyze prompt intent, scope, and domains"
     creates: ["prompt_metadata"]
     next: enrich-requirements
   
   - id: enrich-requirements
     agent: analyst
     action: gather-requirements
-    description: "Gather functional and non-functional requirements"
+    notes: "Gather functional and non-functional requirements"
     consults: ["expert-*"]  # Consult all relevant experts
     requires: ["prompt_metadata"]
     creates: ["requirements"]
@@ -24,7 +24,7 @@ steps:
   - id: architecture-guidance
     agent: architect
     action: design-system
-    description: "Provide architecture guidance and design patterns"
+    notes: "Provide architecture guidance and design patterns"
     context_tier: TIER2
     requires: ["requirements"]
     creates: ["architecture"]
@@ -33,7 +33,7 @@ steps:
   - id: codebase-context
     agent: orchestrator
     action: inject-context
-    description: "Inject codebase context and related files"
+    notes: "Inject codebase context and related files"
     requires: ["prompt_metadata"]
     creates: ["codebase_context"]
     next: quality-standards
@@ -41,7 +41,7 @@ steps:
   - id: quality-standards
     agent: reviewer
     action: define-standards
-    description: "Define quality gates and standards"
+    notes: "Define quality gates and standards"
     requires: ["requirements", "architecture"]
     creates: ["quality_gates"]
     next: implementation-plan
@@ -49,7 +49,7 @@ steps:
   - id: implementation-plan
     agent: planner
     action: create-tasks
-    description: "Create implementation task breakdown"
+    notes: "Create implementation task breakdown"
     requires: ["requirements", "architecture"]
     creates: ["implementation_plan"]
     next: synthesize
@@ -57,9 +57,9 @@ steps:
   - id: synthesize
     agent: documenter
     action: synthesize-prompt
-    description: "Synthesize final enhanced prompt"
+    notes: "Synthesize final enhanced prompt"
     requires: ["prompt_metadata", "requirements", "architecture", 
                "codebase_context", "quality_gates", "implementation_plan"]
     creates: ["enhanced_prompt"]
-    optional: false
+    condition: required
 

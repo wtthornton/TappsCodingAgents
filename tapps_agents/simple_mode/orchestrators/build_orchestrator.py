@@ -7,8 +7,8 @@ Coordinates: Planner → Architect → Designer → Implementer
 from pathlib import Path
 from typing import Any
 
-from ...core.config import ProjectConfig
-from ...core.multi_agent_orchestrator import MultiAgentOrchestrator
+from tapps_agents.core.config import ProjectConfig
+from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 

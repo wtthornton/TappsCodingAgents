@@ -26,6 +26,7 @@ from .logging_helper import WorkflowLogger
 from .observer import ObserverRegistry, WorkflowObserver
 from .validation import ValidatorRegistry, WorkflowValidator
 from .agent_handlers.registry import AgentHandlerRegistry
+from .background_agent_generator import BackgroundAgentGenerator
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
 from .parser import WorkflowParser
@@ -122,6 +123,12 @@ class WorkflowExecutor:
 
         # Initialize validator registry for SDLC phase validation
         self.validator_registry = ValidatorRegistry()
+
+        # Initialize Background Agent Generator (Epic 9)
+        bg_agent_enabled = os.getenv("TAPPS_AGENTS_BG_AGENT_GENERATION", "true").lower() == "true"
+        self.background_agent_generator = (
+            BackgroundAgentGenerator(self.project_root) if bg_agent_enabled else None
+        )
 
         if auto_detect:
             self.recommender = WorkflowRecommender(
@@ -289,6 +296,35 @@ class WorkflowExecutor:
             step_count=len(self.workflow.steps),
         )
 
+        # Generate Background Agent configs (Epic 9)
+        if self.background_agent_generator:
+            try:
+                configs = self.background_agent_generator.generate_workflow_configs(
+                    workflow=self.workflow,
+                    workflow_id=workflow_id,
+                )
+                self.background_agent_generator.apply_workflow_configs(
+                    configs=configs,
+                    workflow_id=workflow_id,
+                )
+                # Validate generated configs
+                is_valid, errors = self.background_agent_generator.validate_config()
+                if not is_valid:
+                    self.logger.warning(
+                        "Background Agent config validation warnings",
+                        errors=errors,
+                    )
+                else:
+                    self.logger.info(
+                        "Background Agent configs generated",
+                        config_count=len(configs),
+                    )
+            except Exception as e:
+                self.logger.warning(
+                    "Failed to generate Background Agent configs",
+                    error=str(e),
+                )
+
         # Initialize progress monitor
         self.progress_monitor = WorkflowProgressMonitor(
             workflow=self.workflow,
@@ -310,6 +346,9 @@ class WorkflowExecutor:
         self._notify_observers(event)
 
         self.save_state()
+
+        # Generate task manifest (Epic 7)
+        self._generate_manifest()
 
         return self.state
 
@@ -541,6 +580,7 @@ class WorkflowExecutor:
                 error=self.state.error,
             )
             self._notify_observers(event)
+            self._cleanup_background_agents()
             self.save_state()
             return True
         return False
@@ -571,6 +611,7 @@ class WorkflowExecutor:
                 status="completed",
             )
             self._notify_observers(event)
+            self._cleanup_background_agents()
             self.save_state()
             return True
         else:
@@ -584,6 +625,7 @@ class WorkflowExecutor:
                 error=self.state.error,
             )
             self._notify_observers(event)
+            self._cleanup_background_agents()
             self.save_state()
             return True
 
@@ -680,6 +722,7 @@ class WorkflowExecutor:
                     step_logger.error(
                         f"Workflow aborted: {decision.reason}",
                     )
+                self._cleanup_background_agents()
                 self.save_state()
                 return True
             elif decision.action == ProgressionAction.CONTINUE:
@@ -712,6 +755,7 @@ class WorkflowExecutor:
                 error=str(result.error),
                 action=result.step.action,
             )
+        self._cleanup_background_agents()
         self.save_state()
         return True
 
@@ -788,6 +832,9 @@ class WorkflowExecutor:
         
         # Create checkpoint if needed
         self._create_checkpoint_if_needed(result)
+        
+        # Generate task manifest (Epic 7)
+        self._generate_manifest()
 
     def _run_validators_for_step(self, result: Any) -> None:
         """Run validators for the completed step's phase."""
@@ -912,6 +959,7 @@ class WorkflowExecutor:
             workflow_id=self.state.workflow_id,
         )
         self.state.error = envelope.to_user_message()
+        self._cleanup_background_agents()
         # Emit workflow_end event
         event = self.event_log.emit_event(
             event_type="workflow_end",
@@ -1253,8 +1301,70 @@ class WorkflowExecutor:
             # Workflow complete
             self.state.current_step = None
             self.state.status = "completed"
+            self._cleanup_background_agents()
 
         self.save_state()
+
+    def _cleanup_background_agents(self) -> None:
+        """Clean up Background Agent configs when workflow completes or fails."""
+        if self.background_agent_generator and self.state:
+            try:
+                self.background_agent_generator.cleanup_workflow_configs(
+                    workflow_id=self.state.workflow_id,
+                )
+                if self.logger:
+                    self.logger.info(
+                        "Background Agent configs cleaned up",
+                        workflow_id=self.state.workflow_id,
+                    )
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(
+                        "Failed to cleanup Background Agent configs",
+                        error=str(e),
+                    )
+
+    def _generate_manifest(self) -> None:
+        """
+        Generate and save task manifest (Epic 7).
+        
+        Generates manifest on workflow start, step completion, and state load/resume.
+        """
+        if not self.workflow or not self.state:
+            return
+        
+        try:
+            from .manifest import generate_manifest, save_manifest, sync_manifest_to_project_root
+            
+            # Generate manifest
+            manifest_content = generate_manifest(self.workflow, self.state)
+            
+            # Save to state directory
+            state_dir = self._state_dir()
+            manifest_path = save_manifest(manifest_content, state_dir, self.state.workflow_id)
+            
+            # Optional: Sync to project root if configured
+            sync_enabled = os.getenv("TAPPS_AGENTS_MANIFEST_SYNC", "false").lower() == "true"
+            if sync_enabled:
+                sync_path = sync_manifest_to_project_root(manifest_content, self.project_root)
+                if self.logger:
+                    self.logger.debug(
+                        "Task manifest synced to project root",
+                        manifest_path=str(manifest_path),
+                        sync_path=str(sync_path),
+                    )
+            elif self.logger:
+                self.logger.debug(
+                    "Task manifest generated",
+                    manifest_path=str(manifest_path),
+                )
+        except Exception as e:
+            # Don't fail workflow if manifest generation fails
+            if self.logger:
+                self.logger.warning(
+                    "Failed to generate task manifest",
+                    error=str(e),
+                )
 
     def _state_dir(self) -> Path:
         """Directory for persisted workflow state."""
@@ -1509,6 +1619,11 @@ class WorkflowExecutor:
                 self.load_workflow(candidate)
 
         self.state = state
+        
+        # Generate task manifest on state load/resume (Epic 7)
+        if self.workflow:
+            self._generate_manifest()
+        
         return state
 
     def step_requires_expert_consultation(
@@ -1852,6 +1967,7 @@ class WorkflowExecutor:
             if len(self.state.completed_steps) + len(self.state.skipped_steps) >= len(self.workflow.steps):
                 self.state.status = "completed"
                 self.state.current_step = None
+                self._cleanup_background_agents()
         
         self.save_state()
         if self.logger:

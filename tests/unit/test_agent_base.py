@@ -408,7 +408,7 @@ persona_overrides:
         agent = base_agent
         
         # Mock MCP gateway
-        with patch("tapps_agents.core.agent_base.MCPGateway") as mock_gateway_class:
+        with patch("tapps_agents.mcp.gateway.MCPGateway") as mock_gateway_class:
             mock_gateway = MagicMock()
             mock_gateway.call_tool.return_value = {"result": "test"}
             mock_gateway_class.return_value = mock_gateway

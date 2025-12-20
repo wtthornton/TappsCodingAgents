@@ -108,8 +108,8 @@ class WorkflowParser:
                 f"{WorkflowParser._err_prefix(file_path)}schema_version must be a string"
             )
 
-        # Validate against schema
-        validator = WorkflowSchemaValidator(schema_version=schema_version)
+        # Validate against schema (strict mode enabled by default)
+        validator = WorkflowSchemaValidator(schema_version=schema_version, strict=True)
         validation_errors = validator.validate_workflow(content, file_path=file_path)
         if validation_errors:
             error_messages = [str(err) for err in validation_errors]
@@ -176,11 +176,15 @@ class WorkflowParser:
             raise ValueError(
                 f"{WorkflowParser._err_prefix(file_path)}Workflow 'settings' must be an object/mapping"
             )
+        # Support auto_detect at workflow level (legacy) or in settings
+        auto_detect = workflow_data.get("auto_detect")
+        if auto_detect is None:
+            auto_detect = settings_data.get("auto_detect", True)
         settings = WorkflowSettings(
             quality_gates=settings_data.get("quality_gates", True),
             code_scoring=settings_data.get("code_scoring", True),
             context_tier_default=settings_data.get("context_tier_default", 2),
-            auto_detect=settings_data.get("auto_detect", True),
+            auto_detect=auto_detect if isinstance(auto_detect, bool) else True,
         )
 
         # Parse steps

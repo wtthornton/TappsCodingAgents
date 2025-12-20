@@ -4,6 +4,22 @@
 
 ---
 
+## YAML-First Architecture ✅ (Epics 6-10 Complete)
+
+✅ **YAML is the single source of truth** with strict schema enforcement and auto-generated artifacts:
+
+- **Strict Schema Enforcement** (Epic 6): All YAML structures validated and executed, no "YAML theater"
+- **Task Manifest Generation** (Epic 7): Auto-generated task checklists from workflow YAML + state
+- **Automated Documentation** (Epic 8): Cursor Rules auto-generated from workflow YAML
+- **Background Agent Auto-Generation** (Epic 9): Background Agent configs auto-generated from workflow steps
+- **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies (no `parallel_tasks`)
+
+**Task Manifests:** Task checklists are automatically generated in `.tapps-agents/workflow-state/{workflow_id}/task-manifest.md` showing step status, dependencies, artifacts, and progress.
+
+See [YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md) for complete details.
+
+---
+
 ## Parallel Execution
 
 ✅ **All workflows support automatic parallel execution**

@@ -79,7 +79,6 @@ class TestReviewerAgentConfig:
     def test_default_values(self):
         """Test default configuration values"""
         config = ReviewerAgentConfig()
-        assert config.model == "qwen2.5-coder:7b"
         assert config.quality_threshold == 70.0
         assert config.include_scoring is True
         assert config.include_llm_feedback is True
@@ -150,7 +149,7 @@ class TestLoadConfig:
         config_data = {
             "project_name": "TestProject",
             "agents": {
-                "reviewer": {"quality_threshold": 85.0, "model": "custom-model:7b"}
+                "reviewer": {"quality_threshold": 85.0}
             },
             "scoring": {"quality_threshold": 85.0},
         }
@@ -160,7 +159,6 @@ class TestLoadConfig:
         config = load_config(config_file)
         assert config.project_name == "TestProject"
         assert config.agents.reviewer.quality_threshold == 85.0
-        assert config.agents.reviewer.model == "custom-model:7b"
         assert config.scoring.quality_threshold == 85.0
 
     def test_load_config_invalid_yaml(self, tmp_path: Path):
@@ -220,7 +218,6 @@ class TestConfigIntegration:
             "version": "1.0.0",
             "agents": {
                 "reviewer": {
-                    "model": "qwen2.5-coder:7b",
                     "quality_threshold": 75.0,
                     "include_scoring": True,
                     "include_llm_feedback": True,
@@ -246,7 +243,6 @@ class TestConfigIntegration:
         # Verify all values loaded correctly
         assert config.project_name == "MyProject"
         assert config.version == "1.0.0"
-        assert config.agents.reviewer.model == "qwen2.5-coder:7b"
         assert config.agents.reviewer.quality_threshold == 75.0
         assert config.agents.reviewer.max_file_size == 2097152
         assert config.scoring.weights.security == 0.35
@@ -262,7 +258,7 @@ class TestConfigIntegration:
             "agents": {
                 "reviewer": {
                     "quality_threshold": 80.0,
-                    # model, include_scoring, etc. should use defaults
+                    # include_scoring, etc. should use defaults
                 }
             },
             # Only set scoring quality_threshold, weights should use defaults
@@ -281,8 +277,6 @@ class TestConfigIntegration:
         assert config.scoring.quality_threshold == 75.0
 
         # Verify defaults are applied for unset values
-        assert config.agents.reviewer.model == "qwen2.5-coder:7b", \
-            "model should use default value when not specified"
         assert config.agents.reviewer.include_scoring is True, \
             "include_scoring should use default value when not specified"
         assert config.agents.reviewer.max_file_size == 1024 * 1024, \
@@ -307,8 +301,6 @@ class TestConfigIntegration:
         config = load_config(config_file)
 
         # Verify all default values are applied
-        assert config.agents.reviewer.model == "qwen2.5-coder:7b", \
-            "Reviewer model should use default"
         assert config.agents.reviewer.quality_threshold == 70.0, \
             "Reviewer quality_threshold should use default"
         assert config.agents.reviewer.include_scoring is True, \
@@ -343,7 +335,6 @@ class TestConfigIntegration:
             "agents": {
                 "reviewer": {
                     "quality_threshold": 85.0,
-                    "model": "custom-model:7b",
                     # Don't specify other reviewer fields (should use defaults)
                 },
                 # Don't specify other agents (should use defaults)
@@ -360,7 +351,6 @@ class TestConfigIntegration:
 
         # Verify overridden values
         assert config.agents.reviewer.quality_threshold == 85.0
-        assert config.agents.reviewer.model == "custom-model:7b"
         assert config.scoring.quality_threshold == 80.0
 
         # Verify defaults are applied for unset nested fields

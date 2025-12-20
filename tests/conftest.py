@@ -95,7 +95,7 @@ def test_config(tmp_path: Path) -> dict[str, Any]:
     """Create a test configuration dictionary."""
     return {
         "agents": {
-            "reviewer": {"model": "qwen2.5-coder:7b", "quality_threshold": 70.0}
+            "reviewer": {"quality_threshold": 70.0}
         },
         "scoring": {
             "weights": {

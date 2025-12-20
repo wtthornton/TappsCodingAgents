@@ -1,10 +1,10 @@
 # Cursor Rules Setup Guide
 
-**Automatic setup of Cursor Rules for workflow presets**
+**Automatic setup and generation of Cursor Rules for workflow presets**
 
 ## Overview
 
-TappsCodingAgents can automatically set up Cursor Rules that provide context about workflow presets, making it easier to use them in Cursor AI conversations.
+TappsCodingAgents can automatically set up and generate Cursor Rules that provide context about workflow presets, making it easier to use them in Cursor AI conversations. **Cursor Rules are now auto-generated from workflow YAML files** (Epic 8 complete), ensuring documentation always matches the actual workflow definitions.
 
 ## What Gets Installed
 
@@ -35,24 +35,42 @@ TappsCodingAgents sets up two complementary directory structures:
 **Location:** `.cursor/rules/`
 
 **Files installed by `tapps-agents init`:**
-- `workflow-presets.mdc` - Workflow preset documentation
+- `workflow-presets.mdc` - Workflow preset documentation (✅ **Auto-generated from YAML** - Epic 8)
 - `quick-reference.mdc` - Quick command reference
 - `agent-capabilities.mdc` - Agent capabilities guide
 - `project-context.mdc` - Project context (always applied)
 - `project-profiling.mdc` - Project profiling system documentation
+- `simple-mode.mdc` - Simple Mode documentation for new users
 
-**Content:**
-- Documentation of all 5 workflow presets
-- When to use each workflow
-- Agent sequences for each workflow
-- Quality gate thresholds
-- Usage examples
+**Content (Auto-Generated from Workflow YAML):**
+- Documentation of all 5 workflow presets extracted from YAML definitions
+- When to use each workflow (from YAML metadata)
+- Agent sequences for each workflow (from YAML steps)
+- Quality gate thresholds (from YAML gates)
+- Usage examples generated from workflow structure
 
 **Benefits:**
+- ✅ **Always in sync**: Documentation auto-generated from YAML (Epic 8)
+- ✅ **Zero drift**: No manual documentation maintenance needed
+- ✅ **Single source of truth**: YAML workflows are authoritative
 - Cursor AI understands workflow presets
 - Can suggest appropriate workflows
 - Natural language support ("run rapid development")
 - Voice command support
+
+**Regenerating Rules:**
+
+Cursor Rules can be regenerated from workflow YAML files:
+
+```bash
+# Regenerate Cursor Rules from workflow YAML
+tapps-agents generate-rules
+
+# Regenerate and overwrite existing rules
+tapps-agents generate-rules --overwrite
+```
+
+This ensures documentation stays aligned with workflow definitions.
 
 ### Workflow Presets
 

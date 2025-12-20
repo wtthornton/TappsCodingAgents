@@ -435,6 +435,29 @@ Example: tapps-agents init""",
         action="store_true",
         help="Skip pre-populating Context7 knowledge base cache. Cache speeds up library documentation lookups.",
     )
+    # Generate rules command
+    generate_rules_parser = subparsers.add_parser(
+        "generate-rules",
+        help="Generate Cursor Rules documentation from workflow YAML files",
+        description="""Generate .cursor/rules/workflow-presets.mdc from workflow YAML definitions.
+        
+This command automatically generates Cursor Rules documentation by parsing workflow YAML files
+and extracting metadata, steps, and quality gates. The generated documentation stays in sync
+with workflow definitions, eliminating documentation drift.
+
+Example: tapps-agents generate-rules""",
+    )
+    generate_rules_parser.add_argument(
+        "--output",
+        type=str,
+        help="Output file path (defaults to .cursor/rules/workflow-presets.mdc)",
+    )
+    generate_rules_parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Skip backing up existing rules file",
+    )
+
     init_parser.add_argument(
         "--no-cursorignore",
         action="store_true",

@@ -252,6 +252,22 @@ class CursorWorkflowExecutor:
             },
         )
 
+        # Generate and save execution plan (Epic 6 - Story 6.7)
+        try:
+            from .execution_plan import generate_execution_plan, save_execution_plan
+            execution_plan = generate_execution_plan(workflow)
+            state_dir = self._state_dir()
+            plan_path = save_execution_plan(execution_plan, state_dir, workflow_id)
+            if self.logger:
+                self.logger.info(
+                    f"Execution plan generated: {plan_path}",
+                    execution_plan_path=str(plan_path),
+                )
+        except Exception as e:
+            # Don't fail workflow start if execution plan generation fails
+            if self.logger:
+                self.logger.warning(f"Failed to generate execution plan: {e}")
+
         self.logger.info(
             "Workflow started",
             workflow_name=workflow.name,
@@ -295,6 +311,10 @@ class CursorWorkflowExecutor:
             pass
         
         self.save_state()
+        
+        # Generate task manifest (Epic 7)
+        self._generate_manifest()
+        
         return self.state
 
     def save_state(self) -> None:
@@ -391,6 +411,51 @@ class CursorWorkflowExecutor:
         history_dir.mkdir(exist_ok=True)
         history_file = history_dir / state_file.name
         atomic_write_json(history_file, state_dict, indent=2)
+        
+        # Generate task manifest (Epic 7)
+        self._generate_manifest()
+
+    def _generate_manifest(self) -> None:
+        """
+        Generate and save task manifest (Epic 7).
+        
+        Generates manifest on workflow start, step completion, and state save.
+        """
+        if not self.workflow or not self.state:
+            return
+        
+        try:
+            from .manifest import generate_manifest, save_manifest, sync_manifest_to_project_root
+            
+            # Generate manifest
+            manifest_content = generate_manifest(self.workflow, self.state)
+            
+            # Save to state directory
+            state_dir = self._state_dir()
+            manifest_path = save_manifest(manifest_content, state_dir, self.state.workflow_id)
+            
+            # Optional: Sync to project root if configured
+            sync_enabled = os.getenv("TAPPS_AGENTS_MANIFEST_SYNC", "false").lower() == "true"
+            if sync_enabled:
+                sync_path = sync_manifest_to_project_root(manifest_content, self.project_root)
+                if self.logger:
+                    self.logger.debug(
+                        "Task manifest synced to project root",
+                        manifest_path=str(manifest_path),
+                        sync_path=str(sync_path),
+                    )
+            elif self.logger:
+                self.logger.debug(
+                    "Task manifest generated",
+                    manifest_path=str(manifest_path),
+                )
+        except Exception as e:
+            # Don't fail workflow if manifest generation fails
+            if self.logger:
+                self.logger.warning(
+                    "Failed to generate task manifest",
+                    error=str(e),
+                )
 
     async def run(
         self,
@@ -460,6 +525,9 @@ class CursorWorkflowExecutor:
 
                 steps_executed += len(ready_steps)
                 self.save_state()
+                
+                # Generate task manifest after step completion (Epic 7)
+                self._generate_manifest()
 
             except Exception as e:
                 self._handle_execution_error(e)

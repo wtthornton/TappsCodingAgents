@@ -3,7 +3,7 @@ Unit tests for Ops Agent.
 """
 
 import json
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 
@@ -37,7 +37,7 @@ class TestOpsAgent:
     async def test_activate(self, ops_agent):
         with (
             patch.object(ops_agent, "greet") as mock_greet,
-            patch.object(ops_agent, "run", new_callable=pytest.AsyncMock) as mock_run,
+            patch.object(ops_agent, "run", new_callable=AsyncMock) as mock_run,
         ):
             await ops_agent.activate()
             mock_greet.assert_called_once()

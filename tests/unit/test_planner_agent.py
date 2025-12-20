@@ -14,9 +14,9 @@ class TestPlannerAgentHelpers:
     """Test cases for PlannerAgent helper methods."""
 
     @pytest.fixture
-    def planner_agent(self, mock_mal):
+    def planner_agent(self):
         """Create a PlannerAgent instance for testing."""
-        return PlannerAgent(mal=mock_mal)
+        return PlannerAgent()
 
     def test_generate_story_id_basic(self, planner_agent):
         """Test story ID generation from description."""

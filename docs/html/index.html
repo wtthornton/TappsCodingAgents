@@ -100,6 +100,11 @@
                 <h3>Unified Cache</h3>
                 <p>Hardware-adaptive caching system with automatic optimization for different hardware profiles</p>
             </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎯</div>
+                <h3>Simple Mode</h3>
+                <p>Streamlined, task-first interface for new users with natural language commands and guided onboarding</p>
+            </div>
         </section>
 
         <section class="quick-start">
@@ -141,7 +146,15 @@ tapps-agents reviewer review src/main.py
 tapps-agents reviewer score src/main.py
 
 # Run a workflow
-tapps-agents workflow run workflow-full-sdlc</code></pre>
+tapps-agents workflow run workflow-full-sdlc
+
+# Simple Mode (New Users)
+tapps-agents simple-mode on
+tapps-agents simple-mode init
+tapps-agents simple-mode build -p "Create a new feature"</code></pre>
+            </div>
+            <div class="alert alert-info" style="margin-top: 1.5rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border-left: 4px solid var(--primary);">
+                <strong>🎯 New to TappsCodingAgents?</strong> Try <strong>Simple Mode</strong> - a streamlined interface that hides complexity while showcasing the power of the framework. Use natural language commands like "Build a user authentication module" or "Review my code for quality". See the <a href="user-guide-getting-started.html#simple-mode" style="color: var(--primary-light);">Getting Started guide</a> for details.
             </div>
         </section>
 

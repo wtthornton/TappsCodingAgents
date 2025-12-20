@@ -578,7 +578,7 @@ class TestImplementerAgentReviewIntegration:
         file_path = tmp_path / "test.py"
         file_path.write_text(code)
         
-        with patch("tapps_agents.agents.implementer.agent.ReviewerAgent") as mock_reviewer_class:
+        with patch("tapps_agents.agents.reviewer.agent.ReviewerAgent") as mock_reviewer_class:
             mock_reviewer = MagicMock()
             mock_reviewer.review_file = AsyncMock(return_value={
                 "file": "test.py",

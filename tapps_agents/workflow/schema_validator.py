@@ -40,16 +40,65 @@ class ValidationError:
 
 
 class WorkflowSchemaValidator:
-    """Validates workflow YAML against versioned schemas."""
+    """Validates workflow YAML against versioned schemas with strict enforcement."""
 
     SUPPORTED_VERSIONS = {SchemaVersion.V1_0.value, SchemaVersion.V2_0.value}
 
-    def __init__(self, schema_version: str | None = None):
+    # Allowed workflow-level fields (v2.0 schema)
+    ALLOWED_WORKFLOW_FIELDS = {
+        "id",
+        "name",
+        "description",
+        "version",
+        "type",
+        "schema_version",
+        "settings",
+        "steps",
+        "metadata",
+        "auto_detect",  # Legacy: allowed at workflow level for backward compatibility
+    }
+
+    # Allowed settings fields
+    ALLOWED_SETTINGS_FIELDS = {
+        "quality_gates",
+        "code_scoring",
+        "context_tier_default",
+        "auto_detect",
+    }
+
+    # Allowed step-level fields
+    ALLOWED_STEP_FIELDS = {
+        "id",
+        "agent",
+        "action",
+        "context_tier",
+        "creates",
+        "requires",
+        "consults",
+        "condition",
+        "next",
+        "gate",
+        "optional_steps",
+        "notes",
+        "repeats",
+        "scoring",
+        "metadata",
+    }
+
+    # Allowed gate fields
+    ALLOWED_GATE_FIELDS = {
+        "condition",
+        "on_pass",
+        "on_fail",
+    }
+
+    def __init__(self, schema_version: str | None = None, strict: bool = True):
         """
         Initialize schema validator.
 
         Args:
             schema_version: Schema version to validate against (defaults to latest)
+            strict: If True, reject unknown fields (default: True)
         """
         if schema_version is None:
             schema_version = SchemaVersion.LATEST.value
@@ -59,6 +108,7 @@ class WorkflowSchemaValidator:
                 f"Supported: {', '.join(sorted(self.SUPPORTED_VERSIONS))}"
             )
         self.schema_version = schema_version
+        self.strict = strict
 
     def validate_workflow(
         self, workflow_data: dict[str, Any], file_path: Path | None = None
@@ -172,6 +222,27 @@ class WorkflowSchemaValidator:
                     workflow_content, step_ids, file_path=file_path
                 )
                 errors.extend(ref_errors)
+
+        # Strict schema enforcement: check for unknown workflow-level fields
+        if self.strict:
+            unknown_fields = self._check_unknown_fields(
+                workflow_content,
+                self.ALLOWED_WORKFLOW_FIELDS,
+                "workflow",
+                file_path=file_path,
+            )
+            errors.extend(unknown_fields)
+
+            # Check settings fields
+            settings_data = workflow_content.get("settings")
+            if isinstance(settings_data, dict):
+                settings_errors = self._check_unknown_fields(
+                    settings_data,
+                    self.ALLOWED_SETTINGS_FIELDS,
+                    "settings",
+                    file_path=file_path,
+                )
+                errors.extend(settings_errors)
 
         return errors
 
@@ -330,6 +401,29 @@ class WorkflowSchemaValidator:
                 )
             )
 
+        # Strict schema enforcement: check for unknown step fields
+        if self.strict:
+            unknown_fields = self._check_unknown_fields(
+                step_data,
+                self.ALLOWED_STEP_FIELDS,
+                "step",
+                file_path=file_path,
+                step_id=step_id,
+            )
+            errors.extend(unknown_fields)
+
+            # Check gate fields
+            gate = step_data.get("gate")
+            if isinstance(gate, dict):
+                gate_errors = self._check_unknown_fields(
+                    gate,
+                    self.ALLOWED_GATE_FIELDS,
+                    "gate",
+                    file_path=file_path,
+                    step_id=step_id,
+                )
+                errors.extend(gate_errors)
+
         return errors
 
     def _validate_cross_references(
@@ -397,4 +491,32 @@ class WorkflowSchemaValidator:
                             )
                         )
 
+        return errors
+
+    def _check_unknown_fields(
+        self,
+        data: dict[str, Any],
+        allowed_fields: set[str],
+        context: str,
+        file_path: Path | None = None,
+        step_id: str | None = None,
+    ) -> list[ValidationError]:
+        """Check for unknown/unsupported fields in strict mode."""
+        errors: list[ValidationError] = []
+        if not self.strict:
+            return errors
+
+        for field_name in data.keys():
+            if field_name not in allowed_fields:
+                errors.append(
+                    ValidationError(
+                        field=field_name,
+                        message=(
+                            f"Unknown {context} field '{field_name}'. "
+                            f"Allowed fields: {', '.join(sorted(allowed_fields))}"
+                        ),
+                        file_path=file_path,
+                        step_id=step_id,
+                    )
+                )
         return errors

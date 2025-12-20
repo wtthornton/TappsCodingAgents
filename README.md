@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-2.0.6-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.7-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -45,6 +45,7 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
 - **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases)
   - **13 Cursor Skills** (All agents available as Cursor Skills)
+  - **Simple Mode** ✅ (Streamlined interface for new users with natural language commands)
   - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
   - **Background Agents** (Offload heavy tasks to cloud/remote)
   - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with adaptive polling)
@@ -97,7 +98,70 @@ If you're using **Cursor IDE**, get started quickly:
    - Say: "Analyze project quality"
    - Say: "Run security scan"
 
+### 🎬 Try the Demo (5 minutes)
+
+**Want to see it in action?** Run our interactive demo:
+
+```bash
+# Run the automated demo script
+python demo/run_demo.py
+
+# Or follow the quick start guide
+cat demo/DEMO_QUICK_START.md
+```
+
+The demo showcases:
+- ✅ Code scoring with objective metrics
+- ✅ Code review with detailed feedback
+- ✅ Quality tools (linting, type checking)
+- ✅ Code generation workflows
+
+See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
+
+### 🎯 Simple Mode (New Users)
+
+**New to TappsCodingAgents?** Try **Simple Mode** - a streamlined, task-first interface that hides complexity while showcasing the power of the framework:
+
+1. **Enable Simple Mode:**
+   ```bash
+   tapps-agents simple-mode on
+   ```
+
+2. **Run the onboarding wizard:**
+   ```bash
+   tapps-agents simple-mode init
+   ```
+
+3. **Use natural language commands:**
+   ```bash
+   # Build new features
+   tapps-agents simple-mode build -p "Create a user authentication module"
+   
+   # Review code quality
+   tapps-agents simple-mode review --file src/main.py
+   
+   # Fix issues
+   tapps-agents simple-mode fix --file src/buggy.py -p "Fix the error"
+   
+   # Generate tests
+   tapps-agents simple-mode test --file src/api.py
+   ```
+
+4. **Or use natural language (auto-detects intent):**
+   ```bash
+   tapps-agents simple-mode run -p "Build a new REST API endpoint"
+   ```
+
+**Simple Mode Features:**
+- ✅ **Task-first interface** - Focus on what you want to achieve
+- ✅ **Natural language commands** - Use plain English
+- ✅ **Guided onboarding** - Interactive wizard for new users
+- ✅ **Zero-config mode** - Smart defaults with auto-detection
+- ✅ **Learning progression** - Unlock advanced features as you learn
+- ✅ **Friendly error handling** - Clear messages with recovery suggestions
+
 **Full Documentation:**
+- [Simple Mode Guide](docs/SIMPLE_MODE_GUIDE.md) - Complete Simple Mode documentation
 - [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)
 - [Cursor Rules Setup Guide](docs/CURSOR_RULES_SETUP.md)
 - [Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)
@@ -108,8 +172,14 @@ If you're using **Cursor IDE**, get started quickly:
 - **Code Scoring System**: Objective quality metrics (complexity, security, maintainability)
 - **Tiered Context Injection**: 90%+ token savings with intelligent caching
 - **MCP Gateway**: Unified Model Context Protocol interface for tool access
-- **YAML Workflow Definitions**: Declarative, version-controlled orchestration
+- **YAML Workflow Definitions**: Declarative, version-controlled orchestration with strict schema enforcement
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
+- **YAML-First Architecture** ✅ (Epics 6-10 Complete):
+  - **Strict Schema Enforcement** (Epic 6): All YAML structures validated and executed, no "YAML theater"
+  - **Task Manifest Generation** (Epic 7): Auto-generated task checklists from workflow YAML + state
+  - **Automated Documentation** (Epic 8): Cursor Rules auto-generated from workflow YAML
+  - **Background Agent Auto-Generation** (Epic 9): Background Agent configs auto-generated from workflow steps
+  - **Documentation Alignment** (Epic 10): All documentation aligned with YAML-first architecture
 - **Cursor AI Integration**: Complete 7-phase integration with Cursor AI
   - Cursor Skills for all 13 agents
   - Background Agents for heavy tasks
@@ -118,6 +188,17 @@ If you're using **Cursor IDE**, get started quickly:
   - NUC optimization for low-power hardware
 
 ## Current Status (January 2026)
+
+🎉 **YAML-FIRST ARCHITECTURE COMPLETE** 🎉 (Epics 6-10)
+
+✅ **YAML Schema Enforcement & Generated Artifacts** (Epics 6-10, January 2025)
+- **Epic 6: YAML Schema Enforcement** ✅ - Strict schema validation, removed `parallel_tasks`, eliminated "YAML theater"
+- **Epic 7: Task Manifest Generation** ✅ - Auto-generated task checklists from workflow YAML + state
+- **Epic 8: Automated Documentation Generation** ✅ - Cursor Rules auto-generated from workflow YAML
+- **Epic 9: Background Agent Auto-Generation** ✅ - Background Agent configs auto-generated from workflow steps
+- **Epic 10: Documentation Cleanup & Alignment** ✅ - All documentation aligned with YAML-first architecture
+- **YAML is now the single source of truth** - All derived artifacts (manifests, docs, configs) are auto-generated
+- See [YAML Workflow Architecture Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md) for details
 
 🎉 **PHASE 5 EXPERT FRAMEWORK ENHANCEMENT COMPLETE** 🎉
 
@@ -209,6 +290,9 @@ If you're using **Cursor IDE**, get started quickly:
 - **Unified Cache Architecture** ✅ (Single interface for all caching systems with hardware auto-detection)
 - **MCP Gateway** (Unified tool access with filesystem, Git, and analysis servers)
 - **YAML Workflow Definitions** (Parser, executor, artifact tracking, conditional steps)
+  - **YAML-First Architecture** ✅ (Epics 6-10): YAML as single source of truth with strict schema enforcement
+  - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs, Background Agent configs
+  - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies (no `parallel_tasks`)
 - **Industry Experts Framework** (Weighted decision-making, domain configuration, expert registry)
 - **Configuration-Only Experts** (YAML-based expert definition, no code classes required)
 - **Simple File-Based RAG** (Knowledge base retrieval for experts)
@@ -344,6 +428,7 @@ TappsCodingAgents/
 
 ### Getting Started
 - **[Quick Start Guide](docs/guides/QUICK_START.md)** - 🚀 Get started in 10 minutes
+- **[Simple Mode Guide](docs/SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users (task-first, natural language)
 - **[Cursor AI Integration Plan 2025](docs/CURSOR_AI_INTEGRATION_PLAN_2025.md)** - Complete integration roadmap (all 7 phases complete)
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and use Cursor Skills
 - **[Documentation Index](docs/README.md)** - Complete documentation overview
@@ -360,9 +445,11 @@ TappsCodingAgents/
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills
 - **[Custom Skills Guide](docs/CUSTOM_SKILLS_GUIDE.md)** - Create, validate, and manage custom Skills
-- **[Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks
+- **[Cursor Rules Setup Guide](docs/CURSOR_RULES_SETUP.md)** - Cursor Rules setup (auto-generated from YAML workflows)
+- **[Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks (configs auto-generated from workflows)
 - **[Background Agent Auto-Execution Guide](docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md)** - Automatic workflow execution
 - **[Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
+- **[YAML Workflow Architecture Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts
 - **[Unified Cache Architecture](implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Single interface for all caching systems
 - **[Unified Cache Integration Guide](implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
 - **[Context7 Cache Optimization](docs/CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates
@@ -390,7 +477,7 @@ TappsCodingAgents/
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 2.0.6  
+**Version**: 2.0.7  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-from ...core.config import ProjectConfig
+from tapps_agents.core.config import ProjectConfig
 
 if TYPE_CHECKING:
     from ..intent_parser import Intent

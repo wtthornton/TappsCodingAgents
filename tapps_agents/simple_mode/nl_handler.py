@@ -8,7 +8,7 @@ Works both in CLI mode and Cursor Skills mode.
 from pathlib import Path
 from typing import Any
 
-from ...core.config import ProjectConfig, load_config
+from tapps_agents.core.config import ProjectConfig, load_config
 from .intent_parser import Intent, IntentParser, IntentType
 from .orchestrators import (
     BuildOrchestrator,

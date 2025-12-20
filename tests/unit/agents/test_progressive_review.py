@@ -370,7 +370,6 @@ class TestProgressiveReviewSerialization:
             task_title="Test Task",
             reviewed_at=datetime(2025, 12, 18, 10, 30, 0),
             reviewer="Test Reviewer",
-            model="test-model",
             decision=ReviewDecision.CONCERNS,
             decision_reason="Test reason",
             findings=[

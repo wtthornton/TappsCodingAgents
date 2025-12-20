@@ -77,6 +77,9 @@ class EnhancerAgent(BaseAgent):
         # Context manager
         self.context_manager = ContextManager()
 
+        # Skill invoker for executing Cursor Skills when possible
+        self.skill_invoker = None  # Lazy load
+
         # Enhancement state
         self.current_session: dict[str, Any] | None = None
 
@@ -84,6 +87,13 @@ class EnhancerAgent(BaseAgent):
         """Activate the enhancer agent."""
         await super().activate(project_root)
         await self.analyst.activate(project_root)
+
+        # Initialize skill invoker if available
+        try:
+            from ...workflow.skill_invoker import SkillInvoker
+            self.skill_invoker = SkillInvoker(project_root=project_root, use_api=False)
+        except Exception:
+            logger.debug("SkillInvoker not available; skills will be prepared but not executed")
 
         # Load expert registry if domains.md exists
         if project_root:
@@ -641,6 +651,25 @@ Provide structured JSON response."""
             if "error" not in requirements_result
             else {}
         )
+        
+        # Try to execute the skill if we have a skill invoker and instruction
+        if self.skill_invoker and "requirements" in requirements_result:
+            req_data = requirements_result["requirements"]
+            if "skill_command" in req_data:
+                try:
+                    # Try to execute the skill command
+                    skill_result = await self._try_execute_skill(
+                        req_data["skill_command"],
+                        worktree_path=self.config.project_root or Path.cwd(),
+                    )
+                    # If we got a result, merge it into requirements
+                    if skill_result and "result" in skill_result:
+                        # Try to extract actual requirements from the result
+                        parsed_req = self._parse_requirements_from_result(skill_result["result"])
+                        if parsed_req:
+                            requirements.update(parsed_req)
+                except Exception as e:
+                    logger.debug(f"Failed to execute skill: {e}", exc_info=True)
 
         # Consult experts if available
         expert_consultations = {}

@@ -19,7 +19,7 @@ class TestBaseExpertWithProfile:
     """Test BaseExpert integration with project profile."""
 
     @pytest.mark.asyncio
-    async def test_expert_uses_profile_in_prompt(self, mock_mal):
+    async def test_expert_uses_profile_in_prompt(self):
         """Test that expert includes project profile in consultation prompt."""
         expert = BaseExpert(
             expert_id="expert-test",
@@ -27,7 +27,6 @@ class TestBaseExpertWithProfile:
             primary_domain="security",
             rag_enabled=False,
         )
-        expert.mal = mock_mal
 
         profile = ProjectProfile(
             deployment_type="cloud",
@@ -57,7 +56,7 @@ class TestBaseExpertWithProfile:
         assert "project context" in prompt.lower()
 
     @pytest.mark.asyncio
-    async def test_expert_works_without_profile(self, mock_mal):
+    async def test_expert_works_without_profile(self):
         """Test that expert works when no profile is provided."""
         expert = BaseExpert(
             expert_id="expert-test",
@@ -65,7 +64,6 @@ class TestBaseExpertWithProfile:
             primary_domain="security",
             rag_enabled=False,
         )
-        expert.mal = mock_mal
 
         # Should work without profile
         prompt = await expert._build_consultation_prompt(
@@ -84,7 +82,7 @@ class TestExpertRegistryWithProfile:
     """Test ExpertRegistry integration with project profile."""
 
     @pytest.mark.asyncio
-    async def test_registry_loads_profile(self, mock_mal):
+    async def test_registry_loads_profile(self):
         """Test that ExpertRegistry loads project profile."""
         with TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
@@ -110,7 +108,7 @@ class TestExpertRegistryWithProfile:
             assert loaded_profile.security_level == "high"
 
     @pytest.mark.asyncio
-    async def test_registry_passes_profile_to_experts(self, mock_mal):
+    async def test_registry_passes_profile_to_experts(self):
         """Test that ExpertRegistry passes profile to experts during consultation."""
         registry = ExpertRegistry(load_builtin=False)
 
@@ -141,7 +139,7 @@ class TestExpertRegistryWithProfile:
         assert call_kwargs["project_profile"] == profile
 
     @pytest.mark.asyncio
-    async def test_registry_handles_missing_profile(self, mock_mal):
+    async def test_registry_handles_missing_profile(self):
         """Test that ExpertRegistry handles missing profile gracefully."""
         registry = ExpertRegistry(load_builtin=False)
 
@@ -254,7 +252,7 @@ class TestEndToEndProfileIntegration:
     """End-to-end tests for profile integration."""
 
     @pytest.mark.asyncio
-    async def test_full_consultation_flow_with_profile(self, mock_mal):
+    async def test_full_consultation_flow_with_profile(self):
         """Test full consultation flow with project profile."""
         with TemporaryDirectory() as tmpdir:
             project_root = Path(tmpdir)
@@ -286,7 +284,6 @@ class TestEndToEndProfileIntegration:
                 primary_domain="security",
                 rag_enabled=False,
             )
-            expert.mal = mock_mal
             registry.register_expert(expert, is_builtin=False)
 
             # Consult
@@ -301,7 +298,7 @@ class TestEndToEndProfileIntegration:
             assert registry._cached_profile is not None
 
     @pytest.mark.asyncio
-    async def test_profile_affects_confidence(self, mock_mal):
+    async def test_profile_affects_confidence(self):
         """Test that project profile affects confidence calculation."""
         registry = ExpertRegistry(load_builtin=False)
 
@@ -312,7 +309,6 @@ class TestEndToEndProfileIntegration:
             primary_domain="architecture",
             rag_enabled=False,
         )
-        expert.mal = mock_mal
 
         # Mock the run method to return specific answer
         async def mock_run(command, **kwargs):

@@ -137,6 +137,41 @@ python -m tapps_agents.cli workflow quality
 python -m tapps_agents.cli workflow hotfix
 ```
 
+### Simple Mode (New Users)
+
+**New to TappsCodingAgents?** Try **Simple Mode** - a streamlined interface that hides complexity:
+
+```bash
+# Enable Simple Mode
+tapps-agents simple-mode on
+
+# Run onboarding wizard
+tapps-agents simple-mode init
+
+# Build new features (natural language)
+tapps-agents simple-mode build -p "Create a user authentication module"
+
+# Review code quality
+tapps-agents simple-mode review --file src/main.py
+
+# Fix issues
+tapps-agents simple-mode fix --file src/buggy.py -p "Fix the error"
+
+# Generate tests
+tapps-agents simple-mode test --file src/api.py
+
+# Auto-detect intent from natural language
+tapps-agents simple-mode run -p "Build a new REST API endpoint"
+
+# Check Simple Mode status
+tapps-agents simple-mode status
+
+# View learning progression
+tapps-agents simple-mode progress
+```
+
+See [Simple Mode Guide](../SIMPLE_MODE_GUIDE.md) for complete documentation.
+
 ### Set up experts (optional)
 
 ```bash
@@ -198,6 +233,7 @@ Then see `docs/CONFIGURATION.md` for the full schema.
 
 ## Next Steps
 
+- **[Simple Mode Guide](../SIMPLE_MODE_GUIDE.md)** - 🎯 Start with Simple Mode if you're new
 - `docs/API.md`
 - `docs/CONFIGURATION.md`
 - `docs/WORKFLOW_SELECTION_GUIDE.md`

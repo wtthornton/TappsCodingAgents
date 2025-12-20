@@ -30,32 +30,26 @@ Multi-Agent Orchestration enables parallel execution of multiple agents, signifi
 
 ### Workflow Structure
 
-Multi-agent workflows are defined in YAML format with `parallel_execution: true`:
+Multi-agent workflows are defined in YAML format using standard `steps` with dependency-based parallelism:
 
 ```yaml
 workflow:
   id: multi-agent-review-and-test
   name: "Multi-Agent Review and Test Workflow"
-  parallel_execution: true
+  version: "2.0"
   
-  settings:
-    max_parallel_agents: 8
-    use_worktrees: true
-    aggregate_results: true
-    performance_monitoring: true
-  
-  parallel_tasks:
-    - agent_id: auth-reviewer
+  steps:
+    - id: auth-reviewer
       agent: reviewer
-      command: review
-      target: services/auth/
-      worktree: auth-review
+      action: review_code
+      requires: []  # No dependencies = runs immediately in parallel
+      creates: [auth-review-report.json]
       
-    - agent_id: api-reviewer
+    - id: api-reviewer
       agent: reviewer
-      command: review
-      target: services/api/
-      worktree: api-review
+      action: review_code
+      requires: []  # No dependencies = runs in parallel with auth-reviewer
+      creates: [api-review-report.json]
 ```
 
 ### Available Multi-Agent Workflows
@@ -264,20 +258,21 @@ Break tasks into independent, parallelizable units:
 
 ### 3. Dependency Management
 
-Use `depends_on` to handle dependencies:
+Use `requires` dependencies to handle step ordering:
 
 ```yaml
-parallel_tasks:
-  - agent_id: refactor
+steps:
+  - id: refactor
     agent: improver
-    command: refactor
-    target: services/auth/
+    action: refactor_code
+    requires: []
+    creates: [services/auth/]
     
-  - agent_id: review
+  - id: review
     agent: reviewer
-    command: review
-    target: services/auth/
-    depends_on: [refactor]  # Wait for refactor to complete
+    action: review_code
+    requires: [services/auth/]  # Wait for refactor to complete
+    creates: [review-report.json]
 ```
 
 ### 4. Resource Management
@@ -327,9 +322,9 @@ python -m tapps_agents.cli orchestrator workflow-start multi-agent-refactor
 
 ### Agents Not Running in Parallel
 
-1. **Check Configuration**: Verify `parallel_execution: true` in workflow
-2. **Check Limits**: Ensure `max_parallel_agents` is set correctly
-3. **Check Dependencies**: Remove unnecessary `depends_on` constraints
+1. **Check Dependencies**: Steps with no `requires` dependencies run in parallel automatically
+2. **Check Limits**: Default max parallel is 8 steps (configurable via `ParallelStepExecutor`)
+3. **Check Dependencies**: Remove unnecessary `requires` constraints to enable parallelism
 
 ### File Conflicts
 
@@ -339,7 +334,7 @@ python -m tapps_agents.cli orchestrator workflow-start multi-agent-refactor
 
 ### Performance Issues
 
-1. **Too Many Agents**: Reduce `max_parallel_agents`
+1. **Too Many Parallel Steps**: Reduce `max_parallel` in `ParallelStepExecutor` (default: 8)
 2. **Resource Limits**: Check CPU/memory usage
 3. **I/O Bottlenecks**: Consider disk I/O limits
 
@@ -354,29 +349,30 @@ Create custom workflow in `workflows/`:
 ```yaml
 workflow:
   id: custom-multi-agent
-  parallel_execution: true
+  name: "Custom Multi-Agent Workflow"
+  version: "2.0"
   
-  settings:
-    max_parallel_agents: 6
-    use_worktrees: true
-  
-  parallel_tasks:
-    - agent_id: task1
+  steps:
+    - id: task1
       agent: reviewer
-      command: review
-      target: path/to/target
+      action: review_code
+      requires: []  # No dependencies = runs immediately
+      creates: [task1-report.json]
+    
+    - id: task2
+      agent: reviewer
+      action: review_code
+      requires: []  # Runs in parallel with task1
+      creates: [task2-report.json]
 ```
 
 ### Performance Tuning
 
-Adjust parallelism based on system:
+Parallelism is controlled by the `ParallelStepExecutor` class (default: 8 concurrent steps). To adjust:
 
-```yaml
-settings:
-  max_parallel_agents: 4  # For slower systems
-  # or
-  max_parallel_agents: 12  # For powerful systems
-```
+- Modify `max_parallel` parameter in `ParallelStepExecutor` initialization
+- Steps automatically run in parallel when dependencies allow (up to the limit)
+- No workflow-level configuration needed - parallelism is automatic based on dependencies
 
 ---
 

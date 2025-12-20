@@ -1,0 +1,134 @@
+﻿
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentDebugCommand::test_debug_command_missing_error_message 
+PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_success 
+PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_missing_erro
+r_message FAILED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_with_stack_t
+race PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_with_code_co
+ntext PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentAnalyzeErrorCommand::test_analyze_error_command_method 
+PASSED [  0%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentErrorHandling::test_unknown_command PASSED [  1%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentErrorHandling::test_help_command PASSED [  1%]
+tests/unit/agents/test_debugger_agent.py::TestDebuggerAgentErrorHandling::test_debug_command_path_validation_error 
+FAILED [  1%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentEnhanceCommand::test_enhance_command_success FAILED [  1%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentEnhanceCommand::test_enhance_command_with_output_file 
+FAILED [  1%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentEnhanceQuickCommand::test_enhance_quick_command_success 
+FAILED [  1%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentEnhanceResumeCommand::test_enhance_resume_command_success 
+FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_create_session FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_analysis FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_requirements FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_architecture FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_codebase_context FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_quality FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_stage_implementation FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_format_output_markdown FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentHelperMethods::test_format_output_json FAILED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentErrorHandling::test_unknown_command PASSED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentErrorHandling::test_help_command PASSED [  2%]
+tests/unit/agents/test_enhancer_agent.py::TestEnhancerAgentErrorHandling::test_enhance_command_exception_handling 
+PASSED [  2%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentRefactorCommand::test_refactor_method_read_error 
+PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_unknown_command PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_help_command PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_implement_code_generation_error 
+PASSED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentErrorHandling::test_refactor_preparation_error PASSED 
+[  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentReviewIntegration::test_review_code_lazy_initializatio
+n FAILED [  4%]
+tests/unit/agents/test_implementer_agent.py::TestImplementerAgentReviewIntegration::test_review_code_error_handling 
+PASSED [  4%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandling::test_review_command_scorer_error PASSED [  
+5%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentLintCommand::test_lint_command_file_not_found FAILED [  5%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentTypeCheckCommand::test_type_check_command_file_not_found 
+FAILED [  5%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentAnalyzeProjectCommand::test_analyze_project_command_success 
+FAILED [  6%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentAnalyzeServicesCommand::test_analyze_services_command_succes
+s FAILED [  6%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentReviewFileMethod::test_review_file_unicode_error PASSED [  
+7%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentDependencySecurity::test_get_dependency_security_penalty_aud
+it_error PASSED [  7%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandlingExtended::test_review_command_missing_file_para
+m PASSED [  7%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandlingExtended::test_score_command_missing_file_param
+ PASSED [  7%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandlingExtended::test_unknown_command PASSED [  7%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandlingExtended::test_help_command PASSED [  7%]
+tests/unit/agents/test_reviewer_agent.py::TestReviewerAgentErrorHandlingExtended::test_review_file_path_traversal_prote
+ction PASSED [  7%]
+tests/unit/agents/test_tester_agent.py::TestTesterAgentGenerateE2ETestsCommand::test_generate_e2e_tests_command_success
+ FAILED [  8%]
+tests/unit/agents/test_tester_agent.py::TestTesterAgentGenerateE2ETestsCommand::test_generate_e2e_tests_command_no_fram
+ework FAILED [  8%]
+tests/unit/agents/test_tester_agent.py::TestTesterAgentGenerateE2ETestsCommand::test_generate_e2e_tests_command_method 
+FAILED [  8%]
+tests/unit/agents/test_tester_agent.py::TestTesterAgentErrorHandling::test_unknown_command PASSED [  9%]
+tests/unit/agents/test_tester_agent.py::TestTesterAgentErrorHandling::test_help_command PASSED [  9%]
+tests/unit/agents/test_tester_agent.py::TestTesterAgentErrorHandling::test_test_command_path_validation_error PASSED [ 
+ 9%]
+tests/unit/cli/test_cli.py::TestReviewCommand::test_review_command_file_not_found FAILED [  9%]
+tests/unit/cli/test_cli.py::TestReviewCommand::test_review_command_success_json FAILED [  9%]
+tests/unit/cli/test_cli.py::TestReviewCommand::test_review_command_success_text FAILED [  9%]
+tests/unit/cli/test_cli.py::TestReviewCommand::test_review_command_error_handling FAILED [  9%]
+tests/unit/cli/test_cli.py::TestScoreCommand::test_score_command_file_not_found FAILED [  9%]
+tests/unit/cli/test_cli.py::TestScoreCommand::test_score_command_success_json FAILED [  9%]
+tests/unit/cli/test_cli_base.py::TestFormatOutput::test_format_output_json_dict FAILED [ 10%]
+tests/unit/cli/test_cli_base.py::TestFormatOutput::test_format_output_json_string FAILED [ 10%]
+tests/unit/cli/test_cli_base.py::TestFormatErrorOutput::test_format_error_output_json FAILED [ 10%]
+tests/unit/cli/test_cli_base.py::TestFormatErrorOutput::test_format_error_output_json_with_details FAILED [ 10%]
+tests/unit/cli/test_cli_base.py::TestFormatErrorOutput::test_format_error_output_text PASSED [ 10%]
+tests/unit/cli/test_cli_base.py::TestFormatErrorOutput::test_format_error_output_text_with_details PASSED [ 10%]
+tests/unit/cli/test_cli_base.py::TestHandleAgentError::test_handle_agent_error_no_error PASSED [ 10%]
+tests/unit/cli/test_cli_base.py::TestHandleAgentError::test_handle_agent_error_with_error_json FAILED [ 10%]
+tests/unit/cli/test_cli_base.py::TestHandleAgentError::test_handle_agent_error_with_error_text PASSED [ 10%]
+tests/unit/cli/test_cli_base.py::TestHandleAgentError::test_handle_agent_error_custom_exit_code PASSED [ 10%]
+tests/unit/cli/test_cli_base.py::TestRunAgentCommand::test_run_agent_command_exit_on_error PASSED [ 11%]
+tests/unit/cli/test_cli_base.py::TestRunAgentCommand::test_run_agent_command_no_exit_on_error PASSED [ 11%]
+tests/unit/cli/test_commands.py::TestCommonCommands::test_handle_error_string PASSED [ 11%]
+tests/unit/cli/test_commands.py::TestCommonCommands::test_handle_error_dict PASSED [ 11%]
+tests/unit/cli/test_commands.py::TestCommonCommands::test_check_result_error_no_error PASSED [ 11%]
+tests/unit/cli/test_commands.py::TestCommonCommands::test_check_result_error_with_error PASSED [ 11%]
+tests/unit/cli/test_commands.py::TestReviewerCommands::test_review_command_error_handling PASSED [ 12%]
+tests/unit/cli/test_commands.py::TestTopLevelCommands::test_hardware_profile_command_get FAILED [ 12%]
+tests/unit/cli/test_commands.py::TestTopLevelCommands::test_hardware_profile_command_set FAILED [ 12%]
+tests/unit/cli/test_commands.py::TestTopLevelCommands::test_hardware_profile_command_invalid_profile FAILED [ 12%]
+tests/unit/cli/test_commands.py::TestTopLevelCommands::test_score_command_shortcut FAILED [ 12%]
+tests/unit/cli/test_commands.py::TestTopLevelCommands::test_doctor_command FAILED [ 12%]
+tests/unit/cli/test_commands.py::TestTopLevelCommands::test_doctor_command_json FAILED [ 12%]
+tests/unit/cli/test_parsers.py::TestReviewerParser::test_reviewer_parser_aliases FAILED [ 13%]
+tests/unit/cli/test_parsers.py::TestPlannerParser::test_planner_parser_registration FAILED [ 13%]
+tests/unit/cli/test_parsers.py::TestImplementerParser::test_implementer_parser_registration FAILED [ 13%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_debugger_parser_registration FAILED [ 13%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_analyst_parser_registration FAILED [ 13%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_architect_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_designer_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_documenter_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_enhancer_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_improver_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_ops_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestOtherAgentParsers::test_orchestrator_parser_registration FAILED [ 14%]
+tests/unit/cli/test_parsers.py::TestParserErrorHandling::test_invalid_command_raises_error PASSED [ 14%]
+tests/unit/cli/test_parsers.py::TestParserErrorHandling::test_missing_required_argument_raises_error PASSED [ 14%]
+tests/unit/cli/test_parsers.py::TestParserErrorHandling::test_invalid_format_raises_error PASSED [ 14%]
+tests/unit/cli/test_workflow_recommend.py::TestWorkflowRecommendCommand::test_recommend_command_error_handling PASSED 
+[ 15%]
+tests/unit/context7/test_analytics_dashboard.py::TestAnalyticsDashboard::test_analytics_dashboard_record_skill_usage 
+FAILED [ 17%]
+tests/unit/context7/test_analytics_dashboard.py::TestAnalyticsDashboard::test_analytics_dashboard_get_dashboard_metrics
+ FAILED [ 17%]
+tests/unit/context7/test_analytics_dashboard.py::TestAnalyticsDashboard::test_analytics_dashboard_save_skill_usage 
+FAILED [ 17%]
+
+

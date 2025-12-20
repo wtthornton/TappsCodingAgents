@@ -199,6 +199,56 @@ quality_tools:
   dependency_audit_threshold: "high"   # low | medium | high | critical
 ```
 
+### Simple Mode Configuration
+
+Simple Mode provides a streamlined, task-first interface for new users, hiding complexity while showcasing the power of TappsCodingAgents.
+
+```yaml
+simple_mode:
+  enabled: false                      # Enable Simple Mode
+  default_orchestrator: "build"      # Default orchestrator (build, review, fix, test)
+  onboarding_enabled: true           # Enable guided onboarding wizard
+  natural_language_enabled: true     # Enable natural language command processing
+  progressive_disclosure_enabled: true # Gradually reveal advanced features
+  auto_detect_project_type: true    # Automatically detect project type
+  show_advanced_tips: true            # Show tips for advanced features
+  max_history_entries: 10            # Maximum command history entries
+  feedback_collection_enabled: true  # Enable anonymous feedback collection
+```
+
+**Configuration Options:**
+
+- `enabled`: Enable or disable Simple Mode (default: `false`)
+- `default_orchestrator`: Default orchestrator to use when intent is ambiguous (`build`, `review`, `fix`, `test`)
+- `onboarding_enabled`: Enable the interactive onboarding wizard (`tapps-agents simple-mode init`)
+- `natural_language_enabled`: Enable natural language command parsing
+- `progressive_disclosure_enabled`: Gradually reveal advanced features as users gain experience
+- `auto_detect_project_type`: Automatically detect project type for tailored suggestions
+- `show_advanced_tips`: Show tips for advanced features as users progress
+- `max_history_entries`: Maximum number of command history entries to store (1-100)
+- `feedback_collection_enabled`: Enable anonymous feedback collection for UX improvements
+
+**Usage:**
+
+```bash
+# Enable Simple Mode
+tapps-agents simple-mode on
+
+# Run onboarding wizard
+tapps-agents simple-mode init
+
+# Use Simple Mode commands
+tapps-agents simple-mode build -p "Create a new feature"
+tapps-agents simple-mode review --file src/main.py
+tapps-agents simple-mode fix --file src/buggy.py
+tapps-agents simple-mode test --file src/api.py
+
+# Auto-detect intent
+tapps-agents simple-mode run -p "Build a REST API endpoint"
+```
+
+See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
+
 ## Default Values
 
 If no configuration file is provided, defaults are loaded from the Pydantic models in `tapps_agents/core/config.py`.
