@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """
 TappsCodingAgents Interactive Demo Script
 
@@ -12,6 +13,12 @@ import shutil
 from pathlib import Path
 from typing import Optional
 
+# Fix Windows encoding issues
+if sys.platform == 'win32':
+    import io
+    sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
+    sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8', errors='replace')
+
 
 def print_header(text: str):
     """Print a formatted header."""
@@ -24,6 +31,21 @@ def print_step(step_num: int, text: str):
     """Print a formatted step."""
     print(f"\n[Step {step_num}] {text}")
     print("-" * 70)
+
+
+def get_cli_command() -> list[str]:
+    """Get the CLI command, using module invocation as fallback."""
+    # Try direct command first
+    try:
+        result = subprocess.run(["tapps-agents", "--version"], 
+                              capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            return ["tapps-agents"]
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+    
+    # Fallback to module invocation
+    return [sys.executable, "-m", "tapps_agents.cli"]
 
 
 def run_command(cmd: list[str], check: bool = True) -> subprocess.CompletedProcess:
@@ -43,22 +65,20 @@ def check_prerequisites() -> bool:
     # Check Python version
     python_version = sys.version_info
     if python_version.major < 3 or (python_version.major == 3 and python_version.minor < 13):
-        print("❌ Python 3.13+ required")
+        print("[X] Python 3.13+ required")
         print(f"   Current version: {python_version.major}.{python_version.minor}")
         return False
-    print(f"✅ Python {python_version.major}.{python_version.minor}.{python_version.micro}")
+    print(f"[OK] Python {python_version.major}.{python_version.minor}.{python_version.micro}")
     
-    # Check if tapps-agents is installed
-    try:
-        result = run_command(["tapps-agents", "--version"], check=False)
-        if result.returncode == 0:
-            print("✅ TappsCodingAgents installed")
-        else:
-            print("❌ TappsCodingAgents not found")
-            print("   Install with: pip install -e .")
-            return False
-    except FileNotFoundError:
-        print("❌ TappsCodingAgents CLI not found")
+    # Check if tapps-agents is installed (try both CLI and module)
+    cli_cmd = get_cli_command()
+    result = run_command(cli_cmd + ["--version"], check=False)
+    if result.returncode == 0:
+        print("[OK] TappsCodingAgents installed")
+        if cli_cmd[0] != "tapps-agents":
+            print("   (Using module invocation: python -m tapps_agents.cli)")
+    else:
+        print("[X] TappsCodingAgents not found")
         print("   Install with: pip install -e .")
         return False
     
@@ -112,7 +132,7 @@ def process_data(data):
     
     calculator_file = sample_code_dir / "calculator.py"
     calculator_file.write_text(calculator_code)
-    print(f"✅ Created {calculator_file}")
+    print(f"[OK] Created {calculator_file}")
     
     # Create a simple API file
     api_code = '''"""Simple REST API example."""
@@ -154,7 +174,7 @@ class TaskAPI:
     
     api_file = sample_code_dir / "api.py"
     api_file.write_text(api_code)
-    print(f"✅ Created {api_file}")
+    print(f"[OK] Created {api_file}")
 
 
 def demo_code_scoring(demo_dir: Path):
@@ -166,9 +186,11 @@ def demo_code_scoring(demo_dir: Path):
     print("\nRunning code scoring on calculator.py...")
     print("This shows objective quality metrics (5 dimensions).\n")
     
-    result = run_command([
-        "tapps-agents", "score", str(calculator_file)
-    ], check=False)
+    cli_cmd = get_cli_command()
+    result = run_command(
+        cli_cmd + ["score", str(calculator_file)],
+        check=False
+    )
     
     print(result.stdout)
     if result.stderr:
@@ -184,9 +206,11 @@ def demo_code_review(demo_dir: Path):
     print("\nRunning full code review...")
     print("This provides detailed feedback with specific issues.\n")
     
-    result = run_command([
-        "tapps-agents", "reviewer", "review", str(calculator_file)
-    ], check=False)
+    cli_cmd = get_cli_command()
+    result = run_command(
+        cli_cmd + ["reviewer", "review", str(calculator_file)],
+        check=False
+    )
     
     print(result.stdout)
     if result.stderr:
@@ -197,16 +221,20 @@ def demo_quality_tools(demo_dir: Path):
     """Demonstrate quality tools."""
     print_step(5, "Quality Tools Demo")
     
+    cli_cmd = get_cli_command()
+    
     print("\nRunning linting (Ruff)...")
-    result = run_command([
-        "tapps-agents", "reviewer", "lint", str(demo_dir / "src")
-    ], check=False)
+    result = run_command(
+        cli_cmd + ["reviewer", "lint", str(demo_dir / "src")],
+        check=False
+    )
     print(result.stdout)
     
     print("\nRunning type checking (mypy)...")
-    result = run_command([
-        "tapps-agents", "reviewer", "type-check", str(demo_dir / "src")
-    ], check=False)
+    result = run_command(
+        cli_cmd + ["reviewer", "type-check", str(demo_dir / "src")],
+        check=False
+    )
     print(result.stdout)
 
 
@@ -222,9 +250,13 @@ def demo_code_generation(demo_dir: Path):
 
 def main():
     """Main demo function."""
-    print_header("TappsCodingAgents Interactive Demo")
+    # Save original working directory
+    original_cwd = Path.cwd()
     
-    print("""
+    try:
+        print_header("TappsCodingAgents Interactive Demo")
+        
+        print("""
 This demo will show you:
   1. Code scoring with objective metrics
   2. Code review with detailed feedback
@@ -233,53 +265,59 @@ This demo will show you:
 
 Let's get started!
 """)
-    
-    # Check prerequisites
-    if not check_prerequisites():
-        print("\n❌ Prerequisites not met. Please install required components.")
-        sys.exit(1)
-    
-    # Create demo project
-    demo_dir = Path.cwd() / "demo_output"
-    print_step(1, "Creating Demo Project")
-    demo_dir = create_demo_project(demo_dir)
-    os.chdir(demo_dir)
-    print(f"✅ Demo project created at: {demo_dir}")
-    
-    # Initialize project
-    print("\nInitializing TappsCodingAgents project...")
-    run_command(["tapps-agents", "init"], check=False)
-    
-    # Create sample code
-    create_sample_code(demo_dir)
-    
-    # Run demos
-    demo_code_scoring(demo_dir)
-    
-    input("\nPress Enter to continue to code review demo...")
-    demo_code_review(demo_dir)
-    
-    input("\nPress Enter to continue to quality tools demo...")
-    demo_quality_tools(demo_dir)
-    
-    # Wrap up
-    print_header("Demo Complete!")
-    
-    print(f"""
+        
+        # Check prerequisites
+        if not check_prerequisites():
+            print("\n[X] Prerequisites not met. Please install required components.")
+            sys.exit(1)
+        
+        # Create demo project
+        demo_dir = original_cwd / "demo_output"
+        print_step(1, "Creating Demo Project")
+        demo_dir = create_demo_project(demo_dir)
+        os.chdir(demo_dir)
+        print(f"[OK] Demo project created at: {demo_dir}")
+        
+        # Initialize project
+        print("\nInitializing TappsCodingAgents project...")
+        cli_cmd = get_cli_command()
+        run_command(cli_cmd + ["init"], check=False)
+        
+        # Create sample code
+        create_sample_code(demo_dir)
+        
+        # Run demos
+        demo_code_scoring(demo_dir)
+        
+        input("\nPress Enter to continue to code review demo...")
+        demo_code_review(demo_dir)
+        
+        input("\nPress Enter to continue to quality tools demo...")
+        demo_quality_tools(demo_dir)
+        
+        # Wrap up
+        print_header("Demo Complete!")
+        
+        cli_example = "tapps-agents" if get_cli_command()[0] == "tapps-agents" else "python -m tapps_agents.cli"
+        
+        print(f"""
 Demo project created at: {demo_dir}
 
 Next steps:
   1. Explore the generated code in {demo_dir}/src/
   2. Try running more commands:
-     - tapps-agents reviewer report . json markdown html
-     - tapps-agents tester test src/calculator.py
-     - tapps-agents workflow rapid --prompt "Add feature X"
+     - {cli_example} reviewer report . json markdown html
+     - {cli_example} tester test src/calculator.py
+     - {cli_example} workflow rapid --prompt "Add feature X"
   
-  3. Read the full demo plan: docs/DEMO_PLAN.md
-  4. Check out the documentation: docs/
+  3. Read the full demo plan: {original_cwd}/docs/DEMO_PLAN.md
+  4. Check out the documentation: {original_cwd}/docs/
   
 Thank you for trying TappsCodingAgents!
 """)
+    finally:
+        # Restore original working directory
+        os.chdir(original_cwd)
 
 
 if __name__ == "__main__":

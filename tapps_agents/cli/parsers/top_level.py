@@ -184,12 +184,7 @@ Example: tapps-agents workflow hotfix --file example_bug.py --auto""",
         description="Alias for 'fix' workflow - focused on code maintenance, bug fixes, and technical debt reduction. Emphasizes targeted analysis, safe refactoring, and regression testing. Use for improving existing code without adding new features.",
         parents=[common_workflow_args],
     )
-    workflow_subparsers.add_parser(
-        "improve",
-        help="Quality Improvement (alias for 'quality' workflow)",
-        description="Alias for 'quality' workflow - comprehensive code quality improvement cycle. Runs full analysis, scoring, linting, and generates detailed quality reports. Focuses on improving existing code quality metrics without changing functionality.",
-        parents=[common_workflow_args],
-    )
+    # Note: "improve" parser already added above (line 145), skipping duplicate
     workflow_subparsers.add_parser(
         "urgent",
         help="Quick Fix (alias for 'hotfix' workflow)",
