@@ -59,7 +59,36 @@ tapps-agents reviewer review src/calculator.py
 tapps-agents reviewer report . json markdown html
 ```
 
-## Option 3: Simple Mode Demo
+## Option 3: YAML Workflow Demo (Cursor + YAML)
+
+**Best for:** Understanding how YAML workflows work with Cursor Skills
+
+```bash
+# 1. Initialize project
+tapps-agents init
+
+# 2. View available YAML workflows
+ls workflows/presets/
+cat workflows/presets/rapid-dev.yaml
+
+# 3. Run a YAML workflow with Cursor Skills (if in Cursor IDE)
+tapps-agents workflow rapid --prompt "Create a REST API for tasks" --cursor-mode
+
+# Or use Cursor Skills directly in Cursor chat:
+# @orchestrator *workflow rapid --prompt "Create a REST API for tasks"
+
+# 4. Check generated artifacts
+ls stories/ src/ tests/
+cat .tapps-agents/workflow-state/*/task-manifest.md
+```
+
+**Key Points:**
+- ✅ Workflows are defined in YAML files (`workflows/presets/*.yaml`)
+- ✅ Each step uses Cursor Skills (`@planner`, `@implementer`, `@reviewer`, etc.)
+- ✅ Framework executes YAML workflow, Cursor handles LLM operations
+- ✅ Artifacts are auto-generated from YAML workflow state
+
+## Option 4: Simple Mode Demo
 
 For new users, try Simple Mode:
 
@@ -76,6 +105,8 @@ tapps-agents simple-mode review --file src/api/tasks.py
 # Generate tests
 tapps-agents simple-mode test --file src/api/tasks.py
 ```
+
+**Note:** Simple Mode uses YAML workflows under the hood (`workflows/presets/feature-implementation.yaml`)
 
 ## What You'll See
 
@@ -103,12 +134,50 @@ Overall Score: 45/100
 - Markdown format (human-readable)
 - HTML format (visual dashboard)
 
+## Understanding YAML Workflows
+
+TappsCodingAgents uses **YAML files** as the single source of truth. All workflows are defined in `workflows/presets/*.yaml`:
+
+**Example YAML Structure:**
+```yaml
+workflow:
+  id: rapid-dev
+  name: "Rapid Development"
+  steps:
+    - id: planning
+      agent: planner
+      action: create_stories
+      requires: []
+      creates:
+        - stories/
+    - id: implementation
+      agent: implementer
+      action: write_code
+      requires:
+        - stories/
+      creates:
+        - src/
+```
+
+**Available YAML Workflows:**
+- `rapid-dev.yaml` - Fast feature development
+- `quick-fix.yaml` - Bug fixes
+- `quality.yaml` - Quality improvement
+- `full-sdlc.yaml` - Complete SDLC pipeline
+- `feature-implementation.yaml` - Feature-focused (used by Simple Mode)
+
+**Using with Cursor:**
+- Workflows execute via Cursor Skills (`@agent-name`)
+- Framework reads YAML, Skills handle LLM operations
+- All artifacts generated from YAML workflow state
+
 ## Next Steps
 
 1. Read the full [Demo Plan](../docs/DEMO_PLAN.md)
 2. Try [Simple Mode Guide](../docs/SIMPLE_MODE_GUIDE.md)
-3. Explore [Workflow Presets](../docs/WORKFLOW_SELECTION_GUIDE.md)
+3. Explore [YAML Workflow Architecture](../docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)
 4. Check out [Cursor Skills Integration](../docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)
+5. View [Workflow Presets](../docs/WORKFLOW_SELECTION_GUIDE.md)
 
 ## Troubleshooting
 

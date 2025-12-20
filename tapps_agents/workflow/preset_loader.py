@@ -31,6 +31,7 @@ PRESET_ALIASES: dict[str, str] = {
     "simple-new-feature": "simple-new-feature",
     "simple-fix-issues": "simple-fix-issues",
     "simple-improve-quality": "simple-improve-quality",
+    "simple-full": "simple-full",
     # Full names
     "full-sdlc": "full-sdlc",
     "rapid-dev": "rapid-dev",

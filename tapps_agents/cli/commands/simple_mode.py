@@ -2,6 +2,7 @@
 Simple Mode command handlers.
 """
 
+import sys
 import yaml
 from pathlib import Path
 
@@ -10,6 +11,8 @@ from ...simple_mode.error_handling import SimpleModeErrorHandler
 from ...simple_mode.learning_progression import LearningProgressionTracker
 from ...simple_mode.onboarding import OnboardingWizard
 from ...simple_mode.zero_config import ZeroConfigMode
+from ...workflow.executor import WorkflowExecutor
+from ...workflow.preset_loader import PresetLoader
 from ..feedback import get_feedback
 
 
@@ -29,13 +32,15 @@ def handle_simple_mode_command(args: object) -> None:
         handle_simple_mode_configure()
     elif command == "progress":
         handle_simple_mode_progress()
+    elif command == "full":
+        handle_simple_mode_full(args)
     else:
         feedback = get_feedback()
         feedback.error(
             "Invalid simple-mode command",
             error_code="invalid_command",
             context={"command": command},
-            remediation="Use: on, off, status, init, configure, or progress",
+            remediation="Use: on, off, status, init, configure, progress, or full",
             exit_code=2,
         )
 
@@ -182,4 +187,89 @@ def handle_simple_mode_progress() -> None:
     """Show Simple Mode learning progression."""
     tracker = LearningProgressionTracker()
     tracker.show_progression_indicator()
+
+
+def handle_simple_mode_full(args: object) -> None:
+    """Handle simple-mode full command - runs full lifecycle workflow with testing and loopbacks."""
+    feedback = get_feedback()
+    feedback.start_operation("Starting Simple Full Lifecycle Workflow")
+    
+    # Load the simple-full workflow preset
+    loader = PresetLoader()
+    workflow = loader.load_preset("simple-full")
+    
+    if not workflow:
+        feedback.error(
+            "Workflow not found",
+            error_code="workflow_not_found",
+            context={"preset": "simple-full"},
+            remediation="Ensure simple-full.yaml exists in workflows/presets/",
+            exit_code=1,
+        )
+        return
+    
+    print(f"\n{'='*60}")
+    print(f"Starting: {workflow.name}")
+    print(f"{'='*60}")
+    print(f"Description: {workflow.description}")
+    print(f"Steps: {len(workflow.steps)}")
+    print("\nThis workflow includes:")
+    print("  • Full SDLC lifecycle (requirements → implementation → testing)")
+    print("  • Automatic quality gates with scoring")
+    print("  • Development loopbacks if scores aren't good enough")
+    print("  • Test execution and validation")
+    print("  • Security scanning")
+    print("  • Documentation generation")
+    print()
+    
+    # Get optional arguments
+    target_file = getattr(args, "file", None)
+    user_prompt = getattr(args, "prompt", None)
+    auto_mode = getattr(args, "auto", False)
+    
+    # Execute workflow
+    executor = WorkflowExecutor(auto_detect=False, auto_mode=auto_mode)
+    
+    if user_prompt:
+        executor.user_prompt = user_prompt
+    
+    # Check runtime mode
+    from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
+    runtime_mode = detect_runtime_mode()
+    
+    print("Executing workflow steps...")
+    print(f"Runtime mode: {runtime_mode.value}")
+    
+    from ...core.unicode_safe import safe_print
+    if is_cursor_mode():
+        safe_print("WARNING: Running in Cursor mode - workflow will use Background Agents")
+        safe_print("   If auto-execution is disabled, workflow will wait for manual execution")
+        safe_print("   To force headless mode: set TAPPS_AGENTS_MODE=headless\n")
+    else:
+        safe_print("[OK] Running in headless mode - direct execution with terminal output\n")
+    
+    sys.stdout.flush()
+    
+    try:
+        result = executor.execute_workflow(workflow, target_path=target_file)
+        
+        if result.success:
+            feedback.success("Simple Full Lifecycle Workflow completed successfully")
+            print("\n✅ Workflow completed successfully!")
+            if result.summary:
+                print(f"\nSummary: {result.summary}")
+        else:
+            feedback.error(
+                "Workflow execution failed",
+                error_code="workflow_execution_failed",
+                context={"error": result.error_message if hasattr(result, 'error_message') else "Unknown error"},
+                exit_code=1,
+            )
+    except Exception as e:
+        feedback.error(
+            "Workflow execution error",
+            error_code="workflow_execution_error",
+            context={"error": str(e)},
+            exit_code=1,
+        )
 

@@ -1,3 +1,8 @@
+---
+description: Simple Mode natural language interface for TappsCodingAgents - simplified commands for new users
+alwaysApply: false
+---
+
 # Simple Mode - Natural Language Interface
 
 ## Overview
@@ -25,7 +30,16 @@ Build new features using natural language:
 - "Implement user registration"
 - "Generate a payment processing module"
 
-**Workflow:** Planner → Architect → Designer → Implementer
+**Workflow:** Enhancer (Full Enhancement - 7 stages) → Planner → Architect → Designer → Implementer
+
+The Enhancer performs comprehensive prompt enhancement through all 7 stages:
+1. **Analysis** - Intent, domains, scope, workflow type
+2. **Requirements** - Functional/NFR + Expert consultation
+3. **Architecture** - Design patterns, technology recommendations
+4. **Codebase Context** - Related files, existing patterns
+5. **Quality Standards** - Security, testing, performance requirements
+6. **Implementation Strategy** - Task breakdown, dependencies
+7. **Synthesis** - Combined enhanced prompt
 
 ### Review Commands
 
@@ -63,6 +77,22 @@ Generate tests using natural language:
 
 **Workflow:** Tester
 
+### Full Lifecycle Command
+
+Run the complete development lifecycle with automatic quality loopbacks:
+
+- `@simple-mode full` - Run full SDLC workflow with testing and development loopbacks
+- `@simple-mode full --prompt "description"` - Run with a specific project description
+- `@simple-mode full --auto` - Run in fully automated mode
+
+**Workflow:** Requirements → Planning → Design → Implementation → Review → Testing → Security → Documentation
+
+**Features:**
+- Automatic loopbacks if code quality scores aren't good enough
+- Test execution with retry logic
+- Security validation with remediation
+- Final quality review before completion
+
 ## Command Variations
 
 Simple Mode understands many ways to express the same intent:
@@ -95,6 +125,28 @@ Review my authentication code
 Fix the error in auth.py
 Add tests for service.py
 ```
+
+## Full Lifecycle Workflow
+
+The `@simple-mode full` command runs a complete development lifecycle:
+
+```
+@simple-mode full --prompt "Build a REST API for a todo app"
+```
+
+This workflow includes:
+1. **Requirements** - Gather and analyze requirements
+2. **Planning** - Create user stories
+3. **Design** - System architecture design
+4. **API Design** - API contracts and specifications
+5. **Implementation** - Code generation
+6. **Review** - Code review with quality gates (loops back if score too low)
+7. **Testing** - Test generation and execution (loops back if tests fail)
+8. **Security** - Security scanning (loops back if issues found)
+9. **Documentation** - Generate documentation
+10. **Final Review** - Final quality check before completion
+
+The workflow automatically retries and improves code until quality thresholds are met.
 
 ## Advanced Options
 
@@ -146,6 +198,15 @@ User: Build a user registration API with email validation
 
 Simple Mode:
 ✅ Building user registration API...
+
+[Enhancer] Enhancing prompt with full analysis...
+  - Analysis: Intent and scope detection
+  - Requirements: Gathering functional/NFR requirements
+  - Architecture: System design guidance
+  - Codebase Context: Analyzing related files
+  - Quality Standards: Security and testing requirements
+  - Implementation Strategy: Task breakdown
+  - Synthesis: Creating enhanced prompt
 
 [Planner] Creating user stories...
 [Architect] Designing system architecture...

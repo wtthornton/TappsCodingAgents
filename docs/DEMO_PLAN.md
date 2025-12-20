@@ -26,16 +26,18 @@ This demo plan provides multiple paths for showcasing TappsCodingAgents:
 
 - **Quick Demo (5 min)**: Fast code review and scoring
 - **Full Demo (15-20 min)**: Complete workflow from code generation to testing
-- **Advanced Demo (30+ min)**: Multi-agent orchestration and workflow presets
+- **Advanced Demo (30+ min)**: YAML workflow presets and multi-agent orchestration with Cursor
 
 **Key Features Demonstrated:**
+- ✅ **YAML Workflows**: Single source of truth for all workflows
+- ✅ **Cursor Skills Integration**: Native Cursor IDE integration with 13 specialized agents
 - ✅ Code scoring with objective metrics
 - ✅ Code generation and refactoring
 - ✅ Test generation and execution
 - ✅ Quality tools (linting, type checking)
-- ✅ Workflow presets
+- ✅ **YAML Workflow Presets**: Pre-defined workflows in `workflows/presets/*.yaml`
 - ✅ Simple Mode (new user friendly)
-- ✅ Cursor Skills integration (if using Cursor IDE)
+- ✅ **Auto-generated Artifacts**: Task manifests, docs, and configs generated from YAML
 
 ---
 
@@ -51,9 +53,15 @@ This demo plan provides multiple paths for showcasing TappsCodingAgents:
 
 3. **Basic project structure** (created during demo)
 
+### Recommended (for full YAML + Cursor experience)
+
+4. **Cursor IDE** (for Skills integration - **highly recommended**)
+   - Enables native Cursor Skills (`@reviewer`, `@implementer`, etc.)
+   - YAML workflows execute via Cursor Skills
+   - Better context awareness and model selection
+
 ### Optional (for enhanced demo)
 
-4. **Cursor IDE** (for Skills integration)
 5. **Context7 API Key** (for library documentation caching)
 6. **Git** (for workflow demonstrations)
 
@@ -141,7 +149,43 @@ tapps-agents reviewer report . json markdown html
 
 ## Full Demo (15-20 minutes)
 
-**Goal:** Complete workflow from requirements to tested code
+**Goal:** Complete workflow from requirements to tested code using YAML workflows and Cursor Skills
+
+### Understanding YAML Workflows
+
+Before starting, understand that TappsCodingAgents uses **YAML files** as the single source of truth:
+
+**Workflow Location:** `workflows/presets/*.yaml`
+
+**Example YAML Structure** (`workflows/presets/rapid-dev.yaml`):
+```yaml
+workflow:
+  id: rapid-dev
+  name: "Rapid Development"
+  steps:
+    - id: planning
+      agent: planner          # Uses @planner Cursor Skill
+      action: create_stories
+      requires: []
+      creates:
+        - stories/
+      next: implementation
+      
+    - id: implementation
+      agent: implementer      # Uses @implementer Cursor Skill
+      action: write_code
+      requires:
+        - stories/
+      creates:
+        - src/
+      next: review
+```
+
+**Key Points:**
+- ✅ Each `agent` field maps to a Cursor Skill (`@planner`, `@implementer`, `@reviewer`, etc.)
+- ✅ `requires` defines dependencies (enables parallel execution)
+- ✅ `creates` lists generated artifacts
+- ✅ Framework executes YAML, Cursor Skills handle LLM operations
 
 ### Scenario: Build a Task Management API
 
@@ -152,6 +196,10 @@ tapps-agents reviewer report . json markdown html
 mkdir task-api-demo
 cd task-api-demo
 tapps-agents init
+
+# View available YAML workflows
+ls workflows/presets/
+cat workflows/presets/rapid-dev.yaml
 ```
 
 ### Step 2: Use Simple Mode (New User Friendly)
@@ -164,18 +212,34 @@ tapps-agents simple-mode on
 tapps-agents simple-mode init
 ```
 
-### Step 3: Build Feature (Natural Language)
+### Step 3: Build Feature (Natural Language via YAML Workflow)
+
+**Option A: Using Simple Mode (uses YAML workflow under the hood)**
 
 ```bash
 # Build a REST API endpoint for tasks
 tapps-agents simple-mode build -p "Create a REST API endpoint for managing tasks with CRUD operations"
 ```
 
-**What happens:**
-- Planner creates user stories
-- Architect designs system
-- Designer creates API contracts
-- Implementer generates code
+**Option B: Using YAML Workflow Directly with Cursor Skills**
+
+```bash
+# Run rapid-dev YAML workflow with Cursor Skills
+tapps-agents workflow rapid --prompt "Create a REST API endpoint for managing tasks with CRUD operations" --cursor-mode
+
+# Or in Cursor IDE chat:
+# @orchestrator *workflow rapid --prompt "Create a REST API endpoint for managing tasks with CRUD operations"
+```
+
+**What happens (YAML workflow execution):**
+1. Framework reads `workflows/presets/rapid-dev.yaml` (or `feature-implementation.yaml` for Simple Mode)
+2. Executes steps using Cursor Skills:
+   - `@planner` creates user stories
+   - `@architect` designs system (if in workflow)
+   - `@designer` creates API contracts (if in workflow)
+   - `@implementer` generates code
+3. Generates artifacts: `stories/`, `src/`, `tests/`
+4. Creates task manifest from YAML workflow state
 
 ### Step 4: Review Generated Code
 
@@ -228,27 +292,96 @@ Check generated files:
 
 ## Advanced Demo (30+ minutes)
 
-**Goal:** Showcase workflow presets and multi-agent orchestration
+**Goal:** Showcase YAML workflow presets and multi-agent orchestration with Cursor
 
-### Scenario 1: Rapid Development Workflow
+### Understanding YAML Workflows
+
+TappsCodingAgents uses **YAML files** as the single source of truth for workflows. All workflows are defined in `workflows/presets/*.yaml` files.
+
+**Example YAML Workflow Structure** (`workflows/presets/rapid-dev.yaml`):
+
+```yaml
+workflow:
+  id: rapid-dev
+  name: "Rapid Development"
+  description: "Fast feature development with quality checks"
+  
+  steps:
+    - id: planning
+      agent: planner
+      action: create_stories
+      requires: []
+      creates:
+        - stories/
+      next: implementation
+      
+    - id: implementation
+      agent: implementer
+      action: write_code
+      requires:
+        - stories/
+      creates:
+        - src/
+      next: review
+      
+    - id: review
+      agent: reviewer
+      action: review_code
+      requires:
+        - src/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 65
+```
+
+**Key Points:**
+- ✅ **YAML-first**: All workflows are defined in YAML files
+- ✅ **Cursor Skills**: Each step uses Cursor Skills (`@planner`, `@implementer`, `@reviewer`)
+- ✅ **Dependency-based**: Steps run in parallel when dependencies are met
+- ✅ **Auto-generated**: Task manifests, docs, and configs are generated from YAML
+
+### Scenario 1: Rapid Development Workflow (YAML + Cursor)
+
+**Option A: Using Cursor Skills (Recommended)**
 
 ```bash
-# Create project
+# 1. Ensure Cursor IDE is open
+# 2. Initialize project
 mkdir rapid-demo
 cd rapid-demo
 tapps-agents init
 
-# Run rapid development workflow
-tapps-agents workflow rapid --prompt "Add user authentication with JWT tokens"
+# 3. View the YAML workflow file
+cat workflows/presets/rapid-dev.yaml
 
-# Monitor workflow execution
-# Check generated artifacts:
-# - stories/ (user stories)
-# - src/ (generated code)
-# - tests/ (generated tests)
+# 4. Run workflow using Cursor Skills (via CLI)
+tapps-agents workflow rapid --prompt "Add user authentication with JWT tokens" --cursor-mode
+
+# Or use Cursor Skills directly in Cursor chat:
+# @orchestrator *workflow rapid --prompt "Add user authentication with JWT tokens"
 ```
 
-### Scenario 2: Bug Fix Workflow
+**Option B: Headless Mode (CLI only)**
+
+```bash
+# Run workflow in headless mode (no Cursor)
+tapps-agents workflow rapid --prompt "Add user authentication with JWT tokens"
+```
+
+**What happens:**
+1. Framework reads `workflows/presets/rapid-dev.yaml`
+2. Executes steps using Cursor Skills (if `--cursor-mode` or in Cursor IDE)
+3. Generates artifacts: `stories/`, `src/`, `tests/`
+4. Creates task manifest from YAML workflow state
+
+**Check generated artifacts:**
+- `stories/` - User stories (from planner agent)
+- `src/` - Generated code (from implementer agent)
+- `tests/` - Generated tests (from tester agent)
+- `.tapps-agents/workflow-state/` - Workflow execution state
+
+### Scenario 2: Bug Fix Workflow (YAML + Cursor)
 
 ```bash
 # Create project with buggy code
@@ -259,14 +392,22 @@ tapps-agents init
 # Copy example bug file
 cp ../examples/example_bug.py src/buggy.py
 
-# Run quick-fix workflow
-tapps-agents workflow fix --file src/buggy.py
+# View the YAML workflow file
+cat workflows/presets/quick-fix.yaml
+
+# Run quick-fix workflow with Cursor Skills
+tapps-agents workflow fix --file src/buggy.py --cursor-mode
+
+# Or in Cursor chat:
+# @orchestrator *workflow fix --file src/buggy.py
 
 # Review fixes
 tapps-agents reviewer review src/buggy.py
 ```
 
-### Scenario 3: Quality Improvement Workflow
+**YAML Workflow File:** `workflows/presets/quick-fix.yaml`
+
+### Scenario 3: Quality Improvement Workflow (YAML + Cursor)
 
 ```bash
 # Create project
@@ -277,14 +418,22 @@ tapps-agents init
 # Add some code
 # ... (create code files)
 
-# Run quality improvement workflow
-tapps-agents workflow quality --file src/legacy_code.py
+# View the YAML workflow file
+cat workflows/presets/quality.yaml
+
+# Run quality improvement workflow with Cursor Skills
+tapps-agents workflow quality --file src/legacy_code.py --cursor-mode
+
+# Or in Cursor chat:
+# @orchestrator *workflow quality --file src/legacy_code.py
 
 # Review improvements
 tapps-agents reviewer report . json markdown html
 ```
 
-### Scenario 4: Full SDLC Workflow
+**YAML Workflow File:** `workflows/presets/quality.yaml`
+
+### Scenario 4: Full SDLC Workflow (YAML + Cursor)
 
 ```bash
 # Create project
@@ -292,19 +441,36 @@ mkdir sdlc-demo
 cd sdlc-demo
 tapps-agents init
 
-# Run full SDLC workflow
-tapps-agents workflow full --prompt "Build a microservice for order processing"
+# View the comprehensive YAML workflow file
+cat workflows/presets/full-sdlc.yaml
 
-# This runs complete SDLC:
-# - Requirements analysis
-# - Planning
-# - Architecture design
-# - API design
-# - Implementation
-# - Testing
-# - Documentation
-# - Review
+# Run full SDLC workflow with Cursor Skills
+tapps-agents workflow full --prompt "Build a microservice for order processing" --cursor-mode
+
+# Or in Cursor chat:
+# @orchestrator *workflow full --prompt "Build a microservice for order processing"
+
+# This runs complete SDLC (defined in YAML):
+# - Requirements analysis (analyst agent)
+# - Planning (planner agent)
+# - Architecture design (architect agent)
+# - API design (designer agent)
+# - Implementation (implementer agent)
+# - Testing (tester agent)
+# - Security scan (ops agent)
+# - Documentation (documenter agent)
+# - Review (reviewer agent)
 ```
+
+**YAML Workflow File:** `workflows/presets/full-sdlc.yaml`
+
+**Available YAML Workflow Presets:**
+- `rapid-dev.yaml` - Fast feature development
+- `quick-fix.yaml` - Bug fixes and hotfixes
+- `quality.yaml` - Code quality improvement
+- `maintenance.yaml` - Refactoring and maintenance
+- `full-sdlc.yaml` - Complete SDLC pipeline
+- `feature-implementation.yaml` - Feature-focused development
 
 ---
 
@@ -362,7 +528,7 @@ tapps-agents workflow full --prompt "Build a microservice for order processing"
 - Artifact tracking
 - State persistence
 
-### Scenario D: Cursor IDE Integration
+### Scenario D: Cursor IDE Integration with YAML Workflows
 
 **Duration:** 10-15 minutes  
 **Audience:** Cursor IDE users
@@ -370,16 +536,38 @@ tapps-agents workflow full --prompt "Build a microservice for order processing"
 **Prerequisites:** Cursor IDE installed
 
 **Steps:**
-1. Open Cursor IDE
-2. Use `@reviewer` skill
-3. Use `@implementer` skill
-4. Use `@tester` skill
-5. Show Simple Mode in Cursor
+1. **Open Cursor IDE** and navigate to your project
+2. **View YAML Workflows:**
+   ```bash
+   # List available workflows
+   cat workflows/presets/*.yaml
+   ```
+3. **Use Cursor Skills directly:**
+   - `@reviewer *review {file}` - Code review
+   - `@implementer *implement "description" {file}` - Code generation
+   - `@tester *test {file}` - Test generation
+4. **Run YAML Workflows via Cursor Skills:**
+   ```
+   @orchestrator *workflow rapid --prompt "Add feature X"
+   @orchestrator *workflow full --prompt "Build microservice Y"
+   ```
+5. **Show Simple Mode in Cursor:**
+   ```
+   @simple-mode Build a REST API endpoint
+   ```
 
 **Key Points:**
-- Skills integration
-- Natural language in IDE
-- Context-aware assistance
+- ✅ **YAML workflows** are the single source of truth
+- ✅ **Cursor Skills** execute workflow steps using your configured model
+- ✅ **Natural language** commands in Cursor chat
+- ✅ **Context-aware** assistance with full project context
+- ✅ **Auto-generated** artifacts from YAML (task manifests, docs, configs)
+
+**YAML Workflow Integration:**
+- Workflows defined in `workflows/presets/*.yaml`
+- Each step uses Cursor Skills (`@agent-name`)
+- Framework executes YAML workflow, Skills handle LLM operations
+- All artifacts generated from YAML workflow state
 
 ---
 

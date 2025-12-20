@@ -1324,4 +1324,41 @@ Shows:
   • Usage breakdown by command type
 """,
     )
+    simple_mode_full_parser = simple_mode_subparsers.add_parser(
+        "full",
+        help="Run full lifecycle workflow with testing and development loopbacks",
+        description="""Execute the complete development lifecycle with automatic quality loopbacks.
+
+This workflow runs the full SDLC pipeline:
+  • Requirements gathering
+  • Planning and story creation
+  • Architecture design
+  • API design
+  • Implementation
+  • Code review with quality gates
+  • Test generation and execution
+  • Security scanning
+  • Documentation generation
+
+Features:
+  • Automatic loopbacks if code quality scores aren't good enough
+  • Test execution with retry logic
+  • Security validation with remediation
+  • Final quality review before completion
+
+The workflow will automatically retry and improve code until quality thresholds are met.""",
+    )
+    simple_mode_full_parser.add_argument(
+        "--prompt", "-p",
+        help="Natural language description of what to build or implement. Required for greenfield workflows.",
+    )
+    simple_mode_full_parser.add_argument(
+        "--file",
+        help="Target file or directory path for workflows that operate on existing code.",
+    )
+    simple_mode_full_parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Enable fully automated execution mode. Skips all interactive prompts.",
+    )
 

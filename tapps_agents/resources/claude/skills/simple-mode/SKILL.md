@@ -39,6 +39,22 @@ Simple Mode understands many ways to express the same intent:
 - **Fix synonyms**: fix, repair, resolve, debug, error, bug, issue, problem, broken, correct
 - **Test synonyms**: test, verify, validate, coverage, testing, tests
 
+### Full Lifecycle Command
+
+Run the complete development lifecycle with automatic quality loopbacks:
+
+- `@simple-mode full` - Run full SDLC workflow with testing and development loopbacks
+- `@simple-mode full --prompt "description"` - Run with a specific project description
+- `@simple-mode full --auto` - Run in fully automated mode
+
+**Workflow:** Requirements → Planning → Design → Implementation → Review → Testing → Security → Documentation
+
+**Features:**
+- Automatic loopbacks if code quality scores aren't good enough
+- Test execution with retry logic
+- Security validation with remediation
+- Final quality review before completion
+
 ### Advanced Options
 
 - `*show-advanced` - Show advanced agent-specific commands
@@ -56,9 +72,17 @@ Simple Mode uses intent-based orchestration:
 
 ### Build Workflow
 
-Coordinates: Planner → Architect → Designer → Implementer
+Coordinates: Enhancer (Full Enhancement) → Planner → Architect → Designer → Implementer
 
 Example: "Build a user authentication feature"
+- **Enhancer** performs full enhancement (all 7 stages):
+  - Analysis: Intent, domains, scope, workflow type
+  - Requirements: Functional/NFR + Expert consultation
+  - Architecture: Design patterns, technology recommendations
+  - Codebase Context: Related files, existing patterns
+  - Quality Standards: Security, testing, performance requirements
+  - Implementation Strategy: Task breakdown, dependencies
+  - Synthesis: Combined enhanced prompt
 - Planner creates user stories
 - Architect designs system architecture
 - Designer creates API contracts
@@ -88,6 +112,18 @@ Coordinates: Tester
 Example: "Add tests for service.py"
 - Tester generates comprehensive tests
 
+### Full Lifecycle Workflow
+
+Coordinates: Analyst → Planner → Architect → Designer → Implementer → Reviewer → Tester → Ops → Documenter
+
+Example: "@simple-mode full --prompt 'Build a REST API for a todo app'"
+- Runs complete SDLC pipeline
+- Automatic quality gates with loopbacks
+- Test execution and validation
+- Security scanning
+- Documentation generation
+- Retries until quality thresholds are met
+
 ## Examples
 
 ### Building Features
@@ -97,6 +133,15 @@ User: Build a user registration API with email validation
 
 Simple Mode:
 ✅ Building user registration API...
+
+[Enhancer] Enhancing prompt with full analysis...
+  - Analysis: Intent and scope detection
+  - Requirements: Gathering functional/NFR requirements
+  - Architecture: System design guidance
+  - Codebase Context: Analyzing related files
+  - Quality Standards: Security and testing requirements
+  - Implementation Strategy: Task breakdown
+  - Synthesis: Creating enhanced prompt
 
 [Planner] Creating user stories...
 [Architect] Designing system architecture...

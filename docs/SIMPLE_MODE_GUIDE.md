@@ -37,7 +37,7 @@ Create new features and functionality.
 - "Add login functionality"
 - "Implement user registration"
 
-**Workflow:** Planner → Architect → Designer → Implementer
+**Workflow:** Enhancer → Planner → Architect → Designer → Implementer
 
 ### 2. Review
 
