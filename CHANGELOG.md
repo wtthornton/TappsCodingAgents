@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.9] - 2026-01-22
+
+### Fixed
+- **CLI Installation Issue** - Fixed "command not found" error on Windows
+  - Added comprehensive troubleshooting guide (`docs/TROUBLESHOOTING_CLI_INSTALLATION.md`)
+  - Added quick reference fix document (`CLI_INSTALLATION_FIX.md`)
+  - Updated README.md with module invocation workaround (`python -m tapps_agents.cli`)
+  - Documented both entry point and module invocation methods
+  - Addresses Windows-specific installation issues with console scripts
+
+### Documentation
+- Added troubleshooting guide for CLI installation issues
+- Updated README with workaround instructions for CLI command not found error
+
 ## [2.0.8] - 2026-01-22
 
 ### Changed
