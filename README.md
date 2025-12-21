@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-2.0.7-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.0.8-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -84,9 +84,15 @@ If you're using **Cursor IDE**, get started quickly:
 
 2. **Initialize Cursor integration:**
    ```bash
+   # If 'tapps-agents' command not found, use module invocation:
+   python -m tapps_agents.cli init
+   
+   # OR if entry point is working:
    tapps-agents init
    ```
    This installs Skills, Rules, and Background Agents configuration.
+   
+   **Note:** If you get "command not found" error, use `python -m tapps_agents.cli` instead of `tapps-agents`. See [Troubleshooting Guide](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
 
 3. **Try it in Cursor:**
    - Open Cursor chat
@@ -124,6 +130,10 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 1. **Initialize project** (first time setup):
    ```bash
+   # If 'tapps-agents' command not found, use:
+   python -m tapps_agents.cli init
+   
+   # OR if entry point is working:
    tapps-agents init
    ```
    This sets up configuration, Cursor Rules, workflow presets, and Skills.
@@ -477,7 +487,7 @@ TappsCodingAgents/
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 2.0.7  
+**Version**: 2.0.8  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

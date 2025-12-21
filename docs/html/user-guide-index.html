@@ -31,6 +31,892 @@
             <h1>User Guide</h1>
             <p class="lead">Complete guide to using TappsCodingAgents for AI-powered software development. Learn workflows, best practices, and how to leverage multi-agent orchestration for your projects.</p>
 
+            <!-- Table of Contents -->
+            <nav style="margin: 3rem 0; padding: 2rem; background: var(--bg-secondary); border-radius: 16px; border: 1px solid var(--border);">
+                <h2 style="margin-top: 0; border: none; padding: 0;">Table of Contents</h2>
+                <ul style="list-style: none; padding: 0; margin: 0; columns: 2; gap: 2rem;">
+                    <li><a href="#overview">Overview</a></li>
+                    <li><a href="#getting-started">Getting Started</a></li>
+                    <li><a href="#simple-mode">Simple Mode</a></li>
+                    <li><a href="#agents">Agent Reference</a></li>
+                    <li><a href="#features">Features & Capabilities</a></li>
+                    <li><a href="#commands">Command Reference</a></li>
+                    <li><a href="#examples">Examples</a></li>
+                    <li><a href="#help">Help & Support</a></li>
+                </ul>
+            </nav>
+
+            <!-- Overview Section -->
+            <section id="overview" style="margin-top: 4rem;">
+                <h2>Overview</h2>
+                <p>TappsCodingAgents is a specification framework for defining, configuring, and orchestrating coding agents. It provides a standardized approach to AI-powered software development with a two-layer agent model.</p>
+
+                <h3>What is TappsCodingAgents?</h3>
+                <p>TappsCodingAgents provides:</p>
+                <ul>
+                    <li><strong>13 Workflow Agents</strong>: Specialized agents covering the complete software development lifecycle (Planning, Design, Development, Testing, Quality, Operations, Orchestration, Enhancement)</li>
+                    <li><strong>16 Built-in Experts</strong>: Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)</li>
+                    <li><strong>Industry Experts</strong>: Project-defined business domain knowledge with weighted decision-making</li>
+                    <li><strong>Simple Mode</strong>: Natural language interface for new users with automatic skill orchestration</li>
+                    <li><strong>Cursor AI Integration</strong>: Complete integration with Cursor IDE (all 7 phases complete)</li>
+                    <li><strong>YAML Workflow Definitions</strong>: Declarative, version-controlled orchestration</li>
+                </ul>
+
+                <h3>Architecture</h3>
+                <p>TappsCodingAgents uses a two-layer agent model:</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Type</th>
+                            <th>Purpose</th>
+                            <th>Count</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Knowledge</strong></td>
+                            <td>Industry Experts</td>
+                            <td>Business domain authority</td>
+                            <td>N (per project)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Execution</strong></td>
+                            <td>Workflow Agents</td>
+                            <td>SDLC task execution</td>
+                            <td>13 (fixed)</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Key Features</h3>
+                <div class="features-grid" style="margin-top: 2rem;">
+                    <div class="feature-card">
+                        <div class="feature-icon">🤖</div>
+                        <h3>13 Workflow Agents</h3>
+                        <p>Complete SDLC coverage with specialized agents for planning, design, development, testing, quality, operations, orchestration, and enhancement.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h3>Simple Mode</h3>
+                        <p>Natural language interface that automatically orchestrates multiple skills. Use plain English commands instead of learning agent-specific syntax.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🧠</div>
+                        <h3>Expert System</h3>
+                        <p>16 built-in technical experts plus project-defined industry experts with weighted decision-making and RAG integration.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h3>Code Scoring</h3>
+                        <p>Objective quality metrics: complexity, security, maintainability, test coverage, and performance with configurable thresholds.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚙️</div>
+                        <h3>YAML Workflows</h3>
+                        <p>Declarative workflow definitions with strict schema enforcement. YAML is the single source of truth with auto-generated artifacts.</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔗</div>
+                        <h3>Cursor Integration</h3>
+                        <p>Complete integration with Cursor IDE including Skills, Background Agents, multi-agent orchestration, and Context7 caching.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Started Section -->
+            <section id="getting-started" style="margin-top: 4rem;">
+                <h2>Getting Started</h2>
+                <p>Follow these steps to get started with TappsCodingAgents:</p>
+
+                <div class="alert alert-info">
+                    <strong>Recommended Flow:</strong> Installation → Initialize → Enable Simple Mode → Start Coding
+                </div>
+
+                <h3>Step 1: Installation</h3>
+                <p><strong>Prerequisites:</strong></p>
+                <ul>
+                    <li>Python 3.13+ (recommended: latest stable Python)</li>
+                    <li>Git (to clone the repository)</li>
+                    <li>Cursor IDE (for LLM operations via Skills)</li>
+                </ul>
+
+                <p><strong>Install from Source (Development):</strong></p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Installation</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# Windows PowerShell:
+.venv\Scripts\activate
+# macOS/Linux:
+source .venv/bin/activate
+
+# Upgrade pip
+python -m pip install --upgrade pip
+
+# Install in editable mode
+pip install -e .</code></pre>
+                </div>
+
+                <h3>Step 2: Initialize Project</h3>
+                <p>Initialize your project to set up configuration, Cursor Rules, workflow presets, and Skills:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Initialize Project</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>tapps-agents init</code></pre>
+                </div>
+                <p>This creates:</p>
+                <ul>
+                    <li><code>.tapps-agents/config.yaml</code> - Project configuration</li>
+                    <li><code>.cursor/rules/</code> - Cursor Rules for AI assistance</li>
+                    <li><code>workflows/presets/</code> - Workflow preset YAML files</li>
+                    <li><code>.claude/skills/</code> - Cursor Skills</li>
+                    <li><code>.cursor/background-agents.yaml</code> - Background Agents config</li>
+                </ul>
+
+                <h3>Step 3: Enable Simple Mode (Recommended for New Users)</h3>
+                <p>Simple Mode provides a natural language interface that automatically orchestrates multiple skills:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Enable Simple Mode</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Enable Simple Mode
+tapps-agents simple-mode on
+
+# Or run the interactive onboarding wizard
+tapps-agents simple-mode init
+
+# Check status
+tapps-agents simple-mode status</code></pre>
+                </div>
+
+                <h3>Step 4: Verify Setup</h3>
+                <p>Verify that everything is set up correctly:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Verify CLI</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code># Check CLI is available
+tapps-agents --help
+
+# Check version
+tapps-agents --version
+
+# Try a skill in Cursor
+# Open Cursor chat and type:
+@reviewer *help
+@implementer *help
+@tester *help</code></pre>
+                </div>
+
+                <div class="alert alert-success">
+                    <strong>You're ready!</strong> You can now use TappsCodingAgents. Try Simple Mode in Cursor chat or use individual agent skills directly.
+                </div>
+
+                <p>For detailed getting started instructions, see <a href="user-guide-getting-started.html">Getting Started Guide</a>.</p>
+            </section>
+
+            <!-- Simple Mode Section -->
+            <section id="simple-mode" style="margin-top: 4rem;">
+                <h2>Simple Mode</h2>
+                <p class="lead">Simple Mode is the <strong>primary user interface</strong> for TappsCodingAgents in Cursor. It provides natural language commands that automatically orchestrate multiple specialized skills through a structured workflow.</p>
+
+                <h3>What is Simple Mode?</h3>
+                <p>Simple Mode hides complexity while showcasing power. Instead of learning multiple agent commands, you use natural language and Simple Mode automatically:</p>
+                <ul>
+                    <li>Parses your intent</li>
+                    <li>Routes to the appropriate orchestrator</li>
+                    <li>Coordinates multiple agents in sequence</li>
+                    <li>Reports progress with status updates</li>
+                    <li>Summarizes results when complete</li>
+                </ul>
+
+                <h3>How to Use Simple Mode</h3>
+                <p><strong>Invoke with @simple-mode in Cursor chat:</strong></p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Simple Mode Commands</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>@simple-mode *build "Create a user authentication feature"
+@simple-mode *review src/api/auth.py
+@simple-mode *fix src/buggy.py "Fix the error"
+@simple-mode *test src/api/auth.py
+@simple-mode *full "Build a complete REST API"</code></pre>
+                </div>
+
+                <p><strong>Or use natural language:</strong></p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Natural Language</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>@simple-mode Build a user authentication feature
+@simple-mode Review my authentication code
+@simple-mode Fix the error in auth.py
+@simple-mode Add tests for service.py</code></pre>
+                </div>
+
+                <h3>Simple Mode Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Skills Invoked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>*build {description}</code></td>
+                            <td>Build new features</td>
+                            <td>@enhancer → @planner → @architect → @designer → @implementer → @reviewer → @tester</td>
+                        </tr>
+                        <tr>
+                            <td><code>*review {file}</code></td>
+                            <td>Review code quality</td>
+                            <td>@reviewer → @improver</td>
+                        </tr>
+                        <tr>
+                            <td><code>*fix {file} {description}</code></td>
+                            <td>Fix bugs/errors</td>
+                            <td>@debugger → @implementer → @tester</td>
+                        </tr>
+                        <tr>
+                            <td><code>*test {file}</code></td>
+                            <td>Generate tests</td>
+                            <td>@tester</td>
+                        </tr>
+                        <tr>
+                            <td><code>*full {description}</code></td>
+                            <td>Full SDLC workflow</td>
+                            <td>All skills in sequence</td>
+                        </tr>
+                        <tr>
+                            <td><code>*help</code></td>
+                            <td>Show help</td>
+                            <td>-</td>
+                        </tr>
+                        <tr>
+                            <td><code>*status</code></td>
+                            <td>Check status</td>
+                            <td>-</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Build Workflow (7 Steps)</h3>
+                <p>When you use <code>*build</code>, Simple Mode executes ALL 7 steps in sequence:</p>
+                <ol>
+                    <li><strong>@enhancer *enhance</strong> - Enhanced prompt with requirements analysis, architecture guidance, quality standards</li>
+                    <li><strong>@planner *plan</strong> - User stories with acceptance criteria, story points, estimates</li>
+                    <li><strong>@architect *design</strong> - System architecture, component design, data flow</li>
+                    <li><strong>@designer *design-api</strong> - Component specifications, API design, data models</li>
+                    <li><strong>@implementer *implement</strong> - Code implementation following all specifications</li>
+                    <li><strong>@reviewer *review</strong> - Quality scores (5 metrics), issues found, recommendations</li>
+                    <li><strong>@tester *test</strong> - Test plan, browser compatibility, accessibility checklist, performance validation</li>
+                </ol>
+
+                <div class="alert alert-info">
+                    <strong>⚠️ CRITICAL:</strong> When using <code>*build</code> commands, ALL 7 steps are executed and documentation artifacts are created. Do not skip steps.
+                </div>
+
+                <h3>Intent Detection</h3>
+                <p>Simple Mode detects intent from keywords:</p>
+                <ul>
+                    <li><strong>Build</strong>: build, create, make, generate, add, implement, develop, write, new, feature</li>
+                    <li><strong>Review</strong>: review, check, analyze, inspect, examine, score, quality, audit</li>
+                    <li><strong>Fix</strong>: fix, repair, resolve, debug, error, bug, issue, problem, broken</li>
+                    <li><strong>Test</strong>: test, verify, validate, coverage, testing</li>
+                    <li><strong>Full</strong>: full, complete, sdlc, lifecycle, everything</li>
+                </ul>
+
+                <h3>Configuration</h3>
+                <p>Simple Mode can be configured in <code>.tapps-agents/config.yaml</code>:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Configuration</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>simple_mode:
+  enabled: true
+  auto_detect: true
+  show_advanced: false
+  natural_language: true</code></pre>
+                </div>
+
+                <h3>Why Use Simple Mode?</h3>
+                <ul>
+                    <li><strong>Natural Language</strong> - Use plain English instead of learning multiple skill commands</li>
+                    <li><strong>Automatic Orchestration</strong> - Skills are coordinated automatically in the right sequence</li>
+                    <li><strong>Quality Gates</strong> - Automatic quality checks with loopback on failures</li>
+                    <li><strong>Progressive Disclosure</strong> - Start simple, unlock advanced features as you learn</li>
+                    <li><strong>Best Practices</strong> - Follows TappsCodingAgents workflow patterns automatically</li>
+                    <li><strong>Better Outcomes</strong> - Produces higher quality code with comprehensive documentation</li>
+                </ul>
+
+                <p>For complete Simple Mode documentation, see <a href="user-guide-getting-started.html#simple-mode">Simple Mode Guide</a>.</p>
+            </section>
+
+            <!-- Agent Reference Section -->
+            <section id="agents" style="margin-top: 4rem;">
+                <h2>Agent Reference</h2>
+                <p>TappsCodingAgents provides <strong>13 specialized workflow agents</strong> covering the complete software development lifecycle.</p>
+
+                <h3>Planning Agents</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>📊 Analyst</h3>
+                        <p><strong>Purpose:</strong> Requirements gathering, analysis, and project understanding.</p>
+                        <p><strong>When to Use:</strong> Starting new features, understanding codebase, gathering requirements, creating project profiles.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli analyst analyze "Add user authentication"
+python -m tapps_agents.cli analyst requirements "Payment feature"
+python -m tapps_agents.cli analyst profile .</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@analyst *analyze "{description}"</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📋 Planner</h3>
+                        <p><strong>Purpose:</strong> Create development plans, user stories, and task breakdowns.</p>
+                        <p><strong>When to Use:</strong> Creating feature plans, generating user stories, planning sprint work.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli planner plan "Add authentication"
+python -m tapps_agents.cli planner create-story "User login"</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@planner *plan "{description}"</code></p>
+                    </div>
+                </div>
+
+                <h3>Design Agents</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🏗️ Architect</h3>
+                        <p><strong>Purpose:</strong> System architecture design, technical decisions, and high-level design.</p>
+                        <p><strong>When to Use:</strong> Designing new systems, making architectural decisions, creating system diagrams.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli architect design "Microservices architecture"</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@architect *design "{description}"</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🎨 Designer</h3>
+                        <p><strong>Purpose:</strong> API design, data model design, and interface specifications.</p>
+                        <p><strong>When to Use:</strong> Designing REST APIs, creating data models, defining interfaces.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli designer design-api "User management API"</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@designer *design-api "{description}"</code></p>
+                    </div>
+                </div>
+
+                <h3>Development Agents</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>💻 Implementer</h3>
+                        <p><strong>Purpose:</strong> Code generation, implementation, and refactoring.</p>
+                        <p><strong>When to Use:</strong> Implementing new features, generating code from specifications, refactoring existing code.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli implementer implement "Create factorial function" factorial.py
+python -m tapps_agents.cli implementer refactor service.py "Add type hints"</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@implementer *implement "{description}" {file}</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🐛 Debugger</h3>
+                        <p><strong>Purpose:</strong> Error analysis, debugging, and code tracing.</p>
+                        <p><strong>When to Use:</strong> Debugging errors, analyzing stack traces, finding root causes.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli debugger debug "ImportError" --file app.py</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@debugger *debug "{error}" --file {file}</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>📝 Documenter</h3>
+                        <p><strong>Purpose:</strong> Documentation generation, API docs, and README creation.</p>
+                        <p><strong>When to Use:</strong> Generating API documentation, creating README files, documenting code.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli documenter document-api api.py
+python -m tapps_agents.cli documenter generate-readme .</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@documenter *document-api {file}</code></p>
+                    </div>
+                </div>
+
+                <h3>Testing Agent</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🧪 Tester</h3>
+                        <p><strong>Purpose:</strong> Test generation, execution, and test strategy.</p>
+                        <p><strong>When to Use:</strong> Generating unit tests, creating integration tests, running test suites.</p>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli tester test service.py
+python -m tapps_agents.cli tester generate-tests service.py --integration</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@tester *test {file}</code></p>
+                    </div>
+                </div>
+
+                <h3>Quality Agents</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>✅ Reviewer</h3>
+                        <p><strong>Purpose:</strong> Code review, quality analysis, and scoring (5 metrics).</p>
+                        <p><strong>When to Use:</strong> Code quality checks, pre-commit reviews, quality scoring, security analysis.</p>
+                        <p><strong>Scoring Metrics:</strong></p>
+                        <ul>
+                            <li>Complexity (0-10)</li>
+                            <li>Security (0-10)</li>
+                            <li>Maintainability (0-10)</li>
+                            <li>Test Coverage (0-10)</li>
+                            <li>Performance (0-10)</li>
+                        </ul>
+                        <p><strong>Commands:</strong></p>
+                        <div class="code-block">
+                            <div class="code-header">
+                                <span>CLI</span>
+                                <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                            </div>
+                            <pre><code>python -m tapps_agents.cli reviewer score file.py
+python -m tapps_agents.cli reviewer review file.py
+python -m tapps_agents.cli reviewer lint file.py
+python -m tapps_agents.cli reviewer type-check file.py</code></pre>
+                        </div>
+                        <p><strong>Cursor Skill:</strong> <code>@reviewer *review {file}</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>🔧 Improver</h3>
+                        <p><strong>Purpose:</strong> Code refactoring and optimization suggestions.</p>
+                        <p><strong>When to Use:</strong> Improving code quality, refactoring legacy code, optimization.</p>
+                        <p><strong>Cursor Skill:</strong> <code>@improver *improve {file} "{issues}"</code></p>
+                    </div>
+                </div>
+
+                <h3>Operations Agent</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🔒 Ops</h3>
+                        <p><strong>Purpose:</strong> Security scanning, compliance, deployment, and dependency auditing.</p>
+                        <p><strong>When to Use:</strong> Security audits, compliance checks, deployment planning, dependency auditing.</p>
+                        <p><strong>Cursor Skill:</strong> <code>@ops *security-scan {file}</code></p>
+                    </div>
+                </div>
+
+                <h3>Orchestration & Enhancement</h3>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <h3>🎼 Orchestrator</h3>
+                        <p><strong>Purpose:</strong> YAML workflow coordination and multi-agent orchestration.</p>
+                        <p><strong>When to Use:</strong> Coordinating complex workflows, parallel agent execution.</p>
+                        <p><strong>Cursor Skill:</strong> <code>@orchestrator *run-workflow {workflow_file}</code></p>
+                    </div>
+                    <div class="feature-card">
+                        <h3>✨ Enhancer</h3>
+                        <p><strong>Purpose:</strong> Prompt enhancement utility with 7-stage pipeline and expert integration.</p>
+                        <p><strong>When to Use:</strong> Transforming simple prompts into comprehensive, context-aware prompts.</p>
+                        <p><strong>Cursor Skill:</strong> <code>@enhancer *enhance "{prompt}"</code></p>
+                    </div>
+                </div>
+
+                <p>For detailed agent documentation, see <a href="user-guide-agents.html">Agent Reference Guide</a>.</p>
+            </section>
+
+            <!-- Features Section -->
+            <section id="features" style="margin-top: 4rem;">
+                <h2>Features & Capabilities</h2>
+
+                <h3>Workflow Agents (13)</h3>
+                <p>Complete SDLC coverage with specialized agents:</p>
+                <ul>
+                    <li><strong>Planning</strong>: analyst, planner</li>
+                    <li><strong>Design</strong>: architect, designer</li>
+                    <li><strong>Development</strong>: implementer, debugger, documenter</li>
+                    <li><strong>Testing</strong>: tester</li>
+                    <li><strong>Quality</strong>: reviewer, improver</li>
+                    <li><strong>Operations</strong>: ops</li>
+                    <li><strong>Orchestration</strong>: orchestrator</li>
+                    <li><strong>Enhancement</strong>: enhancer</li>
+                </ul>
+
+                <h3>Expert System</h3>
+                <p><strong>16 Built-in Experts:</strong> Framework-controlled technical domain experts with 83 knowledge files:</p>
+                <ul>
+                    <li>Security, Performance, Testing, Data Privacy, Accessibility, UX</li>
+                    <li>Code Quality, Software Architecture, DevOps, Documentation</li>
+                    <li>AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning</li>
+                </ul>
+                <p><strong>Industry Experts:</strong> Project-defined business domain experts with weighted decision-making and RAG integration.</p>
+
+                <h3>Code Scoring System</h3>
+                <p>Objective quality metrics with configurable thresholds:</p>
+                <ol>
+                    <li><strong>Complexity Score</strong> (0-10): Cyclomatic complexity analysis using Radon</li>
+                    <li><strong>Security Score</strong> (0-10): Vulnerability detection using Bandit + heuristics</li>
+                    <li><strong>Maintainability Score</strong> (0-10): Maintainability Index using Radon MI</li>
+                    <li><strong>Test Coverage Score</strong> (0-10): Coverage data parsing + heuristic analysis</li>
+                    <li><strong>Performance Score</strong> (0-10): Static analysis (function size, nesting depth, pattern detection)</li>
+                </ol>
+
+                <h3>YAML Workflow Definitions</h3>
+                <p>Declarative, version-controlled orchestration with:</p>
+                <ul>
+                    <li><strong>Strict Schema Enforcement</strong>: All YAML structures validated and executed</li>
+                    <li><strong>Task Manifest Generation</strong>: Auto-generated task checklists from workflow YAML</li>
+                    <li><strong>Automated Documentation</strong>: Cursor Rules auto-generated from workflow YAML</li>
+                    <li><strong>Background Agent Auto-Generation</strong>: Background Agent configs auto-generated from workflow steps</li>
+                    <li><strong>Dependency-Based Parallelism</strong>: Automatic parallel execution based on step dependencies</li>
+                </ul>
+
+                <h3>Cursor AI Integration (All 7 Phases Complete)</h3>
+                <ul>
+                    <li><strong>13 Cursor Skills</strong>: All agents available as Cursor Skills</li>
+                    <li><strong>Simple Mode</strong>: Streamlined interface for new users</li>
+                    <li><strong>Custom Skills Support</strong>: Create, validate, and integrate custom Skills</li>
+                    <li><strong>Background Agents</strong>: Offload heavy tasks to cloud/remote</li>
+                    <li><strong>Multi-Agent Orchestration</strong>: Parallel execution with structured concurrency</li>
+                    <li><strong>Context7 Integration</strong>: KB-first caching + analytics</li>
+                    <li><strong>NUC Optimization</strong>: Resource monitoring, fallback strategy</li>
+                </ul>
+            </section>
+
+            <!-- Command Reference Section -->
+            <section id="commands" style="margin-top: 4rem;">
+                <h2>Command Reference</h2>
+
+                <h3>Simple Mode Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>*build</code></td>
+                            <td>Build new features (7-step workflow)</td>
+                            <td><code>@simple-mode *build "Create JWT auth"</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>*review</code></td>
+                            <td>Review code quality</td>
+                            <td><code>@simple-mode *review src/api/auth.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>*fix</code></td>
+                            <td>Fix bugs/errors</td>
+                            <td><code>@simple-mode *fix src/buggy.py "Fix the error"</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>*test</code></td>
+                            <td>Generate tests</td>
+                            <td><code>@simple-mode *test src/api/auth.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>*full</code></td>
+                            <td>Full SDLC workflow</td>
+                            <td><code>@simple-mode *full "Build REST API"</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>*help</code></td>
+                            <td>Show help</td>
+                            <td><code>@simple-mode *help</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>*status</code></td>
+                            <td>Check status</td>
+                            <td><code>@simple-mode *status</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>CLI Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Command</th>
+                            <th>Description</th>
+                            <th>Example</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>tapps-agents init</code></td>
+                            <td>Initialize project</td>
+                            <td><code>tapps-agents init</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>tapps-agents simple-mode on/off</code></td>
+                            <td>Enable/disable Simple Mode</td>
+                            <td><code>tapps-agents simple-mode on</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>tapps-agents simple-mode status</code></td>
+                            <td>Check Simple Mode status</td>
+                            <td><code>tapps-agents simple-mode status</code></td>
+                        </tr>
+                        <tr>
+                            <td><code>python -m tapps_agents.cli {agent} {command}</code></td>
+                            <td>Run agent commands</td>
+                            <td><code>python -m tapps_agents.cli reviewer review file.py</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Cursor Skills Commands</h3>
+                <p>All agents are available as Cursor Skills. Use <code>@agent-name *command</code> format:</p>
+                <div class="code-block">
+                    <div class="code-header">
+                        <span>Cursor Skills</span>
+                        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                    </div>
+                    <pre><code>@reviewer *review {file}
+@implementer *implement "{description}" {file}
+@tester *test {file}
+@debugger *debug "{error}" --file {file}
+@planner *plan "{description}"
+@architect *design "{description}"
+@designer *design-api "{description}"
+@documenter *document-api {file}
+@improver *improve {file} "{issues}"
+@ops *security-scan {file}
+@orchestrator *run-workflow {workflow_file}
+@enhancer *enhance "{prompt}"
+@analyst *analyze "{description}"</code></pre>
+                </div>
+
+                <p>For complete API reference, see <a href="api-reference.html">API Reference</a>.</p>
+            </section>
+
+            <!-- Examples Section -->
+            <section id="examples" style="margin-top: 4rem;">
+                <h2>Examples</h2>
+
+                <h3>Simple Mode Examples</h3>
+
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h4>Example 1: Build a Feature</h4>
+                    <p><strong>Goal:</strong> Create JWT authentication with refresh tokens</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Command</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code>@simple-mode *build "Create JWT authentication with refresh tokens"</code></pre>
+                    </div>
+                    <p><strong>Workflow:</strong></p>
+                    <ol>
+                        <li>@enhancer enhances prompt with security requirements, architecture guidance</li>
+                        <li>@planner creates user stories</li>
+                        <li>@architect designs system architecture</li>
+                        <li>@designer creates API specification</li>
+                        <li>@implementer generates code</li>
+                        <li>@reviewer reviews code (Quality score: 85/100 ✅)</li>
+                        <li>@tester generates tests</li>
+                    </ol>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h4>Example 2: Review Code</h4>
+                    <p><strong>Goal:</strong> Review authentication code quality</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Command</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code>@simple-mode *review src/api/auth.py</code></pre>
+                    </div>
+                    <p><strong>Expected Output:</strong></p>
+                    <ul>
+                        <li>Quality Scores: Complexity: 7.5/10 ✅, Security: 8.0/10 ✅, Maintainability: 7.2/10 ✅, Test Coverage: 65% ⚠️, Performance: 7.8/10 ✅</li>
+                        <li>Overall Score: 76/100 ✅</li>
+                        <li>Issues Found: 2</li>
+                        <li>@improver suggests improvements if needed</li>
+                    </ul>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h4>Example 3: Fix an Error</h4>
+                    <p><strong>Goal:</strong> Fix a bug in authentication code</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Command</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code>@simple-mode *fix src/buggy.py "Fix the import error"</code></pre>
+                    </div>
+                    <p><strong>Workflow:</strong></p>
+                    <ol>
+                        <li>@debugger analyzes error and finds root cause</li>
+                        <li>@implementer applies fix</li>
+                        <li>@tester verifies fix with tests</li>
+                    </ol>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h4>Example 4: Generate Tests</h4>
+                    <p><strong>Goal:</strong> Add tests for authentication service</p>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Command</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code>@simple-mode *test src/api/auth.py</code></pre>
+                    </div>
+                    <p><strong>Expected Output:</strong></p>
+                    <ul>
+                        <li>@tester generates unit tests</li>
+                        <li>Test plan created</li>
+                        <li>Tests cover main functionality</li>
+                    </ul>
+                </div>
+
+                <h3>Individual Agent Examples</h3>
+
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h4>Example: Code Review</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Cursor Skill</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code>@reviewer *review src/api/users.py</code></pre>
+                    </div>
+                    <p>Provides comprehensive code review with 5-metric scoring, linting, type checking, and security analysis.</p>
+                </div>
+
+                <div class="feature-card" style="margin-bottom: 2rem;">
+                    <h4>Example: Code Implementation</h4>
+                    <div class="code-block">
+                        <div class="code-header">
+                            <span>Cursor Skill</span>
+                            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+                        </div>
+                        <pre><code>@implementer *implement "Create a function to calculate factorial" factorial.py</code></pre>
+                    </div>
+                    <p>Generates code following specifications with automatic code review and safety checks.</p>
+                </div>
+
+                <p>For more examples, see <a href="examples.html">Examples Page</a>.</p>
+            </section>
+
+            <!-- Help & Support Section -->
+            <section id="help" style="margin-top: 4rem;">
+                <h2>Help & Support</h2>
+
+                <h3>Getting Help</h3>
+                <ul>
+                    <li><strong>In Cursor:</strong> Use <code>@simple-mode *help</code> or <code>@agent-name *help</code> for agent-specific help</li>
+                    <li><strong>CLI:</strong> Use <code>tapps-agents --help</code> or <code>python -m tapps_agents.cli {agent} --help</code></li>
+                    <li><strong>Documentation:</strong> See detailed guides linked below</li>
+                </ul>
+
+                <h3>Quick Links</h3>
+                <div class="doc-grid">
+                    <a href="user-guide-getting-started.html" class="doc-card">
+                        <h3>🚀 Getting Started</h3>
+                        <p>Complete setup instructions and first steps</p>
+                    </a>
+                    <a href="user-guide-workflows.html" class="doc-card">
+                        <h3>⚙️ Workflows</h3>
+                        <p>Workflow presets and customization</p>
+                    </a>
+                    <a href="user-guide-agents.html" class="doc-card">
+                        <h3>🤖 Agent Reference</h3>
+                        <p>Complete agent documentation</p>
+                    </a>
+                    <a href="api-reference.html" class="doc-card">
+                        <h3>📚 API Reference</h3>
+                        <p>Complete API documentation</p>
+                    </a>
+                    <a href="technical-spec.html" class="doc-card">
+                        <h3>🔧 Technical Spec</h3>
+                        <p>Architecture and technical details</p>
+                    </a>
+                    <a href="examples.html" class="doc-card">
+                        <h3>💡 Examples</h3>
+                        <p>More examples and use cases</p>
+                    </a>
+                </div>
+
+                <h3>Troubleshooting</h3>
+                <div class="alert alert-info">
+                    <strong>Simple Mode Not Working?</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>Check status: <code>tapps-agents simple-mode status</code></li>
+                        <li>Enable if needed: <code>tapps-agents simple-mode on</code></li>
+                        <li>Verify configuration exists: <code>cat .tapps-agents/config.yaml</code></li>
+                    </ul>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Commands Not Recognized?</strong>
+                    <ul style="margin-top: 0.5rem;">
+                        <li>Use explicit keywords (build, review, fix, test)</li>
+                        <li>Try using <code>*build</code> syntax instead of natural language</li>
+                        <li>Use <code>*show-advanced</code> to access agent-specific commands</li>
+                    </ul>
+                </div>
+
+                <h3>Additional Resources</h3>
+                <ul>
+                    <li><a href="https://github.com/wtthornton/TappsCodingAgents">GitHub Repository</a></li>
+                    <li><a href="docs/README.md">Documentation Index</a></li>
+                    <li><a href="docs/SIMPLE_MODE_GUIDE.md">Simple Mode Guide</a></li>
+                    <li><a href="docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md">Cursor Skills Installation Guide</a></li>
+                </ul>
+            </section>
+
             <div class="doc-grid" style="margin-top: 3rem;">
                 <a href="user-guide-getting-started.html" class="doc-card">
                     <h3>🚀 Getting Started</h3>
@@ -145,6 +1031,36 @@
             <p>Version 2.0.6 | Last Updated: January 2026</p>
         </div>
     </footer>
+
+    <script>
+        function copyCode(btn) {
+            const codeBlock = btn.parentElement.nextElementSibling;
+            const code = codeBlock.textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                btn.textContent = 'Copied!';
+                setTimeout(() => {
+                    btn.textContent = 'Copy';
+                }, 2000);
+            });
+        }
+
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                const href = this.getAttribute('href');
+                if (href !== '#' && href !== '') {
+                    e.preventDefault();
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }
+            });
+        });
+    </script>
 </body>
 </html>
 

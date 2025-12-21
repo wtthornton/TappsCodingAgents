@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.8] - 2026-01-22
+
+### Changed
+- **Dependency Updates** - Updated all runtime and development packages to latest stable versions
+  - **Core Framework:**
+    - `pydantic`: 2.12.5 → 2.13.0
+    - `httpx`: 0.28.1 → 0.28.2
+    - `psutil`: 5.9.0 → 7.1.0 (major update with performance improvements)
+  - **Development Tools:**
+    - `ruff`: 0.14.8 → 0.14.10
+    - `mypy`: 1.19.0 → 1.19.1
+    - `pytest`: 9.0.2 → 9.1.0
+    - `pytest-xdist`: 3.6.0 → 3.8.0
+    - `pip-tools`: 7.4.1 → 7.5.2
+- **Documentation Updates** - Updated version references across all documentation files to 2.0.8
+
+### Fixed
+- Fixed incorrect Python version settings in `pyproject.toml`:
+  - `ruff.target-version`: Changed from "2.0.8" → "py313"
+  - `mypy.python_version`: Changed from "2.0.8" → "3.13"
+
 ## [2.0.7] - 2026-01-21
 
 ### Added

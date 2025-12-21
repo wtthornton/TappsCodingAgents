@@ -205,7 +205,7 @@ Simple Mode provides a streamlined, task-first interface for new users, hiding c
 
 ```yaml
 simple_mode:
-  enabled: false                      # Enable Simple Mode
+  enabled: true                       # Enable Simple Mode (default: true)
   default_orchestrator: "build"      # Default orchestrator (build, review, fix, test)
   onboarding_enabled: true           # Enable guided onboarding wizard
   natural_language_enabled: true     # Enable natural language command processing
@@ -218,7 +218,7 @@ simple_mode:
 
 **Configuration Options:**
 
-- `enabled`: Enable or disable Simple Mode (default: `false`)
+- `enabled`: Enable or disable Simple Mode (default: `true`)
 - `default_orchestrator`: Default orchestrator to use when intent is ambiguous (`build`, `review`, `fix`, `test`)
 - `onboarding_enabled`: Enable the interactive onboarding wizard (`tapps-agents simple-mode init`)
 - `natural_language_enabled`: Enable natural language command parsing

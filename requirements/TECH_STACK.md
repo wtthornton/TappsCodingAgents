@@ -1,6 +1,6 @@
 # TappsCodingAgents - Technology Stack Document
 
-**Version:** 2.0.6  
+**Version:** 2.0.8  
 **Date:** January 2026  
 **Status:** Implementation Reference
 
