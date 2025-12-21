@@ -61,7 +61,7 @@ When working on this repo:
 
 ## Current Self-Hosting Configuration
 
-**Framework version**: 2.0.8 (see `tapps_agents.__version__`)
+**Framework version**: 2.1.0 (see `tapps_agents.__version__`)
 
 ## References
 
@@ -72,4 +72,4 @@ When working on this repo:
 ---
 
 **Last Updated**: January 2026  
-**Version**: 2.0.8
+**Version**: 2.1.0

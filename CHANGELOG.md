@@ -7,6 +7,54 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-01-22
+
+### Added
+- **Batch Operations Support** - Reviewer agent now supports processing multiple files at once
+  - Added support for multiple files as arguments: `reviewer score file1.py file2.py file3.py`
+  - Added glob pattern support: `reviewer score --pattern "src/**/*.py"`
+  - Added concurrent processing with `--max-workers` option for performance
+  - Backward compatible with single file commands
+  - Supports batch operations for `score`, `review`, `lint`, and `type-check` commands
+
+- **Output Format Options** - Added support for multiple output formats
+  - Added `--output` flag to all reviewer commands (score, review, lint, type-check)
+  - Automatic format detection from file extension (`.json`, `.md`, `.html`)
+  - New centralized formatters module with JSON, Markdown, and HTML output
+  - Consistent API across all reviewer commands
+
+- **Project Profile Refresh** - Added mechanism to refresh project profile
+  - New `refresh_project_profile()` function for explicit re-detection
+  - Support for incremental updates to existing profiles
+
+### Fixed
+- **Enhancer Output Formatting** - Fixed incomplete metadata display
+  - Fixed `_stage_analysis()` to correctly parse and store intent, scope, workflow_type
+  - Added robust JSON parsing with fallback values in `_parse_analysis_response()`
+  - Enhanced markdown output to display all stage data (requirements, architecture guidance, etc.)
+  - All enhancement stages now properly displayed in output
+
+- **Helpful Error Messages** - Improved CLI error handling
+  - Added `HelpfulArgumentParser` class for better error messages
+  - More context-aware suggestions for unrecognized arguments
+
+### Changed
+- **Consistency Improvements** - Unified API across reviewer commands
+  - All reviewer commands now support `--output` flag consistently
+  - Standardized output formatting across all commands
+
+### Testing
+- Added comprehensive test coverage for batch operations
+- Added tests for enhancer output formatting fixes
+- Added tests for formatters module
+- Added tests for output file support
+
+### Documentation
+- Updated API.md with batch operations examples
+- Added output format examples to documentation
+- Documented enhancer improvements
+- Created consistency improvements plan document
+
 ## [2.0.9] - 2026-01-22
 
 ### Fixed

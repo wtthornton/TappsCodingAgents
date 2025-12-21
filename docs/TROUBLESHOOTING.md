@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-**Version**: 2.0.8  
+**Version**: 2.1.0  
 **Last Updated**: December 2025
 
 ## Installation

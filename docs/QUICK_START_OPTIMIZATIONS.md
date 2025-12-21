@@ -90,5 +90,5 @@ pytest tests/unit/workflow/test_cursor_executor_context_manager.py -v
 ---
 
 **Last Updated**: January 2025  
-**Version**: 2.0.8+
+**Version**: 2.1.0+
 
