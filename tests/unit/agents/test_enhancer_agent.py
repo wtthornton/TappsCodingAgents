@@ -513,3 +513,218 @@ class TestEnhancerAgentErrorHandling:
             assert "error" in result
             assert "failed" in result["error"].lower()
 
+
+class TestEnhancerOutputFormatting:
+    """Tests for enhancer output formatting fixes."""
+
+    @pytest.mark.asyncio
+    async def test_stage_analysis_parses_intent_scope_workflow(self, tmp_path):
+        """Test _stage_analysis correctly parses intent, scope, and workflow_type."""
+        agent = EnhancerAgent()
+        await agent.activate(tmp_path)
+        
+        # Mock analyst.run to return structured response
+        mock_analysis_response = {
+            "instruction": {
+                "content": """Here's the analysis:
+```json
+{
+  "intent": "feature",
+  "scope": "medium",
+  "workflow_type": "greenfield",
+  "domains": ["security"],
+  "technologies": ["Python"],
+  "complexity": "medium"
+}
+```"""
+            }
+        }
+        
+        with patch.object(agent.analyst, 'run', new_callable=AsyncMock) as mock_analyst_run:
+            mock_analyst_run.return_value = mock_analysis_response
+            
+            result = await agent._stage_analysis("Create a user authentication feature")
+            
+            # Verify parsed fields are present
+            assert "intent" in result
+            assert "scope" in result
+            assert "workflow_type" in result
+            assert result["intent"] == "feature"
+            assert result["scope"] == "medium"
+            assert result["workflow_type"] == "greenfield"
+
+    def test_parse_analysis_response_with_json_block(self):
+        """Test _parse_analysis_response extracts JSON from code block."""
+        agent = EnhancerAgent()
+        
+        response_text = """Here's the analysis:
+```json
+{
+  "intent": "bug fix",
+  "scope": "small",
+  "workflow_type": "quick-fix",
+  "domains": ["ui"],
+  "technologies": ["React"],
+  "complexity": "low"
+}
+```"""
+        
+        result = agent._parse_analysis_response(response_text)
+        
+        assert result["intent"] == "bug fix"
+        assert result["scope"] == "small"
+        assert result["workflow_type"] == "quick-fix"
+        assert "domains" in result
+        assert "technologies" in result
+
+    def test_parse_analysis_response_with_plain_json(self):
+        """Test _parse_analysis_response extracts JSON without code block."""
+        agent = EnhancerAgent()
+        
+        response_text = '{"intent": "refactor", "scope": "large", "workflow_type": "brownfield"}'
+        
+        result = agent._parse_analysis_response(response_text)
+        
+        assert result["intent"] == "refactor"
+        assert result["scope"] == "large"
+        assert result["workflow_type"] == "brownfield"
+
+    def test_parse_analysis_response_with_fallback(self):
+        """Test _parse_analysis_response provides fallback values."""
+        agent = EnhancerAgent()
+        
+        # Invalid JSON
+        response_text = "This is not JSON at all"
+        
+        result = agent._parse_analysis_response(response_text)
+        
+        # Should return empty dict or dict with fallback values
+        assert isinstance(result, dict)
+
+    def test_create_markdown_from_stages_includes_all_sections(self, tmp_path):
+        """Test _create_markdown_from_stages includes all stage data."""
+        agent = EnhancerAgent()
+        await agent.activate(tmp_path)
+        
+        session = {
+            "metadata": {
+                "original_prompt": "Test prompt",
+                "created_at": "2025-01-01T00:00:00Z",
+            },
+            "stages": {
+                "analysis": {
+                    "intent": "feature",
+                    "scope": "medium",
+                    "workflow_type": "greenfield",
+                    "domains": ["security"],
+                    "technologies": ["Python"],
+                    "complexity": "medium",
+                },
+                "requirements": {
+                    "requirements": [
+                        "Requirement 1: User authentication",
+                        "Requirement 2: Password hashing",
+                    ],
+                },
+                "architecture": {
+                    "guidance": "Use FastAPI with JWT tokens",
+                    "patterns": ["REST API", "JWT"],
+                },
+                "codebase_context": {
+                    "related_files": ["auth.py", "models.py"],
+                    "patterns": ["MVC"],
+                },
+                "quality": {
+                    "standards": ["PEP 8", "Type hints"],
+                    "thresholds": {"complexity": 5.0},
+                },
+                "implementation": {
+                    "strategy": "Step 1: Create auth module\nStep 2: Add JWT handling",
+                    "tasks": ["Task 1", "Task 2"],
+                },
+            },
+        }
+        
+        markdown = agent._create_markdown_from_stages(session)
+        
+        # Verify all sections are present
+        assert "## Analysis" in markdown
+        assert "**Intent**: feature" in markdown
+        assert "**Scope**: medium" in markdown
+        assert "**Workflow Type**: greenfield" in markdown
+        
+        assert "## Requirements" in markdown
+        assert "Requirement 1: User authentication" in markdown
+        
+        assert "## Architecture Guidance" in markdown
+        assert "Use FastAPI with JWT tokens" in markdown
+        
+        assert "## Codebase Context" in markdown
+        assert "auth.py" in markdown
+        
+        assert "## Quality Standards" in markdown
+        assert "PEP 8" in markdown
+        
+        assert "## Implementation Strategy" in markdown
+        assert "Step 1: Create auth module" in markdown
+
+    def test_create_markdown_from_stages_handles_missing_stages(self, tmp_path):
+        """Test _create_markdown_from_stages handles missing stage data gracefully."""
+        agent = EnhancerAgent()
+        await agent.activate(tmp_path)
+        
+        session = {
+            "metadata": {
+                "original_prompt": "Test prompt",
+                "created_at": "2025-01-01T00:00:00Z",
+            },
+            "stages": {
+                "analysis": {
+                    "intent": "feature",
+                    "scope": "medium",
+                },
+                # Missing other stages
+            },
+        }
+        
+        markdown = agent._create_markdown_from_stages(session)
+        
+        # Should still create valid markdown
+        assert "## Analysis" in markdown
+        assert "**Intent**: feature" in markdown
+        assert isinstance(markdown, str)
+        assert len(markdown) > 0
+
+    def test_create_markdown_from_stages_displays_parsed_analysis_fields(self, tmp_path):
+        """Test markdown output displays parsed analysis fields correctly."""
+        agent = EnhancerAgent()
+        await agent.activate(tmp_path)
+        
+        session = {
+            "metadata": {
+                "original_prompt": "Create authentication",
+                "created_at": "2025-01-01T00:00:00Z",
+            },
+            "stages": {
+                "analysis": {
+                    "intent": "feature",
+                    "scope": "medium",
+                    "workflow_type": "greenfield",
+                    "domains": ["security", "user-management"],
+                    "technologies": ["Python", "FastAPI"],
+                    "complexity": "medium",
+                },
+            },
+        }
+        
+        markdown = agent._create_markdown_from_stages(session)
+        
+        # Verify parsed fields are displayed (not "unknown")
+        assert "**Intent**: feature" in markdown
+        assert "**Scope**: medium" in markdown
+        assert "**Workflow Type**: greenfield" in markdown
+        assert "**Complexity**: medium" in markdown
+        assert "security" in markdown or "user-management" in markdown
+        assert "**Intent**: unknown" not in markdown
+        assert "**Scope**: unknown" not in markdown
+        assert "**Workflow**: unknown" not in markdown

@@ -7,6 +7,7 @@ This module provides standardized patterns for:
 - Output formatting (JSON/text)
 - Async command execution with proper event loop management
 """
+import argparse
 import asyncio
 import json
 import sys
@@ -301,4 +302,82 @@ def get_verbosity_level() -> str:
     from .feedback import VerbosityLevel
     verbosity = FeedbackManager.get_verbosity()
     return verbosity.value
+
+
+class HelpfulArgumentParser(argparse.ArgumentParser):
+    """
+    ArgumentParser subclass with improved error messages and suggestions.
+    
+    Provides helpful hints for common errors like unrecognized arguments,
+    missing required arguments, and invalid choices.
+    """
+    
+    def error(self, message: str) -> None:
+        """
+        Override error method to provide helpful suggestions.
+        
+        Args:
+            message: Error message from argparse
+        """
+        # Handle unrecognized arguments (common when user tries to pass multiple files)
+        if "unrecognized arguments" in message:
+            # Extract the unrecognized arguments
+            import re
+            match = re.search(r"unrecognized arguments: (.+)", message)
+            if match:
+                unrecognized = match.group(1).split()
+                # Check if they look like file paths
+                if any(arg.endswith(('.py', '.js', '.ts', '.java', '.go', '.rs')) for arg in unrecognized):
+                    self.print_help()
+                    print("\n" + "="*70)
+                    print("ERROR: Multiple files detected but batch mode not enabled")
+                    print("="*70)
+                    print(f"\nUnrecognized arguments: {', '.join(unrecognized)}")
+                    print("\nHint: The command accepts multiple files. Try one of these:")
+                    print(f"  1. Specify files as positional arguments:")
+                    print(f"     tapps-agents reviewer score {' '.join(unrecognized)}")
+                    print(f"  2. Use a glob pattern:")
+                    print(f"     tapps-agents reviewer score --pattern '**/*.py'")
+                    print(f"  3. Process files one at a time:")
+                    for arg in unrecognized[:3]:  # Show first 3
+                        print(f"     tapps-agents reviewer score {arg}")
+                    if len(unrecognized) > 3:
+                        print(f"     ... and {len(unrecognized) - 3} more files")
+                    print("\nFor more information, use: tapps-agents reviewer score --help")
+                    sys.exit(EXIT_USAGE_ERROR)
+        
+        # Handle missing required arguments
+        if "the following arguments are required" in message.lower():
+            self.print_help()
+            print("\n" + "="*70)
+            print("ERROR: Missing required arguments")
+            print("="*70)
+            print(f"\n{message}")
+            print("\nHint: Check the command syntax above and provide all required arguments.")
+            sys.exit(EXIT_USAGE_ERROR)
+        
+        # Handle invalid choice errors
+        if "invalid choice" in message.lower():
+            import re
+            match = re.search(r"invalid choice: '(.+)' \(choose from: (.+)\)", message)
+            if match:
+                invalid = match.group(1)
+                choices = match.group(2)
+                self.print_help()
+                print("\n" + "="*70)
+                print("ERROR: Invalid choice")
+                print("="*70)
+                print(f"\nInvalid choice: '{invalid}'")
+                print(f"Valid choices: {choices}")
+                print("\nHint: Use one of the valid choices listed above.")
+                sys.exit(EXIT_USAGE_ERROR)
+        
+        # Default behavior for other errors
+        self.print_help()
+        print("\n" + "="*70)
+        print("ERROR")
+        print("="*70)
+        print(f"\n{message}")
+        print("\nFor more information, use --help")
+        sys.exit(EXIT_USAGE_ERROR)
 

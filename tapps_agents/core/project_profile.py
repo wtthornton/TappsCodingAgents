@@ -259,3 +259,97 @@ def load_project_profile(
         logger = logging.getLogger(__name__)
         logger.debug(f"Failed to load project profile: {e}")
         return None
+
+
+def refresh_project_profile(
+    project_root: Path | None = None,
+    incremental: bool = False,
+    characteristics: list[str] | None = None,
+) -> ProjectProfile:
+    """
+    Refresh project profile by re-detecting characteristics.
+    
+    Args:
+        project_root: Root directory (defaults to current directory)
+        incremental: If True, only update specified characteristics; if False, full refresh
+        characteristics: List of characteristics to refresh (e.g., ['deployment_type', 'tenancy']).
+                        If None and incremental=True, refreshes all. If incremental=False, ignored.
+    
+    Returns:
+        Updated ProjectProfile
+    """
+    project_root = project_root or Path.cwd()
+    
+    # Load existing profile if it exists
+    existing_profile = load_project_profile(project_root)
+    
+    # Create detector
+    detector = ProjectProfileDetector(project_root=project_root)
+    
+    if incremental and existing_profile:
+        # Incremental update: only refresh specified characteristics
+        new_profile = existing_profile
+        
+        # If no characteristics specified, refresh all
+        if not characteristics:
+            characteristics = [
+                'deployment_type',
+                'tenancy',
+                'user_scale',
+                'compliance_requirements',
+                'security_level',
+            ]
+        
+        # Refresh each specified characteristic
+        if 'deployment_type' in characteristics:
+            deployment_type, deployment_conf, deployment_indicators = (
+                detector.detector.detect_deployment_type()
+            )
+            if deployment_type:
+                new_profile.deployment_type = deployment_type
+                new_profile.deployment_type_confidence = deployment_conf
+                new_profile.deployment_type_indicators = deployment_indicators
+        
+        if 'tenancy' in characteristics:
+            tenancy, tenancy_conf, tenancy_indicators = detector.detector.detect_tenancy()
+            if tenancy:
+                new_profile.tenancy = tenancy
+                new_profile.tenancy_confidence = tenancy_conf
+                new_profile.tenancy_indicators = tenancy_indicators
+        
+        if 'user_scale' in characteristics:
+            user_scale, user_scale_conf, user_scale_indicators = (
+                detector.detector.detect_user_scale()
+            )
+            if user_scale and user_scale_conf >= 0.5:
+                new_profile.user_scale = user_scale
+                new_profile.user_scale_confidence = user_scale_conf
+                new_profile.user_scale_indicators = user_scale_indicators
+        
+        if 'compliance_requirements' in characteristics:
+            compliance_results = detector.detector.detect_compliance_requirements()
+            compliance_reqs = [
+                ComplianceRequirement(name=name, confidence=conf, indicators=indicators)
+                for name, conf, indicators in compliance_results
+            ]
+            new_profile.compliance_requirements = compliance_reqs
+        
+        if 'security_level' in characteristics:
+            security_level, security_conf, security_indicators = (
+                detector.detector.detect_security_level()
+            )
+            if security_level:
+                new_profile.security_level = security_level
+                new_profile.security_level_confidence = security_conf
+                new_profile.security_level_indicators = security_indicators
+        
+        # Update timestamp
+        new_profile.detected_at = datetime.now(UTC).isoformat() + "Z"
+    else:
+        # Full refresh: detect everything
+        new_profile = detector.detect_profile()
+    
+    # Save updated profile
+    save_project_profile(new_profile, project_root)
+    
+    return new_profile

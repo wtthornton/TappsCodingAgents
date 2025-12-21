@@ -105,15 +105,35 @@ The CLI accepts **both** forms for many agent commands:
 ### Common Examples
 
 ```bash
-# Reviewer
+# Reviewer - Single File
 python -m tapps_agents.cli reviewer review path/to/file.py
 python -m tapps_agents.cli reviewer score path/to/file.py
 python -m tapps_agents.cli reviewer lint path/to/file.py
 python -m tapps_agents.cli reviewer type-check path/to/file.py
 python -m tapps_agents.cli reviewer report path/to/dir json markdown html
 
+# Reviewer - Batch Operations (Multiple Files)
+python -m tapps_agents.cli reviewer score file1.py file2.py file3.py
+python -m tapps_agents.cli reviewer review file1.py file2.py --max-workers 4
+python -m tapps_agents.cli reviewer lint file1.py file2.py --output results.json
+
+# Reviewer - Glob Patterns
+python -m tapps_agents.cli reviewer score --pattern "src/**/*.py"
+python -m tapps_agents.cli reviewer review --pattern "tests/*.py" --max-workers 8
+python -m tapps_agents.cli reviewer lint --pattern "**/*.ts" --output lint-report.html
+
+# Reviewer - Output Formats
+python -m tapps_agents.cli reviewer score file.py --output report.json
+python -m tapps_agents.cli reviewer score file.py --output report.md --format markdown
+python -m tapps_agents.cli reviewer score file.py --output report.html --format html
+
 # Quick shortcut (same as reviewer score)
 python -m tapps_agents.cli score path/to/file.py
+
+# Enhancer - Prompt Enhancement
+python -m tapps_agents.cli enhancer enhance "Create a user authentication feature"
+python -m tapps_agents.cli enhancer enhance "Fix the bug in login.py" --output enhanced.md
+python -m tapps_agents.cli enhancer enhance-quick "Quick enhancement" --output quick.md
 
 # Workflow presets
 python -m tapps_agents.cli workflow list
@@ -147,6 +167,97 @@ python -m tapps_agents.cli create "Create a REST API for user management" --work
 python -m tapps_agents.cli hardware-profile
 python -m tapps_agents.cli hardware-profile --set nuc
 python -m tapps_agents.cli hardware-profile --set auto
+```
+
+## Batch Operations
+
+The reviewer agent now supports batch processing for multiple files:
+
+### Multiple Files
+```bash
+# Score multiple files at once
+python -m tapps_agents.cli reviewer score file1.py file2.py file3.py
+
+# Review multiple files with custom concurrency
+python -m tapps_agents.cli reviewer review file1.py file2.py --max-workers 4
+```
+
+### Glob Patterns
+```bash
+# Process all Python files in a directory
+python -m tapps_agents.cli reviewer score --pattern "src/**/*.py"
+
+# Process test files only
+python -m tapps_agents.cli reviewer lint --pattern "tests/*.py"
+```
+
+### Output Formats
+```bash
+# Save results to JSON file
+python -m tapps_agents.cli reviewer score file.py --output report.json
+
+# Generate HTML report
+python -m tapps_agents.cli reviewer score file.py --output report.html --format html
+
+# Generate Markdown report
+python -m tapps_agents.cli reviewer score file.py --output report.md --format markdown
+
+# Save lint results to file
+python -m tapps_agents.cli reviewer lint file.py --output lint-report.json
+
+# Save type-check results to file
+python -m tapps_agents.cli reviewer type-check file.py --output type-check.json
+
+# Batch lint with output file
+python -m tapps_agents.cli reviewer lint file1.py file2.py --output batch-lint.json
+
+# Batch type-check with HTML output
+python -m tapps_agents.cli reviewer type-check --pattern "src/**/*.py" --output type-check.html --format html
+```
+
+## Enhancer Improvements
+
+The enhancer agent now provides complete output with all stage data:
+
+### Enhanced Output
+The enhancer now displays:
+- **Analysis**: Intent, scope, workflow type, complexity, domains, technologies
+- **Requirements**: Gathered requirements from analyst and experts
+- **Architecture Guidance**: Architecture recommendations and patterns
+- **Codebase Context**: Related files and detected patterns
+- **Quality Standards**: Quality thresholds and standards
+- **Implementation Strategy**: Step-by-step implementation plan
+
+### Example Output
+```markdown
+# Enhanced Prompt: Create a user authentication feature
+
+## Analysis
+- **Intent**: feature
+- **Scope**: medium
+- **Workflow Type**: greenfield
+- **Complexity**: medium
+- **Detected Domains**: security, user-management
+
+## Requirements
+1. Requirement 1: User authentication
+2. Requirement 2: Password hashing
+
+## Architecture Guidance
+Use FastAPI with JWT tokens
+Patterns: REST API, JWT
+
+## Codebase Context
+Related Files: auth.py, models.py
+Patterns: MVC
+
+## Quality Standards
+Standards: PEP 8, Type hints
+Thresholds: complexity < 5.0
+
+## Implementation Strategy
+Step 1: Create auth module
+Step 2: Add JWT handling
 ```
 
 ## Related Documentation

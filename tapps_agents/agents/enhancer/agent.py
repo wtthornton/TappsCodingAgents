@@ -619,21 +619,58 @@ class EnhancerAgent(BaseAgent):
 
 Prompt: {prompt}
 
-Provide structured JSON response."""
+Provide structured JSON response with the following format:
+{{
+  "intent": "feature",
+  "scope": "medium",
+  "workflow_type": "greenfield",
+  "domains": ["security", "user-management"],
+  "technologies": ["Python", "FastAPI"],
+  "complexity": "medium"
+}}"""
 
-        # Prepare instruction for Cursor Skills
-        instruction = GenericInstruction(
-            agent_name="enhancer",
-            command="analyze-prompt",
-            prompt=analysis_prompt,
-            parameters={"original_prompt": prompt},
-        )
-
-        return {
-            "original_prompt": prompt,
-            "instruction": instruction.to_dict(),
-            "skill_command": instruction.to_skill_command(),
-        }
+        # Use analyst agent to perform analysis
+        try:
+            analysis_result = await self.analyst.run(
+                "analyze-prompt",
+                description=prompt,
+            )
+            
+            # Extract analysis text from result
+            analysis_text = ""
+            if isinstance(analysis_result, dict):
+                analysis_text = analysis_result.get("analysis", "") or analysis_result.get("result", "") or str(analysis_result)
+            else:
+                analysis_text = str(analysis_result)
+            
+            # Parse the response to extract structured data
+            parsed = self._parse_analysis_response(analysis_text)
+            
+            return {
+                "original_prompt": prompt,
+                "intent": parsed.get("intent", "unknown"),
+                "scope": parsed.get("scope", "unknown"),
+                "workflow_type": parsed.get("workflow_type", "unknown"),
+                "domains": parsed.get("domains", []),
+                "technologies": parsed.get("technologies", []),
+                "complexity": parsed.get("complexity", "medium"),
+                "analysis": analysis_text,  # Keep raw response for reference
+                "parsed_data": parsed,  # Store parsed data
+            }
+        except Exception as e:
+            logger.warning(f"Analysis stage failed: {e}, using fallback values")
+            # Return fallback values if analysis fails
+            return {
+                "original_prompt": prompt,
+                "intent": "unknown",
+                "scope": "unknown",
+                "workflow_type": "unknown",
+                "domains": [],
+                "technologies": [],
+                "complexity": "medium",
+                "analysis": f"Analysis failed: {str(e)}",
+                "parsed_data": {},
+            }
 
     async def _stage_requirements(
         self, prompt: str, analysis: dict[str, Any]
@@ -927,23 +964,72 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         lines.append(f"- **Created**: {session['metadata']['created_at']}")
         lines.append("")
 
+        # Analysis section with all extracted fields
         if "analysis" in stages:
             lines.append("## Analysis")
             analysis = stages["analysis"]
-            lines.append(f"- **Intent**: {analysis.get('intent', 'unknown')}")
-            lines.append(f"- **Scope**: {analysis.get('scope', 'unknown')}")
-            lines.append(f"- **Workflow**: {analysis.get('workflow_type', 'unknown')}")
+            
+            # Display parsed fields
+            intent = analysis.get('intent', 'unknown')
+            scope = analysis.get('scope', 'unknown')
+            workflow_type = analysis.get('workflow_type', 'unknown')
+            domains = analysis.get('domains', [])
+            technologies = analysis.get('technologies', [])
+            complexity = analysis.get('complexity', 'medium')
+            
+            lines.append(f"- **Intent**: {intent}")
+            lines.append(f"- **Scope**: {scope}")
+            lines.append(f"- **Workflow Type**: {workflow_type}")
+            lines.append(f"- **Complexity**: {complexity}")
+            
+            if domains:
+                lines.append(f"- **Detected Domains**: {', '.join(domains)}")
+            
+            if technologies:
+                lines.append(f"- **Technologies**: {', '.join(technologies)}")
+            
             lines.append("")
 
+        # Requirements section with all content
         if "requirements" in stages:
             lines.append("## Requirements")
             reqs = stages["requirements"]
+            
+            # Functional Requirements
             if reqs.get("functional_requirements"):
                 lines.append("### Functional Requirements")
                 for req in reqs["functional_requirements"]:
                     lines.append(f"- {req}")
                 lines.append("")
+            
+            # Non-functional Requirements
+            if reqs.get("non_functional_requirements"):
+                lines.append("### Non-Functional Requirements")
+                for req in reqs["non_functional_requirements"]:
+                    lines.append(f"- {req}")
+                lines.append("")
+            
+            # Technical Constraints
+            if reqs.get("technical_constraints"):
+                lines.append("### Technical Constraints")
+                for constraint in reqs["technical_constraints"]:
+                    lines.append(f"- {constraint}")
+                lines.append("")
+            
+            # Assumptions
+            if reqs.get("assumptions"):
+                lines.append("### Assumptions")
+                for assumption in reqs["assumptions"]:
+                    lines.append(f"- {assumption}")
+                lines.append("")
+            
+            # Requirements Analysis
+            if reqs.get("requirements_analysis"):
+                lines.append("### Requirements Analysis")
+                lines.append(reqs["requirements_analysis"])
+                lines.append("")
 
+            # Expert Consultations
             if reqs.get("expert_consultations"):
                 lines.append("### Domain Context (from Industry Experts)")
                 for domain, consultation in reqs["expert_consultations"].items():
@@ -958,33 +1044,216 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
                         f"**Primary Expert**: {consultation.get('primary_expert', 'unknown')}"
                     )
                     lines.append("")
-                    lines.append(consultation.get("weighted_answer", ""))
+                    weighted_answer = consultation.get("weighted_answer", "")
+                    if weighted_answer:
+                        lines.append(weighted_answer)
                     lines.append("")
 
+        # Architecture section with all content
         if "architecture" in stages:
             lines.append("## Architecture Guidance")
             arch = stages["architecture"]
-            lines.append(arch.get("architecture_guidance", ""))
-            lines.append("")
+            
+            # Architecture Guidance
+            if arch.get("architecture_guidance"):
+                lines.append(arch["architecture_guidance"])
+                lines.append("")
+            
+            # System Design
+            if arch.get("system_design"):
+                lines.append("### System Design")
+                if isinstance(arch["system_design"], dict):
+                    for key, value in arch["system_design"].items():
+                        lines.append(f"**{key.title()}**: {value}")
+                else:
+                    lines.append(str(arch["system_design"]))
+                lines.append("")
+            
+            # Design Patterns
+            if arch.get("design_patterns"):
+                lines.append("### Design Patterns")
+                for pattern in arch["design_patterns"]:
+                    lines.append(f"- {pattern}")
+                lines.append("")
+            
+            # Technology Recommendations
+            if arch.get("technology_recommendations"):
+                lines.append("### Technology Recommendations")
+                for tech in arch["technology_recommendations"]:
+                    lines.append(f"- {tech}")
+                lines.append("")
 
+        # Codebase Context section
+        if "codebase_context" in stages:
+            lines.append("## Codebase Context")
+            ctx = stages["codebase_context"]
+            
+            if ctx.get("codebase_context"):
+                lines.append(ctx["codebase_context"])
+                lines.append("")
+            
+            # Related Files
+            if ctx.get("related_files"):
+                lines.append("### Related Files")
+                for file in ctx["related_files"]:
+                    lines.append(f"- {file}")
+                lines.append("")
+            
+            # Existing Patterns
+            if ctx.get("existing_patterns"):
+                lines.append("### Existing Patterns")
+                for pattern in ctx["existing_patterns"]:
+                    lines.append(f"- {pattern}")
+                lines.append("")
+            
+            # Cross References
+            if ctx.get("cross_references"):
+                lines.append("### Cross References")
+                for ref in ctx["cross_references"]:
+                    lines.append(f"- {ref}")
+                lines.append("")
+
+        # Quality Standards section
         if "quality" in stages:
             lines.append("## Quality Standards")
             quality = stages["quality"]
-            lines.append(
-                f"**Overall Score Threshold**: {quality.get('code_quality_thresholds', {}).get('overall_score', 70)}"
-            )
-            lines.append("")
+            
+            # Code Quality Thresholds
+            if quality.get("code_quality_thresholds"):
+                thresholds = quality["code_quality_thresholds"]
+                lines.append("### Code Quality Thresholds")
+                lines.append(f"- **Overall Score Threshold**: {thresholds.get('overall_score', 70)}")
+                if thresholds.get('complexity_target'):
+                    lines.append(f"- **Complexity Target**: {thresholds['complexity_target']}")
+                if thresholds.get('security_target'):
+                    lines.append(f"- **Security Target**: {thresholds['security_target']}")
+                lines.append("")
+            
+            # Quality Standards Text
+            if quality.get("quality_standards"):
+                lines.append("### Quality Standards")
+                lines.append(quality["quality_standards"])
+                lines.append("")
 
+        # Implementation Strategy section
         if "implementation" in stages:
             lines.append("## Implementation Strategy")
             impl = stages["implementation"]
+            
+            # Task Breakdown
             if impl.get("task_breakdown"):
                 lines.append("### Task Breakdown")
                 for task in impl["task_breakdown"]:
                     lines.append(f"- {task}")
                 lines.append("")
+            
+            # Implementation Plan
+            if impl.get("implementation_plan"):
+                lines.append("### Implementation Plan")
+                if isinstance(impl["implementation_plan"], str):
+                    lines.append(impl["implementation_plan"])
+                else:
+                    lines.append(str(impl["implementation_plan"]))
+                lines.append("")
+            
+            # Implementation Steps
+            if impl.get("steps"):
+                lines.append("### Implementation Steps")
+                for i, step in enumerate(impl["steps"], 1):
+                    lines.append(f"{i}. {step}")
+                lines.append("")
+
+        # Synthesis section (final enhanced prompt)
+        if "synthesis" in stages:
+            lines.append("## Enhanced Prompt")
+            synthesis = stages["synthesis"]
+            if isinstance(synthesis, dict):
+                enhanced_prompt = synthesis.get("enhanced_prompt", synthesis.get("result", ""))
+            else:
+                enhanced_prompt = str(synthesis)
+            
+            if enhanced_prompt:
+                lines.append("")
+                lines.append(enhanced_prompt)
+                lines.append("")
 
         return "\n".join(lines)
+
+    def _parse_analysis_response(self, response_text: str) -> dict[str, Any]:
+        """
+        Parse analysis response to extract structured data.
+        
+        Handles both JSON and markdown-formatted responses.
+        
+        Args:
+            response_text: Raw response text from analyst
+            
+        Returns:
+            Dictionary with parsed fields (intent, scope, workflow_type, etc.)
+        """
+        parsed: dict[str, Any] = {}
+        
+        if not response_text:
+            return parsed
+        
+        # Try to extract JSON from response
+        # Look for JSON code blocks first
+        import re
+        
+        # Try to find JSON in code blocks
+        json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
+        if json_match:
+            try:
+                parsed = json.loads(json_match.group(1))
+                return parsed
+            except json.JSONDecodeError:
+                pass
+        
+        # Try to find JSON object directly
+        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response_text, re.DOTALL)
+        if json_match:
+            try:
+                parsed = json.loads(json_match.group(0))
+                return parsed
+            except json.JSONDecodeError:
+                pass
+        
+        # Fallback: try to extract fields using regex patterns
+        # Extract intent
+        intent_match = re.search(r'"intent"\s*:\s*"([^"]+)"|intent[:\s]+([a-z-]+)', response_text, re.IGNORECASE)
+        if intent_match:
+            parsed["intent"] = intent_match.group(1) or intent_match.group(2) or "unknown"
+        
+        # Extract scope
+        scope_match = re.search(r'"scope"\s*:\s*"([^"]+)"|scope[:\s]+(small|medium|large)', response_text, re.IGNORECASE)
+        if scope_match:
+            parsed["scope"] = scope_match.group(1) or scope_match.group(2) or "unknown"
+        
+        # Extract workflow_type
+        workflow_match = re.search(r'"workflow_type"\s*:\s*"([^"]+)"|workflow[:\s]+(greenfield|brownfield|quick-fix)', response_text, re.IGNORECASE)
+        if workflow_match:
+            parsed["workflow_type"] = workflow_match.group(1) or workflow_match.group(2) or "unknown"
+        
+        # Extract domains (list)
+        domains_match = re.search(r'"domains"\s*:\s*\[(.*?)\]', response_text, re.DOTALL)
+        if domains_match:
+            domains_str = domains_match.group(1)
+            domains = [d.strip().strip('"\'') for d in domains_str.split(',') if d.strip()]
+            parsed["domains"] = domains
+        
+        # Extract technologies (list)
+        tech_match = re.search(r'"technologies"\s*:\s*\[(.*?)\]', response_text, re.DOTALL)
+        if tech_match:
+            tech_str = tech_match.group(1)
+            technologies = [t.strip().strip('"\'') for t in tech_str.split(',') if t.strip()]
+            parsed["technologies"] = technologies
+        
+        # Extract complexity
+        complexity_match = re.search(r'"complexity"\s*:\s*"([^"]+)"|complexity[:\s]+(low|medium|high)', response_text, re.IGNORECASE)
+        if complexity_match:
+            parsed["complexity"] = complexity_match.group(1) or complexity_match.group(2) or "medium"
+        
+        return parsed
 
     def _print_progress(self, current: int, total: int, stage_name: str, message: str):
         """Print progress indicator with percentage - real-time unbuffered output."""

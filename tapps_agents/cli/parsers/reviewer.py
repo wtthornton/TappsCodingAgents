@@ -40,17 +40,39 @@ Analyzes code for:
   • Documentation quality
   • Test coverage recommendations
 
+Supports batch processing: specify multiple files or use --pattern for glob patterns.
+
 Example:
   tapps-agents reviewer review src/app.py
-  tapps-agents reviewer review src/app.py --format text""",
+  tapps-agents reviewer review src/app.py --format text
+  tapps-agents reviewer review file1.py file2.py file3.py
+  tapps-agents reviewer review --pattern "**/*.py" --max-workers 8""",
     )
-    review_parser.add_argument("file", help="Path to the source code file to review. The file will be analyzed for quality, bugs, security issues, and best practices.")
+    review_parser.add_argument(
+        "files",
+        nargs="*",
+        help="Path(s) to source code file(s) to review. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+    )
+    review_parser.add_argument(
+        "--pattern",
+        help="Glob pattern to match files (e.g., '**/*.py'). Overrides file arguments. Files are resolved relative to current working directory.",
+    )
+    review_parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=4,
+        help="Maximum number of concurrent file operations (default: 4). Use 1 for sequential processing.",
+    )
     # Model parameter removed - all LLM operations handled by Cursor Skills
     review_parser.add_argument(
         "--format",
-        choices=["json", "text"],
+        choices=["json", "text", "markdown", "html"],
         default="json",
-        help="Output format: 'json' for structured review data with categories and scores (default), 'text' for human-readable review report",
+        help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for Markdown, 'html' for HTML report",
+    )
+    review_parser.add_argument(
+        "--output",
+        help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
     )
 
     score_parser = reviewer_subparsers.add_parser(
@@ -69,16 +91,38 @@ Returns numerical scores (0-100) for:
 This is a fast, objective analysis without AI review. Use 'review' for
 detailed AI-powered analysis.
 
+Supports batch processing: specify multiple files or use --pattern for glob patterns.
+
 Example:
   tapps-agents reviewer score src/utils.py
-  tapps-agents reviewer score src/utils.py --format text""",
+  tapps-agents reviewer score src/utils.py --format text
+  tapps-agents reviewer score file1.py file2.py file3.py
+  tapps-agents reviewer score --pattern "**/*.py" --max-workers 8""",
     )
-    score_parser.add_argument("file", help="Path to the source code file to score. Objective metrics will be calculated without AI analysis.")
+    score_parser.add_argument(
+        "files",
+        nargs="*",
+        help="Path(s) to source code file(s) to score. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+    )
+    score_parser.add_argument(
+        "--pattern",
+        help="Glob pattern to match files (e.g., '**/*.py'). Overrides file arguments. Files are resolved relative to current working directory.",
+    )
+    score_parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=4,
+        help="Maximum number of concurrent file operations (default: 4). Use 1 for sequential processing.",
+    )
     score_parser.add_argument(
         "--format",
-        choices=["json", "text"],
+        choices=["json", "text", "markdown", "html"],
         default="json",
-        help="Output format: 'json' for structured score data (default), 'text' for human-readable score summary",
+        help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for Markdown, 'html' for HTML report",
+    )
+    score_parser.add_argument(
+        "--output",
+        help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
     )
 
     lint_parser = reviewer_subparsers.add_parser(
@@ -94,16 +138,39 @@ Ruff is a fast Python linter that checks for:
   • Code complexity issues
   • Best practice violations
 
+Supports batch processing: specify multiple files or use --pattern for glob patterns.
+
 Example:
   tapps-agents reviewer lint src/main.py
-  tapps-agents reviewer lint src/main.py --format text""",
+  tapps-agents reviewer lint src/main.py --format text
+  tapps-agents reviewer lint src/main.py --output lint-report.json
+  tapps-agents reviewer lint file1.py file2.py file3.py
+  tapps-agents reviewer lint --pattern "**/*.py" --max-workers 8""",
     )
-    lint_parser.add_argument("file", help="Path to the Python source code file to lint. Ruff will analyze the file for style violations and code quality issues.")
+    lint_parser.add_argument(
+        "files",
+        nargs="*",
+        help="Path(s) to Python source code file(s) to lint. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+    )
+    lint_parser.add_argument(
+        "--pattern",
+        help="Glob pattern to match files (e.g., '**/*.py'). Overrides file arguments. Files are resolved relative to current working directory.",
+    )
+    lint_parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=4,
+        help="Maximum number of concurrent file operations (default: 4). Use 1 for sequential processing.",
+    )
     lint_parser.add_argument(
         "--format",
         choices=["json", "text"],
         default="json",
         help="Output format: 'json' for structured lint results (default), 'text' for human-readable lint output",
+    )
+    lint_parser.add_argument(
+        "--output",
+        help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
     )
 
     type_check_parser = reviewer_subparsers.add_parser(
@@ -121,16 +188,39 @@ Checks for:
 
 Requires type annotations in your code. Use --format text for readable output.
 
+Supports batch processing: specify multiple files or use --pattern for glob patterns.
+
 Example:
   tapps-agents reviewer type-check src/models.py
-  tapps-agents reviewer type-check src/models.py --format text""",
+  tapps-agents reviewer type-check src/models.py --format text
+  tapps-agents reviewer type-check src/models.py --output type-check.json
+  tapps-agents reviewer type-check file1.py file2.py file3.py
+  tapps-agents reviewer type-check --pattern "**/*.py" --max-workers 8""",
     )
-    type_check_parser.add_argument("file", help="Path to the Python source code file to type-check. Requires type annotations in your code for meaningful results.")
+    type_check_parser.add_argument(
+        "files",
+        nargs="*",
+        help="Path(s) to Python source code file(s) to type-check. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+    )
+    type_check_parser.add_argument(
+        "--pattern",
+        help="Glob pattern to match files (e.g., '**/*.py'). Overrides file arguments. Files are resolved relative to current working directory.",
+    )
+    type_check_parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=4,
+        help="Maximum number of concurrent file operations (default: 4). Use 1 for sequential processing.",
+    )
     type_check_parser.add_argument(
         "--format",
         choices=["json", "text"],
         default="json",
         help="Output format: 'json' for structured type check results (default), 'text' for human-readable mypy output",
+    )
+    type_check_parser.add_argument(
+        "--output",
+        help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
     )
 
     report_parser = reviewer_subparsers.add_parser(

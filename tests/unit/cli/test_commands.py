@@ -204,6 +204,581 @@ class TestReviewerCommands:
         assert len(captured.out) > 0
 
 
+class TestReviewerBatchOperations:
+    """Tests for reviewer batch operations (multiple files, glob patterns)."""
+
+    @pytest.mark.asyncio
+    async def test_review_command_multiple_files(self, tmp_path, capsys):
+        """Test review command with multiple files."""
+        # Create test files
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file3 = tmp_path / "file3.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        file3.write_text("def func3(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            
+            # Mock run to return different results for each file
+            async def mock_run(command, file):
+                return {
+                    "file": file,
+                    "scoring": {
+                        "complexity_score": 2.0,
+                        "security_score": 10.0,
+                        "maintainability_score": 9.0,
+                        "overall_score": 85.0,
+                    },
+                    "passed": True,
+                }
+            
+            mock_agent.run = AsyncMock(side_effect=mock_run)
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.review_command(
+                files=[str(file1), str(file2), str(file3)],
+                output_format="json"
+            )
+            
+            # Should call run 3 times (once per file)
+            assert mock_agent.run.call_count == 3
+            mock_agent.activate.assert_called_once()
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_review_command_glob_pattern(self, tmp_path, capsys):
+        """Test review command with glob pattern."""
+        # Create test files in subdirectory
+        test_dir = tmp_path / "test_dir"
+        test_dir.mkdir()
+        file1 = test_dir / "file1.py"
+        file2 = test_dir / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class, \
+             patch("pathlib.Path.cwd", return_value=tmp_path):
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "scoring": {
+                    "complexity_score": 2.0,
+                    "security_score": 10.0,
+                    "maintainability_score": 9.0,
+                    "overall_score": 85.0,
+                },
+                "passed": True,
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.review_command(
+                pattern="test_dir/*.py",
+                output_format="json"
+            )
+            
+            # Should call run for each matched file
+            assert mock_agent.run.call_count >= 1
+            mock_agent.activate.assert_called_once()
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_review_command_batch_with_errors(self, tmp_path, capsys):
+        """Test batch review with some files failing."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            
+            # First file succeeds, second fails
+            async def mock_run(command, file):
+                if "file1" in file:
+                    return {
+                        "file": file,
+                        "scoring": {
+                            "complexity_score": 2.0,
+                            "security_score": 10.0,
+                            "maintainability_score": 9.0,
+                            "overall_score": 85.0,
+                        },
+                        "passed": True,
+                    }
+                else:
+                    return {"error": "Test error", "file": file}
+            
+            mock_agent.run = AsyncMock(side_effect=mock_run)
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.review_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            assert mock_agent.run.call_count == 2
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_score_command_multiple_files(self, tmp_path, capsys):
+        """Test score command with multiple files."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "scoring": {
+                    "complexity_score": 2.0,
+                    "security_score": 10.0,
+                    "maintainability_score": 9.0,
+                    "overall_score": 85.0,
+                },
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.score_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            assert mock_agent.run.call_count == 2
+            mock_agent.activate.assert_called_once()
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_score_command_glob_pattern(self, tmp_path, capsys):
+        """Test score command with glob pattern."""
+        test_dir = tmp_path / "src"
+        test_dir.mkdir()
+        file1 = test_dir / "module1.py"
+        file2 = test_dir / "module2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class, \
+             patch("pathlib.Path.cwd", return_value=tmp_path):
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "scoring": {
+                    "complexity_score": 2.0,
+                    "security_score": 10.0,
+                    "maintainability_score": 9.0,
+                    "overall_score": 85.0,
+                },
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.score_command(
+                pattern="src/*.py",
+                output_format="json"
+            )
+            
+            assert mock_agent.run.call_count >= 1
+            mock_agent.activate.assert_called_once()
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_resolve_file_list_with_files(self, tmp_path):
+        """Test file resolution with explicit file list."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class, \
+             patch("pathlib.Path.cwd", return_value=tmp_path):
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "scoring": {"overall_score": 85.0},
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            # Test through public interface
+            await reviewer.review_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            # Should process both files
+            assert mock_agent.run.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_resolve_file_list_with_pattern(self, tmp_path):
+        """Test file resolution with glob pattern."""
+        test_dir = tmp_path / "test"
+        test_dir.mkdir()
+        file1 = test_dir / "file1.py"
+        file2 = test_dir / "file2.py"
+        file3 = test_dir / "file3.txt"  # Should not match *.py
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        file3.write_text("not python")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class, \
+             patch("pathlib.Path.cwd", return_value=tmp_path):
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "scoring": {"overall_score": 85.0},
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            # Test through public interface
+            await reviewer.review_command(
+                pattern="test/*.py",
+                output_format="json"
+            )
+            
+            # Should process only .py files (2 files)
+            assert mock_agent.run.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_resolve_file_list_no_files(self, tmp_path):
+        """Test file resolution raises error when no files found."""
+        with patch("pathlib.Path.cwd", return_value=tmp_path):
+            with pytest.raises(SystemExit):
+                await reviewer.review_command(
+                    pattern="nonexistent/*.py",
+                    output_format="json"
+                )
+
+    @pytest.mark.asyncio
+    async def test_process_file_batch_success(self, tmp_path):
+        """Test batch processing with successful processing."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(side_effect=[
+                {"file": str(file1), "scoring": {"overall_score": 85.0}},
+                {"file": str(file2), "scoring": {"overall_score": 90.0}},
+            ])
+            mock_agent_class.return_value = mock_agent
+            
+            # Test through public interface
+            await reviewer.score_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            # Both files should be processed successfully
+            assert mock_agent.run.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_process_file_batch_with_errors(self, tmp_path):
+        """Test batch processing with some errors."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(side_effect=[
+                {"file": str(file1), "scoring": {"overall_score": 85.0}},
+                {"error": "Test error", "file": str(file2)},
+            ])
+            mock_agent_class.return_value = mock_agent
+            
+            # Test through public interface
+            await reviewer.score_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            # Both files should be processed (one succeeds, one fails)
+            assert mock_agent.run.call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_process_file_batch_concurrency_limit(self, tmp_path):
+        """Test batch processing respects max_workers limit."""
+        # Create 5 files
+        files = []
+        for i in range(5):
+            file = tmp_path / f"file{i}.py"
+            file.write_text(f"def func{i}(): pass")
+            files.append(file)
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            call_count = 0
+            
+            async def mock_run(command, file):
+                nonlocal call_count
+                call_count += 1
+                return {"file": str(file), "scoring": {"overall_score": 85.0}}
+            
+            mock_agent.run = AsyncMock(side_effect=mock_run)
+            mock_agent_class.return_value = mock_agent
+            
+            # Test through public interface with max_workers=2
+            await reviewer.score_command(
+                files=[str(f) for f in files],
+                output_format="json",
+                max_workers=2
+            )
+            
+            # All files should be processed
+            assert call_count == 5
+
+    @pytest.mark.asyncio
+    async def test_lint_command_multiple_files(self, tmp_path, capsys):
+        """Test lint command with multiple files."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "linting_score": 9.0,
+                "issues": [],
+                "issue_count": 0,
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.lint_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            assert mock_agent.run.call_count == 2
+            mock_agent.activate.assert_called_once()
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_type_check_command_multiple_files(self, tmp_path, capsys):
+        """Test type-check command with multiple files."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": "test",
+                "type_checking_score": 9.0,
+                "errors": [],
+                "error_count": 0,
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            await reviewer.type_check_command(
+                files=[str(file1), str(file2)],
+                output_format="json"
+            )
+            
+            assert mock_agent.run.call_count == 2
+            mock_agent.activate.assert_called_once()
+            mock_agent.close.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_lint_command_with_output_file(self, tmp_path):
+        """Test lint command saves results to output file."""
+        file1 = tmp_path / "file1.py"
+        file1.write_text("def func1(): pass")
+        output_file = tmp_path / "lint-report.json"
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": str(file1),
+                "issues": [],
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            class MockArgs:
+                command = "lint"
+                files = [str(file1)]
+                pattern = None
+                max_workers = 4
+                format = "json"
+                output = str(output_file)
+            
+            reviewer.handle_reviewer_command(MockArgs())
+            
+            # Verify file was created
+            assert output_file.exists()
+            # Verify content is valid JSON
+            import json
+            content = json.loads(output_file.read_text())
+            assert "file" in content
+
+    @pytest.mark.asyncio
+    async def test_type_check_command_with_output_file(self, tmp_path):
+        """Test type-check command saves results to output file."""
+        file1 = tmp_path / "file1.py"
+        file1.write_text("def func1(): pass")
+        output_file = tmp_path / "type-check.json"
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": str(file1),
+                "errors": [],
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            class MockArgs:
+                command = "type-check"
+                files = [str(file1)]
+                pattern = None
+                max_workers = 4
+                format = "json"
+                output = str(output_file)
+            
+            reviewer.handle_reviewer_command(MockArgs())
+            
+            # Verify file was created
+            assert output_file.exists()
+            # Verify content is valid JSON
+            import json
+            content = json.loads(output_file.read_text())
+            assert "file" in content
+
+    @pytest.mark.asyncio
+    async def test_lint_command_output_format_detection(self, tmp_path):
+        """Test lint command detects format from file extension."""
+        file1 = tmp_path / "file1.py"
+        file1.write_text("def func1(): pass")
+        output_file = tmp_path / "lint-report.html"
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": str(file1),
+                "issues": [],
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            class MockArgs:
+                command = "lint"
+                files = [str(file1)]
+                pattern = None
+                max_workers = 4
+                format = "json"  # Will be overridden by extension
+                output = str(output_file)
+            
+            reviewer.handle_reviewer_command(MockArgs())
+            
+            # Verify HTML file was created
+            assert output_file.exists()
+            content = output_file.read_text()
+            assert "<html>" in content or "<!DOCTYPE html>" in content
+
+    @pytest.mark.asyncio
+    async def test_type_check_command_output_format_detection(self, tmp_path):
+        """Test type-check command detects format from file extension."""
+        file1 = tmp_path / "file1.py"
+        file1.write_text("def func1(): pass")
+        output_file = tmp_path / "type-check.md"
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(return_value={
+                "file": str(file1),
+                "errors": [],
+            })
+            mock_agent_class.return_value = mock_agent
+            
+            class MockArgs:
+                command = "type-check"
+                files = [str(file1)]
+                pattern = None
+                max_workers = 4
+                format = "json"  # Will be overridden by extension
+                output = str(output_file)
+            
+            reviewer.handle_reviewer_command(MockArgs())
+            
+            # Verify Markdown file was created
+            assert output_file.exists()
+            content = output_file.read_text()
+            assert "#" in content or "Results" in content
+
+    @pytest.mark.asyncio
+    async def test_lint_batch_with_output_file(self, tmp_path):
+        """Test batch lint with output file."""
+        file1 = tmp_path / "file1.py"
+        file2 = tmp_path / "file2.py"
+        file1.write_text("def func1(): pass")
+        file2.write_text("def func2(): pass")
+        output_file = tmp_path / "batch-lint.json"
+        
+        with patch("tapps_agents.cli.commands.reviewer.ReviewerAgent") as mock_agent_class:
+            mock_agent = MagicMock()
+            mock_agent.activate = AsyncMock()
+            mock_agent.close = AsyncMock()
+            mock_agent.run = AsyncMock(side_effect=[
+                {"file": str(file1), "issues": []},
+                {"file": str(file2), "issues": []},
+            ])
+            mock_agent_class.return_value = mock_agent
+            
+            class MockArgs:
+                command = "lint"
+                files = [str(file1), str(file2)]
+                pattern = None
+                max_workers = 4
+                format = "json"
+                output = str(output_file)
+            
+            reviewer.handle_reviewer_command(MockArgs())
+            
+            # Verify file was created
+            assert output_file.exists()
+            # Verify content is valid JSON
+            import json
+            content = json.loads(output_file.read_text())
+            assert "files" in content or isinstance(content, list)
+
+
 class TestPlannerCommands:
     """Tests for planner command handlers."""
 
