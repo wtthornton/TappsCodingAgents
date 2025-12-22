@@ -79,6 +79,75 @@ state = executor.start(workflow=workflow)
 print(state.workflow_id, state.status)
 ```
 
+### Batch Review Workflow
+
+Review multiple services in parallel with timeout protection:
+
+```python
+from pathlib import Path
+from tapps_agents.agents.reviewer.batch_review import BatchReviewWorkflow
+from tapps_agents.agents.reviewer.service_discovery import ServiceDiscovery, Priority
+
+# Discover services
+discovery = ServiceDiscovery(project_root=Path.cwd())
+services = discovery.discover_services_with_priority(prioritize=True)
+
+# Review services in parallel (with 5-minute timeout per service)
+workflow = BatchReviewWorkflow(
+    project_root=Path.cwd(),
+    max_parallel=4,  # Max concurrent reviews
+    review_timeout=300.0  # 5 minutes per service
+)
+
+result = await workflow.review_services(
+    services=services,
+    parallel=True,
+    include_scoring=True,
+    include_llm_feedback=True
+)
+
+print(f"Reviewed {result.services_reviewed} services")
+print(f"Passed: {result.passed}, Failed: {result.failed}")
+print(f"Average score: {result.average_score:.2f}")
+```
+
+### Phased Review Strategy
+
+Review services in priority-based phases with progress persistence:
+
+```python
+from pathlib import Path
+from tapps_agents.agents.reviewer.phased_review import PhasedReviewStrategy
+from tapps_agents.agents.reviewer.service_discovery import Priority
+
+strategy = PhasedReviewStrategy(
+    project_root=Path.cwd(),
+    max_parallel=4
+)
+
+# Execute phased review (critical → high → medium → low)
+result = await strategy.execute_phased_review(
+    review_id="my-review-2025-01-15",
+    phases=[Priority.CRITICAL, Priority.HIGH, Priority.MEDIUM, Priority.LOW],
+    resume=True,  # Resume from saved progress if interrupted
+    parallel=True,
+    include_scoring=True,
+    include_llm_feedback=True
+)
+
+print(f"Completed {result.completed_phases} of {result.total_phases} phases")
+print(f"Services reviewed: {result.services_reviewed}")
+print(f"Passed: {result.passed}, Failed: {result.failed}")
+
+# Resume interrupted review
+resumed_result = await strategy.execute_phased_review(
+    review_id="my-review-2025-01-15",
+    resume=True  # Automatically resumes from saved progress
+)
+```
+
+**Note**: Progress is automatically saved to `.tapps-agents/review-progress.json` for resumability.
+
 ## CLI
 
 ### Entry Points

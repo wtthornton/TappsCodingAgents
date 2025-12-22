@@ -525,28 +525,27 @@ class ServiceDiscoverer:
 
 **Implementation:**
 ```python
-# Batch review workflow
+# Batch review workflow (with timeout support)
 class BatchReviewWorkflow:
-    def review_services(self, services: List[Service], parallel: bool = True) -> BatchReviewResult:
-        results = []
-        if parallel:
-            # Review services in parallel
-            with ThreadPoolExecutor() as executor:
-                futures = [executor.submit(self.review_service, s) for s in services]
-                results = [f.result() for f in futures]
-        else:
-            # Review services sequentially
-            for service in services:
-                results.append(self.review_service(service))
-        
-        # Aggregate results
-        return BatchReviewResult(
-            services_reviewed=len(results),
-            passed=sum(1 for r in results if r.passed),
-            failed=sum(1 for r in results if not r.passed),
-            average_score=sum(r.score for r in results) / len(results),
-            results=results
-        )
+    def __init__(
+        self,
+        config: ProjectConfig | None = None,
+        project_root: Path | None = None,
+        max_parallel: int = 4,
+        review_timeout: float = 300.0,  # 5 minutes default timeout
+    ):
+        ...
+    
+    async def review_services(
+        self,
+        services: List[Service],
+        parallel: bool = True,
+        include_scoring: bool = True,
+        include_llm_feedback: bool = True,
+    ) -> BatchReviewResult:
+        # Uses asyncio.TaskGroup for parallel execution (Python 3.11+)
+        # Includes timeout protection with asyncio.wait_for()
+        ...
 ```
 
 **CLI Command:**
@@ -582,10 +581,10 @@ python -m tapps_agents.cli reviewer review-batch --priority critical,high
 class PhasedReviewStrategy:
     def execute(self, project_root: str) -> PhasedReviewResult:
         phases = [
-            Phase(name="critical", priority="critical", services=[]),
-            Phase(name="high", priority="high", services=[]),
-            Phase(name="medium", priority="medium", services=[]),
-            Phase(name="low", priority="low", services=[])
+            Phase(name="critical", priority=Priority.CRITICAL, services=[]),
+            Phase(name="high", priority=Priority.HIGH, services=[]),
+            Phase(name="medium", priority=Priority.MEDIUM, services=[]),
+            Phase(name="low", priority=Priority.LOW, services=[])
         ]
         
         # Discover and prioritize services
