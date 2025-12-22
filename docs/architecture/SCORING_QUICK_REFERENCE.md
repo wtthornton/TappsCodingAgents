@@ -113,6 +113,36 @@ ScorerRegistry.register_fallback_chain(
 - `tapps_agents/agents/reviewer/typescript_scorer.py` - TypeScript/JS scorer
 - `tapps_agents/agents/reviewer/react_scorer.py` - React scorer
 
+## Recent Enhancements (January 2025)
+
+### Priority Enum
+
+Service priorities now use a type-safe `Priority` enum:
+
+```python
+from tapps_agents.agents.reviewer.service_discovery import Priority
+
+# Type-safe priority assignment
+service.priority = Priority.CRITICAL  # ✅ Type-safe
+# service.priority = "invalid"  # ❌ Type error
+```
+
+Available priorities: `Priority.CRITICAL`, `Priority.HIGH`, `Priority.MEDIUM`, `Priority.LOW`
+
+### Batch Review Timeouts
+
+Batch reviews now include timeout protection:
+
+```python
+from tapps_agents.agents.reviewer.batch_review import BatchReviewWorkflow, DEFAULT_REVIEW_TIMEOUT
+
+workflow = BatchReviewWorkflow(
+    review_timeout=300.0  # 5 minutes per service (default)
+)
+```
+
+See `BATCH_REVIEW_AND_TIMEOUTS.md` for detailed timeout configuration.
+
 ## Next Steps
 
 1. Create `GenericScorer` using metric strategies for unknown languages
