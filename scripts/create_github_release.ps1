@@ -233,29 +233,42 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 
-# Build gh release create command
-$releaseCmd = "gh release create $Tag"
-$releaseCmd += " --title `"$Title`""
-$releaseCmd += " --notes `"$ReleaseNotes`""
+# Build gh release create command (avoid Invoke-Expression so multiline notes don't break PowerShell parsing)
+$ghArgs = @("release", "create", $Tag, "--title", $Title)
+
+# Prefer notes-file when we have a known release notes path (safer for multiline Markdown)
+$releaseNotesFile = Join-Path $projectRoot ("RELEASE_NOTES_v{0}.md" -f $Version)
+if (Test-Path $releaseNotesFile) {
+    $ghArgs += @("--notes-file", $releaseNotesFile)
+} else {
+    # Fall back to --notes (single argument). If it's multiline, write a temp file instead.
+    if ($ReleaseNotes -match "`r?`n") {
+        $tmpNotes = Join-Path $env:TEMP ("tapps-agents-release-notes-{0}.md" -f $Version)
+        Set-Content -Path $tmpNotes -Value $ReleaseNotes -Encoding UTF8
+        $ghArgs += @("--notes-file", $tmpNotes)
+    } else {
+        $ghArgs += @("--notes", $ReleaseNotes)
+    }
+}
 
 if ($Draft) {
-    $releaseCmd += " --draft"
+    $ghArgs += "--draft"
 }
 if ($Prerelease) {
-    $releaseCmd += " --prerelease"
+    $ghArgs += "--prerelease"
 }
 
-# Add files
+# Add files to attach
 foreach ($file in $distFiles) {
-    $releaseCmd += " `"dist/$($file.Name)`""
+    $ghArgs += ("dist/{0}" -f $file.Name)
 }
 
-Write-Host "Command: $releaseCmd" -ForegroundColor Gray
+Write-Host "Command: gh $($ghArgs -join ' ')" -ForegroundColor Gray
 Write-Host ""
 
 # Execute
 try {
-    Invoke-Expression $releaseCmd
+    & gh @ghArgs
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
         Write-Host "=== Release Created Successfully! ===" -ForegroundColor Green
