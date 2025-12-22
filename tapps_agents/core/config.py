@@ -647,6 +647,37 @@ class SimpleModeConfig(BaseModel):
     )
 
 
+class AutoEnhancementConfig(BaseModel):
+    """Configuration for automatic prompt enhancement"""
+
+    enabled: bool = Field(
+        default=True, description="Enable auto-enhancement globally"
+    )
+    mode: str = Field(
+        default="cursor-skills",
+        description="Enhancement mode: cursor-skills, structured, or smart",
+    )
+    min_prompt_length: int = Field(
+        default=20, description="Minimum prompt length to trigger enhancement"
+    )
+    quality_threshold: float = Field(
+        default=50.0,
+        ge=0.0,
+        le=100.0,
+        description="Quality score below which to enhance",
+    )
+
+    commands: dict[str, dict[str, Any]] = Field(
+        default_factory=lambda: {
+            "implementer": {"enabled": True, "synthesis_mode": "full"},
+            "planner": {"enabled": True, "synthesis_mode": "quick"},
+            "architect": {"enabled": False},
+            "designer": {"enabled": False},
+        },
+        description="Per-command enhancement settings",
+    )
+
+
 class ProjectConfig(BaseModel):
     """Root configuration model for TappsCodingAgents project"""
 
@@ -679,6 +710,10 @@ class ProjectConfig(BaseModel):
     simple_mode: SimpleModeConfig = Field(
         default_factory=SimpleModeConfig,
         description="Simple Mode configuration (intent-based orchestration)",
+    )
+    auto_enhancement: AutoEnhancementConfig = Field(
+        default_factory=AutoEnhancementConfig,
+        description="Automatic prompt enhancement configuration",
     )
 
     model_config = {

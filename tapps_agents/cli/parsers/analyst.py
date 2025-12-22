@@ -45,7 +45,23 @@ Example:
     )
     gather_req_parser.add_argument("description", help="Natural language description of the project, feature, or requirement to analyze. Be specific about goals, constraints, and desired outcomes.")
     gather_req_parser.add_argument("--context", help="Additional context, background information, or constraints that should be considered during requirements gathering (e.g., existing systems, technical limitations, business rules)")
-    gather_req_parser.add_argument("--output-file", help="Path to output file where requirements will be saved. If not provided, requirements are printed to stdout. Supports .md, .txt, or .json formats.")
+    gather_req_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    gather_req_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    gather_req_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    gather_req_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    gather_req_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
+    )
 
     stakeholder_parser = analyst_subparsers.add_parser(
         "stakeholder-analysis",

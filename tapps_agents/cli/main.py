@@ -237,6 +237,14 @@ def route_command(args: argparse.Namespace) -> None:
     Note:
         If no agent is specified, prints the main help message.
     """
+    # Apply prompt enhancement middleware if enabled
+    from ..cli.utils.prompt_enhancer import enhance_prompt_if_needed
+    from ..core.config import load_config
+    
+    config = load_config()
+    if config.auto_enhancement.enabled:
+        args = enhance_prompt_if_needed(args, config.auto_enhancement)
+    
     # Route agent commands
     if args.agent == "reviewer":
         reviewer.handle_reviewer_command(args)

@@ -42,8 +42,24 @@ Example:
   tapps-agents planner plan "Implement shopping cart" --format text""",
     )
     plan_parser.add_argument("description", help="Description of the feature or requirement to plan. Include functional requirements, goals, constraints, and any relevant context. Be specific for more accurate planning.")
+    plan_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     plan_parser.add_argument(
-        "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured plan data (default), 'text' for human-readable plan"
+        "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured plan data (default), 'text' for human-readable plan, 'markdown' for markdown format"
+    )
+    plan_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    plan_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    plan_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
 
     create_story_parser = planner_subparsers.add_parser(
@@ -67,8 +83,24 @@ Example:
         default="medium",
         help="Priority level for the story: 'high' for critical features, 'medium' for important features (default), 'low' for nice-to-have features",
     )
+    create_story_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     create_story_parser.add_argument(
-        "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured story data (default), 'text' for human-readable user story"
+        "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured story data (default), 'text' for human-readable user story, 'markdown' for markdown format"
+    )
+    create_story_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    create_story_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    create_story_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
 
     list_stories_parser = planner_subparsers.add_parser(
@@ -87,8 +119,9 @@ Example:
     )
     list_stories_parser.add_argument("--epic", help="Filter stories to show only those belonging to a specific epic or feature area (e.g., 'Authentication', 'User Management')")
     list_stories_parser.add_argument("--status", help="Filter stories by status: 'todo' for unstarted stories, 'in-progress' for active stories, 'done' for completed stories")
+    list_stories_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     list_stories_parser.add_argument(
-        "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured story list (default), 'text' for human-readable list"
+        "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured story list (default), 'text' for human-readable list, 'markdown' for markdown format"
     )
 
     planner_subparsers.add_parser(

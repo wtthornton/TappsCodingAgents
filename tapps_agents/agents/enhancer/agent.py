@@ -16,6 +16,7 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.context_manager import ContextManager
 from ...core.instructions import GenericInstruction
+from ...core.runtime_mode import is_cursor_mode
 
 if TYPE_CHECKING:
     from ...experts.expert_registry import ExpertRegistry
@@ -830,12 +831,11 @@ Provide structured JSON response with the following format:
             "estimated_effort": plan_result.get("estimate", {}),
         }
 
-    async def _stage_synthesis(
-        self, prompt: str, stages: dict[str, Any], output_format: str
-    ) -> dict[str, Any]:
-        """Stage 7: Synthesize enhanced prompt."""
-        # Combine all stages into final enhanced prompt
-        synthesis_prompt = f"""Synthesize an enhanced prompt from the following analysis:
+    def _build_synthesis_prompt(
+        self, prompt: str, stages: dict[str, Any]
+    ) -> str:
+        """Build synthesis prompt from stages."""
+        return f"""Synthesize an enhanced prompt from the following analysis:
 
 Original Prompt: {prompt}
 
@@ -847,28 +847,112 @@ Implementation: {json.dumps(stages.get('implementation', {}), indent=2)}
 
 Create a comprehensive, context-aware enhanced prompt that includes all relevant information."""
 
-        # Prepare instruction for Cursor Skills
-        instruction = GenericInstruction(
-            agent_name="enhancer",
-            command="synthesize-prompt",
-            prompt=synthesis_prompt,
-            parameters={
-                "original_prompt": prompt,
-                "output_format": output_format,
-                "stages_used": list(stages.keys()),
-            },
-        )
+    async def _stage_synthesis(
+        self, prompt: str, stages: dict[str, Any], output_format: str
+    ) -> dict[str, Any]:
+        """Stage 7: Synthesize enhanced prompt."""
+        if is_cursor_mode():
+            # Cursor mode: Return structured data for Cursor Skill synthesis
+            synthesis_prompt = self._build_synthesis_prompt(prompt, stages)
+            instruction = GenericInstruction(
+                agent_name="enhancer",
+                command="synthesize-prompt",
+                prompt=synthesis_prompt,
+                parameters={
+                    "original_prompt": prompt,
+                    "stages": json.dumps(stages),
+                    "output_format": output_format,
+                },
+            )
 
-        return {
-            "instruction": instruction.to_dict(),
-            "skill_command": instruction.to_skill_command(),
-            "format": output_format,
-            "metadata": {
-                "original_prompt": prompt,
-                "stages_used": list(stages.keys()),
-                "synthesized_at": datetime.now().isoformat(),
-            },
-        }
+            return {
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "synthesis_data": {
+                    "original_prompt": prompt,
+                    "stages": stages,
+                    "format": output_format,
+                },
+                "format": output_format,
+                "metadata": {
+                    "original_prompt": prompt,
+                    "stages_used": list(stages.keys()),
+                    "synthesized_at": datetime.now().isoformat(),
+                    "mode": "cursor-skills",
+                },
+            }
+        else:
+            # Headless mode: Use MAL for synthesis
+            synthesis_prompt = self._build_synthesis_prompt(prompt, stages)
+            
+            try:
+                from ...core.mal import MAL, MALDisabledInCursorModeError
+                
+                mal_config = self.config.mal if self.config else None
+                if mal_config and mal_config.enabled:
+                    mal = MAL(config=mal_config)
+                    enhanced = await mal.generate(
+                        prompt=synthesis_prompt,
+                        model=mal_config.default_model if mal_config else None,
+                        temperature=0.3,
+                    )
+                    return {
+                        "enhanced_prompt": enhanced,
+                        "format": output_format,
+                        "metadata": {
+                            "original_prompt": prompt,
+                            "stages_used": list(stages.keys()),
+                            "synthesized_at": datetime.now().isoformat(),
+                            "mode": "headless-mal",
+                        },
+                    }
+                else:
+                    # MAL not configured, return structured data
+                    logger.warning("MAL not configured for headless mode synthesis")
+                    return {
+                        "enhanced_prompt": None,
+                        "synthesis_data": {
+                            "original_prompt": prompt,
+                            "stages": stages,
+                            "format": output_format,
+                        },
+                        "format": output_format,
+                        "metadata": {
+                            "original_prompt": prompt,
+                            "stages_used": list(stages.keys()),
+                            "synthesized_at": datetime.now().isoformat(),
+                            "mode": "structured",
+                        },
+                    }
+            except MALDisabledInCursorModeError:
+                # Should not happen in headless mode, but handle gracefully
+                logger.warning("MAL disabled error in headless mode")
+                return {
+                    "enhanced_prompt": None,
+                    "synthesis_data": {
+                        "original_prompt": prompt,
+                        "stages": stages,
+                        "format": output_format,
+                    },
+                    "format": output_format,
+                    "metadata": {
+                        "original_prompt": prompt,
+                        "stages_used": list(stages.keys()),
+                        "synthesized_at": datetime.now().isoformat(),
+                        "mode": "structured",
+                    },
+                }
+            except Exception as e:
+                logger.error(f"Synthesis failed: {e}", exc_info=True)
+                return {
+                    "error": f"Synthesis failed: {str(e)}",
+                    "format": output_format,
+                    "metadata": {
+                        "original_prompt": prompt,
+                        "stages_used": list(stages.keys()),
+                        "synthesized_at": datetime.now().isoformat(),
+                    },
+                }
 
     # Helper methods
 

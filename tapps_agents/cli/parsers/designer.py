@@ -46,7 +46,23 @@ Example:
     api_design_parser.add_argument(
         "--api-type", default="REST", help="API type to design: 'REST' for RESTful APIs (default), 'GraphQL' for GraphQL APIs, 'gRPC' for gRPC services"
     )
-    api_design_parser.add_argument("--output-file", help="Path to output file where API specification will be saved. Supports .yaml, .json (OpenAPI), .md, or .txt formats. If not provided, specification is printed to stdout.")
+    api_design_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    api_design_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    api_design_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    api_design_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    api_design_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
+    )
 
     data_model_parser = designer_subparsers.add_parser(
         "data-model-design",
@@ -66,7 +82,23 @@ Use this to design database schemas, ORM models, or data structures before imple
     )
     data_model_parser.add_argument("requirements", help="Data model requirements description including entities, relationships, data types, constraints, and use cases. Describe what data needs to be stored and how it relates.")
     data_model_parser.add_argument("--data-source", help="Description of the data source or database system (e.g., 'PostgreSQL', 'MongoDB', 'in-memory'). Influences schema design and optimization strategies.")
-    data_model_parser.add_argument("--output-file", help="Path to output file where data model design will be saved. Supports .md, .sql, .json, or .yaml formats. If not provided, design is printed to stdout.")
+    data_model_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    data_model_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    data_model_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
+    )
+    data_model_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    data_model_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     ui_ux_parser = designer_subparsers.add_parser(
         "ui-ux-design",
@@ -86,7 +118,8 @@ Use this to design interfaces before implementation, ensuring good UX and access
     )
     ui_ux_parser.add_argument("feature_description", help="Description of the feature or interface to design. Include user goals, functionality, and any design constraints or brand guidelines.")
     ui_ux_parser.add_argument("--user-stories", nargs="+", help="Space-separated list of user stories that inform the design (e.g., 'As a user, I want to login so that I can access my account'). Helps ensure design meets user needs.")
-    ui_ux_parser.add_argument("--output-file", help="Path to output file where UI/UX design specification will be saved. Supports .md, .txt, or .json formats. If not provided, design is printed to stdout.")
+    ui_ux_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    ui_ux_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     wireframes_parser = designer_subparsers.add_parser(
         "wireframes", 
@@ -110,7 +143,8 @@ Wireframes are provided in text format (ASCII art or structured descriptions) th
         default="page",
         help="Type of wireframe to generate: 'page' for full page layouts (default), 'component' for individual UI components, 'flow' for multi-screen user flows",
     )
-    wireframes_parser.add_argument("--output-file", help="Path to output file where wireframe will be saved. Supports .md, .txt formats. If not provided, wireframe is printed to stdout.")
+    wireframes_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    wireframes_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     design_system_designer_parser = designer_subparsers.add_parser(
         "design-system",
@@ -134,7 +168,8 @@ Use this to establish or extend a design system that ensures consistency across 
     design_system_designer_parser.add_argument(
         "--brand-guidelines", help="Brand guidelines, color schemes, typography preferences, or existing brand assets that should be incorporated into the design system"
     )
-    design_system_designer_parser.add_argument("--output-file", help="Path to output file where design system specification will be saved. Supports .md, .txt, or .json formats. If not provided, design system is printed to stdout.")
+    design_system_designer_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    design_system_designer_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     designer_subparsers.add_parser(
         "help", aliases=["*help"], help="Show designer commands"

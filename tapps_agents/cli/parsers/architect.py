@@ -45,7 +45,23 @@ Example:
     )
     design_system_parser.add_argument("requirements", help="System requirements description including functional requirements, non-functional requirements, constraints, and goals. Be comprehensive for best results.")
     design_system_parser.add_argument("--context", help="Additional context such as existing systems, technical constraints, organizational standards, or integration requirements")
-    design_system_parser.add_argument("--output-file", help="Path to output file where architecture design will be saved. Supports .md, .txt, or .json formats. If not provided, output is printed to stdout.")
+    design_system_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    design_system_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    design_system_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    design_system_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    design_system_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
+    )
 
     diagram_parser = architect_subparsers.add_parser(
         "architecture-diagram",
@@ -68,7 +84,8 @@ Diagrams are generated in text format (Mermaid, PlantUML) that can be rendered i
         default="component",
         help="Type of diagram to generate: 'component' for system structure (default), 'sequence' for interaction flows, 'deployment' for infrastructure layout",
     )
-    diagram_parser.add_argument("--output-file", help="Path to output file where diagram will be saved. Supports .md, .txt, .mmd (Mermaid), or .puml (PlantUML) formats. If not provided, diagram is printed to stdout.")
+    diagram_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    diagram_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     tech_selection_parser = architect_subparsers.add_parser(
         "tech-selection",

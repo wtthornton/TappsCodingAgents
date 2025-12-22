@@ -165,6 +165,54 @@ Resume an interrupted enhancement session.
 - References session management best practices
 - Uses cached docs for session recovery
 
+### `*synthesize-prompt {synthesis_data}`
+
+Synthesize an enhanced prompt from structured enhancement data.
+
+**Usage:**
+```
+@synthesize-prompt --original-prompt "Create login system" --stages '{"analysis": {...}, "requirements": {...}}' --output-format markdown
+```
+
+**Parameters:**
+- `--original-prompt`: Original user prompt (required)
+- `--stages`: JSON string with all enhancement stage outputs (required)
+- `--output-format`: Desired output format (markdown, json, yaml). Defaults to markdown.
+
+**What it does:**
+- Takes structured enhancement data (analysis, requirements, architecture, quality standards, implementation strategy)
+- Uses Cursor's LLM to synthesize a comprehensive enhanced prompt
+- Returns formatted enhanced prompt ready for use by other agents
+- Combines all stage outputs into a single, coherent specification
+
+**Example Output:**
+```markdown
+# Enhanced Prompt: Create login system
+
+## Metadata
+- Intent: Feature (authentication)
+- Domain: security, user-management
+- Scope: Medium (3-5 files)
+- Workflow: greenfield
+
+## Requirements
+### Functional Requirements
+- User authentication with email/password
+- Session management
+- Password reset functionality
+...
+
+## Architecture Guidance
+- Service layer pattern for authentication logic
+- JWT token management
+...
+```
+
+**When to use:**
+- Called automatically by the framework when enhancement stages complete
+- Can be called manually if you have structured enhancement data
+- Used in Cursor mode for prompt synthesis (framework provides data, Cursor provides intelligence)
+
 ### `*docs {library}`
 
 Lookup library documentation from Context7 KB cache.

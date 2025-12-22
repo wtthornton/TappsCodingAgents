@@ -51,11 +51,27 @@ Example:
         default="python",
         help="Programming language for code generation: 'python' (default), 'javascript', 'typescript', 'java', 'go', 'rust', etc. Determines syntax and conventions used.",
     )
+    implement_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     implement_parser.add_argument(
         "--format",
-        choices=["json", "text"],
+        choices=["json", "text", "markdown"],
         default="json",
-        help="Output format: 'json' for structured output with metadata (default), 'text' for plain text code output",
+        help="Output format: 'json' for structured output with metadata (default), 'text' for plain text code output, 'markdown' for markdown format",
+    )
+    implement_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    implement_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    implement_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
 
     generate_code_parser = implementer_subparsers.add_parser(
@@ -86,8 +102,24 @@ Example:
     generate_code_parser.add_argument(
         "--language", default="python", help="Programming language for code generation: 'python' (default), 'javascript', 'typescript', 'java', 'go', 'rust', etc."
     )
+    generate_code_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     generate_code_parser.add_argument(
-        "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured output with metadata (default), 'text' for plain code output"
+        "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured output with metadata (default), 'text' for plain code output, 'markdown' for markdown format"
+    )
+    generate_code_parser.add_argument(
+        "--no-enhance",
+        action="store_true",
+        help="Disable automatic prompt enhancement for this command",
+    )
+    generate_code_parser.add_argument(
+        "--enhance",
+        action="store_true",
+        help="Force prompt enhancement even if quality is high",
+    )
+    generate_code_parser.add_argument(
+        "--enhance-mode",
+        choices=["quick", "full"],
+        help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
 
     refactor_parser = implementer_subparsers.add_parser(
@@ -109,8 +141,9 @@ Example:
     )
     refactor_parser.add_argument("file_path", help="Path to the source code file to refactor. The file will be analyzed and refactored according to the instruction.")
     refactor_parser.add_argument("instruction", help="Detailed refactoring instruction describing what changes to make (e.g., 'Extract common logic into helper functions', 'Apply dependency injection pattern', 'Improve error handling'). Be specific about the refactoring goal.")
+    refactor_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     refactor_parser.add_argument(
-        "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured output with change descriptions (default), 'text' for plain refactored code"
+        "--format", choices=["json", "text", "markdown", "diff"], default="json", help="Output format: 'json' for structured output with change descriptions (default), 'text' for plain refactored code, 'markdown' for markdown format, 'diff' for showing changes only"
     )
 
     implementer_subparsers.add_parser(
