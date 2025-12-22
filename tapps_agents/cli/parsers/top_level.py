@@ -404,7 +404,15 @@ Sets up all integration components for Cursor AI:
 This command is safe to run multiple times - it won't overwrite existing files
 unless you use --overwrite flags. Use --no-<component> to skip specific setups.
 
-Example: tapps-agents init""",
+Upgrade/Reset Mode:
+  Use --reset or --upgrade to reset framework-managed files to the latest version
+  while preserving user data and customizations. Creates a backup by default.
+
+Examples:
+  tapps-agents init                    # Initial setup
+  tapps-agents init --reset            # Upgrade/reset framework files
+  tapps-agents init --reset --dry-run  # Preview changes without making them
+  tapps-agents init --rollback <path>  # Rollback from backup""",
     )
     init_parser.add_argument(
         "--no-rules", action="store_true", help="Skip creating/updating .cursor/rules/ directory with natural language workflow commands and project context"
@@ -457,6 +465,49 @@ Example: tapps-agents generate-rules""",
         "--no-cursorignore",
         action="store_true",
         help="Skip creating .cursorignore file to exclude patterns from Cursor AI indexing (e.g., node_modules, .git, build artifacts)",
+    )
+    init_parser.add_argument(
+        "--reset",
+        action="store_true",
+        help="Reset framework-managed files to latest version (upgrade mode). Detects existing installation and resets framework files while preserving user data and customizations.",
+    )
+    init_parser.add_argument(
+        "--upgrade",
+        action="store_true",
+        help="Upgrade installation (alias for --reset). Resets framework-managed files to latest version while preserving user data.",
+    )
+    init_parser.add_argument(
+        "--no-backup",
+        action="store_true",
+        help="Skip backup before reset (not recommended). Use with caution as this prevents rollback capability.",
+    )
+    init_parser.add_argument(
+        "--reset-mcp",
+        action="store_true",
+        help="Also reset .cursor/mcp.json to framework version. By default, MCP config is preserved.",
+    )
+    init_parser.add_argument(
+        "--preserve-custom",
+        action="store_true",
+        default=True,
+        help="Preserve custom Skills, Rules, and presets (default: True). Custom files not in framework whitelist are always preserved.",
+    )
+    init_parser.add_argument(
+        "--rollback",
+        type=str,
+        metavar="BACKUP_PATH",
+        help="Rollback an init reset from a backup. Provide path to backup directory (e.g., .tapps-agents/backups/init-reset-20250116-143022).",
+    )
+    init_parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="Automatically answer 'yes' to all confirmation prompts. Useful for CI/CD pipelines.",
+    )
+    init_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview what would be reset without actually making changes. Shows framework files that would be deleted and files that would be preserved.",
     )
 
     # Environment diagnostics

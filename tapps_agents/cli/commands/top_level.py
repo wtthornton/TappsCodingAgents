@@ -1617,6 +1617,61 @@ def _run_environment_check(project_root: str) -> None:
         print()
 
 
+def _print_reset_results(results: dict[str, Any]) -> None:
+    """Print reset mode results."""
+    print("\n" + "=" * 60)
+    print("Reset Mode Results")
+    print("=" * 60)
+    
+    # Version information
+    version_before = results.get("version_before")
+    version_after = results.get("version_after")
+    if version_before and version_after:
+        print(f"\nVersion: {version_before} → {version_after}")
+        if version_before != version_after:
+            print("  ✅ Framework upgraded")
+        else:
+            print("  ℹ️  Same version (files reset to latest)")
+    elif version_after:
+        print(f"\nVersion: {version_after} (installed)")
+    
+    # Files reset
+    files_reset = results.get("files_reset", [])
+    if files_reset:
+        print(f"\n✅ Reset {len(files_reset)} framework files:")
+        for file_path in files_reset[:10]:  # Show first 10
+            print(f"  • {file_path}")
+        if len(files_reset) > 10:
+            print(f"  ... and {len(files_reset) - 10} more")
+    
+    # Custom files preserved
+    custom_skills = results.get("custom_skills_preserved", [])
+    custom_rules = results.get("custom_rules_preserved", [])
+    custom_presets = results.get("custom_presets_preserved", [])
+    
+    if custom_skills or custom_rules or custom_presets:
+        print("\n✅ Preserved custom files:")
+        if custom_skills:
+            print(f"  • Custom Skills ({len(custom_skills)}): {', '.join(custom_skills)}")
+        if custom_rules:
+            print(f"  • Custom Rules ({len(custom_rules)}): {', '.join(custom_rules)}")
+        if custom_presets:
+            print(f"  • Custom Presets ({len(custom_presets)}): {', '.join(custom_presets)}")
+    
+    # User files preserved
+    files_preserved = results.get("files_preserved", [])
+    if files_preserved:
+        print(f"\n✅ Preserved {len(files_preserved)} user files")
+    
+    # Backup information
+    backup_path = results.get("backup_path")
+    if backup_path:
+        print(f"\n💾 Backup created: {backup_path}")
+        print("  To rollback: tapps-agents init --rollback " + backup_path)
+    else:
+        print("\n⚠️  No backup created (--no-backup was used)")
+
+
 def _print_next_steps() -> None:
     """Print next steps instructions."""
     print("\n" + "=" * 60)
@@ -1668,7 +1723,142 @@ def _print_next_steps() -> None:
 
 def handle_init_command(args: object) -> None:
     """Handle init command"""
-    from ...core.init_project import init_project
+    from pathlib import Path
+    from ...core.init_project import (
+        detect_existing_installation,
+        identify_framework_files,
+        init_project,
+        rollback_init_reset,
+    )
+
+    # Handle rollback
+    rollback_path = getattr(args, "rollback", None)
+    if rollback_path:
+        project_root = Path.cwd()
+        backup_path = Path(rollback_path)
+        if not backup_path.is_absolute():
+            backup_path = project_root / backup_path
+        
+        if not backup_path.exists():
+            print(f"Error: Backup path not found: {backup_path}", file=sys.stderr)
+            sys.exit(1)
+        
+        print(f"\n{'='*60}")
+        print("Rolling back init reset")
+        print(f"{'='*60}")
+        print(f"Backup: {backup_path}")
+        print()
+        
+        result = rollback_init_reset(project_root, backup_path)
+        
+        if result["success"]:
+            print(f"✅ Successfully restored {len(result['restored_files'])} files")
+            if result["restored_files"]:
+                print("\nRestored files:")
+                for file_path in result["restored_files"]:
+                    print(f"  - {file_path}")
+        else:
+            print(f"❌ Rollback failed with {len(result['errors'])} errors", file=sys.stderr)
+            for error in result["errors"]:
+                print(f"  - {error}", file=sys.stderr)
+            sys.exit(1)
+        
+        return
+    
+    # Check for existing installation
+    project_root = Path.cwd()
+    detection = detect_existing_installation(project_root)
+    reset_mode = getattr(args, "reset", False) or getattr(args, "upgrade", False)
+    dry_run = getattr(args, "dry_run", False)
+    auto_yes = getattr(args, "yes", False)
+    
+    # If existing installation detected and no reset flag, warn user
+    if detection["installed"] and not reset_mode and not dry_run:
+        print("\n" + "="*60)
+        print("⚠️  Existing Installation Detected")
+        print("="*60)
+        print("\nFound existing tapps-agents installation:")
+        for indicator in detection["indicators"]:
+            print(f"  • {indicator}")
+        print("\nTo upgrade and reset framework files, use:")
+        print("  tapps-agents init --reset")
+        print("\nOr to preview changes without making them:")
+        print("  tapps-agents init --reset --dry-run")
+        print("\nProceeding with normal init (will skip existing files)...")
+        print()
+    
+    # Handle dry-run mode
+    if dry_run and reset_mode:
+        file_identification = identify_framework_files(project_root)
+        framework_files = file_identification.get("framework_files", [])
+        custom_skills = file_identification.get("custom_skills", [])
+        custom_rules = file_identification.get("custom_rules", [])
+        custom_presets = file_identification.get("custom_presets", [])
+        
+        print("\n" + "="*60)
+        print("DRY RUN: Reset Preview")
+        print("="*60)
+        print(f"\nFramework files that would be reset ({len(framework_files)}):")
+        for file_path in framework_files[:20]:  # Show first 20
+            # Convert Path to relative string for display
+            rel_path = file_path.relative_to(project_root) if isinstance(file_path, Path) else file_path
+            print(f"  - {rel_path}")
+        if len(framework_files) > 20:
+            print(f"  ... and {len(framework_files) - 20} more")
+        
+        print(f"\nCustom files that would be preserved:")
+        if custom_skills:
+            print(f"  Custom Skills ({len(custom_skills)}): {', '.join(custom_skills)}")
+        if custom_rules:
+            print(f"  Custom Rules ({len(custom_rules)}): {', '.join(custom_rules)}")
+        if custom_presets:
+            print(f"  Custom Presets ({len(custom_presets)}): {', '.join(custom_presets)}")
+        
+        print("\nUser data that would be preserved:")
+        print("  • .tapps-agents/config.yaml (user overrides)")
+        print("  • .tapps-agents/experts.yaml")
+        print("  • .tapps-agents/domains.md")
+        print("  • .tapps-agents/knowledge/")
+        print("  • .tapps-agents/worktrees/")
+        print("  • .tapps-agents/workflow-state/")
+        print("  • .tapps-agents/customizations/")
+        print("  • .tapps-agents/reports/")
+        
+        print("\n⚠️  This is a dry run. No changes were made.")
+        print("Run without --dry-run to perform the reset.")
+        return
+    
+    # Confirm reset if not auto-yes
+    if reset_mode and not auto_yes and not dry_run:
+        file_identification = identify_framework_files(project_root)
+        framework_files = file_identification.get("framework_files", [])
+        
+        print("\n" + "="*60)
+        print("⚠️  Reset Mode: Framework Files Will Be Reset")
+        print("="*60)
+        print(f"\nThis will reset {len(framework_files)} framework-managed files to the latest version.")
+        print("\nFramework files to reset:")
+        for file_path in framework_files[:10]:  # Show first 10
+            # Convert Path to relative string for display
+            rel_path = file_path.relative_to(project_root) if isinstance(file_path, Path) else file_path
+            print(f"  • {rel_path}")
+        if len(framework_files) > 10:
+            print(f"  ... and {len(framework_files) - 10} more")
+        
+        print("\nUser data that will be preserved:")
+        print("  • Custom Skills, Rules, and Presets")
+        print("  • .tapps-agents/config.yaml (user overrides)")
+        print("  • .tapps-agents/experts.yaml, domains.md, knowledge/")
+        print("  • Workflow state and worktrees")
+        
+        try:
+            response = input("\nContinue with reset? [y/N]: ").strip().lower()
+            if response not in ("y", "yes"):
+                print("Reset cancelled.")
+                return
+        except (EOFError, KeyboardInterrupt):
+            print("\nReset cancelled.")
+            return
 
     _print_init_header()
 
@@ -1680,9 +1870,17 @@ def handle_init_command(args: object) -> None:
         include_background_agents=not getattr(args, "no_background_agents", False),
         include_cursorignore=not getattr(args, "no_cursorignore", False),
         pre_populate_cache=not getattr(args, "no_cache", False),
+        reset_mode=reset_mode,
+        backup_before_reset=not getattr(args, "no_backup", False),
+        reset_mcp=getattr(args, "reset_mcp", False),
+        preserve_custom=getattr(args, "preserve_custom", True),
     )
 
     _print_init_results(results)
+    
+    # Show reset mode results if applicable
+    if results.get("reset_mode"):
+        _print_reset_results(results)
 
     # Show validation results
     if results.get("validation"):

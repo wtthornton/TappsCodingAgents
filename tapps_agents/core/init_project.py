@@ -22,6 +22,40 @@ from .tech_stack_priorities import get_priorities_for_frameworks
 
 logger = logging.getLogger(__name__)
 
+# Framework-managed file names (whitelist approach)
+FRAMEWORK_CURSOR_RULES = {
+    "workflow-presets.mdc",
+    "quick-reference.mdc",
+    "agent-capabilities.mdc",
+    "project-context.mdc",
+    "project-profiling.mdc",
+    "simple-mode.mdc",
+}
+
+FRAMEWORK_SKILLS = {
+    "analyst",
+    "architect",
+    "debugger",
+    "designer",
+    "documenter",
+    "enhancer",
+    "implementer",
+    "improver",
+    "ops",
+    "orchestrator",
+    "planner",
+    "reviewer",
+    "tester",
+}
+
+FRAMEWORK_WORKFLOW_PRESETS = {
+    "full-sdlc.yaml",
+    "rapid-dev.yaml",
+    "maintenance.yaml",
+    "quality.yaml",
+    "quick-fix.yaml",
+}
+
 try:
     # Python 3.9+: importlib.resources is the canonical way to ship non-code assets.
     from importlib import resources as importlib_resources
@@ -1615,6 +1649,353 @@ async def pre_populate_context7_cache(
         }
 
 
+def get_framework_version() -> str | None:
+    """
+    Get the current framework version from the installed package.
+    
+    Returns:
+        Version string (e.g., "2.0.1") or None if version cannot be determined
+    """
+    try:
+        import importlib.metadata
+        version = importlib.metadata.version("tapps-agents")
+        return version
+    except Exception:
+        # Fallback: try to read from package __init__.py
+        try:
+            from .. import __version__
+            return __version__
+        except Exception:
+            logger.debug("Could not determine framework version")
+            return None
+
+
+def detect_existing_installation(project_root: Path) -> dict[str, Any]:
+    """
+    Detect if tapps-agents is already installed in the project.
+    
+    Args:
+        project_root: Project root directory
+        
+    Returns:
+        Dictionary with detection results:
+        - installed: bool - Whether installation detected
+        - indicators: list[str] - What indicators were found
+        - config_exists: bool
+        - skills_exist: bool
+        - rules_exist: bool
+        - presets_exist: bool
+        - background_agents_exist: bool
+    """
+    result: dict[str, Any] = {
+        "installed": False,
+        "indicators": [],
+        "config_exists": False,
+        "skills_exist": False,
+        "rules_exist": False,
+        "presets_exist": False,
+        "background_agents_exist": False,
+    }
+    
+    # Check for config file
+    config_file = project_root / ".tapps-agents" / "config.yaml"
+    if config_file.exists():
+        result["config_exists"] = True
+        result["indicators"].append(".tapps-agents/config.yaml")
+        result["installed"] = True
+    
+    # Check for Skills directory with framework skills
+    skills_dir = project_root / ".claude" / "skills"
+    if skills_dir.exists():
+        framework_skills_found = False
+        for skill_name in FRAMEWORK_SKILLS:
+            skill_path = skills_dir / skill_name
+            if skill_path.exists() and skill_path.is_dir():
+                framework_skills_found = True
+                break
+        if framework_skills_found:
+            result["skills_exist"] = True
+            result["indicators"].append(".claude/skills/ (framework skills)")
+            result["installed"] = True
+    
+    # Check for Cursor Rules directory with framework rules
+    rules_dir = project_root / ".cursor" / "rules"
+    if rules_dir.exists():
+        framework_rules_found = False
+        for rule_name in FRAMEWORK_CURSOR_RULES:
+            rule_path = rules_dir / rule_name
+            if rule_path.exists():
+                framework_rules_found = True
+                break
+        if framework_rules_found:
+            result["rules_exist"] = True
+            result["indicators"].append(".cursor/rules/ (framework rules)")
+            result["installed"] = True
+    
+    # Check for workflow presets directory with framework presets
+    presets_dir = project_root / "workflows" / "presets"
+    if presets_dir.exists():
+        framework_presets_found = False
+        for preset_name in FRAMEWORK_WORKFLOW_PRESETS:
+            preset_path = presets_dir / preset_name
+            if preset_path.exists():
+                framework_presets_found = True
+                break
+        if framework_presets_found:
+            result["presets_exist"] = True
+            result["indicators"].append("workflows/presets/ (framework presets)")
+            result["installed"] = True
+    
+    # Check for background agents config
+    bg_agents_file = project_root / ".cursor" / "background-agents.yaml"
+    if bg_agents_file.exists():
+        result["background_agents_exist"] = True
+        result["indicators"].append(".cursor/background-agents.yaml")
+        result["installed"] = True
+    
+    return result
+
+
+def identify_framework_files(project_root: Path) -> dict[str, Any]:
+    """
+    Identify framework-managed files vs user-added files.
+    
+    Args:
+        project_root: Project root directory
+        
+    Returns:
+        Dictionary with:
+        - framework_files: list[Path] - Files to reset
+        - user_files: list[Path] - Files to preserve
+        - custom_skills: list[str] - Custom skill names
+        - custom_rules: list[str] - Custom rule names
+        - custom_presets: list[str] - Custom preset names
+    """
+    result: dict[str, Any] = {
+        "framework_files": [],
+        "user_files": [],
+        "custom_skills": [],
+        "custom_rules": [],
+        "custom_presets": [],
+    }
+    
+    # Identify framework Cursor Rules
+    rules_dir = project_root / ".cursor" / "rules"
+    if rules_dir.exists():
+        for rule_file in rules_dir.glob("*.mdc"):
+            if rule_file.name in FRAMEWORK_CURSOR_RULES:
+                result["framework_files"].append(rule_file)
+            else:
+                result["custom_rules"].append(rule_file.name)
+                result["user_files"].append(rule_file)
+    
+    # Identify framework Skills
+    skills_dir = project_root / ".claude" / "skills"
+    if skills_dir.exists():
+        for skill_dir_item in skills_dir.iterdir():
+            if skill_dir_item.is_dir():
+                if skill_dir_item.name in FRAMEWORK_SKILLS:
+                    # Add all files in framework skill directory
+                    for skill_file in skill_dir_item.rglob("*"):
+                        if skill_file.is_file():
+                            result["framework_files"].append(skill_file)
+                else:
+                    result["custom_skills"].append(skill_dir_item.name)
+                    result["user_files"].append(skill_dir_item)
+    
+    # Identify framework workflow presets
+    presets_dir = project_root / "workflows" / "presets"
+    if presets_dir.exists():
+        for preset_file in presets_dir.glob("*.yaml"):
+            if preset_file.name in FRAMEWORK_WORKFLOW_PRESETS:
+                result["framework_files"].append(preset_file)
+            else:
+                result["custom_presets"].append(preset_file.name)
+                result["user_files"].append(preset_file)
+    
+    # Framework background agents config
+    bg_agents_file = project_root / ".cursor" / "background-agents.yaml"
+    if bg_agents_file.exists():
+        result["framework_files"].append(bg_agents_file)
+    
+    # Framework .cursorignore (will be merged, not replaced)
+    cursorignore_file = project_root / ".cursorignore"
+    if cursorignore_file.exists():
+        # Check if it contains framework patterns (heuristic)
+        try:
+            content = cursorignore_file.read_text(encoding="utf-8")
+            if ".tapps-agents" in content or "worktrees" in content:
+                result["framework_files"].append(cursorignore_file)
+        except Exception:
+            pass
+    
+    # Framework MCP config (optional, only if framework-managed)
+    mcp_file = project_root / ".cursor" / "mcp.json"
+    if mcp_file.exists():
+        # Check if it's framework-managed (contains Context7 config)
+        try:
+            content = mcp_file.read_text(encoding="utf-8")
+            if "Context7" in content or "context7" in content.lower():
+                result["framework_files"].append(mcp_file)
+        except Exception:
+            pass
+    
+    return result
+
+
+def create_backup(
+    project_root: Path,
+    framework_files: list[Path],
+    version_before: str | None = None,
+) -> tuple[Path, dict[str, Any]]:
+    """
+    Create a backup of files that will be reset.
+    
+    Args:
+        project_root: Project root directory
+        framework_files: List of framework files to backup
+        version_before: Framework version before reset
+        
+    Returns:
+        Tuple of (backup_path, manifest_dict)
+    """
+    from datetime import datetime
+    
+    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup_id = f"init-reset-{timestamp}"
+    backup_dir = project_root / ".tapps-agents" / "backups" / backup_id
+    backup_dir.mkdir(parents=True, exist_ok=True)
+    
+    manifest: dict[str, Any] = {
+        "backup_id": backup_id,
+        "timestamp": datetime.now().isoformat(),
+        "framework_version_before": version_before,
+        "framework_version_after": None,  # Will be set after reset
+        "files": [],
+        "preserved": [],
+    }
+    
+    # Backup framework files
+    for file_path in framework_files:
+        try:
+            # Calculate relative path from project root
+            rel_path = file_path.relative_to(project_root)
+            backup_path = backup_dir / rel_path
+            backup_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            if file_path.exists():
+                if file_path.is_file():
+                    shutil.copy2(file_path, backup_path)
+                elif file_path.is_dir():
+                    shutil.copytree(file_path, backup_path, dirs_exist_ok=True)
+                
+                manifest["files"].append({
+                    "original_path": str(rel_path),
+                    "backup_path": str(backup_path.relative_to(backup_dir)),
+                    "action": "reset",
+                })
+        except Exception as e:
+            logger.warning(f"Failed to backup {file_path}: {e}")
+    
+    # Save manifest
+    manifest_path = backup_dir / "manifest.json"
+    manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+    
+    return backup_dir, manifest
+
+
+def cleanup_framework_files(
+    project_root: Path,
+    framework_files: list[Path],
+    reset_mcp: bool = False,
+) -> list[str]:
+    """
+    Clean up (delete) framework-managed files.
+    
+    Args:
+        project_root: Project root directory
+        framework_files: List of framework files to delete
+        reset_mcp: Whether to reset MCP config
+        
+    Returns:
+        List of deleted file paths (as strings)
+    """
+    deleted: list[str] = []
+    
+    for file_path in framework_files:
+        # Skip MCP config unless explicitly requested
+        if file_path.name == "mcp.json" and not reset_mcp:
+            continue
+        
+        try:
+            if file_path.exists():
+                if file_path.is_file():
+                    file_path.unlink()
+                    deleted.append(str(file_path.relative_to(project_root)))
+                elif file_path.is_dir():
+                    shutil.rmtree(file_path)
+                    deleted.append(str(file_path.relative_to(project_root)))
+        except Exception as e:
+            logger.warning(f"Failed to delete {file_path}: {e}")
+    
+    return deleted
+
+
+def rollback_init_reset(project_root: Path, backup_path: Path) -> dict[str, Any]:
+    """
+    Rollback an init reset from a backup.
+    
+    Args:
+        project_root: Project root directory
+        backup_path: Path to backup directory
+        
+    Returns:
+        Dictionary with rollback results
+    """
+    result: dict[str, Any] = {
+        "success": False,
+        "restored_files": [],
+        "errors": [],
+    }
+    
+    # Load manifest
+    manifest_path = backup_path / "manifest.json"
+    if not manifest_path.exists():
+        result["errors"].append("Manifest file not found in backup")
+        return result
+    
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        result["errors"].append(f"Failed to load manifest: {e}")
+        return result
+    
+    # Restore files
+    for file_info in manifest.get("files", []):
+        try:
+            original_rel = file_info["original_path"]
+            backup_rel = file_info["backup_path"]
+            
+            original_path = project_root / original_rel
+            backup_file_path = backup_path / backup_rel
+            
+            if backup_file_path.exists():
+                original_path.parent.mkdir(parents=True, exist_ok=True)
+                if backup_file_path.is_file():
+                    shutil.copy2(backup_file_path, original_path)
+                elif backup_file_path.is_dir():
+                    if original_path.exists():
+                        shutil.rmtree(original_path)
+                    shutil.copytree(backup_file_path, original_path)
+                
+                result["restored_files"].append(original_rel)
+        except Exception as e:
+            result["errors"].append(f"Failed to restore {file_info.get('original_path', 'unknown')}: {e}")
+    
+    result["success"] = len(result["errors"]) == 0
+    return result
+
+
 def init_project(
     project_root: Path | None = None,
     include_cursor_rules: bool = True,
@@ -1624,6 +2005,10 @@ def init_project(
     include_background_agents: bool = True,
     include_cursorignore: bool = True,
     pre_populate_cache: bool = True,
+    reset_mode: bool = False,
+    backup_before_reset: bool = True,
+    reset_mcp: bool = False,
+    preserve_custom: bool = True,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -1637,6 +2022,10 @@ def init_project(
         include_background_agents: Whether to install Background Agents config
         include_cursorignore: Whether to install .cursorignore file
         pre_populate_cache: Whether to pre-populate Context7 cache with detected tech stack
+        reset_mode: Whether to reset framework-managed files (upgrade mode)
+        backup_before_reset: Whether to create backup before reset (default: True)
+        reset_mcp: Whether to reset MCP config (default: False)
+        preserve_custom: Whether to preserve custom Skills, Rules, and presets (default: True)
 
     Returns:
         Dictionary with initialization results
@@ -1656,7 +2045,58 @@ def init_project(
         "tech_stack": None,
         "cache_prepopulated": False,
         "files_created": [],
+        "reset_mode": reset_mode,
+        "backup_path": None,
+        "files_reset": [],
+        "files_preserved": [],
+        "custom_skills_preserved": [],
+        "custom_rules_preserved": [],
+        "custom_presets_preserved": [],
+        "version_before": None,
+        "version_after": None,
     }
+    
+    # Handle reset mode
+    if reset_mode:
+        # Get version before reset
+        version_before = get_framework_version()
+        results["version_before"] = version_before
+        
+        # Detect existing installation
+        detection = detect_existing_installation(project_root)
+        if not detection["installed"]:
+            logger.info("Reset mode requested but no existing installation detected. Proceeding with normal init.")
+        else:
+            # Identify framework vs project files
+            file_identification = identify_framework_files(project_root)
+            # framework_files is already a list of Path objects
+            framework_files = file_identification.get("framework_files", [])
+            
+            # Store preserved customizations
+            results["custom_skills_preserved"] = file_identification.get("custom_skills", [])
+            results["custom_rules_preserved"] = file_identification.get("custom_rules", [])
+            results["custom_presets_preserved"] = file_identification.get("custom_presets", [])
+            results["files_preserved"] = [str(f.relative_to(project_root)) for f in file_identification.get("user_files", [])]
+            
+            # Create backup if requested
+            if backup_before_reset:
+                try:
+                    backup_dir, manifest = create_backup(project_root, framework_files, version_before)
+                    results["backup_path"] = str(backup_dir.relative_to(project_root))
+                    logger.info(f"Backup created at: {results['backup_path']}")
+                except Exception as e:
+                    logger.warning(f"Failed to create backup: {e}")
+                    if not backup_before_reset:  # Only warn if backup was requested
+                        raise
+            
+            # Cleanup framework files
+            deleted = cleanup_framework_files(project_root, framework_files, reset_mcp=reset_mcp)
+            results["files_reset"] = deleted
+            logger.info(f"Reset {len(deleted)} framework files")
+    
+    # Get version after reset (will be updated after init completes)
+    version_after = get_framework_version()
+    results["version_after"] = version_after
 
     # Detect tech stack early (needed for template application)
     tech_stack = detect_tech_stack(project_root)
@@ -1793,5 +2233,30 @@ def init_project(
             results["validation"]["cursorignore"] = verification_results["components"].get("cursorignore", {})
     except Exception as e:
         results["validation_error"] = str(e)
+    
+    # Update version tracking and backup manifest if in reset mode
+    if reset_mode and results.get("backup_path"):
+        try:
+            version_after = get_framework_version()
+            results["version_after"] = version_after
+            
+            # Update backup manifest with version_after
+            backup_dir = project_root / results["backup_path"]
+            manifest_path = backup_dir / "manifest.json"
+            if manifest_path.exists():
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                manifest["framework_version_after"] = version_after
+                manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+        except Exception as e:
+            logger.warning(f"Failed to update backup manifest: {e}")
+    
+    # Store framework version for future reference
+    try:
+        version_file = project_root / ".tapps-agents" / ".framework-version"
+        current_version = get_framework_version()
+        if current_version:
+            version_file.write_text(current_version, encoding="utf-8")
+    except Exception as e:
+        logger.debug(f"Failed to store framework version: {e}")
 
     return results
