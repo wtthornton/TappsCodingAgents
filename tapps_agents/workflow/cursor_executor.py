@@ -42,6 +42,7 @@ from .skill_invoker import SkillInvoker
 from .state_manager import AdvancedStateManager
 from .state_persistence_config import StatePersistenceConfigManager
 from .worktree_manager import WorktreeManager
+from .marker_writer import MarkerWriter
 
 
 class CursorWorkflowExecutor:
@@ -157,6 +158,9 @@ class CursorWorkflowExecutor:
             polling_interval=config.workflow.polling_interval,
             timeout_seconds=config.workflow.timeout_seconds,
         ) if self.auto_execution_enabled else None
+        
+        # Initialize marker writer for durable step completion tracking
+        self.marker_writer = MarkerWriter(project_root=self.project_root)
 
     def _state_dir(self) -> Path:
         """Get state directory path."""
@@ -288,6 +292,7 @@ class CursorWorkflowExecutor:
                     "user_prompt": user_prompt or "",
                 },
                 timestamp=datetime.now(),
+                correlation_id=workflow_id,
             )
         )
         
@@ -655,6 +660,7 @@ class CursorWorkflowExecutor:
                     "attempts": result.step_execution.attempts or 1,
                 },
                 timestamp=datetime.now(),
+                correlation_id=f"{self.state.workflow_id}:{result.step.id}",
             )
         )
         
@@ -738,6 +744,7 @@ class CursorWorkflowExecutor:
                             "step_id": result.step.id,
                         },
                         timestamp=datetime.now(),
+                        correlation_id=f"{self.state.workflow_id}:{result.step.id}",
                     )
                 )
                 
@@ -777,6 +784,7 @@ class CursorWorkflowExecutor:
                     "step_id": result.step.id,
                 },
                 timestamp=datetime.now(),
+                correlation_id=f"{self.state.workflow_id}:{result.step.id}",
             )
         )
         
@@ -820,6 +828,7 @@ class CursorWorkflowExecutor:
                     "artifact_count": len(result.artifacts) if result.artifacts else 0,
                 },
                 timestamp=datetime.now(),
+                correlation_id=f"{self.state.workflow_id}:{result.step.id}",
             )
         )
         
@@ -837,6 +846,7 @@ class CursorWorkflowExecutor:
                             "created_by": result.step.id,
                         },
                         timestamp=datetime.now(),
+                        correlation_id=f"{self.state.workflow_id}:{result.step.id}",
                     )
                 )
         
@@ -892,6 +902,7 @@ class CursorWorkflowExecutor:
                                 "passed": gate_result.get("passed", False),
                             },
                             timestamp=datetime.now(),
+                            correlation_id=f"{self.state.workflow_id}:{result.step.id}",
                         )
                     )
             
@@ -981,6 +992,7 @@ class CursorWorkflowExecutor:
                         "total_steps": len(self.workflow.steps) if self.workflow else 0,
                     },
                     timestamp=datetime.now(),
+                    correlation_id=self.state.workflow_id,
                 )
             )
             
@@ -1026,6 +1038,7 @@ class CursorWorkflowExecutor:
                     "step_id": step.id,
                 },
                 timestamp=datetime.now(),
+                correlation_id=f"{self.state.workflow_id}:{step.id}",
             )
         )
 
@@ -1034,194 +1047,324 @@ class CursorWorkflowExecutor:
             # Return empty artifacts for completion steps
             return {}
 
+        # Track step start time for duration calculation
+        step_started_at = datetime.now()
+        
         # Use context manager for worktree lifecycle (guaranteed cleanup)
         async with self._worktree_context(step) as worktree_path:
+            worktree_name = self._worktree_name_for_step(step.id)
+            
             # Determine if auto-execution should be used
             use_auto_execution = (
                 self.auto_execution_enabled_workflow
                 if self.auto_execution_enabled_workflow is not None
                 else self.auto_execution_enabled
             ) and self.auto_executor is not None
-
-            if use_auto_execution:
-                # Use Background Agent auto-execution (Epic 7)
-                # Build command using skill_invoker's parameter extraction
-                # Get command mapping from skill_invoker
-                key = (agent_name.lower(), action.lower())
-                if key not in self.skill_invoker.COMMAND_MAPPING:
-                    raise ValueError(
-                        f"Unknown command for auto-execution: {agent_name}/{action}. "
-                        f"Available: {list(self.skill_invoker.COMMAND_MAPPING.keys())}"
+            
+            try:
+                if use_auto_execution:
+                    # Use Background Agent auto-execution (Epic 7)
+                    # Build command using skill_invoker's parameter extraction
+                    # Get command mapping from skill_invoker
+                    key = (agent_name.lower(), action.lower())
+                    if key not in self.skill_invoker.COMMAND_MAPPING:
+                        raise ValueError(
+                            f"Unknown command for auto-execution: {agent_name}/{action}. "
+                            f"Available: {list(self.skill_invoker.COMMAND_MAPPING.keys())}"
+                        )
+                    
+                    skill_command, _ = self.skill_invoker.COMMAND_MAPPING[key]
+                    
+                    # Build parameters from state (same as skill_invoker does)
+                    params = self.skill_invoker._build_parameters(
+                        step=step,
+                        param_mapping={},  # Will be extracted from state
+                        target_path=target_path,
+                        state=self.state,
                     )
-                
-                skill_command, _ = self.skill_invoker.COMMAND_MAPPING[key]
-                
-                # Build parameters from state (same as skill_invoker does)
-                params = self.skill_invoker._build_parameters(
-                    step=step,
-                    param_mapping={},  # Will be extracted from state
-                    target_path=target_path,
-                    state=self.state,
-                )
-                
-                # Build command string
-                command = self.skill_invoker._build_command(
-                    agent_name=agent_name,
-                    skill_command=skill_command,
-                    params=params,
-                )
-                
-                # Execute via auto-executor (creates command file and polls for completion)
-                execution_result = await self.auto_executor.execute_command(
-                    command=command,
-                    worktree_path=worktree_path,
-                    workflow_id=self.state.workflow_id,
-                    step_id=step.id,
-                    expected_artifacts=step.creates,
-                )
-                
-                # Check execution result
-                if execution_result.get("status") == "failed":
-                    error_msg = execution_result.get("error", "Unknown error")
-                    from ..core.unicode_safe import safe_print
-                    safe_print(f"\n[ERROR] Auto-execution failed for {agent_name}/{action}", flush=True)
-                    safe_print(f"   Error: {error_msg}", flush=True)
-                    safe_print(f"[TIP] Check Background Agents are running and configured correctly", flush=True)
-                    safe_print(f"   See docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md for setup", flush=True)
-                    raise RuntimeError(
-                        f"Auto-execution failed for {agent_name}/{action}: {error_msg}"
+                    
+                    # Build command string
+                    command = self.skill_invoker._build_command(
+                        agent_name=agent_name,
+                        skill_command=skill_command,
+                        params=params,
                     )
-                elif execution_result.get("status") == "timeout":
-                    from ..core.unicode_safe import safe_print
-                    timeout_msg = execution_result.get('error', 'Timeout')
-                    safe_print(f"\n[ERROR] Auto-execution timeout for {agent_name}/{action}", flush=True)
-                    safe_print(f"   Timeout: {timeout_msg}", flush=True)
-                    safe_print(f"[TIP] Increase timeout in config: workflow.timeout_seconds", flush=True)
-                    raise TimeoutError(
-                        f"Auto-execution timeout for {agent_name}/{action}: {timeout_msg}"
-                    )
-                elif execution_result.get("status") != "completed":
-                    from ..core.unicode_safe import safe_print
-                    status = execution_result.get('status', 'unknown')
-                    safe_print(f"\n[ERROR] Auto-execution returned unexpected status: {status}", flush=True)
-                    safe_print(f"[TIP] Check Background Agents configuration and logs", flush=True)
-                    raise RuntimeError(
-                        f"Auto-execution returned unexpected status: {status}"
-                    )
-                
-                if self.logger:
-                    self.logger.info(
-                        f"Step {step.id} completed via auto-execution",
-                        agent=agent_name,
-                        action=action,
-                        duration=execution_result.get("duration_seconds"),
-                    )
-            else:
-                # Manual execution mode (backward compatibility)
-                # Invoke Skill via SkillInvoker (creates command files for Background Agents)
-                from ..core.unicode_safe import safe_print
-                safe_print(f"\n[FILE] Creating command file for {agent_name}/{action}...", flush=True)
-                await self.skill_invoker.invoke_skill(
-                    agent_name=agent_name,
-                    action=action,
-                    step=step,
-                    target_path=target_path,
-                    worktree_path=worktree_path,
-                    state=self.state,
-                )
-                command_file = worktree_path / ".cursor-skill-command.txt"
-                if command_file.exists():
-                    safe_print(f"[OK] Command file created: {command_file}", flush=True)
-                    # Show first few lines of command
-                    try:
-                        with open(command_file, 'r', encoding='utf-8') as f:
-                            first_line = f.readline().strip()
-                            if first_line:
-                                safe_print(f"   Command: {first_line[:80]}...", flush=True)
-                    except Exception:
-                        pass
-
-                # Wait for Skill to complete (manual polling for artifacts)
-                import asyncio
-
-                from .cursor_skill_helper import check_skill_completion
-                
-                max_wait_time = 3600  # 1 hour max wait
-                poll_interval = 2  # Check every 2 seconds
-                elapsed = 0
-                
-                # Print to terminal for visibility with helpful guidance
-                command_file = worktree_path / ".cursor-skill-command.txt"
-                safe_print(f"\n{'='*60}", flush=True)
-                safe_print(f"[WAIT] Waiting for {agent_name}/{action} to complete (manual mode)", flush=True)
-                safe_print(f"[FILE] Command file: {command_file}", flush=True)
-                safe_print(f"[LIST] Expected artifacts: {step.creates}", flush=True)
-                safe_print(f"[TIP] Auto-execution is disabled. To enable automatic execution:", flush=True)
-                safe_print(f"   1. Enable in config: workflow.auto_execution_enabled: true", flush=True)
-                safe_print(f"   2. Or run in headless mode: set TAPPS_AGENTS_MODE=headless", flush=True)
-                safe_print(f"   3. Or use --cursor-mode flag with auto-execution enabled", flush=True)
-                safe_print(f"{'='*60}\n", flush=True)
-                
-                if self.logger:
-                    self.logger.info(
-                        f"Waiting for {agent_name}/{action} to complete (manual mode)...",
-                        step_id=step.id,
-                    )
-                
-                while elapsed < max_wait_time:
-                    completion_status = check_skill_completion(
+                    
+                    # Execute via auto-executor (creates command file and polls for completion)
+                    execution_result = await self.auto_executor.execute_command(
+                        command=command,
                         worktree_path=worktree_path,
+                        workflow_id=self.state.workflow_id,
+                        step_id=step.id,
                         expected_artifacts=step.creates,
                     )
                     
-                    if completion_status["completed"]:
+                    # Check execution result
+                    if execution_result.get("status") == "failed":
+                        error_msg = execution_result.get("error", "Unknown error")
                         from ..core.unicode_safe import safe_print
-                        safe_print(f"[OK] Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}", flush=True)
-                        if self.logger:
-                            self.logger.info(
-                                f"Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}",
-                                agent=agent_name,
-                                action=action,
-                            )
-                        break
-                    
-                    await asyncio.sleep(poll_interval)
-                    elapsed += poll_interval
-                    
-                    # Print progress every 10 seconds to terminal
-                    if elapsed % 10 == 0:
+                        safe_print(f"\n[ERROR] Auto-execution failed for {agent_name}/{action}", flush=True)
+                        safe_print(f"   Error: {error_msg}", flush=True)
+                        safe_print(f"[TIP] Check Background Agents are running and configured correctly", flush=True)
+                        safe_print(f"   See docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md for setup", flush=True)
+                        # Marker will be written by exception handler
+                        raise RuntimeError(
+                            f"Auto-execution failed for {agent_name}/{action}: {error_msg}"
+                        )
+                    elif execution_result.get("status") == "timeout":
                         from ..core.unicode_safe import safe_print
-                        safe_print(f"  [WAIT] Still waiting... ({elapsed}s elapsed) - Checking for artifacts...", flush=True)
-                        if self.logger:
-                            self.logger.debug(
-                                f"Still waiting for step {step.id}... ({elapsed}s elapsed)",
+                        timeout_msg = execution_result.get('error', 'Timeout')
+                        safe_print(f"\n[ERROR] Auto-execution timeout for {agent_name}/{action}", flush=True)
+                        safe_print(f"   Timeout: {timeout_msg}", flush=True)
+                        safe_print(f"[TIP] Increase timeout in config: workflow.timeout_seconds", flush=True)
+                        # Marker will be written by exception handler
+                        raise TimeoutError(
+                            f"Auto-execution timeout for {agent_name}/{action}: {timeout_msg}"
+                        )
+                    elif execution_result.get("status") != "completed":
+                        from ..core.unicode_safe import safe_print
+                        status = execution_result.get('status', 'unknown')
+                        safe_print(f"\n[ERROR] Auto-execution returned unexpected status: {status}", flush=True)
+                        safe_print(f"[TIP] Check Background Agents configuration and logs", flush=True)
+                        # Marker will be written by exception handler
+                        raise RuntimeError(
+                            f"Auto-execution returned unexpected status: {status}"
+                        )
+                    
+                    if self.logger:
+                        self.logger.info(
+                            f"Step {step.id} completed via auto-execution",
+                            agent=agent_name,
+                            action=action,
+                            duration=execution_result.get("duration_seconds"),
                         )
                 else:
-                    raise TimeoutError(
-                        f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
-                        f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}"
+                    # Manual execution mode (backward compatibility)
+                    # Invoke Skill via SkillInvoker (creates command files for Background Agents)
+                    from ..core.unicode_safe import safe_print
+                    safe_print(f"\n[FILE] Creating command file for {agent_name}/{action}...", flush=True)
+                    await self.skill_invoker.invoke_skill(
+                        agent_name=agent_name,
+                        action=action,
+                        step=step,
+                        target_path=target_path,
+                        worktree_path=worktree_path,
+                        state=self.state,
+                    )
+                    command_file = worktree_path / ".cursor-skill-command.txt"
+                    if command_file.exists():
+                        safe_print(f"[OK] Command file created: {command_file}", flush=True)
+                        # Show first few lines of command
+                        try:
+                            with open(command_file, 'r', encoding='utf-8') as f:
+                                first_line = f.readline().strip()
+                                if first_line:
+                                    safe_print(f"   Command: {first_line[:80]}...", flush=True)
+                        except Exception:
+                            pass
+
+                    # Wait for Skill to complete (manual polling for artifacts)
+                    import asyncio
+
+                    from .cursor_skill_helper import check_skill_completion
+                    
+                    max_wait_time = 3600  # 1 hour max wait
+                    poll_interval = 2  # Check every 2 seconds
+                    elapsed = 0
+                    
+                    # Print to terminal for visibility with helpful guidance
+                    command_file = worktree_path / ".cursor-skill-command.txt"
+                    safe_print(f"\n{'='*60}", flush=True)
+                    safe_print(f"[WAIT] Waiting for {agent_name}/{action} to complete (manual mode)", flush=True)
+                    safe_print(f"[FILE] Command file: {command_file}", flush=True)
+                    safe_print(f"[LIST] Expected artifacts: {step.creates}", flush=True)
+                    safe_print(f"[TIP] Auto-execution is disabled. To enable automatic execution:", flush=True)
+                    safe_print(f"   1. Enable in config: workflow.auto_execution_enabled: true", flush=True)
+                    safe_print(f"   2. Or run in headless mode: set TAPPS_AGENTS_MODE=headless", flush=True)
+                    safe_print(f"   3. Or use --cursor-mode flag with auto-execution enabled", flush=True)
+                    safe_print(f"{'='*60}\n", flush=True)
+                    
+                    if self.logger:
+                        self.logger.info(
+                            f"Waiting for {agent_name}/{action} to complete (manual mode)...",
+                            step_id=step.id,
+                        )
+                    
+                    while elapsed < max_wait_time:
+                        completion_status = check_skill_completion(
+                            worktree_path=worktree_path,
+                            expected_artifacts=step.creates,
+                            workflow_id=self.state.workflow_id,
+                            step_id=step.id,
+                        )
+                        
+                        if completion_status["completed"]:
+                            from ..core.unicode_safe import safe_print
+                            safe_print(f"[OK] Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}", flush=True)
+                            if self.logger:
+                                self.logger.info(
+                                    f"Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}",
+                                    agent=agent_name,
+                                    action=action,
+                                )
+                            break
+                        
+                        await asyncio.sleep(poll_interval)
+                        elapsed += poll_interval
+                        
+                        # Print progress every 10 seconds to terminal
+                        if elapsed % 10 == 0:
+                            from ..core.unicode_safe import safe_print
+                            safe_print(f"  [WAIT] Still waiting... ({elapsed}s elapsed) - Checking for artifacts...", flush=True)
+                            if self.logger:
+                                self.logger.debug(
+                                    f"Still waiting for step {step.id}... ({elapsed}s elapsed)",
+                            )
+                    else:
+                        marker_location = f".tapps-agents/workflows/markers/{self.state.workflow_id}/step-{step.id}/FAILED.json"
+                        raise TimeoutError(
+                            f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
+                            f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}. "
+                            f"Check failure marker at: {marker_location}"
+                        )
+
+                    # Extract artifacts from worktree
+                    artifacts = await self.worktree_manager.extract_artifacts(
+                        worktree_path=worktree_path,
+                        step=step,
                     )
 
-            # Extract artifacts from worktree
-            artifacts = await self.worktree_manager.extract_artifacts(
-                worktree_path=worktree_path,
-                step=step,
-            )
+                    # Convert artifacts to dict format
+                    artifacts_dict: dict[str, dict[str, Any]] = {}
+                    found_artifact_paths = []
+                    for artifact in artifacts:
+                        artifacts_dict[artifact.name] = {
+                            "name": artifact.name,
+                            "path": artifact.path,
+                            "status": artifact.status,
+                            "created_by": artifact.created_by,
+                            "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
+                            "metadata": artifact.metadata or {},
+                        }
+                        found_artifact_paths.append(artifact.path)
 
-            # Convert artifacts to dict format
-            artifacts_dict: dict[str, dict[str, Any]] = {}
-            for artifact in artifacts:
-                artifacts_dict[artifact.name] = {
-                    "name": artifact.name,
-                    "path": artifact.path,
-                    "status": artifact.status,
-                    "created_by": artifact.created_by,
-                    "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
-                    "metadata": artifact.metadata or {},
-                }
+                    # Write DONE marker for successful completion
+                    step_completed_at = datetime.now()
+                    duration = (step_completed_at - step_started_at).total_seconds()
+                    
+                    marker_path = self.marker_writer.write_done_marker(
+                        workflow_id=self.state.workflow_id,
+                        step_id=step.id,
+                        agent=agent_name,
+                        action=action,
+                        worktree_name=worktree_name,
+                        worktree_path=str(worktree_path),
+                        expected_artifacts=step.creates or [],
+                        found_artifacts=found_artifact_paths,
+                        duration_seconds=duration,
+                        started_at=step_started_at,
+                        completed_at=step_completed_at,
+                    )
+                    
+                    if self.logger:
+                        self.logger.debug(
+                            f"DONE marker written for step {step.id}",
+                            marker_path=str(marker_path),
+                        )
 
-            # Worktree cleanup is handled by context manager
-            return artifacts_dict if artifacts_dict else None
+                    # Worktree cleanup is handled by context manager
+                    return artifacts_dict if artifacts_dict else None
+                
+            except (TimeoutError, RuntimeError) as e:
+                # Write FAILED marker for timeout or execution errors
+                step_failed_at = datetime.now()
+                duration = (step_failed_at - step_started_at).total_seconds()
+                error_type = type(e).__name__
+                error_msg = str(e)
+                
+                # Try to get completion status if available (for missing artifacts)
+                found_artifact_paths = []
+                try:
+                    from .cursor_skill_helper import check_skill_completion
+                    completion_status = check_skill_completion(
+                        worktree_path=worktree_path,
+                        expected_artifacts=step.creates or [],
+                    )
+                    found_artifact_paths = completion_status.get("found_artifacts", [])
+                except Exception:
+                    pass
+                
+                marker_path = self.marker_writer.write_failed_marker(
+                    workflow_id=self.state.workflow_id,
+                    step_id=step.id,
+                    agent=agent_name,
+                    action=action,
+                    error=error_msg,
+                    worktree_name=worktree_name,
+                    worktree_path=str(worktree_path),
+                    expected_artifacts=step.creates or [],
+                    found_artifacts=found_artifact_paths,
+                    duration_seconds=duration,
+                    started_at=step_started_at,
+                    failed_at=step_failed_at,
+                    error_type=error_type,
+                    metadata={
+                        "marker_location": f".tapps-agents/workflows/markers/{self.state.workflow_id}/step-{step.id}/FAILED.json",
+                    },
+                )
+                
+                if self.logger:
+                    self.logger.warning(
+                        f"FAILED marker written for step {step.id}",
+                        marker_path=str(marker_path),
+                        error=error_msg,
+                    )
+                
+                # Include marker location in error message for better troubleshooting
+                from ..core.unicode_safe import safe_print
+                safe_print(
+                    f"\n[INFO] Failure marker written to: {marker_path}",
+                    flush=True,
+                )
+                
+                # Re-raise the exception
+                raise
+            except Exception as e:
+                # Write FAILED marker for unexpected errors
+                step_failed_at = datetime.now()
+                duration = (step_failed_at - step_started_at).total_seconds()
+                error_type = type(e).__name__
+                error_msg = str(e)
+                
+                marker_path = self.marker_writer.write_failed_marker(
+                    workflow_id=self.state.workflow_id,
+                    step_id=step.id,
+                    agent=agent_name,
+                    action=action,
+                    error=error_msg,
+                    worktree_name=worktree_name,
+                    worktree_path=str(worktree_path) if 'worktree_path' in locals() else None,
+                    expected_artifacts=step.creates or [],
+                    found_artifacts=[],
+                    duration_seconds=duration,
+                    started_at=step_started_at,
+                    failed_at=step_failed_at,
+                    error_type=error_type,
+                    metadata={
+                        "marker_location": f".tapps-agents/workflows/markers/{self.state.workflow_id}/step-{step.id}/FAILED.json",
+                    },
+                )
+                
+                if self.logger:
+                    self.logger.error(
+                        f"FAILED marker written for step {step.id} (unexpected error)",
+                        marker_path=str(marker_path),
+                        error=error_msg,
+                        exc_info=True,
+                    )
+                
+                # Re-raise the exception
+                raise
 
     @asynccontextmanager
     async def _worktree_context(

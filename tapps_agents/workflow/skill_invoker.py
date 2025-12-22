@@ -609,10 +609,17 @@ class SkillInvoker:
         expected_artifacts = step.creates if step else None
         
         # Fallback: Create structured command files with metadata
+        # Get workflow_id from state if available
+        workflow_id = None
+        if step and hasattr(step, "workflow_id"):
+            workflow_id = step.workflow_id
+        elif state:
+            workflow_id = state.workflow_id
+        
         command_file, metadata_file = create_skill_command_file(
             command=command,
             worktree_path=worktree_path,
-            workflow_id=getattr(step, "id", None) if step else None,
+            workflow_id=workflow_id,
             step_id=getattr(step, "id", None) if step else None,
             expected_artifacts=expected_artifacts,
         )
@@ -620,6 +627,8 @@ class SkillInvoker:
             worktree_path=worktree_path,
             command=command,
             expected_artifacts=expected_artifacts,
+            workflow_id=workflow_id,
+            step_id=getattr(step, "id", None) if step else None,
         )
 
         # Also create a simple script that can execute the command
