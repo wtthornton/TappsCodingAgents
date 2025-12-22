@@ -346,18 +346,37 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         result: dict[str, Any] = {"file": str(file_path), "review": {}}
 
-        # Calculate scores
+        # Detect file type
+        file_type = self._detect_file_type(file_path)
+        result["file_type"] = file_type
+
+        # Calculate scores based on file type
         if include_scoring:
-            scores = self.scorer.score_file(file_path, code)
+            if file_type == "yaml":
+                scores = self._score_yaml_file(file_path, code)
+            elif file_type == "typescript":
+                # Use TypeScript scorer if available
+                if hasattr(self, 'typescript_scorer'):
+                    scores = self.typescript_scorer.score_file(file_path, code)
+                else:
+                    # Fallback to generic scoring
+                    scores = self._score_generic_file(file_path, code, file_type)
+            elif file_type == "python":
+                scores = self.scorer.score_file(file_path, code)
+            else:
+                # Generic scoring for other file types
+                scores = self._score_generic_file(file_path, code, file_type)
 
             # Enhance security score with dependency health (Phase 6.4.3)
-            dependency_security = self._get_dependency_security_penalty()
-            # Blend dependency security into security score (70% code security, 30% dependency security)
-            original_security = scores.get("security_score", 5.0)
-            scores["security_score"] = (original_security * 0.7) + (
-                dependency_security * 0.3
-            )
-            scores["dependency_security_score"] = dependency_security
+            # Only apply to Python files
+            if file_type == "python":
+                dependency_security = self._get_dependency_security_penalty()
+                # Blend dependency security into security score (70% code security, 30% dependency security)
+                original_security = scores.get("security_score", 5.0)
+                scores["security_score"] = (original_security * 0.7) + (
+                    dependency_security * 0.3
+                )
+                scores["dependency_security_score"] = dependency_security
 
             result["scoring"] = scores
 
@@ -1436,6 +1455,150 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             )
 
         return findings
+
+    def _detect_file_type(self, file_path: Path) -> str:
+        """
+        Detect file type from extension.
+        
+        Args:
+            file_path: Path to file
+            
+        Returns:
+            File type string (python, yaml, typescript, javascript, etc.)
+        """
+        extension_map = {
+            ".py": "python",
+            ".js": "javascript",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".java": "java",
+            ".cpp": "cpp",
+            ".c": "c",
+            ".rs": "rust",
+            ".go": "go",
+            ".rb": "ruby",
+            ".php": "php",
+            ".swift": "swift",
+            ".kt": "kotlin",
+            ".md": "markdown",
+            ".yaml": "yaml",
+            ".yml": "yaml",
+            ".json": "json",
+            ".xml": "xml",
+            ".html": "html",
+            ".css": "css",
+            ".sh": "shell",
+            ".ps1": "powershell",
+            ".dockerfile": "dockerfile",
+        }
+        return extension_map.get(file_path.suffix.lower(), "unknown")
+
+    def _score_yaml_file(self, file_path: Path, code: str) -> dict[str, Any]:
+        """
+        Score YAML file with YAML-specific analysis.
+        
+        Args:
+            file_path: Path to YAML file
+            code: File content
+            
+        Returns:
+            Scoring dictionary with YAML-specific metrics
+        """
+        scores: dict[str, Any] = {
+            "complexity_score": 5.0,  # Default for YAML
+            "security_score": 8.0,  # Default, will be adjusted
+            "maintainability_score": 7.0,  # Default
+            "test_coverage_score": 0.0,  # Not applicable
+            "performance_score": 10.0,  # Not applicable for config files
+            "linting_score": 10.0,  # Will check YAML syntax
+            "type_checking_score": 10.0,  # Not applicable
+            "duplication_score": 10.0,  # Not applicable
+            "overall_score": 75.0,  # Default
+            "metrics": {},
+        }
+        
+        # Check YAML syntax
+        try:
+            import yaml
+            yaml.safe_load(code)
+            scores["linting_score"] = 10.0
+            yaml_valid = True
+        except yaml.YAMLError as e:
+            scores["linting_score"] = 0.0
+            yaml_valid = False
+            scores["yaml_error"] = str(e)
+        except ImportError:
+            # yaml library not available, skip validation
+            yaml_valid = True
+            scores["yaml_warning"] = "YAML library not available for validation"
+        
+        # Basic structure analysis
+        lines = code.split('\n')
+        scores["metrics"]["line_count"] = len(lines)
+        scores["metrics"]["file_size"] = len(code)
+        
+        # Check for common YAML issues
+        issues = []
+        if not yaml_valid:
+            issues.append("Invalid YAML syntax")
+        
+        # Check for Docker Compose specific patterns if applicable
+        if "docker-compose" in file_path.name.lower():
+            if "version:" not in code and '"version"' not in code:
+                issues.append("Docker Compose version not specified")
+            scores["file_subtype"] = "docker-compose"
+        
+        # Adjust security score based on issues
+        if issues:
+            scores["security_score"] = max(5.0, scores["security_score"] - len(issues) * 1.0)
+        
+        scores["yaml_issues"] = issues
+        scores["yaml_valid"] = yaml_valid
+        
+        # Calculate overall score
+        scores["overall_score"] = (
+            scores["complexity_score"] * 0.1 +
+            scores["security_score"] * 0.3 +
+            scores["maintainability_score"] * 0.2 +
+            scores["linting_score"] * 0.4
+        ) * 10
+        
+        return scores
+
+    def _score_generic_file(self, file_path: Path, code: str, file_type: str) -> dict[str, Any]:
+        """
+        Score generic/non-Python file with basic analysis.
+        
+        Args:
+            file_path: Path to file
+            code: File content
+            file_type: Detected file type
+            
+        Returns:
+            Scoring dictionary with generic metrics
+        """
+        lines = code.split('\n')
+        line_count = len(lines)
+        
+        scores: dict[str, Any] = {
+            "complexity_score": 5.0,  # Default
+            "security_score": 7.0,  # Default
+            "maintainability_score": 7.0,  # Default
+            "test_coverage_score": 0.0,  # Not applicable
+            "performance_score": 10.0,  # Not applicable for config files
+            "linting_score": 10.0,  # Not applicable
+            "type_checking_score": 10.0,  # Not applicable
+            "duplication_score": 10.0,  # Not applicable
+            "overall_score": 70.0,  # Default
+            "metrics": {
+                "line_count": line_count,
+                "file_size": len(code),
+            },
+            "file_type": file_type,
+            "message": f"Generic analysis for {file_type} file. File-type-specific analysis not available.",
+        }
+        
+        return scores
 
     async def close(self):
         """Clean up resources"""

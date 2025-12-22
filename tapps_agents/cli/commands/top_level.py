@@ -1407,6 +1407,31 @@ def _print_init_results(results: dict[str, Any]) -> None:
         print("    - .cursorignore")
     else:
         print("  .cursorignore: Skipped or already exists")
+    
+    # Show MCP config
+    mcp_config = results.get("mcp_config", {})
+    if mcp_config.get("created"):
+        print("  MCP Config: Created")
+        print(f"    - {mcp_config.get('path', '.cursor/mcp.json')}")
+        print("    - Context7 MCP server configured (project-local)")
+    elif mcp_config.get("path"):
+        print("  MCP Config: Already exists")
+        print(f"    - {mcp_config.get('path')}")
+    
+    # Show experts scaffold
+    experts_scaffold = results.get("experts_scaffold", {})
+    if experts_scaffold.get("created"):
+        print("  Experts Scaffold: Created")
+        if experts_scaffold.get("domains_md"):
+            print(f"    - {experts_scaffold['domains_md']}")
+        if experts_scaffold.get("experts_yaml"):
+            print(f"    - {experts_scaffold['experts_yaml']}")
+        if experts_scaffold.get("knowledge_dir"):
+            print(f"    - {experts_scaffold['knowledge_dir']}/")
+        print("    - Built-in technical experts are automatically available")
+        print("    - Edit these files to add business-domain experts")
+    elif experts_scaffold.get("domains_md"):
+        print("  Experts Scaffold: Already exists")
 
 
 def _print_validation_results(validation: dict[str, Any]) -> None:
@@ -1594,11 +1619,50 @@ def _run_environment_check(project_root: str) -> None:
 
 def _print_next_steps() -> None:
     """Print next steps instructions."""
-    print("Next Steps:")
-    print("  1. Set up experts: python -m tapps_agents.cli setup-experts init")
-    print("  2. List workflows: python -m tapps_agents.cli workflow list")
-    print("  3. Run a workflow: python -m tapps_agents.cli workflow rapid")
-    print("  4. Full environment check: python -m tapps_agents.cli doctor")
+    print("\n" + "=" * 60)
+    print("Next Steps")
+    print("=" * 60)
+    print()
+    
+    print("In Cursor Chat (Recommended):")
+    print("  • Use Simple Mode for natural language commands:")
+    print("    @simple-mode *build \"Add user authentication\"")
+    print("    @simple-mode *review src/api.py")
+    print("    @simple-mode *fix src/buggy.py \"Fix the error\"")
+    print("    @simple-mode *test src/service.py")
+    print()
+    print("  • Use individual agents:")
+    print("    @reviewer *score src/main.py")
+    print("    @implementer *implement \"Add feature\" src/feature.py")
+    print("    @tester *test src/utils.py")
+    print()
+    
+    print("In Terminal/CI:")
+    print("  • Run workflow presets:")
+    print("    tapps-agents workflow rapid --prompt \"Add feature\" --auto")
+    print("    tapps-agents workflow fix --file src/buggy.py --auto")
+    print()
+    print("  • Use CLI commands:")
+    print("    tapps-agents reviewer review src/")
+    print("    tapps-agents score src/main.py")
+    print()
+    
+    print("Setup & Configuration:")
+    print("  • Configure experts: tapps-agents setup-experts add")
+    print("    (Built-in technical experts are already available)")
+    print("  • Verify setup: tapps-agents cursor verify")
+    print("  • Environment check: tapps-agents doctor")
+    print()
+    
+    print("Why Init Matters:")
+    print("  • Cursor Skills: Enables @agent-name commands in Cursor chat")
+    print("  • Cursor Rules: Provides context to AI about your project")
+    print("  • Background Agents: Auto-executes quality checks and workflows")
+    print("  • Context7 MCP: Library documentation lookup (configured in .cursor/mcp.json)")
+    print("  • Experts + RAG: Business-domain knowledge for better code generation")
+    print("    - Built-in technical experts: Auto-loaded from tech stack")
+    print("    - Project experts: Configure in .tapps-agents/experts.yaml")
+    print("    - Knowledge base: Add files in .tapps-agents/knowledge/<domain>/")
     print()
 
 

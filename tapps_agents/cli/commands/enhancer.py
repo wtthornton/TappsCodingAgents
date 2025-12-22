@@ -7,6 +7,7 @@ import json
 from ...agents.enhancer.agent import EnhancerAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -74,5 +75,5 @@ def handle_enhancer_command(args: object) -> None:
             else:
                 print(enhanced)
     finally:
-        asyncio.run(enhancer.close())
+        safe_close_agent_sync(enhancer)
 

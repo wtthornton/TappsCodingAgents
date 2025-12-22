@@ -568,6 +568,279 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
     return created, str(dest_file)
 
 
+def init_cursor_mcp_config(project_root: Path | None = None, overwrite: bool = False) -> tuple[bool, str | None]:
+    """
+    Initialize `.cursor/mcp.json` with Context7 MCP server configuration.
+    
+    Creates a project-local MCP config file if it doesn't exist. Never overwrites
+    existing files unless overwrite=True. Uses environment variable references
+    for API keys (no secrets embedded).
+    
+    Args:
+        project_root: Project root directory (defaults to cwd)
+        overwrite: If True, overwrite existing file (default: False)
+        
+    Returns:
+        Tuple of (created, path) where:
+        - created: True if file was created, False if skipped
+        - path: Path to mcp.json file or None if skipped
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+    
+    cursor_dir = project_root / ".cursor"
+    cursor_dir.mkdir(parents=True, exist_ok=True)
+    
+    mcp_config_file = cursor_dir / "mcp.json"
+    
+    # Skip if file exists and overwrite is False
+    if mcp_config_file.exists() and not overwrite:
+        return False, str(mcp_config_file)
+    
+    # Create MCP config with Context7 server
+    mcp_config = {
+        "mcpServers": {
+            "Context7": {
+                "command": "npx",
+                "args": ["-y", "@context7/mcp-server"],
+                "env": {
+                    # Use environment variable reference - no secrets embedded
+                    "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+                }
+            }
+        }
+    }
+    
+    # Write config file
+    try:
+        mcp_config_file.write_text(
+            json.dumps(mcp_config, indent=2) + "\n",
+            encoding="utf-8"
+        )
+        return True, str(mcp_config_file)
+    except Exception as e:
+        logger.warning(f"Failed to create MCP config: {e}")
+        return False, None
+
+
+def init_experts_scaffold(project_root: Path | None = None) -> dict[str, Any]:
+    """
+    Scaffold experts and RAG project files for business-domain experts.
+    
+    Creates:
+    - `.tapps-agents/domains.md` - Business domains template
+    - `.tapps-agents/experts.yaml` - Project experts configuration stub
+    - `.tapps-agents/knowledge/` - Knowledge base directory structure
+    - `.tapps-agents/knowledge/README.md` - Instructions for adding knowledge
+    
+    Note: Built-in technical experts are automatically loaded and don't need
+    configuration. This scaffold is for project-specific business experts.
+    
+    Args:
+        project_root: Project root directory (defaults to cwd)
+        
+    Returns:
+        Dictionary with scaffold results:
+        - created: List of created file paths
+        - domains_md: Path to domains.md
+        - experts_yaml: Path to experts.yaml
+        - knowledge_dir: Path to knowledge directory
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+    
+    tapps_dir = project_root / ".tapps-agents"
+    tapps_dir.mkdir(parents=True, exist_ok=True)
+    
+    results: dict[str, Any] = {
+        "created": [],
+        "domains_md": None,
+        "experts_yaml": None,
+        "knowledge_dir": None,
+    }
+    
+    # Create domains.md template
+    domains_file = tapps_dir / "domains.md"
+    if not domains_file.exists():
+        domains_content = """# Business Domains
+
+This file maps your business domains to expert agents. Built-in technical experts
+(python, fastapi, sqlalchemy, etc.) are automatically available and don't need
+to be listed here.
+
+## Domain to Expert Mapping
+
+Add your business domains and their associated experts below:
+
+```yaml
+domains:
+  e-commerce:
+    experts:
+      - expert-payment-processing
+      - expert-inventory-management
+    description: "E-commerce domain covering payments, inventory, and orders"
+  
+  analytics:
+    experts:
+      - expert-data-analysis
+      - expert-reporting
+    description: "Analytics and reporting domain"
+```
+
+## How It Works
+
+1. **Built-in Technical Experts**: Automatically loaded based on your tech stack
+   (detected from `requirements.txt`, `package.json`, etc.)
+
+2. **Project Business Experts**: Configure in `.tapps-agents/experts.yaml`
+   and add domain knowledge in `.tapps-agents/knowledge/<domain>/`
+
+3. **Knowledge Base**: Add markdown files under `.tapps-agents/knowledge/<domain>/`
+   to provide context for business-domain experts
+
+## Next Steps
+
+1. Edit `.tapps-agents/experts.yaml` to add your business experts
+2. Add knowledge files in `.tapps-agents/knowledge/<domain>/`
+3. Run `tapps-agents setup-experts add` for interactive configuration
+"""
+        domains_file.write_text(domains_content, encoding="utf-8")
+        results["created"].append(str(domains_file))
+    results["domains_md"] = str(domains_file)
+    
+    # Create experts.yaml stub
+    experts_file = tapps_dir / "experts.yaml"
+    if not experts_file.exists():
+        experts_content = """# Project Business Experts Configuration
+
+# Built-in technical experts are automatically loaded based on your tech stack.
+# This file is for project-specific business-domain experts.
+
+# Example expert configuration (commented out):
+# experts:
+#   - id: expert-payment-processing
+#     name: Payment Processing Expert
+#     description: "Expert in payment gateways, PCI compliance, and transaction processing"
+#     knowledge_domains:
+#       - payments
+#       - compliance
+#     priority: 0.9
+#     enabled: true
+
+# To add an expert, uncomment and modify the example above, or run:
+#   tapps-agents setup-experts add
+
+# For more information, see:
+#   - .tapps-agents/domains.md (domain mapping)
+#   - .tapps-agents/knowledge/README.md (knowledge base setup)
+"""
+        experts_file.write_text(experts_content, encoding="utf-8")
+        results["created"].append(str(experts_file))
+    results["experts_yaml"] = str(experts_file)
+    
+    # Create knowledge directory structure
+    knowledge_dir = tapps_dir / "knowledge"
+    knowledge_dir.mkdir(parents=True, exist_ok=True)
+    results["knowledge_dir"] = str(knowledge_dir)
+    
+    # Create knowledge README
+    knowledge_readme = knowledge_dir / "README.md"
+    if not knowledge_readme.exists():
+        readme_content = """# Knowledge Base
+
+This directory contains domain-specific knowledge files for your business experts.
+
+## Directory Structure
+
+Organize knowledge by domain:
+
+```
+knowledge/
+  payments/
+    payment-gateways.md
+    pci-compliance.md
+  inventory/
+    stock-management.md
+    warehouse-operations.md
+  analytics/
+    reporting-requirements.md
+    data-sources.md
+```
+
+## Adding Knowledge
+
+1. Create a directory for each domain (e.g., `payments/`, `inventory/`)
+2. Add markdown files with domain knowledge
+3. Reference these domains in `.tapps-agents/experts.yaml`
+
+## Knowledge File Format
+
+Use standard markdown. Include:
+- Domain concepts and terminology
+- Business rules and constraints
+- Integration patterns
+- Common workflows
+- Examples and use cases
+
+## Example Knowledge File
+
+```markdown
+# Payment Processing Domain
+
+## Overview
+Our payment system integrates with Stripe and PayPal.
+
+## Business Rules
+- Minimum transaction amount: $0.50
+- Maximum transaction amount: $10,000
+- Refunds must be processed within 30 days
+
+## Integration Points
+- Stripe API for credit cards
+- PayPal API for PayPal payments
+- Internal accounting system for reconciliation
+```
+
+## How It's Used
+
+Knowledge files are automatically indexed and made available to:
+- Expert agents during code generation
+- RAG (Retrieval-Augmented Generation) queries
+- Context-aware code reviews and suggestions
+
+For more information, see `.tapps-agents/domains.md`.
+"""
+        knowledge_readme.write_text(readme_content, encoding="utf-8")
+        results["created"].append(str(knowledge_readme))
+    
+    # Optionally create a general knowledge example
+    general_dir = knowledge_dir / "general"
+    general_dir.mkdir(parents=True, exist_ok=True)
+    general_example = general_dir / "project-overview.md"
+    if not general_example.exists():
+        example_content = """# Project Overview
+
+Add general project knowledge here. This file serves as an example.
+
+## Project Context
+
+Describe your project's purpose, key features, and important context here.
+
+## Key Concepts
+
+- Concept 1: Description
+- Concept 2: Description
+
+## Important Notes
+
+Add any important information that agents should know about your project.
+"""
+        general_example.write_text(example_content, encoding="utf-8")
+        results["created"].append(str(general_example))
+    
+    return results
+
+
 def init_tech_stack_config(
     project_root: Path | None = None,
     tech_stack: dict[str, Any] | None = None,
@@ -1465,9 +1738,28 @@ def init_project(
     if tech_stack_path:
         results["files_created"].append(tech_stack_path)
 
+    # Initialize MCP config (project-local)
+    mcp_created, mcp_path = init_cursor_mcp_config(project_root, overwrite=False)
+    results["mcp_config"] = {
+        "created": mcp_created,
+        "path": mcp_path,
+    }
+    if mcp_path:
+        results["files_created"].append(mcp_path)
+    
     # Detect MCP servers
     mcp_status = detect_mcp_servers(project_root)
     results["mcp_servers"] = mcp_status
+    # Update MCP status with project-local config info
+    if mcp_created and mcp_path:
+        mcp_status["project_local_config"] = mcp_path
+        mcp_status["note"] = f"Project-local `.cursor/mcp.json` was created. Context7 MCP server configured."
+    
+    # Scaffold experts and RAG files
+    experts_scaffold = init_experts_scaffold(project_root)
+    results["experts_scaffold"] = experts_scaffold
+    if experts_scaffold.get("created"):
+        results["files_created"].extend(experts_scaffold["created"])
 
     # Pre-populate cache with expert libraries even if no project libraries detected
     # Expert libraries should always be cached for built-in experts

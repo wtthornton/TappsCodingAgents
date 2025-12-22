@@ -6,6 +6,7 @@ import asyncio
 from ...agents.debugger.agent import DebuggerAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -58,5 +59,5 @@ def handle_debugger_command(args: object) -> None:
         check_result_error(result)
         feedback.output_result(result, message="Debugging completed successfully")
     finally:
-        asyncio.run(debugger.close())
+        safe_close_agent_sync(debugger)
 

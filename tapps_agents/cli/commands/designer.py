@@ -6,6 +6,7 @@ import asyncio
 from ...agents.designer.agent import DesignerAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -24,7 +25,7 @@ def handle_designer_command(args: object) -> None:
                     "design-api",
                     requirements=args.requirements,
                     api_type=getattr(args, "api_type", "REST"),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "design-data-model":
@@ -33,7 +34,7 @@ def handle_designer_command(args: object) -> None:
                     "design-data-model",
                     requirements=args.requirements,
                     data_source=getattr(args, "data_source", ""),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "design-ui":
@@ -42,7 +43,7 @@ def handle_designer_command(args: object) -> None:
                     "design-ui",
                     feature_description=args.feature_description,
                     user_stories=getattr(args, "user_stories", []),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "create-wireframe":
@@ -51,7 +52,7 @@ def handle_designer_command(args: object) -> None:
                     "create-wireframe",
                     screen_description=args.screen_description,
                     wireframe_type=getattr(args, "wireframe_type", "page"),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "define-design-system":
@@ -60,7 +61,7 @@ def handle_designer_command(args: object) -> None:
                     "define-design-system",
                     project_description=args.project_description,
                     brand_guidelines=getattr(args, "brand_guidelines", ""),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "help" or command is None:
@@ -75,5 +76,5 @@ def handle_designer_command(args: object) -> None:
         check_result_error(result)
         feedback.output_result(result, message="Design completed successfully")
     finally:
-        asyncio.run(designer.close())
+        safe_close_agent_sync(designer)
 

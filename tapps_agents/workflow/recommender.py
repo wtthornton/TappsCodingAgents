@@ -78,29 +78,48 @@ class WorkflowRecommender:
         # Find available workflows
         available_workflows = self._find_available_workflows()
 
+        # Check if workflow file exists (separate from loading)
+        workflow_exists = False
+        workflow_path = None
+        if workflow_file:
+            # Check main workflows directory
+            workflow_path = self.workflows_dir / f"{workflow_file}.yaml"
+            workflow_exists = workflow_path.exists()
+            
+            # Also check presets directory
+            if not workflow_exists:
+                presets_path = self.workflows_dir / "presets" / f"{workflow_file}.yaml"
+                workflow_exists = presets_path.exists()
+                if workflow_exists:
+                    workflow_path = presets_path
+
         # Load workflow if requested and found
         workflow = None
-        if auto_load and workflow_file:
-            workflow_path = self.workflows_dir / f"{workflow_file}.yaml"
-            if workflow_path.exists():
-                try:
-                    workflow = WorkflowParser.parse_file(workflow_path)
-                except Exception:
-                    # If recommended workflow doesn't exist, try to find a similar one
-                    workflow_file = self._find_best_match(
-                        workflow_file, available_workflows
-                    )
-                    if workflow_file:
-                        workflow_path = self.workflows_dir / f"{workflow_file}.yaml"
-                        if workflow_path.exists():
+        if auto_load and workflow_file and workflow_exists and workflow_path:
+            try:
+                workflow = WorkflowParser.parse_file(workflow_path)
+            except Exception:
+                # If recommended workflow doesn't exist, try to find a similar one
+                workflow_file = self._find_best_match(
+                    workflow_file, available_workflows
+                )
+                if workflow_file:
+                    # Check both directories for best match
+                    workflow_path = self.workflows_dir / f"{workflow_file}.yaml"
+                    if not workflow_path.exists():
+                        workflow_path = self.workflows_dir / "presets" / f"{workflow_file}.yaml"
+                    if workflow_path.exists():
+                        try:
                             workflow = WorkflowParser.parse_file(workflow_path)
+                        except Exception:
+                            pass
 
         # Get alternative workflows
         alternative_workflows = [w for w in available_workflows if w != workflow_file]
 
         # Generate recommendation message
         message = self._generate_message(
-            characteristics, workflow_file, workflow is not None
+            characteristics, workflow_file, workflow_exists
         )
 
         return WorkflowRecommendation(
@@ -114,23 +133,52 @@ class WorkflowRecommender:
         )
 
     def _find_available_workflows(self) -> list[str]:
-        """Find all available workflow files."""
-        if not self.workflows_dir.exists():
-            return []
-
+        """Find all available workflow files in workflows/ and workflows/presets/."""
         workflows = []
-        for workflow_file in self.workflows_dir.glob("*.yaml"):
-            workflows.append(workflow_file.stem)
+        
+        # Check main workflows directory
+        if self.workflows_dir.exists():
+            for workflow_file in self.workflows_dir.glob("*.yaml"):
+                workflows.append(workflow_file.stem)
+        
+        # Check presets subdirectory
+        presets_dir = self.workflows_dir / "presets"
+        if presets_dir.exists():
+            for workflow_file in presets_dir.glob("*.yaml"):
+                if workflow_file.stem not in workflows:  # Avoid duplicates
+                    workflows.append(workflow_file.stem)
+        
         return workflows
 
     def _find_best_match(self, preferred: str, available: list[str]) -> str | None:
-        """Find best matching workflow from available workflows."""
+        """Find best matching workflow from available workflows, including preset aliases."""
         if not available:
             return None
 
         # Try exact match first
         if preferred in available:
             return preferred
+
+        # Check preset aliases if no match found
+        try:
+            from .preset_loader import PRESET_ALIASES
+            
+            # Check if preferred is an alias
+            if preferred in PRESET_ALIASES:
+                preset_name = PRESET_ALIASES[preferred]
+                if preset_name in available:
+                    return preset_name
+            
+            # Reverse lookup: check if any available workflow has preferred as alias
+            for workflow in available:
+                if workflow in PRESET_ALIASES.values():
+                    # Find aliases for this workflow
+                    aliases = [k for k, v in PRESET_ALIASES.items() if v == workflow]
+                    if preferred in aliases:
+                        return workflow
+        except ImportError:
+            # If preset_loader not available, continue with normal matching
+            pass
 
         # Try partial match
         preferred_lower = preferred.lower()
@@ -148,7 +196,7 @@ class WorkflowRecommender:
         self,
         characteristics: ProjectCharacteristics,
         workflow_file: str | None,
-        workflow_loaded: bool,
+        workflow_exists: bool,
     ) -> str:
         """Generate human-readable recommendation message."""
         track_emojis = {
@@ -173,8 +221,8 @@ class WorkflowRecommender:
         ]
 
         if workflow_file:
-            if workflow_loaded:
-                parts.append(f"✅ Loaded: `{workflow_file}.yaml`")
+            if workflow_exists:
+                parts.append(f"✅ Recommended: `{workflow_file}.yaml` (found)")
             else:
                 parts.append(f"⚠️ Recommended: `{workflow_file}.yaml` (not found)")
 
@@ -184,6 +232,22 @@ class WorkflowRecommender:
                 parts.append(f"  • {rec}")
 
         return "\n".join(parts)
+
+    def _check_workflow_validity(self, workflow_path: Path) -> tuple[bool, str | None]:
+        """
+        Check if workflow file is valid.
+        
+        Returns:
+            Tuple of (is_valid, error_message)
+        """
+        if not workflow_path.exists():
+            return False, "File does not exist"
+        
+        try:
+            workflow = WorkflowParser.parse_file(workflow_path)
+            return True, None
+        except Exception as e:
+            return False, f"Invalid workflow file: {str(e)}"
 
     def list_available_workflows(self) -> list[dict[str, str]]:
         """

@@ -43,6 +43,8 @@ Use --instruction to specify particular refactoring goals, or let the agent iden
     refactor_improver_parser.add_argument(
         "--instruction", help="Optional specific refactoring instructions (e.g., 'extract methods', 'simplify conditionals', 'improve error handling'). If not provided, the agent will identify and apply general improvements."
     )
+    refactor_improver_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    refactor_improver_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     optimize_parser = improver_subparsers.add_parser(
         "optimize",
@@ -72,6 +74,8 @@ Use --type to specify the optimization focus.""",
         default="performance",
         help="Type of optimization to focus on: 'performance' for speed improvements (default), 'memory' for memory usage reduction, 'both' for comprehensive optimization",
     )
+    optimize_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    optimize_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     improve_quality_parser = improver_subparsers.add_parser(
         "improve-quality",
@@ -90,6 +94,8 @@ Addresses multiple quality aspects:
 This is a general quality improvement that addresses multiple concerns simultaneously.""",
     )
     improve_quality_parser.add_argument("file_path", help="Path to the source code file to improve. The file will be comprehensively analyzed and improved across multiple quality dimensions.")
+    improve_quality_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    improve_quality_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     improver_subparsers.add_parser(
         "help", aliases=["*help"], help="Show improver commands"

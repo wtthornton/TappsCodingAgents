@@ -361,30 +361,35 @@ class FeedbackManager:
                     "duration_ms": duration_ms,
                     "version": PACKAGE_VERSION,
                 }
-            print(json.dumps(output, indent=2))
+            # JSON output always goes to stdout
+            print(json.dumps(output, indent=2), file=sys.stdout)
+            sys.stdout.flush()
         else:
             # Text format
             if message and self.verbosity != VerbosityLevel.QUIET:
                 print(f"\n{message}", file=sys.stderr)
+                sys.stderr.flush()
             if warnings and self.verbosity != VerbosityLevel.QUIET:
                 for warning in warnings:
                     print(f"[WARN] {warning}", file=sys.stderr)
+                sys.stderr.flush()
             # Data goes to stdout
             if isinstance(data, dict):
                 # For text mode, format dict nicely
                 if self.verbosity == VerbosityLevel.QUIET:
                     # In quiet mode, just output minimal data
-                    print(json.dumps(data, indent=2))
+                    print(json.dumps(data, indent=2), file=sys.stdout)
                 else:
                     # Format for readability
                     for key, value in data.items():
                         if isinstance(value, (dict, list)):
-                            print(f"{key}:")
-                            print(json.dumps(value, indent=2))
+                            print(f"{key}:", file=sys.stdout)
+                            print(json.dumps(value, indent=2), file=sys.stdout)
                         else:
-                            print(f"{key}: {value}")
+                            print(f"{key}: {value}", file=sys.stdout)
             else:
-                print(data)
+                print(data, file=sys.stdout)
+            sys.stdout.flush()
     
     def start_operation(self, operation_name: str) -> None:
         """

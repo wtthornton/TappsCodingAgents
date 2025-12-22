@@ -6,6 +6,7 @@ import asyncio
 from ...agents.ops.agent import OpsAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -67,5 +68,5 @@ def handle_ops_command(args: object) -> None:
         check_result_error(result)
         feedback.output_result(result, message="Operations completed successfully")
     finally:
-        asyncio.run(ops.close())
+        safe_close_agent_sync(ops)
 

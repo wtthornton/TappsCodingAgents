@@ -373,13 +373,29 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         except Exception as e:
             return {"error": f"Failed to prepare refactoring instruction: {str(e)}"}
 
-        return {
+        # Create backup before refactoring
+        backup_path = self._create_backup(path)
+
+        # Note: Actual refactored code generation would happen here
+        # For now, return instruction structure - actual code writing
+        # would be handled by Cursor Skills or needs to be implemented
+        # with actual code generation
+        
+        result = {
             "type": "refactor",
             "file": str(path),
             "original_code": existing_code,
             "instruction": refactor_instruction.to_dict(),
             "skill_command": refactor_instruction.to_skill_command(),
+            "backup": str(backup_path) if backup_path else None,
+            "approved": True,  # Would be set based on review/approval
         }
+        
+        # TODO: Generate actual refactored code and write to file
+        # This requires implementing actual code generation in code_generator
+        # For now, the instruction is returned for Cursor Skills to execute
+        
+        return result
 
     async def _review_code(self, code: str, file_path: Path) -> dict[str, Any] | None:
         """Review generated code using ReviewerAgent."""

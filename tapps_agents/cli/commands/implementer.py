@@ -80,9 +80,11 @@ async def generate_code_command(
 
 
 async def refactor_command(
-    file_path: str, instruction: str, output_format: str = "json"
+    file_path: str, instruction: str, output_format: str = "json", output_file: str | None = None
 ):
     """Refactor existing code file"""
+    from ..utils.output_handler import write_output
+    
     implementer = ImplementerAgent()
     try:
         await implementer.activate()
@@ -92,13 +94,15 @@ async def refactor_command(
 
         check_result_error(result)
 
-        if output_format == "json":
-            format_json_output(result)
+        # Use output handler utility for consistent output
+        if output_file or output_format != "json":
+            write_output(result, output_file=output_file, format_type=output_format, default_format="json")
         else:
-            print(f"Refactored: {result['file']}")
-            print(f"Approved: {result['approved']}")
-            if result.get("backup"):
-                print(f"Backup created: {result['backup']}")
+            format_json_output(result)
+            
+        # Note: Actual file writing with refactored code would happen here
+        # Currently, refactor returns instructions, not actual refactored code
+        # File writing would need actual code generation to be implemented
     finally:
         await implementer.close()
 
@@ -135,6 +139,7 @@ def handle_implementer_command(args: object) -> None:
                     args.file_path,
                     args.instruction,
                     output_format=getattr(args, "format", "json"),
+                    output_file=getattr(args, "output", None),
                 )
             )
         elif command == "help" or command is None:
@@ -146,8 +151,6 @@ def handle_implementer_command(args: object) -> None:
             result = asyncio.run(implementer.run("help"))
             print(result["content"])
     finally:
-        try:
-            asyncio.run(implementer.close())
-        except Exception:
-            pass
+        from ..utils.agent_lifecycle import safe_close_agent_sync
+        safe_close_agent_sync(implementer)
 

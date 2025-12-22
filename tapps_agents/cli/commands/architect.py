@@ -6,6 +6,7 @@ import asyncio
 from ...agents.architect.agent import ArchitectAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -24,7 +25,7 @@ def handle_architect_command(args: object) -> None:
                     "design-system",
                     requirements=args.requirements,
                     context=getattr(args, "context", ""),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "architecture-diagram":
@@ -33,7 +34,7 @@ def handle_architect_command(args: object) -> None:
                     "create-diagram",
                     architecture_description=args.architecture_description,
                     diagram_type=getattr(args, "diagram_type", "component"),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "tech-selection":
@@ -73,5 +74,5 @@ def handle_architect_command(args: object) -> None:
         check_result_error(result)
         feedback.output_result(result, message="Architecture design completed successfully")
     finally:
-        asyncio.run(architect.close())
+        safe_close_agent_sync(architect)
 

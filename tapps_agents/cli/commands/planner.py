@@ -121,8 +121,6 @@ def handle_planner_command(args: object) -> None:
             result = asyncio.run(planner.run("help"))
             print(result["content"])
     finally:
-        try:
-            asyncio.run(planner.close())
-        except Exception:
-            pass
+        from ..utils.agent_lifecycle import safe_close_agent_sync
+        safe_close_agent_sync(planner)
 

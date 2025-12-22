@@ -51,6 +51,8 @@ Example:
         action="store_true",
         help="Generate integration tests in addition to unit tests. Integration tests verify component interactions and end-to-end functionality.",
     )
+    test_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    test_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     generate_tests_parser = tester_subparsers.add_parser(
         "generate-tests",
@@ -73,6 +75,8 @@ Example:
     generate_tests_parser.add_argument(
         "--integration", action="store_true", help="Generate integration tests in addition to unit tests. Integration tests verify component interactions and system behavior."
     )
+    generate_tests_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    generate_tests_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     run_tests_parser = tester_subparsers.add_parser(
         "run-tests",
@@ -94,6 +98,8 @@ Example:
     run_tests_parser.add_argument(
         "--no-coverage", action="store_true", help="Skip test coverage analysis. By default, generates coverage reports showing which code is tested. Use this flag to run tests faster without coverage."
     )
+    run_tests_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    run_tests_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     tester_subparsers.add_parser("help", aliases=["*help"], help="Show tester commands")
 

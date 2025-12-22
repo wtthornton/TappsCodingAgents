@@ -6,6 +6,7 @@ import asyncio
 from ...agents.documenter.agent import DocumenterAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -24,7 +25,7 @@ def handle_documenter_command(args: object) -> None:
                     "document",
                     file=args.file,
                     output_format=getattr(args, "output_format", "markdown"),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
         elif command == "generate-docs":
@@ -64,5 +65,5 @@ def handle_documenter_command(args: object) -> None:
         check_result_error(result)
         feedback.output_result(result, message="Documentation completed successfully")
     finally:
-        asyncio.run(documenter.close())
+        safe_close_agent_sync(documenter)
 

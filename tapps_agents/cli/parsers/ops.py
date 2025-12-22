@@ -126,8 +126,9 @@ Use this to bootstrap infrastructure setup for your project.""",
         default="high",
         help="Minimum vulnerability severity to report: 'low' for all vulnerabilities, 'medium' for medium and above, 'high' for high and critical (default), 'critical' for critical only",
     )
+    audit_dependencies_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     audit_dependencies_parser.add_argument(
-        "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured vulnerability data (default), 'text' for human-readable report"
+        "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured vulnerability data (default), 'text' for human-readable report, 'markdown' for markdown format"
     )
 
     ops_subparsers.add_parser("help", aliases=["*help"], help="Show ops commands")

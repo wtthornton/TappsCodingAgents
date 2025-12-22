@@ -47,7 +47,7 @@ Example:
     document_parser.add_argument(
         "--output-format", default="markdown", help="Output format for documentation: 'markdown' for Markdown format (default), 'rst' for reStructuredText, 'html' for HTML documentation"
     )
-    document_parser.add_argument("--output-file", help="Path to output file where documentation will be saved. If not provided, documentation is printed to stdout. File extension should match output format.")
+    document_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
 
     generate_docs_parser = documenter_subparsers.add_parser(
         "generate-docs", 
@@ -66,6 +66,7 @@ Creates documentation including:
 Use this to generate API documentation for REST APIs, GraphQL schemas, or function APIs.""",
     )
     generate_docs_parser.add_argument("file", help="Path to the source code file containing API definitions (e.g., FastAPI routes, Flask endpoints, function definitions)")
+    generate_docs_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     generate_docs_parser.add_argument(
         "--output-format", default="markdown", help="Output format for API documentation: 'markdown' for Markdown (default), 'rst' for reStructuredText, 'html' for HTML, 'openapi' for OpenAPI/Swagger YAML"
     )

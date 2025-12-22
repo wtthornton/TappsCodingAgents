@@ -770,9 +770,6 @@ def handle_reviewer_command(args: object) -> None:
         else:
             asyncio.run(help_command())
     finally:
-        if reviewer:
-            try:
-                asyncio.run(reviewer.close())
-            except Exception:
-                pass
+        from ..utils.agent_lifecycle import safe_close_agent_sync
+        safe_close_agent_sync(reviewer)
 

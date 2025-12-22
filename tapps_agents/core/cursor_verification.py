@@ -138,7 +138,8 @@ def _verify_rules(rules_dir: Path) -> dict:
             "quick-reference.mdc",
             "agent-capabilities.mdc",
             "project-context.mdc",
-            "project-profiling.mdc"
+            "project-profiling.mdc",
+            "simple-mode.mdc"
         ]
     }
     

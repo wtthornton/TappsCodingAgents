@@ -7,6 +7,7 @@ import json
 from ...agents.orchestrator.agent import OrchestratorAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -69,12 +70,5 @@ def handle_orchestrator_command(args: object) -> None:
         else:
             feedback.output_result(result)
     finally:
-        if orchestrator:
-            try:
-                # Close agent if it has a close method
-                if hasattr(orchestrator, 'close'):
-                    asyncio.run(orchestrator.close())
-            except Exception:
-                # Ignore errors during cleanup
-                pass
+        safe_close_agent_sync(orchestrator)
 

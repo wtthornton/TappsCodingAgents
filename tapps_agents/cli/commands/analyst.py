@@ -6,6 +6,7 @@ import asyncio
 from ...agents.analyst.agent import AnalystAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
 
@@ -26,7 +27,7 @@ def handle_analyst_command(args: object) -> None:
                     "gather-requirements",
                     description=args.description,
                     context=getattr(args, "context", ""),
-                    output_file=getattr(args, "output_file", None),
+                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
             feedback.clear_progress()
@@ -85,5 +86,5 @@ def handle_analyst_command(args: object) -> None:
         check_result_error(result)
         feedback.output_result(result, message="Analysis completed successfully")
     finally:
-        asyncio.run(analyst.close())
+        safe_close_agent_sync(analyst)
 
