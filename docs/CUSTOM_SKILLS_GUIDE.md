@@ -219,6 +219,42 @@ You are a security expert focused on identifying and preventing security vulnera
 
 ## Best Practices
 
+### Skill reliability checklist (recommended)
+
+These checks help Skills stay **predictable**, **easy to invoke**, and **maintainable** over time.
+
+- **Clear “when to use” description**
+  - Your `description` should explicitly say *when* to use the skill (not just what it is).
+  - Prefer: “Use when the user asks to audit dependencies for vulnerabilities”
+  - Avoid: “Handles dependencies”
+- **Avoid overlapping intent**
+  - If two skills could both match the same request, narrow one skill’s `description` and command set.
+- **Add example prompts**
+  - Include 2–5 example prompts that should trigger/use the skill so humans can test it quickly in Cursor.
+- **Keep it small**
+  - Prefer narrow skills that compose well over one “mega-skill”.
+- **Prefer instructions over scripts**
+  - Use scripts only when you need determinism, heavy processing, or non-LLM data transforms.
+
+### Recommended skill bundle layout
+
+When a skill grows beyond a single file, keep it organized with a consistent structure:
+
+- **`SKILL.md`**: required (frontmatter + instructions)
+- **`references/`**: optional (checklists, policies, examples)
+- **`assets/`**: optional (templates, report skeletons, snippets)
+- **`scripts/`**: optional (deterministic helpers; use only when needed)
+
+This keeps the top-level skill instructions readable while letting you ship supporting material alongside the skill.
+
+### Progressive disclosure (keep context lean)
+
+Write Skills so the “top of the file” is enough for most users:
+
+- Put the essentials first: purpose, commands, and 1–2 examples
+- Put deep details later (edge cases, large tables, long examples)
+- Link out to docs in `docs/` if the content is better maintained centrally
+
 ### 1. Follow Standard Format
 
 - Use YAML frontmatter with required fields

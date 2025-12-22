@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapps-agents"
-version = "2.1.0"
+version = "2.1.1"
 description = "A specification framework for defining, configuring, and orchestrating coding agents"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -108,7 +108,7 @@ exclude = '''
 
 [tool.ruff]
 line-length = 88
-target-version = "2.0.8"
+target-version = "2.1.1"
 fix = false
 show-fixes = true
 exclude = [
@@ -141,7 +141,7 @@ ignore = [
 ]
 
 [tool.mypy]
-python_version = "2.0.8"
+python_version = "2.1.1"
 pretty = true
 show_error_codes = true
 show_column_numbers = true

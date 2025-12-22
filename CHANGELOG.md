@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.1] - 2025-12-22
+
+### Documentation
+- **Cursor Rules**: Added rule layering/scoping guidance (how to use `globs` vs `alwaysApply`) in `docs/CURSOR_RULES_SETUP.md`.
+- **Custom Skills**: Added a skill reliability checklist, recommended skill bundle layout, and progressive disclosure guidance in `docs/CUSTOM_SKILLS_GUIDE.md`.
+- **Workflow artifacts**: Added Simple Mode-style implementation plan artifacts under `docs/workflows/simple-mode/` for traceability.
+
 ## [2.1.0] - 2026-01-22
 
 ### Added

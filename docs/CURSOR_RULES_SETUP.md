@@ -85,6 +85,37 @@ tapps-agents generate-rules --overwrite
 
 This ensures documentation stays aligned with workflow definitions.
 
+## Rule layering & scoping (recommended pattern)
+
+Cursor Rules work best when you treat them like **layers**:
+
+- **Global / always-on rules** (small, stable):
+  - Use `alwaysApply: true` sparingly for rules that should *always* be present (for example: project context and Simple Mode workflow enforcement).
+- **Scoped rules** (the default):
+  - Use `globs` to target specific areas of the repo (a service, package, language folder, etc.).
+  - Prefer creating multiple small `.mdc` files over one monolithic “do everything” rule.
+
+### Example: folder-scoped rule
+
+```md
+---
+description: Payments service rules (scoped)
+globs: ["services/payments/**"]
+alwaysApply: false
+---
+
+# Payments Service Rules
+
+- Run `make test-payments` for changes under `services/payments/`.
+- Avoid touching shared auth code without a reviewer sign-off.
+```
+
+### Common mistakes to avoid
+
+- **Overusing `alwaysApply: true`**: giant always-on rules increase noise and reduce compliance.
+- **Mixing unrelated scopes**: keep “frontend rules” and “backend rules” in separate files with different `globs`.
+- **Duplicating the source of truth**: if something is auto-generated (like `workflow-presets.mdc`), document *how to regenerate it* rather than rewriting it manually.
+
 ### Workflow Presets
 
 **Location:** `workflows/presets/`
