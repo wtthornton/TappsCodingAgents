@@ -11,6 +11,7 @@ from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 from ..ops.dependency_analyzer import DependencyAnalyzer
+from ...core.language_detector import Language
 from .aggregator import QualityAggregator
 from .progressive_review import (
     ProgressiveReview,
@@ -346,30 +347,35 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         result: dict[str, Any] = {"file": str(file_path), "review": {}}
 
-        # Detect file type
-        file_type = self._detect_file_type(file_path)
+        # Detect file type using LanguageDetector
+        from ...core.language_detector import LanguageDetector
+
+        detector = LanguageDetector(project_root=self._project_root)
+        detection_result = detector.detect_language(file_path, code)
+        file_type = detection_result.language.value
         result["file_type"] = file_type
+        result["language_detection"] = {
+            "language": file_type,
+            "confidence": detection_result.confidence,
+            "method": detection_result.method,
+        }
 
         # Calculate scores based on file type
         if include_scoring:
-            if file_type == "yaml":
+            from ...core.language_detector import Language
+            from .scoring import ScorerFactory
+
+            language = detection_result.language
+            if language == Language.YAML:
                 scores = self._score_yaml_file(file_path, code)
-            elif file_type == "typescript":
-                # Use TypeScript scorer if available
-                if hasattr(self, 'typescript_scorer'):
-                    scores = self.typescript_scorer.score_file(file_path, code)
-                else:
-                    # Fallback to generic scoring
-                    scores = self._score_generic_file(file_path, code, file_type)
-            elif file_type == "python":
-                scores = self.scorer.score_file(file_path, code)
             else:
-                # Generic scoring for other file types
-                scores = self._score_generic_file(file_path, code, file_type)
+                # Use ScorerFactory to get appropriate scorer for the language
+                scorer = ScorerFactory.get_scorer(language, self.config)
+                scores = scorer.score_file(file_path, code)
 
             # Enhance security score with dependency health (Phase 6.4.3)
             # Only apply to Python files
-            if file_type == "python":
+            if language == Language.PYTHON:
                 dependency_security = self._get_dependency_security_penalty()
                 # Blend dependency security into security score (70% code security, 30% dependency security)
                 original_security = scores.get("security_score", 5.0)
@@ -434,11 +440,85 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             model_name = "reviewer-agent"
             feedback = await self._generate_feedback(
                 code,
+                language,  # Pass detected language for language-aware prompts
                 scores if include_scoring else None,
                 model_name,
                 expert_guidance=expert_guidance,
             )
             result["feedback"] = feedback
+
+        # Quality gate evaluation (Phase 2.2: Quality Gates Integration)
+        # Note: Quality gate checks use tool operations (coverage analysis) which are Cursor-first compatible.
+        # LLM feedback generation already uses GenericInstruction with to_skill_command() for Cursor Skills.
+        quality_gate_result = None
+        if include_scoring and self.config:
+            from ...quality.quality_gates import QualityGate, QualityThresholds
+
+            scoring_config = self.config.scoring
+            quality_gates_config = scoring_config.quality_gates if scoring_config else None
+
+            # Check if quality gates are enabled
+            if quality_gates_config and quality_gates_config.enabled:
+                # Create quality gate with thresholds from config
+                thresholds = QualityThresholds(
+                    overall_min=8.0,  # Default, can be overridden from config
+                    security_min=8.5,  # Default, can be overridden from config
+                    test_coverage_min=(
+                        quality_gates_config.test_coverage.threshold * 100.0
+                        if quality_gates_config.test_coverage.enabled
+                        else 80.0
+                    ),
+                )
+
+                quality_gate = QualityGate(thresholds=thresholds)
+                quality_gate_result = quality_gate.evaluate(scores)
+
+                # Block review approval if quality gate fails
+                if not quality_gate_result.passed:
+                    result["quality_gate"] = quality_gate_result.to_dict()
+                    result["quality_gate_blocked"] = True
+
+                # Optionally check coverage using CoverageAnalyzer if enabled
+                if quality_gates_config.test_coverage.enabled:
+                    try:
+                        # Determine project root from file path (go up to find project root markers)
+                        project_root = None
+                        current_dir = file_path.parent
+                        # Look for common project root indicators
+                        for _ in range(5):  # Limit search depth
+                            if any(
+                                (current_dir / marker).exists()
+                                for marker in [".git", "pyproject.toml", "package.json", "tsconfig.json"]
+                            ):
+                                project_root = current_dir
+                                break
+                            if current_dir == current_dir.parent:  # Reached filesystem root
+                                break
+                            current_dir = current_dir.parent
+                        
+                        coverage_result = await quality_gate.check_coverage(
+                            file_path=file_path,
+                            language=language,
+                            threshold=quality_gates_config.test_coverage.threshold,
+                            project_root=project_root or file_path.parent,
+                        )
+                        # Merge coverage-specific results
+                        if coverage_result:
+                            result["coverage_gate"] = {
+                                "coverage_percentage": coverage_result.scores.get("coverage_percentage", 0.0),
+                                "coverage_passed": coverage_result.test_coverage_passed,
+                                "coverage_threshold": quality_gates_config.test_coverage.threshold * 100.0,
+                            }
+                            # Block if coverage gate fails
+                            if not coverage_result.test_coverage_passed:
+                                result["quality_gate_blocked"] = True
+                    except Exception as e:
+                        # Log error but don't block review if coverage check fails
+                        logger.debug(f"Coverage check failed: {e}", exc_info=True)
+
+                # Store quality gate result
+                if quality_gate_result:
+                    result["quality_gate"] = quality_gate_result.to_dict()
 
         # Determine pass/fail using configured threshold
         if include_scoring:
@@ -446,69 +526,36 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             threshold = reviewer_config.quality_threshold if reviewer_config else 70.0
             result["passed"] = scores["overall_score"] >= threshold
             result["threshold"] = threshold
+            
+            # Quality gate can override passed status
+            if quality_gate_result and not quality_gate_result.passed:
+                result["passed"] = False
 
         return result
 
     async def _generate_feedback(
         self,
         code: str,
+        language: Language,
         scores: dict[str, Any] | None,
         model: str,
         expert_guidance: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        """Generate LLM feedback on code"""
+        """
+        Generate LLM feedback on code using language-aware prompts.
+        
+        Phase 1.3: LLM Feedback Generation Fix
+        """
+        from .feedback_generator import FeedbackGenerator
 
-        # Build prompt
-        prompt_parts = [
-            "Review this code and provide feedback:",
-            "",
-            "Code:",
-            "```python",
-            code[:2000],  # Limit to first 2000 chars
-            "```",
-        ]
-
-        # Add expert guidance if available
-        if expert_guidance:
-            prompt_parts.append("\nExpert Guidance:")
-            if "security" in expert_guidance:
-                prompt_parts.append(
-                    f"\nSecurity Expert:\n{expert_guidance['security'][:500]}..."
-                )
-            if "performance" in expert_guidance:
-                prompt_parts.append(
-                    f"\nPerformance Expert:\n{expert_guidance['performance'][:300]}..."
-                )
-            if "code_quality" in expert_guidance:
-                prompt_parts.append(
-                    f"\nCode Quality Expert:\n{expert_guidance['code_quality'][:300]}..."
-                )
-            prompt_parts.append("")
-
-        if scores:
-            prompt_parts.extend(
-                [
-                    "",
-                    "Code Scores:",
-                    f"- Complexity: {scores['complexity_score']:.1f}/10",
-                    f"- Security: {scores['security_score']:.1f}/10",
-                    f"- Maintainability: {scores['maintainability_score']:.1f}/10",
-                    f"- Overall: {scores['overall_score']:.1f}/100",
-                ]
-            )
-
-        prompt_parts.extend(
-            [
-                "",
-                "Provide:",
-                "1. What the code does",
-                "2. Potential issues or improvements",
-                "3. Security concerns (if any)",
-                "4. Style/best practices",
-            ]
+        # Generate language-aware prompt using FeedbackGenerator
+        prompt = FeedbackGenerator.generate_prompt(
+            code=code,
+            language=language,
+            scores=scores,
+            expert_guidance=expert_guidance,
+            code_preview_limit=2000,
         )
-
-        prompt = "\n".join(prompt_parts)
 
         # Prepare instruction for Cursor Skills
         instruction = GenericInstruction(

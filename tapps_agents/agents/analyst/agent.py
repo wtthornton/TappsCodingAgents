@@ -387,3 +387,9 @@ Format as structured JSON."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
         }
+
+    async def close(self) -> None:
+        """Cleanup resources."""
+        await super().close()
+        # Context7 helper cleanup if needed
+        # (Context7AgentHelper doesn't currently require explicit cleanup)

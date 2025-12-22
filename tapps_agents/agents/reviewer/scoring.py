@@ -4,13 +4,17 @@ Code Scoring System - Calculates objective quality metrics
 
 import ast
 import json as json_lib
+import logging
 import shutil
 import subprocess  # nosec B404 - used with fixed args, no shell
 import sys
 from pathlib import Path
 from typing import Any, Protocol
 
-from ...core.config import ScoringWeightsConfig
+logger = logging.getLogger(__name__)
+
+from ...core.config import ProjectConfig, ScoringWeightsConfig
+from ...core.language_detector import Language
 from ...core.subprocess_utils import wrap_windows_cmd_shim
 
 # Import analysis libraries
@@ -90,8 +94,29 @@ except ImportError:
     HAS_COVERAGE = False
 
 
-class CodeScorer:
-    """Calculate code quality scores"""
+class BaseScorer:
+    """
+    Base class for all scorers.
+    
+    Defines the interface that all language-specific scorers must implement.
+    """
+    
+    def score_file(self, file_path: Path, code: str) -> dict[str, Any]:
+        """
+        Score a file and return quality metrics.
+        
+        Args:
+            file_path: Path to the file
+            code: File content
+            
+        Returns:
+            Dictionary with scores and metrics
+        """
+        raise NotImplementedError("Subclasses must implement score_file")
+
+
+class CodeScorer(BaseScorer):
+    """Calculate code quality scores for Python files"""
 
     def __init__(
         self,
@@ -155,7 +180,14 @@ class CodeScorer:
         metrics["test_coverage"] = float(scores["test_coverage_score"])
 
         # Performance Score (0-10, higher is better)
-        scores["performance_score"] = self._calculate_performance(code)
+        # Phase 3.2: Use context-aware performance scorer
+        from .performance_scorer import PerformanceScorer
+        from ...core.language_detector import Language
+
+        performance_scorer = PerformanceScorer()
+        scores["performance_score"] = performance_scorer.calculate(
+            code, Language.PYTHON, file_path, context=None
+        )
         metrics["performance"] = float(scores["performance_score"])
 
         # Linting Score (0-10, higher is better) - Phase 6.1
@@ -201,7 +233,34 @@ class CodeScorer:
             + scores["performance_score"] * w.performance
         ) * 10  # Scale from 0-10 weighted sum to 0-100
 
-        return scores
+        # Phase 3.3: Validate all scores before returning
+        from .score_validator import ScoreValidator
+        from ...core.language_detector import Language
+
+        validator = ScoreValidator()
+        validation_results = validator.validate_all_scores(
+            scores, language=Language.PYTHON, context=None
+        )
+
+        # Update scores with validated/clamped values and add explanations
+        validated_scores = {}
+        score_explanations = {}
+        for category, result in validation_results.items():
+            if result.valid and result.calibrated_score is not None:
+                validated_scores[category] = result.calibrated_score
+                if result.explanation:
+                    score_explanations[category] = {
+                        "explanation": result.explanation,
+                        "suggestions": result.suggestions,
+                    }
+            else:
+                validated_scores[category] = scores.get(category, 0.0)
+
+        # Add explanations to result if any
+        if score_explanations:
+            validated_scores["_explanations"] = score_explanations
+
+        return validated_scores if validated_scores else scores
 
     def _calculate_complexity(self, code: str) -> float:
         """Calculate cyclomatic complexity (0-10 scale)"""
@@ -263,39 +322,27 @@ class CodeScorer:
             # Score: 10 - (high*3 + medium*1)
             score = 10.0 - (high_severity * 3.0 + medium_severity * 1.0)
             return max(0.0, score)
-        except (FileNotFoundError, PermissionError, ValueError):
+        except (FileNotFoundError, PermissionError, ValueError) as e:
             # Specific exceptions for file/system errors
+            logger.warning(f"Security scoring failed for {file_path}: {e}")
             return 5.0  # Default neutral on error
-        except Exception:
+        except Exception as e:
             # Catch-all for unexpected errors (should be rare)
+            logger.warning(f"Unexpected error during security scoring for {file_path}: {e}", exc_info=True)
             return 5.0  # Default neutral on error
 
     def _calculate_maintainability(self, code: str) -> float:
-        """Calculate maintainability index (0-10 scale, higher is better)"""
-        if not self.has_radon:
-            # Basic heuristic: code length and structure
-            lines = code.split("\n")
+        """
+        Calculate maintainability index (0-10 scale, higher is better).
+        
+        Phase 3.1: Enhanced with context-aware scoring using MaintainabilityScorer.
+        """
+        from .maintainability_scorer import MaintainabilityScorer
+        from ...core.language_detector import Language
 
-            # Penalize very long lines
-            long_lines = sum(1 for line in lines if len(line) > 100)
-            score = 10.0 - (long_lines * 0.5)
-            return max(0.0, score)
-
-        try:
-            # mi_visit expects (code_string, lines_list), not (tree, lines)
-            # Parse to check for syntax errors first
-            ast.parse(code)
-            lines = code.splitlines()
-            mi_score = mi_visit(code, lines)
-
-            # Maintainability Index: 0-100 scale, convert to 0-10
-            # MI > 80 = good (10), MI < 20 = bad (0)
-            return min(mi_score / 10.0, 10.0)
-        except SyntaxError:
-            return 0.0
-        except Exception:
-            # Fallback on any other error
-            return 5.0
+        # Use context-aware maintainability scorer
+        scorer = MaintainabilityScorer()
+        return scorer.calculate(code, Language.PYTHON, file_path=None, context=None)
 
     def _calculate_test_coverage(self, file_path: Path) -> float:
         """
@@ -1115,3 +1162,48 @@ class CodeScorer:
                 "duplicates": [],
                 "files": [],
             }
+
+
+class ScorerFactory:
+    """
+    Factory to provide appropriate scorer based on language (Strategy Pattern).
+    
+    Phase 1.2: Language-Specific Scorers
+    
+    Now uses ScorerRegistry for extensible language support.
+    """
+
+    @staticmethod
+    def get_scorer(language: Language, config: ProjectConfig | None = None) -> BaseScorer:
+        """
+        Get the appropriate scorer for a given language.
+        
+        Uses ScorerRegistry for extensible language support with fallback chains.
+        
+        Args:
+            language: Detected language enum
+            config: Optional project configuration
+            
+        Returns:
+            BaseScorer instance appropriate for the language
+            
+        Raises:
+            ValueError: If no scorer is available for the language (even with fallbacks)
+        """
+        from .scorer_registry import ScorerRegistry
+        
+        try:
+            return ScorerRegistry.get_scorer(language, config)
+        except ValueError:
+            # If no scorer found, fall back to Python scorer as last resort
+            # This maintains backward compatibility but may not work well for non-Python code
+            # TODO: In the future, create a GenericScorer that uses metric strategies
+            if language != Language.PYTHON:
+                # Try Python scorer as absolute last resort
+                try:
+                    return ScorerRegistry.get_scorer(Language.PYTHON, config)
+                except ValueError:
+                    pass
+            
+            # If even Python scorer isn't available, raise the original error
+            raise

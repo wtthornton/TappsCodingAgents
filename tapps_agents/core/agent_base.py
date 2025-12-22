@@ -371,6 +371,29 @@ class BaseAgent(ABC):
 
         return self._unified_cache
 
+    async def close(self) -> None:
+        """
+        Cleanup resources. Override in subclasses if needed.
+        
+        This default implementation provides a no-op cleanup. Subclasses should
+        override this method to clean up specific resources like:
+        - Database connections
+        - File handles
+        - Network connections
+        - Cache instances
+        - Background tasks
+        
+        Examples:
+            async def close(self) -> None:
+                await super().close()  # Call parent cleanup
+                if self.dependency_analyzer:
+                    await self.dependency_analyzer.close()
+                if self.cache:
+                    self.cache.clear()
+        """
+        # Default implementation - override in subclasses for specific cleanup
+        pass
+
     def handle_optional_dependency_error(
         self,
         error: Exception,

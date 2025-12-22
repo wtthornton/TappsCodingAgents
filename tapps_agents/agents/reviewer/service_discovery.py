@@ -2,11 +2,62 @@
 Service Discovery - Auto-detect services in project structure
 
 Phase 6.4.2: Multi-Service Analysis
+Phase 4.1: Enhanced with prioritization, dependency analysis, and language grouping
 """
 
+from __future__ import annotations
+
+import json
+import logging
 import re
+from dataclasses import dataclass, field
+from enum import Enum
 from pathlib import Path
 from typing import Any
+
+from ...core.language_detector import Language, LanguageDetector
+
+logger = logging.getLogger(__name__)
+
+
+class Priority(str, Enum):
+    """Service priority levels for phased review."""
+
+    CRITICAL = "critical"
+    HIGH = "high"
+    MEDIUM = "medium"
+    LOW = "low"
+
+
+@dataclass
+class Service:
+    """
+    Service model with enhanced metadata.
+
+    Phase 4.1: Service Discovery Enhancement
+    """
+
+    name: str
+    path: Path
+    relative_path: str
+    language: Language = Language.UNKNOWN
+    priority: Priority = Priority.MEDIUM
+    dependencies: list[str] = field(default_factory=list)
+    file_count: int = 0
+    pattern: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert Service to dictionary."""
+        return {
+            "name": self.name,
+            "path": str(self.path),
+            "relative_path": self.relative_path,
+            "language": self.language.value,
+            "priority": self.priority.value,  # Convert enum to string
+            "dependencies": self.dependencies,
+            "file_count": self.file_count,
+            "pattern": self.pattern,
+        }
 
 
 class ServiceDiscovery:
@@ -61,6 +112,246 @@ class ServiceDiscovery:
                 "build",
             ]
         self.exclude_patterns = exclude_patterns
+        self.language_detector = LanguageDetector()
+
+    def discover_services_enhanced(self) -> list[Service]:
+        """
+        Discover all services with enhanced metadata.
+
+        Phase 4.1: Enhanced service discovery with language detection, priority, and dependencies.
+
+        Returns:
+            List of Service objects with language, priority, and dependencies
+        """
+        # Get basic service discovery
+        basic_services = self.discover_services()
+
+        # Convert to Service objects with enhanced metadata
+        services = []
+        for service_dict in basic_services:
+            service_path = Path(service_dict["path"])
+
+            # Detect language
+            language = self._detect_service_language(service_path)
+
+            # Count files
+            file_count = self._count_service_files(service_path)
+
+            # Detect dependencies
+            dependencies = self._detect_dependencies(service_path)
+
+            # Determine priority
+            priority = self._determine_priority(
+                service_dict["name"], dependencies, file_count
+            )
+
+            service = Service(
+                name=service_dict["name"],
+                path=service_path,
+                relative_path=service_dict["relative_path"],
+                language=language,
+                priority=priority,
+                dependencies=dependencies,
+                file_count=file_count,
+                pattern=service_dict.get("pattern", ""),
+            )
+            services.append(service)
+
+        return services
+
+    def _detect_service_language(self, service_path: Path) -> Language:
+        """Detect the primary language of a service."""
+        # Try to detect from common config files
+        if (service_path / "package.json").exists():
+            try:
+                with (service_path / "package.json").open(encoding="utf-8") as f:
+                    package_data = json.load(f)
+                    if package_data.get("dependencies", {}).get("react"):
+                        return Language.REACT
+                    return Language.TYPESCRIPT
+            except (json.JSONDecodeError, Exception) as e:
+                logger.debug(f"Failed to parse package.json for language detection in {service_path.name}: {e}")
+
+        if (service_path / "requirements.txt").exists() or (
+            service_path / "pyproject.toml"
+        ).exists():
+            return Language.PYTHON
+
+        # Detect from file extensions in service directory
+        code_files = []
+        for ext in [".py", ".ts", ".tsx", ".js", ".jsx"]:
+            code_files.extend(list(service_path.rglob(f"*{ext}"))[:10])
+
+        if not code_files:
+            return Language.UNKNOWN
+
+        # Use LanguageDetector on a sample file
+        sample_file = code_files[0]
+        result = self.language_detector.detect_language(sample_file)
+        return result.language
+
+    def _count_service_files(self, service_path: Path) -> int:
+        """Count code files in service directory."""
+        count = 0
+        code_extensions = [".py", ".ts", ".tsx", ".js", ".jsx"]
+        for ext in code_extensions:
+            count += len(list(service_path.rglob(f"*{ext}")))
+        return count
+
+    def _detect_dependencies(self, service_path: Path) -> list[str]:
+        """
+        Detect service dependencies from config files.
+
+        Phase 4.1: Dependency Analysis
+        """
+        dependencies = []
+
+        # Check package.json (Node.js/TypeScript/React)
+        package_json = service_path / "package.json"
+        if package_json.exists():
+            try:
+                with package_json.open(encoding="utf-8") as f:
+                    package_data = json.load(f)
+                    # Get both dependencies and devDependencies
+                    deps = package_data.get("dependencies", {})
+                    deps.update(package_data.get("devDependencies", {}))
+                    dependencies.extend(list(deps.keys()))
+            except (json.JSONDecodeError, Exception):
+                pass
+
+        # Check requirements.txt (Python)
+        requirements_txt = service_path / "requirements.txt"
+        if requirements_txt.exists():
+            try:
+                with requirements_txt.open(encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#"):
+                            # Extract package name (before ==, >=, etc.)
+                            package_name = line.split("==")[0].split(">=")[0].split("<=")[0].strip()
+                            if package_name:
+                                dependencies.append(package_name)
+            except Exception as e:
+                logger.debug(f"Failed to parse requirements.txt for service {service_path.name}: {e}")
+
+        # Check pyproject.toml (Python)
+        pyproject_toml = service_path / "pyproject.toml"
+        if pyproject_toml.exists():
+            try:
+                import tomllib  # Python 3.11+
+
+                with pyproject_toml.open("rb") as f:
+                    pyproject_data = tomllib.load(f)
+                    project_deps = pyproject_data.get("project", {}).get(
+                        "dependencies", []
+                    )
+                    for dep in project_deps:
+                        # Extract package name (before version specifiers)
+                        package_name = dep.split("==")[0].split(">=")[0].split("<=")[0].strip()
+                        if package_name:
+                            dependencies.append(package_name)
+            except ImportError:
+                # Fallback for Python < 3.11 (could use tomli)
+                pass
+            except Exception as e:
+                logger.debug(f"Failed to parse requirements.txt for service {service_path.name}: {e}")
+
+        return sorted(set(dependencies))
+
+    def _determine_priority(
+        self, service_name: str, dependencies: list[str], file_count: int
+    ) -> Priority:
+        """
+        Determine service priority based on name patterns, dependencies, and file count.
+
+        Phase 4.1: Prioritization Logic
+        """
+        service_name_lower = service_name.lower()
+
+        # Critical priority patterns
+        critical_patterns = [
+            "auth",
+            "security",
+            "api",
+            "gateway",
+            "core",
+            "base",
+            "common",
+        ]
+        if any(pattern in service_name_lower for pattern in critical_patterns):
+            return Priority.CRITICAL
+
+        # High priority: many dependencies or high file count
+        if len(dependencies) > 20 or file_count > 100:
+            return Priority.HIGH
+
+        # High priority patterns
+        high_patterns = ["service", "server", "backend", "frontend", "client"]
+        if any(pattern in service_name_lower for pattern in high_patterns):
+            return Priority.HIGH
+
+        # Low priority: minimal dependencies and low file count
+        if len(dependencies) < 3 and file_count < 10:
+            return Priority.LOW
+
+        # Default to medium
+        return Priority.MEDIUM
+
+    def prioritize_services(self, services: list[Service]) -> list[Service]:
+        """
+        Prioritize services: critical → high → medium → low.
+
+        Phase 4.1: Service Prioritization
+        """
+        priority_order = {
+            Priority.CRITICAL: 0,
+            Priority.HIGH: 1,
+            Priority.MEDIUM: 2,
+            Priority.LOW: 3,
+        }
+
+        def priority_key(service: Service) -> tuple[int, str]:
+            return (priority_order.get(service.priority, 99), service.name)
+
+        return sorted(services, key=priority_key)
+
+    def group_by_language(self, services: list[Service]) -> dict[Language, list[Service]]:
+        """
+        Group services by detected primary language.
+
+        Phase 4.1: Language Grouping
+        """
+        grouped: dict[Language, list[Service]] = {}
+        for service in services:
+            if service.language not in grouped:
+                grouped[service.language] = []
+            grouped[service.language].append(service)
+        return grouped
+
+    def discover_services_with_priority(
+        self, prioritize: bool = True, group_by_language: bool = False
+    ) -> list[Service] | dict[Language, list[Service]]:
+        """
+        Discover services with prioritization and optional language grouping.
+
+        Phase 4.1: Enhanced Service Discovery
+
+        Args:
+            prioritize: Whether to prioritize services (critical → high → medium → low)
+            group_by_language: Whether to group services by language
+
+        Returns:
+            List of prioritized Service objects, or dict grouped by language
+        """
+        services = self.discover_services_enhanced()
+
+        if prioritize:
+            services = self.prioritize_services(services)
+
+        if group_by_language:
+            return self.group_by_language(services)
+
+        return services
 
     def discover_services(self) -> list[dict[str, Any]]:
         """

@@ -45,12 +45,45 @@ class ScoringWeightsConfig(BaseModel):
         return self
 
 
+class TestCoverageConfig(BaseModel):
+    """Test coverage configuration for quality gates."""
+
+    enabled: bool = Field(default=True, description="Enable test coverage checks")
+    threshold: float = Field(
+        default=0.8, ge=0.0, le=1.0, description="Minimum coverage threshold (0.0-1.0)"
+    )
+    critical_services_threshold: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Minimum coverage for critical services (0.0-1.0)",
+    )
+    warning_threshold: float = Field(
+        default=0.6,
+        ge=0.0,
+        le=1.0,
+        description="Coverage threshold for warnings (0.0-1.0)",
+    )
+
+
+class QualityGatesConfig(BaseModel):
+    """Quality gates configuration."""
+
+    enabled: bool = Field(default=True, description="Enable quality gates")
+    test_coverage: TestCoverageConfig = Field(
+        default_factory=TestCoverageConfig, description="Test coverage configuration"
+    )
+
+
 class ScoringConfig(BaseModel):
     """Configuration for code scoring system"""
 
     weights: ScoringWeightsConfig = Field(default_factory=ScoringWeightsConfig)
     quality_threshold: float = Field(
         default=70.0, ge=0.0, le=100.0, description="Minimum overall score to pass"
+    )
+    quality_gates: QualityGatesConfig = Field(
+        default_factory=QualityGatesConfig, description="Quality gates configuration"
     )
 
 

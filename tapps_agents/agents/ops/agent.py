@@ -564,3 +564,9 @@ Return Dockerfile content and docker-compose.yml content."""
             "*help": "Show this help message",
         }
         return {"content": help_message}
+
+    async def close(self) -> None:
+        """Cleanup resources."""
+        await super().close()
+        # Dependency analyzer cleanup if needed
+        # (DependencyAnalyzer doesn't currently require explicit cleanup)

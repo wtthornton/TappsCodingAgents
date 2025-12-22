@@ -631,3 +631,10 @@ Format as structured JSON with boundary and interface definitions."""
             }
         except Exception as e:
             return {"error": f"Failed to define boundaries: {str(e)}"}
+
+    async def close(self) -> None:
+        """Cleanup resources."""
+        await super().close()
+        # Context7 helper cleanup if needed
+        # (Context7AgentHelper doesn't currently require explicit cleanup)
+        # Design cache cleanup would go here if we add caching in the future

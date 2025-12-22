@@ -2,13 +2,19 @@
 Quality Gates Module.
 
 Story 6.4: Quality Gates & Review Integration
+Phase 2.2: Enhanced with coverage analysis integration
+
 - Implement quality thresholds (8.0+ overall, 8.5+ security)
 - Add quality gates to workflows
 - Integrate scores into Review Agent decisions
 - Create quality reports
+- Async coverage measurement using CoverageAnalyzer
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 
@@ -203,3 +209,82 @@ class QualityGate:
                 scores = scoring.get("scores", {})
 
         return self.evaluate(scores, thresholds)
+
+    async def check_coverage(
+        self,
+        file_path: Path,
+        language: Any,
+        threshold: float = 0.8,
+        test_file_path: Path | None = None,
+        project_root: Path | None = None,
+    ) -> QualityGateResult:
+        """
+        Check test coverage for a file and evaluate against threshold.
+        
+        Phase 2.2: Coverage Analysis Integration
+        
+        Note: This method uses CoverageAnalyzer which runs tool operations (subprocess commands).
+        Tool operations work in both Cursor and headless modes. This is Cursor-first compatible.
+        
+        Args:
+            file_path: Path to the source file
+            language: Detected language (from LanguageDetector)
+            threshold: Minimum coverage threshold (0.0-1.0)
+            test_file_path: Optional path to test file
+            project_root: Optional project root directory
+            
+        Returns:
+            QualityGateResult with coverage evaluation results
+        """
+        from ...agents.tester.coverage_analyzer import CoverageAnalyzer
+        from ...core.language_detector import Language
+
+        # Ensure language is Language enum
+        if not isinstance(language, Language):
+            # Try to convert if it's a string
+            try:
+                language = Language(language)
+            except (ValueError, TypeError):
+                language = Language.UNKNOWN
+
+        # Measure coverage using CoverageAnalyzer
+        # CoverageAnalyzer runs tool operations (pytest, jest, etc.) which work in both modes
+        # This is Cursor-first compatible as it doesn't require LLM operations
+        analyzer = CoverageAnalyzer()
+        coverage_result = await analyzer.measure_coverage(
+            file_path=file_path,
+            language=language,
+            test_file_path=test_file_path,
+            project_root=project_root,
+        )
+
+        # Convert coverage percentage (0-100) to 0-1 scale
+        coverage_pct = coverage_result.coverage_percentage / 100.0
+        coverage_passed = coverage_pct >= threshold
+
+        # Create scores dict for evaluation
+        scores: dict[str, float] = {
+            "test_coverage_score": coverage_result.coverage_percentage / 10.0,  # Convert to 0-10 scale
+            "overall_score": 100.0 if coverage_passed else 50.0,  # Simplified for coverage-only check
+        }
+
+        # Evaluate using existing evaluate method
+        thresholds = QualityThresholds(test_coverage_min=threshold * 100.0)
+        result = self.evaluate(scores, thresholds)
+
+        # Enhance result with coverage-specific information
+        if coverage_result.error:
+            result.failures.append(f"Coverage measurement error: {coverage_result.error}")
+            result.passed = False
+
+        # Add coverage details to scores
+        result.scores.update(
+            {
+                "coverage_percentage": coverage_result.coverage_percentage,
+                "coverage_lines_covered": coverage_result.lines_covered,
+                "coverage_lines_total": coverage_result.lines_total,
+                "coverage_framework": coverage_result.framework,
+            }
+        )
+
+        return result

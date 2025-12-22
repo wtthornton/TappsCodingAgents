@@ -336,45 +336,91 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         except Exception as e:
             return {"error": f"Failed to prepare code generation instruction: {str(e)}"}
 
-    async def refactor(self, file_path: str, instruction: str) -> dict[str, Any]:
+    async def refactor(
+        self, file_path: str, instruction: str, preview: bool = False
+    ) -> dict[str, Any]:
         """
         Refactor existing code file.
+
+        Phase 5.1: Enhanced file writing with validation and ErrorEnvelope
 
         Args:
             file_path: Path to file to refactor
             instruction: Refactoring instruction
+            preview: If True, return refactored code without writing to file (default: False)
 
         Returns:
-            Result dictionary with refactored code and file path
+            Result dictionary with refactored code and file path, or ErrorEnvelope on error
         """
+        from ...core.error_envelope import ErrorEnvelopeBuilder
+
         path = Path(file_path)
 
-        # Validate path
+        # Validate path with ErrorEnvelope
         if not path.exists():
-            return {"error": f"File not found: {file_path}"}
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                FileNotFoundError(f"File not found: {file_path}"),
+                agent="implementer",
+            )
+            return envelope.to_dict()
 
         if not self._is_valid_path(path):
-            return {"error": f"Invalid or unsafe path: {file_path}"}
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                ValueError(f"Invalid or unsafe path: {file_path}"),
+                agent="implementer",
+            )
+            return envelope.to_dict()
 
-        # Read existing code
+        # Read existing code with enhanced error handling
         try:
             existing_code = path.read_text(encoding="utf-8")
+            if not existing_code.strip():
+                envelope = ErrorEnvelopeBuilder.from_exception(
+                    ValueError(f"File is empty: {file_path}"),
+                    agent="implementer",
+                )
+                return envelope.to_dict()
+        except UnicodeDecodeError as e:
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                e,
+                agent="implementer",
+            )
+            envelope.message = f"Failed to read file (encoding error): {file_path}. File may not be text-based."
+            return envelope.to_dict()
         except Exception as e:
-            return {"error": f"Failed to read file: {str(e)}"}
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                e,
+                agent="implementer",
+            )
+            envelope.message = f"Failed to read file: {file_path}. {envelope.message}"
+            return envelope.to_dict()
 
         # Detect language from file extension
         language = self._detect_language(path)
 
-        # Prepare refactoring instruction for Cursor Skills
+        # Prepare refactoring instruction for Cursor Skills with enhanced error handling
         try:
             refactor_instruction = self.code_generator.prepare_refactoring(
                 code=existing_code, instruction=instruction, language=language
             )
         except Exception as e:
-            return {"error": f"Failed to prepare refactoring instruction: {str(e)}"}
+            envelope = ErrorEnvelopeBuilder.from_exception(
+                e,
+                agent="implementer",
+            )
+            envelope.message = f"Failed to prepare refactoring instruction: {envelope.message}"
+            return envelope.to_dict()
 
-        # Create backup before refactoring
-        backup_path = self._create_backup(path)
+        # Create backup before refactoring (best-effort, don't fail if backup fails)
+        backup_path = None
+        try:
+            backup_path = self._create_backup(path)
+        except Exception as e:
+            # Log warning but continue (backup failure shouldn't block refactoring)
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create backup for {file_path}: {e}")
 
         # Note: Actual refactored code generation would happen here
         # For now, return instruction structure - actual code writing
@@ -388,6 +434,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             "instruction": refactor_instruction.to_dict(),
             "skill_command": refactor_instruction.to_skill_command(),
             "backup": str(backup_path) if backup_path else None,
+            "preview": preview,
             "approved": True,  # Would be set based on review/approval
         }
         
@@ -458,7 +505,11 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         return True
 
     def _create_backup(self, path: Path) -> Path | None:
-        """Create backup of existing file."""
+        """
+        Create backup of existing file.
+
+        Phase 5.1: Enhanced backup creation with validation
+        """
         if not path.exists():
             return None
 
@@ -466,8 +517,18 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
             backup_path = path.parent / f"{path.stem}.backup_{timestamp}{path.suffix}"
             shutil.copy2(path, backup_path)
-            return backup_path
-        except Exception:
+            
+            # Validate backup was created correctly (Phase 5.1: Write Validation)
+            if backup_path.exists() and backup_path.stat().st_size == path.stat().st_size:
+                return backup_path
+            else:
+                # Backup file size mismatch, clean up and return None
+                if backup_path.exists():
+                    backup_path.unlink()
+                logger.warning(f"Backup validation failed for {path}, backup not created")
+                return None
+        except Exception as e:
+            logger.warning(f"Failed to create backup for {path}: {e}")
             return None
 
     def _detect_language(self, path: Path) -> str:

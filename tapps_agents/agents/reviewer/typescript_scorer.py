@@ -2,18 +2,21 @@
 TypeScript Scorer - Code quality scoring for TypeScript and JavaScript files
 
 Phase 6.4.4: TypeScript & JavaScript Support
+Phase 1.2: Enhanced maintainability scoring
 """
 
 import json
+import re
 import shutil
 import subprocess  # nosec B404 - used with fixed args, no shell
 from pathlib import Path
 from typing import Any
 
 from ...core.subprocess_utils import wrap_windows_cmd_shim
+from .scoring import BaseScorer
 
 
-class TypeScriptScorer:
+class TypeScriptScorer(BaseScorer):
     """
     Calculate code quality scores for TypeScript and JavaScript files.
 
@@ -107,7 +110,7 @@ class TypeScriptScorer:
             "security_score": 5.0,  # Default neutral score
             "maintainability_score": 0.0,
             "test_coverage_score": 0.0,
-            "performance_score": 5.0,  # Default neutral score
+            "performance_score": 5.0,  # Default, will be overridden by PerformanceScorer
             "linting_score": 0.0,
             "type_checking_score": 0.0,
             "metrics": metrics,
@@ -131,8 +134,26 @@ class TypeScriptScorer:
         metrics["type_checking"] = float(scores["type_checking_score"])
 
         # Maintainability Score (0-10, higher is better)
-        scores["maintainability_score"] = self._calculate_maintainability(
-            code, file_path
+        # Phase 3.1: Use context-aware maintainability scorer
+        from .maintainability_scorer import MaintainabilityScorer
+        from ...core.language_detector import Language
+
+        maintainability_scorer = MaintainabilityScorer()
+        language = (
+            Language.TYPESCRIPT
+            if file_path and file_path.suffix in [".ts", ".tsx"]
+            else Language.JAVASCRIPT
+        )
+        scores["maintainability_score"] = maintainability_scorer.calculate(
+            code, language, file_path, context=None
+        )
+
+        # Phase 3.2: Use context-aware performance scorer
+        from .performance_scorer import PerformanceScorer
+
+        performance_scorer = PerformanceScorer()
+        scores["performance_score"] = performance_scorer.calculate(
+            code, language, file_path, context=None
         )
         metrics["maintainability"] = float(scores["maintainability_score"])
 
@@ -152,6 +173,43 @@ class TypeScriptScorer:
             + scores["linting_score"] * 0.10
             + scores["type_checking_score"] * 0.05
         ) * 10  # Scale to 0-100
+
+        # Phase 3.3: Validate all scores before returning
+        from .score_validator import ScoreValidator
+        from ...core.language_detector import Language
+
+        validator = ScoreValidator()
+        language = (
+            Language.TYPESCRIPT
+            if file_path and file_path.suffix in [".ts", ".tsx"]
+            else Language.JAVASCRIPT
+        )
+        validation_results = validator.validate_all_scores(
+            scores, language=language, context=None
+        )
+
+        # Update scores with validated/clamped values and add explanations
+        validated_scores = {}
+        score_explanations = {}
+        for category, result in validation_results.items():
+            if result.valid and result.calibrated_score is not None:
+                validated_scores[category] = result.calibrated_score
+                if result.explanation:
+                    score_explanations[category] = {
+                        "explanation": result.explanation,
+                        "suggestions": result.suggestions,
+                    }
+            else:
+                validated_scores[category] = scores.get(category, 0.0)
+
+        # Merge validated scores back into scores
+        for key, value in validated_scores.items():
+            if key != "_explanations":
+                scores[key] = value
+
+        # Add explanations to result if any
+        if score_explanations:
+            scores["_explanations"] = score_explanations
 
         return scores
 
@@ -345,7 +403,7 @@ class TypeScriptScorer:
         """
         Calculate maintainability score for TypeScript/JavaScript.
 
-        Heuristic-based maintainability analysis.
+        Enhanced heuristic-based maintainability analysis with context-aware scoring.
         """
         try:
             lines = code.split("\n")
@@ -354,43 +412,110 @@ class TypeScriptScorer:
             if total_lines == 0:
                 return 5.0
 
+            # Base score - start higher for TypeScript (type safety helps)
+            is_typescript = file_path and file_path.suffix in [".ts", ".tsx"]
+            score = 6.0 if is_typescript else 5.0
+
             # Factors that improve maintainability
             has_comments = sum(
                 1 for line in lines if line.strip().startswith("//") or "/*" in line
             )
             has_javadoc = sum(1 for line in lines if "/**" in line or "* @" in line)
+            
+            # Enhanced type safety detection
             has_types = sum(
                 1
                 for line in lines
                 if ": " in line
-                and ("string" in line or "number" in line or "boolean" in line)
+                and (
+                    "string" in line
+                    or "number" in line
+                    or "boolean" in line
+                    or "object" in line
+                    or "Array<" in line
+                    or "Promise<" in line
+                    or "Record<" in line
+                )
             )
+            
+            # Check for interfaces and type aliases (TypeScript)
+            has_interfaces = len(re.findall(r"interface\s+\w+", code))
+            has_type_aliases = len(re.findall(r"type\s+\w+\s*=", code))
+            has_generics = len(re.findall(r"<\w+>", code))
+            
+            # Check for proper exports/imports structure
+            has_exports = len(re.findall(r"export\s+(const|function|class|interface|type)", code))
+            has_imports = len(re.findall(r"import\s+.*from\s+['\"]", code))
+            
+            # Error handling patterns
+            has_error_handling = bool(
+                re.search(r"try\s*\{|catch\s*\(|throw\s+new\s+Error", code)
+            )
+            
+            # Documentation patterns
+            has_jsdoc = bool(re.search(r"/\*\*[\s\S]*?\*/", code))
 
             # Factors that reduce maintainability
             long_lines = sum(1 for line in lines if len(line) > 120)
-            deep_nesting = code.count("{") - code.count("}")  # Rough nesting estimate
-
-            # Calculate score
-            score = 5.0  # Base score
+            # Better nesting calculation
+            nesting_depth = self._calculate_nesting_depth(code)
+            
+            # Function/class complexity
+            function_count = len(re.findall(r"(function|const\s+\w+\s*=\s*\(|=>\s*\{)", code))
+            avg_function_length = total_lines / max(function_count, 1)
 
             # Positive factors
             if has_comments > 0:
                 score += min(has_comments / total_lines * 2, 2.0)
-            if has_javadoc > 0:
-                score += min(has_javadoc / total_lines * 1, 1.0)
-            if file_path and has_types > 0 and file_path.suffix in [".ts", ".tsx"]:
-                score += min(has_types / total_lines * 2, 2.0)
+            if has_javadoc > 0 or has_jsdoc:
+                score += min((has_javadoc + (1 if has_jsdoc else 0)) / total_lines * 1.5, 1.5)
+            if is_typescript:
+                # TypeScript-specific bonuses
+                if has_types > 0:
+                    score += min(has_types / total_lines * 2.5, 2.5)
+                if has_interfaces > 0:
+                    score += min(has_interfaces * 0.3, 1.0)
+                if has_type_aliases > 0:
+                    score += min(has_type_aliases * 0.2, 0.5)
+                if has_generics > 0:
+                    score += min(has_generics * 0.1, 0.5)
+            
+            # Code organization
+            if has_exports > 0:
+                score += min(has_exports * 0.1, 0.5)
+            if has_imports > 0:
+                score += min(has_imports * 0.05, 0.3)
+            
+            # Error handling
+            if has_error_handling:
+                score += 0.5
 
             # Negative factors
             if long_lines > 0:
-                score -= min(long_lines / total_lines * 1, 1.0)
-            if deep_nesting > 0:
-                score -= min(deep_nesting / 10.0, 1.0)
+                score -= min(long_lines / total_lines * 1.5, 1.5)
+            if nesting_depth > 3:
+                score -= min((nesting_depth - 3) * 0.5, 2.0)
+            if avg_function_length > 50:
+                score -= min((avg_function_length - 50) / 50 * 1.0, 1.5)
 
             return max(0.0, min(10.0, score))
 
         except Exception:
             return 5.0  # Neutral on error
+    
+    def _calculate_nesting_depth(self, code: str) -> int:
+        """Calculate maximum nesting depth in code."""
+        max_depth = 0
+        current_depth = 0
+        
+        for char in code:
+            if char == '{':
+                current_depth += 1
+                max_depth = max(max_depth, current_depth)
+            elif char == '}':
+                current_depth = max(0, current_depth - 1)
+        
+        return max_depth
 
     def _calculate_test_coverage(self, file_path: Path) -> float:
         """

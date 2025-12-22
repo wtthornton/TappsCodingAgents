@@ -1,5 +1,7 @@
 """
 Test Generator - Prepares test generation instructions for Cursor Skills
+
+Phase 2.1: Enhanced with coverage analysis and language-aware test generation
 """
 
 import ast
@@ -7,14 +9,24 @@ from pathlib import Path
 from typing import Any
 
 from ...core.instructions import TestGenerationInstruction
+from ...core.language_detector import Language, LanguageDetector
+from .coverage_analyzer import CoverageAnalyzer, CoverageResult
 
 
 class TestGenerator:
-    """Prepares test generation instructions for Cursor Skills execution."""
+    """
+    Prepares test generation instructions for Cursor Skills execution.
+    
+    Enhanced with:
+    - Language-aware test framework detection
+    - Async coverage analysis
+    - Coverage measurement for Python (pytest) and TypeScript/React (jest/vitest)
+    """
 
     def __init__(self):
         """Initialize test generator."""
-        pass
+        self.language_detector = LanguageDetector()
+        self.coverage_analyzer = CoverageAnalyzer()
 
     def prepare_unit_tests(
         self,
@@ -30,6 +42,7 @@ class TestGenerator:
             code_path: Path to the source code file
             test_path: Optional path where test will be written
             context: Optional context (existing tests, patterns, etc.)
+            expert_guidance: Optional expert guidance for test generation
 
         Returns:
             TestGenerationInstruction object for Cursor Skills execution
@@ -37,11 +50,15 @@ class TestGenerator:
         # Read source code
         code = code_path.read_text(encoding="utf-8")
 
+        # Detect language
+        detection_result = self.language_detector.detect_language(code_path, code)
+        language = detection_result.language
+
         # Analyze code structure
         analysis = self._analyze_code(code, code_path)
 
-        # Detect test framework
-        test_framework = analysis.get("test_framework", "pytest")
+        # Detect test framework based on language
+        test_framework = self._detect_test_framework_for_language(language, code)
 
         # Build coverage requirements
         coverage_requirements = {
@@ -49,6 +66,7 @@ class TestGenerator:
             "test_types": ["unit"],
             "context": context,
             "expert_guidance": expert_guidance,
+            "language": language.value,
         }
 
         return TestGenerationInstruction(
@@ -56,6 +74,65 @@ class TestGenerator:
             test_framework=test_framework,
             coverage_requirements=coverage_requirements,
         )
+
+    async def measure_coverage(
+        self,
+        file_path: Path,
+        test_file_path: Path | None = None,
+        project_root: Path | None = None,
+    ) -> CoverageResult:
+        """
+        Measure test coverage for a file using language-specific tools.
+        
+        Phase 2.1: Coverage Analysis Integration
+        
+        Args:
+            file_path: Path to the source file
+            test_file_path: Optional path to test file
+            project_root: Optional project root directory
+            
+        Returns:
+            CoverageResult with coverage percentage and metrics
+        """
+        # Detect language
+        code = file_path.read_text(encoding="utf-8") if file_path.exists() else ""
+        detection_result = self.language_detector.detect_language(file_path, code)
+        language = detection_result.language
+
+        # Measure coverage using language-specific analyzer
+        return await self.coverage_analyzer.measure_coverage(
+            file_path, language, test_file_path, project_root
+        )
+
+    def _detect_test_framework_for_language(
+        self, language: Language, code: str
+    ) -> str:
+        """
+        Detect test framework based on language.
+        
+        Args:
+            language: Detected language
+            code: Source code content
+            
+        Returns:
+            Test framework name (pytest, jest, vitest, etc.)
+        """
+        if language == Language.PYTHON:
+            # Check code for framework hints
+            if "import pytest" in code or "from pytest" in code:
+                return "pytest"
+            elif "import unittest" in code or "from unittest" in code:
+                return "unittest"
+            return "pytest"  # Default for Python
+
+        elif language in [Language.TYPESCRIPT, Language.JAVASCRIPT, Language.REACT]:
+            # Check package.json or code for framework
+            # This is a basic check - full detection is in CoverageAnalyzer
+            if "vitest" in code.lower():
+                return "vitest"
+            return "jest"  # Default for TypeScript/JavaScript
+
+        return "pytest"  # Fallback default
 
     def prepare_integration_tests(
         self,
@@ -274,7 +351,11 @@ class TestGenerator:
         return analysis
 
     def _detect_test_framework(self, code: str) -> str:
-        """Detect which test framework is being used."""
+        """
+        Detect which test framework is being used (legacy method).
+        
+        Note: Use _detect_test_framework_for_language() for language-aware detection.
+        """
         if "import pytest" in code or "from pytest" in code:
             return "pytest"
         elif "import unittest" in code or "from unittest" in code:
