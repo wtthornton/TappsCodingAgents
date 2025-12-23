@@ -308,7 +308,8 @@ class TestImplementerAgentRefactorCommand:
         )
         
         assert "error" in result
-        assert "not found" in result["error"].lower()
+        error_msg = result["error"]["message"] if isinstance(result["error"], dict) else result["error"]
+        assert "not found" in error_msg.lower()
 
     @pytest.mark.asyncio
     async def test_refactor_command_missing_file_path(self):
@@ -539,7 +540,8 @@ class TestImplementerAgentErrorHandling:
         )
         
         assert "error" in result
-        assert "failed" in result["error"].lower()
+        error_msg = result["error"]["message"] if isinstance(result["error"], dict) else result["error"]
+        assert "failed" in error_msg.lower()
 
 
 class TestImplementerAgentReviewIntegration:

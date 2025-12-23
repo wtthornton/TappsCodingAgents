@@ -86,6 +86,48 @@ class ScoreValidator:
         Returns:
             ValidationResult with validation status, explanation, and suggestions
         """
+        # Type checking: ensure score is numeric
+        # Handle case where a dict might be passed instead of a float
+        if isinstance(score, dict):
+            # Try to extract a numeric score from the dict
+            # Common keys that might contain the actual score
+            numeric_score = None
+            for key in ["score", "value", category, f"{category}_score"]:
+                if key in score and isinstance(score[key], (int, float)):
+                    numeric_score = float(score[key])
+                    break
+            
+            if numeric_score is None:
+                # No numeric value found in dict, return error
+                return ValidationResult(
+                    valid=False,
+                    score=0.0,
+                    category=category,
+                    error=f"Invalid score type: expected float/int, got dict. Dict contents: {score}",
+                    explanation=f"Score validation failed: received dict instead of numeric value for {category}",
+                    suggestions=[
+                        "Ensure score calculation returns numeric values (float/int), not dictionaries",
+                        "Check score calculation logic to return raw numeric scores",
+                    ],
+                )
+            score = numeric_score
+        elif not isinstance(score, (int, float)):
+            # Handle other non-numeric types
+            return ValidationResult(
+                valid=False,
+                score=0.0,
+                category=category,
+                error=f"Invalid score type: expected float/int, got {type(score).__name__}",
+                explanation=f"Score validation failed: received {type(score).__name__} instead of numeric value for {category}",
+                suggestions=[
+                    "Ensure score calculation returns numeric values (float/int)",
+                    f"Check that score is not a {type(score).__name__}",
+                ],
+            )
+        else:
+            # Ensure score is a float for consistent handling
+            score = float(score)
+
         # Get valid range for category
         min_score, max_score = self.SCORE_RANGES.get(
             category, (0.0, 10.0 if category != "overall" else 100.0)
