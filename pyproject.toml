@@ -63,9 +63,18 @@ dev = [
     "pylint>=4.0.4",
     # Security & Dependency Management
     "pip-audit>=2.10.0",
-    "pipdeptree>=2.30.0",
+    # Note: pipdeptree moved to [dependency-analysis] extra due to packaging>=25 requirement
+    # which conflicts with our packaging<25 constraint (needed for langchain-core compatibility)
     # Lock File Generation
     "pip-tools>=7.5.2",
+]
+dependency-analysis = [
+    # Dependency analysis tools (optional - requires packaging>=25)
+    # Note: These tools require packaging>=25, which conflicts with our packaging<25 constraint
+    # needed for langchain-core compatibility. Install separately if needed:
+    # pip install -e ".[dependency-analysis]"
+    # This will install packaging>=25 and may cause conflicts with langchain-core.
+    "pipdeptree>=2.30.0",
 ]
 
 [project.urls]

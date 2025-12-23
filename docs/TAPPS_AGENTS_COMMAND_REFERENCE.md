@@ -378,7 +378,9 @@ tapps-agents generate-rules [--output <path>] [--no-backup]
 
 ### `install-dev` - Install Dev Tools (CLI-First)
 
-**Purpose:** Install development tools and dependencies required by TappsCodingAgents (ruff, mypy, pytest, pip-audit, pipdeptree, etc.).
+**Purpose:** Install development tools and dependencies required by TappsCodingAgents (ruff, mypy, pytest, pip-audit, etc.).
+
+**Note:** `pipdeptree` is now optional and moved to the `[dependency-analysis]` extra due to a dependency conflict. See [Installation Troubleshooting](INSTALLATION_TROUBLESHOOTING.md#11-dependency-conflict-pipdeptree-and-packaging-version) for details.
 
 **CLI Syntax:**
 ```bash

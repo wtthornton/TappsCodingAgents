@@ -14,7 +14,36 @@ While using TappsCodingAgents commands to implement code review recommendations,
 
 ## Issues Encountered
 
-### 1. Reviewer Command - No Scorer Registered ❌
+### 1. Reviewer Command - TypeError in Score Validation ✅ FIXED
+
+**Date Fixed:** January 2026  
+**Issue:** `TypeError: '<' not supported between instances of 'dict' and 'float'`
+
+**Error Location:**
+- File: `tapps_agents/agents/reviewer/score_validator.py`
+- Method: `validate_all_scores()`
+- Line: ~95 (before fix)
+
+**Root Cause:**
+The `validate_all_scores()` method was iterating over all keys in the scores dictionary without checking if values were numeric. When it encountered non-numeric values like the `"metrics"` dict (which contains detailed metric information), it tried to pass the dict to `validate_score()`, which then attempted to compare `if score < min_score`, causing a TypeError.
+
+**Fix Applied:**
+1. Added type checking to skip non-numeric values in `validate_all_scores()`
+2. Added category name normalization to handle both `"complexity_score"` and `"complexity"` formats
+3. Created comprehensive test suite in `tests/unit/agents/test_score_validator.py`
+
+**Test Coverage:**
+- ✅ `test_validate_score_with_float` - Valid float score validation
+- ✅ `test_validate_score_out_of_range` - Out of range score handling
+- ✅ `test_validate_all_scores_with_metrics_key` - Reproduces the original bug
+- ✅ `test_validate_all_scores_with_only_score_keys` - Normal operation
+- ✅ `test_validate_all_scores_filters_non_numeric` - Non-numeric filtering
+
+**Status:** ✅ **FIXED** - All tests pass, issue resolved
+
+---
+
+### 2. Reviewer Command - No Scorer Registered ❌
 
 **Command:**
 ```bash
@@ -46,7 +75,7 @@ python -m tapps_agents.cli reviewer review src/api/ask_ai/alias_router.py
 
 ---
 
-### 2. Implementer Command - Files Not Actually Created ⚠️
+### 3. Implementer Command - Files Not Actually Created ⚠️
 
 **Command:**
 ```bash
@@ -83,7 +112,7 @@ python -m tapps_agents.cli implementer implement "Create alias_router.py..." src
 
 ---
 
-### 3. Context7 Credentials Warnings (Multiple Occurrences) ⚠️
+### 4. Context7 Credentials Warnings (Multiple Occurrences) ⚠️
 
 **Warning (appeared multiple times):**
 ```
@@ -111,7 +140,7 @@ Context7 credentials are not configured. To set up:
 
 ---
 
-### 4. Tester Command - Test File Creation Inconsistent ❌
+### 5. Tester Command - Test File Creation Inconsistent ❌
 
 **Command:**
 ```bash
@@ -162,7 +191,7 @@ python -m tapps_agents.cli tester test src/safety_validator.py
 
 ---
 
-### 5. Planner Command - Limited Output ⚠️
+### 6. Planner Command - Limited Output ⚠️
 
 **Command:**
 ```bash

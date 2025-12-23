@@ -44,6 +44,8 @@ pylint>=4.0.4
 
 # Security & Dependency Management
 pip-audit>=2.10.0
-pipdeptree>=2.30.0
+# Note: pipdeptree moved to [dependency-analysis] extra due to packaging>=25 requirement
+# which conflicts with our packaging<25 constraint (needed for langchain-core compatibility)
+# To install: pip install -e ".[dependency-analysis]"
 # Lock File Generation
 pip-tools>=7.5.2

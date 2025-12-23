@@ -35,8 +35,29 @@ pip install -e ".[dev]"
 - Type checking: `mypy`
 - Testing: `pytest`, `pytest-asyncio`, `pytest-cov`, `pytest-mock`, `pytest-timeout`
 - Security auditing: `pip-audit`
-- Dependency analysis: `pipdeptree`
 - Lock file generation: `pip-tools`
+
+**Note:** `pipdeptree` has been moved to the `[dependency-analysis]` extra due to a dependency conflict:
+- `pipdeptree>=2.30.0` requires `packaging>=25`
+- TappsCodingAgents constrains `packaging` to `<25,>=23.2` to avoid conflicts with `langchain-core`
+- Install separately if needed: `pip install -e ".[dependency-analysis]"` (may cause packaging conflicts)
+
+### Dependency Analysis Extra (`dependency-analysis`)
+
+Optional extra for dependency tree visualization tools:
+
+```bash
+pip install -e ".[dependency-analysis]"
+```
+
+**Warning:** This extra requires `packaging>=25`, which conflicts with TappsCodingAgents' `packaging<25` constraint. Installing this extra may cause dependency conflicts with `langchain-core` or other packages that require `packaging<25`.
+
+**Includes:**
+- `pipdeptree>=2.30.0` - Dependency tree visualization
+
+**Impact:**
+- The `DependencyAnalyzer` in the ops agent gracefully handles missing `pipdeptree`
+- Dependency analysis works without it, but tree visualization will be unavailable
 
 ### Test Dependencies
 
@@ -83,6 +104,12 @@ pip install tapps-agents
 ```bash
 pip install -e ".[dev]"
 ```
+
+**Optional:** If you need dependency tree visualization (may cause packaging conflicts):
+```bash
+pip install -e ".[dev,dependency-analysis]"
+```
+**Warning:** The `dependency-analysis` extra requires `packaging>=25`, which conflicts with TappsCodingAgents' `packaging<25` constraint. See [Dependency Analysis Extra](#dependency-analysis-extra-dependency-analysis) for details.
 
 ### For CI/Testing
 ```bash

@@ -39,6 +39,34 @@ langchain-core 0.2.43 requires packaging<25,>=23.2, but you have packaging 25.0 
 
 ---
 
+### 1.1. Dependency Conflict: `pipdeptree` and `packaging` Version
+
+**Issue:**
+- `pipdeptree>=2.30.0` requires `packaging>=25`
+- TappsCodingAgents constrains `packaging` to `<25,>=23.2` to avoid conflicts with `langchain-core`
+- This creates a dependency conflict if `pipdeptree` is installed
+
+**Solution:**
+- **`pipdeptree` is now optional** - It's been moved to a separate `[dependency-analysis]` extra
+- **Default installation** (without pipdeptree):
+  ```bash
+  pip install -e ".[dev]"
+  ```
+- **If you need dependency tree visualization** (and can accept the packaging conflict):
+  ```bash
+  pip install -e ".[dev,dependency-analysis]"
+  ```
+  **Note:** This will install `packaging>=25` and may cause conflicts with `langchain-core` or other packages.
+
+**Impact:**
+- The `DependencyAnalyzer` in the ops agent will gracefully handle missing `pipdeptree`
+- Dependency analysis will still work, but tree visualization will be unavailable
+- All other functionality remains unaffected
+
+**Status:** ✅ **Fixed in v2.4.2+** - `pipdeptree` moved to optional `[dependency-analysis]` extra
+
+---
+
 ### 2. PATH Warning
 
 **Warning Message:**

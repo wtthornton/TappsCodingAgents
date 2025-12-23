@@ -99,17 +99,22 @@ class DebuggerAgent(BaseAgent):
         if file:
             file_path = Path(file)
             if file_path.exists():
-                self._validate_path(file_path)
-                code = file_path.read_text(encoding="utf-8")
-                # Extract context around error line
-                if line:
-                    lines = code.split("\n")
-                    start = max(0, line - self.max_context_lines // 2)
-                    end = min(len(lines), line + self.max_context_lines // 2)
-                    code_context = "\n".join(lines[start:end])
-                else:
-                    # Use first 100 lines if no line specified
-                    code_context = "\n".join(code.split("\n")[:100])
+                try:
+                    self._validate_path(file_path)
+                    code = file_path.read_text(encoding="utf-8")
+                    # Extract context around error line
+                    if line:
+                        lines = code.split("\n")
+                        start = max(0, line - self.max_context_lines // 2)
+                        end = min(len(lines), line + self.max_context_lines // 2)
+                        code_context = "\n".join(lines[start:end])
+                    else:
+                        # Use first 100 lines if no line specified
+                        code_context = "\n".join(code.split("\n")[:100])
+                except (ValueError, OSError) as e:
+                    # If validation fails or file can't be read, continue without file context
+                    # The error analysis can still proceed with just the error message
+                    pass
 
         # Analyze error
         analysis = await self.error_analyzer.analyze_error(

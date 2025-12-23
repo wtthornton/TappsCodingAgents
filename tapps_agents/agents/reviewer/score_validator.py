@@ -295,7 +295,7 @@ class ScoreValidator:
         Validate all scores in a score dictionary.
 
         Args:
-            scores: Dictionary of category -> score
+            scores: Dictionary of category -> score (can have keys like "complexity_score" or "complexity")
             language: Optional language for language-specific validation
             context: Optional context for explanations
 
@@ -304,9 +304,20 @@ class ScoreValidator:
         """
         results = {}
         for category, score in scores.items():
+            # Skip non-numeric values (e.g., "metrics" dict, strings, lists)
+            # Only validate actual numeric scores
+            if not isinstance(score, (int, float)):
+                continue
+            
+            # Normalize category name: remove "_score" suffix if present
+            # e.g., "complexity_score" -> "complexity", "overall_score" -> "overall"
+            normalized_category = category
+            if category.endswith("_score"):
+                normalized_category = category[:-6]  # Remove "_score" suffix
+            
             category_context = (context or {}).get(category, {}) if context else None
             results[category] = self.validate_score(
-                score, category, language=language, context=category_context
+                score, normalized_category, language=language, context=category_context
             )
 
         return results
