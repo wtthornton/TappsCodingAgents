@@ -13,6 +13,7 @@ from .cache_structure import CacheStructure
 from .credential_validation import validate_context7_credentials
 from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import KBCache
+from .library_detector import LibraryDetector
 from .lookup import KBLookup
 from .metadata import MetadataManager
 
@@ -100,6 +101,9 @@ class Context7AgentHelper:
         self.kb_lookup = KBLookup(
             kb_cache=self.kb_cache, mcp_gateway=mcp_gateway, fuzzy_threshold=0.7
         )
+
+        # Initialize library detector for Option 3 quality uplift
+        self.library_detector = LibraryDetector(project_root=project_root)
 
     async def get_documentation(
         self, library: str, topic: str | None = None, use_fuzzy_match: bool = True
@@ -274,6 +278,115 @@ class Context7AgentHelper:
         ]
 
         return any(keyword in message_lower for keyword in library_keywords)
+
+    def detect_libraries(
+        self, code: str | None = None, prompt: str | None = None, language: str = "python"
+    ) -> list[str]:
+        """
+        Detect libraries from code, prompt, or project files.
+        
+        Option 3 (C1) Enhancement: Enhanced library detection for prompt analysis.
+
+        Args:
+            code: Optional code content to analyze
+            prompt: Optional prompt text to analyze
+            language: Programming language ("python", "typescript", "javascript")
+
+        Returns:
+            List of detected library names
+        """
+        if not self.enabled:
+            return []
+
+        return self.library_detector.detect_all(code=code, prompt=prompt, language=language)
+
+    async def get_documentation_for_libraries(
+        self,
+        libraries: list[str],
+        topic: str | None = None,
+        use_fuzzy_match: bool = True,
+    ) -> dict[str, dict[str, Any] | None]:
+        """
+        Get documentation for multiple libraries in parallel.
+        
+        Option 3 Enhancement: Batch Context7 documentation retrieval.
+
+        Args:
+            libraries: List of library names
+            topic: Optional topic name (e.g., "hooks", "routing")
+            use_fuzzy_match: Whether to use fuzzy matching
+
+        Returns:
+            Dictionary mapping library names to their documentation (or None if not found)
+        """
+        if not self.enabled:
+            return {lib: None for lib in libraries}
+
+        import asyncio
+
+        # Fetch documentation for all libraries in parallel
+        tasks = [
+            self.get_documentation(library=lib, topic=topic, use_fuzzy_match=use_fuzzy_match)
+            for lib in libraries
+        ]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Map results to libraries
+        library_docs = {}
+        for lib, result in zip(libraries, results):
+            if isinstance(result, Exception):
+                logger.warning(f"Error fetching docs for {lib}: {result}")
+                library_docs[lib] = None
+            else:
+                library_docs[lib] = result
+
+        return library_docs
+
+    async def resolve_library_ids(self, libraries: list[str]) -> dict[str, str | None]:
+        """
+        Resolve library names to Context7-compatible library IDs.
+        
+        Option 3 Enhancement: Batch library ID resolution.
+
+        Args:
+            libraries: List of library names
+
+        Returns:
+            Dictionary mapping library names to Context7 library IDs (or None if not found)
+        """
+        if not self.enabled or not self.mcp_gateway:
+            return {lib: None for lib in libraries}
+
+        import asyncio
+
+        async def resolve_one(lib: str) -> tuple[str, str | None]:
+            try:
+                from .backup_client import call_context7_resolve_with_fallback
+
+                result = await call_context7_resolve_with_fallback(lib, self.mcp_gateway)
+                if result.get("success"):
+                    matches = result.get("result", {}).get("matches", [])
+                    if matches:
+                        # Return the first match's library ID
+                        return (lib, matches[0].get("library_id"))
+            except Exception as e:
+                logger.debug(f"Error resolving library ID for {lib}: {e}")
+            return (lib, None)
+
+        # Resolve all libraries in parallel
+        tasks = [resolve_one(lib) for lib in libraries]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        # Map results
+        library_ids = {}
+        for result in results:
+            if isinstance(result, Exception):
+                logger.warning(f"Error in library resolution: {result}")
+            else:
+                lib, lib_id = result
+                library_ids[lib] = lib_id
+
+        return library_ids
 
 
 def get_context7_helper(

@@ -238,6 +238,35 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             except Exception:
                 logger.debug("Performance expert consultation failed", exc_info=True)
 
+        # R7: Get Context7 documentation for libraries mentioned in specification
+        context7_docs = {}
+        if self.context7 and self.context7.enabled:
+            try:
+                # Detect libraries from specification and context
+                detected_libraries = []
+                if self.context7.library_detector:
+                    # R7: Detect from specification text (prompt)
+                    detected_libraries.extend(
+                        self.context7.library_detector.detect_from_prompt(specification)
+                    )
+                    # Detect from context code if available
+                    if context:
+                        detected_libraries.extend(
+                            self.context7.library_detector.detect_from_code(context, language=language)
+                        )
+                
+                # Get Context7 documentation for each detected library
+                for library in set(detected_libraries):  # Remove duplicates
+                    try:
+                        docs_result = await self.context7.get_documentation(library, topic=None, use_fuzzy_match=True)
+                        if docs_result and docs_result.get("content"):
+                            context7_docs[library] = docs_result["content"]
+                            logger.debug(f"Retrieved Context7 docs for library '{library}'")
+                    except Exception as e:
+                        logger.debug(f"Failed to get Context7 docs for library '{library}': {e}")
+            except Exception as e:
+                logger.debug(f"Context7 documentation lookup failed: {e}", exc_info=True)
+
         # Prepare code generation instruction for Cursor Skills
         try:
             instruction = self.code_generator.prepare_code_generation(
@@ -246,6 +275,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 context=context,
                 language=language,
                 expert_guidance=expert_guidance,
+                context7_docs=context7_docs if context7_docs else None,
             )
         except Exception as e:
             return {"error": f"Failed to prepare code generation instruction: {str(e)}"}

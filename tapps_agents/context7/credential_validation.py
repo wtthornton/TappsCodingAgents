@@ -39,16 +39,43 @@ class CredentialValidator:
         """
         Validate Context7 credentials.
 
+        R2/R3: Improved availability detection with clear error messages.
+
         Checks:
-        1. Environment variables (or encrypted storage)
-        2. MCP server availability
-        3. Test API call (if MCP gateway available)
+        1. Runtime mode (Cursor vs headless)
+        2. MCP server availability (Cursor mode preferred)
+        3. Environment variables (or encrypted storage) for fallback
+        4. Provides actionable error messages
 
         Returns:
             CredentialValidationResult
         """
-        # Check environment variables or encrypted storage
-        # This automatically loads from encrypted storage if not in environment
+        from ..core.runtime_mode import is_cursor_mode
+        
+        # R2: Check runtime mode first
+        in_cursor_mode = is_cursor_mode()
+        
+        # Check MCP gateway availability (preferred in Cursor mode)
+        if self.mcp_gateway:
+            from .backup_client import check_mcp_tools_available
+            mcp_available, mcp_source = check_mcp_tools_available(self.mcp_gateway)
+            
+            if mcp_available:
+                if mcp_source == "cursor_mcp":
+                    # R2: In Cursor mode, MCP tools are available - no API key needed
+                    return CredentialValidationResult(
+                        valid=True,
+                        credential_source="mcp",
+                        actionable_message="Context7 MCP tools available via Cursor's MCP server (no API key needed)",
+                    )
+                elif mcp_source == "local_gateway":
+                    return CredentialValidationResult(
+                        valid=True,
+                        credential_source="mcp",
+                        actionable_message="Context7 MCP tools available via local gateway",
+                    )
+        
+        # Check environment variables or encrypted storage (for HTTP fallback)
         try:
             from .backup_client import _ensure_context7_api_key
             context7_key = _ensure_context7_api_key()
@@ -61,48 +88,39 @@ class CredentialValidator:
             return CredentialValidationResult(
                 valid=True,
                 credential_source=source,
-                actionable_message=f"Context7 API key found ({'environment variable' if source == 'env' else 'encrypted storage'})",
+                actionable_message=f"Context7 API key found ({'environment variable' if source == 'env' else 'encrypted storage'}) - will use HTTP fallback",
             )
 
-        # Check MCP gateway availability
-        if self.mcp_gateway:
-            # Try to list Context7 resources to verify connection
-            try:
-                # Check if Context7 MCP server is available
-                # This is a lightweight check that doesn't require credentials
-                # but verifies the MCP server is configured
-                return CredentialValidationResult(
-                    valid=True,
-                    credential_source="mcp",
-                    actionable_message="Context7 MCP server is available",
-                )
-            except Exception as e:
-                return CredentialValidationResult(
-                    valid=False,
-                    error=str(e),
-                    actionable_message=(
-                        "Context7 MCP server is not available. "
-                        "Please ensure:\n"
-                        "1. Context7 MCP server is configured in your MCP settings\n"
-                        "2. The MCP server is running\n"
-                        "3. Check MCP server logs for errors"
-                    ),
-                )
-
-        # No credentials found
-        return CredentialValidationResult(
-            valid=False,
-            error="No Context7 credentials found",
-            actionable_message=(
-                "Context7 credentials are not configured. To set up:\n"
-                "1. Set CONTEXT7_API_KEY environment variable, OR\n"
-                "2. Configure Context7 MCP server in your MCP settings\n\n"
-                "For local development:\n"
-                "  export CONTEXT7_API_KEY='your-api-key'\n\n"
-                "For CI/CD:\n"
-                "  Add CONTEXT7_API_KEY to your CI/CD secrets"
-            ),
-        )
+        # R3: No credentials found - provide actionable error message
+        if in_cursor_mode:
+            # In Cursor mode, suggest MCP server configuration
+            return CredentialValidationResult(
+                valid=False,
+                error="No Context7 credentials found",
+                actionable_message=(
+                    "Context7 is not configured. In Cursor mode, you can:\n"
+                    "1. Configure Context7 MCP server in `.cursor/mcp.json` (recommended)\n"
+                    "2. Set CONTEXT7_API_KEY environment variable for HTTP fallback\n\n"
+                    "To configure MCP server:\n"
+                    "  Run: tapps-agents init (creates .cursor/mcp.json)\n"
+                    "  Or manually add Context7 server to your MCP settings"
+                ),
+            )
+        else:
+            # In headless mode, suggest API key
+            return CredentialValidationResult(
+                valid=False,
+                error="No Context7 credentials found",
+                actionable_message=(
+                    "Context7 credentials are not configured. To set up:\n"
+                    "1. Set CONTEXT7_API_KEY environment variable\n"
+                    "2. Or configure Context7 MCP server in your MCP settings\n\n"
+                    "For local development:\n"
+                    "  export CONTEXT7_API_KEY='your-api-key'\n\n"
+                    "For CI/CD:\n"
+                    "  Add CONTEXT7_API_KEY to your CI/CD secrets"
+                ),
+            )
 
     async def test_credentials(self) -> CredentialValidationResult:
         """

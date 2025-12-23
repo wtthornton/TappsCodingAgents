@@ -199,6 +199,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "command": "*analyze-services",
                 "description": "Analyze specific services (Phase 6.4.2)",
             },
+            {
+                "command": "*docs",
+                "description": "Get library documentation from Context7 (R6)",
+            },
         ]
 
     async def run(self, command: str, **kwargs) -> dict[str, Any]:
@@ -295,6 +299,24 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 services=services if services else None,
                 project_root=Path(project_root) if project_root else None,
                 include_comparison=include_comparison,
+            )
+
+        elif command == "docs":
+            library = kwargs.get("library")
+            if not library:
+                return {"error": "Library name required. Usage: *docs <library> [topic]"}
+            
+            topic = kwargs.get("topic")
+            mode = kwargs.get("mode", "code")
+            page = kwargs.get("page", 1)
+            no_cache = kwargs.get("no_cache", False)
+            
+            return await self.get_documentation(
+                library=library,
+                topic=topic,
+                mode=mode,
+                page=page,
+                no_cache=no_cache,
             )
 
         else:
@@ -400,6 +422,65 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "confidence": detection_result.confidence,
             "method": detection_result.method,
         }
+
+        # E2: Context7 API verification and best practices validation
+        context7_verification = {}
+        libraries_used = []
+        
+        # Get Context7 helper if available
+        context7_helper = None
+        try:
+            from ...context7.agent_integration import get_context7_helper
+            context7_helper = get_context7_helper(self, self.config, self._project_root)
+        except Exception as e:
+            logger.debug(f"Context7 helper not available: {e}")
+        
+        if context7_helper and context7_helper.enabled:
+            try:
+                # Detect libraries from code
+                language_str = file_type.lower()  # "python", "typescript", etc.
+                libraries_used = context7_helper.detect_libraries(
+                    code=code,
+                    prompt=None,
+                    language=language_str
+                )
+                
+                if libraries_used:
+                    # Verify each library usage against Context7 docs
+                    for lib in libraries_used:
+                        # Get full API reference
+                        lib_docs = await context7_helper.get_documentation(
+                            library=lib,
+                            topic=None,  # Get full API reference
+                            use_fuzzy_match=True
+                        )
+                        
+                        # Get best practices
+                        best_practices = await context7_helper.get_documentation(
+                            library=lib,
+                            topic="best-practices",
+                            use_fuzzy_match=True
+                        )
+                        
+                        # Basic API correctness check (check if library is mentioned in code)
+                        api_mentioned = lib.lower() in code.lower()
+                        
+                        context7_verification[lib] = {
+                            "api_docs_available": lib_docs is not None,
+                            "best_practices_available": best_practices is not None,
+                            "api_mentioned": api_mentioned,
+                            "docs_source": lib_docs.get("source") if lib_docs else None,
+                            "best_practices_source": best_practices.get("source") if best_practices else None,
+                        }
+                    
+                    logger.debug(f"E2: Verified {len(libraries_used)} libraries with Context7")
+            except Exception as e:
+                logger.debug(f"E2: Context7 API verification failed: {e}")
+        
+        # Store Context7 verification results
+        if context7_verification:
+            result["context7_verification"] = context7_verification
+            result["libraries_detected"] = libraries_used
 
         # Calculate scores based on file type
         if include_scoring:
@@ -1689,6 +1770,82 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         ) * 10
         
         return scores
+
+    async def get_documentation(
+        self,
+        library: str,
+        topic: str | None = None,
+        mode: str = "code",
+        page: int = 1,
+        no_cache: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Get library documentation from Context7 using KB-first lookup.
+        
+        R6: Reviewer docs command implementation.
+        
+        Args:
+            library: Library name (e.g., "react", "fastapi")
+            topic: Optional topic name (e.g., "hooks", "routing")
+            mode: Documentation mode ("code" or "info")
+            page: Page number for pagination
+            no_cache: Skip cache and fetch fresh documentation
+            
+        Returns:
+            Dictionary with documentation content and metadata
+        """
+        from ...context7.agent_integration import get_context7_helper
+        
+        # Get Context7 helper
+        context7_helper = get_context7_helper(self, config=self.config, project_root=self._project_root)
+        
+        if not context7_helper or not context7_helper.enabled:
+            return {
+                "error": "Context7 is not enabled or not available. Check your configuration.",
+                "library": library,
+                "topic": topic,
+            }
+        
+        try:
+            # Use KB-first lookup (respects no_cache flag via lookup implementation)
+            # Note: no_cache flag would need to be passed through to KBLookup if implemented
+            result = await context7_helper.get_documentation(
+                library=library,
+                topic=topic,
+                use_fuzzy_match=True,
+            )
+            
+            if result:
+                return {
+                    "success": True,
+                    "library": result.get("library", library),
+                    "topic": result.get("topic", topic or "overview"),
+                    "content": result.get("content", ""),
+                    "source": result.get("source", "unknown"),  # "cache", "api", "fuzzy_match"
+                    "fuzzy_score": result.get("fuzzy_score"),
+                    "matched_topic": result.get("matched_topic"),
+                    "response_time_ms": result.get("response_time_ms", 0.0),
+                    "cached": result.get("source") == "cache",
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": f"Documentation not found for library '{library}'" + (f" (topic: {topic})" if topic else ""),
+                    "library": library,
+                    "topic": topic,
+                    "suggestion": "Try a different library name or check if the library is available in Context7",
+                }
+        except Exception as e:
+            logger.warning(
+                f"Failed to get Context7 documentation for library '{library}' (topic: {topic}): {e}",
+                exc_info=True
+            )
+            return {
+                "success": False,
+                "error": f"Failed to retrieve documentation: {str(e)}",
+                "library": library,
+                "topic": topic,
+            }
 
     def _score_generic_file(self, file_path: Path, code: str, file_type: str) -> dict[str, Any]:
         """

@@ -24,23 +24,17 @@ from tapps_agents.mcp.gateway import MCPGateway
 from tapps_agents.mcp.servers.context7 import Context7MCPServer
 
 
-def check_mcp_tools_available(gateway: MCPGateway | None = None) -> bool:
+def check_mcp_tools_available(gateway: MCPGateway | None = None) -> tuple[bool, str]:
     """
-    Check if Context7 MCP tools are available via Cursor's MCP server.
+    Check if Context7 MCP tools are available via Cursor's MCP server or local gateway.
     
-    Returns True if MCP tools are available (no API key needed).
+    Returns tuple of (available: bool, source: str) where source is:
+    - "cursor_mcp" if in Cursor mode
+    - "local_gateway" if tools registered in local MCPGateway
+    - "none" if not available
     """
-    if gateway is None:
-        gateway = MCPGateway()
-    
-    # Check if Context7 MCP tools are registered
-    tools = gateway.list_available_tools()
-    tool_names = [tool.get("name", "") for tool in tools]
-    
-    return (
-        "mcp_Context7_resolve-library-id" in tool_names
-        and "mcp_Context7_get-library-docs" in tool_names
-    )
+    from tapps_agents.context7.backup_client import check_mcp_tools_available as check_mcp
+    return check_mcp(gateway)
 
 
 def check_context7_api_available():

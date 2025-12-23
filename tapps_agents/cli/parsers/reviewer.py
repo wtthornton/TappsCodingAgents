@@ -51,7 +51,7 @@ Example:
     review_parser.add_argument(
         "files",
         nargs="*",
-        help="Path(s) to source code file(s) to review. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+        help="Path(s) to source code file(s) to review. Supports multiple files, directories (auto-discovers code files), or glob patterns. If not provided and --pattern is not used, the command will error.",
     )
     review_parser.add_argument(
         "--pattern",
@@ -73,6 +73,11 @@ Example:
     review_parser.add_argument(
         "--output",
         help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
+    )
+    review_parser.add_argument(
+        "--fail-under",
+        type=float,
+        help="Exit with code 1 if the overall score is below this threshold (0-100). Useful for CI.",
     )
 
     score_parser = reviewer_subparsers.add_parser(
@@ -102,7 +107,7 @@ Example:
     score_parser.add_argument(
         "files",
         nargs="*",
-        help="Path(s) to source code file(s) to score. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+        help="Path(s) to source code file(s) to score. Supports multiple files, directories (auto-discovers code files), or glob patterns. If not provided and --pattern is not used, the command will error.",
     )
     score_parser.add_argument(
         "--pattern",
@@ -123,6 +128,11 @@ Example:
     score_parser.add_argument(
         "--output",
         help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
+    )
+    score_parser.add_argument(
+        "--fail-under",
+        type=float,
+        help="Exit with code 1 if the overall score is below this threshold (0-100). Useful for CI.",
     )
 
     lint_parser = reviewer_subparsers.add_parser(
@@ -150,7 +160,7 @@ Example:
     lint_parser.add_argument(
         "files",
         nargs="*",
-        help="Path(s) to Python source code file(s) to lint. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+        help="Path(s) to source code file(s) to lint. Supports multiple files, directories (auto-discovers code files), or glob patterns. If not provided and --pattern is not used, the command will error.",
     )
     lint_parser.add_argument(
         "--pattern",
@@ -164,13 +174,18 @@ Example:
     )
     lint_parser.add_argument(
         "--format",
-        choices=["json", "text"],
+        choices=["json", "text", "markdown", "html"],
         default="json",
-        help="Output format: 'json' for structured lint results (default), 'text' for human-readable lint output",
+        help="Output format: 'json' for structured lint results (default), 'text' for human-readable output, 'markdown' for Markdown, 'html' for HTML report",
     )
     lint_parser.add_argument(
         "--output",
         help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
+    )
+    lint_parser.add_argument(
+        "--fail-on-issues",
+        action="store_true",
+        help="Exit with code 1 if any lint issues are found (or any files fail in batch mode). Useful for CI.",
     )
 
     type_check_parser = reviewer_subparsers.add_parser(
@@ -200,7 +215,7 @@ Example:
     type_check_parser.add_argument(
         "files",
         nargs="*",
-        help="Path(s) to Python source code file(s) to type-check. Can specify multiple files or use glob patterns with --pattern. If not provided and --pattern is not used, will prompt for input.",
+        help="Path(s) to source code file(s) to type-check. Supports multiple files, directories (auto-discovers code files), or glob patterns. If not provided and --pattern is not used, the command will error.",
     )
     type_check_parser.add_argument(
         "--pattern",
@@ -214,13 +229,18 @@ Example:
     )
     type_check_parser.add_argument(
         "--format",
-        choices=["json", "text"],
+        choices=["json", "text", "markdown", "html"],
         default="json",
-        help="Output format: 'json' for structured type check results (default), 'text' for human-readable mypy output",
+        help="Output format: 'json' for structured results (default), 'text' for human-readable output, 'markdown' for Markdown, 'html' for HTML report",
     )
     type_check_parser.add_argument(
         "--output",
         help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.",
+    )
+    type_check_parser.add_argument(
+        "--fail-on-issues",
+        action="store_true",
+        help="Exit with code 1 if any type-check errors are found (or any files fail in batch mode). Useful for CI.",
     )
 
     report_parser = reviewer_subparsers.add_parser(
@@ -340,6 +360,55 @@ Example:
     )
     analyze_services_parser.add_argument(
         "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured analysis data (default), 'text' for human-readable analysis report"
+    )
+
+    docs_parser = reviewer_subparsers.add_parser(
+        "docs",
+        aliases=["*docs"],
+        help="Get library documentation from Context7",
+        description="""Get up-to-date library documentation from Context7.
+
+Retrieves documentation for a library using KB-first lookup with automatic fallback.
+The documentation is cached locally for fast subsequent lookups.
+
+Example:
+  tapps-agents reviewer docs react
+  tapps-agents reviewer docs fastapi routing
+  tapps-agents reviewer docs react hooks --mode code --page 2
+  tapps-agents reviewer docs react --format markdown""",
+    )
+    docs_parser.add_argument(
+        "library",
+        help="Library name (e.g., 'react', 'fastapi', 'pytest')",
+    )
+    docs_parser.add_argument(
+        "topic",
+        nargs="?",
+        default=None,
+        help="Optional topic name (e.g., 'hooks', 'routing', 'fixtures'). Defaults to 'overview' if not specified.",
+    )
+    docs_parser.add_argument(
+        "--mode",
+        choices=["code", "info"],
+        default="code",
+        help="Documentation mode: 'code' for API references and code examples (default), 'info' for conceptual guides",
+    )
+    docs_parser.add_argument(
+        "--page",
+        type=int,
+        default=1,
+        help="Page number for pagination (default: 1). Use if documentation is paginated.",
+    )
+    docs_parser.add_argument(
+        "--format",
+        choices=["json", "text", "markdown"],
+        default="json",
+        help="Output format: 'json' for structured data (default), 'text' for plain text, 'markdown' for Markdown",
+    )
+    docs_parser.add_argument(
+        "--no-cache",
+        action="store_true",
+        help="Skip cache and fetch fresh documentation from Context7 API",
     )
 
     reviewer_subparsers.add_parser(

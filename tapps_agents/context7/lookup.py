@@ -110,6 +110,14 @@ class KBLookup:
         cached_entry = self.kb_cache.get(library, topic)
         if cached_entry:
             response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+            # R4: Record cache hit with latency
+            from .analytics import Analytics
+            from .metadata import MetadataManager
+            analytics = Analytics(
+                self.kb_cache.cache_structure,
+                MetadataManager(self.kb_cache.cache_structure)
+            )
+            analytics.record_cache_hit(response_time_ms=response_time)
             return LookupResult(
                 success=True,
                 content=cached_entry.content,
@@ -152,6 +160,15 @@ class KBLookup:
                     response_time = (
                         datetime.now(UTC) - start_time
                     ).total_seconds() * 1000
+                    # R4: Record fuzzy match with latency
+                    from .analytics import Analytics
+                    from .metadata import MetadataManager
+                    analytics = Analytics(
+                        self.kb_cache.cache_structure,
+                        MetadataManager(self.kb_cache.cache_structure)
+                    )
+                    analytics.record_fuzzy_match()
+                    analytics.record_cache_hit(response_time_ms=response_time)
                     return LookupResult(
                         success=True,
                         content=fuzzy_entry.content,
@@ -164,6 +181,15 @@ class KBLookup:
                         fuzzy_score=best_match.score,
                         matched_topic=best_match.topic,
                     )
+
+        # R4: Record cache miss before API call
+        from .analytics import Analytics
+        from .metadata import MetadataManager
+        analytics = Analytics(
+            self.kb_cache.cache_structure,
+            MetadataManager(self.kb_cache.cache_structure)
+        )
+        analytics.record_cache_miss()
 
         # Step 3: Resolve library ID if needed
         context7_id = None
@@ -184,10 +210,11 @@ class KBLookup:
                         else str(matches[0])
                     )
             elif "quota exceeded" in resolve_result.get("error", "").lower():
-                # Quota exceeded - log and return early with specific error
+                # R3: Quota exceeded - clear error message with actionable guidance
                 error_msg = resolve_result.get("error", "Context7 API quota exceeded")
                 logger.warning(
                     f"Context7 API quota exceeded for library '{library}' (topic: {topic}): {error_msg}. "
+                    f"Consider upgrading your Context7 plan or waiting for quota reset. "
                     f"Continuing without Context7 documentation."
                 )
                 response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
@@ -196,16 +223,31 @@ class KBLookup:
                     source="api",
                     library=library,
                     topic=topic,
-                    error=error_msg,
+                    error=f"Context7 API quota exceeded: {error_msg}. Consider upgrading your plan or waiting for quota reset.",
                     response_time_ms=response_time,
                 )
             else:
-                # Context7 unavailable - log and continue
+                # R3: Context7 unavailable - distinguish between different error types
                 error_msg = resolve_result.get("error", "Context7 not available")
-                logger.info(
-                    f"Context7 not available for library '{library}' (topic: {topic}): {error_msg}. "
-                    f"Continuing without Context7 documentation."
-                )
+                if "not configured" in error_msg.lower() or "not found" in error_msg.lower():
+                    # Not configured - provide setup instructions
+                    logger.info(
+                        f"Context7 not configured for library '{library}' (topic: {topic}): {error_msg}. "
+                        f"To enable Context7, set CONTEXT7_API_KEY or configure MCP server. "
+                        f"Continuing without Context7 documentation."
+                    )
+                elif "network" in error_msg.lower() or "connection" in error_msg.lower():
+                    # Network error
+                    logger.warning(
+                        f"Context7 network error for library '{library}' (topic: {topic}): {error_msg}. "
+                        f"Check your network connection. Continuing without Context7 documentation."
+                    )
+                else:
+                    # Generic unavailable
+                    logger.info(
+                        f"Context7 not available for library '{library}' (topic: {topic}): {error_msg}. "
+                        f"Continuing without Context7 documentation."
+                    )
         except Exception as e:
             # Continue without context7_id if resolution fails
             logger.warning(
@@ -225,6 +267,8 @@ class KBLookup:
                 api_result = await call_context7_get_docs_with_fallback(
                     context7_id, topic, mode="code", page=1, mcp_gateway=self.mcp_gateway
                 )
+                # R4: Record API call
+                analytics.record_api_call()
                 if api_result.get("success"):
                     result_data = api_result.get("result", {})
                     content = (
@@ -241,6 +285,8 @@ class KBLookup:
                     )
                     content = None
             except Exception as e:
+                # R4: Still record API call attempt
+                analytics.record_api_call()
                 logger.warning(
                     f"Failed to fetch Context7 docs for library '{library}' (topic: {topic}): {e}. "
                     f"Continuing without Context7 documentation.",
@@ -258,6 +304,9 @@ class KBLookup:
                 )
 
                 response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+                # R4: Record latency for API call (already recorded API call above)
+                if response_time > 0:
+                    analytics.record_cache_hit(response_time_ms=response_time)  # Reuse method to record latency
                 return LookupResult(
                     success=True,
                     content=content,

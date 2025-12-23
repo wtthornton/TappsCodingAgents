@@ -21,9 +21,12 @@ class CodeGenerator:
         context: str | None = None,
         language: str = "python",
         expert_guidance: dict[str, str] | None = None,
+        context7_docs: dict[str, str] | None = None,
     ) -> CodeGenerationInstruction:
         """
         Prepare code generation instruction for Cursor Skills.
+
+        R7: Added Context7 documentation support.
 
         Args:
             specification: Description of what code to generate
@@ -31,6 +34,7 @@ class CodeGenerator:
             context: Optional context (existing code, patterns, etc.)
             language: Programming language (default: python)
             expert_guidance: Optional expert guidance dictionary
+            context7_docs: Optional Context7 documentation (library name -> docs content)
 
         Returns:
             CodeGenerationInstruction object for Cursor Skills execution
@@ -41,6 +45,7 @@ class CodeGenerator:
             context=context,
             language=language,
             expert_guidance=expert_guidance,
+            context7_docs=context7_docs,
         )
 
     def prepare_refactoring(

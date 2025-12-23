@@ -19,6 +19,7 @@ class CodeGenerationInstruction:
     context: str | None
     language: str
     expert_guidance: dict[str, str] | None
+    context7_docs: dict[str, str] | None = None  # R7: Library name -> documentation content
 
     def to_skill_command(self, agent_name: str = "implementer") -> str:
         """Convert to Cursor Skill command string."""
@@ -36,6 +37,7 @@ class CodeGenerationInstruction:
             "context": self.context,
             "language": self.language,
             "expert_guidance": self.expert_guidance,
+            "context7_docs": self.context7_docs,
         }
 
 
