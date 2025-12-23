@@ -348,22 +348,14 @@ class FeedbackManager:
         if self.verbosity == VerbosityLevel.QUIET:
             return
             
-        if self.format_type == "json":
-            # JSON format - typically not used for info messages, but available
-            output = {
-                "type": "info",
-                "message": message,
-            }
-            if details:
-                output["details"] = details
-            print(json.dumps(output), file=sys.stderr)
-        else:
-            # Text format
-            prefix = "[INFO] " if self.verbosity == VerbosityLevel.VERBOSE else ""
-            print(f"{prefix}{message}", file=sys.stderr)
-            if details and self.verbosity == VerbosityLevel.VERBOSE:
-                for key, value in details.items():
-                    print(f"  {key}: {value}", file=sys.stderr)
+        # Status messages always go to stderr as plain text (even in JSON mode)
+        # This prevents PowerShell from trying to parse JSON status messages
+        # Only final results go to stdout as JSON
+        prefix = "[INFO] " if self.verbosity == VerbosityLevel.VERBOSE else ""
+        print(f"{prefix}{message}", file=sys.stderr)
+        if details and self.verbosity == VerbosityLevel.VERBOSE:
+            for key, value in details.items():
+                print(f"  {key}: {value}", file=sys.stderr)
     
     def _stop_heartbeat(self) -> None:
         """Stop the heartbeat if it's running."""
@@ -395,6 +387,19 @@ class FeedbackManager:
         # Stop heartbeat when operation completes
         self._stop_heartbeat()
         
+        # Calculate duration
+        duration_str = ""
+        if self.operation_start_time:
+            duration = time.time() - self.operation_start_time
+            if duration < 1:
+                duration_str = f" ({duration*1000:.0f}ms)"
+            elif duration < 60:
+                duration_str = f" ({duration:.1f}s)"
+            else:
+                minutes = int(duration // 60)
+                seconds = int(duration % 60)
+                duration_str = f" ({minutes}m {seconds}s)"
+        
         if self.format_type == "json":
             output = {
                 "success": True,
@@ -411,16 +416,21 @@ class FeedbackManager:
                     "duration_ms": duration_ms,
                     "version": PACKAGE_VERSION,
                 }
-            print(json.dumps(output, indent=2))
+            # Show success indicator to stderr, then JSON result to stdout
+            if self.verbosity != VerbosityLevel.QUIET:
+                print(f"[SUCCESS] {message}{duration_str}", file=sys.stderr)
+            print(json.dumps(output, indent=2), file=sys.stdout)
+            sys.stdout.flush()
         else:
             # Text format
-            print(f"[OK] {message}", file=sys.stderr)
+            print(f"[SUCCESS] {message}{duration_str}", file=sys.stderr)
             if summary and self.verbosity != VerbosityLevel.QUIET:
                 for key, value in summary.items():
                     print(f"  {key}: {value}", file=sys.stderr)
-            # Data goes to stdout for parsing
+            # Data goes to stdout for parsing (only in quiet mode or if explicitly requested)
             if data and self.verbosity == VerbosityLevel.QUIET:
-                print(json.dumps(data, indent=2))
+                print(json.dumps(data, indent=2), file=sys.stdout)
+                sys.stdout.flush()
     
     def warning(self, message: str, remediation: str | None = None) -> None:
         """
@@ -433,19 +443,10 @@ class FeedbackManager:
         if self.verbosity == VerbosityLevel.QUIET:
             return
             
-        if self.format_type == "json":
-            output = {
-                "type": "warning",
-                "message": message,
-            }
-            if remediation:
-                output["remediation"] = remediation
-            print(json.dumps(output), file=sys.stderr)
-        else:
-            # Text format
-            print(f"[WARN] Warning: {message}", file=sys.stderr)
-            if remediation:
-                print(f"  Suggestion: {remediation}", file=sys.stderr)
+        # Warnings always go to stderr as plain text (even in JSON mode)
+        print(f"[WARN] Warning: {message}", file=sys.stderr)
+        if remediation:
+            print(f"  Suggestion: {remediation}", file=sys.stderr)
     
     def error(
         self,
@@ -465,6 +466,18 @@ class FeedbackManager:
             remediation: Optional remediation suggestion
             exit_code: Exit code to use
         """
+        # Stop heartbeat on error
+        self._stop_heartbeat()
+        
+        # Errors always go to stderr as plain text for visibility
+        # In JSON mode, also output structured error to stdout for parsing
+        print(f"[ERROR] {error_code}: {message}", file=sys.stderr)
+        if context:
+            for key, value in context.items():
+                print(f"  {key}: {value}", file=sys.stderr)
+        if remediation:
+            print(f"  Suggestion: {remediation}", file=sys.stderr)
+        
         if self.format_type == "json":
             output = {
                 "success": False,
@@ -477,18 +490,8 @@ class FeedbackManager:
                 output["error"]["context"] = context
             if remediation:
                 output["error"]["remediation"] = remediation
-            print(json.dumps(output, indent=2), file=sys.stderr)
-        else:
-            # Text format
-            print(f"[ERROR] Error: {message}", file=sys.stderr)
-            if context:
-                for key, value in context.items():
-                    print(f"  {key}: {value}", file=sys.stderr)
-            if remediation:
-                print(f"  Suggestion: {remediation}", file=sys.stderr)
-        
-        # Stop heartbeat on error
-        self._stop_heartbeat()
+            print(json.dumps(output, indent=2), file=sys.stdout)
+            sys.stdout.flush()
         
         sys.exit(exit_code)
     
@@ -509,43 +512,35 @@ class FeedbackManager:
         if self.verbosity == VerbosityLevel.QUIET:
             return
             
-        if self.format_type == "json":
-            # Progress updates typically not in JSON format
-            # But if needed, output to stderr
-            output = {
-                "type": "progress",
-                "message": message,
-            }
-            if percentage is not None:
-                output["percentage"] = percentage
-            print(json.dumps(output), file=sys.stderr)
-        else:
-            mode = self._resolve_progress_mode()
-            if mode == ProgressMode.OFF:
+        # Progress updates always go to stderr as plain text (even in JSON mode)
+        # This prevents PowerShell from trying to parse JSON progress messages
+        # Only final results go to stdout as JSON
+        mode = self._resolve_progress_mode()
+        if mode == ProgressMode.OFF:
+            return
+
+        if mode == ProgressMode.RICH:
+            try:
+                if self._rich is None:
+                    self._rich = _RichProgressRenderer()
+                self._rich.update(message, percentage, show_progress_bar)
                 return
+            except Exception:
+                # Never fail a command due to progress rendering.
+                self._rich = None
+                mode = ProgressMode.PLAIN
 
-            if mode == ProgressMode.RICH:
-                try:
-                    if self._rich is None:
-                        self._rich = _RichProgressRenderer()
-                    self._rich.update(message, percentage, show_progress_bar)
-                    return
-                except Exception:
-                    # Never fail a command due to progress rendering.
-                    self._rich = None
-                    mode = ProgressMode.PLAIN
+        # Plain text fallback - use ASCII-safe characters for Windows compatibility
+        from ..core.unicode_safe import safe_print, safe_format_progress_bar
 
-            # Plain text fallback - use ASCII-safe characters for Windows compatibility
-            from ..core.unicode_safe import safe_print, safe_format_progress_bar
-
-            spinner = self._plain_spinner.next()
-            if show_progress_bar and percentage is not None:
-                bar = safe_format_progress_bar(percentage, width=24)
-                safe_print(f"{spinner} {message} {bar}", file=sys.stderr, end="\r")
-                sys.stderr.flush()
-            else:
-                safe_print(f"{spinner} {message}", file=sys.stderr, end="\r")
-                sys.stderr.flush()
+        spinner = self._plain_spinner.next()
+        if show_progress_bar and percentage is not None:
+            bar = safe_format_progress_bar(percentage, width=24)
+            safe_print(f"{spinner} {message} {bar}", file=sys.stderr, end="\r")
+            sys.stderr.flush()
+        else:
+            safe_print(f"{spinner} {message}", file=sys.stderr, end="\r")
+            sys.stderr.flush()
     
     def clear_progress(self) -> None:
         """Clear the current progress line."""
@@ -640,19 +635,25 @@ class FeedbackManager:
                 print(data, file=sys.stdout)
             sys.stdout.flush()
     
-    def start_operation(self, operation_name: str) -> None:
+    def start_operation(self, operation_name: str, description: str | None = None) -> None:
         """
         Start timing an operation and optionally start a heartbeat.
         
         Args:
             operation_name: Name of the operation
+            description: Optional description of what the operation does
         """
         self.operation_start_time = time.time()
-        if self.verbosity == VerbosityLevel.VERBOSE:
-            self.info(f"Starting {operation_name}...")
+        
+        # Always show clear START indicator (unless quiet mode)
+        if self.verbosity != VerbosityLevel.QUIET:
+            if description:
+                self.info(f"[START] {operation_name} - {description}")
+            else:
+                self.info(f"[START] {operation_name}...")
         
         # Start heartbeat for long-running operations (after 2 seconds)
-        if self.verbosity != VerbosityLevel.QUIET and self.format_type != "json":
+        if self.verbosity != VerbosityLevel.QUIET:
             try:
                 from .progress_heartbeat import ProgressHeartbeat
                 self._heartbeat = ProgressHeartbeat(
@@ -671,6 +672,28 @@ class FeedbackManager:
         if self.operation_start_time:
             return int((time.time() - self.operation_start_time) * 1000)
         return None
+    
+    def running(self, message: str, step: int | None = None, total_steps: int | None = None) -> None:
+        """
+        Output running status message.
+        
+        Args:
+            message: Running status message
+            step: Current step number (optional)
+            total_steps: Total number of steps (optional)
+        """
+        if self.verbosity == VerbosityLevel.QUIET:
+            return
+        
+        # Format step information if provided
+        step_info = ""
+        if step is not None and total_steps is not None:
+            step_info = f" (step {step}/{total_steps})"
+        elif step is not None:
+            step_info = f" (step {step})"
+        
+        # Running status always goes to stderr as plain text
+        print(f"[RUNNING] {message}{step_info}", file=sys.stderr)
 
 
 # Convenience functions for easy access

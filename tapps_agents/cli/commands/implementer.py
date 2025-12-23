@@ -20,12 +20,14 @@ async def implement_command(
     """Generate and write code to file (with review)"""
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Implement")
-    feedback.info(f"Implementing code in {file_path}...")
+    spec_preview = specification[:50] + "..." if len(specification) > 50 else specification
+    feedback.start_operation("Code Implementation", f"Implementing: {spec_preview} in {file_path}")
+    feedback.running("Analyzing specification...", step=1, total_steps=4)
     
     implementer = ImplementerAgent()
     try:
         await implementer.activate()
+        feedback.running("Generating code structure...", step=2, total_steps=4)
         result = await implementer.run(
             "implement",
             specification=specification,
@@ -33,14 +35,25 @@ async def implement_command(
             context=context,
             language=language,
         )
+        feedback.running("Reviewing code quality...", step=3, total_steps=4)
+        feedback.running("Preparing implementation...", step=4, total_steps=4)
 
         check_result_error(result)
         feedback.clear_progress()
 
         # Note: Implementer returns instructions for Cursor Skills execution
         # The actual code generation happens via Cursor Skills, not directly in CLI
+        summary = {}
+        if isinstance(result, dict):
+            if "file" in result:
+                summary["target_file"] = result["file"]
+            if "file_existed" in result:
+                summary["file_existed"] = result["file_existed"]
+            if "instruction" in result:
+                summary["instruction_prepared"] = True
+        
         if output_format == "json":
-            feedback.output_result(result, message="Code implementation instruction prepared successfully")
+            feedback.output_result(result, message="Code implementation instruction prepared successfully", summary=summary)
             # Add prominent note about Cursor Skills execution
             if "instruction" in result:
                 feedback.warning(
@@ -77,9 +90,17 @@ async def generate_code_command(
     output_format: str = "json",
 ):
     """Generate code from specification (no file write)"""
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    spec_preview = specification[:50] + "..." if len(specification) > 50 else specification
+    target_desc = f" for {file_path}" if file_path else ""
+    feedback.start_operation("Code Generation", f"Generating code{target_desc}: {spec_preview}")
+    feedback.running("Analyzing specification...", step=1, total_steps=3)
+    
     implementer = ImplementerAgent()
     try:
         await implementer.activate()
+        feedback.running("Generating code...", step=2, total_steps=3)
         result = await implementer.run(
             "generate-code",
             specification=specification,
@@ -87,19 +108,28 @@ async def generate_code_command(
             context=context,
             language=language,
         )
+        feedback.running("Preparing code output...", step=3, total_steps=3)
 
         check_result_error(result)
+        feedback.clear_progress()
+
+        summary = {}
+        if isinstance(result, dict):
+            if "file" in result:
+                summary["target_file"] = result["file"]
+            if "instruction" in result:
+                summary["instruction_prepared"] = True
 
         if output_format == "json":
-            format_json_output(result)
+            feedback.output_result(result, message="Code generation instruction prepared", summary=summary)
             # Add note about instruction-based execution
             if "instruction" in result:
-                feedback = get_feedback()
                 feedback.warning(
                     "⚠️  Note: This command returns an instruction object.\n"
                     "   To see actual generated code, use @implementer in Cursor IDE."
                 )
         else:
+            feedback.success("Code generation instruction prepared")
             print("⚠️  Note: This command returns an instruction object, not actual code.")
             print("   To see generated code, use @implementer in Cursor IDE.")
             if "skill_command" in result:
@@ -117,21 +147,38 @@ async def refactor_command(
 ):
     """Refactor existing code file"""
     from ..utils.output_handler import write_output
+    from ..feedback import get_feedback
+    
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    inst_preview = instruction[:50] + "..." if len(instruction) > 50 else instruction
+    feedback.start_operation("Code Refactoring", f"Refactoring {file_path}: {inst_preview}")
+    feedback.running("Analyzing source file...", step=1, total_steps=3)
     
     implementer = ImplementerAgent()
     try:
         await implementer.activate()
+        feedback.running("Applying refactoring...", step=2, total_steps=3)
         result = await implementer.run(
             "refactor", file_path=file_path, instruction=instruction
         )
+        feedback.running("Preparing refactored code...", step=3, total_steps=3)
 
         check_result_error(result)
+        feedback.clear_progress()
+
+        summary = {}
+        if isinstance(result, dict):
+            if "file" in result:
+                summary["source_file"] = result["file"]
+            if "instruction" in result:
+                summary["instruction_prepared"] = True
 
         # Use output handler utility for consistent output
         if output_file or output_format != "json":
             write_output(result, output_file=output_file, format_type=output_format, default_format="json")
         else:
-            format_json_output(result)
+            feedback.output_result(result, message="Refactoring instruction prepared", summary=summary)
             
         # Note: Actual file writing with refactored code would happen here
         # Currently, refactor returns instructions, not actual refactored code

@@ -59,17 +59,30 @@ def handle_health_check_command(
     # Run checks
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Health Check")
+    operation_desc = f"Running health check: {check_name}" if check_name else "Running all health checks"
+    feedback.start_operation("Health Check", operation_desc)
     
     if check_name:
         check_names = [check_name]
-        feedback.info(f"Running health check: {check_name}...")
+        feedback.running(f"Initializing check: {check_name}...", step=1, total_steps=3)
     else:
         check_names = None
-        feedback.info("Running all health checks...")
+        feedback.running("Discovering health checks...", step=1, total_steps=3)
 
+    feedback.running("Executing health checks...", step=2, total_steps=3)
     results = orchestrator.run_all_checks(check_names=check_names, save_metrics=save)
+    feedback.running("Collecting results...", step=3, total_steps=3)
     feedback.clear_progress()
+
+    # Build summary
+    summary = {}
+    if results:
+        healthy_count = sum(1 for r in results.values() if r and r.status == "healthy")
+        total_count = len([r for r in results.values() if r])
+        summary["checks_run"] = total_count
+        summary["healthy"] = healthy_count
+        summary["degraded"] = sum(1 for r in results.values() if r and r.status == "degraded")
+        summary["unhealthy"] = sum(1 for r in results.values() if r and r.status == "unhealthy")
 
     # Format output
     if output_format == "json":
@@ -92,7 +105,7 @@ def handle_health_check_command(
                 if result
             }
         }
-        feedback.output_result(output, message="Health checks completed")
+        feedback.output_result(output, message="Health checks completed", summary=summary)
     else:
         # Text output
         feedback.success("Health checks completed")
@@ -181,8 +194,10 @@ def handle_health_dashboard_command(
     # Render dashboard
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Health Dashboard")
-    feedback.info("Generating health dashboard...")
+    feedback.start_operation("Health Dashboard", "Generating health dashboard visualization")
+    feedback.running("Collecting health metrics...", step=1, total_steps=3)
+    feedback.running("Generating dashboard...", step=2, total_steps=3)
+    feedback.running("Rendering dashboard output...", step=3, total_steps=3)
     
     if output_format == "json":
         output = dashboard.render_json()
@@ -218,11 +233,14 @@ def handle_health_metrics_command(
     # Get metrics
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Health Metrics")
-    feedback.info("Collecting health metrics...")
+    operation_desc = f"Collecting metrics{f' for {check_name}' if check_name else ''}"
+    feedback.start_operation("Health Metrics", operation_desc)
+    feedback.running("Querying metrics database...", step=1, total_steps=3)
     
     metrics = collector.get_metrics(check_name=check_name, status=status, days=days, limit=1000)
+    feedback.running("Calculating summary statistics...", step=2, total_steps=3)
     summary = collector.get_summary(days=days)
+    feedback.running("Formatting results...", step=3, total_steps=3)
     feedback.clear_progress()
 
     if output_format == "json":
@@ -278,10 +296,12 @@ def handle_health_trends_command(
     # Get trends
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Health Trends")
-    feedback.info(f"Analyzing trends for {check_name}...")
+    feedback.start_operation("Health Trends", f"Analyzing health trends for {check_name}")
+    feedback.running("Loading historical data...", step=1, total_steps=3)
     
     trends = collector.get_trends(check_name=check_name, days=days)
+    feedback.running("Calculating trends...", step=2, total_steps=3)
+    feedback.running("Generating trend report...", step=3, total_steps=3)
     feedback.clear_progress()
 
     if output_format == "json":

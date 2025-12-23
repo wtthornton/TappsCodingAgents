@@ -14,19 +14,29 @@ async def plan_command(description: str, output_format: str = "json"):
     """Create a plan for a feature/requirement"""
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Plan")
-    feedback.info("Creating plan...")
+    desc_preview = description[:50] + "..." if len(description) > 50 else description
+    feedback.start_operation("Plan Creation", f"Creating plan for: {desc_preview}")
+    feedback.running("Analyzing requirements...", step=1, total_steps=3)
     
     planner = PlannerAgent()
     try:
         await planner.activate()
+        feedback.running("Generating plan structure...", step=2, total_steps=3)
         result = await planner.run("plan", description=description)
+        feedback.running("Finalizing plan...", step=3, total_steps=3)
 
         check_result_error(result)
         feedback.clear_progress()
 
+        summary = {}
+        if isinstance(result, dict):
+            if "plan" in result:
+                summary["plan_items"] = len(result.get("plan", "").split("\n")) if isinstance(result.get("plan"), str) else 0
+            if "description" in result:
+                summary["description"] = result["description"][:100] + "..." if len(result.get("description", "")) > 100 else result.get("description", "")
+
         if output_format == "json":
-            feedback.output_result(result, message="Plan created successfully")
+            feedback.output_result(result, message="Plan created successfully", summary=summary)
         else:
             feedback.success("Plan created successfully")
             print(f"\nPlan: {result['description']}")
@@ -42,18 +52,39 @@ async def create_story_command(
     output_format: str = "json",
 ):
     """Generate a user story from description"""
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    desc_preview = description[:50] + "..." if len(description) > 50 else description
+    feedback.start_operation("Create User Story", f"Creating story: {desc_preview}")
+    feedback.running("Analyzing story requirements...", step=1, total_steps=3)
+    
     planner = PlannerAgent()
     try:
         await planner.activate()
+        feedback.running("Generating story structure...", step=2, total_steps=3)
         result = await planner.run(
             "create-story", description=description, epic=epic, priority=priority
         )
+        feedback.running("Saving story file...", step=3, total_steps=3)
 
         check_result_error(result)
+        feedback.clear_progress()
+
+        summary = {}
+        if isinstance(result, dict):
+            if "story_id" in result:
+                summary["story_id"] = result["story_id"]
+            if "story_file" in result:
+                summary["story_file"] = result["story_file"]
+            if "metadata" in result:
+                summary["epic"] = result["metadata"].get("epic", "N/A")
+                summary["priority"] = result["metadata"].get("priority", "medium")
+                summary["complexity"] = result["metadata"].get("complexity", 0)
 
         if output_format == "json":
-            format_json_output(result)
+            feedback.output_result(result, message="User story created successfully", summary=summary)
         else:
+            feedback.success("User story created successfully")
             print(f"Story created: {result['story_id']}")
             print(f"File: {result['story_file']}")
             print(f"\nTitle: {result['metadata']['title']}")

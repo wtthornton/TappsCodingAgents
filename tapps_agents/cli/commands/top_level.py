@@ -49,10 +49,12 @@ def hardware_profile_command(
     
     feedback = get_feedback()
     feedback.format_type = output_format
-    feedback.start_operation("Hardware Profile")
+    operation_desc = f"Setting profile to {set_profile}" if set_profile else "Checking hardware profile"
+    feedback.start_operation("Hardware Profile", operation_desc)
     
     # If user wants to set a profile
     if set_profile:
+        feedback.running("Validating profile...", step=1, total_steps=3)
         # Validate profile
         valid_profiles = ["auto", "nuc", "development", "workstation", "server"]
         if set_profile.lower() not in valid_profiles:
@@ -73,8 +75,15 @@ def hardware_profile_command(
             config.hardware_auto_detect = False
             config.detected_profile = set_profile.lower()
         
+        feedback.running("Saving configuration...", step=2, total_steps=3)
         config_manager.save(config)
+        feedback.running("Configuration saved", step=3, total_steps=3)
         feedback.clear_progress()
+        
+        summary = {
+            "profile_set": set_profile.lower(),
+            "detected_profile": detected_profile.value,
+        }
         
         if output_format == "json":
             result = {
@@ -100,7 +109,7 @@ def hardware_profile_command(
                     "disk_free_gb": round(current_resource_usage["disk_free_gb"], 2),
                 },
             }
-            feedback.output_result(result, message="Hardware profile set successfully")
+            feedback.output_result(result, message="Hardware profile set successfully", summary=summary)
         else:
             feedback.success("Hardware profile set successfully")
             print(f"\nHardware profile set to: {set_profile.lower()}")
@@ -111,7 +120,8 @@ def hardware_profile_command(
             print(f"\nConfiguration saved to: {config_manager.config_path}")
     else:
         # Just show current status
-        feedback.info("Retrieving hardware profile information...")
+        feedback.running("Retrieving hardware profile information...", step=1, total_steps=2)
+        feedback.running("Collecting hardware metrics...", step=2, total_steps=2)
         feedback.clear_progress()
         if output_format == "json":
             result = {
@@ -219,8 +229,8 @@ def handle_create_command(args: object) -> None:
             safe_print("[WARN] Headless mode: local-only execution. LLM-driven workflow steps will not auto-generate artifacts without Cursor Skills.")
 
     try:
-        feedback.start_operation("Create Project")
-        feedback.info(f"Loading workflow preset: {workflow_name}...")
+        feedback.start_operation("Create Project", f"Creating project with {workflow_name} workflow")
+        feedback.running(f"Loading workflow preset: {workflow_name}...", step=1, total_steps=5)
         workflow = loader.load_preset(workflow_name)
         if not workflow:
             feedback.error(
@@ -230,7 +240,8 @@ def handle_create_command(args: object) -> None:
                 exit_code=3,
             )
 
-        feedback.info(f"Creating project with workflow: {workflow.name}")
+        feedback.running(f"Initializing workflow: {workflow.name}...", step=2, total_steps=5)
+        feedback.running("Preparing project structure...", step=3, total_steps=5)
         if feedback.verbosity.value == "verbose":
             print(f"\n{'='*60}")
             print(f"Creating Project: {workflow.name}")

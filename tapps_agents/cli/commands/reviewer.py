@@ -951,20 +951,45 @@ def handle_reviewer_command(args: object) -> None:
                 )
             )
         elif command == "report":
-            feedback.start_operation("Report")
-            feedback.info("Generating report...")
+            feedback.start_operation("Report Generation", "Analyzing project quality...")
             formats = getattr(args, "formats", ["all"])
             if "all" in formats:
                 format_type = "all"
             else:
                 format_type = ",".join(formats)
+            
+            # Show initial progress
+            feedback.running("Discovering files...", step=1, total_steps=4)
+            
             reviewer = ReviewerAgent()
             result = run_async_command(
                 run_report(reviewer, args.target, format_type, getattr(args, "output_dir", None))
             )
             check_result_error(result)
             feedback.clear_progress()
-            feedback.output_result(result, message="Report generated successfully")
+            
+            # Extract report paths from result for better feedback
+            report_paths = []
+            if isinstance(result, dict):
+                if "reports" in result and isinstance(result["reports"], dict):
+                    # Reports is a dict like {"json": "path", "markdown": "path", ...}
+                    report_paths = list(result["reports"].values())
+                elif "reports" in result and isinstance(result["reports"], list):
+                    report_paths = result["reports"]
+                elif "data" in result and isinstance(result["data"], dict):
+                    if "reports" in result["data"]:
+                        if isinstance(result["data"]["reports"], dict):
+                            report_paths = list(result["data"]["reports"].values())
+                        elif isinstance(result["data"]["reports"], list):
+                            report_paths = result["data"]["reports"]
+            
+            summary = {}
+            if report_paths:
+                summary["reports_generated"] = len(report_paths)
+                if len(report_paths) <= 5:  # Only show paths if not too many
+                    summary["report_files"] = report_paths
+            
+            feedback.output_result(result, message="Report generated successfully", warnings=None)
         elif command == "duplication":
             feedback.start_operation("Duplication Check")
             feedback.info(f"Checking for code duplication in {args.target}...")

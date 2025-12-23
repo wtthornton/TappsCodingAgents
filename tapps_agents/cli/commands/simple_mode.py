@@ -67,10 +67,12 @@ def handle_simple_mode_on() -> None:
         )
 
     # Load config
+    feedback.running("Loading configuration...", step=2, total_steps=3)
     config = load_config(config_path)
     config.simple_mode.enabled = True
 
     # Save config
+    feedback.running("Saving configuration...", step=3, total_steps=3)
     save_config(config_path, config)
 
     feedback.clear_progress()
@@ -87,9 +89,10 @@ def handle_simple_mode_off() -> None:
     """Disable Simple Mode."""
     feedback = get_feedback()
     error_handler = SimpleModeErrorHandler()
-    feedback.start_operation("Disabling Simple Mode")
+    feedback.start_operation("Disable Simple Mode", "Disabling Simple Mode in configuration")
 
     # Find config file
+    feedback.running("Locating configuration file...", step=1, total_steps=3)
     config_path = find_config_file()
     if not config_path:
         error_handler.handle_error(
@@ -126,7 +129,8 @@ def handle_simple_mode_status(args: object) -> None:
     output_format = getattr(args, "format", "text")
     feedback.format_type = output_format
 
-    feedback.start_operation("Checking Simple Mode status")
+    feedback.start_operation("Simple Mode Status", "Checking Simple Mode configuration status")
+    feedback.running("Loading configuration...", step=1, total_steps=2)
 
     # Find config file
     config_path = find_config_file()
@@ -134,6 +138,7 @@ def handle_simple_mode_status(args: object) -> None:
         # No config file - use defaults
         config = ProjectConfig()
     else:
+        feedback.running("Loading configuration...", step=2, total_steps=2)
         config = load_config(config_path)
 
     feedback.clear_progress()
