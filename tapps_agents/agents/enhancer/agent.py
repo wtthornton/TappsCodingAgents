@@ -81,6 +81,9 @@ class EnhancerAgent(BaseAgent):
         # Skill invoker for executing Cursor Skills when possible
         self.skill_invoker = None  # Lazy load
 
+        # Context7 helper for Option 3 quality uplift (C1-C3, D1-D2, E2)
+        self.context7 = None  # Lazy load in activate()
+
         # Enhancement state
         self.current_session: dict[str, Any] | None = None
 
@@ -95,6 +98,13 @@ class EnhancerAgent(BaseAgent):
             self.skill_invoker = SkillInvoker(project_root=project_root, use_api=False)
         except Exception:
             logger.debug("SkillInvoker not available; skills will be prepared but not executed")
+
+        # Initialize Context7 helper for Option 3 quality uplift
+        try:
+            from ...context7.agent_integration import get_context7_helper
+            self.context7 = get_context7_helper(self, self.config, project_root)
+        except Exception as e:
+            logger.debug(f"Context7 helper not available: {e}")
 
         # Load expert registry if domains.md exists
         if project_root:
@@ -609,7 +619,31 @@ class EnhancerAgent(BaseAgent):
     # Stage implementations
 
     async def _stage_analysis(self, prompt: str) -> dict[str, Any]:
-        """Stage 1: Analyze prompt intent, scope, and domains."""
+        """
+        Stage 1: Analyze prompt intent, scope, and domains.
+        
+        Option 3 (C1) Enhancement: Enhanced library detection with Context7 pre-fetching.
+        """
+        # C1: Detect libraries from prompt and pre-fetch Context7 docs
+        detected_libraries = []
+        context7_docs = {}
+        
+        if self.context7:
+            try:
+                # Detect libraries from prompt
+                detected_libraries = self.context7.detect_libraries(prompt=prompt)
+                
+                # Pre-fetch Context7 documentation for detected libraries
+                if detected_libraries:
+                    context7_docs = await self.context7.get_documentation_for_libraries(
+                        libraries=detected_libraries,
+                        topic=None,  # Get general docs first
+                        use_fuzzy_match=True
+                    )
+                    logger.debug(f"C1: Detected {len(detected_libraries)} libraries, fetched {sum(1 for v in context7_docs.values() if v)} docs")
+            except Exception as e:
+                logger.debug(f"C1: Library detection failed: {e}")
+
         analysis_prompt = f"""Analyze the following prompt and extract:
 1. Intent (feature, bug fix, refactor, documentation, etc.)
 2. Detected domains (security, user-management, payments, etc.)
@@ -647,6 +681,12 @@ Provide structured JSON response with the following format:
             # Parse the response to extract structured data
             parsed = self._parse_analysis_response(analysis_text)
             
+            # Merge detected libraries into technologies
+            if detected_libraries:
+                technologies = parsed.get("technologies", [])
+                technologies.extend([lib for lib in detected_libraries if lib not in technologies])
+                parsed["technologies"] = technologies
+            
             return {
                 "original_prompt": prompt,
                 "intent": parsed.get("intent", "unknown"),
@@ -657,6 +697,9 @@ Provide structured JSON response with the following format:
                 "complexity": parsed.get("complexity", "medium"),
                 "analysis": analysis_text,  # Keep raw response for reference
                 "parsed_data": parsed,  # Store parsed data
+                # C1 Enhancement: Library detection and Context7 docs
+                "detected_libraries": detected_libraries,
+                "context7_docs": {k: v is not None for k, v in context7_docs.items()},  # Store availability only
             }
         except Exception as e:
             logger.warning(f"Analysis stage failed: {e}, using fallback values")
@@ -671,12 +714,18 @@ Provide structured JSON response with the following format:
                 "complexity": "medium",
                 "analysis": f"Analysis failed: {str(e)}",
                 "parsed_data": {},
+                "detected_libraries": detected_libraries,
+                "context7_docs": {},
             }
 
     async def _stage_requirements(
         self, prompt: str, analysis: dict[str, Any]
     ) -> dict[str, Any]:
-        """Stage 2: Enrich requirements with analyst and experts."""
+        """
+        Stage 2: Enrich requirements with analyst and experts.
+        
+        Option 3 (C2) Enhancement: Requirements with Context7 best practices.
+        """
         # Use analyst to gather requirements
         requirements_result = await self.analyst.run(
             "gather-requirements",
@@ -689,6 +738,42 @@ Provide structured JSON response with the following format:
             if "error" not in requirements_result
             else {}
         )
+        
+        # C2: Enhance requirements with Context7 best practices
+        library_best_practices = {}
+        api_compatibility = {}
+        detected_libraries = analysis.get("detected_libraries", [])
+        
+        if self.context7 and detected_libraries:
+            try:
+                # Fetch best practices for each detected library
+                for lib in detected_libraries:
+                    best_practices = await self.context7.get_documentation(
+                        library=lib,
+                        topic="best-practices",
+                        use_fuzzy_match=True
+                    )
+                    
+                    if best_practices:
+                        library_best_practices[lib] = {
+                            "content_preview": best_practices.get("content", "")[:500] if best_practices.get("content") else "",
+                            "source": best_practices.get("source", "unknown"),
+                        }
+                        
+                        # Check API compatibility (basic check)
+                        api_compatibility[lib] = {
+                            "docs_available": True,
+                            "best_practices_available": True,
+                        }
+                    else:
+                        api_compatibility[lib] = {
+                            "docs_available": False,
+                            "best_practices_available": False,
+                        }
+                
+                logger.debug(f"C2: Enhanced requirements with best practices for {len(library_best_practices)} libraries")
+            except Exception as e:
+                logger.debug(f"C2: Best practices enhancement failed: {e}")
         
         # Try to execute the skill if we have a skill invoker and instruction
         if self.skill_invoker and "requirements" in requirements_result:
@@ -745,12 +830,19 @@ Provide structured JSON response with the following format:
             "assumptions": requirements.get("assumptions", []),
             "expert_consultations": expert_consultations,
             "requirements_analysis": requirements.get("analysis", ""),
+            # C2 Enhancement: Context7 best practices
+            "library_best_practices": library_best_practices,
+            "api_compatibility": api_compatibility,
         }
 
     async def _stage_architecture(
         self, prompt: str, requirements: dict[str, Any]
     ) -> dict[str, Any]:
-        """Stage 3: Architecture guidance."""
+        """
+        Stage 3: Architecture guidance.
+        
+        Option 3 (C3) Enhancement: Architecture with Context7 patterns.
+        """
         if self.architect is None:
             from ...agents.architect.agent import ArchitectAgent
 
@@ -764,11 +856,70 @@ Provide structured JSON response with the following format:
             context=json.dumps(requirements, indent=2),
         )
 
+        # C3: Enhance architecture with Context7 patterns
+        library_patterns = {}
+        integration_examples = {}
+        
+        # Get libraries from requirements (set in C2) or detect from prompt
+        detected_libraries = []
+        if "api_compatibility" in requirements:
+            detected_libraries = list(requirements.get("api_compatibility", {}).keys())
+        elif self.context7:
+            detected_libraries = self.context7.detect_libraries(prompt=prompt)
+        
+        if self.context7 and detected_libraries:
+            try:
+                # Fetch architecture patterns for each library
+                for lib in detected_libraries:
+                    arch_patterns = await self.context7.get_documentation(
+                        library=lib,
+                        topic="architecture",
+                        use_fuzzy_match=True
+                    )
+                    
+                    if arch_patterns:
+                        library_patterns[lib] = {
+                            "content_preview": arch_patterns.get("content", "")[:500] if arch_patterns.get("content") else "",
+                            "source": arch_patterns.get("source", "unknown"),
+                        }
+                        
+                        # Extract integration examples (basic extraction)
+                        content = arch_patterns.get("content", "")
+                        if content:
+                            # Look for code examples in content
+                            if "example" in content.lower() or "integration" in content.lower():
+                                integration_examples[lib] = {
+                                    "has_examples": True,
+                                    "pattern_available": True,
+                                }
+                    else:
+                        # Try alternative topics
+                        for alt_topic in ["patterns", "integration", "design"]:
+                            alt_patterns = await self.context7.get_documentation(
+                                library=lib,
+                                topic=alt_topic,
+                                use_fuzzy_match=True
+                            )
+                            if alt_patterns:
+                                library_patterns[lib] = {
+                                    "content_preview": alt_patterns.get("content", "")[:500] if alt_patterns.get("content") else "",
+                                    "source": alt_patterns.get("source", "unknown"),
+                                    "topic": alt_topic,
+                                }
+                                break
+                
+                logger.debug(f"C3: Enhanced architecture with patterns for {len(library_patterns)} libraries")
+            except Exception as e:
+                logger.debug(f"C3: Architecture patterns enhancement failed: {e}")
+
         return {
             "system_design": arch_result.get("architecture", {}),
             "design_patterns": [],
             "technology_recommendations": [],
             "architecture_guidance": arch_result.get("guidance", ""),
+            # C3 Enhancement: Context7 architecture patterns
+            "library_patterns": library_patterns,
+            "integration_examples": integration_examples,
         }
 
     async def _stage_codebase_context(

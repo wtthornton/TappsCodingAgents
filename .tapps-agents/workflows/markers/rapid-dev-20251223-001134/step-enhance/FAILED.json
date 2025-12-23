@@ -1,0 +1,20 @@
+{
+  "workflow_id": "rapid-dev-20251223-001134",
+  "step_id": "enhance",
+  "agent": "enhancer",
+  "action": "enhance-prompt",
+  "status": "failed",
+  "timestamp": "2025-12-23T00:11:36.837619",
+  "error": "SkillInvoker._build_parameters() missing 1 required positional argument: 'worktree_path'",
+  "worktree_name": "workflow-rapid-dev-20251223-001134-step-enhance-20759125",
+  "worktree_path": "C:\\cursor\\TappsCodingAgents\\.tapps-agents\\worktrees\\workflow-rapid-dev-20251223-001134-step-enhance-20759125",
+  "expected_artifacts": [
+    "enhanced-requirements.md"
+  ],
+  "duration_seconds": 2.412537,
+  "started_at": "2025-12-23T00:11:34.425082",
+  "error_type": "TypeError",
+  "metadata": {
+    "marker_location": ".tapps-agents/workflows/markers/rapid-dev-20251223-001134/step-enhance/FAILED.json"
+  }
+}

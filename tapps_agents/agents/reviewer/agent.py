@@ -437,13 +437,16 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         
         if context7_helper and context7_helper.enabled:
             try:
-                # Detect libraries from code
+                # E2: Detect libraries ONLY from code (not project files)
+                # This ensures we only verify libraries actually used in the code
                 language_str = file_type.lower()  # "python", "typescript", etc.
-                libraries_used = context7_helper.detect_libraries(
-                    code=code,
-                    prompt=None,
-                    language=language_str
-                )
+                if code:
+                    libraries_used = context7_helper.library_detector.detect_from_code(
+                        code=code,
+                        language=language_str
+                    )
+                else:
+                    libraries_used = []
                 
                 if libraries_used:
                     # Verify each library usage against Context7 docs

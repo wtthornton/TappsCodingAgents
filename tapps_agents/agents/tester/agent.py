@@ -157,13 +157,47 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             focus_areas = [area.strip() for area in focus.split(",")]
             focus_text = f" Focus specifically on: {', '.join(focus_areas)}."
         
+        # D1: Get Context7 test framework documentation
+        framework_docs = None
+        test_framework = "pytest"  # Default
+        try:
+            from ...core.language_detector import LanguageDetector
+            detector = LanguageDetector()
+            language = detector.detect_language(file_path)
+            test_framework = self.test_generator._detect_test_framework_for_language(
+                language=language,
+                code=file_path.read_text(encoding="utf-8") if file_path.exists() else ""
+            )
+        except Exception as e:
+            logger.debug(f"Failed to detect test framework: {e}, using default pytest")
+        
+        if self.context7:
+            try:
+                # Get Context7 documentation for test framework
+                framework_docs = await self.context7.get_documentation(
+                    library=test_framework,  # e.g., "pytest", "jest", "vitest"
+                    topic="testing",
+                    use_fuzzy_match=True
+                )
+                if framework_docs:
+                    logger.debug(f"D1: Fetched Context7 docs for {test_framework}")
+            except Exception as e:
+                logger.debug(f"D1: Context7 framework docs lookup failed: {e}")
+
         # Consult Testing expert for test generation guidance
         expert_guidance = ""
         expert_advice = None
+        
+        # Enhance expert query with Context7 best practices if available
+        context7_guidance = ""
+        if framework_docs and framework_docs.get("content"):
+            content_preview = framework_docs.get("content", "")[:1000]  # First 1000 chars
+            context7_guidance = f"\n\nContext7 Best Practices for {test_framework}:\n{content_preview}"
+        
         # Use defensive check to ensure attribute exists (safety for MRO issue)
         if hasattr(self, 'expert_registry') and self.expert_registry:
             testing_consultation = await self.expert_registry.consult(
-                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.{focus_text}",
+                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.{focus_text}{context7_guidance}",
                 domain="testing-strategies",
                 agent_id=self.agent_id,
                 prioritize_builtin=True,
@@ -218,6 +252,31 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 exc_info=True
             )
 
+        # D2: Prepare test quality validation info (will be used after test generation)
+        quality_validation = None
+        if self.context7 and framework_docs:
+            try:
+                # Get quality standards for the test framework
+                quality_standards = await self.context7.get_documentation(
+                    library=test_framework,
+                    topic="quality-standards",
+                    use_fuzzy_match=True
+                )
+                
+                if quality_standards:
+                    quality_validation = {
+                        "framework": test_framework,
+                        "standards_available": True,
+                        "source": quality_standards.get("source", "unknown"),
+                    }
+                else:
+                    quality_validation = {
+                        "framework": test_framework,
+                        "standards_available": False,
+                    }
+            except Exception as e:
+                logger.debug(f"D2: Quality standards lookup failed: {e}")
+
         return {
             "type": "test",
             "instruction": instruction.to_dict(),
@@ -225,6 +284,14 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             "test_file": str(test_path),
             "test_directory": str(test_path.parent),
             "expert_advice": expert_advice,  # Include expert recommendations
+            # D1 Enhancement: Context7 framework documentation
+            "context7_framework_docs": {
+                "framework": test_framework,
+                "docs_available": framework_docs is not None,
+                "source": framework_docs.get("source") if framework_docs else None,
+            } if framework_docs else None,
+            # D2 Enhancement: Quality validation info
+            "quality_validation": quality_validation,
         }
 
     async def generate_tests_command(
@@ -254,12 +321,43 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         except (FileNotFoundError, ValueError) as e:
             return {"error": str(e)}
 
+        # D1: Get Context7 test framework documentation (same as test_command)
+        framework_docs = None
+        test_framework = "pytest"  # Default
+        try:
+            from ...core.language_detector import LanguageDetector
+            detector = LanguageDetector()
+            language = detector.detect_language(file_path)
+            test_framework = self.test_generator._detect_test_framework_for_language(
+                language=language,
+                code=file_path.read_text(encoding="utf-8") if file_path.exists() else ""
+            )
+        except Exception as e:
+            logger.debug(f"Failed to detect test framework: {e}, using default pytest")
+        
+        if self.context7:
+            try:
+                framework_docs = await self.context7.get_documentation(
+                    library=test_framework,
+                    topic="testing",
+                    use_fuzzy_match=True
+                )
+                if framework_docs:
+                    logger.debug(f"D1: Fetched Context7 docs for {test_framework}")
+            except Exception as e:
+                logger.debug(f"D1: Context7 framework docs lookup failed: {e}")
+
         # Consult Testing expert for test generation guidance
         expert_guidance = ""
+        context7_guidance = ""
+        if framework_docs and framework_docs.get("content"):
+            content_preview = framework_docs.get("content", "")[:1000]
+            context7_guidance = f"\n\nContext7 Best Practices for {test_framework}:\n{content_preview}"
+        
         # Use defensive check to ensure attribute exists (safety for MRO issue)
         if hasattr(self, 'expert_registry') and self.expert_registry:
             testing_consultation = await self.expert_registry.consult(
-                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.",
+                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.{context7_guidance}",
                 domain="testing-strategies",
                 agent_id=self.agent_id,
                 prioritize_builtin=True,
@@ -292,11 +390,37 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         else:
             test_path = self._get_test_file_path(file_path)
 
+        # D2: Quality validation info
+        quality_validation = None
+        if self.context7 and framework_docs:
+            try:
+                quality_standards = await self.context7.get_documentation(
+                    library=test_framework,
+                    topic="quality-standards",
+                    use_fuzzy_match=True
+                )
+                if quality_standards:
+                    quality_validation = {
+                        "framework": test_framework,
+                        "standards_available": True,
+                        "source": quality_standards.get("source", "unknown"),
+                    }
+            except Exception as e:
+                logger.debug(f"D2: Quality standards lookup failed: {e}")
+
         return {
             "type": "test_generation",
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
+            # D1 Enhancement
+            "context7_framework_docs": {
+                "framework": test_framework,
+                "docs_available": framework_docs is not None,
+                "source": framework_docs.get("source") if framework_docs else None,
+            } if framework_docs else None,
+            # D2 Enhancement
+            "quality_validation": quality_validation,
         }
 
     async def generate_e2e_tests_command(

@@ -2,6 +2,19 @@
 
 **For complete command documentation, see `.cursor/rules/command-reference.mdc`**
 
+## Global CLI Options (All Commands)
+
+```bash
+# Works before OR after the subcommand
+tapps-agents doctor --progress rich
+tapps-agents reviewer score README.md --no-progress
+```
+
+- **Progress UI**:
+  - `--progress {auto,rich,plain,off}`
+  - `--no-progress` (same as `--progress off`)
+  - Env: `TAPPS_PROGRESS=...`, `TAPPS_NO_PROGRESS=1` / `NO_PROGRESS=1`
+
 ## Most Common Commands
 
 ### Code Review & Quality

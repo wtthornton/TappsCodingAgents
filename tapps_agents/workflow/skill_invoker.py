@@ -319,6 +319,7 @@ class SkillInvoker:
             command=command_str,
             worktree_path=worktree_path,
             step=step,
+            workflow_id=getattr(state, "workflow_id", None),
         )
         
         # Store result in state for tracking
@@ -480,7 +481,11 @@ class SkillInvoker:
         return " ".join(parts)
 
     async def _execute_skill_command(
-        self, command: str, worktree_path: Path, step: WorkflowStep | None = None
+        self,
+        command: str,
+        worktree_path: Path,
+        step: WorkflowStep | None = None,
+        workflow_id: str | None = None,
     ) -> dict[str, Any]:
         """
         Execute Skill command via Cursor Background Agents.
@@ -609,13 +614,6 @@ class SkillInvoker:
         expected_artifacts = step.creates if step else None
         
         # Fallback: Create structured command files with metadata
-        # Get workflow_id from state if available
-        workflow_id = None
-        if step and hasattr(step, "workflow_id"):
-            workflow_id = step.workflow_id
-        elif state:
-            workflow_id = state.workflow_id
-        
         command_file, metadata_file = create_skill_command_file(
             command=command,
             worktree_path=worktree_path,

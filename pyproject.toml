@@ -41,6 +41,8 @@ dependencies = [
     # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
     # langchain-core 0.2.43 requires packaging<25,>=23.2
     "packaging>=23.2,<25",
+    # CLI UX (progress spinners/bars, live updates)
+    "rich>=13.9.4",
 ]
 
 [project.optional-dependencies]

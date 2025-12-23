@@ -3,6 +3,7 @@ Main CLI entry point
 """
 import argparse
 import asyncio
+import sys
 
 from .. import __version__ as PACKAGE_VERSION
 from .commands import (
@@ -67,6 +68,48 @@ from .parsers import (
     top_level as top_level_parsers,
 )
 from .feedback import FeedbackManager, VerbosityLevel
+from .feedback import ProgressMode
+
+
+def _reorder_global_flags(argv: list[str]) -> list[str]:
+    """
+    Allow global flags to appear anywhere (common modern CLI UX).
+
+    Argparse only supports global flags before the subcommand. Users frequently type:
+      tapps-agents doctor --no-progress
+    so we hoist known global flags to the front before parsing.
+    """
+
+    hoisted: list[str] = []
+    rest: list[str] = []
+    i = 0
+    while i < len(argv):
+        a = argv[i]
+
+        if a in {"--quiet", "-q", "--verbose", "-v", "--no-progress"}:
+            hoisted.append(a)
+            i += 1
+            continue
+
+        if a.startswith("--progress="):
+            hoisted.append(a)
+            i += 1
+            continue
+
+        if a == "--progress":
+            # Keep the value if present; argparse will validate choices later.
+            if i + 1 < len(argv):
+                hoisted.extend([a, argv[i + 1]])
+                i += 2
+            else:
+                hoisted.append(a)
+                i += 1
+            continue
+
+        rest.append(a)
+        i += 1
+
+    return hoisted + rest
 
 
 def create_root_parser() -> argparse.ArgumentParser:
@@ -180,6 +223,20 @@ For more information on a specific command, use:
         const="verbose",
         dest="verbosity",
         help="Verbose mode: show detailed debugging information",
+    )
+    parser.add_argument(
+        "--progress",
+        choices=[m.value for m in ProgressMode],
+        default=None,
+        help=(
+            "Progress UI mode: auto (default), rich (animated), plain (single-line), off (disabled). "
+            "You can also set TAPPS_PROGRESS=auto|rich|plain|off or TAPPS_NO_PROGRESS=1."
+        ),
+    )
+    parser.add_argument(
+        "--no-progress",
+        action="store_true",
+        help="Disable progress UI (same as --progress off)",
     )
     return parser
 
@@ -367,7 +424,8 @@ def main() -> None:
     register_all_parsers(parser)
 
     # Parse arguments
-    args = parser.parse_args()
+    argv = _reorder_global_flags(sys.argv[1:])
+    args = parser.parse_args(argv)
     
     # Set verbosity level from arguments
     verbosity_str = getattr(args, "verbosity", None)
@@ -377,6 +435,14 @@ def main() -> None:
         FeedbackManager.set_verbosity(VerbosityLevel.VERBOSE)
     else:
         FeedbackManager.set_verbosity(VerbosityLevel.NORMAL)
+
+    # Set progress mode (CLI flags override env; env is handled by FeedbackManager.AUTO)
+    if getattr(args, "no_progress", False):
+        FeedbackManager.set_progress_mode(ProgressMode.OFF)
+    else:
+        progress_str = getattr(args, "progress", None)
+        if progress_str:
+            FeedbackManager.set_progress_mode(ProgressMode(progress_str))
     
     # Set format type if specified (for commands that support it)
     format_type = getattr(args, "format", None)

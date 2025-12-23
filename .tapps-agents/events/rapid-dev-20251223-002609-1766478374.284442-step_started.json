@@ -1,0 +1,12 @@
+{
+  "event_type": "step_started",
+  "workflow_id": "rapid-dev-20251223-002609",
+  "step_id": "complete",
+  "data": {
+    "agent": "orchestrator",
+    "action": "finalize",
+    "step_id": "complete"
+  },
+  "timestamp": "2025-12-23T00:26:14.284442",
+  "correlation_id": "rapid-dev-20251223-002609:complete"
+}

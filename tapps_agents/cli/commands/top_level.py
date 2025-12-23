@@ -186,12 +186,13 @@ def handle_create_command(args: object) -> None:
     import os
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
+    from ...core.unicode_safe import safe_print
 
     feedback = get_feedback()
     loader = PresetLoader()
     workflow_name = getattr(args, "workflow", "full")
     user_prompt = getattr(args, "prompt", "")
-    cursor_mode = getattr(args, "cursor_mode", False)
+    cursor_mode_flag = getattr(args, "cursor_mode", False)
 
     if not user_prompt:
         feedback.error(
@@ -201,13 +202,21 @@ def handle_create_command(args: object) -> None:
             exit_code=2,
         )
 
-    # Force headless mode for CLI unless --cursor-mode specified
-    # This ensures CLI commands work out of the box without requiring environment variables
-    if not cursor_mode:
-        os.environ["TAPPS_AGENTS_MODE"] = "headless"
-        from ...core.unicode_safe import safe_print
-        if feedback.verbosity.value != "quiet":
-            safe_print("[OK] Running in headless mode - direct execution with terminal output")
+    # Cursor-first default:
+    # - Workflows need Cursor Skills/Background Agents to produce artifacts for LLM-driven steps.
+    # - Users can still force headless mode by setting TAPPS_AGENTS_MODE=headless explicitly.
+    if cursor_mode_flag:
+        os.environ["TAPPS_AGENTS_MODE"] = "cursor"
+    elif "TAPPS_AGENTS_MODE" not in os.environ:
+        os.environ["TAPPS_AGENTS_MODE"] = "cursor"
+
+    if feedback.verbosity.value != "quiet":
+        mode = os.environ.get("TAPPS_AGENTS_MODE", "headless")
+        if mode == "cursor":
+            safe_print("[OK] Cursor-first mode: workflows use Cursor Skills / Background Agents (or file-based Skill commands).")
+            safe_print("     To force local-only execution: set TAPPS_AGENTS_MODE=headless (note: LLM steps won't execute without Cursor Skills).")
+        else:
+            safe_print("[WARN] Headless mode: local-only execution. LLM-driven workflow steps will not auto-generate artifacts without Cursor Skills.")
 
     try:
         feedback.start_operation("Create Project")
@@ -230,19 +239,30 @@ def handle_create_command(args: object) -> None:
             print(f"Your Prompt: {user_prompt}")
             print(f"Steps: {len(workflow.steps)}")
             print("Mode: Auto (fully automated)")
-            if cursor_mode:
-                print("Runtime Mode: Cursor (uses Background Agents)")
-            else:
-                print("Runtime Mode: Headless (direct execution)")
+            print(f"Runtime Mode: {os.environ.get('TAPPS_AGENTS_MODE', 'headless')}")
             print()
 
         # Execute workflow with auto mode and prompt
         executor = WorkflowExecutor(auto_detect=False, auto_mode=True)
         executor.user_prompt = user_prompt
 
-        feedback.progress("Executing workflow...")
-        result = asyncio.run(executor.execute(workflow=workflow, target_file=None))
-        feedback.clear_progress()
+        # Use heartbeat to show continuous progress
+        from ..progress_heartbeat import AsyncProgressHeartbeat
+        
+        async def execute_with_progress():
+            heartbeat = AsyncProgressHeartbeat(
+                message=f"Executing workflow: {workflow.name}",
+                start_delay=1.0,  # Show progress after 1 second
+                update_interval=1.0,  # Update every second
+            )
+            try:
+                await heartbeat.start()
+                result = await executor.execute(workflow=workflow, target_file=None)
+                return result
+            finally:
+                await heartbeat.stop()
+        
+        result = asyncio.run(execute_with_progress())
 
         if result.status == "completed":
             feedback.success("Project created successfully", summary={"timeline": "project-timeline.md", "status": result.status})
@@ -479,6 +499,7 @@ def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
+    import os
 
     feedback = get_feedback()
     preset_name = getattr(args, "preset", None)
@@ -578,6 +599,12 @@ def handle_workflow_command(args: object) -> None:
             )
             sys.exit(1)
 
+        # Cursor-first default for workflow execution.
+        # Workflows frequently require Cursor Skills to materialize artifacts for LLM-driven steps.
+        # Respect explicit user override via TAPPS_AGENTS_MODE.
+        if "TAPPS_AGENTS_MODE" not in os.environ:
+            os.environ["TAPPS_AGENTS_MODE"] = "cursor"
+
         print(f"\n{'='*60}")
         print(f"Starting: {workflow.name}")
         print(f"{'='*60}")
@@ -603,11 +630,11 @@ def handle_workflow_command(args: object) -> None:
         
         from ...core.unicode_safe import safe_print
         if is_cursor_mode():
-            safe_print("WARNING: Running in Cursor mode - workflow will use Background Agents")
-            safe_print("   If auto-execution is disabled, workflow will wait for manual execution")
-            safe_print("   To force headless mode: set TAPPS_AGENTS_MODE=headless\n")
+            safe_print("[OK] Cursor-first mode: workflow will use Cursor Skills / Background Agents (or file-based Skill commands).")
+            safe_print("     If auto-execution is disabled, workflow will wait for manual execution.\n")
         else:
-            safe_print("[OK] Running in headless mode - direct execution with terminal output\n")
+            safe_print("[WARN] Headless mode: local-only execution. LLM-driven workflow steps will not auto-generate artifacts without Cursor Skills.")
+            safe_print("       To enable Cursor-first mode: unset TAPPS_AGENTS_MODE or set TAPPS_AGENTS_MODE=cursor.\n")
         
         sys.stdout.flush()
         
@@ -1700,6 +1727,12 @@ def _print_next_steps() -> None:
     print("  • Use CLI commands:")
     print("    tapps-agents reviewer review src/")
     print("    tapps-agents score src/main.py")
+    print()
+
+    print("  • Progress UI (all commands):")
+    print("    tapps-agents doctor --progress rich")
+    print("    tapps-agents reviewer score src/ --no-progress")
+    print("    (Env: TAPPS_PROGRESS=auto|rich|plain|off, TAPPS_NO_PROGRESS=1)")
     print()
     
     print("Setup & Configuration:")

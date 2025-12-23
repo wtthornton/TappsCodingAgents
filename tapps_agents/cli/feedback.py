@@ -4,7 +4,10 @@ Centralized feedback system for CLI commands.
 Provides consistent, user-friendly output with support for quiet, normal, and verbose modes.
 All CLI commands should use this module instead of direct print() calls.
 """
+from __future__ import annotations
+
 import json
+import os
 import sys
 import time
 from datetime import UTC, datetime
@@ -19,6 +22,181 @@ class VerbosityLevel(Enum):
     QUIET = "quiet"
     NORMAL = "normal"
     VERBOSE = "verbose"
+
+
+class ProgressMode(Enum):
+    """Progress rendering modes for CLI output."""
+
+    AUTO = "auto"
+    OFF = "off"
+    PLAIN = "plain"
+    RICH = "rich"
+
+
+def _is_interactive_tty() -> bool:
+    """
+    Best-effort detection of an interactive TTY.
+
+    Notes:
+    - We treat stderr as the "UI" stream for progress.
+    - On CI / non-interactive sessions we default to non-animated output.
+    """
+
+    try:
+        return bool(sys.stderr.isatty())
+    except Exception:
+        return False
+
+
+def _env_truthy(name: str) -> bool:
+    val = os.environ.get(name)
+    if val is None:
+        return False
+    return val.strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+def _should_disable_animated_progress() -> bool:
+    """
+    Prefer deterministic output on CI/log files, and honor common env flags.
+
+    References (patterns widely used by modern CLIs):
+    - NO_COLOR: disable color
+    - CI/GITHUB_ACTIONS: reduce animation/noise
+    - TAPPS_PROGRESS=off: explicit disable
+    """
+
+    if _env_truthy("CI") or _env_truthy("GITHUB_ACTIONS"):
+        return True
+    if _env_truthy("TAPPS_NO_PROGRESS") or _env_truthy("NO_PROGRESS"):
+        return True
+    progress_env = os.environ.get("TAPPS_PROGRESS", "").strip().lower()
+    if progress_env in {"off", "0", "false", "no"}:
+        return True
+    return False
+
+
+class _PlainSpinner:
+    """A tiny spinner that advances on each render call (no background thread)."""
+
+    _frames = "|/-\\"
+
+    def __init__(self) -> None:
+        self._i = 0
+
+    def next(self) -> str:
+        ch = self._frames[self._i % len(self._frames)]
+        self._i += 1
+        return ch
+
+
+class _RichProgressRenderer:
+    """
+    Rich-based renderer that supports:
+    - Indeterminate spinner (Status)
+    - Determinate progress bar (Progress + Live)
+
+    This is intentionally lightweight and driven by explicit update() calls,
+    so it works without threads and plays nicely with existing code paths.
+    """
+
+    def __init__(self) -> None:
+        from rich.console import Console
+        from rich.live import Live
+        from rich.progress import (
+            BarColumn,
+            Progress,
+            SpinnerColumn,
+            TaskProgressColumn,
+            TextColumn,
+            TimeElapsedColumn,
+            TimeRemainingColumn,
+        )
+        from rich.status import Status
+
+        self._Console = Console
+        self._Live = Live
+        self._Progress = Progress
+        self._Status = Status
+
+        self._BarColumn = BarColumn
+        self._SpinnerColumn = SpinnerColumn
+        self._TextColumn = TextColumn
+        self._TaskProgressColumn = TaskProgressColumn
+        self._TimeElapsedColumn = TimeElapsedColumn
+        self._TimeRemainingColumn = TimeRemainingColumn
+
+        self._console = Console(stderr=True, highlight=False, soft_wrap=True)
+
+        self._status: Status | None = None
+        self._progress: Progress | None = None
+        self._live: Live | None = None
+        self._task_id: int | None = None
+
+    def update(
+        self,
+        message: str,
+        percentage: int | None,
+        show_progress_bar: bool,
+    ) -> None:
+        if show_progress_bar and percentage is not None:
+            self._stop_status()
+            self._ensure_progress()
+            assert self._progress is not None
+            assert self._task_id is not None
+
+            pct = max(0, min(100, int(percentage)))
+            self._progress.update(self._task_id, description=message, completed=pct)
+            return
+
+        # Indeterminate / spinner-only
+        self._stop_progress()
+        self._ensure_status(message)
+        assert self._status is not None
+        self._status.update(status=message)
+
+    def clear(self) -> None:
+        self._stop_status()
+        self._stop_progress()
+
+    def _ensure_status(self, message: str) -> None:
+        if self._status is None:
+            self._status = self._console.status(message, spinner="dots")
+            self._status.start()
+
+    def _stop_status(self) -> None:
+        if self._status is not None:
+            try:
+                self._status.stop()
+            finally:
+                self._status = None
+
+    def _ensure_progress(self) -> None:
+        if self._progress is None:
+            # “2025 modern” defaults: clean, minimal, informative.
+            self._progress = self._Progress(
+                self._SpinnerColumn(style="cyan"),
+                self._TextColumn("[bold]{task.description}"),
+                self._BarColumn(bar_width=24, complete_style="cyan", finished_style="green"),
+                self._TaskProgressColumn(),
+                self._TimeElapsedColumn(),
+                self._TimeRemainingColumn(compact=True),
+                console=self._console,
+            )
+            self._task_id = self._progress.add_task("Working…", total=100, completed=0)
+
+        if self._live is None:
+            self._live = self._Live(self._progress, console=self._console, refresh_per_second=12)
+            self._live.start()
+
+    def _stop_progress(self) -> None:
+        if self._live is not None:
+            try:
+                self._live.stop()
+            finally:
+                self._live = None
+
+        self._progress = None
+        self._task_id = None
 
 
 class ProgressTracker:
@@ -113,12 +291,18 @@ class FeedbackManager:
     _instance: "FeedbackManager | None" = None
     _verbosity: VerbosityLevel = VerbosityLevel.NORMAL
     _format_type: str = "text"
+    _progress_mode: ProgressMode = ProgressMode.AUTO
     
     def __init__(self):
         """Initialize feedback manager."""
         self.verbosity = FeedbackManager._verbosity
         self.format_type = FeedbackManager._format_type
+        self.progress_mode = FeedbackManager._progress_mode
         self.operation_start_time: float | None = None
+
+        self._plain_spinner = _PlainSpinner()
+        self._rich: _RichProgressRenderer | None = None
+        self._heartbeat: Any | None = None  # ProgressHeartbeat instance
         
     @classmethod
     def get_instance(cls) -> "FeedbackManager":
@@ -140,6 +324,13 @@ class FeedbackManager:
         cls._format_type = format_type
         if cls._instance:
             cls._instance.format_type = format_type
+
+    @classmethod
+    def set_progress_mode(cls, progress_mode: ProgressMode) -> None:
+        """Set global progress rendering mode."""
+        cls._progress_mode = progress_mode
+        if cls._instance:
+            cls._instance.progress_mode = progress_mode
     
     @classmethod
     def get_verbosity(cls) -> VerbosityLevel:
@@ -174,6 +365,16 @@ class FeedbackManager:
                 for key, value in details.items():
                     print(f"  {key}: {value}", file=sys.stderr)
     
+    def _stop_heartbeat(self) -> None:
+        """Stop the heartbeat if it's running."""
+        if self._heartbeat:
+            try:
+                self._heartbeat.stop()
+            except Exception:
+                pass
+            finally:
+                self._heartbeat = None
+    
     def success(
         self,
         message: str,
@@ -191,6 +392,9 @@ class FeedbackManager:
         if self.verbosity == VerbosityLevel.QUIET and data is None:
             return
             
+        # Stop heartbeat when operation completes
+        self._stop_heartbeat()
+        
         if self.format_type == "json":
             output = {
                 "success": True,
@@ -283,6 +487,9 @@ class FeedbackManager:
             if remediation:
                 print(f"  Suggestion: {remediation}", file=sys.stderr)
         
+        # Stop heartbeat on error
+        self._stop_heartbeat()
+        
         sys.exit(exit_code)
     
     def progress(
@@ -313,20 +520,62 @@ class FeedbackManager:
                 output["percentage"] = percentage
             print(json.dumps(output), file=sys.stderr)
         else:
-            # Text format - use ASCII-safe characters for Windows compatibility
+            mode = self._resolve_progress_mode()
+            if mode == ProgressMode.OFF:
+                return
+
+            if mode == ProgressMode.RICH:
+                try:
+                    if self._rich is None:
+                        self._rich = _RichProgressRenderer()
+                    self._rich.update(message, percentage, show_progress_bar)
+                    return
+                except Exception:
+                    # Never fail a command due to progress rendering.
+                    self._rich = None
+                    mode = ProgressMode.PLAIN
+
+            # Plain text fallback - use ASCII-safe characters for Windows compatibility
             from ..core.unicode_safe import safe_print, safe_format_progress_bar
+
+            spinner = self._plain_spinner.next()
             if show_progress_bar and percentage is not None:
-                bar = safe_format_progress_bar(percentage, width=30)
-                safe_print(f"-> {message} {bar}", file=sys.stderr, end="\r")
+                bar = safe_format_progress_bar(percentage, width=24)
+                safe_print(f"{spinner} {message} {bar}", file=sys.stderr, end="\r")
                 sys.stderr.flush()
             else:
-                safe_print(f"-> {message}", file=sys.stderr, end="\r")
+                safe_print(f"{spinner} {message}", file=sys.stderr, end="\r")
                 sys.stderr.flush()
     
     def clear_progress(self) -> None:
         """Clear the current progress line."""
         if self.verbosity != VerbosityLevel.QUIET:
+            if self._rich is not None:
+                try:
+                    self._rich.clear()
+                except Exception:
+                    pass
+                finally:
+                    self._rich = None
             print("", file=sys.stderr)  # New line to clear progress
+
+    def _resolve_progress_mode(self) -> ProgressMode:
+        """
+        Decide which progress renderer to use for this invocation.
+
+        Rules:
+        - JSON output: keep progress as JSON events (handled earlier)
+        - Quiet: already handled earlier
+        - OFF: explicit disable
+        - AUTO: Rich when interactive TTY and not on CI / explicitly disabled
+        """
+
+        mode = self.progress_mode
+        if mode == ProgressMode.AUTO:
+            if not _is_interactive_tty() or _should_disable_animated_progress():
+                return ProgressMode.PLAIN
+            return ProgressMode.RICH
+        return mode
     
     def output_result(
         self,
@@ -393,7 +642,7 @@ class FeedbackManager:
     
     def start_operation(self, operation_name: str) -> None:
         """
-        Start timing an operation.
+        Start timing an operation and optionally start a heartbeat.
         
         Args:
             operation_name: Name of the operation
@@ -401,6 +650,21 @@ class FeedbackManager:
         self.operation_start_time = time.time()
         if self.verbosity == VerbosityLevel.VERBOSE:
             self.info(f"Starting {operation_name}...")
+        
+        # Start heartbeat for long-running operations (after 2 seconds)
+        if self.verbosity != VerbosityLevel.QUIET and self.format_type != "json":
+            try:
+                from .progress_heartbeat import ProgressHeartbeat
+                self._heartbeat = ProgressHeartbeat(
+                    message=f"{operation_name}...",
+                    start_delay=2.0,
+                    update_interval=1.0,
+                    feedback_manager=self,
+                )
+                self._heartbeat.start()
+            except Exception:
+                # Don't fail if heartbeat can't start
+                self._heartbeat = None
     
     def get_duration_ms(self) -> int | None:
         """Get operation duration in milliseconds."""

@@ -46,6 +46,27 @@ Some commands work in **both** modes:
 
 ---
 
+## Global CLI Options (All Commands)
+
+These flags work for **any** CLI command and can be placed **before or after** the subcommand (modern CLI behavior):
+
+```bash
+tapps-agents doctor --progress rich
+tapps-agents reviewer score README.md --no-progress
+tapps-agents --progress plain doctor
+```
+
+- `--quiet` / `-q`: Quiet mode (errors + final results)
+- `--verbose` / `-v`: Verbose diagnostics
+- `--progress {auto,rich,plain,off}`: Progress UI mode
+- `--no-progress`: Disable progress UI (same as `--progress off`)
+
+**Environment variables:**
+- `TAPPS_PROGRESS=auto|rich|plain|off`
+- `TAPPS_NO_PROGRESS=1` (or `NO_PROGRESS=1`)
+
+---
+
 ## Top-Level Commands
 
 ### `create` - Create New Project (CLI-First, Cursor-Compatible)
@@ -2100,5 +2121,5 @@ tapps-agents --version
 
 ---
 
-*Last updated: 2025-12-22*
+*Last updated: 2025-12-23*
 

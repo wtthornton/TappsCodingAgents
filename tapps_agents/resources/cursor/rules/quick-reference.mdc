@@ -42,6 +42,23 @@ alwaysApply: false
 
 **Syntax:** `tapps-agents <agent> <command> [--flags]`
 
+**Global options (all commands; flags can appear before OR after the subcommand):**
+
+```bash
+# Progress UI (modern 2025-style: Rich spinner/progress when interactive)
+tapps-agents doctor --progress rich
+tapps-agents reviewer score README.md --no-progress
+
+# Equivalent (flags before subcommand)
+tapps-agents --progress plain doctor
+```
+
+- `--quiet` / `-q`: Quiet mode (errors + final results)
+- `--verbose` / `-v`: Verbose diagnostics
+- `--progress {auto,rich,plain,off}`: Progress UI mode
+- `--no-progress`: Disable progress UI (same as `--progress off`)
+- Env: `TAPPS_PROGRESS=auto|rich|plain|off`, `TAPPS_NO_PROGRESS=1` / `NO_PROGRESS=1`
+
 **Examples:**
 ```bash
 # Workflow presets (automated)

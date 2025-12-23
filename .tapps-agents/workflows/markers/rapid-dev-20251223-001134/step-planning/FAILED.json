@@ -1,0 +1,20 @@
+{
+  "workflow_id": "rapid-dev-20251223-001134",
+  "step_id": "planning",
+  "agent": "planner",
+  "action": "create-stories",
+  "status": "failed",
+  "timestamp": "2025-12-23T00:11:38.916126",
+  "error": "SkillInvoker._build_parameters() missing 1 required positional argument: 'worktree_path'",
+  "worktree_name": "workflow-rapid-dev-20251223-001134-step-planning-0132f9f8",
+  "worktree_path": "C:\\cursor\\TappsCodingAgents\\.tapps-agents\\worktrees\\workflow-rapid-dev-20251223-001134-step-planning-0132f9f8",
+  "expected_artifacts": [
+    "stories/"
+  ],
+  "duration_seconds": 1.521217,
+  "started_at": "2025-12-23T00:11:37.394909",
+  "error_type": "TypeError",
+  "metadata": {
+    "marker_location": ".tapps-agents/workflows/markers/rapid-dev-20251223-001134/step-planning/FAILED.json"
+  }
+}

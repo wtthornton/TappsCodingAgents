@@ -383,7 +383,7 @@ Example:
     create_parser.add_argument(
         "--cursor-mode",
         action="store_true",
-        help="Run in Cursor mode (uses Background Agents). By default, CLI commands run in headless mode for direct execution. Use this flag to explicitly enable Cursor mode.",
+        help="(Deprecated) Force Cursor mode for workflow execution. Cursor-first is now the default for workflows unless TAPPS_AGENTS_MODE is explicitly set (e.g., TAPPS_AGENTS_MODE=headless).",
     )
 
     # Project initialization command

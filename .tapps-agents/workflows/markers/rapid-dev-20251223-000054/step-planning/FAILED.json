@@ -1,0 +1,20 @@
+{
+  "workflow_id": "rapid-dev-20251223-000054",
+  "step_id": "planning",
+  "agent": "planner",
+  "action": "create-stories",
+  "status": "failed",
+  "timestamp": "2025-12-23T00:01:08.630125",
+  "error": "name 'state' is not defined",
+  "worktree_name": "workflow-rapid-dev-20251223-000054-step-planning-bf9496d9",
+  "worktree_path": "C:\\cursor\\TappsCodingAgents\\.tapps-agents\\worktrees\\workflow-rapid-dev-20251223-000054-step-planning-bf9496d9",
+  "expected_artifacts": [
+    "stories/"
+  ],
+  "duration_seconds": 5.731248,
+  "started_at": "2025-12-23T00:01:02.898877",
+  "error_type": "NameError",
+  "metadata": {
+    "marker_location": ".tapps-agents/workflows/markers/rapid-dev-20251223-000054/step-planning/FAILED.json"
+  }
+}

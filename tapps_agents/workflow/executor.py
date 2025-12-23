@@ -449,11 +449,20 @@ class WorkflowExecutor:
             # Print progress to terminal in headless mode (for CLI visibility)
             if not is_cursor_mode():
                 from ..core.unicode_safe import safe_print
+                from ..cli.feedback import get_feedback
+                
                 step_names = [f"{s.agent}/{s.action}" for s in ready_steps]
                 completed = len(completed_step_ids)
                 total = len(self.workflow.steps)
                 progress_pct = int((completed / total) * 100) if total > 0 else 0
-                safe_print(f"-> Step {completed + 1}/{total} ({progress_pct}%): Executing {', '.join(step_names)}", flush=True)
+                
+                # Update progress with step information
+                feedback = get_feedback()
+                progress_msg = f"Step {completed + 1}/{total} ({progress_pct}%): {', '.join(step_names)}"
+                feedback.progress(progress_msg, percentage=progress_pct, show_progress_bar=True)
+                
+                # Also print to terminal for visibility
+                safe_print(f"-> {progress_msg}", flush=True)
             
             async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
                 """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""

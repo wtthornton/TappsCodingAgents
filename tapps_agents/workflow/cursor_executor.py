@@ -657,7 +657,7 @@ class CursorWorkflowExecutor:
                     "agent": result.step.agent,
                     "action": result.step.action,
                     "error": str(result.error),
-                    "attempts": result.step_execution.attempts or 1,
+                    "attempts": getattr(result, "attempts", 1),
                 },
                 timestamp=datetime.now(),
                 correlation_id=f"{self.state.workflow_id}:{result.step.id}",
@@ -677,16 +677,17 @@ class CursorWorkflowExecutor:
         
         # Handle error with recovery manager (Epic 14)
         recovery_result = None
+        user_friendly_error = None
         if self.error_recovery:
             recovery_result = self.error_recovery.handle_error(
                 error=result.error,
                 context=error_context,
-                attempt=result.step_execution.attempts or 1,
+                attempt=getattr(result, "attempts", 1),
             )
             
-            # Use user-friendly message
+            # Store user-friendly message (can't modify frozen dataclass)
             if recovery_result.get("user_message"):
-                result.error = recovery_result["user_message"]
+                user_friendly_error = recovery_result["user_message"]
         
         if self.auto_progression.should_auto_progress():
             # Get review result if this was a reviewer step
@@ -764,12 +765,14 @@ class CursorWorkflowExecutor:
                 return False
         
         # Fallback: mark as failed and stop workflow (if auto-progression disabled)
+        # Use user-friendly error message if available
+        error_message = user_friendly_error if user_friendly_error else str(result.error)
         self.state.status = "failed"
-        self.state.error = f"Step {result.step.id} failed: {result.error}"
+        self.state.error = f"Step {result.step.id} failed: {error_message}"
         if step_logger:
             step_logger.error(
                 "Step execution failed",
-                error=str(result.error),
+                error=error_message,
                 action=result.step.action,
             )
         
@@ -780,7 +783,7 @@ class CursorWorkflowExecutor:
                 workflow_id=self.state.workflow_id,
                 step_id=result.step.id,
                 data={
-                    "error": str(result.error),
+                    "error": error_message,
                     "step_id": result.step.id,
                 },
                 timestamp=datetime.now(),
@@ -793,7 +796,7 @@ class CursorWorkflowExecutor:
         # Send failure update
         if self.progress_manager:
             await self.progress_manager.send_workflow_failed(
-                str(result.error)
+                error_message
             )
             await self.progress_manager.stop()
         return True
@@ -1076,10 +1079,13 @@ class CursorWorkflowExecutor:
                     skill_command, _ = self.skill_invoker.COMMAND_MAPPING[key]
                     
                     # Build parameters from state (same as skill_invoker does)
+                    # Get param_mapping from COMMAND_MAPPING
+                    _, param_mapping = self.skill_invoker.COMMAND_MAPPING[key]
                     params = self.skill_invoker._build_parameters(
+                        param_mapping=param_mapping,
                         step=step,
-                        param_mapping={},  # Will be extracted from state
                         target_path=target_path,
+                        worktree_path=worktree_path,
                         state=self.state,
                     )
                     

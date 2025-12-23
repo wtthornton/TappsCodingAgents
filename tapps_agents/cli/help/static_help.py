@@ -296,6 +296,8 @@ Options:
   --pattern <glob>                     - Glob pattern for batch processing
   --max-workers <n>                    - Concurrent operations (default: 4)
   --output <file>                      - Save output to file
+  --fail-under <score>                 - Exit with code 1 if overall score is below this threshold (review/score)
+  --fail-on-issues                     - Exit with code 1 if issues/errors are found (lint/type-check)
   --output-dir <dir>                   - Output directory (for report)
 
 Examples:

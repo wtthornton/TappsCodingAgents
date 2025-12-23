@@ -236,16 +236,16 @@ def run_async_command(coro: Any) -> Any:
         RuntimeError: If called from within an existing event loop
     """
     try:
-        # Check if we're already in an event loop
+        # If this succeeds, we're already inside an event loop.
         asyncio.get_running_loop()
-        # If we get here, we're in a loop - this is an error
-        raise RuntimeError(
-            "run_async_command() called from within an event loop. "
-            "Use 'await' instead of run_async_command()."
-        )
     except RuntimeError:
         # No running loop - safe to use asyncio.run()
         return asyncio.run(coro)
+
+    raise RuntimeError(
+        "run_async_command() called from within an event loop. "
+        "Use 'await' instead of run_async_command()."
+    )
 
 
 async def run_agent_command(

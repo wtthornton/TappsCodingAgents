@@ -50,7 +50,7 @@ tapps-agents init
 
 This installs (by copying from packaged templates in `tapps_agents/resources/*`):
 - **Skills**: `.claude/skills/` (13 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
-- **Cursor Rules**: `.cursor/rules/*.mdc` (6 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc`)
+- **Cursor Rules**: `.cursor/rules/*.mdc` (7 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc` and `command-reference.mdc`)
 - **Background Agents**: `.cursor/background-agents.yaml` (from `tapps_agents/resources/cursor/background-agents.yaml`)
 - **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
