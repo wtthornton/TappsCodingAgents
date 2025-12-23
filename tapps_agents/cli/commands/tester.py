@@ -8,7 +8,7 @@ from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
-from .common import check_result_error, format_json_output
+from .common import check_result_error
 
 
 def handle_tester_command(args: object) -> None:
@@ -24,10 +24,31 @@ def handle_tester_command(args: object) -> None:
         feedback.output_result(help_text)
         return
     
+    # Check network requirement
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
+    requirement = CommandClassifier.get_network_requirement("tester", command)
+    offline_mode = False
+    
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name=f"tester {command}",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    elif requirement == CommandNetworkRequirement.OFFLINE:
+        offline_mode = True
+    
     # Only activate for commands that need it
     tester = TesterAgent()
     try:
-        asyncio.run(tester.activate())
+        asyncio.run(tester.activate(offline_mode=offline_mode))
         if command == "test":
             feedback.start_operation("Test Generation", f"Generating tests for {args.file}...")
             feedback.running("Analyzing source file...", step=1, total_steps=3)
@@ -55,18 +76,23 @@ def handle_tester_command(args: object) -> None:
                 if test_path.exists() and test_path.stat().st_size > 0:
                     summary["test_file"] = test_file_path
                     summary["file_created"] = True
-                    feedback.output_result(result, message="Tests generated and file created successfully", summary=summary)
                 else:
                     summary["test_file"] = test_file_path
                     summary["file_created"] = False
-                    feedback.output_result(result, message="Test generation instruction prepared", summary=summary)
                     feedback.info(
                         f"Note: Test file not yet created at {test_file_path}. "
                         "This command returns an instruction for Cursor Skills execution. "
                         "To execute, use the skill_command in Cursor or use @tester in Cursor chat."
                     )
+            
+            # Merge summary into result
+            if isinstance(result, dict) and summary:
+                result = {**result, "summary": summary}
+            
+            if summary.get("file_created") is True:
+                feedback.output_result(result, message="Tests generated and file created successfully")
             else:
-                feedback.output_result(result, message="Test generation instruction prepared", summary=summary)
+                feedback.output_result(result, message="Test generation instruction prepared")
                 feedback.info(
                     "Note: This command returns an instruction for Cursor Skills execution. "
                     "To execute, use the skill_command in Cursor or use @tester in Cursor chat."
@@ -91,7 +117,12 @@ def handle_tester_command(args: object) -> None:
             test_file_path = result.get("test_file")
             if test_file_path:
                 summary["test_file"] = test_file_path
-            feedback.output_result(result, message="Tests generated successfully", summary=summary)
+            
+            # Merge summary into result
+            if isinstance(result, dict) and summary:
+                result = {**result, "summary": summary}
+            
+            feedback.output_result(result, message="Tests generated successfully")
         elif command == "run-tests":
             test_path = getattr(args, "test_path", None)
             operation_desc = f"Running test suite{f' in {test_path}' if test_path else ''}..."
@@ -119,15 +150,17 @@ def handle_tester_command(args: object) -> None:
                     summary["tests_failed"] = result["tests_failed"]
                 if "coverage" in result:
                     summary["coverage"] = result["coverage"]
-            feedback.output_result(result, message="Test suite completed", summary=summary)
+            
+            # Merge summary into result
+            if isinstance(result, dict) and summary:
+                result = {**result, "summary": summary}
+            
+            feedback.output_result(result, message="Test suite completed")
         else:
             # Invalid command - show help without activation
             help_text = get_static_help("tester")
             feedback.output_result(help_text)
             return
-
-        check_result_error(result)
-        format_json_output(result)
     finally:
         safe_close_agent_sync(tester)
 

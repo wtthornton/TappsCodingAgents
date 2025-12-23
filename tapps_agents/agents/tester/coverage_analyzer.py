@@ -346,3 +346,42 @@ class CoverageAnalyzer:
             priority += 1
 
         return min(priority, 10)
+
+    async def measure_coverage(
+        self,
+        file_path: Path,
+        language: Any,
+        test_file_path: Path | None = None,
+        project_root: Path | None = None,
+    ) -> CoverageReport:
+        """
+        Measure test coverage for a file using language-specific tools.
+        
+        This method runs tests and measures coverage, then analyzes the results.
+        Currently a stub implementation - looks for existing coverage.json file.
+        
+        Args:
+            file_path: Path to the source file
+            language: Language object (from LanguageDetector)
+            test_file_path: Optional path to test file
+            project_root: Optional project root directory
+            
+        Returns:
+            CoverageReport with coverage percentage and metrics
+        """
+        # Update project_root if provided
+        if project_root:
+            self.project_root = Path(project_root)
+        
+        # Look for coverage.json in project root
+        coverage_file = self.project_root / "coverage.json"
+        
+        if coverage_file.exists():
+            # Analyze existing coverage file
+            return self.analyze_coverage(coverage_file)
+        else:
+            # Return empty report if no coverage file exists
+            # This is a stub - in a full implementation, this would run tests
+            # and generate coverage data
+            logger.warning(f"No coverage file found at {coverage_file}, returning empty report")
+            return CoverageReport()

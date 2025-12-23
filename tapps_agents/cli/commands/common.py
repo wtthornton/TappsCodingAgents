@@ -2,10 +2,13 @@
 Shared command utilities for output formatting and error handling
 """
 import json
+import os
 import sys
 from typing import Any
 
+from ..command_classifier import CommandNetworkRequirement
 from ..feedback import get_feedback
+from ..network_detection import NetworkDetector
 
 
 def format_json_output(data: dict[str, Any] | str, indent: int = 2) -> None:
@@ -88,4 +91,29 @@ def check_result_error(result: dict[str, Any]) -> None:
     """
     if "error" in result:
         handle_error(result)
+
+
+def should_use_offline_mode(command_requirement: CommandNetworkRequirement) -> bool:
+    """Determine if offline mode should be used.
+    
+    Args:
+        command_requirement: Network requirement for the command
+        
+    Returns:
+        True if offline mode should be used, False otherwise
+    """
+    # Check environment variable
+    if os.getenv("TAPPS_AGENTS_OFFLINE", "0") == "1":
+        return True
+    
+    # Check config (if available)
+    # TODO: Check .tapps-agents/config.yaml for offline_mode setting
+    
+    # Auto-detect based on command requirement
+    if command_requirement == CommandNetworkRequirement.OFFLINE:
+        return True
+    if command_requirement == CommandNetworkRequirement.OPTIONAL:
+        return not NetworkDetector.is_network_available()
+    
+    return False
 

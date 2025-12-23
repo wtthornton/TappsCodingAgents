@@ -53,7 +53,7 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
         if config:
             self.context7 = get_context7_helper(self, config)
 
-    async def activate(self, project_root: Path | None = None):
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the designer agent with expert support."""
         # Validate that expert_registry attribute exists (safety check)
         if not hasattr(self, 'expert_registry'):
@@ -61,8 +61,8 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
                 f"{self.__class__.__name__}.expert_registry not initialized. "
                 "This should not happen if __init__() properly initializes the attribute."
             )
-        await super().activate(project_root)
-        await self._initialize_expert_support(project_root)
+        await super().activate(project_root, offline_mode=offline_mode)
+        await self._initialize_expert_support(project_root, offline_mode=offline_mode)
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return available commands for designer agent"""

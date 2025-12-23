@@ -24,10 +24,31 @@ def handle_analyst_command(args: object) -> None:
         feedback.output_result(help_text)
         return
     
+    # Check network requirement
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
+    requirement = CommandClassifier.get_network_requirement("analyst", command)
+    offline_mode = False
+    
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name=f"analyst {command}",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    elif requirement == CommandNetworkRequirement.OFFLINE:
+        offline_mode = True
+    
     # Only activate for commands that need it
     analyst = AnalystAgent()
     try:
-        asyncio.run(analyst.activate())
+        asyncio.run(analyst.activate(offline_mode=offline_mode))
         if command == "gather-requirements":
             desc_preview = args.description[:50] + "..." if len(args.description) > 50 else args.description
             feedback.start_operation("Gather Requirements", f"Gathering requirements: {desc_preview}")
@@ -141,8 +162,12 @@ def handle_analyst_command(args: object) -> None:
             if command == "assess-risk" and "risks" in result:
                 risks = result["risks"]
                 summary["risks_count"] = len(risks) if isinstance(risks, list) else 0
+            
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
         
-        feedback.output_result(result, message="Analysis completed successfully", summary=summary)
+        feedback.output_result(result, message="Analysis completed successfully")
     finally:
         safe_close_agent_sync(analyst)
 

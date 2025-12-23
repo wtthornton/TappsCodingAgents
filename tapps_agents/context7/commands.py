@@ -792,6 +792,10 @@ Status & Search:
     
   *context7-kb-health
     Get detailed health check report with recommendations.
+  
+  *context7-kb-validate-cache
+    Validate cache coverage and identify missing/stale libraries.
+    Example: *context7-kb-validate-cache
     
   *context7-kb-search {query} [limit]
     Search cached documentation.

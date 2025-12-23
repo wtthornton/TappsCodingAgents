@@ -109,7 +109,10 @@ def hardware_profile_command(
                     "disk_free_gb": round(current_resource_usage["disk_free_gb"], 2),
                 },
             }
-            feedback.output_result(result, message="Hardware profile set successfully", summary=summary)
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
+            feedback.output_result(result, message="Hardware profile set successfully")
         else:
             feedback.success("Hardware profile set successfully")
             print(f"\nHardware profile set to: {set_profile.lower()}")

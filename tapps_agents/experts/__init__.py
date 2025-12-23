@@ -28,7 +28,7 @@ from .expert_engine import (
     KnowledgeWriteRequest,
 )
 from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
-from .expert_synthesizer import ExpertSynthesisResult, ExpertSynthesizer
+from .expert_synthesizer import ExpertSynthesizer
 from .governance import (
     FilterResult,
     GovernanceLayer,
@@ -105,7 +105,6 @@ __all__ = [
     "RepoSignal",
     "StackDetectionResult",
     "ExpertSynthesizer",
-    "ExpertSynthesisResult",
     "KnowledgeIngestionPipeline",
     "KnowledgeEntry",
     "IngestionResult",

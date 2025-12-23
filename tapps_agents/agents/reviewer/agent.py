@@ -146,7 +146,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         # Initialize Dockerfile validator (Phase 4.2: HomeIQ Support)
         self.dockerfile_validator = DockerfileValidator()
 
-    async def activate(self, project_root: Path | None = None):
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the reviewer agent with expert support."""
         # Validate that expert_registry attribute exists (safety check)
         if not hasattr(self, 'expert_registry'):
@@ -154,9 +154,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 f"{self.__class__.__name__}.expert_registry not initialized. "
                 "This should not happen if __init__() properly initializes the attribute."
             )
-        await super().activate(project_root)
+        await super().activate(project_root, offline_mode=offline_mode)
         # Initialize expert support via mixin
-        await self._initialize_expert_support(project_root)
+        await self._initialize_expert_support(project_root, offline_mode=offline_mode)
         # Initialize dependency analyzer if enabled
         if self.dependency_analyzer_enabled:
             self.dependency_analyzer = DependencyAnalyzer(

@@ -16,6 +16,47 @@ class ErrorAnalyzer:
         """Initialize error analyzer."""
         pass
 
+    async def analyze_error(
+        self,
+        error_message: str,
+        stack_trace: str | None = None,
+        code_context: str | None = None,
+        file_path: Path | None = None,
+    ) -> dict[str, Any]:
+        """
+        Analyze an error and return analysis results.
+
+        Args:
+            error_message: The error message
+            stack_trace: Optional stack trace
+            code_context: Optional code context around the error
+            file_path: Optional file path where error occurred
+
+        Returns:
+            Dictionary with error analysis including suggestions and fix examples
+        """
+        # Parse error to extract basic information
+        error_info = self._parse_error(error_message, stack_trace)
+        
+        # Generate basic suggestions based on error type
+        suggestions = self._generate_suggestions(error_info, error_message, stack_trace)
+        
+        # Generate fix examples based on error type
+        fix_examples = self._generate_fix_examples(error_info, error_message)
+        
+        # Determine root cause
+        root_cause = self._determine_root_cause(error_info, error_message)
+        
+        return {
+            "error_type": error_info.get("type", "Unknown"),
+            "error_message": error_message,
+            "file_location": error_info.get("file") or (str(file_path) if file_path else None),
+            "line_number": error_info.get("line"),
+            "root_cause": root_cause,
+            "suggestions": suggestions,
+            "fix_examples": fix_examples,
+        }
+
     def prepare_error_analysis(
         self,
         error_message: str,
@@ -274,3 +315,123 @@ class ErrorAnalyzer:
         path.extend(calls)
 
         return path if path else ["Execution path extracted from analysis"]
+
+    def _generate_suggestions(
+        self, error_info: dict[str, Any], error_message: str, stack_trace: str | None
+    ) -> list[str]:
+        """Generate suggestions based on error type and message."""
+        suggestions: list[str] = []
+        error_type = error_info.get("type", "").lower()
+        message_lower = error_message.lower()
+
+        if "attributeerror" in error_type or "no attribute" in message_lower:
+            suggestions.append("Check if the object/class has the attribute being accessed")
+            suggestions.append("Verify the attribute name spelling and case sensitivity")
+            suggestions.append("Ensure the object is properly initialized before accessing attributes")
+            if "'" in error_message:
+                attr_match = re.search(r"'(\w+)'", error_message)
+                if attr_match:
+                    attr_name = attr_match.group(1)
+                    suggestions.append(f"Consider if '{attr_name}' should be '{attr_name}' or a different method name")
+        elif "nameerror" in error_type or "not defined" in message_lower:
+            suggestions.append("Check if the variable/function is defined before use")
+            suggestions.append("Verify import statements if it's a module or function from another file")
+            suggestions.append("Check for typos in variable or function names")
+        elif "typeerror" in error_type:
+            suggestions.append("Verify the types of arguments being passed")
+            suggestions.append("Check if None values are being used where a value is expected")
+            suggestions.append("Ensure function signatures match the call sites")
+        elif "valueerror" in error_type:
+            suggestions.append("Check if input values are in the expected format or range")
+            suggestions.append("Validate input data before processing")
+        elif "keyerror" in error_type:
+            suggestions.append("Check if the key exists in the dictionary before accessing")
+            suggestions.append("Use .get() method with default values for optional keys")
+        elif "indexerror" in error_type:
+            suggestions.append("Verify the index is within the bounds of the list/array")
+            suggestions.append("Check if the list/array is empty before accessing")
+        elif "file not found" in message_lower or "filenotfounderror" in error_type:
+            suggestions.append("Verify the file path is correct and the file exists")
+            suggestions.append("Check if you need to create the file or directory first")
+            suggestions.append("Verify path separators for your operating system")
+        elif "permission" in message_lower or "permissiondenied" in error_type:
+            suggestions.append("Check file/directory permissions")
+            suggestions.append("Verify you have write access if trying to modify files")
+        elif "connection" in message_lower or "timeout" in message_lower:
+            suggestions.append("Check network connectivity")
+            suggestions.append("Verify the service/endpoint is running and accessible")
+            suggestions.append("Check firewall settings and ports")
+        else:
+            suggestions.append("Review the error message and stack trace for context")
+            suggestions.append("Check the code around the error location")
+            if stack_trace:
+                suggestions.append("Examine the stack trace to trace the execution path")
+
+        return suggestions
+
+    def _generate_fix_examples(
+        self, error_info: dict[str, Any], error_message: str
+    ) -> list[str]:
+        """Generate fix examples based on error type."""
+        fix_examples: list[str] = []
+        error_type = error_info.get("type", "").lower()
+        message_lower = error_message.lower()
+
+        if "attributeerror" in error_type or "no attribute" in message_lower:
+            attr_match = re.search(r"'(\w+)'", error_message)
+            if attr_match:
+                attr_name = attr_match.group(1)
+                fix_examples.append(
+                    f"# Instead of: obj.{attr_name}\n"
+                    f"# Check if attribute exists:\n"
+                    f"if hasattr(obj, '{attr_name}'):\n"
+                    f"    result = getattr(obj, '{attr_name}')"
+                )
+        elif "keyerror" in error_type:
+            fix_examples.append(
+                "# Instead of: value = my_dict['key']\n"
+                "# Use: value = my_dict.get('key', default_value)"
+            )
+        elif "indexerror" in error_type:
+            fix_examples.append(
+                "# Instead of: item = my_list[index]\n"
+                "# Use: \n"
+                "if index < len(my_list):\n"
+                "    item = my_list[index]\n"
+                "else:\n"
+                "    # Handle index out of bounds"
+            )
+        elif "nameerror" in error_type:
+            var_match = re.search(r"'(\w+)'", error_message)
+            if var_match:
+                var_name = var_match.group(1)
+                fix_examples.append(
+                    f"# Make sure '{var_name}' is defined before use:\n"
+                    f"{var_name} = ...  # Initialize variable"
+                )
+
+        return fix_examples
+
+    def _determine_root_cause(
+        self, error_info: dict[str, Any], error_message: str
+    ) -> str:
+        """Determine the root cause based on error information."""
+        error_type = error_info.get("type", "Unknown")
+        message_lower = error_message.lower()
+
+        if "attributeerror" in error_type.lower():
+            return f"The object does not have the attribute being accessed. This often happens when the object type is different than expected or the attribute name is misspelled."
+        elif "nameerror" in error_type.lower():
+            return f"A variable or function name is being used before it's defined or imported."
+        elif "typeerror" in error_type.lower():
+            return f"An operation or function is being applied to an object of an inappropriate type."
+        elif "keyerror" in error_type.lower():
+            return f"A dictionary key is being accessed that doesn't exist in the dictionary."
+        elif "indexerror" in error_type.lower():
+            return f"A list/array index is out of range, either negative or beyond the length of the sequence."
+        elif "file not found" in message_lower:
+            return f"The specified file or directory path does not exist or is incorrect."
+        elif "connection" in message_lower:
+            return f"A network connection cannot be established or has been lost."
+        else:
+            return f"An error of type {error_type} occurred. Review the error message and stack trace for details."

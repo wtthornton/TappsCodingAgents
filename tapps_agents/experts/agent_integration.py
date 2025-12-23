@@ -44,6 +44,7 @@ class ExpertSupportMixin:
         project_root: Path | None = None,
         domains_file: Path | None = None,
         experts_config_file: Path | None = None,
+        offline_mode: bool = False,
     ) -> None:
         """
         Initialize expert registry for this agent.
@@ -52,8 +53,17 @@ class ExpertSupportMixin:
             project_root: Project root directory
             domains_file: Optional path to domains.md file
             experts_config_file: Optional path to experts.yaml file
+            offline_mode: If True, only load built-in experts (no network operations)
         """
         if not project_root:
+            return
+
+        # If offline mode, only load built-in experts (no network)
+        if offline_mode:
+            try:
+                self.expert_registry = ExpertRegistry(domain_config=None, load_builtin=True)
+            except Exception:
+                self.expert_registry = None
             return
 
         # Try to load from domains.md first

@@ -12,15 +12,33 @@ from .common import check_result_error, format_json_output
 
 async def plan_command(description: str, output_format: str = "json"):
     """Create a plan for a feature/requirement"""
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
     feedback = get_feedback()
     feedback.format_type = output_format
+    
+    # Check network requirement - plan requires network
+    requirement = CommandClassifier.get_network_requirement("planner", "plan")
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name="planner plan",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    
     desc_preview = description[:50] + "..." if len(description) > 50 else description
     feedback.start_operation("Plan Creation", f"Creating plan for: {desc_preview}")
     feedback.running("Analyzing requirements...", step=1, total_steps=3)
     
     planner = PlannerAgent()
     try:
-        await planner.activate()
+        await planner.activate(offline_mode=False)
         feedback.running("Generating plan structure...", step=2, total_steps=3)
         result = await planner.run("plan", description=description)
         feedback.running("Finalizing plan...", step=3, total_steps=3)
@@ -34,9 +52,13 @@ async def plan_command(description: str, output_format: str = "json"):
                 summary["plan_items"] = len(result.get("plan", "").split("\n")) if isinstance(result.get("plan"), str) else 0
             if "description" in result:
                 summary["description"] = result["description"][:100] + "..." if len(result.get("description", "")) > 100 else result.get("description", "")
+            
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
 
         if output_format == "json":
-            feedback.output_result(result, message="Plan created successfully", summary=summary)
+            feedback.output_result(result, message="Plan created successfully")
         else:
             feedback.success("Plan created successfully")
             print(f"\nPlan: {result['description']}")
@@ -58,9 +80,26 @@ async def create_story_command(
     feedback.start_operation("Create User Story", f"Creating story: {desc_preview}")
     feedback.running("Analyzing story requirements...", step=1, total_steps=3)
     
+    # Check network requirement - create-story requires network
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
+    requirement = CommandClassifier.get_network_requirement("planner", "create-story")
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name="planner create-story",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    
     planner = PlannerAgent()
     try:
-        await planner.activate()
+        await planner.activate(offline_mode=False)
         feedback.running("Generating story structure...", step=2, total_steps=3)
         result = await planner.run(
             "create-story", description=description, epic=epic, priority=priority
@@ -80,9 +119,13 @@ async def create_story_command(
                 summary["epic"] = result["metadata"].get("epic", "N/A")
                 summary["priority"] = result["metadata"].get("priority", "medium")
                 summary["complexity"] = result["metadata"].get("complexity", 0)
+            
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
 
         if output_format == "json":
-            feedback.output_result(result, message="User story created successfully", summary=summary)
+            feedback.output_result(result, message="User story created successfully")
         else:
             feedback.success("User story created successfully")
             print(f"Story created: {result['story_id']}")
@@ -101,9 +144,15 @@ async def list_stories_command(
     output_format: str = "json",
 ):
     """List all stories in the project"""
+    # Check network requirement - list-stories can work offline
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
+    requirement = CommandClassifier.get_network_requirement("planner", "list-stories")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
+    
     planner = PlannerAgent()
     try:
-        await planner.activate()
+        await planner.activate(offline_mode=offline_mode)
         result = await planner.run("list-stories", epic=epic, status=status)
 
         if output_format == "json":

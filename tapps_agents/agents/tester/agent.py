@@ -75,7 +75,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         # The registry will be properly initialized in activate() via _initialize_expert_support()
         self.expert_registry: Any | None = None
 
-    async def activate(self, project_root: Path | None = None):
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the tester agent with expert support."""
         # Validate that expert_registry attribute exists (safety check)
         if not hasattr(self, 'expert_registry'):
@@ -83,9 +83,9 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 f"{self.__class__.__name__}.expert_registry not initialized. "
                 "This should not happen if __init__() properly initializes the attribute."
             )
-        await super().activate(project_root)
+        await super().activate(project_root, offline_mode=offline_mode)
         # Initialize expert support
-        await self._initialize_expert_support(project_root)
+        await self._initialize_expert_support(project_root, offline_mode=offline_mode)
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return list of available commands."""

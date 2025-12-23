@@ -24,10 +24,31 @@ def handle_architect_command(args: object) -> None:
         feedback.output_result(help_text)
         return
     
+    # Check network requirement
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
+    requirement = CommandClassifier.get_network_requirement("architect", command)
+    offline_mode = False
+    
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name=f"architect {command}",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    elif requirement == CommandNetworkRequirement.OFFLINE:
+        offline_mode = True
+    
     # Only activate for commands that need it
     architect = ArchitectAgent()
     try:
-        asyncio.run(architect.activate())
+        asyncio.run(architect.activate(offline_mode=offline_mode))
         if command == "design-system":
             result = asyncio.run(
                 architect.run(

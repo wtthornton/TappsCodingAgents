@@ -105,7 +105,10 @@ def handle_health_check_command(
                 if result
             }
         }
-        feedback.output_result(output, message="Health checks completed", summary=summary)
+        # Merge summary into output
+        if summary:
+            output = {**output, "summary": summary}
+        feedback.output_result(output, message="Health checks completed")
     else:
         # Text output
         feedback.success("Health checks completed")

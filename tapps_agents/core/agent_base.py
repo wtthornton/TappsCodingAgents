@@ -58,7 +58,7 @@ class BaseAgent(ABC):
         self._unified_cache: Any | None = None  # Optional unified cache instance
         self._project_root: Path | None = None  # Cached project root
 
-    async def activate(self, project_root: Path | None = None):
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """
         Follow activation instructions sequence.
 
@@ -78,6 +78,8 @@ class BaseAgent(ABC):
         Args:
             project_root: Optional project root path. If None, will be detected
                 automatically from the current working directory or config.
+            offline_mode: If True, skip network-dependent initialization
+                (expert support, Context7 helpers, MCP gateway). Defaults to False.
                 
         Raises:
             FileNotFoundError: If required configuration files are missing
@@ -89,7 +91,7 @@ class BaseAgent(ABC):
         # Store project root for path validation
         self._project_root = project_root
 
-        # Step 3: Load project configuration
+        # Step 3: Load project configuration (offline operation)
         # If config not already loaded, load it now
         if self.config is None:
             try:
@@ -100,7 +102,7 @@ class BaseAgent(ABC):
                 # Use defaults if config file is invalid or missing
                 self.config = load_config()  # Returns defaults
 
-        # Step 4: Load domain configuration
+        # Step 4: Load domain configuration (offline operation)
         domains_path = project_root / ".tapps-agents" / "domains.md"
         if domains_path.exists():
             try:
@@ -108,12 +110,12 @@ class BaseAgent(ABC):
             except OSError:
                 self.domain_config = None
 
-        # Step 5: Load role file (if available)
+        # Step 5: Load role file (if available) (offline operation)
         from .role_loader import load_role_file
 
         self.role_file = load_role_file(self.agent_id, project_root)
 
-        # Step 5b: Load user role template (if available)
+        # Step 5b: Load user role template (if available) (offline operation)
         from .role_template_loader import get_role_from_config
 
         user_role_id = get_role_from_config(project_root)
@@ -122,10 +124,15 @@ class BaseAgent(ABC):
             from .role_template_loader import load_role_template
             self.user_role_template = load_role_template(user_role_id, project_root)
 
-        # Step 6: Load customizations (customizations can override role file and role template)
+        # Step 6: Load customizations (offline operation)
+        # Customizations can override role file and role template
         from .customization_loader import load_customization
 
         self.customizations = load_customization(self.agent_id, project_root)
+        
+        # Network-dependent initialization is deferred to agent subclasses
+        # or mixins (e.g., ExpertSupportMixin) when offline_mode=False
+        # They should check offline_mode before making network calls
 
     def get_commands(self) -> list[dict[str, str]]:
         """

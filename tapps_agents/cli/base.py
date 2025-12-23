@@ -184,10 +184,67 @@ def handle_agent_error(
             )
 
 
+def handle_network_error(error: Exception, format_type: str = "text") -> None:
+    """Handle network errors with informative messages following Cursor CLI 2025 patterns.
+    
+    Args:
+        error: NetworkError instance with operation context (or any exception)
+        format_type: Output format ("json" or "text")
+        
+    Raises:
+        SystemExit: Always raises SystemExit with appropriate code
+    """
+    from ..core.network_errors import NetworkError
+    
+    feedback = get_feedback()
+    
+    # Check if it's a NetworkError
+    if isinstance(error, NetworkError):
+        if format_type == "json":
+            # Output in Cursor CLI JSON format
+            error_dict = error.to_dict()
+            feedback.error(
+                message=error_dict["message"],
+                error_code="connection_error",
+                context=error_dict.get("details", {}),
+                remediation="Check your internet connection or VPN. Use offline alternatives if available.",
+                exit_code=EXIT_GENERAL_ERROR,
+            )
+        else:
+            # Text format with actionable guidance
+            feedback.error(
+                message=str(error),
+                error_code="connection_error",
+                context={
+                    "operation": error.operation_name,
+                    "request_id": error.request_id,
+                    "session_id": error.session_id,
+                },
+                remediation=(
+                    "1. Check your internet connection\n"
+                    "2. Verify VPN is connected (if required)\n"
+                    "3. Check firewall/proxy settings\n"
+                    "4. Try again in a few moments\n"
+                    "5. Use offline alternatives if available"
+                ),
+                exit_code=EXIT_GENERAL_ERROR,
+            )
+    else:
+        # Generic error handling
+        feedback.error(
+            message=str(error),
+            error_code="connection_error",
+            context={},
+            remediation="Check your internet connection or VPN.",
+            exit_code=EXIT_GENERAL_ERROR,
+        )
+
+
 async def run_with_agent_lifecycle(
     agent: Any,
     command_func: Callable[..., Any],
     *args: Any,
+    offline_mode: bool = False,
     **kwargs: Any,
 ) -> Any:
     """
@@ -202,6 +259,7 @@ async def run_with_agent_lifecycle(
         agent: Agent instance (must have activate() and close() methods)
         command_func: Async function to execute (can be agent.run or a wrapper)
         *args: Positional arguments for command_func
+        offline_mode: If True, activate agent in offline mode (no network operations)
         **kwargs: Keyword arguments for command_func
         
     Returns:
@@ -211,7 +269,7 @@ async def run_with_agent_lifecycle(
         Any exception raised by command_func or agent methods
     """
     try:
-        await agent.activate()
+        await agent.activate(offline_mode=offline_mode)
         return await command_func(*args, **kwargs)
     finally:
         if hasattr(agent, "close") and agent.close is not None:

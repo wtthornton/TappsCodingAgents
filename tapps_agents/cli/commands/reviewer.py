@@ -107,9 +107,37 @@ async def review_command(
     
     Supports single file (backward compatible) or batch processing.
     """
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError, NetworkOptionalError
+    from ..base import handle_network_error
+    
     feedback = get_feedback()
     output_format = _infer_output_format(output_format, output_file)
     feedback.format_type = output_format
+    
+    # Check network requirement
+    requirement = CommandClassifier.get_network_requirement("reviewer", "review")
+    offline_mode = False
+    
+    if requirement == CommandNetworkRequirement.OFFLINE:
+        offline_mode = True
+    elif requirement == CommandNetworkRequirement.OPTIONAL:
+        # Try offline first if network unavailable
+        if not NetworkDetector.is_network_available():
+            offline_mode = True
+            feedback.info("Network unavailable, continuing in offline mode with reduced functionality")
+    else:
+        # Network required - check availability
+        if not NetworkDetector.is_network_available():
+            try:
+                raise NetworkRequiredError(
+                    operation_name="reviewer review",
+                    message="Network is required for this command"
+                )
+            except NetworkRequiredError as e:
+                handle_network_error(e, format_type=output_format)
+                return
     
     # Handle backward compatibility: single file argument
     if file_path and not files and not pattern:
@@ -151,7 +179,7 @@ async def review_command(
         # Activate agent (load configs, etc.)
         if feedback.verbosity.value == "verbose":
             feedback.info("Initializing ReviewerAgent...")
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
 
         # Single file - use existing flow for backward compatibility
         if len(resolved_files) == 1:
@@ -445,9 +473,15 @@ async def score_command(
     
     Supports single file (backward compatible) or batch processing.
     """
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
     feedback = get_feedback()
     output_format = _infer_output_format(output_format, output_file)
     feedback.format_type = output_format
+    
+    # Check network requirement - score is offline
+    requirement = CommandClassifier.get_network_requirement("reviewer", "score")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
     
     # Handle backward compatibility: single file argument
     if file_path and not files and not pattern:
@@ -477,7 +511,7 @@ async def score_command(
             exit_code=1,
         )
         return
-    
+
     feedback.start_operation("Score")
     if len(resolved_files) == 1:
         feedback.info(f"Scoring {resolved_files[0]}...")
@@ -486,7 +520,7 @@ async def score_command(
     
     reviewer = ReviewerAgent()
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
         
         # Single file - use existing flow for backward compatibility
         if len(resolved_files) == 1:
@@ -572,9 +606,15 @@ async def lint_command(
     fail_on_issues: bool = False,
 ) -> None:
     """Run linting on file(s) with consistent async execution and output handling."""
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
     feedback = get_feedback()
     output_format = _infer_output_format(output_format, output_file)
     feedback.format_type = output_format
+
+    # Check network requirement - lint is offline
+    requirement = CommandClassifier.get_network_requirement("reviewer", "lint")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
 
     if file_path and not files and not pattern:
         files = [file_path]
@@ -609,7 +649,7 @@ async def lint_command(
 
     reviewer = ReviewerAgent()
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
 
         if len(resolved_files) == 1:
             result = await reviewer.run("lint", file=str(resolved_files[0]))
@@ -693,9 +733,15 @@ async def type_check_command(
     fail_on_issues: bool = False,
 ) -> None:
     """Run type-checking on file(s) with consistent async execution and output handling."""
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
     feedback = get_feedback()
     output_format = _infer_output_format(output_format, output_file)
     feedback.format_type = output_format
+
+    # Check network requirement - type-check is offline
+    requirement = CommandClassifier.get_network_requirement("reviewer", "type-check")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
 
     if file_path and not files and not pattern:
         files = [file_path]
@@ -730,7 +776,7 @@ async def type_check_command(
 
     reviewer = ReviewerAgent()
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
 
         if len(resolved_files) == 1:
             result = await reviewer.run("type-check", file=str(resolved_files[0]))
@@ -817,9 +863,22 @@ async def docs_command(
     
     Uses KB-first lookup with automatic fallback to Context7 API.
     """
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    
     feedback = get_feedback()
     feedback.format_type = output_format
     feedback.start_operation("Get Documentation")
+    
+    # Check network requirement - docs is optional (can use cache)
+    requirement = CommandClassifier.get_network_requirement("reviewer", "docs")
+    offline_mode = False
+    
+    if requirement == CommandNetworkRequirement.OPTIONAL:
+        # Try offline first if network unavailable
+        if not NetworkDetector.is_network_available():
+            offline_mode = True
+            feedback.info("Network unavailable, using cached documentation if available")
     
     query_desc = f"{library}"
     if topic:
@@ -828,7 +887,7 @@ async def docs_command(
     
     reviewer = ReviewerAgent()
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
         
         result = await reviewer.run(
             "docs",
@@ -951,6 +1010,22 @@ def handle_reviewer_command(args: object) -> None:
                 )
             )
         elif command == "report":
+            from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+            from ..network_detection import NetworkDetector
+            from ...core.network_errors import NetworkRequiredError
+            from ..base import handle_network_error
+            
+            requirement = CommandClassifier.get_network_requirement("reviewer", "report")
+            if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+                try:
+                    raise NetworkRequiredError(
+                        operation_name="reviewer report",
+                        message="Network is required for this command"
+                    )
+                except NetworkRequiredError as e:
+                    handle_network_error(e, format_type=output_format)
+                    return
+            
             feedback.start_operation("Report Generation", "Analyzing project quality...")
             formats = getattr(args, "formats", ["all"])
             if "all" in formats:
@@ -991,6 +1066,7 @@ def handle_reviewer_command(args: object) -> None:
             
             feedback.output_result(result, message="Report generated successfully", warnings=None)
         elif command == "duplication":
+            # Duplication check is offline - no network check needed
             feedback.start_operation("Duplication Check")
             feedback.info(f"Checking for code duplication in {args.target}...")
             reviewer = ReviewerAgent()
@@ -1005,6 +1081,23 @@ def handle_reviewer_command(args: object) -> None:
                     print(f"\nCode duplication detected in {args.target}:")
                     print(f"  Total duplicates: {len(result.get('duplicates', []))}")
         elif command == "analyze-project":
+            # Project analysis may need network - check if required
+            from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+            from ..network_detection import NetworkDetector
+            from ...core.network_errors import NetworkRequiredError
+            from ..base import handle_network_error
+            
+            requirement = CommandClassifier.get_network_requirement("reviewer", "analyze-project")
+            if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+                try:
+                    raise NetworkRequiredError(
+                        operation_name="reviewer analyze-project",
+                        message="Network is required for this command"
+                    )
+                except NetworkRequiredError as e:
+                    handle_network_error(e, format_type=output_format)
+                    return
+            
             feedback.start_operation("Project Analysis")
             feedback.info("Analyzing project...")
             reviewer = ReviewerAgent()
@@ -1019,6 +1112,23 @@ def handle_reviewer_command(args: object) -> None:
             feedback.clear_progress()
             feedback.output_result(result, message="Project analysis completed")
         elif command == "analyze-services":
+            # Service analysis may need network - check if required
+            from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+            from ..network_detection import NetworkDetector
+            from ...core.network_errors import NetworkRequiredError
+            from ..base import handle_network_error
+            
+            requirement = CommandClassifier.get_network_requirement("reviewer", "analyze-services")
+            if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+                try:
+                    raise NetworkRequiredError(
+                        operation_name="reviewer analyze-services",
+                        message="Network is required for this command"
+                    )
+                except NetworkRequiredError as e:
+                    handle_network_error(e, format_type=output_format)
+                    return
+            
             feedback.start_operation("Service Analysis")
             feedback.info("Analyzing services...")
             services = getattr(args, "services", None)
@@ -1055,24 +1165,42 @@ def handle_reviewer_command(args: object) -> None:
 
 
 async def run_report(reviewer: ReviewerAgent, target: str, format_type: str, output_dir: str | None) -> dict[str, Any]:
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
+    # Report generation may need network for some features, but can work offline
+    requirement = CommandClassifier.get_network_requirement("reviewer", "report")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
+    
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
         return await reviewer.run("report", target=target, format=format_type, output_dir=output_dir)
     finally:
         await reviewer.close()
 
 
 async def run_duplication(reviewer: ReviewerAgent, target: str) -> dict[str, Any]:
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
+    # Duplication check is offline (local analysis)
+    requirement = CommandClassifier.get_network_requirement("reviewer", "duplication")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
+    
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
         return await reviewer.run("duplication", file=target)
     finally:
         await reviewer.close()
 
 
 async def run_analyze_project(reviewer: ReviewerAgent, project_root: str | None, include_comparison: bool) -> dict[str, Any]:
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
+    # Project analysis may need network for some features, but can work offline
+    requirement = CommandClassifier.get_network_requirement("reviewer", "analyze-project")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
+    
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
         return await reviewer.run(
             "analyze-project",
             project_root=project_root,
@@ -1088,8 +1216,14 @@ async def run_analyze_services(
     project_root: str | None,
     include_comparison: bool,
 ) -> dict[str, Any]:
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    
+    # Service analysis may need network for some features, but can work offline
+    requirement = CommandClassifier.get_network_requirement("reviewer", "analyze-services")
+    offline_mode = (requirement == CommandNetworkRequirement.OFFLINE)
+    
     try:
-        await reviewer.activate()
+        await reviewer.activate(offline_mode=offline_mode)
         return await reviewer.run(
             "analyze-services",
             services=services,

@@ -106,3 +106,124 @@ class MyClass:
 
         assert isinstance(result, ErrorAnalysisInstruction)
         assert result.error_message is not None
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_basic(self, error_analyzer):
+        """Test basic error analysis."""
+        error_msg = "NameError: name 'x' is not defined"
+
+        result = await error_analyzer.analyze_error(error_msg)
+
+        assert isinstance(result, dict)
+        assert "error_type" in result
+        assert "error_message" in result
+        assert "root_cause" in result
+        assert "suggestions" in result
+        assert "fix_examples" in result
+        assert "file_location" in result
+        assert "line_number" in result
+        assert result["error_message"] == error_msg
+        assert result["error_type"] == "NameError"
+        assert isinstance(result["suggestions"], list)
+        assert len(result["suggestions"]) > 0
+        assert isinstance(result["fix_examples"], list)
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_attribute_error(self, error_analyzer):
+        """Test AttributeError analysis."""
+        error_msg = "AttributeError: 'ErrorAnalyzer' object has no attribute 'analyze_error'"
+
+        result = await error_analyzer.analyze_error(error_msg)
+
+        assert result["error_type"] == "AttributeError"
+        assert len(result["suggestions"]) > 0
+        assert any("attribute" in s.lower() for s in result["suggestions"])
+        assert len(result["fix_examples"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_with_stack_trace(self, error_analyzer):
+        """Test error analysis with stack trace."""
+        error_msg = "ValueError: invalid literal for int() with base 10: 'abc'"
+        stack_trace = 'File "test.py", line 42, in process_data\n    result = int("abc")'
+
+        result = await error_analyzer.analyze_error(error_msg, stack_trace=stack_trace)
+
+        assert result["error_type"] == "ValueError"
+        assert result["file_location"] == "test.py"
+        assert result["line_number"] == 42
+        assert len(result["suggestions"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_with_file_path(self, error_analyzer, tmp_path: Path):
+        """Test error analysis with file path."""
+        error_msg = "KeyError: 'missing_key'"
+        file_path = tmp_path / "test.py"
+        file_path.write_text("# test file")
+
+        result = await error_analyzer.analyze_error(
+            error_msg, file_path=file_path
+        )
+
+        assert result["error_type"] == "KeyError"
+        assert result["file_location"] == str(file_path)
+        assert len(result["suggestions"]) > 0
+        assert any("dictionary" in s.lower() or ".get()" in s.lower() for s in result["suggestions"])
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_type_error(self, error_analyzer):
+        """Test TypeError analysis."""
+        error_msg = "TypeError: unsupported operand type(s) for +: 'int' and 'str'"
+
+        result = await error_analyzer.analyze_error(error_msg)
+
+        assert result["error_type"] == "TypeError"
+        assert len(result["suggestions"]) > 0
+        assert any("type" in s.lower() for s in result["suggestions"])
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_index_error(self, error_analyzer):
+        """Test IndexError analysis."""
+        error_msg = "IndexError: list index out of range"
+
+        result = await error_analyzer.analyze_error(error_msg)
+
+        assert result["error_type"] == "IndexError"
+        assert len(result["suggestions"]) > 0
+        assert any("index" in s.lower() or "bounds" in s.lower() for s in result["suggestions"])
+        assert len(result["fix_examples"]) > 0
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_file_not_found(self, error_analyzer):
+        """Test FileNotFoundError analysis."""
+        error_msg = "FileNotFoundError: [Errno 2] No such file or directory: 'missing.txt'"
+
+        result = await error_analyzer.analyze_error(error_msg)
+
+        assert result["error_type"] == "FileNotFoundError"
+        assert len(result["suggestions"]) > 0
+        assert any("file" in s.lower() or "path" in s.lower() for s in result["suggestions"])
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_unknown_error(self, error_analyzer):
+        """Test analysis of unknown error type."""
+        error_msg = "CustomError: something went wrong"
+
+        result = await error_analyzer.analyze_error(error_msg)
+
+        assert result["error_type"] == "CustomError"
+        assert len(result["suggestions"]) > 0
+        assert result["root_cause"] is not None
+
+    @pytest.mark.asyncio
+    async def test_analyze_error_with_code_context(self, error_analyzer):
+        """Test error analysis with code context."""
+        error_msg = "NameError: name 'undefined_var' is not defined"
+        code_context = "def test():\n    return undefined_var"
+
+        result = await error_analyzer.analyze_error(
+            error_msg, code_context=code_context
+        )
+
+        assert result["error_type"] == "NameError"
+        assert len(result["suggestions"]) > 0
+        assert len(result["fix_examples"]) > 0

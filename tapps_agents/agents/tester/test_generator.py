@@ -10,7 +10,7 @@ from typing import Any
 
 from ...core.instructions import TestGenerationInstruction
 from ...core.language_detector import Language, LanguageDetector
-from .coverage_analyzer import CoverageAnalyzer, CoverageResult
+from .coverage_analyzer import CoverageAnalyzer, CoverageReport
 
 
 class TestGenerator:
@@ -84,7 +84,7 @@ class TestGenerator:
         file_path: Path,
         test_file_path: Path | None = None,
         project_root: Path | None = None,
-    ) -> CoverageResult:
+    ) -> CoverageReport:
         """
         Measure test coverage for a file using language-specific tools.
         
@@ -96,7 +96,7 @@ class TestGenerator:
             project_root: Optional project root directory
             
         Returns:
-            CoverageResult with coverage percentage and metrics
+            CoverageReport with coverage percentage and metrics
         """
         # Detect language
         code = file_path.read_text(encoding="utf-8") if file_path.exists() else ""

@@ -725,6 +725,137 @@ class AutoEnhancementConfig(BaseModel):
     )
 
 
+class EvaluationConfig(BaseModel):
+    """Configuration for Evaluation & Quality Assurance Engine (Tier 1)"""
+
+    enabled: bool = Field(
+        default=True, description="Enable comprehensive evaluation engine"
+    )
+    include_behavioral_validation: bool = Field(
+        default=True, description="Include behavioral correctness validation"
+    )
+    include_spec_compliance: bool = Field(
+        default=True, description="Include specification compliance checking"
+    )
+    include_architectural_checks: bool = Field(
+        default=True, description="Include architectural pattern adherence checking"
+    )
+    issue_severity_thresholds: dict[str, int] = Field(
+        default_factory=lambda: {
+            "critical": 0,  # Hard fail
+            "high": 5,  # Soft fail/loopback
+            "medium": 10,
+            "low": 20,
+        },
+        description="Maximum allowed issues by severity for gate passing",
+    )
+    enable_remediation_loop: bool = Field(
+        default=True, description="Enable automatic remediation loops"
+    )
+    max_remediation_retries: int = Field(
+        default=3, ge=1, le=10, description="Maximum remediation retry attempts"
+    )
+
+
+class PromptLearningConfig(BaseModel):
+    """Configuration for Continual System Prompt Learning (Tier 1)"""
+
+    enabled: bool = Field(
+        default=True, description="Enable prompt learning system"
+    )
+    feedback_collection_enabled: bool = Field(
+        default=True, description="Enable feedback collection from Cursor IDE"
+    )
+    ab_testing_enabled: bool = Field(
+        default=True, description="Enable A/B testing for prompt variations"
+    )
+    auto_optimize_enabled: bool = Field(
+        default=True, description="Enable automatic prompt optimization"
+    )
+    min_samples_for_optimization: int = Field(
+        default=10, ge=5, description="Minimum feedback samples before optimization"
+    )
+    optimization_interval_hours: int = Field(
+        default=24, ge=1, description="Hours between optimization runs"
+    )
+    prompt_version_retention_days: int = Field(
+        default=90, ge=7, description="Days to retain prompt version history"
+    )
+    auto_update_skills: bool = Field(
+        default=False, description="Automatically update Skills with learned prompts"
+    )
+    require_approval_for_updates: bool = Field(
+        default=True, description="Require approval before updating prompts"
+    )
+
+
+class KnowledgeEngineConfig(BaseModel):
+    """Configuration for Knowledge Ecosystem Enhancement (Tier 1)"""
+
+    enabled: bool = Field(
+        default=True, description="Enable always-on knowledge orchestration engine"
+    )
+    auto_detect_domains: bool = Field(
+        default=True, description="Automatically detect project domains"
+    )
+    auto_create_experts: bool = Field(
+        default=True, description="Automatically create project experts"
+    )
+    knowledge_ingestion_enabled: bool = Field(
+        default=True, description="Enable automatic knowledge ingestion"
+    )
+    proactive_consultation: bool = Field(
+        default=True, description="Proactively consult experts before needed"
+    )
+    metrics_tracking_enabled: bool = Field(
+        default=True, description="Enable metrics tracking for knowledge quality"
+    )
+    kb_maintenance_schedule: str = Field(
+        default="weekly", description="KB maintenance schedule: daily, weekly, monthly"
+    )
+    governance_enabled: bool = Field(
+        default=True, description="Enable governance and safety layer"
+    )
+    require_approval_for_writes: bool = Field(
+        default=False, description="Require approval before writing to knowledge base"
+    )
+
+
+class ContextIntelligenceConfig(BaseModel):
+    """Configuration for Context Intelligence Engine (Tier 1)"""
+
+    enabled: bool = Field(
+        default=True, description="Enable context intelligence engine"
+    )
+    dynamic_gathering_enabled: bool = Field(
+        default=True, description="Enable dynamic context gathering"
+    )
+    repository_exploration_enabled: bool = Field(
+        default=True, description="Enable autonomous repository exploration"
+    )
+    pattern_recognition_enabled: bool = Field(
+        default=True, description="Enable pattern recognition and cataloging"
+    )
+    similarity_detection_enabled: bool = Field(
+        default=True, description="Enable similarity detection for code reuse"
+    )
+    historical_analysis_enabled: bool = Field(
+        default=True, description="Enable historical context analysis"
+    )
+    relevance_ranking_enabled: bool = Field(
+        default=True, description="Enable relevance-based context ranking"
+    )
+    token_budget_management_enabled: bool = Field(
+        default=True, description="Enable token budget management"
+    )
+    default_token_budget: int = Field(
+        default=4000, ge=1000, le=16000, description="Default token budget for context"
+    )
+    progressive_loading_enabled: bool = Field(
+        default=True, description="Enable progressive context loading"
+    )
+
+
 class ProjectConfig(BaseModel):
     """Root configuration model for TappsCodingAgents project"""
 
@@ -761,6 +892,24 @@ class ProjectConfig(BaseModel):
     auto_enhancement: AutoEnhancementConfig = Field(
         default_factory=AutoEnhancementConfig,
         description="Automatic prompt enhancement configuration",
+    )
+
+    # Tier 1 Enhancement Configurations
+    evaluation: EvaluationConfig = Field(
+        default_factory=EvaluationConfig,
+        description="Evaluation & Quality Assurance Engine configuration (Tier 1)",
+    )
+    prompt_learning: PromptLearningConfig = Field(
+        default_factory=PromptLearningConfig,
+        description="Continual System Prompt Learning configuration (Tier 1)",
+    )
+    knowledge_engine: KnowledgeEngineConfig = Field(
+        default_factory=KnowledgeEngineConfig,
+        description="Knowledge Ecosystem Enhancement configuration (Tier 1)",
+    )
+    context_intelligence: ContextIntelligenceConfig = Field(
+        default_factory=ContextIntelligenceConfig,
+        description="Context Intelligence Engine configuration (Tier 1)",
     )
 
     model_config = {

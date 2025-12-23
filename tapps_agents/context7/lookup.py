@@ -78,6 +78,62 @@ class KBLookup:
         self.resolve_library_func = resolve_library_func
         self.get_docs_func = get_docs_func
         self.fuzzy_matcher = FuzzyMatcher(threshold=fuzzy_threshold)
+        # Initialize staleness policy manager and refresh queue (lazy-loaded)
+        self._staleness_policy_manager = None
+        self._refresh_queue = None
+
+    async def _process_refresh_queue_async(self, max_items: int = 1) -> None:
+        """
+        Process refresh queue in background (non-blocking).
+
+        Args:
+            max_items: Maximum number of items to process
+        """
+        try:
+            from .refresh_queue import RefreshQueue
+            from .staleness_policies import StalenessPolicyManager
+            
+            if self._refresh_queue is None:
+                if self._staleness_policy_manager is None:
+                    self._staleness_policy_manager = StalenessPolicyManager()
+                self._refresh_queue = RefreshQueue(
+                    self.kb_cache.cache_structure.refresh_queue_file,
+                    self._staleness_policy_manager
+                )
+            
+            # Get highest priority tasks (limit to max_items)
+            tasks_processed = 0
+            while tasks_processed < max_items:
+                task = self._refresh_queue.get_next_task(max_priority=10)
+                if not task:
+                    break
+                
+                # Process task via lookup (which will fetch and cache)
+                try:
+                    result = await self.lookup(
+                        library=task.library, topic=task.topic, use_fuzzy_match=False
+                    )
+                    if result.success:
+                        # Mark task as completed (removes from queue)
+                        self._refresh_queue.mark_task_completed(
+                            task.library, task.topic, error=None
+                        )
+                        tasks_processed += 1
+                    else:
+                        # Mark task as failed (keeps in queue for retry)
+                        self._refresh_queue.mark_task_completed(
+                            task.library, task.topic, error=result.error or "Refresh failed"
+                        )
+                        tasks_processed += 1  # Count as processed even if failed
+                except Exception as e:
+                    logger.warning(f"Failed to refresh {task.library}/{task.topic}: {e}")
+                    # Mark task as failed
+                    self._refresh_queue.mark_task_completed(
+                        task.library, task.topic, error=str(e)
+                    )
+                    tasks_processed += 1
+        except Exception as e:
+            logger.warning(f"Background refresh processing failed: {e}")
 
     async def lookup(
         self, library: str, topic: str | None = None, use_fuzzy_match: bool = False
@@ -118,6 +174,57 @@ class KBLookup:
                 MetadataManager(self.kb_cache.cache_structure)
             )
             analytics.record_cache_hit(response_time_ms=response_time)
+            
+            # Check if entry is stale
+            if cached_entry.cached_at:
+                from .staleness_policies import StalenessPolicyManager
+                if self._staleness_policy_manager is None:
+                    self._staleness_policy_manager = StalenessPolicyManager()
+                
+                is_stale = self._staleness_policy_manager.is_entry_stale(
+                    library, cached_entry.cached_at
+                )
+                
+                if is_stale:
+                    # Queue refresh for background processing (non-blocking)
+                    from .refresh_queue import RefreshQueue
+                    if self._refresh_queue is None:
+                        self._refresh_queue = RefreshQueue(
+                            self.kb_cache.cache_structure.refresh_queue_file,
+                            self._staleness_policy_manager
+                        )
+                    
+                    self._refresh_queue.add_task(
+                        library, topic, priority=7, reason="staleness"
+                    )
+                    
+                    # Process refresh queue in background (non-blocking, limit to 1 item)
+                    # Try to process in background if event loop is available
+                    import asyncio
+                    try:
+                        loop = asyncio.get_running_loop()
+                        # Event loop is running, create task for background processing
+                        asyncio.create_task(
+                            self._process_refresh_queue_async(max_items=1)
+                        )
+                    except RuntimeError:
+                        # No running event loop - queue will be processed on next lookup
+                        # or via manual refresh command
+                        logger.debug("No running event loop, refresh queued for later processing")
+                    
+                    # Return stale entry immediately (non-blocking)
+                    return LookupResult(
+                        success=True,
+                        content=cached_entry.content,
+                        source="cache_stale",  # Indicate stale source
+                        library=library,
+                        topic=topic,
+                        context7_id=cached_entry.context7_id,
+                        cached_entry=cached_entry,
+                        response_time_ms=response_time,
+                    )
+            
+            # Entry is fresh - return it
             return LookupResult(
                 success=True,
                 content=cached_entry.content,

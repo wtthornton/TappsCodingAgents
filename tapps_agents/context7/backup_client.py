@@ -170,13 +170,29 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
     # Context7 API base URL - using correct API endpoint from documentation
     BASE_URL = os.getenv("CONTEXT7_API_URL", "https://context7.com/api/v2")
     
-    def resolve_library_client(library_name: str) -> dict[str, Any]:
+    def resolve_library_client(
+        library_name: str,
+        offline_mode: bool = False
+    ) -> dict[str, Any]:
         """
         Fallback HTTP client for library resolution.
         Only used if MCP Gateway is not available.
         
         Uses Context7 Search API: GET /api/v2/search?query={library_name}
+        
+        Args:
+            library_name: Name of library to resolve
+            offline_mode: If True, return cached result or empty matches without network call
         """
+        # Check offline mode
+        from ...core.offline_mode import OfflineMode
+        
+        if offline_mode or OfflineMode.is_offline():
+            return {
+                "success": False,
+                "error": "Offline mode",
+                "result": {"matches": []}
+            }
         # #region agent log
         import json
         from datetime import datetime
@@ -318,9 +334,23 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                     }) + "\n")
             except: pass
             # #endregion
+            
+            # Record connection failure for offline mode detection
+            from ...core.offline_mode import OfflineMode
+            OfflineMode.record_connection_failure()
+            
+            # Return error with context (don't raise exception to allow graceful fallback)
+            import uuid
+            request_id = str(uuid.uuid4())
             return {
                 "success": False,
                 "error": "Context7 API endpoint not reachable",
+                "error_details": {
+                    "operation": "Context7 library lookup",
+                    "request_id": request_id,
+                    "library": library_name,
+                    "original_error": str(e),
+                },
                 "result": {
                     "matches": [],
                 },

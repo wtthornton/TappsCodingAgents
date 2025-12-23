@@ -1539,6 +1539,10 @@ async def pre_populate_context7_cache(
                 "cached": 0,
             }
 
+        # Use CacheWarmer for staleness-aware pre-loading
+        # CacheWarmer automatically checks staleness and skips fresh entries
+        cache_warmer = context7_commands.cache_warmer
+        
         # Common topics to cache for popular libraries
         common_topics_map = {
             "fastapi": ["routing", "dependency-injection", "middleware", "errors"],
@@ -1548,45 +1552,48 @@ async def pre_populate_context7_cache(
             "pydantic": ["models", "validation", "serialization"],
         }
 
-        success_count = 0
-        fail_count = 0
-        errors: list[str] = []
-
+        # Use CacheWarmer.warm_cache which checks staleness and skips fresh entries
+        # Build list of libraries with their topics
+        libraries_to_warm = []
         for library in all_libraries:
-            # Cache overview
-            try:
-                result = await context7_commands.cmd_docs(library)
-                if result.get("success"):
-                    success_count += 1
-                else:
-                    fail_count += 1
-                    error_msg = result.get('error') or result.get('message') or 'Unknown error'
-                    errors.append(f"{library}: {error_msg}")
-            except Exception as e:
-                fail_count += 1
-                errors.append(f"{library}: Exception - {str(e)}")
-
-            # Cache common topics if available
             lib_lower = library.lower()
             topics = None
             for key, topic_list in common_topics_map.items():
                 if key in lib_lower:
                     topics = topic_list
                     break
-
             if topics:
+                # Warm with specific topics
                 for topic in topics:
-                    try:
-                        result = await context7_commands.cmd_docs(library, topic=topic)
-                        if result.get("success"):
-                            success_count += 1
-                        else:
-                            fail_count += 1
-                            error_msg = result.get('error') or result.get('message') or 'Unknown error'
-                            errors.append(f"{library}/{topic}: {error_msg}")
-                    except Exception as e:
+                    libraries_to_warm.append((library, topic))
+            else:
+                # Warm with overview only
+                libraries_to_warm.append((library, "overview"))
+        
+        # Warm cache using CacheWarmer (checks staleness automatically)
+        # Process in batches to avoid overwhelming the API
+        batch_size = 10
+        success_count = 0
+        fail_count = 0
+        errors: list[str] = []
+        
+        for i in range(0, len(libraries_to_warm), batch_size):
+            batch = libraries_to_warm[i:i + batch_size]
+            for library, topic in batch:
+                try:
+                    # Use lookup which now has staleness checking
+                    # CacheWarmer would be ideal but it processes libraries, not individual entries
+                    # So we use cmd_docs which goes through lookup (now staleness-aware)
+                    result = await context7_commands.cmd_docs(library, topic=topic)
+                    if result.get("success"):
+                        success_count += 1
+                    else:
                         fail_count += 1
-                        errors.append(f"{library}/{topic}: Exception - {str(e)}")
+                        error_msg = result.get('error') or result.get('message') or 'Unknown error'
+                        errors.append(f"{library}/{topic}: {error_msg}")
+                except Exception as e:
+                    fail_count += 1
+                    errors.append(f"{library}/{topic}: Exception - {str(e)}")
 
         # Determine overall error message
         error_msg = None

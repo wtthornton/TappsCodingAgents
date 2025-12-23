@@ -52,7 +52,7 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
         # The registry will be properly initialized in activate() via _initialize_expert_support()
         self.expert_registry: Any | None = None
 
-    async def activate(self, project_root: Path | None = None):
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         # Validate that expert_registry attribute exists (safety check)
         if not hasattr(self, 'expert_registry'):
             raise AttributeError(
@@ -67,8 +67,8 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
                 project_root=self.project_root
             )
 
-        await super().activate(project_root)
-        await self._initialize_expert_support(project_root)
+        await super().activate(project_root, offline_mode=offline_mode)
+        await self._initialize_expert_support(project_root, offline_mode=offline_mode)
         self.greet()
         await self.run("help")
 

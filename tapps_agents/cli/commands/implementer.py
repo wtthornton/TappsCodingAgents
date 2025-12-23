@@ -18,15 +18,33 @@ async def implement_command(
     output_format: str = "json",
 ):
     """Generate and write code to file (with review)"""
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
     feedback = get_feedback()
     feedback.format_type = output_format
+    
+    # Check network requirement - implement requires network
+    requirement = CommandClassifier.get_network_requirement("implementer", "implement")
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name="implementer implement",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    
     spec_preview = specification[:50] + "..." if len(specification) > 50 else specification
     feedback.start_operation("Code Implementation", f"Implementing: {spec_preview} in {file_path}")
     feedback.running("Analyzing specification...", step=1, total_steps=4)
     
     implementer = ImplementerAgent()
     try:
-        await implementer.activate()
+        await implementer.activate(offline_mode=False)
         feedback.running("Generating code structure...", step=2, total_steps=4)
         result = await implementer.run(
             "implement",
@@ -51,9 +69,13 @@ async def implement_command(
                 summary["file_existed"] = result["file_existed"]
             if "instruction" in result:
                 summary["instruction_prepared"] = True
+            
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
         
         if output_format == "json":
-            feedback.output_result(result, message="Code implementation instruction prepared successfully", summary=summary)
+            feedback.output_result(result, message="Code implementation instruction prepared successfully")
             # Add prominent note about Cursor Skills execution
             if "instruction" in result:
                 feedback.warning(
@@ -90,8 +112,26 @@ async def generate_code_command(
     output_format: str = "json",
 ):
     """Generate code from specification (no file write)"""
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
+    
     feedback = get_feedback()
     feedback.format_type = output_format
+    
+    # Check network requirement - generate-code requires network
+    requirement = CommandClassifier.get_network_requirement("implementer", "generate-code")
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name="implementer generate-code",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
+    
     spec_preview = specification[:50] + "..." if len(specification) > 50 else specification
     target_desc = f" for {file_path}" if file_path else ""
     feedback.start_operation("Code Generation", f"Generating code{target_desc}: {spec_preview}")
@@ -99,7 +139,7 @@ async def generate_code_command(
     
     implementer = ImplementerAgent()
     try:
-        await implementer.activate()
+        await implementer.activate(offline_mode=False)
         feedback.running("Generating code...", step=2, total_steps=3)
         result = await implementer.run(
             "generate-code",
@@ -119,9 +159,13 @@ async def generate_code_command(
                 summary["target_file"] = result["file"]
             if "instruction" in result:
                 summary["instruction_prepared"] = True
+            
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
 
         if output_format == "json":
-            feedback.output_result(result, message="Code generation instruction prepared", summary=summary)
+            feedback.output_result(result, message="Code generation instruction prepared")
             # Add note about instruction-based execution
             if "instruction" in result:
                 feedback.warning(
@@ -148,16 +192,32 @@ async def refactor_command(
     """Refactor existing code file"""
     from ..utils.output_handler import write_output
     from ..feedback import get_feedback
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
     
     feedback = get_feedback()
     feedback.format_type = output_format
+    
+    # Check network requirement - refactor requires network
+    requirement = CommandClassifier.get_network_requirement("implementer", "refactor")
+    if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
+        try:
+            raise NetworkRequiredError(
+                operation_name="implementer refactor",
+                message="Network is required for this command"
+            )
+        except NetworkRequiredError as e:
+            handle_network_error(e, format_type=output_format)
+            return
     inst_preview = instruction[:50] + "..." if len(instruction) > 50 else instruction
     feedback.start_operation("Code Refactoring", f"Refactoring {file_path}: {inst_preview}")
     feedback.running("Analyzing source file...", step=1, total_steps=3)
     
     implementer = ImplementerAgent()
     try:
-        await implementer.activate()
+        await implementer.activate(offline_mode=False)
         feedback.running("Applying refactoring...", step=2, total_steps=3)
         result = await implementer.run(
             "refactor", file_path=file_path, instruction=instruction
@@ -173,12 +233,16 @@ async def refactor_command(
                 summary["source_file"] = result["file"]
             if "instruction" in result:
                 summary["instruction_prepared"] = True
+            
+            # Merge summary into result
+            if summary:
+                result = {**result, "summary": summary}
 
         # Use output handler utility for consistent output
         if output_file or output_format != "json":
             write_output(result, output_file=output_file, format_type=output_format, default_format="json")
         else:
-            feedback.output_result(result, message="Refactoring instruction prepared", summary=summary)
+            feedback.output_result(result, message="Refactoring instruction prepared")
             
         # Note: Actual file writing with refactored code would happen here
         # Currently, refactor returns instructions, not actual refactored code
