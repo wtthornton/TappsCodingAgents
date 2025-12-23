@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.5.1] - 2026-01-27
+
+### Fixed
+- **Workflow Schema Validation** - Fixed schema validation errors in workflow preset files
+  - Fixed `brownfield-analysis.yaml`: moved `project_types` to metadata, changed workflow type from 'analysis' to 'brownfield'
+  - Fixed `simple-full.yaml`: moved `loopback` settings to metadata
+  - All workflow presets now pass schema validation during `tapps-agents init`
+  - Resolves workflow parsing errors that prevented proper initialization
+
+## [2.5.0] - 2026-01-27
+
+### Added
+- **Enhanced Context7 Integration** - Improved Context7 integration with Cursor MCP support and agent integrations
+  - Enhanced MCP server configuration and integration
+  - Improved agent access to Context7 documentation
+  - Better error handling and fallback mechanisms
+- **Offline Mode Handler** - Implemented offline mode handler to prevent connection errors
+  - Graceful degradation when network is unavailable
+  - Improved error messages for offline scenarios
+- **Focus Argument Support** - Added `--focus` argument support for improver and tester commands
+  - Allows users to focus on specific aspects of code improvement
+  - Enhanced targeting for test generation
+
+### Changed
+- **Documentation Updates** - Updated documentation with latest improvements
+- **CLI Improvements** - Enhanced CLI with better error handling and user experience
+- **Workflow Enhancements** - Improved workflow execution and error recovery
+
 ## [2.4.4] - 2026-01-27
 
 ### Fixed
