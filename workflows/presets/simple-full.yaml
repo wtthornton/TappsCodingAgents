@@ -15,9 +15,6 @@ workflow:
     quality_gates: true
     code_scoring: true
     context_tier_default: 2
-    loopback:
-      max_attempts: 3
-      retry_backoff: 1.0
   
   steps:
     - id: requirements
@@ -247,4 +244,9 @@ workflow:
       agent: orchestrator
       action: finalize
       context_tier: 1
+
+metadata:
+  loopback:
+    max_attempts: 3
+    retry_backoff: 1.0
 

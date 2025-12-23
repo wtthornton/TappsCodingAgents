@@ -17,12 +17,7 @@ workflow:
     
     This workflow orchestrates multiple agents to provide a complete picture
     of a brownfield project's current state and recommended improvements.
-  type: analysis
-  project_types:
-    - brownfield
-    - existing-project
-    - legacy-modernization
-    - codebase-assessment
+  type: brownfield
 
 sequence:
   - step: discovery
@@ -232,4 +227,9 @@ metadata:
   author: "TappsCodingAgents Framework"
   estimated_duration: "15-30 minutes"
   complexity: "high"
+  project_types:
+    - brownfield
+    - existing-project
+    - legacy-modernization
+    - codebase-assessment
 
