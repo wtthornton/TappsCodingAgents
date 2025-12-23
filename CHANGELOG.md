@@ -7,6 +7,61 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.7.0] - 2026-01-29
+
+### Added
+- **Enhanced CLI User Feedback Indicators** - Comprehensive feedback system across all CLI commands
+  - Clear status indicators: `[START]`, `[RUNNING]`, `[SUCCESS]`, `[ERROR]`, `[WARN]`
+  - Step-by-step progress tracking with step numbers (e.g., "Step 2 of 5")
+  - Enhanced `start_operation()` method with descriptive operation names and context
+  - New `running()` method for showing current progress with step information
+  - Improved success messages with summary information
+  - Better error visibility with clear visual indicators
+  - Stream separation: status messages to stderr, data to stdout (prevents PowerShell JSON parsing errors)
+  - Progress tracking for all multi-step operations
+
+- **Enhanced Commands** - All CLI commands now provide consistent feedback:
+  - **Tester**: `test`, `generate-tests`, `run-tests` - Added step-by-step progress tracking
+  - **Planner**: `plan`, `create-story` - Added progress tracking and summary information
+  - **Implementer**: `implement`, `generate-code`, `refactor` - Added 4-step progress tracking
+  - **Analyst**: All 6 commands enhanced with progress tracking and summaries
+  - **Top-Level**: `hardware-profile`, `create`, `workflow` - Added progress tracking
+  - **Simple Mode**: `on`, `off`, `status`, `full` - Added step-by-step progress
+  - **Health**: `check`, `dashboard`, `metrics`, `trends` - Added progress tracking with health summaries
+  - **Reviewer**: `report` - Enhanced with detailed progress and report summaries
+
+- **Documentation** - Comprehensive documentation for CLI feedback enhancements
+  - `CLI_USER_FEEDBACK_ENHANCEMENT_PLAN.md` - Problem analysis and solution plan
+  - `CLI_FEEDBACK_IMPLEMENTATION_GUIDE.md` - Detailed implementation guide with code examples
+  - `CLI_FEEDBACK_SUMMARY.md` - Quick reference summary
+  - `CLI_FEEDBACK_IMPROVEMENTS_SUMMARY.md` - Implementation summary
+  - `CLI_FEEDBACK_ALL_COMMANDS_PLAN.md` - All commands enhancement plan
+  - `CLI_FEEDBACK_ALL_COMMANDS_COMPLETE.md` - Complete implementation summary
+
+### Changed
+- **CLI Feedback System** - Major improvements to user experience
+  - Status messages now always go to stderr (even in JSON mode) to prevent PowerShell parsing errors
+  - All commands show clear operation start indicators
+  - Multi-step operations show progress with step numbers
+  - Success messages include duration and summary information
+  - Error messages are clearly distinguished with visual indicators
+
+- **Command Output Format** - Improved consistency across all commands
+  - Consistent status indicator format across all commands
+  - Standardized progress tracking format
+  - Enhanced summary information in success messages
+
+### Fixed
+- **PowerShell JSON Parsing Errors** - Fixed issue where PowerShell tried to parse JSON status messages as commands
+  - Status messages now go to stderr as plain text (even in JSON mode)
+  - Only final results go to stdout as JSON
+  - Prevents PowerShell from attempting to execute JSON output
+
+- **User Feedback Clarity** - Resolved issues with unclear command status
+  - Users can now clearly see if commands are running, stuck, or completed
+  - Progress indicators show what's happening at each step
+  - Error states are immediately obvious
+
 ## [2.6.0] - 2026-01-28
 
 ### Added
