@@ -1,8 +1,11 @@
 """Expert synthesizer for auto-creating project experts."""
 
 import logging
+import re
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +19,21 @@ class ExpertSynthesizer:
         self.experts_file = project_root / ".tapps-agents" / "experts.yaml"
         self.knowledge_base = project_root / ".tapps-agents" / "knowledge"
 
+    def _generate_expert_name(self, domain: str) -> str:
+        """
+        Generate a human-readable expert name from a domain name.
+        
+        Examples:
+            "python" -> "Python Expert"
+            "home-automation" -> "Home Automation Expert"
+            "health_care" -> "Health Care Expert"
+        """
+        # Replace hyphens and underscores with spaces
+        name = domain.replace("-", " ").replace("_", " ")
+        # Capitalize each word
+        name = " ".join(word.capitalize() for word in name.split())
+        return f"{name} Expert"
+
     def synthesize_from_domains(self, domains: list[str]) -> None:
         """Create experts from detected domains."""
         # Create domains.md
@@ -25,11 +43,16 @@ class ExpertSynthesizer:
             for domain in domains:
                 f.write(f"- {domain}\n")
         
-        # Create experts.yaml
-        import yaml
+        # Create experts.yaml with correct format
         experts_config = {
             "experts": [
-                {"id": f"expert-{domain}", "domain": domain, "type": "project"}
+                {
+                    "expert_id": f"expert-{domain}",
+                    "expert_name": self._generate_expert_name(domain),
+                    "primary_domain": domain,
+                    "rag_enabled": False,
+                    "fine_tuned": False,
+                }
                 for domain in domains
             ]
         }

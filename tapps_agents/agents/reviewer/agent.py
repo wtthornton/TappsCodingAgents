@@ -674,6 +674,21 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     "overall_score": 50.0,
                     "metrics": {"timeout": True, "error": "Scoring operation timed out"},
                 }
+            except Exception as e:
+                logger.warning(
+                    f"Scoring failed for {file_path}: {e}. "
+                    f"Using fallback scores."
+                )
+                # Provide fallback scores instead of failing completely
+                scores = {
+                    "complexity_score": 5.0,
+                    "security_score": 5.0,
+                    "maintainability_score": 5.0,
+                    "test_coverage_score": 0.0,
+                    "performance_score": 5.0,
+                    "overall_score": 50.0,
+                    "metrics": {"error": True, "error_message": str(e)},
+                }
 
             # Enhance security score with dependency health (Phase 6.4.3)
             # Only apply to Python files

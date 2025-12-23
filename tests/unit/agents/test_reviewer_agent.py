@@ -153,34 +153,31 @@ class TestReviewerAgentErrorHandling:
     @pytest.mark.asyncio
     async def test_review_command_scorer_error(self, sample_python_file):
         """Test review command handles scorer errors from real CodeScorer."""
+        from unittest.mock import patch
+        from tapps_agents.agents.reviewer.scoring import ScorerFactory
+        
         agent = ReviewerAgent()
         
-        # Patch the scorer's score_file method to raise a specific error
-        # This tests error propagation through real agent code
+        # Patch ScorerFactory.get_scorer to return a scorer that raises an error
         error_message = "Scorer error: File parsing failed"
         
-        def failing_score_file(*args, **kwargs):
-            raise RuntimeError(error_message)
+        class FailingScorer:
+            def score_file(self, *args, **kwargs):
+                raise RuntimeError(error_message)
         
-        agent.scorer.score_file = failing_score_file
+        # Error should be handled gracefully
+        with patch.object(ScorerFactory, 'get_scorer', return_value=FailingScorer()):
+            result = await agent.run("review", file=str(sample_python_file))
         
-        # Error should be raised or handled gracefully
-        result = await agent.run("review", file=str(sample_python_file))
-        
-        # Should handle error gracefully and propagate error information
+        # Should handle error gracefully and include error information in scoring metrics
         assert isinstance(result, dict)
-        # Validate that error information is included in result
-        # The error might be in the result dict or the scoring might be absent
-        assert "error" in result or "scoring" not in result
-        if "error" in result:
-            # Error should contain the original error message
-            error_info = result.get("error", {})
-            if isinstance(error_info, dict):
-                error_msg = error_info.get("message", "") or str(error_info)
-                assert error_message in error_msg or "error" in str(result).lower()
-            else:
-                # Error might be a string
-                assert error_message in str(error_info) or "error" in str(result).lower()
+        assert "scoring" in result  # Scoring should still be present with fallback scores
+        
+        # Check that error information is in the scoring metrics
+        scoring = result.get("scoring", {})
+        metrics = scoring.get("metrics", {})
+        assert metrics.get("error") is True or "error" in str(metrics).lower()
+        assert error_message in str(metrics.get("error_message", ""))
 
 
 class TestReviewerAgentLintCommand:
