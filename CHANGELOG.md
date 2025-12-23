@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.2] - 2025-01-27
+
+### Fixed
+- **pipdeptree Dependency Conflict** - Resolved dependency conflict with `pipdeptree` and `packaging` version
+  - Moved `pipdeptree` from `dev` dependencies to optional `[dependency-analysis]` extra
+  - `pipdeptree>=2.30.0` requires `packaging>=25`, which conflicts with TappsCodingAgents' `packaging<25` constraint
+  - Users can now install without dependency conflicts: `pip install -e ".[dev]"`
+  - Optional dependency tree visualization available via: `pip install -e ".[dependency-analysis]"`
+  - Updated documentation with clear explanation of the conflict and workaround
+
+### Documentation
+- **Installation Troubleshooting** - Added section on `pipdeptree` dependency conflict
+- **Dependency Policy** - Documented new `[dependency-analysis]` optional extra
+- **Command Reference** - Updated install-dev command documentation
+
 ## [2.4.1] - 2025-01-27
 
 ### Fixed

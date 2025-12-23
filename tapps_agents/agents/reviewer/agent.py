@@ -97,6 +97,29 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         self.dependency_analyzer_enabled = pip_audit_enabled
         self.dependency_analyzer: DependencyAnalyzer | None = None
 
+        # Ensure Python scorer is registered in ScorerRegistry (fix for registration issues)
+        # This ensures reviewer commands work even if lazy initialization fails
+        try:
+            from ...core.language_detector import Language
+            from .scorer_registry import ScorerRegistry
+            
+            # Ensure built-in scorers are registered
+            ScorerRegistry._ensure_initialized()
+            
+            # Double-check Python scorer is registered (fallback if initialization failed)
+            if not ScorerRegistry.is_registered(Language.PYTHON):
+                logger.warning(
+                    "Python scorer not registered, attempting explicit registration"
+                )
+                ScorerRegistry.register(Language.PYTHON, CodeScorer, override=True)
+        except Exception as e:
+            # Log but don't fail - we have self.scorer as fallback
+            logger.warning(
+                f"Failed to ensure Python scorer registration: {e}. "
+                "Using direct CodeScorer instance as fallback.",
+                exc_info=True
+            )
+
         # Initialize TypeScript scorer (Phase 6.4.4)
         typescript_enabled = quality_tools.typescript_enabled if quality_tools else True
         self.typescript_enabled = typescript_enabled

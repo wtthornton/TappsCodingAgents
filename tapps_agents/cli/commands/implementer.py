@@ -40,20 +40,30 @@ async def implement_command(
         # The actual code generation happens via Cursor Skills, not directly in CLI
         if output_format == "json":
             feedback.output_result(result, message="Code implementation instruction prepared successfully")
-            # Add note about Cursor Skills execution
+            # Add prominent note about Cursor Skills execution
             if "instruction" in result:
-                feedback.info(
-                    "Note: This command returns an instruction for Cursor Skills execution. "
-                    "To execute, use the skill_command in Cursor or use @implementer in Cursor chat."
+                feedback.warning(
+                    "⚠️  IMPORTANT: This command returns an instruction object, not actual code.\n"
+                    "   The file will NOT be created by this CLI command.\n"
+                    "   To actually generate and write code, use one of these methods:\n"
+                    "   1. Use the skill_command in Cursor IDE: @implementer *implement ...\n"
+                    "   2. Copy the skill_command from the result and run it in Cursor chat\n"
+                    "   3. Use Simple Mode: @simple-mode *build \"your description\""
                 )
         else:
             feedback.success("Code implementation instruction prepared successfully")
+            print(f"\n{'='*60}")
+            print("⚠️  IMPORTANT: This command returns an instruction, not actual code.")
+            print("   The file will NOT be created by this CLI command.")
+            print(f"{'='*60}")
             print(f"\nInstruction prepared for: {result.get('file', 'N/A')}")
             if "skill_command" in result:
-                print(f"\nTo execute in Cursor, use:")
-                print(f"  {result['skill_command']}")
+                print(f"\n📋 To execute in Cursor IDE, use:")
+                print(f"   {result['skill_command']}")
+                print(f"\n   Or use Simple Mode:")
+                print(f"   @simple-mode *build \"{specification[:50]}...\"")
             if result.get("file_existed"):
-                print(f"File existed: {result['file_existed']}")
+                print(f"\nFile existed: {result['file_existed']}")
     finally:
         await implementer.close()
 
@@ -81,10 +91,22 @@ async def generate_code_command(
 
         if output_format == "json":
             format_json_output(result)
+            # Add note about instruction-based execution
+            if "instruction" in result:
+                feedback = get_feedback()
+                feedback.warning(
+                    "⚠️  Note: This command returns an instruction object.\n"
+                    "   To see actual generated code, use @implementer in Cursor IDE."
+                )
         else:
-            print("Generated Code:")
+            print("⚠️  Note: This command returns an instruction object, not actual code.")
+            print("   To see generated code, use @implementer in Cursor IDE.")
+            if "skill_command" in result:
+                print(f"\n   Execute in Cursor: {result['skill_command']}")
+            print("\nInstruction Details:")
             print("-" * 40)
-            print(result["code"])
+            if "instruction" in result:
+                print(f"Specification: {result['instruction'].get('specification', 'N/A')[:100]}...")
     finally:
         await implementer.close()
 

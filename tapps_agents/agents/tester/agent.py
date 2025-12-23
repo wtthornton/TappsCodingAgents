@@ -200,11 +200,22 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             # Auto-generate test file path
             test_path = self._get_test_file_path(file_path)
 
+        # Ensure test directory exists (fix for nested path issues)
+        try:
+            test_path.parent.mkdir(parents=True, exist_ok=True)
+        except Exception as e:
+            logger.warning(
+                f"Failed to create test directory {test_path.parent}: {e}. "
+                "Test file creation may fail.",
+                exc_info=True
+            )
+
         return {
             "type": "test",
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
+            "test_directory": str(test_path.parent),
             "expert_advice": expert_advice,  # Include expert recommendations
         }
 

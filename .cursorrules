@@ -7,6 +7,7 @@ This project uses Cursor Skills and Rules for AI assistance.
 - **Skills**: Use `@agent-name` in chat (e.g., `@reviewer`, `@implementer`)
 - **Rules**: See `.cursor/rules/` for detailed project context
 - **Background Agents**: See `.cursor/background-agents.yaml` for autonomous task execution
+- **Command Reference**: See `.cursor/rules/command-reference.mdc` for complete command documentation
 
 ## Available Skills (13 Agents)
 
@@ -101,8 +102,8 @@ See `.cursor/rules/project-context.mdc` for full context.
 
 ## Configuration
 
-- **Skills**: `.claude/skills/` (13 agent skills)
-- **Rules**: `.cursor/rules/` (5 rule files)
+- **Skills**: `.claude/skills/` (13 agent skills + simple-mode)
+- **Rules**: `.cursor/rules/` (6 rule files: workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference)
 - **Background Agents**: `.cursor/background-agents.yaml`
 - **Indexing**: `.cursorignore` (performance optimization)
 

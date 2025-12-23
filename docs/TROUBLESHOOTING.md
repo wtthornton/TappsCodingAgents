@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-**Version**: 2.4.1  
+**Version**: 2.4.2  
 **Last Updated**: January 2026
 
 ## Installation

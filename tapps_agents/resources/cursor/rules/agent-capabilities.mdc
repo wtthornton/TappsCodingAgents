@@ -613,7 +613,10 @@ agents:
 
 ## Related Documentation
 
-- [Quick Reference](quick-reference.mdc) - Command reference
+- [Command Reference](command-reference.mdc) - ⭐ **Complete command reference** - All commands and parameters
+- [Simple Mode](simple-mode.mdc) - ⭐ **Recommended orchestration method** - Complete workflow execution
+- [Quick Reference](quick-reference.mdc) - Quick command reference
 - [Workflow Presets](workflow-presets.mdc) - Workflow documentation
+- [Simple Mode User Guide](../docs/SIMPLE_MODE_USER_GUIDE.md) - How to ensure workflow execution
 - [API Documentation](../docs/API.md) - Full API reference
 - [Configuration Guide](../docs/CONFIGURATION.md) - Configuration details
