@@ -652,33 +652,82 @@ tapps-agents ops plan-deployment "<description>" [--format json|text]
 
 **Available Commands:**
 
-#### `*analyze` / `analyze` (Dual-Mode)
-**Purpose:** Requirements analysis
+#### `*gather-requirements` / `gather-requirements` (Dual-Mode)
+**Purpose:** Gather and document requirements from description or stakeholder input
 
 **CLI Syntax:**
 ```bash
-tapps-agents analyst analyze "<description>" [--format json|text]
+tapps-agents analyst gather-requirements "<description>" [--context "<context>"] [--output <file>] [--format json|text|markdown]
 ```
 
 **Cursor Syntax:**
 ```cursor
-@analyst *analyze "<description>"
+@analyst *gather-requirements "<description>"
 ```
 
-#### `*requirements` / `requirements` (CLI-First)
-**Purpose:** Gather requirements
+#### `*analyze-stakeholders` / `stakeholder-analysis` (Dual-Mode)
+**Purpose:** Analyze stakeholders and their needs
 
 **CLI Syntax:**
 ```bash
-tapps-agents analyst requirements "<description>" [--format json|text]
+tapps-agents analyst stakeholder-analysis "<description>" [--stakeholders <stakeholder>...] [--format json|text]
 ```
 
-#### `*profile` / `profile` (CLI-First)
-**Purpose:** Project profiling
+**Cursor Syntax:**
+```cursor
+@analyst *analyze-stakeholders "<description>"
+```
+
+#### `*research-technology` / `tech-research` (Dual-Mode)
+**Purpose:** Research technology options for a requirement
 
 **CLI Syntax:**
 ```bash
-tapps-agents analyst profile <target> [--format json|text]
+tapps-agents analyst tech-research "<requirement>" [--context "<context>"] [--criteria <criteria>...] [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@analyst *research-technology "<requirement>"
+```
+
+#### `*estimate-effort` / `estimate-effort` (Dual-Mode)
+**Purpose:** Estimate effort and complexity for a feature
+
+**CLI Syntax:**
+```bash
+tapps-agents analyst estimate-effort "<feature_description>" [--context "<context>"] [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@analyst *estimate-effort "<feature_description>"
+```
+
+#### `*assess-risk` / `assess-risk` (Dual-Mode)
+**Purpose:** Assess risks for a feature or project
+
+**CLI Syntax:**
+```bash
+tapps-agents analyst assess-risk "<feature_description>" [--context "<context>"] [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@analyst *assess-risk "<feature_description>"
+```
+
+#### `*competitive-analysis` / `competitive-analysis` (Dual-Mode)
+**Purpose:** Perform competitive analysis
+
+**CLI Syntax:**
+```bash
+tapps-agents analyst competitive-analysis "<product_description>" [--competitors <competitor>...] [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@analyst *competitive-analysis "<product_description>"
 ```
 
 ### Orchestrator Agent (`@orchestrator`)

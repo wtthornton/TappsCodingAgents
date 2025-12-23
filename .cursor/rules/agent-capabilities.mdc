@@ -39,9 +39,9 @@ TappsCodingAgents provides **13 specialized workflow agents** covering the compl
 
 **Common Commands**:
 ```bash
-python -m tapps_agents.cli analyst analyze "Add user authentication system"
-python -m tapps_agents.cli analyst requirements "Payment processing feature"
-python -m tapps_agents.cli analyst profile .
+python -m tapps_agents.cli analyst gather-requirements "Add user authentication system"
+python -m tapps_agents.cli analyst stakeholder-analysis "Payment processing feature"
+python -m tapps_agents.cli analyst tech-research "Authentication solution" --criteria security scalability
 ```
 
 **Expert Integration**: Consults domain experts for business context.

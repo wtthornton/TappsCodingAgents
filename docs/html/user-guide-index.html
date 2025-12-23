@@ -384,11 +384,11 @@ tapps-agents --version
                                 <span>CLI</span>
                                 <button class="copy-btn" onclick="copyCode(this)">Copy</button>
                             </div>
-                            <pre><code>python -m tapps_agents.cli analyst analyze "Add user authentication"
-python -m tapps_agents.cli analyst requirements "Payment feature"
-python -m tapps_agents.cli analyst profile .</code></pre>
+                            <pre><code>python -m tapps_agents.cli analyst gather-requirements "Add user authentication"
+python -m tapps_agents.cli analyst stakeholder-analysis "Payment feature"
+python -m tapps_agents.cli analyst tech-research "Authentication solution"</code></pre>
                         </div>
-                        <p><strong>Cursor Skill:</strong> <code>@analyst *analyze "{description}"</code></p>
+                        <p><strong>Cursor Skill:</strong> <code>@analyst *gather-requirements "{description}"</code></p>
                     </div>
                     <div class="feature-card">
                         <h3>📋 Planner</h3>
@@ -732,7 +732,7 @@ python -m tapps_agents.cli reviewer type-check file.py</code></pre>
 @ops *security-scan {file}
 @orchestrator *run-workflow {workflow_file}
 @enhancer *enhance "{prompt}"
-@analyst *analyze "{description}"</code></pre>
+@analyst *gather-requirements "{description}"</code></pre>
                 </div>
 
                 <p>For complete API reference, see <a href="api-reference.html">API Reference</a>.</p>
