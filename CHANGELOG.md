@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.3] - 2025-01-27
+
+### Added
+- **Enhanced Version Update Script** - Comprehensive version update automation
+  - Updates version in `pyproject.toml` and `tapps_agents/__init__.py`
+  - Automatically updates all documentation files with version headers
+  - Includes `-SkipDocs` flag for core-only updates
+  - Validates version format and verifies updates
+  - Documentation: `docs/scripts/UPDATE_VERSION_SCRIPT.md`
+
+### Fixed
+- **Version Update Script** - Fixed PowerShell syntax issues
+  - Resolved quote escaping problems
+  - Improved regex pattern handling
+  - Enhanced error handling and verification
+
 ## [2.4.2] - 2025-01-27
 
 ### Fixed
