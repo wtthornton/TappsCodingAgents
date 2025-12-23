@@ -234,6 +234,7 @@ Format as structured JSON with OpenAPI-style specification."""
 
         # Consult Data Privacy expert for data model design
         privacy_guidance = ""
+        database_guidance = ""
         # Use defensive check to ensure attribute exists (safety for MRO issue)
         if hasattr(self, 'expert_registry') and self.expert_registry:
             privacy_consultation = await self.expert_registry.consult(
@@ -247,10 +248,30 @@ Format as structured JSON with OpenAPI-style specification."""
                 >= privacy_consultation.confidence_threshold
             ):
                 privacy_guidance = privacy_consultation.weighted_answer
+            
+            # Consult Database expert for time-series/InfluxDB patterns (Phase 1.2: HomeIQ Support)
+            requirements_lower = requirements.lower()
+            if any(keyword in requirements_lower for keyword in ["influxdb", "time-series", "time series", "iot", "sensor", "metrics"]):
+                database_consultation = await self.expert_registry.consult(
+                    query=f"Provide database design patterns for time-series data modeling with the following requirements: {requirements[:500]}",
+                    domain="database-data-management",
+                    agent_id=self.agent_id,
+                    prioritize_builtin=True,
+                )
+                if (
+                    database_consultation.confidence
+                    >= database_consultation.confidence_threshold
+                ):
+                    database_guidance = database_consultation.weighted_answer
 
         privacy_guidance_section = (
             f"Data Privacy Expert Guidance:\n{privacy_guidance}\n"
             if privacy_guidance
+            else ""
+        )
+        database_guidance_section = (
+            f"Database Expert Guidance (Time-Series/InfluxDB):\n{database_guidance}\n"
+            if database_guidance
             else ""
         )
 
@@ -262,6 +283,7 @@ Requirements:
 {f"Data Source: {data_source}" if data_source else ""}
 
 {privacy_guidance_section}
+{database_guidance_section}
 
 Provide comprehensive data model design including:
 1. Entity Relationship Overview

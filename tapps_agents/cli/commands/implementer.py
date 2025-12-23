@@ -36,14 +36,24 @@ async def implement_command(
         check_result_error(result)
         feedback.clear_progress()
 
+        # Note: Implementer returns instructions for Cursor Skills execution
+        # The actual code generation happens via Cursor Skills, not directly in CLI
         if output_format == "json":
-            feedback.output_result(result, message="Code implemented successfully")
+            feedback.output_result(result, message="Code implementation instruction prepared successfully")
+            # Add note about Cursor Skills execution
+            if "instruction" in result:
+                feedback.info(
+                    "Note: This command returns an instruction for Cursor Skills execution. "
+                    "To execute, use the skill_command in Cursor or use @implementer in Cursor chat."
+                )
         else:
-            feedback.success("Code implemented successfully")
-            print(f"\nCode implemented: {result['file']}")
-            print(f"Approved: {result['approved']}")
-            if result.get("backup"):
-                print(f"Backup created: {result['backup']}")
+            feedback.success("Code implementation instruction prepared successfully")
+            print(f"\nInstruction prepared for: {result.get('file', 'N/A')}")
+            if "skill_command" in result:
+                print(f"\nTo execute in Cursor, use:")
+                print(f"  {result['skill_command']}")
+            if result.get("file_existed"):
+                print(f"File existed: {result['file_existed']}")
     finally:
         await implementer.close()
 

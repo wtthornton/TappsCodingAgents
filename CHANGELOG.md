@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.3.0] - 2025-01-27
+
+### Added
+- **Automatic Python Scorer Registration** - Python support now works automatically for all agents
+  - Added lazy initialization pattern in `ScorerRegistry` for automatic built-in scorer registration
+  - Python scorer (`CodeScorer`) is now automatically registered on first use
+  - TypeScript and React scorers also auto-registered for consistency
+  - No manual configuration required - Python files work out of the box
+  - Resolves "No scorer registered for language python" error
+
+### Changed
+- **ScorerRegistry Enhancement** - Improved scorer registration system
+  - Added `_ensure_initialized()` method for lazy initialization
+  - Added `_register_builtin_scorers()` method to auto-register built-in scorers
+  - Enhanced error handling with graceful degradation and logging
+
 ## [2.1.1] - 2025-12-22
 
 ### Documentation

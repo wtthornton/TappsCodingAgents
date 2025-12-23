@@ -33,7 +33,28 @@ def handle_tester_command(args: object) -> None:
             )
             check_result_error(result)
             feedback.clear_progress()
-            feedback.output_result(result, message="Tests completed")
+            
+            # Note: Tester returns instructions for Cursor Skills execution
+            # Check if test file was actually created
+            test_file_path = result.get("test_file")
+            if test_file_path:
+                from pathlib import Path
+                test_path = Path(test_file_path)
+                if test_path.exists() and test_path.stat().st_size > 0:
+                    feedback.output_result(result, message="Tests generated and file created successfully")
+                else:
+                    feedback.output_result(result, message="Test generation instruction prepared")
+                    feedback.info(
+                        f"Note: Test file not yet created at {test_file_path}. "
+                        "This command returns an instruction for Cursor Skills execution. "
+                        "To execute, use the skill_command in Cursor or use @tester in Cursor chat."
+                    )
+            else:
+                feedback.output_result(result, message="Test generation instruction prepared")
+                feedback.info(
+                    "Note: This command returns an instruction for Cursor Skills execution. "
+                    "To execute, use the skill_command in Cursor or use @tester in Cursor chat."
+                )
         elif command == "generate-tests":
             feedback.start_operation("Generate Tests")
             feedback.info(f"Generating tests for {args.file}...")

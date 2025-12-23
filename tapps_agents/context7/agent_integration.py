@@ -56,14 +56,27 @@ class Context7AgentHelper:
         except Exception as e:
             logger.debug(f"Could not ensure Context7 API key availability: {e}")
 
-        # Validate credentials (non-blocking, logs warnings if invalid)
+        # Validate credentials (non-blocking, only warn if Context7 is actually needed)
+        # Context7 is optional - only warn if it's explicitly required for the operation
         try:
             cred_result = validate_context7_credentials(mcp_gateway=mcp_gateway)
+            # Only log as debug if MCP is available (Context7 works via MCP)
+            # Only warn if both MCP and API key are unavailable
             if not cred_result.valid:
-                logger.warning(
-                    f"Context7 credentials validation failed: {cred_result.error}\n"
-                    f"{cred_result.actionable_message}"
-                )
+                if mcp_gateway:
+                    # MCP is available, so Context7 should work via MCP
+                    # Only log as debug to avoid noise
+                    logger.debug(
+                        f"Context7 API key not configured, but MCP gateway is available. "
+                        f"Context7 will work via MCP: {cred_result.error}"
+                    )
+                else:
+                    # No MCP and no API key - warn only if Context7 is actually needed
+                    # For now, we'll still warn but at debug level to reduce noise
+                    logger.debug(
+                        f"Context7 credentials not configured: {cred_result.error}. "
+                        f"Context7 features will be limited. {cred_result.actionable_message}"
+                    )
         except Exception as e:
             logger.debug(f"Context7 credential validation error: {e}", exc_info=True)
 

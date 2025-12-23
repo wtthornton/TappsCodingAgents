@@ -110,6 +110,51 @@ Row Key: user123
 (Product:123) -[:CATEGORY]-> (Category:Electronics)
 ```
 
+### Time-Series Databases
+
+**Structure:**
+- Measurements (like tables)
+- Tags (indexed metadata)
+- Fields (actual values)
+- Timestamps (automatic indexing)
+
+**Examples:** InfluxDB, TimescaleDB, Prometheus
+
+**Use Cases:**
+- IoT sensor data
+- Home automation
+- Energy monitoring
+- Real-time metrics
+- Event logging
+
+**Pattern:**
+```
+measurement: "sensors"
+tags: device_id="sensor_001", location="kitchen"
+fields: temperature=72.5, humidity=45.2
+timestamp: 2026-01-15T10:30:00Z
+```
+
+**InfluxDB Query (Flux):**
+```flux
+from(bucket: "homeiq")
+  |> range(start: -1h)
+  |> filter(fn: (r) => r["device_id"] == "sensor_001")
+  |> aggregateWindow(every: 5m, fn: mean)
+```
+
+**Best Practices:**
+- Use tags for frequently filtered metadata (low cardinality)
+- Use fields for actual measurements
+- Always specify time ranges in queries
+- Filter by tags before fields
+- Use downsampling for long-term retention
+
+**See Also:**
+- `influxdb-patterns.md` - Detailed InfluxDB patterns
+- `time-series-modeling.md` - Time-series data modeling
+- `flux-query-optimization.md` - Flux query optimization
+
 ## Design Patterns
 
 ### Document Embedding vs References

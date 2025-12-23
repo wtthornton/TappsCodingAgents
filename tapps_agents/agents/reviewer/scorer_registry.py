@@ -6,11 +6,14 @@ language-specific scorers, making it easy to add support for new languages
 without modifying core code.
 """
 
+import logging
 from typing import Any
 
 from ...core.config import ProjectConfig
 from ...core.language_detector import Language
 from .scoring import BaseScorer
+
+logger = logging.getLogger(__name__)
 
 
 class ScorerRegistry:
@@ -21,6 +24,7 @@ class ScorerRegistry:
     - Registration of scorers for specific languages
     - Fallback chains (e.g., React → TypeScript → Generic)
     - Config-based scorer instantiation
+    - Automatic registration of built-in scorers (lazy initialization)
     """
     
     # Registry mapping language to scorer class
@@ -31,6 +35,9 @@ class ScorerRegistry:
         Language.REACT: [Language.TYPESCRIPT, Language.JAVASCRIPT],
         Language.TYPESCRIPT: [Language.JAVASCRIPT],
     }
+    
+    # Track initialization state for lazy registration
+    _initialized: bool = False
     
     @classmethod
     def register(
@@ -76,6 +83,96 @@ class ScorerRegistry:
         cls._scorers.pop(language, None)
     
     @classmethod
+    def _ensure_initialized(cls) -> None:
+        """
+        Ensure built-in scorers are registered (lazy initialization).
+        
+        This method is called automatically before scorer lookup to ensure
+        all built-in scorers (Python, TypeScript, etc.) are registered.
+        
+        Safe to call multiple times (idempotent).
+        """
+        if cls._initialized:
+            return
+        
+        try:
+            cls._register_builtin_scorers()
+            # Only mark as initialized if at least Python scorer was registered
+            if cls.is_registered(Language.PYTHON):
+                cls._initialized = True
+            else:
+                # Force register Python scorer as fallback
+                logger.warning(
+                    "Python scorer registration failed, attempting fallback registration"
+                )
+                try:
+                    from .scoring import CodeScorer
+                    cls.register(Language.PYTHON, CodeScorer, override=True)
+                    cls._initialized = True
+                except Exception as fallback_error:
+                    logger.error(
+                        f"Failed to register Python scorer even with fallback: {fallback_error}",
+                        exc_info=True,
+                    )
+                    # Don't set _initialized = True so it will retry next time
+        except Exception as e:
+            # Log error but try to register Python scorer as fallback
+            logger.warning(
+                f"Failed to auto-register built-in scorers: {e}. "
+                "Attempting fallback Python scorer registration.",
+                exc_info=True,
+            )
+            try:
+                from .scoring import CodeScorer
+                if not cls.is_registered(Language.PYTHON):
+                    cls.register(Language.PYTHON, CodeScorer, override=True)
+                    cls._initialized = True
+            except Exception as fallback_error:
+                logger.error(
+                    f"Failed to register Python scorer as fallback: {fallback_error}",
+                    exc_info=True,
+                )
+                # Don't set _initialized = True so it will retry next time
+    
+    @classmethod
+    def _register_builtin_scorers(cls) -> None:
+        """
+        Register all built-in language scorers.
+        
+        This method registers:
+        - CodeScorer for Language.PYTHON
+        - TypeScriptScorer for Language.TYPESCRIPT (if available)
+        - ReactScorer for Language.REACT (if available)
+        
+        Uses lazy imports to avoid circular dependencies.
+        """
+        # Register Python scorer
+        from .scoring import CodeScorer
+        
+        if not cls.is_registered(Language.PYTHON):
+            cls.register(Language.PYTHON, CodeScorer, override=False)
+        
+        # Register TypeScript scorer (if available)
+        try:
+            from .typescript_scorer import TypeScriptScorer
+            
+            if not cls.is_registered(Language.TYPESCRIPT):
+                cls.register(Language.TYPESCRIPT, TypeScriptScorer, override=False)
+        except ImportError:
+            # TypeScript scorer not available - skip silently
+            pass
+        
+        # Register React scorer (if available)
+        try:
+            from .react_scorer import ReactScorer
+            
+            if not cls.is_registered(Language.REACT):
+                cls.register(Language.REACT, ReactScorer, override=False)
+        except ImportError:
+            # React scorer not available - skip silently
+            pass
+    
+    @classmethod
     def get_scorer(cls, language: Language, config: ProjectConfig | None = None) -> BaseScorer:
         """
         Get appropriate scorer for a language, with fallback support.
@@ -90,6 +187,9 @@ class ScorerRegistry:
         Raises:
             ValueError: If no scorer found and no fallback available
         """
+        # Ensure built-in scorers are registered (lazy initialization)
+        cls._ensure_initialized()
+        
         # Try to get scorer for this language
         scorer_class = cls._scorers.get(language)
         
@@ -105,11 +205,29 @@ class ScorerRegistry:
                     fallback_scorer_class, fallback_language, config
                 )
         
+        # If still no scorer, try to ensure initialization one more time
+        # (in case initialization failed previously)
+        if not cls._initialized:
+            cls._ensure_initialized()
+            scorer_class = cls._scorers.get(language)
+            if scorer_class:
+                return cls._instantiate_scorer(scorer_class, language, config)
+            
+            # Try fallback chain again after re-initialization
+            fallback_chain = cls._fallback_chains.get(language, [])
+            for fallback_language in fallback_chain:
+                fallback_scorer_class = cls._scorers.get(fallback_language)
+                if fallback_scorer_class:
+                    return cls._instantiate_scorer(
+                        fallback_scorer_class, fallback_language, config
+                    )
+        
         # If still no scorer, raise error
         # In the future, we could return a GenericScorer here
+        available_languages = [lang.value for lang in cls._scorers.keys()]
         raise ValueError(
             f"No scorer registered for language {language.value} "
-            f"and no fallback available. Available languages: {list(cls._scorers.keys())}"
+            f"and no fallback available. Available languages: {available_languages}"
         )
     
     @classmethod
@@ -246,15 +364,10 @@ def register_scorer(
     return decorator
 
 
-# Auto-register built-in scorers (lazy import to avoid circular dependencies)
-def _auto_register_scorers() -> None:
-    """Auto-register built-in scorers on module import."""
-    # Use lazy imports to avoid circular dependencies
-    # Scorers will be registered when ScorerRegistry.get_scorer() is called
-    # This avoids import-time registration which can cause circular imports
-    pass
-
-
-# Note: Scorers are registered lazily in _instantiate_scorer() to avoid circular imports
-# For explicit registration, use the decorator or manual registration
+# Note: Built-in scorers are registered lazily via _ensure_initialized()
+# which is called automatically when get_scorer() is first invoked.
+# This avoids circular import issues while ensuring scorers are available.
+#
+# For explicit registration, use the @register_scorer decorator or
+# ScorerRegistry.register() method directly.
 

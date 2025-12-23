@@ -445,6 +445,129 @@ Response:
 - `RATE_LIMIT_EXCEEDED`
 - `INTERNAL_ERROR`
 
+## FastAPI Examples
+
+### Basic RESTful API with FastAPI
+
+```python
+from fastapi import FastAPI, HTTPException, Depends
+from pydantic import BaseModel
+from typing import List
+
+app = FastAPI(title="User API", version="1.0.0")
+
+class User(BaseModel):
+    id: int
+    name: str
+    email: str
+
+class UserCreate(BaseModel):
+    name: str
+    email: str
+
+# GET /users - List users
+@app.get("/users", response_model=List[User])
+async def list_users():
+    return [
+        User(id=1, name="John", email="john@example.com"),
+        User(id=2, name="Jane", email="jane@example.com")
+    ]
+
+# GET /users/{user_id} - Get user
+@app.get("/users/{user_id}", response_model=User)
+async def get_user(user_id: int):
+    if user_id == 1:
+        return User(id=1, name="John", email="john@example.com")
+    raise HTTPException(status_code=404, detail="User not found")
+
+# POST /users - Create user
+@app.post("/users", response_model=User, status_code=201)
+async def create_user(user: UserCreate):
+    # Create user logic
+    return User(id=3, name=user.name, email=user.email)
+
+# PUT /users/{user_id} - Replace user
+@app.put("/users/{user_id}", response_model=User)
+async def replace_user(user_id: int, user: UserCreate):
+    # Replace user logic
+    return User(id=user_id, name=user.name, email=user.email)
+
+# PATCH /users/{user_id} - Update user
+@app.patch("/users/{user_id}", response_model=User)
+async def update_user(user_id: int, user: UserCreate):
+    # Partial update logic
+    return User(id=user_id, name=user.name, email=user.email)
+
+# DELETE /users/{user_id} - Delete user
+@app.delete("/users/{user_id}", status_code=204)
+async def delete_user(user_id: int):
+    # Delete user logic
+    return None
+```
+
+### FastAPI with Query Parameters and Pagination
+
+```python
+from fastapi import Query
+from typing import Optional
+
+@app.get("/users")
+async def list_users(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(10, ge=1, le=100),
+    search: Optional[str] = None
+):
+    """List users with pagination and search."""
+    # Query logic with pagination
+    users = await db.get_users(skip=skip, limit=limit, search=search)
+    return {
+        "items": users,
+        "total": await db.count_users(search=search),
+        "skip": skip,
+        "limit": limit
+    }
+```
+
+### FastAPI Error Handling
+
+```python
+from fastapi import HTTPException, status
+
+@app.get("/users/{user_id}")
+async def get_user(user_id: int):
+    user = await db.get_user(user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"User {user_id} not found"
+        )
+    return user
+```
+
+### FastAPI with Dependency Injection
+
+```python
+from fastapi import Depends
+from sqlalchemy.orm import Session
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+@app.get("/users/{user_id}")
+async def get_user(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+```
+
 ## Best Practices Summary
 
 1. **Use RESTful principles:** Resources as nouns, HTTP methods correctly

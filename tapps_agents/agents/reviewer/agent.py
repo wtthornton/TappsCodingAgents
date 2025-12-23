@@ -26,6 +26,11 @@ from .report_generator import ReportGenerator
 from .scoring import CodeScorer
 from .service_discovery import ServiceDiscovery
 from .typescript_scorer import TypeScriptScorer
+from .influxdb_validator import InfluxDBValidator
+from .websocket_validator import WebSocketValidator
+from .mqtt_validator import MQTTValidator
+from .docker_compose_validator import DockerComposeValidator
+from .dockerfile_validator import DockerfileValidator
 
 logger = logging.getLogger(__name__)
 
@@ -104,6 +109,19 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             )
         else:
             self.typescript_scorer = None
+        
+        # Initialize InfluxDB validator (Phase 1.2: HomeIQ Support)
+        self.influxdb_validator = InfluxDBValidator()
+        
+        # Initialize WebSocket and MQTT validators (Phase 2.2: HomeIQ Support)
+        self.websocket_validator = WebSocketValidator()
+        self.mqtt_validator = MQTTValidator()
+        
+        # Initialize Docker Compose validator (Phase 3.3: HomeIQ Support)
+        self.docker_compose_validator = DockerComposeValidator()
+        
+        # Initialize Dockerfile validator (Phase 4.2: HomeIQ Support)
+        self.dockerfile_validator = DockerfileValidator()
 
     async def activate(self, project_root: Path | None = None):
         """Activate the reviewer agent with expert support."""
@@ -385,6 +403,43 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 scores["dependency_security_score"] = dependency_security
 
             result["scoring"] = scores
+        
+        # Validate InfluxDB patterns (Phase 1.2: HomeIQ Support)
+        influxdb_review = self.influxdb_validator.review_file(file_path, code)
+        if influxdb_review.get("has_influxdb"):
+            result["influxdb_validation"] = {
+                "flux_queries": influxdb_review.get("flux_queries", []),
+                "connection_issues": influxdb_review.get("connection_issues", []),
+                "data_modeling_issues": influxdb_review.get("data_modeling_issues", []),
+                "suggestions": influxdb_review.get("suggestions", [])
+            }
+        
+        # Validate WebSocket patterns (Phase 2.2: HomeIQ Support)
+        websocket_review = self.websocket_validator.review_file(file_path, code)
+        if websocket_review.get("has_websocket"):
+            result["websocket_validation"] = {
+                "connection_issues": websocket_review.get("connection_issues", []),
+                "suggestions": websocket_review.get("suggestions", [])
+            }
+        
+        # Validate MQTT patterns (Phase 2.2: HomeIQ Support)
+        mqtt_review = self.mqtt_validator.review_file(file_path, code)
+        if mqtt_review.get("has_mqtt"):
+            result["mqtt_validation"] = {
+                "connection_issues": mqtt_review.get("connection_issues", []),
+                "topic_issues": mqtt_review.get("topic_issues", []),
+                "suggestions": mqtt_review.get("suggestions", [])
+            }
+        
+        # Validate Docker Compose patterns (Phase 3.3: HomeIQ Support)
+        compose_review = self.docker_compose_validator.review_file(file_path, code)
+        if compose_review.get("is_compose_file"):
+            result["docker_compose_validation"] = compose_review.get("validation", {})
+        
+        # Validate Dockerfile patterns (Phase 4.2: HomeIQ Support)
+        dockerfile_review = self.dockerfile_validator.review_file(file_path, code)
+        if dockerfile_review.get("is_dockerfile"):
+            result["dockerfile_validation"] = dockerfile_review.get("validation", {})
 
         # Consult experts for review guidance
         expert_guidance: dict[str, Any] = {}

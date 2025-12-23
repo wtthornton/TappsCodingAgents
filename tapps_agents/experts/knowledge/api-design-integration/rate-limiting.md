@@ -399,6 +399,97 @@ def adaptive_rate_limit(user):
         return REDUCED_LIMITS
 ```
 
+## External API Rate Limiting
+
+### Pattern 1: Client-Side Rate Limiting
+
+**Respect External API Limits:**
+```python
+from collections import deque
+from datetime import datetime, timedelta
+
+class ExternalAPIRateLimiter:
+    def __init__(self, max_requests: int, time_window: int):
+        self.max_requests = max_requests
+        self.time_window = timedelta(seconds=time_window)
+        self.requests = deque()
+    
+    async def acquire(self):
+        """Acquire rate limit token."""
+        now = datetime.now()
+        
+        # Remove old requests
+        while self.requests and now - self.requests[0] > self.time_window:
+            self.requests.popleft()
+        
+        # Check if limit reached
+        if len(self.requests) >= self.max_requests:
+            wait_time = (self.requests[0] + self.time_window - now).total_seconds()
+            await asyncio.sleep(wait_time)
+            return await self.acquire()
+        
+        # Add current request
+        self.requests.append(now)
+```
+
+### Pattern 2: API-Specific Rate Limits
+
+**Different Limits per API:**
+```python
+class APIRateLimitManager:
+    def __init__(self):
+        self.limiters = {
+            "openweathermap": ExternalAPIRateLimiter(max_requests=60, time_window=60),
+            "watttime": ExternalAPIRateLimiter(max_requests=100, time_window=60),
+            "airnow": ExternalAPIRateLimiter(max_requests=500, time_window=3600),
+        }
+    
+    async def acquire(self, api_name: str):
+        """Acquire rate limit for specific API."""
+        if api_name in self.limiters:
+            await self.limiters[api_name].acquire()
+```
+
+### Pattern 3: Retry with Rate Limit Awareness
+
+**Handle 429 Responses:**
+```python
+from tenacity import retry, stop_after_attempt, wait_exponential, retry_if_exception_type
+
+class RateLimitAwareClient:
+    def __init__(self, base_url: str, api_key: str):
+        self.base_url = base_url
+        self.api_key = api_key
+        self.client = httpx.AsyncClient()
+        self.rate_limit = ExternalAPIRateLimiter(max_requests=60, time_window=60)
+    
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception_type(httpx.HTTPStatusError)
+    )
+    async def get(self, endpoint: str):
+        """GET request with rate limit awareness."""
+        await self.rate_limit.acquire()
+        
+        response = await self.client.get(
+            f"{self.base_url}/{endpoint}",
+            headers={"Authorization": f"Bearer {self.api_key}"}
+        )
+        
+        # Handle 429 (Too Many Requests)
+        if response.status_code == 429:
+            retry_after = int(response.headers.get("Retry-After", 60))
+            await asyncio.sleep(retry_after)
+            raise httpx.HTTPStatusError("Rate limit exceeded", request=response.request, response=response)
+        
+        response.raise_for_status()
+        return response.json()
+```
+
+**See Also:**
+- `external-api-integration.md` - Comprehensive external API integration patterns
+
 ## Tools
 
 ### Open Source

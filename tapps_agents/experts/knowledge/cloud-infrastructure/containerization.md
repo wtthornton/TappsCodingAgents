@@ -168,6 +168,45 @@ env:
         key: password
 ```
 
+## Dockerfile-Specific Patterns
+
+### Multi-Stage Build Optimization
+
+**Separate Build and Runtime:**
+```dockerfile
+# Stage 1: Build
+FROM python:3.12-slim AS builder
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# Stage 2: Runtime
+FROM python:3.12-slim
+WORKDIR /app
+COPY --from=builder /root/.local /root/.local
+COPY . .
+ENV PATH=/root/.local/bin:$PATH
+CMD ["python", "main.py"]
+```
+
+### Docker Health Check Patterns
+
+**Basic Health Check:**
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+```
+
+**Python Service Health Check:**
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import requests; requests.get('http://localhost:8000/health')" || exit 1
+```
+
+**See Also:**
+- `dockerfile-patterns.md` - Comprehensive Dockerfile patterns
+- `container-health-checks.md` - Detailed health check patterns
+
 ## Best Practices Summary
 
 1. **Use multi-stage builds** for smaller images
