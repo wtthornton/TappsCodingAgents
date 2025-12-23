@@ -700,3 +700,57 @@ class ProjectDetector:
                 return "brownfield-development"
             else:
                 return "feature-development"  # Default
+
+    def detect_command_suggestions(self, context: dict[str, Any]) -> list[dict[str, Any]]:
+        """
+        Detect when to suggest Epic, coverage, microservice, or Docker commands.
+
+        Args:
+            context: User action context (files, actions, errors, etc.)
+
+        Returns:
+            List of command suggestions
+        """
+        suggestions = []
+
+        # Detect Epic document mentions
+        if context.get("files"):
+            for file_path in context["files"]:
+                if "epic" in str(file_path).lower() and file_path.endswith(".md"):
+                    suggestions.append({
+                        "command": f"@simple-mode *epic {file_path}",
+                        "description": "Execute Epic workflow for this document",
+                        "confidence": 0.9,
+                        "type": "epic",
+                    })
+
+        # Detect test coverage gaps
+        if context.get("action") == "checking_coverage" or "coverage.json" in str(context.get("files", [])):
+            suggestions.append({
+                "command": "@simple-mode *test-coverage <file> --target 80",
+                "description": "Generate tests to improve coverage",
+                "confidence": 0.85,
+                "type": "coverage",
+            })
+
+        # Detect microservice creation
+        if context.get("action") == "creating_service" or "services/" in str(context.get("files", [])):
+            suggestions.append({
+                "command": "@simple-mode *microservice <name> --port <port> --type fastapi",
+                "description": "Generate microservice structure automatically",
+                "confidence": 0.8,
+                "type": "microservice",
+            })
+
+        # Detect Docker errors
+        if context.get("error"):
+            error_msg = str(context["error"])
+            if any(keyword in error_msg.lower() for keyword in ["docker", "container", "module not found", "workdir"]):
+                suggestions.append({
+                    "command": "@simple-mode *docker-fix <service> \"<error>\"",
+                    "description": "Debug and fix Docker/container issues",
+                    "confidence": 0.9,
+                    "type": "docker",
+                })
+
+        return suggestions

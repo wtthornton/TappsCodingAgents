@@ -101,7 +101,27 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 - Overall score: ≥60
 - Security: ≥7.0
 
-### 6. Feature Implementation
+### 6. Brownfield Project Analysis
+
+**Command:** `python -m tapps_agents.cli workflow brownfield-analysis`
+
+**Best for:** Comprehensive analysis workflow for existing codebases that provides:
+- Project discovery and profiling
+- Code quality assessment
+- Architecture pattern analysis
+- Codebase structure evaluation
+- Technical debt categorization and prioritization
+- Dependency and integration mapping
+- Test and documentation coverage analysis
+- Modernization roadmap generation
+
+This workflow orchestrates multiple agents to provide a complete picture
+of a brownfield project's current state and recommended improvements.
+
+
+**Agent Sequence:**
+
+### 7. Feature Implementation
 
 **Command:** `python -m tapps_agents.cli workflow feature-implementation`
 
@@ -119,7 +139,7 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 - Overall score: ≥65
 - Security: ≥6.5
 
-### 7. Simple Fix Issues
+### 8. Simple Fix Issues
 
 **Command:** `python -m tapps_agents.cli workflow simple-fix-issues`
 
@@ -132,7 +152,39 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 4. Tester - Write Tests
 5. Orchestrator - Finalize
 
-### 8. Simple Improve Quality
+### 9. Simple Full Lifecycle
+
+**Command:** `python -m tapps_agents.cli workflow simple-full`
+
+**Best for:** Complete development lifecycle with testing and automatic quality loopbacks
+
+**Agent Sequence:**
+1. Analyst - Gather Requirements
+2. Planner - Create Stories
+3. Architect - Design System
+4. Designer - Api Design
+5. Implementer - Write Code
+6. Reviewer - Review Code
+7. Improver - Refactor
+8. Reviewer - Review Code
+9. Tester - Write Tests
+10. Tester - Run Tests
+11. Debugger - Analyze Error
+12. Implementer - Write Code
+13. Tester - Run Tests
+14. Ops - Security Scan
+15. Improver - Refactor
+16. Ops - Security Scan
+17. Documenter - Generate Docs
+18. Reviewer - Review Code
+19. Orchestrator - Finalize
+
+**Quality Gates:**
+- Overall score: ≥80
+- Security: ≥8.0
+- Maintainability: ≥8.0
+
+### 10. Simple Improve Quality
 
 **Command:** `python -m tapps_agents.cli workflow simple-improve-quality`
 
@@ -149,7 +201,7 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 - Overall score: ≥75
 - Maintainability: ≥8.0
 
-### 9. Simple New Feature
+### 11. Simple New Feature
 
 **Command:** `python -m tapps_agents.cli workflow simple-new-feature`
 
@@ -193,8 +245,21 @@ When working in Cursor AI, you can:
 - **Debug, improve, and refactor existing code** → `workflow fix`
 - **Comprehensive code review and improvement cycle** → `workflow quality`
 - **Fast bug fix with minimal overhead** → `workflow hotfix`
+- **Comprehensive analysis workflow for existing codebases that provides:
+- Project discovery and profiling
+- Code quality assessment
+- Architecture pattern analysis
+- Codebase structure evaluation
+- Technical debt categorization and prioritization
+- Dependency and integration mapping
+- Test and documentation coverage analysis
+- Modernization roadmap generation
+
+This workflow orchestrates multiple agents to provide a complete picture
+of a brownfield project's current state and recommended improvements** → `workflow brownfield-analysis`
 - **Standard workflow for implementing new features in existing projects** → `workflow feature-implementation`
 - **Debug and fix issues in existing code** → `workflow simple-fix-issues`
+- **Complete development lifecycle with testing and automatic quality loopbacks** → `workflow simple-full`
 - **Improve code quality through review and refactoring** → `workflow simple-improve-quality`
 - **Build new features with automatic quality checks** → `workflow simple-new-feature`
 
@@ -221,8 +286,10 @@ Workflow presets are defined in `workflows/presets/`:
 - `maintenance.yaml`
 - `quality.yaml`
 - `quick-fix.yaml`
+- `brownfield-analysis.yaml`
 - `feature-implementation.yaml`
 - `simple-fix-issues.yaml`
+- `simple-full.yaml`
 - `simple-improve-quality.yaml`
 - `simple-new-feature.yaml`
 

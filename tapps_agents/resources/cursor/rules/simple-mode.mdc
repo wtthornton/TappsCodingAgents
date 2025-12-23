@@ -39,6 +39,12 @@ Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor. I
 | `*review {file}` | Review code quality | @reviewer → @improver |
 | `*fix {file} {description}` | Fix bugs/errors | @debugger → @implementer → @tester |
 | `*test {file}` | Generate tests | @tester |
+| `*epic {epic-doc.md}` | Execute Epic workflow | Epic orchestrator (all stories in dependency order) |
+| `*test-coverage {file} --target 80` | Coverage-driven test generation | Coverage analyzer → Test generator |
+| `*fix-tests {test-file}` | Auto-fix test failures | Test fixer |
+| `*microservice {name} --port {port} --type {type}` | Generate microservice | Microservice generator |
+| `*docker-fix {service} "{error}"` | Debug container errors | Container debugger |
+| `*integrate-service {service1} --with {service2}` | Service integration | Service integrator |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
 | `*help` | Show help | - |
 | `*status` | Check status | - |
@@ -51,6 +57,7 @@ Simple Mode detects intent from keywords:
 - **Review**: review, check, analyze, inspect, examine, score, quality, audit
 - **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken
 - **Test**: test, verify, validate, coverage, testing
+- **Epic**: epic, implement epic, execute epic, run epic, story, stories
 - **Full**: full, complete, sdlc, lifecycle, everything
 
 ## Skill Orchestration Workflows

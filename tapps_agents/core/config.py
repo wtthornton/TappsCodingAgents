@@ -110,6 +110,20 @@ class ReviewerAgentConfig(BaseModel):
         le=1.0,
         description="Minimum expert confidence threshold (0.0-1.0)",
     )
+    operation_timeout: float = Field(
+        default=300.0,
+        ge=10.0,
+        description="Timeout in seconds for reviewer operations (default: 5 minutes)",
+    )
+    tool_timeout: float = Field(
+        default=30.0,
+        ge=5.0,
+        description="Timeout in seconds for individual quality tools (default: 30 seconds)",
+    )
+    enable_parallel_tools: bool = Field(
+        default=True,
+        description="Enable parallel execution of quality tools (Ruff, mypy, bandit)",
+    )
 
 
 class PlannerAgentConfig(BaseModel):

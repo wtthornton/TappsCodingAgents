@@ -12,6 +12,7 @@ from tapps_agents.core.config import ProjectConfig, load_config
 from .intent_parser import Intent, IntentParser, IntentType
 from .orchestrators import (
     BuildOrchestrator,
+    EpicOrchestrator,
     FixOrchestrator,
     ReviewOrchestrator,
     TestOrchestrator,
@@ -50,6 +51,9 @@ class SimpleModeHandler:
                 project_root=self.project_root, config=self.config
             ),
             IntentType.TEST: TestOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.EPIC: EpicOrchestrator(
                 project_root=self.project_root, config=self.config
             ),
         }

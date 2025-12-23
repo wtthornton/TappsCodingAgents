@@ -18,6 +18,7 @@ class IntentType(Enum):
     REVIEW = "review"
     FIX = "fix"
     TEST = "test"
+    EPIC = "epic"
     UNKNOWN = "unknown"
 
 
@@ -40,6 +41,8 @@ class Intent:
             return ["debugger", "implementer", "tester"]
         elif self.type == IntentType.TEST:
             return ["tester"]
+        elif self.type == IntentType.EPIC:
+            return ["epic-orchestrator"]
         else:
             return []
 
@@ -103,6 +106,16 @@ class IntentParser:
             "integration test",
         ]
 
+        # Epic intent keywords
+        self.epic_keywords = [
+            "epic",
+            "implement epic",
+            "execute epic",
+            "run epic",
+            "story",
+            "stories",
+        ]
+
     def parse(self, input_text: str) -> Intent:
         """
         Parse natural language input into a structured intent.
@@ -118,12 +131,26 @@ class IntentParser:
         # Extract parameters
         parameters = self._extract_parameters(input_text)
 
+        # Check for explicit *epic command
+        if input_text.strip().startswith("*epic") or input_text.strip().startswith("@simple-mode *epic"):
+            # Extract epic path
+            epic_path = input_text.replace("*epic", "").replace("@simple-mode", "").strip()
+            if epic_path:
+                parameters["epic_path"] = epic_path
+            return Intent(
+                type=IntentType.EPIC,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
         # Score each intent type
         scores = {
             IntentType.BUILD: self._score_intent(input_lower, self.build_keywords),
             IntentType.REVIEW: self._score_intent(input_lower, self.review_keywords),
             IntentType.FIX: self._score_intent(input_lower, self.fix_keywords),
             IntentType.TEST: self._score_intent(input_lower, self.test_keywords),
+            IntentType.EPIC: self._score_intent(input_lower, self.epic_keywords),
         }
 
         # Find best match
@@ -191,6 +218,12 @@ class IntentParser:
         quoted_matches = re.findall(quoted_pattern, text)
         if quoted_matches:
             parameters["description"] = quoted_matches[0]
+
+        # Extract Epic document paths (epic-*.md or docs/prd/epic-*.md)
+        epic_pattern = r'(?:epic-[\w-]+\.md|docs/prd/epic-[\w-]+\.md|[\w/]+epic[\w-]*\.md)'
+        epic_matches = re.findall(epic_pattern, text, re.IGNORECASE)
+        if epic_matches:
+            parameters["epic_path"] = epic_matches[0]
 
         # Extract feature/functionality mentions
         feature_patterns = [

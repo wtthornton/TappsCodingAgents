@@ -1,0 +1,13 @@
+{
+  "event_type": "step_failed",
+  "workflow_id": "rapid-dev-20251223-004537",
+  "step_id": "enhance",
+  "data": {
+    "agent": "enhancer",
+    "action": "enhance_prompt",
+    "error": "",
+    "attempts": 1
+  },
+  "timestamp": "2025-12-23T02:45:49.573034",
+  "correlation_id": "rapid-dev-20251223-004537:enhance"
+}

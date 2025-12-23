@@ -123,6 +123,28 @@ When user wants to **test** code:
 @tester *test {file}
 ```
 
+### Epic Intent
+
+When user wants to **execute an Epic**:
+
+**Step 1: Execute Epic workflow**
+```
+@simple-mode *epic {epic-doc.md}
+```
+
+This will:
+1. Parse Epic document to extract stories and dependencies
+2. Resolve story dependencies (topological sort)
+3. Execute stories in dependency order
+4. Enforce quality gates after each story (automatic loopback if < 70)
+5. Track progress across all stories
+6. Generate Epic completion report
+
+**Example:**
+```
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
+```
+
 ### Full Lifecycle Intent
 
 When user wants the **full** SDLC:
@@ -201,6 +223,29 @@ Orchestrate a test workflow.
 **Execution:**
 1. Invoke `@tester *test {file}`
 2. Report results
+
+### `*epic {epic-doc.md}`
+
+Execute Epic workflow - implements all stories in an Epic document.
+
+**Example:**
+```
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
+```
+
+**Execution:**
+1. Parse Epic document (extract stories, dependencies, acceptance criteria)
+2. Resolve story dependencies (topological sort)
+3. Execute each story in order:
+   - Create workflow for story
+   - Execute with quality gates
+   - Loopback if quality < threshold (max 3 iterations)
+4. Track progress and generate completion report
+
+**Parameters:**
+- `epic-doc.md`: Path to Epic markdown document
+- `--quality-threshold`: Minimum quality score (default: 70)
+- `--auto-mode`: Fully automated execution
 
 ### `*full {description}`
 

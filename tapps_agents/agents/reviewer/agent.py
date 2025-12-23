@@ -230,10 +230,27 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     include_llm_feedback=True,
                 )
             except (FileNotFoundError, ValueError) as e:
-                return {"error": str(e)}
+                error_msg = str(e)
+                if "File path required" in error_msg:
+                    return {
+                        "error": error_msg,
+                        "suggestion": "Provide a file path: @reviewer *review <file_path>",
+                    }
+                return {
+                    "error": error_msg,
+                    "suggestion": "Check that the file exists and is readable",
+                }
             except RuntimeError as e:
                 # Handle scorer errors and other runtime errors
-                return {"error": str(e)}
+                return {
+                    "error": f"Review failed: {str(e)}",
+                    "suggestion": "Check that quality tools (Ruff, mypy) are installed and configured correctly",
+                }
+            except TimeoutError as e:
+                return {
+                    "error": str(e),
+                    "suggestion": "Try reviewing a smaller file or increase 'operation_timeout' in config",
+                }
 
         elif command == "score":
             file_path = kwargs.get("file")
@@ -245,7 +262,21 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     Path(file_path), include_scoring=True, include_llm_feedback=False
                 )
             except (FileNotFoundError, ValueError) as e:
-                return {"error": str(e)}
+                error_msg = str(e)
+                if "File path required" in error_msg:
+                    return {
+                        "error": error_msg,
+                        "suggestion": "Provide a file path: @reviewer *score <file_path>",
+                    }
+                return {
+                    "error": error_msg,
+                    "suggestion": "Check that the file exists and is readable",
+                }
+            except TimeoutError as e:
+                return {
+                    "error": str(e),
+                    "suggestion": "Try scoring a smaller file or increase 'tool_timeout' in config",
+                }
 
         elif command == "lint":
             file_path = kwargs.get("file")
@@ -324,6 +355,87 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "error": f"Unknown command: {command}. Use *help to see available commands."
             }
 
+    async def _run_quality_tools_parallel(
+        self, file_path: Path, language: Language
+    ) -> dict[str, Any]:
+        """
+        Run quality tools (linting, type checking) in parallel for better performance.
+        
+        Args:
+            file_path: Path to file to analyze
+            language: Detected language
+            
+        Returns:
+            Dictionary with tool results
+        """
+        import asyncio
+        
+        reviewer_config = self.config.agents.reviewer if self.config else None
+        enable_parallel = (
+            reviewer_config.enable_parallel_tools if reviewer_config else True
+        )
+        tool_timeout = reviewer_config.tool_timeout if reviewer_config else 30.0
+        
+        results = {
+            "linting": None,
+            "type_checking": None,
+            "parallel": enable_parallel,
+        }
+        
+        if not enable_parallel or language not in [Language.PYTHON, Language.TYPESCRIPT]:
+            # Run sequentially or skip for unsupported languages
+            if language == Language.PYTHON or (
+                language == Language.TYPESCRIPT and self.typescript_scorer
+            ):
+                results["linting"] = await self.lint_file(file_path)
+                results["type_checking"] = await self.type_check_file(file_path)
+            return results
+        
+        # Run tools in parallel
+        try:
+            lint_task = asyncio.create_task(self.lint_file(file_path))
+            type_check_task = asyncio.create_task(self.type_check_file(file_path))
+            
+            # Wait for both with timeout
+            lint_result, type_check_result = await asyncio.wait_for(
+                asyncio.gather(
+                    lint_task,
+                    type_check_task,
+                    return_exceptions=True,
+                ),
+                timeout=tool_timeout * 2,  # Allow 2x timeout for parallel execution
+            )
+            
+            # Handle results (may be exceptions)
+            if isinstance(lint_result, Exception):
+                logger.warning(f"Linting failed: {lint_result}")
+                results["linting"] = {
+                    "file": str(file_path),
+                    "linting_score": 5.0,
+                    "error": str(lint_result),
+                    "timeout": isinstance(lint_result, TimeoutError),
+                }
+            else:
+                results["linting"] = lint_result
+            
+            if isinstance(type_check_result, Exception):
+                logger.warning(f"Type checking failed: {type_check_result}")
+                results["type_checking"] = {
+                    "file": str(file_path),
+                    "type_checking_score": 5.0,
+                    "error": str(type_check_result),
+                    "timeout": isinstance(type_check_result, TimeoutError),
+                }
+            else:
+                results["type_checking"] = type_check_result
+                
+        except asyncio.TimeoutError:
+            logger.warning(f"Parallel quality tools timed out for {file_path}")
+            results["timeout"] = True
+            results["error"] = f"Quality tools exceeded timeout of {tool_timeout * 2}s"
+        
+        return results
+    
     def _get_dependency_security_penalty(self) -> float:
         """
         Get security penalty based on dependency vulnerabilities.
@@ -384,7 +496,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         include_llm_feedback: bool = True,
     ) -> dict[str, Any]:
         """
-        Review a code file.
+        Review a code file with timeout protection and improved error handling.
 
         Args:
             file_path: Path to code file
@@ -393,12 +505,50 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         Returns:
             Review results with scores and feedback
+
+        Raises:
+            TimeoutError: If review operation exceeds configured timeout
+            ValueError: If file cannot be read or validated
+            RuntimeError: If scoring fails
         """
-        # Use centralized path validation from BaseAgent
+        import asyncio
+        
+        # Get timeout configuration
         reviewer_config = self.config.agents.reviewer if self.config else None
+        operation_timeout = (
+            reviewer_config.operation_timeout if reviewer_config else 300.0
+        )
         max_file_size = (
             reviewer_config.max_file_size if reviewer_config else (10 * 1024 * 1024)
         )
+        
+        # Wrap entire review in timeout protection
+        try:
+            return await asyncio.wait_for(
+                self._review_file_internal(
+                    file_path, include_scoring, include_llm_feedback, max_file_size
+                ),
+                timeout=operation_timeout,
+            )
+        except asyncio.TimeoutError:
+            logger.error(
+                f"Review operation timed out after {operation_timeout}s for {file_path}"
+            )
+            raise TimeoutError(
+                f"Review operation exceeded timeout of {operation_timeout}s. "
+                f"The file may be too large or quality tools may be slow. "
+                f"Consider increasing 'operation_timeout' in config or reviewing smaller files."
+            ) from None
+    
+    async def _review_file_internal(
+        self,
+        file_path: Path,
+        include_scoring: bool,
+        include_llm_feedback: bool,
+        max_file_size: int,
+    ) -> dict[str, Any]:
+        """Internal review implementation without timeout wrapper."""
+        # Use centralized path validation from BaseAgent
         # _validate_path handles existence, size, and path traversal checks
         self._validate_path(file_path, max_file_size=max_file_size)
 
@@ -485,29 +635,66 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             result["context7_verification"] = context7_verification
             result["libraries_detected"] = libraries_used
 
-        # Calculate scores based on file type
+        # Calculate scores based on file type with timeout protection
         if include_scoring:
+            import asyncio
             from ...core.language_detector import Language
             from .scoring import ScorerFactory
 
             language = detection_result.language
-            if language == Language.YAML:
-                scores = self._score_yaml_file(file_path, code)
-            else:
-                # Use ScorerFactory to get appropriate scorer for the language
-                scorer = ScorerFactory.get_scorer(language, self.config)
-                scores = scorer.score_file(file_path, code)
+            reviewer_config = self.config.agents.reviewer if self.config else None
+            tool_timeout = reviewer_config.tool_timeout if reviewer_config else 30.0
+            
+            try:
+                if language == Language.YAML:
+                    scores = await asyncio.wait_for(
+                        asyncio.to_thread(self._score_yaml_file, file_path, code),
+                        timeout=tool_timeout,
+                    )
+                else:
+                    # Use ScorerFactory to get appropriate scorer for the language
+                    scorer = ScorerFactory.get_scorer(language, self.config)
+                    # Run scoring in thread with timeout
+                    scores = await asyncio.wait_for(
+                        asyncio.to_thread(scorer.score_file, file_path, code),
+                        timeout=tool_timeout,
+                    )
+            except asyncio.TimeoutError:
+                logger.warning(
+                    f"Scoring timed out after {tool_timeout}s for {file_path}. "
+                    f"Using fallback scores."
+                )
+                # Provide fallback scores instead of failing completely
+                scores = {
+                    "complexity_score": 5.0,
+                    "security_score": 5.0,
+                    "maintainability_score": 5.0,
+                    "test_coverage_score": 0.0,
+                    "performance_score": 5.0,
+                    "overall_score": 50.0,
+                    "metrics": {"timeout": True, "error": "Scoring operation timed out"},
+                }
 
             # Enhance security score with dependency health (Phase 6.4.3)
             # Only apply to Python files
             if language == Language.PYTHON:
-                dependency_security = self._get_dependency_security_penalty()
-                # Blend dependency security into security score (70% code security, 30% dependency security)
-                original_security = scores.get("security_score", 5.0)
-                scores["security_score"] = (original_security * 0.7) + (
-                    dependency_security * 0.3
-                )
-                scores["dependency_security_score"] = dependency_security
+                try:
+                    dependency_security = await asyncio.wait_for(
+                        asyncio.to_thread(self._get_dependency_security_penalty),
+                        timeout=tool_timeout,
+                    )
+                    # Blend dependency security into security score (70% code security, 30% dependency security)
+                    original_security = scores.get("security_score", 5.0)
+                    scores["security_score"] = (original_security * 0.7) + (
+                        dependency_security * 0.3
+                    )
+                    scores["dependency_security_score"] = dependency_security
+                except asyncio.TimeoutError:
+                    logger.debug(f"Dependency security check timed out for {file_path}")
+                    # Continue without dependency security penalty
+                except Exception as e:
+                    logger.debug(f"Dependency security check failed: {e}")
+                    # Continue without dependency security penalty
 
             result["scoring"] = scores
         
@@ -734,7 +921,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
     async def lint_file(self, file_path: Path) -> dict[str, Any]:
         """
-        Run Ruff linting on a file and return detailed issues.
+        Run Ruff linting on a file and return detailed issues with timeout protection.
 
         Phase 6: Modern Quality Analysis - Ruff Integration
 
@@ -752,9 +939,41 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "warning_count": int,
                 "fatal_count": int
             }
+
+        Raises:
+            TimeoutError: If linting exceeds configured timeout
         """
+        import asyncio
+        
         # Use centralized path validation from BaseAgent
         self._validate_path(file_path)
+        
+        # Get timeout configuration
+        reviewer_config = self.config.agents.reviewer if self.config else None
+        tool_timeout = reviewer_config.tool_timeout if reviewer_config else 30.0
+        
+        try:
+            return await asyncio.wait_for(
+                self._lint_file_internal(file_path),
+                timeout=tool_timeout,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"Linting timed out after {tool_timeout}s for {file_path}")
+            return {
+                "file": str(file_path),
+                "linting_score": 5.0,
+                "issues": [],
+                "issue_count": 0,
+                "error_count": 0,
+                "warning_count": 0,
+                "fatal_count": 0,
+                "tool": "none",
+                "timeout": True,
+                "error": f"Linting operation timed out after {tool_timeout}s",
+            }
+    
+    async def _lint_file_internal(self, file_path: Path) -> dict[str, Any]:
+        """Internal linting implementation without timeout wrapper."""
 
         file_ext = file_path.suffix.lower()
 
@@ -829,7 +1048,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
     async def type_check_file(self, file_path: Path) -> dict[str, Any]:
         """
-        Run mypy type checking on a file and return detailed errors.
+        Run mypy type checking on a file and return detailed errors with timeout protection.
 
         Phase 6.2: Modern Quality Analysis - mypy Integration
 
@@ -845,9 +1064,39 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "error_count": int,
                 "error_codes": List[str] (unique error codes found)
             }
+
+        Raises:
+            TimeoutError: If type checking exceeds configured timeout
         """
+        import asyncio
+        
         # Use centralized path validation from BaseAgent
         self._validate_path(file_path)
+        
+        # Get timeout configuration
+        reviewer_config = self.config.agents.reviewer if self.config else None
+        tool_timeout = reviewer_config.tool_timeout if reviewer_config else 30.0
+        
+        try:
+            return await asyncio.wait_for(
+                self._type_check_file_internal(file_path),
+                timeout=tool_timeout,
+            )
+        except asyncio.TimeoutError:
+            logger.warning(f"Type checking timed out after {tool_timeout}s for {file_path}")
+            return {
+                "file": str(file_path),
+                "type_checking_score": 5.0,
+                "errors": [],
+                "error_count": 0,
+                "error_codes": [],
+                "tool": "none",
+                "timeout": True,
+                "error": f"Type checking operation timed out after {tool_timeout}s",
+            }
+    
+    async def _type_check_file_internal(self, file_path: Path) -> dict[str, Any]:
+        """Internal type checking implementation without timeout wrapper."""
 
         file_ext = file_path.suffix.lower()
 

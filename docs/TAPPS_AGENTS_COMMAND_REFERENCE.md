@@ -8,6 +8,10 @@ Complete reference for all tapps-agents commands, parameters, and usage patterns
 - [Top-Level Commands](#top-level-commands)
 - [Agent Commands](#agent-commands)
 - [Workflow Commands](#workflow-commands)
+- [Epic Commands](#epic-commands)
+- [Coverage-Driven Test Commands](#coverage-driven-test-commands)
+- [Microservice Commands](#microservice-commands)
+- [Docker Commands](#docker-commands)
 - [Recommended Command Combinations](#recommended-command-combinations)
 - [Cursor vs CLI Usage Guide](#cursor-vs-cli-usage-guide)
 
@@ -555,6 +559,253 @@ tapps-agents setup-experts [-y|--yes] [--non-interactive] <init|add|remove|list>
 ```bash
 tapps-agents cursor verify [--format json|text]
 ```
+
+## Epic Commands (New)
+
+### `*epic` - Execute Epic Workflow (Cursor-First)
+
+**Purpose:** Execute all stories in an Epic document in dependency order with progress tracking and quality gates.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
+@simple-mode *epic epic-8-automated-documentation-generation.md
+```
+
+**Parameters:**
+- `epic_path` (required): Path to Epic markdown document
+- `--quality-threshold`: Minimum quality score (default: 70)
+- `--critical-service-threshold`: Minimum for critical services (default: 80)
+- `--enforce-quality-gates`: Enable quality gate enforcement (default: true)
+- `--auto-mode`: Fully automated execution
+- `--max-iterations`: Maximum quality loopback iterations (default: 3)
+
+**Features:**
+- Parses Epic documents to extract stories and dependencies
+- Executes stories in topological order (dependency resolution)
+- Tracks progress across all stories
+- Enforces quality gates with automatic loopback
+- Generates Epic completion report
+
+**Example:**
+```cursor
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
+```
+
+**Output:**
+- Execution report with completion percentage
+- Story-by-story results
+- Quality gate status
+- Report saved to `docs/prd/epic-{number}-report.json`
+
+---
+
+## Coverage-Driven Test Commands (New)
+
+### `*test-coverage` - Coverage-Driven Test Generation (Cursor-First)
+
+**Purpose:** Generate tests targeting specific uncovered code paths identified by coverage analysis.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *test-coverage <file> --target 80
+@tester analyze-coverage coverage.json --target 80 --generate-tests
+```
+
+**CLI Syntax:**
+```bash
+tapps-agents tester analyze-coverage <coverage.json> [--target <percentage>] [--generate-tests] [--module <path>]
+tapps-agents tester generate-coverage-tests <coverage.json> [--module <path>] [--target-coverage <percentage>] [--focus-uncovered]
+```
+
+**Parameters:**
+- `coverage.json` (required): Path to coverage.json file
+- `--target`: Target coverage percentage (default: 80)
+- `--generate-tests`: Automatically generate tests for gaps
+- `--module`: Optional module path to focus on
+- `--focus-uncovered`: Only generate tests for uncovered code
+
+**Features:**
+- Analyzes coverage.json to identify gaps
+- Prioritizes gaps (critical paths, error handling, public APIs)
+- Generates targeted tests for uncovered code
+- Verifies coverage improvement after generation
+
+**Example:**
+```bash
+# Analyze coverage and generate tests
+tapps-agents tester analyze-coverage coverage.json --target 80 --generate-tests
+
+# Generate tests for specific module
+tapps-agents tester generate-coverage-tests coverage.json --module src/clients --target-coverage 80
+```
+
+### `*fix-tests` - Test Failure Auto-Fix (Cursor-First)
+
+**Purpose:** Analyze test failures and automatically fix common patterns.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *fix-tests <test-file>
+```
+
+**CLI Syntax:**
+```bash
+tapps-agents tester fix-failures <test-dir> [--pattern <pattern>] [--auto-fix]
+```
+
+**Parameters:**
+- `test-dir` (required): Test directory or file
+- `--pattern`: Filter by pattern (async, auth, mock, import)
+- `--auto-fix`: Automatically apply fixes (default: false)
+
+**Supported Patterns:**
+- `async`: TestClient → AsyncClient migration, missing await
+- `auth`: Authentication header issues
+- `mock`: Mock configuration errors
+- `import`: Import path issues
+
+**Example:**
+```bash
+# Fix async/await issues
+tapps-agents tester fix-failures tests/ --pattern async --auto-fix
+
+# Fix all patterns with auto-fix
+tapps-agents tester fix-failures tests/ --auto-fix
+```
+
+---
+
+## Microservice Commands (New)
+
+### `*microservice` - Generate Microservice (Cursor-First)
+
+**Purpose:** Generate complete microservice structure with Docker, tests, and health checks.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *microservice <name> --port <port> --type <fastapi|flask|homeiq>
+```
+
+**CLI Syntax:**
+```bash
+tapps-agents create-microservice <name> [--port <port>] [--type <fastapi|flask|homeiq>] [--features <list>]
+```
+
+**Parameters:**
+- `name` (required): Service name
+- `--port`: Port number (default: 8000)
+- `--type`: Service type - `fastapi` (default), `flask`, or `homeiq`
+- `--features`: Comma-separated list of features (validation, normalization, etc.)
+
+**What It Generates:**
+- Service structure (`src/`, `tests/`, `Dockerfile`, `requirements.txt`)
+- Docker Compose integration
+- Health check endpoints
+- Logging configuration
+- API router structure
+- Test scaffolding
+- README with service docs
+
+**Example:**
+```bash
+# Generate FastAPI service
+tapps-agents create-microservice yaml-validation-service --port 8037 --type fastapi
+
+# Generate HomeIQ service with features
+tapps-agents create-microservice data-service --port 8040 --type homeiq --features validation,normalization
+```
+
+---
+
+## Docker Commands (New)
+
+### `*docker-fix` - Container Debugging (Cursor-First)
+
+**Purpose:** Debug container errors with automatic fix suggestions.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *docker-fix <service> "<error>"
+```
+
+**CLI Syntax:**
+```bash
+tapps-agents debugger docker-fix <service> [--error "<error>"] [--auto-fix]
+```
+
+**Parameters:**
+- `service` (required): Service/container name
+- `--error`: Error message (if not provided, checks container logs)
+- `--auto-fix`: Automatically apply fixes with high confidence (>95%)
+
+**Features:**
+- Analyzes container logs
+- Matches errors to known patterns
+- Checks Dockerfile for issues
+- Suggests fixes with confidence scores
+- Auto-applies high-confidence fixes
+
+**Example:**
+```bash
+# Debug service error
+tapps-agents debugger docker-fix device-intelligence-service --error "ModuleNotFoundError: No module named 'src'"
+
+# Auto-fix with high confidence
+tapps-agents debugger docker-fix device-intelligence-service --auto-fix
+```
+
+### Dockerfile Analysis
+
+**CLI Syntax:**
+```bash
+tapps-agents docker analyze <Dockerfile> [--suggest-fixes]
+```
+
+**What It Detects:**
+- `ModuleNotFoundError: No module named 'src'` (WORKDIR/Python path)
+- COPY before WORKDIR
+- Missing `python -m` prefix for uvicorn
+- Incorrect PYTHONPATH
+
+**Example:**
+```bash
+tapps-agents docker analyze services/device-intelligence-service/Dockerfile --suggest-fixes
+```
+
+---
+
+## Service Integration Commands (New)
+
+### `*integrate-service` - Service Integration (Cursor-First)
+
+**Purpose:** Automate service-to-service integration (client classes, config, DI).
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *integrate-service <service1> --with <service2>
+```
+
+**CLI Syntax:**
+```bash
+tapps-agents integrate-service <service1> --with <service2>
+```
+
+**What It Does:**
+- Generates HTTP client classes for target service
+- Updates config files with service URLs
+- Adds dependency injection setup
+- Updates docker-compose.yml with service dependencies
+- Generates integration tests
+- Updates API documentation
+
+**Example:**
+```bash
+# Integrate yaml-validation-service with ai-automation-service-new
+tapps-agents integrate-service ai-automation-service-new --with yaml-validation-service
+```
+
+---
 
 ## Agent Commands
 
