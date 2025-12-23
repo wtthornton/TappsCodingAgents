@@ -7,6 +7,7 @@ Welcome to the documentation for TappsCodingAgents.
 ### Getting Started
 - **[Quick Start Guide](guides/QUICK_START.md)** - Get up and running quickly
 - **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users (task-first, natural language)
+- **[Epic Workflow Guide](EPIC_WORKFLOW_GUIDE.md)** - Execute Epic documents with story dependency resolution
 - **[Current Defaults](CURRENT_DEFAULTS.md)** - What happens by default (no surprises)
 - **[Configuration Guide](CONFIGURATION.md)** - Complete configuration reference
 - **[API Reference](API.md)** - Python API + CLI overview

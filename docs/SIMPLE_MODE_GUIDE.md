@@ -54,7 +54,7 @@ Add tests for service.py
 
 ## Intent Types
 
-Simple Mode supports four main intent types:
+Simple Mode supports five main intent types:
 
 ### 1. Build
 
@@ -113,6 +113,30 @@ Generate and run tests.
 
 **Workflow:** Tester
 
+### 5. Epic
+
+Execute Epic workflows - implement all stories in an Epic document.
+
+**Examples:**
+- "Execute epic docs/prd/epic-51-yaml-automation-quality-enhancement.md"
+- "Run epic epic-8-automated-documentation-generation.md"
+- "Implement epic docs/prd/my-epic.md"
+
+**Workflow:** Epic Orchestrator
+1. Parses Epic document to extract stories and dependencies
+2. Resolves story dependencies (topological sort)
+3. Executes stories in dependency order
+4. Enforces quality gates after each story (automatic loopback if < 70)
+5. Tracks progress across all stories
+6. Generates Epic completion report
+
+**Usage:**
+```
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
+```
+
+**Note:** Epic workflows require an Epic document in markdown format with stories, dependencies, and acceptance criteria.
+
 ## Command Variations
 
 Simple Mode understands many ways to express the same intent:
@@ -121,6 +145,7 @@ Simple Mode understands many ways to express the same intent:
 - **Review synonyms**: review, check, analyze, inspect, examine, score, quality, audit, assess, evaluate
 - **Fix synonyms**: fix, repair, resolve, debug, error, bug, issue, problem, broken, correct
 - **Test synonyms**: test, verify, validate, coverage, testing, tests
+- **Epic synonyms**: epic, execute epic, run epic, implement epic, epic workflow
 
 ## Using Simple Mode
 
@@ -133,6 +158,7 @@ Use the `@simple-mode` skill:
 @simple-mode Review my authentication code
 @simple-mode Fix the error in auth.py
 @simple-mode Add tests for service.py
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
 ```
 
 ### In CLI

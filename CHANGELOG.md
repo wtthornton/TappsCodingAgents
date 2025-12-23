@@ -7,6 +7,112 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.6.0] - 2026-01-28
+
+### Added
+- **Epic Workflow Orchestration** - Execute Epic documents with automatic story dependency resolution
+  - Epic document parsing with story extraction and dependency resolution
+  - Topological sort (Kahn's algorithm) for story execution order
+  - Quality gate enforcement after each story with automatic loopback
+  - Progress tracking and completion reports
+  - Simple Mode command: `@simple-mode *epic <epic-doc.md>`
+  - Comprehensive Epic Workflow Guide documentation
+  - See `docs/EPIC_WORKFLOW_GUIDE.md` for details
+
+- **Coverage-Driven Test Generation** - Intelligent test generation based on coverage gaps
+  - Coverage analyzer for JSON and .coverage database formats
+  - Gap identification and prioritization
+  - Targeted test generation for uncovered code paths
+  - Integration with test generators for automatic gap filling
+  - Coverage threshold checking and reporting
+
+- **Docker Debugging Capabilities** - Automated Docker container issue diagnosis
+  - Dockerfile analysis for common issues (Python path, WORKDIR, COPY order)
+  - Container log retrieval and analysis
+  - Error pattern matching with confidence scoring
+  - Automatic fix suggestions based on known patterns
+  - Pattern learning from successful fixes
+
+- **Microservice Generation** - Automated microservice boilerplate generation
+  - FastAPI and Flask service templates
+  - Dockerfile and docker-compose integration
+  - Health check endpoints
+  - Test scaffolding
+  - HomeIQ-specific patterns support
+
+- **Service Integration Automation** - Automate service-to-service integration
+  - Client class generation
+  - Configuration file updates
+  - Dependency injection setup
+  - Integration test generation
+
+- **Quality Gate Enforcement** - Mandatory quality checks with automatic loopback
+  - Configurable quality thresholds (overall, security, maintainability, test coverage)
+  - Critical service detection with higher thresholds
+  - Automatic improvement loopback on quality failures
+  - Integration with Epic workflows for story-level enforcement
+
+- **Test Fixing Capabilities** - Automatic test failure analysis and fixing
+  - Pattern-based test failure detection
+  - Common issue fixes (async/await, authentication, mocks)
+  - Batch test fixing support
+  - Test modernization (e.g., TestClient → AsyncClient migration)
+
+- **Batch Test Generation** - Generate tests for multiple files simultaneously
+  - Shared fixture detection
+  - Consistent test patterns across files
+  - Integration test support
+
+- **Context-Aware Test Generation** - Learn from existing test patterns
+  - Test style matching
+  - Fixture reuse
+  - Pattern recognition from codebase
+
+- **Service Integration Testing** - Generate service-to-service integration tests
+  - Internal authentication handling
+  - Dependency mocking
+  - Service-to-service communication patterns
+
+### Changed
+- **Simple Mode** - Added Epic intent type (5th intent type)
+  - Epic command: `@simple-mode *epic <epic-doc.md>`
+  - Epic synonyms: epic, implement epic, execute epic, run epic, story, stories
+  - Updated Simple Mode Guide with Epic workflow documentation
+
+- **Agent Capabilities** - Enhanced capabilities documentation
+  - Added new Tester capabilities (coverage-driven, test fixing, batch generation)
+  - Added new Ops capabilities (Docker debugging, analysis)
+  - Added new Orchestrator capabilities (Epic orchestration, quality gates, service integration)
+  - Added "Specialized Tools" section with Epic Orchestrator, Microservice Generator, Coverage Analyzer, Docker Debugger
+
+- **Documentation** - Comprehensive documentation updates
+  - New Epic Workflow Guide (`docs/EPIC_WORKFLOW_GUIDE.md`)
+  - Updated Simple Mode Guide with Epic intent
+  - Updated Agent Capabilities with new features
+  - Updated Command Reference (already complete)
+  - Updated README with Epic examples
+
+### Fixed
+- **Code Review Issues** - Fixed syntax errors and linting issues
+  - Fixed indentation errors in reviewer agent exception handlers
+  - Fixed unused imports and variables in Epic orchestrator
+  - All linting issues resolved (ruff check passes)
+
+### Documentation
+- **Epic Workflow Guide** - Comprehensive guide for Epic workflows
+  - Quick start guide
+  - Epic document format specification
+  - Story format specification
+  - Examples (simple and complex Epics)
+  - Configuration options
+  - Best practices and troubleshooting
+
+- **Code Review Documentation** - New code review document
+  - Analysis of 6 new components
+  - 15+ issues identified with recommendations
+  - Code quality metrics
+  - Test coverage requirements
+
 ## [2.5.1] - 2026-01-27
 
 ### Fixed
