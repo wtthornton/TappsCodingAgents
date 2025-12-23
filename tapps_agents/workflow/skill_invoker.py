@@ -7,10 +7,13 @@ This module translates workflow actions to Cursor Skill commands and executes th
 from __future__ import annotations
 
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
 import requests  # type: ignore[import-untyped]
+
+logger = logging.getLogger(__name__)
 
 from ..core.skill_integration import (
     get_skill_integration_manager,

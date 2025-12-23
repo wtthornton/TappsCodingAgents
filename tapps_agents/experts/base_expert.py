@@ -7,6 +7,7 @@ They provide domain knowledge through consultation, RAG, and weighted decisions.
 
 from __future__ import annotations
 
+import logging
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -16,6 +17,8 @@ from ..core.instructions import GenericInstruction
 from .domain_utils import sanitize_domain_for_path
 from .simple_rag import SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from ..core.project_profile import ProjectProfile

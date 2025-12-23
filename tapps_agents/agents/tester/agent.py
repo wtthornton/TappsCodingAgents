@@ -3,6 +3,7 @@ Tester Agent - Generates and runs tests
 """
 
 import json
+import logging
 import re
 import shutil
 import subprocess  # nosec B404
@@ -15,6 +16,8 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...experts.agent_integration import ExpertSupportMixin
 from .test_generator import TestGenerator
+
+logger = logging.getLogger(__name__)
 
 
 class TesterAgent(BaseAgent, ExpertSupportMixin):

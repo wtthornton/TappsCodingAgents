@@ -10,6 +10,7 @@ Based on Cursor 2.0 API documentation (2025).
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,8 @@ from typing import Any
 import requests  # type: ignore[import-untyped]
 
 from ..core.offline_mode import OfflineMode
+
+logger = logging.getLogger(__name__)
 
 
 class BackgroundAgentAPI:

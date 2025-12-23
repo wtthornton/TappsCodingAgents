@@ -4,10 +4,13 @@ Preset Workflow Loader
 Loads and maps preset workflows with short aliases and voice-friendly names.
 """
 
+import logging
 from pathlib import Path
 from typing import Any
 
 import yaml
+
+logger = logging.getLogger(__name__)
 
 from .models import Workflow
 from .parser import WorkflowParser

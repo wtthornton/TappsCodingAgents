@@ -3,10 +3,13 @@ Document Generator - Prepares documentation generation instructions for Cursor S
 """
 
 import ast
+import logging
 from pathlib import Path
 from typing import Any
 
 from ...core.instructions import DocumentationInstruction
+
+logger = logging.getLogger(__name__)
 
 
 class DocGenerator:
