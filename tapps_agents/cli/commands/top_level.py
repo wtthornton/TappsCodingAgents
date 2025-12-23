@@ -1723,6 +1723,21 @@ def _print_next_steps() -> None:
 
 def handle_init_command(args: object) -> None:
     """Handle init command"""
+    # Set up Windows encoding for Unicode support
+    import os
+    if sys.platform == "win32":
+        os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+        if hasattr(sys.stdout, 'reconfigure'):
+            try:
+                sys.stdout.reconfigure(encoding='utf-8')
+            except Exception:
+                pass
+        if hasattr(sys.stderr, 'reconfigure'):
+            try:
+                sys.stderr.reconfigure(encoding='utf-8')
+            except Exception:
+                pass
+    
     from pathlib import Path
     from ...core.init_project import (
         detect_existing_installation,

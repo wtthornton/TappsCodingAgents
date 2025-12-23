@@ -356,7 +356,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
 
     # Always generate workflow-presets.mdc from YAML files (auto-generated)
     try:
-        from ...workflow.rules_generator import CursorRulesGenerator
+        from tapps_agents.workflow.rules_generator import CursorRulesGenerator
 
         generator = CursorRulesGenerator(project_root=project_root)
         rules_path = project_rules_dir / "workflow-presets.mdc"

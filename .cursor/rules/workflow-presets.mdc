@@ -119,6 +119,54 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 - Overall score: ≥65
 - Security: ≥6.5
 
+### 7. Simple Fix Issues
+
+**Command:** `python -m tapps_agents.cli workflow simple-fix-issues`
+
+**Best for:** Debug and fix issues in existing code
+
+**Agent Sequence:**
+1. Reviewer - Review Code
+2. Debugger - Analyze Error
+3. Implementer - Write Code
+4. Tester - Write Tests
+5. Orchestrator - Finalize
+
+### 8. Simple Improve Quality
+
+**Command:** `python -m tapps_agents.cli workflow simple-improve-quality`
+
+**Best for:** Improve code quality through review and refactoring
+
+**Agent Sequence:**
+1. Reviewer - Review Code
+2. Improver - Refactor
+3. Reviewer - Review Code
+4. Tester - Write Tests
+5. Orchestrator - Finalize
+
+**Quality Gates:**
+- Overall score: ≥75
+- Maintainability: ≥8.0
+
+### 9. Simple New Feature
+
+**Command:** `python -m tapps_agents.cli workflow simple-new-feature`
+
+**Best for:** Build new features with automatic quality checks
+
+**Agent Sequence:**
+1. Enhancer - Enhance Prompt
+2. Planner - Create Stories
+3. Implementer - Write Code
+4. Reviewer - Review Code
+5. Tester - Write Tests
+6. Orchestrator - Finalize
+
+**Quality Gates:**
+- Overall score: ≥65
+- Security: ≥6.5
+
 ## Usage in Cursor AI
 
 When working in Cursor AI, you can:
@@ -146,6 +194,9 @@ When working in Cursor AI, you can:
 - **Comprehensive code review and improvement cycle** → `workflow quality`
 - **Fast bug fix with minimal overhead** → `workflow hotfix`
 - **Standard workflow for implementing new features in existing projects** → `workflow feature-implementation`
+- **Debug and fix issues in existing code** → `workflow simple-fix-issues`
+- **Improve code quality through review and refactoring** → `workflow simple-improve-quality`
+- **Build new features with automatic quality checks** → `workflow simple-new-feature`
 
 ## Integration
 
@@ -171,5 +222,8 @@ Workflow presets are defined in `workflows/presets/`:
 - `quality.yaml`
 - `quick-fix.yaml`
 - `feature-implementation.yaml`
+- `simple-fix-issues.yaml`
+- `simple-improve-quality.yaml`
+- `simple-new-feature.yaml`
 
 You can modify these files or create your own presets.

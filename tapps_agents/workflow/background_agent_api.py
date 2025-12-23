@@ -16,6 +16,8 @@ from typing import Any
 
 import requests  # type: ignore[import-untyped]
 
+from ..core.offline_mode import OfflineMode
+
 
 class BackgroundAgentAPI:
     """
@@ -85,6 +87,12 @@ class BackgroundAgentAPI:
         Raises:
             requests.RequestException: Only if API key is invalid (401)
         """
+        # Check offline mode FIRST
+        if OfflineMode.is_offline():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug("Offline mode: skipping list_agents API call")
+            return []
         # Based on Cursor docs: GET /v0/agents
         url = f"{self.base_url}/agents"
         
@@ -113,6 +121,7 @@ class BackgroundAgentAPI:
             import logging
             logger = logging.getLogger(__name__)
             logger.debug(f"Background Agent API unavailable: {e}")
+            OfflineMode.record_connection_failure()  # Track failure for offline mode
             return []
 
     def trigger_agent(
@@ -142,6 +151,18 @@ class BackgroundAgentAPI:
         Raises:
             requests.RequestException: Only if API key is invalid (401)
         """
+        # Check offline mode FIRST - skip network call entirely if offline
+        if OfflineMode.is_offline():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Offline mode: skipping API call for agent {agent_id}")
+            return {
+                "status": "pending",
+                "job_id": f"local-{agent_id}",
+                "message": "Offline mode enabled, using file-based fallback",
+                "fallback_mode": True,
+            }
+        
         # API endpoint structure (to be verified with actual Cursor API docs)
         # Possible endpoints based on research:
         # - POST /v0/background-agents/{id}/trigger
@@ -159,10 +180,32 @@ class BackgroundAgentAPI:
         if environment:
             payload["environment"] = environment
         
-        try:
-            response = requests.post(
+        def network_operation():
+            return requests.post(
                 url, headers=self._get_headers(), json=payload, timeout=30
             )
+        
+        def local_fallback():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Using local fallback for agent {agent_id}")
+            return None  # Will be handled below
+        
+        try:
+            response = OfflineMode.with_offline_fallback(
+                network_operation=network_operation,
+                local_fallback=local_fallback,
+                operation_name=f"trigger_agent({agent_id})",
+            )
+            
+            # If offline fallback was used, response is None
+            if response is None:
+                return {
+                    "status": "pending",
+                    "job_id": f"local-{agent_id}",
+                    "message": "Offline mode: using file-based fallback",
+                    "fallback_mode": True,
+                }
             
             # Handle different status codes
             if response.status_code == 404:
@@ -199,6 +242,7 @@ class BackgroundAgentAPI:
             import logging
             logger = logging.getLogger(__name__)
             logger.debug(f"Background Agent API request failed: {e}")
+            OfflineMode.record_connection_failure()  # Track failure for offline mode
             return {
                 "status": "pending",
                 "job_id": f"local-{agent_id}",
@@ -224,6 +268,18 @@ class BackgroundAgentAPI:
         Raises:
             requests.RequestException: Only if API key is invalid (401)
         """
+        # Check offline mode FIRST
+        if OfflineMode.is_offline():
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Offline mode: skipping get_agent_status API call for {job_id}")
+            return {
+                "status": "unknown",
+                "job_id": job_id,
+                "message": "Offline mode enabled",
+                "fallback_mode": True,
+            }
+        
         # Possible endpoints based on research:
         # - GET /v0/background-agents/jobs/{job_id}
         # - GET /v0/background-agents/{job_id}/status
@@ -264,6 +320,7 @@ class BackgroundAgentAPI:
             import logging
             logger = logging.getLogger(__name__)
             logger.debug(f"Background Agent API status check failed: {e}")
+            OfflineMode.record_connection_failure()  # Track failure for offline mode
             return {
                 "status": "unknown",
                 "job_id": job_id,
