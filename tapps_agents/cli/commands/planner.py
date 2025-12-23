@@ -6,6 +6,7 @@ import asyncio
 from ...agents.planner.agent import PlannerAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from .common import check_result_error, format_json_output
 
 
@@ -90,8 +91,15 @@ async def list_stories_command(
 def handle_planner_command(args: object) -> None:
     """Handle planner agent commands"""
     command = normalize_command(getattr(args, "command", None))
-    planner = PlannerAgent()
+    feedback = get_feedback()
     
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("planner")
+        feedback.output_result(help_text)
+        return
+    
+    planner = PlannerAgent()
     try:
         if command == "plan":
             asyncio.run(plan_command(args.description, getattr(args, "format", "json")))
@@ -112,14 +120,10 @@ def handle_planner_command(args: object) -> None:
                     output_format=getattr(args, "format", "json"),
                 )
             )
-        elif command == "help" or command is None:
-            asyncio.run(planner.activate())
-            result = asyncio.run(planner.run("help"))
-            print(result["content"])
         else:
-            asyncio.run(planner.activate())
-            result = asyncio.run(planner.run("help"))
-            print(result["content"])
+            # Invalid command - show help without activation
+            help_text = get_static_help("planner")
+            feedback.output_result(help_text)
     finally:
         from ..utils.agent_lifecycle import safe_close_agent_sync
         safe_close_agent_sync(planner)

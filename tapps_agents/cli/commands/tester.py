@@ -6,6 +6,7 @@ import asyncio
 from ...agents.tester.agent import TesterAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
@@ -17,9 +18,16 @@ def handle_tester_command(args: object) -> None:
     output_format = getattr(args, "format", "json")
     feedback.format_type = output_format
     
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("tester")
+        feedback.output_result(help_text)
+        return
+    
+    # Only activate for commands that need it
     tester = TesterAgent()
-    asyncio.run(tester.activate())
     try:
+        asyncio.run(tester.activate())
         if command == "test":
             feedback.start_operation("Test")
             feedback.info(f"Running tests for {args.file}...")
@@ -82,13 +90,10 @@ def handle_tester_command(args: object) -> None:
             check_result_error(result)
             feedback.clear_progress()
             feedback.output_result(result, message="Test suite completed")
-        elif command == "help" or command is None:
-            result = asyncio.run(tester.run("help"))
-            feedback.output_result(result["content"])
-            return
         else:
-            result = asyncio.run(tester.run("help"))
-            feedback.output_result(result["content"])
+            # Invalid command - show help without activation
+            help_text = get_static_help("tester")
+            feedback.output_result(help_text)
             return
 
         check_result_error(result)

@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-2.4.3-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-2.4.4-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 

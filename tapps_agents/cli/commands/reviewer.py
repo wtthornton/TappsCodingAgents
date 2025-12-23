@@ -430,23 +430,28 @@ async def score_command(
 
 
 async def help_command():
-    """Show help (supports both *help and help commands)"""
-    reviewer = ReviewerAgent()
-    await reviewer.activate()
-    result = await reviewer.run("help")
+    """Show help (supports both *help and help commands) - uses static help, no activation needed"""
+    from ..help.static_help import get_static_help
+    help_text = get_static_help("reviewer")
     feedback = get_feedback()
-    feedback.output_result(result["content"])
-    await reviewer.close()
+    feedback.output_result(help_text)
 
 
 def handle_reviewer_command(args: object) -> None:
     """Handle reviewer agent commands"""
     from ..feedback import get_feedback
+    from ..help.static_help import get_static_help
     
     feedback = get_feedback()
     command = normalize_command(getattr(args, "command", None))
     output_format = getattr(args, "format", "json")
     feedback.format_type = output_format
+    
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("reviewer")
+        feedback.output_result(help_text)
+        return
     
     # Get batch operation parameters
     files = getattr(args, "files", None)
@@ -765,10 +770,10 @@ def handle_reviewer_command(args: object) -> None:
             check_result_error(result)
             feedback.clear_progress()
             feedback.output_result(result, message="Service analysis completed")
-        elif command == "help" or command is None:
-            asyncio.run(help_command())
         else:
-            asyncio.run(help_command())
+            # Invalid command - show help without activation
+            help_text = get_static_help("reviewer")
+            feedback.output_result(help_text)
     finally:
         from ..utils.agent_lifecycle import safe_close_agent_sync
         safe_close_agent_sync(reviewer)

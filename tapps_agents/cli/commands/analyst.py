@@ -6,6 +6,7 @@ import asyncio
 from ...agents.analyst.agent import AnalystAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
@@ -16,9 +17,17 @@ def handle_analyst_command(args: object) -> None:
     command = normalize_command(getattr(args, "command", None))
     output_format = getattr(args, "format", "json")
     feedback.format_type = output_format
+    
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("analyst")
+        feedback.output_result(help_text)
+        return
+    
+    # Only activate for commands that need it
     analyst = AnalystAgent()
-    asyncio.run(analyst.activate())
     try:
+        asyncio.run(analyst.activate())
         if command == "gather-requirements":
             feedback.start_operation("Gather Requirements")
             feedback.info("Gathering requirements...")
@@ -74,13 +83,10 @@ def handle_analyst_command(args: object) -> None:
                     competitors=getattr(args, "competitors", []),
                 )
             )
-        elif command == "help" or command is None:
-            result = asyncio.run(analyst.run("help"))
-            feedback.output_result(result["content"])
-            return
         else:
-            result = asyncio.run(analyst.run("help"))
-            feedback.output_result(result["content"])
+            # Invalid command - show help without activation
+            help_text = get_static_help("analyst")
+            feedback.output_result(help_text)
             return
 
         check_result_error(result)

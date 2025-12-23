@@ -6,6 +6,7 @@ import asyncio
 from ...agents.improver.agent import ImproverAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
@@ -16,10 +17,17 @@ def handle_improver_command(args: object) -> None:
     command = normalize_command(getattr(args, "command", None))
     output_format = getattr(args, "format", "json")
     feedback.format_type = output_format
+    
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("improver")
+        feedback.output_result(help_text)
+        return
+    
+    # Only activate for commands that need it
     improver = ImproverAgent()
-    asyncio.run(improver.activate())
-
     try:
+        asyncio.run(improver.activate())
         if command == "refactor":
             result = asyncio.run(
                 improver.run(
@@ -40,13 +48,10 @@ def handle_improver_command(args: object) -> None:
             result = asyncio.run(
                 improver.run("improve-quality", file_path=args.file_path)
             )
-        elif command == "help" or command is None:
-            result = asyncio.run(improver.run("help"))
-            feedback.output_result(result["content"] if isinstance(result, dict) else result)
-            return
         else:
-            result = asyncio.run(improver.run("help"))
-            feedback.output_result(result["content"] if isinstance(result, dict) else result)
+            # Invalid command - show help without activation
+            help_text = get_static_help("improver")
+            feedback.output_result(help_text)
             return
 
         check_result_error(result)

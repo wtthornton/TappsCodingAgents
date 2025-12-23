@@ -7,6 +7,7 @@ import json
 from ...agents.orchestrator.agent import OrchestratorAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
@@ -17,9 +18,17 @@ def handle_orchestrator_command(args: object) -> None:
     command = normalize_command(getattr(args, "command", None))
     output_format = getattr(args, "format", "json")
     feedback.format_type = output_format
+    
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("orchestrator")
+        feedback.output_result(help_text)
+        return
+    
+    # Only activate for commands that need it
     orchestrator = OrchestratorAgent()
-    asyncio.run(orchestrator.activate())
     try:
+        asyncio.run(orchestrator.activate())
         if command == "workflow-list":
             result = asyncio.run(orchestrator.run("*workflow-list"))
         elif command == "workflow-start":
@@ -58,10 +67,11 @@ def handle_orchestrator_command(args: object) -> None:
                     "*gate", condition=condition, scoring_data=scoring_data
                 )
             )
-        elif command == "help" or command is None:
-            result = asyncio.run(orchestrator.run("*help"))
         else:
-            result = asyncio.run(orchestrator.run("*help"))
+            # Invalid command - show help without activation
+            help_text = get_static_help("orchestrator")
+            feedback.output_result(help_text)
+            return
 
         if isinstance(result, dict) and "error" in result:
             check_result_error(result)

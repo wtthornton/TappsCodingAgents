@@ -6,6 +6,7 @@ import asyncio
 from ...agents.implementer.agent import ImplementerAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from .common import check_result_error, format_json_output
 
 
@@ -142,8 +143,15 @@ async def refactor_command(
 def handle_implementer_command(args: object) -> None:
     """Handle implementer agent commands"""
     command = normalize_command(getattr(args, "command", None))
-    implementer = ImplementerAgent()
+    feedback = get_feedback()
     
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("implementer")
+        feedback.output_result(help_text)
+        return
+    
+    implementer = ImplementerAgent()
     try:
         if command == "implement":
             asyncio.run(
@@ -174,14 +182,10 @@ def handle_implementer_command(args: object) -> None:
                     output_file=getattr(args, "output", None),
                 )
             )
-        elif command == "help" or command is None:
-            asyncio.run(implementer.activate())
-            result = asyncio.run(implementer.run("help"))
-            print(result["content"])
         else:
-            asyncio.run(implementer.activate())
-            result = asyncio.run(implementer.run("help"))
-            print(result["content"])
+            # Invalid command - show help without activation
+            help_text = get_static_help("implementer")
+            feedback.output_result(help_text)
     finally:
         from ..utils.agent_lifecycle import safe_close_agent_sync
         safe_close_agent_sync(implementer)

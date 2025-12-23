@@ -6,6 +6,7 @@ import asyncio
 from ...agents.documenter.agent import DocumenterAgent
 from ..base import normalize_command
 from ..feedback import get_feedback
+from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
 
@@ -16,9 +17,17 @@ def handle_documenter_command(args: object) -> None:
     command = normalize_command(getattr(args, "command", None))
     output_format = getattr(args, "format", "json")
     feedback.format_type = output_format
+    
+    # Help commands first - no activation needed
+    if command == "help" or command is None:
+        help_text = get_static_help("documenter")
+        feedback.output_result(help_text)
+        return
+    
+    # Only activate for commands that need it
     documenter = DocumenterAgent()
-    asyncio.run(documenter.activate())
     try:
+        asyncio.run(documenter.activate())
         if command == "document":
             result = asyncio.run(
                 documenter.run(
@@ -53,13 +62,10 @@ def handle_documenter_command(args: object) -> None:
                     write_file=getattr(args, "write_file", False),
                 )
             )
-        elif command == "help" or command is None:
-            result = asyncio.run(documenter.run("help"))
-            feedback.output_result(result["content"])
-            return
         else:
-            result = asyncio.run(documenter.run("help"))
-            feedback.output_result(result["content"])
+            # Invalid command - show help without activation
+            help_text = get_static_help("documenter")
+            feedback.output_result(help_text)
             return
 
         check_result_error(result)
