@@ -4,8 +4,8 @@
 # See docs/DEPENDENCY_POLICY.md for the dependency management policy.
 
 # Core Framework
-pydantic>=2.13.0
-httpx>=0.28.2
+pydantic>=2.12.0
+httpx>=0.28.0
 pyyaml>=6.0.3
 aiohttp>=3.13.2
 psutil>=7.1.0
@@ -18,6 +18,11 @@ coverage>=7.13.0
 # Reporting
 jinja2>=3.1.6
 plotly>=6.5.0
+
+# Dependency conflict resolution
+# Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
+# langchain-core 0.2.43 requires packaging<25,>=23.2
+packaging>=23.2,<25
 
 # Development Tools (from dev extra)
 black>=25.12.0

@@ -125,7 +125,7 @@ await handler.handle(step, state, run_agent_func, target_path, created_artifacts
 - `expert_engine.py` - Expert orchestration
 - `knowledge_ingestion.py` - Knowledge ingestion pipeline
 - `governance.py` - Knowledge governance and safety
-- `knowledge/` - Built-in knowledge files (83 files)
+- `knowledge/` - Built-in knowledge files (100 files)
 
 **Pattern:**
 - Experts provide domain-specific knowledge

@@ -26,7 +26,7 @@ This document analyzes HomeIQ's technology stack and identifies gaps in TappsCod
 
 | Technology | Version | Purpose | TappsCodingAgents Support |
 |------------|---------|---------|---------------------------|
-| **Python** | 3.12+ | Backend services | ✅ Full (3.13+ support) |
+| **Python** | 3.13+ | Backend services | ✅ Full (3.13+ required) |
 | **TypeScript** | Latest | Frontend, MCP servers | ✅ Full (recently added) |
 | **React** | 18 | Frontend UI | ✅ Full (ReactScorer available) |
 | **FastAPI** | Latest | RESTful APIs | ⚠️ Implicit (no explicit patterns) |

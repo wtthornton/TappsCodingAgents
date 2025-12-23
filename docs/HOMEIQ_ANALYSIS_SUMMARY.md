@@ -12,7 +12,7 @@
 
 | Category | Status | Notes |
 |----------|--------|-------|
-| **Python 3.12+** | ✅ Full Support | TappsCodingAgents supports 3.13+ |
+| **Python 3.13+** | ✅ Full Support | TappsCodingAgents requires 3.13+ |
 | **TypeScript/React** | ✅ Full Support | Recently added, ReactScorer available |
 | **FastAPI** | ⚠️ Implicit | No explicit patterns, but should work |
 | **InfluxDB** | ❌ Not Supported | **CRITICAL GAP** |

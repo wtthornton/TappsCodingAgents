@@ -125,6 +125,32 @@ The check is implemented in `scripts/validate_dependencies.py` and runs automati
 3. Update `requirements.txt` if maintained
 4. Regenerate lock files: `python scripts/generate_lock_files.py` (if using lock files)
 
+### Handling Transitive Dependency Conflicts
+
+Sometimes transitive dependencies (dependencies of dependencies) can conflict with each other. For example:
+- Package A requires `packaging>=25.0`
+- Package B (transitive) requires `packaging<25,>=23.2`
+
+**Solution:** Add explicit version constraints to `pyproject.toml` to resolve conflicts:
+
+```toml
+dependencies = [
+    # ... other dependencies ...
+    # Constrain packaging to avoid conflicts with transitive dependencies
+    "packaging>=23.2,<25",
+]
+```
+
+**When to add constraints:**
+- When pip reports dependency conflicts during installation
+- When transitive dependencies have incompatible version requirements
+- When you need to ensure compatibility with specific ecosystem packages (e.g., langchain-core)
+
+**Best practices:**
+- Use the most restrictive constraint that satisfies all dependencies
+- Document why the constraint exists (add a comment)
+- Monitor for updates to conflicting packages that may allow constraint relaxation
+
 ## Policy Enforcement
 
 - **CI**: The drift check runs in `.github/workflows/ci.yml` and fails if sources disagree

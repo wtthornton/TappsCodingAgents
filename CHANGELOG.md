@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.4.1] - 2025-01-27
+
+### Fixed
+- **Dependency Conflict Resolution** - Fixed `packaging` version conflict with transitive dependencies
+  - Added explicit `packaging>=23.2,<25` constraint to prevent conflicts with `langchain-core` and other packages
+  - Resolves "langchain-core 0.2.43 requires packaging<25,>=23.2, but you have packaging 25.0" error
+- **Version Synchronization** - Synchronized version numbers across all files
+  - Updated `pyproject.toml` and `tapps_agents/__init__.py` to match
+
+### Documentation
+- **Installation Troubleshooting Guide** - Added comprehensive troubleshooting guide (`docs/INSTALLATION_TROUBLESHOOTING.md`)
+  - Common installation issues and solutions
+  - PATH warning workarounds
+  - Best practices for virtual environments
+- **Dependency Policy Updates** - Enhanced dependency policy documentation
+  - Added section on handling transitive dependency conflicts
+  - Best practices for version constraint management
+
+## [2.4.0] - 2025-01-27
+
+### Fixed
+- **Version Mismatch** - Fixed version synchronization between `pyproject.toml` and installed package
+- **Dependency Constraints** - Added `packaging` version constraint to prevent conflicts
+
 ## [2.3.0] - 2025-01-27
 
 ### Added

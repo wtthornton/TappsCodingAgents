@@ -1,6 +1,6 @@
 # Deployment Guide
 
-**Version**: 2.1.0  
+**Version**: 2.4.1  
 **Last Updated**: January 2026
 
 ## Overview

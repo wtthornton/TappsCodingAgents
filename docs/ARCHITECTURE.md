@@ -25,7 +25,7 @@ These shard files exist to keep agent context small while remaining accurate.
 
 # Architecture Overview
 
-**Version**: 2.1.0  
+**Version**: 2.4.1  
 **Last Updated**: January 2026
 
 ## System Architecture
@@ -61,7 +61,7 @@ Agents are invoked:
 
 Experts live under `tapps_agents/experts/`.
 
-- **Built-in experts** (16): framework-provided technical domains (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning) with 83 knowledge files.
+- **Built-in experts** (16): framework-provided technical domains (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning) with 100 knowledge files.
 - **Industry experts** (project-defined): configured in `.tapps-agents/experts.yaml` and optionally backed by a file-based knowledge base under `.tapps-agents/knowledge/<domain>/*.md`.
 
 ### 3) Instruction-Based Architecture

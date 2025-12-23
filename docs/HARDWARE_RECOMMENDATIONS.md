@@ -1,7 +1,7 @@
 # Hardware Recommendations for TappsCodingAgents
 
 **Last Updated:** January 2026  
-**Project Version:** 2.1.0
+**Project Version:** 2.4.1
 
 ## Executive Summary
 

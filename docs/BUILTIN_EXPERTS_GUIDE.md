@@ -285,7 +285,7 @@ tapps_agents/experts/knowledge/
 └── agent-learning/                 # 3 files
 ```
 
-**Total:** 83 knowledge files across 11 knowledge domains
+**Total:** 100 knowledge files across 13 knowledge domains
 
 Each knowledge base contains markdown files with:
 - Domain overview

@@ -601,7 +601,7 @@ class TestEnhancerOutputFormatting:
         # Should return empty dict or dict with fallback values
         assert isinstance(result, dict)
 
-    def test_create_markdown_from_stages_includes_all_sections(self, tmp_path):
+    async def test_create_markdown_from_stages_includes_all_sections(self, tmp_path):
         """Test _create_markdown_from_stages includes all stage data."""
         agent = EnhancerAgent()
         await agent.activate(tmp_path)
@@ -668,7 +668,7 @@ class TestEnhancerOutputFormatting:
         assert "## Implementation Strategy" in markdown
         assert "Step 1: Create auth module" in markdown
 
-    def test_create_markdown_from_stages_handles_missing_stages(self, tmp_path):
+    async def test_create_markdown_from_stages_handles_missing_stages(self, tmp_path):
         """Test _create_markdown_from_stages handles missing stage data gracefully."""
         agent = EnhancerAgent()
         await agent.activate(tmp_path)
@@ -695,7 +695,7 @@ class TestEnhancerOutputFormatting:
         assert isinstance(markdown, str)
         assert len(markdown) > 0
 
-    def test_create_markdown_from_stages_displays_parsed_analysis_fields(self, tmp_path):
+    async def test_create_markdown_from_stages_displays_parsed_analysis_fields(self, tmp_path):
         """Test markdown output displays parsed analysis fields correctly."""
         agent = EnhancerAgent()
         await agent.activate(tmp_path)
