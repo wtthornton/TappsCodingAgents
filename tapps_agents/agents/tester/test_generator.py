@@ -34,6 +34,7 @@ class TestGenerator:
         test_path: Path | None = None,
         context: str | None = None,
         expert_guidance: str | None = None,
+        focus: str | None = None,
     ) -> TestGenerationInstruction:
         """
         Prepare unit test generation instruction for Cursor Skills.
@@ -60,7 +61,7 @@ class TestGenerator:
         # Detect test framework based on language
         test_framework = self._detect_test_framework_for_language(language, code)
 
-        # Build coverage requirements
+        # Build coverage requirements with focus areas if provided
         coverage_requirements = {
             "target_coverage": 80.0,
             "test_types": ["unit"],
@@ -68,6 +69,9 @@ class TestGenerator:
             "expert_guidance": expert_guidance,
             "language": language.value,
         }
+        if focus:
+            focus_areas = [area.strip() for area in focus.split(",")]
+            coverage_requirements["focus_areas"] = focus_areas
 
         return TestGenerationInstruction(
             target_file=str(test_path) if test_path else str(code_path),
@@ -140,6 +144,7 @@ class TestGenerator:
         test_path: Path | None = None,
         context: str | None = None,
         expert_guidance: str | None = None,
+        focus: str | None = None,
     ) -> TestGenerationInstruction:
         """
         Prepare integration test generation instruction for Cursor Skills.
@@ -148,6 +153,8 @@ class TestGenerator:
             file_paths: List of source code file paths
             test_path: Optional path where test will be written
             context: Optional context
+            expert_guidance: Optional expert guidance
+            focus: Optional comma-separated focus areas
 
         Returns:
             TestGenerationInstruction object for Cursor Skills execution
@@ -162,6 +169,9 @@ class TestGenerator:
             "context": context,
             "expert_guidance": expert_guidance,
         }
+        if focus:
+            focus_areas = [area.strip() for area in focus.split(",")]
+            coverage_requirements["focus_areas"] = focus_areas
 
         return TestGenerationInstruction(
             target_file=target_file,

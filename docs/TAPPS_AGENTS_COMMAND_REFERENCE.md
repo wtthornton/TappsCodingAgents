@@ -1667,7 +1667,9 @@ tapps-agents ops audit-dependencies --format markdown
 - `improver optimize` / `*optimize`  
   - **Syntax:** `tapps-agents improver optimize <file_path> [--type performance|memory|both] [--output <path>] [--format json|text|markdown]`
 - `improver improve-quality` / `*improve-quality`  
-  - **Syntax:** `tapps-agents improver improve-quality <file_path> [--output <path>] [--format json|text|markdown]`
+  - **Syntax:** `tapps-agents improver improve-quality <file_path> [--focus "<areas>"] [--output <path>] [--format json|text|markdown]`
+  - **Parameters:**
+    - `--focus`: Comma-separated list of quality aspects to focus on (e.g., `"security, maintainability, type-safety"`). If not provided, performs comprehensive quality improvement.
 
 **Cursor Skill Note (source: `tapps_agents/resources/claude/skills/improver/SKILL.md`):**
 - The Skill supports `@improver *improve` as an alias to `*refactor`. The CLI does **not** provide an `improver improve` subcommand.

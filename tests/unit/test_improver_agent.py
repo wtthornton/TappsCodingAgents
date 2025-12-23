@@ -147,6 +147,66 @@ class TestImproverAgent:
         assert "error" in result
         assert "required" in result["error"].lower()
 
+    async def test_improve_quality_with_focus(self, improver_agent, tmp_path):
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text("def bad_code():\n    pass\n")
+        improver_agent.project_root = tmp_path
+        with (
+            patch.object(
+                improver_agent, "get_context", new_callable=AsyncMock
+            ) as mock_context,
+            patch.object(improver_agent, "get_context_text", return_value=""),
+        ):
+            mock_context.return_value = {}
+            result = await improver_agent.run(
+                "improve-quality",
+                file_path=str(test_file),
+                focus="security, maintainability, type-safety",
+            )
+
+        assert "message" in result or "instruction" in result
+        # Verify focus is incorporated into the prompt
+        if "instruction" in result:
+            instruction = result["instruction"]
+            if isinstance(instruction, dict) and "prompt" in instruction:
+                prompt = instruction["prompt"]
+                assert "security" in prompt.lower() or "maintainability" in prompt.lower()
+
+    async def test_improve_quality_with_single_focus(self, improver_agent, tmp_path):
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text("def bad_code():\n    pass\n")
+        improver_agent.project_root = tmp_path
+        with (
+            patch.object(
+                improver_agent, "get_context", new_callable=AsyncMock
+            ) as mock_context,
+            patch.object(improver_agent, "get_context_text", return_value=""),
+        ):
+            mock_context.return_value = {}
+            result = await improver_agent.run(
+                "improve-quality", file_path=str(test_file), focus="security"
+            )
+
+        assert "message" in result or "instruction" in result
+
+    async def test_improve_quality_without_focus(self, improver_agent, tmp_path):
+        """Test that improve-quality works without focus (backward compatibility)"""
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text("def bad_code():\n    pass\n")
+        improver_agent.project_root = tmp_path
+        with (
+            patch.object(
+                improver_agent, "get_context", new_callable=AsyncMock
+            ) as mock_context,
+            patch.object(improver_agent, "get_context_text", return_value=""),
+        ):
+            mock_context.return_value = {}
+            result = await improver_agent.run(
+                "improve-quality", file_path=str(test_file)
+            )
+
+        assert "message" in result or "instruction" in result
+
     async def test_help(self, improver_agent):
         result = await improver_agent.run("help")
 

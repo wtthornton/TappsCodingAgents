@@ -94,6 +94,10 @@ Addresses multiple quality aspects:
 This is a general quality improvement that addresses multiple concerns simultaneously.""",
     )
     improve_quality_parser.add_argument("file_path", help="Path to the source code file to improve. The file will be comprehensively analyzed and improved across multiple quality dimensions.")
+    improve_quality_parser.add_argument(
+        "--focus",
+        help="Comma-separated list of quality aspects to focus on (e.g., 'security, maintainability, type-safety'). If not provided, performs comprehensive quality improvement.",
+    )
     improve_quality_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     improve_quality_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 

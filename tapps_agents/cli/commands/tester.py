@@ -37,6 +37,7 @@ def handle_tester_command(args: object) -> None:
                     file=args.file,
                     test_file=getattr(args, "test_file", None),
                     integration=getattr(args, "integration", False),
+                    focus=getattr(args, "focus", None),
                 )
             )
             check_result_error(result)

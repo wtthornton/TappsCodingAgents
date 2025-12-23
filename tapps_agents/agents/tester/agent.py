@@ -126,6 +126,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         file: str | None = None,
         test_file: str | None = None,
         integration: bool = False,
+        focus: str | None = None,
         **kwargs,  # Accept additional kwargs to be more flexible
     ) -> dict[str, Any]:
         """
@@ -135,6 +136,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             file: Source code file to test
             test_file: Optional path to write test file
             integration: If True, generate integration tests
+            focus: Comma-separated list of test aspects to focus on
         """
         if not file:
             return {"error": "File path required"}
@@ -149,13 +151,19 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         except (FileNotFoundError, ValueError) as e:
             return {"error": str(e)}
 
+        # Build expert query with focus areas if provided
+        focus_text = ""
+        if focus:
+            focus_areas = [area.strip() for area in focus.split(",")]
+            focus_text = f" Focus specifically on: {', '.join(focus_areas)}."
+        
         # Consult Testing expert for test generation guidance
         expert_guidance = ""
         expert_advice = None
         # Use defensive check to ensure attribute exists (safety for MRO issue)
         if hasattr(self, 'expert_registry') and self.expert_registry:
             testing_consultation = await self.expert_registry.consult(
-                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.",
+                query=f"Provide best practices for generating {'integration' if integration else 'unit'} tests for: {file_path.name}. Focus on test coverage, edge cases, and maintainability.{focus_text}",
                 domain="testing-strategies",
                 agent_id=self.agent_id,
                 prioritize_builtin=True,

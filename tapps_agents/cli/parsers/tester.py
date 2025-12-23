@@ -51,6 +51,10 @@ Example:
         action="store_true",
         help="Generate integration tests in addition to unit tests. Integration tests verify component interactions and end-to-end functionality.",
     )
+    test_parser.add_argument(
+        "--focus",
+        help="Comma-separated list of test aspects to focus on (e.g., 'edge cases, error handling, performance'). If not provided, generates comprehensive tests covering all aspects.",
+    )
     test_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     test_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 

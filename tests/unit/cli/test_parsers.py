@@ -252,6 +252,24 @@ class TestTesterParser:
         assert args.command == "test"
         assert args.file == "test.py"
 
+    def test_tester_parser_focus_argument(self):
+        """Test tester parser --focus argument."""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers(dest="agent")
+        tester.add_tester_parser(subparsers)
+
+        args = parser.parse_args(["tester", "test", "test.py", "--focus", "edge cases, error handling"])
+        assert args.focus == "edge cases, error handling"
+
+    def test_tester_parser_focus_optional(self):
+        """Test that --focus is optional."""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers(dest="agent")
+        tester.add_tester_parser(subparsers)
+
+        args = parser.parse_args(["tester", "test", "test.py"])
+        assert not hasattr(args, "focus") or args.focus is None
+
 
 class TestOtherAgentParsers:
     """Tests for other agent parsers."""
@@ -316,8 +334,28 @@ class TestOtherAgentParsers:
         subparsers = parser.add_subparsers(dest="agent")
         improver.add_improver_parser(subparsers)
 
-        args = parser.parse_args(["improver", "improve", "--file", "test.py"])
+        args = parser.parse_args(["improver", "improve-quality", "test.py"])
         assert args.agent == "improver"
+        assert args.command == "improve-quality"
+        assert args.file_path == "test.py"
+
+    def test_improver_parser_focus_argument(self):
+        """Test improver parser --focus argument for improve-quality."""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers(dest="agent")
+        improver.add_improver_parser(subparsers)
+
+        args = parser.parse_args(["improver", "improve-quality", "test.py", "--focus", "security, maintainability"])
+        assert args.focus == "security, maintainability"
+
+    def test_improver_parser_focus_optional(self):
+        """Test that --focus is optional for improve-quality."""
+        parser = argparse.ArgumentParser()
+        subparsers = parser.add_subparsers(dest="agent")
+        improver.add_improver_parser(subparsers)
+
+        args = parser.parse_args(["improver", "improve-quality", "test.py"])
+        assert not hasattr(args, "focus") or args.focus is None
 
     def test_ops_parser_registration(self):
         """Test ops parser registration."""

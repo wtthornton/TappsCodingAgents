@@ -214,7 +214,7 @@ Return only the optimized code, wrapped in ```python code blocks."""
         }
 
     async def _handle_improve_quality(
-        self, file_path: str | None = None, **kwargs: Any
+        self, file_path: str | None = None, focus: str | None = None, **kwargs: Any
     ) -> dict[str, Any]:
         """Improve overall code quality (structure, patterns, best practices)."""
         if not file_path:
@@ -240,6 +240,19 @@ Return only the optimized code, wrapped in ```python code blocks."""
         # Get context
         context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
+        # Parse focus areas
+        focus_areas = []
+        if focus:
+            focus_areas = [area.strip() for area in focus.split(",") if area.strip()]
+
+        # Build focus-specific prompt section
+        focus_text = ""
+        if focus_areas:
+            focus_text = "\n\nFocus specifically on these quality aspects:\n"
+            for area in focus_areas:
+                focus_text += f"- {area}\n"
+            focus_text += "\nWhile still maintaining general code quality standards."
+
         prompt = f"""Improve the overall code quality of the following code:
         
 Current code:
@@ -249,7 +262,7 @@ Current code:
 
 Context (other related files):
 {context_text}
-
+{focus_text}
 Provide improved code that:
 1. Follows Python best practices and PEP 8 style guide
 2. Uses appropriate design patterns
