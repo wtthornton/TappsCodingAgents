@@ -373,7 +373,7 @@ class EnhancerAgent(BaseAgent):
                 output_path = Path(output_file)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 if output_format == "json":
-                    output_path.write_text(json.dumps(result, indent=2))
+                    output_path.write_text(self._safe_json_dumps(result, indent=2))
                     if isinstance(result, dict):
                         result["output_file"] = str(output_path)
                 else:
@@ -495,7 +495,7 @@ class EnhancerAgent(BaseAgent):
                 output_path = Path(output_file)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
                 if output_format == "json":
-                    output_path.write_text(json.dumps(result, indent=2))
+                    output_path.write_text(self._safe_json_dumps(result, indent=2))
                     if isinstance(result, dict):
                         result["output_file"] = str(output_path)
                 else:
@@ -853,7 +853,7 @@ Provide structured JSON response with the following format:
         arch_result = await self.architect.run(
             "design-system",
             requirements=prompt,
-            context=json.dumps(requirements, indent=2),
+            context=self._safe_json_dumps(requirements, indent=2),
         )
 
         # C3: Enhance architecture with Context7 patterns
@@ -990,11 +990,11 @@ Provide structured JSON response with the following format:
 
 Original Prompt: {prompt}
 
-Analysis: {json.dumps(stages.get('analysis', {}), indent=2)}
-Requirements: {json.dumps(stages.get('requirements', {}), indent=2)}
-Architecture: {json.dumps(stages.get('architecture', {}), indent=2)}
-Quality: {json.dumps(stages.get('quality', {}), indent=2)}
-Implementation: {json.dumps(stages.get('implementation', {}), indent=2)}
+Analysis: {self._safe_json_dumps(stages.get('analysis', {}), indent=2)}
+Requirements: {self._safe_json_dumps(stages.get('requirements', {}), indent=2)}
+Architecture: {self._safe_json_dumps(stages.get('architecture', {}), indent=2)}
+Quality: {self._safe_json_dumps(stages.get('quality', {}), indent=2)}
+Implementation: {self._safe_json_dumps(stages.get('implementation', {}), indent=2)}
 
 Create a comprehensive, context-aware enhanced prompt that includes all relevant information."""
 
@@ -1011,7 +1011,7 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
                 prompt=synthesis_prompt,
                 parameters={
                     "original_prompt": prompt,
-                    "stages": json.dumps(stages),
+                    "stages": self._safe_json_dumps(stages),
                     "output_format": output_format,
                 },
             )
@@ -1156,13 +1156,92 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
 
         return session_id
 
+    def _safe_json_dumps(self, obj: Any, indent: int = 2) -> str:
+        """
+        Safely serialize object to JSON, handling circular references.
+        
+        Args:
+            obj: Object to serialize
+            indent: JSON indentation level
+            
+        Returns:
+            JSON string representation
+        """
+        def _make_serializable(o: Any, seen: set[int] | None = None) -> Any:
+            """Recursively convert object to JSON-serializable format."""
+            if seen is None:
+                seen = set()
+            
+            # Handle primitives first (no circular reference risk)
+            if isinstance(o, (str, int, float, bool, type(None))):
+                return o
+            
+            # Handle datetime (immutable)
+            if isinstance(o, datetime):
+                return o.isoformat()
+            
+            # Handle Path objects (immutable)
+            if isinstance(o, Path):
+                return str(o)
+            
+            # For mutable objects, check for circular references
+            obj_id = id(o)
+            if obj_id in seen:
+                return "<circular reference>"
+            
+            try:
+                # Handle dict
+                if isinstance(o, dict):
+                    seen.add(obj_id)
+                    result = {}
+                    for k, v in o.items():
+                        # Skip non-string keys (convert to string)
+                        key = str(k) if not isinstance(k, (str, int, float, bool, type(None))) else k
+                        result[key] = _make_serializable(v, seen)
+                    seen.remove(obj_id)
+                    return result
+                
+                # Handle list/tuple
+                if isinstance(o, (list, tuple)):
+                    seen.add(obj_id)
+                    result = [_make_serializable(item, seen) for item in o]
+                    seen.remove(obj_id)
+                    return result
+                
+                # For other objects, try to convert to dict or string
+                if hasattr(o, '__dict__'):
+                    seen.add(obj_id)
+                    try:
+                        result = _make_serializable(o.__dict__, seen)
+                        seen.remove(obj_id)
+                        return result
+                    except Exception:
+                        seen.remove(obj_id)
+                        return str(o)
+                
+                # Fallback: convert to string
+                return str(o)
+                
+            except Exception as e:
+                # If anything fails, return error string
+                seen.discard(obj_id)
+                return f"<serialization error: {str(e)}>"
+        
+        try:
+            serializable_obj = _make_serializable(obj)
+            return json.dumps(serializable_obj, indent=indent, ensure_ascii=False)
+        except Exception as e:
+            logger.error(f"Failed to serialize session: {e}")
+            # Last resort: return minimal error representation
+            return json.dumps({"error": f"Serialization failed: {str(e)}"}, indent=indent)
+
     def _save_session(self, session_id: str, session: dict[str, Any]):
         """Save session to disk."""
         sessions_dir = Path.cwd() / ".tapps-agents" / "sessions"
         sessions_dir.mkdir(parents=True, exist_ok=True)
 
         session_file = sessions_dir / f"{session_id}.json"
-        session_file.write_text(json.dumps(session, indent=2))
+        session_file.write_text(self._safe_json_dumps(session, indent=2))
 
     def _load_session(self, session_id: str) -> dict[str, Any] | None:
         """Load session from disk."""
