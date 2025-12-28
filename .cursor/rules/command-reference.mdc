@@ -44,21 +44,225 @@ tapps-agents reviewer score README.md --no-progress
 ## Top-Level Commands
 
 ### `init` - Initialize Project
-**Purpose:** Set up TappsCodingAgents in your project (Cursor Rules, Skills, Background Agents, config)
+**Purpose:** Set up TappsCodingAgents in your project (Cursor Rules, Skills, Background Agents, config). **This is the first command you should run on any project** to enable all tapps-agents capabilities in Cursor IDE.
 
 **CLI Syntax:**
 ```bash
-tapps-agents init [--no-rules] [--no-presets] [--no-config] [--no-skills] [--no-background-agents] [--no-cache] [--no-cursorignore]
+tapps-agents init [--no-rules] [--no-presets] [--no-config] [--no-skills] [--no-background-agents] [--no-cache] [--no-cursorignore] [--reset] [--upgrade] [--no-backup] [--reset-mcp] [--preserve-custom] [--rollback <path>] [--yes] [--dry-run]
 ```
 
+**When to Use:**
+- **First-time setup**: Run `tapps-agents init` when adding TappsCodingAgents to a new or existing project
+- **Upgrading framework**: Use `tapps-agents init --reset` to upgrade framework files to latest version
+- **Selective setup**: Use `--no-<component>` flags to skip specific components you don't need
+- **CI/CD automation**: Use `--yes` flag to skip confirmation prompts
+
+**What Happens When Executed on Other Projects:**
+
+When you run `tapps-agents init` on any project (new or existing), it:
+
+1. **Detects existing installation**: Checks for existing tapps-agents files and warns if found (unless using `--reset`)
+2. **Creates directory structure**: Sets up all required directories if they don't exist
+3. **Copies framework files**: Installs framework-provided files (Skills, Rules, Presets) from the installed package
+4. **Preserves user files**: Never overwrites existing user files unless using `--reset` mode
+5. **Detects tech stack**: Automatically detects project dependencies (Python packages, frameworks) and configures experts
+6. **Pre-populates cache**: Optionally pre-populates Context7 cache with project dependencies (unless `--no-cache`)
+7. **Validates setup**: Runs environment diagnostics to verify everything is configured correctly
+
 **What it installs:**
-- `.cursor/rules/` - 7 rule files (workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference)
-- `.claude/skills/` - 13 agent skills + simple-mode skill
-- `.cursor/background-agents.yaml` - Background agent configuration
-- `.tapps-agents/config.yaml` - Framework configuration
-- `workflows/presets/` - 5 workflow preset YAML files
-- `.cursor/mcp.json` - Context7 MCP server configuration
-- `.cursorignore` - Performance optimization patterns
+
+1. **Cursor Rules** (`.cursor/rules/`) - 7 rule files:
+   - `workflow-presets.mdc` - Workflow preset documentation (auto-generated from YAML)
+   - `quick-reference.mdc` - Quick command reference
+   - `agent-capabilities.mdc` - Agent capability descriptions
+   - `project-context.mdc` - Project context template
+   - `project-profiling.mdc` - Project profiling guide
+   - `simple-mode.mdc` - Simple Mode guide (natural language orchestration)
+   - `command-reference.mdc` - This file (complete command reference)
+
+2. **Cursor Skills** (`.claude/skills/`) - 13 agent skills + simple-mode skill:
+   - Enables `@agent-name *command` syntax in Cursor chat
+   - Each skill defines agent capabilities, tools, and instructions
+   - Skills are model-agnostic (use Cursor's configured LLM)
+   - **Simple Mode skill** (`.claude/skills/simple-mode/`) - **INSTALLED BY DEFAULT**:
+     - **Primary interface** for TappsCodingAgents in Cursor
+     - Natural language orchestration of multiple skills
+     - **Available immediately after `init`** (no additional setup needed)
+     - Commands:
+       - `@simple-mode *build` - Complete 7-step feature development workflow
+       - `@simple-mode *review` - Code quality review workflow
+       - `@simple-mode *fix` - Bug fixing workflow with debugging
+       - `@simple-mode *test` - Test generation workflow
+       - `@simple-mode *epic` - Epic execution workflow (all stories in dependency order)
+       - `@simple-mode *test-coverage` - Coverage-driven test generation
+       - `@simple-mode *fix-tests` - Auto-fix test failures
+       - `@simple-mode *microservice` - Generate complete microservice structure
+       - `@simple-mode *docker-fix` - Debug container errors
+       - `@simple-mode *integrate-service` - Service-to-service integration
+       - `@simple-mode *full` - Full SDLC workflow (9 steps)
+       - Natural language commands (e.g., `@simple-mode Build a feature`)
+     - **Simple Mode is enabled by default** in config after `init`
+
+3. **Background Agents** (`.cursor/background-agents.yaml`):
+   - Defines automatic workflow execution triggers
+   - Enables auto-execution of quality checks, testing, security scans
+   - Configurable triggers (file changes, git commits, etc.)
+
+4. **Configuration** (`.tapps-agents/config.yaml`):
+   - Framework settings and agent configurations
+   - Tech stack detection results
+   - Quality thresholds and automation settings
+
+5. **Workflow Presets** (`workflows/presets/`):
+   - 5 predefined workflow YAML files (full, rapid, fix, quality, hotfix)
+   - Can be customized per project
+
+6. **MCP Config** (`.cursor/mcp.json`):
+   - Context7 MCP server configuration for library documentation lookup
+   - Enables `@reviewer *docs <library>` commands
+
+7. **Context7 Cache**:
+   - Pre-populated with project dependencies + built-in expert libraries
+   - Speeds up library documentation lookups
+   - Can be skipped with `--no-cache` if Context7 not configured
+
+8. **`.cursorignore`**:
+   - Performance optimization patterns
+   - Excludes large/generated files from Cursor indexing
+
+**Parameters:**
+
+- `--no-rules`: Skip creating `.cursor/rules/` directory
+  - **When to use**: If you want to manage rules manually or use custom rules only
+  - **Why**: Reduces setup time if you don't need framework-provided rules
+
+- `--no-presets`: Skip creating workflow presets directory
+  - **When to use**: If you only use custom workflows or CLI commands
+  - **Why**: Reduces setup time if you don't need preset workflows
+
+- `--no-config`: Skip creating `.tapps-agents/config.yaml`
+  - **When to use**: If you have existing config or want to configure manually
+  - **Why**: Allows manual configuration without framework defaults
+
+- `--no-skills`: Skip installing Cursor Skills
+  - **When to use**: If you only use CLI commands, not Cursor chat
+  - **Why**: Reduces setup time, but disables `@agent-name` commands in Cursor
+
+- `--no-background-agents`: Skip creating Background Agents config
+  - **When to use**: If you don't want automatic workflow execution
+  - **Why**: Manual control over when workflows run
+
+- `--no-cache`: Skip pre-populating Context7 cache
+  - **When to use**: If Context7 is not configured or you want to populate manually
+  - **Why**: Faster init if Context7 API key not available
+
+- `--no-cursorignore`: Skip creating `.cursorignore` file
+  - **When to use**: If you have custom indexing preferences
+  - **Why**: Manual control over Cursor indexing patterns
+
+- `--reset` / `--upgrade`: Reset framework-managed files to latest version
+  - **When to use**: After upgrading tapps-agents package, to get latest framework files
+  - **Why**: Updates Skills, Rules, Presets to match installed package version
+  - **Note**: Preserves user data (config, experts, knowledge base, custom files)
+
+- `--no-backup`: Skip backup before reset (not recommended)
+  - **When to use**: Only if you're certain you don't need rollback capability
+  - **Why**: Faster reset, but no way to undo changes
+
+- `--reset-mcp`: Also reset `.cursor/mcp.json` to framework version
+  - **When to use**: If MCP config is corrupted or you want framework defaults
+  - **Why**: Restores MCP configuration to framework-provided version
+
+- `--preserve-custom`: Preserve custom Skills, Rules, and presets (default: True)
+  - **When to use**: Default behavior - custom files are always preserved
+  - **Why**: Protects user customizations during reset
+
+- `--rollback <path>`: Rollback an init reset from a backup
+  - **When to use**: If reset caused issues and you need to restore previous state
+  - **Why**: Restores files from backup created during reset
+
+- `--yes` / `-y`: Automatically answer 'yes' to all confirmation prompts
+  - **When to use**: CI/CD pipelines, automation scripts, non-interactive environments
+  - **Why**: Enables fully automated init without user interaction
+
+- `--dry-run`: Preview what would be reset without making changes
+  - **When to use**: Before running `--reset` to see what will change
+  - **Why**: Safe way to preview reset impact without modifying files
+
+**Examples:**
+
+```bash
+# Initial setup (recommended for all projects)
+tapps-agents init
+
+# Initial setup without Context7 cache (if API key not configured)
+tapps-agents init --no-cache
+
+# Upgrade framework files after package update
+tapps-agents init --reset
+
+# Preview what would be reset (safe to run)
+tapps-agents init --reset --dry-run
+
+# Automated setup for CI/CD
+tapps-agents init --yes
+
+# Minimal setup (only Skills and Rules, no presets or cache)
+tapps-agents init --no-presets --no-cache
+
+# Rollback from backup
+tapps-agents init --rollback .tapps-agents/backups/init-reset-20250116-143022
+```
+
+**After Init - What You Can Do:**
+
+**Simple Mode is Ready to Use:**
+After `tapps-agents init`, Simple Mode is automatically set up and ready:
+- ✅ Simple Mode skill installed (`.claude/skills/simple-mode/`)
+- ✅ Simple Mode rule installed (`.cursor/rules/simple-mode.mdc`)
+- ✅ Simple Mode enabled by default in config
+- ✅ Ready to use immediately in Cursor chat
+
+**Verify Simple Mode Setup:**
+```bash
+tapps-agents simple-mode status
+```
+
+**In Cursor Chat (Recommended - Use Simple Mode):**
+```cursor
+# Natural language commands (Simple Mode auto-detects intent)
+@simple-mode Build a user authentication feature
+@simple-mode Review my authentication code
+@simple-mode Fix the error in auth.py
+@simple-mode Add tests for service.py
+
+# Explicit commands (more reliable for complex workflows)
+@simple-mode *build "Add user authentication"
+@simple-mode *review src/api/auth.py
+@simple-mode *fix src/buggy.py "Fix the error"
+@simple-mode *epic docs/prd/epic-51.md
+
+# Individual agent commands (when you need specific agents)
+@reviewer *score src/main.py
+@implementer *implement "Add feature" src/feature.py
+@reviewer *docs fastapi routing
+```
+
+**In Terminal/CI:**
+```bash
+# Workflow presets
+tapps-agents workflow rapid --prompt "Add feature" --auto
+tapps-agents workflow full --prompt "Build API" --auto
+
+# Individual agent commands
+tapps-agents reviewer review src/
+tapps-agents score src/main.py
+
+# Simple Mode management
+tapps-agents simple-mode on
+tapps-agents simple-mode status
+tapps-agents simple-mode full --prompt "Build feature" --auto
+```
 
 ### `create` - Create New Project
 **Purpose:** Create a complete application from natural language description
@@ -129,7 +333,7 @@ tapps-agents doctor [--format json|text] [--config-path <path>]
 ```
 
 ### `simple-mode` - Simple Mode Management
-**Purpose:** Manage Simple Mode - simplified natural language interface
+**Purpose:** Manage Simple Mode - simplified natural language interface. Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor, providing natural language commands that automatically orchestrate multiple specialized skills.
 
 **CLI Syntax:**
 ```bash
@@ -138,29 +342,78 @@ tapps-agents simple-mode <command> [options]
 
 **Subcommands:**
 - `on` - Enable Simple Mode
-- `off` - Disable Simple Mode
-- `status [--format json|text]` - Check Simple Mode status
-- `init` - Run onboarding wizard
-- `configure` / `config` - Configure settings interactively
-- `progress` - Show learning progression
-- `full [--prompt "<desc>"] [--file <path>] [--auto]` - Run full lifecycle workflow
+  - **When to use**: After running `tapps-agents init`, to enable Simple Mode
+  - **Why**: Activates Simple Mode configuration in `.tapps-agents/config.yaml`
+  - **Note**: Simple Mode skill is installed by `init`, but must be enabled via this command
 
-**Cursor Usage (Natural Language):**
+- `off` - Disable Simple Mode
+  - **When to use**: If you want to use individual agent commands only
+  - **Why**: Disables Simple Mode but keeps skill installed
+
+- `status [--format json|text]` - Check Simple Mode status
+  - **When to use**: Verify Simple Mode is enabled and configured
+  - **Why**: Shows current configuration and enabled state
+
+- `init` - Run onboarding wizard
+  - **When to use**: First time using Simple Mode, or to reconfigure
+  - **Why**: Interactive setup with guided configuration
+  - **What it does**: Detects project type, configures settings, suggests first command
+
+- `configure` / `config` - Configure settings interactively
+  - **When to use**: To change Simple Mode settings after initial setup
+  - **Why**: Update configuration without running full onboarding
+
+- `progress` - Show learning progression
+  - **When to use**: Track your Simple Mode usage and unlocked features
+  - **Why**: Shows learning level, commands used, features unlocked
+
+- `full [--prompt "<desc>"] [--file <path>] [--auto]` - Run full lifecycle workflow
+  - **When to use**: Complete SDLC workflow with all quality gates
+  - **Why**: Comprehensive workflow with requirements, design, implementation, testing, security, documentation
+  - **Parameters**:
+    - `--prompt`: Natural language description (required for greenfield)
+    - `--file`: Target file/directory (for brownfield/refactoring)
+    - `--auto`: Fully automated execution
+
+**Simple Mode is Installed by `init`:**
+- Simple Mode skill (`.claude/skills/simple-mode/`) is automatically installed by `tapps-agents init`
+- Simple Mode rule (`.cursor/rules/simple-mode.mdc`) is automatically installed
+- Simple Mode is enabled by default in config, but you can run `tapps-agents simple-mode on` to ensure it's active
+
+**Cursor Usage (Natural Language - Recommended):**
 ```cursor
 @simple-mode Build a user authentication feature
 @simple-mode Review my authentication code
 @simple-mode Fix the error in auth.py
 @simple-mode Add tests for service.py
+@simple-mode Execute epic docs/prd/epic-51.md
 ```
 
-**Cursor Usage (Explicit Commands):**
+**Cursor Usage (Explicit Commands - More Reliable):**
 ```cursor
 @simple-mode *build "Create a user authentication feature"
 @simple-mode *review src/api/auth.py
 @simple-mode *fix src/buggy.py "Fix the error"
 @simple-mode *test src/api/auth.py
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
 @simple-mode *full "Build a complete REST API"
 ```
+
+**When to Use Simple Mode:**
+- **New users**: Start with Simple Mode for natural language commands
+- **Feature development**: Use `*build` for complete feature workflows
+- **Code review**: Use `*review` for quality analysis
+- **Bug fixing**: Use `*fix` for systematic debugging
+- **Testing**: Use `*test` for test generation
+- **Epic execution**: Use `*epic` for implementing entire Epic documents
+- **Full lifecycle**: Use `*full` for complete SDLC workflows
+
+**Why Use Simple Mode:**
+- **Natural language**: Use plain English instead of learning multiple agent commands
+- **Automatic orchestration**: Skills are coordinated automatically in the right sequence
+- **Quality gates**: Automatic quality checks with loopback on failures
+- **Better outcomes**: Produces higher quality code with comprehensive documentation
+- **Workflow enforcement**: Ensures all steps are executed (enhance → plan → design → implement → review → test)
 
 ## Agent Commands
 
@@ -169,11 +422,11 @@ tapps-agents simple-mode <command> [options]
 **Available Commands:**
 
 #### `*review` / `review` (Dual-Mode)
-**Purpose:** Comprehensive code review with AI analysis
+**Purpose:** Comprehensive code review with AI analysis. Provides detailed feedback on code quality, security, maintainability, and best practices.
 
 **CLI Syntax:**
 ```bash
-tapps-agents reviewer review [<files>...] [--pattern <glob>] [--max-workers <n>] [--format json|text|markdown|html] [--output <file>]
+tapps-agents reviewer review [<files>...] [--pattern <glob>] [--max-workers <n>] [--format json|text|markdown|html] [--output <file>] [--fail-under <score>]
 ```
 
 **Cursor Syntax:**
@@ -181,12 +434,59 @@ tapps-agents reviewer review [<files>...] [--pattern <glob>] [--max-workers <n>]
 @reviewer *review <file>
 ```
 
+**When to Use:**
+- **Pre-commit reviews**: Review code before committing changes
+- **Code quality audits**: Comprehensive analysis of codebase quality
+- **Learning best practices**: Get detailed feedback on code improvements
+- **Batch processing**: Review multiple files or entire directories
+- **CI/CD integration**: Use `--fail-under` to enforce quality gates
+
 **Parameters:**
-- `files` (optional): One or more file paths
-- `--pattern`: Glob pattern (e.g., `**/*.py`)
-- `--max-workers`: Concurrent operations (default: 4)
-- `--format`: Output format (default: `json`)
-- `--output`: Output file path
+- `files` (optional): One or more file paths. Supports multiple files, directories (auto-discovers code files), or glob patterns
+  - **When to use**: Review specific files or directories
+  - **Why**: Targeted review of changed or problematic code
+
+- `--pattern <glob>`: Glob pattern to match files (e.g., `**/*.py`, `src/**/*.ts`)
+  - **When to use**: Review all files matching a pattern across the project
+  - **Why**: Efficient batch review without listing individual files
+
+- `--max-workers <n>`: Concurrent file operations (default: 4)
+  - **When to use**: Adjust based on system resources and file count
+  - **Why**: Balance speed vs. resource usage (higher = faster but more CPU/memory)
+
+- `--format <format>`: Output format - `json` (default), `text`, `markdown`, `html`
+  - **When to use**: 
+    - `json`: CI/CD, automation, programmatic processing
+    - `text`: Terminal output, quick reviews
+    - `markdown`: Documentation, reports, PR comments
+    - `html`: Web-based reports, sharing with team
+  - **Why**: Different formats suit different use cases
+
+- `--output <file>`: Output file path
+  - **When to use**: Save review results to file for later analysis
+  - **Why**: Persist review results, share with team, track over time
+
+- `--fail-under <score>`: Exit with code 1 if overall score is below threshold (0-100)
+  - **When to use**: CI/CD quality gates, enforcing minimum quality standards
+  - **Why**: Automatically fail builds if code quality is too low
+
+**Examples:**
+```bash
+# Review single file
+tapps-agents reviewer review src/app.py
+
+# Review multiple files
+tapps-agents reviewer review src/app.py src/utils.py src/models.py
+
+# Review all Python files in project
+tapps-agents reviewer review --pattern "**/*.py" --max-workers 8
+
+# Generate HTML report
+tapps-agents reviewer review src/ --format html --output review-report.html
+
+# CI/CD quality gate (fail if score < 70)
+tapps-agents reviewer review src/ --fail-under 70 --format json
+```
 
 #### `*score` / `score` (Dual-Mode)
 **Purpose:** Fast objective quality metrics (no LLM feedback)
@@ -774,25 +1074,45 @@ tapps-agents orchestrator sequence "<agent-list>" [--format json|text]
 
 ## Simple Mode Workflows
 
-Simple Mode provides natural language orchestration with structured workflows. Use `@simple-mode` in Cursor chat.
+Simple Mode provides natural language orchestration with structured workflows. Use `@simple-mode` in Cursor chat. **Simple Mode is installed by `tapps-agents init`** - the skill and rule files are automatically set up.
 
 ### Build Workflow (`*build`)
 
-**Purpose:** Build new features with complete 7-step workflow
+**Purpose:** Build new features with complete 7-step workflow. **This is the most commonly used Simple Mode command.**
 
 **Cursor Syntax:**
 ```cursor
 @simple-mode *build "Create a user authentication feature"
 ```
 
-**Workflow Steps:**
-1. **@enhancer** - Enhanced prompt with requirements analysis
-2. **@planner** - User stories with acceptance criteria
-3. **@architect** - System architecture design
-4. **@designer** - Component design specifications
-5. **@implementer** - Code implementation
-6. **@reviewer** - Code quality review (with scores)
-7. **@tester** - Testing plan and validation
+**When to Use:**
+- Creating new features from scratch
+- Implementing user stories
+- Adding new functionality to existing projects
+- Greenfield development
+
+**Workflow Steps (MUST FOLLOW ALL STEPS):**
+1. **@enhancer *enhance** - Enhanced prompt with requirements analysis (7-stage pipeline)
+   - Creates: `docs/workflows/simple-mode/step1-enhanced-prompt.md`
+   - Output: Comprehensive specification with requirements, architecture guidance, quality standards
+2. **@planner *plan** - User stories with acceptance criteria
+   - Creates: `docs/workflows/simple-mode/step2-user-stories.md`
+   - Output: User stories, story points, estimates
+3. **@architect *design** - System architecture design
+   - Creates: `docs/workflows/simple-mode/step3-architecture.md`
+   - Output: Architecture, component design, data flow, performance considerations
+4. **@designer *design-api** - Component design specifications
+   - Creates: `docs/workflows/simple-mode/step4-design.md`
+   - Output: API specifications, data models, component designs
+5. **@implementer *implement** - Code implementation
+   - Uses: All specifications from previous steps
+   - Output: Implemented code following design system and architecture
+6. **@reviewer *review** - Code quality review (with scores)
+   - Creates: `docs/workflows/simple-mode/step6-review.md`
+   - Output: Quality scores (5 metrics), issues found, recommendations
+7. **@tester *test** - Testing plan and validation
+   - Creates: `docs/workflows/simple-mode/step7-testing.md`
+   - Output: Test plan, test cases, validation criteria
 
 **Documentation Created:**
 - `docs/workflows/simple-mode/step1-enhanced-prompt.md`
@@ -802,73 +1122,273 @@ Simple Mode provides natural language orchestration with structured workflows. U
 - `docs/workflows/simple-mode/step6-review.md`
 - `docs/workflows/simple-mode/step7-testing.md`
 
+**Quality Gates:**
+- Overall score must be ≥ 70 (configurable)
+- Security score must be ≥ 6.5
+- If thresholds not met, workflow loops back to improve code
+
 ### Review Workflow (`*review`)
 
-**Purpose:** Code quality review
+**Purpose:** Code quality review with improvement suggestions
 
 **Cursor Syntax:**
 ```cursor
 @simple-mode *review <file>
 ```
 
+**When to Use:**
+- Before committing code
+- Code quality audits
+- Pre-PR reviews
+- Learning best practices
+
 **Workflow Steps:**
-1. **@reviewer** - Quality scores (5 metrics)
-2. **@improver** - Improvement suggestions (if needed)
+1. **@reviewer *review** - Quality scores (5 metrics: complexity, security, maintainability, test coverage, performance)
+2. **@improver *improve** - Improvement suggestions (if issues found or score < threshold)
+
+**Output:**
+- Quality scores for all 5 metrics
+- Detailed feedback on issues
+- Improvement suggestions (if needed)
 
 ### Fix Workflow (`*fix`)
 
-**Purpose:** Fix bugs and errors
+**Purpose:** Fix bugs and errors with systematic debugging
 
 **Cursor Syntax:**
 ```cursor
 @simple-mode *fix <file> "<description>"
 ```
 
+**When to Use:**
+- Debugging runtime errors
+- Fixing bugs reported by users
+- Resolving test failures
+- Correcting logic errors
+
 **Workflow Steps:**
-1. **@debugger** - Root cause analysis
-2. **@implementer** - Fix applied
-3. **@tester** - Verification
+1. **@debugger *debug** - Root cause analysis
+   - Analyzes error message, stack trace, code context
+   - Identifies root cause and suggests fix
+2. **@implementer *refactor** - Fix applied
+   - Implements the fix based on debugger analysis
+3. **@tester *test** - Verification
+   - Generates/updates tests to verify fix
+   - Ensures fix doesn't break existing functionality
 
 ### Test Workflow (`*test`)
 
-**Purpose:** Generate tests
+**Purpose:** Generate comprehensive tests for code
 
 **Cursor Syntax:**
 ```cursor
 @simple-mode *test <file>
 ```
 
+**When to Use:**
+- After implementing features
+- To improve test coverage
+- When user asks for tests
+- Test-driven development
+
 **Workflow Steps:**
-1. **@tester** - Tests generated
+1. **@tester *test** - Tests generated and executed
+   - Analyzes code structure
+   - Generates unit tests
+   - Optionally generates integration tests
+   - Runs tests and reports coverage
+
+### Epic Workflow (`*epic`)
+
+**Purpose:** Execute all stories in an Epic document in dependency order
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *epic <epic-doc.md> [--quality-threshold 70] [--auto-mode]
+```
+
+**When to Use:**
+- Implementing entire Epic documents
+- Executing multiple related stories
+- Large feature development
+- Project milestones
+
+**Workflow Steps:**
+1. Parse Epic document (extract stories, dependencies, acceptance criteria)
+2. Resolve story dependencies (topological sort)
+3. Execute each story in order:
+   - Create workflow for story
+   - Execute with quality gates
+   - Loopback if quality < threshold (max 3 iterations)
+4. Track progress across all stories
+5. Generate Epic completion report
+
+**Parameters:**
+- `epic-doc.md` (required): Path to Epic markdown document
+- `--quality-threshold`: Minimum quality score (default: 70)
+- `--critical-service-threshold`: Minimum for critical services (default: 80)
+- `--auto-mode`: Fully automated execution
+
+**Example:**
+```cursor
+@simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
+```
+
+**Output:**
+- Execution report with completion percentage
+- Story-by-story results
+- Quality gate status
+- Report saved to `docs/prd/epic-{number}-report.json`
+
+### Test Coverage Workflow (`*test-coverage`)
+
+**Purpose:** Generate tests targeting specific uncovered code paths
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *test-coverage <file> --target 80
+```
+
+**When to Use:**
+- Improving test coverage
+- Targeting uncovered code paths
+- Coverage-driven test development
+
+**Workflow Steps:**
+1. Analyze coverage data (from `coverage.json`)
+2. Identify uncovered code paths
+3. Prioritize gaps (critical paths, error handling, public APIs)
+4. Generate targeted tests for uncovered code
+5. Verify coverage improvement
+
+### Fix Tests Workflow (`*fix-tests`)
+
+**Purpose:** Analyze test failures and automatically fix common patterns
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *fix-tests <test-file>
+```
+
+**When to Use:**
+- Test failures after code changes
+- Async/await migration issues
+- Mock configuration errors
+- Import path issues
+
+**Supported Patterns:**
+- `async`: TestClient → AsyncClient migration, missing await
+- `auth`: Authentication header issues
+- `mock`: Mock configuration errors
+- `import`: Import path issues
+
+### Microservice Workflow (`*microservice`)
+
+**Purpose:** Generate complete microservice structure with Docker, tests, and health checks
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *microservice <name> --port <port> --type <fastapi|flask|homeiq>
+```
+
+**When to Use:**
+- Creating new microservices
+- Service scaffolding
+- Docker-based services
+
+**What It Generates:**
+- Service structure (`src/`, `tests/`, `Dockerfile`, `requirements.txt`)
+- Docker Compose integration
+- Health check endpoints
+- Logging configuration
+- API router structure
+- Test scaffolding
+- README with service docs
+
+### Docker Fix Workflow (`*docker-fix`)
+
+**Purpose:** Debug container errors with automatic fix suggestions
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *docker-fix <service> "<error>"
+```
+
+**When to Use:**
+- Container startup failures
+- Docker build errors
+- Runtime container issues
+
+**Features:**
+- Analyzes container logs
+- Matches errors to known patterns
+- Checks Dockerfile for issues
+- Suggests fixes with confidence scores
+- Auto-applies high-confidence fixes (>95%)
+
+### Service Integration Workflow (`*integrate-service`)
+
+**Purpose:** Automate service-to-service integration (client classes, config, DI)
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *integrate-service <service1> --with <service2>
+```
+
+**When to Use:**
+- Integrating microservices
+- Service-to-service communication setup
+- Client class generation
+
+**What It Does:**
+- Generates HTTP client classes for target service
+- Updates config files with service URLs
+- Adds dependency injection setup
+- Updates docker-compose.yml with service dependencies
+- Generates integration tests
+- Updates API documentation
 
 ### Full SDLC Workflow (`*full`)
 
-**Purpose:** Complete software development lifecycle
+**Purpose:** Complete software development lifecycle with all quality gates
 
 **Cursor Syntax:**
 ```cursor
 @simple-mode *full "<description>"
 ```
 
+**When to Use:**
+- Enterprise projects
+- Mission-critical features
+- Complete application development
+- Full lifecycle management
+
 **Workflow Steps:**
-1. **@analyst** - Requirements gathering
-2. **@planner** - User stories
-3. **@architect** - Architecture design
-4. **@designer** - API design
-5. **@implementer** - Code implementation
-6. **@reviewer** - Quality review (loop if < 70)
-7. **@tester** - Test generation
-8. **@ops** - Security scanning
-9. **@documenter** - Documentation
+1. **@analyst *gather-requirements** - Requirements gathering
+2. **@planner *plan** - User stories
+3. **@architect *design** - Architecture design
+4. **@designer *design-api** - API design
+5. **@implementer *implement** - Code implementation
+6. **@reviewer *review** - Quality review (loop if < 70)
+7. **@tester *test** - Test generation
+8. **@ops *security-scan** - Security scanning
+9. **@documenter *document-api** - Documentation
+
+**Features:**
+- Automatic loopbacks if code quality scores aren't good enough
+- Test execution with retry logic
+- Security validation with remediation
+- Final quality review before completion
 
 ### Natural Language Intent Detection
 
 Simple Mode automatically detects intent from keywords:
 
 - **Build**: build, create, make, generate, add, implement, develop, write, new, feature
-- **Review**: review, check, analyze, inspect, examine, score, quality, audit
-- **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken
-- **Test**: test, verify, validate, coverage, testing
+- **Review**: review, check, analyze, inspect, examine, score, quality, audit, assess, evaluate
+- **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken, correct
+- **Test**: test, verify, validate, coverage, testing, tests
+- **Epic**: epic, implement epic, execute epic, run epic, story, stories
 - **Full**: full, complete, sdlc, lifecycle, everything
 
 **Examples:**
@@ -877,6 +1397,40 @@ Simple Mode automatically detects intent from keywords:
 @simple-mode Review my authentication code
 @simple-mode Fix the error in auth.py
 @simple-mode Add tests for service.py
+@simple-mode Execute epic docs/prd/epic-51.md
+```
+
+### Simple Mode Configuration
+
+Simple Mode is configured in `.tapps-agents/config.yaml` (created by `init`):
+
+```yaml
+simple_mode:
+  enabled: true                       # Enable Simple Mode (default: true after init)
+  auto_detect: true                   # Auto-detect intent from natural language
+  show_advanced: false                # Hide advanced features initially
+  natural_language: true             # Enable natural language commands
+  default_orchestrator: "build"      # Default when intent is ambiguous
+  onboarding_enabled: true           # Enable onboarding wizard
+  progressive_disclosure_enabled: true # Gradually reveal advanced features
+```
+
+**After `init`, Simple Mode is:**
+- ✅ Skill installed (`.claude/skills/simple-mode/`)
+- ✅ Rule installed (`.cursor/rules/simple-mode.mdc`)
+- ✅ Enabled by default in config
+- ✅ Ready to use in Cursor chat
+
+**To verify Simple Mode is ready:**
+```bash
+tapps-agents simple-mode status
+```
+
+**To enable/configure:**
+```bash
+tapps-agents simple-mode on          # Enable (usually already enabled after init)
+tapps-agents simple-mode init        # Run onboarding wizard
+tapps-agents simple-mode configure   # Configure settings
 ```
 
 ## Command Help
@@ -929,6 +1483,124 @@ simple_mode:
   show_advanced: false
   natural_language: true
 ```
+
+## Guide for Cursor: When and Why to Use tapps-agents
+
+This section helps Cursor AI understand when to suggest or use tapps-agents commands during development.
+
+### Always Use tapps-agents For:
+
+1. **Code Quality Checks**
+   - **When**: Before committing code, reviewing PRs, or when user asks about code quality
+   - **Why**: Provides objective metrics and AI-powered feedback
+   - **Commands**: `@reviewer *review`, `@reviewer *score`, `@reviewer *lint`, `@reviewer *type-check`
+   - **Example**: User says "Is this code good?" → Use `@reviewer *review <file>`
+
+2. **Code Generation**
+   - **When**: User asks to implement features, create new files, or generate code
+   - **Why**: Follows project patterns, includes tests, meets quality standards
+   - **Commands**: `@implementer *implement`, `@simple-mode *build`
+   - **Example**: User says "Add user authentication" → Use `@simple-mode *build "Add user authentication"`
+
+3. **Bug Fixing**
+   - **When**: User reports errors, exceptions, or bugs
+   - **Why**: Systematic debugging with root cause analysis
+   - **Commands**: `@debugger *debug`, `@simple-mode *fix`
+   - **Example**: User says "Fix the error in auth.py" → Use `@simple-mode *fix src/auth.py "Fix the error"`
+
+4. **Testing**
+   - **When**: After implementing features, when user asks for tests, or to improve coverage
+   - **Why**: Generates comprehensive tests following project patterns
+   - **Commands**: `@tester *test`, `@tester *generate-tests`
+   - **Example**: User says "Add tests for this" → Use `@tester *test <file>`
+
+5. **Documentation**
+   - **When**: User asks for documentation, or after implementing features
+   - **Why**: Maintains consistent documentation standards
+   - **Commands**: `@documenter *document`, `@documenter *document-api`
+   - **Example**: User says "Document this API" → Use `@documenter *document-api <file>`
+
+6. **Library Documentation Lookup**
+   - **When**: User asks "How do I use X library?" or needs API reference
+   - **Why**: Provides up-to-date library documentation from Context7
+   - **Commands**: `@reviewer *docs <library> [topic]`
+   - **Example**: User says "How do I use FastAPI routing?" → Use `@reviewer *docs fastapi routing`
+
+7. **Project Setup**
+   - **When**: User is setting up a new project or adding tapps-agents to existing project
+   - **Why**: Enables all tapps-agents capabilities in Cursor
+   - **Commands**: `tapps-agents init`
+   - **Example**: User says "Set up tapps-agents" → Suggest `tapps-agents init`
+
+### Command Selection Guide
+
+**For Interactive Development (Cursor Chat):**
+- Prefer Cursor Skills syntax: `@agent-name *command`
+- Use Simple Mode for complex workflows: `@simple-mode *build`
+- Natural language works: `@simple-mode Build a user authentication feature`
+
+**For Batch/Automation (Terminal/CI):**
+- Use CLI commands: `tapps-agents <agent> <command>`
+- Use `--auto` flag for non-interactive execution
+- Use `--format json` for programmatic processing
+
+**For Quality Gates:**
+- Use `@reviewer *score` for quick checks
+- Use `@reviewer *review` for comprehensive analysis
+- Use `--fail-under` in CI/CD to enforce thresholds
+
+**For Feature Development:**
+- Use `@simple-mode *build` for complete feature workflow
+- Use `@planner *plan` for planning phase
+- Use `@architect *design` for architecture decisions
+
+**For Bug Fixes:**
+- Use `@simple-mode *fix` for complete fix workflow
+- Use `@debugger *debug` for error analysis
+- Use `@tester *test` for verification
+
+### Parameter Selection Guide
+
+**Output Formats:**
+- `json`: CI/CD, automation, programmatic processing
+- `text`: Human-readable terminal output
+- `markdown`: Documentation, reports, PR comments
+- `html`: Web-based reports, sharing with team
+
+**Batch Processing:**
+- Use `--pattern` for glob patterns across project
+- Use `--max-workers` to balance speed vs. resources
+- Use multiple files for targeted batch operations
+
+**Automation:**
+- Use `--auto` for fully automated workflows
+- Use `--yes` for non-interactive commands
+- Use `--format json` for structured output
+
+**Quality Gates:**
+- Use `--fail-under` to enforce minimum scores
+- Use `--fail-on-issues` to fail on lint errors
+- Use `--coverage` to require test coverage
+
+### Common Workflows
+
+**New Feature Development:**
+1. `@simple-mode *build "<description>"` - Complete workflow
+2. Or step-by-step: `@planner *plan` → `@architect *design` → `@implementer *implement` → `@reviewer *review` → `@tester *test`
+
+**Code Review:**
+1. `@reviewer *score <file>` - Quick quality check
+2. `@reviewer *review <file>` - Comprehensive analysis
+3. `@improver *improve <file> "<issues>"` - Apply improvements
+
+**Bug Fixing:**
+1. `@simple-mode *fix <file> "<description>"` - Complete workflow
+2. Or step-by-step: `@debugger *debug` → `@implementer *refactor` → `@tester *test`
+
+**Testing:**
+1. `@tester *test <file>` - Generate and run tests
+2. `@tester *generate-tests <file>` - Generate without running
+3. `@tester *run-tests` - Run existing test suite
 
 ## Related Documentation
 

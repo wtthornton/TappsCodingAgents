@@ -138,3 +138,5 @@ tests/unit/context7/test_security.py
 - Tests use `@patch` decorators for mocking
 - Windows compatibility handled with try/except for chmod
 
+
+

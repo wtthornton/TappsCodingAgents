@@ -577,6 +577,7 @@ class FeedbackManager:
         data: dict[str, Any] | str,
         message: str | None = None,
         warnings: list[str] | None = None,
+        **kwargs: Any,  # Accept additional kwargs for backward compatibility
     ) -> None:
         """
         Output final result data.

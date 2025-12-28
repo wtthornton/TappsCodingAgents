@@ -1255,18 +1255,108 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         synthesis = session["stages"].get("synthesis", {})
 
         if format == "json":
-            return {
-                "original_prompt": session["metadata"]["original_prompt"],
-                "enhanced_prompt": synthesis.get("enhanced_prompt", ""),
-                "stages": session["stages"],
-                "metadata": session["metadata"],
-            }
+            # Create a clean copy to avoid circular references
+            # Use _safe_json_dumps to serialize and then parse back to ensure no circular refs
+            try:
+                # Create a clean dict structure without circular references
+                stages_copy = {}
+                for stage_name, stage_data in session["stages"].items():
+                    if isinstance(stage_data, dict):
+                        # Deep copy dict to break any circular references
+                        stages_copy[stage_name] = self._clean_dict(stage_data)
+                    else:
+                        stages_copy[stage_name] = stage_data
+                
+                metadata_copy = {}
+                for key, value in session["metadata"].items():
+                    if isinstance(value, dict):
+                        metadata_copy[key] = self._clean_dict(value)
+                    else:
+                        metadata_copy[key] = value
+                
+                return {
+                    "original_prompt": session["metadata"]["original_prompt"],
+                    "enhanced_prompt": synthesis.get("enhanced_prompt", ""),
+                    "stages": stages_copy,
+                    "metadata": metadata_copy,
+                }
+            except Exception as e:
+                logger.warning(f"Error cleaning output dict: {e}, using fallback")
+                # Fallback: return minimal structure
+                return {
+                    "original_prompt": session["metadata"].get("original_prompt", ""),
+                    "enhanced_prompt": synthesis.get("enhanced_prompt", ""),
+                    "stages": {},
+                    "metadata": {"created_at": session["metadata"].get("created_at", "")},
+                }
         else:  # markdown
             enhanced = synthesis.get("enhanced_prompt", "")
             if not enhanced:
                 # Fallback: create markdown from stages
                 enhanced = self._create_markdown_from_stages(session)
             return enhanced
+
+    def _clean_dict(self, obj: Any, seen: set[int] | None = None) -> Any:
+        """
+        Recursively clean a dict to remove circular references.
+        
+        Args:
+            obj: Object to clean
+            seen: Set of object IDs already seen (for cycle detection)
+            
+        Returns:
+            Cleaned object without circular references
+        """
+        if seen is None:
+            seen = set()
+        
+        # Handle primitives
+        if isinstance(obj, (str, int, float, bool, type(None))):
+            return obj
+        
+        # Handle datetime
+        if isinstance(obj, datetime):
+            return obj.isoformat()
+        
+        # Handle Path
+        if isinstance(obj, Path):
+            return str(obj)
+        
+        # Check for circular reference
+        obj_id = id(obj)
+        if obj_id in seen:
+            return "<circular reference>"
+        
+        # Handle dict
+        if isinstance(obj, dict):
+            seen.add(obj_id)
+            result = {}
+            for k, v in obj.items():
+                key = str(k) if not isinstance(k, (str, int, float, bool, type(None))) else k
+                result[key] = self._clean_dict(v, seen)
+            seen.remove(obj_id)
+            return result
+        
+        # Handle list/tuple
+        if isinstance(obj, (list, tuple)):
+            seen.add(obj_id)
+            result = [self._clean_dict(item, seen) for item in obj]
+            seen.remove(obj_id)
+            return tuple(result) if isinstance(obj, tuple) else result
+        
+        # Handle objects with __dict__
+        if hasattr(obj, '__dict__'):
+            seen.add(obj_id)
+            try:
+                result = self._clean_dict(obj.__dict__, seen)
+                seen.remove(obj_id)
+                return result
+            except Exception:
+                seen.remove(obj_id)
+                return str(obj)
+        
+        # Fallback: convert to string
+        return str(obj)
 
     def _create_markdown_from_stages(self, session: dict[str, Any]) -> str:
         """Create markdown output from stages."""
