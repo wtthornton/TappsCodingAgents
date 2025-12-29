@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.5] - 2025-01-16
+
+### Fixed
+- **Reviewer Agent Batch Processing Crashes** - Fixed crashes during batch file processing with connection errors
+  - Added retry logic with exponential backoff (2s, 4s, 8s) for connection errors
+  - Implemented circuit breaker pattern to prevent cascading failures (opens after 5 consecutive failures)
+  - Added per-attempt timeout protection (120s) to prevent hanging operations
+  - Enhanced error classification to distinguish retryable (transient) vs non-retryable (permanent) errors
+  - Added comprehensive exception handling in `review_file` method
+  - Improved error metadata for better debugging (error_type, timeout flags)
+
+### Added
+- **Batch Processing Documentation** - Added comprehensive documentation for batch processing fixes:
+  - `docs/REVIEWER_BATCH_CRASH_ANALYSIS.md` - Root cause analysis
+  - `docs/REVIEWER_BATCH_CRASH_BEST_PRACTICES.md` - Best practices applied
+  - `docs/REVIEWER_BATCH_CRASH_FIX.md` - Initial fix documentation
+  - `docs/REVIEWER_BATCH_CRASH_FIX_V2.md` - Additional fixes documentation
+
+### Changed
+- **Error Handling** - Enhanced error handling throughout reviewer agent:
+  - Better timeout error handling with specific retry logic
+  - Improved error messages with context (file path, retry attempts, error types)
+  - Graceful degradation when circuit breaker opens (returns partial results)
+
 ## [3.0.4] - 2025-12-29
 
 ### Fixed
