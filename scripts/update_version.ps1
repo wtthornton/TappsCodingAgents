@@ -64,11 +64,19 @@ try {
     exit 1
 }
 
-# Extract current version from pyproject.toml
+# Extract current version from pyproject.toml [project] section only
 $currentVersionPyproject = ""
-$versionPattern1 = 'version\s*=\s*"(.*?)"'
-if ($pyprojectContent -match $versionPattern1) {
-    $currentVersionPyproject = $matches[1]
+$pyprojectLines = $pyprojectContent -split "`r?`n"
+$inProjectSection = $false
+foreach ($line in $pyprojectLines) {
+    if ($line -match '^\s*\[project\]\s*$') {
+        $inProjectSection = $true
+    } elseif ($line -match '^\s*\[.*?\]\s*$') {
+        $inProjectSection = $false
+    } elseif ($inProjectSection -and $line -match '^\s*version\s*=\s*"(.*?)"\s*$') {
+        $currentVersionPyproject = $matches[1]
+        break
+    }
 }
 
 # Extract current version from __init__.py
@@ -98,9 +106,27 @@ if ($currentVersionPyproject -ne $currentVersionInit) {
 # Update pyproject.toml
 try {
     Write-Host "Updating pyproject.toml..." -ForegroundColor Cyan
-    $replacePattern1 = 'version\s*=\s*".*?"'
-    $replaceValue1 = "version = `"$Version`""
-    $pyprojectContent = $pyprojectContent -replace $replacePattern1, $replaceValue1
+    # Only update version in [project] section to avoid updating tool config versions
+    # Process line by line, tracking when we're in [project] section
+    $lines = $pyprojectContent -split "`r?`n"
+    $inProjectSection = $false
+    $updated = $false
+    for ($i = 0; $i -lt $lines.Count; $i++) {
+        if ($lines[$i] -match '^\s*\[project\]\s*$') {
+            $inProjectSection = $true
+        } elseif ($lines[$i] -match '^\s*\[.*?\]\s*$') {
+            # We've entered a new section, so we're no longer in [project] section
+            $inProjectSection = $false
+        } elseif ($inProjectSection -and $lines[$i] -match '^(\s*)version\s*=\s*".*?"(\s*)$') {
+            # This is the version line in [project] section (not target-version or python_version)
+            $lines[$i] = $lines[$i] -replace 'version\s*=\s*".*?"', "version = `"$Version`""
+            $updated = $true
+        }
+    }
+    if (-not $updated) {
+        Write-Warning "Warning: Could not find version in [project] section to update"
+    }
+    $pyprojectContent = $lines -join "`n"
     Set-Content -Path $pyprojectFile -Value $pyprojectContent -NoNewline -ErrorAction Stop
 } catch {
     Write-Error -Message "Failed to update pyproject.toml: $_" `
@@ -284,9 +310,18 @@ $verifyPyproject = Get-Content $pyprojectFile -Raw
 $verifyInit = Get-Content $initFile -Raw
 
 $verifyVersionPyproject = ""
-$verifyPattern = 'version\s*=\s*"(.*?)"'
-if ($verifyPyproject -match $verifyPattern) {
-    $verifyVersionPyproject = $matches[1]
+# Only match version in [project] section for verification
+$verifyLines = $verifyPyproject -split "`r?`n"
+$inProjectSection = $false
+foreach ($line in $verifyLines) {
+    if ($line -match '^\s*\[project\]\s*$') {
+        $inProjectSection = $true
+    } elseif ($line -match '^\s*\[.*?\]\s*$') {
+        $inProjectSection = $false
+    } elseif ($inProjectSection -and $line -match '^\s*version\s*=\s*"(.*?)"\s*$') {
+        $verifyVersionPyproject = $matches[1]
+        break
+    }
 }
 
 $verifyVersionInit = ""
