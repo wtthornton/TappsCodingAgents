@@ -66,5 +66,5 @@ Welcome to the documentation for TappsCodingAgents.
 
 ---
 
-**Documentation Version**: 2.4.2  
+**Documentation Version**: 3.0.0  
 **Last Reviewed**: January 2026

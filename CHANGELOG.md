@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2026-01-31
+
+### Changed
+- **Major Version Release** - Version bump to 3.0.0
+- Updated all documentation to reflect version 3.0.0
+- Comprehensive documentation accuracy review completed
+- All version references updated across codebase and documentation
+
+### Documentation
+- Updated version numbers in all key documentation files
+- Verified accuracy of all documentation against actual codebase
+- Aligned README.md, docs/README.md, ARCHITECTURE.md, API.md, and BUILTIN_EXPERTS_GUIDE.md with code
+
+## [2.9.0] - 2026-01-30
+
+### Changed
+- Updated version to 2.9.0 across all files
+- Updated documentation with latest version information
+
 ## [2.8.0] - 2026-01-30
 
 ### Added
