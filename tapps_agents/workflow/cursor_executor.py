@@ -148,16 +148,50 @@ class CursorWorkflowExecutor:
         # Default to True for better user experience (can be overridden by config)
         from ..core.config import load_config
         config = load_config()
-        self.auto_execution_enabled = config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled is not None else True
+        
+        # If auto_mode is True (from --auto flag), force enable auto-execution
+        # Otherwise use config setting (defaults to True)
+        if auto_mode:
+            self.auto_execution_enabled = True
+            # Log that --auto flag is forcing auto-execution
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"Auto-execution FORCED ENABLED by --auto flag (overriding config)",
+                extra={"auto_mode": True, "auto_execution_enabled": True}
+            )
+        else:
+            self.auto_execution_enabled = config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled is not None else True
         
         # Also check workflow metadata for per-workflow override
         self.auto_execution_enabled_workflow: bool | None = None
         
         # Initialize auto-executor (will be used if enabled)
-        self.auto_executor = BackgroundAgentAutoExecutor(
-            polling_interval=config.workflow.polling_interval,
-            timeout_seconds=config.workflow.timeout_seconds,
-        ) if self.auto_execution_enabled else None
+        if self.auto_execution_enabled:
+            self.auto_executor = BackgroundAgentAutoExecutor(
+                polling_interval=config.workflow.polling_interval,
+                timeout_seconds=config.workflow.timeout_seconds,
+                project_root=self.project_root,
+            )
+            # Log initialization
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.info(
+                f"Background Agent auto-executor initialized (polling_interval={config.workflow.polling_interval}s, timeout={config.workflow.timeout_seconds}s)",
+                extra={
+                    "auto_execution_enabled": True,
+                    "polling_interval": config.workflow.polling_interval,
+                    "timeout_seconds": config.workflow.timeout_seconds,
+                }
+            )
+        else:
+            self.auto_executor = None
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                "Auto-execution DISABLED - workflows will wait for manual Background Agent execution",
+                extra={"auto_execution_enabled": False}
+            )
         
         # Initialize marker writer for durable step completion tracking
         self.marker_writer = MarkerWriter(project_root=self.project_root)
@@ -212,8 +246,28 @@ class CursorWorkflowExecutor:
         self.workflow = workflow
         
         # Check workflow metadata for auto-execution override (per-workflow config)
-        if workflow.metadata and "auto_execution" in workflow.metadata:
+        # If auto_mode is True (from --auto flag), force enable auto-execution
+        if self.auto_mode:
+            self.auto_execution_enabled_workflow = True
+            if self.logger:
+                self.logger.info(
+                    "Auto-execution FORCED ENABLED for this workflow by --auto flag",
+                    extra={
+                        "auto_mode": True,
+                        "auto_execution_enabled_workflow": True,
+                        "auto_execution_enabled": self.auto_execution_enabled,
+                    }
+                )
+        elif workflow.metadata and "auto_execution" in workflow.metadata:
             self.auto_execution_enabled_workflow = bool(workflow.metadata["auto_execution"])
+            if self.logger:
+                self.logger.info(
+                    f"Auto-execution set from workflow metadata: {self.auto_execution_enabled_workflow}",
+                    extra={
+                        "auto_execution_enabled_workflow": self.auto_execution_enabled_workflow,
+                        "auto_execution_enabled": self.auto_execution_enabled,
+                    }
+                )
         else:
             self.auto_execution_enabled_workflow = None  # Use global config
         
@@ -231,9 +285,31 @@ class CursorWorkflowExecutor:
             self.auto_executor = BackgroundAgentAutoExecutor(
                 polling_interval=config.workflow.polling_interval,
                 timeout_seconds=config.workflow.timeout_seconds,
+                project_root=self.project_root,
             )
+            # Log auto-execution status
+            if self.logger:
+                self.logger.info(
+                    f"Auto-execution enabled for workflow (auto_mode={self.auto_mode}, config={self.auto_execution_enabled}, workflow_override={self.auto_execution_enabled_workflow})",
+                    extra={
+                        "auto_mode": self.auto_mode,
+                        "auto_execution_enabled": self.auto_execution_enabled,
+                        "auto_execution_enabled_workflow": self.auto_execution_enabled_workflow,
+                        "use_auto_execution": use_auto_execution,
+                    }
+                )
         elif not use_auto_execution:
             self.auto_executor = None
+            if self.logger:
+                self.logger.warning(
+                    "Auto-execution DISABLED for this workflow - will wait for manual Background Agent execution",
+                    extra={
+                        "auto_mode": self.auto_mode,
+                        "auto_execution_enabled": self.auto_execution_enabled,
+                        "auto_execution_enabled_workflow": self.auto_execution_enabled_workflow,
+                        "use_auto_execution": False,
+                    }
+                )
         
         # Use consistent workflow_id format: {workflow.id}-{timestamp}
         workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -1067,14 +1143,36 @@ class CursorWorkflowExecutor:
             try:
                 if use_auto_execution:
                     # Use Background Agent auto-execution (Epic 7)
+                    # Log that we're using auto-execution
+                    if self.logger:
+                        self.logger.info(
+                            f"Using auto-execution for step {step.id} ({agent_name}/{action})",
+                            extra={
+                                "step_id": step.id,
+                                "agent": agent_name,
+                                "action": action,
+                                "workflow_id": self.state.workflow_id,
+                            }
+                        )
+                    
                     # Build command using skill_invoker's parameter extraction
                     # Get command mapping from skill_invoker
                     key = (agent_name.lower(), action.lower())
                     if key not in self.skill_invoker.COMMAND_MAPPING:
-                        raise ValueError(
+                        error_msg = (
                             f"Unknown command for auto-execution: {agent_name}/{action}. "
                             f"Available: {list(self.skill_invoker.COMMAND_MAPPING.keys())}"
                         )
+                        if self.logger:
+                            self.logger.error(
+                                error_msg,
+                                extra={
+                                    "step_id": step.id,
+                                    "agent": agent_name,
+                                    "action": action,
+                                }
+                            )
+                        raise ValueError(error_msg)
                     
                     skill_command, _ = self.skill_invoker.COMMAND_MAPPING[key]
                     
@@ -1097,6 +1195,18 @@ class CursorWorkflowExecutor:
                     )
                     
                     # Execute via auto-executor (creates command file and polls for completion)
+                    if self.logger:
+                        self.logger.info(
+                            f"Executing command via Background Agent auto-executor",
+                            extra={
+                                "step_id": step.id,
+                                "agent": agent_name,
+                                "action": action,
+                                "worktree_path": str(worktree_path),
+                                "command_preview": command[:100] + "..." if len(command) > 100 else command,
+                            }
+                        )
+                    
                     execution_result = await self.auto_executor.execute_command(
                         command=command,
                         worktree_path=worktree_path,
@@ -1113,6 +1223,20 @@ class CursorWorkflowExecutor:
                         safe_print(f"   Error: {error_msg}", flush=True)
                         safe_print(f"[TIP] Check Background Agents are running and configured correctly", flush=True)
                         safe_print(f"   See docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md for setup", flush=True)
+                        safe_print(f"   Worktree: {worktree_path}", flush=True)
+                        if self.logger:
+                            self.logger.error(
+                                f"Auto-execution failed for step {step.id}",
+                                extra={
+                                    "step_id": step.id,
+                                    "agent": agent_name,
+                                    "action": action,
+                                    "error": error_msg,
+                                    "worktree_path": str(worktree_path),
+                                    "execution_result": execution_result,
+                                },
+                                exc_info=True,
+                            )
                         # Marker will be written by exception handler
                         raise RuntimeError(
                             f"Auto-execution failed for {agent_name}/{action}: {error_msg}"
