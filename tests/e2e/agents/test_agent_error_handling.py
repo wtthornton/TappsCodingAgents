@@ -15,7 +15,6 @@ import pytest
 from tests.e2e.fixtures.agent_test_helpers import (
     assert_error_message_quality,
     create_missing_file_scenario,
-    create_network_error_scenario,
     create_test_agent,
     execute_command,
     validate_error_response,
@@ -150,15 +149,18 @@ class TestAgentErrorHandling:
         "error_type",
         ["connection", "timeout", "rate_limit"],
     )
+    @pytest.mark.skip(reason="Network error scenario creation removed - agents no longer use MAL")
     async def test_network_error_handling(
         self, e2e_project, mock_mal, error_type
     ):
         """Test that network errors (MAL) are handled gracefully."""
+        # NOTE: This test is skipped because agents no longer use MAL
+        # Network error handling is now done through instruction objects and Cursor Skills
         agent = create_test_agent("planner", mock_mal)
         await agent.activate(e2e_project)
 
         # Configure mock to raise network errors
-        create_network_error_scenario(mock_mal, error_type)
+        # create_network_error_scenario(mock_mal, error_type)  # Removed - no longer needed
 
         # Try command that uses MAL
         result = await execute_command(

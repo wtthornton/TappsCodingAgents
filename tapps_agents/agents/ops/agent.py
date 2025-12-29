@@ -2,6 +2,7 @@
 Ops Agent - Security scanning, compliance checks, deployment, and infrastructure management
 """
 
+import inspect
 import json
 from pathlib import Path
 from typing import Any
@@ -82,7 +83,12 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
         handler_name = f"_handle_{command.replace('-', '_')}"
         if hasattr(self, handler_name):
             handler = getattr(self, handler_name)
-            return await handler(**kwargs)
+            # Check if handler is async before awaiting
+            if inspect.iscoroutinefunction(handler):
+                return await handler(**kwargs)
+            else:
+                # Synchronous handler - call directly
+                return handler(**kwargs)
         else:
             return {
                 "error": f"Unknown command: {command}. Use '*help' to see available commands."

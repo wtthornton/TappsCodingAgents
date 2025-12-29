@@ -1,0 +1,13 @@
+{
+  "event_type": "step_failed",
+  "workflow_id": "quality-20251229-015809",
+  "step_id": "initial_review",
+  "data": {
+    "agent": "reviewer",
+    "action": "review_code",
+    "error": "",
+    "attempts": 1
+  },
+  "timestamp": "2025-12-29T02:58:11.361195",
+  "correlation_id": "quality-20251229-015809:initial_review"
+}

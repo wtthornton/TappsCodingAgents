@@ -1,0 +1,11 @@
+{
+  "event_type": "step_started",
+  "workflow_id": "quality-20251229-022400",
+  "step_id": "initial_review",
+  "data": {
+    "agent": "reviewer",
+    "action": "review_code"
+  },
+  "timestamp": "2025-12-29T03:24:04.281259",
+  "correlation_id": null
+}
