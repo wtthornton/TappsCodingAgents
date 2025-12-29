@@ -178,6 +178,30 @@ if (-not $SkipDocs) {
         }
     )
     
+    # Update JSON metadata files
+    $jsonFiles = @(
+        @{
+            Path = "implementation/IMPROVEMENT_PLAN.json"
+            Pattern = '"version"\s*:\s*"([\d\.]+)"'
+            Replacement = '"version": "' + $Version + '"'
+        }
+    )
+    
+    foreach ($jsonFile in $jsonFiles) {
+        $filePath = Join-Path $projectRoot $jsonFile.Path
+        if (Test-Path $filePath) {
+            $content = Get-Content $filePath -Raw
+            if ($content -match $jsonFile.Pattern) {
+                $content = $content -replace $jsonFile.Pattern, $jsonFile.Replacement
+                Set-Content -Path $filePath -Value $content -NoNewline
+                $updatedFiles += $jsonFile.Path
+                Write-Host "  ✓ Updated: $($jsonFile.Path)" -ForegroundColor Gray
+            }
+        } else {
+            Write-Host "  ⚠ Skipped (not found): $($jsonFile.Path)" -ForegroundColor Yellow
+        }
+    }
+    
     foreach ($docFile in $docFiles) {
         $filePath = Join-Path $projectRoot $docFile.Path
         if (Test-Path $filePath) {
@@ -247,7 +271,7 @@ Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Review the changes: git diff" -ForegroundColor White
 Write-Host "  2. Update CHANGELOG.md with release notes for version $Version" -ForegroundColor White
 Write-Host "  3. Build packages: python -m build" -ForegroundColor White
-$releaseCmd = ".\scripts\create_github_release.ps1 -Version $Version"
+$releaseCmd = '.\scripts\create_github_release.ps1 -Version ' + $Version
 Write-Host "  4. Create release: $releaseCmd" -ForegroundColor White
 
 exit 0

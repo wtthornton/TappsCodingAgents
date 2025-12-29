@@ -492,6 +492,36 @@ TappsCodingAgents/
 - **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute
 - **[Changelog](CHANGELOG.md)** - Version history and changes
 
+### Version Management
+
+When updating the version number, use the automated script to ensure all files are updated consistently:
+
+```powershell
+# Update version to 3.0.4 (or any version)
+.\scripts\update_version.ps1 -Version 3.0.4
+
+# Update core files only (skip documentation)
+.\scripts\update_version.ps1 -Version 3.0.4 -SkipDocs
+```
+
+**What it updates:**
+- ✅ `pyproject.toml` - Package version
+- ✅ `tapps_agents/__init__.py` - Module version
+- ✅ `README.md` - Version badge and references
+- ✅ `docs/README.md` - Documentation version
+- ✅ `docs/API.md` - API version
+- ✅ `docs/ARCHITECTURE.md` - Architecture version
+- ✅ `implementation/IMPROVEMENT_PLAN.json` - Metadata version
+- ✅ Other documentation files with version references
+
+**After running the script:**
+1. Review changes: `git diff`
+2. Update `CHANGELOG.md` with release notes
+3. Commit and push changes
+4. Create git tag: `git tag v3.0.4 && git push origin v3.0.4`
+
+See [Release Guide](docs/RELEASE_GUIDE.md) for complete release process.
+
 ### Reference
 - **[Project Requirements](requirements/PROJECT_REQUIREMENTS.md)** - Complete specification
 - **[Technology Stack](requirements/TECH_STACK.md)** - Recommended technologies
