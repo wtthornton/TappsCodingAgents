@@ -2,7 +2,7 @@
 TappsCodingAgents - Specification framework for coding agents
 """
 
-__version__ = "3.0.3"
+__version__ = "3.0.4"
 
 # Also expose as _version_ for compatibility with some import mechanisms
 # This helps with editable installs where __version__ might not be importable

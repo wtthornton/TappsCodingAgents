@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.4] - 2025-12-29
+
+### Fixed
+- **Auto-Execution Flag** - Fixed `--auto` flag not properly enabling Background Agent auto-execution in workflow commands
+  - `auto_mode` parameter now correctly forces `auto_execution_enabled = True` when `--auto` flag is used
+  - Enhanced logging to show when auto-execution is enabled/disabled and why
+  - Improved error messages with helpful tips when auto-execution fails
+
+### Changed
+- **Cursor Workflow Executor** - Enhanced `cursor_executor.py` with improved workflow execution:
+  - Better auto-executor initialization with comprehensive logging
+  - Enhanced error handling with structured logging
+  - Improved auto-execution status tracking and reporting
+- **Orchestrator Agent** - Updated orchestrator agent for better workflow coordination
+
+### Added
+- **Auto Execution Fix Documentation** - Added `docs/AUTO_EXECUTION_FIX_SUMMARY.md` documenting the auto-execution fix and implementation details
+
 ## [3.0.3] - 2025-12-29
 
 ### Added
