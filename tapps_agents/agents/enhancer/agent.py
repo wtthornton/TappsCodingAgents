@@ -87,10 +87,10 @@ class EnhancerAgent(BaseAgent):
         # Enhancement state
         self.current_session: dict[str, Any] | None = None
 
-    async def activate(self, project_root: Path | None = None):
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the enhancer agent."""
-        await super().activate(project_root)
-        await self.analyst.activate(project_root)
+        await super().activate(project_root, offline_mode=offline_mode)
+        await self.analyst.activate(project_root, offline_mode=offline_mode)
 
         # Initialize skill invoker if available
         try:

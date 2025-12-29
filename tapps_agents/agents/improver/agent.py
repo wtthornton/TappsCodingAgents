@@ -2,6 +2,7 @@
 Improver Agent - Refactors and enhances existing code
 """
 
+import inspect
 from pathlib import Path
 from typing import Any
 
@@ -34,8 +35,8 @@ class ImproverAgent(BaseAgent):
         self.config = config
         self.project_root: Path = Path.cwd()
 
-    async def activate(self, project_root: Path | None = None):
-        await super().activate(project_root)
+    async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
+        await super().activate(project_root, offline_mode=offline_mode)
         if project_root is not None:
             self.project_root = project_root
         self.greet()
@@ -51,7 +52,11 @@ class ImproverAgent(BaseAgent):
         handler_name = f"_handle_{command.replace('-', '_')}"
         if hasattr(self, handler_name):
             handler = getattr(self, handler_name)
-            return await handler(**kwargs)
+            # Handle both sync and async handlers
+            if inspect.iscoroutinefunction(handler):
+                return await handler(**kwargs)
+            else:
+                return handler(**kwargs)
         else:
             return {
                 "error": f"Unknown command: {command}. Use '*help' to see available commands."

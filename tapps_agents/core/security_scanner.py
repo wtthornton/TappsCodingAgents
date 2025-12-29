@@ -62,6 +62,18 @@ class SecurityScanner:
         """
         if not self.has_bandit:
             # Fallback to basic heuristic check
+            # Check if no input provided (both None, not empty strings)
+            if file_path is None and code is None:
+                logger.warning("No file_path or code provided for security scan")
+                return {
+                    "security_score": 5.0,
+                    "vulnerabilities": [],
+                    "high_severity_count": 0,
+                    "medium_severity_count": 0,
+                    "low_severity_count": 0,
+                    "is_safe": True,
+                }
+            
             code_str = code or ""
             if file_path and file_path.exists():
                 try:

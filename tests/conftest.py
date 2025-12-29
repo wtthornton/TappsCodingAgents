@@ -202,31 +202,41 @@ def pytest_collection_modifyitems(config, items):
     """Automatically skip requires_llm and requires_context7 tests if services unavailable."""
     import os
 
-    import httpx
-    
-    # Check LLM availability
+    # Check LLM availability with robust error handling
     ollama_available = False
     try:
-        response = httpx.get("http://localhost:11434/api/tags", timeout=2.0)
+        import httpx
+        # Use very short timeout to prevent hanging during collection
+        response = httpx.get("http://localhost:11434/api/tags", timeout=1.0)
         ollama_available = response.status_code == 200
-    except Exception:
-        pass
+    except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError, Exception):
+        # Silently fail - Ollama not available
+        ollama_available = False
     
     anthropic_available = os.getenv("ANTHROPIC_API_KEY") is not None
     openai_available = os.getenv("OPENAI_API_KEY") is not None
     has_llm = ollama_available or anthropic_available or openai_available
     
     # Check Context7 availability (prefers MCP Gateway, falls back to API key)
-    from tapps_agents.mcp.gateway import MCPGateway
-    
-    gateway = MCPGateway()
-    tools = gateway.list_available_tools()
-    tool_names = [tool.get("name", "") for tool in tools]
-    mcp_tools_available = (
-        "mcp_Context7_resolve-library-id" in tool_names
-        and "mcp_Context7_get-library-docs" in tool_names
-    )
+    # Wrap in try/except to prevent crashes during collection
+    mcp_tools_available = False
     api_key_available = os.getenv("CONTEXT7_API_KEY") is not None
+    
+    try:
+        from tapps_agents.mcp.gateway import MCPGateway
+        
+        gateway = MCPGateway()
+        tools = gateway.list_available_tools()
+        tool_names = [tool.get("name", "") for tool in tools if isinstance(tool, dict)]
+        mcp_tools_available = (
+            "mcp_Context7_resolve-library-id" in tool_names
+            and "mcp_Context7_get-library-docs" in tool_names
+        )
+    except (ImportError, AttributeError, Exception):
+        # MCP Gateway not available or failed to initialize
+        # This is OK - we'll fall back to API key check
+        mcp_tools_available = False
+    
     context7_available = mcp_tools_available or api_key_available
     
     # Skip requires_llm tests if no LLM available

@@ -223,3 +223,71 @@ class TestImproverAgent:
 
         assert "error" in result
         assert "Unknown command" in result["error"]
+
+    async def test_activate_with_offline_mode(self, mock_config):
+        """Test activate() accepts offline_mode parameter."""
+        with patch(
+            "tapps_agents.agents.improver.agent.load_config", return_value=mock_config
+        ):
+            agent = ImproverAgent(config=mock_config)
+            with (
+                patch.object(agent, "greet") as mock_greet,
+                patch.object(agent, "run", new_callable=AsyncMock) as mock_run,
+            ):
+                # Test with offline_mode=True
+                await agent.activate(offline_mode=True)
+                mock_greet.assert_called_once()
+                mock_run.assert_called_once_with("help")
+                
+                # Reset mocks
+                mock_greet.reset_mock()
+                mock_run.reset_mock()
+                
+                # Test with offline_mode=False
+                await agent.activate(offline_mode=False)
+                mock_greet.assert_called_once()
+                mock_run.assert_called_once_with("help")
+
+    async def test_activate_passes_offline_mode_to_base(self, mock_config):
+        """Test activate() passes offline_mode to BaseAgent.activate()."""
+        with patch(
+            "tapps_agents.agents.improver.agent.load_config", return_value=mock_config
+        ):
+            agent = ImproverAgent(config=mock_config)
+            with (
+                patch.object(agent, "greet"),
+                patch.object(agent, "run", new_callable=AsyncMock),
+                patch.object(agent.__class__.__bases__[0], "activate", new_callable=AsyncMock) as mock_base_activate,
+            ):
+                await agent.activate(project_root=Path("/test"), offline_mode=True)
+                
+                # Verify BaseAgent.activate() was called with offline_mode
+                mock_base_activate.assert_called_once_with(Path("/test"), offline_mode=True)
+
+    async def test_run_handles_sync_handler(self, improver_agent):
+        """Test run() correctly handles synchronous handlers (like _handle_help)."""
+        # The help handler is synchronous, so run() should not await it
+        result = await improver_agent.run("help")
+        
+        assert "type" in result or "content" in result
+        # Verify it's a dict (not a coroutine)
+        assert isinstance(result, dict)
+
+    async def test_run_handles_async_handler(self, improver_agent, tmp_path):
+        """Test run() correctly handles asynchronous handlers."""
+        test_file = tmp_path / "test_code.py"
+        test_file.write_text("def code():\n    pass\n")
+        improver_agent.project_root = tmp_path
+        
+        with (
+            patch.object(
+                improver_agent, "get_context", new_callable=AsyncMock
+            ) as mock_context,
+            patch.object(improver_agent, "get_context_text", return_value=""),
+        ):
+            mock_context.return_value = {}
+            # refactor handler is async, so run() should await it
+            result = await improver_agent.run("refactor", file_path=str(test_file))
+            
+            assert "message" in result or "instruction" in result
+            assert isinstance(result, dict)

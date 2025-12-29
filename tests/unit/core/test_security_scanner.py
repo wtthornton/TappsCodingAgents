@@ -109,6 +109,20 @@ class TestSecurityScannerScanCode:
         
         assert "security_score" in result
         assert result["security_score"] == 5.0  # Default score
+        assert result["is_safe"] is True
+        assert len(result["vulnerabilities"]) == 0
+
+    @patch("tapps_agents.core.security_scanner.HAS_BANDIT", False)
+    def test_scan_code_empty_string(self):
+        """Test scan_code with empty code string (should scan and return 10.0)."""
+        scanner = SecurityScanner()
+        
+        result = scanner.scan_code(code="")
+        
+        assert "security_score" in result
+        assert result["security_score"] == 10.0  # Empty code has no issues
+        assert result["is_safe"] is True
+        assert len(result["vulnerabilities"]) == 0
 
 
 class TestSecurityScannerHeuristicScan:

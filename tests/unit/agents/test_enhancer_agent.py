@@ -40,6 +40,34 @@ class TestEnhancerAgentInitialization:
         assert agent.config is not None
 
     @pytest.mark.asyncio
+    async def test_enhancer_agent_activate_with_offline_mode(self, temp_project_dir: Path):
+        """Test EnhancerAgent activation with offline_mode parameter."""
+        agent = EnhancerAgent()
+        
+        with patch.object(agent, "analyst") as mock_analyst:
+            mock_analyst.activate = AsyncMock()
+            await agent.activate(temp_project_dir, offline_mode=True)
+            
+            # Verify analyst.activate was called with offline_mode
+            mock_analyst.activate.assert_called_once_with(temp_project_dir, offline_mode=True)
+            assert agent.config is not None
+
+    @pytest.mark.asyncio
+    async def test_enhancer_agent_activate_passes_offline_mode_to_base(self, temp_project_dir: Path):
+        """Test EnhancerAgent.activate() passes offline_mode to BaseAgent.activate()."""
+        agent = EnhancerAgent()
+        
+        with (
+            patch.object(agent, "analyst") as mock_analyst,
+            patch.object(agent.__class__.__bases__[0], "activate", new_callable=AsyncMock) as mock_base_activate,
+        ):
+            mock_analyst.activate = AsyncMock()
+            await agent.activate(temp_project_dir, offline_mode=True)
+            
+            # Verify BaseAgent.activate() was called with offline_mode
+            mock_base_activate.assert_called_once_with(temp_project_dir, offline_mode=True)
+
+    @pytest.mark.asyncio
     async def test_enhancer_agent_get_commands(self):
         """Test EnhancerAgent command list."""
         agent = EnhancerAgent()

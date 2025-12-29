@@ -75,8 +75,13 @@ class TestNetworkErrorHandling:
         assert analysis.error_type == ErrorType.SERVICE_UNAVAILABLE
 
     @pytest.mark.asyncio
+    @pytest.mark.timeout(10)
     async def test_network_error_in_agent(self):
-        """Test network error handling in agent context."""
+        """
+        Test network error handling in agent context.
+        
+        Verifies that agents handle network errors gracefully without hanging.
+        """
         from tapps_agents.agents.reviewer.agent import ReviewerAgent
         
         agent = ReviewerAgent()
