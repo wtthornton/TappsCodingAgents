@@ -4,6 +4,8 @@ Pytest configuration and shared fixtures for TappsCodingAgents tests.
 
 # ruff: noqa: E402
 
+# Register pytest plugins
+pytest_plugins = ["tests.pytest_rich_progress"]
 
 # Add project root to path
 import sys
@@ -186,6 +188,14 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "requires_llm: mark test as requiring LLM service (Ollama, Anthropic, or OpenAI)"
     )
+    
+    # Register rich progress plugin if available
+    try:
+        # Import the plugin module to trigger its pytest_configure hook
+        import tests.pytest_rich_progress
+        # The plugin's pytest_configure hook will register itself
+    except ImportError:
+        pass  # Rich progress not available, use default output
 
 
 def pytest_collection_modifyitems(config, items):
