@@ -11,6 +11,7 @@ from typing import Any
 import yaml
 
 from ...agents.analyst.agent import AnalystAgent
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
@@ -44,6 +45,11 @@ class PlannerAgent(BaseAgent):
         planner_config = config.agents.planner if config and config.agents else None
         stories_dir_str = planner_config.stories_dir if planner_config else None
         self.stories_dir = Path(stories_dir_str) if stories_dir_str else None
+
+        # Initialize Context7 helper (Enhancement: Universal Context7 integration)
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return available commands for planner agent"""
@@ -150,7 +156,7 @@ Format your response as structured text."""
         analyst = None
         try:
             analyst = AnalystAgent(config=self.config)
-            await analyst.activate(project_root=self.project_root, offline_mode=False)
+            await analyst.activate(project_root=self._project_root, offline_mode=False)
             
             # Gather requirements first
             requirements_result = await analyst.run(

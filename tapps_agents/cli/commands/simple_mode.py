@@ -219,7 +219,7 @@ def handle_simple_mode_full(args: object) -> None:
     print(f"Description: {workflow.description}")
     print(f"Steps: {len(workflow.steps)}")
     print("\nThis workflow includes:")
-    print("  • Full SDLC lifecycle (requirements → implementation → testing)")
+    print("  • Full SDLC lifecycle (requirements -> implementation -> testing)")
     print("  • Automatic quality gates with scoring")
     print("  • Development loopbacks if scores aren't good enough")
     print("  • Test execution and validation")
@@ -256,18 +256,19 @@ def handle_simple_mode_full(args: object) -> None:
     sys.stdout.flush()
     
     try:
-        result = executor.execute_workflow(workflow, target_path=target_file)
+        import asyncio
+        state = asyncio.run(executor.execute(workflow=workflow, target_file=target_file))
         
-        if result.success:
+        if state.status == "completed":
             feedback.success("Simple Full Lifecycle Workflow completed successfully")
             print("\n✅ Workflow completed successfully!")
-            if result.summary:
-                print(f"\nSummary: {result.summary}")
+            print(f"\nWorkflow ID: {state.workflow_id}")
+            print(f"Steps completed: {len(state.completed_steps)}/{len(workflow.steps)}")
         else:
             feedback.error(
                 "Workflow execution failed",
                 error_code="workflow_execution_failed",
-                context={"error": result.error_message if hasattr(result, 'error_message') else "Unknown error"},
+                context={"status": state.status, "error": state.error if hasattr(state, 'error') else "Unknown error"},
                 exit_code=1,
             )
     except Exception as e:

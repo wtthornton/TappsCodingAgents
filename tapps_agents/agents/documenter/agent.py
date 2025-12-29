@@ -5,6 +5,7 @@ Documenter Agent - Generates documentation
 from pathlib import Path
 from typing import Any
 
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from .doc_generator import DocGenerator
@@ -51,6 +52,11 @@ class DocumenterAgent(BaseAgent):
         self.docstring_format = (
             documenter_config.docstring_format if documenter_config else "google"
         )
+
+        # Initialize Context7 helper (Enhancement: Universal Context7 integration)
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
         # Ensure docs directory exists
         self.docs_dir.mkdir(parents=True, exist_ok=True)

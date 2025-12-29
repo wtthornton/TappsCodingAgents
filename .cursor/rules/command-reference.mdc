@@ -1448,6 +1448,29 @@ Simple Mode provides natural language orchestration with structured workflows. U
 - Security validation with remediation
 - Final quality review before completion
 
+**⚠️ CRITICAL: Framework Development MUST Use Full SDLC**
+
+When modifying the **TappsCodingAgents framework itself** (`tapps_agents/` package), you **MUST** use this workflow:
+
+```bash
+# CLI
+tapps-agents simple-mode full --prompt "Implement [enhancement description]" --auto
+
+# Or in Cursor chat
+@simple-mode *full "Implement [enhancement description]"
+```
+
+**Why?** Framework changes require:
+- ✅ Requirements analysis before implementation
+- ✅ Architecture design for integration patterns
+- ✅ Quality gates (≥75 score) with automatic loopbacks
+- ✅ Test generation and execution
+- ✅ Security validation
+- ✅ Complete documentation
+- ✅ Full traceability
+
+**DO NOT skip the workflow for framework changes!** See `.cursor/rules/project-context.mdc` for details.
+
 ### Natural Language Intent Detection
 
 Simple Mode automatically detects intent from keywords:

@@ -37,6 +37,42 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         original_description = parameters.get("description") or intent.original_input
 
+        # Enhancement 3: Auto-detect libraries and fetch Context7 documentation
+        context7_docs = {}
+        context7_info = {}
+        try:
+            from tapps_agents.context7.agent_integration import get_context7_helper
+            
+            context7_helper = get_context7_helper(None, self.config, self.project_root)
+            if context7_helper and context7_helper.enabled:
+                # Detect libraries from the description
+                detected_libraries = context7_helper.detect_libraries(
+                    prompt=original_description,
+                    language="python"  # Default, can be enhanced to detect from project
+                )
+                
+                if detected_libraries:
+                    # Fetch documentation for detected libraries
+                    context7_docs = await context7_helper.get_documentation_for_libraries(
+                        libraries=detected_libraries,
+                        topic=None,
+                        use_fuzzy_match=True,
+                    )
+                    context7_info = {
+                        "libraries_detected": detected_libraries,
+                        "docs_available": len([d for d in context7_docs.values() if d is not None]),
+                        "total_libraries": len(detected_libraries),
+                    }
+                    # Enhance description with Context7 guidance note
+                    if context7_docs:
+                        context7_note = f"\n\n[Context7: Detected {len(detected_libraries)} libraries. Documentation available for {context7_info['docs_available']} libraries.]"
+                        original_description = original_description + context7_note
+        except Exception as e:
+            # Context7 is optional - continue without it
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.debug(f"Context7 auto-detection failed in build workflow: {e}")
+
         # Step 1: Enhance the prompt using the enhancer agent
         enhanced_prompt = original_description
         enhancement_result = None
@@ -130,5 +166,6 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 "enhanced_prompt": enhanced_prompt,
                 "enhancement_result": enhancement_result,
             },
+            "context7": context7_info,  # Enhancement 3: Include Context7 detection info
         }
 

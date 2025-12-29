@@ -280,16 +280,22 @@ class Context7AgentHelper:
         return any(keyword in message_lower for keyword in library_keywords)
 
     def detect_libraries(
-        self, code: str | None = None, prompt: str | None = None, language: str = "python"
+        self,
+        code: str | None = None,
+        prompt: str | None = None,
+        error_message: str | None = None,
+        language: str = "python",
     ) -> list[str]:
         """
-        Detect libraries from code, prompt, or project files.
+        Detect libraries from code, prompt, error messages, or project files.
         
         Option 3 (C1) Enhancement: Enhanced library detection for prompt analysis.
+        Enhancement 5: Added error message detection.
 
         Args:
             code: Optional code content to analyze
             prompt: Optional prompt text to analyze
+            error_message: Optional error message or stack trace to analyze
             language: Programming language ("python", "typescript", "javascript")
 
         Returns:
@@ -298,7 +304,9 @@ class Context7AgentHelper:
         if not self.enabled:
             return []
 
-        return self.library_detector.detect_all(code=code, prompt=prompt, language=language)
+        return self.library_detector.detect_all(
+            code=code, prompt=prompt, error_message=error_message, language=language
+        )
 
     async def get_documentation_for_libraries(
         self,
@@ -387,6 +395,80 @@ class Context7AgentHelper:
                 library_ids[lib] = lib_id
 
         return library_ids
+
+    def detect_topics(self, code: str, library: str) -> list[str]:
+        """
+        Detect relevant Context7 topics from code context.
+        
+        Enhancement 7: Automatic topic detection from code patterns.
+        
+        Examples:
+        - FastAPI code with @router.get() → ["routing", "path-parameters"]
+        - React code with useState() → ["hooks", "state-management"]
+        - pytest code with @pytest.fixture → ["fixtures", "testing"]
+        
+        Args:
+            code: Code content to analyze
+            library: Library name (e.g., "fastapi", "react", "pytest")
+            
+        Returns:
+            List of detected topic names
+        """
+        if not self.enabled:
+            return []
+        
+        topics = []
+        code_lower = code.lower()
+        
+        # Library-specific topic mappings
+        topic_mappings = {
+            "fastapi": {
+                "routing": ["@router.get", "@router.post", "@router.put", "@router.delete", "apirouter", "route"],
+                "path-parameters": ["/{", "{id}", "path parameter", "pathparam"],
+                "query-parameters": ["query(", "query parameter", "queryparam"],
+                "dependencies": ["depends(", "dependency injection", "inject"],
+                "middleware": ["middleware", "@app.middleware", "starlette.middleware"],
+                "authentication": ["oauth2", "jwt", "security", "httponly", "authorization"],
+                "validation": ["pydantic", "basemodel", "validator", "field"],
+            },
+            "react": {
+                "hooks": ["usestate", "useeffect", "usecallback", "usememo", "useref"],
+                "state-management": ["usestate", "usereducer", "context", "redux", "zustand"],
+                "routing": ["router", "route", "link", "usenavigate", "browserrouter"],
+                "components": ["component", "jsx", "props", "children"],
+                "lifecycle": ["useeffect", "componentdidmount", "componentwillunmount"],
+            },
+            "pytest": {
+                "fixtures": ["@pytest.fixture", "fixture", "conftest"],
+                "parametrization": ["@pytest.mark.parametrize", "parametrize"],
+                "mocking": ["mock", "patch", "magicmock", "mock.patch"],
+                "async": ["pytest.mark.asyncio", "async def", "await"],
+            },
+            "django": {
+                "models": ["models.model", "models.charfield", "models.foreignkey"],
+                "views": ["view", "class view", "function view", "generic view"],
+                "urls": ["urlpatterns", "path(", "re_path("],
+                "admin": ["admin.site.register", "admin.modeladmin"],
+                "orm": ["objects.filter", "objects.get", "queryset"],
+            },
+            "flask": {
+                "routing": ["@app.route", "@blueprint.route", "route("],
+                "templates": ["render_template", "jinja2", "template"],
+                "request": ["request.form", "request.json", "request.args"],
+            },
+            "sqlalchemy": {
+                "orm": ["session", "query(", "relationship", "backref"],
+                "models": ["declarative_base", "column", "relationship"],
+                "migrations": ["alembic", "migration", "upgrade", "downgrade"],
+            },
+        }
+        
+        if library.lower() in topic_mappings:
+            for topic, keywords in topic_mappings[library.lower()].items():
+                if any(keyword.lower() in code_lower for keyword in keywords):
+                    topics.append(topic)
+        
+        return topics
 
 
 def get_context7_helper(

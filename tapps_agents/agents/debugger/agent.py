@@ -5,6 +5,7 @@ Debugger Agent - Analyzes errors and suggests fixes
 from pathlib import Path
 from typing import Any
 
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from .error_analyzer import ErrorAnalyzer
@@ -44,6 +45,11 @@ class DebuggerAgent(BaseAgent):
         self.max_context_lines = (
             debugger_config.max_context_lines if debugger_config else 50
         )
+
+        # Initialize Context7 helper (Enhancement 2)
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return list of available commands."""
@@ -95,6 +101,7 @@ class DebuggerAgent(BaseAgent):
         # Get code context if file provided
         code_context = None
         file_path = None
+        full_code = None
 
         if file:
             file_path = Path(file)
@@ -102,6 +109,7 @@ class DebuggerAgent(BaseAgent):
                 try:
                     self._validate_path(file_path)
                     code = file_path.read_text(encoding="utf-8")
+                    full_code = code  # Keep full code for Context7 detection
                     # Extract context around error line
                     if line:
                         lines = code.split("\n")
@@ -116,6 +124,13 @@ class DebuggerAgent(BaseAgent):
                     # The error analysis can still proceed with just the error message
                     pass
 
+        # Enhancement 2: Auto-detect libraries and fetch Context7 documentation
+        context7_docs = await self._auto_fetch_context7_docs(
+            error_message=error_message,
+            code=full_code if file_path else None,
+            language=self._detect_language(file_path) if file_path else "python",
+        )
+
         # Analyze error
         analysis = await self.error_analyzer.analyze_error(
             error_message=error_message,
@@ -123,6 +138,29 @@ class DebuggerAgent(BaseAgent):
             code_context=code_context,
             file_path=file_path,
         )
+
+        # Enhancement 2: Enhance error analysis with Context7 guidance
+        if context7_docs:
+            context7_guidance = {}
+            for lib, docs in context7_docs.items():
+                if docs and lib.lower() in error_message.lower():
+                    # Add library-specific troubleshooting guidance
+                    context7_guidance[lib] = {
+                        "library": lib,
+                        "documentation_available": True,
+                        "source": docs.get("source", "unknown"),
+                        "content_preview": docs.get("content", "")[:500] if docs.get("content") else "",  # First 500 chars
+                    }
+            
+            if context7_guidance:
+                analysis["context7_guidance"] = context7_guidance
+                # Add note to suggestions
+                if "suggestions" not in analysis:
+                    analysis["suggestions"] = []
+                analysis["suggestions"].append({
+                    "type": "context7_available",
+                    "message": f"Context7 documentation available for {', '.join(context7_guidance.keys())}. Check context7_guidance for library-specific troubleshooting.",
+                })
 
         return {
             "type": "debug",
@@ -221,6 +259,36 @@ class DebuggerAgent(BaseAgent):
         ]
         help_text = "\n".join([self.format_help(), "\nExamples:", *examples])
         return {"type": "help", "content": help_text}
+
+    def _detect_language(self, file_path: Path | None) -> str:
+        """
+        Detect programming language from file extension.
+        
+        Args:
+            file_path: Path to the file
+            
+        Returns:
+            Language string ("python", "typescript", "javascript", etc.)
+        """
+        if not file_path:
+            return "python"
+        
+        ext = file_path.suffix.lower()
+        language_map = {
+            ".py": "python",
+            ".ts": "typescript",
+            ".tsx": "typescript",
+            ".js": "javascript",
+            ".jsx": "javascript",
+            ".java": "java",
+            ".go": "go",
+            ".rs": "rust",
+            ".cpp": "cpp",
+            ".c": "c",
+            ".cs": "csharp",
+        }
+        
+        return language_map.get(ext, "python")
 
     async def close(self):
         """Close agent and clean up resources."""

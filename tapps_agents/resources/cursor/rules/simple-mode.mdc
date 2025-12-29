@@ -1,5 +1,5 @@
 ---
-description: Simple Mode - Natural language orchestrator for TappsCodingAgents. ALWAYS APPLY to enable skill orchestration.
+description: Simple Mode - Natural language orchestrator for TappsCodingAgents. ALWAYS APPLY to enable skill orchestration. CRITICAL: When users request Simple Mode workflow, you MUST follow ALL workflow steps and create documentation artifacts.
 globs: []
 alwaysApply: true
 ---
@@ -8,11 +8,28 @@ alwaysApply: true
 
 ## What is Simple Mode?
 
-Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor. It provides natural language commands that automatically orchestrate multiple specialized skills.
+Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor. It provides natural language commands that automatically orchestrate multiple specialized skills through a **structured workflow** that produces better, more maintainable code with comprehensive documentation.
+
+## ⚠️ CRITICAL: Complete Workflow Execution
+
+When a user requests Simple Mode workflow (especially `*build` commands), you MUST:
+
+1. **Follow ALL workflow steps** - Do NOT skip steps or directly implement
+2. **Create documentation artifacts** - Generate workflow documentation files
+3. **Execute in sequence** - Each step informs the next
+4. **Report progress** - Show which step you're on
+
+**Why?** Our comparison (index.html vs index2.html) shows the workflow produces:
+- Better documentation (87/100 quality score vs direct implementation)
+- Higher maintainability (design system, spacing variables)
+- Comprehensive testing (test plans, validation criteria)
+- Full traceability (requirements → stories → architecture → implementation)
 
 ## How to Use Simple Mode
 
-### Invoke with @simple-mode
+### Invoke with @simple-mode (RECOMMENDED)
+
+Use explicit commands for guaranteed workflow execution:
 
 ```
 @simple-mode *build "Create a user authentication feature"
@@ -31,6 +48,8 @@ Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor. I
 @simple-mode Add tests for service.py
 ```
 
+**Note:** Explicit `*build` commands are more reliable for ensuring complete workflow execution.
+
 ## Simple Mode Commands
 
 | Command | Description | Skills Invoked |
@@ -39,12 +58,6 @@ Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor. I
 | `*review {file}` | Review code quality | @reviewer → @improver |
 | `*fix {file} {description}` | Fix bugs/errors | @debugger → @implementer → @tester |
 | `*test {file}` | Generate tests | @tester |
-| `*epic {epic-doc.md}` | Execute Epic workflow | Epic orchestrator (all stories in dependency order) |
-| `*test-coverage {file} --target 80` | Coverage-driven test generation | Coverage analyzer → Test generator |
-| `*fix-tests {test-file}` | Auto-fix test failures | Test fixer |
-| `*microservice {name} --port {port} --type {type}` | Generate microservice | Microservice generator |
-| `*docker-fix {service} "{error}"` | Debug container errors | Container debugger |
-| `*integrate-service {service1} --with {service2}` | Service integration | Service integrator |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
 | `*help` | Show help | - |
 | `*status` | Check status | - |
@@ -57,21 +70,55 @@ Simple Mode detects intent from keywords:
 - **Review**: review, check, analyze, inspect, examine, score, quality, audit
 - **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken
 - **Test**: test, verify, validate, coverage, testing
-- **Epic**: epic, implement epic, execute epic, run epic, story, stories
 - **Full**: full, complete, sdlc, lifecycle, everything
 
 ## Skill Orchestration Workflows
 
-### Build Workflow
+### Build Workflow (MUST FOLLOW ALL STEPS)
+
+**When user requests `@simple-mode *build` or build-related commands, you MUST execute ALL steps:**
+
 ```
-1. @enhancer *enhance "{description}"      → Enhanced prompt
-2. @planner *plan "{enhanced}"             → User stories
-3. @architect *design "{enhanced}"         → Architecture
-4. @designer *design-api "{enhanced}"      → API design
-5. @implementer *implement "{spec}" {file} → Code
-6. @reviewer *review {file}                → Quality check
-7. @tester *test {file}                    → Tests
+Step 1: @enhancer *enhance "{description}"
+  → Create: docs/workflows/simple-mode/step1-enhanced-prompt.md
+  → Enhanced prompt with requirements analysis, architecture guidance, quality standards
+
+Step 2: @planner *plan "{enhanced prompt}"
+  → Create: docs/workflows/simple-mode/step2-user-stories.md
+  → User stories with acceptance criteria, story points, estimates
+
+Step 3: @architect *design "{specification}"
+  → Create: docs/workflows/simple-mode/step3-architecture.md
+  → System architecture, component design, data flow, performance considerations
+
+Step 4: @designer *design-api "{specification}" OR design components
+  → Create: docs/workflows/simple-mode/step4-design.md
+  → Component specifications, color palette, typography, spacing system, animations
+
+Step 5: @implementer *implement "{specification}" {target_file}
+  → Implement code following all specifications from previous steps
+  → Use design system, spacing variables, architecture patterns
+
+Step 6: @reviewer *review {target_file}
+  → Create: docs/workflows/simple-mode/step6-review.md
+  → Quality scores (5 metrics), issues found, recommendations
+
+Step 7: @tester *test {target_file}
+  → Create: docs/workflows/simple-mode/step7-testing.md
+  → Test plan, browser compatibility, accessibility checklist, performance validation
 ```
+
+**DO NOT:**
+- ❌ Skip directly to implementation
+- ❌ Skip documentation steps
+- ❌ Combine steps
+- ❌ Implement without planning
+
+**DO:**
+- ✅ Execute each step in sequence
+- ✅ Create documentation files for each step
+- ✅ Use outputs from previous steps as inputs
+- ✅ Report progress ("Starting Step 1...", "Step 1 complete, starting Step 2...")
 
 ### Review Workflow
 ```
@@ -93,7 +140,7 @@ Simple Mode detects intent from keywords:
 
 ### Full SDLC Workflow
 ```
-1. @analyst *requirements "{description}"  → Requirements
+1. @analyst *gather-requirements "{description}"  → Requirements
 2. @planner *plan "{requirements}"         → Stories
 3. @architect *design "{specification}"    → Architecture
 4. @designer *design-api "{spec}"          → API design
@@ -103,6 +150,31 @@ Simple Mode detects intent from keywords:
 8. @ops *security-scan {file}              → Security
 9. @documenter *document-api {file}        → Documentation
 ```
+
+**⚠️ MANDATORY for Framework Development:**
+
+When modifying the TappsCodingAgents framework itself (`tapps_agents/` package), you **MUST** use `*full` workflow:
+
+```
+@simple-mode *full "Implement [framework enhancement description]"
+```
+
+This ensures:
+- ✅ Requirements analysis before implementation
+- ✅ Architecture design for integration patterns
+- ✅ Quality gates (≥75 score) with automatic loopbacks
+- ✅ Test generation and execution
+- ✅ Security validation
+- ✅ Complete documentation
+- ✅ Full traceability
+
+**Example:**
+```
+User: "Add Context7 integration to all agents"
+AI: [MUST use] @simple-mode *full "Add Context7 integration to all SDLC agents"
+```
+
+**DO NOT skip the workflow for framework changes!**
 
 ## Available Skills Reference
 
@@ -197,9 +269,33 @@ simple_mode:
 3. **Quality Gates** - Automatic quality checks with loopback on failures
 4. **Progressive Disclosure** - Start simple, unlock advanced features as you learn
 5. **Best Practices** - Follows TappsCodingAgents workflow patterns automatically
+6. **Better Outcomes** - Produces higher quality code with comprehensive documentation (see comparison: `docs/SIMPLE_MODE_WORKFLOW_COMPARISON.md`)
+
+## Evidence: Workflow Value
+
+**Comparison Study:** `index.html` (direct) vs `index2.html` (workflow)
+- Quality Score: 87/100 with workflow vs unmeasured direct implementation
+- Documentation: 7 workflow documents vs 0
+- Maintainability: Design system, spacing variables, architecture documented
+- Testing: Comprehensive test plan vs none
+- Traceability: Full requirements → implementation traceability
+
+See `docs/SIMPLE_MODE_WORKFLOW_COMPARISON.md` for full analysis.
+
+## When User Requests Workflow
+
+If user explicitly mentions "Simple Mode workflow", "follow the workflow", "use the complete workflow", or references workflow documentation:
+
+1. **Acknowledge** the workflow request
+2. **Execute ALL 7 steps** for build workflows
+3. **Create documentation files** for each step
+4. **Report progress** step-by-step
+5. **Do NOT shortcut** - complete workflow provides value
 
 ## Related Documentation
 
+- See `docs/SIMPLE_MODE_USER_GUIDE.md` for user guide with invocation options
 - See `.claude/skills/simple-mode/SKILL.md` for full skill definition
 - See `docs/SIMPLE_MODE_GUIDE.md` for complete documentation
+- See `docs/SIMPLE_MODE_WORKFLOW_COMPARISON.md` for workflow vs direct comparison
 - See `.cursor/rules/agent-capabilities.mdc` for all agent capabilities

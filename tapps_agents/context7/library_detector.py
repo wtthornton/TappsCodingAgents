@@ -418,8 +418,66 @@ class LibraryDetector:
 
         return sorted(list(libraries))
 
+    def detect_from_error(self, error_message: str) -> list[str]:
+        """
+        Detect libraries from error messages and stack traces.
+        
+        Examples:
+        - "FastAPI HTTPException" → ["fastapi"]
+        - "pytest.raises" → ["pytest"]
+        - "sqlalchemy.exc.IntegrityError" → ["sqlalchemy"]
+        
+        Args:
+            error_message: Error message or stack trace to analyze
+            
+        Returns:
+            List of detected library names
+        """
+        libraries = set()
+        
+        # Pattern matching for common error formats
+        patterns = [
+            r"(\w+)\.(HTTPException|ValidationError|NotFound|APIRouter|FastAPI)",  # FastAPI, Pydantic
+            r"(\w+)\.(raises|fixture|mark)",  # pytest
+            r"(\w+)\.(exc\.|orm\.)",  # SQLAlchemy
+            r"from\s+(\w+)\s+import",  # Import statements in tracebacks
+            r"(\w+)\.(core\.exceptions|db\.)",  # Django
+            r"(\w+)\.(models\.|admin\.)",  # Django models/admin
+        ]
+        
+        for pattern in patterns:
+            matches = re.findall(pattern, error_message, re.IGNORECASE)
+            for match in matches:
+                lib_name = match[0] if isinstance(match, tuple) else match
+                if not self._is_stdlib(lib_name):
+                    libraries.add(lib_name.lower())
+        
+        # Known library error patterns
+        library_errors = {
+            "fastapi": ["HTTPException", "APIRouter", "FastAPI", "fastapi"],
+            "pytest": ["pytest.raises", "pytest.fixture", "pytest.mark", "pytest"],
+            "sqlalchemy": ["sqlalchemy.exc", "sqlalchemy.orm", "sqlalchemy"],
+            "django": ["django.core.exceptions", "django.db", "django"],
+            "flask": ["flask", "Flask", "flask.Flask"],
+            "pydantic": ["pydantic", "ValidationError", "BaseModel"],
+            "requests": ["requests", "requests.exceptions"],
+            "httpx": ["httpx", "httpx.exceptions"],
+            "aiohttp": ["aiohttp", "aiohttp.exceptions"],
+        }
+        
+        error_lower = error_message.lower()
+        for lib, keywords in library_errors.items():
+            if any(keyword.lower() in error_lower for keyword in keywords):
+                libraries.add(lib)
+        
+        return sorted(list(libraries))
+
     def detect_all(
-        self, code: str | None = None, prompt: str | None = None, language: str = "python"
+        self,
+        code: str | None = None,
+        prompt: str | None = None,
+        error_message: str | None = None,
+        language: str = "python",
     ) -> list[str]:
         """
         Detect libraries from all available sources.
@@ -427,6 +485,7 @@ class LibraryDetector:
         Args:
             code: Optional code content
             prompt: Optional prompt text
+            error_message: Optional error message or stack trace
             language: Programming language
 
         Returns:
@@ -444,6 +503,10 @@ class LibraryDetector:
         # From prompt
         if prompt:
             libraries.update(self.detect_from_prompt(prompt))
+
+        # From error messages (NEW)
+        if error_message:
+            libraries.update(self.detect_from_error(error_message))
 
         return sorted(list(libraries))
 

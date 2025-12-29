@@ -644,6 +644,98 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             result["context7_verification"] = context7_verification
             result["libraries_detected"] = libraries_used
 
+        # Enhancement 4: Proactive Context7 suggestions based on library-specific patterns
+        context7_suggestions = []
+        if context7_helper and context7_helper.enabled and libraries_used:
+            try:
+                code_lower = code.lower()
+                
+                # Check for library-specific patterns that might need Context7 guidance
+                for lib in libraries_used:
+                    lib_lower = lib.lower()
+                    
+                    # FastAPI: Check for route ordering issues
+                    if lib_lower == "fastapi" and ("route" in code_lower or "router" in code_lower):
+                        # Detect topics for FastAPI
+                        topics = context7_helper.detect_topics(code, lib)
+                        if "routing" in topics:
+                            # Proactively fetch routing documentation
+                            routing_docs = await context7_helper.get_documentation(
+                                library=lib,
+                                topic="routing",
+                                use_fuzzy_match=True
+                            )
+                            if routing_docs:
+                                # Check for potential route ordering issues
+                                # Look for parameterized routes before specific routes
+                                import re
+                                route_pattern = r"@(?:router|app)\.(?:get|post|put|delete|patch)\(['\"]([^'\"]+)['\"]"
+                                routes = re.findall(route_pattern, code, re.IGNORECASE)
+                                
+                                # Check if there are parameterized routes (containing {})
+                                param_routes = [r for r in routes if "{" in r]
+                                specific_routes = [r for r in routes if "{" not in r]
+                                
+                                # If we have both types, suggest checking order
+                                if param_routes and specific_routes:
+                                    context7_suggestions.append({
+                                        "type": "context7_best_practice",
+                                        "library": lib,
+                                        "issue": "Route ordering: Parameterized routes (e.g., /{id}) should come after specific routes (e.g., /stats)",
+                                        "guidance": routing_docs.get("content", "")[:500] if routing_docs.get("content") else "",
+                                        "source": routing_docs.get("source", "Context7 KB"),
+                                        "severity": "info",
+                                    })
+                    
+                    # React: Check for common hook patterns
+                    elif lib_lower == "react" and ("usestate" in code_lower or "useeffect" in code_lower):
+                        topics = context7_helper.detect_topics(code, lib)
+                        if "hooks" in topics:
+                            hooks_docs = await context7_helper.get_documentation(
+                                library=lib,
+                                topic="hooks",
+                                use_fuzzy_match=True
+                            )
+                            if hooks_docs:
+                                context7_suggestions.append({
+                                    "type": "context7_best_practice",
+                                    "library": lib,
+                                    "issue": "React hooks best practices available",
+                                    "guidance": hooks_docs.get("content", "")[:500] if hooks_docs.get("content") else "",
+                                    "source": hooks_docs.get("source", "Context7 KB"),
+                                    "severity": "info",
+                                })
+                    
+                    # pytest: Check for fixture patterns
+                    elif lib_lower == "pytest" and ("fixture" in code_lower or "@pytest" in code_lower):
+                        topics = context7_helper.detect_topics(code, lib)
+                        if "fixtures" in topics:
+                            fixtures_docs = await context7_helper.get_documentation(
+                                library=lib,
+                                topic="fixtures",
+                                use_fuzzy_match=True
+                            )
+                            if fixtures_docs:
+                                context7_suggestions.append({
+                                    "type": "context7_best_practice",
+                                    "library": lib,
+                                    "issue": "pytest fixture best practices available",
+                                    "guidance": fixtures_docs.get("content", "")[:500] if fixtures_docs.get("content") else "",
+                                    "source": fixtures_docs.get("source", "Context7 KB"),
+                                    "severity": "info",
+                                })
+                
+                if context7_suggestions:
+                    logger.debug(f"Enhancement 4: Generated {len(context7_suggestions)} proactive Context7 suggestions")
+            except Exception as e:
+                logger.debug(f"Enhancement 4: Proactive Context7 suggestions failed: {e}")
+        
+        # Add Context7 suggestions to result
+        if context7_suggestions:
+            if "suggestions" not in result:
+                result["suggestions"] = []
+            result["suggestions"].extend(context7_suggestions)
+
         # Calculate scores based on file type with timeout protection
         if include_scoring:
             import asyncio

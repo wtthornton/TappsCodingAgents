@@ -18,6 +18,39 @@
 - You're fixing bugs or improving the framework
 - Focus on: `tapps_agents/`, `tests/`, `requirements/`, `docs/`
 
+**⚠️ CRITICAL: Framework Changes MUST Use Full SDLC Workflow**
+
+When modifying the TappsCodingAgents framework itself, you **MUST** use Simple Mode Full SDLC workflow:
+
+```bash
+# CLI
+tapps-agents simple-mode full --prompt "Implement [enhancement description]" --auto
+
+# Or in Cursor chat
+@simple-mode *full "Implement [enhancement description]"
+```
+
+**Why?** The full SDLC workflow ensures:
+- ✅ Proper requirements analysis (analyst)
+- ✅ Architecture design (architect)
+- ✅ Quality gates with automatic loopbacks (reviewer)
+- ✅ Test generation and execution (tester)
+- ✅ Security validation (ops)
+- ✅ Complete documentation (documenter)
+- ✅ Full traceability (requirements → stories → architecture → implementation)
+
+**DO NOT:**
+- ❌ Directly implement code without using the workflow
+- ❌ Skip planning, design, or architecture phases
+- ❌ Validate only afterward (use quality gates during development)
+- ❌ Skip test generation (tests should be part of workflow)
+
+**Example:**
+```
+❌ WRONG: Directly implement Context7 enhancements
+✅ CORRECT: @simple-mode *full "Implement Context7 automatic integration enhancements"
+```
+
 ### 2. Self-Hosting (Secondary Role)
 **TappsCodingAgents uses its own framework** for its own development:
 - Configuration: `.tapps-agents/` directory

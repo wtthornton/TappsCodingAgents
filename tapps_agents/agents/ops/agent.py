@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
@@ -46,6 +47,11 @@ class OpsAgent(BaseAgent, ExpertSupportMixin):
 
         # Initialize dependency analyzer
         self.dependency_analyzer = DependencyAnalyzer(project_root=self.project_root)
+
+        # Initialize Context7 helper (Enhancement: Universal Context7 integration)
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
         # Expert registry initialization (required due to multiple inheritance MRO issue)
         # BaseAgent.__init__() doesn't call super().__init__(), so ExpertSupportMixin.__init__()

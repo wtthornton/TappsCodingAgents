@@ -87,6 +87,18 @@ class ScoringConfig(BaseModel):
     )
 
 
+class ReviewerAgentContext7Config(BaseModel):
+    """Context7 configuration for Reviewer Agent"""
+    
+    auto_detect: bool = Field(
+        default=True, description="Enable automatic library detection"
+    )
+    topics: list[str] = Field(
+        default_factory=lambda: ["best-practices", "routing", "api-design"],
+        description="Default topics to fetch for detected libraries"
+    )
+
+
 class ReviewerAgentConfig(BaseModel):
     """Configuration specific to Reviewer Agent"""
 
@@ -124,6 +136,10 @@ class ReviewerAgentConfig(BaseModel):
         default=True,
         description="Enable parallel execution of quality tools (Ruff, mypy, bandit)",
     )
+    context7: ReviewerAgentContext7Config = Field(
+        default_factory=ReviewerAgentContext7Config,
+        description="Context7 integration settings for Reviewer Agent"
+    )
 
 
 class PlannerAgentConfig(BaseModel):
@@ -141,6 +157,17 @@ class PlannerAgentConfig(BaseModel):
         ge=0.0,
         le=1.0,
         description="Minimum expert confidence threshold (0.0-1.0)",
+    )
+
+
+class ImplementerAgentContext7Config(BaseModel):
+    """Context7 configuration for Implementer Agent"""
+    
+    auto_detect: bool = Field(
+        default=True, description="Enable automatic library detection"
+    )
+    detect_from_prompt: bool = Field(
+        default=True, description="Detect libraries from prompt/specification text"
     )
 
 
@@ -167,6 +194,10 @@ class ImplementerAgentConfig(BaseModel):
         le=1.0,
         description="Minimum expert confidence threshold (0.0-1.0)",
     )
+    context7: ImplementerAgentContext7Config = Field(
+        default_factory=ImplementerAgentContext7Config,
+        description="Context7 integration settings for Implementer Agent"
+    )
 
 
 class TesterAgentConfig(BaseModel):
@@ -192,6 +223,17 @@ class TesterAgentConfig(BaseModel):
     )
 
 
+class DebuggerAgentContext7Config(BaseModel):
+    """Context7 configuration for Debugger Agent"""
+    
+    auto_detect: bool = Field(
+        default=True, description="Enable automatic library detection"
+    )
+    detect_from_errors: bool = Field(
+        default=True, description="Detect libraries from error messages and stack traces"
+    )
+
+
 class DebuggerAgentConfig(BaseModel):
     """Configuration specific to Debugger Agent"""
 
@@ -209,6 +251,10 @@ class DebuggerAgentConfig(BaseModel):
         ge=0.0,
         le=1.0,
         description="Minimum expert confidence threshold (0.0-1.0)",
+    )
+    context7: DebuggerAgentContext7Config = Field(
+        default_factory=DebuggerAgentContext7Config,
+        description="Context7 integration settings for Debugger Agent"
     )
 
 
@@ -284,6 +330,16 @@ class Context7Config(BaseModel):
     )
     bypass_forbidden: bool = Field(
         default=True, description="Allow bypassing if Context7 unavailable"
+    )
+    # Enhancement: Automatic Context7 detection and fetching
+    auto_detect: bool = Field(
+        default=True, description="Enable automatic library detection from code, prompts, and errors"
+    )
+    auto_fetch: bool = Field(
+        default=True, description="Automatically fetch docs for detected libraries"
+    )
+    proactive_suggestions: bool = Field(
+        default=True, description="Proactively suggest Context7 lookups when library patterns detected"
     )
 
     knowledge_base: Context7KnowledgeBaseConfig = Field(

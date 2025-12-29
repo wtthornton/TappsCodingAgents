@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.0] - 2025-01-16
+
 ### Added
 - **Playwright MCP Integration** - Complete integration with Playwright MCP server for browser automation
   - Automatic detection of Playwright MCP server configuration

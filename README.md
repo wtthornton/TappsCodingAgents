@@ -34,6 +34,34 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 
 > **Note**: This project both **develops** the TappsCodingAgents framework AND **uses** it for its own development (self-hosting). See [Project Context](docs/PROJECT_CONTEXT.md) for details.
 
+### ⚠️ Framework Development Guidelines
+
+**When modifying the TappsCodingAgents framework itself**, you **MUST** use Simple Mode Full SDLC workflow:
+
+```bash
+# CLI
+tapps-agents simple-mode full --prompt "Implement [enhancement description]" --auto
+
+# Or in Cursor chat
+@simple-mode *full "Implement [enhancement description]"
+```
+
+**Why?** The full SDLC workflow ensures:
+- ✅ Requirements analysis (analyst)
+- ✅ Architecture design (architect) 
+- ✅ Quality gates with automatic loopbacks (≥75 score)
+- ✅ Test generation and execution (tester)
+- ✅ Security validation (ops)
+- ✅ Complete documentation (documenter)
+- ✅ Full traceability (requirements → stories → architecture → implementation)
+
+**DO NOT:**
+- ❌ Directly implement code without using the workflow
+- ❌ Skip planning, design, or architecture phases
+- ❌ Validate only afterward (use quality gates during development)
+
+See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
+
 - **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
 - **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)

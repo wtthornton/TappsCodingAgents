@@ -6,6 +6,7 @@ import inspect
 from pathlib import Path
 from typing import Any
 
+from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
@@ -34,6 +35,11 @@ class ImproverAgent(BaseAgent):
             config = load_config()
         self.config = config
         self.project_root: Path = Path.cwd()
+
+        # Initialize Context7 helper (Enhancement: Universal Context7 integration)
+        self.context7: Context7AgentHelper | None = None
+        if config:
+            self.context7 = get_context7_helper(self, config)
 
     async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         await super().activate(project_root, offline_mode=offline_mode)

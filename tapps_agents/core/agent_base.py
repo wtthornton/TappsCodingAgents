@@ -482,3 +482,59 @@ class BaseAgent(ABC):
         result["success"] = False
         result["optional_dependency"] = True
         return result
+
+    async def _auto_fetch_context7_docs(
+        self,
+        code: str | None = None,
+        prompt: str | None = None,
+        error_message: str | None = None,
+        language: str = "python",
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Automatically detect libraries and fetch Context7 documentation.
+        Called before any agent operation that might benefit from library docs.
+        
+        This is a universal hook that all agents can use to automatically
+        fetch Context7 documentation without manual intervention.
+
+        Args:
+            code: Optional code content to analyze
+            prompt: Optional prompt text to analyze
+            error_message: Optional error message or stack trace
+            language: Programming language (default: "python")
+
+        Returns:
+            Dictionary mapping library names to their documentation dictionaries,
+            or empty dict if Context7 is disabled or no libraries detected.
+            Format: {library_name: {content: str, source: str, ...}, ...}
+        """
+        # Get Context7 helper if available
+        context7_helper = getattr(self, "context7", None)
+        if not context7_helper:
+            # Try to get it via the helper function
+            from ..context7.agent_integration import get_context7_helper
+            context7_helper = get_context7_helper(self, self.config, self._project_root)
+            if context7_helper:
+                # Cache it for future use
+                self.context7 = context7_helper
+
+        if not context7_helper or not context7_helper.enabled:
+            return {}
+
+        # Detect libraries from all available sources (including error messages)
+        detected_libraries = context7_helper.detect_libraries(
+            code=code, prompt=prompt, error_message=error_message, language=language
+        )
+
+        # Deduplicate
+        detected_libraries = list(set(detected_libraries))
+
+        # Fetch documentation for all detected libraries
+        if detected_libraries:
+            return await context7_helper.get_documentation_for_libraries(
+                libraries=detected_libraries,
+                topic=None,
+                use_fuzzy_match=True,
+            )
+
+        return {}

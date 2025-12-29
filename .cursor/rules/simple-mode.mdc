@@ -151,6 +151,31 @@ Step 7: @tester *test {target_file}
 9. @documenter *document-api {file}        → Documentation
 ```
 
+**⚠️ MANDATORY for Framework Development:**
+
+When modifying the TappsCodingAgents framework itself (`tapps_agents/` package), you **MUST** use `*full` workflow:
+
+```
+@simple-mode *full "Implement [framework enhancement description]"
+```
+
+This ensures:
+- ✅ Requirements analysis before implementation
+- ✅ Architecture design for integration patterns
+- ✅ Quality gates (≥75 score) with automatic loopbacks
+- ✅ Test generation and execution
+- ✅ Security validation
+- ✅ Complete documentation
+- ✅ Full traceability
+
+**Example:**
+```
+User: "Add Context7 integration to all agents"
+AI: [MUST use] @simple-mode *full "Add Context7 integration to all SDLC agents"
+```
+
+**DO NOT skip the workflow for framework changes!**
+
 ## Available Skills Reference
 
 | Skill | Purpose |
