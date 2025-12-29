@@ -252,6 +252,7 @@ python -m tapps_agents.cli documenter document-code service.py
 **Capabilities**:
 - Unit test generation
 - Integration test generation
+- E2E test generation with **Playwright MCP awareness** (NEW): Automatically detects Playwright MCP availability and leverages it for browser automation
 - Test execution
 - Coverage analysis
 - Test strategy
@@ -274,6 +275,12 @@ python -m tapps_agents.cli tester fix-failures tests/ --pattern async --auto-fix
 # Batch generation (NEW)
 python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output-dir tests/clients
 ```
+
+**Playwright MCP Integration**:
+- Automatically detects Playwright MCP server availability when generating E2E tests
+- Leverages Playwright MCP tools for browser automation when available
+- Falls back to Python Playwright package if MCP not configured
+- Check status: `tapps-agents doctor` shows Playwright MCP configuration
 
 **Expert Integration**: Consults testing and code quality experts.
 

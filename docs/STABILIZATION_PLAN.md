@@ -67,6 +67,37 @@ All stabilization tasks leverage the framework's own tools, demonstrating self-h
   - `implementer.implement` (needs decision - may be intentional)
 - **Documentation**: See `docs/INSTRUCTION_OBJECT_FIX_ANALYSIS.md` for complete analysis
 
+### Issue 8: Improver Agent - improve-quality returns instruction object, doesn't improve code
+- **Status**: ✅ FIXED (Cursor-first mode)
+- **Date**: 2025-12-29
+- **Command**: `python -m tapps_agents.cli improver improve-quality <file> --focus "complexity,type-safety,maintainability" --format json`
+- **Error**: Returned instruction object with prompt and skill_command, but did not actually improve the code or provide improved code output
+- **Root Cause**: 
+  - `_handle_improve_quality` method only created instruction objects for Cursor Skills execution
+  - MAL (Model Abstraction Layer) was removed from the project
+  - In Cursor-first mode, code improvement is handled by Cursor Skills, not CLI
+- **Fix Applied**: 
+  - Removed MAL dependency from `_handle_improve_quality` method
+  - Clarified that instruction objects are the correct behavior for Cursor-first mode
+  - Instruction objects contain all necessary information for Cursor AI to improve code
+  - Added note in response indicating instruction objects should be executed in Cursor chat
+- **Impact**: 
+  - Command now correctly returns instruction objects for Cursor Skills execution
+  - No MAL dependency - works in Cursor-first mode without local LLM
+  - Users execute `skill_command` in Cursor chat to actually improve code
+- **Files Changed**: 
+  - `tapps_agents/agents/improver/agent.py` (removed MAL dependency, clarified behavior)
+  - `docs/STABILIZATION_PLAN.md` (documentation)
+- **Usage**: 
+  ```bash
+  # Get instruction object
+  python -m tapps_agents.cli improver improve-quality src/main.py --focus "complexity,type-safety"
+  
+  # Execute the skill_command in Cursor chat to improve code
+  # Example: @improver *improve-quality src/main.py --focus "complexity,type-safety"
+  ```
+- **Note**: In Cursor-first mode, instruction objects are the correct behavior. Code improvement happens when the instruction is executed in Cursor Skills (Cursor chat), not in CLI mode.
+
 ### Issue 7: Docker ps Command - Agent Crash with Table Format
 - **Status**: ✅ FIXED
 - **Date**: 2025-12-29

@@ -409,6 +409,11 @@ tapps-agents tester test <file> [--integration] [--coverage] [--format json|text
 - `--coverage`: Run with coverage analysis
 - `--format`: Output format
 
+**Playwright MCP Integration:**
+- When generating E2E tests with Playwright, automatically detects Playwright MCP server availability
+- If Playwright MCP is configured, test generation prompts include note about MCP availability
+- Check Playwright MCP status: `tapps-agents doctor`
+
 #### `*generate-tests` / `generate-tests` (Dual-Mode)
 **Purpose:** Generate tests without running
 
@@ -1006,6 +1011,46 @@ simple_mode:
 3. Use Context7 MCP directly via `mcp_Context7_get-library-docs` tool
 
 **Note:** Context7 integration works via MCP server even without API key.
+
+### Playwright MCP Integration
+
+**Feature:** Playwright MCP server detection and awareness for browser automation.
+
+**Status:** ✅ **Available** - Playwright MCP integration is fully implemented
+
+**Capabilities:**
+- **Automatic Detection**: `tapps-agents doctor` reports Playwright MCP status
+- **Setup Instructions**: `tapps-agents init` provides setup instructions when Playwright MCP is missing
+- **Tester Agent Awareness**: E2E test generation automatically detects Playwright MCP availability
+- **Graceful Fallback**: Falls back to Python Playwright package if MCP not configured
+
+**Check Status:**
+```bash
+tapps-agents doctor
+# Look for "Playwright MCP: Configured" or status messages
+```
+
+**Configuration:**
+Add to `.cursor/mcp.json`:
+```json
+{
+  "mcpServers": {
+    "Playwright": {
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp-server"]
+    }
+  }
+}
+```
+
+**Usage:**
+- **In Cursor**: Playwright MCP tools are available via Cursor when configured
+- **E2E Tests**: Tester agent automatically detects and mentions Playwright MCP in test generation prompts
+- **CLI Fallback**: If MCP not configured, uses Python Playwright package (`pip install playwright`)
+
+**Note:** Playwright MCP is optional. Browser automation works via either:
+1. Playwright MCP server (recommended in Cursor)
+2. Python Playwright package (for CLI usage)
 
 ## Related Documentation
 

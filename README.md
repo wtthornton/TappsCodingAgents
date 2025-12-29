@@ -194,6 +194,8 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Code Scoring System**: Objective quality metrics (complexity, security, maintainability)
 - **Tiered Context Injection**: 90%+ token savings with intelligent caching
 - **MCP Gateway**: Unified Model Context Protocol interface for tool access
+  - **Context7 MCP Server**: Library documentation lookup (required, auto-configured)
+  - **Playwright MCP Server**: Browser automation for E2E testing (optional, auto-detected)
 - **YAML Workflow Definitions**: Declarative, version-controlled orchestration with strict schema enforcement
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
 - **YAML-First Architecture** ✅ (Epics 6-10 Complete):
@@ -282,10 +284,13 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 ✅ **Phase 3 Complete - Remaining Agents + Advanced Features**
 - **All 13 Cursor Skills** ✅ (Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer)
 - **Context7 Integration** ✅ (KB-first caching for library documentation)
+- **Playwright MCP Integration** ✅ (Browser automation detection and awareness for E2E testing)
 - **Industry Experts** ✅ (Domain expert consultation framework)
 - **YAML Workflows** ✅ (Declarative multi-step task definitions)
 - **Tiered Context System** ✅ (90%+ token savings)
 - **MCP Gateway** ✅ (Unified tool access)
+  - **Context7 MCP**: Library documentation (required)
+  - **Playwright MCP**: Browser automation (optional, auto-detected)
 - See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 3 Summary](implementation/PHASE3_REMAINING_AGENTS_COMPLETE.md)
 
 ✅ **Phase 2 Complete - Quality Tools Integration**
@@ -311,6 +316,9 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Tiered Context System** (90%+ token savings, 3 tiers with caching)
 - **Unified Cache Architecture** ✅ (Single interface for all caching systems with hardware auto-detection)
 - **MCP Gateway** (Unified tool access with filesystem, Git, and analysis servers)
+  - **MCP Server Detection**: Automatic detection of Context7 and Playwright MCP servers
+  - **Setup Instructions**: Auto-generated setup instructions when MCP servers are missing
+  - **Status Reporting**: `tapps-agents doctor` reports MCP server configuration status
 - **YAML Workflow Definitions** (Parser, executor, artifact tracking, conditional steps)
   - **YAML-First Architecture** ✅ (Epics 6-10): YAML as single source of truth with strict schema enforcement
   - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs, Background Agent configs
@@ -476,6 +484,7 @@ TappsCodingAgents/
 - **[Unified Cache Integration Guide](implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
 - **[Context7 Cache Optimization](docs/CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates
 - **[Context7 Security & Privacy](docs/CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices
+- **[Playwright MCP Integration](docs/PLAYWRIGHT_MCP_INTEGRATION.md)** - Browser automation with Playwright MCP server
 - **[NUC Setup Guide](docs/NUC_SETUP_GUIDE.md)** - Optimize for low-power hardware
 
 ### Operations

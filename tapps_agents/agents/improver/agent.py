@@ -237,8 +237,6 @@ Return only the optimized code, wrapped in ```python code blocks."""
         if not file_path_obj.exists():
             return {"error": f"File not found: {file_path}"}
 
-        # Improving code quality in progress...
-
         # Read current code
         current_code = file_path_obj.read_text(encoding="utf-8")
 
@@ -279,20 +277,30 @@ Provide improved code that:
 
 Return only the improved code, wrapped in ```python code blocks."""
 
-        # Prepare instruction for Cursor Skills
+        # Issue 8 Fix: Return instruction object for Cursor Skills execution
+        # Note: MAL has been removed from the project. In Cursor-first mode,
+        # code improvement is handled by Cursor Skills using the instruction object.
+        # The instruction object contains all necessary information for Cursor AI
+        # to improve the code when executed in Cursor chat.
+
+        # Prepare instruction for Cursor Skills (always returned for compatibility)
         instruction = GenericInstruction(
             agent_name="improver",
             command="improve-quality",
             prompt=prompt,
-            parameters={"file_path": str(file_path)},
+            parameters={"file_path": str(file_path), "focus": focus},
         )
 
-        return {
+        result = {
             "message": f"Code quality improvement instruction prepared for {file_path}",
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
+            "file_written": False,  # Code improvement happens in Cursor Skills
+            "note": "Execute the skill_command in Cursor chat to improve the code",
         }
+        
+        return result
 
     def _handle_help(self) -> dict[str, Any]:
         """

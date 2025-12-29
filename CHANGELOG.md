@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Playwright MCP Integration** - Complete integration with Playwright MCP server for browser automation
+  - Automatic detection of Playwright MCP server configuration
+  - Setup instructions generated when Playwright MCP is missing
+  - Doctor command reports Playwright MCP status with remediation guidance
+  - Tester agent automatically detects and leverages Playwright MCP when generating E2E tests
+  - Graceful fallback to Python Playwright package if MCP not configured
+  - Comprehensive documentation updates (TROUBLESHOOTING.md, quick-reference.mdc, agent-capabilities.mdc, command-reference.mdc)
+  - Follows same pattern as Context7 MCP integration for consistency
+  - See `docs/PLAYWRIGHT_MCP_INTEGRATION.md` for complete guide
+
+### Changed
+- **Tester Agent** - Enhanced E2E test generation with Playwright MCP awareness
+  - Automatically detects Playwright MCP availability when generating Playwright-based E2E tests
+  - Test generation prompts include note about Playwright MCP availability when configured
+- **Doctor Command** - Added Playwright MCP status checking
+  - Reports Playwright MCP configuration status
+  - Provides setup instructions when missing
+  - Distinguishes between Playwright MCP and Python Playwright package
+- **Init Command** - Enhanced MCP detection with Playwright MCP setup instructions
+  - Generates setup instructions following Context7 MCP pattern
+  - Includes configuration examples and alternative options
+
+### Documentation
+- Added `docs/PLAYWRIGHT_MCP_INTEGRATION.md` - Complete integration guide
+- Added `docs/PLAYWRIGHT_MCP_CODE_REVIEW.md` - Code review summary
+- Updated `docs/TROUBLESHOOTING.md` - Enhanced Playwright section with MCP information
+- Updated `tapps_agents/resources/cursor/rules/quick-reference.mdc` - Enhanced Playwright warning section
+- Updated `tapps_agents/resources/cursor/rules/agent-capabilities.mdc` - Added Playwright MCP to Tester Agent
+- Updated `tapps_agents/resources/cursor/rules/command-reference.mdc` - Added Playwright MCP integration section
+- Updated `.claude/skills/tester/SKILL.md` - Added Playwright MCP awareness to capabilities
+- Updated `README.md` - Added Playwright MCP to MCP Gateway sections
+- Updated `docs/README.md` - Added Playwright MCP integration documentation link
+
 ## [3.1.1] - 2025-01-16
 
 ### Changed

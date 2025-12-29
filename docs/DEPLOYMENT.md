@@ -139,6 +139,11 @@ Before deploying to production, ensure:
 
 - **Context7**: Optional library documentation cache. If unavailable, agents continue without it.
 - **Playwright**: Optional for browser automation. Some features may be limited without it.
+  - **Playwright MCP Server** (recommended in Cursor): Browser automation via Cursor's MCP tools
+    - Configure in `.cursor/mcp.json`: `{"mcpServers": {"Playwright": {"command": "npx", "args": ["-y", "@playwright/mcp-server"]}}}`
+    - Check status: `tapps-agents doctor`
+  - **Python Playwright Package** (for CLI): Install with `pip install playwright && python -m playwright install`
+  - See [Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md) for complete guide
 - **External Quality Tools**: Ruff, mypy, pytest are optional but recommended for quality checks.
 
 ### Best-Effort Features

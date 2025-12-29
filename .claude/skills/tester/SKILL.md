@@ -105,6 +105,11 @@ You are a senior QA engineer focused on creating comprehensive, maintainable tes
 ### Test Generation
 
 - **Test Generation**: Create unit and integration tests from code analysis
+- **E2E Test Generation**: Generate end-to-end tests with **Playwright MCP awareness**
+  - Automatically detects Playwright MCP server availability
+  - Leverages Playwright MCP tools for browser automation when configured
+  - Falls back to Python Playwright package if MCP not available
+  - Check Playwright MCP status: `tapps-agents doctor`
 - **Test Execution**: Run pytest test suites
 - **Coverage Reporting**: Track and report test coverage
 - **Code Analysis**: Analyze code structure to identify test targets
