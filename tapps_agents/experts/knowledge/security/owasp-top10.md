@@ -1,10 +1,10 @@
-# OWASP Top 10 Security Risks (2021)
+# OWASP Top 10 Security Risks (2024)
 
 ## Overview
 
-The OWASP Top 10 is a standard awareness document for developers and web application security. It represents a broad consensus about the most critical security risks to web applications.
+The OWASP Top 10 is a standard awareness document for developers and web application security. It represents a broad consensus about the most critical security risks to web applications. The 2024 edition reflects the current threat landscape and incorporates feedback from security professionals worldwide.
 
-## A01:2021 – Broken Access Control
+## A01:2024 – Broken Access Control
 
 ### Description
 Access control enforces policy such that users cannot act outside of their intended permissions. Failures typically lead to unauthorized information disclosure, modification, or destruction of all data or performing a business function outside the user's limits.
@@ -22,7 +22,7 @@ Access control enforces policy such that users cannot act outside of their inten
 - Disable web server directory listing
 - Log access control failures and alert administrators
 
-## A02:2021 – Cryptographic Failures
+## A02:2024 – Cryptographic Failures
 
 ### Description
 Previously known as "Sensitive Data Exposure," this category focuses on failures related to cryptography which often lead to exposure of sensitive data.
@@ -39,9 +39,9 @@ Previously known as "Sensitive Data Exposure," this category focuses on failures
 - Use strong, up-to-date cryptographic algorithms (AES-256, RSA-2048+)
 - Never store passwords in plain text; use strong, adaptive hashing (bcrypt, Argon2)
 - Disable caching for responses that contain sensitive data
-- Use secure protocols (TLS 1.2+) with proper certificate validation
+- Use secure protocols (TLS 1.3 recommended, TLS 1.2 minimum) with proper certificate validation
 
-## A03:2021 – Injection
+## A03:2024 – Injection
 
 ### Description
 Injection flaws occur when untrusted data is sent to an interpreter as part of a command or query. The attacker's hostile data can trick the interpreter into executing unintended commands or accessing data without proper authorization.
@@ -62,7 +62,7 @@ Injection flaws occur when untrusted data is sent to an interpreter as part of a
 - Escape special characters in output
 - Use safe APIs that avoid the interpreter entirely
 
-## A04:2021 – Insecure Design
+## A04:2024 – Insecure Design
 
 ### Description
 Insecure design is a broad category representing different weaknesses, expressed as "missing or ineffective control design." This is different from insecure implementation.
@@ -81,7 +81,7 @@ Insecure design is a broad category representing different weaknesses, expressed
 - Integrate security language and controls into user stories
 - Integrate plausibility checks at each tier of your application
 
-## A05:2021 – Security Misconfiguration
+## A05:2024 – Security Misconfiguration
 
 ### Description
 Security misconfiguration is the most commonly seen issue. This is commonly a result of insecure default configurations, incomplete or ad hoc configurations, open cloud storage, misconfigured HTTP headers, and verbose error messages containing sensitive information.
@@ -102,7 +102,7 @@ Security misconfiguration is the most commonly seen issue. This is commonly a re
 - Use automated tools to verify configurations
 - Keep all software and dependencies up to date
 
-## A06:2021 – Vulnerable and Outdated Components
+## A06:2024 – Vulnerable and Outdated Components
 
 ### Description
 Using components with known vulnerabilities can compromise application security and enable a range of possible attacks and impacts.
@@ -121,7 +121,7 @@ Using components with known vulnerabilities can compromise application security 
 - Use dependency management tools (npm audit, pip-audit, etc.)
 - Apply security patches in a timely fashion
 
-## A07:2021 – Identification and Authentication Failures
+## A07:2024 – Identification and Authentication Failures
 
 ### Description
 Previously "Broken Authentication," this category includes failures related to identification and authentication. Attackers can exploit authentication weaknesses to gain access to user accounts.
@@ -142,7 +142,7 @@ Previously "Broken Authentication," this category includes failures related to i
 - Generate strong session IDs and invalidate them properly
 - Use password hashing with strong algorithms (bcrypt, Argon2)
 
-## A08:2021 – Software and Data Integrity Failures
+## A08:2024 – Software and Data Integrity Failures
 
 ### Description
 Previously "Insecure Deserialization," this category focuses on making assumptions about software updates, critical data, and CI/CD pipelines without verifying integrity.
@@ -161,7 +161,7 @@ Previously "Insecure Deserialization," this category focuses on making assumptio
 - Avoid deserializing untrusted data
 - Implement integrity checks or digital signatures on serialized objects
 
-## A09:2021 – Security Logging and Monitoring Failures
+## A09:2024 – Security Logging and Monitoring Failures
 
 ### Description
 Previously "Insufficient Logging & Monitoring," this category includes failures to log security-relevant events or monitor for suspicious activities.
@@ -182,7 +182,7 @@ Previously "Insufficient Logging & Monitoring," this category includes failures 
 - Use centralized logging
 - Establish incident response procedures
 
-## A10:2021 – Server-Side Request Forgery (SSRF)
+## A10:2024 – Server-Side Request Forgery (SSRF)
 
 ### Description
 SSRF flaws occur whenever a web application is fetching a remote resource without validating the user-supplied URL. It allows an attacker to coerce the application to send a crafted request to an unexpected destination.
@@ -203,6 +203,7 @@ SSRF flaws occur whenever a web application is fetching a remote resource withou
 
 ## References
 
-- [OWASP Top 10 2021](https://owasp.org/Top10/)
+- [OWASP Top 10 2024](https://owasp.org/Top10/)
 - [OWASP Foundation](https://owasp.org/)
+- [OWASP Top 10 2024 Release Notes](https://owasp.org/www-project-top-ten/)
 

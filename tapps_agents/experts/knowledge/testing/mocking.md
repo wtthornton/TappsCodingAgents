@@ -106,9 +106,9 @@ from datetime import datetime
 
 @patch('datetime.datetime')
 def test_time_based_function(mock_datetime):
-    mock_datetime.now.return_value = datetime(2023, 1, 1)
+    mock_datetime.now.return_value = datetime(2025, 1, 1)
     result = time_based_function()
-    assert result == "2023-01-01"
+    assert result == "2025-01-01"
 ```
 
 ## Verification

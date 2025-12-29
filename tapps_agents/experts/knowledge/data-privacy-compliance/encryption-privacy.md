@@ -122,7 +122,7 @@ Encryption is a critical technical measure for protecting personal data and ensu
 ## TLS/SSL for Transit
 
 ### TLS Configuration
-- Use TLS 1.2 or higher
+- Use TLS 1.3 (recommended) or TLS 1.2 (minimum)
 - Disable weak protocols
 - Use strong cipher suites
 - Implement perfect forward secrecy

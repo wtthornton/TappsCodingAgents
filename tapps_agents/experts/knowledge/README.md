@@ -14,10 +14,53 @@ knowledge/
 │   ├── threat-modeling.md
 │   └── vulnerability-patterns.md
 ├── performance/                   # Performance Expert (Phase 2)
+│   ├── optimization-patterns.md
+│   ├── caching.md
+│   ├── scalability.md
+│   ├── api-performance.md
+│   ├── database-performance.md
+│   ├── resource-management.md
+│   ├── profiling.md
+│   └── anti-patterns.md
 ├── testing/                       # Testing Expert (Phase 2)
+│   ├── best-practices.md
+│   ├── test-strategies.md
+│   ├── test-design-patterns.md
+│   ├── test-automation.md
+│   ├── mocking.md
+│   ├── test-data.md
+│   ├── coverage-analysis.md
+│   └── test-maintenance.md
 ├── data-privacy-compliance/       # Data Privacy Expert (Phase 3)
+│   ├── gdpr.md
+│   ├── ccpa.md
+│   ├── hipaa.md
+│   ├── privacy-by-design.md
+│   ├── consent-management.md
+│   ├── data-minimization.md
+│   ├── data-retention.md
+│   ├── data-subject-rights.md
+│   ├── anonymization.md
+│   └── encryption-privacy.md
 ├── accessibility/                 # Accessibility Expert (Phase 4)
+│   ├── wcag-2.1.md
+│   ├── wcag-2.2.md
+│   ├── semantic-html.md
+│   ├── aria-patterns.md
+│   ├── keyboard-navigation.md
+│   ├── screen-readers.md
+│   ├── color-contrast.md
+│   ├── accessible-forms.md
+│   └── testing-accessibility.md
 ├── user-experience/               # UX Expert (Phase 4)
+│   ├── ux-principles.md
+│   ├── user-research.md
+│   ├── user-journeys.md
+│   ├── information-architecture.md
+│   ├── interaction-design.md
+│   ├── prototyping.md
+│   ├── usability-heuristics.md
+│   └── usability-testing.md
 ├── observability-monitoring/      # Observability Expert (Phase 5)
 │   ├── distributed-tracing.md
 │   ├── metrics-and-monitoring.md
@@ -35,29 +78,48 @@ knowledge/
 │   ├── rate-limiting.md
 │   ├── api-gateway-patterns.md
 │   ├── api-security-patterns.md
-│   └── contract-testing.md
+│   ├── contract-testing.md
+│   ├── fastapi-patterns.md
+│   ├── fastapi-testing.md
+│   ├── websocket-patterns.md
+│   ├── mqtt-patterns.md
+│   ├── async-protocol-patterns.md
+│   └── external-api-integration.md
 ├── cloud-infrastructure/          # Cloud Infrastructure Expert (Phase 5)
 │   ├── cloud-native-patterns.md
 │   ├── containerization.md
+│   ├── container-health-checks.md
 │   ├── kubernetes-patterns.md
 │   ├── infrastructure-as-code.md
 │   ├── serverless-architecture.md
 │   ├── multi-cloud-strategies.md
 │   ├── cost-optimization.md
-│   └── disaster-recovery.md
-└── database-data-management/      # Database Expert (Phase 5)
-    ├── database-design.md
-    ├── sql-optimization.md
-    ├── nosql-patterns.md
-    ├── data-modeling.md
-    ├── migration-strategies.md
-    ├── scalability-patterns.md
-    ├── backup-and-recovery.md
-    └── acid-vs-cap.md
-├── agent-learning/                # Agent Learning Best Practices (Gap 1)
-    ├── best-practices.md
-    ├── pattern-extraction.md
-    └── prompt-optimization.md
+│   ├── disaster-recovery.md
+│   └── dockerfile-patterns.md
+├── database-data-management/      # Database Expert (Phase 5)
+│   ├── database-design.md
+│   ├── sql-optimization.md
+│   ├── nosql-patterns.md
+│   ├── data-modeling.md
+│   ├── migration-strategies.md
+│   ├── scalability-patterns.md
+│   ├── backup-and-recovery.md
+│   ├── acid-vs-cap.md
+│   ├── influxdb-patterns.md
+│   ├── influxdb-connection-patterns.md
+│   ├── flux-query-optimization.md
+│   └── time-series-modeling.md
+├── software-architecture/         # Software Architecture Expert
+│   ├── microservices-patterns.md
+│   ├── service-communication.md
+│   └── docker-compose-patterns.md
+├── agent-learning/                # Agent Learning Best Practices
+│   ├── best-practices.md
+│   ├── pattern-extraction.md
+│   └── prompt-optimization.md
+└── ai-frameworks/                 # AI Frameworks Expert
+    ├── model-optimization.md
+    └── openvino-patterns.md
 ```
 
 ## Knowledge Base Format
