@@ -52,6 +52,7 @@ class OrchestratorAgent(BaseAgent):
         Commands:
         - *workflow-list: List available workflows
         - *workflow-start {id}: Start a workflow
+        - *workflow {file_path}: Execute a workflow from a YAML file path
         - *workflow-status: Show current workflow status
         - *workflow-next: Show next step
         - *workflow-skip {step}: Skip an optional step
@@ -65,6 +66,11 @@ class OrchestratorAgent(BaseAgent):
             if not workflow_id:
                 return {"error": "workflow_id required"}
             return await self._start_workflow(workflow_id)
+        elif command == "*workflow":
+            workflow_file = kwargs.get("workflow_file")
+            if not workflow_file:
+                return {"error": "workflow_file required"}
+            return await self._execute_workflow_from_file(workflow_file)
         elif command == "*workflow-status":
             return await self._get_workflow_status()
         elif command == "*workflow-next":
@@ -163,6 +169,49 @@ class OrchestratorAgent(BaseAgent):
                 return candidates[0]
         
         return None
+
+    async def _execute_workflow_from_file(self, workflow_file_path: str) -> dict[str, Any]:
+        """Execute a workflow from a file path."""
+        if not self.workflow_executor:
+            return {"error": "Workflow executor not initialized"}
+
+        # Validate input
+        if not workflow_file_path or not isinstance(workflow_file_path, str):
+            return {"error": "workflow_file_path must be a non-empty string"}
+
+        # Resolve file path (supports both relative and absolute paths)
+        workflow_path = Path(workflow_file_path)
+        if not workflow_path.is_absolute():
+            # Relative path - resolve from project root (set during activate)
+            # BaseAgent stores project_root as _project_root
+            base_path = getattr(self, "_project_root", None) or Path.cwd()
+            workflow_path = (base_path / workflow_path).resolve()
+        else:
+            workflow_path = workflow_path.resolve()
+
+        if not workflow_path.exists():
+            return {"error": f"Workflow file not found: {workflow_file_path} (resolved to: {workflow_path})"}
+
+        if not workflow_path.is_file():
+            return {"error": f"Path is not a file: {workflow_file_path} (resolved to: {workflow_path})"}
+
+        try:
+            # Load and start workflow
+            workflow = self.workflow_executor.load_workflow(workflow_path)
+            self.current_workflow = workflow
+            state = self.workflow_executor.start()
+
+            return {
+                "success": True,
+                "workflow_id": workflow.id,
+                "workflow_name": workflow.name,
+                "workflow_file": str(workflow_path),
+                "status": state.status,
+                "current_step": state.current_step,
+                "message": f"Workflow '{workflow.name}' started from {workflow_file_path}",
+            }
+        except Exception as e:
+            return {"error": f"Failed to execute workflow from file: {str(e)}"}
 
     async def _start_workflow(self, workflow_id: str) -> dict[str, Any]:
         """Start a workflow."""
@@ -361,7 +410,8 @@ class OrchestratorAgent(BaseAgent):
         """
         commands_dict = {
             "*workflow-list": "List available workflows",
-            "*workflow-start {workflow_id}": "Start a workflow",
+            "*workflow-start {workflow_id}": "Start a workflow by ID",
+            "*workflow {workflow_file}": "Execute a workflow from a YAML file path",
             "*workflow-status": "Show current workflow status",
             "*workflow-next": "Show next step in workflow",
             "*workflow-skip {step_id}": "Skip an optional step",

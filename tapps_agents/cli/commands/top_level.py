@@ -233,16 +233,76 @@ def handle_create_command(args: object) -> None:
             safe_print("[WARN] Headless mode: local-only execution. LLM-driven workflow steps will not auto-generate artifacts without Cursor Skills.")
 
     try:
-        feedback.start_operation("Create Project", f"Creating project with {workflow_name} workflow")
-        feedback.running(f"Loading workflow preset: {workflow_name}...", step=1, total_steps=5)
-        workflow = loader.load_preset(workflow_name)
-        if not workflow:
+        # Check if workflow_name is actually a file path
+        is_file_path = (
+            "/" in workflow_name
+            or "\\" in workflow_name
+            or workflow_name.endswith(".yaml")
+            or workflow_name.endswith(".yml")
+        )
+        
+        # Validate input
+        if not workflow_name or not isinstance(workflow_name, str):
             feedback.error(
-                f"Workflow preset '{workflow_name}' not found",
-                error_code="config_error",
-                remediation="Use 'tapps-agents workflow list' to see available presets",
+                "Workflow name or file path required",
+                error_code="validation_error",
                 exit_code=3,
             )
+            return
+
+        if is_file_path:
+            # Load workflow from file path
+            workflow_file_path = Path(workflow_name)
+            if not workflow_file_path.is_absolute():
+                workflow_file_path = (Path.cwd() / workflow_file_path).resolve()
+            else:
+                workflow_file_path = workflow_file_path.resolve()
+            
+            if not workflow_file_path.exists():
+                feedback.error(
+                    f"Workflow file not found: {workflow_name}",
+                    error_code="file_not_found",
+                    remediation="Check that the file path is correct and the file exists",
+                    exit_code=3,
+                )
+                return
+            
+            if not workflow_file_path.is_file():
+                feedback.error(
+                    f"Path is not a file: {workflow_name}",
+                    error_code="validation_error",
+                    remediation="Provide a path to a workflow YAML file",
+                    exit_code=3,
+                )
+                return
+            
+            feedback.start_operation("Create Project", f"Creating project with workflow from {workflow_name}")
+            feedback.running(f"Loading workflow from file: {workflow_name}...", step=1, total_steps=5)
+            try:
+                from ...workflow.executor import WorkflowExecutor
+                executor = WorkflowExecutor(auto_detect=False)
+                workflow = executor.load_workflow(workflow_file_path)
+            except Exception as e:
+                feedback.error(
+                    f"Failed to load workflow from file: {str(e)}",
+                    error_code="workflow_load_error",
+                    context={"file": str(workflow_file_path)},
+                    exit_code=3,
+                )
+                return
+        else:
+            # Load workflow preset
+            feedback.start_operation("Create Project", f"Creating project with {workflow_name} workflow")
+            feedback.running(f"Loading workflow preset: {workflow_name}...", step=1, total_steps=5)
+            workflow = loader.load_preset(workflow_name)
+            if not workflow:
+                feedback.error(
+                    f"Workflow preset '{workflow_name}' not found",
+                    error_code="config_error",
+                    remediation="Use 'tapps-agents workflow list' to see available presets, or provide a file path",
+                    exit_code=3,
+                )
+                return
 
         feedback.running(f"Initializing workflow: {workflow.name}...", step=2, total_steps=5)
         feedback.running("Preparing project structure...", step=3, total_steps=5)
@@ -551,68 +611,143 @@ def handle_workflow_command(args: object) -> None:
 
     loader = PresetLoader()
 
-    if not preset_name or preset_name == "list":
-        # List all presets
-        feedback.info("Loading workflow presets...")
-        presets = loader.list_presets()
-        feedback.clear_progress()
-        feedback.success("Workflow presets loaded")
-        print("\n" + "=" * 60)
-        print("Available Workflow Presets")
-        print("=" * 60)
-        print()
-
-        if presets:
-            for _preset_id, preset_info in presets.items():
-                print(f"{preset_info['name']}")
-                if preset_info.get("description"):
-                    print(f"  Description: {preset_info['description']}")
-                aliases = preset_info.get("aliases", [])
-                if aliases:
-                    # Show primary aliases (first 5)
-                    primary_aliases = [
-                        a
-                        for a in aliases
-                        if a
-                        in [
-                            "full",
-                            "rapid",
-                            "fix",
-                            "quality",
-                            "hotfix",
-                            "enterprise",
-                            "feature",
-                            "refactor",
-                            "improve",
-                            "urgent",
-                        ]
-                    ]
-                    if primary_aliases:
-                        print(f"  Quick commands: {', '.join(primary_aliases[:5])}")
-                print()
-        else:
-            print("No presets found. Check workflows/presets/ directory.")
+    try:
+        if not preset_name or preset_name == "list":
+            # List all presets
+            feedback.info("Loading workflow presets...")
+            presets = loader.list_presets()
+            feedback.clear_progress()
+            feedback.success("Workflow presets loaded")
+            print("\n" + "=" * 60)
+            print("Available Workflow Presets")
+            print("=" * 60)
             print()
 
-        print("Usage: python -m tapps_agents.cli workflow <alias>")
-        print("\nExamples:")
-        print("  python -m tapps_agents.cli workflow rapid")
-        print("  python -m tapps_agents.cli workflow full")
-        print("  python -m tapps_agents.cli workflow fix")
-        print("  python -m tapps_agents.cli workflow enterprise")
-        print("  python -m tapps_agents.cli workflow feature")
-        return
+            if presets:
+                for _preset_id, preset_info in presets.items():
+                    print(f"{preset_info['name']}")
+                    if preset_info.get("description"):
+                        print(f"  Description: {preset_info['description']}")
+                    aliases = preset_info.get("aliases", [])
+                    if aliases:
+                        # Show primary aliases (first 5)
+                        primary_aliases = [
+                            a
+                            for a in aliases
+                            if a
+                            in [
+                                "full",
+                                "rapid",
+                                "fix",
+                                "quality",
+                                "hotfix",
+                                "enterprise",
+                                "feature",
+                                "refactor",
+                                "improve",
+                                "urgent",
+                            ]
+                        ]
+                        if primary_aliases:
+                            print(f"  Quick commands: {', '.join(primary_aliases[:5])}")
+                    print()
+            else:
+                print("No presets found. Check workflows/presets/ directory.")
+                print()
 
-    # Load and execute preset
-    try:
-        workflow = loader.load_preset(preset_name)
-        if not workflow:
-            print(f"Error: Preset '{preset_name}' not found.", file=sys.stderr)
-            print(
-                f"Available presets: {', '.join(loader.list_presets().keys())}",
-                file=sys.stderr,
+            print("Usage: python -m tapps_agents.cli workflow <preset>|<file_path>")
+            print("\nExamples:")
+            print("  # Using preset names:")
+            print("  python -m tapps_agents.cli workflow rapid")
+            print("  python -m tapps_agents.cli workflow full")
+            print("  python -m tapps_agents.cli workflow fix")
+            print("  python -m tapps_agents.cli workflow enterprise")
+            print("  python -m tapps_agents.cli workflow feature")
+            print("\n  # Using file paths:")
+            print("  python -m tapps_agents.cli workflow workflows/custom/my-workflow.yaml")
+            print("  python -m tapps_agents.cli workflow ./workflows/example-feature-development.yaml")
+            return
+
+        # Validate input
+        if not preset_name or not isinstance(preset_name, str):
+            feedback.error(
+                "Workflow preset name or file path required",
+                error_code="validation_error",
+                exit_code=1,
             )
-            sys.exit(1)
+            return
+
+        # Check if preset_name is actually a file path
+        # File paths typically contain '/' or '\' or end with '.yaml' or '.yml'
+        workflow_file_path: Path | None = None
+        is_file_path = (
+            "/" in preset_name
+            or "\\" in preset_name
+            or preset_name.endswith(".yaml")
+            or preset_name.endswith(".yml")
+        )
+        
+        if is_file_path:
+            # Try to load as file path
+            workflow_file_path = Path(preset_name)
+            if not workflow_file_path.is_absolute():
+                workflow_file_path = (Path.cwd() / workflow_file_path).resolve()
+            else:
+                workflow_file_path = workflow_file_path.resolve()
+            
+            if not workflow_file_path.exists():
+                feedback.error(
+                    f"Workflow file not found: {preset_name}",
+                    error_code="file_not_found",
+                    remediation="Check that the file path is correct and the file exists",
+                    exit_code=1,
+                )
+                return
+            
+            if not workflow_file_path.is_file():
+                feedback.error(
+                    f"Path is not a file: {preset_name}",
+                    error_code="validation_error",
+                    remediation="Provide a path to a workflow YAML file",
+                    exit_code=1,
+                )
+                return
+            
+            # Load workflow from file
+            try:
+                executor = WorkflowExecutor(auto_detect=False)
+                workflow = executor.load_workflow(workflow_file_path)
+            except Exception as e:
+                feedback.error(
+                    f"Failed to load workflow from file: {str(e)}",
+                    error_code="workflow_load_error",
+                    context={"file": str(workflow_file_path)},
+                    exit_code=1,
+                )
+                return
+        else:
+            # Load and execute preset
+            try:
+                workflow = loader.load_preset(preset_name)
+                if not workflow:
+                    print(f"Error: Preset '{preset_name}' not found.", file=sys.stderr)
+                    print(
+                        f"Available presets: {', '.join(loader.list_presets().keys())}",
+                        file=sys.stderr,
+                    )
+                    print(
+                        "\nTip: You can also provide a file path (e.g., 'workflows/custom/my-workflow.yaml')",
+                        file=sys.stderr,
+                    )
+                    sys.exit(1)
+            except Exception as e:
+                feedback.error(
+                    f"Failed to load preset: {str(e)}",
+                    error_code="preset_load_error",
+                    context={"preset": preset_name},
+                    exit_code=1,
+                )
+                return
 
         # Cursor-first default for workflow execution.
         # Workflows frequently require Cursor Skills to materialize artifacts for LLM-driven steps.
@@ -676,7 +811,7 @@ def handle_workflow_command(args: object) -> None:
             sys.exit(1)
         else:
             print(f"\nWorkflow status: {result.status}")
-
+    
     except Exception as e:
         print(f"Error executing workflow: {e}", file=sys.stderr)
         sys.exit(1)

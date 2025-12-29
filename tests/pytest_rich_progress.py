@@ -9,6 +9,7 @@ Provides:
 - Modern visual feedback
 """
 
+import os
 import sys
 from typing import Any
 
@@ -26,6 +27,28 @@ from rich.progress import (
 )
 from rich.table import Table
 from rich.text import Text
+
+# Set UTF-8 encoding for Windows console
+if sys.platform == "win32":
+    os.environ["PYTHONIOENCODING"] = "utf-8"
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+        sys.stderr.reconfigure(encoding="utf-8")
+    except AttributeError:
+        # Python < 3.7 - use environment variable only
+        pass
+
+
+def safe_emoji(emoji: str, fallback: str) -> str:
+    """Return emoji if encoding supports it, otherwise fallback."""
+    if sys.platform == "win32":
+        try:
+            # Test if emoji can be encoded
+            emoji.encode(sys.stdout.encoding or "utf-8")
+            return emoji
+        except (UnicodeEncodeError, AttributeError):
+            return fallback
+    return emoji
 
 
 class RichProgressReporter:
@@ -54,9 +77,10 @@ class RichProgressReporter:
 
         # Print header immediately (before progress bar)
         self.console.print()
+        rocket = safe_emoji("🚀", "[START]")
         self.console.print(
             Panel(
-                f"[bold green]🚀 Starting Test Suite[/bold green]\n"
+                f"[bold green]{rocket} Starting Test Suite[/bold green]\n"
                 f"[dim]Total tests: {self.test_count}[/dim]",
                 border_style="green",
             )
@@ -77,10 +101,11 @@ class RichProgressReporter:
         )
 
         # Start live display
+        test_emoji = safe_emoji("🧪", "[TEST]")
         self.live = Live(
             Panel(
                 self.progress,
-                title="[bold cyan]🧪 Test Suite Progress[/bold cyan]",
+                title=f"[bold cyan]{test_emoji} Test Suite Progress[/bold cyan]",
                 border_style="cyan",
             ),
             console=self.console,
@@ -123,10 +148,10 @@ class RichProgressReporter:
         """Process a test report."""
         if report.when == "call":  # Only count actual test execution
             status_emoji = {
-                "passed": "✅",
-                "failed": "❌",
-                "skipped": "⏭️",
-                "error": "💥",
+                "passed": safe_emoji("✅", "[OK]"),
+                "failed": safe_emoji("❌", "[FAIL]"),
+                "skipped": safe_emoji("⏭️", "[SKIP]"),
+                "error": safe_emoji("💥", "[ERROR]"),
             }
 
             status_color = {
@@ -136,7 +161,7 @@ class RichProgressReporter:
                 "error": "red",
             }
 
-            emoji = status_emoji.get(report.outcome, "❓")
+            emoji = status_emoji.get(report.outcome, safe_emoji("❓", "[?]"))
             color = status_color.get(report.outcome, "white")
 
             # Store result
@@ -184,9 +209,10 @@ class RichProgressReporter:
 
         # Create summary
         self.console.print()
+        chart_emoji = safe_emoji("📊", "[SUMMARY]")
         self.console.print(
             Panel(
-                "[bold cyan]📊 Test Suite Summary[/bold cyan]",
+                f"[bold cyan]{chart_emoji} Test Suite Summary[/bold cyan]",
                 border_style="cyan",
             )
         )
@@ -196,22 +222,23 @@ class RichProgressReporter:
         summary.add_column(style="bold", justify="right")
         summary.add_column(style="", justify="left")
 
-        summary.add_row("✅", f"[green]Passed:[/green] {self.passed}")
-        summary.add_row("❌", f"[red]Failed:[/red] {self.failed}")
-        summary.add_row("⏭️", f"[yellow]Skipped:[/yellow] {self.skipped}")
-        summary.add_row("💥", f"[red]Errors:[/red] {self.errors}")
+        summary.add_row(safe_emoji("✅", "[OK]"), f"[green]Passed:[/green] {self.passed}")
+        summary.add_row(safe_emoji("❌", "[FAIL]"), f"[red]Failed:[/red] {self.failed}")
+        summary.add_row(safe_emoji("⏭️", "[SKIP]"), f"[yellow]Skipped:[/yellow] {self.skipped}")
+        summary.add_row(safe_emoji("💥", "[ERROR]"), f"[red]Errors:[/red] {self.errors}")
         summary.add_row("", "")
-        summary.add_row("📈", f"[cyan]Total:[/cyan] {total}")
-        summary.add_row("⏱️", f"[cyan]Duration:[/cyan] {duration:.2f}s")
+        summary.add_row(safe_emoji("📈", "[TOTAL]"), f"[cyan]Total:[/cyan] {total}")
+        summary.add_row(safe_emoji("⏱️", "[TIME]"), f"[cyan]Duration:[/cyan] {duration:.2f}s")
 
         self.console.print(summary)
 
         # Show failed tests if any
         if self.failed > 0 or self.errors > 0:
             self.console.print()
+            fail_emoji = safe_emoji("❌", "[FAIL]")
             self.console.print(
                 Panel(
-                    "[bold red]❌ Failed Tests[/bold red]",
+                    f"[bold red]{fail_emoji} Failed Tests[/bold red]",
                     border_style="red",
                 )
             )
@@ -227,16 +254,18 @@ class RichProgressReporter:
         # Final status
         self.console.print()
         if exitstatus == 0:
+            success_emoji = safe_emoji("✨", "[SUCCESS]")
             self.console.print(
                 Panel(
-                    "[bold green]✨ All tests passed![/bold green]",
+                    f"[bold green]{success_emoji} All tests passed![/bold green]",
                     border_style="green",
                 )
             )
         else:
+            error_emoji = safe_emoji("💥", "[ERROR]")
             self.console.print(
                 Panel(
-                    f"[bold red]💥 Test suite failed with {self.failed + self.errors} error(s)[/bold red]",
+                    f"[bold red]{error_emoji} Test suite failed with {self.failed + self.errors} error(s)[/bold red]",
                     border_style="red",
                 )
             )

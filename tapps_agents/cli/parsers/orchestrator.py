@@ -68,6 +68,17 @@ Use this agent to coordinate complex multi-step development processes.""",
         description="Resume execution of a workflow that was interrupted, paused, or failed. Continues from the last completed step."
     )
 
+    workflow_parser = orchestrator_subparsers.add_parser(
+        "workflow",
+        aliases=["*workflow"],
+        help="Execute a workflow from a YAML file path",
+        description="Execute a workflow directly from a YAML file path. Supports both relative and absolute paths."
+    )
+    workflow_parser.add_argument(
+        "workflow_file",
+        help="Path to the workflow YAML file (e.g., 'workflows/custom/my-workflow.yaml' or absolute path)"
+    )
+
     gate_parser = orchestrator_subparsers.add_parser(
         "gate", 
         aliases=["*gate"], 

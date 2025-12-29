@@ -78,6 +78,17 @@ def handle_orchestrator_command(args: object) -> None:
             result = asyncio.run(orchestrator.run("*workflow-skip", step_id=step_id))
         elif command == "workflow-resume":
             result = asyncio.run(orchestrator.run("*workflow-resume"))
+        elif command == "workflow":
+            workflow_file = getattr(args, "workflow_file", None)
+            if not workflow_file or not isinstance(workflow_file, str):
+                feedback.error(
+                    "workflow_file path required (must be a non-empty string)",
+                    error_code="validation_error",
+                    exit_code=2,
+                )
+            result = asyncio.run(
+                orchestrator.run("*workflow", workflow_file=workflow_file)
+            )
         elif command == "gate":
             condition = getattr(args, "condition", None)
             scoring_data = getattr(args, "scoring_data", {})

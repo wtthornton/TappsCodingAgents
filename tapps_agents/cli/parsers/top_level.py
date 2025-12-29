@@ -51,8 +51,8 @@ def add_top_level_parsers(subparsers: argparse._SubParsersAction) -> None:
     # Workflow preset commands
     workflow_parser = subparsers.add_parser(
         "workflow",
-        help="Run preset workflows (short commands)",
-        description="""Execute predefined workflow presets for common development scenarios.
+        help="Run preset workflows (short commands) or custom workflow files",
+        description="""Execute predefined workflow presets or custom workflow YAML files.
         
 Workflows orchestrate multiple agents in sequence to complete complex tasks:
   • Rapid/Feature: Fast development for sprint work and new features
@@ -61,11 +61,17 @@ Workflows orchestrate multiple agents in sequence to complete complex tasks:
   • Quality/Improve: Code review and quality improvement cycles
   • Hotfix/Urgent: Quick fixes for production-critical issues
 
-Each workflow can be run with --auto for fully automated execution or interactively.""",
+You can use preset names (rapid, full, fix, etc.) or provide a path to a custom workflow YAML file.
+Each workflow can be run with --auto for fully automated execution or interactively.
+
+Examples:
+  tapps-agents workflow rapid --prompt "Add feature"
+  tapps-agents workflow workflows/custom/my-workflow.yaml --prompt "Build API"
+""",
     )
     workflow_subparsers = workflow_parser.add_subparsers(
         dest="preset",
-        help="Workflow preset name to execute (use 'list' to see all available presets with descriptions)",
+        help="Workflow preset name or file path (use 'list' to see all available presets)",
     )
 
     # Common workflow options (apply to all presets)

@@ -366,6 +366,139 @@ class TestOrchestratorAgent:
         assert any("*workflow-start" in cmd for cmd in result["commands"].keys())
 
     @pytest.mark.asyncio
+    async def test_execute_workflow_from_file(
+        self, orchestrator, sample_workflow_file, tmp_path: Path, monkeypatch
+    ):
+        """Test executing a workflow from a file path."""
+        import os
+
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            # Use relative path
+            relative_path = str(sample_workflow_file.relative_to(tmp_path))
+            result = await orchestrator.run("*workflow", workflow_file=relative_path)
+
+            assert "success" in result
+            assert result["success"] is True
+            assert result["workflow_id"] == "test-workflow"
+            assert result["workflow_file"] == str(sample_workflow_file)
+            assert result["status"] == "running"
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_from_file_absolute_path(
+        self, orchestrator, sample_workflow_file, tmp_path: Path, monkeypatch
+    ):
+        """Test executing a workflow from an absolute file path."""
+        import os
+
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            # Use absolute path
+            result = await orchestrator.run("*workflow", workflow_file=str(sample_workflow_file))
+
+            assert "success" in result
+            assert result["success"] is True
+            assert result["workflow_id"] == "test-workflow"
+            assert result["workflow_file"] == str(sample_workflow_file)
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_from_file_subdirectory(
+        self, orchestrator, tmp_path: Path, monkeypatch
+    ):
+        """Test executing a workflow from a file in a subdirectory."""
+        import os
+
+        workflows_dir = tmp_path / "workflows"
+        custom_dir = workflows_dir / "custom"
+        custom_dir.mkdir(parents=True)
+
+        workflow_file = custom_dir / "subdir-workflow.yaml"
+        workflow_file.write_text(
+            yaml.dump(
+                {
+                    "workflow": {
+                        "id": "subdir-workflow",
+                        "name": "Subdirectory Workflow",
+                        "description": "A workflow in a subdirectory",
+                        "version": "1.0.0",
+                        "type": "greenfield",
+                        "steps": [
+                            {
+                                "id": "step1",
+                                "agent": "analyst",
+                                "action": "gather",
+                                "requires": [],
+                            }
+                        ],
+                    }
+                }
+            )
+        )
+
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            # Use relative path with subdirectory
+            relative_path = str(workflow_file.relative_to(tmp_path))
+            result = await orchestrator.run("*workflow", workflow_file=relative_path)
+
+            assert "success" in result
+            assert result["success"] is True
+            assert result["workflow_id"] == "subdir-workflow"
+            assert result["workflow_file"] == str(workflow_file)
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_from_file_not_found(self, orchestrator, tmp_path: Path):
+        """Test executing a workflow from a non-existent file."""
+        import os
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            result = await orchestrator.run(
+                "*workflow", workflow_file="workflows/nonexistent.yaml"
+            )
+
+            assert "error" in result
+            assert "not found" in result["error"].lower()
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
+    async def test_execute_workflow_from_file_no_file_param(self, orchestrator, tmp_path: Path):
+        """Test executing workflow command without file parameter."""
+        import os
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            result = await orchestrator.run("*workflow")
+
+            assert "error" in result
+            assert "workflow_file required" in result["error"]
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
     async def test_unknown_command(self, orchestrator):
         """Test unknown command."""
         await orchestrator.activate()

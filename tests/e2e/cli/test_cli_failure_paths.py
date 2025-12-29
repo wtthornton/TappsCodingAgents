@@ -204,6 +204,64 @@ def test_cli_missing_command_error(cli_harness, test_project):
 
 
 @pytest.mark.e2e_cli
+def test_cli_workflow_file_not_found_error(cli_harness, test_project):
+    """
+    Test top-level workflow command with non-existent file path.
+
+    Validates:
+    - Command fails with appropriate error (exit code != 0)
+    - Error message indicates file not found
+    """
+    result = cli_harness.run_command(
+        [
+            "python",
+            "-m",
+            "tapps_agents.cli",
+            "workflow",
+            "workflows/custom/nonexistent.yaml",
+            "--prompt",
+            "Test",
+        ],
+        cwd=test_project,
+        expect_success=False,
+    )
+
+    assert result.exit_code != 0
+    error_text = result.stderr.lower() + result.stdout.lower()
+    assert (
+        "not found" in error_text or "error" in error_text
+    ), f"Expected file not found error, got: {result.stderr}"
+
+
+def test_cli_orchestrator_workflow_file_not_found_error(cli_harness, test_project):
+    """
+    Test orchestrator workflow command with non-existent file path.
+
+    Validates:
+    - Command fails with appropriate error (exit code != 0)
+    - Error message indicates file not found
+    """
+    result = cli_harness.run_command(
+        [
+            "python",
+            "-m",
+            "tapps_agents.cli",
+            "orchestrator",
+            "workflow",
+            "workflows/custom/nonexistent.yaml",
+            "--format",
+            "json",
+        ],
+        cwd=test_project,
+        expect_success=False,
+    )
+
+    assert result.exit_code != 0
+    json_data = assert_json_output(result)
+    assert "error" in json_data
+    assert "not found" in json_data["error"].lower()
+
+
 def test_cli_orchestrator_missing_workflow_id_error(cli_harness, test_project):
     """
     Test CLI error handling for missing workflow_id in workflow-start.

@@ -238,6 +238,7 @@ Orchestrator Agent Commands:
   workflow-next                        - Execute next workflow step
   workflow-skip <step_id>              - Skip a workflow step
   workflow-resume                      - Resume interrupted workflow
+  workflow <file_path>                 - Execute a workflow from a YAML file path
   gate                                 - Evaluate workflow gate condition
   help                                 - Show this help message
 
@@ -248,6 +249,7 @@ Options:
 Examples:
   python -m tapps_agents.cli orchestrator workflow-list
   python -m tapps_agents.cli orchestrator workflow-start workflow_123
+  python -m tapps_agents.cli orchestrator workflow workflows/custom/my-workflow.yaml
   python -m tapps_agents.cli orchestrator workflow-status
 
 For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
