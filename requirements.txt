@@ -24,7 +24,7 @@ rich>=13.9.4
 
 # Dependency conflict resolution
 # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
-# langchain-core 0.2.43 requires packaging<25,>=23.2
+# langchain-core 0.2.43 requires packaging>=23.2,<26
 packaging>=23.2,<25
 
 # Development Tools (from dev extra)
