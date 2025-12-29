@@ -38,6 +38,12 @@ from .checkpoint_manager import CheckpointManager, CheckpointStorage, TaskCheckp
 from .config import ProjectConfig as ProjectConfig
 from .config import load_config as load_config
 from .context_manager import ContextManager
+from .docker_utils import (
+    get_container_status,
+    run_docker_ps_json,
+    run_docker_ps_native,
+    run_docker_ps_simple,
+)
 from .hardware_profiler import (
     CacheOptimizationProfile,
     HardwareProfile,
@@ -218,4 +224,8 @@ __all__ = [
     "RenderingMode",
     "ScreenshotOptions",
     "InteractionEvent",
+    "run_docker_ps_json",
+    "run_docker_ps_simple",
+    "run_docker_ps_native",
+    "get_container_status",
 ]

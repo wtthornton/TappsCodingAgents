@@ -33,6 +33,92 @@ All stabilization tasks leverage the framework's own tools, demonstrating self-h
 
 ---
 
+## Recent Fixes (December 29, 2025)
+
+**Status**: ✅ All fixes completed and tested
+
+### Issue 4: Tester Agent - generate-tests returns instruction object, doesn't create test file
+- **Status**: ✅ FIXED
+- **Fix Applied**: Modified `tester.generate_tests_command` and `tester.test_command` to actually generate and write test files when `auto_write_tests` is enabled
+- **Impact**: CLI commands now create test files directly instead of only returning instruction objects
+- **Files Changed**: `tapps_agents/agents/tester/agent.py`
+- **Related**: Also fixed `test_command` to generate AND run tests
+- **Documentation**: See `docs/ISSUES_FIXED_2025-12-29.md` and `docs/INSTRUCTION_OBJECT_FIX_ANALYSIS.md`
+
+### Issue 5: Reviewer Agent - Quality score below threshold
+- **Status**: ✅ RESOLVED (User addressed test coverage manually)
+- **Issue**: Overall score 67.4/100 (below 70 threshold) due to 0% test coverage
+- **Resolution**: User created tests manually to address coverage. Quality threshold is configurable in `.tapps-agents/config.yaml`
+- **Documentation**: See `docs/ISSUES_FIXED_2025-12-29.md`
+
+### Issue 6: ai-code-executor Container - TypeError in sandbox.py
+- **Status**: ✅ FIXED (External project)
+- **Issue**: `TypeError: 'method' object is not subscriptable` due to `multiprocessing.Queue[dict[str, Any]]` type hint in Python 3.9
+- **Fix Applied**: Added `from __future__ import annotations` at top of `sandbox.py`
+- **Impact**: Container now builds and runs successfully
+- **Documentation**: See `docs/ISSUES_FIXED_2025-12-29.md`
+
+### Additional Analysis: Instruction Object Pattern Review
+- **Status**: ✅ COMPLETED
+- **Analysis**: Reviewed all agent commands that return instruction objects
+- **Findings**: Identified 3 additional commands that may need similar fixes:
+  - `tester.generate_e2e_tests_command` (medium priority)
+  - `implementer.refactor` (high priority - explicitly marked as TODO)
+  - `implementer.implement` (needs decision - may be intentional)
+- **Documentation**: See `docs/INSTRUCTION_OBJECT_FIX_ANALYSIS.md` for complete analysis
+
+### Issue 7: Docker ps Command - Agent Crash with Table Format
+- **Status**: ✅ FIXED
+- **Date**: 2025-12-29
+- **Command**: `docker ps --format "table {{.Names}}\t{{.Status}}" | Select-Object -First 35`
+- **Error**: Agent crashes when trying to execute this command (connection error)
+- **Root Cause**: 
+  - `--format "table"` creates a header row that breaks `Select-Object` parsing
+  - Tab character `\t` not properly handled in PowerShell piping
+  - Table format output doesn't work well with PowerShell cmdlets
+- **Fix Applied**: 
+  - Created `tapps_agents/core/docker_utils.py` with safe Docker command execution utilities
+  - Exposed utilities in `tapps_agents/core/__init__.py` for easy imports
+  - Created comprehensive unit tests in `tests/unit/core/test_docker_utils.py`
+- **Impact**: Provides reliable alternatives for checking Docker container status
+- **Files Changed**: 
+  - `tapps_agents/core/docker_utils.py` (new file - 233 lines)
+  - `tapps_agents/core/__init__.py` (added exports)
+  - `tests/unit/core/test_docker_utils.py` (new file - 300+ lines of tests)
+  - `docs/STABILIZATION_PLAN.md` (documentation)
+- **Testing**: Comprehensive unit tests cover all functions, error cases, and edge cases
+- **Recommended Alternatives**:
+  1. **JSON Format (Most Reliable)** - Use `run_docker_ps_json()`:
+     ```python
+     from tapps_agents.core.docker_utils import run_docker_ps_json
+     containers = run_docker_ps_json(limit=35)
+     ```
+     Or in PowerShell:
+     ```powershell
+     docker ps --format json | ConvertFrom-Json | Select-Object -First 35 | Format-Table Name, Status
+     ```
+  2. **Simple Format (No Table)** - Use `run_docker_ps_simple()`:
+     ```python
+     from tapps_agents.core.docker_utils import run_docker_ps_simple
+     containers = run_docker_ps_simple(limit=35)
+     ```
+     Or in PowerShell:
+     ```powershell
+     docker ps --format "{{.Names}}\t{{.Status}}" | Select-Object -First 35
+     ```
+  3. **Native Docker Output** - Use `run_docker_ps_native()`:
+     ```python
+     from tapps_agents.core.docker_utils import run_docker_ps_native
+     output = run_docker_ps_native(limit=35)
+     ```
+     Or in PowerShell:
+     ```powershell
+     docker ps | Select-Object -First 35
+     ```
+- **Documentation**: See `tapps_agents/core/docker_utils.py` for complete API documentation
+
+---
+
 ## 1. Test Suite Stabilization (Priority: CRITICAL)
 
 **⚠️ All test stabilization tasks use tapps-agents workflows and commands**
