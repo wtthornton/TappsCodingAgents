@@ -1666,7 +1666,7 @@ def get_framework_version() -> str | None:
     even in problematic editable install scenarios.
     
     Returns:
-        Version string (e.g., "3.0.0") or None if version cannot be determined
+        Version string (e.g., "3.0.1") or None if version cannot be determined
     """
     # Strategy 1: Try direct import from package (most reliable for editable installs)
     try:

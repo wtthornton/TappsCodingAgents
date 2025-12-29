@@ -1025,18 +1025,43 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         elif file_ext == ".py":
             # Use Ruff for Python files
             linting_score = self.scorer._calculate_linting_score(file_path)
-            issues = self.scorer.get_ruff_issues(file_path)
+            issues_raw = self.scorer.get_ruff_issues(file_path)
 
-            # Count issues by severity
-            error_count = sum(
-                1 for d in issues if d.get("code", {}).get("name", "").startswith("E")
-            )
-            warning_count = sum(
-                1 for d in issues if d.get("code", {}).get("name", "").startswith("W")
-            )
-            fatal_count = sum(
-                1 for d in issues if d.get("code", {}).get("name", "").startswith("F")
-            )
+            # Defensive check: ensure issues is a list and filter out non-dict items
+            if not isinstance(issues_raw, list):
+                logger.warning(f"get_ruff_issues returned non-list: {type(issues_raw).__name__}")
+                issues = []
+            else:
+                # Filter to only dict items and ensure they have the expected structure
+                issues = []
+                for item in issues_raw:
+                    if isinstance(item, dict):
+                        issues.append(item)
+                    else:
+                        logger.warning(f"Skipping non-dict issue item: {type(item).__name__} - {str(item)[:100]}")
+
+            # Count issues by severity (defensive: handle missing or malformed code structure)
+            error_count = 0
+            warning_count = 0
+            fatal_count = 0
+            
+            for d in issues:
+                if not isinstance(d, dict):
+                    continue
+                code_info = d.get("code")
+                if isinstance(code_info, dict):
+                    code_name = code_info.get("name", "")
+                elif isinstance(code_info, str):
+                    code_name = code_info
+                else:
+                    code_name = str(d.get("code", ""))
+                
+                if code_name.startswith("E"):
+                    error_count += 1
+                elif code_name.startswith("W"):
+                    warning_count += 1
+                elif code_name.startswith("F"):
+                    fatal_count += 1
 
             return {
                 "file": str(file_path),

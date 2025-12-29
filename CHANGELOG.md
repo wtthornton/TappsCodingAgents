@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1] - 2026-01-31
+
+### Fixed
+- Fixed version import issues in editable installs - added defensive import pattern with fallbacks
+- Fixed lint command bug where `'str' object has no attribute 'get'` error occurred
+- Enhanced error handling in batch lint processing to handle malformed Ruff output
+- Added defensive checks to ensure all result objects are dicts before processing
+- **Fixed ModuleNotFoundError after upgrade** - When upgrading to 3.0.1, if you encounter `ModuleNotFoundError: No module named 'tapps_agents.agents.analyst'`, reinstall the package with `pip install -e .` to refresh editable install metadata
+
+### Changed
+- Improved version import robustness with 3-strategy fallback (direct import → importlib.metadata → file reading)
+- Enhanced lint command to filter out non-dict items from issues list
+- Made code counting more robust to handle different code structure formats
+
 ## [3.0.0] - 2026-01-31
 
 ### Changed

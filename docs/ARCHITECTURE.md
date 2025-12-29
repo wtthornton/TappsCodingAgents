@@ -25,7 +25,7 @@ These shard files exist to keep agent context small while remaining accurate.
 
 # Architecture Overview
 
-**Version**: 3.0.0  
+**Version**: 3.0.1  
 **Last Updated**: January 2026
 
 ## System Architecture

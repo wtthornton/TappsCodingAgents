@@ -21,6 +21,71 @@ python -m pip install --upgrade pip
 
 ## CLI
 
+### Cannot import '_version_' from 'tapps_agents' (Upgrade Required)
+
+**Problem:** When running `python -m tapps_agents.cli --version` or any CLI command, you get:
+```
+ImportError: cannot import name '_version_' from 'tapps_agents' (unknown location)
+```
+
+**Cause:** You have an older version (2.0.1 or earlier) installed that has a bug preventing the CLI from running. The CLI can't run, so you can't use it to upgrade.
+
+**Solution:** Upgrade directly using `pip`, bypassing the broken CLI:
+
+```bash
+# Upgrade to latest version
+pip install --upgrade tapps-agents
+
+# Or upgrade to specific version (3.0.1+ fixes this issue)
+pip install --upgrade tapps-agents==3.0.1
+```
+
+**If installed as git submodule:**
+```bash
+cd TappsCodingAgents
+git pull origin main
+git checkout v3.0.1  # or latest tag
+pip install -e .
+```
+
+**Verify after upgrade:**
+```bash
+python -m tapps_agents.cli --version
+# Should show: tapps-agents 3.0.1
+```
+
+See [TROUBLESHOOTING_UPGRADE.md](TROUBLESHOOTING_UPGRADE.md) for detailed upgrade instructions.
+
+### ModuleNotFoundError: No module named 'tapps_agents.agents.analyst' (After Upgrade)
+
+**Problem:** After upgrading to 3.0.1 (or any new version), you get:
+```
+ModuleNotFoundError: No module named 'tapps_agents.agents.analyst'
+```
+
+**Cause:** When upgrading code to a new version but not reinstalling the package, editable installs can have stale metadata that prevents Python from finding modules correctly.
+
+**Solution:** Reinstall the package to refresh the editable install:
+
+```bash
+# If installed via pip (editable mode):
+cd /path/to/TappsCodingAgents
+pip install -e .
+
+# If installed as regular package, upgrade:
+pip install --upgrade tapps-agents==3.0.1
+
+# Verify the fix:
+python -m tapps_agents.cli reviewer review --help
+```
+
+**Prevention:** Always reinstall after upgrading code when using editable installs:
+```bash
+git pull origin main  # or checkout new version
+git checkout v3.0.1   # if upgrading to specific version
+pip install -e .      # Refresh editable install
+```
+
 ### CLI runs but prints "Playwright not available"
 
 Some browser-related functionality can run in a mocked mode if the **Python Playwright package** is not installed.

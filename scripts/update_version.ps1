@@ -247,6 +247,7 @@ Write-Host "Next steps:" -ForegroundColor Cyan
 Write-Host "  1. Review the changes: git diff" -ForegroundColor White
 Write-Host "  2. Update CHANGELOG.md with release notes for version $Version" -ForegroundColor White
 Write-Host "  3. Build packages: python -m build" -ForegroundColor White
-Write-Host ('  4. Create release: .\scripts\create_github_release.ps1 -Version ' + $Version) -ForegroundColor White
+$releaseCmd = ".\scripts\create_github_release.ps1 -Version $Version"
+Write-Host "  4. Create release: $releaseCmd" -ForegroundColor White
 
 exit 0

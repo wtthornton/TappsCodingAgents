@@ -416,6 +416,12 @@ async def _process_file_batch(
         async with semaphore:
             try:
                 result = await reviewer.run(command, file=str(file_path))
+                # Ensure result is always a dict (defensive check)
+                if not isinstance(result, dict):
+                    return (file_path, {
+                        "error": f"Unexpected result type: {type(result).__name__}. Result: {str(result)[:200]}",
+                        "file": str(file_path)
+                    })
                 return (file_path, result)
             except Exception as e:
                 return (file_path, {"error": str(e), "file": str(file_path)})
@@ -440,11 +446,20 @@ async def _process_file_batch(
             
         file_path, file_result = result
         
+        # Defensive check: ensure file_result is a dict
+        if not isinstance(file_result, dict):
+            aggregated["failed"] += 1
+            aggregated["errors"].append({
+                "file": str(file_path),
+                "error": f"Unexpected result type: {type(file_result).__name__}. Result: {str(file_result)[:200]}"
+            })
+            continue
+        
         if "error" in file_result:
             aggregated["failed"] += 1
             aggregated["errors"].append({
                 "file": str(file_path),
-                "error": file_result["error"]
+                "error": file_result.get("error", "Unknown error")
             })
         else:
             aggregated["successful"] += 1
@@ -686,6 +701,16 @@ async def lint_command(
             result = await _process_file_batch(reviewer, resolved_files, "lint", max_workers)
             feedback.clear_progress()
 
+            # Defensive check: ensure result is a dict
+            if not isinstance(result, dict):
+                feedback.error(
+                    f"Unexpected result type from batch processing: {type(result).__name__}",
+                    error_code="invalid_result_type",
+                    context={"result_type": type(result).__name__, "result_preview": str(result)[:200]},
+                    exit_code=1,
+                )
+                return
+
             if output_file:
                 if output_format == "json":
                     output_content = format_json(result)
@@ -701,7 +726,7 @@ async def lint_command(
                 if output_format == "json":
                     feedback.output_result(
                         result,
-                        message=f"Linting completed: {result['successful']}/{result['total']} files successful",
+                        message=f"Linting completed: {result.get('successful', 0)}/{result.get('total', 0)} files successful",
                     )
                 elif output_format in ("markdown", "html"):
                     print(
@@ -710,7 +735,7 @@ async def lint_command(
                         else format_html(result.get("files", []), title="Batch Linting Results")
                     )
                 else:
-                    feedback.success(f"Linting completed: {result['successful']}/{result['total']} files successful")
+                    feedback.success(f"Linting completed: {result.get('successful', 0)}/{result.get('total', 0)} files successful")
                     print(_format_text_batch_summary(result, title="Batch Lint"))
 
             if fail_on_issues:
