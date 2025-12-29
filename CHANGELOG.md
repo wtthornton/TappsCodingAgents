@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.3] - 2025-12-29
+
+### Added
+- **Background Agents Monitoring Documentation** - Comprehensive guide for monitoring and managing background agents
+- **Help Functions Analysis** - Performance analysis and improvements summary documentation
+- **Monitoring Script** - Added `scripts/monitor_status.py` for real-time agent status monitoring
+- **Workflow Events** - Enhanced workflow event tracking and logging
+
+### Changed
+- **Agent Implementations** - Updated multiple agent implementations for improved reliability:
+  - Debugger agent: Enhanced error analysis capabilities
+  - Documenter agent: Improved documentation generation
+  - Implementer agent: Better code generation patterns
+  - Improver agent: Enhanced code improvement suggestions
+  - Ops agent: Improved security and deployment operations
+  - Orchestrator agent: Enhanced workflow coordination
+  - Planner agent: Better story planning and estimation
+  - Tester agent: Improved test generation and execution
+- **Core Functionality** - Enhanced core components:
+  - `agent_base.py`: Improved base agent functionality
+  - `cursor_verification.py`: Better Cursor integration validation
+  - `init_project.py`: Enhanced project initialization
+
+### Fixed
+- Improved test coverage for orchestrator agent
+- Enhanced error handling across multiple agents
+
+## [3.0.2] - 2025-12-29
+
+### Fixed
+- **OrchestratorAgent.activate()** - Fixed to accept `offline_mode` parameter, resolving TypeError in orchestrator CLI command handler
+- Resolved parameter mismatch in orchestrator agent activation
+
+### Documentation
+- Added documentation for multiple installations and upgrade troubleshooting
+- Updated expert knowledge files to 2025 standards
+- Enhanced CLI feedback and user experience documentation
+
 ## [3.0.1] - 2026-01-31
 
 ### Fixed
