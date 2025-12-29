@@ -13,6 +13,7 @@ from ...core.cursor_verification import (
     format_verification_results,
     verify_cursor_integration,
 )
+from ..base import run_async_command
 from ..feedback import get_feedback
 from .common import format_json_output
 from .reviewer import score_command
@@ -2378,6 +2379,7 @@ def handle_workflow_resume_command(args: object) -> None:
 
     workflow_id = getattr(args, "workflow_id", None)
     validate = getattr(args, "validate", True)
+    max_steps = getattr(args, "max_steps", 50)
     
     executor = WorkflowExecutor(auto_detect=False, auto_mode=True)
     
@@ -2409,27 +2411,86 @@ def handle_workflow_resume_command(args: object) -> None:
             print("Error: Could not load workflow state or workflow definition", file=sys.stderr)
             sys.exit(1)
         
+        # Validate state status
+        if executor.state.status == "completed":
+            print(f"\n{'='*60}")
+            print(f"Workflow: {executor.workflow.name}")
+            print(f"{'='*60}")
+            print(f"Workflow ID: {executor.state.workflow_id}")
+            print("Status: Already completed")
+            print(f"{'='*60}")
+            return
+        
+        if executor.state.status == "failed":
+            print(f"\nWarning: Workflow previously failed. Resuming from failure point.", file=sys.stderr)
+            print(f"Previous error: {executor.state.error or 'Unknown error'}", file=sys.stderr)
+            # Reset status to running to allow resume
+            executor.state.status = "running"
+        
+        # Resume paused workflow if needed
+        if executor.state.status == "paused":
+            executor.resume_workflow()
+        
         print(f"\n{'='*60}")
         print(f"Resuming: {executor.workflow.name}")
         print(f"{'='*60}")
         print(f"Workflow ID: {executor.state.workflow_id}")
         print(f"Status: {executor.state.status}")
         print(f"Current Step: {executor.state.current_step or 'N/A'}")
+        print(f"Completed Steps: {len(executor.state.completed_steps)}")
         print()
         
-        # Resume execution
-        result = asyncio.run(executor.run())
+        # Get target file from state if available
+        target_file = executor.state.variables.get("target_file")
+        if target_file:
+            # Convert to relative path if absolute
+            target_path = Path(target_file)
+            if target_path.is_absolute():
+                # Try to make it relative to project root
+                try:
+                    target_file = str(target_path.relative_to(Path.cwd()))
+                except ValueError:
+                    # Keep absolute if can't make relative
+                    target_file = str(target_path)
         
-        if result.status == "completed":
+        # Resume execution - use execute() method, not run()
+        # Use run_async_command helper for proper event loop management
+        final_state = run_async_command(executor.execute(
+            workflow=None,  # Already loaded
+            target_file=target_file,
+            max_steps=max_steps,
+        ))
+        
+        # Handle final state
+        if final_state.status == "completed":
             print(f"\n{'='*60}")
             print("Workflow completed successfully!")
             print(f"{'='*60}")
-        elif result.status == "failed":
-            print(f"\nError: {result.error or 'Unknown error'}", file=sys.stderr)
+            print(f"Total steps completed: {len(final_state.completed_steps)}")
+        elif final_state.status == "failed":
+            print(f"\n{'='*60}")
+            print("Workflow failed")
+            print(f"{'='*60}")
+            print(f"Error: {final_state.error or 'Unknown error'}", file=sys.stderr)
             sys.exit(1)
         else:
-            print(f"\nWorkflow status: {result.status}")
+            print(f"\n{'='*60}")
+            print(f"Workflow status: {final_state.status}")
+            print(f"{'='*60}")
+            print(f"Current step: {final_state.current_step or 'N/A'}")
+            print(f"Completed steps: {len(final_state.completed_steps)}")
+            print("\nWorkflow can be resumed again with: tapps-agents workflow resume")
             
+    except FileNotFoundError as e:
+        print(f"Error: No workflow state found to resume", file=sys.stderr)
+        if workflow_id:
+            print(f"  Workflow ID: {workflow_id}", file=sys.stderr)
+        print(f"  Details: {e}", file=sys.stderr)
+        sys.exit(1)
+    except ValueError as e:
+        print(f"Error: Invalid workflow state or configuration", file=sys.stderr)
+        print(f"  Details: {e}", file=sys.stderr)
+        sys.exit(1)
     except Exception as e:
         print(f"Error resuming workflow: {e}", file=sys.stderr)
         import traceback

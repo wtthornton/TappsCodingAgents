@@ -558,6 +558,84 @@ This project uses its own framework for development:
 
 See [Self-Hosting Setup](implementation/SELF_HOSTING_SETUP_COMPLETE.md) for details.
 
+## Windows Compatibility & Encoding
+
+**⚠️ CRITICAL: All scripts and code must work correctly on Windows**
+
+This project is developed and tested on **Windows** (in addition to Linux/macOS). All scripts, tools, and code must handle Windows-specific encoding issues correctly.
+
+### Windows Encoding Requirements
+
+**All Python scripts MUST:**
+
+1. **Set UTF-8 encoding for console output** (Windows uses CP1252 by default):
+   ```python
+   import sys
+   import os
+   
+   # Set UTF-8 encoding for Windows console
+   if sys.platform == "win32":
+       os.environ["PYTHONIOENCODING"] = "utf-8"
+       try:
+           sys.stdout.reconfigure(encoding="utf-8")
+           sys.stderr.reconfigure(encoding="utf-8")
+       except AttributeError:
+           # Python < 3.7 - use environment variable only
+           pass
+   ```
+
+2. **Use ASCII-safe fallbacks for Unicode characters**:
+   ```python
+   # Use ASCII-safe symbols instead of Unicode emojis
+   SUCCESS_SYMBOL = "[OK]"
+   ERROR_SYMBOL = "[FAIL]"
+   WARNING_SYMBOL = "[WARN]"
+   
+   # Or handle UnicodeEncodeError gracefully
+   try:
+       print(f"{GREEN}✅ {text}{RESET}")
+   except UnicodeEncodeError:
+       print(f"[OK] {text}")
+   ```
+
+3. **Always specify encoding when opening files**:
+   ```python
+   # ✅ CORRECT - Always specify encoding
+   with open("file.txt", "r", encoding="utf-8") as f:
+       content = f.read()
+   
+   # ❌ WRONG - Relies on system default (CP1252 on Windows)
+   with open("file.txt", "r") as f:
+       content = f.read()
+   ```
+
+4. **Test on Windows before committing**:
+   - Run all scripts on Windows to verify encoding works
+   - Use PowerShell or Command Prompt (not just WSL)
+   - Verify Unicode characters display correctly
+
+### Why This Matters
+
+- **Windows default encoding is CP1252**, not UTF-8
+- **Unicode emojis (✅, ❌, ⚠️) fail on Windows** without proper encoding setup
+- **File I/O without explicit encoding** can cause `UnicodeDecodeError` on Windows
+- **GitHub Actions runs on Linux**, but developers use Windows - both must work
+
+### Testing on Windows
+
+Before committing code that prints to console or reads files:
+
+```bash
+# Test script on Windows PowerShell
+python scripts/your_script.py
+
+# Verify no encoding errors
+# Check that Unicode characters display correctly
+# Or use ASCII-safe alternatives
+```
+
+**Reference**: See [Python 3.10 Documentation - Windows Encoding](https://docs.python.org/3.10/library/sys.html) for official guidance.
+
 ## GitHub Best Practices (2025)
 
 This project follows 2025 GitHub best practices for open-source development:

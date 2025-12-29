@@ -126,9 +126,9 @@ class NLPWorkflowExecutor:
             if target_file:
                 executor.user_prompt = intent_result.parameters.get("prompt")
 
-            import asyncio
+            from ...cli.base import run_async_command
 
-            result = asyncio.run(executor.execute(workflow=workflow, target_file=target_file))
+            result = run_async_command(executor.execute(workflow=workflow, target_file=target_file))
 
             # Record learning if user corrected
             if intent_result.workflow_name != input_text:

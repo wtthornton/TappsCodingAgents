@@ -313,7 +313,19 @@ If --workflow-id is not specified, resumes the most recent workflow. Use --valid
         "--validate",
         action="store_true",
         default=True,
-        help="Validate state integrity and dependencies before resuming. Checks that all required files and context are still available (default: True). Disable only if you're certain the state is valid.",
+        help="Validate state integrity and dependencies before resuming. Checks that all required files and context are still available (default: True).",
+    )
+    state_resume_parser.add_argument(
+        "--no-validate",
+        action="store_false",
+        dest="validate",
+        help="Skip state validation before resuming. Use only if you're certain the state is valid.",
+    )
+    state_resume_parser.add_argument(
+        "--max-steps",
+        type=int,
+        default=50,
+        help="Maximum number of steps to execute during resume (default: 50). Use to limit execution for testing or debugging.",
     )
     
     # Recommend command

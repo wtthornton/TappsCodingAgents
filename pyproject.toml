@@ -125,7 +125,7 @@ exclude = '''
 
 [tool.ruff]
 line-length = 88
-target-version = "3.0.4"
+target-version = "py313"
 fix = false
 show-fixes = true
 exclude = [
