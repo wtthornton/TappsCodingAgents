@@ -1,21 +1,18 @@
 # Version Update Script
 # Updates version number in pyproject.toml, tapps_agents/__init__.py, and all documentation files
 
+[CmdletBinding()]
 param(
     [Parameter(Mandatory=$true)]
+    [ValidatePattern('^\d+\.\d+\.\d+$')]
     [string]$Version,
     
     [Parameter(Mandatory=$false)]
     [switch]$SkipDocs = $false
 )
 
-# Validate semantic versioning format (X.Y.Z)
-$versionPattern = '^\d+\.\d+\.\d+$'
-if ($Version -notmatch $versionPattern) {
-    Write-Host "ERROR: Invalid version format. Expected format: X.Y.Z (e.g., 2.4.2)" -ForegroundColor Red
-    Write-Host "Provided: $Version" -ForegroundColor Yellow
-    exit 1
-}
+# Set error action preference
+$ErrorActionPreference = 'Stop'
 
 Write-Host "=== Version Update Script ===" -ForegroundColor Cyan
 Write-Host ""
@@ -34,19 +31,38 @@ $pyprojectFile = Join-Path $projectRoot "pyproject.toml"
 $initFile = Join-Path $projectRoot "tapps_agents\__init__.py"
 
 # Verify core files exist
-if (-not (Test-Path $pyprojectFile)) {
-    Write-Host "ERROR: pyproject.toml not found at: $pyprojectFile" -ForegroundColor Red
-    exit 1
-}
+try {
+    if (-not (Test-Path $pyprojectFile)) {
+        Write-Error -Message "pyproject.toml not found at: $pyprojectFile" `
+            -Category ObjectNotFound `
+            -ErrorId "FileNotFound" `
+            -TargetObject $pyprojectFile
+    }
 
-if (-not (Test-Path $initFile)) {
-    Write-Host "ERROR: tapps_agents/__init__.py not found at: $initFile" -ForegroundColor Red
+    if (-not (Test-Path $initFile)) {
+        Write-Error -Message "tapps_agents/__init__.py not found at: $initFile" `
+            -Category ObjectNotFound `
+            -ErrorId "FileNotFound" `
+            -TargetObject $initFile
+    }
+} catch {
+    Write-Error -Message "Failed to verify core files: $_" `
+        -Category InvalidOperation `
+        -ErrorId "FileVerificationFailed"
     exit 1
 }
 
 # Read current versions
-$pyprojectContent = Get-Content $pyprojectFile -Raw
-$initContent = Get-Content $initFile -Raw
+try {
+    $pyprojectContent = Get-Content $pyprojectFile -Raw -ErrorAction Stop
+    $initContent = Get-Content $initFile -Raw -ErrorAction Stop
+} catch {
+    Write-Error -Message "Failed to read version files: $_" `
+        -Category ReadError `
+        -ErrorId "FileReadError" `
+        -TargetObject $_.TargetObject
+    exit 1
+}
 
 # Extract current version from pyproject.toml
 $currentVersionPyproject = ""
@@ -80,18 +96,34 @@ if ($currentVersionPyproject -ne $currentVersionInit) {
 }
 
 # Update pyproject.toml
-Write-Host "Updating pyproject.toml..." -ForegroundColor Cyan
-$replacePattern1 = 'version\s*=\s*".*?"'
-$replaceValue1 = "version = `"$Version`""
-$pyprojectContent = $pyprojectContent -replace $replacePattern1, $replaceValue1
-Set-Content -Path $pyprojectFile -Value $pyprojectContent -NoNewline
+try {
+    Write-Host "Updating pyproject.toml..." -ForegroundColor Cyan
+    $replacePattern1 = 'version\s*=\s*".*?"'
+    $replaceValue1 = "version = `"$Version`""
+    $pyprojectContent = $pyprojectContent -replace $replacePattern1, $replaceValue1
+    Set-Content -Path $pyprojectFile -Value $pyprojectContent -NoNewline -ErrorAction Stop
+} catch {
+    Write-Error -Message "Failed to update pyproject.toml: $_" `
+        -Category WriteError `
+        -ErrorId "FileUpdateError" `
+        -TargetObject $pyprojectFile
+    exit 1
+}
 
 # Update __init__.py
-Write-Host "Updating tapps_agents/__init__.py..." -ForegroundColor Cyan
-$replacePattern2 = '__version__\s*=\s*".*?"'
-$replaceValue2 = "__version__ = `"$Version`""
-$initContent = $initContent -replace $replacePattern2, $replaceValue2
-Set-Content -Path $initFile -Value $initContent -NoNewline
+try {
+    Write-Host "Updating tapps_agents/__init__.py..." -ForegroundColor Cyan
+    $replacePattern2 = '__version__\s*=\s*".*?"'
+    $replaceValue2 = "__version__ = `"$Version`""
+    $initContent = $initContent -replace $replacePattern2, $replaceValue2
+    Set-Content -Path $initFile -Value $initContent -NoNewline -ErrorAction Stop
+} catch {
+    Write-Error -Message "Failed to update __init__.py: $_" `
+        -Category WriteError `
+        -ErrorId "FileUpdateError" `
+        -TargetObject $initFile
+    exit 1
+}
 
 $updatedFiles = @("pyproject.toml", "tapps_agents/__init__.py")
 
@@ -192,10 +224,14 @@ if (-not $SkipDocs) {
         if (Test-Path $filePath) {
             $content = Get-Content $filePath -Raw
             if ($content -match $jsonFile.Pattern) {
-                $content = $content -replace $jsonFile.Pattern, $jsonFile.Replacement
-                Set-Content -Path $filePath -Value $content -NoNewline
-                $updatedFiles += $jsonFile.Path
-                Write-Host "  ✓ Updated: $($jsonFile.Path)" -ForegroundColor Gray
+                try {
+                    $content = $content -replace $jsonFile.Pattern, $jsonFile.Replacement
+                    Set-Content -Path $filePath -Value $content -NoNewline -ErrorAction Stop
+                    $updatedFiles += $jsonFile.Path
+                    Write-Host "  ✓ Updated: $($jsonFile.Path)" -ForegroundColor Gray
+                } catch {
+                    Write-Warning "Failed to update $($jsonFile.Path): $_"
+                }
             }
         } else {
             Write-Host "  ⚠ Skipped (not found): $($jsonFile.Path)" -ForegroundColor Yellow
@@ -217,9 +253,13 @@ if (-not $SkipDocs) {
             }
             
             if ($updated) {
-                Set-Content -Path $filePath -Value $content -NoNewline
-                $updatedFiles += $docFile.Path
-                Write-Host "  ✓ Updated: $($docFile.Path)" -ForegroundColor Gray
+                try {
+                    Set-Content -Path $filePath -Value $content -NoNewline -ErrorAction Stop
+                    $updatedFiles += $docFile.Path
+                    Write-Host "  ✓ Updated: $($docFile.Path)" -ForegroundColor Gray
+                } catch {
+                    Write-Warning "Failed to update $($docFile.Path): $_"
+                }
             }
         } else {
             Write-Host "  ⚠ Skipped (not found): $($docFile.Path)" -ForegroundColor Yellow
@@ -260,9 +300,10 @@ if ($verifyVersionPyproject -eq $Version -and $verifyVersionInit -eq $Version) {
     Write-Host "  pyproject.toml: $verifyVersionPyproject" -ForegroundColor Gray
     Write-Host "  __init__.py:    $verifyVersionInit" -ForegroundColor Gray
 } else {
-    Write-Host "WARNING: Verification failed!" -ForegroundColor Yellow
-    Write-Host "  pyproject.toml: $verifyVersionPyproject (expected: $Version)" -ForegroundColor Yellow
-    Write-Host "  __init__.py:    $verifyVersionInit (expected: $Version)" -ForegroundColor Yellow
+    Write-Error -Message "Verification failed! Version mismatch detected." `
+        -Category InvalidResult `
+        -ErrorId "VerificationFailed" `
+        -RecommendedAction "Check that version updates were applied correctly. pyproject.toml: $verifyVersionPyproject (expected: $Version), __init__.py: $verifyVersionInit (expected: $Version)"
     exit 1
 }
 
