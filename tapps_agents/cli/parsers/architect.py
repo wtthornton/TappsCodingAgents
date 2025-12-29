@@ -27,7 +27,7 @@ with appropriate technology choices.""",
 
     design_system_parser = architect_subparsers.add_parser(
         "design-system",
-        aliases=["*design-system"],
+        aliases=["*design-system", "design", "*design"],
         help="Design the overall system architecture",
         description="""Design comprehensive system architecture from requirements.
         

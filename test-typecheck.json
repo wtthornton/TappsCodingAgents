@@ -1,0 +1,1608 @@
+{
+  "files": [
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\check_and_start_agents.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\check_background_agents.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\check_runtime_mode.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\run_amazon_workflow.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\setup.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_063835.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064056.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064345.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064612.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064816.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_065014.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_073406.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_075522.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_080107.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_080751.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_081110.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_132249.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_133326.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\verify_context7_key.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\verify_context7_setup.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\who_starts_background_agents.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\why_framework_doesnt_start_agents.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\windows_compatibility_check.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\billstest\\check_services.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\demo\\demo_prompt_enhancement.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\demo\\run_demo.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\example_bug.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\long_duration_example.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\unified_cache_example.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\visual_feedback_example.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\fixed-code\\example_bug.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\analyze_and_fix.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\analyze_project.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\check_documented_arguments.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\coverage_tracker.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\diagnose_ci_issues.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\execute_improvements.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\generate_lock_files.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\monitor_background_agents.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\monitor_status.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\monitor_workflow_progress.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\prepopulate_context7_cache.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\quality_marathon.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\run_tests_with_coverage.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\test_enhancer_rig.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\test_nuc_optimization.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\trigger_background_agent_demo.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\validate_dependencies.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\validate_framework.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\validate_root_structure.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\verify_cursor_api.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\verify_docs.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tapps_agents\\__init__.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\conftest.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\pytest_rich_progress.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\quick_context_check.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_cursor_executor.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_execute_startup.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_refactor.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_simple.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_single_file_refactor.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_workflow_prompt.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\cli\\test_feedback.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\cli\\test_help_commands.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\conftest.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\__init__.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\examples\\test_expert_examples.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\fixtures\\background_agent_fixtures.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\fixtures\\sample_code.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\fixtures\\state_persistence_fixtures.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_auto_enhancement.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_auto_execution_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_cursor_ide_timeline.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_cursor_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_full_sdlc.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_timeline_verification.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_real.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_context7_api_key_verification.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_context7_real.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cursor_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_debugger_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_documenter_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_e2e_workflow_real.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_enhancer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_implementer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_learning_best_practices_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_long_duration_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_negative_feedback_learning.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_planner_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_project_profile_json_serialization.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_reviewer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_reviewer_agent_real.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_security_aware_learning.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_tech_stack_priority_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_tester_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_visual_feedback_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\__init__.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\conftest.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_adaptive_cache_config.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_agent_base.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_agent_contracts.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_agent_learning.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_analyst_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_architect_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_ast_parser.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_best_practice_consultant.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_browser_controller.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_cache_router.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_capability_registry.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_checkpoint_manager.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_code_generator.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_config.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_context_manager.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_designer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_doc_generator.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_domain_detector.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_edge_cases_boundary.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_edge_cases_concurrency.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_edge_cases_core.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_error_analyzer.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_expert_engine.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_expert_synthesizer.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_governance.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_improver_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_knowledge_graph.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_knowledge_ingestion.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_learning_confidence.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_learning_decision.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_long_duration_support.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_mcp_gateway.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_nlp_parser.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_observability.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_ops_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_orchestrator_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_planner_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_progress_updates.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_report_generator_jinja2.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_resource_aware_executor.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_resume_handler.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_scoring.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_session_manager.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_task_memory.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_task_state.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_test_generator.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache_hardware_aware.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache_performance.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_visual_designer.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_visual_feedback.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_executor.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_parser.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_resume_command.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_resume_persistence.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\__init__.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_debugger_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_enhancer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_implementer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_progressive_review.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_reviewer_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_score_validator.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_tester_agent.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_cli.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_cli_base.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_cli_version_flag.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_commands.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_command_classifier.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_formatters.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_network_detection.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_parsers.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_parser_argument_validation.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_prompt_enhancer.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_workflow_recommend.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\__init__.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_agent_integration.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_analytics.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_analytics_dashboard.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_cache_structure.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_cleanup.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_commands.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_cross_reference_resolver.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_fuzzy_matcher.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_kb_cache.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_lookup.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_metadata.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_refresh_queue.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_security.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_staleness_policies.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\__init__.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_anti_pattern_extraction.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_doctor_windows_cmd_shims.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_error_edge_cases.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_error_propagation.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_exceptions_maintainability.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_init_project_cursor_artifacts.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_learning_explainability.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_meta_learning.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_path_validator.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_project_profile.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_project_type_detector.py",
+      "type_checking_score": 5.0,
+      "errors": [],
+      "error_count": 0,
+      "error_codes": [],
+      "tool": "mypy"
+    }
+  ],
+  "successful": 200,
+  "failed": 0,
+  "errors": [],
+  "total": 200
+}

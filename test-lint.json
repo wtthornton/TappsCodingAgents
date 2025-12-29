@@ -1,0 +1,2008 @@
+{
+  "files": [
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\check_and_start_agents.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\check_background_agents.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\check_runtime_mode.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\run_amazon_workflow.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\setup.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_063835.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064056.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064345.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064612.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_064816.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_065014.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_073406.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_075522.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_080107.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_080751.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_081110.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_132249.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.backup_20251218_133326.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\test_feature.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\verify_context7_key.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\verify_context7_setup.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\who_starts_background_agents.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\why_framework_doesnt_start_agents.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\windows_compatibility_check.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\billstest\\check_services.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\demo\\demo_prompt_enhancement.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\demo\\run_demo.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\example_bug.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\long_duration_example.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\unified_cache_example.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\examples\\visual_feedback_example.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\fixed-code\\example_bug.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\analyze_and_fix.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\analyze_project.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\check_documented_arguments.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\coverage_tracker.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\diagnose_ci_issues.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\execute_improvements.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\generate_lock_files.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\monitor_background_agents.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\monitor_status.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\monitor_workflow_progress.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\prepopulate_context7_cache.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\quality_marathon.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\run_tests_with_coverage.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\test_enhancer_rig.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\test_nuc_optimization.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\trigger_background_agent_demo.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\validate_dependencies.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\validate_framework.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\validate_root_structure.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\verify_cursor_api.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\scripts\\verify_docs.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tapps_agents\\__init__.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\conftest.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\pytest_rich_progress.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\quick_context_check.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_cursor_executor.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_execute_startup.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_refactor.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_simple.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_single_file_refactor.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\test_workflow_prompt.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\cli\\test_feedback.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\cli\\test_help_commands.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\conftest.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\__init__.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\examples\\test_expert_examples.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\fixtures\\background_agent_fixtures.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\fixtures\\sample_code.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\fixtures\\state_persistence_fixtures.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_auto_enhancement.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_auto_execution_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_cursor_ide_timeline.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_cursor_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_full_sdlc.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_timeline_verification.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_real.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_context7_api_key_verification.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_context7_real.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cursor_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_debugger_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_documenter_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_e2e_workflow_real.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_enhancer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_implementer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_learning_best_practices_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_long_duration_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_negative_feedback_learning.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_planner_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_project_profile_json_serialization.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_reviewer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_reviewer_agent_real.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_security_aware_learning.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_tech_stack_priority_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_tester_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_visual_feedback_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\__init__.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\conftest.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_adaptive_cache_config.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_agent_base.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_agent_contracts.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_agent_learning.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_analyst_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_architect_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_ast_parser.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_best_practice_consultant.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_browser_controller.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_cache_router.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_capability_registry.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_checkpoint_manager.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_code_generator.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_config.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_context_manager.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_designer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_doc_generator.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_domain_detector.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_edge_cases_boundary.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_edge_cases_concurrency.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_edge_cases_core.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_error_analyzer.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_expert_engine.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_expert_synthesizer.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_governance.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_improver_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_knowledge_graph.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_knowledge_ingestion.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_learning_confidence.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_learning_decision.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_long_duration_support.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_mcp_gateway.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_nlp_parser.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_observability.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_ops_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_orchestrator_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_planner_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_progress_updates.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_report_generator_jinja2.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_resource_aware_executor.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_resume_handler.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_scoring.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_session_manager.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_task_memory.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_task_state.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_test_generator.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache_hardware_aware.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache_performance.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_visual_designer.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_visual_feedback.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_executor.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_parser.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_resume_command.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_workflow_resume_persistence.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\__init__.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_debugger_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_enhancer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_implementer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_progressive_review.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_reviewer_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_score_validator.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\agents\\test_tester_agent.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_cli.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_cli_base.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_cli_version_flag.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_commands.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_command_classifier.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_formatters.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_network_detection.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_parsers.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_parser_argument_validation.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_prompt_enhancer.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\test_workflow_recommend.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\cli\\__init__.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_agent_integration.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_analytics.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_analytics_dashboard.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_cache_structure.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_cleanup.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_commands.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_cross_reference_resolver.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_fuzzy_matcher.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_kb_cache.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_lookup.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_metadata.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_refresh_queue.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_security.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_staleness_policies.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\__init__.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_anti_pattern_extraction.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_doctor_windows_cmd_shims.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_error_edge_cases.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_error_propagation.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_exceptions_maintainability.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_init_project_cursor_artifacts.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_learning_explainability.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_meta_learning.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_path_validator.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_project_profile.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_project_type_detector.py",
+      "linting_score": 10.0,
+      "issues": [],
+      "issue_count": 0,
+      "error_count": 0,
+      "warning_count": 0,
+      "fatal_count": 0,
+      "tool": "ruff"
+    }
+  ],
+  "successful": 200,
+  "failed": 0,
+  "errors": [],
+  "total": 200
+}

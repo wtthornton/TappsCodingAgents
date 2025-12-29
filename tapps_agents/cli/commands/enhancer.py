@@ -49,7 +49,7 @@ def handle_enhancer_command(args: object) -> None:
     # Only activate for commands that need it
     enhancer = EnhancerAgent()
     try:
-        asyncio.run(enhancer.activate(offline_mode=offline_mode))
+        asyncio.run(enhancer.activate(project_root=None, offline_mode=offline_mode))
 
         if command == "enhance":
             result = asyncio.run(

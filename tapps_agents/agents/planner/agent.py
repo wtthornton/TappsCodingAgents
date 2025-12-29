@@ -10,9 +10,11 @@ from typing import Any
 
 import yaml
 
+from ...agents.analyst.agent import AnalystAgent
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
+from ...core.runtime_mode import is_cursor_mode
 
 logger = logging.getLogger(__name__)
 
@@ -112,7 +114,9 @@ class PlannerAgent(BaseAgent):
         - Task estimates
         - Dependencies
         """
-        prompt = f"""You are a software planning expert. Analyze the following requirement and create a detailed plan.
+        # If in Cursor mode, return instruction for Cursor Skills
+        if is_cursor_mode():
+            prompt = f"""You are a software planning expert. Analyze the following requirement and create a detailed plan.
 
 Requirement:
 {description}
@@ -126,21 +130,165 @@ Generate a plan that includes:
 
 Format your response as structured text."""
 
-        # Prepare instruction for Cursor Skills
-        instruction = GenericInstruction(
-            agent_name="planner",
-            command="plan",
-            prompt=prompt,
-            parameters={"description": description},
-        )
+            # Prepare instruction for Cursor Skills
+            instruction = GenericInstruction(
+                agent_name="planner",
+                command="plan",
+                prompt=prompt,
+                parameters={"description": description},
+            )
 
-        return {
-            "type": "plan",
-            "description": description,
-            "instruction": instruction.to_dict(),
-            "skill_command": instruction.to_skill_command(),
-            "created_at": datetime.now().isoformat(),
-        }
+            return {
+                "type": "plan",
+                "description": description,
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "created_at": datetime.now().isoformat(),
+            }
+        
+        # For CLI mode, actually generate the plan using analyst agent
+        analyst = None
+        try:
+            analyst = AnalystAgent(config=self.config)
+            await analyst.activate(project_root=self.project_root, offline_mode=False)
+            
+            # Gather requirements first
+            requirements_result = await analyst.run(
+                "gather-requirements",
+                description=description,
+            )
+            
+            # Check for errors in result
+            if isinstance(requirements_result, dict) and "error" in requirements_result:
+                error_msg = requirements_result.get("error", "Unknown error")
+                logger.warning(f"Analyst agent returned error: {error_msg}")
+                raise RuntimeError(f"Requirements gathering failed: {error_msg}")
+            
+            # Extract requirements information
+            requirements = requirements_result.get("requirements", {})
+            if isinstance(requirements, dict):
+                functional_reqs = requirements.get("functional_requirements", [])
+                non_functional_reqs = requirements.get("non_functional_requirements", [])
+            else:
+                functional_reqs = []
+                non_functional_reqs = []
+            
+            # Build plan structure
+            plan_text = f"""# Plan: {description}
+
+## Overview
+
+{requirements_result.get('summary', {}).get('overview', 'Feature implementation plan') if isinstance(requirements_result.get('summary'), dict) else 'Feature implementation plan'}
+
+## Requirements
+
+### Functional Requirements
+{chr(10).join(f"- {req}" for req in functional_reqs) if functional_reqs else "- Requirements analysis in progress"}
+
+### Non-Functional Requirements
+{chr(10).join(f"- {req}" for req in non_functional_reqs) if non_functional_reqs else "- Requirements analysis in progress"}
+
+## User Stories
+
+(To be generated based on requirements)
+
+## Estimated Complexity
+
+(To be estimated per story)
+
+## Dependencies
+
+(To be identified)
+
+## Priority Order
+
+(To be determined)
+"""
+            
+            return {
+                "type": "plan",
+                "description": description,
+                "plan": plan_text,
+                "requirements": requirements,
+                "created_at": datetime.now().isoformat(),
+            }
+        except (ConnectionError, TimeoutError, OSError) as e:
+            # Network-related errors
+            error_msg = f"Network error: {str(e)}"
+            logger.error(f"Network error generating plan: {e}", exc_info=True)
+            # Fallback to instruction if analyst fails
+            prompt = f"""You are a software planning expert. Analyze the following requirement and create a detailed plan.
+
+Requirement:
+{description}
+
+Generate a plan that includes:
+1. Overview of the feature/requirement
+2. List of user stories (with brief descriptions)
+3. Estimated complexity for each story (1-5 scale)
+4. Dependencies between stories
+5. Suggested priority order
+
+Format your response as structured text."""
+
+            instruction = GenericInstruction(
+                agent_name="planner",
+                command="plan",
+                prompt=prompt,
+                parameters={"description": description},
+            )
+
+            return {
+                "type": "plan",
+                "description": description,
+                "error": error_msg,
+                "error_type": "network_error",
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "created_at": datetime.now().isoformat(),
+            }
+        except Exception as e:
+            # All other errors
+            error_msg = f"Error generating plan: {str(e)}"
+            logger.error(f"Error generating plan: {e}", exc_info=True)
+            # Fallback to instruction if analyst fails
+            prompt = f"""You are a software planning expert. Analyze the following requirement and create a detailed plan.
+
+Requirement:
+{description}
+
+Generate a plan that includes:
+1. Overview of the feature/requirement
+2. List of user stories (with brief descriptions)
+3. Estimated complexity for each story (1-5 scale)
+4. Dependencies between stories
+5. Suggested priority order
+
+Format your response as structured text."""
+
+            instruction = GenericInstruction(
+                agent_name="planner",
+                command="plan",
+                prompt=prompt,
+                parameters={"description": description},
+            )
+
+            return {
+                "type": "plan",
+                "description": description,
+                "error": error_msg,
+                "error_type": "unknown_error",
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "created_at": datetime.now().isoformat(),
+            }
+        finally:
+            # Ensure analyst is always closed, even on error
+            if analyst is not None:
+                try:
+                    await analyst.close()
+                except Exception as close_error:
+                    logger.warning(f"Error closing analyst agent: {close_error}", exc_info=True)
 
     async def create_story(
         self, description: str, epic: str | None = None, priority: str = "medium"

@@ -48,8 +48,8 @@ def handle_architect_command(args: object) -> None:
     # Only activate for commands that need it
     architect = ArchitectAgent()
     try:
-        asyncio.run(architect.activate(offline_mode=offline_mode))
-        if command == "design-system":
+        asyncio.run(architect.activate(project_root=None, offline_mode=offline_mode))
+        if command == "design-system" or command == "design":
             result = asyncio.run(
                 architect.run(
                     "design-system",

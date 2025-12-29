@@ -43,8 +43,29 @@ async def plan_command(description: str, output_format: str = "json"):
         result = await planner.run("plan", description=description)
         feedback.running("Finalizing plan...", step=3, total_steps=3)
 
-        check_result_error(result)
         feedback.clear_progress()
+
+        # Check for errors - handle network errors gracefully
+        if isinstance(result, dict) and "error" in result:
+            error_type = result.get("error_type", "unknown_error")
+            error_msg = result.get("error", "Unknown error")
+            
+            # For network errors, return the fallback instruction instead of crashing
+            if error_type == "network_error":
+                logger.warning(f"Network error during plan creation: {error_msg}")
+                if output_format == "json":
+                    # Return the instruction-based result for network errors
+                    feedback.output_result(result, message="Plan creation failed (network error), returning instruction-based fallback")
+                else:
+                    feedback.warning(f"Network error: {error_msg}")
+                    if "instruction" in result:
+                        print("\nNote: Network unavailable. Using instruction-based plan generation.")
+                        print(f"\nDescription: {result.get('description', '')}")
+                return
+            else:
+                # For other errors, use standard error handling
+                check_result_error(result)
+                return
 
         summary = {}
         if isinstance(result, dict):
@@ -61,8 +82,16 @@ async def plan_command(description: str, output_format: str = "json"):
             feedback.output_result(result, message="Plan created successfully")
         else:
             feedback.success("Plan created successfully")
-            print(f"\nPlan: {result['description']}")
-            print(f"\n{result.get('plan', '')}")
+            if "description" in result:
+                print(f"\nPlan: {result['description']}")
+            if "plan" in result:
+                print(f"\n{result.get('plan', '')}")
+    except Exception as e:
+        # Catch any unexpected exceptions
+        logger.error(f"Unexpected error in plan_command: {e}", exc_info=True)
+        feedback.error(f"Failed to create plan: {str(e)}")
+        if output_format == "json":
+            feedback.output_result({"error": str(e), "error_type": "unexpected_error"})
     finally:
         await planner.close()
 
