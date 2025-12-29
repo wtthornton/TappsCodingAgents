@@ -1377,6 +1377,30 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
                     ],
                     "alternative": "Set CONTEXT7_API_KEY environment variable for direct API access",
                 }
+            elif server_id == "Playwright":
+                mcp_status["setup_instructions"][server_id] = {
+                    "method": "npx",
+                    "steps": [
+                        "1. Install Node.js and npm (if not already installed)",
+                        "2. Configure Playwright MCP server in your MCP settings:",
+                        "   Location: ~/.cursor/mcp.json or .cursor/mcp.json",
+                        "   Configuration:",
+                        "   {",
+                        '     "mcpServers": {',
+                        '       "Playwright": {',
+                        '         "command": "npx",',
+                        '         "args": ["-y", "@playwright/mcp-server"]',
+                        "       }",
+                        "     }",
+                        "   }",
+                        "3. Restart Cursor/VS Code",
+                        "",
+                        "Note: Playwright MCP is optional. Cursor may provide Playwright MCP natively.",
+                        "If Playwright MCP is not configured, browser automation can still work via",
+                        "the Python Playwright package (install with: pip install playwright).",
+                    ],
+                    "alternative": "Install Python Playwright package: pip install playwright && python -m playwright install",
+                }
 
     # Categorize servers
     for server in mcp_status["detected_servers"] + mcp_status["missing_servers"]:

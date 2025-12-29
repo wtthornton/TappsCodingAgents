@@ -282,6 +282,95 @@ def collect_doctor_report(
         )
     )
 
+    # --- MCP Server checks ---
+    from .init_project import detect_mcp_servers
+    try:
+        mcp_status = detect_mcp_servers(root)
+        
+        # Check Context7 MCP
+        context7_detected = any(
+            s.get("id") == "Context7" and s.get("status") == "installed"
+            for s in mcp_status.get("detected_servers", [])
+        )
+        if context7_detected:
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="MCP_CONTEXT7",
+                    message="Context7 MCP: Configured",
+                )
+            )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="MCP_CONTEXT7",
+                    message="Context7 MCP: Not configured (optional but recommended)",
+                    remediation=(
+                        "Configure Context7 MCP in .cursor/mcp.json for library documentation lookup.\n"
+                        "Run 'tapps-agents init' to set up MCP configuration."
+                    ),
+                )
+            )
+        
+        # Check Playwright MCP
+        playwright_detected = any(
+            s.get("id") == "Playwright" and s.get("status") == "installed"
+            for s in mcp_status.get("detected_servers", [])
+        )
+        if playwright_detected:
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="MCP_PLAYWRIGHT",
+                    message="Playwright MCP: Configured",
+                )
+            )
+        else:
+            # Check if Python Playwright is installed as fallback
+            playwright_python_available = False
+            try:
+                import playwright  # noqa: F401
+                playwright_python_available = True
+            except ImportError:
+                pass
+            
+            if playwright_python_available:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="MCP_PLAYWRIGHT",
+                        message="Playwright MCP: Not configured (optional), but Python Playwright package is available",
+                        remediation=(
+                            "Playwright MCP is optional. Browser automation works via Python Playwright package.\n"
+                            "To configure Playwright MCP, add it to .cursor/mcp.json:\n"
+                            '  {"mcpServers": {"Playwright": {"command": "npx", "args": ["-y", "@playwright/mcp-server"]}}}'
+                        ),
+                    )
+                )
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="MCP_PLAYWRIGHT",
+                        message="Playwright MCP: Not configured (optional)",
+                        remediation=(
+                            "Playwright MCP is optional. To enable browser automation:\n"
+                            "1. Configure Playwright MCP in .cursor/mcp.json (recommended in Cursor), or\n"
+                            "2. Install Python Playwright: pip install playwright && python -m playwright install"
+                        ),
+                    )
+                )
+    except Exception:
+        # If MCP detection fails, don't fail the entire doctor report
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="MCP_DETECTION_ERROR",
+                message="Could not detect MCP servers (check .cursor/mcp.json manually)",
+            )
+        )
+
     return {
         "policy": {
             "external_tools_mode": policy_mode,

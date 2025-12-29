@@ -108,13 +108,33 @@ pip install -e .      # Refresh editable install
 
 Some browser-related functionality can run in a mocked mode if the **Python Playwright package** is not installed.
 
-- If you're using **Cursor** with **Playwright MCP**, you can ignore this: browser automation should be done via Cursor Skills/Background Agents.
-- If you need browser automation from the **CLI** (outside Cursor), install Playwright:
+**Understanding Playwright Options:**
+- **Playwright MCP Server**: Browser automation via Cursor's MCP tools (recommended in Cursor)
+- **Python Playwright Package**: Browser automation from CLI (required for CLI usage)
+
+**If you're using Cursor:**
+- If **Playwright MCP is configured**, you can ignore this message: browser automation should be done via Cursor Skills/Background Agents using Playwright MCP tools.
+- To check if Playwright MCP is configured, run: `tapps-agents doctor` and look for "Playwright MCP" status.
+- To configure Playwright MCP, add it to `.cursor/mcp.json`:
+  ```json
+  {
+    "mcpServers": {
+      "Playwright": {
+        "command": "npx",
+        "args": ["-y", "@playwright/mcp-server"]
+      }
+    }
+  }
+  ```
+
+**If you need browser automation from the CLI** (outside Cursor), install the Python Playwright package:
 
 ```bash
 python -m pip install playwright
 python -m playwright install
 ```
+
+**Note**: Playwright MCP is optional. If not configured, tapps-agents will use the Python Playwright package when available.
 
 ### "pytest is not recognized"
 

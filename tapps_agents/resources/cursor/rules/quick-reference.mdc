@@ -317,13 +317,27 @@ The framework handles this automatically, but you can also add Scripts directory
 **Issue:** "Playwright not available" message
 **Solution:** This refers to the **Python Playwright package** not being installed.
 
-- If you're using **Cursor Playwright MCP**, you can ignore it (browser automation is available through Cursor tools).
-- If you need browser automation from the **CLI**, install Playwright:
+**Playwright Options:**
+- **Playwright MCP Server** (recommended in Cursor): Browser automation via Cursor's MCP tools
+  - Check status: `tapps-agents doctor`
+  - Configure in `.cursor/mcp.json`:
+    ```json
+    {
+      "mcpServers": {
+        "Playwright": {
+          "command": "npx",
+          "args": ["-y", "@playwright/mcp-server"]
+        }
+      }
+    }
+    ```
+- **Python Playwright Package** (for CLI): Install if you need browser automation from CLI:
+  ```bash
+  python -m pip install playwright
+  python -m playwright install
+  ```
 
-```bash
-python -m pip install playwright
-python -m playwright install
-```
+**Note:** If you're using **Cursor with Playwright MCP configured**, you can ignore the warning (browser automation is available through Cursor tools).
 
 ### Model Not Available
 **Issue:** Agent operations not executing

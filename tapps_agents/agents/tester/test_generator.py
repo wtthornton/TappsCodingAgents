@@ -527,6 +527,19 @@ class TestGenerator:
             prompt_parts.append(expert_guidance)
             prompt_parts.append("")
 
+        # Check for Playwright MCP availability (for Playwright-based frameworks)
+        playwright_mcp_available = False
+        if e2e_framework in ("playwright", "pytest-playwright"):
+            try:
+                from ...core.init_project import detect_mcp_servers
+                mcp_status = detect_mcp_servers(project_root)
+                playwright_mcp_available = any(
+                    s.get("id") == "Playwright" and s.get("status") == "installed"
+                    for s in mcp_status.get("detected_servers", [])
+                )
+            except Exception:
+                pass  # If detection fails, assume not available
+
         # Framework-specific requirements
         framework_requirements = {
             "playwright": [
@@ -534,13 +547,13 @@ class TestGenerator:
                 "- Test user workflows and interactions",
                 "- Include browser automation (navigation, clicks, form fills)",
                 "- Test across different browsers if configured",
-            ],
+            ] + (["- Note: Playwright MCP server is available for browser automation via Cursor tools"] if playwright_mcp_available else []),
             "pytest-playwright": [
                 "- Use pytest fixtures for setup/teardown",
                 "- Use Playwright's async API",
                 "- Test user workflows end-to-end",
                 "- Include proper async/await patterns",
-            ],
+            ] + (["- Note: Playwright MCP server is available for browser automation via Cursor tools"] if playwright_mcp_available else []),
             "selenium": [
                 "- Use Selenium WebDriver patterns",
                 "- Test user interactions and workflows",
