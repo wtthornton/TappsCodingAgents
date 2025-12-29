@@ -14,7 +14,32 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-from .. import __version__ as PACKAGE_VERSION
+# Try to import version, with fallback to importlib.metadata
+try:
+    from .. import __version__ as PACKAGE_VERSION
+except (ImportError, AttributeError):
+    # Fallback: use importlib.metadata (standard library, Python 3.8+)
+    try:
+        from importlib.metadata import version
+        PACKAGE_VERSION = version("tapps-agents")
+    except Exception:
+        # Last resort: try reading from __init__.py directly
+        try:
+            import importlib.util
+            import pathlib
+            init_path = pathlib.Path(__file__).parent.parent / "__init__.py"
+            if init_path.exists():
+                spec = importlib.util.spec_from_file_location("tapps_agents_init", init_path)
+                if spec and spec.loader:
+                    module = importlib.util.module_from_spec(spec)
+                    spec.loader.exec_module(module)
+                    PACKAGE_VERSION = getattr(module, "__version__", "unknown")
+                else:
+                    PACKAGE_VERSION = "unknown"
+            else:
+                PACKAGE_VERSION = "unknown"
+        except Exception:
+            PACKAGE_VERSION = "unknown"
 
 
 class VerbosityLevel(Enum):

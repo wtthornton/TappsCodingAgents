@@ -1662,21 +1662,46 @@ def get_framework_version() -> str | None:
     """
     Get the current framework version from the installed package.
     
+    Uses multiple fallback strategies to ensure version can be determined
+    even in problematic editable install scenarios.
+    
     Returns:
-        Version string (e.g., "2.0.1") or None if version cannot be determined
+        Version string (e.g., "3.0.0") or None if version cannot be determined
     """
+    # Strategy 1: Try direct import from package (most reliable for editable installs)
+    try:
+        from .. import __version__
+        return __version__
+    except (ImportError, AttributeError):
+        pass
+    
+    # Strategy 2: Use importlib.metadata (works for installed packages)
     try:
         import importlib.metadata
         version = importlib.metadata.version("tapps-agents")
         return version
     except Exception:
-        # Fallback: try to read from package __init__.py
-        try:
-            from .. import __version__
-            return __version__
-        except Exception:
-            logger.debug("Could not determine framework version")
-            return None
+        pass
+    
+    # Strategy 3: Try reading from __init__.py directly (last resort)
+    try:
+        import importlib.util
+        import pathlib
+        init_path = pathlib.Path(__file__).parent.parent / "__init__.py"
+        if init_path.exists():
+            spec = importlib.util.spec_from_file_location("tapps_agents_init", init_path)
+            if spec and spec.loader:
+                module = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(module)
+                version = getattr(module, "__version__", None)
+                if version:
+                    return version
+    except Exception:
+        pass
+    
+    # All strategies failed
+    logger.debug("Could not determine framework version")
+    return None
 
 
 def detect_existing_installation(project_root: Path) -> dict[str, Any]:
