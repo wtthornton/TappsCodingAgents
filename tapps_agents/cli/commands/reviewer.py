@@ -3,6 +3,7 @@ Reviewer agent command handlers
 """
 import asyncio
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -327,7 +328,17 @@ def _resolve_file_list(files: list[str] | None, pattern: str | None) -> list[Pat
     def _is_excluded(path: Path) -> bool:
         return any(part in exclude_dir_names for part in path.parts)
 
-    def _discover_from_dir(root: Path, max_files: int = 5000) -> list[Path]:
+    def _discover_from_dir(root: Path, max_files: int = 200) -> list[Path]:
+        """
+        Discover code files from a directory.
+        
+        Args:
+            root: Directory to search
+            max_files: Maximum number of files to discover (default: 200)
+            
+        Returns:
+            List of discovered file paths
+        """
         discovered: list[Path] = []
         for pat in ["*.py", "*.ts", "*.tsx", "*.js", "*.jsx", "*.java", "*.go", "*.rs", "*.yaml", "*.yml"]:
             if len(discovered) >= max_files:
@@ -344,7 +355,12 @@ def _resolve_file_list(files: list[str] | None, pattern: str | None) -> list[Pat
     # Handle glob pattern
     if pattern:
         cwd = Path.cwd()
-        matched = [p for p in cwd.glob(pattern) if p.is_file() and not _is_excluded(p)]
+        matched = []
+        for p in cwd.glob(pattern):
+            if len(matched) >= 200:  # Limit pattern matches to prevent too many files
+                break
+            if p.is_file() and not _is_excluded(p):
+                matched.append(p)
         resolved_files.extend(matched)
     
     # Handle explicit file list
@@ -352,9 +368,13 @@ def _resolve_file_list(files: list[str] | None, pattern: str | None) -> list[Pat
         for file_path in files:
             # Support passing glob patterns directly as positional args (e.g. "src/**/*.py")
             if any(ch in file_path for ch in ["*", "?", "["]):
+                matched_count = 0
                 for p in Path.cwd().glob(file_path):
+                    if matched_count >= 200:  # Limit glob matches to prevent too many files
+                        break
                     if p.is_file() and not _is_excluded(p):
                         resolved_files.append(p)
+                        matched_count += 1
                 continue
 
             path = Path(file_path)
@@ -388,7 +408,138 @@ def _resolve_file_list(files: list[str] | None, pattern: str | None) -> list[Pat
     if not unique_files:
         raise ValueError("No files found. Specify files or use --pattern to match files.")
     
+    # Warn if too many files discovered
+    if len(unique_files) > 200:
+        from ..feedback import get_feedback
+        feedback = get_feedback()
+        feedback.warning(
+            f"Large number of files discovered ({len(unique_files)}). Processing may take a while. "
+            f"Consider using --pattern to target specific files or directories. "
+            f"Only the first 200 files will be processed."
+        )
+        # Limit to 200 files to prevent connection errors
+        unique_files = unique_files[:200]
+    
     return unique_files
+
+
+class CircuitBreaker:
+    """Circuit breaker to prevent cascading failures."""
+    
+    def __init__(self, failure_threshold: int = 5, reset_timeout: float = 60.0):
+        self.failure_threshold = failure_threshold
+        self.reset_timeout = reset_timeout
+        self.failure_count = 0
+        self.last_failure_time: float | None = None
+        self.is_open = False
+    
+    def record_success(self) -> None:
+        """Record successful operation."""
+        self.failure_count = 0
+        self.is_open = False
+    
+    def record_failure(self) -> None:
+        """Record failure and check if circuit should open."""
+        self.failure_count += 1
+        if self.failure_count >= self.failure_threshold:
+            self.is_open = True
+            self.last_failure_time = time.time()
+    
+    def should_allow(self) -> bool:
+        """Check if operation should be allowed."""
+        if not self.is_open:
+            return True
+        
+        # Check if reset timeout has passed
+        if self.last_failure_time:
+            elapsed = time.time() - self.last_failure_time
+            if elapsed >= self.reset_timeout:
+                self.is_open = False
+                self.failure_count = 0
+                return True
+        
+        return False
+
+
+def is_retryable_error(error: Exception) -> bool:
+    """
+    Check if error is retryable (connection-related).
+    
+    Implements error taxonomy to distinguish between:
+    - Retryable: Transient issues (network timeouts, connection errors)
+    - Non-retryable: Permanent issues (file not found, invalid input)
+    
+    Based on best practices for AI agent error handling.
+    
+    Args:
+        error: Exception to check
+        
+    Returns:
+        True if error is retryable (connection-related)
+    """
+    retryable_types = (
+        ConnectionError,
+        TimeoutError,
+        OSError,
+    )
+    
+    # Check for requests library errors
+    try:
+        import requests
+        retryable_types = retryable_types + (
+            requests.exceptions.RequestException,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+            requests.exceptions.ReadTimeout,
+            requests.exceptions.ConnectTimeout,
+        )
+    except ImportError:
+        pass
+    
+    # Check for aiohttp errors (common in async Python)
+    try:
+        import aiohttp
+        retryable_types = retryable_types + (
+            aiohttp.ClientError,
+            aiohttp.ClientConnectionError,
+            aiohttp.ClientConnectorError,
+            aiohttp.ServerTimeoutError,
+        )
+    except ImportError:
+        pass
+    
+    error_str = str(error).lower()
+    retryable_keywords = [
+        "connection",
+        "timeout",
+        "network",
+        "unreachable",
+        "refused",
+        "reset",
+        "connection error",
+        "connection failed",
+        "temporary failure",
+        "service unavailable",
+        "rate limit",  # Rate limits are often temporary
+    ]
+    
+    # Non-retryable keywords (permanent errors)
+    non_retryable_keywords = [
+        "file not found",
+        "permission denied",
+        "invalid",
+        "malformed",
+        "syntax error",
+    ]
+    
+    # Check for non-retryable errors first
+    if any(keyword in error_str for keyword in non_retryable_keywords):
+        return False
+    
+    return (
+        isinstance(error, retryable_types) or
+        any(keyword in error_str for keyword in retryable_keywords)
+    )
 
 
 async def _process_file_batch(
@@ -398,7 +549,7 @@ async def _process_file_batch(
     max_workers: int = 4,
 ) -> dict[str, Any]:
     """
-    Process multiple files concurrently.
+    Process multiple files concurrently in batches with retry logic and circuit breaker.
     
     Args:
         reviewer: ReviewerAgent instance
@@ -409,26 +560,155 @@ async def _process_file_batch(
     Returns:
         Dictionary with aggregated results
     """
-    semaphore = asyncio.Semaphore(max_workers)
+    from ..feedback import get_feedback
+    feedback = get_feedback()
+    
+    # Configuration
+    BATCH_SIZE = 10  # Process 10 files per batch
+    MAX_CONCURRENT = max(1, min(max_workers, 2))  # Limit to max 2 concurrent
+    BATCH_DELAY = 1.0  # Delay between batches
+    FILE_DELAY = 0.2  # Small delay between individual files
+    MAX_RETRIES = 3  # Maximum retry attempts for connection errors
+    RETRY_BACKOFF_BASE = 2.0  # Exponential backoff base
+    MAX_RETRY_BACKOFF = 10.0  # Maximum backoff time in seconds
+    RETRY_TIMEOUT = 120.0  # Timeout per retry attempt (2 minutes)
+    
+    # Initialize circuit breaker
+    circuit_breaker = CircuitBreaker(failure_threshold=5, reset_timeout=60.0)
+    semaphore = asyncio.Semaphore(MAX_CONCURRENT)
     
     async def process_single_file(file_path: Path) -> tuple[Path, dict[str, Any]]:
-        """Process a single file with semaphore limiting."""
+        """Process a single file with retry logic, circuit breaker, and semaphore limiting."""
+        # Check circuit breaker before processing
+        if not circuit_breaker.should_allow():
+            return (file_path, {
+                "error": "Circuit breaker open - too many failures",
+                "file": str(file_path),
+                "circuit_breaker": True
+            })
+        
         async with semaphore:
-            try:
-                result = await reviewer.run(command, file=str(file_path))
-                # Ensure result is always a dict (defensive check)
-                if not isinstance(result, dict):
-                    return (file_path, {
-                        "error": f"Unexpected result type: {type(result).__name__}. Result: {str(result)[:200]}",
-                        "file": str(file_path)
-                    })
-                return (file_path, result)
-            except Exception as e:
-                return (file_path, {"error": str(e), "file": str(file_path)})
+            await asyncio.sleep(FILE_DELAY)
+            
+            # Retry logic for connection errors with per-attempt timeout
+            last_error: Exception | None = None
+            RETRY_TIMEOUT = 120.0  # 2 minutes per retry attempt
+            
+            for attempt in range(1, MAX_RETRIES + 1):
+                try:
+                    # Wrap each retry attempt in a timeout to prevent hanging
+                    result = await asyncio.wait_for(
+                        reviewer.run(command, file=str(file_path)),
+                        timeout=RETRY_TIMEOUT
+                    )
+                    # Ensure result is always a dict (defensive check)
+                    if not isinstance(result, dict):
+                        return (file_path, {
+                            "error": f"Unexpected result type: {type(result).__name__}. Result: {str(result)[:200]}",
+                            "file": str(file_path)
+                        })
+                    
+                    # Success - record in circuit breaker
+                    circuit_breaker.record_success()
+                    return (file_path, result)
+                    
+                except asyncio.TimeoutError:
+                    # Per-attempt timeout - treat as retryable connection issue
+                    last_error = TimeoutError(f"Operation timed out after {RETRY_TIMEOUT}s")
+                    if attempt < MAX_RETRIES:
+                        backoff = min(RETRY_BACKOFF_BASE ** attempt, MAX_RETRY_BACKOFF)
+                        if feedback.verbosity.value == "verbose":
+                            feedback.info(
+                                f"Retrying {file_path.name} after timeout "
+                                f"(attempt {attempt + 1}/{MAX_RETRIES}, backoff {backoff:.1f}s)..."
+                            )
+                        await asyncio.sleep(backoff)
+                        continue
+                    else:
+                        circuit_breaker.record_failure()
+                        return (file_path, {
+                            "error": f"Operation timed out after {RETRY_TIMEOUT}s (attempt {attempt}/{MAX_RETRIES})",
+                            "file": str(file_path),
+                            "retryable": True,
+                            "attempts": attempt,
+                            "timeout": True
+                        })
+                    
+                except Exception as e:
+                    last_error = e
+                    
+                    # Check if error is retryable
+                    if is_retryable_error(e) and attempt < MAX_RETRIES:
+                        # Exponential backoff
+                        backoff = min(RETRY_BACKOFF_BASE ** attempt, MAX_RETRY_BACKOFF)
+                        if feedback.verbosity.value == "verbose":
+                            feedback.info(
+                                f"Retrying {file_path.name} after connection error "
+                                f"(attempt {attempt + 1}/{MAX_RETRIES}, backoff {backoff:.1f}s)..."
+                            )
+                        await asyncio.sleep(backoff)
+                        continue
+                    else:
+                        # Non-retryable error or max retries reached
+                        if is_retryable_error(e):
+                            circuit_breaker.record_failure()
+                        return (file_path, {
+                            "error": str(e),
+                            "file": str(file_path),
+                            "retryable": is_retryable_error(e),
+                            "attempts": attempt,
+                            "error_type": type(e).__name__
+                        })
+            
+            # All retries exhausted
+            circuit_breaker.record_failure()
+            return (file_path, {
+                "error": f"Failed after {MAX_RETRIES} attempts: {str(last_error)}",
+                "file": str(file_path),
+                "retryable": True,
+                "attempts": MAX_RETRIES,
+                "error_type": type(last_error).__name__ if last_error else "Unknown"
+            })
     
-    # Process all files concurrently
-    tasks = [process_single_file(f) for f in files]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+    # Process files in batches with circuit breaker protection
+    all_results = []
+    total_batches = (len(files) + BATCH_SIZE - 1) // BATCH_SIZE
+    
+    for batch_idx in range(total_batches):
+        # Check circuit breaker before processing batch
+        if not circuit_breaker.should_allow():
+            remaining_count = len(files) - batch_idx * BATCH_SIZE
+            feedback.warning(
+                f"Circuit breaker open - skipping remaining {remaining_count} files "
+                f"(too many connection failures)"
+            )
+            # Mark remaining files as failed
+            for remaining_file in files[batch_idx * BATCH_SIZE:]:
+                all_results.append((remaining_file, {
+                    "error": "Circuit breaker open - skipped due to too many failures",
+                    "file": str(remaining_file),
+                    "circuit_breaker": True
+                }))
+            break
+        
+        start_idx = batch_idx * BATCH_SIZE
+        end_idx = min(start_idx + BATCH_SIZE, len(files))
+        batch_files = files[start_idx:end_idx]
+        
+        if total_batches > 1:
+            feedback.info(f"Processing batch {batch_idx + 1}/{total_batches} ({len(batch_files)} files)...")
+        
+        # Process files in batch with limited concurrency
+        # Create tasks for the batch, but semaphore limits concurrent execution
+        batch_tasks = [process_single_file(f) for f in batch_files]
+        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+        all_results.extend(batch_results)
+        
+        # Delay between batches to avoid overwhelming connections
+        if batch_idx < total_batches - 1:  # Don't delay after last batch
+            await asyncio.sleep(BATCH_DELAY)
+    
+    results = all_results
     
     # Aggregate results
     aggregated: dict[str, Any] = {

@@ -522,7 +522,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             reviewer_config.max_file_size if reviewer_config else (10 * 1024 * 1024)
         )
         
-        # Wrap entire review in timeout protection
+        # Wrap entire review in timeout protection with comprehensive error handling
         try:
             return await asyncio.wait_for(
                 self._review_file_internal(
@@ -539,6 +539,15 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 f"The file may be too large or quality tools may be slow. "
                 f"Consider increasing 'operation_timeout' in config or reviewing smaller files."
             ) from None
+        except Exception as e:
+            # Catch any unexpected exceptions to prevent crashes
+            # Log the error but re-raise it so retry logic can handle it
+            logger.warning(
+                f"Unexpected error in review_file for {file_path}: {type(e).__name__}: {e}",
+                exc_info=True
+            )
+            # Re-raise to allow retry logic to handle it
+            raise
     
     async def _review_file_internal(
         self,
