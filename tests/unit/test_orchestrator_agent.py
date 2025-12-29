@@ -85,6 +85,130 @@ class TestOrchestratorAgent:
             os.chdir(original_cwd)
 
     @pytest.mark.asyncio
+    async def test_list_workflows_in_subdirectories(
+        self, orchestrator, tmp_path: Path
+    ):
+        """Test listing workflows when workflow files exist in subdirectories."""
+        import os
+
+        workflows_dir = tmp_path / "workflows"
+        workflows_dir.mkdir()
+
+        # Create workflow in root
+        root_workflow = workflows_dir / "root-workflow.yaml"
+        root_workflow.write_text(
+            yaml.dump(
+                {
+                    "workflow": {
+                        "id": "root-workflow",
+                        "name": "Root Workflow",
+                        "description": "A workflow in root",
+                        "version": "1.0.0",
+                        "type": "greenfield",
+                        "steps": [
+                            {
+                                "id": "step1",
+                                "agent": "analyst",
+                                "action": "gather",
+                                "requires": [],
+                            }
+                        ],
+                    }
+                }
+            )
+        )
+
+        # Create workflow in subdirectory
+        custom_dir = workflows_dir / "custom"
+        custom_dir.mkdir()
+        custom_workflow = custom_dir / "custom-workflow.yaml"
+        custom_workflow.write_text(
+            yaml.dump(
+                {
+                    "workflow": {
+                        "id": "custom-workflow",
+                        "name": "Custom Workflow",
+                        "description": "A workflow in custom subdirectory",
+                        "version": "1.0.0",
+                        "type": "greenfield",
+                        "steps": [
+                            {
+                                "id": "step1",
+                                "agent": "analyst",
+                                "action": "gather",
+                                "requires": [],
+                            }
+                        ],
+                    }
+                }
+            )
+        )
+
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            result = await orchestrator.run("*workflow-list")
+
+            assert "workflows" in result
+            assert len(result["workflows"]) == 2
+            workflow_ids = [w["id"] for w in result["workflows"]]
+            assert "root-workflow" in workflow_ids
+            assert "custom-workflow" in workflow_ids
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
+    async def test_start_workflow_in_subdirectory(
+        self, orchestrator, tmp_path: Path, monkeypatch
+    ):
+        """Test starting a workflow that exists in a subdirectory."""
+        import os
+
+        workflows_dir = tmp_path / "workflows"
+        custom_dir = workflows_dir / "custom"
+        custom_dir.mkdir(parents=True)
+
+        workflow_file = custom_dir / "subdir-workflow.yaml"
+        workflow_file.write_text(
+            yaml.dump(
+                {
+                    "workflow": {
+                        "id": "subdir-workflow",
+                        "name": "Subdirectory Workflow",
+                        "description": "A workflow in a subdirectory",
+                        "version": "1.0.0",
+                        "type": "greenfield",
+                        "steps": [
+                            {
+                                "id": "step1",
+                                "agent": "analyst",
+                                "action": "gather",
+                                "requires": [],
+                            }
+                        ],
+                    }
+                }
+            )
+        )
+
+        # Preserve workflow ID for tests
+        monkeypatch.setenv("TAPPS_AGENTS_PRESERVE_WORKFLOW_ID", "true")
+        original_cwd = os.getcwd()
+        try:
+            os.chdir(tmp_path)
+            await orchestrator.activate(project_root=tmp_path)
+            result = await orchestrator.run(
+                "*workflow-start", workflow_id="subdir-workflow"
+            )
+
+            assert "success" in result
+            assert result["success"] is True
+            assert result["workflow_id"] == "subdir-workflow"
+        finally:
+            os.chdir(original_cwd)
+
+    @pytest.mark.asyncio
     async def test_start_workflow(
         self, orchestrator, sample_workflow_file, tmp_path: Path, monkeypatch
     ):

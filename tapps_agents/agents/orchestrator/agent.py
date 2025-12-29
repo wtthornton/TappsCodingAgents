@@ -81,9 +81,29 @@ class OrchestratorAgent(BaseAgent):
             scoring_data = kwargs.get("scoring_data", {})
             return await self._make_gate_decision(condition, scoring_data)
         elif command == "*help":
-            return await self._help()
+            return self._help()
         else:
             return {"error": f"Unknown command: {command}"}
+
+    def _find_all_workflow_files(self, workflows_dir: Path) -> list[Path]:
+        """
+        Find all workflow YAML files recursively in the workflows directory.
+        
+        Args:
+            workflows_dir: Path to the workflows directory
+            
+        Returns:
+            List of Path objects for all workflow files found
+        """
+        if not workflows_dir.exists():
+            return []
+        
+        # Recursively search for .yaml and .yml files
+        workflow_files = list(workflows_dir.rglob("*.yaml")) + list(
+            workflows_dir.rglob("*.yml")
+        )
+        
+        return workflow_files
 
     async def _list_workflows(self) -> dict[str, Any]:
         """List available workflows."""
@@ -91,9 +111,7 @@ class OrchestratorAgent(BaseAgent):
         if not workflows_dir.exists():
             return {"workflows": [], "message": "No workflows directory found"}
 
-        workflow_files = list(workflows_dir.glob("*.yaml")) + list(
-            workflows_dir.glob("*.yml")
-        )
+        workflow_files = self._find_all_workflow_files(workflows_dir)
 
         workflows = []
         for workflow_file in workflow_files:
@@ -120,20 +138,40 @@ class OrchestratorAgent(BaseAgent):
 
         return {"workflows": workflows}
 
+    def _find_workflow_by_id(self, workflows_dir: Path, workflow_id: str) -> Path | None:
+        """
+        Find a workflow file by ID, searching recursively in subdirectories.
+        
+        Args:
+            workflows_dir: Path to the workflows directory
+            workflow_id: The workflow ID to search for
+            
+        Returns:
+            Path to the workflow file, or None if not found
+        """
+        if not workflows_dir.exists():
+            return None
+        
+        # Search recursively for files matching the workflow ID
+        for ext in [".yaml", ".yml"]:
+            candidates = list(workflows_dir.rglob(f"{workflow_id}{ext}"))
+            if candidates:
+                # If multiple found, prefer exact match in root, otherwise return first
+                root_candidate = workflows_dir / f"{workflow_id}{ext}"
+                if root_candidate in candidates:
+                    return root_candidate
+                return candidates[0]
+        
+        return None
+
     async def _start_workflow(self, workflow_id: str) -> dict[str, Any]:
         """Start a workflow."""
         if not self.workflow_executor:
             return {"error": "Workflow executor not initialized"}
 
-        # Find workflow file
+        # Find workflow file recursively
         workflows_dir = Path("workflows")
-        workflow_file = None
-
-        for ext in [".yaml", ".yml"]:
-            candidate = workflows_dir / f"{workflow_id}{ext}"
-            if candidate.exists():
-                workflow_file = candidate
-                break
+        workflow_file = self._find_workflow_by_id(workflows_dir, workflow_id)
 
         if not workflow_file:
             return {"error": f"Workflow '{workflow_id}' not found"}
@@ -303,18 +341,50 @@ class OrchestratorAgent(BaseAgent):
                 "message": "Gate evaluation error",
             }
 
-    async def _help(self) -> dict[str, Any]:
-        """Show help for orchestrator commands."""
-        return {
-            "commands": {
-                "*workflow-list": "List available workflows",
-                "*workflow-start {workflow_id}": "Start a workflow",
-                "*workflow-status": "Show current workflow status",
-                "*workflow-next": "Show next step in workflow",
-                "*workflow-skip {step_id}": "Skip an optional step",
-                "*workflow-resume": "Resume interrupted workflow",
-                "*gate {condition}": "Make a gate decision based on condition and scoring",
-                "*help": "Show this help message",
-            },
-            "description": "Orchestrator Agent coordinates workflows and makes gate decisions",
+    def _help(self) -> dict[str, Any]:
+        """
+        Return help information for Orchestrator Agent.
+        
+        Returns standardized help format with commands and description.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted help text containing:
+                    - Available commands with descriptions
+                    - Agent description
+                    
+        Note:
+            This method is synchronous as it performs no I/O operations.
+            Called via agent.run("help") which handles async context.
+            Standardized to match format used by other agents.
+        """
+        commands_dict = {
+            "*workflow-list": "List available workflows",
+            "*workflow-start {workflow_id}": "Start a workflow",
+            "*workflow-status": "Show current workflow status",
+            "*workflow-next": "Show next step in workflow",
+            "*workflow-skip {step_id}": "Skip an optional step",
+            "*workflow-resume": "Resume interrupted workflow",
+            "*gate {condition}": "Make a gate decision based on condition and scoring",
+            "*help": "Show this help message",
         }
+        
+        # Format as markdown for consistency with other agents
+        command_lines = [
+            f"- **{cmd}**: {desc}"
+            for cmd, desc in commands_dict.items()
+        ]
+        
+        content = f"""# {self.agent_name} - Help
+
+## Available Commands
+
+{chr(10).join(command_lines)}
+
+## Description
+
+Orchestrator Agent coordinates workflows and makes gate decisions.
+"""
+        
+        return {"type": "help", "content": content}

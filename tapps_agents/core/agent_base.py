@@ -57,6 +57,7 @@ class BaseAgent(ABC):
         self.mcp_gateway: Any | None = None
         self._unified_cache: Any | None = None  # Optional unified cache instance
         self._project_root: Path | None = None  # Cached project root
+        self._cached_commands: list[dict[str, str]] | None = None  # Cached command list
 
     async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """
@@ -137,6 +138,14 @@ class BaseAgent(ABC):
     def get_commands(self) -> list[dict[str, str]]:
         """
         Return list of available commands for this agent.
+        
+        Results are cached after first call to improve performance. Subclasses
+        should override _compute_commands() to provide agent-specific commands.
+
+        Returns:
+            List of command dictionaries, each containing:
+                - command (str): Command identifier (e.g., "*review", "*help")
+                - description (str): Human-readable command description
 
         Format:
         [
@@ -144,6 +153,24 @@ class BaseAgent(ABC):
             {"command": "*score", "description": "Calculate scores only"},
             ...
         ]
+        
+        Note:
+            This method caches results after the first call. If commands need
+            to be recomputed, clear the cache by setting self._cached_commands = None.
+        """
+        if self._cached_commands is None:
+            self._cached_commands = self._compute_commands()
+        return self._cached_commands
+
+    def _compute_commands(self) -> list[dict[str, str]]:
+        """
+        Compute the list of available commands for this agent.
+        
+        This is the internal method that subclasses should override to provide
+        their command list. The base implementation returns just the help command.
+
+        Returns:
+            List of command dictionaries. See get_commands() for format details.
         """
         return [
             {"command": "*help", "description": "Show available commands"},
@@ -154,6 +181,13 @@ class BaseAgent(ABC):
         Format help output with numbered command list.
 
         BMAD-METHOD pattern: Show numbered list for easy selection.
+        
+        Returns:
+            Formatted help text as a string, with commands numbered and
+            formatted for easy reading.
+            
+        Note:
+            Uses cached command list from get_commands() for optimal performance.
         """
         commands = self.get_commands()
 
@@ -165,14 +199,17 @@ class BaseAgent(ABC):
             "",
         ]
 
-        for i, cmd in enumerate(commands, 1):
-            lines.append(f"{i}. {cmd['command']:<20} - {cmd['description']}")
+        # Optimize string building with list comprehension
+        lines.extend(
+            f"{i}. {cmd['command']:<20} - {cmd['description']}"
+            for i, cmd in enumerate(commands, 1)
+        )
 
         lines.extend(
             [
                 "",
                 "Examples:",
-                f"  Type '1' or '{commands[0]['command']}' to get help",
+                f"  Type '1' or '{commands[0]['command']}' to get help" if commands else "  Use *help to see available commands",
                 "",
             ]
         )

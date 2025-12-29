@@ -69,7 +69,7 @@ class DebuggerAgent(BaseAgent):
         elif command == "trace":
             return await self.trace_command(**kwargs)
         elif command == "help":
-            return await self._help()
+            return self._help()
         else:
             return {"error": f"Unknown command: {command}"}
 
@@ -195,13 +195,31 @@ class DebuggerAgent(BaseAgent):
             "line": line,
         }
 
-    async def _help(self) -> dict[str, Any]:
-        """Generate help text."""
-        help_text = self.format_help()
-        help_text += "\n\nExamples:\n"
-        help_text += '  *debug "ValueError: invalid literal" --file code.py --line 42\n'
-        help_text += '  *analyze-error "IndexError: list index out of range" --stack-trace "..."\n'
-        help_text += "  *trace code.py --function process_data\n"
+    def _help(self) -> dict[str, Any]:
+        """
+        Return help information for Debugger Agent.
+        
+        Returns standardized help format with commands and usage examples.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted help text containing:
+                    - Available commands (from format_help())
+                    - Usage examples for debug, analyze-error, and trace commands
+                    
+        Note:
+            This method is synchronous as it performs no I/O operations.
+            Called via agent.run("help") which handles async context.
+            Uses BaseAgent.format_help() which caches command list for performance.
+        """
+        # Optimize string building by using list and join
+        examples = [
+            '  *debug "ValueError: invalid literal" --file code.py --line 42',
+            '  *analyze-error "IndexError: list index out of range" --stack-trace "..."',
+            '  *trace code.py --function process_data',
+        ]
+        help_text = "\n".join([self.format_help(), "\nExamples:", *examples])
         return {"type": "help", "content": help_text}
 
     async def close(self):

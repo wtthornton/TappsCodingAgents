@@ -551,8 +551,22 @@ Return Dockerfile content and docker-compose.yml content."""
             severity_threshold=severity_threshold, **kwargs
         )
 
-    async def _handle_help(self) -> dict[str, Any]:
-        """Show this help message."""
+    def _handle_help(self) -> dict[str, Any]:
+        """
+        Return help information for Ops Agent.
+        
+        Returns standardized help format with commands and descriptions.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted markdown help text containing:
+                    - Available commands with descriptions
+                    
+        Note:
+            This method is synchronous as it performs no I/O operations.
+            Standardized to match format used by other agents (type + content keys).
+        """
         help_message = {
             "*security-scan [target] [type]": "Perform security scanning on codebase or specific target",
             "*compliance-check [type]": "Check compliance with standards (GDPR, HIPAA, SOC2, general)",
@@ -563,7 +577,21 @@ Return Dockerfile content and docker-compose.yml content."""
             "*check-vulnerabilities [severity_threshold]": "Check for dependency vulnerabilities (Phase 6.4.3)",
             "*help": "Show this help message",
         }
-        return {"content": help_message}
+        
+        # Format as markdown for consistency with other agents
+        command_lines = [
+            f"- **{cmd}**: {desc}"
+            for cmd, desc in help_message.items()
+        ]
+        
+        content = f"""# {self.agent_name} - Help
+
+## Available Commands
+
+{chr(10).join(command_lines)}
+"""
+        
+        return {"type": "help", "content": content}
 
     async def close(self) -> None:
         """Cleanup resources."""

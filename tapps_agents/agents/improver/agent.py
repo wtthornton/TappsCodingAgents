@@ -289,15 +289,43 @@ Return only the improved code, wrapped in ```python code blocks."""
             "file": str(file_path),
         }
 
-    async def _handle_help(self) -> dict[str, Any]:
-        """Show this help message."""
+    def _handle_help(self) -> dict[str, Any]:
+        """
+        Return help information for Improver Agent.
+        
+        Returns standardized help format with commands and descriptions.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted markdown help text containing:
+                    - Available commands with descriptions
+                    
+        Note:
+            This method is synchronous as it performs no I/O operations.
+            Standardized to match format used by other agents (type + content keys).
+        """
         help_message = {
             "*refactor [file_path] [instruction]": "Refactor existing code to improve structure and maintainability",
             "*optimize [file_path] [type]": "Optimize code for performance, memory, or both (type: performance|memory|both)",
             "*improve-quality [file_path]": "Improve overall code quality (best practices, patterns, documentation)",
             "*help": "Show this help message",
         }
-        return {"content": help_message}
+        
+        # Format as markdown for consistency with other agents
+        command_lines = [
+            f"- **{cmd}**: {desc}"
+            for cmd, desc in help_message.items()
+        ]
+        
+        content = f"""# {self.agent_name} - Help
+
+## Available Commands
+
+{chr(10).join(command_lines)}
+"""
+        
+        return {"type": "help", "content": content}
 
     def _extract_code_from_response(self, response: str) -> str:
         """Extract code from LLM response (handles code blocks)."""

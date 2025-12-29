@@ -73,7 +73,7 @@ class PlannerAgent(BaseAgent):
         await self.activate()
 
         if command == "help":
-            return await self._help()
+            return self._help()
 
         elif command == "plan":
             description = kwargs.get("description") or kwargs.get("text", "")
@@ -436,13 +436,36 @@ created_by: {metadata['created_by']}
 
         return {}
 
-    async def _help(self) -> dict[str, Any]:
-        """Return help information."""
+    def _help(self) -> dict[str, Any]:
+        """
+        Return help information for Planner Agent.
+        
+        Returns standardized help format with commands, examples, and usage notes.
+        This method is synchronous as it performs no I/O operations.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted markdown help text containing:
+                    - Available commands list
+                    - Usage examples
+                    - Story storage information
+                    
+        Note:
+            This method is called via agent.run("help") which handles async context.
+            Command list is cached via BaseAgent.get_commands() for performance.
+        """
+        commands = self.get_commands()
+        command_lines = [
+            f"- **{cmd['command']}**: {cmd['description']}"
+            for cmd in commands
+        ]
+        
         content = f"""# {self.agent_name} - Help
 
 ## Available Commands
 
-{chr(10).join(f"- **{cmd['command']}**: {cmd['description']}" for cmd in self.get_commands())}
+{chr(10).join(command_lines)}
 
 ## Usage Examples
 

@@ -46,6 +46,7 @@ FRAMEWORK_SKILLS = {
     "orchestrator",
     "planner",
     "reviewer",
+    "simple-mode",
     "tester",
 }
 
@@ -459,8 +460,13 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
             if not skill_dir.is_dir():
                 continue
             dest_dir = project_skills_dir / skill_dir.name
+            # Check if skill directory exists and has SKILL.md
+            skill_md = dest_dir / "SKILL.md"
+            if dest_dir.exists() and skill_md.exists():
+                continue  # Skip if complete skill already exists
+            # Copy/overwrite if missing or incomplete
             if dest_dir.exists():
-                continue
+                shutil.rmtree(dest_dir)  # Remove incomplete directory
             created = _copy_traversable_tree(skill_dir, dest_dir)
             if created:
                 copied.append(str(dest_dir))
@@ -471,8 +477,13 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
                 if not skill_dir.is_dir():
                     continue
                 dest_dir = project_skills_dir / skill_dir.name
+                # Check if skill directory exists and has SKILL.md
+                skill_md = dest_dir / "SKILL.md"
+                if dest_dir.exists() and skill_md.exists():
+                    continue  # Skip if complete skill already exists
+                # Copy/overwrite if missing or incomplete
                 if dest_dir.exists():
-                    continue
+                    shutil.rmtree(dest_dir)  # Remove incomplete directory
                 shutil.copytree(skill_dir, dest_dir)
                 copied.append(str(dest_dir))
 

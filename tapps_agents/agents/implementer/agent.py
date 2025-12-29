@@ -127,7 +127,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         await self.activate()
 
         if command == "help":
-            return await self._help()
+            return self._help()
 
         elif command == "implement":
             specification = kwargs.get("specification") or kwargs.get("text", "")
@@ -582,13 +582,38 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         }
         return extension_map.get(path.suffix.lower(), "python")
 
-    async def _help(self) -> dict[str, Any]:
-        """Return help information."""
+    def _help(self) -> dict[str, Any]:
+        """
+        Return help information for Implementer Agent.
+        
+        Returns standardized help format with commands, examples, configuration,
+        and safety features documentation.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted markdown help text containing:
+                    - Available commands list
+                    - Usage examples for implement, generate-code, refactor
+                    - Configuration options
+                    - Safety features documentation
+                    
+        Note:
+            This method is synchronous as it performs no I/O operations.
+            Called via agent.run("help") which handles async context.
+            Command list is cached via BaseAgent.get_commands() for performance.
+        """
+        commands = self.get_commands()
+        command_lines = [
+            f"- **{cmd['command']}**: {cmd['description']}"
+            for cmd in commands
+        ]
+        
         content = f"""# {self.agent_name} - Help
 
 ## Available Commands
 
-{chr(10).join(f"- **{cmd['command']}**: {cmd['description']}" for cmd in self.get_commands())}
+{chr(10).join(command_lines)}
 
 ## Usage Examples
 

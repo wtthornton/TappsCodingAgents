@@ -1,0 +1,26 @@
+﻿{
+  "success": true,
+  "message": "Plan created successfully",
+  "data": {
+    "type": "plan",
+    "description": "Create execution plan for production readiness improvements. Current overall quality score is 79.7/100. Need to improve to meet production thresholds: overall >= 75 (already met), security >= 8.0, maintainability >= 7.5, test coverage >= 80%. Review reports in reports/production-readiness/ for specific issues.",
+    "instruction": {
+      "agent_name": "planner",
+      "command": "plan",
+      "prompt": "You are a software planning expert. Analyze the following requirement and create a detailed plan.\n\nRequirement:\nCreate execution plan for production readiness improvements. Current overall quality score is 79.7/100. Need to improve to meet production thresholds: overall >= 75 (already met), security >= 8.0, maintainability >= 7.5, test coverage >= 80%. Review reports in reports/production-readiness/ for specific issues.\n\nGenerate a plan that includes:\n1. Overview of the feature/requirement\n2. List of user stories (with brief descriptions)\n3. Estimated complexity for each story (1-5 scale)\n4. Dependencies between stories\n5. Suggested priority order\n\nFormat your response as structured text.",
+      "parameters": {
+        "description": "Create execution plan for production readiness improvements. Current overall quality score is 79.7/100. Need to improve to meet production thresholds: overall >= 75 (already met), security >= 8.0, maintainability >= 7.5, test coverage >= 80%. Review reports in reports/production-readiness/ for specific issues."
+      }
+    },
+    "skill_command": "@planner plan --description \"Create execution plan for production readiness improvements. Current overall quality score is 79.7/100. Need to improve to meet production thresholds: overall >= 75 (already met), security >= 8.0, maintainability >= 7.5, test coverage >= 80%. Review reports in reports/production-readiness/ for specific issues.\"",
+    "created_at": "2025-12-29T01:57:45.303398",
+    "summary": {
+      "description": "Create execution plan for production readiness improvements. Current overall quality score is 79.7/1..."
+    }
+  },
+  "metadata": {
+    "timestamp": "2025-12-29T09:57:45.303442+00:00",
+    "duration_ms": 39,
+    "version": "3.0.2"
+  }
+}

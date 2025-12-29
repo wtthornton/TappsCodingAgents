@@ -84,7 +84,7 @@ def _verify_skills(skills_dir: Path) -> dict:
         "expected_skills": [
             "analyst", "architect", "debugger", "designer", "documenter",
             "enhancer", "implementer", "improver", "ops", "orchestrator",
-            "planner", "reviewer", "tester"
+            "planner", "reviewer", "simple-mode", "tester"
         ]
     }
     

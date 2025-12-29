@@ -120,7 +120,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         elif command == "run-tests":
             return await self.run_tests_command(**kwargs)
         elif command == "help":
-            return await self._help()
+            return self._help()
         else:
             return {"error": f"Unknown command: {command}"}
 
@@ -664,16 +664,32 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
         except Exception as e:
             return {"success": False, "error": str(e), "return_code": -1}
 
-    async def _help(self) -> dict[str, Any]:
-        """Generate help text."""
-        help_text = self.format_help()
-        help_text += "\n\nExamples:\n"
-        help_text += (
-            "  *test file.py              # Generate and run tests for file.py\n"
-        )
-        help_text += "  *generate-tests file.py    # Generate tests only\n"
-        help_text += "  *run-tests                 # Run all tests in tests/\n"
-        help_text += "  *run-tests test_file.py    # Run specific test file\n"
+    def _help(self) -> dict[str, Any]:
+        """
+        Return help information for Tester Agent.
+        
+        Returns standardized help format with commands and usage examples.
+        
+        Returns:
+            dict: Help information with standardized format:
+                - type (str): Always "help"
+                - content (str): Formatted help text containing:
+                    - Available commands (from format_help())
+                    - Usage examples for test, generate-tests, and run-tests commands
+                    
+        Note:
+            This method is synchronous as it performs no I/O operations.
+            Called via agent.run("help") which handles async context.
+            Uses BaseAgent.format_help() which caches command list for performance.
+        """
+        # Optimize string building by using list and join
+        examples = [
+            "  *test file.py              # Generate and run tests for file.py",
+            "  *generate-tests file.py    # Generate tests only",
+            "  *run-tests                 # Run all tests in tests/",
+            "  *run-tests test_file.py    # Run specific test file",
+        ]
+        help_text = "\n".join([self.format_help(), "\nExamples:", *examples])
         return {"type": "help", "content": help_text}
 
     async def close(self):
