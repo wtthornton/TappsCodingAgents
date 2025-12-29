@@ -479,6 +479,55 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
     return len(copied) > 0, copied
 
 
+def init_claude_commands(project_root: Path | None = None, source_dir: Path | None = None):
+    """
+    Initialize Claude Desktop Commands directory for a project.
+
+    Copies framework-provided Commands from `.claude/commands/` into the target project.
+    These commands work alongside Cursor Skills for a unified experience.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    if source_dir is None:
+        packaged = _resource_at("claude", "commands")
+        if packaged is not None and packaged.is_dir():
+            source_dir = None  # type: ignore[assignment]
+            packaged_commands = packaged
+        else:
+            packaged_commands = None
+            current_file = Path(__file__)
+            framework_root = current_file.parent.parent.parent
+            source_dir = framework_root / ".claude" / "commands"
+    else:
+        packaged_commands = None
+
+    project_commands_dir = project_root / ".claude" / "commands"
+    project_commands_dir.mkdir(parents=True, exist_ok=True)
+
+    copied: list[str] = []
+    if packaged_commands is not None:
+        # Copy each command file (idempotent).
+        for cmd_file in packaged_commands.iterdir():
+            if cmd_file.is_dir() or not cmd_file.name.endswith(".md"):
+                continue
+            dest_file = project_commands_dir / cmd_file.name
+            if dest_file.exists():
+                continue
+            dest_file.write_bytes(cmd_file.read_bytes())
+            copied.append(str(dest_file))
+    else:
+        if source_dir.exists():
+            # Copy each command file (idempotent).
+            for cmd_file in source_dir.glob("*.md"):
+                dest_file = project_commands_dir / cmd_file.name
+                if not dest_file.exists():
+                    shutil.copy2(cmd_file, dest_file)
+                    copied.append(str(dest_file))
+
+    return len(copied) > 0, copied
+
+
 def init_background_agents_config(
     project_root: Path | None = None, source_file: Path | None = None
 ):
@@ -2183,6 +2232,13 @@ def init_project(
         except Exception as e:
             # Non-fatal: custom Skills loading failed, but built-in Skills still work
             results["custom_skills_error"] = str(e)
+    
+    # Initialize Claude Desktop Commands (works alongside Skills)
+    if include_skills:  # Commands are installed with Skills
+        success, copied_commands = init_claude_commands(project_root)
+        results["claude_commands"] = success
+        if copied_commands:
+            results["files_created"].extend(copied_commands)
 
     # Initialize Cursor Background Agents config
     if include_background_agents:

@@ -31,7 +31,8 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Customization Guide](CUSTOMIZATION_GUIDE.md)** - Project-specific agent customizations
 
 ### Cursor AI Integration
-- **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)**
+- **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Skills + Claude Desktop Commands setup
+- **[Claude Desktop Commands Guide](CLAUDE_DESKTOP_COMMANDS.md)** - Using commands in Claude Desktop
 - **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users
 - **[Custom Skills Guide](CUSTOM_SKILLS_GUIDE.md)** - Creating, validating, and managing custom Skills
 - **[Cursor Rules Setup Guide](CURSOR_RULES_SETUP.md)** - Cursor Rules setup (auto-generated from YAML workflows - Epic 8)

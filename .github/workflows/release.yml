@@ -1,0 +1,377 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on version tags (e.g., v3.0.2)
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 3.0.2)'
+        required: true
+        type: string
+      skip_pypi:
+        description: 'Skip PyPI upload'
+        required: false
+        default: false
+        type: boolean
+
+# Cancel in-progress runs for the same workflow
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false  # Don't cancel release workflows
+
+# Permissions needed for release creation and PyPI upload
+permissions:
+  contents: write  # Required for creating releases
+  id-token: write  # Required for PyPI OIDC authentication (if using)
+
+env:
+  PYTHON_VERSION: "3.13"
+
+jobs:
+  # Pre-release validation: Run full test suite and quality checks
+  validate:
+    name: Pre-Release Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for version detection
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[dev]"
+
+      - name: Extract version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            # Extract version from tag (e.g., v3.0.2 -> 3.0.2)
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Verify version format
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "ERROR: Invalid version format. Expected X.Y.Z (e.g., 3.0.2)"
+            exit 1
+          fi
+
+      - name: Verify version matches code
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          PYPROJECT_VERSION=$(python -c "import tomli; f=open('pyproject.toml','rb'); d=tomli.load(f); print(d['project']['version'])")
+          INIT_VERSION=$(python -c "from tapps_agents import __version__; print(__version__)")
+          
+          if [ "$PYPROJECT_VERSION" != "$VERSION" ] || [ "$INIT_VERSION" != "$VERSION" ]; then
+            echo "ERROR: Version mismatch!"
+            echo "  Expected: $VERSION"
+            echo "  pyproject.toml: $PYPROJECT_VERSION"
+            echo "  __init__.py: $INIT_VERSION"
+            exit 1
+          fi
+          echo "Version consistency verified: $VERSION"
+
+      - name: Install GitHub CLI
+        run: |
+          type -p curl >/dev/null || apt-get update && apt-get install -y curl
+          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
+          chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
+          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
+          apt-get update && apt-get install -y gh
+
+      - name: Check for existing release
+        id: check_release
+        run: |
+          TAG="${{ steps.version.outputs.tag }}"
+          if gh release view "$TAG" 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "WARNING: Release $TAG already exists!"
+            echo "If this is intentional, the workflow will continue."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run linting
+        run: ruff check .
+
+      - name: Run type checking
+        run: python -m mypy tapps_agents/core tapps_agents/workflow tapps_agents/context7
+
+      - name: Run full test suite
+        run: |
+          python -m pytest tests/ \
+            --junitxml=junit-release.xml \
+            --cov=tapps_agents \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-fail-under=75 \
+            --tb=short \
+            -v
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-release
+          path: |
+            junit-release.xml
+            coverage.xml
+          retention-days: 90
+
+      - name: Security scan
+        run: |
+          pip install pip-audit
+          pip-audit --desc --format json --output pip-audit-report.json || true
+        continue-on-error: true
+
+      - name: Upload security report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-report
+          path: pip-audit-report.json
+          retention-days: 90
+
+  # Build packages
+  build:
+    name: Build Packages
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install build dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install build twine
+
+      - name: Clean build artifacts
+        run: |
+          rm -rf dist/ build/ *.egg-info
+          find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+
+      - name: Build packages
+        run: python -m build
+
+      - name: Verify packages
+        run: |
+          # Check that both sdist and wheel exist
+          SDIST=$(ls dist/*.tar.gz 2>/dev/null | head -1)
+          WHEEL=$(ls dist/*.whl 2>/dev/null | head -1)
+          
+          if [ -z "$SDIST" ] || [ -z "$WHEEL" ]; then
+            echo "ERROR: Missing required packages"
+            echo "SDIST: ${SDIST:-NOT FOUND}"
+            echo "WHEEL: ${WHEEL:-NOT FOUND}"
+            exit 1
+          fi
+          
+          echo "Built packages:"
+          echo "  - $SDIST"
+          echo "  - $WHEEL"
+          
+          # Verify package contents (basic check)
+          python -c "
+          import tarfile
+          import zipfile
+          import sys
+          
+          # Check sdist
+          with tarfile.open('$SDIST', 'r:gz') as tar:
+              names = tar.getnames()
+              if 'tapps_agents/__init__.py' not in [n for n in names if 'tapps_agents/__init__.py' in n]:
+                  print('ERROR: tapps_agents/__init__.py missing from sdist')
+                  sys.exit(1)
+          
+          # Check wheel
+          with zipfile.ZipFile('$WHEEL', 'r') as zip:
+              names = zip.namelist()
+              if not any('tapps_agents/__init__.py' in n for n in names):
+                  print('ERROR: tapps_agents/__init__.py missing from wheel')
+                  sys.exit(1)
+          
+          print('Package verification passed')
+          "
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/*
+          retention-days: 30
+
+  # Create GitHub release
+  github-release:
+    name: Create GitHub Release
+    needs: [validate, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Extract version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+      - name: Extract release notes from CHANGELOG.md
+        id: release_notes
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          
+          # Try to extract section from CHANGELOG.md
+          if [ -f CHANGELOG.md ]; then
+            # Extract section between ## [VERSION] and next ## or end of file
+            # Use awk to extract content between version header and next version header
+            awk -v version="$VERSION" '
+              /^## \[/ { 
+                if (found) exit
+                if ($0 ~ "## \\[" version "\\]") {
+                  found = 1
+                  next
+                }
+              }
+              found { 
+                if (/^## \[/) exit
+                print
+              }
+            ' CHANGELOG.md > release_notes_temp.md || true
+            
+            # Clean up the extracted notes
+            if [ -s release_notes_temp.md ]; then
+              # Remove leading blank lines and trailing blank lines
+              sed -i '/./,$!d' release_notes_temp.md 2>/dev/null || sed -i '' '/./,$!d' release_notes_temp.md
+              tac release_notes_temp.md 2>/dev/null | sed -i '/./,$!d' 2>/dev/null || \
+                sed -i '' '1!G;h;$!d' release_notes_temp.md && sed -i '' '/./,$!d' release_notes_temp.md
+              cat release_notes_temp.md
+            else
+              # Fallback: try RELEASE_NOTES file
+              if [ -f "RELEASE_NOTES_v$VERSION.md" ]; then
+                cat "RELEASE_NOTES_v$VERSION.md"
+              else
+                echo "Release ${{ steps.version.outputs.tag }}"
+                echo ""
+                echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+              fi
+            fi
+          else
+            echo "Release ${{ steps.version.outputs.tag }}"
+            echo ""
+            echo "See [CHANGELOG.md](https://github.com/${{ github.repository }}/blob/main/CHANGELOG.md) for details."
+          fi > release_notes.md
+          
+          echo "notes_file=release_notes.md" >> $GITHUB_OUTPUT
+          echo "Release notes extracted (first 500 chars):"
+          head -c 500 release_notes.md
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: Release ${{ steps.version.outputs.tag }}
+          body_path: ${{ steps.release_notes.outputs.notes_file }}
+          draft: false
+          prerelease: ${{ contains(steps.version.outputs.version, '-') || contains(steps.version.outputs.version, 'alpha') || contains(steps.version.outputs.version, 'beta') || contains(steps.version.outputs.version, 'rc') }}
+          files: |
+            dist/*.tar.gz
+            dist/*.whl
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release Summary
+        run: |
+          echo "## Release Created Successfully" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release URL:** https://github.com/${{ github.repository }}/releases/tag/${{ steps.version.outputs.tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Packages Attached:" >> $GITHUB_STEP_SUMMARY
+          ls -lh dist/ | grep -E '\.(whl|tar\.gz)$' | awk '{print "- " $9 " (" $5 ")"}' >> $GITHUB_STEP_SUMMARY
+
+  # Publish to PyPI (optional)
+  pypi-publish:
+    name: Publish to PyPI
+    needs: [validate, build, github-release]
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) &&
+      !contains(github.ref, 'alpha') &&
+      !contains(github.ref, 'beta') &&
+      !contains(github.ref, 'rc') &&
+      !contains(github.ref, 'test') &&
+      (github.event_name != 'workflow_dispatch' || !github.event.inputs.skip_pypi)
+    environment:
+      name: pypi
+      url: https://pypi.org/project/tapps-agents/
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/
+          password: ${{ secrets.PYPI_API_TOKEN }}
+          skip-existing: true
+
+      - name: PyPI Summary
+        run: |
+          echo "## Published to PyPI" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** [tapps-agents](https://pypi.org/project/tapps-agents/)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Install with: \`pip install tapps-agents\`" >> $GITHUB_STEP_SUMMARY
+

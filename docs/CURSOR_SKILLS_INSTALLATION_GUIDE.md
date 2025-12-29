@@ -1,19 +1,26 @@
-# Cursor AI Skills Installation Guide
+# Cursor AI Skills & Claude Desktop Commands Installation Guide
 
-**TappsCodingAgents + Cursor AI Integration**
+**TappsCodingAgents + Cursor AI + Claude Desktop Integration**
 
-This guide explains how to install and use TappsCodingAgents Skills in Cursor AI IDE.
+This guide explains how to install and use TappsCodingAgents Skills in Cursor AI IDE and Commands in Claude Desktop.
 
 ---
 
 ## Overview
 
-TappsCodingAgents provides **Claude Code Skills** that integrate directly into Cursor AI, giving you access to specialized SDLC agents with:
+TappsCodingAgents provides **two unified interfaces** for accessing specialized SDLC agents:
 
-- ✅ **Objective Quality Metrics**: Code scoring with 5 metrics (complexity, security, maintainability, test coverage, performance)
-- ✅ **Quality Tools**: Ruff, mypy, bandit, jscpd, pip-audit integration
-- ✅ **Context7 Integration**: KB-first library documentation caching (90%+ cache hit rate)
-- ✅ **13 Specialized Agents**: Reviewer, Implementer, Tester, Debugger, and more
+### Cursor Skills (Cursor IDE)
+- **14 Cursor Skills** (`.claude/skills/`) - Use `@agent *command` syntax in Cursor IDE
+- **Objective Quality Metrics**: Code scoring with 5 metrics (complexity, security, maintainability, test coverage, performance)
+- **Quality Tools**: Ruff, mypy, bandit, jscpd, pip-audit integration
+- **Context7 Integration**: KB-first library documentation caching (90%+ cache hit rate)
+- **13 Specialized Agents**: Reviewer, Implementer, Tester, Debugger, and more
+
+### Claude Desktop Commands (Claude Desktop)
+- **16 Claude Desktop Commands** (`.claude/commands/`) - Use `@command` syntax in Claude Desktop
+- **Same Functionality**: All commands provide the same features as Cursor Skills
+- **Unified Experience**: Choose your preferred interface - both work seamlessly
 
 ---
 
@@ -49,16 +56,18 @@ tapps-agents init
 ```
 
 This installs (by copying from packaged templates in `tapps_agents/resources/*`):
-- **Skills**: `.claude/skills/` (13 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
+- **Cursor Skills**: `.claude/skills/` (13 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
+- **Claude Desktop Commands**: `.claude/commands/` (16 commands from `tapps_agents/resources/claude/commands/`)
 - **Cursor Rules**: `.cursor/rules/*.mdc` (7 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc` and `command-reference.mdc`)
 - **Background Agents**: `.cursor/background-agents.yaml` (from `tapps_agents/resources/cursor/background-agents.yaml`)
 - **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
 
 > **Important**: 
-> - Skills are **model-agnostic**. Cursor uses the developer's configured model (Auto or pinned).
-> - All LLM operations are handled by Cursor Skills - no local LLM or API keys required.
+> - Skills and Commands are **model-agnostic**. Cursor/Claude Desktop uses the developer's configured model (Auto or pinned).
+> - All LLM operations are handled by Cursor Skills or Claude Desktop - no local LLM or API keys required.
 > - Templates are shipped in the package under `tapps_agents/resources/*` and copied to your project during `init`.
+> - **Both interfaces work together** - use Skills in Cursor IDE or Commands in Claude Desktop, whichever you prefer.
 
 ### Step 3: (Alternative) Manual Installation
 
@@ -140,12 +149,16 @@ This helps achieve 95%+ cache hit rate from the start.
 
 ### Step 4: Verify Installation
 
-**4.1 Check Skills Directory**
+**4.1 Check Skills and Commands Directories**
 
 ```bash
 # Verify Skills are in place
 ls .claude/skills/
-# Should show: reviewer/, implementer/, tester/, debugger/
+# Should show: reviewer/, implementer/, tester/, debugger/, simple-mode/, etc.
+
+# Verify Commands are in place
+ls .claude/commands/
+# Should show: review.md, implement.md, test.md, build.md, etc.
 ```
 
 **4.2 Test in Cursor AI**
@@ -156,6 +169,15 @@ ls .claude/skills/
 4. Try a command: `*help`
 
 You should see the Reviewer agent respond with available commands.
+
+**4.3 Test in Claude Desktop**
+
+1. Open Claude Desktop
+2. Open a conversation
+3. Type `@review src/api/auth.py` (or any file path)
+4. Or type `@build "Create a user authentication feature"`
+
+You should see Claude execute the command with the same functionality as Cursor Skills.
 
 ---
 
@@ -218,9 +240,48 @@ See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 
 ---
 
+## Available Claude Desktop Commands
+
+TappsCodingAgents provides **16 Claude Desktop Commands** that work alongside Cursor Skills. Use `@command` syntax in Claude Desktop for the same functionality.
+
+### Core Development Commands
+
+- **@review** - Full code review with scoring (equivalent to `@reviewer *review`)
+- **@score** - Quick quality scoring (equivalent to `@reviewer *score`)
+- **@implement** - Generate code from description (equivalent to `@implementer *implement`)
+- **@test** - Generate and run tests (equivalent to `@tester *test`)
+- **@debug** - Debug errors and find root cause (equivalent to `@debugger *debug`)
+- **@refactor** - Refactor code with instructions (equivalent to `@implementer *refactor`)
+- **@improve** - Improve code quality (equivalent to `@improver *improve`)
+- **@lint** - Run code linting (equivalent to `@reviewer *lint`)
+
+### Planning & Design Commands
+
+- **@plan** - Create development plan with user stories (equivalent to `@planner *plan`)
+- **@design** - Design system architecture (equivalent to `@architect *design`)
+- **@docs** - Generate documentation (equivalent to `@documenter *document`)
+
+### Quality & Security Commands
+
+- **@security-scan** - Scan for security vulnerabilities (equivalent to `@reviewer *security-scan`)
+- **@library-docs** - Get library documentation from Context7 (equivalent to `@reviewer *docs`)
+
+### Workflow Commands
+
+- **@build** - Complete feature development workflow (Simple Mode build workflow)
+- **@fix** - Fix bugs with systematic debugging (Simple Mode fix workflow)
+
+**See [Claude Desktop Commands Guide](CLAUDE_DESKTOP_COMMANDS.md) for complete documentation.**
+
+---
+
 ## Usage Examples
 
-### Reviewer Agent
+### In Cursor IDE (Skills)
+
+Use `@agent *command` syntax:
+
+### Reviewer Agent (Cursor IDE)
 
 ```bash
 # Full code review with scoring
@@ -242,7 +303,7 @@ See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 @reviewer *docs fastapi
 ```
 
-### Implementer Agent
+### Implementer Agent (Cursor IDE)
 
 ```bash
 # Generate code
@@ -256,7 +317,7 @@ See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 @implementer *refactor utils/helpers.py "Extract common logic"
 ```
 
-### Tester Agent
+### Tester Agent (Cursor IDE)
 
 ```bash
 # Generate and run tests
@@ -267,7 +328,7 @@ See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 @tester *test api.py --integration
 ```
 
-### Debugger Agent
+### Debugger Agent (Cursor IDE)
 
 ```bash
 # Debug error
@@ -275,6 +336,37 @@ See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 
 # Analyze error with stack trace
 @debugger *analyze-error "ValueError: invalid literal" --stack-trace "..."
+```
+
+### In Claude Desktop (Commands)
+
+Use `@command` syntax (same functionality as Skills):
+
+```bash
+# Code review
+@review src/api/auth.py
+
+# Quick scoring
+@score src/utils/helpers.py
+
+# Generate code
+@implement "Create FastAPI endpoint for user registration" api/auth.py
+
+# Generate tests
+@test calculator.py
+
+# Debug errors
+@debug "NameError: name 'x' is not defined" --file code.py --line 42
+
+# Build complete feature
+@build "Create a user authentication feature"
+
+# Get library documentation
+@library-docs fastapi routing
+
+# Security scan
+@security-scan src/
+```
 ```
 
 ---

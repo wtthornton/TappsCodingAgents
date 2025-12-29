@@ -18,7 +18,8 @@ This sets up:
 - `.tapps-agents/config.yaml` - Project configuration
 - `.cursor/rules/` - Cursor Rules for AI assistance  
 - `workflows/presets/` - Workflow preset YAML files
-- `.claude/skills/` - Cursor Skills
+- `.claude/skills/` - Cursor Skills (use in Cursor IDE)
+- `.claude/commands/` - Claude Desktop Commands (use in Claude Desktop)
 - `.cursor/background-agents.yaml` - Background Agents config
 
 ### 2. Enable Simple Mode

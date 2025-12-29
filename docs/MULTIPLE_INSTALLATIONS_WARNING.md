@@ -79,6 +79,7 @@ This will show you:
 
 ## Related Issues
 
+- [DEPENDENCY_CONFLICT_PIPDEPTREE.md](DEPENDENCY_CONFLICT_PIPDEPTREE.md) - Dependency conflict warnings during installation
 - [UPGRADE_REINSTALL_REQUIRED.md](UPGRADE_REINSTALL_REQUIRED.md) - Issues after upgrading versions
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) - General troubleshooting guide
 

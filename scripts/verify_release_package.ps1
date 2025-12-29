@@ -91,6 +91,9 @@ try {
         ".claude\*",
         ".cursor\*",
         ".bmad-core\*",
+        ".git\*",
+        ".github\*",
+        ".tapps-agents\*",
         "billstest\*",
         "reports\*",
         "htmlcov\*",
@@ -99,7 +102,12 @@ try {
         ".ruff_cache\*",
         "*.egg-info\*",
         "build\*",
-        "dist\*"
+        "dist\*",
+        ".cursorignore",
+        ".cursorrules",
+        ".env",
+        ".env.*",
+        ".gitignore"
     )
     
     # Check required items
@@ -144,8 +152,8 @@ try {
     # Also check for common excluded directory names
     $excludedDirs = @("tests", "docs", "examples", "scripts", "workflows", "requirements", 
                       "templates", "implementation", ".claude", ".cursor", ".bmad-core", 
-                      "billstest", "reports", "htmlcov", ".pytest_cache", ".mypy_cache", 
-                      ".ruff_cache", "build", "dist")
+                      ".git", ".github", ".tapps-agents", "billstest", "reports", "htmlcov", 
+                      ".pytest_cache", ".mypy_cache", ".ruff_cache", "build", "dist")
     
     foreach ($dir in $excludedDirs) {
         $dirPath = Join-Path $extractRoot $dir

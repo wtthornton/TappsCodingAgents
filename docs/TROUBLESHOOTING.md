@@ -19,6 +19,24 @@ python --version
 python -m pip install --upgrade pip
 ```
 
+### Dependency Conflict Warning: pipdeptree and packaging
+
+**Problem:** During installation, you see:
+```
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+pipdeptree 2.30.0 requires packaging>=25, but you have packaging 24.2 which is incompatible.
+```
+
+**Cause:** TappsCodingAgents constrains `packaging>=23.2,<25` for `langchain-core` compatibility, but `pipdeptree>=2.30.0` requires `packaging>=25`. These are incompatible.
+
+**Solution:** This is **non-fatal** and can be safely ignored. TappsCodingAgents works perfectly without `pipdeptree`.
+
+- **Standard installation** (recommended): `pip install -e .` - No conflict ✅
+- **If you need pipdeptree**: Install with `pip install -e ".[dependency-analysis]"` - Warning is expected ⚠️
+- **If pipdeptree was installed separately**: `pip uninstall pipdeptree` to remove the warning
+
+**See:** [DEPENDENCY_CONFLICT_PIPDEPTREE.md](DEPENDENCY_CONFLICT_PIPDEPTREE.md) for detailed explanation.
+
 ## CLI
 
 ### Cannot import '_version_' from 'tapps_agents' (Upgrade Required)

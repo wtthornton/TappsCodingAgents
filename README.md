@@ -44,7 +44,9 @@ TappsCodingAgents provides a standardized framework for building AI coding agent
 - **RAG Integration**: Retrieval-augmented generation for domain knowledge
 - **Fine-Tuning Support**: LoRA adapters for domain specialization
 - **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases)
-  - **13 Cursor Skills** (All agents available as Cursor Skills)
+  - **14 Cursor Skills** (All agents available as Cursor Skills, including Simple Mode)
+  - **16 Claude Desktop Commands** ✅ (Use `@command` in Claude Desktop - same functionality as Skills)
+  - **Unified Experience** ✅ (Commands and Skills work together - choose your interface)
   - **Simple Mode** ✅ (Streamlined interface for new users with natural language commands)
   - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
   - **Background Agents** (Offload heavy tasks to cloud/remote)
@@ -90,17 +92,26 @@ If you're using **Cursor IDE**, get started quickly:
    # OR if entry point is working:
    tapps-agents init
    ```
-   This installs Skills, Rules, and Background Agents configuration.
+   This installs:
+   - ✅ **Cursor Skills** (`.claude/skills/`) - Use `@agent *command` in Cursor IDE
+   - ✅ **Claude Desktop Commands** (`.claude/commands/`) - Use `@command` in Claude Desktop
+   - ✅ **Cursor Rules** (`.cursor/rules/`)
+   - ✅ **Background Agents** (`.cursor/background-agents.yaml`)
    
    **Note:** If you get "command not found" error, use `python -m tapps_agents.cli` instead of `tapps-agents`. See [Troubleshooting Guide](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
 
-3. **Try it in Cursor:**
+3. **Try it in Cursor IDE:**
    - Open Cursor chat
    - Type: `@reviewer *help`
    - Type: `@implementer *help`
    - Type: `@tester *help`
 
-4. **Use Background Agents:**
+4. **Or use Claude Desktop:**
+   - Type: `@review src/api/auth.py`
+   - Type: `@build "Create a user authentication feature"`
+   - Type: `@test src/api/auth.py`
+
+5. **Use Background Agents:**
    - Say: "Analyze project quality"
    - Say: "Run security scan"
 
@@ -136,7 +147,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
    # OR if entry point is working:
    tapps-agents init
    ```
-   This sets up configuration, Cursor Rules, workflow presets, and Skills.
+   This sets up configuration, Cursor Rules, workflow presets, Skills, and Claude Desktop Commands.
 
 2. **Enable Simple Mode:**
    ```bash

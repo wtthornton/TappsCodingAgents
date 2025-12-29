@@ -83,6 +83,27 @@ agents:
       delivery: ["file"]
     worktree: "security"
 
+  - name: "TappsCodingAgents Cursor Integration Verifier"
+    type: "background"
+    description: "Verify Cursor AI integration components (Skills, Rules, Background Agents, config). Validates setup after init or when troubleshooting."
+    repository: "${GITHUB_REPO}"
+    working_directory: "${PROJECT_ROOT}"
+    commands:
+      - "python -m tapps_agents.cli cursor verify --format json"
+    environment:
+      - "TAPPS_AGENTS_MODE=cursor"
+    triggers:
+      - "Verify Cursor setup"
+      - "Check Cursor integration"
+      - "Validate Cursor configuration"
+      - "Verify Cursor Skills and Rules"
+      - "Check if Cursor integration is working"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file"]
+    worktree: "cursor-verification"
+
   # PR Mode (opt-in): uses Cursor as the LLM runtime to make changes, then runs deterministic verification.
   # This agent enables PR delivery explicitly. Use when you want an isolated worktree + PR for the result.
   - name: "TappsCodingAgents PR Mode (Verify + PR)"
