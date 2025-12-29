@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0] - 2025-12-29
+
+### Added
+- **File Path Support for Custom Workflows** - Users can now execute custom workflow YAML files directly via CLI
+  - Added `orchestrator workflow <file_path>` command for direct file execution
+  - Added automatic file path detection to top-level `workflow` and `create` commands
+  - Supports both preset names and file paths (auto-detection based on path patterns)
+  - Examples:
+    - `tapps-agents workflow workflows/custom/my-workflow.yaml`
+    - `tapps-agents orchestrator workflow <file_path>`
+    - `tapps-agents create "..." --workflow <file_path>`
+
+### Changed
+- **Path Resolution** - Improved path handling using `Path.resolve()` for consistent normalization
+  - Better Windows compatibility with proper symlink handling
+  - Consistent with existing codebase patterns
+- **Error Messages** - Enhanced error messages to show both original and resolved paths for better debugging
+
+### Fixed
+- **Input Validation** - Added validation for `None` and empty string inputs in workflow commands
+- **Windows Encoding** - Fixed Unicode encoding issues in `pytest_rich_progress.py` for Windows console output
+
+### Security
+- **Path Validation** - Added input validation to prevent errors from invalid file paths
+- **Path Resolution** - Proper handling of path traversal sequences using `Path.resolve()`
+
+### Documentation
+- Added comprehensive code review document: `docs/CODE_REVIEW_WORKFLOW_FILE_PATH_SUPPORT.md`
+- Updated help text and CLI documentation with file path examples
+
+### Testing
+- Added comprehensive unit tests for `_execute_workflow_from_file` method
+- Added E2E tests for both success and failure paths
+- Test coverage for relative paths, absolute paths, and error cases
+
 ## [3.0.5] - 2025-01-16
 
 ### Fixed
