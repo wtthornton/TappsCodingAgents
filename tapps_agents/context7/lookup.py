@@ -311,10 +311,27 @@ class KBLookup:
             if resolve_result.get("success"):
                 matches = resolve_result.get("result", {}).get("matches", [])
                 if matches and len(matches) > 0:
-                    context7_id = (
-                        matches[0].get("id")
-                        if isinstance(matches[0], dict)
-                        else str(matches[0])
+                    # Extract context7_id from first match
+                    first_match = matches[0]
+                    if isinstance(first_match, dict):
+                        context7_id = first_match.get("id")
+                        # Also try library_id as fallback
+                        if not context7_id:
+                            context7_id = first_match.get("library_id")
+                    else:
+                        context7_id = str(first_match)
+                    
+                    # Validate that we actually got an ID
+                    if not context7_id:
+                        logger.warning(
+                            f"Context7 library resolution succeeded for '{library}' (topic: {topic}) "
+                            f"but no ID found in match result: {first_match}. "
+                            f"Cannot fetch documentation without library ID."
+                        )
+                else:
+                    logger.warning(
+                        f"Context7 library resolution succeeded for '{library}' (topic: {topic}) "
+                        f"but no matches returned. Cannot fetch documentation without library ID."
                     )
             elif "quota exceeded" in resolve_result.get("error", "").lower():
                 # R3: Quota exceeded - clear error message with actionable guidance
@@ -427,14 +444,27 @@ class KBLookup:
 
         # If we reach here, lookup failed
         response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
-        error_msg = "No documentation found in cache or API unavailable"
-        logger.info(
+        
+        # Provide more specific error message based on why we failed
+        if context7_id is None:
+            error_msg = (
+                f"Could not resolve library ID for '{library}'. "
+                f"This is required to fetch documentation from Context7 API. "
+                f"Library resolution may have failed or returned no matches."
+            )
+        else:
+            error_msg = (
+                f"Failed to fetch documentation from Context7 API for '{library}' (ID: {context7_id}). "
+                f"API call may have failed or returned no content."
+            )
+        
+        logger.warning(
             f"Context7 lookup failed for library '{library}' (topic: {topic}): {error_msg}. "
             f"Continuing without Context7 documentation."
         )
         return LookupResult(
             success=False,
-            source="cache",
+            source="cache" if context7_id is None else "api",
             library=library,
             topic=topic,
             error=error_msg,

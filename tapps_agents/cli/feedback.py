@@ -631,6 +631,47 @@ class FeedbackManager:
                     "duration_ms": duration_ms,
                     "version": PACKAGE_VERSION,
                 }
+            
+            # Issue 8 Fix: Detect instruction objects and add Cursor AI execution directive
+            # When an instruction object is present, add clear directives for Cursor AI
+            data_dict = output.get("data", {})
+            if isinstance(data_dict, dict) and "instruction" in data_dict:
+                instruction = data_dict.get("instruction", {})
+                file_path = data_dict.get("file", instruction.get("parameters", {}).get("file_path", "unknown"))
+                command = instruction.get("command", "improve")
+                agent_name = instruction.get("agent_name", "improver")
+                
+                # Print clear text directive to stderr BEFORE JSON (Cursor AI sees this in chat)
+                # This helps Cursor AI recognize that it should execute the instruction
+                print("\n" + "=" * 80, file=sys.stderr)
+                print("⚠️  CURSOR AI: EXECUTION REQUIRED", file=sys.stderr)
+                print("=" * 80, file=sys.stderr)
+                print(f"\nThis command returned an instruction object that YOU MUST EXECUTE.", file=sys.stderr)
+                print(f"\nDO NOT just return this JSON - you must:", file=sys.stderr)
+                print(f"  1. Read the file: {file_path}", file=sys.stderr)
+                print(f"  2. Extract the 'prompt' field from the instruction object below", file=sys.stderr)
+                print(f"  3. Use that prompt as your directive to improve/refactor/optimize the code", file=sys.stderr)
+                print(f"  4. Actually edit the file with improvements", file=sys.stderr)
+                print(f"  5. Explain what improvements you made and why", file=sys.stderr)
+                print(f"\nThe instruction is in: data.instruction.prompt", file=sys.stderr)
+                print(f"Execute using: @{agent_name} *{command} or follow the prompt directly.", file=sys.stderr)
+                print("=" * 80 + "\n", file=sys.stderr)
+                sys.stderr.flush()
+                
+                # Also add execution directive in JSON for programmatic use
+                output["_cursor_execution_directive"] = {
+                    "action": "execute_instruction",
+                    "description": "This result contains an instruction object that must be executed. DO NOT just return this JSON - you must execute the instruction by improving the code.",
+                    "steps": [
+                        f"1. Read the file: {file_path}",
+                        "2. Extract the 'prompt' field from data.instruction as your improvement directive",
+                        "3. Actually improve/refactor/optimize the code by editing the file according to the prompt",
+                        "4. Apply all improvements (best practices, type hints, documentation, etc.)",
+                        "5. Explain what improvements you made and why",
+                    ],
+                    "critical": "DO NOT just return this instruction object - you must execute it by improving the code!",
+                }
+            
             # JSON output always goes to stdout
             print(json.dumps(output, indent=2), file=sys.stdout)
             sys.stdout.flush()

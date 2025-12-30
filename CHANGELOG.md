@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Workflow Auto-Execution Command Mapping** - Fixed missing command mappings for workflow auto-execution
+  - Added missing `("improver", "refactor")` mapping to `COMMAND_MAPPING` in `skill_invoker.py`
+  - Added missing `("documenter", "update_docstrings")` and `("documenter", "update-docstrings")` mappings
+  - Added `debug_report` parameter handler to support refactor instructions from debug artifacts
+  - Resolves `Unknown command for auto-execution: improver/refactor` error in maintenance, quality, and simple-improve-quality workflows
+  - All workflow presets using `improver/refactor` and `documenter/update_docstrings` now execute successfully with auto-execution enabled
+
 ## [3.2.1] - 2025-01-16
 
 ### Added

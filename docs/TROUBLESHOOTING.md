@@ -340,6 +340,43 @@ python -c "from tapps_agents.core.runtime_mode import detect_runtime_mode; print
 2. Check for resource constraints (CPU, memory, network).
 3. Review step logs for performance bottlenecks.
 
+### Unknown command for auto-execution
+
+**Symptoms**: Workflow execution fails with error:
+```
+Unknown command for auto-execution: <agent>/<action>
+Available: [list of available commands]
+```
+
+**Cause**: The workflow preset uses an agent/action combination that isn't mapped in `COMMAND_MAPPING`. This typically happens when:
+- A workflow preset uses a command that hasn't been added to the command mapping
+- There's a mismatch between the action name in the workflow and the mapped command
+
+**Solution**:
+1. **Check if this is a known issue**: This error was fixed in version 3.2.2+ for:
+   - `improver/refactor` (used in maintenance, quality, simple-improve-quality workflows)
+   - `documenter/update_docstrings` (used in maintenance workflow)
+2. **Upgrade to latest version**: Run `pip install --upgrade tapps-agents` to get the latest fixes
+3. **If error persists with a different command**:
+   - Check the workflow preset YAML file for the agent/action combination
+   - Verify the command exists in the agent's implementation
+   - File an issue with the workflow preset name and the exact error message
+4. **Workaround**: Disable auto-execution for that step:
+   ```yaml
+   steps:
+     - id: problematic-step
+       agent: improver
+       action: refactor
+       # Add metadata to disable auto-execution
+       metadata:
+         auto_execute: false
+   ```
+
+**Affected Workflows** (fixed in 3.2.2+):
+- `maintenance` (fix workflow) - uses `improver/refactor` and `documenter/update_docstrings`
+- `quality` - uses `improver/refactor`
+- `simple-improve-quality` - uses `improver/refactor`
+
 ## Artifact and Data Issues
 
 ### `.tapps-agents/` directory growing too large

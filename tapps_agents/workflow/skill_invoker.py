@@ -168,6 +168,14 @@ class SkillInvoker:
             "document",
             {"target": "target_file", "output_dir": "docs"},
         ),
+        ("documenter", "update_docstrings"): (
+            "update-docstrings",
+            {"file": "target_file", "write_file": True},
+        ),
+        ("documenter", "update-docstrings"): (
+            "update-docstrings",
+            {"file": "target_file", "write_file": True},
+        ),
         
         # Ops
         ("ops", "security-scan"): (
@@ -183,6 +191,10 @@ class SkillInvoker:
         ("improver", "improve"): (
             "improve",
             {"file": "target_file", "feedback": "review_feedback"},
+        ),
+        ("improver", "refactor"): (
+            "refactor",
+            {"file_path": "target_file", "instruction": "debug_report"},
         ),
         
         # Enhancer
@@ -402,6 +414,13 @@ class SkillInvoker:
                 params[param_name] = state.variables.get("error_message", "")
             elif state_key == "stack_trace":
                 params[param_name] = state.variables.get("stack_trace", "")
+            elif state_key == "debug_report":
+                # Find debug-report.md artifact
+                debug_file = self._find_artifact(state, "debug-report.md")
+                if debug_file and debug_file.exists():
+                    params[param_name] = debug_file.read_text(encoding="utf-8")
+                else:
+                    params[param_name] = state.variables.get("user_prompt", "")
             elif state_key == "project_profile":
                 # Get project profile from state
                 profile_dict = state.variables.get("project_profile")

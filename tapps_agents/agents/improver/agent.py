@@ -3,6 +3,7 @@ Improver Agent - Refactors and enhances existing code
 """
 
 import inspect
+import logging
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +12,8 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
 from ...core.tiered_context import ContextTier
+
+logger = logging.getLogger(__name__)
 
 
 class ImproverAgent(BaseAgent):
@@ -100,6 +103,32 @@ class ImproverAgent(BaseAgent):
         # Get context for refactoring
         context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
+        # Enhancement: Auto-detect libraries and fetch Context7 documentation
+        context7_docs = {}
+        context7_guidance = ""
+        try:
+            from ...core.language_detector import LanguageDetector
+            detector = LanguageDetector()
+            language = detector.detect_language(file_path_obj)
+            
+            # Use universal auto-detection hook for Context7 docs
+            context7_docs = await self._auto_fetch_context7_docs(
+                code=current_code,
+                prompt=instruction or "Refactor code to improve structure and maintainability",
+                language=language,
+            )
+            
+            # Add Context7 guidance to prompt if available
+            if context7_docs:
+                context7_guidance = "\n\nRelevant Library Best Practices from Context7:\n"
+                for lib_name, lib_doc in context7_docs.items():
+                    if lib_doc and lib_doc.get("content"):
+                        content_preview = lib_doc.get("content", "")[:500]
+                        context7_guidance += f"\n{lib_name}:\n{content_preview}...\n"
+                logger.debug(f"Auto-fetched Context7 docs for {len(context7_docs)} libraries using universal hook")
+        except Exception as e:
+            logger.debug(f"Context7 auto-detection failed during refactor: {e}, continuing without Context7 docs")
+
         # Build prompt for refactoring
         instruction_text = (
             instruction
@@ -117,6 +146,7 @@ Current code:
 
 Context (other related files):
 {context_text}
+{context7_guidance}
 
 Provide the refactored code that:
 1. Improves code structure and organization
@@ -140,6 +170,16 @@ Return only the refactored code, wrapped in ```python code blocks."""
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
+            "note": "⚠️ IMPORTANT: When you see this instruction object in Cursor, you MUST execute it by:",
+            "execution_instructions": [
+                f"1. Read the file: {file_path}",
+                "2. Use the 'prompt' field from the instruction object as your refactoring directive",
+                "3. Actually refactor the code by editing the file according to the prompt",
+                "4. Preserve all existing functionality while improving structure and maintainability",
+                "5. Explain what refactoring changes you made and why",
+                "",
+                "DO NOT just return the instruction object - you must execute it by refactoring the code!",
+            ],
         }
 
     async def _handle_optimize(
@@ -174,6 +214,32 @@ Return only the refactored code, wrapped in ```python code blocks."""
         # Get context
         context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
+        # Enhancement: Auto-detect libraries and fetch Context7 documentation
+        context7_docs = {}
+        context7_guidance = ""
+        try:
+            from ...core.language_detector import LanguageDetector
+            detector = LanguageDetector()
+            language = detector.detect_language(file_path_obj)
+            
+            # Use universal auto-detection hook for Context7 docs
+            context7_docs = await self._auto_fetch_context7_docs(
+                code=current_code,
+                prompt=f"Optimize code for {optimization_type}",
+                language=language,
+            )
+            
+            # Add Context7 guidance to prompt if available
+            if context7_docs:
+                context7_guidance = "\n\nRelevant Library Optimization Best Practices from Context7:\n"
+                for lib_name, lib_doc in context7_docs.items():
+                    if lib_doc and lib_doc.get("content"):
+                        content_preview = lib_doc.get("content", "")[:500]
+                        context7_guidance += f"\n{lib_name}:\n{content_preview}...\n"
+                logger.debug(f"Auto-fetched Context7 docs for {len(context7_docs)} libraries using universal hook")
+        except Exception as e:
+            logger.debug(f"Context7 auto-detection failed during optimize: {e}, continuing without Context7 docs")
+
         optimization_prompts = {
             "performance": "Optimize for execution speed and efficiency",
             "memory": "Optimize for memory usage and reduce memory footprint",
@@ -195,6 +261,7 @@ Current code:
 
 Context (other related files):
 {context_text}
+{context7_guidance}
 
 Provide the optimized code that:
 1. Improves {optimization_type} characteristics
@@ -222,6 +289,16 @@ Return only the optimized code, wrapped in ```python code blocks."""
             "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
             "optimization_type": optimization_type,
+            "note": "⚠️ IMPORTANT: When you see this instruction object in Cursor, you MUST execute it by:",
+            "execution_instructions": [
+                f"1. Read the file: {file_path}",
+                "2. Use the 'prompt' field from the instruction object as your optimization directive",
+                f"3. Actually optimize the code for {optimization_type} by editing the file according to the prompt",
+                "4. Maintain functionality and correctness while improving performance/memory characteristics",
+                "5. Explain what optimizations you made and why",
+                "",
+                "DO NOT just return the instruction object - you must execute it by optimizing the code!",
+            ],
         }
 
     async def _handle_improve_quality(
@@ -249,6 +326,33 @@ Return only the optimized code, wrapped in ```python code blocks."""
         # Get context
         context_text = self.get_context_text(file_path_obj, tier=ContextTier.TIER2)
 
+        # Enhancement: Auto-detect libraries and fetch Context7 documentation
+        context7_docs = {}
+        context7_guidance = ""
+        try:
+            from ...core.language_detector import LanguageDetector
+            detector = LanguageDetector()
+            language = detector.detect_language(file_path_obj)
+            
+            # Use universal auto-detection hook for Context7 docs
+            focus_prompt = f"Improve code quality" + (f" focusing on {focus}" if focus else "")
+            context7_docs = await self._auto_fetch_context7_docs(
+                code=current_code,
+                prompt=focus_prompt,
+                language=language,
+            )
+            
+            # Add Context7 guidance to prompt if available
+            if context7_docs:
+                context7_guidance = "\n\nRelevant Library Best Practices from Context7:\n"
+                for lib_name, lib_doc in context7_docs.items():
+                    if lib_doc and lib_doc.get("content"):
+                        content_preview = lib_doc.get("content", "")[:500]
+                        context7_guidance += f"\n{lib_name}:\n{content_preview}...\n"
+                logger.debug(f"Auto-fetched Context7 docs for {len(context7_docs)} libraries using universal hook")
+        except Exception as e:
+            logger.debug(f"Context7 auto-detection failed during improve-quality: {e}, continuing without Context7 docs")
+
         # Parse focus areas
         focus_areas = []
         if focus:
@@ -272,6 +376,8 @@ Current code:
 Context (other related files):
 {context_text}
 {focus_text}
+{context7_guidance}
+
 Provide improved code that:
 1. Follows Python best practices and PEP 8 style guide
 2. Uses appropriate design patterns
@@ -303,7 +409,16 @@ Return only the improved code, wrapped in ```python code blocks."""
             "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
             "file_written": False,  # Code improvement happens in Cursor Skills
-            "note": "Execute the skill_command in Cursor chat to improve the code",
+            "note": "⚠️ IMPORTANT: When you see this instruction object in Cursor, you MUST execute it by:",
+            "execution_instructions": [
+                f"1. Read the file: {file_path}",
+                "2. Use the 'prompt' field from the instruction object as your improvement directive",
+                "3. Actually improve the code by editing the file according to the prompt",
+                "4. Apply all quality improvements (best practices, type hints, documentation, etc.)",
+                "5. Explain what improvements you made and why",
+                "",
+                "DO NOT just return the instruction object - you must execute it by improving the code!",
+            ],
         }
         
         return result

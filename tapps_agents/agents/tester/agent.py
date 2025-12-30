@@ -160,32 +160,47 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             focus_areas = [area.strip() for area in focus.split(",")]
             focus_text = f" Focus specifically on: {', '.join(focus_areas)}."
         
-        # D1: Get Context7 test framework documentation
+        # D1: Get Context7 test framework documentation using universal auto-detection
+        # Enhancement: Use _auto_fetch_context7_docs() for automatic library detection
         framework_docs = None
         test_framework = "pytest"  # Default
+        
         try:
             from ...core.language_detector import LanguageDetector
             detector = LanguageDetector()
             language = detector.detect_language(file_path)
+            code_content = file_path.read_text(encoding="utf-8") if file_path.exists() else ""
             test_framework = self.test_generator._detect_test_framework_for_language(
                 language=language,
-                code=file_path.read_text(encoding="utf-8") if file_path.exists() else ""
+                code=code_content
             )
+            
+            # Use universal auto-detection hook for Context7 docs
+            # This automatically detects libraries from code and test framework name in prompt
+            context7_docs = await self._auto_fetch_context7_docs(
+                code=code_content,
+                prompt=f"Generate tests using {test_framework}",
+                language=language,
+            )
+            
+            # Extract test framework docs if available
+            if context7_docs:
+                # First try exact match with detected framework
+                if test_framework in context7_docs and context7_docs[test_framework]:
+                    framework_docs = context7_docs[test_framework]
+                else:
+                    # Look for any test framework in the detected libraries
+                    test_frameworks = ["pytest", "jest", "vitest", "unittest", "mocha", "jasmine"]
+                    for lib_name, lib_docs in context7_docs.items():
+                        if lib_name.lower() in [tf.lower() for tf in test_frameworks] and lib_docs:
+                            framework_docs = lib_docs
+                            test_framework = lib_name
+                            break
+            
+            if framework_docs:
+                logger.debug(f"D1: Auto-fetched Context7 docs for {test_framework} using universal hook")
         except Exception as e:
-            logger.debug(f"Failed to detect test framework: {e}, using default pytest")
-        
-        if self.context7:
-            try:
-                # Get Context7 documentation for test framework
-                framework_docs = await self.context7.get_documentation(
-                    library=test_framework,  # e.g., "pytest", "jest", "vitest"
-                    topic="testing",
-                    use_fuzzy_match=True
-                )
-                if framework_docs:
-                    logger.debug(f"D1: Fetched Context7 docs for {test_framework}")
-            except Exception as e:
-                logger.debug(f"D1: Context7 framework docs lookup failed: {e}")
+            logger.debug(f"D1: Context7 auto-detection failed: {e}, continuing without Context7 docs")
 
         # Consult Testing expert for test generation guidance
         expert_guidance = ""
