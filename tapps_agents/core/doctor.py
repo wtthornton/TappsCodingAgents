@@ -335,32 +335,27 @@ def collect_doctor_report(
             except ImportError:
                 pass
             
-            if playwright_python_available:
-                findings.append(
-                    DoctorFinding(
-                        severity="ok",
-                        code="MCP_PLAYWRIGHT",
-                        message="Playwright MCP: Not configured (optional), but Python Playwright package is available",
-                        remediation=(
-                            "Playwright MCP is optional. Browser automation works via Python Playwright package.\n"
-                            "To configure Playwright MCP, add it to .cursor/mcp.json:\n"
-                            '  {"mcpServers": {"Playwright": {"command": "npx", "args": ["-y", "@playwright/mcp-server"]}}}'
-                        ),
-                    )
+            # Note: Cursor may provide Playwright MCP natively (not in config files)
+            # If it's enabled in Cursor settings, it should work even if not detected here
+            findings.append(
+                DoctorFinding(
+                    severity="ok" if playwright_python_available else "warn",
+                    code="MCP_PLAYWRIGHT",
+                    message=(
+                        "Playwright MCP: Not detected in config files (optional)"
+                        + (" - Python Playwright package available" if playwright_python_available else "")
+                        + "\nNote: Cursor may provide Playwright MCP natively. If enabled in Cursor settings, it should work."
+                    ),
+                    remediation=(
+                        "Playwright MCP is optional. If it's enabled in Cursor settings (Tools & MCP), it should work.\n"
+                        "If not enabled, you can:\n"
+                        "1. Enable it in Cursor settings (Tools & MCP), or\n"
+                        "2. Configure Playwright MCP in .cursor/mcp.json:\n"
+                        '   {"mcpServers": {"Playwright": {"command": "npx", "args": ["-y", "@playwright/mcp-server"]}}}, or\n'
+                        "3. Install Python Playwright: pip install playwright && python -m playwright install"
+                    ) if not playwright_python_available else None,
                 )
-            else:
-                findings.append(
-                    DoctorFinding(
-                        severity="warn",
-                        code="MCP_PLAYWRIGHT",
-                        message="Playwright MCP: Not configured (optional)",
-                        remediation=(
-                            "Playwright MCP is optional. To enable browser automation:\n"
-                            "1. Configure Playwright MCP in .cursor/mcp.json (recommended in Cursor), or\n"
-                            "2. Install Python Playwright: pip install playwright && python -m playwright install"
-                        ),
-                    )
-                )
+            )
     except Exception:
         # If MCP detection fails, don't fail the entire doctor report
         findings.append(

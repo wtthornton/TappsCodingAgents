@@ -1321,6 +1321,13 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
                             detected = True
                             reason = f"Configured as '{server_name}' in MCP settings (with API key)"
                             break
+                    
+                    # Check for Playwright in server name (case-insensitive) - Cursor may provide natively
+                    if server_id == "Playwright":
+                        if "playwright" in server_name.lower():
+                            detected = True
+                            reason = f"Configured as '{server_name}' in MCP settings (may be Cursor native)"
+                            break
 
         # Check environment variables for Context7
         if server_id == "Context7":
