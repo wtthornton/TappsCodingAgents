@@ -48,6 +48,23 @@ class TestInitProjectCursorArtifacts:
         assert results["skills"] is True
         assert results["background_agents"] is True
 
+    def test_init_project_does_not_install_background_agents_by_default(self, tmp_path: Path):
+        """Test that background agents are NOT installed by default (opt-in behavior)."""
+        results = init_project(
+            project_root=tmp_path,
+            include_cursor_rules=True,
+            include_workflow_presets=False,
+            include_config=False,
+            include_skills=True,
+            # include_background_agents not specified - should default to False
+        )
+
+        # Background agents config should NOT exist
+        bg_config = tmp_path / ".cursor" / "background-agents.yaml"
+        assert not bg_config.exists(), "Background agents should not be installed by default"
+
+        assert results["background_agents"] is False
+
     def test_init_project_with_empty_project_detects_no_tech_stack(self, tmp_path: Path):
         """Test that init_project handles empty projects (no dependency files) correctly."""
         results = init_project(

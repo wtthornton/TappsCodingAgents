@@ -447,9 +447,14 @@ Examples:
         help="Skip installing Cursor Skills definitions in .claude/skills/ directory. Skills enable agent capabilities in Cursor AI.",
     )
     init_parser.add_argument(
+        "--background-agents",
+        action="store_true",
+        help="Install .cursor/background-agents.yaml configuration for automatic workflow execution in Cursor (not installed by default)",
+    )
+    init_parser.add_argument(
         "--no-background-agents",
         action="store_true",
-        help="Skip creating .cursor/background-agents.yaml configuration for automatic workflow execution in Cursor",
+        help="(Deprecated) Explicitly skip creating .cursor/background-agents.yaml. Background agents are not installed by default, so this flag is no longer needed.",
     )
     init_parser.add_argument(
         "--no-cache",

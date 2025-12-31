@@ -2127,7 +2127,7 @@ def init_project(
     include_workflow_presets: bool = True,
     include_config: bool = True,
     include_skills: bool = True,
-    include_background_agents: bool = True,
+    include_background_agents: bool = False,
     include_cursorignore: bool = True,
     pre_populate_cache: bool = True,
     reset_mode: bool = False,
@@ -2144,7 +2144,7 @@ def init_project(
         include_workflow_presets: Whether to copy workflow presets
         include_config: Whether to create project config
         include_skills: Whether to install Cursor Skills
-        include_background_agents: Whether to install Background Agents config
+        include_background_agents: Whether to install Background Agents config (default: False)
         include_cursorignore: Whether to install .cursorignore file
         pre_populate_cache: Whether to pre-populate Context7 cache with detected tech stack
         reset_mode: Whether to reset framework-managed files (upgrade mode)

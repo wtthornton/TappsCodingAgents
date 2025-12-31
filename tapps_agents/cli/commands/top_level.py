@@ -2071,12 +2071,18 @@ def handle_init_command(args: object) -> None:
 
     _print_init_header()
 
+    # Background agents are opt-in: default is False, use --background-agents to enable
+    # Keep --no-background-agents for backward compatibility (explicitly disable)
+    include_bg_agents = getattr(args, "background_agents", False)
+    if getattr(args, "no_background_agents", False):
+        include_bg_agents = False  # Explicit disable overrides opt-in
+    
     results = init_project(
         include_cursor_rules=not getattr(args, "no_rules", False),
         include_workflow_presets=not getattr(args, "no_presets", False),
         include_config=not getattr(args, "no_config", False),
         include_skills=not getattr(args, "no_skills", False),
-        include_background_agents=not getattr(args, "no_background_agents", False),
+        include_background_agents=include_bg_agents,
         include_cursorignore=not getattr(args, "no_cursorignore", False),
         pre_populate_cache=not getattr(args, "no_cache", False),
         reset_mode=reset_mode,
