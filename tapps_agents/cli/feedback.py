@@ -637,7 +637,23 @@ class FeedbackManager:
             data_dict = output.get("data", {})
             if isinstance(data_dict, dict) and "instruction" in data_dict:
                 instruction = data_dict.get("instruction", {})
-                file_path = data_dict.get("file", instruction.get("parameters", {}).get("file_path", "unknown"))
+                
+                # Extract file path - handle different instruction types:
+                # 1. TestGenerationInstruction: target_file (test file path for tester instructions)
+                # 2. CodeGenerationInstruction: file_path
+                # 3. GenericInstruction: parameters.file_path
+                # 4. Tester agent result: test_file (test file path, not source)
+                # 5. Fallback: file from data_dict
+                # Note: For tester instructions, target_file points to test file (not source file)
+                # TODO: Store source file path in tester agent result for better traceability
+                file_path = (
+                    instruction.get("target_file") or  # TestGenerationInstruction (test file)
+                    instruction.get("file_path") or  # CodeGenerationInstruction
+                    data_dict.get("test_file") or  # Tester agent result (test file)
+                    instruction.get("parameters", {}).get("file_path") or  # GenericInstruction
+                    data_dict.get("file") or  # Fallback
+                    "unknown"
+                )
                 command = instruction.get("command", "improve")
                 agent_name = instruction.get("agent_name", "improver")
                 

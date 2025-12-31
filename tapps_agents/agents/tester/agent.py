@@ -714,14 +714,40 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             Test file content as string
         """
         # Determine module import path
+        module_path = None
         try:
             # Try to make path relative to project root
-            project_root = self._project_root if hasattr(self, "_project_root") else Path.cwd()
-            rel_path = file_path.resolve().relative_to(project_root.resolve())
-            # Convert to module path (remove .py, replace / with .)
-            module_path = str(rel_path.with_suffix("")).replace("/", ".").replace("\\", ".")
-        except (ValueError, AttributeError):
-            # Fallback to filename
+            project_root = None
+            if hasattr(self, "_project_root") and self._project_root is not None:
+                project_root = self._project_root
+            else:
+                project_root = Path.cwd()
+            
+            abs_file_path = file_path.resolve()
+            abs_project_root = project_root.resolve()
+            
+            # Calculate relative path
+            try:
+                rel_path = abs_file_path.relative_to(abs_project_root)
+                # Convert to module path (remove .py, replace / with .)
+                module_path = str(rel_path.with_suffix("")).replace("/", ".").replace("\\", ".")
+            except ValueError:
+                # File is not under project root, try parent directory
+                # This can happen with worktrees or symlinks
+                parent = abs_file_path.parent
+                if parent != abs_file_path:  # Avoid infinite loop
+                    try:
+                        rel_path = parent.relative_to(abs_project_root) / abs_file_path.name
+                        module_path = str(rel_path.with_suffix("")).replace("/", ".").replace("\\", ".")
+                    except ValueError:
+                        # Fall through to filename fallback
+                        module_path = None
+        except (AttributeError, OSError) as e:
+            logger.debug(f"Error calculating module path: {e}")
+            module_path = None
+        
+        # Fallback to filename if module path calculation failed
+        if not module_path:
             module_path = file_path.stem
         
         if test_framework == "pytest":
@@ -735,6 +761,11 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             ]
             
             # Add import for the module being tested
+            lines.append(f"# Import module under test")
+            lines.append(f"# NOTE: If this import fails, adjust the path based on your project structure")
+            lines.append(f"# Common fixes:")
+            lines.append(f"#   - If src/ is not a package, remove 'src.' prefix: from {module_path.replace('src.', '', 1) if module_path.startswith('src.') else module_path} import *")
+            lines.append(f"#   - Use explicit imports: from {module_path} import ClassName, function_name")
             lines.append(f"from {module_path} import *")
             lines.append("")
             
@@ -797,6 +828,11 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 "",
                 "import unittest",
                 "",
+                f"# Import module under test",
+                f"# NOTE: If this import fails, adjust the path based on your project structure",
+                f"# Common fixes:",
+                f"#   - If src/ is not a package, remove 'src.' prefix: from {module_path.replace('src.', '', 1) if module_path.startswith('src.') else module_path} import *",
+                f"#   - Use explicit imports: from {module_path} import ClassName, function_name",
                 f"from {module_path} import *",
                 "",
             ]
