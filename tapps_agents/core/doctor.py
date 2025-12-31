@@ -371,6 +371,214 @@ def collect_doctor_report(
             )
         )
 
+    # --- Cursor Integration checks (what init creates) ---
+    try:
+        from .cursor_verification import verify_cursor_integration
+        
+        is_valid, verification_results = verify_cursor_integration(root)
+        
+        # Check Cursor Rules
+        rules_result = verification_results.get("components", {}).get("rules", {})
+        if rules_result.get("valid"):
+            rules_found = len(rules_result.get("rules_found", []))
+            expected = len(rules_result.get("expected_rules", []))
+            if rules_found == expected:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="CURSOR_RULES",
+                        message=f"Cursor Rules: {rules_found}/{expected} rules found",
+                    )
+                )
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="CURSOR_RULES",
+                        message=f"Cursor Rules: {rules_found}/{expected} rules found (missing {expected - rules_found})",
+                        remediation=(
+                            "Run 'tapps-agents init' to install missing Cursor Rules.\n"
+                            "Missing rules are required for Cursor AI integration."
+                        ),
+                    )
+                )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CURSOR_RULES",
+                    message="Cursor Rules: Not found or incomplete",
+                    remediation=(
+                        "Run 'tapps-agents init' to install Cursor Rules.\n"
+                        "Cursor Rules provide context to Cursor AI about workflow presets and agent capabilities."
+                    ),
+                )
+            )
+        
+        # Check Skills
+        skills_result = verification_results.get("components", {}).get("skills", {})
+        if skills_result.get("valid"):
+            skills_found = len(skills_result.get("skills_found", []))
+            expected = len(skills_result.get("expected_skills", []))
+            if skills_found == expected:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="CURSOR_SKILLS",
+                        message=f"Cursor Skills: {skills_found}/{expected} skills found",
+                    )
+                )
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="CURSOR_SKILLS",
+                        message=f"Cursor Skills: {skills_found}/{expected} skills found (missing {expected - skills_found})",
+                        remediation=(
+                            "Run 'tapps-agents init' to install missing Cursor Skills.\n"
+                            "Skills enable @agent-name commands in Cursor chat."
+                        ),
+                    )
+                )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CURSOR_SKILLS",
+                    message="Cursor Skills: Not found or incomplete",
+                    remediation=(
+                        "Run 'tapps-agents init' to install Cursor Skills.\n"
+                        "Skills enable @agent-name commands (e.g., @reviewer, @implementer) in Cursor chat."
+                    ),
+                )
+            )
+        
+        # Check Background Agents
+        bg_agents_result = verification_results.get("components", {}).get("background_agents", {})
+        if bg_agents_result.get("valid"):
+            agents_count = bg_agents_result.get("agents_count", 0)
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="BACKGROUND_AGENTS",
+                    message=f"Background Agents: {agents_count} agents configured",
+                )
+            )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="BACKGROUND_AGENTS",
+                    message="Background Agents: Config not found or invalid",
+                    remediation=(
+                        "Run 'tapps-agents init' to install Background Agents configuration.\n"
+                        "Background Agents enable automatic workflow execution in Cursor."
+                    ),
+                )
+            )
+        
+        # Check .cursorignore
+        cursorignore_result = verification_results.get("components", {}).get("cursorignore", {})
+        if cursorignore_result.get("valid"):
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="CURSORIGNORE",
+                    message=".cursorignore: Found (recommended for performance)",
+                )
+            )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CURSORIGNORE",
+                    message=".cursorignore: Not found (optional but recommended)",
+                    remediation=(
+                        "Run 'tapps-agents init' to create .cursorignore.\n"
+                        ".cursorignore excludes large/generated files from Cursor indexing for better performance."
+                    ),
+                )
+            )
+        
+    except Exception as e:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="CURSOR_INTEGRATION_CHECK_ERROR",
+                message=f"Could not verify Cursor integration: {e}",
+                remediation="Run 'tapps-agents init' to set up Cursor integration components.",
+            )
+        )
+    
+    # --- Workflow Presets check ---
+    from .init_project import FRAMEWORK_WORKFLOW_PRESETS
+    
+    presets_dir = root / "workflows" / "presets"
+    if presets_dir.exists():
+        preset_files = list(presets_dir.glob("*.yaml"))
+        framework_presets_found = [
+            p.name for p in preset_files if p.name in FRAMEWORK_WORKFLOW_PRESETS
+        ]
+        expected_count = len(FRAMEWORK_WORKFLOW_PRESETS)
+        found_count = len(framework_presets_found)
+        
+        if found_count == expected_count:
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="WORKFLOW_PRESETS",
+                    message=f"Workflow Presets: {found_count}/{expected_count} presets found",
+                )
+            )
+        else:
+            missing = expected_count - found_count
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="WORKFLOW_PRESETS",
+                    message=f"Workflow Presets: {found_count}/{expected_count} presets found (missing {missing})",
+                    remediation=(
+                        "Run 'tapps-agents init' to install missing workflow presets.\n"
+                        "Workflow presets define reusable workflows (full, rapid, fix, quality, hotfix)."
+                    ),
+                )
+            )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="WORKFLOW_PRESETS",
+                message="Workflow Presets: Directory not found",
+                remediation=(
+                    "Run 'tapps-agents init' to install workflow presets.\n"
+                    "Workflow presets define reusable workflows for common development tasks."
+                ),
+            )
+        )
+    
+    # --- Config file check ---
+    config_file = root / ".tapps-agents" / "config.yaml"
+    if config_file.exists():
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="PROJECT_CONFIG",
+                message="Project Config: .tapps-agents/config.yaml found",
+            )
+        )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="PROJECT_CONFIG",
+                message="Project Config: .tapps-agents/config.yaml not found",
+                remediation=(
+                    "Run 'tapps-agents init' to create project configuration.\n"
+                    "Config file contains project settings, quality thresholds, and tool configurations."
+                ),
+            )
+        )
+
     return {
         "policy": {
             "external_tools_mode": policy_mode,
