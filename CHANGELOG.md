@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.7] - 2025-01-16
+
+### Added
+- **Core Validation Utilities** - New code validation and path sanitization modules
+  - Added `code_validator.py` for code correctness validation
+  - Added `module_path_sanitizer.py` for safe module path handling
+  - Enhanced framework with improved validation capabilities
+
+### Changed
+- **Simple Mode** - Improved intent parsing and natural language handling
+  - Enhanced `intent_parser.py` with better command detection
+  - Improved `nl_handler.py` for natural language processing
+- **Implementer Agent** - Code generation improvements
+  - Enhanced agent implementation with better validation
+
+### Removed
+- **Script Cleanup** - Removed deprecated monitoring scripts
+  - Removed `monitor_background_agents.py`
+  - Removed `monitor_status.py`
+  - Removed `trigger_background_agent_demo.py`
+
+### Documentation
+- Added `docs/tapps-agents-usage-analysis-database-schema-fix.md` - Usage analysis and recommendations
+- Added `docs/workflows/simple-mode-framework-improvements/` - Framework improvement documentation
+
 ## [3.2.6] - 2025-01-16
 
 ### Fixed

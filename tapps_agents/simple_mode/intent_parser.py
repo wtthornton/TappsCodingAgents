@@ -116,6 +116,38 @@ class IntentParser:
             "stories",
         ]
 
+        # Simple Mode intent keywords
+        self.simple_mode_keywords = [
+            "@simple-mode",
+            "simple mode",
+            "use simple mode",
+            "simple-mode",
+            "@simple_mode",
+            "simple_mode",
+        ]
+
+    def detect_simple_mode_intent(self, text: str) -> bool:
+        """
+        Detect if user wants Simple Mode.
+
+        Args:
+            text: User input text
+
+        Returns:
+            True if Simple Mode intent detected, False otherwise
+
+        Examples:
+            >>> parser = IntentParser()
+            >>> parser.detect_simple_mode_intent("@simple-mode build feature")
+            True
+            >>> parser.detect_simple_mode_intent("use simple mode to create api")
+            True
+            >>> parser.detect_simple_mode_intent("build feature")
+            False
+        """
+        text_lower = text.lower()
+        return any(keyword in text_lower for keyword in self.simple_mode_keywords)
+
     def parse(self, input_text: str) -> Intent:
         """
         Parse natural language input into a structured intent.
@@ -130,6 +162,11 @@ class IntentParser:
 
         # Extract parameters
         parameters = self._extract_parameters(input_text)
+
+        # Check for Simple Mode intent first
+        if self.detect_simple_mode_intent(input_text):
+            # Force Simple Mode workflow
+            parameters["force_simple_mode"] = True
 
         # Check for explicit *epic command
         if input_text.strip().startswith("*epic") or input_text.strip().startswith("@simple-mode *epic"):

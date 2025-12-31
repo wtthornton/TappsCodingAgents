@@ -52,6 +52,206 @@ def format_instruction(inst_dict: dict) -> str:
     return "\n".join(lines)
 
 
+def _format_analysis_stage(analysis: dict) -> list[str]:
+    """Format analysis stage output."""
+    lines = ["## Analysis"]
+    if not isinstance(analysis, dict):
+        return lines
+    
+    if "original_prompt" in analysis:
+        lines.append(f"- **Original Prompt**: {analysis['original_prompt']}")
+    if "instruction" in analysis:
+        lines.append("\n### Instruction Prepared:")
+        lines.append(format_instruction(analysis["instruction"]))
+    if "skill_command" in analysis:
+        lines.append(f"\n- **Skill Command**: `{analysis['skill_command']}`")
+    lines.append("")
+    return lines
+
+
+def _format_requirements_stage(req: dict) -> list[str]:
+    """Format requirements stage output."""
+    lines = ["## Requirements"]
+    if not isinstance(req, dict):
+        return lines
+    
+    if "requirements_analysis" in req and req["requirements_analysis"]:
+        lines.append("### Requirements Analysis")
+        analysis_text = req["requirements_analysis"]
+        if isinstance(analysis_text, str):
+            lines.append(analysis_text[:600] + ("..." if len(analysis_text) > 600 else ""))
+        lines.append("")
+    
+    if "functional_requirements" in req and req["functional_requirements"]:
+        lines.append("### Functional Requirements")
+        lines.extend(f"- {fr}" for fr in req["functional_requirements"])
+        lines.append("")
+    
+    if "non_functional_requirements" in req and req["non_functional_requirements"]:
+        lines.append("### Non-Functional Requirements")
+        lines.extend(f"- {nfr}" for nfr in req["non_functional_requirements"])
+        lines.append("")
+    
+    if "technical_constraints" in req and req["technical_constraints"]:
+        lines.append("### Technical Constraints")
+        lines.extend(f"- {tc}" for tc in req["technical_constraints"])
+        lines.append("")
+    
+    if "assumptions" in req and req["assumptions"]:
+        lines.append("### Assumptions")
+        lines.extend(f"- {ass}" for ass in req["assumptions"])
+        lines.append("")
+    
+    if "expert_consultations" in req and req["expert_consultations"]:
+        lines.append("### Expert Consultations")
+        for domain, consultation in req["expert_consultations"].items():
+            lines.append(f"#### {domain}")
+            if "weighted_answer" in consultation:
+                answer = consultation["weighted_answer"]
+                answer_str = answer[:500] if isinstance(answer, str) else str(answer)[:500]
+                lines.append(f"{answer_str}...")
+            if "confidence" in consultation:
+                lines.append(f"- Confidence: {consultation['confidence']}")
+            if "agreement_level" in consultation:
+                lines.append(f"- Agreement: {consultation['agreement_level']}")
+            if "primary_expert" in consultation:
+                lines.append(f"- Primary Expert: {consultation['primary_expert']}")
+        lines.append("")
+    
+    lines.append("")
+    return lines
+
+
+def _format_architecture_stage(arch: dict) -> list[str]:
+    """Format architecture stage output."""
+    lines = ["## Architecture"]
+    if not isinstance(arch, dict):
+        return lines
+    
+    if "architecture_guidance" in arch and arch["architecture_guidance"]:
+        lines.append("### Architecture Guidance")
+        guidance = arch["architecture_guidance"]
+        guidance_str = guidance[:800] if isinstance(guidance, str) else str(guidance)[:800]
+        lines.append(guidance_str + ("..." if len(guidance_str) >= 800 else ""))
+        lines.append("")
+    
+    if "system_design" in arch and arch["system_design"]:
+        lines.append("### System Design")
+        design_dict = arch["system_design"]
+        if isinstance(design_dict, dict):
+            for key, value in design_dict.items():
+                if isinstance(value, (dict, list)):
+                    value_str = json.dumps(value, indent=2)
+                    if len(value_str) > 400:
+                        value_str = value_str[:400] + "..."
+                    lines.append(f"- **{key}**:\n  ```json\n  {value_str}\n  ```")
+                else:
+                    lines.append(f"- **{key}**: {value}")
+        else:
+            design_str = json.dumps(design_dict, indent=2)
+            lines.append(design_str[:600] + ("..." if len(design_str) > 600 else ""))
+        lines.append("")
+    
+    if "design_patterns" in arch and arch["design_patterns"]:
+        lines.append("### Design Patterns")
+        lines.extend(f"- {pattern}" for pattern in arch["design_patterns"])
+        lines.append("")
+    
+    if "technology_recommendations" in arch and arch["technology_recommendations"]:
+        lines.append("### Technology Recommendations")
+        lines.extend(f"- {tech}" for tech in arch["technology_recommendations"])
+        lines.append("")
+    
+    lines.append("")
+    return lines
+
+
+def _format_codebase_context_stage(ctx: dict) -> list[str]:
+    """Format codebase context stage output."""
+    lines = ["## Codebase Context"]
+    if not isinstance(ctx, dict):
+        return lines
+    
+    if "related_files" in ctx and ctx["related_files"]:
+        lines.append("### Related Files")
+        lines.extend(f"- {file}" for file in ctx["related_files"][:10])
+    if "codebase_context" in ctx:
+        lines.append(f"\n{ctx['codebase_context']}")
+    lines.append("")
+    return lines
+
+
+def _format_quality_stage(qual: dict) -> list[str]:
+    """Format quality stage output."""
+    lines = ["## Quality Standards"]
+    if not isinstance(qual, dict):
+        return lines
+    
+    if "security_requirements" in qual and qual["security_requirements"]:
+        lines.append("### Security")
+        lines.extend(f"- {sec}" for sec in qual["security_requirements"][:5])
+    
+    if "testing_requirements" in qual and qual["testing_requirements"]:
+        lines.append("\n### Testing")
+        lines.extend(f"- {test}" for test in qual["testing_requirements"])
+    
+    if "code_quality_thresholds" in qual:
+        lines.append("\n### Quality Thresholds")
+        thresholds = qual["code_quality_thresholds"]
+        if isinstance(thresholds, dict):
+            lines.extend(f"- {key}: {value}" for key, value in thresholds.items())
+    lines.append("")
+    return lines
+
+
+def _format_implementation_stage(impl: dict) -> list[str]:
+    """Format implementation stage output."""
+    lines = ["## Implementation Strategy"]
+    if not isinstance(impl, dict):
+        return lines
+    
+    if "tasks" in impl and impl["tasks"]:
+        lines.append("### Tasks")
+        for i, task in enumerate(impl["tasks"][:10], 1):
+            if isinstance(task, dict):
+                lines.append(f"{i}. {task.get('description', task.get('title', str(task)))}")
+            else:
+                lines.append(f"{i}. {task}")
+    
+    if "implementation_plan" in impl:
+        plan = impl["implementation_plan"]
+        if isinstance(plan, str):
+            lines.append(plan[:500] + ("..." if len(plan) > 500 else ""))
+    
+    if "task_breakdown" in impl and impl["task_breakdown"]:
+        lines.append("### Task Breakdown")
+        for i, task in enumerate(impl["task_breakdown"][:10], 1):
+            lines.append(f"{i}. {task}")
+    lines.append("")
+    return lines
+
+
+def _format_synthesis_stage(synth: dict) -> list[str]:
+    """Format synthesis stage output."""
+    lines = ["## Final Synthesis"]
+    if not isinstance(synth, dict):
+        return lines
+    
+    if "enhanced_prompt" in synth and synth["enhanced_prompt"]:
+        lines.append(synth["enhanced_prompt"])
+    elif "instruction" in synth:
+        lines.append("### Synthesis Instruction:")
+        lines.append(format_instruction(synth["instruction"]))
+        if "skill_command" in synth:
+            lines.append(f"\n- **Skill Command**: `{synth['skill_command']}`")
+    
+    if "metadata" in synth:
+        lines.append("\n### Synthesis Metadata:")
+        lines.extend(f"- **{key}**: {value}" for key, value in synth["metadata"].items())
+    lines.append("")
+    return lines
+
+
 def format_stage_output(session: dict, stage_name: str) -> str:
     """Format and return the current enhancement state after a stage."""
     prompt = session["metadata"]["original_prompt"]
@@ -59,184 +259,27 @@ def format_stage_output(session: dict, stage_name: str) -> str:
     
     lines = [f"# Enhanced Prompt (After {stage_name}): {prompt}", ""]
     
-    # Add completed stages
+    # Format each stage using dedicated functions
     if "analysis" in stages:
-        lines.append("## Analysis")
-        analysis = stages["analysis"]
-        if isinstance(analysis, dict):
-            # Extract key info if available
-            if "original_prompt" in analysis:
-                lines.append(f"- **Original Prompt**: {analysis['original_prompt']}")
-            if "instruction" in analysis:
-                lines.append("\n### Instruction Prepared:")
-                inst_fmt = format_instruction(analysis["instruction"])
-                lines.append(inst_fmt)
-            if "skill_command" in analysis:
-                lines.append(f"\n- **Skill Command**: `{analysis['skill_command']}`")
-        lines.append("")
+        lines.extend(_format_analysis_stage(stages["analysis"]))
     
     if "requirements" in stages:
-        lines.append("## Requirements")
-        req = stages["requirements"]
-        if isinstance(req, dict):
-            # Show requirements analysis if available
-            if "requirements_analysis" in req and req["requirements_analysis"]:
-                lines.append("### Requirements Analysis")
-                analysis_text = req["requirements_analysis"]
-                if isinstance(analysis_text, str):
-                    lines.append(analysis_text[:600] + ("..." if len(analysis_text) > 600 else ""))
-                lines.append("")
-            if "functional_requirements" in req and req["functional_requirements"]:
-                lines.append("### Functional Requirements")
-                for fr in req["functional_requirements"]:
-                    lines.append(f"- {fr}")
-                lines.append("")
-            if "non_functional_requirements" in req and req["non_functional_requirements"]:
-                lines.append("### Non-Functional Requirements")
-                for nfr in req["non_functional_requirements"]:
-                    lines.append(f"- {nfr}")
-                lines.append("")
-            if "technical_constraints" in req and req["technical_constraints"]:
-                lines.append("### Technical Constraints")
-                for tc in req["technical_constraints"]:
-                    lines.append(f"- {tc}")
-                lines.append("")
-            if "assumptions" in req and req["assumptions"]:
-                lines.append("### Assumptions")
-                for ass in req["assumptions"]:
-                    lines.append(f"- {ass}")
-                lines.append("")
-            if "expert_consultations" in req and req["expert_consultations"]:
-                lines.append("### Expert Consultations")
-                for domain, consultation in req["expert_consultations"].items():
-                    lines.append(f"#### {domain}")
-                    if "weighted_answer" in consultation:
-                        answer = consultation["weighted_answer"]
-                        if isinstance(answer, str):
-                            lines.append(f"{answer[:500]}...")
-                        else:
-                            lines.append(str(answer)[:500] + "...")
-                    if "confidence" in consultation:
-                        lines.append(f"- Confidence: {consultation['confidence']}")
-                    if "agreement_level" in consultation:
-                        lines.append(f"- Agreement: {consultation['agreement_level']}")
-                    if "primary_expert" in consultation:
-                        lines.append(f"- Primary Expert: {consultation['primary_expert']}")
-                lines.append("")
-        lines.append("")
+        lines.extend(_format_requirements_stage(stages["requirements"]))
     
     if "architecture" in stages:
-        lines.append("## Architecture")
-        arch = stages["architecture"]
-        if isinstance(arch, dict):
-            if "architecture_guidance" in arch and arch["architecture_guidance"]:
-                guidance = arch["architecture_guidance"]
-                if isinstance(guidance, str):
-                    lines.append("### Architecture Guidance")
-                    lines.append(guidance[:800] + ("..." if len(guidance) > 800 else ""))
-                else:
-                    lines.append(str(guidance)[:800] + "...")
-                lines.append("")
-            if "system_design" in arch and arch["system_design"]:
-                lines.append("### System Design")
-                design_dict = arch["system_design"]
-                if isinstance(design_dict, dict):
-                    # Format as readable structure
-                    for key, value in design_dict.items():
-                        if isinstance(value, (dict, list)):
-                            value_str = json.dumps(value, indent=2)
-                            if len(value_str) > 400:
-                                value_str = value_str[:400] + "..."
-                            lines.append(f"- **{key}**:\n  ```json\n  {value_str}\n  ```")
-                        else:
-                            lines.append(f"- **{key}**: {value}")
-                else:
-                    design_str = json.dumps(design_dict, indent=2)
-                    lines.append(design_str[:600] + ("..." if len(design_str) > 600 else ""))
-                lines.append("")
-            if "design_patterns" in arch and arch["design_patterns"]:
-                lines.append("### Design Patterns")
-                for pattern in arch["design_patterns"]:
-                    lines.append(f"- {pattern}")
-                lines.append("")
-            if "technology_recommendations" in arch and arch["technology_recommendations"]:
-                lines.append("### Technology Recommendations")
-                for tech in arch["technology_recommendations"]:
-                    lines.append(f"- {tech}")
-                lines.append("")
-        lines.append("")
+        lines.extend(_format_architecture_stage(stages["architecture"]))
     
     if "codebase_context" in stages:
-        lines.append("## Codebase Context")
-        ctx = stages["codebase_context"]
-        if isinstance(ctx, dict):
-            if "related_files" in ctx and ctx["related_files"]:
-                lines.append("### Related Files")
-                for file in ctx["related_files"][:10]:
-                    lines.append(f"- {file}")
-            if "codebase_context" in ctx:
-                lines.append(f"\n{ctx['codebase_context']}")
-        lines.append("")
+        lines.extend(_format_codebase_context_stage(stages["codebase_context"]))
     
     if "quality" in stages:
-        lines.append("## Quality Standards")
-        qual = stages["quality"]
-        if isinstance(qual, dict):
-            if "security_requirements" in qual and qual["security_requirements"]:
-                lines.append("### Security")
-                for sec in qual["security_requirements"][:5]:
-                    lines.append(f"- {sec}")
-            if "testing_requirements" in qual and qual["testing_requirements"]:
-                lines.append("\n### Testing")
-                for test in qual["testing_requirements"]:
-                    lines.append(f"- {test}")
-            if "code_quality_thresholds" in qual:
-                lines.append("\n### Quality Thresholds")
-                thresholds = qual["code_quality_thresholds"]
-                if isinstance(thresholds, dict):
-                    for key, value in thresholds.items():
-                        lines.append(f"- {key}: {value}")
-        lines.append("")
+        lines.extend(_format_quality_stage(stages["quality"]))
     
     if "implementation" in stages:
-        lines.append("## Implementation Strategy")
-        impl = stages["implementation"]
-        if isinstance(impl, dict):
-            if "tasks" in impl and impl["tasks"]:
-                lines.append("### Tasks")
-                for i, task in enumerate(impl["tasks"][:10], 1):
-                    if isinstance(task, dict):
-                        lines.append(f"{i}. {task.get('description', task.get('title', str(task)))}")
-                    else:
-                        lines.append(f"{i}. {task}")
-            if "implementation_plan" in impl:
-                plan = impl["implementation_plan"]
-                if isinstance(plan, str):
-                    lines.append(plan[:500] + ("..." if len(plan) > 500 else ""))
-            if "task_breakdown" in impl and impl["task_breakdown"]:
-                lines.append("### Task Breakdown")
-                for i, task in enumerate(impl["task_breakdown"][:10], 1):
-                    lines.append(f"{i}. {task}")
-        lines.append("")
+        lines.extend(_format_implementation_stage(stages["implementation"]))
     
     if "synthesis" in stages:
-        lines.append("## Final Synthesis")
-        synth = stages["synthesis"]
-        if isinstance(synth, dict):
-            if "enhanced_prompt" in synth and synth["enhanced_prompt"]:
-                lines.append(synth["enhanced_prompt"])
-            elif "instruction" in synth:
-                lines.append("### Synthesis Instruction:")
-                inst_fmt = format_instruction(synth["instruction"])
-                lines.append(inst_fmt)
-                if "skill_command" in synth:
-                    lines.append(f"\n- **Skill Command**: `{synth['skill_command']}`")
-            if "metadata" in synth:
-                meta = synth["metadata"]
-                lines.append("\n### Synthesis Metadata:")
-                for key, value in meta.items():
-                    lines.append(f"- **{key}**: {value}")
-        lines.append("")
+        lines.extend(_format_synthesis_stage(stages["synthesis"]))
     
     return "\n".join(lines)
 

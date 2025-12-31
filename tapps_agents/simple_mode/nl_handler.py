@@ -62,20 +62,40 @@ class SimpleModeHandler:
         """
         Handle a natural language command.
 
+        Enhanced to detect and force Simple Mode when requested.
+
         Args:
             command: User's natural language command
 
         Returns:
             Dictionary with execution results
         """
+        # Check for Simple Mode intent first
+        if self.intent_parser.detect_simple_mode_intent(command):
+            # Force Simple Mode workflow
+            if not self.config.simple_mode.enabled:
+                return {
+                    "success": False,
+                    "error": "Simple Mode requested but not available. Install with: `tapps-agents init`",
+                    "suggestion": "Run: tapps-agents simple-mode on",
+                }
+
         # Normalize command (expand synonyms)
         normalized = normalize_command(command)
 
         # Parse intent
         intent = self.intent_parser.parse(normalized)
 
-        # Check if Simple Mode is enabled
-        if not self.config.simple_mode.enabled:
+        # Check if Simple Mode is enabled (or forced)
+        force_simple_mode = intent.parameters.get("force_simple_mode", False)
+        if force_simple_mode and not self.config.simple_mode.enabled:
+            return {
+                "success": False,
+                "error": "Simple Mode requested but not available. Install with: `tapps-agents init`",
+                "suggestion": "Run: tapps-agents simple-mode on",
+            }
+
+        if not self.config.simple_mode.enabled and not force_simple_mode:
             return {
                 "success": False,
                 "error": "Simple Mode is disabled. Enable it in .tapps-agents/config.yaml",
@@ -96,6 +116,8 @@ class SimpleModeHandler:
             result = await orchestrator.execute(intent, intent.parameters)
             result["intent"] = intent.type.value
             result["confidence"] = intent.confidence
+            if force_simple_mode:
+                result["simple_mode_forced"] = True
             return result
         except Exception as e:
             return {
@@ -108,3 +130,11 @@ class SimpleModeHandler:
         """Check if Simple Mode is enabled."""
         return self.config.simple_mode.enabled
 
+    def is_simple_mode_available(self) -> bool:
+        """
+        Check if Simple Mode is available and enabled.
+
+        Returns:
+            True if Simple Mode is available, False otherwise
+        """
+        return self.config.simple_mode.enabled

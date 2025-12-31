@@ -281,12 +281,25 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             return {"error": f"Failed to prepare code generation instruction: {str(e)}"}
 
         # Return instruction object for Cursor Skills execution
+        skill_command = instruction.to_skill_command()
         result = {
             "type": "implement",
+            "execution_mode": "cursor_skills",  # Explicit mode indication
             "instruction": instruction.to_dict(),
-            "skill_command": instruction.to_skill_command(),
+            "skill_command": skill_command,
             "file": str(path),
             "file_existed": file_exists,
+            "next_steps": [
+                "This instruction is prepared for Cursor Skills execution.",
+                "To execute, copy this command to Cursor chat:",
+                f"  {skill_command}",
+                "",
+                "Or use Cursor Skills directly:",
+                f"  @implementer *implement \"{specification}\" {file_path}",
+                "",
+                "Note: Code generation requires Cursor Skills (uses your configured LLM).",
+                "The framework prepares instructions; Cursor Skills execute them.",
+            ],
         }
         if expert_guidance:
             result["expert_guidance"] = expert_guidance
