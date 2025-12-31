@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.5] - 2025-01-16
+
+### Added
+- **Doctor Command Enhancements** - Comprehensive checks for all init components
+  - Added Cursor Rules verification (checks for all 7 required rule files)
+  - Added Cursor Skills verification (checks for all 14 required skills)
+  - Added Background Agents config verification
+  - Added Workflow Presets verification (checks for all 5 required presets)
+  - Added .cursorignore file check
+  - Added project config file check
+  - All checks provide remediation messages suggesting 'tapps-agents init'
+  - Verifies Playwright MCP configuration is correct (optional, with Python fallback)
+
+### Changed
+- **Doctor Command** - Now comprehensively checks all components that init creates
+  - Doctor now suggests running init when components are missing
+  - Improved integration with Cursor verification utilities
+
 ## [3.2.4] - 2025-01-16
 
 ### Added
