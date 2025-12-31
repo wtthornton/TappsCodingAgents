@@ -1,152 +1,289 @@
-# Step 7: Testing Plan - Automatic Documentation Updates for Framework Changes
+# Step 7: Testing Plan - Library Detection and Context7 Integration
 
-## Test Strategy
+**Workflow:** Simple Mode *build  
+**Feature:** Priority 1 & 2 - Library Detection and Context-Aware Review Enhancement  
+**Date:** January 2025
 
-### Unit Tests
+---
 
-#### Framework Change Detector Tests
-**File**: `tests/test_framework_change_detector.py`
+## Testing Strategy
 
-**Test Cases**:
-1. `test_scan_agent_directories` - Verify agent directory scanning
-2. `test_detect_cli_registration` - Verify CLI registration detection
-3. `test_detect_skill_creation` - Verify skill file detection
-4. `test_detect_changes_new_agent` - Verify new agent detection
-5. `test_detect_changes_no_changes` - Verify no false positives
-6. `test_get_agent_info` - Verify agent info extraction
-7. `test_agent_info_from_directory` - Verify agent info parsing
+### Test Coverage Goals
+- **Unit Tests:** ≥ 80% coverage for all new components
+- **Integration Tests:** End-to-end review workflow with library detection
+- **Performance Tests:** Verify performance targets are met
+- **Error Handling Tests:** Test all error scenarios
 
-#### Documentation Updater Tests
-**File**: `tests/test_framework_doc_updater.py`
+---
 
-**Test Cases**:
-1. `test_update_readme` - Verify README.md updates
-2. `test_update_api_docs` - Verify API.md updates
-3. `test_update_architecture_docs` - Verify ARCHITECTURE.md updates
-4. `test_update_agent_capabilities` - Verify agent-capabilities.mdc updates
-5. `test_create_backup` - Verify backup creation
-6. `test_update_all_docs` - Verify all docs updated
-7. `test_alphabetical_insertion` - Verify alphabetical ordering
-8. `test_agent_count_increment` - Verify count increment
+## Unit Tests
 
-#### Documentation Validator Tests
-**File**: `tests/test_doc_validator.py`
+### 1. LibraryDetector Tests
 
-**Test Cases**:
-1. `test_validate_readme` - Verify README validation
-2. `test_validate_api_docs` - Verify API validation
-3. `test_validate_architecture_docs` - Verify ARCHITECTURE validation
-4. `test_validate_agent_capabilities` - Verify capabilities validation
-5. `test_check_consistency` - Verify consistency checks
-6. `test_generate_report` - Verify report generation
-7. `test_validate_completeness` - Verify completeness validation
+**File:** `tests/agents/reviewer/test_library_detector.py`
 
-### Integration Tests
+**Test Cases:**
+- [ ] `test_detect_from_code_imports` - Test basic import detection
+- [ ] `test_detect_from_code_from_imports` - Test from imports
+- [ ] `test_detect_from_code_relative_imports` - Test relative imports
+- [ ] `test_detect_from_code_namespace_packages` - Test namespace packages
+- [ ] `test_detect_from_code_stdlib_filtering` - Test stdlib filtering
+- [ ] `test_detect_from_requirements_basic` - Test basic requirements.txt parsing
+- [ ] `test_detect_from_requirements_with_versions` - Test version specifiers
+- [ ] `test_detect_from_requirements_with_extras` - Test extras
+- [ ] `test_detect_from_requirements_comments` - Test comment handling
+- [ ] `test_detect_from_pyproject_basic` - Test basic pyproject.toml parsing
+- [ ] `test_detect_from_pyproject_poetry` - Test Poetry dependencies
+- [ ] `test_detect_all_merges_sources` - Test merging from all sources
+- [ ] `test_detect_all_deduplication` - Test deduplication
+- [ ] `test_detect_all_empty_code` - Test edge case: empty code
+- [ ] `test_detect_all_invalid_syntax` - Test edge case: invalid Python syntax
+- [ ] `test_detect_all_missing_files` - Test edge case: missing dependency files
 
-#### Full Workflow Test
-**File**: `tests/test_build_orchestrator_documentation.py`
+**Mock Requirements:**
+- Mock file system operations
+- Mock AST parsing errors
 
-**Test Cases**:
-1. `test_build_workflow_with_new_agent` - Test full workflow with mock agent
-2. `test_documentation_updates_on_agent_creation` - Verify docs update automatically
-3. `test_validation_after_updates` - Verify validation runs
-4. `test_no_updates_for_feature_development` - Verify no updates for features
+### 2. PatternDetector Tests
 
-### Edge Case Tests
+**File:** `tests/agents/reviewer/test_pattern_detector.py`
 
-**Test Cases**:
-1. `test_missing_documentation_files` - Handle missing files gracefully
-2. `test_malformed_documentation` - Handle malformed docs
-3. `test_multiple_agents_simultaneously` - Handle multiple agents
-4. `test_backup_failure` - Handle backup failures
-5. `test_write_permissions` - Handle permission errors
-6. `test_large_files` - Handle large documentation files
+**Test Cases:**
+- [ ] `test_detect_rag_pattern_basic` - Test RAG pattern detection
+- [ ] `test_detect_rag_pattern_multiple_indicators` - Test multiple indicators
+- [ ] `test_detect_rag_pattern_confidence_calculation` - Test confidence scoring
+- [ ] `test_detect_multi_agent_pattern_basic` - Test multi-agent pattern
+- [ ] `test_detect_weighted_decision_pattern_basic` - Test weighted decision pattern
+- [ ] `test_detect_patterns_all_patterns` - Test detecting all patterns
+- [ ] `test_detect_patterns_confidence_threshold` - Test confidence filtering
+- [ ] `test_detect_patterns_case_insensitive` - Test case-insensitive matching
+- [ ] `test_detect_patterns_word_boundaries` - Test word boundary matching
+- [ ] `test_detect_patterns_no_false_positives` - Test false positive prevention
+- [ ] `test_detect_patterns_empty_code` - Test edge case: empty code
+- [ ] `test_detect_patterns_line_numbers` - Test line number tracking
+
+**Mock Requirements:**
+- None (pure string matching)
+
+### 3. Context7ReviewEnhancer Tests
+
+**File:** `tests/agents/reviewer/test_context7_enhancer.py`
+
+**Test Cases:**
+- [ ] `test_get_library_recommendations_success` - Test successful lookup
+- [ ] `test_get_library_recommendations_timeout` - Test timeout handling
+- [ ] `test_get_library_recommendations_error` - Test error handling
+- [ ] `test_get_library_recommendations_caching` - Test response caching
+- [ ] `test_get_library_recommendations_batch` - Test batch lookups
+- [ ] `test_get_pattern_guidance_success` - Test pattern guidance lookup
+- [ ] `test_extract_best_practices` - Test best practices extraction
+- [ ] `test_extract_common_mistakes` - Test common mistakes extraction
+- [ ] `test_extract_examples` - Test usage examples extraction
+- [ ] `test_extract_recommendations` - Test recommendations extraction
+- [ ] `test_context7_disabled` - Test when Context7 is disabled
+
+**Mock Requirements:**
+- Mock Context7AgentHelper
+- Mock Context7 responses
+- Mock async operations
+
+### 4. ReviewOutputEnhancer Tests
+
+**File:** `tests/agents/reviewer/test_output_enhancer.py`
+
+**Test Cases:**
+- [ ] `test_enhance_output_with_library_recommendations` - Test library recommendations
+- [ ] `test_enhance_output_with_pattern_guidance` - Test pattern guidance
+- [ ] `test_enhance_output_with_both` - Test both recommendations and guidance
+- [ ] `test_enhance_output_backward_compatibility` - Test backward compatibility
+- [ ] `test_enhance_output_empty_recommendations` - Test empty recommendations
+- [ ] `test_format_library_recommendations` - Test formatting
+- [ ] `test_format_pattern_guidance` - Test formatting
+
+**Mock Requirements:**
+- Mock LibraryRecommendation objects
+- Mock PatternGuidance objects
+
+---
+
+## Integration Tests
+
+### 5. End-to-End Review Tests
+
+**File:** `tests/agents/reviewer/test_reviewer_integration.py`
+
+**Test Cases:**
+- [ ] `test_review_file_with_library_detection` - Test full review with library detection
+- [ ] `test_review_file_with_pattern_detection` - Test full review with pattern detection
+- [ ] `test_review_file_with_context7` - Test full review with Context7 integration
+- [ ] `test_review_file_output_format` - Test enhanced output format
+- [ ] `test_review_file_backward_compatibility` - Test backward compatibility
+- [ ] `test_review_file_performance` - Test performance targets
+
+**Mock Requirements:**
+- Mock file system
+- Mock Context7AgentHelper
+- Mock Context7 responses
+
+---
+
+## Performance Tests
+
+### 6. Performance Validation
+
+**File:** `tests/agents/reviewer/test_performance.py`
+
+**Test Cases:**
+- [ ] `test_library_detection_performance` - Verify < 100ms per file
+- [ ] `test_pattern_detection_performance` - Verify < 50ms per file
+- [ ] `test_context7_lookup_performance` - Verify timeout handling
+- [ ] `test_review_time_increase` - Verify < 30% increase
+
+**Requirements:**
+- Use time.time() for measurements
+- Run multiple iterations for accuracy
+
+---
+
+## Error Handling Tests
+
+### 7. Error Scenario Tests
+
+**Test Cases:**
+- [ ] `test_library_detection_syntax_error` - Test invalid Python syntax
+- [ ] `test_library_detection_file_not_found` - Test missing files
+- [ ] `test_context7_lookup_timeout` - Test timeout scenarios
+- [ ] `test_context7_lookup_network_error` - Test network failures
+- [ ] `test_pattern_detection_empty_code` - Test edge cases
+
+---
 
 ## Test Implementation Plan
 
-### Phase 1: Unit Tests (Priority: High)
-1. Create test fixtures with sample documentation files
-2. Implement Framework Change Detector tests
-3. Implement Documentation Updater tests
-4. Implement Documentation Validator tests
+### Phase 1: Unit Tests (Priority 1)
+1. LibraryDetector unit tests
+2. PatternDetector unit tests
+3. ReviewOutputEnhancer unit tests
+4. Context7ReviewEnhancer unit tests (with mocks)
 
-### Phase 2: Integration Tests (Priority: High)
-1. Create mock agent creation scenario
-2. Test full workflow execution
-3. Verify documentation updates
-4. Verify validation
+### Phase 2: Integration Tests (Priority 2)
+1. End-to-end review workflow tests
+2. Output format validation tests
 
-### Phase 3: Edge Cases (Priority: Medium)
-1. Test error conditions
-2. Test boundary cases
-3. Test performance with large files
+### Phase 3: Performance Tests (Priority 3)
+1. Performance benchmark tests
+2. Performance regression tests
 
-## Test Coverage Goals
-
-- **Unit Tests**: 90%+ coverage
-- **Integration Tests**: All main workflows
-- **Edge Cases**: All error conditions
-
-## Validation Criteria
-
-### Success Criteria
-- ✅ All unit tests pass
-- ✅ All integration tests pass
-- ✅ Documentation updates work correctly
-- ✅ Validation catches missing updates
-- ✅ No false positives in change detection
-
-### Performance Criteria
-- Change detection: < 1 second
-- Documentation updates: < 5 seconds per file
-- Validation: < 2 seconds
+---
 
 ## Test Data
 
-### Sample Documentation Files
-- Sample README.md with agent list
-- Sample API.md with subcommands
-- Sample ARCHITECTURE.md with agent list
-- Sample agent-capabilities.mdc with agent sections
+### Sample Code Files
 
-### Mock Agent Data
-- Agent directory structure
-- Agent.py with docstring
-- SKILL.md with commands
-- CLI registration
+**test_code_with_langchain.py:**
+```python
+from langchain.llms import OpenAI
+from langchain.vectorstores import FAISS
+import pandas as pd
+
+def rag_function():
+    vectorstore = FAISS()
+    return vectorstore
+```
+
+**test_code_with_agents.py:**
+```python
+from agents import Agent, Orchestrator
+
+class MultiAgentSystem:
+    def __init__(self):
+        self.agent = Agent()
+        self.orchestrator = Orchestrator()
+```
+
+**test_code_with_weighted.py:**
+```python
+def weighted_decision(scores, weights):
+    weighted_score = sum(s * w for s, w in zip(scores, weights))
+    return weighted_score
+```
+
+### Sample Dependency Files
+
+**test_requirements.txt:**
+```
+langchain>=0.1.0
+pandas==1.5.0
+numpy[extra1,extra2]>=1.20.0
+# This is a comment
+```
+
+**test_pyproject.toml:**
+```toml
+[project]
+dependencies = [
+    "langchain>=0.1.0",
+    "pandas==1.5.0"
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+langchain = "^0.1.0"
+```
+
+---
 
 ## Test Execution
 
-### Local Testing
+### Running Tests
+
 ```bash
-# Run unit tests
-pytest tests/test_framework_change_detector.py -v
-pytest tests/test_framework_doc_updater.py -v
-pytest tests/test_doc_validator.py -v
+# Run all tests
+pytest tests/agents/reviewer/test_library_detector.py -v
 
-# Run integration tests
-pytest tests/test_build_orchestrator_documentation.py -v
+# Run with coverage
+pytest tests/agents/reviewer/ --cov=tapps_agents/agents/reviewer --cov-report=html
 
-# Run all tests with coverage
-pytest --cov=tapps_agents/simple_mode --cov=tapps_agents/agents/documenter --cov-report=html
+# Run performance tests
+pytest tests/agents/reviewer/test_performance.py -v -m performance
 ```
 
-### CI/CD Integration
-- Run tests on every commit
-- Fail build if tests don't pass
-- Generate coverage reports
-- Validate documentation updates in PRs
+### Coverage Goals
 
-## Known Limitations
+- **LibraryDetector:** ≥ 90% coverage
+- **PatternDetector:** ≥ 90% coverage
+- **Context7ReviewEnhancer:** ≥ 80% coverage (mocked Context7)
+- **ReviewOutputEnhancer:** ≥ 90% coverage
+- **Overall:** ≥ 80% coverage
 
-1. **Regex Patterns**: May need updates if documentation format changes
-2. **Known Agents Baseline**: Currently detects all agents (no baseline)
-3. **Error Recovery**: Limited rollback for partial failures
+---
 
-## Next Steps
+## Test Status
 
-1. Implement test suite
-2. Run tests and fix any failures
-3. Achieve target coverage
-4. Test with real agent creation
-5. Document test results
+### Current Status
+⏳ **Tests Not Yet Implemented**
+
+**Next Steps:**
+1. Create test files
+2. Implement unit tests
+3. Implement integration tests
+4. Run tests and verify coverage
+5. Fix any failing tests
+
+---
+
+## Validation Criteria
+
+### Test Success Criteria
+- ✅ All unit tests pass
+- ✅ All integration tests pass
+- ✅ Test coverage ≥ 80%
+- ✅ Performance targets met
+- ✅ Error handling verified
+- ✅ Backward compatibility verified
+
+---
+
+**Next Step:** Implement tests according to this plan.
+
+**Status:** ⏳ Pending Implementation

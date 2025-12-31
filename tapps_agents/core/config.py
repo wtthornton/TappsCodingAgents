@@ -140,6 +140,41 @@ class ReviewerAgentConfig(BaseModel):
         default_factory=ReviewerAgentContext7Config,
         description="Context7 integration settings for Reviewer Agent"
     )
+    # NEW: Library detection config
+    auto_library_detection: bool = Field(
+        default=True,
+        description="Automatically detect libraries from code and dependency files"
+    )
+    library_detection_depth: str = Field(
+        default="both",
+        description="What to detect: 'code' (imports only), 'dependencies' (requirements.txt/pyproject.toml), or 'both'"
+    )
+    # NEW: Context7 integration config
+    auto_context7_lookups: bool = Field(
+        default=True,
+        description="Automatically lookup library documentation from Context7"
+    )
+    context7_timeout: int = Field(
+        default=30,
+        ge=1,
+        le=300,
+        description="Timeout for Context7 lookups in seconds"
+    )
+    context7_cache_enabled: bool = Field(
+        default=True,
+        description="Cache Context7 responses to avoid duplicate lookups"
+    )
+    # NEW: Pattern detection config
+    pattern_detection_enabled: bool = Field(
+        default=True,
+        description="Enable domain-specific pattern detection"
+    )
+    pattern_confidence_threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Minimum confidence to report detected patterns (0.0-1.0)"
+    )
 
 
 class PlannerAgentConfig(BaseModel):

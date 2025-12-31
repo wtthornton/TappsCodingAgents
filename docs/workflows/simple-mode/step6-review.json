@@ -1,0 +1,259 @@
+{
+  "files": [
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tapps_agents\\experts\\business_metrics.py",
+      "review": {},
+      "file_type": "python",
+      "language_detection": {
+        "language": "python",
+        "confidence": 1.0,
+        "method": "extension"
+      },
+      "scoring": {
+        "complexity_score": 2.8,
+        "security_score": 10.0,
+        "maintainability_score": 9.4,
+        "test_coverage_score": 0.0,
+        "performance_score": 10.0,
+        "linting_score": 5.0,
+        "type_checking_score": 5.0,
+        "duplication_score": 10.0,
+        "overall_score": 77.9,
+        "_explanations": {
+          "complexity_score": {
+            "explanation": "Areas for improvement: complexity needs significant improvement (2.8/10)",
+            "suggestions": [
+              "Break down complex functions into smaller, focused functions",
+              "Reduce nesting depth (aim for < 4 levels)",
+              "Extract complex logic into separate functions or modules",
+              "Use early returns to reduce nesting",
+              "Consider using list comprehensions or generator expressions"
+            ]
+          },
+          "security_score": {
+            "explanation": "Strengths: security is excellent (10.0/10), Code demonstrates best practices",
+            "suggestions": []
+          },
+          "maintainability_score": {
+            "explanation": "Strengths: maintainability is excellent (9.4/10), Code demonstrates best practices",
+            "suggestions": []
+          },
+          "test_coverage_score": {
+            "explanation": "Areas for improvement: test_coverage needs significant improvement (0.0/10)",
+            "suggestions": [
+              "Increase test coverage to at least 70%",
+              "Add unit tests for critical functions",
+              "Include edge cases and error handling in tests",
+              "Add integration tests for important workflows"
+            ]
+          },
+          "performance_score": {
+            "explanation": "Strengths: performance is excellent (10.0/10), Code demonstrates best practices",
+            "suggestions": []
+          },
+          "linting_score": {
+            "explanation": "Areas for improvement: linting is acceptable but could be improved (5.0/10)",
+            "suggestions": []
+          },
+          "type_checking_score": {
+            "explanation": "Areas for improvement: type_checking is acceptable but could be improved (5.0/10)",
+            "suggestions": []
+          },
+          "duplication_score": {
+            "explanation": "Strengths: duplication is excellent (10.0/10), Code demonstrates best practices",
+            "suggestions": []
+          },
+          "overall_score": {
+            "explanation": "Strengths: overall is good (77.9/10)",
+            "suggestions": [
+              "Consider minor improvements to reach excellent level (>8.5)"
+            ]
+          }
+        },
+        "dependency_security_score": 10.0
+      },
+      "feedback": {
+        "instruction": {
+          "agent_name": "reviewer",
+          "command": "generate-feedback",
+          "prompt": "Review this code and provide detailed feedback:\n\nCode:\n```python\n\"\"\"\nBusiness Metrics Collection for Experts Feature\n\nCollects and aggregates business metrics from technical metrics to demonstrate\nthe business value and ROI of expert consultations.\n\nPhases:\n- Phase 1: Aggregate existing technical metrics into business metrics\n- Phase 2: Correlate expert consultations with code quality scores\n- Phase 3: Calculate ROI and track user value\n\"\"\"\n\nfrom __future__ import annotations\n\nimport json\nimport logging\nfrom dataclasses import asdict, dataclass, field\nfrom datetime import datetime, timedelta\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .confidence_metrics import ConfidenceMetricsTracker, get_tracker\nfrom .expert_engine import ExpertEngine, ExpertEngineMetrics\n\nlogger = logging.getLogger(__name__)\n\n\n@dataclass\nclass AdoptionMetrics:\n    \"\"\"Adoption and usage metrics.\"\"\"\n\n    total_consultations: int = 0\n    consultations_per_workflow: float = 0.0\n    consultations_per_day: float = 0.0\n    expert_usage_by_id: dict[str, int] = field(default_factory=dict)\n    domain_usage: dict[str, int] = field(default_factory=dict)\n    agent_usage: dict[str, int] = field(default_factory=dict)\n    workflow_usage_percentage: float = 0.0\n\n\n@dataclass\nclass CodeQualityImprovement:\n    \"\"\"Single code quality improvement record.\"\"\"\n\n    consultation_id: str\n    timestamp: datetime\n    before_score: float\n    after_score: float\n    improvement_percentage: float\n    expert_id: str\n    domain: str\n\n\n@dataclass\nclass EffectivenessMetrics:\n    \"\"\"Effectiveness and impact metrics.\"\"\"\n\n    code_quality_improvements: list[CodeQualityImprovement] = field(\n        default_factory=list\n    )\n    avg_quality_improvement: float = 0.0\n    bug_prevention_rate: float = 0.0\n    avg_time_savings_minutes: float = 15.0  # Default estimate\n    total_bugs_prevented: int = 0\n\n\n@dataclass\nclass QualityMetrics:\n    \"\"\"Quality and performance metrics.\"\"\"\n\n    avg_confidence: float = 0.0\n    confidence_trend: list[float] = field(default_factory=list)\n    avg_agreement_lev\n```\n\nFocus on Python best practices:\n- PEP 8 style compliance\n- Type hints (Python 3.9+)\n- Error handling patterns\n- Docstring quality\n- Import organization\n\nCode Quality Scores:\n- Complexity: 2.8/10\n- Security: 10.0/10\n- Maintainability: 9.4/10\n- Test Coverage: 0.0/10\n- Performance: 10.0/10\n- Overall Score: 77.9/100\n\nProvide detailed feedback:\n\n1. What the code does (brief summary)\n2. Potential issues or improvements\n3. Security concerns (if any)\n4. Style/best practices recommendations\n5. Type hint usage and improvements\n6. Error handling improvements\n7. Documentation quality (docstrings)",
+          "parameters": {
+            "model": "reviewer-agent"
+          }
+        },
+        "skill_command": "@reviewer generate-feedback --model \"reviewer-agent\""
+      },
+      "quality_gate": {
+        "passed": false,
+        "overall_passed": false,
+        "security_passed": true,
+        "maintainability_passed": true,
+        "complexity_passed": true,
+        "test_coverage_passed": false,
+        "performance_passed": true,
+        "failures": [
+          "Overall score 7.79 below threshold 8.0"
+        ],
+        "warnings": [
+          "Test coverage 0.00% below threshold 80.0%"
+        ],
+        "scores": {
+          "overall_score": 7.790000000000001,
+          "security_score": 10.0,
+          "maintainability_score": 9.4,
+          "complexity_score": 2.8,
+          "test_coverage_score": 0.0,
+          "performance_score": 10.0
+        },
+        "thresholds": {
+          "overall_min": 8.0,
+          "security_min": 8.5,
+          "maintainability_min": 7.0,
+          "complexity_max": 5.0,
+          "test_coverage_min": 80.0,
+          "performance_min": 7.0
+        }
+      },
+      "quality_gate_blocked": true,
+      "passed": false,
+      "threshold": 70.0
+    },
+    {
+      "file": "C:\\cursor\\TappsCodingAgents\\tapps_agents\\experts\\report_generator.py",
+      "review": {},
+      "file_type": "python",
+      "language_detection": {
+        "language": "python",
+        "confidence": 1.0,
+        "method": "extension"
+      },
+      "scoring": {
+        "complexity_score": 3.2,
+        "security_score": 10.0,
+        "maintainability_score": 6.7,
+        "test_coverage_score": 4.167,
+        "performance_score": 6.5,
+        "linting_score": 5.0,
+        "type_checking_score": 5.0,
+        "duplication_score": 10.0,
+        "overall_score": 73.10050000000001,
+        "_explanations": {
+          "complexity_score": {
+            "explanation": "Areas for improvement: complexity needs significant improvement (3.2/10)",
+            "suggestions": [
+              "Break down complex functions into smaller, focused functions",
+              "Reduce nesting depth (aim for < 4 levels)",
+              "Extract complex logic into separate functions or modules",
+              "Use early returns to reduce nesting",
+              "Consider using list comprehensions or generator expressions"
+            ]
+          },
+          "security_score": {
+            "explanation": "Strengths: security is excellent (10.0/10), Code demonstrates best practices",
+            "suggestions": []
+          },
+          "maintainability_score": {
+            "explanation": "Areas for improvement: maintainability is acceptable but could be improved (6.7/10)",
+            "suggestions": [
+              "Add comprehensive docstrings/comments",
+              "Follow consistent naming conventions",
+              "Reduce code duplication (DRY principle)",
+              "Improve code organization and structure",
+              "Use type hints for better code clarity"
+            ]
+          },
+          "test_coverage_score": {
+            "explanation": "Areas for improvement: test_coverage needs significant improvement (4.2/10)",
+            "suggestions": [
+              "Increase test coverage to at least 70%",
+              "Add unit tests for critical functions",
+              "Include edge cases and error handling in tests",
+              "Add integration tests for important workflows"
+            ]
+          },
+          "performance_score": {
+            "explanation": "Areas for improvement: performance is acceptable but could be improved (6.5/10)",
+            "suggestions": [
+              "Profile code to identify bottlenecks",
+              "Optimize hot paths and frequently called functions",
+              "Consider caching results of expensive operations",
+              "Use appropriate data structures for the use case",
+              "Use async/await for I/O-bound operations",
+              "Consider using functools.lru_cache for expensive computations"
+            ]
+          },
+          "linting_score": {
+            "explanation": "Areas for improvement: linting is acceptable but could be improved (5.0/10)",
+            "suggestions": []
+          },
+          "type_checking_score": {
+            "explanation": "Areas for improvement: type_checking is acceptable but could be improved (5.0/10)",
+            "suggestions": []
+          },
+          "duplication_score": {
+            "explanation": "Strengths: duplication is excellent (10.0/10), Code demonstrates best practices",
+            "suggestions": []
+          },
+          "overall_score": {
+            "explanation": "Strengths: overall is good (73.1/10)",
+            "suggestions": [
+              "Consider minor improvements to reach excellent level (>8.5)"
+            ]
+          }
+        },
+        "dependency_security_score": 10.0
+      },
+      "feedback": {
+        "instruction": {
+          "agent_name": "reviewer",
+          "command": "generate-feedback",
+          "prompt": "Review this code and provide detailed feedback:\n\nCode:\n```python\n\"\"\"\nReport Generator for Business Metrics\n\nGenerates human-readable reports from business metrics data.\n\"\"\"\n\nfrom __future__ import annotations\n\nimport logging\nfrom dataclasses import dataclass\nfrom datetime import datetime, timedelta\nfrom pathlib import Path\nfrom typing import Any\n\nfrom .business_metrics import (\n    BusinessMetricsData,\n    MetricsStorage,\n    ROIMetrics,\n)\n\nlogger = logging.getLogger(__name__)\n\n\n@dataclass\nclass WeeklyReport:\n    \"\"\"Weekly summary report.\"\"\"\n\n    period_start: datetime\n    period_end: datetime\n    total_consultations: int\n    top_experts: list[tuple[str, int]]  # (expert_id, count)\n    top_domains: list[tuple[str, int]]  # (domain, count)\n    avg_confidence: float\n    confidence_trend: str  # \"increasing\", \"decreasing\", \"stable\"\n    code_quality_improvements: int\n    estimated_time_saved_hours: float\n    roi_percentage: float\n\n\n@dataclass\nclass ROIReport:\n    \"\"\"ROI analysis report.\"\"\"\n\n    period_start: datetime\n    period_end: datetime\n    total_consultations: int\n    total_cost: float\n    total_value: float\n    roi_percentage: float\n    roi_per_consultation: float\n    breakdown_by_expert: dict[str, ROIMetrics]  # expert_id -> ROI\n    breakdown_by_domain: dict[str, ROIMetrics]  # domain -> ROI\n\n\nclass ReportGenerator:\n    \"\"\"Generate human-readable reports from metrics.\"\"\"\n\n    def __init__(self, storage: MetricsStorage):\n        \"\"\"\n        Initialize report generator.\n\n        Args:\n            storage: MetricsStorage instance\n        \"\"\"\n        self.storage = storage\n        self.reports_path = storage.storage_path / \"reports\"\n        self.reports_path.mkdir(parents=True, exist_ok=True)\n\n    def generate_weekly_report(\n        self, start_date: datetime | None = None, end_date: datetime | None = None\n    ) -> WeeklyReport:\n        \"\"\"Generate weekly summary report.\"\"\"\n        if end_date is None:\n            end_date = datetime.now()\n        if start_date is None:\n            start_date = end_date - timedelta(days=7)\n\n     \n```\n\nFocus on Python best practices:\n- PEP 8 style compliance\n- Type hints (Python 3.9+)\n- Error handling patterns\n- Docstring quality\n- Import organization\n\nCode Quality Scores:\n- Complexity: 3.2/10\n- Security: 10.0/10\n- Maintainability: 6.7/10\n- Test Coverage: 4.2/10\n- Performance: 6.5/10\n- Overall Score: 73.1/100\n\nProvide detailed feedback:\n\n1. What the code does (brief summary)\n2. Potential issues or improvements\n3. Security concerns (if any)\n4. Style/best practices recommendations\n5. Type hint usage and improvements\n6. Error handling improvements\n7. Documentation quality (docstrings)",
+          "parameters": {
+            "model": "reviewer-agent"
+          }
+        },
+        "skill_command": "@reviewer generate-feedback --model \"reviewer-agent\""
+      },
+      "quality_gate": {
+        "passed": false,
+        "overall_passed": false,
+        "security_passed": true,
+        "maintainability_passed": false,
+        "complexity_passed": true,
+        "test_coverage_passed": false,
+        "performance_passed": false,
+        "failures": [
+          "Overall score 7.31 below threshold 8.0"
+        ],
+        "warnings": [
+          "Maintainability score 6.70 below threshold 7.0",
+          "Test coverage 41.67% below threshold 80.0%",
+          "Performance score 6.50 below threshold 7.0"
+        ],
+        "scores": {
+          "overall_score": 7.310050000000001,
+          "security_score": 10.0,
+          "maintainability_score": 6.7,
+          "complexity_score": 3.2,
+          "test_coverage_score": 4.167,
+          "performance_score": 6.5
+        },
+        "thresholds": {
+          "overall_min": 8.0,
+          "security_min": 8.5,
+          "maintainability_min": 7.0,
+          "complexity_max": 5.0,
+          "test_coverage_min": 80.0,
+          "performance_min": 7.0
+        }
+      },
+      "quality_gate_blocked": true,
+      "passed": false,
+      "threshold": 70.0
+    }
+  ],
+  "successful": 2,
+  "failed": 0,
+  "errors": [],
+  "total": 2
+}

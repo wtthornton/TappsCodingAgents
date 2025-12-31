@@ -151,6 +151,49 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         
         # Initialize library pattern registry for extensible library-specific checks
         self.pattern_registry = LibraryPatternRegistry()
+        
+        # NEW: Initialize library detection components (Priority 1 & 2)
+        reviewer_config = config.agents.reviewer if config and hasattr(config, 'agents') else None
+        auto_library_detection = (
+            reviewer_config.auto_library_detection 
+            if reviewer_config else True
+        )
+        library_detection_depth = (
+            reviewer_config.library_detection_depth 
+            if reviewer_config else "both"
+        )
+        
+        if auto_library_detection:
+            from .library_detector import LibraryDetector
+            self.library_detector = LibraryDetector(
+                include_stdlib=False,
+                detection_depth=library_detection_depth
+            )
+        else:
+            self.library_detector = None
+        
+        # NEW: Initialize pattern detector
+        pattern_detection_enabled = (
+            reviewer_config.pattern_detection_enabled 
+            if reviewer_config else True
+        )
+        pattern_confidence_threshold = (
+            reviewer_config.pattern_confidence_threshold 
+            if reviewer_config else 0.5
+        )
+        
+        if pattern_detection_enabled:
+            from .pattern_detector import PatternDetector
+            self.pattern_detector = PatternDetector(
+                confidence_threshold=pattern_confidence_threshold
+            )
+        else:
+            self.pattern_detector = None
+        
+        # NEW: Initialize Context7 enhancer and output enhancer (will be set in activate)
+        self.context7_enhancer = None
+        from .output_enhancer import ReviewOutputEnhancer
+        self.output_enhancer = ReviewOutputEnhancer()
 
     async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the reviewer agent with expert support."""
@@ -168,6 +211,41 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             self.dependency_analyzer = DependencyAnalyzer(
                 project_root=project_root or Path.cwd()
             )
+        
+        # NEW: Initialize Context7 enhancer if Context7 is enabled (Priority 1 & 2)
+        reviewer_config = self.config.agents.reviewer if self.config and hasattr(self.config, 'agents') else None
+        auto_context7 = (
+            reviewer_config.auto_context7_lookups 
+            if reviewer_config else True
+        )
+        context7_timeout = (
+            reviewer_config.context7_timeout 
+            if reviewer_config else 30
+        )
+        context7_cache_enabled = (
+            reviewer_config.context7_cache_enabled 
+            if reviewer_config else True
+        )
+        
+        # Get Context7 helper if available
+        context7_helper = None
+        try:
+            from ...context7.agent_integration import get_context7_helper
+            context7_helper = get_context7_helper(self, self.config, project_root)
+        except Exception as e:
+            logger.debug(f"Context7 helper not available: {e}")
+        
+        if (auto_context7 and 
+            context7_helper and 
+            context7_helper.enabled):
+            from .context7_enhancer import Context7ReviewEnhancer
+            self.context7_enhancer = Context7ReviewEnhancer(
+                context7_helper=context7_helper,
+                timeout=context7_timeout,
+                cache_enabled=context7_cache_enabled
+            )
+        else:
+            self.context7_enhancer = None
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return available commands for reviewer agent"""
@@ -800,6 +878,57 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     # Continue without dependency security penalty
 
             result["scoring"] = scores
+        
+        # NEW: Library detection and Context7 integration (Priority 1 & 2)
+        library_recommendations = {}
+        pattern_guidance = {}
+        
+        # Detect libraries if enabled
+        libraries = []
+        if self.library_detector and file_type == "python":
+            try:
+                libraries = self.library_detector.detect_all(code, file_path)
+                if libraries:
+                    logger.debug(f"Detected {len(libraries)} libraries: {libraries}")
+            except Exception as e:
+                logger.warning(f"Library detection failed: {e}")
+        
+        # Detect patterns if enabled
+        patterns = []
+        if self.pattern_detector:
+            try:
+                patterns = self.pattern_detector.detect_patterns(code)
+                if patterns:
+                    logger.debug(f"Detected {len(patterns)} patterns: {[p.pattern_name for p in patterns]}")
+            except Exception as e:
+                logger.warning(f"Pattern detection failed: {e}")
+        
+        # Get Context7 recommendations if enabled
+        if self.context7_enhancer:
+            try:
+                if libraries:
+                    library_recommendations = await self.context7_enhancer.get_library_recommendations(
+                        libraries
+                    )
+                    if library_recommendations:
+                        logger.debug(f"Got Context7 recommendations for {len(library_recommendations)} libraries")
+                
+                if patterns:
+                    pattern_guidance = await self.context7_enhancer.get_pattern_guidance(
+                        patterns
+                    )
+                    if pattern_guidance:
+                        logger.debug(f"Got Context7 guidance for {len(pattern_guidance)} patterns")
+            except Exception as e:
+                logger.warning(f"Context7 enhancement failed: {e}")
+        
+        # Enhance output with library recommendations and pattern guidance
+        if library_recommendations or pattern_guidance:
+            result = self.output_enhancer.enhance_output(
+                result,
+                library_recommendations,
+                pattern_guidance
+            )
         
         # Validate InfluxDB patterns (Phase 1.2: HomeIQ Support)
         influxdb_review = self.influxdb_validator.review_file(file_path, code)
