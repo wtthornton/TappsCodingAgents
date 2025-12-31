@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.3] - 2025-01-16
+
+### Fixed
+- **Simple Mode Full Workflow Infinite Loop (Issue 10)** - Fixed infinite hangs in Simple Mode full workflow execution
+  - Added overall workflow timeout protection (2x step timeout, default: 2 hours) to prevent infinite hangs
+  - Enhanced workflow initialization with validation (empty workflow check, first step readiness validation)
+  - Improved no ready steps handling with detailed diagnostics (blocking step identification, missing artifact detection)
+  - Added progress reporting with step-by-step visibility and logging every 10 steps
+  - Force auto-execution for Simple Mode full workflow with clear warnings when disabled
+  - Added health check method (`get_workflow_health()`) for workflow diagnostics and stuck detection
+  - Enhanced error messages with actionable remediation steps
+  - Comprehensive test suite added (24 tests: 19 unit, 5 integration)
+  - See `docs/ISSUE_10_SIMPLE_MODE_FULL_WORKFLOW_INFINITE_LOOP_PLAN.md` for complete details
+
+### Added
+- **Workflow Diagnostics** - Enhanced diagnostic capabilities for workflow execution
+  - Health check method returns comprehensive workflow status (progress, timing, stuck detection)
+  - Detailed blocking diagnostics when no steps are ready (identifies blockers and missing artifacts)
+  - Progress logging every 10 steps for visibility during long-running workflows
+  - Timeout error messages with actionable remediation steps
+
+### Changed
+- **Simple Mode Full Workflow** - Enhanced execution reliability
+  - Auto-execution enabled by default for Simple Mode full workflow
+  - Clear warnings when auto-execution is explicitly disabled
+  - Better progress visibility with step-by-step reporting
+  - Improved timeout handling with graceful error messages
+
+### Documentation
+- Added `docs/ISSUE_10_IMPLEMENTATION_SUMMARY.md` - Complete implementation summary
+- Added `docs/ISSUE_10_TEST_SUITE_SUMMARY.md` - Test suite documentation
+- Updated `docs/ISSUE_10_SIMPLE_MODE_FULL_WORKFLOW_INFINITE_LOOP_PLAN.md` - Enhanced fix plan
+
 ## [3.2.2] - 2025-12-29
 
 ### Fixed
