@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.6] - 2025-01-16
+
+### Fixed
+- **Doctor Command - Playwright MCP Detection** - Improved detection of Playwright MCP server
+  - Added case-insensitive matching for Playwright in server names (similar to Context7)
+  - Updated doctor message to clarify that Cursor may provide Playwright MCP natively
+  - If Playwright is enabled in Cursor settings, it should work even if not detected in config files
+  - Improved remediation messages for Playwright MCP configuration
+
+### Changed
+- **Doctor Command** - Better handling of native Cursor MCP servers
+  - Native Cursor servers (like Playwright) may not appear in config files
+  - Doctor now provides clearer guidance when native servers are enabled but not detected
+
 ## [3.2.5] - 2025-01-16
 
 ### Added
