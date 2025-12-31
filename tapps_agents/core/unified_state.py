@@ -186,12 +186,10 @@ class UnifiedStateManager:
         """
         if state_dir is None:
             # Default to current working directory's .tapps-agents/state
-            from pathlib import Path
-
             project_root = Path.cwd()
             state_dir = project_root / ".tapps-agents" / "state"
 
-        self.state_dir = Path(state_dir)
+        self.state_dir = Path(state_dir) if not isinstance(state_dir, Path) else state_dir
         self.state_dir.mkdir(parents=True, exist_ok=True)
 
     def get_state_file(self, task_id: str) -> Path:

@@ -545,7 +545,7 @@ class CursorWorkflowExecutor:
         max_steps: int = 100,
     ) -> WorkflowState:
         """
-        Run workflow to completion.
+        Run workflow to completion with timeout protection.
 
         Args:
             workflow: Workflow to execute (if not already loaded)
@@ -555,73 +555,134 @@ class CursorWorkflowExecutor:
         Returns:
             Final workflow state
         """
-        # Initialize execution
-        target_path = await self._initialize_run(workflow, target_file)
+        from tapps_agents.core.config import load_config
+        import asyncio
+        from datetime import datetime
         
-        # Use parallel execution for independent steps
-        steps_executed = 0
-        completed_step_ids = set(self.state.completed_steps)
-        running_step_ids: set[str] = set()
-
-        while (
-            self.state
-            and self.workflow
-            and self.state.status == "running"
-        ):
-            if steps_executed >= max_steps:
-                self._handle_max_steps_exceeded(max_steps)
-                break
-
-            # Find steps ready to execute (dependencies met)
-            ready_steps = self._find_ready_steps(
-                completed_step_ids, running_step_ids
-            )
-
-            if not ready_steps:
-                if self._handle_no_ready_steps(completed_step_ids):
-                    break
-                continue
-
-            # Execute ready steps in parallel
-            running_step_ids.update(step.id for step in ready_steps)
+        config = load_config()
+        # Use 2x step timeout for overall workflow timeout (default: 2 hours)
+        workflow_timeout = getattr(config.workflow, 'timeout_seconds', 3600.0) * 2
+        
+        async def _run_workflow_inner() -> WorkflowState:
+            """Inner function to wrap actual execution for timeout protection."""
+            # Initialize execution
+            target_path = await self._initialize_run(workflow, target_file)
             
-            async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
-                """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
-                artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
-                return artifacts or {}
-
-            try:
-                results = await self.parallel_executor.execute_parallel(
-                    steps=ready_steps,
-                    execute_fn=execute_step_wrapper,
-                    state=self.state,
+            # Log workflow start
+            start_time = datetime.now()
+            if self.logger:
+                self.logger.info(
+                    "Starting workflow execution",
+                    extra={
+                        "workflow_id": self.state.workflow_id if self.state else None,
+                        "workflow_name": workflow.name if workflow else (self.workflow.name if self.workflow else None),
+                        "max_steps": max_steps,
+                        "total_steps": len(workflow.steps) if workflow else (len(self.workflow.steps) if self.workflow else 0),
+                        "workflow_timeout": workflow_timeout,
+                    }
                 )
+            
+            # Use parallel execution for independent steps
+            steps_executed = 0
+            completed_step_ids = set(self.state.completed_steps)
+            running_step_ids: set[str] = set()
 
-                # Process results and update state
-                should_break = await self._process_parallel_results(
-                    results, completed_step_ids, running_step_ids
-                )
-                if should_break:
+            while (
+                self.state
+                and self.workflow
+                and self.state.status == "running"
+            ):
+                if steps_executed >= max_steps:
+                    self._handle_max_steps_exceeded(max_steps)
                     break
 
-                steps_executed += len(ready_steps)
-                self.save_state()
+                # Find steps ready to execute (dependencies met)
+                ready_steps = self._find_ready_steps(
+                    completed_step_ids, running_step_ids
+                )
+
+                if not ready_steps:
+                    if self._handle_no_ready_steps(completed_step_ids):
+                        break
+                    continue
+
+                # Execute ready steps in parallel
+                running_step_ids.update(step.id for step in ready_steps)
                 
-                # Generate task manifest after step completion (Epic 7)
-                self._generate_manifest()
+                async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
+                    """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
+                    artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
+                    return artifacts or {}
 
-            except Exception as e:
-                self._handle_execution_error(e)
-                break
+                try:
+                    results = await self.parallel_executor.execute_parallel(
+                        steps=ready_steps,
+                        execute_fn=execute_step_wrapper,
+                        state=self.state,
+                    )
 
-        return await self._finalize_run(completed_step_ids)
+                    # Process results and update state
+                    should_break = await self._process_parallel_results(
+                        results, completed_step_ids, running_step_ids
+                    )
+                    if should_break:
+                        break
+
+                    steps_executed += len(ready_steps)
+                    self.save_state()
+                    
+                    # Generate task manifest after step completion (Epic 7)
+                    self._generate_manifest()
+                    
+                    # Log progress every 10 steps
+                    if steps_executed % 10 == 0 and self.logger:
+                        elapsed = (datetime.now() - start_time).total_seconds()
+                        self.logger.info(
+                            f"Workflow progress: {steps_executed} steps executed in {elapsed:.1f}s",
+                            extra={
+                                "steps_executed": steps_executed,
+                                "completed_steps": len(completed_step_ids),
+                                "total_steps": len(self.workflow.steps),
+                                "elapsed_seconds": elapsed,
+                            }
+                        )
+
+                except Exception as e:
+                    self._handle_execution_error(e)
+                    break
+
+            return await self._finalize_run(completed_step_ids)
+        
+        # Wrap execution with timeout
+        try:
+            return await asyncio.wait_for(
+                _run_workflow_inner(),
+                timeout=workflow_timeout
+            )
+        except asyncio.TimeoutError:
+            if self.state:
+                self.state.status = "failed"
+                self.state.error = f"Workflow timeout after {workflow_timeout}s"
+                self.save_state()
+                if self.logger:
+                    self.logger.error(
+                        f"Workflow execution exceeded {workflow_timeout}s timeout",
+                        extra={
+                            "workflow_id": self.state.workflow_id,
+                            "timeout_seconds": workflow_timeout,
+                        }
+                    )
+            raise TimeoutError(
+                f"Workflow execution exceeded {workflow_timeout}s timeout. "
+                f"Increase timeout in config (workflow.timeout_seconds) or check for blocking operations."
+            )
 
     async def _initialize_run(
         self,
         workflow: Workflow | None,
         target_file: str | None,
     ) -> Path | None:
-        """Initialize workflow execution and return target path."""
+        """Initialize workflow execution with validation and return target path."""
         if workflow:
             self.workflow = workflow
         if not self.workflow:
@@ -629,9 +690,27 @@ class CursorWorkflowExecutor:
                 "No workflow loaded. Call start() or pass workflow."
             )
 
+        # Validate workflow has steps
+        if not self.workflow.steps:
+            raise ValueError("Workflow has no steps to execute")
+
         # Ensure we have a state
         if not self.state or not self.state.workflow_id.startswith(f"{self.workflow.id}-"):
             await self.start(workflow=self.workflow)
+
+        # Validate first step can be executed (no dependencies)
+        first_step = self.workflow.steps[0]
+        if not first_step.requires:  # No dependencies
+            # First step should always be ready
+            if self.logger:
+                self.logger.info(
+                    f"First step {first_step.id} has no dependencies - ready to execute",
+                    extra={
+                        "step_id": first_step.id,
+                        "agent": first_step.agent,
+                        "action": first_step.action,
+                    }
+                )
 
         # Establish target file
         target_path: Path | None = None
@@ -655,6 +734,63 @@ class CursorWorkflowExecutor:
         self.state.error = f"Max steps exceeded ({max_steps}). Aborting."
         self.save_state()
 
+    def get_workflow_health(self) -> dict[str, Any]:
+        """
+        Get workflow health diagnostics.
+        
+        Returns:
+            Dictionary with workflow health information including:
+            - status: Current workflow status
+            - elapsed_seconds: Time since workflow started
+            - completed_steps: Number of completed steps
+            - total_steps: Total number of steps
+            - progress_percent: Percentage of steps completed
+            - time_since_last_step: Seconds since last step completed
+            - is_stuck: Whether workflow appears to be stuck (no progress in 5 minutes)
+            - current_step: Current step ID
+            - error: Error message if any
+        """
+        if not self.state:
+            return {"status": "not_started", "message": "Workflow not started"}
+        
+        elapsed = (
+            (datetime.now() - self.state.started_at).total_seconds() 
+            if self.state.started_at else 0
+        )
+        completed = len(self.state.completed_steps)
+        total = len(self.workflow.steps) if self.workflow else 0
+        
+        # Check if stuck (no progress in last 5 minutes)
+        last_step_time = None
+        if self.state.step_executions:
+            completed_times = [
+                se.completed_at for se in self.state.step_executions 
+                if se.completed_at
+            ]
+            if completed_times:
+                last_step_time = max(completed_times)
+        
+        if not last_step_time:
+            last_step_time = self.state.started_at
+        
+        time_since_last_step = (
+            (datetime.now() - last_step_time).total_seconds() 
+            if last_step_time else elapsed
+        )
+        is_stuck = time_since_last_step > 300  # 5 minutes
+        
+        return {
+            "status": self.state.status,
+            "elapsed_seconds": elapsed,
+            "completed_steps": completed,
+            "total_steps": total,
+            "progress_percent": (completed / total * 100) if total > 0 else 0,
+            "time_since_last_step": time_since_last_step,
+            "is_stuck": is_stuck,
+            "current_step": self.state.current_step,
+            "error": self.state.error,
+        }
+
     def _find_ready_steps(
         self,
         completed_step_ids: set[str],
@@ -670,7 +806,7 @@ class CursorWorkflowExecutor:
         )
 
     def _handle_no_ready_steps(self, completed_step_ids: set[str]) -> bool:
-        """Handle case when no steps are ready. Returns True if workflow should stop."""
+        """Handle case when no steps are ready with better diagnostics. Returns True if workflow should stop."""
         if len(completed_step_ids) >= len(self.workflow.steps):
             # Workflow is complete
             self.state.status = "completed"
@@ -678,10 +814,42 @@ class CursorWorkflowExecutor:
             self.save_state()
             return True
         else:
-            # Workflow is blocked (dependencies not met)
+            # Workflow is blocked - provide diagnostics
+            available_artifacts = set(self.state.artifacts.keys())
+            pending_steps = [
+                s for s in self.workflow.steps 
+                if s.id not in completed_step_ids
+            ]
+            
+            # Check what's blocking
+            blocking_info = []
+            for step in pending_steps:
+                missing = [req for req in (step.requires or []) if req not in available_artifacts]
+                if missing:
+                    blocking_info.append(f"Step {step.id} ({step.agent}/{step.action}): missing {missing}")
+            
+            error_msg = (
+                f"Workflow blocked: no ready steps and workflow not complete. "
+                f"Completed: {len(completed_step_ids)}/{len(self.workflow.steps)}. "
+                f"Blocking issues: {blocking_info if blocking_info else 'Unknown - check step dependencies'}"
+            )
+            
             self.state.status = "failed"
-            self.state.error = "Workflow blocked: no ready steps and workflow not complete"
+            self.state.error = error_msg
             self.save_state()
+            
+            # Log detailed diagnostics
+            if self.logger:
+                self.logger.error(
+                    "Workflow blocked - no ready steps",
+                    extra={
+                        "completed_steps": list(completed_step_ids),
+                        "pending_steps": [s.id for s in pending_steps],
+                        "available_artifacts": list(available_artifacts),
+                        "blocking_info": blocking_info,
+                    }
+                )
+            
             return True
 
     async def _process_parallel_results(

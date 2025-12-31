@@ -232,8 +232,34 @@ def handle_simple_mode_full(args: object) -> None:
     user_prompt = getattr(args, "prompt", None)
     auto_mode = getattr(args, "auto", False)
     
-    # Execute workflow
-    executor = WorkflowExecutor(auto_detect=False, auto_mode=auto_mode)
+    # Force auto-execution for Simple Mode full (unless explicitly disabled)
+    from ...core.config import load_config
+    config = load_config()
+    # config.workflow.auto_execution_enabled defaults to True, so this check is mainly for explicit False
+    if not auto_mode and config.workflow.auto_execution_enabled is False:
+        from ...core.unicode_safe import safe_print
+        safe_print("\n[WARNING] Auto-execution is disabled. Simple Mode full workflow requires auto-execution.", flush=True)
+        safe_print("[TIP] Enable auto-execution:", flush=True)
+        safe_print("  1. Add --auto flag: simple-mode full --prompt '...' --auto", flush=True)
+        safe_print("  2. Or enable in config: workflow.auto_execution_enabled: true", flush=True)
+        safe_print("  3. Or set TAPPS_AGENTS_MODE=headless for direct execution\n", flush=True)
+        
+        # Ask user if they want to continue (in interactive mode)
+        if sys.stdin.isatty():
+            response = input("Continue anyway? (y/N): ").strip().lower()
+            if response != 'y':
+                feedback.error(
+                    "Auto-execution required",
+                    error_code="auto_execution_required",
+                    remediation="Use --auto flag or enable auto-execution in config",
+                    exit_code=1,
+                )
+                return
+    
+    # Execute with auto_mode
+    # If auto_mode is False but config has auto_execution_enabled=True, use that
+    effective_auto_mode = auto_mode or (config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled else True)
+    executor = WorkflowExecutor(auto_detect=False, auto_mode=effective_auto_mode)
     
     if user_prompt:
         executor.user_prompt = user_prompt
@@ -242,13 +268,18 @@ def handle_simple_mode_full(args: object) -> None:
     from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
     runtime_mode = detect_runtime_mode()
     
+    # Stop spinner before async execution (spinner may interfere with async)
+    feedback.clear_progress()
+    
     print("Executing workflow steps...")
     print(f"Runtime mode: {runtime_mode.value}")
+    print(f"Auto-execution: {'enabled' if effective_auto_mode else 'disabled'}")
     
     from ...core.unicode_safe import safe_print
     if is_cursor_mode():
         safe_print("WARNING: Running in Cursor mode - workflow will use Background Agents")
-        safe_print("   If auto-execution is disabled, workflow will wait for manual execution")
+        if not effective_auto_mode:
+            safe_print("   Auto-execution is disabled - workflow will wait for manual execution")
         safe_print("   To force headless mode: set TAPPS_AGENTS_MODE=headless\n")
     else:
         safe_print("[OK] Running in headless mode - direct execution with terminal output\n")
@@ -271,6 +302,14 @@ def handle_simple_mode_full(args: object) -> None:
                 context={"status": state.status, "error": state.error if hasattr(state, 'error') else "Unknown error"},
                 exit_code=1,
             )
+    except TimeoutError as e:
+        feedback.error(
+            "Workflow timeout",
+            error_code="workflow_timeout",
+            context={"error": str(e)},
+            remediation="Increase timeout in config (workflow.timeout_seconds) or check for blocking operations",
+            exit_code=1,
+        )
     except Exception as e:
         feedback.error(
             "Workflow execution error",

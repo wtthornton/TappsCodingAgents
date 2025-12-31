@@ -30,17 +30,21 @@ python -m tapps_agents.cli simple-mode full --prompt "http://localhost:3001/syne
    - `_initialize_run()` calls `await self.start()` if state doesn't exist
    - If state initialization fails silently, workflow never progresses
    - First step might not be marked as "ready" if dependencies aren't properly initialized
+   - **Status**: Verified - code matches plan
 
-   **B. No Ready Steps Loop** (`cursor_executor.py:580-585`):
+   **B. No Ready Steps Loop** (`cursor_executor.py:672-685`):
    - `_find_ready_steps()` returns empty list if dependencies not met
-   - `_handle_no_ready_steps()` might not properly detect completion vs. blocking
-   - Infinite loop if workflow thinks it's not complete but no steps are ready
+   - `_handle_no_ready_steps()` currently has basic error message
+   - Current implementation does stop the loop (returns True), but error message is not diagnostic
+   - **Status**: Verified - code matches plan, but current implementation is less diagnostic than proposed fix
 
    **C. Manual Mode Waiting** (`cursor_executor.py:1323-1359`):
    - If auto-execution is disabled, workflow waits for Background Agents
    - Polling loop waits up to 1 hour (`max_wait_time = 3600`)
    - If Background Agents never execute, workflow hangs indefinitely
    - **This is likely the primary issue** - workflow is waiting for manual Background Agent execution
+   - **Status**: Verified - code matches plan exactly
+   - **Note**: Auto-execution defaults to `True` in config (line 715-718 in config.py), but can be disabled
 
    **D. Missing Progress Feedback**:
    - Spinner shows but no actual progress updates
@@ -71,18 +75,42 @@ python -m tapps_agents.cli simple-mode full --prompt "http://localhost:3001/syne
 async def run(self, workflow, target_file, max_steps=100) -> WorkflowState:
     """Run workflow with timeout protection."""
     from ...core.config import load_config
+    import asyncio
     config = load_config()
-    workflow_timeout = config.workflow.get('workflow_timeout_seconds', 7200)  # 2 hours
+    # Use existing timeout_seconds from config, or default to 2 hours
+    workflow_timeout = getattr(config.workflow, 'timeout_seconds', 7200.0) * 2  # 2x step timeout for overall workflow
+    
+    async def _run_with_timeout():
+        """Inner function to wrap actual execution."""
+        # Initialize execution
+        target_path = await self._initialize_run(workflow, target_file)
+        
+        # Use parallel execution for independent steps
+        steps_executed = 0
+        completed_step_ids = set(self.state.completed_steps)
+        running_step_ids: set[str] = set()
+
+        while (
+            self.state
+            and self.workflow
+            and self.state.status == "running"
+        ):
+            # ... existing execution loop code ...
+            # (Copy the entire while loop from the current run() method)
+            pass
+        
+        return await self._finalize_run(completed_step_ids)
     
     try:
         return await asyncio.wait_for(
-            self._run_workflow(workflow, target_file, max_steps),
+            _run_with_timeout(),
             timeout=workflow_timeout
         )
     except asyncio.TimeoutError:
-        self.state.status = "failed"
-        self.state.error = f"Workflow timeout after {workflow_timeout}s"
-        self.save_state()
+        if self.state:
+            self.state.status = "failed"
+            self.state.error = f"Workflow timeout after {workflow_timeout}s"
+            self.save_state()
         raise TimeoutError(f"Workflow execution exceeded {workflow_timeout}s timeout")
 ```
 
@@ -209,17 +237,9 @@ def handle_simple_mode_full(args: object) -> None:
     if user_prompt:
         executor.user_prompt = user_prompt
     
-    # Add progress callback
-    def on_step_start(step_id: str, agent: str, action: str):
-        print(f"\n[STEP] Executing: {step_id} ({agent}/{action})")
-        sys.stdout.flush()
-    
-    def on_step_complete(step_id: str, duration: float):
-        print(f"[OK] Step {step_id} completed in {duration:.1f}s")
-        sys.stdout.flush()
-    
-    executor.on_step_start = on_step_start
-    executor.on_step_complete = on_step_complete
+    # Note: Progress reporting will be added via workflow observer pattern
+    # or by adding callbacks to CursorWorkflowExecutor
+    # For now, progress is shown via terminal output in the executor itself
     
     try:
         import asyncio
@@ -345,7 +365,8 @@ def handle_simple_mode_full(args: object) -> None:
     # Force auto-execution for Simple Mode full (unless explicitly disabled)
     from ...core.config import load_config
     config = load_config()
-    if not auto_mode and not config.workflow.auto_execution_enabled:
+    # config.workflow.auto_execution_enabled defaults to True, so this check is mainly for explicit False
+    if not auto_mode and config.workflow.auto_execution_enabled is False:
         from ...core.unicode_safe import safe_print
         safe_print("\n[WARNING] Auto-execution is disabled. Simple Mode full workflow requires auto-execution.", flush=True)
         safe_print("[TIP] Enable auto-execution:", flush=True)
@@ -366,7 +387,9 @@ def handle_simple_mode_full(args: object) -> None:
                 return
     
     # Execute with auto_mode
-    executor = WorkflowExecutor(auto_detect=False, auto_mode=auto_mode or config.workflow.auto_execution_enabled)
+    # If auto_mode is False but config has auto_execution_enabled=True, use that
+    effective_auto_mode = auto_mode or (config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled else True)
+    executor = WorkflowExecutor(auto_detect=False, auto_mode=effective_auto_mode)
     # ... rest of execution ...
 ```
 
@@ -385,13 +408,9 @@ async def _execute_step_for_parallel(self, step, target_path):
     # ... existing code ...
     
     if use_auto_execution:
-        # Check Background Agents are running before starting
-        if not self._check_background_agents_running():
-            error_msg = (
-                f"Background Agents not running. Auto-execution requires Background Agents to be active. "
-                f"Start them with: python -m tapps_agents.background_agents start"
-            )
-            raise RuntimeError(error_msg)
+        # Note: Background Agents check would be useful but requires implementation
+        # For now, auto-executor will handle errors if Background Agents aren't running
+        # The auto_executor.execute_command() will fail with clear error messages
         
         # ... existing auto-execution code ...
     else:
@@ -468,4 +487,67 @@ async def _execute_step_for_parallel(self, step, target_path):
 - Solution: Force auto-execution for Simple Mode full workflow
 - Alternative: Add timeout and better error messages for manual mode
 - Consider adding a "dry-run" mode that validates workflow without executing
+
+## Code Verification Status
+
+✅ **Verified Accurate**:
+- Line numbers match actual code locations
+- Method names and signatures are correct
+- Config structure (`config.workflow.auto_execution_enabled`) exists and defaults to `True`
+- Manual mode waiting loop exists at lines 1323-1359
+- `_handle_no_ready_steps()` exists at line 672 (but needs improvement)
+- `_initialize_run()` exists at line 619
+
+⚠️ **Corrections Made**:
+- `_run_workflow()` method doesn't exist - updated to use inline function wrapper
+- `_check_background_agents_running()` doesn't exist - removed from plan (auto_executor handles errors)
+- Progress callbacks need to use existing observer pattern or be added to executor
+- Config check updated to handle `auto_execution_enabled` defaulting to `True`
+
+📝 **Implementation Notes**:
+- Auto-execution is enabled by default (`WorkflowConfig.auto_execution_enabled = True`)
+- The issue likely occurs when user explicitly disables auto-execution or when Background Agents aren't running
+- The spinner from `feedback.start_operation()` may not block async, but should be cleared before async execution for clarity
+
+## Test Suite Status
+
+✅ **Test Suite Created** (2025-01-16)
+
+A comprehensive test suite has been created to validate all fixes:
+
+### Test Files Created
+
+1. **Unit Tests** (4 files, 19 tests):
+   - `tests/unit/workflow/test_cursor_executor_issue10_timeout.py` - Timeout mechanism (4 tests)
+   - `tests/unit/workflow/test_cursor_executor_issue10_initialization.py` - Initialization validation (4 tests)
+   - `tests/unit/workflow/test_cursor_executor_issue10_no_ready_steps.py` - No ready steps handling (4 tests)
+   - `tests/unit/workflow/test_cursor_executor_issue10_health_check.py` - Health check method (6 tests)
+
+2. **Integration Tests** (1 file, 5 tests):
+   - `tests/integration/test_simple_mode_full_workflow_issue10.py` - End-to-end workflow tests (5 tests)
+
+**Total**: 24 tests covering all implemented fixes
+
+### Test Coverage
+
+✅ Timeout mechanism (workflow timeout, config-based timeout, error logging)  
+✅ Workflow initialization (empty workflow check, first step validation, state creation)  
+✅ No ready steps handling (blocking detection, missing artifacts, multiple blockers)  
+✅ Health check method (stuck detection, progress calculation, error information)  
+✅ Integration tests (end-to-end execution, timeout handling, warnings, progress reporting)
+
+### Documentation
+
+- Test suite README: `tests/unit/workflow/ISSUE_10_TEST_SUITE_README.md`
+- Test summary: `docs/ISSUE_10_TEST_SUITE_SUMMARY.md`
+
+### Running Tests
+
+```bash
+# All Issue 10 tests
+pytest tests/unit/workflow/test_cursor_executor_issue10_*.py tests/integration/test_simple_mode_full_workflow_issue10.py -v
+
+# With coverage
+pytest tests/unit/workflow/test_cursor_executor_issue10_*.py tests/integration/test_simple_mode_full_workflow_issue10.py --cov=tapps_agents.workflow.cursor_executor --cov=tapps_agents.cli.commands.simple_mode -v
+```
 

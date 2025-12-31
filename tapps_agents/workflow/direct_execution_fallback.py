@@ -8,6 +8,7 @@ need for watch_paths configuration and provides more reliable execution.
 
 import asyncio
 import logging
+import shlex
 from pathlib import Path
 from typing import Any
 
@@ -44,6 +45,7 @@ class DirectExecutionFallback:
         workflow_id: str | None = None,
         step_id: str | None = None,
         environment: dict[str, str] | None = None,
+        is_raw_cli: bool = False,
     ) -> dict[str, Any]:
         """
         Execute a command directly via subprocess.
@@ -53,11 +55,12 @@ class DirectExecutionFallback:
         and executes them directly.
 
         Args:
-            command: Skill command string (e.g., "@reviewer *review file.py")
+            command: Skill command string (e.g., "@reviewer *review file.py") or raw CLI command
             worktree_path: Optional worktree path (uses project_root if None)
             workflow_id: Optional workflow ID for tracking
             step_id: Optional step ID for tracking
             environment: Optional environment variables
+            is_raw_cli: If True, treat command as raw CLI command (skip Skill conversion)
 
         Returns:
             Execution result dictionary:
@@ -74,8 +77,12 @@ class DirectExecutionFallback:
         start_time = time.time()
         execution_path = worktree_path or self.project_root
 
-        # Convert Skill command to CLI command
-        cli_command = self._convert_skill_to_cli(command)
+        # Convert Skill command to CLI command (unless it's already a raw CLI command)
+        if is_raw_cli or (not command.startswith("@") and not command.startswith("python -m tapps_agents.cli")):
+            # Already a CLI command, use as-is
+            cli_command = command
+        else:
+            cli_command = self._convert_skill_to_cli(command)
 
         # Prepare environment
         env = dict(os.environ) if (os := __import__("os")) else {}
@@ -98,13 +105,38 @@ class DirectExecutionFallback:
 
         try:
             # Execute command in worktree directory
-            process = await asyncio.create_subprocess_exec(
-                *cli_command.split(),
-                cwd=execution_path,
-                env=env,
-                stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE,
-            )
+            # Use shlex.split() to properly handle quoted strings
+            import platform
+            is_windows = platform.system() == "Windows"
+            
+            if is_windows and is_raw_cli:
+                # On Windows, for raw CLI commands, use shell=True for built-in commands
+                # Check if command looks like a shell builtin (echo, type, etc.)
+                first_word = cli_command.split()[0] if cli_command.split() else ""
+                shell_builtins = {"echo", "type", "dir", "cd", "set"}
+                use_shell = first_word.lower() in shell_builtins
+            else:
+                use_shell = False
+            
+            if use_shell:
+                # Use shell=True for Windows built-in commands
+                process = await asyncio.create_subprocess_shell(
+                    cli_command,
+                    cwd=execution_path,
+                    env=env,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
+            else:
+                # Use exec for regular commands
+                command_parts = shlex.split(cli_command, posix=not is_windows)
+                process = await asyncio.create_subprocess_exec(
+                    *command_parts,
+                    cwd=execution_path,
+                    env=env,
+                    stdout=asyncio.subprocess.PIPE,
+                    stderr=asyncio.subprocess.PIPE,
+                )
 
             # Wait for completion with timeout
             try:
