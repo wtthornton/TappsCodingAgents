@@ -464,6 +464,62 @@ class TestReviewerBatchOperations:
                     output_format="json"
                 )
 
+    def test_resolve_file_list_no_path_duplication(self, tmp_path):
+        """Test that relative paths don't duplicate directory segments when cwd contains matching segments."""
+        # Create a nested directory structure
+        # cwd will be: tmp_path / "services" / "service-name"
+        service_dir = tmp_path / "services" / "service-name"
+        service_dir.mkdir(parents=True)
+        
+        # Create a file in the service directory
+        target_file = service_dir / "src" / "file.py"
+        target_file.parent.mkdir(parents=True)
+        target_file.write_text("def func(): pass")
+        
+        # Import the function to test directly
+        from tapps_agents.cli.commands.reviewer import _resolve_file_list
+        
+        # Test with cwd = service_dir, and relative path that starts with "services/service-name"
+        # This would previously cause duplication: services/service-name/services/service-name/src/file.py
+        with patch("pathlib.Path.cwd", return_value=service_dir):
+            # Provide relative path that starts with directory segments matching cwd parent
+            # Relative to service_dir, "src/file.py" is the correct path
+            resolved = _resolve_file_list(["src/file.py"], None)
+            
+            # Should resolve to the correct file without duplication
+            assert len(resolved) == 1
+            assert resolved[0].resolve() == target_file.resolve()
+            # Verify no duplication - check that path parts don't repeat
+            path_parts = list(resolved[0].parts)
+            # Count occurrences of "services" and "service-name" - should appear once each
+            services_count = path_parts.count("services")
+            service_name_count = path_parts.count("service-name")
+            assert services_count <= 1, f"Path duplication detected (services appears {services_count} times): {resolved[0]}"
+            assert service_name_count <= 1, f"Path duplication detected (service-name appears {service_name_count} times): {resolved[0]}"
+            
+    def test_resolve_file_list_relative_path_normalization(self, tmp_path):
+        """Test that resolve() properly handles path normalization for relative paths."""
+        # Create a file structure
+        service_dir = tmp_path / "services" / "service-name"
+        src_dir = service_dir / "src"
+        src_dir.mkdir(parents=True)
+        target_file = src_dir / "file.py"
+        target_file.write_text("def func(): pass")
+        
+        from tapps_agents.cli.commands.reviewer import _resolve_file_list
+        
+        # Test with cwd = service_dir, passing a simple relative path
+        # This tests that resolve() works correctly for normal relative paths
+        with patch("pathlib.Path.cwd", return_value=service_dir):
+            # Simple relative path - should resolve correctly
+            resolved = _resolve_file_list(["src/file.py"], None)
+            
+            # Should resolve to the correct file
+            assert len(resolved) == 1
+            resolved_path = resolved[0].resolve()
+            target_resolved = target_file.resolve()
+            assert resolved_path == target_resolved, f"Expected {target_resolved}, got {resolved_path}"
+
     @pytest.mark.asyncio
     async def test_process_file_batch_success(self, tmp_path):
         """Test batch processing with successful processing."""

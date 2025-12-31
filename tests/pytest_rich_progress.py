@@ -14,19 +14,38 @@ import sys
 from typing import Any
 
 import pytest
-from rich.console import Console
-from rich.live import Live
-from rich.panel import Panel
-from rich.progress import (
-    BarColumn,
-    Progress,
-    SpinnerColumn,
-    TextColumn,
-    TimeElapsedColumn,
-    TimeRemainingColumn,
-)
-from rich.table import Table
-from rich.text import Text
+
+# Gracefully handle missing rich library
+try:
+    from rich.console import Console
+    from rich.live import Live
+    from rich.panel import Panel
+    from rich.progress import (
+        BarColumn,
+        Progress,
+        SpinnerColumn,
+        TextColumn,
+        TimeElapsedColumn,
+        TimeRemainingColumn,
+    )
+    from rich.table import Table
+    from rich.text import Text
+    RICH_AVAILABLE = True
+except ImportError:
+    # Rich not available - plugin will be disabled
+    RICH_AVAILABLE = False
+    # Create dummy classes to prevent NameError
+    Console = None
+    Live = None
+    Panel = None
+    Progress = None
+    BarColumn = None
+    SpinnerColumn = None
+    TextColumn = None
+    TimeElapsedColumn = None
+    TimeRemainingColumn = None
+    Table = None
+    Text = None
 
 # Set UTF-8 encoding for Windows console
 if sys.platform == "win32":
@@ -55,6 +74,8 @@ class RichProgressReporter:
     """Rich-based progress reporter for pytest."""
 
     def __init__(self):
+        if not RICH_AVAILABLE:
+            raise ImportError("rich library is not available")
         self.console = Console()
         self.progress = None
         self.live = None
@@ -280,6 +301,10 @@ def pytest_configure(config: pytest.Config) -> None:
     """Register the plugin."""
     global _reporter
     
+    # If rich is not available, don't register the plugin
+    if not RICH_AVAILABLE:
+        return
+    
     # Only use rich reporter if not in quiet mode and not in parallel worker mode
     # --quiet is a count option, so it returns an int (0, 1, 2, etc.)
     quiet_count = config.getoption("--quiet", default=0)
@@ -292,7 +317,11 @@ def pytest_configure(config: pytest.Config) -> None:
     # Create and store reporter if not quiet, traceback not disabled, and not a worker
     # Rich visualization should only run in the main process
     if quiet_count == 0 and tb_option != "no" and not is_worker:
-        _reporter = RichProgressReporter()
+        try:
+            _reporter = RichProgressReporter()
+        except Exception:
+            # If reporter creation fails, continue without rich output
+            _reporter = None
 
 
 # Module-level hooks that delegate to the reporter

@@ -4,8 +4,12 @@ Pytest configuration and shared fixtures for TappsCodingAgents tests.
 
 # ruff: noqa: E402
 
-# Register pytest plugins
-pytest_plugins = ["tests.pytest_rich_progress"]
+# Register pytest plugins (optional - plugin handles import errors gracefully)
+try:
+    pytest_plugins = ["tests.pytest_rich_progress"]
+except ImportError:
+    # Plugin not available - continue without it
+    pytest_plugins = []
 
 # Add project root to path
 import sys
@@ -190,66 +194,193 @@ def pytest_configure(config):
     )
     
     # Register rich progress plugin if available
+    # Note: Plugin is already registered via pytest_plugins or -p flag
+    # This is just a safety check - plugin handles its own import errors
     try:
-        # Import the plugin module to trigger its pytest_configure hook
         import tests.pytest_rich_progress
-        # The plugin's pytest_configure hook will register itself
-    except ImportError:
+        # Plugin's pytest_configure hook will register itself if rich is available
+    except (ImportError, AttributeError):
         pass  # Rich progress not available, use default output
 
 
-def pytest_collection_modifyitems(config, items):
-    """Automatically skip requires_llm and requires_context7 tests if services unavailable."""
-    import os
-
-    # Check LLM availability with robust error handling
-    ollama_available = False
+def _check_ollama_availability() -> bool:
+    """
+    Check if Ollama service is available locally.
+    
+    Returns:
+        True if Ollama is running and accessible, False otherwise.
+        
+    Note:
+        This function must never raise exceptions or hang, as it runs during
+        test collection and any failure would prevent all tests from being discovered.
+    """
     try:
         import httpx
         # Use very short timeout to prevent hanging during collection
+        # httpx timeout handles network hangs, so no additional timeout needed
         response = httpx.get("http://localhost:11434/api/tags", timeout=1.0)
-        ollama_available = response.status_code == 200
-    except (httpx.ConnectError, httpx.TimeoutException, httpx.RequestError, Exception):
-        # Silently fail - Ollama not available
-        ollama_available = False
+        return response.status_code == 200
+    except Exception:
+        # Silently fail for ANY exception - Ollama not available, network error, timeout, etc.
+        return False
+
+
+def _check_api_keys_available() -> tuple[bool, bool]:
+    """
+    Check if LLM API keys are available in environment variables.
     
-    anthropic_available = os.getenv("ANTHROPIC_API_KEY") is not None
-    openai_available = os.getenv("OPENAI_API_KEY") is not None
-    has_llm = ollama_available or anthropic_available or openai_available
+    Returns:
+        Tuple of (anthropic_available, openai_available) boolean values.
+        
+    Note:
+        This function safely checks environment variables and never raises exceptions.
+    """
+    import os
     
-    # Check Context7 availability (prefers MCP Gateway, falls back to API key)
-    # Wrap in try/except to prevent crashes during collection
-    mcp_tools_available = False
-    api_key_available = os.getenv("CONTEXT7_API_KEY") is not None
+    try:
+        anthropic_available = os.getenv("ANTHROPIC_API_KEY") is not None
+        openai_available = os.getenv("OPENAI_API_KEY") is not None
+        return anthropic_available, openai_available
+    except Exception:
+        # If environment variable access fails, assume not available
+        return False, False
+
+
+def _check_context7_availability() -> bool:
+    """
+    Check if Context7 is available via MCP Gateway or API key.
     
+    This function checks for Context7 availability in two ways:
+    1. Checks for CONTEXT7_API_KEY environment variable (fast, no dependencies)
+    2. If API key not found, checks MCP Gateway for Context7 tools (slower, requires imports)
+    
+    Returns:
+        True if Context7 is available (either via API key or MCP Gateway), False otherwise.
+        
+    Note:
+        This function must never raise exceptions or hang, as it runs during
+        test collection and any failure would prevent all tests from being discovered.
+    """
+    import os
+    
+    # Check API key first (fast, no dependencies)
+    api_key_available = False
+    try:
+        api_key_available = os.getenv("CONTEXT7_API_KEY") is not None
+    except Exception:
+        api_key_available = False
+    
+    # If API key is available, no need to check MCP Gateway
+    if api_key_available:
+        return True
+    
+    # Only check MCP Gateway if API key not available (optimization)
+    # This avoids unnecessary MCP Gateway initialization if API key is present
     try:
         from tapps_agents.mcp.gateway import MCPGateway
         
+        # MCPGateway() should be fast (just creates a ToolRegistry)
         gateway = MCPGateway()
+        
+        # list_available_tools() should also be fast (just iterates registry)
         tools = gateway.list_available_tools()
-        tool_names = [tool.get("name", "") for tool in tools if isinstance(tool, dict)]
+        
+        # Safely extract tool names with defensive programming
+        tool_names = []
+        if isinstance(tools, list):
+            for tool in tools:
+                try:
+                    if isinstance(tool, dict):
+                        name = tool.get("name", "")
+                        if name and isinstance(name, str):
+                            tool_names.append(name)
+                except Exception:
+                    # Skip invalid tool entries
+                    continue
+        
+        # Check for required Context7 tools
         mcp_tools_available = (
             "mcp_Context7_resolve-library-id" in tool_names
             and "mcp_Context7_get-library-docs" in tool_names
         )
-    except (ImportError, AttributeError, Exception):
-        # MCP Gateway not available or failed to initialize
-        # This is OK - we'll fall back to API key check
-        mcp_tools_available = False
+        return mcp_tools_available
+    except Exception:
+        # MCP Gateway not available, failed to initialize, or any other error
+        # This is OK - we'll fall back to API key check (already checked above)
+        return False
+
+
+def _mark_tests_for_skipping(
+    items: list[Any],
+    has_llm: bool,
+    context7_available: bool,
+) -> None:
+    """
+    Mark tests for skipping based on service availability.
     
-    context7_available = mcp_tools_available or api_key_available
-    
+    Args:
+        items: List of pytest test items to potentially mark for skipping.
+        has_llm: True if any LLM service (Ollama, Anthropic, OpenAI) is available.
+        context7_available: True if Context7 is available (via API key or MCP Gateway).
+        
+    Note:
+        This function must never raise exceptions, as it runs during test collection.
+        Individual marker operations are wrapped in try/except to prevent failures
+        from blocking test discovery.
+    """
     # Skip requires_llm tests if no LLM available
-    skip_llm = pytest.mark.skip(reason="No LLM service available (Ollama, Anthropic, or OpenAI)")
-    for item in items:
-        if "requires_llm" in item.keywords and not has_llm:
-            item.add_marker(skip_llm)
+    try:
+        skip_llm = pytest.mark.skip(reason="No LLM service available (Ollama, Anthropic, or OpenAI)")
+        for item in items:
+            try:
+                if "requires_llm" in item.keywords and not has_llm:
+                    item.add_marker(skip_llm)
+            except Exception:
+                # Skip individual item if marker addition fails
+                continue
+    except Exception:
+        # If marker creation fails, continue without skipping
+        pass
     
     # Skip requires_context7 tests if neither MCP tools nor API key available
-    skip_context7 = pytest.mark.skip(
-        reason="Context7 not available: "
-        "MCP tools not found and CONTEXT7_API_KEY not set"
-    )
-    for item in items:
-        if "requires_context7" in item.keywords and not context7_available:
-            item.add_marker(skip_context7)
+    try:
+        skip_context7 = pytest.mark.skip(
+            reason="Context7 not available: "
+            "MCP tools not found and CONTEXT7_API_KEY not set"
+        )
+        for item in items:
+            try:
+                if "requires_context7" in item.keywords and not context7_available:
+                    item.add_marker(skip_context7)
+            except Exception:
+                # Skip individual item if marker addition fails
+                continue
+    except Exception:
+        # If marker creation fails, continue without skipping
+        pass
+
+
+def pytest_collection_modifyitems(config: Any, items: list[Any]) -> None:
+    """
+    Automatically skip requires_llm and requires_context7 tests if services unavailable.
+    
+    This hook runs during test collection. All checks are wrapped in try/except
+    to prevent crashes or hangs that would block test discovery.
+    
+    Args:
+        config: Pytest configuration object (unused but required by pytest hook signature).
+        items: List of pytest test items to potentially mark for skipping.
+    
+    NOTE: This function must never raise exceptions or hang, as it runs during
+    test collection and any failure will prevent all tests from being discovered.
+    """
+    # Check LLM availability (Ollama, Anthropic, OpenAI)
+    ollama_available = _check_ollama_availability()
+    anthropic_available, openai_available = _check_api_keys_available()
+    has_llm = ollama_available or anthropic_available or openai_available
+    
+    # Check Context7 availability (MCP Gateway or API key)
+    context7_available = _check_context7_availability()
+    
+    # Mark tests for skipping based on service availability
+    _mark_tests_for_skipping(items, has_llm, context7_available)

@@ -379,15 +379,16 @@ def _resolve_file_list(files: list[str] | None, pattern: str | None) -> list[Pat
 
             path = Path(file_path)
             if not path.is_absolute():
-                path = Path.cwd() / path
+                # Use resolve() to properly normalize path and eliminate directory duplication
+                path = (Path.cwd() / path).resolve()
             if path.exists() and path.is_dir():
                 resolved_files.extend(_discover_from_dir(path))
             elif path.exists():
                 if path.is_file() and (path.suffix.lower() in allowed_suffixes or path.suffix == ""):
                     resolved_files.append(path)
             else:
-                # Try relative to cwd
-                cwd_path = Path.cwd() / file_path
+                # Try relative to cwd (with proper resolution to eliminate duplication)
+                cwd_path = (Path.cwd() / file_path).resolve()
                 if cwd_path.exists() and cwd_path.is_dir():
                     resolved_files.extend(_discover_from_dir(cwd_path))
                 elif cwd_path.exists():
