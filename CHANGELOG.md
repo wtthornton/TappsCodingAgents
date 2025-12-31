@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.8] - 2025-01-16
+
+### Added
+- **Context7 Integration Enhancements** - Improved content extraction from Context7 MCP server
+  - Enhanced content extraction capabilities for better library documentation retrieval
+- **Simple Mode Build Workflow Documentation** - Complete implementation of build workflow MD files
+  - Full documentation artifacts for Simple Mode build workflow steps
+  - Improved traceability and documentation generation
+- **Evaluator Agent Enhancements** - Objective priority evaluation system
+  - Enhanced evaluation capabilities with priority-based assessment
+- **Business Metrics Collection** - Experts feature metrics tracking (Phases 1-3)
+  - Added metrics collection for expert usage and performance
+- **Automatic Documentation Updates** - Framework changes now trigger documentation updates
+  - Automatic documentation synchronization with framework changes
+- **Git Branch Cleanup** - Automatic cleanup for workflow worktrees
+  - Improved workflow worktree management with automatic branch cleanup
+
+### Changed
+- **Background Agents** - Made background agents opt-in instead of default in init/install
+  - Users must explicitly enable background agents during initialization
+  - Improved user control over automatic workflow execution
+- **Command Documentation Coverage** - Improved documentation for Priority 1-3 commands
+  - Enhanced command reference documentation
+  - Better coverage of command options and usage patterns
+- **Documentation Automation** - Priority 1 documentation automation improvements
+  - Streamlined documentation generation and maintenance
+
 ## [3.2.7] - 2025-01-16
 
 ### Added
