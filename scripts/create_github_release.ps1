@@ -90,6 +90,60 @@ if (-not $SkipVersionUpdate) {
         Write-Host "ERROR: Version update failed!" -ForegroundColor Red
         exit 1
     }
+    
+    # CRITICAL: Verify version was updated correctly before proceeding
+    Write-Host "Verifying version update..." -ForegroundColor Cyan
+    $pyprojectContent = Get-Content "pyproject.toml" -Raw
+    $initContent = Get-Content "tapps_agents\__init__.py" -Raw
+    
+    # Extract version from pyproject.toml [project] section
+    $pyprojectVersion = ""
+    $pyprojectLines = $pyprojectContent -split "`r?`n"
+    $inProjectSection = $false
+    foreach ($line in $pyprojectLines) {
+        if ($line -match '^\s*\[project\]\s*$') {
+            $inProjectSection = $true
+        } elseif ($line -match '^\s*\[.*?\]\s*$') {
+            $inProjectSection = $false
+        } elseif ($inProjectSection -and $line -match '^\s*version\s*=\s*"(.*?)"\s*$') {
+            $pyprojectVersion = $matches[1]
+            break
+        }
+    }
+    
+    # Extract version from __init__.py
+    $initVersion = ""
+    if ($initContent -match '__version__\s*=\s*"(.*?)"') {
+        $initVersion = $matches[1]
+    }
+    
+    if ($pyprojectVersion -ne $Version -or $initVersion -ne $Version) {
+        Write-Host "ERROR: Version mismatch after update!" -ForegroundColor Red
+        Write-Host "  Expected: $Version" -ForegroundColor Red
+        Write-Host "  pyproject.toml: $pyprojectVersion" -ForegroundColor Red
+        Write-Host "  __init__.py: $initVersion" -ForegroundColor Red
+        exit 1
+    }
+    
+    Write-Host "  ✓ Version verified: $Version" -ForegroundColor Green
+    
+    # Check if version changes need to be committed
+    $gitStatus = git status --porcelain pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json 2>&1
+    if ($gitStatus) {
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "WARNING: Version files have uncommitted changes!" -ForegroundColor Yellow
+        Write-Host "  The release tag MUST point to a commit with the version bump." -ForegroundColor Yellow
+        Write-Host "  Please commit the version changes before creating the release:" -ForegroundColor Yellow
+        Write-Host "    git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json" -ForegroundColor White
+        Write-Host "    git commit -m `"Bump version to $Version`"" -ForegroundColor White
+        Write-Host "    git push origin main" -ForegroundColor White
+        Write-Host "" -ForegroundColor Yellow
+        $continue = Read-Host "Continue anyway? (y/n) - NOT RECOMMENDED"
+        if ($continue -ne "y") {
+            exit 1
+        }
+    }
+    
     Write-Host ""
 } else {
     Write-Host "Step 1: Skipping version update (--SkipVersionUpdate)" -ForegroundColor Yellow
@@ -205,8 +259,56 @@ if (Test-Path $verifyScript) {
     Write-Host ""
 }
 
-# Step 6: Create GitHub release
-Write-Host "Step 6: Creating GitHub release..." -ForegroundColor Cyan
+# Step 6: Verify tag will point to correct commit
+Write-Host "Step 6: Verifying tag target..." -ForegroundColor Cyan
+
+# Get current HEAD commit
+$currentCommit = git rev-parse HEAD
+Write-Host "  Current HEAD: $currentCommit" -ForegroundColor Gray
+
+# Verify version in current HEAD matches target version
+$headPyprojectVersion = git show HEAD:pyproject.toml | Select-String -Pattern '^\s*version\s*=\s*"(.*?)"\s*$' -Context 2,0
+$headInitVersion = git show HEAD:tapps_agents/__init__.py | Select-String -Pattern '__version__\s*=\s*"(.*?)"' | ForEach-Object { if ($_ -match '__version__\s*=\s*"(.*?)"') { $matches[1] } }
+
+# Extract version from pyproject.toml [project] section
+$headPyprojectVersionExtracted = ""
+if ($headPyprojectVersion) {
+    $headPyprojectVersionLines = $headPyprojectVersion.ToString() -split "`r?`n"
+    $inProjectSection = $false
+    foreach ($line in $headPyprojectVersionLines) {
+        if ($line -match '^\s*\[project\]\s*$') {
+            $inProjectSection = $true
+        } elseif ($line -match '^\s*\[.*?\]\s*$') {
+            $inProjectSection = $false
+        } elseif ($inProjectSection -and $line -match '^\s*version\s*=\s*"(.*?)"\s*$') {
+            $headPyprojectVersionExtracted = $matches[1]
+            break
+        }
+    }
+}
+
+if ($headPyprojectVersionExtracted -ne $Version -or $headInitVersion -ne $Version) {
+    Write-Host "" -ForegroundColor Red
+    Write-Host "ERROR: Current HEAD commit does not have version $Version!" -ForegroundColor Red
+    Write-Host "  HEAD pyproject.toml version: $headPyprojectVersionExtracted" -ForegroundColor Red
+    Write-Host "  HEAD __init__.py version: $headInitVersion" -ForegroundColor Red
+    Write-Host "  Expected version: $Version" -ForegroundColor Red
+    Write-Host "" -ForegroundColor Red
+    Write-Host "CRITICAL: The release tag MUST point to a commit with the version bump." -ForegroundColor Yellow
+    Write-Host "  If you updated the version, you must commit those changes first:" -ForegroundColor Yellow
+    Write-Host "    git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json" -ForegroundColor White
+    Write-Host "    git commit -m `"Bump version to $Version`"" -ForegroundColor White
+    Write-Host "    git push origin main" -ForegroundColor White
+    Write-Host "" -ForegroundColor Yellow
+    Write-Host "  Then re-run this script with -SkipVersionUpdate" -ForegroundColor Yellow
+    exit 1
+}
+
+Write-Host "  ✓ HEAD commit has correct version: $Version" -ForegroundColor Green
+Write-Host ""
+
+# Step 7: Create GitHub release
+Write-Host "Step 7: Creating GitHub release..." -ForegroundColor Cyan
 
 # Check for GitHub CLI
 $ghAvailable = Get-Command gh -ErrorAction SilentlyContinue
@@ -232,6 +334,30 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# Check if tag already exists
+$existingTag = git tag -l $Tag
+if ($existingTag) {
+    Write-Host "" -ForegroundColor Yellow
+    Write-Host "WARNING: Tag $Tag already exists!" -ForegroundColor Yellow
+    $tagCommit = git rev-parse $Tag
+    Write-Host "  Tag points to: $tagCommit" -ForegroundColor Gray
+    Write-Host "  Current HEAD:  $currentCommit" -ForegroundColor Gray
+    
+    if ($tagCommit -ne $currentCommit) {
+        Write-Host "" -ForegroundColor Red
+        Write-Host "ERROR: Tag $Tag points to a different commit than HEAD!" -ForegroundColor Red
+        Write-Host "  This will cause version mismatches for users upgrading." -ForegroundColor Red
+        Write-Host "" -ForegroundColor Yellow
+        Write-Host "  To fix:" -ForegroundColor Yellow
+        Write-Host "    git tag -d $Tag" -ForegroundColor White
+        Write-Host "    git push origin :refs/tags/$Tag" -ForegroundColor White
+        Write-Host "    # Then re-run this script" -ForegroundColor White
+        exit 1
+    } else {
+        Write-Host "  ✓ Tag points to current HEAD (correct)" -ForegroundColor Green
+    }
+    Write-Host ""
+}
 
 # Build gh release create command (avoid Invoke-Expression so multiline notes don't break PowerShell parsing)
 $ghArgs = @("release", "create", $Tag, "--title", $Title)

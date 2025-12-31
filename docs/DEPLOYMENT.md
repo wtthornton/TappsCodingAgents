@@ -1,7 +1,10 @@
 # Deployment Guide
 
-**Version**: 2.4.1  
-**Last Updated**: January 2026
+> **📘 CANONICAL DOCUMENTATION** - This is the authoritative deployment guide.  
+> **For release process, see:** [RELEASE_GUIDE.md](RELEASE_GUIDE.md)
+
+**Version**: 3.2.3  
+**Last Updated**: January 2025
 
 ## Overview
 
@@ -158,3 +161,4 @@ Before deploying to production, ensure:
 - `docs/CONFIGURATION.md` - Complete configuration reference
 - `docs/API.md` - Python API and CLI usage
 - `docs/ARCHITECTURE.md` - System architecture overview
+- `docs/RELEASE_GUIDE.md` - **Release and version management guide** (for maintainers)

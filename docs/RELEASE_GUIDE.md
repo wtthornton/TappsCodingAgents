@@ -1,6 +1,30 @@
 # Release Guide - Optimized Process
 
+> **📘 CANONICAL DOCUMENTATION** - This is the authoritative guide for release and deployment processes.  
+> **Quick Reference:** See [RELEASE_QUICK_REFERENCE.md](RELEASE_QUICK_REFERENCE.md)  
+> **Critical Warning:** See [RELEASE_VERSION_TAG_WARNING.md](RELEASE_VERSION_TAG_WARNING.md)
+
 This guide documents the optimized GitHub release process for TappsCodingAgents.
+
+## ⚠️ CRITICAL: Version Bump Must Be Committed Before Tagging
+
+**IMPORTANT:** The release tag **MUST** point to a commit that has the version bump already committed. If you create a tag before committing the version changes, the tag will point to the wrong commit, causing version mismatches for users upgrading.
+
+**Correct Order:**
+1. Update version files (via script or manually)
+2. **Commit version bump changes** ⚠️ CRITICAL
+3. Push to main
+4. Create tag (which points to the version bump commit)
+5. Create release
+
+**Verification:**
+After creating a tag, always verify it points to the correct commit:
+```powershell
+git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'
+# Should show: __version__ = "3.0.2"
+```
+
+If the tag shows the wrong version, see [Version Mismatch in Tag](#version-mismatch-in-tag-critical-issue) in Troubleshooting.
 
 ## Overview
 
@@ -60,19 +84,38 @@ The release process has been optimized with:
 
 **When to use:** Quick releases, testing, or when GitHub Actions is unavailable
 
-**Steps:**
+**⚠️ CRITICAL: Version Bump Must Be Committed First**
+
+The release script **MUST** be run from a commit that already has the version bump committed. The tag will point to the current HEAD commit, so if the version changes aren't committed, the tag will point to the wrong commit.
+
+**Correct Process:**
 
 ```powershell
-# Update version and build release
-.\scripts\create_github_release.ps1 -Version 3.0.2
+# Step 1: Update version (updates files but doesn't commit)
+.\scripts\update_version.ps1 -Version 3.0.2
+
+# Step 2: Update CHANGELOG.md with release notes
+# Add section: ## [3.0.2] - YYYY-MM-DD
+
+# Step 3: Commit version changes (CRITICAL!)
+git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json
+git commit -m "Bump version to 3.0.2"
+git push origin main
+
+# Step 4: Create release (tag will point to the version bump commit)
+.\scripts\create_github_release.ps1 -Version 3.0.2 -SkipVersionUpdate
 ```
 
-**What it does:**
-- Updates version in `pyproject.toml` and `__init__.py`
+**What the script does:**
+- Verifies current HEAD has correct version (if `-SkipVersionUpdate` not used, updates first)
 - Cleans build artifacts
 - Builds packages
 - Verifies packages (optional)
-- Creates GitHub release
+- Verifies tag target (ensures tag will point to version bump commit)
+- Creates GitHub release with tag pointing to current HEAD
+
+**⚠️ Common Mistake:**
+If you run `.\scripts\create_github_release.ps1 -Version 3.0.2` without committing the version bump first, the tag will point to the commit BEFORE the version update, causing version mismatches for users upgrading.
 
 **Options:**
 ```powershell
@@ -110,17 +153,32 @@ The release process has been optimized with:
 - [ ] All tests pass locally
 - [ ] Version updated in `pyproject.toml` and `tapps_agents/__init__.py`
 - [ ] CHANGELOG.md updated with release notes
-- [ ] All changes committed and pushed to main
+- [ ] **Version bump changes committed and pushed to main** ⚠️ CRITICAL
+- [ ] All other changes committed and pushed to main
 - [ ] CI/CD checks pass on main branch
 - [ ] Run release readiness validation: `.\scripts\validate_release_readiness.ps1 -Version 3.0.2`
+- [ ] **Verify version in HEAD commit matches target version** ⚠️ CRITICAL
+  ```powershell
+  git show HEAD:pyproject.toml | Select-String '^\s*version\s*='
+  git show HEAD:tapps_agents/__init__.py | Select-String '__version__'
+  ```
 
 ### Release
 
-- [ ] Create and push version tag
+- [ ] **Tag points to version bump commit** ⚠️ CRITICAL
+  - Tag MUST point to commit with version bump
+  - Verify: `git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'`
+  - Should show: `__version__ = "3.0.2"`
+- [ ] Create and push version tag (if using Method 1)
 - [ ] Monitor GitHub Actions release workflow
 - [ ] Verify release created successfully
 - [ ] Verify packages attached correctly
 - [ ] Verify release notes extracted correctly
+- [ ] **Verify tag points to correct commit** ⚠️ CRITICAL
+  ```powershell
+  git rev-parse v3.0.2  # Should match version bump commit
+  git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'  # Should show correct version
+  ```
 
 ### Post-Release
 
@@ -206,11 +264,51 @@ pip install --index-url https://test.pypi.org/simple/ tapps-agents
 
 ## Troubleshooting
 
+### Version Mismatch in Tag (CRITICAL ISSUE)
+
+**Symptom:** Tag points to commit with wrong version (e.g., tag `v3.0.2` but code shows `3.0.1`)
+
+**Cause:** Tag was created before version bump was committed, or tag was created pointing to wrong commit.
+
+**Fix:**
+```powershell
+# 1. Verify the issue
+git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'
+# If shows wrong version, continue with fix
+
+# 2. Find the correct commit (version bump commit)
+git log --oneline --all | Select-String "Bump version to 3.0.2"
+# Note the commit hash (e.g., abc1234)
+
+# 3. Delete incorrect tag (local and remote)
+git tag -d v3.0.2
+git push origin :refs/tags/v3.0.2
+
+# 4. Create tag pointing to correct commit
+git tag v3.0.2 abc1234  # Use commit hash from step 2
+git push origin v3.0.2
+
+# 5. Verify fix
+git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'
+# Should now show: __version__ = "3.0.2"
+
+# 6. Update GitHub release (if it exists)
+# Delete the release on GitHub, then recreate it
+# Or use: gh release edit v3.0.2 --target abc1234
+```
+
+**Prevention:**
+- Always commit version bump BEFORE creating tag
+- Use release script with `-SkipVersionUpdate` after committing version bump
+- Verify tag points to correct commit before pushing
+
 ### Release Workflow Fails
 
 **Version mismatch:**
 - Ensure version in `pyproject.toml` and `__init__.py` match tag
+- Ensure tag points to commit with version bump
 - Run: `.\scripts\update_version.ps1 -Version 3.0.2`
+- Commit changes before creating tag
 
 **Tests fail:**
 - Fix failing tests before releasing
@@ -223,6 +321,12 @@ pip install --index-url https://test.pypi.org/simple/ tapps-agents
 ### Release Already Exists
 
 If release tag already exists:
+- **First verify tag points to correct commit:**
+  ```powershell
+  git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'
+  ```
+- If tag is correct, just update release on GitHub
+- If tag is wrong, fix tag first (see "Version Mismatch in Tag" above)
 - Delete release on GitHub (if draft)
 - Delete tag: `git tag -d v3.0.2 && git push origin :refs/tags/v3.0.2`
 - Recreate release
@@ -239,30 +343,47 @@ If release tag already exists:
 
 ## Best Practices
 
-1. **Always test locally first:**
+1. **⚠️ CRITICAL: Commit Version Bump Before Tagging**
+   - Version bump MUST be committed before creating tag
+   - Tag will point to current HEAD, so HEAD must have version bump
+   - Always verify: `git show HEAD:tapps_agents/__init__.py | Select-String '__version__'`
+
+2. **Always test locally first:**
    ```bash
    python -m build
    pip install dist/tapps_agents-3.0.2-py3-none-any.whl
    ```
 
-2. **Use TestPyPI for validation:**
+3. **Verify tag points to correct commit:**
+   ```powershell
+   # After creating tag, verify it points to version bump commit
+   git rev-parse v3.0.2  # Get commit hash
+   git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'  # Verify version
+   ```
+
+4. **Use TestPyPI for validation:**
    - Test package installation before production PyPI
 
-3. **Keep CHANGELOG.md up to date:**
+5. **Keep CHANGELOG.md up to date:**
    - Update as you develop features
    - Makes release notes generation easier
 
-4. **Tag from main branch:**
+6. **Tag from main branch:**
    - Ensures released code matches main branch
+   - Tag must point to commit on main with version bump
 
-5. **Monitor release workflow:**
+7. **Monitor release workflow:**
    - Check GitHub Actions for any failures
    - Verify release artifacts
+   - Verify tag points to correct commit
 
 ## Related Documentation
 
-- [Release Process Analysis](RELEASE_PROCESS_ANALYSIS.md) - Detailed analysis of release components
+- [RELEASE_DOCUMENTATION_INDEX.md](RELEASE_DOCUMENTATION_INDEX.md) - Complete documentation index
+- [RELEASE_VERSION_TAG_WARNING.md](RELEASE_VERSION_TAG_WARNING.md) - ⚠️ Critical version tag requirements
+- [RELEASE_QUICK_REFERENCE.md](RELEASE_QUICK_REFERENCE.md) - Quick command reference
 - [CHANGELOG.md](../CHANGELOG.md) - Release history
 - [Version Update Script](../scripts/update_version.ps1) - Version management
 - [Release Script](../scripts/create_github_release.ps1) - Manual release script
+
 

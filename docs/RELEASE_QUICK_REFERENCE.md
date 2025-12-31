@@ -1,5 +1,8 @@
 # Release Quick Reference
 
+> **⚠️ CRITICAL:** See [RELEASE_GUIDE.md](RELEASE_GUIDE.md) for complete documentation.  
+> **⚠️ CRITICAL:** Version bump MUST be committed before creating tag. See [RELEASE_VERSION_TAG_WARNING.md](RELEASE_VERSION_TAG_WARNING.md).
+
 ## Quick Release (Automated)
 
 ```bash
@@ -8,25 +11,46 @@
 
 # 2. Update CHANGELOG.md (add section for 3.0.2)
 
-# 3. Validate readiness
-.\scripts\validate_release_readiness.ps1 -Version 3.0.2
-
-# 4. Commit and push
-git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md
+# 3. ⚠️ CRITICAL: Commit version bump BEFORE creating tag
+git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json
 git commit -m "Bump version to 3.0.2"
 git push origin main
 
-# 5. Create and push tag
+# 4. Validate readiness
+.\scripts\validate_release_readiness.ps1 -Version 3.0.2
+
+# 5. Verify HEAD has correct version (CRITICAL!)
+git show HEAD:tapps_agents/__init__.py | Select-String '__version__'
+# Should show: __version__ = "3.0.2"
+
+# 6. Create and push tag (points to version bump commit)
 git tag v3.0.2
 git push origin v3.0.2
 
-# 6. GitHub Actions automatically creates release
+# 7. Verify tag points to correct commit
+git show v3.0.2:tapps_agents/__init__.py | Select-String '__version__'
+# Should show: __version__ = "3.0.2"
+
+# 8. GitHub Actions automatically creates release
 ```
 
 ## Manual Release (Windows)
 
+**⚠️ CRITICAL: Version bump must be committed first!**
+
 ```powershell
-.\scripts\create_github_release.ps1 -Version 3.0.2
+# Step 1: Update version (if not already done)
+.\scripts\update_version.ps1 -Version 3.0.2
+
+# Step 2: Update CHANGELOG.md
+
+# Step 3: Commit version bump (CRITICAL!)
+git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json
+git commit -m "Bump version to 3.0.2"
+git push origin main
+
+# Step 4: Create release (script verifies version in HEAD)
+.\scripts\create_github_release.ps1 -Version 3.0.2 -SkipVersionUpdate
 ```
 
 ## Validation Only
@@ -90,10 +114,11 @@ gh release view v3.0.2
 
 ## Files
 
+- **📘 Main Guide**: `docs/RELEASE_GUIDE.md` - **Canonical release documentation**
+- **⚠️ Critical Warning**: `docs/RELEASE_VERSION_TAG_WARNING.md` - Version tag requirements
 - **Release Workflow**: `.github/workflows/release.yml`
-- **Release Guide**: `docs/RELEASE_GUIDE.md`
-- **Process Analysis**: `docs/RELEASE_PROCESS_ANALYSIS.md`
 - **Validation Script**: `scripts/validate_release_readiness.ps1`
 - **Release Script**: `scripts/create_github_release.ps1`
 - **Version Script**: `scripts/update_version.ps1`
+
 
