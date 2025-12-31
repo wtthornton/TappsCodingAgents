@@ -1,0 +1,109 @@
+{
+  "file": "C:\\cursor\\TappsCodingAgents\\tapps_agents\\agents\\reviewer\\context7_enhancer.py",
+  "review": {},
+  "file_type": "python",
+  "language_detection": {
+    "language": "python",
+    "confidence": 1.0,
+    "method": "extension"
+  },
+  "scoring": {
+    "complexity_score": 3.6,
+    "security_score": 10.0,
+    "maintainability_score": 8.38811410459588,
+    "test_coverage_score": 0.0,
+    "performance_score": 9.5,
+    "linting_score": 5.0,
+    "type_checking_score": 5.0,
+    "duplication_score": 10.0,
+    "overall_score": 73.2702852614897,
+    "_explanations": {
+      "complexity_score": {
+        "explanation": "Areas for improvement: complexity needs significant improvement (3.6/10)",
+        "suggestions": [
+          "Break down complex functions into smaller, focused functions",
+          "Reduce nesting depth (aim for < 4 levels)",
+          "Extract complex logic into separate functions or modules",
+          "Use early returns to reduce nesting",
+          "Consider using list comprehensions or generator expressions"
+        ]
+      },
+      "security_score": {
+        "explanation": "Strengths: security is excellent (10.0/10), Code demonstrates best practices",
+        "suggestions": []
+      },
+      "maintainability_score": {
+        "explanation": "Strengths: maintainability is good (8.4/10)",
+        "suggestions": [
+          "Consider minor improvements to reach excellent level (>8.5)"
+        ]
+      },
+      "test_coverage_score": {
+        "explanation": "Areas for improvement: test_coverage needs significant improvement (0.0/10)",
+        "suggestions": [
+          "Increase test coverage to at least 70%",
+          "Add unit tests for critical functions",
+          "Include edge cases and error handling in tests",
+          "Add integration tests for important workflows"
+        ]
+      },
+      "performance_score": {
+        "explanation": "Strengths: performance is excellent (9.5/10), Code demonstrates best practices",
+        "suggestions": []
+      },
+      "linting_score": {
+        "explanation": "Areas for improvement: linting is acceptable but could be improved (5.0/10)",
+        "suggestions": []
+      },
+      "type_checking_score": {
+        "explanation": "Areas for improvement: type_checking is acceptable but could be improved (5.0/10)",
+        "suggestions": []
+      },
+      "duplication_score": {
+        "explanation": "Strengths: duplication is excellent (10.0/10), Code demonstrates best practices",
+        "suggestions": []
+      },
+      "overall_score": {
+        "explanation": "Strengths: overall is good (73.3/10)",
+        "suggestions": [
+          "Consider minor improvements to reach excellent level (>8.5)"
+        ]
+      }
+    },
+    "dependency_security_score": 10.0
+  },
+  "quality_gate": {
+    "passed": false,
+    "overall_passed": false,
+    "security_passed": true,
+    "maintainability_passed": true,
+    "complexity_passed": true,
+    "test_coverage_passed": false,
+    "performance_passed": true,
+    "failures": [
+      "Overall score 7.33 below threshold 8.0"
+    ],
+    "warnings": [
+      "Test coverage 0.00% below threshold 80.0%"
+    ],
+    "scores": {
+      "overall_score": 7.32702852614897,
+      "security_score": 10.0,
+      "maintainability_score": 8.38811410459588,
+      "complexity_score": 3.6,
+      "test_coverage_score": 0.0,
+      "performance_score": 9.5
+    },
+    "thresholds": {
+      "overall_min": 8.0,
+      "security_min": 8.5,
+      "maintainability_min": 7.0,
+      "complexity_max": 5.0,
+      "test_coverage_min": 80.0,
+      "performance_min": 7.0
+    }
+  },
+  "quality_gate_blocked": true,
+  "passed": false,
+  "threshold": 70.0
+}

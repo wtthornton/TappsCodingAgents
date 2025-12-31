@@ -483,6 +483,277 @@ tapps-agents simple-mode <command> [options]
 - **Better outcomes**: Produces higher quality code with comprehensive documentation
 - **Workflow enforcement**: Ensures all steps are executed (enhance → plan → design → implement → review → test)
 
+### `analytics` - Analytics Dashboard and Performance Metrics
+**Purpose:** Access analytics and performance metrics for agents and workflows
+
+**CLI Syntax:**
+```bash
+tapps-agents analytics <command> [options]
+```
+
+**Subcommands:**
+- `dashboard` / `show` - Display comprehensive analytics dashboard
+  - Shows all key metrics including agent performance, workflow statistics, system status, and recent trends
+  - `--format json|text`: Output format (default: `text`)
+- `agents` - Display agent performance metrics and statistics
+  - Shows execution times, success rates, error counts, and average response quality
+  - `--agent-id <agent>`: Filter to specific agent (e.g., 'reviewer', 'implementer')
+  - `--format json|text`: Output format (default: `text`)
+- `workflows` - Display workflow performance metrics and statistics
+  - Shows completion rates, average duration, success rates, and step-by-step timing
+  - `--workflow-id <id>`: Filter to specific workflow ID
+  - `--format json|text`: Output format (default: `text`)
+- `trends` - Display historical trends and patterns
+  - Shows performance trends over time
+  - `--days <n>`: Number of days to analyze (default: 7)
+  - `--format json|text`: Output format (default: `text`)
+- `system` - Display system status and resource usage
+  - Shows CPU, memory, disk usage, active agents/workflows, configuration status, and health checks
+
+**When to Use:**
+- Optimizing agent selection
+- Identifying bottlenecks
+- Tracking improvement over time
+- Monitoring system resource usage
+
+### `governance` - Governance and Safety Controls
+**Purpose:** Manage governance, safety controls, and approval workflows
+
+**CLI Syntax:**
+```bash
+tapps-agents governance <command> [options]
+```
+
+**Subcommands:**
+- `approval list` - List pending approval requests
+  - Shows all pending knowledge ingestion or workflow approvals
+- `approval show <id>` - Show details of specific approval request
+  - Displays full approval request details including content and metadata
+- `approval approve <id>` - Approve a pending request
+  - Approves knowledge ingestion or workflow execution
+- `approval reject <id>` - Reject a pending request
+  - Rejects knowledge ingestion or workflow execution with optional reason
+
+**When to Use:**
+- Managing knowledge base ingestion approvals
+- Controlling workflow execution approvals
+- Reviewing safety and compliance requests
+
+### `auto-exec` - Background Agent Auto-Execution Management
+**Purpose:** Manage automatic workflow execution via Background Agents
+
+**CLI Syntax:**
+```bash
+tapps-agents auto-exec <command> [options]
+```
+
+**Subcommands:**
+- `status` - Show auto-execution status
+  - Displays current auto-execution configuration, active workflows, and execution state
+- `history` - Show execution history
+  - Lists recent auto-executed workflows with results and timestamps
+- `metrics` - Show performance metrics
+  - Displays execution statistics, success rates, and performance data
+- `health` - Check auto-execution health
+  - Verifies Background Agents connectivity and configuration
+- `debug` - Debug auto-execution issues
+  - Provides detailed debugging information for troubleshooting
+
+**When to Use:**
+- Monitoring automatic workflow execution
+- Troubleshooting Background Agent issues
+- Reviewing execution history and metrics
+
+### `customize` - Agent Customization
+**Purpose:** Customize agent behavior and configuration
+
+**CLI Syntax:**
+```bash
+tapps-agents customize <command> [options]
+```
+
+**Subcommands:**
+- `init` - Initialize customization configuration
+  - Sets up agent customization files and templates
+
+**When to Use:**
+- Customizing agent behavior for your project
+- Setting up project-specific agent configurations
+
+### `skill` - Custom Skills Management
+**Purpose:** Create, validate, and manage custom Cursor Skills
+
+**CLI Syntax:**
+```bash
+tapps-agents skill <command> [options]
+```
+
+**Subcommands:**
+- `validate <skill-path>` - Validate a custom skill
+  - Validates skill structure, YAML frontmatter, and syntax
+- `template [--agent <agent>]` - Generate skill template
+  - Creates a template for a new custom skill
+  - `--agent <agent>`: Base template on existing agent skill
+
+**When to Use:**
+- Creating custom Cursor Skills
+- Validating skill definitions
+- Generating skill templates
+
+### `bg-agent` - Background Agent Management
+**Purpose:** Generate and validate Background Agent configurations
+
+**CLI Syntax:**
+```bash
+tapps-agents bg-agent <command> [options]
+```
+
+**Subcommands:**
+- `generate` - Generate Background Agent config from workflow
+  - Auto-generates `.cursor/background-agents.yaml` from workflow YAML files
+- `validate` - Validate Background Agent configuration
+  - Checks configuration syntax and structure
+
+**When to Use:**
+- Setting up Background Agents for workflows
+- Validating Background Agent configurations
+
+### `health` - System Health Monitoring
+**Purpose:** Monitor system health, resource usage, and status
+
+**CLI Syntax:**
+```bash
+tapps-agents health <command> [options]
+```
+
+**Subcommands:**
+- `check` - Run health check
+  - Performs comprehensive health check of all components
+- `dashboard` - Display health dashboard
+  - Shows real-time health metrics and status
+- `metrics` - Show health metrics
+  - Displays detailed health metrics and resource usage
+- `trends` - Show health trends
+  - Displays historical health trends over time
+  - `--days <n>`: Number of days to analyze (default: 7)
+
+**When to Use:**
+- Monitoring system health
+- Troubleshooting issues
+- Tracking resource usage over time
+
+### `hardware-profile` - Hardware Profile Configuration
+**Purpose:** Check and configure hardware profile for performance optimization
+
+**CLI Syntax:**
+```bash
+tapps-agents hardware-profile [--set <profile>] [--format json|text] [--no-metrics]
+```
+
+**Parameters:**
+- `--set <profile>`: Set hardware profile (`auto`, `nuc`, `development`, `workstation`, `server`)
+- `--format json|text`: Output format (default: `text`)
+- `--no-metrics`: Hide detailed resource usage metrics
+
+**Profiles:**
+- `nuc` - Low-power devices (Intel NUC, small form factor)
+- `development` - Standard development machines
+- `workstation` - High-performance development workstations
+- `server` - Production server environments
+- `auto` - Automatically detect based on system resources
+
+**When to Use:**
+- Optimizing performance on low-power hardware
+- Overriding auto-detection
+- Configuring resource allocation
+
+### `install-dev` - Install Development Tools
+**Purpose:** Install development tools and dependencies required by TappsCodingAgents
+
+**CLI Syntax:**
+```bash
+tapps-agents install-dev [--dry-run]
+```
+
+**Parameters:**
+- `--dry-run`: Preview what would be installed without actually installing
+
+**Installs:**
+- `ruff` - Fast Python linter and formatter
+- `mypy` - Static type checker
+- `pytest` - Testing framework
+- `pip-audit` - Security vulnerability scanner
+- `pipdeptree` - Dependency tree visualization
+
+**When to Use:**
+- Setting up development environment
+- Installing quality tools
+- Previewing dependencies before installation
+
+### `status` - Unified Status Command
+**Purpose:** Consolidated status command showing Background Agents activity
+
+**CLI Syntax:**
+```bash
+tapps-agents status [--detailed] [--worktrees-only] [--format json|text]
+```
+
+**Parameters:**
+- `--detailed`: Show detailed information including full progress data and workflow state
+- `--worktrees-only`: Show only worktree information
+- `--format json|text`: Output format (default: `text`)
+
+**Shows:**
+- Active worktrees and their status
+- Progress files and execution status
+- Background agent configuration status
+- Recent results
+
+**When to Use:**
+- Checking Background Agent status
+- Monitoring active workflows
+- Viewing worktree information
+
+### `generate-rules` - Generate Cursor Rules
+**Purpose:** Generate Cursor Rules from workflow YAML files
+
+**CLI Syntax:**
+```bash
+tapps-agents generate-rules [options]
+```
+
+**When to Use:**
+- Auto-generating Cursor Rules documentation
+- Updating rules from workflow changes
+- Creating project-specific rules
+
+### `setup-experts` - Expert Setup Wizard
+**Purpose:** Interactive wizard for configuring Industry Experts
+
+**CLI Syntax:**
+```bash
+tapps-agents setup-experts <command> [options]
+```
+
+**Subcommands:**
+- `init` / `initialize` - Initialize project with expert configuration setup
+  - Creates `.tapps-agents/experts.yaml` with default or recommended experts
+- `add` - Add a new Industry Expert to the project
+  - Prompts for expert name, domain, knowledge base location, and weight
+- `remove` - Remove an expert from the project configuration
+  - Removes expert from `.tapps-agents/experts.yaml`
+- `list` - List all currently configured experts
+  - Displays all experts with domains, weights, and knowledge base locations
+
+**Parameters:**
+- `-y` / `--yes`: Automatically answer 'yes' to all prompts (CI/CD)
+- `--non-interactive`: Non-interactive mode with defaults
+
+**When to Use:**
+- Setting up domain experts for your project
+- Adding specialized knowledge bases
+- Managing expert configurations
+
 ## Agent Commands
 
 ### Reviewer Agent (`@reviewer`)
@@ -634,12 +905,77 @@ tapps-agents reviewer security-scan [<files>...] [--format json|text]
 
 **CLI Syntax:**
 ```bash
-tapps-agents reviewer docs <library> [<topic>]
+tapps-agents reviewer docs <library> [<topic>] [--mode code|info] [--page <n>] [--format json|text|markdown]
 ```
 
 **Cursor Syntax:**
 ```cursor
 @reviewer *docs <library> [<topic>]
+```
+
+#### `*analyze-project` / `analyze-project` (Dual-Mode)
+**Purpose:** Analyze entire project with comprehensive metrics
+
+**CLI Syntax:**
+```bash
+tapps-agents reviewer analyze-project [--project-root <path>] [--no-comparison] [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@reviewer *analyze-project [--project-root <path>]
+```
+
+**When to Use:**
+- Comprehensive project-wide analysis
+- Quality audits
+- Baseline establishment
+- Trend analysis
+
+**What It Analyzes:**
+- Code scoring across all files
+- Linting across project
+- Type checking
+- Duplication detection
+- Security scanning
+- Test coverage analysis
+
+**Parameters:**
+- `--project-root <path>`: Project root directory (default: current directory)
+- `--no-comparison`: Skip comparison with previous analysis
+- `--format json|text`: Output format (default: `json`)
+
+#### `*analyze-services` / `analyze-services` (Dual-Mode)
+**Purpose:** Analyze specific services or modules within a project
+
+**CLI Syntax:**
+```bash
+tapps-agents reviewer analyze-services [<services>...] [--project-root <path>] [--no-comparison] [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@reviewer *analyze-services [<services>...]
+```
+
+**When to Use:**
+- Targeted analysis of specific parts of codebase
+- Large projects where full analysis is time-consuming
+- Service-level quality checks
+
+**Parameters:**
+- `services` (optional): Space-separated list of service names or directory patterns
+- `--project-root <path>`: Project root directory (default: current directory)
+- `--no-comparison`: Skip comparison with previous analysis
+- `--format json|text`: Output format (default: `json`)
+
+**Examples:**
+```bash
+# Analyze specific services
+tapps-agents reviewer analyze-services api auth
+
+# Analyze all services
+tapps-agents reviewer analyze-services
 ```
 
 ### Implementer Agent (`@implementer`)
@@ -805,6 +1141,119 @@ tapps-agents architect design "<description>" [--format json|text]
 tapps-agents architect patterns "<description>" [--format json|text]
 ```
 
+#### `*design-system` / `design-system` / `design` (Dual-Mode)
+**Purpose:** Design comprehensive system architecture from requirements
+
+**CLI Syntax:**
+```bash
+tapps-agents architect design-system "<requirements>" [--context "<context>"] [--output <file>] [--format json|text|markdown] [--no-enhance] [--enhance] [--enhance-mode quick|full]
+```
+
+**Cursor Syntax:**
+```cursor
+@architect *design-system "<requirements>"
+```
+
+**When to Use:**
+- Designing complete system architectures
+- Creating component and module designs
+- Planning data flow and interactions
+- Technology stack selection
+- Scalability and deployment planning
+
+**Creates:**
+- System components and modules
+- Component interactions
+- Data flow diagrams
+- Technology stack recommendations
+- Scalability considerations
+- Deployment architecture
+
+#### `*architecture-diagram` / `architecture-diagram` (CLI-First)
+**Purpose:** Generate visual architecture diagrams in various formats
+
+**CLI Syntax:**
+```bash
+tapps-agents architect architecture-diagram "<architecture_description>" [--diagram-type component|sequence|deployment] [--output <file>] [--format json|text|markdown]
+```
+
+**When to Use:**
+- Visualizing system architecture
+- Creating component diagrams
+- Generating sequence diagrams
+- Documenting deployment architecture
+
+**Diagram Types:**
+- `component` - System components and relationships (default)
+- `sequence` - Interaction flows and message passing
+- `deployment` - Infrastructure and deployment architecture
+
+#### `*tech-selection` / `tech-selection` (CLI-First)
+**Purpose:** Select appropriate technologies for system components
+
+**CLI Syntax:**
+```bash
+tapps-agents architect tech-selection "<component_description>" [--requirements "<requirements>"] [--constraints <constraint>...] [--format json|text]
+```
+
+**When to Use:**
+- Choosing technologies for projects
+- Evaluating technology options
+- Making architectural decisions
+- Technology comparison and selection
+
+**Evaluates:**
+- Technology options and alternatives
+- Pros and cons of each option
+- Fit with requirements and constraints
+- Integration with existing stack
+- Community support and maturity
+- Performance and scalability characteristics
+
+#### `*design-security` / `design-security` (CLI-First)
+**Purpose:** Design security architecture and controls for the system
+
+**CLI Syntax:**
+```bash
+tapps-agents architect design-security "<system_description>" [--threat-model "<threat_model>"] [--format json|text]
+```
+
+**When to Use:**
+- Designing secure systems
+- Security architecture planning
+- Security pattern implementation
+- Threat modeling
+
+**Covers:**
+- Authentication and authorization strategies
+- Data encryption and protection
+- Network security and boundaries
+- Threat mitigation strategies
+- Security monitoring and logging
+- Compliance considerations
+
+#### `*define-boundaries` / `define-boundaries` (CLI-First)
+**Purpose:** Define system boundaries, interfaces, and integration points
+
+**CLI Syntax:**
+```bash
+tapps-agents architect define-boundaries "<system_description>" [--context "<context>"] [--format json|text]
+```
+
+**When to Use:**
+- Defining system boundaries
+- Service boundary design
+- Module boundary planning
+- Integration point definition
+
+**Identifies:**
+- System boundaries and scope
+- External interfaces and APIs
+- Integration points with other systems
+- Data flow across boundaries
+- Interface contracts and protocols
+- Dependency relationships
+
 ### Designer Agent (`@designer`)
 
 **Available Commands:**
@@ -834,6 +1283,93 @@ tapps-agents designer design-model "<description>" [--format json|text]
 ```cursor
 @designer *design-model "<description>"
 ```
+
+#### `*ui-ux-design` / `ui-ux-design` (CLI-First)
+**Purpose:** Design user interfaces and user experiences
+
+**CLI Syntax:**
+```bash
+tapps-agents designer ui-ux-design "<feature_description>" [--user-stories <story>...] [--output <file>] [--format json|text|markdown]
+```
+
+**When to Use:**
+- Designing user interfaces
+- Planning user experience flows
+- Creating UI/UX specifications
+- User interaction design
+
+**Creates:**
+- UI component specifications
+- User flow diagrams
+- Interaction patterns
+- Accessibility considerations
+- Responsive design guidelines
+- User experience principles
+
+**Parameters:**
+- `--user-stories <story>...`: Space-separated list of user stories that inform the design
+- `--output <file>`: Output file path
+- `--format json|text|markdown`: Output format (default: `json`)
+
+#### `*wireframes` / `wireframes` (Dual-Mode)
+**Purpose:** Generate wireframes for user interface design
+
+**CLI Syntax:**
+```bash
+tapps-agents designer wireframes "<screen_description>" [--wireframe-type page|component|flow] [--output <file>] [--format json|text|markdown]
+```
+
+**Cursor Syntax:**
+```cursor
+@designer *wireframes "<screen_description>"
+```
+
+**When to Use:**
+- Creating wireframe layouts
+- Planning page structures
+- Designing component layouts
+- Visual design planning
+
+**Wireframe Types:**
+- `page` - Full page layouts (default)
+- `component` - Individual UI components
+- `flow` - Multi-screen user flows
+
+**Creates:**
+- Layout structure and positioning
+- Component placement
+- Navigation elements
+- Content hierarchy
+- Interactive elements
+- Responsive breakpoints
+
+#### `*design-system` / `design-system` (Dual-Mode)
+**Purpose:** Develop or extend a design system for consistent UI/UX
+
+**CLI Syntax:**
+```bash
+tapps-agents designer design-system "<project_description>" [--brand-guidelines "<guidelines>"] [--output <file>] [--format json|text|markdown]
+```
+
+**Cursor Syntax:**
+```cursor
+@designer *design-system "<project_description>"
+```
+
+**When to Use:**
+- Creating design systems
+- Defining color palettes
+- Establishing typography systems
+- Component library design
+- Spacing and layout systems
+
+**Develops:**
+- Component library specifications
+- Design tokens (colors, typography, spacing)
+- Style guidelines
+- Usage patterns and best practices
+- Accessibility standards
+- Responsive design rules
 
 ### Enhancer Agent (`@enhancer`)
 
@@ -1139,6 +1675,211 @@ tapps-agents orchestrator sequence "<agent-list>" [--format json|text]
 ```
 
 **Example:** `"plan,design,implement,test"`
+
+#### `*workflow-list` / `workflow-list` (CLI-First)
+**Purpose:** List all available workflows with descriptions
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow-list
+```
+
+**When to Use:**
+- Discovering available workflows
+- Understanding workflow purposes and steps
+- Finding workflows for specific use cases
+
+#### `*workflow-start` / `workflow-start` (CLI-First)
+**Purpose:** Start execution of a workflow
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow-start <workflow-id>
+```
+
+**When to Use:**
+- Starting workflow execution
+- Beginning multi-step processes
+- Manual workflow control
+
+**Parameters:**
+- `workflow-id` (required): The ID of the workflow to start (obtain from `workflow-list`)
+
+#### `*workflow-status` / `workflow-status` (CLI-First)
+**Purpose:** Show current status of running workflows
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow-status
+```
+
+**When to Use:**
+- Checking workflow progress
+- Monitoring active workflows
+- Debugging workflow issues
+
+**Shows:**
+- Current step
+- Progress information
+- Errors or warnings
+
+#### `*workflow-next` / `workflow-next` (CLI-First)
+**Purpose:** Show the next step in the current workflow
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow-next
+```
+
+**When to Use:**
+- Previewing next workflow step
+- Understanding upcoming actions
+- Workflow planning
+
+#### `*workflow-skip` / `workflow-skip` (CLI-First)
+**Purpose:** Skip an optional step in the current workflow
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow-skip <step-id>
+```
+
+**When to Use:**
+- Skipping optional steps
+- Bypassing unnecessary steps
+- Workflow customization
+
+**Parameters:**
+- `step-id` (required): The ID of the workflow step to skip
+
+#### `*workflow-resume` / `workflow-resume` (CLI-First)
+**Purpose:** Resume an interrupted or paused workflow
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow-resume
+```
+
+**When to Use:**
+- Resuming interrupted workflows
+- Continuing paused workflows
+- Recovering from failures
+
+#### `*workflow` / `workflow` (CLI-First)
+**Purpose:** Execute a workflow from a YAML file path
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator workflow <workflow_file>
+```
+
+**When to Use:**
+- Executing custom workflows
+- Running workflow YAML files
+- Direct workflow execution
+
+**Parameters:**
+- `workflow_file` (required): Path to workflow YAML file (relative or absolute)
+
+**Example:**
+```bash
+tapps-agents orchestrator workflow workflows/custom/my-workflow.yaml
+```
+
+#### `*gate` / `gate` (CLI-First)
+**Purpose:** Make a gate decision for workflow control flow
+
+**CLI Syntax:**
+```bash
+tapps-agents orchestrator gate [--condition "<condition>"] [--scoring-data "<json>"]
+```
+
+**When to Use:**
+- Evaluating gate conditions
+- Workflow decision points
+- Conditional step execution
+- Quality gate evaluation
+
+**Parameters:**
+- `--condition <condition>`: Gate condition expression (e.g., `score > 80`, `tests_passed == true`)
+- `--scoring-data <json>`: JSON string containing scoring/evaluation data (default: `{}`)
+
+**Purpose:**
+Gates are decision points in workflows that determine whether to proceed, skip, or take alternative paths based on conditions.
+
+### Evaluator Agent (`@evaluator`)
+
+**Available Commands:**
+
+#### `*evaluate` / `evaluate` (Dual-Mode)
+**Purpose:** Evaluate framework effectiveness and generate improvement recommendations
+
+**CLI Syntax:**
+```bash
+tapps-agents evaluator evaluate [--workflow-id <workflow-id>] [--format json|text|markdown] [--output <file>]
+```
+
+**Cursor Syntax:**
+```cursor
+@evaluator *evaluate [--workflow-id <workflow-id>]
+```
+
+**When to Use:**
+- Evaluating TappsCodingAgents framework effectiveness
+- Analyzing usage patterns (CLI vs Cursor Skills vs Simple Mode)
+- Measuring workflow adherence
+- Assessing code quality metrics
+- Generating improvement recommendations
+
+**Parameters:**
+- `--workflow-id` (optional): Workflow ID to evaluate specific workflow execution
+- `--format`: Output format - `markdown` (default), `json`, `text`
+- `--output`: Output file path (default: `.tapps-agents/evaluations/evaluation-{timestamp}.md`)
+
+**Examples:**
+```bash
+# Evaluate framework effectiveness
+tapps-agents evaluator evaluate
+
+# Evaluate specific workflow
+tapps-agents evaluator evaluate --workflow-id workflow-123
+
+# Generate markdown report
+tapps-agents evaluator evaluate --format markdown --output evaluation.md
+```
+
+#### `*evaluate-workflow` / `evaluate-workflow` (Dual-Mode)
+**Purpose:** Evaluate specific workflow execution
+
+**CLI Syntax:**
+```bash
+tapps-agents evaluator evaluate-workflow <workflow-id> [--format json|text|markdown] [--output <file>]
+```
+
+**Cursor Syntax:**
+```cursor
+@evaluator *evaluate-workflow <workflow-id>
+```
+
+**Parameters:**
+- `workflow-id` (required): Workflow ID to evaluate
+- `--format`: Output format - `markdown` (default), `json`, `text`
+- `--output`: Output file path (default: `.tapps-agents/evaluations/evaluation-{workflow-id}-{timestamp}.md`)
+
+**What It Analyzes:**
+- Workflow step completion
+- Documentation artifacts created
+- Workflow deviations
+- Quality metrics
+
+**Examples:**
+```bash
+# Evaluate specific workflow
+tapps-agents evaluator evaluate-workflow workflow-123
+
+# Generate JSON report
+tapps-agents evaluator evaluate-workflow workflow-123 --format json
+```
 
 ## Simple Mode Workflows
 

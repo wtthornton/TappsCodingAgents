@@ -5,6 +5,7 @@ Coordinates: Enhancer → Planner → Architect → Designer → Implementer
 """
 
 import logging
+import re
 from pathlib import Path
 from typing import Any
 
@@ -13,6 +14,9 @@ from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
 from tapps_agents.simple_mode.documentation_manager import (
     WorkflowDocumentationManager,
+)
+from tapps_agents.simple_mode.documentation_reader import (
+    WorkflowDocumentationReader,
 )
 from tapps_agents.workflow.models import Artifact
 from tapps_agents.workflow.step_checkpoint import StepCheckpointManager
@@ -351,11 +355,18 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             ]
         
         # Step 5: Implementation (always execute)
+        # Enrich context with previous step documentation if available
+        implementer_args = self._enrich_implementer_context(
+            workflow_id=workflow_id,
+            doc_manager=doc_manager,
+            enhanced_prompt=enhanced_prompt if not fast_mode else original_description,
+        )
+        
         agent_tasks.append({
             "agent_id": "implementer-1",
             "agent": "implementer",
             "command": "implement",
-            "args": {"specification": enhanced_prompt if not fast_mode else original_description},
+            "args": implementer_args,
         })
 
         # Execute agent tasks
@@ -461,6 +472,11 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         # Create latest symlink if enabled
         if doc_manager:
             doc_manager.create_latest_symlink()
+            # Create workflow summary
+            try:
+                doc_manager.create_workflow_summary()
+            except Exception as e:
+                logger.warning(f"Failed to create workflow summary: {e}")
 
         return {
             "type": "build",
@@ -480,6 +496,192 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             "evaluation": evaluation_result,  # Optional evaluation result
             "documentation": doc_update_result,  # Documentation update result
         }
+
+    def _enrich_implementer_context(
+        self,
+        workflow_id: str,
+        doc_manager: WorkflowDocumentationManager | None,
+        enhanced_prompt: str,
+    ) -> dict[str, Any]:
+        """
+        Enrich implementer context with previous step documentation.
+
+        Args:
+            workflow_id: Workflow identifier
+            doc_manager: Documentation manager instance (None if not enabled)
+            enhanced_prompt: Enhanced prompt from step 1 (fallback)
+
+        Returns:
+            Dictionary with implementer arguments including all previous step outputs
+        """
+        # Start with enhanced prompt as base
+        args = {"specification": enhanced_prompt}
+
+        # If documentation manager is not available, return base args (backward compatible)
+        if not doc_manager:
+            logger.debug("Documentation manager not available, using in-memory enhanced_prompt only")
+            return args
+
+        # Create documentation reader
+        try:
+            reader = WorkflowDocumentationReader(
+                base_dir=doc_manager.base_dir,
+                workflow_id=workflow_id,
+            )
+
+            # Read previous step documentation
+            # Step 1: Enhanced prompt
+            step1_content = reader.read_step_documentation(1, "enhanced-prompt")
+            if step1_content:
+                # Extract enhanced prompt from content (first 2000 chars or full content)
+                args["specification"] = step1_content[:2000] if len(step1_content) > 2000 else step1_content
+                logger.debug("Read enhanced prompt from step1-enhanced-prompt.md")
+
+            # Step 2: User stories
+            step2_content = reader.read_step_documentation(2, "user-stories")
+            if step2_content:
+                args["user_stories"] = step2_content[:3000] if len(step2_content) > 3000 else step2_content
+                logger.debug("Read user stories from step2-user-stories.md")
+
+            # Step 3: Architecture
+            step3_content = reader.read_step_documentation(3, "architecture")
+            if step3_content:
+                args["architecture"] = step3_content[:3000] if len(step3_content) > 3000 else step3_content
+                logger.debug("Read architecture from step3-architecture.md")
+
+            # Step 4: API Design
+            step4_content = reader.read_step_documentation(4, "design")
+            if step4_content:
+                args["api_design"] = step4_content[:3000] if len(step4_content) > 3000 else step4_content
+                logger.debug("Read API design from step4-design.md")
+
+            logger.info(f"Enriched implementer context with {len([k for k in args.keys() if k != 'specification'])} previous step outputs")
+
+        except Exception as e:
+            logger.warning(f"Failed to enrich implementer context, using fallback: {e}")
+            # Fallback to base args if reading fails
+
+        return args
+
+    def _find_last_completed_step(
+        self,
+        workflow_id: str,
+    ) -> int:
+        """
+        Find last completed step by checking for step .md files.
+
+        Args:
+            workflow_id: Workflow identifier
+
+        Returns:
+            Last completed step number (0 if no steps completed)
+        """
+        base_dir = self.project_root / "docs" / "workflows" / "simple-mode"
+        doc_dir = base_dir / workflow_id
+
+        if not doc_dir.exists():
+            logger.debug(f"Workflow directory not found: {doc_dir}")
+            return 0
+
+        # Find all step files
+        step_files = list(doc_dir.glob("step*.md"))
+        if not step_files:
+            return 0
+
+        # Extract step numbers
+        step_numbers = []
+        for step_file in step_files:
+            # Match: step{N}-{name}.md or step{N}.md
+            import re
+            match = re.match(r"step(\d+)", step_file.stem)
+            if match:
+                step_numbers.append(int(match.group(1)))
+
+        if not step_numbers:
+            return 0
+
+        last_step = max(step_numbers)
+        logger.debug(f"Last completed step: {last_step}")
+        return last_step
+
+    async def resume(
+        self,
+        workflow_id: str,
+        from_step: int | None = None,
+    ) -> dict[str, Any]:
+        """
+        Resume workflow from last completed step.
+
+        Args:
+            workflow_id: Workflow identifier
+            from_step: Step to resume from (None = auto-detect)
+
+        Returns:
+            Dictionary with execution results
+
+        Raises:
+            ValueError: If workflow_id is invalid
+            FileNotFoundError: If workflow directory doesn't exist
+        """
+        if not workflow_id or ".." in workflow_id or "/" in workflow_id:
+            raise ValueError(f"Invalid workflow_id: {workflow_id}")
+
+        base_dir = self.project_root / "docs" / "workflows" / "simple-mode"
+        doc_dir = base_dir / workflow_id
+
+        if not doc_dir.exists():
+            raise FileNotFoundError(f"Workflow directory not found: {doc_dir}")
+
+        # Find last completed step if not specified
+        if from_step is None:
+            from_step = self._find_last_completed_step(workflow_id)
+            if from_step == 0:
+                raise ValueError(f"No completed steps found for workflow: {workflow_id}")
+
+        logger.info(f"Resuming workflow {workflow_id} from step {from_step + 1}")
+
+        # Load state from previous steps
+        doc_manager = WorkflowDocumentationManager(
+            base_dir=base_dir,
+            workflow_id=workflow_id,
+        )
+        reader = WorkflowDocumentationReader(
+            base_dir=base_dir,
+            workflow_id=workflow_id,
+        )
+
+        # Restore state
+        state = {}
+        for step_num in range(1, from_step + 1):
+            step_state = reader.read_step_state(step_num)
+            if step_state:
+                state[f"step{step_num}"] = step_state
+
+        # Restore context
+        enhanced_prompt = state.get("step1", {}).get("agent_output", {}).get("enhanced_prompt", "")
+        if not enhanced_prompt:
+            # Fallback: read from markdown
+            enhanced_prompt = reader.read_step_documentation(1, "enhanced-prompt")[:2000]
+
+        # Create intent from restored state
+        from ..intent_parser import Intent, IntentType
+        intent = Intent(
+            original_input=enhanced_prompt or "Resume workflow",
+            type=IntentType.BUILD,
+            confidence=1.0,
+            parameters={},
+        )
+
+        # Execute from next step
+        # For now, we'll re-execute the full workflow but with restored context
+        # In the future, we could implement _execute_from_step for more granular resume
+        parameters = {
+            "description": enhanced_prompt,
+            "resume_from_step": from_step + 1,
+        }
+
+        # Execute workflow (will use restored context)
+        return await self.execute(intent, parameters, fast_mode=False)
 
     async def _execute_documenter_step(
         self,

@@ -87,6 +87,15 @@ python -m tapps_agents.cli init
 python -m tapps_agents.cli setup-experts init
 ```
 
+### Framework Evaluation
+```bash
+# Evaluate framework effectiveness
+python -m tapps_agents.cli evaluator evaluate
+
+# Evaluate specific workflow
+python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
+```
+
 ## Agent Usage Patterns
 
 ### Reviewer Agent
@@ -155,6 +164,16 @@ python -m tapps_agents.cli enhancer enhance "Add user authentication"
 
 # Quick enhancement
 python -m tapps_agents.cli enhancer enhance-quick "Add user authentication"
+```
+
+### Evaluator Agent
+**Best for:** Framework effectiveness analysis and continuous improvement
+```bash
+# Evaluate framework effectiveness
+python -m tapps_agents.cli evaluator evaluate
+
+# Evaluate specific workflow
+python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
 ```
 
 ## Development Workflows

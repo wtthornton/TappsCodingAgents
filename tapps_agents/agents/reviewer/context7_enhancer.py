@@ -297,16 +297,34 @@ class Context7ReviewEnhancer:
             return None
     
     def _extract_best_practices(self, content: str) -> list[str]:
-        """Extract best practices from Context7 content."""
+        """
+        Extract best practices from Context7 content with enhanced parsing.
+        
+        Enhanced approach:
+        1. Try to find section by header (## Best Practices, etc.)
+        2. Extract from section with better parsing
+        3. Fallback to keyword-based extraction if section not found
+        """
+        try:
+            # Enhanced: Try to find section by header
+            section = self._find_section_by_header(
+                content, 
+                ["best practice", "best practices", "recommendation", "recommendations", "tip", "tips"]
+            )
+            
+            if section:
+                # Extract from section
+                practices = self._extract_from_section(section, content)
+                return self._filter_and_limit(practices, max_items=5)
+        except Exception as e:
+            logger.debug(f"Enhanced extraction failed, using fallback: {e}")
+        
+        # Fallback to simple keyword-based extraction
+        return self._extract_best_practices_simple(content)
+    
+    def _extract_best_practices_simple(self, content: str) -> list[str]:
+        """Simple keyword-based extraction (fallback method)."""
         practices = []
-        
-        # Look for common patterns in markdown/content
-        # Best practices often appear in sections like:
-        # - "Best Practices"
-        # - "Recommendations"
-        # - "Tips"
-        # - Bullet points with "should", "recommend", "best"
-        
         lines = content.split('\n')
         in_best_practices = False
         
@@ -317,28 +335,49 @@ class Context7ReviewEnhancer:
                 continue
             
             if in_best_practices:
-                # Extract bullet points or numbered items
                 stripped = line.strip()
                 if stripped.startswith(('-', '*', '•', '1.', '2.', '3.')):
                     practice = stripped.lstrip('-*•1234567890. ').strip()
-                    if practice and len(practice) > 10:  # Filter out very short items
+                    if practice and len(practice) > 10:
                         practices.append(practice)
                 elif stripped and not stripped.startswith('#'):
-                    # Non-header line in best practices section
                     if any(keyword in line_lower for keyword in ["should", "recommend", "best", "use"]):
                         practices.append(stripped)
             
-            # Stop at next section
             if line.startswith('#') and in_best_practices:
                 in_best_practices = False
         
-        # Limit to top 5 practices
         return practices[:5]
     
     def _extract_common_mistakes(self, content: str) -> list[str]:
-        """Extract common mistakes from Context7 content."""
-        mistakes = []
+        """
+        Extract common mistakes from Context7 content with enhanced parsing.
         
+        Enhanced approach:
+        1. Try to find section by header
+        2. Extract from section with better parsing
+        3. Fallback to keyword-based extraction
+        """
+        try:
+            # Enhanced: Try to find section by header
+            section = self._find_section_by_header(
+                content,
+                ["common mistake", "common mistakes", "pitfall", "pitfalls", "avoid", "anti-pattern", "anti-patterns"]
+            )
+            
+            if section:
+                # Extract from section
+                mistakes = self._extract_from_section(section, content)
+                return self._filter_and_limit(mistakes, max_items=5)
+        except Exception as e:
+            logger.debug(f"Enhanced extraction failed, using fallback: {e}")
+        
+        # Fallback to simple keyword-based extraction
+        return self._extract_common_mistakes_simple(content)
+    
+    def _extract_common_mistakes_simple(self, content: str) -> list[str]:
+        """Simple keyword-based extraction (fallback method)."""
+        mistakes = []
         lines = content.split('\n')
         in_mistakes = False
         
@@ -364,30 +403,228 @@ class Context7ReviewEnhancer:
         return mistakes[:5]
     
     def _extract_examples(self, content: str) -> list[str]:
-        """Extract usage examples from Context7 content."""
-        examples = []
+        """
+        Extract usage examples from Context7 content with enhanced parsing.
         
-        # Look for code blocks
-        in_code_block = False
-        code_block = []
+        Enhanced approach:
+        1. Try to find "Examples" section by header
+        2. Extract code blocks from section if found
+        3. Fallback to extracting all code blocks
+        """
+        try:
+            # Enhanced: Try to find "Examples" section
+            section = self._find_section_by_header(
+                content,
+                ["example", "examples", "usage", "code example", "code examples"]
+            )
+            
+            if section:
+                # Extract code blocks from section
+                examples = self._extract_code_blocks_from_section(section, content)
+                return examples[:3]
+        except Exception as e:
+            logger.debug(f"Enhanced extraction failed, using fallback: {e}")
         
-        for line in content.split('\n'):
-            if line.strip().startswith('```'):
-                if in_code_block:
-                    # End of code block
-                    if code_block:
-                        examples.append('\n'.join(code_block))
-                        code_block = []
-                    in_code_block = False
-                else:
-                    # Start of code block
-                    in_code_block = True
-            elif in_code_block:
-                code_block.append(line)
-        
-        return examples[:3]  # Limit to 3 examples
+        # Fallback: Extract all code blocks
+        return self._extract_all_code_blocks(content)[:3]
     
     def _extract_recommendations(self, content: str) -> list[str]:
         """Extract recommendations from Context7 content."""
         # Similar to best practices extraction
         return self._extract_best_practices(content)
+    
+    def _find_section_by_header(
+        self, 
+        content: str, 
+        keywords: list[str]
+    ) -> Optional[tuple[int, int]]:
+        """
+        Find section by header keywords.
+        
+        Enhanced section detection that looks for markdown headers (##, ###, etc.)
+        containing the specified keywords.
+        
+        Args:
+            content: Markdown content
+            keywords: List of keywords to search for in headers
+            
+        Returns:
+            Tuple of (start_line, end_line) if found, None otherwise
+        """
+        lines = content.split('\n')
+        in_section = False
+        start_line = None
+        current_level = None
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Check if line is a header (starts with #)
+            if stripped.startswith('#'):
+                # Extract header level and text
+                header_level = len(stripped) - len(stripped.lstrip('#'))
+                header_text = stripped.lstrip('#').strip().lower()
+                
+                # Check if header contains any keyword
+                if any(keyword in header_text for keyword in keywords):
+                    in_section = True
+                    start_line = i
+                    current_level = header_level
+                elif in_section:
+                    # Found next header at same or higher level, end of section
+                    if header_level <= current_level:
+                        return (start_line, i - 1)
+        
+        # If we're still in a section at the end, return to end of content
+        if in_section:
+            return (start_line, len(lines) - 1)
+        
+        return None
+    
+    def _extract_from_section(
+        self, 
+        section: tuple[int, int], 
+        content: str
+    ) -> list[str]:
+        """
+        Extract content from a section.
+        
+        Enhanced extraction that handles:
+        - List items (bulleted and numbered)
+        - Nested lists
+        - Paragraph text
+        
+        Args:
+            section: Tuple of (start_line, end_line)
+            content: Full markdown content
+            
+        Returns:
+            List of extracted items
+        """
+        lines = content.split('\n')
+        start, end = section
+        section_lines = lines[start:end + 1]
+        
+        items = []
+        for line in section_lines:
+            stripped = line.strip()
+            
+            # Skip empty lines and headers
+            if not stripped or stripped.startswith('#'):
+                continue
+            
+            # Extract list items (bulleted)
+            if stripped.startswith(('-', '*', '•')):
+                item = stripped.lstrip('-*• ').strip()
+                if item and len(item) > 10:
+                    items.append(item)
+            # Extract numbered list items
+            elif stripped and stripped[0].isdigit() and '.' in stripped[:5]:
+                # Handle numbered lists: "1. Item", "2. Item", etc.
+                parts = stripped.split('.', 1)
+                if len(parts) == 2:
+                    item = parts[1].strip()
+                    if item and len(item) > 10:
+                        items.append(item)
+            # Extract substantial paragraph text
+            elif stripped and not stripped.startswith('```') and len(stripped) > 20:
+                # Only add if it looks like a recommendation/practice
+                if any(keyword in stripped.lower() for keyword in 
+                       ["should", "recommend", "best", "use", "avoid", "don't", "never"]):
+                    items.append(stripped)
+        
+        return items
+    
+    def _extract_code_blocks_from_section(
+        self, 
+        section: tuple[int, int], 
+        content: str
+    ) -> list[str]:
+        """
+        Extract code blocks from a section.
+        
+        Args:
+            section: Tuple of (start_line, end_line)
+            content: Full markdown content
+            
+        Returns:
+            List of code block contents
+        """
+        lines = content.split('\n')
+        start, end = section
+        section_content = '\n'.join(lines[start:end + 1])
+        
+        return self._extract_all_code_blocks(section_content)
+    
+    def _extract_all_code_blocks(self, content: str) -> list[str]:
+        """
+        Extract all code blocks from content.
+        
+        Enhanced to handle language tags and preserve formatting.
+        
+        Args:
+            content: Markdown content
+            
+        Returns:
+            List of code block contents
+        """
+        examples = []
+        in_code_block = False
+        code_block = []
+        
+        for line in content.split('\n'):
+            stripped = line.strip()
+            
+            if stripped.startswith('```'):
+                if in_code_block:
+                    # End of code block
+                    if code_block:
+                        examples.append('\n'.join(code_block))
+                    code_block = []
+                    in_code_block = False
+                else:
+                    # Start of code block
+                    in_code_block = True
+                    # Language tag is on the same line (```python), skip it
+            elif in_code_block:
+                code_block.append(line)
+        
+        # Handle unclosed code block
+        if code_block:
+            examples.append('\n'.join(code_block))
+        
+        return examples
+    
+    def _filter_and_limit(
+        self, 
+        items: list[str], 
+        max_items: int = 5,
+        min_length: int = 10
+    ) -> list[str]:
+        """
+        Filter and limit extracted items.
+        
+        Removes duplicates (case-insensitive) and filters by length.
+        
+        Args:
+            items: List of extracted items
+            max_items: Maximum number of items to return
+            min_length: Minimum length for an item
+            
+        Returns:
+            Filtered and limited list
+        """
+        # Filter by length
+        filtered = [item for item in items if len(item.strip()) >= min_length]
+        
+        # Remove duplicates (case-insensitive)
+        seen = set()
+        unique = []
+        for item in filtered:
+            item_lower = item.lower().strip()
+            if item_lower not in seen:
+                seen.add(item_lower)
+                unique.append(item)
+        
+        # Limit
+        return unique[:max_items]

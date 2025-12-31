@@ -339,7 +339,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 1 Summary](implementation/PHASE1_CURSOR_SKILLS_COMPLETE.md)
 
 ✅ **Core Framework Complete:**
-- **All 13 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer)
+- **All 14 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer, evaluator)
 - **Complete Code Scoring System** (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
 - **Instruction-Based Architecture** - Agents prepare structured instructions for Cursor Skills execution
 - **Tiered Context System** (90%+ token savings, 3 tiers with caching)
@@ -463,7 +463,7 @@ TappsCodingAgents/
 │   └── template/                  # Templates and schemas
 │
 ├── tapps_agents/                  # Framework source code
-│   ├── agents/                    # All 13 workflow agents
+│   ├── agents/                    # All 14 workflow agents
 │   │   ├── reviewer/             # Code review & scoring
 │   │   ├── implementer/          # Code generation
 │   │   ├── tester/               # Test generation
@@ -494,6 +494,14 @@ TappsCodingAgents/
 - **[Documentation Index](docs/README.md)** - Complete documentation overview
 - **[API Reference](docs/API.md)** - Python API and CLI documentation
 - **[Enhancer Agent Guide](docs/ENHANCER_AGENT.md)** - Prompt enhancement utility documentation
+
+### Complete Command Reference
+- **Cursor Rules**: `.cursor/rules/command-reference.mdc` (installed by `tapps-agents init`) - **Complete command reference with all commands, subcommands, and parameters**
+- **Quick Reference**: `.cursor/rules/quick-reference.mdc` - Quick command reference for common tasks
+- **Agent Capabilities**: `.cursor/rules/agent-capabilities.mdc` - Detailed agent capability descriptions
+- **Simple Mode Guide**: `.cursor/rules/simple-mode.mdc` - Simple Mode workflow documentation
+
+**Note**: After running `tapps-agents init`, all command reference documentation is available in `.cursor/rules/` directory. The `command-reference.mdc` file contains the most comprehensive documentation with all commands, subcommands, parameters, and examples.
 
 ### Core Guides
 - **[Architecture Overview](docs/ARCHITECTURE.md)** - System architecture and design
@@ -590,7 +598,7 @@ This project uses its own framework for development:
 - **5 Industry Experts** configured (AI frameworks, code quality, architecture, DevOps, documentation)
 - **Enhancer Agent** actively used (23+ enhancement sessions)
 - **Context7 Integration** with KB cache
-- **13 Cursor Skills** available in `.claude/skills/`
+- **14 Cursor Skills** available in `.claude/skills/` (13 agent skills + simple-mode)
 - **Background Agents** configured in `.cursor/background-agents.yaml`
 - **NUC Optimization** enabled for resource-constrained environments
 - Configuration in `.tapps-agents/` directory

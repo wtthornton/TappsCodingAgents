@@ -10,6 +10,117 @@ import json
 from typing import Any
 
 
+def _format_library_recommendations_markdown(recommendations: dict[str, Any]) -> list[str]:
+    """
+    Format library recommendations as markdown.
+    
+    Args:
+        recommendations: Dictionary of library recommendations
+        
+    Returns:
+        List of markdown lines
+    """
+    lines = []
+    
+    if not recommendations:
+        return lines
+    
+    lines.append("## Library Recommendations")
+    lines.append("")
+    
+    for lib_name, rec in recommendations.items():
+        lines.append(f"### {lib_name}")
+        lines.append("")
+        
+        if isinstance(rec, dict):
+            # Best practices
+            best_practices = rec.get("best_practices", [])
+            if best_practices:
+                lines.append("**Best Practices:**")
+                for practice in best_practices:
+                    lines.append(f"- {practice}")
+                lines.append("")
+            
+            # Common mistakes
+            common_mistakes = rec.get("common_mistakes", [])
+            if common_mistakes:
+                lines.append("**Common Mistakes:**")
+                for mistake in common_mistakes:
+                    lines.append(f"- {mistake}")
+                lines.append("")
+            
+            # Usage examples
+            usage_examples = rec.get("usage_examples", [])
+            if usage_examples:
+                lines.append("**Usage Examples:**")
+                for example in usage_examples:
+                    lines.append("```python")
+                    lines.append(example)
+                    lines.append("```")
+                    lines.append("")
+        else:
+            # Fallback for simple string recommendations
+            lines.append(f"- {rec}")
+            lines.append("")
+    
+    return lines
+
+
+def _format_pattern_guidance_markdown(guidance: dict[str, Any]) -> list[str]:
+    """
+    Format pattern guidance as markdown.
+    
+    Args:
+        guidance: Dictionary of pattern guidance
+        
+    Returns:
+        List of markdown lines
+    """
+    lines = []
+    
+    if not guidance:
+        return lines
+    
+    lines.append("## Pattern Guidance")
+    lines.append("")
+    
+    for pattern_name, pattern_info in guidance.items():
+        lines.append(f"### {pattern_name.replace('_', ' ').title()}")
+        lines.append("")
+        
+        if isinstance(pattern_info, dict):
+            # Confidence score
+            confidence = pattern_info.get("confidence", pattern_info.get("detected"))
+            if confidence is not None:
+                if isinstance(confidence, bool):
+                    lines.append(f"**Detected:** {'Yes' if confidence else 'No'}")
+                else:
+                    lines.append(f"**Confidence:** {confidence:.2f}")
+                lines.append("")
+            
+            # Recommendations
+            recommendations = pattern_info.get("recommendations", [])
+            if recommendations:
+                lines.append("**Recommendations:**")
+                for rec in recommendations:
+                    lines.append(f"- {rec}")
+                lines.append("")
+            
+            # Best practices
+            best_practices = pattern_info.get("best_practices", [])
+            if best_practices:
+                lines.append("**Best Practices:**")
+                for practice in best_practices:
+                    lines.append(f"- {practice}")
+                lines.append("")
+        else:
+            # Fallback for simple string guidance
+            lines.append(f"- {pattern_info}")
+            lines.append("")
+    
+    return lines
+
+
 def format_json(data: dict[str, Any] | list[dict[str, Any]], indent: int = 2) -> str:
     """
     Format data as JSON string.
@@ -78,6 +189,14 @@ def format_markdown(data: dict[str, Any] | list[dict[str, Any]]) -> str:
             if "error" in item:
                 lines.append(f"**Error**: {item['error']}")
                 lines.append("")
+            
+            # NEW: Library Recommendations section
+            if "library_recommendations" in item:
+                lines.extend(_format_library_recommendations_markdown(item["library_recommendations"]))
+            
+            # NEW: Pattern Guidance section
+            if "pattern_guidance" in item:
+                lines.extend(_format_pattern_guidance_markdown(item["pattern_guidance"]))
     else:
         # Single result
         if "file" in data:
@@ -116,6 +235,14 @@ def format_markdown(data: dict[str, Any] | list[dict[str, Any]]) -> str:
             lines.append(f"## Error")
             lines.append(data["error"])
             lines.append("")
+        
+        # NEW: Library Recommendations section
+        if "library_recommendations" in data:
+            lines.extend(_format_library_recommendations_markdown(data["library_recommendations"]))
+        
+        # NEW: Pattern Guidance section
+        if "pattern_guidance" in data:
+            lines.extend(_format_pattern_guidance_markdown(data["pattern_guidance"]))
     
     return "\n".join(lines)
 
@@ -299,6 +426,14 @@ def format_html(data: dict[str, Any] | list[dict[str, Any]], title: str = "Quali
                     line = error.get('line', '?')
                     html_parts.append(f"<div class='type-error'>Line {line}: {message}</div>")
             
+            # NEW: Library Recommendations section
+            if "library_recommendations" in item:
+                html_parts.extend(_format_library_recommendations_html(item["library_recommendations"]))
+            
+            # NEW: Pattern Guidance section
+            if "pattern_guidance" in item:
+                html_parts.extend(_format_pattern_guidance_html(item["pattern_guidance"]))
+            
             html_parts.append("</div>")
     else:
         # Single result
@@ -339,10 +474,18 @@ def format_html(data: dict[str, Any] | list[dict[str, Any]], title: str = "Quali
                 line = error.get('line', '?')
                 html_parts.append(f"<div class='type-error'>Line {line}: {message}</div>")
         
-        html_parts.append("</div>")
+            html_parts.append("</div>")
         
         if "error" in data:
             html_parts.append(f"<div class='error'>{data['error']}</div>")
+        
+        # NEW: Library Recommendations section
+        if "library_recommendations" in data:
+            html_parts.extend(_format_library_recommendations_html(data["library_recommendations"]))
+        
+        # NEW: Pattern Guidance section
+        if "pattern_guidance" in data:
+            html_parts.extend(_format_pattern_guidance_html(data["pattern_guidance"]))
     
     html_parts.extend([
         "</body>",
@@ -350,4 +493,116 @@ def format_html(data: dict[str, Any] | list[dict[str, Any]], title: str = "Quali
     ])
     
     return "\n".join(html_parts)
+
+
+def _format_library_recommendations_html(recommendations: dict[str, Any]) -> list[str]:
+    """
+    Format library recommendations as HTML.
+    
+    Args:
+        recommendations: Dictionary of library recommendations
+        
+    Returns:
+        List of HTML lines
+    """
+    html_parts = []
+    
+    if not recommendations:
+        return html_parts
+    
+    html_parts.append("<div class='file-result'>")
+    html_parts.append("<h2>Library Recommendations</h2>")
+    
+    for lib_name, rec in recommendations.items():
+        html_parts.append(f"<h3>{lib_name}</h3>")
+        
+        if isinstance(rec, dict):
+            # Best practices
+            best_practices = rec.get("best_practices", [])
+            if best_practices:
+                html_parts.append("<h4>Best Practices</h4>")
+                html_parts.append("<ul>")
+                for practice in best_practices:
+                    html_parts.append(f"<li>{practice}</li>")
+                html_parts.append("</ul>")
+            
+            # Common mistakes
+            common_mistakes = rec.get("common_mistakes", [])
+            if common_mistakes:
+                html_parts.append("<h4>Common Mistakes</h4>")
+                html_parts.append("<ul>")
+                for mistake in common_mistakes:
+                    html_parts.append(f"<li>{mistake}</li>")
+                html_parts.append("</ul>")
+            
+            # Usage examples
+            usage_examples = rec.get("usage_examples", [])
+            if usage_examples:
+                html_parts.append("<h4>Usage Examples</h4>")
+                for example in usage_examples:
+                    html_parts.append("<pre><code>")
+                    html_parts.append(example)
+                    html_parts.append("</code></pre>")
+        else:
+            html_parts.append(f"<p>{rec}</p>")
+    
+    html_parts.append("</div>")
+    
+    return html_parts
+
+
+def _format_pattern_guidance_html(guidance: dict[str, Any]) -> list[str]:
+    """
+    Format pattern guidance as HTML.
+    
+    Args:
+        guidance: Dictionary of pattern guidance
+        
+    Returns:
+        List of HTML lines
+    """
+    html_parts = []
+    
+    if not guidance:
+        return html_parts
+    
+    html_parts.append("<div class='file-result'>")
+    html_parts.append("<h2>Pattern Guidance</h2>")
+    
+    for pattern_name, pattern_info in guidance.items():
+        display_name = pattern_name.replace('_', ' ').title()
+        html_parts.append(f"<h3>{display_name}</h3>")
+        
+        if isinstance(pattern_info, dict):
+            # Confidence score
+            confidence = pattern_info.get("confidence", pattern_info.get("detected"))
+            if confidence is not None:
+                if isinstance(confidence, bool):
+                    html_parts.append(f"<p><strong>Detected:</strong> {'Yes' if confidence else 'No'}</p>")
+                else:
+                    html_parts.append(f"<p><strong>Confidence:</strong> {confidence:.2f}</p>")
+            
+            # Recommendations
+            recommendations = pattern_info.get("recommendations", [])
+            if recommendations:
+                html_parts.append("<h4>Recommendations</h4>")
+                html_parts.append("<ul>")
+                for rec in recommendations:
+                    html_parts.append(f"<li>{rec}</li>")
+                html_parts.append("</ul>")
+            
+            # Best practices
+            best_practices = pattern_info.get("best_practices", [])
+            if best_practices:
+                html_parts.append("<h4>Best Practices</h4>")
+                html_parts.append("<ul>")
+                for practice in best_practices:
+                    html_parts.append(f"<li>{practice}</li>")
+                html_parts.append("</ul>")
+        else:
+            html_parts.append(f"<p>{pattern_info}</p>")
+    
+    html_parts.append("</div>")
+    
+    return html_parts
 
