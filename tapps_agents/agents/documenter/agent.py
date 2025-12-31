@@ -86,6 +86,10 @@ class DocumenterAgent(BaseAgent):
                     "command": "*generate-project-docs",
                     "description": "Generate project-level API documentation for all agents and workflow engine",
                 },
+                {
+                    "command": "*update-project-docs-for-new-agent",
+                    "description": "Update all project documentation files for a newly created agent",
+                },
             ]
         )
         return commands
@@ -102,6 +106,8 @@ class DocumenterAgent(BaseAgent):
             return await self.update_docstrings_command(**kwargs)
         elif command == "generate-project-docs":
             return await self.generate_project_docs_command(**kwargs)
+        elif command == "update-project-docs-for-new-agent":
+            return await self.update_project_docs_for_new_agent_command(**kwargs)
         elif command == "help":
             return self._help()
         else:
@@ -299,6 +305,190 @@ class DocumenterAgent(BaseAgent):
             "output_dir": str(output_path),
             "format": output_format,
         }
+
+    async def update_project_docs_for_new_agent_command(
+        self,
+        agent_name: str,
+        agent_info: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Update all project documentation files for a newly created agent.
+        
+        This method updates:
+        - README.md (agent count, agent list)
+        - docs/API.md (agent subcommands, API docs)
+        - docs/ARCHITECTURE.md (agent list)
+        - .cursor/rules/agent-capabilities.mdc (agent section)
+        
+        Args:
+            agent_name: Name of the new agent (e.g., "evaluator")
+            agent_info: Optional dictionary with agent metadata
+            
+        Returns:
+            Dictionary with update results for each file
+        """
+        agent_info = agent_info or {}
+        results = {
+            "agent_name": agent_name,
+            "readme_updated": False,
+            "api_updated": False,
+            "architecture_updated": False,
+            "capabilities_updated": False,
+            "errors": [],
+        }
+        
+        try:
+            # Get project root from activated state or use current directory
+            # BaseAgent stores project_root after activate() is called
+            project_root = getattr(self, 'project_root', None) or Path.cwd()
+            
+            # Update README.md
+            readme_path = project_root / "README.md"
+            if readme_path.exists():
+                try:
+                    readme_content = readme_path.read_text(encoding="utf-8")
+                    
+                    # Update agent count (find pattern like "Workflow Agents (13)" or "13 (fixed)")
+                    import re
+                    # Pattern 1: "Workflow Agents (13)"
+                    pattern1 = r"Workflow Agents\s*\((\d+)\)"
+                    match1 = re.search(pattern1, readme_content)
+                    if match1:
+                        current_count = int(match1.group(1))
+                        new_count = current_count + 1
+                        readme_content = re.sub(
+                            pattern1,
+                            f"Workflow Agents ({new_count})",
+                            readme_content
+                        )
+                    
+                    # Pattern 2: "13 (fixed)" in table
+                    pattern2 = r"(\d+)\s*\(fixed\)"
+                    match2 = re.search(pattern2, readme_content)
+                    if match2:
+                        current_count = int(match2.group(1))
+                        new_count = current_count + 1
+                        readme_content = re.sub(
+                            pattern2,
+                            f"{new_count} (fixed)",
+                            readme_content,
+                            count=1
+                        )
+                    
+                    # Add agent to agent list if not present
+                    agent_title = agent_name.title()
+                    if f"- **Evaluation**: {agent_name}" not in readme_content and \
+                       f"- evaluator" not in readme_content.lower():
+                        # Find the last agent in the list and add after it
+                        # Look for pattern like "- **Enhancement**: enhancer"
+                        last_agent_pattern = r"(- \*\*[^\*]+\*\*: [^\n]+)"
+                        matches = list(re.finditer(last_agent_pattern, readme_content))
+                        if matches:
+                            last_match = matches[-1]
+                            insert_pos = last_match.end()
+                            new_line = f"\n- **Evaluation**: {agent_name} ✅ (Framework Effectiveness Analysis & Continuous Improvement)"
+                            readme_content = readme_content[:insert_pos] + new_line + readme_content[insert_pos:]
+                    
+                    readme_path.write_text(readme_content, encoding="utf-8")
+                    results["readme_updated"] = True
+                except Exception as e:
+                    results["errors"].append(f"README.md update failed: {e}")
+            
+            # Update API.md
+            api_path = project_root / "docs" / "API.md"
+            if api_path.exists():
+                try:
+                    api_content = api_path.read_text(encoding="utf-8")
+                    
+                    # Add agent to subcommands list
+                    if f"`{agent_name}`" not in api_content:
+                        # Find the agent subcommands line
+                        subcommands_pattern = r"(\*\*Agent subcommands\*\*: `[^`]+`)"
+                        match = re.search(subcommands_pattern, api_content)
+                        if match:
+                            subcommands_text = match.group(1)
+                            # Add agent name before the closing backtick
+                            new_subcommands = subcommands_text[:-1] + f", `{agent_name}`" + subcommands_text[-1]
+                            api_content = api_content.replace(subcommands_text, new_subcommands)
+                    
+                    api_path.write_text(api_content, encoding="utf-8")
+                    results["api_updated"] = True
+                except Exception as e:
+                    results["errors"].append(f"API.md update failed: {e}")
+            
+            # Update ARCHITECTURE.md
+            arch_path = project_root / "docs" / "ARCHITECTURE.md"
+            if arch_path.exists():
+                try:
+                    arch_content = arch_path.read_text(encoding="utf-8")
+                    
+                    # Update agent count
+                    arch_pattern = r"fixed set of (\d+) SDLC-oriented agents"
+                    arch_match = re.search(arch_pattern, arch_content)
+                    if arch_match:
+                        current_count = int(arch_match.group(1))
+                        new_count = current_count + 1
+                        arch_content = re.sub(
+                            arch_pattern,
+                            f"fixed set of {new_count} SDLC-oriented agents",
+                            arch_content
+                        )
+                    
+                    # Add agent to agent list
+                    if f"- {agent_name}" not in arch_content:
+                        # Find the agents list section
+                        agents_list_pattern = r"(Agents:\s*\n\s*- [^\n]+\n(?:\s+- [^\n]+\n)*)"
+                        agents_match = re.search(agents_list_pattern, arch_content)
+                        if agents_match:
+                            agents_list = agents_match.group(1)
+                            # Add new agent at the end
+                            new_agent_line = f"- {agent_name}\n"
+                            arch_content = arch_content.replace(agents_list, agents_list + new_agent_line)
+                    
+                    arch_path.write_text(arch_content, encoding="utf-8")
+                    results["architecture_updated"] = True
+                except Exception as e:
+                    results["errors"].append(f"ARCHITECTURE.md update failed: {e}")
+            
+            # Update agent-capabilities.mdc
+            capabilities_path = project_root / ".cursor" / "rules" / "agent-capabilities.mdc"
+            if capabilities_path.exists():
+                try:
+                    capabilities_content = capabilities_path.read_text(encoding="utf-8")
+                    
+                    # Update agent count
+                    cap_pattern = r"(\d+) specialized workflow agents"
+                    cap_match = re.search(cap_pattern, capabilities_content)
+                    if cap_match:
+                        current_count = int(cap_match.group(1))
+                        new_count = current_count + 1
+                        capabilities_content = re.sub(
+                            cap_pattern,
+                            f"{new_count} specialized workflow agents",
+                            capabilities_content
+                        )
+                    
+                    # Add agent to agent list if not present
+                    if f"- **Evaluation**: {agent_name}" not in capabilities_content:
+                        # Find the last agent in the list
+                        last_agent_pattern = r"(- \*\*[^\*]+\*\*: [^\n]+)"
+                        matches = list(re.finditer(last_agent_pattern, capabilities_content))
+                        if matches:
+                            last_match = matches[-1]
+                            insert_pos = last_match.end()
+                            new_line = f"\n- **Evaluation**: {agent_name}"
+                            capabilities_content = capabilities_content[:insert_pos] + new_line + capabilities_content[insert_pos:]
+                    
+                    capabilities_path.write_text(capabilities_content, encoding="utf-8")
+                    results["capabilities_updated"] = True
+                except Exception as e:
+                    results["errors"].append(f"agent-capabilities.mdc update failed: {e}")
+            
+        except Exception as e:
+            results["errors"].append(f"Documentation update failed: {e}")
+        
+        results["success"] = len(results["errors"]) == 0
+        return results
 
     def _help(self) -> dict[str, Any]:
         """

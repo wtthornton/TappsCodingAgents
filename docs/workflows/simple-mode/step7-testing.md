@@ -1,293 +1,152 @@
-# Step 7: Testing Plan and Validation - Evaluator Agent
-
-**Date:** January 16, 2025  
-**Workflow:** Simple Mode *build  
-**Agent:** Tester  
-**Stage:** Testing Plan and Validation
-
----
-
-## Testing Strategy
-
-The Evaluator Agent requires comprehensive testing across multiple layers:
-- Unit tests for analyzers
-- Integration tests for CLI commands
-- End-to-end tests for report generation
-- Workflow integration tests
-
----
-
-## Test Plan
-
-### 1. Unit Tests
-
-#### 1.1 UsageAnalyzer Tests
-
-**File:** `tests/agents/evaluator/test_usage_analyzer.py`
-
-**Test Cases:**
-- `test_analyze_usage_with_workflow_state()` - Test analysis with workflow state
-- `test_analyze_usage_with_cli_logs()` - Test analysis with CLI logs
-- `test_analyze_usage_empty()` - Test with no data
-- `test_calculate_statistics()` - Test statistics calculation
-- `test_identify_gaps()` - Test gap identification
-- `test_generate_recommendations()` - Test recommendation generation
-
-**Coverage Target:** 90%+
-
-#### 1.2 WorkflowAnalyzer Tests
-
-**File:** `tests/agents/evaluator/test_workflow_analyzer.py`
-
-**Test Cases:**
-- `test_analyze_workflow_complete()` - Test complete workflow analysis
-- `test_check_step_completion()` - Test step completion checking
-- `test_verify_artifacts()` - Test artifact verification
-- `test_identify_deviations()` - Test deviation identification
-- `test_analyze_workflow_missing_steps()` - Test with missing steps
-- `test_analyze_workflow_missing_artifacts()` - Test with missing artifacts
-
-**Coverage Target:** 90%+
-
-#### 1.3 QualityAnalyzer Tests
-
-**File:** `tests/agents/evaluator/test_quality_analyzer.py`
-
-**Test Cases:**
-- `test_analyze_quality_with_scores()` - Test with quality scores
-- `test_analyze_quality_with_workflow_state()` - Test with workflow state
-- `test_identify_issues()` - Test issue identification
-- `test_identify_issues_below_threshold()` - Test threshold checking
-- `test_track_trends()` - Test trend tracking (if historical data available)
-
-**Coverage Target:** 85%+
-
-#### 1.4 ReportGenerator Tests
-
-**File:** `tests/agents/evaluator/test_report_generator.py`
-
-**Test Cases:**
-- `test_generate_report_full()` - Test full report generation
-- `test_generate_report_usage_only()` - Test with usage data only
-- `test_prioritize_recommendations()` - Test recommendation prioritization
-- `test_generate_executive_summary()` - Test executive summary
-- `test_generate_usage_section()` - Test usage section
-- `test_generate_workflow_section()` - Test workflow section
-- `test_generate_quality_section()` - Test quality section
-- `test_generate_recommendations_section()` - Test recommendations section
-
-**Coverage Target:** 90%+
-
-#### 1.5 EvaluatorAgent Tests
-
-**File:** `tests/agents/evaluator/test_agent.py`
-
-**Test Cases:**
-- `test_agent_initialization()` - Test agent initialization
-- `test_get_commands()` - Test command list
-- `test_run_evaluate()` - Test evaluate command
-- `test_run_evaluate_workflow()` - Test evaluate-workflow command
-- `test_run_help()` - Test help command
-- `test_load_workflow_state()` - Test workflow state loading
-- `test_save_report()` - Test report saving
-
-**Coverage Target:** 85%+
-
-### 2. Integration Tests
-
-#### 2.1 CLI Integration Tests
-
-**File:** `tests/cli/commands/test_evaluator.py`
-
-**Test Cases:**
-- `test_evaluate_command()` - Test CLI evaluate command
-- `test_evaluate_workflow_command()` - Test CLI evaluate-workflow command
-- `test_evaluate_help()` - Test CLI help command
-- `test_evaluate_output_formats()` - Test JSON, text, markdown formats
-- `test_evaluate_with_workflow_id()` - Test with workflow ID
-
-**Coverage Target:** 80%+
-
-#### 2.2 Parser Tests
-
-**File:** `tests/cli/parsers/test_evaluator_parser.py`
-
-**Test Cases:**
-- `test_add_evaluator_parser()` - Test parser registration
-- `test_evaluate_parser_args()` - Test evaluate parser arguments
-- `test_evaluate_workflow_parser_args()` - Test evaluate-workflow parser arguments
-
-**Coverage Target:** 90%+
-
-### 3. End-to-End Tests
-
-#### 3.1 Report Generation E2E
-
-**File:** `tests/e2e/test_evaluator_report.py`
-
-**Test Cases:**
-- `test_full_evaluation_workflow()` - Test complete evaluation workflow
-- `test_report_file_creation()` - Test report file creation
-- `test_report_content_structure()` - Test report content structure
-- `test_report_with_real_workflow()` - Test with real workflow state
-
-**Coverage Target:** 70%+
-
-### 4. Workflow Integration Tests
-
-#### 4.1 Simple Mode Integration
-
-**File:** `tests/simple_mode/test_evaluator_integration.py`
-
-**Test Cases:**
-- `test_evaluator_in_build_workflow()` - Test evaluator in build workflow
-- `test_evaluator_auto_run_config()` - Test auto-run configuration
-- `test_evaluator_optional_step()` - Test optional step behavior
-
-**Coverage Target:** 70%+
-
----
-
-## Test Data
-
-### Mock Workflow State
-
-```python
-MOCK_WORKFLOW_STATE = {
-    "workflow_id": "test-workflow-123",
-    "workflow_type": "build",
-    "step_executions": [
-        {"step_id": "step1", "agent": "enhancer", "action": "enhance", "success": True},
-        {"step_id": "step2", "agent": "planner", "action": "plan", "success": True},
-    ],
-    "artifacts": [
-        {"name": "step1-enhanced-prompt.md"},
-        {"name": "step2-user-stories.md"},
-    ],
-    "quality_scores": {
-        "overall": 85.0,
-        "complexity": 8.5,
-        "security": 9.0,
-    },
-}
-```
-
-### Mock CLI Logs
-
-```python
-MOCK_CLI_LOGS = [
-    {"command": "review", "agent": "reviewer", "invocation_method": "cli", "success": True},
-    {"command": "implement", "agent": "implementer", "invocation_method": "cli", "success": True},
-]
-```
-
----
-
-## Validation Criteria
-
-### Functional Validation
-
-- [ ] Evaluator can analyze usage patterns correctly
-- [ ] Evaluator can analyze workflow adherence correctly
-- [ ] Evaluator can analyze quality metrics correctly
-- [ ] Report generation produces valid markdown
-- [ ] CLI commands work correctly
-- [ ] Parser correctly handles arguments
-
-### Quality Validation
-
-- [ ] All unit tests pass
-- [ ] All integration tests pass
-- [ ] Code coverage ≥ 80%
-- [ ] No linting errors
-- [ ] Type checking passes
-
-### Performance Validation
-
-- [ ] Evaluation completes in < 30 seconds
-- [ ] Report generation completes in < 5 seconds
-- [ ] Memory usage is reasonable
-
----
-
-## Test Execution Plan
-
-### Phase 1: Unit Tests (Priority 1)
-1. Implement UsageAnalyzer tests
-2. Implement WorkflowAnalyzer tests
-3. Implement QualityAnalyzer tests
-4. Implement ReportGenerator tests
-5. Implement EvaluatorAgent tests
-
-**Timeline:** 1-2 days
-
-### Phase 2: Integration Tests (Priority 2)
-1. Implement CLI integration tests
-2. Implement parser tests
-
-**Timeline:** 1 day
-
-### Phase 3: E2E Tests (Priority 3)
-1. Implement report generation E2E tests
-2. Implement workflow integration tests
-
-**Timeline:** 1 day
-
----
+# Step 7: Testing Plan - Automatic Documentation Updates for Framework Changes
+
+## Test Strategy
+
+### Unit Tests
+
+#### Framework Change Detector Tests
+**File**: `tests/test_framework_change_detector.py`
+
+**Test Cases**:
+1. `test_scan_agent_directories` - Verify agent directory scanning
+2. `test_detect_cli_registration` - Verify CLI registration detection
+3. `test_detect_skill_creation` - Verify skill file detection
+4. `test_detect_changes_new_agent` - Verify new agent detection
+5. `test_detect_changes_no_changes` - Verify no false positives
+6. `test_get_agent_info` - Verify agent info extraction
+7. `test_agent_info_from_directory` - Verify agent info parsing
+
+#### Documentation Updater Tests
+**File**: `tests/test_framework_doc_updater.py`
+
+**Test Cases**:
+1. `test_update_readme` - Verify README.md updates
+2. `test_update_api_docs` - Verify API.md updates
+3. `test_update_architecture_docs` - Verify ARCHITECTURE.md updates
+4. `test_update_agent_capabilities` - Verify agent-capabilities.mdc updates
+5. `test_create_backup` - Verify backup creation
+6. `test_update_all_docs` - Verify all docs updated
+7. `test_alphabetical_insertion` - Verify alphabetical ordering
+8. `test_agent_count_increment` - Verify count increment
+
+#### Documentation Validator Tests
+**File**: `tests/test_doc_validator.py`
+
+**Test Cases**:
+1. `test_validate_readme` - Verify README validation
+2. `test_validate_api_docs` - Verify API validation
+3. `test_validate_architecture_docs` - Verify ARCHITECTURE validation
+4. `test_validate_agent_capabilities` - Verify capabilities validation
+5. `test_check_consistency` - Verify consistency checks
+6. `test_generate_report` - Verify report generation
+7. `test_validate_completeness` - Verify completeness validation
+
+### Integration Tests
+
+#### Full Workflow Test
+**File**: `tests/test_build_orchestrator_documentation.py`
+
+**Test Cases**:
+1. `test_build_workflow_with_new_agent` - Test full workflow with mock agent
+2. `test_documentation_updates_on_agent_creation` - Verify docs update automatically
+3. `test_validation_after_updates` - Verify validation runs
+4. `test_no_updates_for_feature_development` - Verify no updates for features
+
+### Edge Case Tests
+
+**Test Cases**:
+1. `test_missing_documentation_files` - Handle missing files gracefully
+2. `test_malformed_documentation` - Handle malformed docs
+3. `test_multiple_agents_simultaneously` - Handle multiple agents
+4. `test_backup_failure` - Handle backup failures
+5. `test_write_permissions` - Handle permission errors
+6. `test_large_files` - Handle large documentation files
+
+## Test Implementation Plan
+
+### Phase 1: Unit Tests (Priority: High)
+1. Create test fixtures with sample documentation files
+2. Implement Framework Change Detector tests
+3. Implement Documentation Updater tests
+4. Implement Documentation Validator tests
+
+### Phase 2: Integration Tests (Priority: High)
+1. Create mock agent creation scenario
+2. Test full workflow execution
+3. Verify documentation updates
+4. Verify validation
+
+### Phase 3: Edge Cases (Priority: Medium)
+1. Test error conditions
+2. Test boundary cases
+3. Test performance with large files
 
 ## Test Coverage Goals
 
-| Component | Target Coverage | Priority |
-|-----------|----------------|----------|
-| UsageAnalyzer | 90%+ | High |
-| WorkflowAnalyzer | 90%+ | High |
-| QualityAnalyzer | 85%+ | High |
-| ReportGenerator | 90%+ | High |
-| EvaluatorAgent | 85%+ | High |
-| CLI Commands | 80%+ | Medium |
-| Parsers | 90%+ | Medium |
-| E2E Tests | 70%+ | Low |
+- **Unit Tests**: 90%+ coverage
+- **Integration Tests**: All main workflows
+- **Edge Cases**: All error conditions
 
-**Overall Target:** 85%+ coverage
+## Validation Criteria
 
----
+### Success Criteria
+- ✅ All unit tests pass
+- ✅ All integration tests pass
+- ✅ Documentation updates work correctly
+- ✅ Validation catches missing updates
+- ✅ No false positives in change detection
 
-## Continuous Testing
+### Performance Criteria
+- Change detection: < 1 second
+- Documentation updates: < 5 seconds per file
+- Validation: < 2 seconds
 
-### Pre-commit Hooks
-- Run unit tests
-- Run linting
-- Run type checking
+## Test Data
 
-### CI/CD Pipeline
-- Run all tests on every commit
+### Sample Documentation Files
+- Sample README.md with agent list
+- Sample API.md with subcommands
+- Sample ARCHITECTURE.md with agent list
+- Sample agent-capabilities.mdc with agent sections
+
+### Mock Agent Data
+- Agent directory structure
+- Agent.py with docstring
+- SKILL.md with commands
+- CLI registration
+
+## Test Execution
+
+### Local Testing
+```bash
+# Run unit tests
+pytest tests/test_framework_change_detector.py -v
+pytest tests/test_framework_doc_updater.py -v
+pytest tests/test_doc_validator.py -v
+
+# Run integration tests
+pytest tests/test_build_orchestrator_documentation.py -v
+
+# Run all tests with coverage
+pytest --cov=tapps_agents/simple_mode --cov=tapps_agents/agents/documenter --cov-report=html
+```
+
+### CI/CD Integration
+- Run tests on every commit
+- Fail build if tests don't pass
 - Generate coverage reports
-- Fail build if coverage < 80%
+- Validate documentation updates in PRs
 
----
+## Known Limitations
+
+1. **Regex Patterns**: May need updates if documentation format changes
+2. **Known Agents Baseline**: Currently detects all agents (no baseline)
+3. **Error Recovery**: Limited rollback for partial failures
 
 ## Next Steps
 
-1. Implement unit tests (Phase 1)
-2. Implement integration tests (Phase 2)
-3. Implement E2E tests (Phase 3)
-4. Validate all criteria
+1. Implement test suite
+2. Run tests and fix any failures
+3. Achieve target coverage
+4. Test with real agent creation
 5. Document test results
-
----
-
-## Test Results Summary
-
-**Status:** Tests not yet implemented (expected for Step 5 implementation)
-
-**Next Actions:**
-- Create test files following test plan
-- Implement test cases
-- Run tests and validate coverage
-- Fix any issues found
-
----
-
-## Conclusion
-
-The Evaluator Agent implementation is complete and ready for testing. The test plan provides comprehensive coverage across all components and integration points. Once tests are implemented and passing, the agent will be ready for production use.

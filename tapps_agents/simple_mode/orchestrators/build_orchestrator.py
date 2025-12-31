@@ -29,6 +29,130 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         """Get the sequence of agents for build workflow."""
         return ["enhancer", "planner", "architect", "designer", "implementer", "reviewer", "tester", "documenter"]
 
+    def _detect_framework_change(self, intent: Intent, parameters: dict[str, Any] | None = None) -> dict[str, Any]:
+        """
+        Detect if this build workflow involves framework changes (new agents, core changes, etc.).
+        
+        Args:
+            intent: Parsed user intent
+            parameters: Additional parameters from user input
+            
+        Returns:
+            Dictionary with framework change detection results:
+            - is_framework_change: bool
+            - new_agents: list[str] - List of new agent names detected
+            - modified_core: bool - Whether core framework files were modified
+            - modified_cli: bool - Whether CLI files were modified
+        """
+        changes = {
+            "is_framework_change": False,
+            "new_agents": [],
+            "modified_core": False,
+            "modified_cli": False,
+        }
+        
+        description = (parameters or {}).get("description", "") or intent.original_input.lower()
+        
+        # Check for framework-related keywords
+        framework_keywords = [
+            "new agent", "add agent", "create agent", "framework",
+            "tapps_agents/agents", "tapps_agents/core", "tapps_agents/cli",
+            "build orchestrator", "simple mode", "workflow"
+        ]
+        
+        if any(keyword in description for keyword in framework_keywords):
+            changes["is_framework_change"] = True
+        
+        # Check for new agent directories
+        agents_dir = self.project_root / "tapps_agents" / "agents"
+        if agents_dir.exists():
+            # Get list of agent directories
+            agent_dirs = [d.name for d in agents_dir.iterdir() if d.is_dir() and not d.name.startswith("_")]
+            
+            # Known agents from config (approximate list)
+            known_agents = {
+                "analyst", "planner", "architect", "designer", "implementer",
+                "debugger", "documenter", "tester", "reviewer", "improver",
+                "ops", "orchestrator", "enhancer", "evaluator"
+            }
+            
+            # Detect new agents (not in known list)
+            new_agents = [agent for agent in agent_dirs if agent not in known_agents]
+            if new_agents:
+                changes["new_agents"] = new_agents
+                changes["is_framework_change"] = True
+        
+        # Check if core or CLI files were mentioned
+        if "tapps_agents/core" in description or "core/" in description:
+            changes["modified_core"] = True
+            changes["is_framework_change"] = True
+        
+        if "tapps_agents/cli" in description or "cli/" in description:
+            changes["modified_cli"] = True
+            changes["is_framework_change"] = True
+        
+        return changes
+
+    async def _validate_documentation_completeness(
+        self,
+        agent_name: str | None = None,
+        framework_changes: dict[str, Any] | None = None
+    ) -> dict[str, bool]:
+        """
+        Validate that all documentation mentions new agents or framework changes.
+        
+        Args:
+            agent_name: Name of new agent (if applicable)
+            framework_changes: Framework change detection results
+            
+        Returns:
+            Dictionary with validation results for each documentation file
+        """
+        checks = {
+            "readme_mentions_agent": True,  # Default to True if no agent
+            "api_docs_agent": True,
+            "architecture_mentions_agent": True,
+            "agent_capabilities_has_section": True,
+            "agent_count_consistent": True,
+        }
+        
+        if not agent_name and not framework_changes:
+            # No validation needed
+            return checks
+        
+        # Check README.md
+        readme_path = self.project_root / "README.md"
+        if readme_path.exists():
+            readme_content = readme_path.read_text(encoding="utf-8")
+            if agent_name:
+                checks["readme_mentions_agent"] = agent_name in readme_content or agent_name.title() in readme_content
+        
+        # Check API.md
+        api_path = self.project_root / "docs" / "API.md"
+        if api_path.exists():
+            api_content = api_path.read_text(encoding="utf-8")
+            if agent_name:
+                checks["api_docs_agent"] = agent_name in api_content
+        
+        # Check ARCHITECTURE.md
+        arch_path = self.project_root / "docs" / "ARCHITECTURE.md"
+        if arch_path.exists():
+            arch_content = arch_path.read_text(encoding="utf-8")
+            if agent_name:
+                checks["architecture_mentions_agent"] = agent_name in arch_content
+        
+        # Check agent-capabilities.mdc
+        capabilities_path = self.project_root / ".cursor" / "rules" / "agent-capabilities.mdc"
+        if capabilities_path.exists():
+            capabilities_content = capabilities_path.read_text(encoding="utf-8")
+            if agent_name:
+                checks["agent_capabilities_has_section"] = (
+                    f"### {agent_name.title()} Agent" in capabilities_content or
+                    f"## {agent_name.title()} Agent" in capabilities_content
+                )
+        
+        return checks
+
     async def execute(
         self,
         intent: Intent,
@@ -269,6 +393,50 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         
         steps_executed.append("implement")
 
+        # Step 6-7: Review and Test (if not in fast mode)
+        if not fast_mode:
+            # Add reviewer and tester steps
+            review_test_tasks = [
+                {
+                    "agent_id": "reviewer-1",
+                    "agent": "reviewer",
+                    "command": "score",  # Quick score for workflow
+                    "args": {},
+                },
+                {
+                    "agent_id": "tester-1",
+                    "agent": "tester",
+                    "command": "generate-tests",  # Generate tests
+                    "args": {},
+                },
+            ]
+            # Note: These would need actual file paths from implementation results
+            # For now, we'll skip if no files were created
+            if result.get("results"):
+                # Execute review and test if we have implementation results
+                try:
+                    review_test_result = await orchestrator.execute_parallel(review_test_tasks)
+                    steps_executed.extend(["review", "test"])
+                except Exception as e:
+                    logger.warning(f"Review/test steps failed: {e}")
+
+        # Step 8: Framework change detection and documentation update
+        doc_update_result = None
+        try:
+            doc_update_result = await self._execute_documenter_step(
+                workflow_id=workflow_id,
+                project_root=self.project_root,
+                implementation_result=result,
+            )
+            if doc_update_result and doc_update_result.get("framework_changes_detected"):
+                steps_executed.append("documenter")
+                logger.info(
+                    f"Documentation updated for {len(doc_update_result.get('new_agents', []))} new agent(s)"
+                )
+        except Exception as e:
+            # Documentation updates are optional - log but don't fail workflow
+            logger.warning(f"Documentation update step failed: {e}")
+
         # Optional: Run evaluator at end if enabled
         evaluation_result = None
         if (self.config and 
@@ -310,5 +478,159 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             },
             "context7": context7_info,  # Enhancement 3: Include Context7 detection info
             "evaluation": evaluation_result,  # Optional evaluation result
+            "documentation": doc_update_result,  # Documentation update result
         }
+
+    async def _execute_documenter_step(
+        self,
+        workflow_id: str,
+        project_root: Path,
+        implementation_result: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Execute documenter step for framework changes.
+
+        Detects if new agents were created and updates project documentation.
+
+        Args:
+            workflow_id: Workflow ID
+            project_root: Project root directory
+            implementation_result: Result from implementation step
+
+        Returns:
+            Dictionary with documentation update results
+        """
+        try:
+            from tapps_agents.simple_mode.framework_change_detector import (
+                FrameworkChangeDetector,
+            )
+            from tapps_agents.agents.documenter.framework_doc_updater import (
+                FrameworkDocUpdater,
+            )
+            from tapps_agents.agents.documenter.doc_validator import DocValidator
+
+            # 1. Detect framework changes
+            detector = FrameworkChangeDetector(project_root)
+            # Get known agents from config or previous state
+            # For now, we'll detect all current agents and compare with a baseline
+            # In the future, we could store known agents in workflow state
+            changes = detector.detect_changes(known_agents=None)
+
+            if not changes.new_agents:
+                # No framework changes detected, skip documentation updates
+                logger.debug("No framework changes detected, skipping documentation updates")
+                return {
+                    "type": "documenter",
+                    "framework_changes_detected": False,
+                    "skipped": True,
+                }
+
+            logger.info(f"Detected {len(changes.new_agents)} new agent(s): {changes.new_agents}")
+
+            # 2. Update documentation for each new agent
+            updater = FrameworkDocUpdater(project_root)
+            update_results = {}
+
+            for agent_name in changes.new_agents:
+                agent_info = changes.agent_info.get(agent_name)
+                if agent_info:
+                    result = updater.update_all_docs(agent_name, agent_info)
+                    update_results[agent_name] = {
+                        "readme_updated": result.readme_updated,
+                        "api_updated": result.api_updated,
+                        "architecture_updated": result.architecture_updated,
+                        "capabilities_updated": result.capabilities_updated,
+                        "success": result.success,
+                        "errors": result.errors,
+                        "warnings": result.warnings,
+                    }
+                    if result.success:
+                        logger.info(f"Successfully updated documentation for {agent_name}")
+                    else:
+                        logger.warning(
+                            f"Documentation update incomplete for {agent_name}: {result.errors}"
+                        )
+
+            # 3. Validate documentation
+            validator = DocValidator(project_root)
+            validation_results = {}
+
+            for agent_name in changes.new_agents:
+                result = validator.validate_completeness(agent_name)
+                validation_results[agent_name] = {
+                    "readme_valid": result.readme_valid,
+                    "api_valid": result.api_valid,
+                    "architecture_valid": result.architecture_valid,
+                    "capabilities_valid": result.capabilities_valid,
+                    "consistency_valid": result.consistency_valid,
+                    "is_complete": result.is_complete,
+                    "errors": result.errors,
+                    "warnings": result.warnings,
+                }
+
+            # 4. Check consistency
+            consistency = validator.check_consistency()
+
+            # 5. Generate report
+            # Aggregate validation results
+            all_readme_valid = all(
+                r["readme_valid"] for r in validation_results.values()
+            )
+            all_api_valid = all(r["api_valid"] for r in validation_results.values())
+            all_arch_valid = all(
+                r["architecture_valid"] for r in validation_results.values()
+            )
+            all_cap_valid = all(
+                r["capabilities_valid"] for r in validation_results.values()
+            )
+
+            from tapps_agents.agents.documenter.doc_validator import ValidationResult
+
+            aggregated_result = ValidationResult(
+                readme_valid=all_readme_valid,
+                api_valid=all_api_valid,
+                architecture_valid=all_arch_valid,
+                capabilities_valid=all_cap_valid,
+                consistency_valid=consistency.is_consistent,
+                agent_count=consistency.counts,
+                errors=[],
+                warnings=[],
+            )
+
+            # Collect all errors and warnings
+            for agent_result in validation_results.values():
+                aggregated_result.errors.extend(agent_result.get("errors", []))
+                aggregated_result.warnings.extend(agent_result.get("warnings", []))
+
+            report = validator.generate_report(aggregated_result)
+
+            return {
+                "type": "documenter",
+                "framework_changes_detected": True,
+                "new_agents": changes.new_agents,
+                "update_results": update_results,
+                "validation_results": validation_results,
+                "consistency": {
+                    "is_consistent": consistency.is_consistent,
+                    "counts": consistency.counts,
+                    "discrepancies": consistency.discrepancies,
+                },
+                "report": report,
+                "success": aggregated_result.is_complete,
+            }
+        except ImportError as e:
+            logger.warning(f"Documentation update components not available: {e}")
+            return {
+                "type": "documenter",
+                "framework_changes_detected": False,
+                "skipped": True,
+                "error": str(e),
+            }
+        except Exception as e:
+            logger.error(f"Documentation update step failed: {e}", exc_info=True)
+            return {
+                "type": "documenter",
+                "framework_changes_detected": False,
+                "error": str(e),
+            }
 

@@ -1,201 +1,140 @@
-# Step 6: Code Quality Review - Evaluator Agent
+# Step 6: Code Review - Automatic Documentation Updates for Framework Changes
 
-**Date:** January 16, 2025  
-**Workflow:** Simple Mode *build  
-**Agent:** Reviewer  
-**Stage:** Code Quality Review
+## Code Quality Review
 
----
+### Implementation Summary
 
-## Review Summary
+The implementation includes three main components:
 
-**Overall Quality Score:** 85/100 ✅
+1. **Framework Change Detector** (`tapps_agents/simple_mode/framework_change_detector.py`)
+   - Detects new agents by scanning directories
+   - Extracts agent metadata from code
+   - Identifies CLI registrations and skill files
 
-The Evaluator Agent implementation follows TappsCodingAgents patterns and best practices. Code is well-structured, follows existing patterns, and integrates properly with CLI and workflow systems.
+2. **Documentation Updater** (`tapps_agents/agents/documenter/framework_doc_updater.py`)
+   - Updates README.md, API.md, ARCHITECTURE.md, and agent-capabilities.mdc
+   - Creates backups before updates
+   - Uses regex patterns for targeted updates
 
----
+3. **Documentation Validator** (`tapps_agents/agents/documenter/doc_validator.py`)
+   - Validates documentation completeness
+   - Checks agent count consistency
+   - Generates validation reports
 
-## Quality Metrics
+4. **Build Orchestrator Integration** (`tapps_agents/simple_mode/orchestrators/build_orchestrator.py`)
+   - Adds documenter step to workflow
+   - Executes framework change detection
+   - Runs documentation updates and validation
 
-### 1. Complexity: 8.5/10 ✅
+## Quality Scores
 
-**Strengths:**
-- Clear separation of concerns (analyzers, report generator)
-- Simple, focused classes with single responsibilities
-- Good use of composition over inheritance
+### Complexity: 7/10
+- **Rationale**: Moderate complexity due to file parsing and regex operations
+- **Concerns**: Regex patterns may need maintenance if documentation format changes
+- **Recommendation**: Consider using markdown parsers for more robust parsing
 
-**Areas for Improvement:**
-- Could add more comprehensive error handling in analyzers
-- Some methods could be split for better readability
+### Security: 8/10
+- **Rationale**: Good security practices with path validation and backup creation
+- **Strengths**: 
+  - Path validation prevents directory traversal
+  - Backups allow rollback
+- **Recommendations**: 
+  - Add file permission checks
+  - Validate file sizes before reading
 
-### 2. Security: 9.0/10 ✅
+### Maintainability: 8/10
+- **Rationale**: Well-structured code with clear separation of concerns
+- **Strengths**:
+  - Clear class responsibilities
+  - Good error handling
+  - Comprehensive logging
+- **Recommendations**:
+  - Add more unit tests
+  - Document regex patterns
+  - Consider configuration for update patterns
 
-**Strengths:**
-- Read-only operations (no file modifications)
-- Safe path validation (inherited from BaseAgent)
-- No external API calls (offline-only)
-- Proper input validation
+### Test Coverage: 6/10
+- **Rationale**: No tests included yet (to be added in Step 7)
+- **Recommendations**:
+  - Unit tests for each component
+  - Integration tests for full workflow
+  - Edge case tests (missing files, malformed docs)
 
-**Recommendations:**
-- Consider adding rate limiting if evaluator is called frequently
-- Add validation for workflow_id format
+### Performance: 9/10
+- **Rationale**: Efficient file operations, minimal I/O
+- **Strengths**:
+  - Only scans when needed
+  - Efficient regex operations
+  - Minimal file reads/writes
+- **Recommendations**: None
 
-### 3. Maintainability: 8.0/10 ✅
+## Overall Score: 76/100 ✅
 
-**Strengths:**
-- Follows existing agent patterns
-- Clear naming conventions
-- Good code organization
-- Type hints throughout
+## Issues Found
 
-**Areas for Improvement:**
-- Add more comprehensive docstrings
-- Consider adding logging for debugging
-- Add configuration options for thresholds
+### Critical Issues
+None
 
-### 4. Test Coverage: 7.0/10 ⚠️
+### High Priority Issues
+1. **Missing Tests**: No unit or integration tests
+   - **Impact**: Cannot verify correctness
+   - **Recommendation**: Add comprehensive test suite
 
-**Current Status:**
-- No tests implemented yet (expected for Step 5)
-- Test plan created in Step 7
+2. **Regex Pattern Maintenance**: Patterns may break if doc format changes
+   - **Impact**: Updates may fail silently
+   - **Recommendation**: Add pattern validation and fallback mechanisms
 
-**Recommendations:**
-- Implement unit tests for all analyzers
-- Add integration tests for CLI commands
-- Test report generation with various inputs
+### Medium Priority Issues
+1. **Error Recovery**: Limited error recovery for partial failures
+   - **Impact**: Some docs may update while others fail
+   - **Recommendation**: Add transaction-like behavior or better rollback
 
-### 5. Performance: 8.5/10 ✅
+2. **Known Agents Baseline**: Currently uses None (detects all agents)
+   - **Impact**: May update docs for existing agents on first run
+   - **Recommendation**: Store known agents in config or workflow state
 
-**Strengths:**
-- Efficient data collection
-- Minimal overhead
-- Lazy initialization of analyzers
+### Low Priority Issues
+1. **Logging Verbosity**: Could use more detailed logging
+   - **Impact**: Harder to debug issues
+   - **Recommendation**: Add debug-level logging for regex matches
 
-**Recommendations:**
-- Consider caching analysis results
-- Optimize report generation for large datasets
+2. **Documentation**: Code could use more inline documentation
+   - **Impact**: Harder for new developers to understand
+   - **Recommendation**: Add docstring examples
 
----
+## Recommendations
 
-## Code Review Findings
+### Immediate Actions
+1. ✅ Add comprehensive test suite
+2. ✅ Add pattern validation
+3. ✅ Improve error recovery
 
-### ✅ Strengths
+### Short-Term Improvements
+1. Store known agents baseline
+2. Add configuration for update patterns
+3. Improve logging verbosity
 
-1. **Architecture**
-   - Follows BaseAgent pattern correctly
-   - Good separation of concerns
-   - Proper integration with CLI and workflow systems
+### Long-Term Enhancements
+1. Consider markdown parser instead of regex
+2. Add UI for reviewing documentation changes
+3. Add CI/CD integration for validation
 
-2. **Code Quality**
-   - Type hints throughout
-   - Clear method names
-   - Good error handling structure
+## Code Review Checklist
 
-3. **Integration**
-   - Properly registered in CLI router
-   - Parser correctly defined
-   - Follows existing command patterns
-
-### ⚠️ Issues Found
-
-1. **Missing Features**
-   - No static help text (needs to be added to help system)
-   - No Cursor Skills definition yet
-   - No workflow integration hooks yet
-
-2. **Error Handling**
-   - Could be more comprehensive in analyzers
-   - Missing validation for edge cases
-
-3. **Documentation**
-   - Could add more detailed docstrings
-   - Missing usage examples in code comments
-
-### 🔧 Recommendations
-
-**Priority 1 (Critical):**
-1. Add static help text for evaluator commands
-2. Create Cursor Skills definition (`.claude/skills/evaluator/SKILL.md`)
-3. Add workflow integration hooks
-
-**Priority 2 (Important):**
-1. Improve error handling in analyzers
-2. Add logging for debugging
-3. Add configuration options for thresholds
-
-**Priority 3 (Nice to Have):**
-1. Add caching for analysis results
-2. Add historical trend analysis
-3. Add custom report formats (JSON, HTML)
-
----
-
-## Specific Code Issues
-
-### 1. Missing Static Help
-
-**Location:** `tapps_agents/cli/help/static_help.py`
-
-**Issue:** Evaluator commands reference static help that doesn't exist yet
-
-**Fix:** Add evaluator help text to static help system
-
-### 2. Missing Cursor Skills
-
-**Location:** `.claude/skills/evaluator/`
-
-**Issue:** Cursor Skills definition not created yet
-
-**Fix:** Create SKILL.md following existing patterns
-
-### 3. Workflow Integration
-
-**Location:** `tapps_agents/simple_mode/orchestrators/`
-
-**Issue:** No hooks for automatic evaluation at end of workflows
-
-**Fix:** Add optional evaluator step to build orchestrator
-
----
-
-## Code Quality Scores by File
-
-| File | Complexity | Security | Maintainability | Overall |
-|------|-----------|----------|----------------|---------|
-| `agent.py` | 8.5/10 | 9.0/10 | 8.0/10 | 85/100 |
-| `usage_analyzer.py` | 8.0/10 | 9.0/10 | 8.5/10 | 85/100 |
-| `workflow_analyzer.py` | 8.5/10 | 9.0/10 | 8.0/10 | 85/100 |
-| `quality_analyzer.py` | 8.0/10 | 9.0/10 | 8.0/10 | 83/100 |
-| `report_generator.py` | 8.5/10 | 9.0/10 | 8.5/10 | 87/100 |
-| `evaluator.py` (CLI) | 8.0/10 | 9.0/10 | 8.0/10 | 83/100 |
-| `evaluator.py` (Parser) | 8.5/10 | 9.0/10 | 8.5/10 | 87/100 |
-
-**Average Score:** 85/100 ✅
-
----
-
-## Recommendations Summary
-
-### Must Fix (Before Production)
-
-1. ✅ Add static help text
-2. ✅ Create Cursor Skills definition
-3. ✅ Add workflow integration hooks
-
-### Should Fix (Next Iteration)
-
-1. Improve error handling
-2. Add logging
-3. Add configuration options
-
-### Nice to Have (Future)
-
-1. Add caching
-2. Historical trend analysis
-3. Custom report formats
-
----
+- [x] Code follows project style guidelines
+- [x] Type hints included
+- [x] Error handling present
+- [x] Logging included
+- [x] Windows compatibility considered
+- [ ] Unit tests added
+- [ ] Integration tests added
+- [ ] Documentation complete
+- [x] No hardcoded paths
+- [x] UTF-8 encoding used
 
 ## Next Steps
 
-Proceed to Step 7: Testing Plan and Validation
+1. Add test suite (Step 7)
+2. Address high-priority issues
+3. Test with actual agent creation
+4. Update project documentation
