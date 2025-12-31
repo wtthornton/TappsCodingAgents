@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 import shutil
 import subprocess  # nosec B404 - fixed args, no shell
@@ -16,6 +17,8 @@ from pathlib import Path
 from typing import Any
 
 from .models import Artifact, WorkflowStep
+
+logger = logging.getLogger(__name__)
 
 
 class WorktreeManager:
@@ -299,7 +302,68 @@ class WorktreeManager:
 
         return artifacts
 
-    async def remove_worktree(self, worktree_name: str) -> None:
+    def _delete_branch(self, branch_name: str) -> bool:
+        """
+        Delete a Git branch (safe delete with force fallback).
+
+        Args:
+            branch_name: Name of the branch to delete (e.g., "workflow/...")
+
+        Returns:
+            True if branch was deleted or didn't exist, False on error
+        """
+        git_path = shutil.which("git") or "git"
+
+        # Verify branch exists
+        try:
+            subprocess.run(
+                [git_path, "rev-parse", "--verify", branch_name],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except subprocess.CalledProcessError:
+            # Branch doesn't exist - treat as success
+            logger.debug(f"Branch {branch_name} doesn't exist, nothing to delete")
+            return True
+
+        # Attempt safe delete first
+        try:
+            subprocess.run(
+                [git_path, "branch", "-d", branch_name],
+                cwd=self.project_root,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=True,
+            )
+            logger.info(f"Successfully deleted branch: {branch_name}")
+            return True
+        except subprocess.CalledProcessError:
+            # Safe delete failed (branch not merged), try force delete
+            try:
+                subprocess.run(
+                    [git_path, "branch", "-D", branch_name],
+                    cwd=self.project_root,
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    check=True,
+                )
+                logger.info(f"Successfully force-deleted branch: {branch_name}")
+                return True
+            except subprocess.CalledProcessError as e:
+                logger.warning(
+                    f"Failed to delete branch {branch_name}: {e.stderr or 'unknown error'}"
+                )
+                return False
+
+    async def remove_worktree(
+        self, worktree_name: str, delete_branch: bool = True
+    ) -> None:
         """
         Remove a worktree.
 
