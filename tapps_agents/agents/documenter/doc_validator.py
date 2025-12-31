@@ -195,8 +195,11 @@ class DocValidator:
         try:
             content = arch_path.read_text(encoding="utf-8")
             # Check for agent name in agent list
+            # Convert snake_case to Title Case for matching
+            agent_name_title = agent_name.replace("_", " ").title()
             patterns = [
-                rf"\*\*{agent_name.title()} Agent\*\*",  # **AgentName Agent**
+                rf"\*\*{re.escape(agent_name_title)} Agent\*\*",  # **Agent Name Agent**
+                rf"\*\*{re.escape(agent_name.title())} Agent\*\*",  # **Agent_Name Agent** (fallback)
                 rf"\b{agent_name}\b",  # Word boundary
             ]
             return any(re.search(pattern, content, re.IGNORECASE) for pattern in patterns)
@@ -227,8 +230,13 @@ class DocValidator:
         try:
             content = capabilities_path.read_text(encoding="utf-8")
             # Check for agent section heading
-            pattern = rf"### {agent_name.title()} Agent"
-            return bool(re.search(pattern, content))
+            # Convert snake_case to Title Case for matching
+            agent_name_title = agent_name.replace("_", " ").title()
+            patterns = [
+                rf"### {re.escape(agent_name_title)} Agent",  # ### Agent Name Agent
+                rf"### {re.escape(agent_name.title())} Agent",  # ### Agent_Name Agent (fallback)
+            ]
+            return any(re.search(pattern, content) for pattern in patterns)
         except Exception as e:
             logger.error(f"Failed to validate agent-capabilities.mdc: {e}")
             return False

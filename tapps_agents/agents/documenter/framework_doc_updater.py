@@ -274,7 +274,8 @@ class FrameworkDocUpdater:
 
         # Add API section
         # Insert after last agent section
-        agent_name_title = agent_name.title()
+        # Convert snake_case to Title Case (e.g., "new_agent" -> "New Agent")
+        agent_name_title = agent_name.replace("_", " ").title()
         api_section = f"\n## {agent_name_title} Agent\n\n"
         if agent_info.purpose:
             api_section += f"{agent_info.purpose}\n\n"
@@ -353,7 +354,8 @@ class FrameworkDocUpdater:
         match = re.search(agents_section_pattern, content, re.MULTILINE | re.DOTALL)
         if match:
             agents_section = match.group(0)
-            agent_name_title = agent_name.title()
+            # Convert snake_case to Title Case
+            agent_name_title = agent_name.replace("_", " ").title()
             agent_entry = f"- **{agent_name_title} Agent** - {agent_info.purpose or agent_name_title} Agent"
             # Insert in alphabetical order
             if agent_entry not in agents_section:
@@ -425,7 +427,8 @@ class FrameworkDocUpdater:
         content = capabilities_path.read_text(encoding="utf-8")
 
         # Create agent section
-        agent_name_title = agent_name.title()
+        # Convert snake_case to Title Case
+        agent_name_title = agent_name.replace("_", " ").title()
         agent_section = f"\n### {agent_name_title} Agent\n\n"
         if agent_info.purpose:
             agent_section += f"**Purpose**: {agent_info.purpose}\n\n"
