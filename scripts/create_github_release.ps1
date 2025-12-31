@@ -146,7 +146,7 @@ if (-not $SkipVersionUpdate) {
     
     Write-Host ""
 } else {
-    Write-Host "Step 1: Skipping version update (--SkipVersionUpdate)" -ForegroundColor Yellow
+    Write-Host "Step 1: Skipping version update (-SkipVersionUpdate)" -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -205,7 +205,7 @@ if (-not $SkipBuild) {
     Write-Host "  Build complete" -ForegroundColor Green
     Write-Host ""
 } else {
-    Write-Host "Step 3: Skipping build (--SkipBuild)" -ForegroundColor Yellow
+    Write-Host "Step 3: Skipping build (-SkipBuild)" -ForegroundColor Yellow
     Write-Host ""
 }
 
@@ -236,7 +236,8 @@ $wheelFiles = $distFiles | Where-Object { $_.Extension -eq ".whl" }
 Write-Host "Files to attach:" -ForegroundColor Green
 foreach ($file in $distFiles) {
     $sizeKB = [math]::Round($file.Length/1KB, 2)
-    Write-Host "  - $($file.Name) ($sizeKB KB)" -ForegroundColor Gray
+    $sizeText = "$sizeKB KB"
+    Write-Host "  - $($file.Name) ($sizeText)" -ForegroundColor Gray
 }
 
 if ($sdistFiles.Count -eq 0) {

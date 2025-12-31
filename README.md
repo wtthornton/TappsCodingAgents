@@ -62,7 +62,7 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 
 See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
 
-- **Workflow Agents** (13): Standard SDLC task execution + Prompt Enhancement
+- **Workflow Agents** (14): Standard SDLC task execution + Prompt Enhancement + Evaluation
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making
 - **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
@@ -133,6 +133,7 @@ If you're using **Cursor IDE**, get started quickly:
    - Type: `@reviewer *help`
    - Type: `@implementer *help`
    - Type: `@tester *help`
+   - Type: `@evaluator *help`
 
 4. **Or use Claude Desktop:**
    - Type: `@review src/api/auth.py`
@@ -416,9 +417,9 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 | Layer | Type | Purpose | Count |
 |-------|------|---------|-------|
 | **Knowledge** | Industry Experts | Business domain authority | N (per project) |
-| **Execution** | Workflow Agents | SDLC task execution | 13 (fixed) |
+| **Execution** | Workflow Agents | SDLC task execution | 14 (fixed) |
 
-### Workflow Agents (13)
+### Workflow Agents (14)
 
 - **Planning**: analyst ✅, planner ✅ (Story Generation)
 - **Design**: architect ✅, designer ✅
@@ -428,6 +429,7 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 - **Operations**: ops ✅ (Security, Compliance, Deployment, Dependency Auditing)
 - **Orchestration**: orchestrator ✅ (Workflow Coordination)
 - **Enhancement**: enhancer ✅ (Prompt Enhancement Utility with Expert Integration)
+- **Evaluation**: evaluator ✅ (Framework Effectiveness Analysis & Continuous Improvement)
 
 ### Code Scoring System
 

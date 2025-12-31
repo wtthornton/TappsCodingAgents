@@ -334,6 +334,42 @@ Examples:
 For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
 """
 
+EVALUATOR_HELP = """
+Evaluator Agent Commands:
+
+  evaluate [--workflow-id <id>]        - Evaluate framework effectiveness
+  evaluate-workflow <workflow-id>      - Evaluate specific workflow
+  help                                 - Show this help message
+
+Options:
+  --format <json|text|markdown>       - Output format (default: markdown)
+  --workflow-id <id>                   - Workflow ID to evaluate (for evaluate command)
+  --output <file>                      - Output file path (default: .tapps-agents/evaluations/evaluation-{timestamp}.md)
+
+Description:
+  The Evaluator Agent analyzes TappsCodingAgents framework effectiveness by:
+  - Analyzing command usage patterns (CLI vs Cursor Skills vs Simple Mode)
+  - Measuring workflow adherence (did users follow intended workflows?)
+  - Assessing code quality metrics
+  - Generating actionable recommendations for continuous improvement
+
+Examples:
+  tapps-agents evaluator evaluate
+  tapps-agents evaluator evaluate --workflow-id workflow-123
+  tapps-agents evaluator evaluate-workflow workflow-123 --format markdown
+  tapps-agents evaluator evaluate --output my-evaluation.md
+
+Output:
+  Reports are saved to .tapps-agents/evaluations/ with:
+  - Executive summary (TL;DR)
+  - Usage statistics
+  - Workflow adherence analysis
+  - Quality metrics
+  - Prioritized recommendations (Priority 1, 2, 3)
+
+For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
+"""
+
 # Map agent names to their help text
 AGENT_HELP_MAP = {
     "enhancer": ENHANCER_HELP,
@@ -349,6 +385,7 @@ AGENT_HELP_MAP = {
     "planner": PLANNER_HELP,
     "reviewer": REVIEWER_HELP,
     "tester": TESTER_HELP,
+    "evaluator": EVALUATOR_HELP,
 }
 
 

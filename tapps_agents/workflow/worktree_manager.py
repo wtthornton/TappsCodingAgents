@@ -365,12 +365,14 @@ class WorktreeManager:
         self, worktree_name: str, delete_branch: bool = True
     ) -> None:
         """
-        Remove a worktree.
+        Remove a worktree and optionally its associated branch.
 
         Args:
             worktree_name: Name of the worktree to remove
+            delete_branch: If True, also delete the associated Git branch
         """
         worktree_path = self._worktree_path_for(worktree_name)
+        branch_name = self._branch_for(worktree_name)
 
         if not worktree_path.exists():
             return
@@ -390,6 +392,10 @@ class WorktreeManager:
         # Fallback: remove directory
         if worktree_path.exists():
             shutil.rmtree(worktree_path, ignore_errors=True)
+
+        # Delete the branch if requested
+        if delete_branch:
+            self._delete_branch(branch_name)
 
     async def cleanup_all(self) -> None:
         """Clean up all worktrees."""

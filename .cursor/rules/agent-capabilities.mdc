@@ -4,7 +4,7 @@ This guide helps you understand what each agent does, when to use them, and comm
 
 ## Overview
 
-TappsCodingAgents provides **13 specialized workflow agents** covering the complete software development lifecycle:
+TappsCodingAgents provides **14 specialized workflow agents** covering the complete software development lifecycle:
 
 - **Planning**: analyst, planner
 - **Design**: architect, designer
@@ -14,6 +14,7 @@ TappsCodingAgents provides **13 specialized workflow agents** covering the compl
 - **Operations**: ops
 - **Orchestration**: orchestrator
 - **Enhancement**: enhancer
+- **Evaluation**: evaluator
 
 ---
 
@@ -444,6 +445,62 @@ python -m tapps_agents.cli enhancer enhance-resume <session-id>
 
 ---
 
+## Evaluation Agent
+
+### Evaluator Agent
+
+**Purpose**: Framework effectiveness analysis, continuous improvement, and quality assessment.
+
+**When to Use**:
+- Evaluating TappsCodingAgents framework effectiveness
+- Analyzing usage patterns (CLI vs Cursor Skills vs Simple Mode)
+- Measuring workflow adherence
+- Assessing code quality metrics
+- Generating improvement recommendations
+- Continuous improvement tracking
+
+**Capabilities**:
+- Usage pattern analysis (command usage, interface preferences)
+- Workflow adherence measurement (did users follow intended workflows?)
+- Quality metrics assessment
+- Framework effectiveness evaluation
+- Prioritized improvement recommendations
+- Structured markdown reports for continuous improvement
+
+**Common Commands**:
+```bash
+# Evaluate framework effectiveness
+python -m tapps_agents.cli evaluator evaluate
+
+# Evaluate specific workflow
+python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
+
+# Generate improvement report
+python -m tapps_agents.cli evaluator evaluate --output my-evaluation.md
+```
+
+**Cursor Skills**:
+```
+@evaluator *evaluate
+@evaluator *evaluate-workflow workflow-123
+```
+
+**Workflow Integration**:
+- Can run automatically at end of `*build` workflows (configurable)
+- Saves reports to `.tapps-agents/evaluations/`
+- Generates structured markdown with prioritized recommendations
+
+**Output Format**:
+- Executive summary (TL;DR)
+- Usage statistics
+- Workflow adherence analysis
+- Quality metrics
+- Prioritized recommendations (Priority 1, 2, 3)
+
+**Expert Integration**: Consults agent learning and code quality experts for improvement insights.
+
+---
+
 ## Agent Selection Guide
 
 ### By Task Type
@@ -460,6 +517,7 @@ python -m tapps_agents.cli enhancer enhance-resume <session-id>
 | **Documentation** | documenter | - |
 | **Security Audit** | ops | reviewer |
 | **Prompt Enhancement** | enhancer | analyst, architect, planner |
+| **Framework Evaluation** | evaluator | reviewer, analyst |
 
 ### By Workflow Stage
 
@@ -473,6 +531,7 @@ python -m tapps_agents.cli enhancer enhance-resume <session-id>
 | **Operations** | ops |
 | **Documentation** | documenter |
 | **Orchestration** | orchestrator |
+| **Evaluation** | evaluator |
 
 ---
 

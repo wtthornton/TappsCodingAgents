@@ -32,7 +32,7 @@ These shard files exist to keep agent context small while remaining accurate.
 
 TappsCodingAgents is organized around a two-layer agent model:
 
-- **Execution layer (Workflow Agents)**: fixed set of 13 SDLC-oriented agents.
+- **Execution layer (Workflow Agents)**: fixed set of 14 SDLC-oriented agents.
 - **Knowledge layer (Experts)**: built-in technical experts plus optional project-defined business experts.
 
 ## High-Level Components
@@ -51,6 +51,7 @@ Agents:
 - ops
 - orchestrator
 - enhancer
+- evaluator
 
 Agents are invoked:
 

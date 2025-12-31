@@ -354,6 +354,39 @@ In interactive mode, asks clarifying questions for ambiguous cases. Use --non-in
         action="store_true",
         help="Non-interactive mode: return structured recommendation without prompting for user input. Recommended for CI/CD pipelines and automated scripts. Uses defaults for ambiguous cases.",
     )
+    # Cleanup branches command
+    cleanup_branches_parser = workflow_subparsers.add_parser(
+        "cleanup-branches",
+        help="Clean up orphaned Git branches from workflow worktrees",
+        description="Detect and optionally delete orphaned Git branches that were created for workflow worktrees but no longer have associated worktrees.",
+    )
+    cleanup_branches_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview which branches would be deleted without actually deleting them",
+    )
+    cleanup_branches_parser.add_argument(
+        "--retention-days",
+        type=int,
+        help="Override retention period (default: from config)",
+    )
+    cleanup_branches_parser.add_argument(
+        "--pattern",
+        type=str,
+        help="Branch pattern to match (e.g., 'workflow/*' or 'agent/*')",
+    )
+    cleanup_branches_parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
+    cleanup_branches_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    
     recommend_parser.add_argument(
         "--format",
         choices=["json", "text"],
@@ -1473,3 +1506,64 @@ The workflow will automatically retry and improve code until quality thresholds 
         help="Enable fully automated execution mode. Skips all interactive prompts.",
     )
 
+    # Simple Mode: build
+    simple_mode_build_parser = simple_mode_subparsers.add_parser(
+        "build",
+        help="Build new features with Simple Mode workflow",
+        description="""Build new features using the Simple Mode build workflow.
+
+This workflow executes:
+  • Step 1: Enhance prompt (requirements analysis)
+  • Step 2: Create user stories
+  • Step 3: Design architecture
+  • Step 4: Design API/data models
+  • Step 5: Implement code
+  • Step 6: Review code quality
+  • Step 7: Generate tests
+
+Use --fast to skip documentation steps (1-4) for faster iteration.""",
+    )
+    simple_mode_build_parser.add_argument(
+        "--prompt", "-p",
+        required=True,
+        help="Natural language description of the feature to build",
+    )
+    simple_mode_build_parser.add_argument(
+        "--file",
+        help="Target file path for implementation",
+    )
+    simple_mode_build_parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Skip documentation steps (1-4) for 50-70% faster execution",
+    )
+    simple_mode_build_parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Enable fully automated execution mode",
+    )
+
+    # Simple Mode: resume
+    simple_mode_resume_parser = simple_mode_subparsers.add_parser(
+        "resume",
+        help="Resume a failed or paused workflow",
+        description="""Resume a workflow from the last completed step.
+
+Use this command to continue a workflow that was interrupted or failed.
+The workflow will resume from the last successfully completed step.""",
+    )
+    simple_mode_resume_parser.add_argument(
+        "workflow_id",
+        nargs="?",
+        help="Workflow ID to resume (use --list to see available workflows)",
+    )
+    simple_mode_resume_parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List available workflows that can be resumed",
+    )
+    simple_mode_resume_parser.add_argument(
+        "--validate",
+        action="store_true",
+        help="Validate state before resuming",
+    )

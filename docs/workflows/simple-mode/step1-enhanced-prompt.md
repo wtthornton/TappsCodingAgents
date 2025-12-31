@@ -1,296 +1,224 @@
-# Step 1: Enhanced Prompt - Git Workflow Branch Cleanup Enhancement
+# Step 1: Enhanced Prompt - Automatic Documentation Updates for Framework Changes
 
 ## Original Prompt
 
-Implement automatic branch cleanup for TappsCodingAgents workflow branches - evaluate recommendations, enhance them, validate the approach, and execute the implementation
+Implement automatic documentation updates for framework changes in TappsCodingAgents build workflow. This addresses the critical gap identified in the Evaluator Agent Documentation Gap Analysis where new agents are created but project documentation (README.md, API.md, ARCHITECTURE.md, agent-capabilities.mdc) is not automatically updated.
 
-## Enhanced Prompt with Requirements Analysis
+## Enhanced Requirements Analysis
 
 ### Problem Statement
 
-TappsCodingAgents creates Git worktrees and branches for workflow step isolation. Currently, when workflow steps complete, the worktree directories are removed but the associated Git branches remain orphaned in the repository. This leads to:
-- Repository clutter with abandoned workflow branches
-- Potential confusion about active vs completed workflows
-- Storage inefficiency (though minimal)
-- Maintenance overhead for manual cleanup
+When a new agent is created using `@simple-mode *build`, the following occurs:
+- ✅ Agent code is created correctly
+- ✅ CLI integration works
+- ✅ Configuration system integration works
+- ❌ **CRITICAL GAP**: Project documentation files are NOT automatically updated
+  - README.md still shows old agent count
+  - API.md doesn't list the new agent
+  - ARCHITECTURE.md doesn't include the new agent
+  - agent-capabilities.mdc is missing the new agent section
 
-### Scope Analysis
+### Root Causes Identified
 
-**In Scope:**
-- Enhance `WorktreeManager.remove_worktree()` to delete Git branches when removing worktrees
-- Add automated cleanup mechanisms for orphaned branches
-- Implement configuration options for cleanup policies
-- Create retention policies for branch lifecycle management
-- Add cleanup utilities for immediate manual cleanup
-- Ensure backward compatibility with existing workflows
+1. **Documenter agent not in build workflow sequence** - Current sequence: `["enhancer", "planner", "architect", "designer", "implementer"]` - missing `"documenter"`
+2. **No framework change detection** - Build workflow doesn't detect when new agents are added
+3. **No documentation completeness validation** - No check that all docs are updated consistently
+4. **Workflow designed for features, not framework changes** - Framework changes need special handling
 
-**Out of Scope:**
-- Remote branch deletion (can be added later)
-- Branch force-push protection
-- Branch locking mechanisms
-- Custom branch naming schemes (uses existing patterns)
+### Requirements
 
-### Functional Requirements
+#### Functional Requirements
 
-#### FR1: Branch Deletion on Worktree Removal
-- **Priority:** Critical
-- **Description:** When `remove_worktree()` is called, it must delete the associated Git branch
-- **Acceptance Criteria:**
-  - Branch is deleted after worktree removal succeeds
-  - Safe delete (`-d`) attempted first, then force delete (`-D`) if needed
-  - Graceful handling of branch deletion failures (log warning, don't fail workflow)
-  - Works for both local and tracked remote branches
+1. **Framework Change Detection**
+   - Detect when new agent directory is created in `tapps_agents/agents/`
+   - Detect when agent is registered in CLI (`tapps_agents/cli/main.py`)
+   - Detect when agent skill is created in `tapps_agents/resources/claude/skills/`
+   - Identify which agent was added/modified
 
-#### FR2: Orphaned Branch Detection
-- **Priority:** High
-- **Description:** Ability to identify branches that no longer have associated worktrees
-- **Acceptance Criteria:**
-  - Detect branches matching `workflow/*` pattern without corresponding worktrees
-  - Detect branches matching `agent/*` pattern without corresponding worktrees
-  - Age-based filtering (branches older than retention period)
-  - Report orphaned branches with metadata (age, last commit, etc.)
+2. **Automatic Documentation Updates**
+   - Update README.md:
+     - Increment agent count
+     - Add agent to agent list
+     - Update agent descriptions if needed
+   - Update API.md:
+     - Add agent to subcommands list
+     - Add agent API documentation section
+   - Update ARCHITECTURE.md:
+     - Add agent to agent list
+     - Update architecture diagrams if applicable
+   - Update agent-capabilities.mdc:
+     - Add agent section with purpose and commands
 
-#### FR3: Automated Cleanup Service
-- **Priority:** High
-- **Description:** Periodic cleanup of orphaned branches based on retention policies
-- **Acceptance Criteria:**
-  - Configurable retention period (default: 7 days)
-  - Respects `keep_active` flag (preserve branches with uncommitted changes)
-  - Safe execution (dry-run mode available)
-  - Reporting of cleanup results (branches deleted, space freed)
+3. **Documentation Completeness Validation**
+   - Verify README.md mentions the new agent
+   - Verify API.md documents the new agent
+   - Verify ARCHITECTURE.md includes the new agent
+   - Verify agent-capabilities.mdc has agent section
+   - Verify agent count is consistent across all docs
+   - Fail workflow if critical documentation is missing
 
-#### FR4: Configuration Management
-- **Priority:** Medium
-- **Description:** Configuration options for cleanup behavior
-- **Acceptance Criteria:**
-  - Config file options in `.tapps-agents/config.yaml`
-  - Separate policies for workflow vs agent branches
-  - Enable/disable auto-cleanup flag
-  - Retention period configuration
+4. **Integration with Build Workflow**
+   - Add `documenter` as Step 8 in build workflow
+   - Run documentation updates after implementation step
+   - Only run for framework changes (detect automatically)
+   - Provide clear feedback on what was updated
 
-#### FR5: Manual Cleanup Utilities
-- **Priority:** Medium
-- **Description:** CLI commands and utilities for immediate manual cleanup
-- **Acceptance Criteria:**
-  - CLI command: `tapps-agents workflow cleanup-branches [--dry-run] [--retention-days N]`
-  - Safe preview before deletion (dry-run mode)
-  - Progress reporting during cleanup
+#### Non-Functional Requirements
 
-### Non-Functional Requirements
+1. **Performance**
+   - Documentation updates should be fast (< 5 seconds)
+   - Use file parsing instead of full LLM calls where possible
+   - Cache agent lists to avoid repeated scans
 
-#### NFR1: Backward Compatibility
-- **Priority:** Critical
-- **Description:** Changes must not break existing workflows or worktree operations
-- **Acceptance Criteria:**
-  - Existing `remove_worktree()` calls continue to work
-  - No breaking changes to API signatures
-  - Graceful degradation if git commands fail
+2. **Reliability**
+   - Validate file paths before updating
+   - Create backups before modifying files
+   - Handle missing files gracefully
+   - Provide rollback capability
 
-#### NFR2: Error Handling
-- **Priority:** High
-- **Description:** Robust error handling for git operations
-- **Acceptance Criteria:**
-  - Never fail workflow execution due to cleanup failures
-  - Log all errors with appropriate severity
-  - Fallback mechanisms when git operations fail
-  - Clear error messages for troubleshooting
+3. **Maintainability**
+   - Use template-based updates for consistency
+   - Document update patterns clearly
+   - Make it easy to add new documentation files
 
-#### NFR3: Performance
-- **Priority:** Medium
-- **Description:** Cleanup operations should not significantly impact workflow performance
-- **Acceptance Criteria:**
-  - Branch deletion completes in <1 second per branch
-  - Bulk cleanup operations can handle 100+ branches efficiently
-  - Non-blocking execution (async operations)
-
-#### NFR4: Windows Compatibility
-- **Priority:** Critical
-- **Description:** All operations must work correctly on Windows
-- **Acceptance Criteria:**
-  - Handle Windows path separators correctly
-  - Handle Windows git command quirks
-  - Test on Windows environment
-  - Encoding-safe error messages
-
-#### NFR5: Security
-- **Priority:** High
-- **Description:** Prevent accidental deletion of important branches
-- **Acceptance Criteria:**
-  - Never delete branches outside `workflow/` and `agent/` patterns
-  - Require explicit confirmation for bulk operations
-  - Respect branch protection rules if configured
-  - Dry-run mode as default for destructive operations
+4. **Windows Compatibility**
+   - Handle Windows path separators correctly
+   - Use UTF-8 encoding for all file operations
+   - Test on Windows environment
 
 ### Architecture Guidance
 
-#### Component Structure
+#### Component Design
 
-1. **WorktreeManager Enhancement** (`tapps_agents/workflow/worktree_manager.py`)
-   - Extend `remove_worktree()` to delete branches
-   - Add `_delete_branch()` helper method
-   - Add branch existence checking before deletion
+1. **Framework Change Detector**
+   - Location: `tapps_agents/simple_mode/framework_change_detector.py`
+   - Responsibilities:
+     - Scan `tapps_agents/agents/` for new directories
+     - Parse CLI registration files for new commands
+     - Compare current state with known state
+     - Return list of detected changes
 
-2. **Branch Cleanup Service** (new file: `tapps_agents/workflow/branch_cleanup.py`)
-   - `BranchCleanupService` class
-   - Methods:
-     - `detect_orphaned_branches()` - Find branches without worktrees
-     - `cleanup_orphaned_branches()` - Execute cleanup
-     - `list_orphaned_branches()` - Reporting utility
+2. **Documentation Updater**
+   - Location: `tapps_agents/agents/documenter/framework_doc_updater.py`
+   - Responsibilities:
+     - Update README.md with new agent info
+     - Update API.md with agent documentation
+     - Update ARCHITECTURE.md with agent details
+     - Update agent-capabilities.mdc with agent section
+     - Use templates for consistent formatting
 
-3. **Configuration Extension** (`tapps_agents/core/config.py`)
-   - Add `branch_cleanup` section to config schema
-   - Settings:
-     - `enabled`: bool
-     - `delete_branches_on_cleanup`: bool
-     - `retention_days`: int
-     - `auto_cleanup_on_completion`: bool
+3. **Documentation Validator**
+   - Location: `tapps_agents/agents/documenter/doc_validator.py`
+   - Responsibilities:
+     - Validate all docs mention new agent
+     - Check agent count consistency
+     - Verify documentation completeness
+     - Generate validation report
 
-4. **CLI Command** (`tapps_agents/cli/workflow_commands.py`)
-   - New command: `cleanup-branches`
-   - Options: `--dry-run`, `--retention-days`, `--pattern`
+4. **Build Orchestrator Integration**
+   - Location: `tapps_agents/simple_mode/orchestrators/build_orchestrator.py`
+   - Changes:
+     - Add `documenter` to agent sequence
+     - Add framework change detection after implementation
+     - Call documentation updater if framework changes detected
+     - Run validation after updates
 
-#### Design Patterns
+#### Data Flow
 
-- **Strategy Pattern:** Configurable cleanup policies
-- **Command Pattern:** CLI commands for cleanup operations
-- **Facade Pattern:** Simple API hiding complex git operations
-
-#### Integration Points
-
-- Integrates with existing `WorktreeManager`
-- Uses `ProjectConfig` for settings
-- Leverages existing logging infrastructure
-- Follows existing async patterns
-
-### Codebase Context
-
-#### Key Files to Modify
-
-1. **`tapps_agents/workflow/worktree_manager.py`**
-   - Current `remove_worktree()` method (line 302-329)
-   - `_branch_for()` method for branch name generation (line 76-81)
-   - Need to add branch deletion logic
-
-2. **`tapps_agents/workflow/cursor_executor.py`**
-   - Workflow executor calls `remove_worktree()` (line 1711, 1872)
-   - Ensure cleanup doesn't break workflow execution
-
-3. **`tapps_agents/core/config.py`**
-   - Configuration schema definition
-   - Add branch cleanup configuration section
-
-4. **`tapps_agents/cli/workflow_commands.py`**
-   - CLI command registration
-   - Add cleanup-branches command handler
-
-#### Existing Patterns to Follow
-
-- Async/await pattern (all methods are async)
-- Error handling with try/except and logging
-- Subprocess usage for git commands (see existing code)
-- Configuration access via `ProjectConfig`
+```
+Build Workflow Execution
+  ↓
+Step 5: Implementation (creates agent code)
+  ↓
+Framework Change Detection (detects new agent)
+  ↓
+Step 8: Documenter (if framework change detected)
+  ├─→ Update README.md
+  ├─→ Update API.md
+  ├─→ Update ARCHITECTURE.md
+  └─→ Update agent-capabilities.mdc
+  ↓
+Documentation Validation
+  ├─→ Check all docs updated
+  ├─→ Verify agent count consistency
+  └─→ Generate validation report
+  ↓
+Workflow Complete
+```
 
 ### Quality Standards
 
-#### Code Quality
-- **Complexity:** Keep methods under 30 lines
-- **Test Coverage:** Minimum 80% coverage
-- **Type Hints:** All methods must have type hints
-- **Docstrings:** All public methods documented
+1. **Code Quality**
+   - Type hints for all functions
+   - Comprehensive error handling
+   - Unit tests for all components
+   - Integration tests for full workflow
 
-#### Security Standards
-- **Input Validation:** Validate branch names before deletion
-- **Pattern Matching:** Only delete branches matching safe patterns
-- **Confirmation:** Require explicit confirmation for bulk operations
-- **Logging:** Log all branch deletion operations for audit trail
+2. **Documentation Quality**
+   - Clear docstrings for all functions
+   - Examples in documentation
+   - Update patterns documented
+   - Error messages are clear
 
-#### Testing Requirements
-- **Unit Tests:** Test branch deletion logic
-- **Integration Tests:** Test workflow cleanup scenarios
-- **Edge Cases:** Test with non-existent branches, protected branches
-- **Windows Tests:** Verify Windows compatibility
-
-#### Documentation
-- **API Documentation:** Document new methods and configuration
-- **User Guide:** Document cleanup commands and configuration
-- **Migration Guide:** Document any configuration changes
+3. **Testing Requirements**
+   - Unit tests for change detection
+   - Unit tests for documentation updates
+   - Unit tests for validation
+   - Integration test: Full workflow with mock agent creation
 
 ### Implementation Strategy
 
-#### Phase 1: Core Enhancement (Priority: Critical)
-1. Enhance `WorktreeManager.remove_worktree()` with branch deletion
-2. Add `_delete_branch()` helper method
-3. Add comprehensive error handling
-4. Update tests for new behavior
+#### Phase 1: Framework Change Detection
+1. Create `FrameworkChangeDetector` class
+2. Implement agent directory scanning
+3. Implement CLI registration parsing
+4. Add detection to build orchestrator
 
-#### Phase 2: Cleanup Service (Priority: High)
-1. Create `BranchCleanupService` class
-2. Implement orphaned branch detection
-3. Implement cleanup logic with retention policies
-4. Add configuration support
+#### Phase 2: Documentation Updates
+1. Create `FrameworkDocUpdater` class
+2. Implement README.md update logic
+3. Implement API.md update logic
+4. Implement ARCHITECTURE.md update logic
+5. Implement agent-capabilities.mdc update logic
 
-#### Phase 3: CLI Integration (Priority: Medium)
-1. Add CLI command for manual cleanup
-2. Implement dry-run mode
-3. Add progress reporting
-4. Create user documentation
+#### Phase 3: Validation
+1. Create `DocValidator` class
+2. Implement completeness checks
+3. Implement consistency checks
+4. Add validation to build workflow
 
-#### Phase 4: Configuration & Documentation (Priority: Medium)
-1. Extend configuration schema
-2. Update configuration documentation
-3. Add migration guide if needed
-4. Update user guides
-
-### Dependencies
-
-#### Internal Dependencies
-- `tapps_agents.core.config.ProjectConfig`
-- `tapps_agents.core.logging` (existing logger)
-- `tapps_agents.workflow.models` (for type hints)
-
-#### External Dependencies
-- `git` command-line tool (already required)
-- Python standard library (subprocess, pathlib, datetime)
-
-#### Testing Dependencies
-- `pytest` (existing)
-- `pytest-asyncio` (for async tests)
-- Git test fixtures (may need to create)
-
-### Risk Assessment
-
-#### High Risk Items
-1. **Breaking Existing Workflows:** Mitigation - comprehensive testing, backward compatibility checks
-2. **Accidental Branch Deletion:** Mitigation - pattern matching, dry-run mode, confirmation prompts
-3. **Git Command Failures:** Mitigation - graceful error handling, fallback mechanisms
-
-#### Medium Risk Items
-1. **Performance Impact:** Mitigation - async operations, efficient git queries
-2. **Windows Compatibility:** Mitigation - Windows-specific testing, path handling
-
-#### Low Risk Items
-1. **Configuration Complexity:** Mitigation - sensible defaults, clear documentation
-2. **User Adoption:** Mitigation - opt-in features, clear migration path
+#### Phase 4: Integration
+1. Add documenter to build workflow sequence
+2. Integrate change detection
+3. Integrate documentation updates
+4. Integrate validation
+5. Test full workflow
 
 ### Success Criteria
 
-1. ✅ All workflow branches are automatically cleaned up after step completion
-2. ✅ Orphaned branches can be detected and cleaned up via CLI
-3. ✅ Configuration allows flexible cleanup policies
-4. ✅ No breaking changes to existing workflows
-5. ✅ Comprehensive test coverage (≥80%)
-6. ✅ Windows compatibility verified
-7. ✅ Documentation complete and accurate
+1. ✅ New agent creation automatically updates all project documentation
+2. ✅ Documentation validation catches missing updates
+3. ✅ Build workflow fails gracefully if documentation incomplete
+4. ✅ All documentation files stay in sync
+5. ✅ Agent counts are consistent across all docs
+6. ✅ No manual intervention required for documentation updates
 
-## Next Steps
+### Dependencies
 
-This enhanced prompt provides:
-- ✅ Clear problem statement and scope
-- ✅ Detailed functional and non-functional requirements
-- ✅ Architecture guidance with component structure
-- ✅ Codebase context with key files identified
-- ✅ Quality standards for implementation
-- ✅ Phased implementation strategy
-- ✅ Risk assessment and mitigation
+- Existing documenter agent (`tapps_agents/agents/documenter/`)
+- Build orchestrator (`tapps_agents/simple_mode/orchestrators/build_orchestrator.py`)
+- Project documentation files (README.md, docs/API.md, docs/ARCHITECTURE.md, .cursor/rules/agent-capabilities.mdc)
 
-**Proceed to Step 2: User Stories and Planning**
+### Risks and Mitigations
+
+1. **Risk**: File parsing might break with format changes
+   - **Mitigation**: Use robust parsing with fallbacks, test with various formats
+
+2. **Risk**: Updates might overwrite user customizations
+   - **Mitigation**: Use targeted updates (insert after specific markers), create backups
+
+3. **Risk**: Performance impact on build workflow
+   - **Mitigation**: Only run for framework changes, use efficient file operations
+
+4. **Risk**: False positives in change detection
+   - **Mitigation**: Use multiple detection methods, validate before updating

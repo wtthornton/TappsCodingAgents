@@ -1,693 +1,595 @@
-# Step 4: Component Design Specifications
+# Step 4: Component Design Specifications - Evaluator Agent
 
-## API Specifications and Data Models
-
-This document provides detailed specifications for all components, including method signatures, data models, error handling, and design contracts.
-
----
-
-## 1. WorktreeManager Enhancement
-
-### File: `tapps_agents/workflow/worktree_manager.py`
-
-### Method: `_delete_branch()`
-
-**Purpose:** Delete a Git branch safely (attempts safe delete first, then force delete if needed).
-
-**Signature:**
-```python
-def _delete_branch(self, branch_name: str) -> bool:
-    """
-    Delete a Git branch (safe delete with force fallback).
-    
-    Args:
-        branch_name: Name of the branch to delete (e.g., "workflow/...")
-    
-    Returns:
-        True if branch was deleted or didn't exist, False on error
-    
-    Raises:
-        None (all errors are caught and logged)
-    """
-```
-
-**Algorithm:**
-1. Verify branch exists using `git rev-parse --verify <branch>`
-2. If branch doesn't exist, return True (success - nothing to delete)
-3. Attempt safe delete: `git branch -d <branch>`
-4. If safe delete fails (branch not merged), attempt force delete: `git branch -D <branch>`
-5. Log all operations (info for success, warning for failures)
-6. Return True on success, False on error
-
-**Error Handling:**
-- Catch `subprocess.CalledProcessError` for git command failures
-- Log warnings but don't raise exceptions
-- Return False only if both safe and force delete fail
-
-**Usage Example:**
-```python
-manager = WorktreeManager(project_root)
-success = manager._delete_branch("workflow/my-workflow-step")
-if not success:
-    logger.warning("Failed to delete branch, but continuing...")
-```
+**Date:** January 16, 2025  
+**Workflow:** Simple Mode *build  
+**Agent:** Designer  
+**Stage:** Component Design Specifications
 
 ---
 
-### Method: `remove_worktree()` (Enhanced)
+## Component Design Specifications
 
-**Current Signature:**
+### 1. EvaluatorAgent Class Specification
+
+**File:** `tapps_agents/agents/evaluator/agent.py`
+
+**Class Definition:**
 ```python
-async def remove_worktree(self, worktree_name: str) -> None:
+class EvaluatorAgent(BaseAgent):
+    """
+    Evaluator Agent - Evaluates TappsCodingAgents framework effectiveness.
+    
+    Provides analysis of:
+    - Command usage patterns (CLI vs Cursor Skills vs Simple Mode)
+    - Workflow adherence (did users follow intended workflows?)
+    - Code quality metrics
+    - Actionable recommendations for continuous improvement
+    """
 ```
 
-**Enhanced Behavior:**
-1. Remove worktree directory (existing behavior)
-2. **NEW:** Get branch name using `_branch_for(worktree_name)`
-3. **NEW:** Check configuration for `delete_branches_on_cleanup` flag
-4. **NEW:** If enabled, call `_delete_branch(branch_name)`
-5. Log cleanup results
-
-**Configuration Check:**
+**Initialization:**
 ```python
-# Load config (with defaults)
-config = load_config()
-should_delete = (
-    config.workflow.branch_cleanup.delete_branches_on_cleanup
-    if config.workflow.branch_cleanup.enabled
-    else False
-)
+def __init__(self, config: ProjectConfig | None = None):
+    super().__init__(
+        agent_id="evaluator",
+        agent_name="Evaluator Agent",
+        config=config
+    )
+    self.config = config or load_config()
+    
+    # Analyzers (lazy initialization)
+    self.usage_analyzer: UsageAnalyzer | None = None
+    self.workflow_analyzer: WorkflowAnalyzer | None = None
+    self.quality_analyzer: QualityAnalyzer | None = None
+    self.report_generator: ReportGenerator | None = None
 ```
 
-**Backward Compatibility:**
-- Default behavior: If configuration not present, don't delete branches
-- Existing callers unaffected (returns None, doesn't raise)
-- Graceful degradation on errors
+**Commands:**
+```python
+def get_commands(self) -> list[dict[str, str]]:
+    return [
+        {"command": "*evaluate", "description": "Evaluate framework effectiveness"},
+        {"command": "*evaluate-workflow", "description": "Evaluate specific workflow"},
+        {"command": "*help", "description": "Show available commands"},
+    ]
+```
+
+**Main Run Method:**
+```python
+async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
+    """
+    Execute evaluator commands.
+    
+    Commands:
+    - evaluate: Run full evaluation
+    - evaluate-workflow <workflow_id>: Evaluate specific workflow
+    - help: Show help
+    """
+    command = command.lstrip("*")
+    
+    if command == "help":
+        return {"type": "help", "content": self.format_help()}
+    elif command == "evaluate":
+        workflow_id = kwargs.get("workflow_id")
+        return await self._evaluate(workflow_id=workflow_id)
+    elif command == "evaluate-workflow":
+        workflow_id = kwargs.get("workflow_id")
+        if not workflow_id:
+            return {"error": "workflow_id is required"}
+        return await self._evaluate_workflow(workflow_id)
+    else:
+        return {"error": f"Unknown command: {command}"}
+```
 
 ---
 
-## 2. BranchCleanupService
+### 2. UsageAnalyzer Class Specification
 
-### File: `tapps_agents/workflow/branch_cleanup.py` (NEW)
+**File:** `tapps_agents/agents/evaluator/usage_analyzer.py`
 
-### Class Definition
-
+**Class Definition:**
 ```python
-class BranchCleanupService:
+class UsageAnalyzer:
     """
-    Service for detecting and cleaning up orphaned Git branches.
+    Analyzes command usage patterns and statistics.
     
-    Detects branches that no longer have associated worktrees and provides
-    cleanup functionality based on retention policies.
+    Tracks:
+    - Total commands executed
+    - CLI vs Cursor Skills vs Simple Mode usage
+    - Individual agent usage frequency
+    - Command success/failure rates
+    - Usage gaps (intended vs actual)
     """
-    
-    def __init__(
-        self,
-        project_root: Path,
-        config: BranchCleanupConfig | None = None
-    ):
-        """
-        Initialize branch cleanup service.
-        
-        Args:
-            project_root: Root directory of the project
-            config: Branch cleanup configuration (uses defaults if None)
-        """
 ```
 
-### Method: `detect_orphaned_branches()`
+**Key Methods:**
 
-**Signature:**
 ```python
-async def detect_orphaned_branches(
+def analyze_usage(
     self,
-    pattern: str = "workflow/*",
-    retention_days: int | None = None
-) -> list[OrphanedBranch]:
+    workflow_state: dict[str, Any] | None = None,
+    cli_logs: list[dict] | None = None,
+    runtime_data: dict[str, Any] | None = None
+) -> dict[str, Any]:
     """
-    Detect branches that no longer have associated worktrees.
+    Analyze command usage patterns.
     
     Args:
-        pattern: Branch name pattern to match (default: "workflow/*")
-        retention_days: Only return branches older than N days (None = no age filter)
+        workflow_state: Workflow execution state (if available)
+        cli_logs: CLI execution logs (if available)
+        runtime_data: Runtime analysis data (if available)
     
     Returns:
-        List of orphaned branch information, sorted by age (oldest first)
-    
-    Raises:
-        RuntimeError: If git command execution fails critically
+        Dictionary with usage statistics and analysis
     """
-```
-
-**Algorithm:**
-1. Get branch list matching pattern: `git branch -a | grep <pattern>`
-2. For each branch:
-   - Extract branch name (remove remote prefix if present)
-   - Get branch metadata (last commit date, message)
-   - Check if worktree exists: `_worktree_exists_for_branch()`
-   - Calculate age in days
-   - If `retention_days` specified, filter by age
-3. Return list of `OrphanedBranch` objects, sorted by age (oldest first)
-
-**Performance:**
-- Batch git operations where possible
-- Cache worktree list to avoid repeated queries
-- Early exit for branches that don't match pattern
-
----
-
-### Method: `cleanup_orphaned_branches()`
-
-**Signature:**
-```python
-async def cleanup_orphaned_branches(
-    self,
-    pattern: str = "workflow/*",
-    retention_days: int | None = None,
-    dry_run: bool = False,
-    keep_active: bool = True
-) -> CleanupReport:
-    """
-    Clean up orphaned branches based on retention policies.
+    # Collect all commands from data sources
+    commands = self._collect_commands(workflow_state, cli_logs, runtime_data)
     
-    Args:
-        pattern: Branch name pattern to match (default: "workflow/*")
-        retention_days: Only delete branches older than N days (None = use config default)
-        dry_run: If True, preview what would be deleted without actually deleting
-        keep_active: If True, preserve branches with uncommitted changes
+    # Calculate statistics
+    stats = self.calculate_statistics(commands)
     
-    Returns:
-        CleanupReport with detailed results
+    # Identify gaps
+    gaps = self.identify_gaps(stats)
     
-    Raises:
-        None (all errors are logged in report)
-    """
-```
-
-**Algorithm:**
-1. Detect orphaned branches using `detect_orphaned_branches()`
-2. If `dry_run`, return report with preview only
-3. For each orphaned branch:
-   - If `keep_active`, check for uncommitted changes
-   - Skip branch if it has uncommitted changes
-   - Attempt branch deletion: `git branch -D <branch>`
-   - Track result (deleted, skipped, failed)
-4. Generate and return `CleanupReport`
-
-**Safety Checks:**
-- Only delete branches matching safe patterns
-- Never delete branches outside `workflow/*` or `agent/*` patterns
-- Verify branch name format before deletion
-- Log all deletion attempts
-
----
-
-### Helper Methods
-
-#### `_get_branch_list()`
-
-```python
-def _get_branch_list(self, pattern: str) -> list[str]:
-    """
-    Get all branches matching the specified pattern.
-    
-    Args:
-        pattern: Branch name pattern (e.g., "workflow/*")
-    
-    Returns:
-        List of branch names (local and remote)
-    """
-```
-
-**Implementation:**
-- Execute: `git branch -a`
-- Filter by pattern using regex or fnmatch
-- Normalize branch names (remove `remotes/origin/` prefix)
-- Return sorted list
-
-#### `_get_branch_metadata()`
-
-```python
-def _get_branch_metadata(self, branch_name: str) -> BranchMetadata:
-    """
-    Extract metadata for a branch.
-    
-    Args:
-        branch_name: Name of the branch
-    
-    Returns:
-        BranchMetadata with commit date, message, etc.
-    """
-```
-
-**Implementation:**
-- Execute: `git log -1 --format=%ct|%s <branch>`
-- Parse timestamp and commit message
-- Calculate age in days
-- Return `BranchMetadata` object
-
-#### `_worktree_exists_for_branch()`
-
-```python
-def _worktree_exists_for_branch(self, branch_name: str) -> bool:
-    """
-    Check if a worktree exists for the given branch.
-    
-    Args:
-        branch_name: Name of the branch
-    
-    Returns:
-        True if worktree exists, False otherwise
-    """
-```
-
-**Implementation:**
-- Extract worktree name from branch name (remove `workflow/` prefix)
-- Check if directory exists: `.tapps-agents/worktrees/<worktree_name>`
-- Verify it's a valid worktree (check for `.git` or git metadata)
-- Return boolean
-
----
-
-## 3. Data Models
-
-### OrphanedBranch
-
-```python
-@dataclass
-class OrphanedBranch:
-    """Information about an orphaned branch."""
-    name: str
-    pattern: str
-    age_days: float
-    last_commit_date: datetime
-    last_commit_message: str
-    worktree_exists: bool
-    
-    def __post_init__(self):
-        """Validate branch information."""
-        if not self.name:
-            raise ValueError("Branch name cannot be empty")
-        if self.age_days < 0:
-            raise ValueError("Age cannot be negative")
-```
-
-**Fields:**
-- `name`: Full branch name (e.g., "workflow/my-workflow-step")
-- `pattern`: Pattern that matched this branch
-- `age_days`: Age in days (float for precision)
-- `last_commit_date`: Datetime of last commit
-- `last_commit_message`: First line of last commit message
-- `worktree_exists`: Boolean (should always be False for orphaned branches)
-
----
-
-### BranchMetadata
-
-```python
-@dataclass
-class BranchMetadata:
-    """Metadata for a Git branch."""
-    last_commit_date: datetime
-    last_commit_message: str
-    commit_hash: str
-    
-    @property
-    def age_days(self) -> float:
-        """Calculate age in days."""
-        delta = datetime.now() - self.last_commit_date
-        return delta.total_seconds() / 86400.0
-```
-
-**Fields:**
-- `last_commit_date`: Datetime of last commit
-- `last_commit_message`: First line of commit message
-- `commit_hash`: Full commit hash
-
----
-
-### CleanupReport
-
-```python
-@dataclass
-class CleanupReport:
-    """Results of branch cleanup operation."""
-    branches_deleted: int
-    branches_skipped: int
-    branches_failed: int
-    deleted_branches: list[str]
-    skipped_branches: list[str]
-    failed_branches: list[tuple[str, str]]  # (branch_name, error_message)
-    dry_run: bool
-    execution_time_seconds: float
-    
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        return {
-            "branches_deleted": self.branches_deleted,
-            "branches_skipped": self.branches_skipped,
-            "branches_failed": self.branches_failed,
-            "deleted_branches": self.deleted_branches,
-            "skipped_branches": self.skipped_branches,
-            "failed_branches": [
-                {"branch": b[0], "error": b[1]}
-                for b in self.failed_branches
-            ],
-            "dry_run": self.dry_run,
-            "execution_time_seconds": self.execution_time_seconds,
-        }
-    
-    def __str__(self) -> str:
-        """Human-readable summary."""
-        status = "DRY RUN" if self.dry_run else "COMPLETED"
-        return (
-            f"Cleanup {status}: "
-            f"{self.branches_deleted} deleted, "
-            f"{self.branches_skipped} skipped, "
-            f"{self.branches_failed} failed"
-        )
-```
-
-**Fields:**
-- `branches_deleted`: Count of successfully deleted branches
-- `branches_skipped`: Count of skipped branches (with uncommitted changes, etc.)
-- `branches_failed`: Count of failed deletions
-- `deleted_branches`: List of branch names that were deleted
-- `skipped_branches`: List of branch names that were skipped (with reasons)
-- `failed_branches`: List of tuples (branch_name, error_message) for failures
-- `dry_run`: Boolean indicating if this was a dry-run
-- `execution_time_seconds`: Time taken for cleanup operation
-
----
-
-## 4. Configuration Models
-
-### BranchCleanupConfig
-
-```python
-@dataclass
-class BranchCleanupConfig:
-    """Configuration for branch cleanup behavior."""
-    enabled: bool = True
-    delete_branches_on_cleanup: bool = True
-    retention_days: int = 7
-    auto_cleanup_on_completion: bool = True
-    patterns: dict[str, str] = field(default_factory=lambda: {
-        "workflow": "workflow/*",
-        "agent": "agent/*"
-    })
-    
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> BranchCleanupConfig:
-        """Create from dictionary (configuration file)."""
-        return cls(
-            enabled=data.get("enabled", True),
-            delete_branches_on_cleanup=data.get("delete_branches_on_cleanup", True),
-            retention_days=data.get("retention_days", 7),
-            auto_cleanup_on_completion=data.get("auto_cleanup_on_completion", True),
-            patterns=data.get("patterns", {
-                "workflow": "workflow/*",
-                "agent": "agent/*"
-            })
-        )
-    
-    def validate(self) -> None:
-        """Validate configuration values."""
-        if self.retention_days < 0:
-            raise ValueError("retention_days must be non-negative")
-        if not isinstance(self.patterns, dict):
-            raise ValueError("patterns must be a dictionary")
-```
-
-**Configuration File Format (YAML):**
-```yaml
-workflow:
-  branch_cleanup:
-    enabled: true
-    delete_branches_on_cleanup: true
-    retention_days: 7
-    auto_cleanup_on_completion: true
-    patterns:
-      workflow: "workflow/*"
-      agent: "agent/*"
-```
-
----
-
-## 5. CLI Command Specification
-
-### Command: `cleanup-branches`
-
-**File:** `tapps_agents/cli/workflow_commands.py`
-
-**Function Signature:**
-```python
-@workflow_command("cleanup-branches")
-async def cleanup_branches_command(
-    ctx: Context,
-    dry_run: bool = False,
-    retention_days: int | None = None,
-    pattern: str | None = None,
-    force: bool = False
-) -> None:
-    """
-    Clean up orphaned workflow branches.
-    
-    Args:
-        ctx: Click context
-        dry_run: Preview what would be deleted without actually deleting
-        retention_days: Override retention period (default: from config)
-        pattern: Branch pattern to match (default: all configured patterns)
-        force: Skip confirmation prompts
-    """
-```
-
-**Command-Line Interface:**
-```bash
-tapps-agents workflow cleanup-branches [OPTIONS]
-
-Options:
-  --dry-run              Preview what would be deleted
-  --retention-days INT   Override retention period (days)
-  --pattern TEXT         Branch pattern to match (e.g., "workflow/*")
-  --force                Skip confirmation prompts
-  --help                 Show this message and exit
-```
-
-**Behavior:**
-1. Load configuration from `.tapps-agents/config.yaml`
-2. Initialize `BranchCleanupService` with configuration
-3. Detect orphaned branches (using pattern and retention_days if provided)
-4. Display preview of branches that would be deleted
-5. If `--dry-run`, show preview and exit
-6. If not `--force`, prompt user for confirmation
-7. Execute cleanup operation
-8. Display results summary
-
-**Output Format:**
-```
-Branch Cleanup Preview
-======================
-
-Found 3 orphaned branches:
-  - workflow/my-workflow-1 (age: 10 days)
-  - workflow/my-workflow-2 (age: 8 days)
-  - workflow/my-workflow-3 (age: 5 days)
-
-Would delete 2 branches (older than 7 days):
-  - workflow/my-workflow-1
-  - workflow/my-workflow-2
-
-Proceed with cleanup? [y/N]: y
-
-Cleanup COMPLETED: 2 deleted, 0 skipped, 0 failed
-Execution time: 0.5 seconds
-```
-
----
-
-## 6. Error Handling Specifications
-
-### Error Types
-
-#### GitCommandError
-```python
-class GitCommandError(Exception):
-    """Raised when git command execution fails."""
-    def __init__(self, command: str, returncode: int, stderr: str):
-        self.command = command
-        self.returncode = returncode
-        self.stderr = stderr
-        super().__init__(f"Git command failed: {command}")
-```
-
-**Handling Strategy:**
-- Log error with context
-- Return False/None instead of raising (where appropriate)
-- Include error in CleanupReport for failed operations
-
-#### ConfigurationError
-```python
-class ConfigurationError(Exception):
-    """Raised when configuration is invalid."""
-    def __init__(self, message: str, config_path: Path | None = None):
-        self.config_path = config_path
-        super().__init__(f"Configuration error: {message}")
-```
-
-**Handling Strategy:**
-- Validate configuration on load
-- Use sensible defaults if validation fails
-- Log warning and continue with defaults
-
-### Error Recovery
-
-1. **Non-existent Branch:**
-   - Treat as success (nothing to delete)
-   - Log debug message
-   - Continue operation
-
-2. **Git Command Failure:**
-   - Log warning with error details
-   - Include in CleanupReport.failed_branches
-   - Continue with next branch
-
-3. **Configuration Missing:**
-   - Use default configuration
-   - Log info message
-   - Continue operation
-
----
-
-## 7. Logging Specifications
-
-### Log Levels
-
-- **DEBUG:** Detailed branch information, git command execution
-- **INFO:** Cleanup operations, successful deletions, summary statistics
-- **WARNING:** Failed deletions, configuration issues, non-critical errors
-- **ERROR:** Critical failures, git command errors that prevent operation
-
-### Log Format
-
-```python
-logger.info(
-    f"Deleted branch: {branch_name}",
-    extra={
-        "branch": branch_name,
-        "pattern": pattern,
-        "age_days": age_days
+    return {
+        "statistics": stats,
+        "gaps": gaps,
+        "recommendations": self._generate_recommendations(stats, gaps)
     }
-)
 ```
 
-### Audit Trail
+**Statistics Calculation:**
+```python
+def calculate_statistics(self, commands: list[dict]) -> dict[str, Any]:
+    """
+    Calculate usage statistics from command list.
+    
+    Returns:
+        {
+            "total_commands": int,
+            "cli_commands": int,
+            "cursor_skills": int,
+            "simple_mode": int,
+            "agent_usage": dict[str, int],  # agent_name -> count
+            "command_success_rate": float,
+            "most_used_agents": list[str],
+            "least_used_agents": list[str]
+        }
+    """
+```
 
-All branch deletions are logged with:
-- Timestamp
-- Branch name
-- Pattern matched
-- Age in days
-- Success/failure status
-- Error message (if failed)
-
----
-
-## 8. Testing Contracts
-
-### Unit Test Specifications
-
-#### `_delete_branch()` Tests
-- ✅ Delete existing branch (success)
-- ✅ Delete non-existent branch (success - no error)
-- ✅ Safe delete fails, force delete succeeds
-- ✅ Both safe and force delete fail (returns False)
-- ✅ Branch name validation
-- ✅ Error logging verification
-
-#### `detect_orphaned_branches()` Tests
-- ✅ Detect orphaned branches correctly
-- ✅ Filter by pattern
-- ✅ Filter by retention_days
-- ✅ Sort by age (oldest first)
-- ✅ Handle git command errors gracefully
-- ✅ Return empty list when no orphaned branches
-
-#### `cleanup_orphaned_branches()` Tests
-- ✅ Dry-run mode (no actual deletion)
-- ✅ Delete orphaned branches older than retention period
-- ✅ Skip branches with uncommitted changes (keep_active=True)
-- ✅ Generate accurate CleanupReport
-- ✅ Handle partial failures gracefully
-- ✅ Confirmation prompt (when not force)
-
-### Integration Test Specifications
-
-- ✅ End-to-end workflow execution with branch cleanup
-- ✅ CLI command execution with various options
-- ✅ Configuration loading and validation
-- ✅ Error recovery and logging
-- ✅ Windows path handling
-- ✅ Large number of branches (performance)
+**Gap Identification:**
+```python
+def identify_gaps(
+    self,
+    actual_stats: dict[str, Any],
+    intended_usage: dict[str, Any] | None = None
+) -> list[dict]:
+    """
+    Identify gaps between intended and actual usage.
+    
+    Returns:
+        List of gap dictionaries:
+        [
+            {
+                "type": "usage_pattern",  # or "workflow", "agent"
+                "description": str,
+                "impact": "high" | "medium" | "low",
+                "recommendation": str
+            },
+            ...
+        ]
+    """
+```
 
 ---
 
-## 9. Performance Requirements
+### 3. WorkflowAnalyzer Class Specification
 
-### Response Time Targets
+**File:** `tapps_agents/agents/evaluator/workflow_analyzer.py`
 
-- `_delete_branch()`: < 1 second per branch
-- `detect_orphaned_branches()`: < 5 seconds for 100 branches
-- `cleanup_orphaned_branches()`: < 10 seconds for 50 branches
+**Class Definition:**
+```python
+class WorkflowAnalyzer:
+    """
+    Analyzes workflow adherence and execution patterns.
+    
+    Checks:
+    - Steps executed vs steps required
+    - Documentation artifacts created
+    - Workflow deviations
+    - Completion rates
+    """
+```
 
-### Resource Usage
+**Key Methods:**
 
-- **Memory:** < 50 MB for 100 branches
-- **CPU:** Minimal (git commands are I/O bound)
-- **Disk I/O:** Only git metadata access
+```python
+def analyze_workflow(
+    self,
+    workflow_id: str,
+    workflow_state: dict[str, Any],
+    workflow_definition: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """
+    Analyze workflow execution.
+    
+    Args:
+        workflow_id: Workflow identifier
+        workflow_state: Workflow execution state
+        workflow_definition: Workflow YAML definition (if available)
+    
+    Returns:
+        Dictionary with workflow analysis
+    """
+    # Check step completion
+    step_analysis = self.check_step_completion(workflow_definition, workflow_state)
+    
+    # Verify artifacts
+    artifact_analysis = self.verify_artifacts(workflow_definition, workflow_state)
+    
+    # Identify deviations
+    deviations = self.identify_deviations(workflow_definition, workflow_state)
+    
+    return {
+        "workflow_id": workflow_id,
+        "step_analysis": step_analysis,
+        "artifact_analysis": artifact_analysis,
+        "deviations": deviations,
+        "recommendations": self._generate_recommendations(step_analysis, deviations)
+    }
+```
 
-### Scalability
+**Step Completion Check:**
+```python
+def check_step_completion(
+    self,
+    workflow_definition: dict[str, Any] | None,
+    workflow_state: dict[str, Any]
+) -> dict[str, Any]:
+    """
+    Check if all required steps were executed.
+    
+    Returns:
+        {
+            "steps_required": int,
+            "steps_executed": int,
+            "completion_rate": float,
+            "missing_steps": list[str],
+            "executed_steps": list[str]
+        }
+    """
+```
 
-- Support 1000+ branches efficiently
-- Streaming processing for large branch lists
-- Batch operations where possible
+**Artifact Verification:**
+```python
+def verify_artifacts(
+    self,
+    workflow_definition: dict[str, Any] | None,
+    workflow_state: dict[str, Any]
+) -> dict[str, Any]:
+    """
+    Verify documentation artifacts were created.
+    
+    Returns:
+        {
+            "artifacts_expected": list[str],
+            "artifacts_created": list[str],
+            "artifacts_missing": list[str],
+            "creation_rate": float
+        }
+    """
+```
 
 ---
 
-## 10. Security Specifications
+### 4. QualityAnalyzer Class Specification
 
-### Input Validation
+**File:** `tapps_agents/agents/evaluator/quality_analyzer.py`
 
-- Branch names must match safe patterns
-- Pattern validation (regex/fnmatch)
-- Path traversal prevention
-- Sanitize all user inputs
+**Class Definition:**
+```python
+class QualityAnalyzer:
+    """
+    Analyzes code quality metrics and issues.
+    
+    Tracks:
+    - Quality scores from reviewer agent
+    - Quality issues (syntax errors, test failures)
+    - Quality trends over time
+    """
+```
 
-### Authorization
+**Key Methods:**
 
-- Only delete branches matching configured patterns
-- Never delete branches outside `workflow/*` or `agent/*`
-- Verify branch name format before deletion
+```python
+def analyze_quality(
+    self,
+    quality_data: dict[str, Any] | None = None,
+    workflow_state: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """
+    Analyze code quality metrics.
+    
+    Args:
+        quality_data: Quality scores from reviewer agent (if available)
+        workflow_state: Workflow state (may contain quality data)
+    
+    Returns:
+        Dictionary with quality analysis
+    """
+    # Collect quality scores
+    scores = self._collect_scores(quality_data, workflow_state)
+    
+    # Identify issues
+    issues = self.identify_issues(scores)
+    
+    # Track trends (if historical data available)
+    trends = self.track_trends(scores) if self._has_historical_data() else {}
+    
+    return {
+        "scores": scores,
+        "issues": issues,
+        "trends": trends,
+        "recommendations": self._generate_recommendations(scores, issues)
+    }
+```
 
-### Audit Logging
-
-- Log all deletion attempts (success and failure)
-- Include timestamp, branch name, user context
-- Generate audit report for compliance
+**Issue Identification:**
+```python
+def identify_issues(
+    self,
+    scores: dict[str, float],
+    thresholds: dict[str, float] | None = None
+) -> list[dict]:
+    """
+    Identify quality issues below thresholds.
+    
+    Returns:
+        List of issue dictionaries:
+        [
+            {
+                "metric": str,  # "complexity", "security", etc.
+                "score": float,
+                "threshold": float,
+                "severity": "high" | "medium" | "low",
+                "recommendation": str
+            },
+            ...
+        ]
+    """
+```
 
 ---
 
-## Summary
+### 5. ReportGenerator Class Specification
 
-This design specification provides:
+**File:** `tapps_agents/agents/evaluator/report_generator.py`
 
-✅ **Complete API contracts** - All methods fully specified  
-✅ **Data models** - Comprehensive data structures  
-✅ **Error handling** - Robust error recovery  
-✅ **Configuration** - Flexible and validated  
-✅ **CLI interface** - User-friendly command design  
-✅ **Testing contracts** - Clear test requirements  
-✅ **Performance targets** - Measurable goals  
-✅ **Security requirements** - Safe operations  
+**Class Definition:**
+```python
+class ReportGenerator:
+    """
+    Generates structured markdown reports.
+    
+    Combines analyzer outputs into actionable report with:
+    - Executive summary
+    - Usage statistics
+    - Workflow adherence
+    - Quality metrics
+    - Prioritized recommendations
+    """
+```
 
-**Proceed to Step 5: Implementation**
+**Key Methods:**
+
+```python
+def generate_report(
+    self,
+    usage_data: dict[str, Any],
+    workflow_data: dict[str, Any] | None = None,
+    quality_data: dict[str, Any] | None = None
+) -> str:
+    """
+    Generate markdown report from analyzer outputs.
+    
+    Args:
+        usage_data: Output from UsageAnalyzer
+        workflow_data: Output from WorkflowAnalyzer (optional)
+        quality_data: Output from QualityAnalyzer (optional)
+    
+    Returns:
+        Markdown report as string
+    """
+    # Build report sections
+    sections = []
+    
+    # Executive Summary
+    sections.append(self._generate_executive_summary(
+        usage_data, workflow_data, quality_data
+    ))
+    
+    # Usage Statistics
+    sections.append(self._generate_usage_section(usage_data))
+    
+    # Workflow Adherence (if available)
+    if workflow_data:
+        sections.append(self._generate_workflow_section(workflow_data))
+    
+    # Quality Metrics (if available)
+    if quality_data:
+        sections.append(self._generate_quality_section(quality_data))
+    
+    # Recommendations
+    recommendations = self._collect_recommendations(
+        usage_data, workflow_data, quality_data
+    )
+    prioritized = self.prioritize_recommendations(recommendations)
+    sections.append(self._generate_recommendations_section(prioritized))
+    
+    return "\n\n".join(sections)
+```
+
+**Recommendation Prioritization:**
+```python
+def prioritize_recommendations(
+    self,
+    recommendations: list[dict]
+) -> dict[str, list[dict]]:
+    """
+    Prioritize recommendations into Priority 1, 2, 3.
+    
+    Priority 1 (Critical): High impact, easy to fix
+    Priority 2 (Important): High impact, moderate effort
+    Priority 3 (Nice to Have): Lower impact or high effort
+    
+    Returns:
+        {
+            "priority_1": list[dict],
+            "priority_2": list[dict],
+            "priority_3": list[dict]
+        }
+    """
+```
+
+**Report Sections:**
+
+1. **Executive Summary:**
+   - Quick TL;DR
+   - Top 3 recommendations
+   - Overall assessment
+
+2. **Usage Statistics:**
+   - Command breakdown
+   - CLI vs Skills vs Simple Mode
+   - Agent usage frequency
+   - Success rates
+
+3. **Workflow Adherence:**
+   - Steps executed vs required
+   - Documentation artifacts
+   - Deviations identified
+
+4. **Quality Metrics:**
+   - Overall scores
+   - Quality issues
+   - Trends (if available)
+
+5. **Recommendations:**
+   - Priority 1 (Critical)
+   - Priority 2 (Important)
+   - Priority 3 (Nice to Have)
+
+---
+
+## Data Models
+
+### Command Data Model
+```python
+{
+    "command": str,  # e.g., "review", "implement"
+    "agent": str,    # e.g., "reviewer", "implementer"
+    "invocation_method": str,  # "cli", "cursor_skill", "simple_mode"
+    "timestamp": datetime,
+    "success": bool,
+    "duration": float,  # seconds
+    "workflow_id": str | None
+}
+```
+
+### Workflow State Model
+```python
+{
+    "workflow_id": str,
+    "workflow_type": str,  # "build", "full", etc.
+    "steps": list[dict],  # Step execution data
+    "artifacts": list[str],  # Created artifact paths
+    "quality_scores": dict[str, float] | None,
+    "completed": bool,
+    "duration": float
+}
+```
+
+### Report Model
+```python
+{
+    "timestamp": datetime,
+    "evaluation_type": str,  # "full", "workflow"
+    "workflow_id": str | None,
+    "usage_statistics": dict,
+    "workflow_analysis": dict | None,
+    "quality_analysis": dict | None,
+    "recommendations": {
+        "priority_1": list[dict],
+        "priority_2": list[dict],
+        "priority_3": list[dict]
+    }
+}
+```
+
+---
+
+## API Specifications
+
+### CLI API
+
+**Command:** `tapps-agents evaluator evaluate [options]`
+
+**Options:**
+- `--workflow-id <id>`: Evaluate specific workflow
+- `--format json|text|markdown`: Output format (default: markdown)
+- `--output <file>`: Output file path (default: `.tapps-agents/evaluations/evaluation-{timestamp}.md`)
+
+**Example:**
+```bash
+tapps-agents evaluator evaluate --workflow-id workflow-123 --format markdown
+```
+
+### Cursor Skills API
+
+**Command:** `@evaluator *evaluate [--workflow-id <id>]`
+
+**Example:**
+```
+@evaluator *evaluate
+@evaluator *evaluate-workflow workflow-123
+```
+
+---
+
+## Configuration
+
+**File:** `.tapps-agents/config.yaml`
+
+**Section:**
+```yaml
+evaluator:
+  auto_run: false  # Run automatically at end of workflows
+  output_dir: ".tapps-agents/evaluations"
+  thresholds:
+    quality_score: 70.0
+    workflow_completion: 0.8
+  enabled: true
+```
+
+---
+
+## Error Handling
+
+**Error Types:**
+- `EvaluationError`: Base exception for evaluation failures
+- `DataCollectionError`: Failed to collect evaluation data
+- `AnalysisError`: Failed during analysis
+- `ReportGenerationError`: Failed to generate report
+
+**Error Handling Strategy:**
+- Graceful degradation (continue with available data)
+- Clear error messages
+- Logging for debugging
+- Return partial results if possible
+
+---
+
+## Next Steps
+
+Proceed to Step 5: Code Implementation

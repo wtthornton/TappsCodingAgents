@@ -38,6 +38,7 @@ from .commands import (
     designer,
     documenter,
     enhancer,
+    evaluator,
     implementer,
     improver,
     ops,
@@ -52,6 +53,7 @@ from .commands import (
 # Import all parser registration functions
 from .parsers import (
     analyst as analyst_parsers,
+    evaluator as evaluator_parsers,
 )
 from .parsers import (
     architect as architect_parsers,
@@ -296,6 +298,7 @@ def register_all_parsers(parser: argparse.ArgumentParser) -> None:
     improver_parsers.add_improver_parser(subparsers)
     ops_parsers.add_ops_parser(subparsers)
     enhancer_parsers.add_enhancer_parser(subparsers)
+    evaluator_parsers.add_evaluator_parser(subparsers)
 
     # Register top-level parsers
     top_level_parsers.add_top_level_parsers(subparsers)
@@ -354,6 +357,8 @@ def route_command(args: argparse.Namespace) -> None:
         ops.handle_ops_command(args)
     elif args.agent == "enhancer":
         enhancer.handle_enhancer_command(args)
+    elif args.agent == "evaluator":
+        evaluator.handle_evaluator_command(args)
     # Route top-level commands
     elif args.agent == "create":
         top_level.handle_create_command(args)

@@ -161,7 +161,7 @@ Both of these are supported:
 
 From `python -m tapps_agents.cli --help`, the CLI exposes:
 
-- **Agent subcommands**: `reviewer`, `planner`, `implementer`, `tester`, `debugger`, `documenter`, `analyst`, `architect`, `designer`, `improver`, `ops`, `enhancer`, `orchestrator`
+- **Agent subcommands**: `reviewer`, `planner`, `implementer`, `tester`, `debugger`, `documenter`, `analyst`, `architect`, `designer`, `improver`, `ops`, `enhancer`, `orchestrator`, `evaluator`
 - **Utility subcommands**: `workflow`, `init`, `doctor`, `score`, `setup-experts`, `analytics`, `create`, `hardware-profile` (or `hardware`)
 
 ### Command Naming (with and without `*`)
@@ -236,6 +236,12 @@ python -m tapps_agents.cli create "Create a REST API for user management" --work
 python -m tapps_agents.cli hardware-profile
 python -m tapps_agents.cli hardware-profile --set nuc
 python -m tapps_agents.cli hardware-profile --set auto
+
+# Evaluator - Framework effectiveness analysis
+python -m tapps_agents.cli evaluator evaluate
+python -m tapps_agents.cli evaluator evaluate --workflow-id workflow-123
+python -m tapps_agents.cli evaluator evaluate --output my-evaluation.md
+python -m tapps_agents.cli evaluator evaluate-workflow workflow-123 --format markdown
 ```
 
 ## Batch Operations
@@ -328,6 +334,82 @@ Thresholds: complexity < 5.0
 Step 1: Create auth module
 Step 2: Add JWT handling
 ```
+
+## Evaluator Agent
+
+The Evaluator Agent analyzes TappsCodingAgents framework effectiveness and generates actionable improvement recommendations.
+
+### Python API
+
+```python
+import asyncio
+from tapps_agents.agents.evaluator.agent import EvaluatorAgent
+
+async def main() -> None:
+    agent = EvaluatorAgent()
+    await agent.activate()
+    try:
+        # Evaluate framework effectiveness
+        result = await agent.run("evaluate", workflow_id="workflow-123")
+        print(result)
+        
+        # Evaluate specific workflow
+        result = await agent.run("evaluate-workflow", workflow_id="workflow-123")
+        print(result)
+    finally:
+        await agent.close()
+
+asyncio.run(main())
+```
+
+### CLI Usage
+
+```bash
+# Evaluate framework effectiveness
+python -m tapps_agents.cli evaluator evaluate
+
+# Evaluate specific workflow
+python -m tapps_agents.cli evaluator evaluate --workflow-id workflow-123
+
+# Generate report with custom output
+python -m tapps_agents.cli evaluator evaluate --output my-evaluation.md
+
+# Evaluate workflow with markdown format
+python -m tapps_agents.cli evaluator evaluate-workflow workflow-123 --format markdown
+```
+
+### Output Format
+
+The evaluator generates structured markdown reports with:
+
+- **Executive Summary (TL;DR)**: Quick overview of findings
+- **Usage Statistics**: Command usage patterns (CLI vs Cursor Skills vs Simple Mode)
+- **Workflow Adherence Analysis**: Did users follow intended workflows?
+- **Quality Metrics**: Code quality assessment
+- **Prioritized Recommendations**: 
+  - Priority 1: Critical improvements
+  - Priority 2: Important improvements
+  - Priority 3: Nice-to-have improvements
+
+### Workflow Integration
+
+The evaluator can run automatically at the end of `*build` workflows when enabled in configuration:
+
+```yaml
+agents:
+  evaluator:
+    auto_run: true  # Enable automatic evaluation
+    output_dir: ".tapps-agents/evaluations"
+    thresholds:
+      quality_score: 70.0
+      workflow_completion: 0.8
+```
+
+### Report Location
+
+Reports are saved to `.tapps-agents/evaluations/` by default, with filenames like:
+- `evaluation-2025-01-15-143022.md`
+- `workflow-workflow-123-evaluation.md`
 
 ## Related Documentation
 

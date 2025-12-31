@@ -608,6 +608,11 @@ def handle_workflow_command(args: object) -> None:
     if preset_name == "recommend":
         handle_workflow_recommend_command(args)
         return
+    
+    # Handle cleanup-branches subcommand
+    if preset_name == "cleanup-branches":
+        handle_workflow_cleanup_branches_command(args)
+        return
 
     loader = PresetLoader()
 
@@ -2521,6 +2526,130 @@ def handle_workflow_state_cleanup_command(args: object) -> None:
     except Exception as e:
         print(f"Error during cleanup: {e}", file=sys.stderr)
         sys.exit(1)
+
+
+def handle_workflow_cleanup_branches_command(args: object) -> None:
+    """Handle 'workflow cleanup-branches' command"""
+    import asyncio
+    from pathlib import Path
+    
+    from ...workflow.branch_cleanup import BranchCleanupService
+    
+    dry_run = getattr(args, "dry_run", False)
+    retention_days = getattr(args, "retention_days", None)
+    pattern = getattr(args, "pattern", None)
+    force = getattr(args, "force", False)
+    output_format = getattr(args, "format", "text")
+    
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    operation_desc = "Previewing branch cleanup" if dry_run else "Cleaning up orphaned branches"
+    feedback.start_operation("Branch Cleanup", operation_desc)
+    
+    try:
+        project_root = Path.cwd()
+        service = BranchCleanupService(project_root=project_root)
+        
+        # Build patterns dict if pattern provided
+        patterns = None
+        if pattern:
+            patterns = {"custom": pattern}
+        
+        # Confirm unless dry-run or force
+        if not dry_run and not force:
+            feedback.running("Detecting orphaned branches...", step=1, total_steps=3)
+            # Pre-scan to show what would be deleted
+            orphaned = asyncio.run(service.detect_orphaned_branches(patterns=patterns))
+            
+            if orphaned:
+                print(f"\n{'='*60}")
+                print("Orphaned Branches Found:")
+                print(f"{'='*60}")
+                for branch in orphaned:
+                    age_str = f" ({branch.metadata.age_days:.1f} days old)" if branch.metadata.age_days else ""
+                    print(f"  • {branch.branch_name}{age_str}")
+                    print(f"    Reason: {branch.reason}")
+                print(f"{'='*60}")
+                print(f"\nTotal: {len(orphaned)} branches")
+                response = input("\nDelete these branches? (yes/no): ").strip().lower()
+                if response not in ["yes", "y"]:
+                    print("Cancelled.")
+                    return
+            else:
+                print("\nNo orphaned branches found.")
+                return
+        
+        feedback.running("Running cleanup...", step=2, total_steps=3)
+        
+        # Run cleanup
+        report = asyncio.run(
+            service.cleanup_orphaned_branches(
+                dry_run=dry_run,
+                patterns=patterns,
+                max_age_days=retention_days,
+            )
+        )
+        
+        feedback.running("Cleanup complete", step=3, total_steps=3)
+        feedback.clear_progress()
+        
+        # Display results
+        if output_format == "json":
+            import json
+            result = {
+                "total_branches_scanned": report.total_branches_scanned,
+                "orphaned_branches_found": report.orphaned_branches_found,
+                "branches_deleted": report.branches_deleted,
+                "branches_failed": report.branches_failed,
+                "dry_run": report.dry_run,
+                "branches": [
+                    {
+                        "branch_name": b.branch_name,
+                        "reason": b.reason,
+                        "age_days": b.metadata.age_days,
+                    }
+                    for b in report.branches
+                ],
+                "errors": report.errors,
+            }
+            print(json.dumps(result, indent=2))
+        else:
+            print(f"\n{'='*60}")
+            print("Branch Cleanup Results")
+            print(f"{'='*60}")
+            print(f"Total branches scanned: {report.total_branches_scanned}")
+            print(f"Orphaned branches found: {report.orphaned_branches_found}")
+            if dry_run:
+                print(f"Branches that would be deleted: {report.branches_deleted}")
+            else:
+                print(f"Branches deleted: {report.branches_deleted}")
+                if report.branches_failed > 0:
+                    print(f"Branches failed: {report.branches_failed}")
+            print(f"{'='*60}")
+            
+            if report.branches:
+                print("\nBranches:")
+                for branch in report.branches:
+                    age_str = f" ({branch.metadata.age_days:.1f} days old)" if branch.metadata.age_days else ""
+                    status = "[DRY RUN]" if dry_run else "[DELETED]"
+                    print(f"  {status} {branch.branch_name}{age_str}")
+                    print(f"    Reason: {branch.reason}")
+            
+            if report.errors:
+                print("\nErrors:")
+                for error in report.errors:
+                    print(f"  • {error}")
+        
+        feedback.success("Branch cleanup completed")
+        
+    except Exception as e:
+        feedback.error(
+            f"Error during branch cleanup: {e}",
+            error_code="cleanup_error",
+            exit_code=1,
+        )
+        import traceback
+        traceback.print_exc()
 
 
 def handle_workflow_resume_command(args: object) -> None:

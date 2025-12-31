@@ -1708,7 +1708,20 @@ class CursorWorkflowExecutor:
             # Always cleanup, even on cancellation or exception
             if worktree_path:
                 try:
-                    await self.worktree_manager.remove_worktree(worktree_name)
+                    # Determine if we should delete the branch based on configuration
+                    from ..core.config import load_config
+                    config = load_config()
+                    should_delete = (
+                        config.workflow.branch_cleanup.delete_branches_on_cleanup
+                        if (
+                            config.workflow.branch_cleanup
+                            and config.workflow.branch_cleanup.enabled
+                        )
+                        else True  # Default to True for backward compatibility (same as parameter default)
+                    )
+                    await self.worktree_manager.remove_worktree(
+                        worktree_name, delete_branch=should_delete
+                    )
                 except Exception as e:
                     # Log but don't raise - cleanup failures shouldn't break workflow
                     if self.logger:
@@ -1869,7 +1882,20 @@ class CursorWorkflowExecutor:
 
             # Remove the worktree on success (keep on failure for debugging)
             try:
-                await self.worktree_manager.remove_worktree(worktree_name)
+                # Determine if we should delete the branch based on configuration
+                from ..core.config import load_config
+                config = load_config()
+                should_delete = (
+                    config.workflow.branch_cleanup.delete_branches_on_cleanup
+                    if (
+                        config.workflow.branch_cleanup
+                        and config.workflow.branch_cleanup.enabled
+                    )
+                    else True  # Default to True for backward compatibility
+                )
+                await self.worktree_manager.remove_worktree(
+                    worktree_name, delete_branch=should_delete
+                )
             except Exception:
                 pass
 

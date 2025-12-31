@@ -27,7 +27,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
 
     def get_agent_sequence(self) -> list[str]:
         """Get the sequence of agents for build workflow."""
-        return ["enhancer", "planner", "architect", "designer", "implementer"]
+        return ["enhancer", "planner", "architect", "designer", "implementer", "reviewer", "tester", "documenter"]
 
     async def execute(
         self,
