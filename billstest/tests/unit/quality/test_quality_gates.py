@@ -75,13 +75,14 @@ class TestQualityGate:
 
     def test_evaluate_passing_scores(self, gate):
         """Test evaluating passing scores."""
+        # Use correct score keys (with _score suffix) and proper scales
         scores = {
-            "overall": 9.0,
-            "security": 9.5,
-            "maintainability": 8.0,
-            "complexity": 4.0,
-            "test_coverage": 85.0,
-            "performance": 8.0
+            "overall_score": 90.0,  # 0-100 scale
+            "security_score": 9.5,  # 0-10 scale
+            "maintainability_score": 8.0,  # 0-10 scale
+            "complexity_score": 4.0,  # 0-10 scale (lower is better)
+            "test_coverage_score": 8.0,  # 0-10 scale (represents 80%)
+            "performance_score": 8.0  # 0-10 scale
         }
         
         result = gate.evaluate(scores)
@@ -94,13 +95,14 @@ class TestQualityGate:
 
     def test_evaluate_failing_scores(self, gate):
         """Test evaluating failing scores."""
+        # Use correct score keys (with _score suffix) and proper scales
         scores = {
-            "overall": 7.0,  # Below 8.0
-            "security": 7.0,  # Below 8.5
-            "maintainability": 6.0,  # Below 7.0
-            "complexity": 6.0,  # Above 5.0
-            "test_coverage": 70.0,  # Below 80.0
-            "performance": 6.0  # Below 7.0
+            "overall_score": 70.0,  # 0-100 scale, below threshold (8.0/10 = 80/100)
+            "security_score": 7.0,  # 0-10 scale, below 8.5
+            "maintainability_score": 6.0,  # 0-10 scale, below 7.0
+            "complexity_score": 6.0,  # 0-10 scale, above 5.0 (lower is better)
+            "test_coverage_score": 7.0,  # 0-10 scale (represents 70%), below 80%
+            "performance_score": 6.0  # 0-10 scale, below 7.0
         }
         
         result = gate.evaluate(scores)
@@ -113,13 +115,14 @@ class TestQualityGate:
 
     def test_evaluate_partial_failure(self, gate):
         """Test evaluating scores with partial failures."""
+        # Use correct score keys (with _score suffix) and proper scales
         scores = {
-            "overall": 8.5,  # Pass
-            "security": 7.0,  # Fail
-            "maintainability": 8.0,  # Pass
-            "complexity": 4.0,  # Pass
-            "test_coverage": 85.0,  # Pass
-            "performance": 8.0  # Pass
+            "overall_score": 85.0,  # 0-100 scale, passes (>= 80)
+            "security_score": 7.0,  # 0-10 scale, fails (< 8.5)
+            "maintainability_score": 8.0,  # 0-10 scale, passes
+            "complexity_score": 4.0,  # 0-10 scale, passes (<= 5.0)
+            "test_coverage_score": 8.5,  # 0-10 scale (represents 85%), passes
+            "performance_score": 8.0  # 0-10 scale, passes
         }
         
         result = gate.evaluate(scores)
@@ -138,13 +141,14 @@ class TestQualityGate:
         )
         gate = QualityGate(thresholds=custom_thresholds)
         
+        # Use correct score keys (with _score suffix) and proper scales
         scores = {
-            "overall": 8.5,  # Below custom 9.0
-            "security": 9.0,  # Below custom 9.5
-            "maintainability": 8.0,
-            "complexity": 4.0,
-            "test_coverage": 85.0,
-            "performance": 8.0
+            "overall_score": 85.0,  # 0-100 scale, below custom 9.0/10 = 90/100
+            "security_score": 9.0,  # 0-10 scale, below custom 9.5
+            "maintainability_score": 8.0,
+            "complexity_score": 4.0,
+            "test_coverage_score": 8.5,
+            "performance_score": 8.0
         }
         
         result = gate.evaluate(scores)

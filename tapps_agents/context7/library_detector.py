@@ -472,6 +472,124 @@ class LibraryDetector:
         
         return sorted(list(libraries))
 
+    def _normalize_library_name(self, lib_name: str) -> str:
+        """
+        Normalize library name for Context7 lookup.
+        
+        Normalizations:
+        - Strip submodule paths (e.g., "playwright/test" → "playwright")
+        - Remove scoped package prefixes (e.g., "@types/react" → "react")
+        - Convert to lowercase
+        - Remove version suffixes
+        
+        Args:
+            lib_name: Raw library name
+            
+        Returns:
+            Normalized library name
+        """
+        if not lib_name:
+            return ""
+        
+        # Remove scoped package prefixes
+        normalized = lib_name.replace("@types/", "").replace("@", "")
+        
+        # Split on path separators and take first part (base package name)
+        # Examples: "playwright/test" → "playwright", "numpy/core" → "numpy"
+        if "/" in normalized:
+            normalized = normalized.split("/")[0]
+        elif "." in normalized and not normalized.startswith("."):
+            # For Python-style imports like "django.contrib.auth", take first part
+            # But preserve names like ".env" (relative imports)
+            parts = normalized.split(".")
+            if len(parts) > 1 and parts[0]:
+                normalized = parts[0]
+        
+        # Remove version suffixes and special characters
+        # Examples: "react@18.0.0" → "react", "vue@next" → "vue"
+        normalized = re.sub(r'[@~^<=>].*$', '', normalized)
+        
+        # Convert to lowercase
+        normalized = normalized.lower().strip()
+        
+        return normalized
+    
+    def _is_valid_library_name(self, lib_name: str) -> bool:
+        """
+        Validate if a library name is valid for Context7 lookup.
+        
+        Args:
+            lib_name: Library name to validate
+            
+        Returns:
+            True if valid, False otherwise
+        """
+        if not lib_name or len(lib_name) < 1:
+            return False
+        
+        # Filter out standard library modules
+        if self._is_stdlib(lib_name):
+            return False
+        
+        # Filter out names with invalid characters for package names
+        # Allow: alphanumeric, hyphens, underscores
+        # Disallow: slashes (should be normalized), dots (submodules), special chars
+        if re.search(r'[^a-z0-9_-]', lib_name.lower()):
+            # Allow dots only if it's a known scoped package pattern
+            if "/" in lib_name or lib_name.count(".") > 1:
+                return False
+        
+        # Filter out very short names (likely false positives)
+        if len(lib_name) < 2:
+            return False
+        
+        # Filter out common false positives (generic directory/structure names)
+        # 
+        # Research findings (verified with Context7 MCP):
+        # - Context7 uses partial/fuzzy matching, so generic names match many libraries
+        # - Names like "test" match "GoogleTest", "Jest" but not a library literally called "test"
+        # - These are typically project structure directories, not installed packages
+        # - We filter them when detected from CODE (local dirs), but keep if in project files (real deps)
+        #
+        # Names we DO filter (verified as directory names, not exact library matches):
+        # - "test", "tests", "testing" → matches test frameworks but not "test" itself
+        # - "utils", "util" → matches sqlite-utils, etc. but not "utils" itself  
+        # - "lib", "libs" → matches libSQL, libzip but not "lib" itself
+        # - "src", "dist", "build" → standard build directories
+        # - "main", "index" → common entry point files
+        # - "views", "controllers", "routes", "handlers", "middleware" → MVC structure dirs
+        # - "types", "constants", "exceptions", "errors" → common code organization dirs
+        #
+        # Names we DON'T filter (verified as valid libraries in Context7):
+        # - "config", "models", "services" → valid library names (node-config, Foundation Models, etc.)
+        # - "settings" → valid (pydantic-settings, typed-settings)
+        # - "app", "server", "client", "api", "web" → can be valid libraries (Appwrite, webpack, etc.)
+        #
+        false_positives = {
+            # Testing directories (not libraries)
+            "test", "tests", "testing",
+            # Utility directories (not the "utils" library itself)
+            "utils", "util", "helpers", "helper",
+            # Build/structure directories
+            "lib", "libs", "src", "dist", "build",
+            # Entry point files
+            "main", "index",
+            # MVC/structure directories
+            "views", "view", "controllers", "controller", "routes", "route",
+            "handlers", "handler", "middleware", "middlewares",
+            # Code organization directories
+            "types", "type", "constants", "constant", "exceptions", "exception",
+            "errors", "error",
+        }
+        # Note: We intentionally DON'T filter "config", "models", "services", "settings",
+        # "app", "server", "client", "api", "web" because Context7 has valid libraries
+        # with these exact names. If detected from local directories, Context7 lookup
+        # will fail gracefully (debug log only). Project file detection will catch real deps.
+        if lib_name.lower() in false_positives:
+            return False
+        
+        return True
+
     def detect_all(
         self,
         code: str | None = None,
@@ -481,6 +599,8 @@ class LibraryDetector:
     ) -> list[str]:
         """
         Detect libraries from all available sources.
+        
+        Automatically normalizes and validates library names before returning.
 
         Args:
             code: Optional code content
@@ -489,24 +609,74 @@ class LibraryDetector:
             language: Programming language
 
         Returns:
-            Combined list of detected library names (deduplicated)
+            Combined list of detected library names (deduplicated and normalized)
         """
-        libraries = set()
+        # Priority 1: Project files (most reliable - these are installed dependencies)
+        project_libraries = set(self.detect_from_project_files())
+        
+        # Priority 2-4: Other sources (may include local directories)
+        other_libraries = set()
 
-        # From project files
-        libraries.update(self.detect_from_project_files())
-
-        # From code
+        # From code (may include local directories, so we check against project files)
         if code:
-            libraries.update(self.detect_from_code(code, language))
+            code_libs = self.detect_from_code(code, language)
+            for lib in code_libs:
+                # Only include code-detected libraries if they're also in project files
+                # This filters out local directory imports like "from config import ..."
+                # UNLESS they're also actual dependencies
+                normalized = self._normalize_library_name(lib)
+                if normalized and normalized in project_libraries:
+                    other_libraries.add(normalized)
+                # But if it's a well-known library, include it anyway
+                # (prompt/error detection will handle explicit mentions)
+                elif normalized and self._is_well_known_library(normalized):
+                    other_libraries.add(normalized)
 
-        # From prompt
+        # From prompt (explicit mentions - higher confidence)
         if prompt:
-            libraries.update(self.detect_from_prompt(prompt))
+            other_libraries.update(self.detect_from_prompt(prompt))
 
-        # From error messages (NEW)
+        # From error messages (explicit mentions - higher confidence)
         if error_message:
-            libraries.update(self.detect_from_error(error_message))
+            other_libraries.update(self.detect_from_error(error_message))
 
-        return sorted(list(libraries))
+        # Combine: project libraries + other sources
+        all_libraries = project_libraries | other_libraries
+
+        # Normalize and validate all detected library names
+        normalized_libraries = set()
+        for lib in all_libraries:
+            normalized = self._normalize_library_name(lib)
+            if normalized and self._is_valid_library_name(normalized):
+                normalized_libraries.add(normalized)
+
+        return sorted(list(normalized_libraries))
+    
+    def _is_well_known_library(self, lib_name: str) -> bool:
+        """
+        Check if a library name is a well-known library (not a local directory).
+        
+        Args:
+            lib_name: Library name to check
+            
+        Returns:
+            True if it's a well-known library name
+        """
+        well_known = {
+            # Python
+            "fastapi", "django", "flask", "pydantic", "sqlalchemy", "pytest",
+            "requests", "httpx", "aiohttp", "click", "typer", "numpy", "pandas",
+            "openai", "anthropic", "yaml", "pyyaml", "pydantic", "marshmallow",
+            # JavaScript/TypeScript
+            "react", "vue", "angular", "express", "nextjs", "nuxt", "svelte",
+            "typescript", "jest", "vitest", "playwright", "cypress", "selenium",
+            "axios", "lodash", "moment", "dayjs",
+            # Node.js
+            "node", "npm", "yarn", "pnpm",
+            # Testing
+            "playwright", "puppeteer", "selenium", "cypress", "jest", "mocha",
+            # Config/Infra - These ARE valid libraries in Context7
+            "config", "dotenv", "env",
+        }
+        return lib_name.lower() in well_known
 

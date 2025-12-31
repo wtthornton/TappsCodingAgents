@@ -2,6 +2,7 @@
 Reviewer Agent - Performs code review with scoring
 """
 
+import asyncio
 import logging
 from pathlib import Path
 from typing import Any
@@ -31,6 +32,8 @@ from .websocket_validator import WebSocketValidator
 from .mqtt_validator import MQTTValidator
 from .docker_compose_validator import DockerComposeValidator
 from .dockerfile_validator import DockerfileValidator
+from .library_patterns import LibraryPatternRegistry
+from .validation import validate_file_path_input, validate_inputs, validate_boolean
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +148,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         
         # Initialize Dockerfile validator (Phase 4.2: HomeIQ Support)
         self.dockerfile_validator = DockerfileValidator()
+        
+        # Initialize library pattern registry for extensible library-specific checks
+        self.pattern_registry = LibraryPatternRegistry()
 
     async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the reviewer agent with expert support."""
@@ -489,6 +495,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         except Exception:
             return 10.0  # No penalty on error
 
+    @validate_inputs(
+        include_scoring=validate_boolean,
+        include_llm_feedback=validate_boolean,
+    )
     async def review_file(
         self,
         file_path: Path,
@@ -509,8 +519,11 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Raises:
             TimeoutError: If review operation exceeds configured timeout
             ValueError: If file cannot be read or validated
+            FileNotFoundError: If file does not exist
             RuntimeError: If scoring fails
         """
+        # Validate file_path (manual validation since decorator doesn't handle Path well)
+        file_path = validate_file_path_input(file_path, must_exist=True, method_name="review_file")
         import asyncio
         
         # Get timeout configuration
@@ -608,32 +621,75 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     libraries_used = []
                 
                 if libraries_used:
-                    # Verify each library usage against Context7 docs
-                    for lib in libraries_used:
-                        # Get full API reference
-                        lib_docs = await context7_helper.get_documentation(
-                            library=lib,
-                            topic=None,  # Get full API reference
-                            use_fuzzy_match=True
+                    # Pre-process code once for efficient string matching
+                    code_lower = code.lower() if code else ""
+                    
+                    # Verify all libraries in parallel for better performance
+                    async def verify_library(lib: str) -> tuple[str, dict[str, Any]]:
+                        """Verify a single library with parallel doc fetches."""
+                        try:
+                            # Run both doc fetches in parallel for each library
+                            lib_docs_task = context7_helper.get_documentation(
+                                library=lib,
+                                topic=None,  # Get full API reference
+                                use_fuzzy_match=True
+                            )
+                            best_practices_task = context7_helper.get_documentation(
+                                library=lib,
+                                topic="best-practices",
+                                use_fuzzy_match=True
+                            )
+                            
+                            lib_docs, best_practices = await asyncio.gather(
+                                lib_docs_task, best_practices_task,
+                                return_exceptions=True  # Don't fail all if one fails
+                            )
+                            
+                            # Handle exceptions gracefully
+                            if isinstance(lib_docs, Exception):
+                                logger.debug(f"Failed to fetch docs for {lib}: {lib_docs}")
+                                lib_docs = None
+                            if isinstance(best_practices, Exception):
+                                logger.debug(f"Failed to fetch best practices for {lib}: {best_practices}")
+                                best_practices = None
+                            
+                            # Basic API correctness check (efficient: use pre-processed code)
+                            api_mentioned = lib.lower() in code_lower
+                            
+                            return (lib, {
+                                "api_docs_available": lib_docs is not None,
+                                "best_practices_available": best_practices is not None,
+                                "api_mentioned": api_mentioned,
+                                "docs_source": lib_docs.get("source") if lib_docs else None,
+                                "best_practices_source": best_practices.get("source") if best_practices else None,
+                            })
+                        except Exception as e:
+                            logger.debug(f"Failed to verify library {lib}: {e}")
+                            return (lib, {
+                                "api_docs_available": False,
+                                "best_practices_available": False,
+                                "api_mentioned": False,
+                                "error": str(e)
+                            })
+                    
+                    # Verify all libraries in parallel with timeout protection
+                    try:
+                        results = await asyncio.wait_for(
+                            asyncio.gather(*[verify_library(lib) for lib in libraries_used]),
+                            timeout=30.0  # 30s total timeout for all libraries
                         )
-                        
-                        # Get best practices
-                        best_practices = await context7_helper.get_documentation(
-                            library=lib,
-                            topic="best-practices",
-                            use_fuzzy_match=True
-                        )
-                        
-                        # Basic API correctness check (check if library is mentioned in code)
-                        api_mentioned = lib.lower() in code.lower()
-                        
-                        context7_verification[lib] = {
-                            "api_docs_available": lib_docs is not None,
-                            "best_practices_available": best_practices is not None,
-                            "api_mentioned": api_mentioned,
-                            "docs_source": lib_docs.get("source") if lib_docs else None,
-                            "best_practices_source": best_practices.get("source") if best_practices else None,
-                        }
+                        context7_verification.update(dict(results))
+                    except asyncio.TimeoutError:
+                        logger.warning(f"Library verification timed out for {len(libraries_used)} libraries")
+                        # Mark all as failed
+                        for lib in libraries_used:
+                            if lib not in context7_verification:
+                                context7_verification[lib] = {
+                                    "api_docs_available": False,
+                                    "best_practices_available": False,
+                                    "api_mentioned": False,
+                                    "error": "timeout"
+                                }
                     
                     logger.debug(f"E2: Verified {len(libraries_used)} libraries with Context7")
             except Exception as e:
@@ -645,85 +701,16 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             result["libraries_detected"] = libraries_used
 
         # Enhancement 4: Proactive Context7 suggestions based on library-specific patterns
+        # Use extensible pattern registry instead of hard-coded logic
         context7_suggestions = []
         if context7_helper and context7_helper.enabled and libraries_used:
             try:
-                code_lower = code.lower()
-                
-                # Check for library-specific patterns that might need Context7 guidance
-                for lib in libraries_used:
-                    lib_lower = lib.lower()
-                    
-                    # FastAPI: Check for route ordering issues
-                    if lib_lower == "fastapi" and ("route" in code_lower or "router" in code_lower):
-                        # Detect topics for FastAPI
-                        topics = context7_helper.detect_topics(code, lib)
-                        if "routing" in topics:
-                            # Proactively fetch routing documentation
-                            routing_docs = await context7_helper.get_documentation(
-                                library=lib,
-                                topic="routing",
-                                use_fuzzy_match=True
-                            )
-                            if routing_docs:
-                                # Check for potential route ordering issues
-                                # Look for parameterized routes before specific routes
-                                import re
-                                route_pattern = r"@(?:router|app)\.(?:get|post|put|delete|patch)\(['\"]([^'\"]+)['\"]"
-                                routes = re.findall(route_pattern, code, re.IGNORECASE)
-                                
-                                # Check if there are parameterized routes (containing {})
-                                param_routes = [r for r in routes if "{" in r]
-                                specific_routes = [r for r in routes if "{" not in r]
-                                
-                                # If we have both types, suggest checking order
-                                if param_routes and specific_routes:
-                                    context7_suggestions.append({
-                                        "type": "context7_best_practice",
-                                        "library": lib,
-                                        "issue": "Route ordering: Parameterized routes (e.g., /{id}) should come after specific routes (e.g., /stats)",
-                                        "guidance": routing_docs.get("content", "")[:500] if routing_docs.get("content") else "",
-                                        "source": routing_docs.get("source", "Context7 KB"),
-                                        "severity": "info",
-                                    })
-                    
-                    # React: Check for common hook patterns
-                    elif lib_lower == "react" and ("usestate" in code_lower or "useeffect" in code_lower):
-                        topics = context7_helper.detect_topics(code, lib)
-                        if "hooks" in topics:
-                            hooks_docs = await context7_helper.get_documentation(
-                                library=lib,
-                                topic="hooks",
-                                use_fuzzy_match=True
-                            )
-                            if hooks_docs:
-                                context7_suggestions.append({
-                                    "type": "context7_best_practice",
-                                    "library": lib,
-                                    "issue": "React hooks best practices available",
-                                    "guidance": hooks_docs.get("content", "")[:500] if hooks_docs.get("content") else "",
-                                    "source": hooks_docs.get("source", "Context7 KB"),
-                                    "severity": "info",
-                                })
-                    
-                    # pytest: Check for fixture patterns
-                    elif lib_lower == "pytest" and ("fixture" in code_lower or "@pytest" in code_lower):
-                        topics = context7_helper.detect_topics(code, lib)
-                        if "fixtures" in topics:
-                            fixtures_docs = await context7_helper.get_documentation(
-                                library=lib,
-                                topic="fixtures",
-                                use_fuzzy_match=True
-                            )
-                            if fixtures_docs:
-                                context7_suggestions.append({
-                                    "type": "context7_best_practice",
-                                    "library": lib,
-                                    "issue": "pytest fixture best practices available",
-                                    "guidance": fixtures_docs.get("content", "")[:500] if fixtures_docs.get("content") else "",
-                                    "source": fixtures_docs.get("source", "Context7 KB"),
-                                    "severity": "info",
-                                })
+                # Use pattern registry to generate suggestions from all matching checkers
+                context7_suggestions = await self.pattern_registry.generate_suggestions(
+                    code=code,
+                    libraries_detected=libraries_used,
+                    context7_helper=context7_helper
+                )
                 
                 if context7_suggestions:
                     logger.debug(f"Enhancement 4: Generated {len(context7_suggestions)} proactive Context7 suggestions")

@@ -46,18 +46,37 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             context7_helper = get_context7_helper(None, self.config, self.project_root)
             if context7_helper and context7_helper.enabled:
                 # Detect libraries from the description
-                detected_libraries = context7_helper.detect_libraries(
+                # Detect libraries, but filter to only relevant ones
+                # (Same filtering logic as enhancer agent - only fetch docs for libraries
+                # that are in project deps, explicitly mentioned, or well-known)
+                all_detected = context7_helper.detect_libraries(
                     prompt=original_description,
                     language="python"  # Default, can be enhanced to detect from project
                 )
                 
-                if detected_libraries:
-                    # Fetch documentation for detected libraries
+                # Filter to only relevant libraries
+                project_libs = set(context7_helper.detect_libraries(
+                    code=None, prompt=None, error_message=None
+                ))
+                
+                filtered_libraries = []
+                desc_lower = original_description.lower()
+                for lib in all_detected:
+                    if (lib in project_libs or
+                        context7_helper.is_well_known_library(lib) or
+                        any(keyword in desc_lower for keyword in [
+                            f"{lib} library", f"{lib} framework", f"using {lib}"
+                        ])):
+                        filtered_libraries.append(lib)
+                
+                if filtered_libraries:
+                    # Fetch documentation for filtered libraries only
                     context7_docs = await context7_helper.get_documentation_for_libraries(
-                        libraries=detected_libraries,
+                        libraries=filtered_libraries,
                         topic=None,
                         use_fuzzy_match=True,
                     )
+                    detected_libraries = filtered_libraries  # For context7_info below
                     context7_info = {
                         "libraries_detected": detected_libraries,
                         "docs_available": len([d for d in context7_docs.values() if d is not None]),

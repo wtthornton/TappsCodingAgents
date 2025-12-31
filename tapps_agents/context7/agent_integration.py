@@ -138,11 +138,25 @@ class Context7AgentHelper:
                     "response_time_ms": result.response_time_ms,
                 }
             elif result.error:
-                # Log Context7 unavailability but continue
-                logger.info(
-                    f"Context7 lookup unavailable for library '{library}' "
-                    f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
-                )
+                # Log Context7 unavailability but continue (use debug for common cases)
+                # Only log at info level if it's a known library or network error
+                error_lower = result.error.lower()
+                if "network" in error_lower or "connection" in error_lower:
+                    logger.warning(
+                        f"Context7 network error for library '{library}' "
+                        f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
+                    )
+                elif "quota" in error_lower:
+                    logger.warning(
+                        f"Context7 quota exceeded for library '{library}' "
+                        f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
+                    )
+                else:
+                    # Common case: library not found - use debug level
+                    logger.debug(
+                        f"Context7 lookup unavailable for library '{library}' "
+                        f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
+                    )
         except Exception as e:
             # Log error but don't fail the agent
             logger.warning(
@@ -237,6 +251,37 @@ class Context7AgentHelper:
         except Exception:
             return {"enabled": True, "error": "Failed to get statistics"}
 
+    def is_well_known_library(self, lib_name: str) -> bool:
+        """
+        Check if a library name is a well-known library (likely to be useful for Context7).
+        
+        This helps filter out local directory names vs. actual libraries that Context7
+        might have documentation for.
+        
+        Args:
+            lib_name: Library name to check
+            
+        Returns:
+            True if it's a well-known library that Context7 likely has docs for
+        """
+        well_known = {
+            # Python
+            "fastapi", "django", "flask", "pydantic", "sqlalchemy", "pytest",
+            "requests", "httpx", "aiohttp", "click", "typer", "numpy", "pandas",
+            "openai", "anthropic", "yaml", "pyyaml", "marshmallow", "celery",
+            # JavaScript/TypeScript
+            "react", "vue", "angular", "express", "nextjs", "nuxt", "svelte",
+            "typescript", "jest", "vitest", "playwright", "cypress", "selenium",
+            "axios", "lodash", "moment", "dayjs", "webpack", "vite",
+            # Node.js
+            "node", "npm", "yarn", "pnpm",
+            # Testing
+            "playwright", "puppeteer", "selenium", "cypress", "jest", "mocha",
+            # Config/Infra (valid libraries in Context7)
+            "config", "dotenv", "env",
+        }
+        return lib_name.lower() in well_known
+    
     def should_use_context7(self, user_message: str) -> bool:
         """
         Heuristic check if Context7 should be used based on user message.

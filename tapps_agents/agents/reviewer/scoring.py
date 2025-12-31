@@ -16,6 +16,8 @@ logger = logging.getLogger(__name__)
 from ...core.config import ProjectConfig, ScoringWeightsConfig
 from ...core.language_detector import Language
 from ...core.subprocess_utils import wrap_windows_cmd_shim
+from .score_constants import ComplexityConstants, SecurityConstants
+from .validation import validate_code_input
 
 # Import analysis libraries
 try:
@@ -264,6 +266,9 @@ class CodeScorer(BaseScorer):
 
     def _calculate_complexity(self, code: str) -> float:
         """Calculate cyclomatic complexity (0-10 scale)"""
+        # Validate input
+        validate_code_input(code, method_name="_calculate_complexity")
+        
         if not self.has_radon:
             return 5.0  # Default neutral score
 
@@ -277,13 +282,21 @@ class CodeScorer(BaseScorer):
             # Get max complexity
             max_complexity = max(cc.complexity for cc in complexities)
 
-            # Scale to 0-10 (max complexity ~50 = 10)
-            return min(max_complexity / 5.0, 10.0)
+            # Scale to 0-10 using constants
+            return min(
+                max_complexity / ComplexityConstants.SCALING_FACTOR,
+                ComplexityConstants.MAX_SCORE
+            )
         except SyntaxError:
             return 10.0  # Syntax errors = max complexity
 
-    def _calculate_security(self, file_path: Path, code: str) -> float:
+    def _calculate_security(self, file_path: Path | None, code: str) -> float:
         """Calculate security score (0-10 scale, higher is better)"""
+        # Validate inputs
+        validate_code_input(code, method_name="_calculate_security")
+        if file_path is not None and not isinstance(file_path, Path):
+            raise ValueError(f"_calculate_security: file_path must be Path or None, got {type(file_path).__name__}")
+        
         if not self.has_bandit:
             # Basic heuristic check
             insecure_patterns = [
@@ -295,7 +308,10 @@ class CodeScorer(BaseScorer):
                 "os.system",
             ]
             issues = sum(1 for pattern in insecure_patterns if pattern in code)
-            return max(0.0, 10.0 - (issues * 2))  # -2 points per issue
+            return max(
+                0.0,
+                SecurityConstants.MAX_SCORE - (issues * SecurityConstants.INSECURE_PATTERN_PENALTY)
+            )
 
         try:
             # Use bandit for proper security analysis

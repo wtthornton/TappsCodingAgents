@@ -522,17 +522,37 @@ class BaseAgent(ABC):
             return {}
 
         # Detect libraries from all available sources (including error messages)
-        detected_libraries = context7_helper.detect_libraries(
+        all_detected = context7_helper.detect_libraries(
             code=code, prompt=prompt, error_message=error_message, language=language
         )
 
-        # Deduplicate
-        detected_libraries = list(set(detected_libraries))
+        # Filter: Only fetch docs for libraries that are likely relevant
+        # Priority: Project deps > Explicit mentions > Well-known libraries
+        project_libs = set(context7_helper.detect_libraries(
+            code=None, prompt=None, error_message=None
+        ))
+        
+        filtered_libraries = []
+        prompt_lower = (prompt or "").lower()
+        
+        for lib in all_detected:
+            # Always include if it's in project dependencies
+            if lib in project_libs:
+                filtered_libraries.append(lib)
+            # Include if explicitly mentioned or well-known
+            elif (context7_helper.is_well_known_library(lib) or
+                  any(keyword in prompt_lower for keyword in [
+                      f"{lib} library", f"{lib} framework", f"using {lib}"
+                  ])):
+                filtered_libraries.append(lib)
 
-        # Fetch documentation for all detected libraries
-        if detected_libraries:
+        # Deduplicate
+        filtered_libraries = list(set(filtered_libraries))
+
+        # Fetch documentation for filtered libraries only
+        if filtered_libraries:
             return await context7_helper.get_documentation_for_libraries(
-                libraries=detected_libraries,
+                libraries=filtered_libraries,
                 topic=None,
                 use_fuzzy_match=True,
             )

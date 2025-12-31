@@ -452,16 +452,34 @@ class KBLookup:
                 f"This is required to fetch documentation from Context7 API. "
                 f"Library resolution may have failed or returned no matches."
             )
+            # Use debug level for library not found (common, expected case)
+            # Only warn if it's a known popular library that should exist in Context7
+            # Valid libraries not in Context7 (like 'openai', 'yaml') will log at debug level to reduce noise
+            known_libraries = {
+                "react", "vue", "angular", "fastapi", "django", "flask", 
+                "pytest", "playwright", "typescript", "javascript", "node",
+                "express", "nextjs", "svelte", "tailwind", "bootstrap"
+            }
+            if library.lower() in known_libraries:
+                logger.info(
+                    f"Context7 lookup failed for library '{library}' (topic: {topic}): {error_msg}. "
+                    f"Continuing without Context7 documentation."
+                )
+            else:
+                logger.debug(
+                    f"Context7 lookup failed for library '{library}' (topic: {topic}): {error_msg}. "
+                    f"Library may not be in Context7 database. Continuing without Context7 documentation."
+                )
         else:
             error_msg = (
                 f"Failed to fetch documentation from Context7 API for '{library}' (ID: {context7_id}). "
                 f"API call may have failed or returned no content."
             )
+            logger.warning(
+                f"Context7 lookup failed for library '{library}' (topic: {topic}): {error_msg}. "
+                f"Continuing without Context7 documentation."
+            )
         
-        logger.warning(
-            f"Context7 lookup failed for library '{library}' (topic: {topic}): {error_msg}. "
-            f"Continuing without Context7 documentation."
-        )
         return LookupResult(
             success=False,
             source="cache" if context7_id is None else "api",

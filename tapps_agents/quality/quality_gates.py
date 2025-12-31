@@ -116,21 +116,32 @@ class QualityGate:
         if thresholds is None:
             thresholds = self.thresholds
 
-        # Extract scores (normalize to 0-10 scale for comparison)
-        overall_score = scores.get("overall_score", 0.0) / 10.0  # Convert 0-100 to 0-10
-        security_score = scores.get("security_score", 0.0)
-        maintainability_score = scores.get("maintainability_score", 0.0)
-        complexity_score = scores.get("complexity_score", 10.0)  # Lower is better
-        test_coverage_score = scores.get("test_coverage_score", 0.0)
-        performance_score = scores.get("performance_score", 0.0)
+        # Lazy import to avoid circular dependency
+        from ..agents.reviewer.score_constants import ScoreNormalizer, extract_scores_normalized
+        
+        # Normalize all scores to consistent scales using score constants
+        normalized_scores = extract_scores_normalized(scores)
+        
+        normalizer = ScoreNormalizer()
+        
+        # Extract normalized scores (individual metrics are 0-10, overall is 0-100)
+        # Convert overall score to 0-10 scale for threshold comparison (thresholds are 0-10)
+        overall_score = normalizer.normalize_overall_score(
+            normalized_scores["overall_score"], from_scale_100=True
+        )
+        security_score = normalized_scores["security_score"]
+        maintainability_score = normalized_scores["maintainability_score"]
+        complexity_score = normalized_scores["complexity_score"]  # Lower is better
+        test_coverage_score = normalized_scores["test_coverage_score"]
+        performance_score = normalized_scores["performance_score"]
 
         # Evaluate each threshold
         overall_passed = overall_score >= thresholds.overall_min
         security_passed = security_score >= thresholds.security_min
         maintainability_passed = maintainability_score >= thresholds.maintainability_min
         complexity_passed = complexity_score <= thresholds.complexity_max
-        # Test coverage is typically 0-100%, convert to 0-10 scale for comparison
-        test_coverage_pct = test_coverage_score * 10.0  # Convert 0-10 to 0-100
+        # Test coverage: convert from 0-10 scale to percentage (0-100) for threshold comparison
+        test_coverage_pct = normalizer.test_coverage_to_percentage(test_coverage_score)
         test_coverage_passed = test_coverage_pct >= thresholds.test_coverage_min
         performance_passed = performance_score >= thresholds.performance_min
 
@@ -262,10 +273,19 @@ class QualityGate:
         coverage_pct = coverage_result.coverage_percentage / 100.0
         coverage_passed = coverage_pct >= threshold
 
-        # Create scores dict for evaluation
+        # Lazy import to avoid circular dependency
+        from ..agents.reviewer.score_constants import ScoreNormalizer
+        
+        # Create scores dict for evaluation using normalized scales
+        # Test coverage: percentage (0-100) to 0-10 scale
+        normalizer = ScoreNormalizer()
+        test_coverage_0_10 = normalizer.normalize_test_coverage(
+            coverage_result.coverage_percentage, from_percentage=True
+        )
+        
         scores: dict[str, float] = {
-            "test_coverage_score": coverage_result.coverage_percentage / 10.0,  # Convert to 0-10 scale
-            "overall_score": 100.0 if coverage_passed else 50.0,  # Simplified for coverage-only check
+            "test_coverage_score": test_coverage_0_10,  # 0-10 scale
+            "overall_score": 100.0 if coverage_passed else 50.0,  # 0-100 scale
         }
 
         # Evaluate using existing evaluate method

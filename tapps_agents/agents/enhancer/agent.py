@@ -625,22 +625,61 @@ class EnhancerAgent(BaseAgent):
         Option 3 (C1) Enhancement: Enhanced library detection with Context7 pre-fetching.
         """
         # C1: Detect libraries from prompt and pre-fetch Context7 docs
+        # IMPORTANT: Only fetch docs for libraries that are:
+        # 1. Explicitly mentioned in prompt (not just detected from keywords), OR
+        # 2. Found in project dependencies (package.json, requirements.txt), OR
+        # 3. Well-known libraries that are likely relevant
         detected_libraries = []
         context7_docs = {}
         
         if self.context7:
             try:
                 # Detect libraries from prompt
-                detected_libraries = self.context7.detect_libraries(prompt=prompt)
+                all_detected = self.context7.detect_libraries(prompt=prompt)
                 
-                # Pre-fetch Context7 documentation for detected libraries
-                if detected_libraries:
-                    context7_docs = await self.context7.get_documentation_for_libraries(
-                        libraries=detected_libraries,
-                        topic=None,  # Get general docs first
-                        use_fuzzy_match=True
-                    )
-                    logger.debug(f"C1: Detected {len(detected_libraries)} libraries, fetched {sum(1 for v in context7_docs.values() if v)} docs")
+                # Filter: Only include libraries that are likely to be needed
+                # Priority: Project deps > Explicit mentions > Well-known libraries
+                if all_detected:
+                    # Check which are in project files (high confidence)
+                    project_libs = set(self.context7.detect_libraries(
+                        code=None, prompt=None, error_message=None
+                    ))
+                    
+                    # Filter to only libraries that are:
+                    # - In project dependencies (installed packages), OR
+                    # - Explicitly mentioned in prompt with library keywords, OR
+                    # - Well-known libraries (from our validated list)
+                    filtered_libraries = []
+                    prompt_lower = prompt.lower()
+                    
+                    for lib in all_detected:
+                        # Always include if it's in project dependencies
+                        if lib in project_libs:
+                            filtered_libraries.append(lib)
+                        # Include if explicitly mentioned with library keywords
+                        elif any(keyword in prompt_lower for keyword in [
+                            f"{lib} library", f"{lib} framework", f"{lib} package",
+                            f"using {lib}", f"with {lib}", f"import {lib}",
+                            f"{lib} docs", f"{lib} documentation"
+                        ]):
+                            filtered_libraries.append(lib)
+                        # Include well-known libraries if detected
+                        elif self.context7.is_well_known_library(lib):
+                            filtered_libraries.append(lib)
+                    
+                    detected_libraries = filtered_libraries
+                    
+                    # Only pre-fetch if we have filtered libraries
+                    if detected_libraries:
+                        logger.debug(f"C1: Filtered {len(all_detected)} detected libraries to {len(detected_libraries)} relevant ones")
+                        context7_docs = await self.context7.get_documentation_for_libraries(
+                            libraries=detected_libraries,
+                            topic=None,  # Get general docs first
+                            use_fuzzy_match=True
+                        )
+                        logger.debug(f"C1: Fetched {sum(1 for v in context7_docs.values() if v)} docs for {len(detected_libraries)} libraries")
+                    else:
+                        logger.debug(f"C1: No relevant libraries to fetch (filtered {len(all_detected)} detected libraries)")
             except Exception as e:
                 logger.debug(f"C1: Library detection failed: {e}")
 
@@ -861,11 +900,31 @@ Provide structured JSON response with the following format:
         integration_examples = {}
         
         # Get libraries from requirements (set in C2) or detect from prompt
+        # IMPORTANT: Only fetch architecture docs for libraries that are:
+        # 1. In project dependencies, OR
+        # 2. Explicitly mentioned in requirements, OR
+        # 3. Well-known libraries
         detected_libraries = []
         if "api_compatibility" in requirements:
             detected_libraries = list(requirements.get("api_compatibility", {}).keys())
         elif self.context7:
-            detected_libraries = self.context7.detect_libraries(prompt=prompt)
+            # Only detect libraries that are likely relevant (same filtering as C1)
+            all_detected = self.context7.detect_libraries(prompt=prompt)
+            project_libs = set(self.context7.detect_libraries(
+                code=None, prompt=None, error_message=None
+            ))
+            
+            # Filter to only relevant libraries
+            filtered = []
+            prompt_lower = prompt.lower()
+            for lib in all_detected:
+                if (lib in project_libs or 
+                    self.context7.is_well_known_library(lib) or
+                    any(keyword in prompt_lower for keyword in [
+                        f"{lib} library", f"{lib} framework", f"using {lib}"
+                    ])):
+                    filtered.append(lib)
+            detected_libraries = filtered
         
         if self.context7 and detected_libraries:
             try:
