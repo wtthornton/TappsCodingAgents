@@ -513,6 +513,26 @@ class OrchestratorAgentConfig(BaseModel):
     )
 
 
+class EvaluatorAgentConfig(BaseModel):
+    """Configuration specific to Evaluator Agent"""
+
+    auto_run: bool = Field(
+        default=False,
+        description="Run evaluator automatically at end of workflows (build, full, etc.)"
+    )
+    output_dir: str = Field(
+        default=".tapps-agents/evaluations",
+        description="Directory for evaluation reports"
+    )
+    thresholds: dict[str, float] = Field(
+        default_factory=lambda: {
+            "quality_score": 70.0,
+            "workflow_completion": 0.8,
+        },
+        description="Thresholds for evaluation metrics"
+    )
+
+
 class ExpertConfig(BaseModel):
     """Configuration for expert consultation system"""
 
@@ -632,6 +652,7 @@ class AgentsConfig(BaseModel):
     orchestrator: OrchestratorAgentConfig = Field(
         default_factory=OrchestratorAgentConfig
     )
+    evaluator: EvaluatorAgentConfig = Field(default_factory=EvaluatorAgentConfig)
 
 
 class CheckpointFrequencyConfig(BaseModel):
@@ -709,6 +730,35 @@ class StatePersistenceConfig(BaseModel):
     )
 
 
+class BranchCleanupConfig(BaseModel):
+    """Configuration for Git branch cleanup after workflow execution"""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable automatic branch cleanup",
+    )
+    delete_branches_on_cleanup: bool = Field(
+        default=True,
+        description="Delete associated Git branches when worktrees are removed",
+    )
+    retention_days: int = Field(
+        default=7,
+        ge=0,
+        description="Number of days to retain branches before cleanup (0 = immediate cleanup)",
+    )
+    auto_cleanup_on_completion: bool = Field(
+        default=True,
+        description="Automatically cleanup branches when workflow step completes",
+    )
+    patterns: dict[str, str] = Field(
+        default_factory=lambda: {
+            "workflow": "workflow/*",
+            "agent": "agent/*",
+        },
+        description="Branch patterns to match for cleanup (wildcards supported)",
+    )
+
+
 class WorkflowConfig(BaseModel):
     """Configuration for workflow execution"""
 
@@ -735,6 +785,10 @@ class WorkflowConfig(BaseModel):
         default_factory=StatePersistenceConfig,
         description="State persistence and checkpointing configuration",
     )
+    branch_cleanup: BranchCleanupConfig = Field(
+        default_factory=BranchCleanupConfig,
+        description="Git branch cleanup configuration for workflow worktrees",
+    )
 
 
 class SimpleModeConfig(BaseModel):
@@ -752,6 +806,27 @@ class SimpleModeConfig(BaseModel):
     )
     natural_language: bool = Field(
         default=True, description="Enable natural language command parsing"
+    )
+    fast_mode_default: bool = Field(
+        default=False,
+        description="Default to fast mode for Simple Mode workflows (skip documentation steps)",
+    )
+    state_persistence_enabled: bool = Field(
+        default=True,
+        description="Enable workflow state persistence for resume capability",
+    )
+    checkpoint_retention_days: int = Field(
+        default=30,
+        ge=1,
+        description="Days to retain workflow checkpoints",
+    )
+    documentation_organized: bool = Field(
+        default=True,
+        description="Organize documentation by workflow ID",
+    )
+    create_latest_symlink: bool = Field(
+        default=False,
+        description="Create 'latest' symlink to most recent workflow",
     )
 
 

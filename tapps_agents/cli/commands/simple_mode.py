@@ -34,13 +34,15 @@ def handle_simple_mode_command(args: object) -> None:
         handle_simple_mode_progress()
     elif command == "full":
         handle_simple_mode_full(args)
+    elif command == "resume":
+        handle_simple_mode_resume(args)
     else:
         feedback = get_feedback()
         feedback.error(
             "Invalid simple-mode command",
             error_code="invalid_command",
             context={"command": command},
-            remediation="Use: on, off, status, init, configure, progress, or full",
+            remediation="Use: on, off, status, init, configure, progress, full, or resume",
             exit_code=2,
         )
 
@@ -192,6 +194,89 @@ def handle_simple_mode_progress() -> None:
     """Show Simple Mode learning progression."""
     tracker = LearningProgressionTracker()
     tracker.show_progression_indicator()
+
+
+def handle_simple_mode_resume(args: object) -> None:
+    """Handle simple-mode resume command."""
+    feedback = get_feedback()
+    feedback.start_operation("Resuming Workflow")
+
+    from ...simple_mode.orchestrators.resume_orchestrator import ResumeOrchestrator
+    from ...simple_mode.intent_parser import IntentParser
+
+    # Check for --list flag
+    list_workflows = getattr(args, "list", False)
+    if list_workflows:
+        orchestrator = ResumeOrchestrator(project_root=Path.cwd())
+        workflows = orchestrator.list_available_workflows()
+
+        if not workflows:
+            feedback.success("No workflows available to resume")
+            print("\nNo workflows found with checkpoints.")
+            return
+
+        feedback.success(f"Found {len(workflows)} workflow(s) available to resume")
+        print(f"\n{'='*60}")
+        print("Available Workflows to Resume")
+        print(f"{'='*60}\n")
+
+        for wf in workflows:
+            print(f"Workflow ID: {wf['workflow_id']}")
+            print(f"  Last Step: {wf['last_step']} (Step {wf['last_step_number']})")
+            print(f"  Completed: {wf['completed_at']}")
+            print()
+
+        return
+
+    # Get workflow_id
+    workflow_id = getattr(args, "workflow_id", None)
+    if not workflow_id:
+        feedback.error(
+            "Workflow ID required",
+            error_code="workflow_id_required",
+            remediation="Provide workflow_id or use --list to see available workflows",
+            exit_code=2,
+        )
+        return
+
+    # Validate if requested
+    validate = getattr(args, "validate", False)
+    if validate:
+        feedback.running("Validating workflow state...", step=1, total_steps=2)
+
+    # Resume workflow
+    feedback.running(f"Resuming workflow: {workflow_id}...", step=2, total_steps=2)
+
+    try:
+        orchestrator = ResumeOrchestrator(project_root=Path.cwd())
+        parser = IntentParser()
+        intent = parser.parse(f"resume {workflow_id}")
+
+        import asyncio
+
+        result = asyncio.run(orchestrator.execute(intent, {"workflow_id": workflow_id}))
+
+        feedback.clear_progress()
+        feedback.success(f"Workflow {workflow_id} ready to resume")
+
+        print(f"\n{'='*60}")
+        print(f"Resume Workflow: {workflow_id}")
+        print(f"{'='*60}")
+        print(f"Resume from: Step {result['resume_step']}")
+        print(f"Completed steps: {', '.join(map(str, result['completed_steps']))}")
+        print(f"Last checkpoint: {result['checkpoint']['step_name']}")
+        print(f"\n{result['message']}")
+        print("\nNote: Resume execution logic will be integrated with BuildOrchestrator")
+
+    except Exception as e:
+        feedback.clear_progress()
+        feedback.error(
+            f"Failed to resume workflow: {e}",
+            error_code="resume_failed",
+            context={"workflow_id": workflow_id},
+            remediation="Check that workflow_id exists and checkpoints are valid",
+            exit_code=1,
+        )
 
 
 def handle_simple_mode_full(args: object) -> None:
