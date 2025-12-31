@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.4] - 2025-01-16
+
+### Added
+- **Reviewer Agent Enhancements** - Improved error handling, validation, and Context7 integration
+  - Added error handling module (`error_handling.py`) with comprehensive error management
+  - Added validation module (`validation.py`) for input validation and type checking
+  - Added score constants module (`score_constants.py`) for centralized scoring configuration
+  - Added library patterns module (`library_patterns.py`) for improved library detection
+  - Enhanced Context7 integration with better library detection and lookup capabilities
+  - Improved quality gates and build orchestrator reliability
+
+### Changed
+- **Reviewer Agent** - Enhanced code quality with modular architecture
+  - Refactored scoring system for better maintainability
+  - Improved error handling throughout the agent
+  - Enhanced library pattern matching for Context7 integration
+
+### Documentation
+- Added `docs/CONTEXT7_MCP_SERVER_ERRORS.md` - Context7 MCP server error handling guide
+- Added `docs/REVIEWER_AGENT_2025_ENHANCEMENTS.md` - Comprehensive reviewer agent enhancement documentation
+- Added `docs/REVIEWER_AGENT_CODE_QUALITY_IMPROVEMENTS.md` - Code quality improvements documentation
+- Added `docs/REVIEWER_AGENT_FIXES_IMPLEMENTED.md` - Fixes and improvements summary
+
+### Testing
+- Added unit tests for validation module (`test_validation.py`)
+- Added unit tests for score constants (`test_score_constants.py`)
+
 ## [3.2.3] - 2025-01-16
 
 ### Fixed
