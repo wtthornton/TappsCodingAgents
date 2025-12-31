@@ -324,6 +324,31 @@ class ScoreValidator:
                         "Consider using functools.lru_cache for expensive computations",
                     ]
                 )
+        elif category == "overall":
+            # For overall score, provide general improvement suggestions
+            # Focus on the most impactful areas
+            suggestions.extend(
+                [
+                    "Review individual quality metrics (complexity, security, maintainability, test coverage, performance)",
+                    "Address the lowest-scoring areas first for maximum impact",
+                    "Set specific improvement goals for each quality dimension",
+                    "Run code quality tools regularly to track progress",
+                ]
+            )
+            if language == Language.PYTHON:
+                suggestions.extend(
+                    [
+                        "Run ruff and mypy to identify code style and type issues",
+                        "Use pytest with coverage to improve test coverage",
+                    ]
+                )
+            elif language in [Language.TYPESCRIPT, Language.JAVASCRIPT]:
+                suggestions.extend(
+                    [
+                        "Use ESLint and TypeScript compiler to identify issues",
+                        "Run tests with coverage to improve test coverage",
+                    ]
+                )
 
         return suggestions
 
