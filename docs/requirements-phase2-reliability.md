@@ -1,0 +1,12 @@
+{
+  "description": "Implement Phase 2 Reliability Improvements: 1) Better API detection with clear error messages when Cursor Background Agents API is unavailable, health check endpoint, 2) Simpler fallback mechanism - direct execution fallback instead of file-based triggers, remove file-based trigger complexity, 3) Configuration validation - validate YAML on startup, warn about missing watch_paths, prevent configuration errors",
+  "instruction": {
+    "agent_name": "analyst",
+    "command": "analyze-requirements",
+    "prompt": "Analyze the following requirement description and extract detailed requirements.\n\nDescription:\nImplement Phase 2 Reliability Improvements: 1) Better API detection with clear error messages when Cursor Background Agents API is unavailable, health check endpoint, 2) Simpler fallback mechanism - direct execution fallback instead of file-based triggers, remove file-based trigger complexity, 3) Configuration validation - validate YAML on startup, warn about missing watch_paths, prevent configuration errors\n\n\n\nPlease provide:\n1. Functional Requirements (what the system should do)\n2. Non-Functional Requirements (performance, security, scalability, etc.)\n3. Technical Constraints\n4. Assumptions\n5. Open Questions\n\nFormat as structured JSON with sections.",
+    "parameters": {
+      "description": "Implement Phase 2 Reliability Improvements: 1) Better API detection with clear error messages when Cursor Background Agents API is unavailable, health check endpoint, 2) Simpler fallback mechanism - direct execution fallback instead of file-based triggers, remove file-based trigger complexity, 3) Configuration validation - validate YAML on startup, warn about missing watch_paths, prevent configuration errors"
+    }
+  },
+  "skill_command": "@analyst analyze-requirements --description \"Implement Phase 2 Reliability Improvements: 1) Better API detection with clear error messages when Cursor Background Agents API is unavailable, health check endpoint, 2) Simpler fallback mechanism - direct execution fallback instead of file-based triggers, remove file-based trigger complexity, 3) Configuration validation - validate YAML on startup, warn about missing watch_paths, prevent configuration errors\""
+}

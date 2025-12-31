@@ -9,6 +9,7 @@ import asyncio
 import json
 import logging
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -221,9 +222,15 @@ class BackgroundAgentWrapper:
             
             return {"success": False, "error": str(e)}
 
-    async def cleanup(self) -> dict[str, Any]:
+    async def cleanup(
+        self, auto_cleanup_others: bool = False, retention_days: int = 7
+    ) -> dict[str, Any]:
         """
         Cleanup the background agent environment.
+
+        Args:
+            auto_cleanup_others: If True, also cleanup other old worktrees
+            retention_days: Retention period in days for auto-cleanup (default: 7)
 
         Returns:
             Cleanup result dictionary
@@ -231,12 +238,34 @@ class BackgroundAgentWrapper:
         self.progress_reporter.report_step("cleanup", "in_progress", "Cleaning up")
 
         try:
+            # Mark worktree as completed
+            if self.use_worktree and self.worktree_path:
+                completion_file = (
+                    self.worktree_path / ".tapps-agents" / "completed.txt"
+                )
+                completion_file.parent.mkdir(parents=True, exist_ok=True)
+                completion_file.write_text(
+                    f"Completed at {datetime.now().isoformat()}\n"
+                )
+
             # Remove worktree if enabled
             if self.use_worktree and self.worktree_manager:
                 self.worktree_manager.remove_worktree(self.agent_id)
                 self.progress_reporter.report_step(
                     "worktree_removed", "completed", "Worktree removed"
                 )
+
+            # Auto-cleanup other old worktrees if requested
+            if auto_cleanup_others and self.worktree_manager:
+                cleaned_count = self.worktree_manager.auto_cleanup(
+                    retention_days=retention_days, keep_active=True
+                )
+                if cleaned_count > 0:
+                    self.progress_reporter.report_step(
+                        "auto_cleanup",
+                        "completed",
+                        f"Cleaned up {cleaned_count} old worktree(s)",
+                    )
 
             self.progress_reporter.report_step(
                 "cleanup", "completed", "Cleanup complete"

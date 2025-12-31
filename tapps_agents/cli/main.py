@@ -365,6 +365,8 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_workflow_command(args)
     elif args.agent == "score":
         top_level.handle_score_command(args)
+    elif args.agent == "status":
+        top_level.handle_status_command(args)
     elif args.agent == "doctor":
         top_level.handle_doctor_command(args)
     elif args.agent == "health":

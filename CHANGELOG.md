@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.2] - 2025-12-29
+
 ### Fixed
 - **Workflow Auto-Execution Command Mapping** - Fixed missing command mappings for workflow auto-execution
   - Added missing `("improver", "refactor")` mapping to `COMMAND_MAPPING` in `skill_invoker.py`

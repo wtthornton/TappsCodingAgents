@@ -11,6 +11,7 @@ from typing import Any
 
 from .config import ProjectConfig
 from .resource_monitor import ResourceMetrics, ResourceMonitor
+from .task_duration import TaskDurationEstimator
 
 
 class TaskType(Enum):
@@ -83,6 +84,17 @@ class FallbackStrategy:
         # Load NUC config if available
         self.nuc_config = self._load_nuc_config()
 
+        # Initialize duration estimator
+        threshold = (
+            config.workflow.duration_threshold_seconds
+            if config and config.workflow
+            else 30.0
+        )
+        project_root = Path.cwd()
+        self.duration_estimator = TaskDurationEstimator(
+            project_root=project_root, default_threshold=threshold
+        )
+
     def _load_nuc_config(self) -> dict[str, Any]:
         """Load NUC configuration."""
         nuc_config_file = Path(".tapps-agents/nuc-config.yaml")
@@ -124,7 +136,13 @@ class FallbackStrategy:
         return TaskType.MEDIUM
 
     def should_use_background_agent(
-        self, task_name: str, check_resources: bool = True
+        self,
+        task_name: str,
+        check_resources: bool = True,
+        agent_name: str | None = None,
+        command: str | None = None,
+        file_count: int = 1,
+        file_size_kb: float = 0.0,
     ) -> TaskDecision:
         """
         Determine if a task should use Background Agent.
@@ -132,6 +150,10 @@ class FallbackStrategy:
         Args:
             task_name: Name of the task
             check_resources: If True, check current resource usage
+            agent_name: Optional agent name for duration estimation
+            command: Optional command name for duration estimation
+            file_count: Number of files to process (for duration estimation)
+            file_size_kb: Total file size in KB (for duration estimation)
 
         Returns:
             TaskDecision
@@ -158,6 +180,37 @@ class FallbackStrategy:
                 use_background=True,
                 reason="Task configured for background agent in NUC config",
             )
+
+        # Check duration estimation if agent/command provided
+        if agent_name and command:
+            threshold = (
+                self.config.workflow.duration_threshold_seconds
+                if self.config and self.config.workflow
+                else 30.0
+            )
+            should_use, estimate = self.duration_estimator.should_use_background_agent(
+                agent_name=agent_name,
+                command=command,
+                file_count=file_count,
+                file_size_kb=file_size_kb,
+                threshold=threshold,
+            )
+
+            if should_use:
+                return TaskDecision(
+                    task_name=task_name,
+                    task_type=TaskType.HEAVY,
+                    use_background=True,
+                    reason=f"Estimated duration {estimate.estimated_seconds:.1f}s >= threshold {threshold}s ({estimate.method})",
+                )
+            else:
+                # Duration-based decision: use direct execution
+                return TaskDecision(
+                    task_name=task_name,
+                    task_type=TaskType.LIGHT,
+                    use_background=False,
+                    reason=f"Estimated duration {estimate.estimated_seconds:.1f}s < threshold {threshold}s ({estimate.method})",
+                )
 
         # Classify task
         task_type = self.classify_task(task_name)

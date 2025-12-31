@@ -26,6 +26,7 @@ from .cursor_skill_helper import (
     create_skill_execution_instructions,
 )
 from .models import Artifact, WorkflowState, WorkflowStep
+from .direct_execution_fallback import DirectExecutionFallback
 
 
 class SkillInvoker:
@@ -48,6 +49,8 @@ class SkillInvoker:
         self.use_api = use_api
         self.background_agent_api = BackgroundAgentAPI() if use_api else None
         self.skill_integration = get_skill_integration_manager(project_root=self.project_root)
+        # Initialize direct execution fallback (Phase 2: Simpler fallback)
+        self.direct_execution = DirectExecutionFallback(project_root=self.project_root)
 
     # Command mapping: (agent_name, action) -> (skill_command, parameters)
     COMMAND_MAPPING: dict[tuple[str, str], tuple[str, dict[str, Any]]] = {
@@ -628,10 +631,56 @@ class SkillInvoker:
                 # Other errors - log and fall back
                 logger.warning(
                     f"Unexpected error using Background Agent API: {e}",
-                    extra={"fallback": "file-based", "error": str(e)},
+                    extra={"fallback": "direct_execution", "error": str(e)},
                     exc_info=True,
                 )
         
+        # Phase 2: Simpler fallback - Use direct execution instead of file-based
+        # Check API health first to provide clear error message
+        if self.background_agent_api:
+            health = self.background_agent_api.health_check()
+            if not health.get("available"):
+                logger.info(
+                    health.get("message", "Background Agent API not available. Using direct execution fallback."),
+                    extra={
+                        "api_status": health.get("status"),
+                        "fallback": "direct_execution",
+                    },
+                )
+        
+        # Use direct execution fallback instead of file-based triggers
+        logger.info(
+            f"Using direct execution fallback for command: {command}",
+            extra={
+                "command": command,
+                "worktree": str(worktree_path),
+                "method": "direct_execution",
+            },
+        )
+        
+        # Execute command directly
+        result = await self.direct_execution.execute_command(
+            command=command,
+            worktree_path=worktree_path,
+            workflow_id=workflow_id,
+            step_id=getattr(step, "id", None) if step else None,
+            environment={
+                "TAPPS_AGENTS_MODE": "cursor",
+                "WORKTREE_PATH": str(worktree_path),
+            },
+        )
+        
+        # Convert result to expected format
+        return {
+            "status": result.get("status", "unknown"),
+            "method": "direct_execution",
+            "command": command,
+            "worktree": str(worktree_path),
+            "message": f"Command executed directly: {result.get('status', 'unknown')}",
+            "result": result,
+        }
+        
+        # OLD FILE-BASED FALLBACK (removed in Phase 2):
         # Create execution instructions
         expected_artifacts = step.creates if step else None
         

@@ -98,17 +98,21 @@ class BackgroundAgentConfigValidator:
         except Exception as e:
             return False, f"Error parsing YAML: {e}", None
 
-    def validate_schema(self, config: dict[str, Any] | None = None) -> tuple[bool, list[str]]:
+    def validate_schema(
+        self, config: dict[str, Any] | None = None, warn_about_watch_paths: bool = True
+    ) -> tuple[bool, list[str], list[str]]:
         """
         Validate configuration schema.
 
         Args:
             config: Parsed configuration (if None, loads from file)
+            warn_about_watch_paths: If True, warn that watch_paths are no longer needed (Phase 2)
 
         Returns:
-            Tuple of (is_valid, list_of_errors)
+            Tuple of (is_valid, list_of_errors, list_of_warnings)
         """
         errors: list[str] = []
+        warnings: list[str] = []
 
         if config is None:
             is_valid, error_msg, config = self.validate_yaml_syntax()
@@ -149,12 +153,27 @@ class BackgroundAgentConfigValidator:
                     f"Agent {i+1}: Field 'type' must be '{self.REQUIRED_TYPE_VALUE}' (got: {agent['type']})"
                 )
 
-            # Validate that agent has either triggers (natural language) or watch_paths (auto-execution)
+            # Phase 2: watch_paths are no longer required (direct execution fallback)
+            # Validate that agent has either triggers (natural language) or watch_paths (legacy auto-execution)
             has_triggers = "triggers" in agent and agent.get("triggers")
             has_watch_paths = "watch_paths" in agent and agent.get("watch_paths")
+            
+            # Phase 2: watch_paths are optional (direct execution is used as fallback)
+            # Only require triggers or watch_paths if neither is present (for backward compatibility)
             if not has_triggers and not has_watch_paths:
-                errors.append(
-                    f"Agent {i+1}: Must have either 'triggers' (for natural language prompts) or 'watch_paths' (for auto-execution)"
+                # This is now a warning, not an error (Phase 2: direct execution fallback)
+                warnings.append(
+                    f"Agent {i+1} ({agent.get('name', 'Unknown')}): No 'triggers' or 'watch_paths' specified. "
+                    "Direct execution fallback will be used when API is unavailable. "
+                    "Consider adding 'triggers' for natural language prompts if needed."
+                )
+            
+            # Phase 2: Warn that watch_paths are no longer needed
+            if warn_about_watch_paths and has_watch_paths:
+                warnings.append(
+                    f"Agent {i+1} ({agent.get('name', 'Unknown')}): 'watch_paths' is configured but no longer required. "
+                    "Direct execution fallback is used automatically when Background Agent API is unavailable. "
+                    "You can remove 'watch_paths' to simplify configuration."
                 )
 
             # Validate commands field
@@ -196,38 +215,45 @@ class BackgroundAgentConfigValidator:
             if not isinstance(global_config, dict):
                 errors.append("Field 'global' must be a YAML object/dictionary")
 
-        return len(errors) == 0, errors
+        return len(errors) == 0, errors, warnings
 
-    def validate(self) -> tuple[bool, list[str]]:
+    def validate(self, warn_about_watch_paths: bool = True) -> tuple[bool, list[str], list[str]]:
         """
         Perform complete validation.
 
+        Args:
+            warn_about_watch_paths: If True, warn that watch_paths are no longer needed (Phase 2)
+
         Returns:
-            Tuple of (is_valid, list_of_errors)
+            Tuple of (is_valid, list_of_errors, list_of_warnings)
         """
         errors: list[str] = []
+        warnings: list[str] = []
 
         # Check file exists
         is_valid, error_msg = self.validate_file_exists()
         if not is_valid:
-            return False, [error_msg]
+            return False, [error_msg], []
 
         # Check permissions
         is_valid, error_msg = self.validate_file_permissions()
         if not is_valid:
-            return False, [error_msg]
+            return False, [error_msg], []
 
         # Validate YAML syntax
         is_valid, error_msg, config = self.validate_yaml_syntax()
         if not is_valid:
-            return False, [error_msg]
+            return False, [error_msg], []
 
         # Validate schema
-        is_valid, schema_errors = self.validate_schema(config)
+        is_valid, schema_errors, schema_warnings = self.validate_schema(
+            config, warn_about_watch_paths=warn_about_watch_paths
+        )
         if not is_valid:
             errors.extend(schema_errors)
+        warnings.extend(schema_warnings)
 
-        return len(errors) == 0, errors
+        return len(errors) == 0, errors, warnings
 
 
 class BackgroundAgentConfigGenerator:

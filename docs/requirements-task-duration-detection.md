@@ -1,0 +1,12 @@
+{
+  "description": "Implement task duration detection system that: 1) Estimates task duration based on command type, file count, and historical data, 2) Routes short tasks (< 30s threshold) to direct execution, 3) Routes long tasks (> 30s) to background agents, 4) Provides configurable threshold in config.yaml, 5) Integrates with workflow executor to make routing decisions. Goal: Eliminate 60% of unnecessary background agent usage for short tasks.",
+  "instruction": {
+    "agent_name": "analyst",
+    "command": "analyze-requirements",
+    "prompt": "Analyze the following requirement description and extract detailed requirements.\n\nDescription:\nImplement task duration detection system that: 1) Estimates task duration based on command type, file count, and historical data, 2) Routes short tasks (< 30s threshold) to direct execution, 3) Routes long tasks (> 30s) to background agents, 4) Provides configurable threshold in config.yaml, 5) Integrates with workflow executor to make routing decisions. Goal: Eliminate 60% of unnecessary background agent usage for short tasks.\n\n\n\nPlease provide:\n1. Functional Requirements (what the system should do)\n2. Non-Functional Requirements (performance, security, scalability, etc.)\n3. Technical Constraints\n4. Assumptions\n5. Open Questions\n\nFormat as structured JSON with sections.",
+    "parameters": {
+      "description": "Implement task duration detection system that: 1) Estimates task duration based on command type, file count, and historical data, 2) Routes short tasks (< 30s threshold) to direct execution, 3) Routes long tasks (> 30s) to background agents, 4) Provides configurable threshold in config.yaml, 5) Integrates with workflow executor to make routing decisions. Goal: Eliminate 60% of unnecessary background agent usage for short tasks."
+    }
+  },
+  "skill_command": "@analyst analyze-requirements --description \"Implement task duration detection system that: 1) Estimates task duration based on command type, file count, and historical data, 2) Routes short tasks (< 30s threshold) to direct execution, 3) Routes long tasks (> 30s) to background agents, 4) Provides configurable threshold in config.yaml, 5) Integrates with workflow executor to make routing decisions. Goal: Eliminate 60% of unnecessary background agent usage for short tasks.\""
+}

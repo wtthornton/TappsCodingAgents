@@ -1,0 +1,12 @@
+{
+  "description": "Implement Phase 1 Quick Wins from Background Agents Evaluation roadmap: 1) Add task duration detection to auto-route short tasks (< 30s) to direct execution, 2) Create unified status command (tapps-agents status) to consolidate all status checks, 3) Implement auto-cleanup system for worktrees with configurable retention period. Goal: Reduce complexity for 80% of use cases by eliminating unnecessary background agent usage.",
+  "instruction": {
+    "agent_name": "analyst",
+    "command": "analyze-requirements",
+    "prompt": "Analyze the following requirement description and extract detailed requirements.\n\nDescription:\nImplement Phase 1 Quick Wins from Background Agents Evaluation roadmap: 1) Add task duration detection to auto-route short tasks (< 30s) to direct execution, 2) Create unified status command (tapps-agents status) to consolidate all status checks, 3) Implement auto-cleanup system for worktrees with configurable retention period. Goal: Reduce complexity for 80% of use cases by eliminating unnecessary background agent usage.\n\n\n\nPlease provide:\n1. Functional Requirements (what the system should do)\n2. Non-Functional Requirements (performance, security, scalability, etc.)\n3. Technical Constraints\n4. Assumptions\n5. Open Questions\n\nFormat as structured JSON with sections.",
+    "parameters": {
+      "description": "Implement Phase 1 Quick Wins from Background Agents Evaluation roadmap: 1) Add task duration detection to auto-route short tasks (< 30s) to direct execution, 2) Create unified status command (tapps-agents status) to consolidate all status checks, 3) Implement auto-cleanup system for worktrees with configurable retention period. Goal: Reduce complexity for 80% of use cases by eliminating unnecessary background agent usage."
+    }
+  },
+  "skill_command": "@analyst analyze-requirements --description \"Implement Phase 1 Quick Wins from Background Agents Evaluation roadmap: 1) Add task duration detection to auto-route short tasks (< 30s) to direct execution, 2) Create unified status command (tapps-agents status) to consolidate all status checks, 3) Implement auto-cleanup system for worktrees with configurable retention period. Goal: Reduce complexity for 80% of use cases by eliminating unnecessary background agent usage.\""
+}

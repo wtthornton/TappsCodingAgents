@@ -743,6 +743,43 @@ Example:
         "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable scores, 'json' for structured data (default: text)"
     )
 
+    # Unified status command
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Unified status command for Background Agents",
+        description="""Consolidated status command showing Background Agents activity.
+        
+Shows:
+  • Active worktrees and their status
+  • Progress files and execution status
+  • Background agent configuration status
+  • Recent results
+  
+Use --detailed for full information, --worktrees-only for worktree info only.
+
+Examples:
+  tapps-agents status
+  tapps-agents status --detailed
+  tapps-agents status --worktrees-only
+  tapps-agents status --format json""",
+    )
+    status_parser.add_argument(
+        "--detailed",
+        action="store_true",
+        help="Show detailed information including full progress data and workflow state",
+    )
+    status_parser.add_argument(
+        "--worktrees-only",
+        action="store_true",
+        help="Show only worktree information",
+    )
+    status_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format: 'text' for human-readable, 'json' for structured data (default: text)",
+    )
+
     # Expert setup wizard commands
     setup_experts_parser = subparsers.add_parser(
         "setup-experts", 

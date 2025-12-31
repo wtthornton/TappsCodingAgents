@@ -395,3 +395,154 @@ class BackgroundAgentAPI:
         
         raise TimeoutError(f"Background Agent execution exceeded timeout of {timeout}s")
 
+    def health_check(self) -> dict[str, Any]:
+        """
+        Check the health and availability of the Background Agent API.
+
+        This method performs a lightweight check to determine if the API is available
+        and functioning correctly. It provides clear status messages for different scenarios.
+
+        Returns:
+            Health check result with:
+            - available: bool - Whether API is available
+            - status: str - Status message ("available", "unavailable", "offline")
+            - message: str - Human-readable message
+            - details: dict - Additional details (endpoint, response time, etc.)
+            - fallback_mode: bool - Whether fallback mode is being used
+
+        Example:
+            {
+                "available": False,
+                "status": "unavailable",
+                "message": "Background Agent API is not available. Using direct execution fallback.",
+                "details": {
+                    "endpoint": "https://api.cursor.com/v0/agents",
+                    "error": "Connection timeout",
+                    "response_time_ms": None
+                },
+                "fallback_mode": True
+            }
+        """
+        import time
+
+        # Check offline mode first
+        if OfflineMode.is_offline():
+            return {
+                "available": False,
+                "status": "offline",
+                "message": "Offline mode is enabled. Background Agent API is not available. Using direct execution fallback.",
+                "details": {
+                    "offline_mode": True,
+                    "reason": "Offline mode explicitly enabled",
+                },
+                "fallback_mode": True,
+            }
+
+        # Try to list agents as a health check
+        url = f"{self.base_url}/agents"
+        start_time = time.time()
+
+        try:
+            response = requests.get(url, headers=self._get_headers(), timeout=5)
+            response_time_ms = (time.time() - start_time) * 1000
+
+            # Check if endpoint exists and is accessible
+            if response.status_code == 200:
+                agents = response.json().get("agents", [])
+                return {
+                    "available": True,
+                    "status": "available",
+                    "message": f"Background Agent API is available. Found {len(agents)} agent(s).",
+                    "details": {
+                        "endpoint": url,
+                        "response_time_ms": round(response_time_ms, 2),
+                        "agent_count": len(agents),
+                        "status_code": response.status_code,
+                    },
+                    "fallback_mode": False,
+                }
+            elif response.status_code == 404:
+                # Endpoint doesn't exist
+                return {
+                    "available": False,
+                    "status": "unavailable",
+                    "message": "Background Agent API endpoint not found. The API may not be available in this Cursor version. Using direct execution fallback.",
+                    "details": {
+                        "endpoint": url,
+                        "response_time_ms": round(response_time_ms, 2),
+                        "status_code": 404,
+                        "reason": "Endpoint not found",
+                    },
+                    "fallback_mode": True,
+                }
+            elif response.status_code == 401:
+                # Invalid API key
+                return {
+                    "available": False,
+                    "status": "unauthorized",
+                    "message": "Background Agent API authentication failed. Invalid API key. Using direct execution fallback.",
+                    "details": {
+                        "endpoint": url,
+                        "response_time_ms": round(response_time_ms, 2),
+                        "status_code": 401,
+                        "reason": "Invalid API key",
+                    },
+                    "fallback_mode": True,
+                }
+            else:
+                # Other HTTP error
+                return {
+                    "available": False,
+                    "status": "unavailable",
+                    "message": f"Background Agent API returned error {response.status_code}. Using direct execution fallback.",
+                    "details": {
+                        "endpoint": url,
+                        "response_time_ms": round(response_time_ms, 2),
+                        "status_code": response.status_code,
+                        "reason": f"HTTP {response.status_code}",
+                    },
+                    "fallback_mode": True,
+                }
+        except requests.exceptions.Timeout:
+            return {
+                "available": False,
+                "status": "timeout",
+                "message": "Background Agent API health check timed out. The API may not be available. Using direct execution fallback.",
+                "details": {
+                    "endpoint": url,
+                    "response_time_ms": None,
+                    "error": "Connection timeout",
+                    "timeout_seconds": 5,
+                },
+                "fallback_mode": True,
+            }
+        except requests.exceptions.ConnectionError as e:
+            return {
+                "available": False,
+                "status": "connection_error",
+                "message": "Cannot connect to Background Agent API. The API may not be available or network is unreachable. Using direct execution fallback.",
+                "details": {
+                    "endpoint": url,
+                    "response_time_ms": None,
+                    "error": str(e),
+                    "reason": "Connection error",
+                },
+                "fallback_mode": True,
+            }
+        except requests.RequestException as e:
+            # Other network errors
+            logger.debug(f"Background Agent API health check failed: {e}")
+            OfflineMode.record_connection_failure()
+            return {
+                "available": False,
+                "status": "unavailable",
+                "message": f"Background Agent API is not available: {str(e)}. Using direct execution fallback.",
+                "details": {
+                    "endpoint": url,
+                    "response_time_ms": None,
+                    "error": str(e),
+                    "reason": "Request exception",
+                },
+                "fallback_mode": True,
+            }
+

@@ -817,6 +817,17 @@ def handle_workflow_command(args: object) -> None:
         sys.exit(1)
 
 
+def handle_status_command(args: object) -> None:
+    """Handle the unified status command."""
+    from .status import handle_status_command as status_handler
+
+    detailed = getattr(args, "detailed", False)
+    worktrees_only = getattr(args, "worktrees_only", False)
+    format = getattr(args, "format", "text")
+
+    status_handler(detailed=detailed, worktrees_only=worktrees_only, format=format)
+
+
 def handle_score_command(args: object) -> None:
     """Handle score command (quick shortcut)"""
     file_path = getattr(args, "file", None)
