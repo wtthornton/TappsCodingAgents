@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-3.2.1-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.2.9-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -62,35 +62,50 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 
 See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
 
-- **Workflow Agents** (14): Standard SDLC task execution + Prompt Enhancement + Evaluation
-- **Industry Experts** (N): Business domain knowledge with weighted decision-making
+- **Workflow Agents** (14): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
+- **Industry Experts** (N): Business domain knowledge with weighted decision-making and RAG integration
 - **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
-- **Project Profiling System** (v1.0.0+): Automatic detection of project characteristics (deployment type, tenancy, user scale, compliance, security) for context-aware expert guidance
-- **Improved Confidence System**: Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
-- **Cursor Skills Integration**: All agents prepare instruction objects for Cursor Skills execution
-- **RAG Integration**: Retrieval-augmented generation for domain knowledge
-- **Fine-Tuning Support**: LoRA adapters for domain specialization
-- **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases)
-  - **14 Cursor Skills** (All agents available as Cursor Skills, including Simple Mode)
-  - **16 Claude Desktop Commands** ✅ (Use `@command` in Claude Desktop - same functionality as Skills)
+- **Project Profiling System**: Automatic detection of project characteristics (deployment type, tenancy, user scale, compliance, security) for context-aware expert guidance
+- **Confidence System**: Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
+- **Cursor Skills Integration**: All 14 agents available as Cursor Skills with instruction-based execution
+- **RAG Integration**: Retrieval-augmented generation for domain knowledge with simple file-based and vector-based RAG support
+- **Fine-Tuning Support**: LoRA adapters for domain specialization (planned)
+- **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases complete)
+  - **14 Cursor Skills** ✅ (All agents available as Cursor Skills: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester)
+  - **Simple Mode Skill** ✅ (Natural language orchestration with 6 workflows: build, review, fix, test, epic, resume)
+  - **Claude Desktop Commands** ✅ (16 commands available in Claude Desktop - same functionality as Skills)
   - **Unified Experience** ✅ (Commands and Skills work together - choose your interface)
-  - **Simple Mode** ✅ (Streamlined interface for new users with natural language commands)
-  - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
-  - **Background Agents** (Offload heavy tasks to cloud/remote)
-  - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with adaptive polling)
-  - **Multi-Agent Orchestration** (Parallel execution with structured concurrency via TaskGroup)
-  - **Context7 Integration** (KB-first caching + analytics)
-  - **NUC Optimization** (Resource monitoring, fallback strategy)
-  - **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow)
+  - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills with template generation)
+  - **Background Agents** ✅ (Offload heavy tasks to cloud/remote with auto-generated configs from workflows)
+  - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with adaptive polling and progress monitoring)
+  - **Multi-Agent Orchestration** ✅ (Parallel execution with structured concurrency via TaskGroup, conflict resolution, result aggregation)
+  - **Context7 Integration** ✅ (KB-first caching, analytics dashboard, cross-reference resolution, cache warming, staleness policies)
+  - **MCP Gateway** ✅ (Unified Model Context Protocol interface with 5 servers: Context7, Playwright, Filesystem, Git, Analysis)
+  - **NUC Optimization** ✅ (Resource monitoring, fallback strategy, hardware profiling)
+  - **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow, knowledge ingestion safety)
   - **2025 Optimizations** ✅ (TaskGroup migration, context managers, adaptive polling - 30-50% performance improvements)
 - **User Role Templates** ✅: Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
   - Customize agent behavior based on user role
   - 5 built-in role templates with sensible defaults
   - Fully customizable and extensible
-- **Claude Code Compatible**: Native Agent Skills format
-- **Prompt Enhancement Utility**: Transform simple prompts into comprehensive, context-aware prompts
+- **Simple Mode** ✅: Streamlined natural language interface with 6 orchestrators
+  - **Build Orchestrator**: Complete feature development (enhancer → planner → architect → designer → implementer → reviewer → tester → documenter)
+  - **Review Orchestrator**: Code quality review with improvement suggestions
+  - **Fix Orchestrator**: Systematic bug fixing with debugging and verification
+  - **Test Orchestrator**: Test generation and execution
+  - **Epic Orchestrator**: Execute Epic documents with story dependency resolution
+  - **Resume Orchestrator**: Resume interrupted workflows
+- **Workflow Presets** (11): Predefined YAML workflows (rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues)
+- **YAML-First Architecture** ✅: YAML as single source of truth with strict schema enforcement
+  - **Auto-Generated Artifacts**: Task manifests, Cursor Rules docs, Background Agent configs
+  - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies
+  - **State Persistence**: Advanced workflow state management with checkpointing, migration, versioning
+- **Prompt Enhancement Utility** ✅: 7-stage enhancement pipeline (analysis, requirements, architecture, codebase, quality, strategy, synthesis)
 - **Project Profiling**: Automatic detection of project characteristics for context-aware expert advice
+- **Analytics Dashboard** ✅: Performance metrics, historical trends, agent/workflow statistics, system status
+- **Health Monitoring** ✅: System health checks, resource usage tracking, health trends
+- **State Management** ✅: Workflow state persistence, resume, cleanup, branch management
 
 ### How it works (no confusion version)
 
@@ -339,24 +354,31 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 1 Summary](implementation/PHASE1_CURSOR_SKILLS_COMPLETE.md)
 
 ✅ **Core Framework Complete:**
-- **All 14 Workflow Agents** (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer, evaluator)
-- **Complete Code Scoring System** (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
-- **Instruction-Based Architecture** - Agents prepare structured instructions for Cursor Skills execution
-- **Tiered Context System** (90%+ token savings, 3 tiers with caching)
+- **All 14 Workflow Agents** ✅ (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer, evaluator)
+- **Complete Code Scoring System** ✅ (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
+- **Instruction-Based Architecture** ✅ - Agents prepare structured instructions for Cursor Skills execution
+- **Tiered Context System** ✅ (90%+ token savings, 3 tiers with caching)
 - **Unified Cache Architecture** ✅ (Single interface for all caching systems with hardware auto-detection)
-- **MCP Gateway** (Unified tool access with filesystem, Git, and analysis servers)
+- **MCP Gateway** ✅ (Unified tool access with 5 servers: Context7, Playwright, Filesystem, Git, Analysis)
   - **MCP Server Detection**: Automatic detection of Context7 and Playwright MCP servers
   - **Setup Instructions**: Auto-generated setup instructions when MCP servers are missing
   - **Status Reporting**: `tapps-agents doctor` reports MCP server configuration status
-- **YAML Workflow Definitions** (Parser, executor, artifact tracking, conditional steps)
+- **YAML Workflow Definitions** ✅ (Parser, executor, artifact tracking, conditional steps, gates)
   - **YAML-First Architecture** ✅ (Epics 6-10): YAML as single source of truth with strict schema enforcement
   - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs, Background Agent configs
   - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies (no `parallel_tasks`)
-- **Industry Experts Framework** (Weighted decision-making, domain configuration, expert registry)
-- **Configuration-Only Experts** (YAML-based expert definition, no code classes required)
-- **Simple File-Based RAG** (Knowledge base retrieval for experts)
-- **Scale-Adaptive Workflow Selection** (Project type auto-detection, workflow recommendation)
-- **Comprehensive test suite** (1200+ unit tests, integration tests, and E2E tests with parallel execution support - see `tests/`)
+  - **11 Workflow Presets**: rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues
+- **Industry Experts Framework** ✅ (Weighted decision-making, domain configuration, expert registry)
+  - **16 Built-in Experts**: Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning
+  - **100+ Knowledge Files**: Across 13 knowledge domains
+  - **Configuration-Only Experts**: YAML-based expert definition, no code classes required
+  - **RAG Integration**: Simple file-based and vector-based RAG for knowledge retrieval
+- **Simple Mode** ✅ (6 orchestrators: build, review, fix, test, epic, resume)
+- **Scale-Adaptive Workflow Selection** ✅ (Project type auto-detection, workflow recommendation)
+- **State Management** ✅ (Advanced workflow state persistence with checkpointing, migration, versioning, resume)
+- **Analytics & Health** ✅ (Performance metrics, trends, system health monitoring, resource usage tracking)
+- **Governance & Safety** ✅ (Secrets/PII filtering, approval workflows, knowledge ingestion safety)
+- **Comprehensive test suite** ✅ (1200+ unit tests, integration tests, and E2E tests with parallel execution support - see `tests/`)
 
 ✅ **Enhancer Agent - Prompt Enhancement Utility (v1.6.0)**
 - **7-Stage Enhancement Pipeline** - Transforms simple prompts into comprehensive, context-aware prompts
@@ -421,15 +443,29 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 
 ### Workflow Agents (14)
 
-- **Planning**: analyst ✅, planner ✅ (Story Generation)
-- **Design**: architect ✅, designer ✅
-- **Development**: implementer ✅ (Code Generation & Refactoring), debugger ✅ (Error Analysis & Code Tracing), documenter ✅ (API Docs & README Generation)
-- **Testing**: tester ✅ (Test Generation & Execution)
-- **Quality**: reviewer ✅ (with Code Scoring & Phase 6 Quality Tools), improver ✅ (Refactoring & Optimization)
-- **Operations**: ops ✅ (Security, Compliance, Deployment, Dependency Auditing)
-- **Orchestration**: orchestrator ✅ (Workflow Coordination)
-- **Enhancement**: enhancer ✅ (Prompt Enhancement Utility with Expert Integration)
-- **Evaluation**: evaluator ✅ (Framework Effectiveness Analysis & Continuous Improvement)
+- **Planning**: 
+  - **analyst** ✅ - Requirements gathering, stakeholder analysis, tech research, effort estimation, risk assessment, competitive analysis
+  - **planner** ✅ - User story creation, task breakdown, story point estimation, acceptance criteria
+- **Design**: 
+  - **architect** ✅ - System architecture design, design patterns, tech selection, security architecture, boundary definition, architecture diagrams
+  - **designer** ✅ - API design, data model design, UI/UX design, wireframes, design systems
+- **Development**: 
+  - **implementer** ✅ - Code generation, refactoring, file writing with backup support
+  - **debugger** ✅ - Error analysis, stack trace analysis, code execution tracing, root cause identification
+  - **documenter** ✅ - API documentation, README generation, docstring generation, code documentation
+- **Testing**: 
+  - **tester** ✅ - Test generation (unit, integration), test execution, coverage analysis
+- **Quality**: 
+  - **reviewer** ✅ - Code review with 5-metric scoring (complexity, security, maintainability, test coverage, performance), linting (Ruff), type checking (mypy), duplication detection, security scanning, project analysis, service analysis
+  - **improver** ✅ - Code refactoring, performance optimization, quality improvement suggestions
+- **Operations**: 
+  - **ops** ✅ - Security auditing, compliance checking (GDPR, HIPAA, PCI-DSS), dependency auditing, deployment planning
+- **Orchestration**: 
+  - **orchestrator** ✅ - Workflow coordination, step sequencing, gate decisions, workflow state management
+- **Enhancement**: 
+  - **enhancer** ✅ - 7-stage prompt enhancement pipeline (analysis, requirements, architecture, codebase, quality, strategy, synthesis), quick enhancement, stage-by-stage execution, session management
+- **Evaluation**: 
+  - **evaluator** ✅ - Framework effectiveness analysis, workflow evaluation, improvement recommendations, usage pattern analysis
 
 ### Code Scoring System
 
@@ -445,11 +481,72 @@ All metrics are configurable with weighted scoring and quality thresholds.
 
 ### Industry Experts
 
-- Business domain authorities (not technical specialists)
-- 1:1 mapping: N domains → N experts
-- Weighted decision-making (Primary: 51%, Others: 49%/(N-1))
-- RAG + Fine-tuning capabilities
-- Consult-based integration with workflow agents
+- **Business Domain Experts** (N): Project-specific domain authorities (not technical specialists)
+  - 1:1 mapping: N domains → N experts
+  - Weighted decision-making (Primary: 51%, Others: 49%/(N-1))
+  - RAG integration (simple file-based and vector-based)
+  - Fine-tuning support (LoRA adapters - planned)
+  - Consult-based integration with 6 workflow agents (Architect, Implementer, Reviewer, Tester, Designer, Ops)
+- **Built-in Technical Experts** (16): Framework-controlled domain experts
+  - Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning
+  - 100+ knowledge files across 13 knowledge domains
+  - Automatic domain detection and expert consultation
+  - Project profiling for context-aware guidance
+- **Expert Governance**: Secrets/PII filtering, prompt injection handling, approval workflows, knowledge ingestion safety
+
+### CLI Commands
+
+**Top-Level Commands:**
+- `init` - Initialize project (Cursor Rules, Skills, Background Agents, config)
+- `create <description>` - Create new project from natural language description
+- `workflow <preset>` - Run workflow presets (rapid, full, fix, quality, hotfix, etc.)
+- `score <file>` - Quick code quality scoring (shortcut for `reviewer score`)
+- `doctor` - Environment diagnostics and validation
+- `cursor verify` - Verify Cursor AI integration components
+- `simple-mode <command>` - Simple Mode management (on, off, status, init, configure, progress, full, build, resume)
+- `analytics <command>` - Analytics dashboard (dashboard, agents, workflows, trends, system)
+- `health <command>` - Health monitoring (check, dashboard, metrics, trends)
+- `governance <command>` - Governance controls (approval list, show, approve, reject)
+- `auto-exec <command>` - Background Agent auto-execution (status, history, metrics, health, debug)
+- `customize <command>` - Agent customization (init)
+- `skill <command>` - Custom Skills management (validate, template)
+- `bg-agent <command>` - Background Agent config (generate, validate)
+- `hardware-profile` - Hardware profile configuration (nuc, development, workstation, server, auto)
+- `install-dev` - Install development tools (ruff, mypy, pytest, pip-audit, pipdeptree)
+- `setup-experts` - Expert setup wizard (init, add, remove, list)
+- `status` - Unified status (active worktrees, progress, Background Agents)
+- `generate-rules` - Generate Cursor Rules from workflow YAML
+
+**Agent Commands** (use `tapps-agents <agent> help` for details):
+- `analyst` - Requirements gathering, stakeholder analysis, tech research, effort estimation, risk assessment
+- `architect` - System design, architecture diagrams, tech selection, security architecture, boundary definition
+- `debugger` - Error debugging, stack trace analysis, code tracing
+- `designer` - API design, data models, UI/UX design, wireframes, design systems
+- `documenter` - Generate documentation, update README, document APIs
+- `enhancer` - Prompt enhancement (full, quick, stage-by-stage, resume)
+- `evaluator` - Framework effectiveness evaluation, workflow evaluation
+- `implementer` - Code generation, refactoring
+- `improver` - Code refactoring, performance optimization
+- `ops` - Security scanning, compliance checks, dependency auditing, deployment planning
+- `orchestrator` - Workflow management, step coordination, gate decisions
+- `planner` - Create plans, user stories, task breakdowns
+- `reviewer` - Code review, scoring, linting, type checking, reports, duplication detection, security scanning, project/service analysis
+- `tester` - Generate and run tests, test coverage
+
+**Workflow State Management:**
+- `workflow state list` - List workflow states
+- `workflow state show <id>` - Show workflow state details
+- `workflow state cleanup` - Cleanup old workflow states
+- `workflow cleanup-branches` - Cleanup workflow worktree branches
+- `workflow resume` - Resume interrupted workflow
+
+**Simple Mode Workflows** (in Cursor chat with `@simple-mode`):
+- `*build <description>` - Complete feature development workflow (8 steps)
+- `*review <file>` - Code quality review with improvements
+- `*fix <file> <description>` - Systematic bug fixing workflow
+- `*test <file>` - Test generation and execution
+- `*epic <epic-doc.md>` - Execute Epic documents with dependency resolution
+- `*full <description>` - Full SDLC workflow (9 steps)
 
 ## Project Structure
 
@@ -576,7 +673,7 @@ See [Release Guide](docs/RELEASE_GUIDE.md) for complete release process.
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 3.2.1  
+**Version**: 3.2.9  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

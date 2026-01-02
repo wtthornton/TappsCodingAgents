@@ -62,11 +62,15 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)** - Always-on orchestrator for automatic expert creation and knowledge ingestion
 - **[Epic Summary: SDLC Improvements](prd/EPIC_SUMMARY_SDLC_IMPROVEMENTS.md)** - High-level overview of all planned improvements
 
-### Quality Improvements (Completed)
-- **[Quality Improvements - Epic 19](QUALITY_IMPROVEMENTS_EPIC_19.md)** - Maintainability improvements summary
-- **[Complexity Reduction - Epic 20](COMPLEXITY_REDUCTION_EPIC_20.md)** - Complexity reduction achievements and refactoring details
+### Features & Capabilities
+- **[Context7 Integration](CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
+- **[MCP Gateway](PLAYWRIGHT_MCP_INTEGRATION.md)** - Unified Model Context Protocol interface (Context7, Playwright, Filesystem, Git, Analysis)
+- **[Analytics Dashboard](../tapps_agents/core/analytics_dashboard.py)** - Performance metrics, trends, agent/workflow statistics
+- **[Health Monitoring](../tapps_agents/health/)** - System health checks, resource usage tracking
+- **[State Management](CHECKPOINT_RESUME_GUIDE.md)** - Workflow state persistence, resume, cleanup
+- **[Governance & Safety](../tapps_agents/experts/governance.py)** - Secrets/PII filtering, approval workflows
 
 ---
 
-**Documentation Version**: 3.0.3  
+**Documentation Version**: 3.2.9  
 **Last Reviewed**: January 2026
