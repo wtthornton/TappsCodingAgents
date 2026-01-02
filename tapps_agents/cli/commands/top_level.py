@@ -1208,75 +1208,7 @@ def handle_auto_execution_command(args: object) -> None:
         sys.exit(1)
 
 
-def handle_background_agent_config_command(args: object) -> None:
-    """Handle background-agent-config command"""
-    from pathlib import Path
-
-    from ...workflow.background_agent_config import (
-        BackgroundAgentConfigGenerator,
-        BackgroundAgentConfigValidator,
-    )
-
-    command = getattr(args, "command", None)
-    if not command:
-        print("Error: subcommand is required (generate, validate)", file=sys.stderr)
-        sys.exit(1)
-
-    config_path = getattr(args, "config_path", None)
-    project_root = Path.cwd()
-
-    if command in ["generate", "gen", "init"]:
-        # Generate configuration
-        template_path = getattr(args, "template", None)
-        minimal = getattr(args, "minimal", False)
-        overwrite = getattr(args, "overwrite", False)
-
-        generator = BackgroundAgentConfigGenerator(project_root=project_root)
-        if config_path:
-            generator.config_path = Path(config_path)
-
-        if minimal:
-            result = generator.generate_minimal_config(overwrite=overwrite)
-        else:
-            template_file = Path(template_path) if template_path else None
-            result = generator.generate_from_template(
-                template_path=template_file, overwrite=overwrite
-            )
-
-        if result["success"]:
-            print(f"[OK] Configuration file generated: {result['file_path']}")
-            if "template_path" in result:
-                print(f"  Template: {result['template_path']}")
-        else:
-            print(f"Error: {result.get('error', 'Unknown error')}", file=sys.stderr)
-            sys.exit(1)
-
-    elif command in ["validate", "check"]:
-        # Validate configuration
-        output_format = getattr(args, "format", "text")
-
-        validator = BackgroundAgentConfigValidator()
-        if config_path:
-            validator.config_path = Path(config_path)
-
-        is_valid, errors = validator.validate()
-
-        if output_format == "json":
-            result = {
-                "valid": is_valid,
-                "config_path": str(validator.config_path),
-                "errors": errors,
-            }
-            print(json.dumps(result, indent=2))
-        else:
-            if is_valid:
-                print(f"[OK] Configuration file is valid: {validator.config_path}")
-            else:
-                print(f"[ERROR] Configuration file has errors: {validator.config_path}", file=sys.stderr)
-                print("\nErrors:", file=sys.stderr)
-                for error in errors:
-                    print(f"  - {error}", file=sys.stderr)
-                sys.exit(1)
+# Background Agent config command removed - Background Agents are no longer used
 
 
 def handle_skill_command(args: object) -> None:

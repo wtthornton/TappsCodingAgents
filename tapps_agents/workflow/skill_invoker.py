@@ -18,9 +18,6 @@ logger = logging.getLogger(__name__)
 from ..core.skill_integration import (
     get_skill_integration_manager,
 )
-from .background_agent_api import BackgroundAgentAPI
-from .background_quality_agent import BackgroundQualityAgent
-from .background_testing_agent import BackgroundTestingAgent
 from .cursor_skill_helper import (
     create_skill_command_file,
     create_skill_execution_instructions,
@@ -47,7 +44,7 @@ class SkillInvoker:
         """
         self.project_root = project_root or Path.cwd()
         self.use_api = use_api
-        self.background_agent_api = BackgroundAgentAPI() if use_api else None
+        # Background Agent API removed - always use direct execution fallback
         self.skill_integration = get_skill_integration_manager(project_root=self.project_root)
         # Initialize direct execution fallback (Phase 2: Simpler fallback)
         self.direct_execution = DirectExecutionFallback(project_root=self.project_root)
@@ -539,116 +536,9 @@ class SkillInvoker:
                 if len(parts) > 1:
                     action = parts[1]
 
-        # Special handling for quality and testing background agents
-        if agent_name in ["quality", "testing"]:
-            return await self._execute_background_agent(
-                agent_name=agent_name,
-                action=action or "analyze" if agent_name == "quality" else "run-tests",
-                command=command,
-                worktree_path=worktree_path,
-                step=step,
-            )
-
-        # Try API-based execution first if enabled (Phase 3)
-        if self.use_api and self.background_agent_api:
-            import logging
-            logger = logging.getLogger(__name__)
-            
-            try:
-                # Extract agent name from command (e.g., "@analyst" from "@analyst gather-requirements")
-                agent_name = None
-                if command.startswith("@"):
-                    parts = command.split()
-                    if parts:
-                        agent_name = parts[0][1:]  # Remove "@"
-                
-                if agent_name:
-                    # Try to find or create a Background Agent for this skill
-                    agents = self.background_agent_api.list_agents()
-                    
-                    # Log API availability status
-                    if agents:
-                        logger.debug(
-                            f"Background Agent API available: {len(agents)} agents found",
-                            extra={"agent_count": len(agents)},
-                        )
-                    else:
-                        logger.debug(
-                            "Background Agent API returned empty list - may not be available",
-                            extra={"fallback": "file-based"},
-                        )
-                    
-                    # Look for existing agent or use a default one
-                    agent_id = None
-                    for agent in agents:
-                        if agent.get("name", "").lower().find(agent_name.lower()) >= 0:
-                            agent_id = agent.get("id")
-                            break
-                    
-                    # If no specific agent found, try to trigger with agent name
-                    if agent_id or agent_name:
-                        trigger_result = self.background_agent_api.trigger_agent(
-                            agent_id=agent_id or agent_name,
-                            command=command,
-                            worktree_path=str(worktree_path),
-                            environment={
-                                "TAPPS_AGENTS_MODE": "cursor",
-                                "WORKTREE_PATH": str(worktree_path),
-                            },
-                        )
-                        
-                        # Check if API call succeeded (not fallback mode)
-                        if trigger_result.get("status") != "error" and not trigger_result.get("fallback_mode"):
-                            logger.info(
-                                f"Background Agent triggered via API: {agent_id or agent_name}",
-                                extra={
-                                    "agent_id": agent_id or agent_name,
-                                    "job_id": trigger_result.get("job_id"),
-                                    "method": "api",
-                                },
-                            )
-                            return {
-                                "status": "triggered",
-                                "method": "api",
-                                "job_id": trigger_result.get("job_id"),
-                                "command": command,
-                                "worktree": str(worktree_path),
-                                "message": "Background Agent triggered via API",
-                            }
-                        else:
-                            # API returned fallback mode - log and continue to file-based
-                            logger.debug(
-                                f"Background Agent API returned fallback mode for {agent_id or agent_name}",
-                                extra={"fallback": "file-based"},
-                            )
-            except requests.RequestException as e:
-                # Network/HTTP errors - log and fall back
-                logger.debug(
-                    f"Background Agent API request failed: {e}",
-                    extra={"fallback": "file-based", "error": str(e)},
-                )
-            except Exception as e:
-                # Other errors - log and fall back
-                logger.warning(
-                    f"Unexpected error using Background Agent API: {e}",
-                    extra={"fallback": "direct_execution", "error": str(e)},
-                    exc_info=True,
-                )
-        
-        # Phase 2: Simpler fallback - Use direct execution instead of file-based
-        # Check API health first to provide clear error message
-        if self.background_agent_api:
-            health = self.background_agent_api.health_check()
-            if not health.get("available"):
-                logger.info(
-                    health.get("message", "Background Agent API not available. Using direct execution fallback."),
-                    extra={
-                        "api_status": health.get("status"),
-                        "fallback": "direct_execution",
-                    },
-                )
-        
-        # Use direct execution fallback instead of file-based triggers
+        # Background Agent API removed - always use direct execution fallback
+        import logging
+        logger = logging.getLogger(__name__)
         logger.info(
             f"Using direct execution fallback for command: {command}",
             extra={
@@ -678,173 +568,6 @@ class SkillInvoker:
             "worktree": str(worktree_path),
             "message": f"Command executed directly: {result.get('status', 'unknown')}",
             "result": result,
-        }
-        
-        # OLD FILE-BASED FALLBACK (removed in Phase 2):
-        # Create execution instructions
-        expected_artifacts = step.creates if step else None
-        
-        # Fallback: Create structured command files with metadata
-        command_file, metadata_file = create_skill_command_file(
-            command=command,
-            worktree_path=worktree_path,
-            workflow_id=workflow_id,
-            step_id=getattr(step, "id", None) if step else None,
-            expected_artifacts=expected_artifacts,
-        )
-        instructions_file = create_skill_execution_instructions(
-            worktree_path=worktree_path,
-            command=command,
-            expected_artifacts=expected_artifacts,
-            workflow_id=workflow_id,
-            step_id=getattr(step, "id", None) if step else None,
-        )
-
-        # Also create a simple script that can execute the command
-        # This will be used by Background Agents
-        script_file = worktree_path / ".execute-skill.sh"
-        if not script_file.exists():
-            script_content = f"""#!/bin/bash
-# Execute Cursor Skill command
-# This script is generated by TappsCodingAgents workflow executor
-
-cd "{worktree_path}"
-echo "Executing: {command}"
-
-# In Cursor, this would invoke the Skill via chat API
-# For now, we write the command to a file that Cursor can process
-echo "{command}" > .skill-command-executed.txt
-
-# Return success
-exit 0
-"""
-            script_file.write_text(script_content, encoding="utf-8")
-            script_file.chmod(0o755)
-
-        # Return result indicating command is ready
-        return {
-            "status": "ready",
-            "command": command,
-            "worktree": str(worktree_path),
-            "command_file": str(command_file),
-            "instructions_file": str(instructions_file),
-            "note": (
-                "Command files created. "
-                "See .cursor-skill-instructions.md for execution instructions. "
-                "Command can be executed in Cursor chat or via Background Agent."
-            ),
-        }
-
-    async def _execute_background_agent(
-        self,
-        agent_name: str,
-        action: str,
-        command: str,
-        worktree_path: Path,
-        step: WorkflowStep | None = None,
-    ) -> dict[str, Any]:
-        """
-        Execute quality or testing background agent directly.
-
-        Args:
-            agent_name: "quality" or "testing"
-            action: Action to perform
-            command: Full command string
-            worktree_path: Path to worktree
-            step: Optional workflow step
-
-        Returns:
-            Result dictionary
-        """
-        correlation_id = None
-        if step:
-            correlation_id = f"{step.id}-{getattr(step, 'workflow_id', 'unknown')}"
-
-        try:
-            if agent_name == "quality":
-                # Extract target path from command if present
-                target_path = None
-                if "--target" in command or "--file" in command:
-                    # Simple parsing - in production would use proper argument parsing
-                    parts = command.split()
-                    for i, part in enumerate(parts):
-                        if part in ["--target", "--file"] and i + 1 < len(parts):
-                            target_path = Path(parts[i + 1].strip('"'))
-                            break
-
-                quality_agent = BackgroundQualityAgent(
-                    worktree_path=worktree_path,
-                    correlation_id=correlation_id,
-                    timeout_seconds=600.0,
-                )
-
-                artifact = await quality_agent.run_quality_analysis(
-                    target_path=target_path,
-                )
-
-                return {
-                    "status": artifact.status,
-                    "method": "background_agent",
-                    "agent": "quality",
-                    "worktree": str(worktree_path),
-                    "artifact_path": str(
-                        worktree_path / "reports" / "quality" / "quality-report.json"
-                    ),
-                    "artifact": artifact.to_dict(),
-                    "message": f"Quality analysis {artifact.status}",
-                }
-
-            elif agent_name == "testing":
-                # Extract test path from command if present
-                test_path = None
-                coverage = True
-                if "--test_path" in command or "--test-path" in command:
-                    parts = command.split()
-                    for i, part in enumerate(parts):
-                        if part in ["--test_path", "--test-path"] and i + 1 < len(parts):
-                            test_path = Path(parts[i + 1].strip('"'))
-                            break
-                if "--no-coverage" in command:
-                    coverage = False
-
-                testing_agent = BackgroundTestingAgent(
-                    worktree_path=worktree_path,
-                    correlation_id=correlation_id,
-                    timeout_seconds=600.0,
-                )
-
-                artifact = await testing_agent.run_tests(
-                    test_path=test_path,
-                    coverage=coverage,
-                )
-
-                return {
-                    "status": artifact.status,
-                    "method": "background_agent",
-                    "agent": "testing",
-                    "worktree": str(worktree_path),
-                    "artifact_path": str(
-                        worktree_path / "reports" / "tests" / "test-report.json"
-                    ),
-                    "artifact": artifact.to_dict(),
-                    "message": f"Test execution {artifact.status}",
-                }
-
-        except Exception as e:
-            return {
-                "status": "error",
-                "method": "background_agent",
-                "agent": agent_name,
-                "worktree": str(worktree_path),
-                "error": str(e),
-                "message": f"Background agent execution failed: {e}",
-            }
-
-        return {
-            "status": "error",
-            "method": "background_agent",
-            "agent": agent_name,
-            "error": f"Unknown agent: {agent_name}",
         }
 
     async def _invoke_custom_skill(

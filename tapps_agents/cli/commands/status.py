@@ -13,7 +13,7 @@ from typing import Any
 from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
 from ...core.unified_state import UnifiedStateManager
 from ...core.worktree import WorktreeManager
-from ...workflow.background_agent_api import BackgroundAgentAPI
+# Background Agent API removed
 
 
 def load_json_file(file_path: Path) -> dict[str, Any] | None:
@@ -213,20 +213,7 @@ def handle_status_command(
             for sf in state_files[:5]:
                 status_data["workflow_state"]["files"].append(sf.name)
 
-    # 7. API Status
-    if not worktrees_only:
-        try:
-            api = BackgroundAgentAPI()
-            agents = api.list_agents()
-            status_data["api"] = {
-                "available": True,
-                "agent_count": len(agents) if agents else 0,
-            }
-        except Exception as e:
-            status_data["api"] = {
-                "available": False,
-                "error": str(e),
-            }
+    # Background Agent API removed - no API status to check
 
     # Output
     if format == "json":

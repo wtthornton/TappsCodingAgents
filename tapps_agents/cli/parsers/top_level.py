@@ -448,7 +448,6 @@ Sets up all integration components for Cursor AI:
   • Workflow Presets (workflows/presets/) - Reusable workflow definitions
   • Configuration (.tapps-agents/config.yaml) - Project settings
   • Cursor Skills (.claude/skills/) - Agent skill definitions
-  • Background Agents (.cursor/background-agents.yaml) - Auto-execution config
   • Context7 Cache - Pre-populated knowledge base cache
   • .cursorignore - Exclude patterns for Cursor indexing
 
@@ -784,8 +783,8 @@ Example:
     # Unified status command
     status_parser = subparsers.add_parser(
         "status",
-        help="Unified status command for Background Agents",
-        description="""Consolidated status command showing Background Agents activity.
+        help="Unified status command for workflows and system",
+        description="""Consolidated status command showing workflow activity and system status.
         
 Shows:
   • Active worktrees and their status
@@ -923,77 +922,8 @@ Use analytics to optimize agent selection, identify bottlenecks, and track impro
         "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable status, 'json' for structured system data (default: text)"
     )
 
-    # Background Agent configuration commands
-    bg_agent_parser = subparsers.add_parser(
-        "background-agent-config",
-        aliases=["bg-config"],
-        help="Manage Background Agent configuration for automatic workflow execution",
-        description="""Generate and validate Background Agent configuration files for automatic workflow command execution in Cursor AI.
-        
-Background Agents enable automatic execution of workflow commands based on triggers (file changes, git commits, etc.). Configuration is stored in .cursor/background-agents.yaml and allows Cursor to automatically run workflows without manual intervention.""",
-    )
-    bg_agent_subparsers = bg_agent_parser.add_subparsers(
-        dest="command", help="Background Agent configuration subcommand (generate, validate)", required=True
-    )
-
-    bg_generate_parser = bg_agent_subparsers.add_parser(
-        "generate",
-        aliases=["gen", "init"],
-        help="Generate Background Agent configuration file from template",
-        description="""Generate a Background Agent configuration file (.cursor/background-agents.yaml) from template.
-        
-Creates configuration with:
-  • Workflow trigger definitions
-  • Auto-execution rules
-  • Agent selection criteria
-  • Execution conditions
-
-Use --minimal for a basic configuration, or provide --template for a custom template. Use --overwrite to replace existing configuration.""",
-    )
-    bg_generate_parser.add_argument(
-        "--template",
-        help="Path to a custom template file. If not provided, uses the framework's default template with comprehensive examples.",
-    )
-    bg_generate_parser.add_argument(
-        "--minimal",
-        action="store_true",
-        help="Generate a minimal configuration with basic settings only. Useful for simple use cases or as a starting point.",
-    )
-    bg_generate_parser.add_argument(
-        "--overwrite",
-        action="store_true",
-        help="Overwrite existing .cursor/background-agents.yaml file if it exists. Without this flag, the command will fail if the file already exists.",
-    )
-    bg_generate_parser.add_argument(
-        "--config-path",
-        help="Custom path for the configuration file. Defaults to .cursor/background-agents.yaml in the project root.",
-    )
-
-    bg_validate_parser = bg_agent_subparsers.add_parser(
-        "validate",
-        aliases=["check"],
-        help="Validate Background Agent configuration file for errors",
-        description="""Validate the Background Agent configuration file for syntax and schema errors.
-        
-Checks:
-  • YAML syntax correctness
-  • Schema compliance
-  • Required fields presence
-  • Valid workflow references
-  • Trigger configuration validity
-
-Use this before committing configuration changes to ensure Cursor can properly load the background agents.""",
-    )
-    bg_validate_parser.add_argument(
-        "--config-path",
-        help="Path to the configuration file to validate. Defaults to .cursor/background-agents.yaml in the project root.",
-    )
-    bg_validate_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        help="Output format: 'text' for human-readable validation results, 'json' for structured error data (default: text)",
-    )
+    # Background Agent configuration commands removed - Background Agents no longer used
+    # All parser code for background-agent-config command has been removed
 
     # Governance & Approval Queue command (Story 28.5)
     governance_parser = subparsers.add_parser(
@@ -1072,17 +1002,11 @@ Use this for quality control and ensuring only validated knowledge enters your p
     auto_exec_parser = subparsers.add_parser(
         "auto-execution",
         aliases=["auto-exec", "ae"],
-        help="Monitor and manage Background Agent auto-execution",
-        description="""Monitor and manage Background Agent auto-execution status, metrics, and health.
+        help="Monitor and manage workflow auto-execution (deprecated)",
+        description="""Monitor and manage workflow auto-execution status, metrics, and health (deprecated - Background Agents removed).
         
-Background Agents can automatically execute workflows based on triggers (file changes, git events, etc.). This command provides tools to:
-  • Check current execution status
-  • View execution history
-  • Monitor performance metrics
-  • Run health checks
-  • Enable/disable debug logging
-
-Use this to troubleshoot auto-execution issues, monitor performance, and ensure Background Agents are functioning correctly.""",
+This command is deprecated as Background Agents have been removed from the framework.
+Workflows now use direct execution and Cursor Skills instead.""",
     )
     auto_exec_subparsers = auto_exec_parser.add_subparsers(
         dest="command", help="Auto-execution subcommand (status, history, metrics, health, debug)"

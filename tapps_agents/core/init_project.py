@@ -543,41 +543,12 @@ def init_background_agents_config(
     project_root: Path | None = None, source_file: Path | None = None
 ):
     """
-    Initialize Cursor Background Agents config for a project.
+    Initialize Background Agents config (deprecated - Background Agents removed).
 
-    Copies `.cursor/background-agents.yaml` into the target project if it doesn't exist.
+    This function is kept for backward compatibility but does nothing.
+    Background Agents have been removed from the framework.
     """
-    if project_root is None:
-        project_root = Path.cwd()
-
-    if source_file is None:
-        packaged = _resource_at("cursor", "background-agents.yaml")
-        if packaged is not None and packaged.exists() and not packaged.is_dir():
-            source_file = None  # type: ignore[assignment]
-            packaged_bg = packaged
-        else:
-            packaged_bg = None
-            current_file = Path(__file__)
-            framework_root = current_file.parent.parent.parent
-            source_file = framework_root / ".cursor" / "background-agents.yaml"
-    else:
-        packaged_bg = None
-
-    project_cursor_dir = project_root / ".cursor"
-    project_cursor_dir.mkdir(parents=True, exist_ok=True)
-    dest_file = project_cursor_dir / "background-agents.yaml"
-
-    if dest_file.exists():
-        return False, str(dest_file)
-
-    if packaged_bg is not None:
-        dest_file.write_bytes(packaged_bg.read_bytes())
-        return True, str(dest_file)
-
-    if source_file.exists():
-        shutil.copy2(source_file, dest_file)
-        return True, str(dest_file)
-
+    # Background Agents removed - function does nothing but kept for backward compatibility
     return False, None
 
 
@@ -2282,12 +2253,11 @@ def init_project(
         if copied_commands:
             results["files_created"].extend(copied_commands)
 
-    # Initialize Cursor Background Agents config
-    if include_background_agents:
-        success, bg_path = init_background_agents_config(project_root)
-        results["background_agents"] = success
-        if bg_path:
-            results["files_created"].append(bg_path)
+    # Background Agents config initialization removed - Background Agents no longer used
+    # if include_background_agents:
+    #     success, bg_path = init_background_agents_config(project_root)
+    #     results["background_agents"] = success
+    results["background_agents"] = False  # Background Agents removed
 
     # Initialize customizations directory
     success, customizations_path = init_customizations_directory(project_root)

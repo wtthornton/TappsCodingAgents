@@ -2,7 +2,7 @@
 Cursor-Native Workflow Executor.
 
 This module provides a Cursor-native execution model that uses Cursor Skills
-and Background Agents for LLM operations.
+and direct execution for LLM operations.
 """
 
 from __future__ import annotations
@@ -162,35 +162,7 @@ class CursorWorkflowExecutor:
         else:
             self.auto_execution_enabled = config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled is not None else True
         
-        # Also check workflow metadata for per-workflow override
-        self.auto_execution_enabled_workflow: bool | None = None
-        
-        # Initialize auto-executor (will be used if enabled)
-        if self.auto_execution_enabled:
-            self.auto_executor = BackgroundAgentAutoExecutor(
-                polling_interval=config.workflow.polling_interval,
-                timeout_seconds=config.workflow.timeout_seconds,
-                project_root=self.project_root,
-            )
-            # Log initialization
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(
-                f"Background Agent auto-executor initialized (polling_interval={config.workflow.polling_interval}s, timeout={config.workflow.timeout_seconds}s)",
-                extra={
-                    "auto_execution_enabled": True,
-                    "polling_interval": config.workflow.polling_interval,
-                    "timeout_seconds": config.workflow.timeout_seconds,
-                }
-            )
-        else:
-            self.auto_executor = None
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.warning(
-                "Auto-execution DISABLED - workflows will wait for manual Background Agent execution",
-                extra={"auto_execution_enabled": False}
-            )
+        # Background Agent auto-executor removed - always use direct execution/Skills
         
         # Initialize marker writer for durable step completion tracking
         self.marker_writer = MarkerWriter(project_root=self.project_root)
@@ -270,45 +242,7 @@ class CursorWorkflowExecutor:
         else:
             self.auto_execution_enabled_workflow = None  # Use global config
         
-        # Determine if auto-execution should be used for this workflow
-        use_auto_execution = (
-            self.auto_execution_enabled_workflow
-            if self.auto_execution_enabled_workflow is not None
-            else self.auto_execution_enabled
-        )
-        
-        # Initialize auto-executor if needed (if not already initialized or config changed)
-        if use_auto_execution and not self.auto_executor:
-            from ..core.config import load_config
-            config = load_config()
-            self.auto_executor = BackgroundAgentAutoExecutor(
-                polling_interval=config.workflow.polling_interval,
-                timeout_seconds=config.workflow.timeout_seconds,
-                project_root=self.project_root,
-            )
-            # Log auto-execution status
-            if self.logger:
-                self.logger.info(
-                    f"Auto-execution enabled for workflow (auto_mode={self.auto_mode}, config={self.auto_execution_enabled}, workflow_override={self.auto_execution_enabled_workflow})",
-                    extra={
-                        "auto_mode": self.auto_mode,
-                        "auto_execution_enabled": self.auto_execution_enabled,
-                        "auto_execution_enabled_workflow": self.auto_execution_enabled_workflow,
-                        "use_auto_execution": use_auto_execution,
-                    }
-                )
-        elif not use_auto_execution:
-            self.auto_executor = None
-            if self.logger:
-                self.logger.warning(
-                    "Auto-execution DISABLED for this workflow - will wait for manual Background Agent execution",
-                    extra={
-                        "auto_mode": self.auto_mode,
-                        "auto_execution_enabled": self.auto_execution_enabled,
-                        "auto_execution_enabled_workflow": self.auto_execution_enabled_workflow,
-                        "use_auto_execution": False,
-                    }
-                )
+        # Background Agent auto-executor removed - always use direct execution/Skills
         
         # Use consistent workflow_id format: {workflow.id}-{timestamp}
         workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -1300,147 +1234,12 @@ class CursorWorkflowExecutor:
         async with self._worktree_context(step) as worktree_path:
             worktree_name = self._worktree_name_for_step(step.id)
             
-            # Determine if auto-execution should be used
-            use_auto_execution = (
-                self.auto_execution_enabled_workflow
-                if self.auto_execution_enabled_workflow is not None
-                else self.auto_execution_enabled
-            ) and self.auto_executor is not None
-            
+            # Background Agent auto-execution removed - always use skill_invoker
             try:
-                if use_auto_execution:
-                    # Use Background Agent auto-execution (Epic 7)
-                    # Log that we're using auto-execution
-                    if self.logger:
-                        self.logger.info(
-                            f"Using auto-execution for step {step.id} ({agent_name}/{action})",
-                            extra={
-                                "step_id": step.id,
-                                "agent": agent_name,
-                                "action": action,
-                                "workflow_id": self.state.workflow_id,
-                            }
-                        )
-                    
-                    # Build command using skill_invoker's parameter extraction
-                    # Get command mapping from skill_invoker
-                    key = (agent_name.lower(), action.lower())
-                    if key not in self.skill_invoker.COMMAND_MAPPING:
-                        error_msg = (
-                            f"Unknown command for auto-execution: {agent_name}/{action}. "
-                            f"Available: {list(self.skill_invoker.COMMAND_MAPPING.keys())}"
-                        )
-                        if self.logger:
-                            self.logger.error(
-                                error_msg,
-                                extra={
-                                    "step_id": step.id,
-                                    "agent": agent_name,
-                                    "action": action,
-                                }
-                            )
-                        raise ValueError(error_msg)
-                    
-                    skill_command, _ = self.skill_invoker.COMMAND_MAPPING[key]
-                    
-                    # Build parameters from state (same as skill_invoker does)
-                    # Get param_mapping from COMMAND_MAPPING
-                    _, param_mapping = self.skill_invoker.COMMAND_MAPPING[key]
-                    params = self.skill_invoker._build_parameters(
-                        param_mapping=param_mapping,
-                        step=step,
-                        target_path=target_path,
-                        worktree_path=worktree_path,
-                        state=self.state,
-                    )
-                    
-                    # Build command string
-                    command = self.skill_invoker._build_command(
-                        agent_name=agent_name,
-                        skill_command=skill_command,
-                        params=params,
-                    )
-                    
-                    # Execute via auto-executor (creates command file and polls for completion)
-                    if self.logger:
-                        self.logger.info(
-                            f"Executing command via Background Agent auto-executor",
-                            extra={
-                                "step_id": step.id,
-                                "agent": agent_name,
-                                "action": action,
-                                "worktree_path": str(worktree_path),
-                                "command_preview": command[:100] + "..." if len(command) > 100 else command,
-                            }
-                        )
-                    
-                    execution_result = await self.auto_executor.execute_command(
-                        command=command,
-                        worktree_path=worktree_path,
-                        workflow_id=self.state.workflow_id,
-                        step_id=step.id,
-                        expected_artifacts=step.creates,
-                    )
-                    
-                    # Check execution result
-                    if execution_result.get("status") == "failed":
-                        error_msg = execution_result.get("error", "Unknown error")
-                        from ..core.unicode_safe import safe_print
-                        safe_print(f"\n[ERROR] Auto-execution failed for {agent_name}/{action}", flush=True)
-                        safe_print(f"   Error: {error_msg}", flush=True)
-                        safe_print(f"[TIP] Check Background Agents are running and configured correctly", flush=True)
-                        safe_print(f"   See docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md for setup", flush=True)
-                        safe_print(f"   Worktree: {worktree_path}", flush=True)
-                        if self.logger:
-                            self.logger.error(
-                                f"Auto-execution failed for step {step.id}",
-                                extra={
-                                    "step_id": step.id,
-                                    "agent": agent_name,
-                                    "action": action,
-                                    "error": error_msg,
-                                    "worktree_path": str(worktree_path),
-                                    "execution_result": execution_result,
-                                },
-                                exc_info=True,
-                            )
-                        # Marker will be written by exception handler
-                        raise RuntimeError(
-                            f"Auto-execution failed for {agent_name}/{action}: {error_msg}"
-                        )
-                    elif execution_result.get("status") == "timeout":
-                        from ..core.unicode_safe import safe_print
-                        timeout_msg = execution_result.get('error', 'Timeout')
-                        safe_print(f"\n[ERROR] Auto-execution timeout for {agent_name}/{action}", flush=True)
-                        safe_print(f"   Timeout: {timeout_msg}", flush=True)
-                        safe_print(f"[TIP] Increase timeout in config: workflow.timeout_seconds", flush=True)
-                        # Marker will be written by exception handler
-                        raise TimeoutError(
-                            f"Auto-execution timeout for {agent_name}/{action}: {timeout_msg}"
-                        )
-                    elif execution_result.get("status") != "completed":
-                        from ..core.unicode_safe import safe_print
-                        status = execution_result.get('status', 'unknown')
-                        safe_print(f"\n[ERROR] Auto-execution returned unexpected status: {status}", flush=True)
-                        safe_print(f"[TIP] Check Background Agents configuration and logs", flush=True)
-                        # Marker will be written by exception handler
-                        raise RuntimeError(
-                            f"Auto-execution returned unexpected status: {status}"
-                        )
-                    
-                    if self.logger:
-                        self.logger.info(
-                            f"Step {step.id} completed via auto-execution",
-                            agent=agent_name,
-                            action=action,
-                            duration=execution_result.get("duration_seconds"),
-                        )
-                else:
-                    # Manual execution mode (backward compatibility)
-                    # Invoke Skill via SkillInvoker (creates command files for Background Agents)
-                    from ..core.unicode_safe import safe_print
-                    safe_print(f"\n[FILE] Creating command file for {agent_name}/{action}...", flush=True)
-                    await self.skill_invoker.invoke_skill(
+                # Invoke Skill via SkillInvoker (direct execution or Cursor Skills)
+                from ..core.unicode_safe import safe_print
+                safe_print(f"\n[EXEC] Executing {agent_name}/{action}...", flush=True)
+                await self.skill_invoker.invoke_skill(
                         agent_name=agent_name,
                         action=action,
                         step=step,
@@ -1448,38 +1247,8 @@ class CursorWorkflowExecutor:
                         worktree_path=worktree_path,
                         state=self.state,
                     )
-                    command_file = worktree_path / ".cursor-skill-command.txt"
-                    if command_file.exists():
-                        safe_print(f"[OK] Command file created: {command_file}", flush=True)
-                        # Show first few lines of command
-                        try:
-                            with open(command_file, 'r', encoding='utf-8') as f:
-                                first_line = f.readline().strip()
-                                if first_line:
-                                    safe_print(f"   Command: {first_line[:80]}...", flush=True)
-                        except Exception:
-                            pass
-
-                    # Wait for Skill to complete (manual polling for artifacts)
-                    import asyncio
-
-                    from .cursor_skill_helper import check_skill_completion
-                    
-                    max_wait_time = 3600  # 1 hour max wait
-                    poll_interval = 2  # Check every 2 seconds
-                    elapsed = 0
-                    
-                    # Print to terminal for visibility with helpful guidance
-                    command_file = worktree_path / ".cursor-skill-command.txt"
-                    safe_print(f"\n{'='*60}", flush=True)
-                    safe_print(f"[WAIT] Waiting for {agent_name}/{action} to complete (manual mode)", flush=True)
-                    safe_print(f"[FILE] Command file: {command_file}", flush=True)
-                    safe_print(f"[LIST] Expected artifacts: {step.creates}", flush=True)
-                    safe_print(f"[TIP] Auto-execution is disabled. To enable automatic execution:", flush=True)
-                    safe_print(f"   1. Enable in config: workflow.auto_execution_enabled: true", flush=True)
-                    safe_print(f"   2. Or run in headless mode: set TAPPS_AGENTS_MODE=headless", flush=True)
-                    safe_print(f"   3. Or use --cursor-mode flag with auto-execution enabled", flush=True)
-                    safe_print(f"{'='*60}\n", flush=True)
+                # Skill invoker handles execution (direct execution or Cursor Skills)
+                # Artifacts are extracted after completion
                     
                     if self.logger:
                         self.logger.info(

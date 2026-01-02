@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from .background_agent_config import BackgroundAgentConfigValidator
+# Background Agent config validator removed - Background Agents no longer used
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ class HealthChecker:
         """
         self.project_root = project_root or Path.cwd()
         self.config_dir = self.project_root / ".tapps-agents"
-        self.background_agents_config = self.project_root / ".cursor" / "background-agents.yaml"
+        # Background Agents config removed - Background Agents no longer used
 
     def check_all(self) -> list[HealthCheckResult]:
         """
@@ -57,40 +57,13 @@ class HealthChecker:
         return results
 
     def check_configuration(self) -> HealthCheckResult:
-        """Check Background Agent configuration validity."""
-        try:
-            if not self.background_agents_config.exists():
-                return HealthCheckResult(
-                    name="configuration",
-                    status="degraded",
-                    message="Background Agent configuration file not found",
-                    details={"path": str(self.background_agents_config)},
-                )
-
-            # Validate configuration
-            validator = BackgroundAgentConfigValidator(self.background_agents_config)
-            is_valid, errors = validator.validate()
-            
-            if not is_valid and errors:
-                return HealthCheckResult(
-                    name="configuration",
-                    status="unhealthy",
-                    message=f"Configuration validation failed: {len(errors)} error(s)",
-                    details={"errors": errors},
-                )
-
-            return HealthCheckResult(
-                name="configuration",
-                status="healthy",
-                message="Configuration is valid",
-            )
-
-        except Exception as e:
-            return HealthCheckResult(
-                name="configuration",
-                status="unhealthy",
-                message=f"Failed to check configuration: {e}",
-            )
+        """Check configuration validity (Background Agent checks removed)."""
+        # Background Agents removed - configuration check no longer needed
+        return HealthCheckResult(
+            name="configuration",
+            status="healthy",
+            message="Configuration check skipped (Background Agents removed)",
+        )
 
     def check_file_system(self) -> HealthCheckResult:
         """Check file system accessibility."""

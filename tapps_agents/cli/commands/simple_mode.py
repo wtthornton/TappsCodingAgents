@@ -362,10 +362,7 @@ def handle_simple_mode_full(args: object) -> None:
     
     from ...core.unicode_safe import safe_print
     if is_cursor_mode():
-        safe_print("WARNING: Running in Cursor mode - workflow will use Background Agents")
-        if not effective_auto_mode:
-            safe_print("   Auto-execution is disabled - workflow will wait for manual execution")
-        safe_print("   To force headless mode: set TAPPS_AGENTS_MODE=headless\n")
+        safe_print("[OK] Running in Cursor mode - using direct execution and Cursor Skills\n")
     else:
         safe_print("[OK] Running in headless mode - direct execution with terminal output\n")
     

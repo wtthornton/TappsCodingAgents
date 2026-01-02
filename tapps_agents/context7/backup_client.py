@@ -185,7 +185,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
             offline_mode: If True, return cached result or empty matches without network call
         """
         # Check offline mode
-        from ...core.offline_mode import OfflineMode
+        from ..core.offline_mode import OfflineMode
         
         if offline_mode or OfflineMode.is_offline():
             return {
@@ -336,7 +336,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
             # #endregion
             
             # Record connection failure for offline mode detection
-            from ...core.offline_mode import OfflineMode
+            from ..core.offline_mode import OfflineMode
             OfflineMode.record_connection_failure()
             
             # Return error with context (don't raise exception to allow graceful fallback)

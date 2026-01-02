@@ -17,9 +17,8 @@ from .detector import (
     WorkflowTrack,
 )
 
-# Background Agents (Epic 2) - Lazy imports to avoid circular dependencies
-# These are imported on-demand when needed
-# Background Agent Artifacts
+# Background Agents removed - Artifact classes remain (data structures only)
+# Background Agent Artifacts (data structures, not Background Agent implementations)
 from .docs_artifact import DocFileResult, DocumentationArtifact
 from .enhancement_artifact import EnhancementArtifact, EnhancementStage
 from .event_log import WorkflowEvent, WorkflowEventLog
@@ -81,13 +80,7 @@ __all__ = [
     "WorkflowTrack",
     "WorkflowRecommender",
     "WorkflowRecommendation",
-    # Background Agents (lazy imports - use direct imports when needed)
-    # "BackgroundDocsAgent",
-    # "BackgroundOpsAgent",
-    # "BackgroundContextAgent",
-    # "BackgroundQualityAgent",
-    # "BackgroundTestingAgent",
-    # Background Agent Artifacts
+    # Background Agents removed - Artifact classes remain (data structures only)
     "DocumentationArtifact",
     "DocFileResult",
     "OperationsArtifact",
