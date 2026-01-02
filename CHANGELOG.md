@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.10] - 2025-01-16
+
+### Fixed
+- **SKILL.md Files** - Updated all agent SKILL.md files to match CLI implementations
+  - Added missing reviewer commands: `*report`, `*analyze-project`, `*analyze-services`
+  - Renamed architect commands: `*create-diagram` → `*architecture-diagram`, `*select-technology` → `*tech-selection`
+  - Renamed analyst commands: `*analyze-stakeholders` → `*stakeholder-analysis`, `*research-technology` → `*tech-research`
+  - Split improver commands: `*refactor`, `*optimize`, `*improve-quality`
+  - Added missing ops command: `*audit-dependencies`
+  - Added missing orchestrator command: `*workflow {file}`
+  - Clarified that `*security-scan` and `*audit-deps` are part of `*review` command
+- **Cursor Rules** - Fixed command-reference.mdc and agent-capabilities.mdc
+  - Added missing `*improve-quality` command documentation
+  - Updated analyst command names to match CLI
+  - Updated ops commands to match actual CLI implementation
+  - Added reviewer `analyze-project` and `analyze-services` examples
+  - Updated improver and ops command examples
+
+### Changed
+- **Documentation** - All SKILL.md files and Cursor rules now accurately reflect CLI implementations
+  - AI agents in Cursor IDE now understand all available commands correctly
+  - Improved command discoverability and accuracy
+
 ## [3.2.9] - 2025-12-31
 
 ### Changed
