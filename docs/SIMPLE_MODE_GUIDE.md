@@ -148,6 +148,46 @@ Simple Mode understands many ways to express the same intent:
 - **Test synonyms**: test, verify, validate, coverage, testing, tests
 - **Epic synonyms**: epic, execute epic, run epic, implement epic, epic workflow
 
+## Phase 2 Features (New!)
+
+Simple Mode now includes enhanced user experience features:
+
+### Real-Time Status Reporting
+
+See progress indicators during workflow execution:
+
+```
+[1/7] Enhance prompt (requirements analysis)... [OK] (2.1s)
+[2/7] Create user stories... [OK] (1.8s)
+...
+```
+
+### Workflow Preview
+
+Before execution, see what steps will run:
+
+```
+============================================================
+Workflow Preview
+============================================================
+Feature: Add user authentication
+Mode: Complete (7 steps)
+
+Steps to Execute:
+  1. Enhance prompt (requirements analysis)     ~2s
+  2. Create user stories                        ~2s
+  ...
+```
+
+### Error Recovery
+
+Automatic error recovery strategies:
+- **Timeout errors** → Automatic retry
+- **Validation errors (non-critical)** → Skip step
+- **File not found (non-critical)** → Continue with degraded functionality
+
+See [Phase 2 Features Documentation](SIMPLE_MODE_PHASE2_FEATURES.md) for details.
+
 ## Using Simple Mode
 
 ### In Cursor IDE

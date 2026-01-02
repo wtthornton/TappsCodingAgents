@@ -1,93 +1,130 @@
-# Step 2: User Stories - Business Metrics Collection
+# Step 2: User Stories - Fix Suggestions Generation Bug
 
-## Story 1: Aggregate Technical Metrics into Business Metrics
-**As a** developer  
-**I want** technical metrics automatically aggregated into business metrics  
-**So that** I can understand the business value of expert consultations
+## User Stories with Acceptance Criteria
 
-**Acceptance Criteria:**
-- [ ] `BusinessMetricsCollector` aggregates data from `ExpertEngineMetrics`
-- [ ] `BusinessMetricsCollector` aggregates data from `ConfidenceMetricsTracker`
-- [ ] Business metrics include: consultations per workflow, average confidence, expert popularity
-- [ ] Metrics are stored in JSON format
-- [ ] Metrics can be queried by date range, expert, domain
-
-**Story Points:** 5
-
-## Story 2: Generate Weekly Summary Reports
-**As a** developer  
-**I want** automated weekly summary reports  
-**So that** I can track expert usage trends over time
+### Story 1: Add Linting Suggestions Generation
+**As a** developer receiving code quality reports  
+**I want** to receive actionable suggestions when my linting score is below threshold  
+**So that** I can improve my code quality by fixing linting issues
 
 **Acceptance Criteria:**
-- [ ] Weekly reports generated automatically or on-demand
-- [ ] Reports include: top experts by usage, confidence trends, consultation frequency
-- [ ] Reports saved as JSON and optionally as markdown
-- [ ] Reports can be generated for custom date ranges
+- ✅ When `linting_score` < 7.0, `_generate_category_suggestions()` returns non-empty suggestions list
+- ✅ Suggestions include reference to Ruff (Python) or ESLint (TypeScript/JavaScript)
+- ✅ Suggestions include actionable commands (e.g., "Run 'ruff check'")
+- ✅ Python-specific suggestions mention Ruff auto-fix and configuration
+- ✅ TypeScript/JavaScript-specific suggestions mention ESLint auto-fix and configuration
+- ✅ Suggestions follow same format as existing categories (base + language-specific)
 
-**Story Points:** 3
+**Story Points:** 3  
+**Priority:** High  
+**Dependencies:** None
 
-## Story 3: Correlate Expert Consultations with Code Quality
-**As a** developer  
-**I want** to see code quality improvements when experts are consulted  
-**So that** I can prove the value of expert consultations
+---
 
-**Acceptance Criteria:**
-- [ ] Track code quality scores before expert consultation
-- [ ] Track code quality scores after expert consultation
-- [ ] Calculate improvement percentage
-- [ ] Store correlation data for analysis
-- [ ] Generate correlation reports
-
-**Story Points:** 8
-
-## Story 4: Track Bug Prevention
-**As a** developer  
-**I want** to track bugs prevented by expert consultations  
-**So that** I can measure the impact of expert advice
+### Story 2: Add Type Checking Suggestions Generation
+**As a** developer receiving code quality reports  
+**I want** to receive actionable suggestions when my type checking score is below threshold  
+**So that** I can improve type safety by fixing type errors
 
 **Acceptance Criteria:**
-- [ ] Compare workflows with expert consultation vs without
-- [ ] Track bugs found in code that used experts
-- [ ] Track bugs found in code that didn't use experts
-- [ ] Calculate bug prevention rate
-- [ ] Store comparison data
+- ✅ When `type_checking_score` < 7.0, `_generate_category_suggestions()` returns non-empty suggestions list
+- ✅ Suggestions include reference to mypy (Python) or TypeScript compiler
+- ✅ Suggestions include actionable commands (e.g., "Run 'mypy <file>'")
+- ✅ Python-specific suggestions mention type hints, typing module, Optional, Union
+- ✅ TypeScript-specific suggestions mention strict mode, explicit return types, avoiding 'any'
+- ✅ Suggestions follow same format as existing categories
 
-**Story Points:** 5
+**Story Points:** 3  
+**Priority:** High  
+**Dependencies:** None
 
-## Story 5: Calculate ROI per Consultation
-**As a** developer  
-**I want** to calculate ROI for expert consultations  
-**So that** I can justify the investment in the Experts feature
+---
 
-**Acceptance Criteria:**
-- [ ] Calculate estimated time savings per consultation
-- [ ] Calculate infrastructure cost per consultation
-- [ ] Calculate ROI: (value - cost) / cost
-- [ ] Store ROI data
-- [ ] Generate ROI reports
-
-**Story Points:** 5
-
-## Story 6: Track Expert Usage by Domain
-**As a** developer  
-**I want** to see which domains use experts most  
-**So that** I can prioritize expert improvements
+### Story 3: Add Duplication Suggestions Generation
+**As a** developer receiving code quality reports  
+**I want** to receive actionable suggestions when my duplication score is below threshold  
+**So that** I can reduce code duplication and improve maintainability
 
 **Acceptance Criteria:**
-- [ ] Track consultations by domain
-- [ ] Track consultations by expert
-- [ ] Generate usage distribution reports
-- [ ] Identify most/least used experts
+- ✅ When `duplication_score` < 7.0, `_generate_category_suggestions()` returns non-empty suggestions list
+- ✅ Suggestions include reference to jscpd tool
+- ✅ Suggestions include actionable commands (e.g., "Run 'jscpd' to identify duplicates")
+- ✅ Suggestions mention extracting duplicate code into reusable functions/components
+- ✅ Python-specific suggestions mention utility functions, decorators, context managers
+- ✅ TypeScript/React-specific suggestions mention shared components, hooks, HOCs
+- ✅ Suggestions include target threshold (e.g., "aim for < 3% duplication")
 
-**Story Points:** 3
+**Story Points:** 2  
+**Priority:** High  
+**Dependencies:** None
 
-## Total Story Points: 29
+---
 
-## Priority Order
-1. Story 1: Aggregate Technical Metrics (Foundation)
-2. Story 6: Track Expert Usage by Domain (Foundation)
-3. Story 2: Generate Weekly Summary Reports (Foundation)
-4. Story 3: Correlate Expert Consultations with Code Quality (Impact)
-5. Story 4: Track Bug Prevention (Impact)
-6. Story 5: Calculate ROI per Consultation (ROI)
+### Story 4: Add Unit Tests for New Categories
+**As a** developer maintaining the codebase  
+**I want** comprehensive unit tests for the new suggestion generation logic  
+**So that** I can ensure correctness and prevent regressions
+
+**Acceptance Criteria:**
+- ✅ Unit test for `linting` category with score < 7.0 returns non-empty suggestions
+- ✅ Unit test for `type_checking` category with score < 7.0 returns non-empty suggestions
+- ✅ Unit test for `duplication` category with score < 7.0 returns non-empty suggestions
+- ✅ Unit test verifies Python-specific suggestions are included for Python language
+- ✅ Unit test verifies TypeScript-specific suggestions are included for TypeScript language
+- ✅ Unit test verifies empty suggestions for scores ≥ 7.0 (excellent threshold)
+- ✅ Edge case tests: score = 0.0, 5.0, 7.0, 10.0
+- ✅ Test coverage ≥ 80% for new code
+
+**Story Points:** 5  
+**Priority:** High  
+**Dependencies:** Stories 1, 2, 3
+
+---
+
+### Story 5: Integration Test for Full Workflow
+**As a** developer maintaining the codebase  
+**I want** integration tests verifying suggestions appear in review output  
+**So that** I can ensure end-to-end functionality works correctly
+
+**Acceptance Criteria:**
+- ✅ Integration test: Score file with linting issues → suggestions appear in review output
+- ✅ Integration test: Score file with type errors → suggestions appear in review output
+- ✅ Integration test: Score file with duplication → suggestions appear in review output
+- ✅ Integration test verifies suggestions are properly formatted in JSON output
+- ✅ Integration test verifies no regression in existing category suggestions
+
+**Story Points:** 3  
+**Priority:** Medium  
+**Dependencies:** Stories 1, 2, 3, 4
+
+---
+
+## Story Breakdown Summary
+
+| Story | Points | Priority | Status |
+|-------|--------|----------|--------|
+| Story 1: Linting Suggestions | 3 | High | Pending |
+| Story 2: Type Checking Suggestions | 3 | High | Pending |
+| Story 3: Duplication Suggestions | 2 | High | Pending |
+| Story 4: Unit Tests | 5 | High | Pending |
+| Story 5: Integration Tests | 3 | Medium | Pending |
+| **Total** | **16** | | |
+
+## Implementation Order
+
+1. **Story 1** - Linting suggestions (foundation)
+2. **Story 2** - Type checking suggestions (foundation)
+3. **Story 3** - Duplication suggestions (foundation)
+4. **Story 4** - Unit tests (validation)
+5. **Story 5** - Integration tests (validation)
+
+## Definition of Done
+
+- ✅ All stories completed and tested
+- ✅ Code passes linting (Ruff score ≥ 9.0)
+- ✅ Code passes type checking (mypy score ≥ 9.0)
+- ✅ Test coverage ≥ 80% for new code
+- ✅ All tests pass (unit + integration)
+- ✅ No regression in existing functionality
+- ✅ Code review approved
+- ✅ Documentation updated if needed

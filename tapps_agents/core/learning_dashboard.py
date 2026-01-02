@@ -66,7 +66,7 @@ class LearningDashboard:
             }
 
         # Get all capabilities
-        all_capabilities = self.capability_registry.get_all_capabilities()
+        all_capabilities = self.capability_registry.metrics
         return {
             "total_capabilities": len(all_capabilities),
             "capabilities": [

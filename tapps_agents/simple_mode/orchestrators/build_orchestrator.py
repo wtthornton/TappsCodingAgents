@@ -7,7 +7,7 @@ Coordinates: Enhancer → Planner → Architect → Designer → Implementer
 import logging
 import re
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from tapps_agents.agents.enhancer.agent import EnhancerAgent
 from tapps_agents.core.config import ProjectConfig
@@ -162,6 +162,9 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         intent: Intent,
         parameters: dict[str, Any] | None = None,
         fast_mode: bool = False,
+        on_step_start: Callable[[int, str], None] | None = None,
+        on_step_complete: Callable[[int, str, str], None] | None = None,
+        on_step_error: Callable[[int, str, Exception], None] | None = None,
     ) -> dict[str, Any]:
         """
         Execute build workflow with prompt enhancement.
@@ -170,6 +173,9 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             intent: Parsed user intent
             parameters: Additional parameters from user input
             fast_mode: If True, skip steps 1-4 (enhance, plan, architect, design)
+            on_step_start: Optional callback when step starts (step_num, step_name)
+            on_step_complete: Optional callback when step completes (step_num, step_name, status)
+            on_step_error: Optional callback when step errors (step_num, step_name, error)
 
         Returns:
             Dictionary with execution results including:
@@ -259,8 +265,6 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                         original_description = original_description + context7_note
         except Exception as e:
             # Context7 is optional - continue without it
-            import logging
-            logger = logging.getLogger(__name__)
             logger.debug(f"Context7 auto-detection failed in build workflow: {e}")
 
         # Step 1: Enhance the prompt using the enhancer agent (skip in fast mode)
@@ -270,6 +274,10 @@ class BuildOrchestrator(SimpleModeOrchestrator):
 
         if not fast_mode:
             # Step 1: Enhancement
+            step_num = 1
+            step_name = "Enhance prompt (requirements analysis)"
+            if on_step_start:
+                on_step_start(step_num, step_name)
             try:
                 enhancer = EnhancerAgent(config=self.config)
                 await enhancer.activate(self.project_root)
@@ -298,6 +306,10 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 await enhancer.close()
                 steps_executed.append("enhance")
                 
+                # Notify step completion
+                if on_step_complete:
+                    on_step_complete(step_num, step_name, "success")
+                
                 # Save checkpoint and documentation
                 if checkpoint_manager:
                     checkpoint_manager.save_checkpoint(
@@ -318,6 +330,10 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 enhanced_prompt = original_description
                 enhancement_result = {"error": str(e), "fallback": True}
                 logger.warning(f"Enhancement failed, continuing with original prompt: {e}")
+                if on_step_error:
+                    on_step_error(step_num, step_name, e)
+                elif on_step_complete:
+                    on_step_complete(step_num, step_name, "failed")
         else:
             logger.info("Fast mode: Skipping enhancement step")
 
@@ -333,26 +349,42 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         agent_tasks = []
         if not fast_mode:
             # Steps 2-4: Plan, Architect, Design
+            step_names = {
+                "planner": (2, "Create user stories"),
+                "architect": (3, "Design architecture"),
+                "designer": (4, "Design API/data models"),
+            }
             agent_tasks = [
                 {
                     "agent_id": "planner-1",
                     "agent": "planner",
                     "command": "create-story",
                     "args": {"description": enhanced_prompt},
+                    "step_num": 2,
+                    "step_name": "Create user stories",
                 },
                 {
                     "agent_id": "architect-1",
                     "agent": "architect",
                     "command": "design",
                     "args": {"specification": enhanced_prompt},
+                    "step_num": 3,
+                    "step_name": "Design architecture",
                 },
                 {
                     "agent_id": "designer-1",
                     "agent": "designer",
                     "command": "design-api",
                     "args": {"specification": enhanced_prompt},
+                    "step_num": 4,
+                    "step_name": "Design API/data models",
                 },
             ]
+            
+            # Notify step starts for steps 2-4
+            for task in agent_tasks:
+                if on_step_start:
+                    on_step_start(task["step_num"], task["step_name"])
         
         # Step 5: Implementation (always execute)
         # Enrich context with previous step documentation if available
@@ -362,63 +394,103 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             enhanced_prompt=enhanced_prompt if not fast_mode else original_description,
         )
         
+        step_5_num = 5 if not fast_mode else 1
+        step_5_name = "Implement code"
+        if on_step_start:
+            on_step_start(step_5_num, step_5_name)
+        
         agent_tasks.append({
             "agent_id": "implementer-1",
             "agent": "implementer",
             "command": "implement",
             "args": implementer_args,
+            "step_num": step_5_num,
+            "step_name": step_5_name,
         })
 
         # Execute agent tasks
         if agent_tasks:
-            result = await orchestrator.execute_parallel(agent_tasks)
-            
-            # Track executed steps and save checkpoints
-            step_number = 2 if not fast_mode else 1
-            for task in agent_tasks:
-                agent_name = task["agent"]
-                if agent_name in ["planner", "architect", "designer"]:
-                    steps_executed.append(agent_name)
-                    # Save checkpoint and documentation for each step
-                    if checkpoint_manager:
-                        step_result = result.get("results", {}).get(task["agent_id"], {})
-                        checkpoint_manager.save_checkpoint(
-                            step_id=agent_name,
-                            step_number=step_number,
-                            step_output=step_result,
-                            artifacts={},
-                            step_name=f"{agent_name}-result",
-                        )
-                    if doc_manager:
-                        step_result = result.get("results", {}).get(task["agent_id"], {})
-                        doc_content = f"# Step {step_number}: {agent_name.title()} Result\n\n{step_result}"
-                        doc_manager.save_step_documentation(
-                            step_number=step_number,
-                            content=doc_content,
-                            step_name=f"{agent_name}-result",
-                        )
-                    step_number += 1
+            try:
+                result = await orchestrator.execute_parallel(agent_tasks)
+                
+                # Track executed steps and save checkpoints
+                step_number = 2 if not fast_mode else 1
+                for task in agent_tasks:
+                    agent_name = task["agent"]
+                    task_step_num = task.get("step_num", step_number)
+                    task_step_name = task.get("step_name", agent_name)
+                    
+                    # Check if task succeeded
+                    task_result = result.get("results", {}).get(task["agent_id"], {})
+                    task_success = result.get("success", True) and task_result.get("success", True)
+                    
+                    if agent_name in ["planner", "architect", "designer", "implementer"]:
+                        steps_executed.append(agent_name)
+                        
+                        # Notify step completion
+                        if on_step_complete:
+                            status = "success" if task_success else "failed"
+                            on_step_complete(task_step_num, task_step_name, status)
+                        
+                        # Save checkpoint and documentation for each step
+                        if checkpoint_manager:
+                            checkpoint_manager.save_checkpoint(
+                                step_id=agent_name,
+                                step_number=task_step_num,
+                                step_output=task_result,
+                                artifacts={},
+                                step_name=f"{agent_name}-result",
+                            )
+                        if doc_manager:
+                            doc_content = f"# Step {task_step_num}: {agent_name.title()} Result\n\n{task_result}"
+                            doc_manager.save_step_documentation(
+                                step_number=task_step_num,
+                                content=doc_content,
+                                step_name=f"{agent_name}-result",
+                            )
+                        step_number += 1
+            except Exception as e:
+                # Handle execution errors
+                for task in agent_tasks:
+                    task_step_num = task.get("step_num", 0)
+                    task_step_name = task.get("step_name", task["agent"])
+                    if on_step_error:
+                        on_step_error(task_step_num, task_step_name, e)
+                    elif on_step_complete:
+                        on_step_complete(task_step_num, task_step_name, "failed")
+                raise
         else:
             # Fast mode: Only implementation
             result = await orchestrator.execute_parallel(agent_tasks)
         
         steps_executed.append("implement")
 
-        # Step 6-7: Review and Test (if not in fast mode)
+        # Step 6-7: Review and Test (if not in fast_mode)
         if not fast_mode:
             # Add reviewer and tester steps
+            step_6_name = "Review code quality"
+            step_7_name = "Generate tests"
+            
+            if on_step_start:
+                on_step_start(6, step_6_name)
+                on_step_start(7, step_7_name)
+            
             review_test_tasks = [
                 {
                     "agent_id": "reviewer-1",
                     "agent": "reviewer",
                     "command": "score",  # Quick score for workflow
                     "args": {},
+                    "step_num": 6,
+                    "step_name": step_6_name,
                 },
                 {
                     "agent_id": "tester-1",
                     "agent": "tester",
                     "command": "generate-tests",  # Generate tests
                     "args": {},
+                    "step_num": 7,
+                    "step_name": step_7_name,
                 },
             ]
             # Note: These would need actual file paths from implementation results
@@ -428,8 +500,19 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 try:
                     review_test_result = await orchestrator.execute_parallel(review_test_tasks)
                     steps_executed.extend(["review", "test"])
+                    
+                    # Notify step completions
+                    if on_step_complete:
+                        on_step_complete(6, step_6_name, "success")
+                        on_step_complete(7, step_7_name, "success")
                 except Exception as e:
                     logger.warning(f"Review/test steps failed: {e}")
+                    if on_step_error:
+                        on_step_error(6, step_6_name, e)
+                        on_step_error(7, step_7_name, e)
+                    elif on_step_complete:
+                        on_step_complete(6, step_6_name, "failed")
+                        on_step_complete(7, step_7_name, "failed")
 
         # Step 8: Framework change detection and documentation update
         doc_update_result = None
@@ -465,8 +548,6 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 await evaluator.close()
             except Exception as e:
                 # Evaluator is optional - log but don't fail workflow
-                import logging
-                logger = logging.getLogger(__name__)
                 logger.debug(f"Evaluator auto-run failed: {e}")
 
         # Create latest symlink if enabled

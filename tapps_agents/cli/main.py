@@ -41,6 +41,7 @@ from .commands import (
     evaluator,
     implementer,
     improver,
+    learning,
     ops,
     orchestrator,
     planner,
@@ -429,6 +430,8 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_cursor_command(args)
     elif args.agent == "simple-mode":
         simple_mode.handle_simple_mode_command(args)
+    elif args.agent == "learning":
+        learning.handle_learning_command(args)
     elif args.agent is None:
         # Show main help if no agent specified
         help_parser = create_root_parser()

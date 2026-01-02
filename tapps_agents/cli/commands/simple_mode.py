@@ -34,6 +34,8 @@ def handle_simple_mode_command(args: object) -> None:
         handle_simple_mode_progress()
     elif command == "full":
         handle_simple_mode_full(args)
+    elif command == "build":
+        handle_simple_mode_build(args)
     elif command == "resume":
         handle_simple_mode_resume(args)
     else:
@@ -42,7 +44,7 @@ def handle_simple_mode_command(args: object) -> None:
             "Invalid simple-mode command",
             error_code="invalid_command",
             context={"command": command},
-            remediation="Use: on, off, status, init, configure, progress, full, or resume",
+            remediation="Use: on, off, status, init, configure, progress, full, build, or resume",
             exit_code=2,
         )
 
@@ -275,6 +277,178 @@ def handle_simple_mode_resume(args: object) -> None:
             error_code="resume_failed",
             context={"workflow_id": workflow_id},
             remediation="Check that workflow_id exists and checkpoints are valid",
+            exit_code=1,
+        )
+
+
+def handle_simple_mode_build(args: object) -> None:
+    """Handle simple-mode build command - runs build workflow for new features."""
+    feedback = get_feedback()
+    feedback.start_operation("Starting Simple Mode Build Workflow")
+    
+    # Validate arguments before execution
+    from ..validators.command_validator import CommandValidator
+    from ..utils.error_formatter import ErrorFormatter
+    
+    validator = CommandValidator()
+    validation_result = validator.validate_build_command(args)
+    
+    if not validation_result.valid:
+        formatter = ErrorFormatter()
+        error_msg = formatter.format_validation_error(validation_result)
+        feedback.error(
+            "Command validation failed",
+            error_code="validation_error",
+            context={"errors": validation_result.errors},
+            remediation=validation_result.suggestions[0] if validation_result.suggestions else "Check command arguments",
+            exit_code=2,
+        )
+        # Print detailed error message
+        print("\n" + error_msg, file=sys.stderr)
+        return
+    
+    # Get arguments (validated)
+    user_prompt = getattr(args, "prompt", None)
+    target_file = getattr(args, "file", None)
+    fast_mode = getattr(args, "fast", False)
+    auto_mode = getattr(args, "auto", False)
+    
+    print(f"\n{'='*60}")
+    print("Simple Mode Build Workflow")
+    print(f"{'='*60}")
+    print(f"Feature: {user_prompt}")
+    if fast_mode:
+        print("Mode: Fast (skipping documentation steps 1-4)")
+    else:
+        print("Mode: Complete (all 7 steps)")
+    print()
+    
+    # Load config
+    from ...core.config import load_config
+    from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
+    from ...simple_mode.intent_parser import Intent, IntentParser, IntentType
+    from ...simple_mode.orchestrators.build_orchestrator import BuildOrchestrator
+    
+    config = load_config()
+    project_root = Path.cwd()
+    
+    # Create intent
+    parser = IntentParser()
+    intent = Intent(
+        type=IntentType.BUILD,
+        confidence=1.0,
+        parameters={"description": user_prompt, "file": target_file},
+        original_input=user_prompt,
+    )
+    
+    # Initialize orchestrator
+    orchestrator = BuildOrchestrator(
+        project_root=project_root,
+        config=config,
+    )
+    
+    # Check runtime mode
+    runtime_mode = detect_runtime_mode()
+    feedback.clear_progress()
+    
+    # Workflow preview (if not auto mode)
+    if not auto_mode:
+        print("\n" + "=" * 60)
+        print("Workflow Preview")
+        print("=" * 60)
+        print(f"Feature: {user_prompt}")
+        print(f"Mode: {'Fast' if fast_mode else 'Complete'} ({'4' if fast_mode else '7'} steps)")
+        print("\nSteps to Execute:")
+        if fast_mode:
+            steps = [
+                (5, "Implement code", "~5s"),
+                (6, "Review code quality", "~2s"),
+                (7, "Generate tests", "~2s"),
+            ]
+        else:
+            steps = [
+                (1, "Enhance prompt (requirements analysis)", "~2s"),
+                (2, "Create user stories", "~2s"),
+                (3, "Design architecture", "~3s"),
+                (4, "Design API/data models", "~3s"),
+                (5, "Implement code", "~5s"),
+                (6, "Review code quality", "~2s"),
+                (7, "Generate tests", "~2s"),
+            ]
+        for step_num, step_name, est_time in steps:
+            print(f"  {step_num}. {step_name:<45} {est_time}")
+        total_est = sum(float(s[2].replace("~", "").replace("s", "")) for s in steps)
+        print(f"\nEstimated Total Time: ~{total_est:.0f}s")
+        print(f"Configuration: automation.level=2, fast_mode={str(fast_mode).lower()}")
+        print("\n" + "=" * 60)
+        sys.stdout.flush()
+    
+    print("\nExecuting build workflow...")
+    print(f"Runtime mode: {runtime_mode.value}")
+    print(f"Auto-execution: {'enabled' if auto_mode else 'disabled'}")
+    
+    from ...core.unicode_safe import safe_print
+    if is_cursor_mode():
+        safe_print("[OK] Running in Cursor mode - using direct execution\n")
+    else:
+        safe_print("[OK] Running in headless mode - direct execution with terminal output\n")
+    
+    sys.stdout.flush()
+    
+    # Initialize status reporter
+    from ..utils.status_reporter import StatusReporter
+    total_steps = 4 if fast_mode else 7
+    status_reporter = StatusReporter(total_steps=total_steps)
+    
+    # Define callbacks for real-time status reporting
+    def on_step_start(step_num: int, step_name: str) -> None:
+        """Callback when a step starts."""
+        status_reporter.start_step(step_num, step_name)
+    
+    def on_step_complete(step_num: int, step_name: str, status: str) -> None:
+        """Callback when a step completes."""
+        status_reporter.complete_step(step_num, step_name, status)
+    
+    def on_step_error(step_num: int, step_name: str, error: Exception) -> None:
+        """Callback when a step errors."""
+        status_reporter.complete_step(step_num, step_name, "failed")
+    
+    try:
+        import asyncio
+        
+        result = asyncio.run(
+            orchestrator.execute(
+                intent=intent,
+                parameters=intent.parameters,
+                fast_mode=fast_mode,
+                on_step_start=on_step_start,
+                on_step_complete=on_step_complete,
+                on_step_error=on_step_error,
+            )
+        )
+        
+        # Print execution summary
+        status_reporter.print_summary()
+        
+        if result.get("success", False):
+            feedback.success("Simple Mode Build Workflow completed successfully")
+            print("\n✅ Build workflow completed successfully!")
+            if "workflow_id" in result:
+                print(f"\nWorkflow ID: {result['workflow_id']}")
+            if "steps_executed" in result:
+                print(f"Steps executed: {len(result['steps_executed'])}")
+        else:
+            feedback.error(
+                "Build workflow execution failed",
+                error_code="build_workflow_failed",
+                context={"error": result.get("error", "Unknown error")},
+                exit_code=1,
+            )
+    except Exception as e:
+        feedback.error(
+            "Build workflow execution error",
+            error_code="build_workflow_error",
+            context={"error": str(e)},
             exit_code=1,
         )
 

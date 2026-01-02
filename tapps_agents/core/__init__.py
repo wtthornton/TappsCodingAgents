@@ -68,6 +68,18 @@ from .learning_decision import (
     LearningDecisionEngine,
 )
 from .learning_integration import LearningAwareMixin
+from .learning_export import (
+    ExportMetadata,
+    LearningDataExporter,
+)
+from .anonymization import (
+    AnonymizationPipeline,
+    AnonymizationReport,
+)
+from .export_schema import (
+    ExportSchema,
+    ValidationResult,
+)
 from .long_duration_support import (
     DurabilityGuarantee,
     DurabilityLevel,
@@ -228,4 +240,10 @@ __all__ = [
     "run_docker_ps_simple",
     "run_docker_ps_native",
     "get_container_status",
+    "LearningDataExporter",
+    "ExportMetadata",
+    "AnonymizationPipeline",
+    "AnonymizationReport",
+    "ExportSchema",
+    "ValidationResult",
 ]

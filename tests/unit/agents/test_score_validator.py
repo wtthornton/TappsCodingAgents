@@ -114,3 +114,130 @@ class TestScoreValidator:
         assert "some_string" not in results
         assert "some_list" not in results
 
+
+class TestLintingSuggestions:
+    """Test linting category suggestion generation."""
+
+    def test_linting_suggestions_below_threshold_python(self):
+        """Test linting suggestions for Python when score < 7.0."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="linting",
+            score=5.0,
+            language=Language.PYTHON
+        )
+        
+        assert len(suggestions) > 0
+        assert any("ruff" in s.lower() for s in suggestions)
+        assert any("check" in s.lower() for s in suggestions)
+
+    def test_linting_suggestions_below_threshold_typescript(self):
+        """Test linting suggestions for TypeScript when score < 7.0."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="linting",
+            score=5.0,
+            language=Language.TYPESCRIPT
+        )
+        
+        assert len(suggestions) > 0
+        assert any("eslint" in s.lower() for s in suggestions)
+
+    def test_linting_suggestions_no_language(self):
+        """Test linting suggestions when language is None."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="linting",
+            score=5.0,
+            language=None
+        )
+        
+        assert len(suggestions) > 0
+        # Should have base suggestions
+        assert any("linting tool" in s.lower() or "code style" in s.lower() for s in suggestions)
+
+
+class TestTypeCheckingSuggestions:
+    """Test type checking category suggestion generation."""
+
+    def test_type_checking_suggestions_below_threshold_python(self):
+        """Test type checking suggestions for Python when score < 7.0."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="type_checking",
+            score=5.0,
+            language=Language.PYTHON
+        )
+        
+        assert len(suggestions) > 0
+        assert any("mypy" in s.lower() for s in suggestions)
+        assert any("type hint" in s.lower() or "type annotation" in s.lower() for s in suggestions)
+
+    def test_type_checking_suggestions_below_threshold_typescript(self):
+        """Test type checking suggestions for TypeScript when score < 7.0."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="type_checking",
+            score=5.0,
+            language=Language.TYPESCRIPT
+        )
+        
+        assert len(suggestions) > 0
+        assert any("typescript" in s.lower() or "tsconfig" in s.lower() for s in suggestions)
+        assert any("strict" in s.lower() for s in suggestions)
+
+    def test_type_checking_suggestions_no_language(self):
+        """Test type checking suggestions when language is None."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="type_checking",
+            score=5.0,
+            language=None
+        )
+        
+        assert len(suggestions) > 0
+        # Should have base suggestions
+        assert any("type annotation" in s.lower() or "type hint" in s.lower() for s in suggestions)
+
+
+class TestDuplicationSuggestions:
+    """Test duplication category suggestion generation."""
+
+    def test_duplication_suggestions_below_threshold_python(self):
+        """Test duplication suggestions for Python when score < 7.0."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="duplication",
+            score=5.0,
+            language=Language.PYTHON
+        )
+        
+        assert len(suggestions) > 0
+        assert any("jscpd" in s.lower() or "duplicate" in s.lower() for s in suggestions)
+        assert any("reusable" in s.lower() or "utility" in s.lower() for s in suggestions)
+
+    def test_duplication_suggestions_below_threshold_react(self):
+        """Test duplication suggestions for React when score < 7.0."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="duplication",
+            score=5.0,
+            language=Language.REACT
+        )
+        
+        assert len(suggestions) > 0
+        assert any("react" in s.lower() or "component" in s.lower() for s in suggestions)
+        assert any("hook" in s.lower() or "hoc" in s.lower() for s in suggestions)
+
+    def test_duplication_suggestions_no_language(self):
+        """Test duplication suggestions when language is None."""
+        validator = ScoreValidator()
+        suggestions = validator._generate_category_suggestions(
+            category="duplication",
+            score=5.0,
+            language=None
+        )
+        
+        assert len(suggestions) > 0
+        # Should have base suggestions
+        assert any("duplicate" in s.lower() or "reusable" in s.lower() for s in suggestions)

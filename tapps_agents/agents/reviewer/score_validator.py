@@ -324,6 +324,95 @@ class ScoreValidator:
                         "Consider using functools.lru_cache for expensive computations",
                     ]
                 )
+        elif category == "linting":
+            suggestions.extend(
+                [
+                    "Run linting tool to identify specific code style issues",
+                    "Fix code style violations (PEP 8 for Python, ESLint rules for JS/TS)",
+                    "Address all errors (E) and fatal issues (F) first, then warnings (W)",
+                    "Review and fix warnings for better code quality",
+                ]
+            )
+            if language == Language.PYTHON:
+                suggestions.extend(
+                    [
+                        "Run 'ruff check' to identify specific linting issues",
+                        "Run 'ruff check --fix' to auto-fix many issues automatically",
+                        "Configure ruff in pyproject.toml for project-specific rules",
+                        "Ensure consistent import ordering and formatting",
+                        "Fix line length violations (aim for 88-100 characters per line)",
+                    ]
+                )
+            elif language in [Language.TYPESCRIPT, Language.JAVASCRIPT, Language.REACT]:
+                suggestions.extend(
+                    [
+                        "Run 'eslint' to identify specific linting issues",
+                        "Run 'eslint --fix' to auto-fix many issues automatically",
+                        "Configure ESLint rules in .eslintrc or package.json",
+                        "Ensure consistent code formatting (integrate Prettier if needed)",
+                        "Fix TypeScript-specific linting issues (strict mode violations)",
+                    ]
+                )
+        elif category == "type_checking":
+            suggestions.extend(
+                [
+                    "Add type annotations to function parameters and return types",
+                    "Fix type errors reported by type checker",
+                    "Use type hints consistently throughout the codebase",
+                    "Enable strict type checking mode for better type safety",
+                ]
+            )
+            if language == Language.PYTHON:
+                suggestions.extend(
+                    [
+                        "Run 'mypy <file>' to see specific type errors",
+                        "Add type hints using typing module or Python 3.9+ built-in types",
+                        "Use Optional[T] for nullable types, Union[T, U] for multiple types",
+                        "Consider using mypy --strict for maximum type safety",
+                        "Add return type annotations: 'def func() -> int:'",
+                        "Use TypeVar for generic types, Protocol for structural typing",
+                    ]
+                )
+            elif language in [Language.TYPESCRIPT, Language.JAVASCRIPT, Language.REACT]:
+                suggestions.extend(
+                    [
+                        "Enable strict mode in tsconfig.json (strict: true)",
+                        "Add explicit return types to functions",
+                        "Use proper interface/type definitions instead of 'any'",
+                        "Fix TypeScript compiler errors systematically",
+                        "Avoid using 'any' type - use 'unknown' or specific types",
+                        "Use type guards for runtime type checking",
+                    ]
+                )
+        elif category == "duplication":
+            suggestions.extend(
+                [
+                    "Identify and extract duplicate code into reusable functions",
+                    "Use helper functions or utility modules for common patterns",
+                    "Consider refactoring similar code blocks into shared components",
+                    "Aim for < 3% code duplication across the project",
+                ]
+            )
+            if language == Language.PYTHON:
+                suggestions.extend(
+                    [
+                        "Run 'jscpd' to identify specific duplicate code blocks",
+                        "Extract common logic into utility functions or classes",
+                        "Use decorators or context managers for repeated patterns",
+                        "Create shared utility modules for common functionality",
+                        "Consider using mixins for shared class behavior",
+                    ]
+                )
+            elif language in [Language.TYPESCRIPT, Language.JAVASCRIPT, Language.REACT]:
+                suggestions.extend(
+                    [
+                        "Extract duplicate code into shared utility functions",
+                        "Create reusable React components for repeated UI patterns",
+                        "Use higher-order components (HOCs) or custom hooks for common logic",
+                        "Create shared utility modules or helper functions",
+                        "Use composition over duplication for React components",
+                    ]
+                )
         elif category == "overall":
             # For overall score, provide general improvement suggestions
             # Focus on the most impactful areas

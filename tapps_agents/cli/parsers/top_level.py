@@ -1491,3 +1491,119 @@ The workflow will resume from the last successfully completed step.""",
         action="store_true",
         help="Validate state before resuming",
     )
+
+    # Learning export commands
+    learning_parser = subparsers.add_parser(
+        "learning",
+        help="Export and view learning system data",
+        description="""Export and view learning data from the self-improvement system.
+
+The learning system tracks agent capabilities, patterns, and effectiveness metrics.
+This command allows you to:
+  • View learning dashboard with current metrics
+  • Export learning data for framework feedback
+  • Submit anonymized data to framework maintainers
+
+All exports are automatically anonymized to protect privacy.""",
+    )
+    learning_subparsers = learning_parser.add_subparsers(
+        dest="command",
+        help="Learning command",
+        required=True,
+    )
+
+    # Learning: export
+    learning_export_parser = learning_subparsers.add_parser(
+        "export",
+        help="Export learning data",
+        description="""Export learning data in a standardized, anonymized format.
+
+The export includes:
+  • Capability metrics (success rates, quality scores)
+  • Pattern statistics (learned patterns, anti-patterns)
+  • Learning effectiveness data (ROI, improvement trends)
+  • Analytics data (agent performance, workflow metrics)
+
+All data is automatically anonymized:
+  • Project paths are removed
+  • Task IDs are hashed
+  • Code snippets are excluded
+  • Sensitive context is removed
+
+Use this to share learning data with framework maintainers for framework improvement.""",
+    )
+    learning_export_parser.add_argument(
+        "--output",
+        help="Output file path (default: .tapps-agents/exports/learning-export-{timestamp}.json)",
+    )
+    learning_export_parser.add_argument(
+        "--no-anonymize",
+        action="store_true",
+        help="Disable anonymization (NOT RECOMMENDED - requires explicit confirmation)",
+    )
+    learning_export_parser.add_argument(
+        "--compress",
+        action="store_true",
+        help="Compress export with gzip",
+    )
+    learning_export_parser.add_argument(
+        "--format",
+        choices=["json", "yaml"],
+        default="json",
+        help="Export format (default: json)",
+    )
+    learning_export_parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="Skip confirmation prompt",
+    )
+
+    # Learning: dashboard
+    learning_dashboard_parser = learning_subparsers.add_parser(
+        "dashboard",
+        help="View learning dashboard",
+        description="""Display learning system dashboard with current metrics.
+
+Shows:
+  • Capability metrics (success rates, quality scores)
+  • Pattern statistics (total patterns, by type)
+  • Security metrics (secure vs insecure patterns)
+  • Learning trends (if available)
+  • Failure analysis (if available)
+
+Use this to verify the self-improvement system is working.""",
+    )
+    learning_dashboard_parser.add_argument(
+        "--capability",
+        help="Filter by capability ID",
+    )
+    learning_dashboard_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    learning_dashboard_parser.add_argument(
+        "--include-trends",
+        action="store_true",
+        help="Include trend data",
+    )
+    learning_dashboard_parser.add_argument(
+        "--include-failures",
+        action="store_true",
+        help="Include failure analysis",
+    )
+
+    # Learning: submit (future)
+    learning_submit_parser = learning_subparsers.add_parser(
+        "submit",
+        help="Submit learning data to framework (future)",
+        description="""Submit exported learning data to framework maintainers (not yet implemented).
+
+This command will prepare submission package and provide instructions for manual submission.""",
+    )
+    learning_submit_parser.add_argument(
+        "--export-file",
+        help="Path to export file (default: latest export)",
+    )
