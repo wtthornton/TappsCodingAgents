@@ -77,8 +77,6 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
   - **Claude Desktop Commands** ✅ (16 commands available in Claude Desktop - same functionality as Skills)
   - **Unified Experience** ✅ (Commands and Skills work together - choose your interface)
   - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills with template generation)
-  - **Background Agents** ✅ (Offload heavy tasks to cloud/remote with auto-generated configs from workflows)
-  - **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with adaptive polling and progress monitoring)
   - **Multi-Agent Orchestration** ✅ (Parallel execution with structured concurrency via TaskGroup, conflict resolution, result aggregation)
   - **Context7 Integration** ✅ (KB-first caching, analytics dashboard, cross-reference resolution, cache warming, staleness policies)
   - **MCP Gateway** ✅ (Unified Model Context Protocol interface with 5 servers: Context7, Playwright, Filesystem, Git, Analysis)
@@ -98,7 +96,7 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
   - **Resume Orchestrator**: Resume interrupted workflows
 - **Workflow Presets** (11): Predefined YAML workflows (rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues)
 - **YAML-First Architecture** ✅: YAML as single source of truth with strict schema enforcement
-  - **Auto-Generated Artifacts**: Task manifests, Cursor Rules docs, Background Agent configs
+  - **Auto-Generated Artifacts**: Task manifests, Cursor Rules docs
   - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies
   - **State Persistence**: Advanced workflow state management with checkpointing, migration, versioning
 - **Prompt Enhancement Utility** ✅: 7-stage enhancement pipeline (analysis, requirements, architecture, codebase, quality, strategy, synthesis)
@@ -109,7 +107,7 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
 
 ### How it works (no confusion version)
 
-- **Cursor is the LLM runtime**: Skills and Background Agents use the developer’s configured model in Cursor (Auto or pinned).
+- **Cursor is the LLM runtime**: Skills use the developer's configured model in Cursor (Auto or pinned).
 - **This framework is the tooling layer**: workflows, quality tools, reporting, worktrees, caching.
 - **Cursor-native execution**: All LLM operations are handled by Cursor via Skills. No local LLM required.
 
@@ -139,7 +137,6 @@ If you're using **Cursor IDE**, get started quickly:
    - ✅ **Cursor Skills** (`.claude/skills/`) - Use `@agent *command` in Cursor IDE
    - ✅ **Claude Desktop Commands** (`.claude/commands/`) - Use `@command` in Claude Desktop
    - ✅ **Cursor Rules** (`.cursor/rules/`)
-   - ✅ **Background Agents** (`.cursor/background-agents.yaml`)
    
    **Note:** If you get "command not found" error, use `python -m tapps_agents.cli` instead of `tapps-agents`. See [Troubleshooting Guide](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
 
@@ -155,9 +152,6 @@ If you're using **Cursor IDE**, get started quickly:
    - Type: `@build "Create a user authentication feature"`
    - Type: `@test src/api/auth.py`
 
-5. **Use Background Agents:**
-   - Say: "Analyze project quality"
-   - Say: "Run security scan"
 
 ### 🎬 Try the Demo (5 minutes)
 
@@ -230,7 +224,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - [Simple Mode Guide](docs/SIMPLE_MODE_GUIDE.md) - Complete Simple Mode documentation
 - [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)
 - [Cursor Rules Setup Guide](docs/CURSOR_RULES_SETUP.md)
-- [Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)
 - [Cursor Integration Review](CURSOR_INTEGRATION_REVIEW.md) - Comprehensive integration status
 
 ### Enhanced Features (v1.6.0+)
@@ -246,11 +239,9 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **Strict Schema Enforcement** (Epic 6): All YAML structures validated and executed, no "YAML theater"
   - **Task Manifest Generation** (Epic 7): Auto-generated task checklists from workflow YAML + state
   - **Automated Documentation** (Epic 8): Cursor Rules auto-generated from workflow YAML
-  - **Background Agent Auto-Generation** (Epic 9): Background Agent configs auto-generated from workflow steps
   - **Documentation Alignment** (Epic 10): All documentation aligned with YAML-first architecture
 - **Cursor AI Integration**: Complete 7-phase integration with Cursor AI
   - Cursor Skills for all 13 agents
-  - Background Agents for heavy tasks
   - Multi-agent orchestration
   - Context7 KB-first caching
   - NUC optimization for low-power hardware
@@ -263,7 +254,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Epic 6: YAML Schema Enforcement** ✅ - Strict schema validation, removed `parallel_tasks`, eliminated "YAML theater"
 - **Epic 7: Task Manifest Generation** ✅ - Auto-generated task checklists from workflow YAML + state
 - **Epic 8: Automated Documentation Generation** ✅ - Cursor Rules auto-generated from workflow YAML
-- **Epic 9: Background Agent Auto-Generation** ✅ - Background Agent configs auto-generated from workflow steps
 - **Epic 10: Documentation Cleanup & Alignment** ✅ - All documentation aligned with YAML-first architecture
 - **YAML is now the single source of truth** - All derived artifacts (manifests, docs, configs) are auto-generated
 - See [YAML Workflow Architecture Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md) for details
@@ -289,7 +279,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **State Persistence Configuration** ✅ (Configurable checkpoint frequency, cleanup policies, runtime reload)
 - **Advanced Analytics Dashboard** ✅ (Performance metrics, historical trends, CLI commands)
 - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
-- **Background Agent Auto-Execution** ✅ (Automatic workflow step execution with polling and monitoring)
 - **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow)
 
 ✅ **P3 Low Priority Enhancements - Critical Items Complete**
@@ -299,7 +288,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 ✅ **Phase 7 Complete - NUC Optimization**
 - **Resource Monitoring** ✅ (CPU, memory, disk usage tracking with alerts)
-- **Background Agent Fallback** ✅ (Automatic task routing based on resource constraints)
 - **Performance Benchmarks** ✅ (Before/after optimization comparisons)
 - **NUC Configuration** ✅ (Optimized settings for low-power hardware)
 - See [NUC Setup Guide](docs/NUC_SETUP_GUIDE.md) and [Phase 7 Summary](implementation/PHASE7_NUC_OPTIMIZATION_COMPLETE.md)
@@ -318,12 +306,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Performance Monitoring** ✅ (Speedup tracking, efficiency metrics)
 - See [Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md) and [Phase 5 Summary](implementation/PHASE5_MULTI_AGENT_ORCHESTRATION_COMPLETE.md)
 
-✅ **Phase 4 Complete - Background Agents Integration**
-- **Cursor Background Agents** ✅ (Offload heavy tasks to cloud/remote agents)
-- **CLI Wrapper** ✅ (Command-line interface for Background Agents)
-- **Progress Reporting** ✅ (Real-time task progress tracking)
-- **Result Delivery** ✅ (File, PR, web app delivery methods)
-- See [Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md) and [Phase 4 Summary](implementation/PHASE4_BACKGROUND_AGENTS_COMPLETE.md)
 
 ✅ **Phase 3 Complete - Remaining Agents + Advanced Features**
 - **All 13 Cursor Skills** ✅ (Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer)
@@ -365,7 +347,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **Status Reporting**: `tapps-agents doctor` reports MCP server configuration status
 - **YAML Workflow Definitions** ✅ (Parser, executor, artifact tracking, conditional steps, gates)
   - **YAML-First Architecture** ✅ (Epics 6-10): YAML as single source of truth with strict schema enforcement
-  - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs, Background Agent configs
+  - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs
   - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies (no `parallel_tasks`)
   - **11 Workflow Presets**: rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues
 - **Industry Experts Framework** ✅ (Weighted decision-making, domain configuration, expert registry)
@@ -392,7 +374,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 ✅ **January 2026 Critical Features Complete:**
 - **Custom Skills Support** ✅ - Create, validate, and integrate custom Skills
-- **Background Agent Auto-Execution** ✅ - Automatic workflow execution with monitoring
 - **State Persistence Configuration** ✅ - Configurable checkpointing and cleanup policies
 - **Governance & Safety Layer** ✅ - Security and safety controls for knowledge ingestion
 - **Epic 20: Complexity Reduction** ✅ - Refactored high-complexity functions (122→C, 114→C, 66→C, 60→C, 64→A/B)
@@ -497,7 +478,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
 ### CLI Commands
 
 **Top-Level Commands:**
-- `init` - Initialize project (Cursor Rules, Skills, Background Agents, config)
+- `init` - Initialize project (Cursor Rules, Skills, config)
 - `create <description>` - Create new project from natural language description
 - `workflow <preset>` - Run workflow presets (rapid, full, fix, quality, hotfix, etc.)
 - `score <file>` - Quick code quality scoring (shortcut for `reviewer score`)
@@ -507,14 +488,12 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `analytics <command>` - Analytics dashboard (dashboard, agents, workflows, trends, system)
 - `health <command>` - Health monitoring (check, dashboard, metrics, trends)
 - `governance <command>` - Governance controls (approval list, show, approve, reject)
-- `auto-exec <command>` - Background Agent auto-execution (status, history, metrics, health, debug)
 - `customize <command>` - Agent customization (init)
 - `skill <command>` - Custom Skills management (validate, template)
-- `bg-agent <command>` - Background Agent config (generate, validate)
 - `hardware-profile` - Hardware profile configuration (nuc, development, workstation, server, auto)
 - `install-dev` - Install development tools (ruff, mypy, pytest, pip-audit, pipdeptree)
 - `setup-experts` - Expert setup wizard (init, add, remove, list)
-- `status` - Unified status (active worktrees, progress, Background Agents)
+- `status` - Unified status (active worktrees, progress)
 - `generate-rules` - Generate Cursor Rules from workflow YAML
 
 **Agent Commands** (use `tapps-agents <agent> help` for details):
@@ -611,8 +590,6 @@ TappsCodingAgents/
 - **[Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Install and configure Cursor Skills
 - **[Custom Skills Guide](docs/CUSTOM_SKILLS_GUIDE.md)** - Create, validate, and manage custom Skills
 - **[Cursor Rules Setup Guide](docs/CURSOR_RULES_SETUP.md)** - Cursor Rules setup (auto-generated from YAML workflows)
-- **[Background Agents Guide](docs/BACKGROUND_AGENTS_GUIDE.md)** - Configure Background Agents for heavy tasks (configs auto-generated from workflows)
-- **[Background Agent Auto-Execution Guide](docs/BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md)** - Automatic workflow execution
 - **[Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
 - **[YAML Workflow Architecture Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts
 - **[Unified Cache Architecture](implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Single interface for all caching systems
@@ -682,7 +659,6 @@ See [Release Guide](docs/RELEASE_GUIDE.md) for complete release process.
 - ✅ Phase 1: Core Agents to Skills
 - ✅ Phase 2: Quality Tools Integration
 - ✅ Phase 3: Remaining Agents + Advanced Features
-- ✅ Phase 4: Background Agents Integration
 - ✅ Phase 5: Multi-Agent Orchestration
 - ✅ Phase 6: Context7 Optimization + Security
 - ✅ Phase 7: NUC Optimization
@@ -696,7 +672,6 @@ This project uses its own framework for development:
 - **Enhancer Agent** actively used (23+ enhancement sessions)
 - **Context7 Integration** with KB cache
 - **14 Cursor Skills** available in `.claude/skills/` (13 agent skills + simple-mode)
-- **Background Agents** configured in `.cursor/background-agents.yaml`
 - **NUC Optimization** enabled for resource-constrained environments
 - Configuration in `.tapps-agents/` directory
 

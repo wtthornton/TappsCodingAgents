@@ -103,13 +103,7 @@ When you run `tapps-agents init` on any project (new or existing), it:
        - Natural language commands (e.g., `@simple-mode Build a feature`)
      - **Simple Mode is enabled by default** in config after `init`
 
-3. **Background Agents** (`.cursor/background-agents.yaml`):
-   - **NOT installed by default** - Use `--background-agents` flag to enable
-   - Defines automatic workflow execution triggers
-   - Enables auto-execution of quality checks, testing, security scans
-   - Configurable triggers (file changes, git commits, etc.)
-
-4. **Configuration** (`.tapps-agents/config.yaml`):
+3. **Configuration** (`.tapps-agents/config.yaml`):
    - Framework settings and agent configurations
    - Tech stack detection results
    - Quality thresholds and automation settings
@@ -361,7 +355,6 @@ tapps-agents cursor check [--format json|text]  # alias
 - **Cursor Rules** (`.cursor/rules/`) - Validates all 7 rule files are present
   - Checks for required rule files (workflow-presets, quick-reference, agent-capabilities, etc.)
   - Verifies file format (.mdc extension)
-- **Background Agents** (`.cursor/background-agents.yaml`) - Validates configuration
   - Checks YAML syntax validity
   - Verifies agents are configured
   - Reports agent count

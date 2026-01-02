@@ -47,16 +47,6 @@ def verify_cursor_integration(project_root: Path = None) -> tuple[bool, dict]:
     if rules_result["warnings"]:
         results["warnings"].extend(rules_result["warnings"])
     
-    # Check Background Agents config
-    bg_agents_file = project_root / ".cursor" / "background-agents.yaml"
-    bg_agents_result = _verify_background_agents(bg_agents_file)
-    results["components"]["background_agents"] = bg_agents_result
-    if not bg_agents_result["valid"]:
-        results["valid"] = False
-        results["errors"].extend(bg_agents_result["errors"])
-    if bg_agents_result["warnings"]:
-        results["warnings"].extend(bg_agents_result["warnings"])
-    
     # Check .cursorignore
     cursorignore_file = project_root / ".cursorignore"
     cursorignore_result = _verify_cursorignore(cursorignore_file)
@@ -170,37 +160,7 @@ def _verify_rules(rules_dir: Path) -> dict:
     return result
 
 
-def _verify_background_agents(bg_agents_file: Path) -> dict:
-    """Verify Background Agents configuration"""
-    result = {
-        "valid": True,
-        "errors": [],
-        "warnings": [],
-        "agents_count": 0
-    }
-    
-    if not bg_agents_file.exists():
-        result["valid"] = False
-        result["errors"].append(f"Background agents config not found: {bg_agents_file}")
-        return result
-    
-    # Verify YAML syntax
-    try:
-        with open(bg_agents_file, encoding="utf-8") as f:
-            config = yaml.safe_load(f)
-            if config and "agents" in config:
-                result["agents_count"] = len(config["agents"])
-                if result["agents_count"] == 0:
-                    result["warnings"].append("No agents configured in background-agents.yaml")
-            else:
-                result["warnings"].append("No 'agents' key found in background-agents.yaml")
-    except yaml.YAMLError as e:
-        result["valid"] = False
-        result["errors"].append(f"Invalid YAML syntax: {e}")
-    except Exception as e:
-        result["warnings"].append(f"Error reading file: {e}")
-    
-    return result
+# Background Agents removed - verification function no longer needed
 
 
 def _verify_cursorignore(cursorignore_file: Path) -> dict:
@@ -298,9 +258,7 @@ def format_verification_results(results: dict, format: str = "text") -> str:
             expected = component_result.get("expected_rules", [])
             lines.append(f"   Found: {len(rules_found)}/{len(expected)} rules")
         
-        elif component_name == "background_agents":
-            agents_count = component_result.get("agents_count", 0)
-            lines.append(f"   Agents configured: {agents_count}")
+        # Background Agents removed - no longer verified
         
         lines.append("")
     

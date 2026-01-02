@@ -444,7 +444,6 @@ You can use these phrases in Cursor AI conversations:
 - **Sessions:** `.tapps-agents/sessions/` (Enhancer sessions)
 - **Cache:** `.tapps-agents/kb/context7-cache/` (Context7 cache)
 - **Cursor Skills:** `.claude/skills/` (13 agent skills)
-- **Background Agents:** `.cursor/background-agents.yaml`
 
 ## Getting Help
 
@@ -470,13 +469,6 @@ python -m tapps_agents.cli setup-experts init --yes --non-interactive
 python -c "import tapps_agents; print(tapps_agents.__version__)"
 ```
 
-## Background Agents
-
-Background Agents are configured in `.cursor/background-agents.yaml`:
-- Quality Analyzer
-- Refactoring Agent
-- Testing Agent
-- Documentation Agent
 - Security Agent
 - Multi-Service Analyzer
 

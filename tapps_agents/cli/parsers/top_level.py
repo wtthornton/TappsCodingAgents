@@ -448,6 +448,7 @@ Sets up all integration components for Cursor AI:
   • Workflow Presets (workflows/presets/) - Reusable workflow definitions
   • Configuration (.tapps-agents/config.yaml) - Project settings
   • Cursor Skills (.claude/skills/) - Agent skill definitions
+  • Claude Desktop Commands (.claude/commands/) - Command definitions for Claude Desktop
   • Context7 Cache - Pre-populated knowledge base cache
   • .cursorignore - Exclude patterns for Cursor indexing
 
@@ -477,16 +478,6 @@ Examples:
         "--no-skills",
         action="store_true",
         help="Skip installing Cursor Skills definitions in .claude/skills/ directory. Skills enable agent capabilities in Cursor AI.",
-    )
-    init_parser.add_argument(
-        "--background-agents",
-        action="store_true",
-        help="Install .cursor/background-agents.yaml configuration for automatic workflow execution in Cursor (not installed by default)",
-    )
-    init_parser.add_argument(
-        "--no-background-agents",
-        action="store_true",
-        help="(Deprecated) Explicitly skip creating .cursor/background-agents.yaml. Background agents are not installed by default, so this flag is no longer needed.",
     )
     init_parser.add_argument(
         "--no-cache",

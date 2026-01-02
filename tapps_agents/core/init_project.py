@@ -539,17 +539,7 @@ def init_claude_commands(project_root: Path | None = None, source_dir: Path | No
     return len(copied) > 0, copied
 
 
-def init_background_agents_config(
-    project_root: Path | None = None, source_file: Path | None = None
-):
-    """
-    Initialize Background Agents config (deprecated - Background Agents removed).
-
-    This function is kept for backward compatibility but does nothing.
-    Background Agents have been removed from the framework.
-    """
-    # Background Agents removed - function does nothing but kept for backward compatibility
-    return False, None
+# Background Agents removed - function no longer needed
 
 
 def init_customizations_directory(project_root: Path | None = None) -> tuple[bool, str | None]:
@@ -1781,7 +1771,6 @@ def detect_existing_installation(project_root: Path) -> dict[str, Any]:
         - skills_exist: bool
         - rules_exist: bool
         - presets_exist: bool
-        - background_agents_exist: bool
     """
     result: dict[str, Any] = {
         "installed": False,
@@ -1790,7 +1779,6 @@ def detect_existing_installation(project_root: Path) -> dict[str, Any]:
         "skills_exist": False,
         "rules_exist": False,
         "presets_exist": False,
-        "background_agents_exist": False,
     }
     
     # Check for config file
@@ -1842,12 +1830,7 @@ def detect_existing_installation(project_root: Path) -> dict[str, Any]:
             result["indicators"].append("workflows/presets/ (framework presets)")
             result["installed"] = True
     
-    # Check for background agents config
-    bg_agents_file = project_root / ".cursor" / "background-agents.yaml"
-    if bg_agents_file.exists():
-        result["background_agents_exist"] = True
-        result["indicators"].append(".cursor/background-agents.yaml")
-        result["installed"] = True
+    # Background Agents removed - no longer checked
     
     return result
 
@@ -1908,11 +1891,6 @@ def identify_framework_files(project_root: Path) -> dict[str, Any]:
             else:
                 result["custom_presets"].append(preset_file.name)
                 result["user_files"].append(preset_file)
-    
-    # Framework background agents config
-    bg_agents_file = project_root / ".cursor" / "background-agents.yaml"
-    if bg_agents_file.exists():
-        result["framework_files"].append(bg_agents_file)
     
     # Framework .cursorignore (will be merged, not replaced)
     cursorignore_file = project_root / ".cursorignore"
@@ -2098,7 +2076,6 @@ def init_project(
     include_workflow_presets: bool = True,
     include_config: bool = True,
     include_skills: bool = True,
-    include_background_agents: bool = False,
     include_cursorignore: bool = True,
     pre_populate_cache: bool = True,
     reset_mode: bool = False,
@@ -2115,7 +2092,6 @@ def init_project(
         include_workflow_presets: Whether to copy workflow presets
         include_config: Whether to create project config
         include_skills: Whether to install Cursor Skills
-        include_background_agents: Whether to install Background Agents config (default: False)
         include_cursorignore: Whether to install .cursorignore file
         pre_populate_cache: Whether to pre-populate Context7 cache with detected tech stack
         reset_mode: Whether to reset framework-managed files (upgrade mode)
@@ -2135,7 +2111,6 @@ def init_project(
         "workflow_presets": False,
         "config": False,
         "skills": False,
-        "background_agents": False,
         "customizations": False,
         "cursorignore": False,
         "tech_stack": None,
@@ -2253,11 +2228,8 @@ def init_project(
         if copied_commands:
             results["files_created"].extend(copied_commands)
 
-    # Background Agents config initialization removed - Background Agents no longer used
-    # if include_background_agents:
-    #     success, bg_path = init_background_agents_config(project_root)
-    #     results["background_agents"] = success
-    results["background_agents"] = False  # Background Agents removed
+    # Background Agents removed - no longer supported
+    results["background_agents"] = False
 
     # Initialize customizations directory
     success, customizations_path = init_customizations_directory(project_root)
@@ -2331,7 +2303,6 @@ def init_project(
         if "components" in verification_results:
             results["validation"]["cursor_rules"] = verification_results["components"].get("rules", {})
             results["validation"]["claude_skills"] = verification_results["components"].get("skills", {})
-            results["validation"]["background_agents"] = verification_results["components"].get("background_agents", {})
             results["validation"]["cursorignore"] = verification_results["components"].get("cursorignore", {})
     except Exception as e:
         results["validation_error"] = str(e)

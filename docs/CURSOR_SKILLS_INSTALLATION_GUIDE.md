@@ -59,7 +59,6 @@ This installs (by copying from packaged templates in `tapps_agents/resources/*`)
 - **Cursor Skills**: `.claude/skills/` (13 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
 - **Claude Desktop Commands**: `.claude/commands/` (16 commands from `tapps_agents/resources/claude/commands/`)
 - **Cursor Rules**: `.cursor/rules/*.mdc` (7 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc` and `command-reference.mdc`)
-- **Background Agents**: `.cursor/background-agents.yaml` (from `tapps_agents/resources/cursor/background-agents.yaml`)
 - **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
 

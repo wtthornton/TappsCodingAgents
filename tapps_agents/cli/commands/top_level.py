@@ -1046,15 +1046,13 @@ def handle_governance_command(args: object) -> None:
 
 
 def handle_auto_execution_command(args: object) -> None:
-    """Handle auto-execution monitoring command (Story 7.9)"""
-    import json
+    """Handle auto-execution monitoring command (DEPRECATED - Background Agents removed)"""
     import sys
-    from pathlib import Path
-
-    command = getattr(args, "command", None)
-    if not command:
-        print("Error: subcommand is required (status, history, metrics, health, debug)", file=sys.stderr)
-        sys.exit(1)
+    
+    print("Error: Background Agents have been removed from the framework.", file=sys.stderr)
+    print("The 'auto-exec' command is no longer available.", file=sys.stderr)
+    print("Workflows now use direct execution via Cursor Skills.", file=sys.stderr)
+    sys.exit(1)
 
     project_root = Path.cwd()
 
@@ -1521,11 +1519,7 @@ def _print_init_results(results: dict[str, Any]) -> None:
     else:
         print("  Cursor Skills: Skipped or already exists")
 
-    if results.get("background_agents"):
-        print("  Background Agents: Installed")
-        print("    - .cursor/background-agents.yaml")
-    else:
-        print("  Background Agents: Skipped or already exists")
+    # Background Agents removed - no longer displayed
 
     if results.get("cursorignore"):
         print("  .cursorignore: Installed")
@@ -1601,10 +1595,6 @@ def _print_validation_results(validation: dict[str, Any]) -> None:
         rules_expected = len(rules_info.get("expected_rules", []))
         print(f"    Rules: {rules_found}/{rules_expected} found")
     
-    if "background_agents" in components:
-        bg_info = components["background_agents"]
-        agents_count = bg_info.get("agents_count", 0)
-        print(f"    Background Agents: {agents_count} configured")
 
 
 def _print_tech_stack(tech_stack: dict[str, Any]) -> None:
@@ -2008,18 +1998,11 @@ def handle_init_command(args: object) -> None:
 
     _print_init_header()
 
-    # Background agents are opt-in: default is False, use --background-agents to enable
-    # Keep --no-background-agents for backward compatibility (explicitly disable)
-    include_bg_agents = getattr(args, "background_agents", False)
-    if getattr(args, "no_background_agents", False):
-        include_bg_agents = False  # Explicit disable overrides opt-in
-    
     results = init_project(
         include_cursor_rules=not getattr(args, "no_rules", False),
         include_workflow_presets=not getattr(args, "no_presets", False),
         include_config=not getattr(args, "no_config", False),
         include_skills=not getattr(args, "no_skills", False),
-        include_background_agents=include_bg_agents,
         include_cursorignore=not getattr(args, "no_cursorignore", False),
         pre_populate_cache=not getattr(args, "no_cache", False),
         reset_mode=reset_mode,

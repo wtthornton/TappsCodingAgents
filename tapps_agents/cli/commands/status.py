@@ -1,8 +1,8 @@
 """
-Unified Status Command for Background Agents
+Unified Status Command
 
 Consolidates monitoring functionality from multiple scripts into a single command.
-Shows worktrees, progress files, configuration status, and recent results.
+Shows worktrees, progress files, and recent results.
 """
 import json
 import os
@@ -69,7 +69,7 @@ def handle_status_command(
     worktrees_dir = project_root / ".tapps-agents" / "worktrees"
     state_dir = project_root / ".tapps-agents" / "workflow-state"
     unified_state_dir = project_root / ".tapps-agents" / "state"  # Phase 3: Unified state
-    bg_config_path = project_root / ".cursor" / "background-agents.yaml"
+    # Background Agents removed - no longer checked
     
     # Phase 3: Initialize UnifiedStateManager
     unified_state_manager = UnifiedStateManager(state_dir=unified_state_dir)
@@ -97,29 +97,7 @@ def handle_status_command(
             found = [v for v in cursor_vars if os.getenv(v)]
             status_data["runtime"]["cursor_env_vars"] = found
 
-    # 2. Background Agents Configuration
-    if not worktrees_only:
-        status_data["configuration"] = {"exists": bg_config_path.exists()}
-        if bg_config_path.exists():
-            try:
-                import yaml
-
-                with open(bg_config_path, encoding="utf-8") as f:
-                    config = yaml.safe_load(f)
-                agents = config.get("agents", [])
-                status_data["configuration"]["agent_count"] = len(agents)
-                status_data["configuration"]["agents"] = []
-                for agent in agents:
-                    agent_info = {
-                        "name": agent.get("name", "Unknown"),
-                        "type": agent.get("type", "unknown"),
-                        "enabled": agent.get("enabled", True),
-                    }
-                    status_data["configuration"]["agents"].append(agent_info)
-            except Exception as e:
-                status_data["configuration"]["error"] = str(e)
-
-    # 3. Worktrees
+    # 2. Worktrees (Background Agents removed)
     worktree_manager = WorktreeManager(project_root, worktrees_dir)
     worktrees = worktree_manager.list_worktrees()
     status_data["worktrees"] = {
@@ -241,22 +219,8 @@ def _print_text_status(
             print(f"Cursor Env Vars: {', '.join(status_data['runtime']['cursor_env_vars'])}")
         print()
 
-        # Configuration
-        print("[2] Background Agents Configuration")
-        print("-" * 70)
-        if status_data["configuration"]["exists"]:
-            print("[OK] Configuration file exists")
-            print(f"Agents: {status_data['configuration']['agent_count']}")
-            if detailed:
-                for agent in status_data["configuration"]["agents"]:
-                    status = "ENABLED" if agent["enabled"] else "DISABLED"
-                    print(f"  - {agent['name']} ({agent['type']}) - {status}")
-        else:
-            print("[MISSING] Configuration file not found")
-        print()
-
     # Worktrees
-    print("[3] Active Worktrees")
+    print("[2] Active Worktrees")
     print("-" * 70)
     if status_data["worktrees"]["count"] > 0:
         print(f"[ACTIVE] Found {status_data['worktrees']['count']} worktree(s):")
@@ -277,7 +241,7 @@ def _print_text_status(
 
     if not worktrees_only:
         # Progress Files
-        print("[4] Progress Files")
+        print("[3] Progress Files")
         print("-" * 70)
         if status_data["progress"]["count"] > 0:
             print(f"[ACTIVE] Found {status_data['progress']['count']} progress file(s):")
@@ -292,7 +256,7 @@ def _print_text_status(
         print()
 
         # Recent Results
-        print("[5] Recent Results")
+        print("[4] Recent Results")
         print("-" * 70)
         if status_data["results"]["count"] > 0:
             print(f"[ACTIVE] Found {status_data['results']['count']} result file(s):")
@@ -305,31 +269,17 @@ def _print_text_status(
             print("[IDLE] No result files found")
         print()
 
-        # API Status
-        print("[6] Background Agent API")
-        print("-" * 70)
-        if status_data["api"]["available"]:
-            print(f"[OK] API available - {status_data['api']['agent_count']} agent(s)")
-        else:
-            print(f"[INFO] API not available: {status_data['api'].get('error', 'Unknown error')}")
-        print()
-
         # Summary
         print("=" * 70)
         print("Summary")
         print("=" * 70)
         if status_data["runtime"]["is_cursor_mode"]:
-            print("[CURSOR MODE] Background Agents should be available via Cursor IDE")
-            if status_data["configuration"]["exists"]:
-                print("[CONFIGURED] Background agents configuration file exists")
-            else:
-                print("[WARNING] Background agents configuration file missing")
-
+            print("[CURSOR MODE] Cursor IDE integration active")
             if status_data["worktrees"]["count"] > 0:
-                print("[ACTIVE] Evidence of background agent activity (worktrees found)")
+                print("[ACTIVE] Active worktrees detected")
             else:
-                print("[IDLE] No current background agent activity detected")
+                print("[IDLE] No active worktrees")
         else:
-            print("[HEADLESS MODE] Background Agents not used in headless mode")
+            print("[HEADLESS MODE] Running in headless mode")
         print()
 

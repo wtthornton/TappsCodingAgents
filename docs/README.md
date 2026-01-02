@@ -18,7 +18,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture and key modules
 - **[YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts (Epics 6-10 Complete)
 - **[Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)** - Choosing and running workflows
-- **[Workflow Execution Summary](WORKFLOW_EXECUTION_SUMMARY.md)** - Quick reference for parallel execution and Background Agents
+- **[Workflow Execution Summary](WORKFLOW_EXECUTION_SUMMARY.md)** - Quick reference for parallel execution
 - **[Quick Start: 2025 Optimizations](QUICK_START_OPTIMIZATIONS.md)** - Quick reference for new performance optimizations
 
 ### Experts
@@ -36,11 +36,8 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users
 - **[Custom Skills Guide](CUSTOM_SKILLS_GUIDE.md)** - Creating, validating, and managing custom Skills
 - **[Cursor Rules Setup Guide](CURSOR_RULES_SETUP.md)** - Cursor Rules setup (auto-generated from YAML workflows - Epic 8)
-- **[Background Agents Guide](BACKGROUND_AGENTS_GUIDE.md)** - Background Agent configuration (configs auto-generated from workflows - Epic 9)
-- **[Background Agent Auto-Execution Guide](BACKGROUND_AGENTS_AUTO_EXECUTION_GUIDE.md)** - Automatic workflow execution
-- **[PR Mode Guide](PR_MODE_GUIDE.md)** - When you explicitly want a PR from Background Agents
 - **[Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)**
-- **[Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md)** - How Full SDLC workflow uses parallel execution and Background Agents
+- **[Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md)** - How Full SDLC workflow uses parallel execution
 - **[Parallel Execution Optimization 2025](PARALLEL_EXECUTION_OPTIMIZATION_2025.md)** - Optimization recommendations and 2025 best practices
 - **[YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts (Epics 6-10)
 
