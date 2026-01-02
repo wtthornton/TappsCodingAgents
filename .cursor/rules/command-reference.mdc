@@ -1534,24 +1534,32 @@ tapps-agents improver optimize <file> "<instructions>" [--format json|text]
 tapps-agents improver refactor <file> "<instructions>" [--format json|text]
 ```
 
+#### `*improve-quality` / `improve-quality` (CLI-First)
+**Purpose:** Code quality improvement
+
+**CLI Syntax:**
+```bash
+tapps-agents improver improve-quality <file> [--format json|text]
+```
+
 ### Ops Agent (`@ops`)
 
 **Available Commands:**
 
-#### `*audit-security` / `audit-security` (CLI-First)
-**Purpose:** Security audit
+#### `*security-scan` / `security-scan` (CLI-First)
+**Purpose:** Security vulnerability scanning
 
 **CLI Syntax:**
 ```bash
-tapps-agents ops audit-security <target> [--format json|text]
+tapps-agents ops security-scan [<target>] [--format json|text]
 ```
 
-#### `*check-compliance` / `check-compliance` (CLI-First)
+#### `*check-compliance` / `compliance-check` (CLI-First)
 **Purpose:** Compliance checking
 
 **CLI Syntax:**
 ```bash
-tapps-agents ops check-compliance [--standard <standard>] [--format json|text]
+tapps-agents ops compliance-check [--type <type>] [--format json|text]
 ```
 
 **Standards:** `GDPR`, `HIPAA`, `PCI-DSS`
@@ -1564,13 +1572,23 @@ tapps-agents ops check-compliance [--standard <standard>] [--format json|text]
 tapps-agents ops audit-dependencies [--format json|text]
 ```
 
-#### `*plan-deployment` / `plan-deployment` (CLI-First)
-**Purpose:** Deployment planning
+#### `*deploy` / `deploy` (CLI-First)
+**Purpose:** Deploy application to target environment
 
 **CLI Syntax:**
 ```bash
-tapps-agents ops plan-deployment "<description>" [--format json|text]
+tapps-agents ops deploy [<target>] [--environment <env>] [--format json|text]
 ```
+
+#### `*infrastructure-setup` / `infrastructure-setup` (CLI-First)
+**Purpose:** Set up infrastructure as code
+
+**CLI Syntax:**
+```bash
+tapps-agents ops infrastructure-setup [--type <type>] [--format json|text]
+```
+
+**Infrastructure Types:** `docker`, `kubernetes`, `terraform`
 
 ### Analyst Agent (`@analyst`)
 
@@ -1589,7 +1607,7 @@ tapps-agents analyst gather-requirements "<description>" [--context "<context>"]
 @analyst *gather-requirements "<description>"
 ```
 
-#### `*analyze-stakeholders` / `stakeholder-analysis` (Dual-Mode)
+#### `*stakeholder-analysis` / `stakeholder-analysis` (Dual-Mode)
 **Purpose:** Analyze stakeholders and their needs
 
 **CLI Syntax:**
@@ -1599,10 +1617,11 @@ tapps-agents analyst stakeholder-analysis "<description>" [--stakeholders <stake
 
 **Cursor Syntax:**
 ```cursor
-@analyst *analyze-stakeholders "<description>"
+@analyst *stakeholder-analysis "<description>"
 ```
+**Note:** Alias `*analyze-stakeholders` is also supported for backward compatibility.
 
-#### `*research-technology` / `tech-research` (Dual-Mode)
+#### `*tech-research` / `tech-research` (Dual-Mode)
 **Purpose:** Research technology options for a requirement
 
 **CLI Syntax:**
@@ -1612,8 +1631,9 @@ tapps-agents analyst tech-research "<requirement>" [--context "<context>"] [--cr
 
 **Cursor Syntax:**
 ```cursor
-@analyst *research-technology "<requirement>"
+@analyst *tech-research "<requirement>"
 ```
+**Note:** Alias `*research-technology` is also supported for backward compatibility.
 
 #### `*estimate-effort` / `estimate-effort` (Dual-Mode)
 **Purpose:** Estimate effort and complexity for a feature

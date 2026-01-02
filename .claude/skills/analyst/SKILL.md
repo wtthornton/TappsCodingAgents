@@ -93,22 +93,22 @@ Gather and extract detailed requirements from a description. (Alias: `*analyze`)
 - Uses weighted decision (51% primary expert, 49% split among others)
 - Incorporates domain-specific knowledge
 
-### `*analyze-stakeholders {feature} [--stakeholders]`
+### `*stakeholder-analysis {feature} [--stakeholders]`
 
-Analyze stakeholders and their needs.
-
-**Example:**
-```
-@analyze-stakeholders "New payment feature" --stakeholders "Product Manager" "Engineering Lead" "Security Team"
-```
-
-### `*research-technology {requirement} [--criteria]`
-
-Research technology options for a requirement.
+Analyze stakeholders and their needs. (Alias: `*analyze-stakeholders`)
 
 **Example:**
 ```
-@research-technology "Need real-time messaging" --criteria "performance" "scalability" "cost"
+@stakeholder-analysis "New payment feature" --stakeholders "Product Manager" "Engineering Lead" "Security Team"
+```
+
+### `*tech-research {requirement} [--criteria]`
+
+Research technology options for a requirement. (Alias: `*research-technology`)
+
+**Example:**
+```
+@tech-research "Need real-time messaging" --criteria "performance" "scalability" "cost"
 ```
 
 **Context7 Integration:**

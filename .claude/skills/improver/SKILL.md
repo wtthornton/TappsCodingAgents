@@ -67,9 +67,17 @@ When you receive a response that contains an `instruction` object (often when co
 
 ## Commands
 
-### `*improve {file_path} [instruction]` / `*refactor {file_path} [instruction]`
+### `*refactor {file_path} [instruction]`
 
-Improves or refactors existing code to improve structure, readability, and maintainability while preserving functionality. (Aliases: `*improve`, `*refactor`)
+Refactors existing code to improve structure, readability, and maintainability while preserving functionality. (Alias: `*improve`)
+
+### `*optimize {file_path} [instruction]`
+
+Optimizes code for performance, reducing bottlenecks and improving execution speed.
+
+### `*improve-quality {file_path} [instruction]`
+
+Improves code quality by applying best practices, fixing code smells, and enhancing error handling.
 
 **Example:**
 ```

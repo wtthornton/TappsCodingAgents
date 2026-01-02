@@ -295,6 +295,8 @@ python -m tapps_agents.cli reviewer review file.py
 python -m tapps_agents.cli reviewer lint file.py
 python -m tapps_agents.cli reviewer type-check file.py
 python -m tapps_agents.cli reviewer report . json markdown html
+python -m tapps_agents.cli reviewer analyze-project
+python -m tapps_agents.cli reviewer analyze-services api auth
 ```
 
 **Scoring Metrics**:
@@ -329,9 +331,9 @@ python -m tapps_agents.cli reviewer report . json markdown html
 
 **Common Commands**:
 ```bash
-python -m tapps_agents.cli improver improve file.py "Refactor to use async/await"
-python -m tapps_agents.cli improver optimize file.py "Improve performance"
 python -m tapps_agents.cli improver refactor file.py "Extract common patterns"
+python -m tapps_agents.cli improver optimize file.py "Improve performance"
+python -m tapps_agents.cli improver improve-quality file.py
 ```
 
 **Expert Integration**: Consults performance, code quality, and architecture experts.
@@ -360,10 +362,11 @@ python -m tapps_agents.cli improver refactor file.py "Extract common patterns"
 
 **Common Commands**:
 ```bash
-python -m tapps_agents.cli ops audit-security .
-python -m tapps_agents.cli ops check-compliance --standard GDPR
+python -m tapps_agents.cli ops security-scan
+python -m tapps_agents.cli ops compliance-check --type GDPR
 python -m tapps_agents.cli ops audit-dependencies
-python -m tapps_agents.cli ops plan-deployment "Kubernetes deployment"
+python -m tapps_agents.cli ops deploy staging
+python -m tapps_agents.cli ops infrastructure-setup --type docker
 ```
 
 **Expert Integration**: Consults security, data privacy, cloud infrastructure, and DevOps experts.

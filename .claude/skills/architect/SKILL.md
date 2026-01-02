@@ -87,13 +87,13 @@ Design system architecture for a feature or project. (Alias: `*design`)
 - Uses weighted decision (51% primary expert, 49% split)
 - Incorporates domain-specific architecture patterns
 
-### `*create-diagram {description} [--diagram-type] [--output-file]`
+### `*architecture-diagram {description} [--diagram-type] [--output-file]`
 
-Create architecture diagram (text-based).
+Create architecture diagram (text-based). (Alias: `*create-diagram`)
 
 **Example:**
 ```
-@create-diagram "Microservices architecture with API gateway" --diagram-type component --output-file docs/diagram.txt
+@architecture-diagram "Microservices architecture with API gateway" --diagram-type component --output-file docs/diagram.txt
 ```
 
 **Diagram Types:**
@@ -108,13 +108,13 @@ Create architecture diagram (text-based).
 - Mermaid syntax
 - PlantUML syntax
 
-### `*select-technology {component} [--requirements] [--constraints]`
+### `*tech-selection {component} [--requirements] [--constraints]`
 
-Select technology stack for a component.
+Select technology stack for a component. (Alias: `*select-technology`)
 
 **Example:**
 ```
-@select-technology "Message queue service" --requirements "High throughput" "Low latency" --constraints "Python only"
+@tech-selection "Message queue service" --requirements "High throughput" "Low latency" --constraints "Python only"
 ```
 
 **Context7 Integration:**

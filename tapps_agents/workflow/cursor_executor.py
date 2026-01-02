@@ -1249,52 +1249,8 @@ class CursorWorkflowExecutor:
                     )
                 # Skill invoker handles execution (direct execution or Cursor Skills)
                 # Artifacts are extracted after completion
-                    
-                    if self.logger:
-                        self.logger.info(
-                            f"Waiting for {agent_name}/{action} to complete (manual mode)...",
-                            step_id=step.id,
-                        )
-                    
-                    while elapsed < max_wait_time:
-                        completion_status = check_skill_completion(
-                            worktree_path=worktree_path,
-                            expected_artifacts=step.creates,
-                            workflow_id=self.state.workflow_id,
-                            step_id=step.id,
-                        )
-                        
-                        if completion_status["completed"]:
-                            from ..core.unicode_safe import safe_print
-                            safe_print(f"[OK] Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}", flush=True)
-                            if self.logger:
-                                self.logger.info(
-                                    f"Step {step.id} completed - found artifacts: {completion_status['found_artifacts']}",
-                                    agent=agent_name,
-                                    action=action,
-                                )
-                            break
-                        
-                        await asyncio.sleep(poll_interval)
-                        elapsed += poll_interval
-                        
-                        # Print progress every 10 seconds to terminal
-                        if elapsed % 10 == 0:
-                            from ..core.unicode_safe import safe_print
-                            safe_print(f"  [WAIT] Still waiting... ({elapsed}s elapsed) - Checking for artifacts...", flush=True)
-                            if self.logger:
-                                self.logger.debug(
-                                    f"Still waiting for step {step.id}... ({elapsed}s elapsed)",
-                            )
-                    else:
-                        marker_location = f".tapps-agents/workflows/markers/{self.state.workflow_id}/step-{step.id}/FAILED.json"
-                        raise TimeoutError(
-                            f"Skill {agent_name}/{action} did not complete within {max_wait_time}s. "
-                            f"Expected artifacts: {step.creates}, Missing: {completion_status.get('missing_artifacts', [])}. "
-                            f"Check failure marker at: {marker_location}"
-                        )
 
-                    # Extract artifacts from worktree
+                # Extract artifacts from worktree
                     artifacts = await self.worktree_manager.extract_artifacts(
                         worktree_path=worktree_path,
                         step=step,

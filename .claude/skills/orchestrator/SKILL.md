@@ -199,6 +199,21 @@ Resume an interrupted workflow (loads state from persistence).
 - References workflow state management best practices
 - Uses cached docs for workflow recovery
 
+### `*workflow {workflow_file}`
+
+Execute a workflow from a YAML file path.
+
+**Example:**
+```
+@workflow workflows/custom/my-workflow.yaml
+```
+
+**Parameters:**
+- `workflow_file` (required): Path to workflow YAML file (relative or absolute)
+
+**Returns:**
+- Workflow execution result with status and artifacts
+
 ### `*gate {condition} [--scoring-data]`
 
 Make a gate decision based on condition and scoring data.

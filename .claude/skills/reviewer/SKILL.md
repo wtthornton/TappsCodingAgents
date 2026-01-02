@@ -43,10 +43,23 @@ You are an expert code reviewer providing **objective, quantitative quality metr
 - `*score {file}` - Calculate code scores only (no LLM feedback, faster)
 - `*lint {file}` - Run Ruff linting (10-100x faster than alternatives)
 - `*type-check {file}` - Run mypy type checking
-- `*security-scan {file}` - Run bandit security analysis
 - `*duplication {file}` - Detect code duplication (jscpd)
-- `*audit-deps` - Audit dependencies (pip-audit)
 - `*help` - Show all available commands
+
+**Note:** Security scanning (bandit) and dependency auditing (pip-audit) are automatically included in `*review` command.
+
+### Project Analysis Commands
+
+- `*report {target} {formats...}` - Comprehensive project-wide quality reports
+  - Formats: `json`, `markdown`, `html`, `all`
+  - Example: `*report src/ json markdown html`
+  - Generates reports in multiple formats with quality metrics
+- `*analyze-project [--project-root <path>] [--no-comparison]` - Analyze entire project with comprehensive metrics
+  - Analyzes: scoring, linting, type checking, duplication, security, test coverage
+  - Compares with previous analysis (unless `--no-comparison`)
+- `*analyze-services [services...] [--project-root <path>] [--no-comparison]` - Analyze specific services or modules
+  - Example: `*analyze-services api auth`
+  - Targeted analysis of specific parts of codebase
 
 ### Context7 Commands
 
@@ -72,10 +85,9 @@ You are an expert code reviewer providing **objective, quantitative quality metr
 
 ### Example 3: Security-Focused Review
 ```
-@reviewer *security-scan src/
-@reviewer *audit-deps
+@reviewer *review src/ --format json
 ```
-**What it does:** Runs bandit security analysis and audits dependencies for vulnerabilities.
+**What it does:** Runs full review including bandit security analysis and pip-audit dependency auditing. Security scanning and dependency auditing are automatically included in the review command.
 
 ### Example 4: Quality Tools Check
 ```
