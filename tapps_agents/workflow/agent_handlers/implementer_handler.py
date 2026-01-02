@@ -52,12 +52,16 @@ class ImplementerHandler(AgentExecutionHandler):
         
         created_artifacts: list[dict[str, Any]] = []
         
-        if is_greenfield and (not target_path or not target_path.exists()):
+        # Determine project type:
+        # - Greenfield: explicitly marked as greenfield AND no target_path provided
+        # - Brownfield: target_path provided (even if file doesn't exist yet - we're enhancing existing service)
+        if is_greenfield and not target_path:
             # Greenfield project: create new code from scratch
             created_artifacts = await self._handle_greenfield(step, user_prompt)
-        elif target_path and target_path.exists():
-            # Brownfield project: refactor existing code
-            created_artifacts = await self._handle_brownfield(step, target_path)
+        elif target_path:
+            # Brownfield project: enhance/refactor existing code
+            # File may not exist yet if we're adding new functionality to an existing service
+            created_artifacts = await self._handle_brownfield(step, target_path, user_prompt)
         else:
             raise ValueError(
                 "Implementer step requires either a target file for brownfield projects "
@@ -127,34 +131,82 @@ class ImplementerHandler(AgentExecutionHandler):
         self,
         step: WorkflowStep,
         target_path: Path,
+        user_prompt: str = "",
     ) -> list[dict[str, Any]]:
-        """Handle brownfield project refactoring."""
-        debug_report_path = self.project_root / "debug-report.md"
-        debug_context = (
-            debug_report_path.read_text(encoding="utf-8")
-            if debug_report_path.exists()
-            else ""
-        )
-        instruction = (
-            f"Fix the bugs in {target_path.name}. "
-            "Add robust input validation and handle missing keys safely. "
-            "Do not change behavior beyond fixing the crashes.\n\n"
-            "Context:\n"
-            f"{debug_context[:4000]}"
-        )
+        """
+        Handle brownfield project refactoring/enhancement.
         
-        fix_result = await self.run_agent(
+        Supports both existing files (refactor) and new files in existing services (implement).
+        """
+        file_exists = target_path.exists()
+        
+        # Build instruction based on whether file exists
+        if file_exists:
+            # Existing file: refactor/enhance
+            debug_report_path = self.project_root / "debug-report.md"
+            debug_context = (
+                debug_report_path.read_text(encoding="utf-8")
+                if debug_report_path.exists()
+                else ""
+            )
+            instruction = (
+                f"Enhance {target_path.name} according to the requirements. "
+                f"{user_prompt}\n\n"
+                "Maintain backward compatibility with existing functionality. "
+                "Add robust input validation and handle edge cases safely.\n\n"
+                "Context:\n"
+                f"{debug_context[:4000]}"
+            )
+            
+            # Read existing file content for context
+            existing_content = target_path.read_text(encoding="utf-8")
+            instruction += f"\n\nExisting code:\n{existing_content[:5000]}"
+            
+            action = "refactor"
+            agent_params = {
+                "file": str(target_path),
+                "instruction": instruction,
+            }
+        else:
+            # New file in existing service: implement with context
+            # Ensure parent directory exists
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            
+            # Build specification from user prompt and workflow context
+            spec_parts = []
+            if user_prompt:
+                spec_parts.append(user_prompt)
+            
+            # Add context from workflow state if available
+            enhanced_prompt = self.state.variables.get("enhanced_prompt", "")
+            if enhanced_prompt:
+                spec_parts.append(f"\n\nEnhanced Requirements:\n{enhanced_prompt[:3000]}")
+            
+            architecture = self.state.variables.get("architecture", "")
+            if architecture:
+                spec_parts.append(f"\n\nArchitecture:\n{architecture[:3000]}")
+            
+            specification = "\n".join(spec_parts) or f"Implement {target_path.name} according to requirements"
+            
+            action = "implement"
+            agent_params = {
+                "specification": specification,
+                "file_path": str(target_path),
+            }
+        
+        # Execute appropriate agent action
+        result = await self.run_agent(
             "implementer",
-            "refactor",
-            file=str(target_path),
-            instruction=instruction,
+            action,
+            **agent_params,
         )
-        self.state.variables["implementer_result"] = fix_result
+        self.state.variables["implementer_result"] = result
+        self.state.variables["target_file"] = str(target_path)
         
         created_artifacts: list[dict[str, Any]] = []
         
-        # Create fixed-code/ artifact if requested by preset
-        if "fixed-code/" in (step.creates or []):
+        # Create fixed-code/ artifact if requested by preset (only for existing files)
+        if file_exists and "fixed-code/" in (step.creates or []):
             fixed_dir = self.project_root / "fixed-code"
             fixed_dir.mkdir(parents=True, exist_ok=True)
             fixed_copy = fixed_dir / target_path.name

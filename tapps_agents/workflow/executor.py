@@ -26,7 +26,6 @@ from .logging_helper import WorkflowLogger
 from .observer import ObserverRegistry, WorkflowObserver
 from .validation import ValidatorRegistry, WorkflowValidator
 from .agent_handlers.registry import AgentHandlerRegistry
-from .background_agent_generator import BackgroundAgentGenerator
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
 from .parser import WorkflowParser
@@ -123,12 +122,6 @@ class WorkflowExecutor:
 
         # Initialize validator registry for SDLC phase validation
         self.validator_registry = ValidatorRegistry()
-
-        # Initialize Background Agent Generator (Epic 9)
-        bg_agent_enabled = os.getenv("TAPPS_AGENTS_BG_AGENT_GENERATION", "true").lower() == "true"
-        self.background_agent_generator = (
-            BackgroundAgentGenerator(self.project_root) if bg_agent_enabled else None
-        )
 
         if auto_detect:
             self.recommender = WorkflowRecommender(

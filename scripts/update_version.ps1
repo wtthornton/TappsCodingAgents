@@ -1,5 +1,5 @@
 # Version Update Script
-# Updates version number in pyproject.toml, tapps_agents/__init__.py, and all documentation files
+# Updates version number in pyproject.toml, tapps_agents/__init__.py, .tapps-agents/.framework-version, and all documentation files
 
 [CmdletBinding()]
 param(
@@ -151,7 +151,43 @@ try {
     exit 1
 }
 
+# Update .framework-version file if it exists
+$tappsAgentsDir = Join-Path $projectRoot ".tapps-agents"
+$frameworkVersionFile = Join-Path $tappsAgentsDir ".framework-version"
+if (Test-Path $frameworkVersionFile) {
+    try {
+        Write-Host "Updating .framework-version..." -ForegroundColor Cyan
+        Set-Content -Path $frameworkVersionFile -Value $Version -NoNewline -ErrorAction Stop
+        Write-Host "  [OK] Updated: .tapps-agents/.framework-version" -ForegroundColor Gray
+    } catch {
+        Write-Warning "Failed to update .framework-version: $_"
+    }
+} else {
+    # Create .tapps-agents directory if it doesn't exist
+    if (-not (Test-Path $tappsAgentsDir)) {
+        try {
+            New-Item -ItemType Directory -Path $tappsAgentsDir -Force | Out-Null
+        } catch {
+            Write-Warning "Failed to create .tapps-agents directory: $_"
+        }
+    }
+    
+    # Create .framework-version file if it doesn't exist
+    if (Test-Path $tappsAgentsDir) {
+        try {
+            Write-Host "Creating .framework-version..." -ForegroundColor Cyan
+            Set-Content -Path $frameworkVersionFile -Value $Version -NoNewline -ErrorAction Stop
+            Write-Host "  [OK] Created: .tapps-agents/.framework-version" -ForegroundColor Gray
+        } catch {
+            Write-Warning "Failed to create .framework-version: $_"
+        }
+    }
+}
+
 $updatedFiles = @("pyproject.toml", "tapps_agents/__init__.py")
+if (Test-Path $frameworkVersionFile) {
+    $updatedFiles += ".tapps-agents/.framework-version"
+}
 
 # Update documentation files if not skipped
 if (-not $SkipDocs) {
@@ -330,10 +366,29 @@ if ($verifyInit -match $verifyInitPattern) {
     $verifyVersionInit = $matches[1]
 }
 
+# Verify .framework-version file if it exists
+$verifyFrameworkVersion = ""
+if (Test-Path $frameworkVersionFile) {
+    try {
+        $verifyFrameworkVersion = Get-Content $frameworkVersionFile -Raw -ErrorAction Stop
+        $verifyFrameworkVersion = $verifyFrameworkVersion.Trim()
+    } catch {
+        Write-Warning "Failed to read .framework-version for verification: $_"
+    }
+}
+
 if ($verifyVersionPyproject -eq $Version -and $verifyVersionInit -eq $Version) {
     Write-Host "Verification: SUCCESS" -ForegroundColor Green
     Write-Host "  pyproject.toml: $verifyVersionPyproject" -ForegroundColor Gray
     Write-Host "  __init__.py:    $verifyVersionInit" -ForegroundColor Gray
+    if ($verifyFrameworkVersion) {
+        if ($verifyFrameworkVersion -eq $Version) {
+            Write-Host "  .framework-version: $verifyFrameworkVersion" -ForegroundColor Gray
+        } else {
+            Write-Host "  .framework-version: $verifyFrameworkVersion (expected: $Version)" -ForegroundColor Yellow
+            Write-Warning ".framework-version file version mismatch. Expected: $Version, Found: $verifyFrameworkVersion"
+        }
+    }
 } else {
     Write-Error -Message "Verification failed! Version mismatch detected." `
         -Category InvalidResult `
