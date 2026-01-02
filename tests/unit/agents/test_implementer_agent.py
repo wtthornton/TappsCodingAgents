@@ -280,7 +280,7 @@ class TestImplementerAgentRefactorCommand:
         await agent.activate()
         
         file_path = tmp_path / "test.py"
-        file_path.write_text("def add(a, b): return a + b")
+        file_path.write_text("def add(a, b): return a + b", encoding="utf-8")
         
         result = await agent.run(
             "refactor",
@@ -329,7 +329,7 @@ class TestImplementerAgentRefactorCommand:
         await agent.activate()
         
         file_path = tmp_path / "test.py"
-        file_path.write_text("def x(): pass")
+        file_path.write_text("def x(): pass", encoding="utf-8")
         
         result = await agent.run("refactor", file_path=str(file_path))
         
@@ -357,7 +357,7 @@ class TestImplementerAgentRefactorCommand:
         await agent.activate()
         
         file_path = tmp_path / "test.py"
-        file_path.write_text("def add(a, b): return a + b")
+        file_path.write_text("def add(a, b): return a + b", encoding="utf-8")
         
         result = await agent.refactor(
             file_path=str(file_path),
@@ -394,7 +394,7 @@ class TestImplementerAgentHelperMethods:
         """Test _is_valid_path with valid path."""
         agent = ImplementerAgent()
         file_path = tmp_path / "test.py"
-        file_path.write_text("code")
+        file_path.write_text("code", encoding="utf-8")
         
         assert agent._is_valid_path(file_path) is True
 
@@ -454,14 +454,14 @@ class TestImplementerAgentHelperMethods:
         """Test _create_backup creates backup file."""
         agent = ImplementerAgent()
         file_path = tmp_path / "test.py"
-        file_path.write_text("original code")
+        file_path.write_text("original code", encoding="utf-8")
         
         backup_path = agent._create_backup(file_path)
         
         assert backup_path is not None
         assert backup_path.exists()
         assert "backup" in backup_path.name
-        assert backup_path.read_text() == "original code"
+        assert backup_path.read_text(encoding="utf-8") == "original code"
 
     def test_create_backup_nonexistent_file(self, tmp_path: Path):
         """Test _create_backup with non-existent file."""
@@ -527,7 +527,7 @@ class TestImplementerAgentErrorHandling:
         await agent.activate()
         
         file_path = tmp_path / "test.py"
-        file_path.write_text("code")
+        file_path.write_text("code", encoding="utf-8")
         
         # Mock code generator to raise error
         agent.code_generator.prepare_refactoring = MagicMock(

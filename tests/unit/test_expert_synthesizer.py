@@ -37,7 +37,7 @@ def test_synthesize_from_domains(temp_project):
 
     # Verify domains.md was created
     assert synthesizer.domains_file.exists()
-    domains_content = synthesizer.domains_file.read_text()
+    domains_content = synthesizer.domains_file.read_text(encoding="utf-8")
     assert "python" in domains_content
     assert "django" in domains_content
     assert "react" in domains_content
@@ -89,5 +89,5 @@ def test_synthesize_from_domains_with_existing_files(temp_project):
     
     # Verify existing file was not overwritten
     assert existing_file.exists()
-    assert existing_file.read_text() == existing_content
+    assert existing_file.read_text(encoding="utf-8") == existing_content
 

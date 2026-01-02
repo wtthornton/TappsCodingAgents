@@ -778,7 +778,8 @@ workflow:
     - id: step1
       agent: analyst
       action: gather
-"""
+""",
+            encoding="utf-8",
         )
 
         with pytest.raises(ValueError, match="Schema validation failed|unknown"):
@@ -799,7 +800,8 @@ workflow:
     - id: step1
       agent: analyst
       action: gather
-"""
+""",
+            encoding="utf-8",
         )
 
         workflow = WorkflowParser.parse_file(workflow_file)

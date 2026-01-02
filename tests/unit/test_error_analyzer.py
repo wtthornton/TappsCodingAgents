@@ -86,10 +86,11 @@ def func1():
 class MyClass:
     def method(self):
         pass
-"""
+""",
+            encoding="utf-8",
         )
 
-        code = code_file.read_text()
+        code = code_file.read_text(encoding="utf-8")
         structure = error_analyzer._analyze_code_structure(code)
 
         assert "functions" in structure
@@ -100,7 +101,7 @@ class MyClass:
     def test_prepare_code_trace(self, error_analyzer, tmp_path: Path):
         """Test code trace instruction preparation."""
         code_file = tmp_path / "test.py"
-        code_file.write_text("def func1():\n    return func2()\ndef func2():\n    pass")
+        code_file.write_text("def func1():\n    return func2()\ndef func2():\n    pass", encoding="utf-8")
 
         result = error_analyzer.prepare_code_trace(code_file, function_name="func1")
 

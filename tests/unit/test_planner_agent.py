@@ -129,7 +129,7 @@ status: draft
 
 Content here
 """
-        story_file.write_text(content)
+        story_file.write_text(content, encoding="utf-8")
 
         metadata = planner_agent._read_story_metadata(story_file)
 
@@ -150,7 +150,7 @@ title: [invalid yaml
 
 Content here
 """
-        story_file.write_text(content)
+        story_file.write_text(content, encoding="utf-8")
 
         metadata = planner_agent._read_story_metadata(story_file)
 
@@ -163,7 +163,7 @@ Content here
 
 Just regular markdown content.
 """
-        story_file.write_text(content)
+        story_file.write_text(content, encoding="utf-8")
 
         metadata = planner_agent._read_story_metadata(story_file)
 

@@ -40,7 +40,8 @@ class TestCursorRulesGenerator:
     - id: step1
       agent: analyst
       action: gather_requirements
-"""
+""",
+            encoding="utf-8",
         )
 
         generator = CursorRulesGenerator(project_root=tmp_path)
@@ -170,7 +171,8 @@ class TestCursorRulesGenerator:
     - id: step1
       agent: analyst
       action: gather_requirements
-"""
+""",
+            encoding="utf-8",
         )
 
         generator = CursorRulesGenerator(project_root=tmp_path)

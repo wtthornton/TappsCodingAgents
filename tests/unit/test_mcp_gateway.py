@@ -175,7 +175,7 @@ class TestFilesystemMCPServer:
     def temp_file(self, tmp_path: Path):
         """Create a temporary file."""
         test_file = tmp_path / "test.txt"
-        test_file.write_text("Hello, World!")
+        test_file.write_text("Hello, World!", encoding="utf-8")
         return test_file
 
     def test_read_file(self, fs_server, temp_file):
@@ -193,7 +193,7 @@ class TestFilesystemMCPServer:
 
         assert result["written"] is True
         assert test_file.exists()
-        assert test_file.read_text() == "Test content"
+        assert test_file.read_text(encoding="utf-8") == "Test content"
 
     def test_list_directory(self, fs_server, tmp_path: Path):
         """Test listing a directory."""

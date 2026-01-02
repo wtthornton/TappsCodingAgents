@@ -33,13 +33,13 @@ class TestFrameworkDocUpdater:
 
         # Create test file
         test_file = tmp_path / "test.txt"
-        test_file.write_text("test content")
+        test_file.write_text("test content", encoding="utf-8")
 
         backup_path = updater.create_backup(test_file)
 
         assert backup_path is not None
         assert backup_path.exists()
-        assert backup_path.read_text() == "test content"
+        assert backup_path.read_text(encoding="utf-8") == "test content"
 
     def test_create_backup_missing_file(self, tmp_path):
         """Test backup creation for missing file."""
@@ -70,7 +70,7 @@ class TestFrameworkDocUpdater:
         result = updater.update_readme("new_agent", agent_info)
 
         assert result is True
-        content = readme_path.read_text()
+        content = readme_path.read_text(encoding="utf-8")
         assert "Workflow Agents** (14)" in content
         assert "`@new_agent`" in content
 
@@ -108,7 +108,7 @@ class TestFrameworkDocUpdater:
         result = updater.update_api_docs("new_agent", agent_info)
 
         assert result is True
-        content = api_path.read_text()
+        content = api_path.read_text(encoding="utf-8")
         assert "`new_agent`" in content
         # Agent name formatting may use underscores
         assert "## New" in content and "Agent" in content
@@ -132,7 +132,7 @@ class TestFrameworkDocUpdater:
         result = updater.update_architecture_docs("new_agent", agent_info)
 
         assert result is True
-        content = arch_path.read_text()
+        content = arch_path.read_text(encoding="utf-8")
         # Agent name formatting may use underscores
         assert "**New" in content and "Agent**" in content
 
@@ -160,7 +160,7 @@ class TestFrameworkDocUpdater:
         result = updater.update_agent_capabilities("new_agent", agent_info)
 
         assert result is True
-        content = capabilities_path.read_text()
+        content = capabilities_path.read_text(encoding="utf-8")
         # Agent name formatting may use underscores
         assert "### New" in content and "Agent" in content
         assert "**Purpose**: New agent" in content
@@ -169,18 +169,18 @@ class TestFrameworkDocUpdater:
         """Test updating all documentation files."""
         # Create all documentation files
         readme_path = tmp_path / "README.md"
-        readme_path.write_text("- **Workflow Agents** (13):\n- `@reviewer` - Review")
+        readme_path.write_text("- **Workflow Agents** (13):\n- `@reviewer` - Review", encoding="utf-8")
 
         api_path = tmp_path / "docs" / "API.md"
         api_path.parent.mkdir(parents=True)
-        api_path.write_text("## Agent subcommands:\n- `reviewer` - Review")
+        api_path.write_text("## Agent subcommands:\n- `reviewer` - Review", encoding="utf-8")
 
         arch_path = tmp_path / "docs" / "ARCHITECTURE.md"
-        arch_path.write_text("## Agents\n- **Reviewer Agent** - Review")
+        arch_path.write_text("## Agents\n- **Reviewer Agent** - Review", encoding="utf-8")
 
         capabilities_path = tmp_path / ".cursor" / "rules" / "agent-capabilities.mdc"
         capabilities_path.parent.mkdir(parents=True)
-        capabilities_path.write_text("### Reviewer Agent\n**Purpose**: Review")
+        capabilities_path.write_text("### Reviewer Agent\n**Purpose**: Review", encoding="utf-8")
 
         agent_info = AgentInfo(name="new_agent", purpose="New agent")
         updater = FrameworkDocUpdater(project_root=tmp_path)
@@ -196,7 +196,7 @@ class TestFrameworkDocUpdater:
         """Test updating all docs with some files missing."""
         # Only create README.md
         readme_path = tmp_path / "README.md"
-        readme_path.write_text("- **Workflow Agents** (13):")
+        readme_path.write_text("- **Workflow Agents** (13):", encoding="utf-8")
 
         agent_info = AgentInfo(name="new_agent", purpose="New agent")
         updater = FrameworkDocUpdater(project_root=tmp_path)
