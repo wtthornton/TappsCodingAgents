@@ -437,6 +437,64 @@ Example:
         help="(Deprecated) Force Cursor mode for workflow execution. Cursor-first is now the default for workflows unless TAPPS_AGENTS_MODE is explicitly set (e.g., TAPPS_AGENTS_MODE=headless).",
     )
 
+    # Cleanup command
+    cleanup_parser = subparsers.add_parser(
+        "cleanup",
+        help="Clean up TappsCodingAgents artifacts and data",
+        description="""Clean up various TappsCodingAgents artifacts to free disk space and reduce clutter.
+        
+Available cleanup operations:
+  • workflow-docs: Clean up old workflow documentation directories
+  • worktrees: Clean up old Git worktrees
+  • analytics: Clean up old analytics history
+  • cache: Clean up old cache entries
+  • all: Clean up all artifacts (default)
+""",
+    )
+    cleanup_subparsers = cleanup_parser.add_subparsers(
+        dest="cleanup_type",
+        help="Type of cleanup to perform",
+    )
+    
+    # Workflow docs cleanup
+    workflow_docs_cleanup_parser = cleanup_subparsers.add_parser(
+        "workflow-docs",
+        help="Clean up old workflow documentation directories",
+        description="""Clean up old workflow documentation directories from docs/workflows/simple-mode/.
+        
+Keeps the N most recent workflows visible and archives workflows older than the retention period.
+Archived workflows are moved to .tapps-agents/archives/workflows/ for reference.
+""",
+    )
+    workflow_docs_cleanup_parser.add_argument(
+        "--keep-latest",
+        type=int,
+        default=None,
+        help="Keep N most recent workflows visible (default: from config, typically 5)",
+    )
+    workflow_docs_cleanup_parser.add_argument(
+        "--retention-days",
+        type=int,
+        default=None,
+        help="Archive workflows older than N days (default: from config, typically 30)",
+    )
+    workflow_docs_cleanup_parser.add_argument(
+        "--archive",
+        action="store_true",
+        default=None,
+        help="Enable archival of old workflows (default: from config)",
+    )
+    workflow_docs_cleanup_parser.add_argument(
+        "--no-archive",
+        action="store_true",
+        help="Disable archival (workflows will be kept visible)",
+    )
+    workflow_docs_cleanup_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without making them",
+    )
+
     # Project initialization command
     init_parser = subparsers.add_parser(
         "init",

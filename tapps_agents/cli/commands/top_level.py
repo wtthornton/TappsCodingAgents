@@ -2029,10 +2029,78 @@ def handle_init_command(args: object) -> None:
     if results.get("cache_prepopulated") is not None:
         _print_cache_results(results)
 
+    # Update .cursorignore patterns if cursorignore was created/updated
+    if results.get("cursorignore") or not getattr(args, "no_cursorignore", False):
+        cursorignore_update = _update_cursorignore_patterns(results["project_root"])
+        if cursorignore_update["updated"]:
+            print("\n✅ Updated .cursorignore with TappsCodingAgents patterns:")
+            for pattern in cursorignore_update["patterns_added"]:
+                print(f"   - {pattern}")
+
     # Run environment diagnostics
     _run_environment_check(results["project_root"])
 
     _print_next_steps()
+
+
+def _update_cursorignore_patterns(project_root: Path) -> dict[str, Any]:
+    """
+    Update .cursorignore with TappsCodingAgents patterns.
+    
+    Args:
+        project_root: Project root directory
+        
+    Returns:
+        Dictionary with update results:
+        {
+            "updated": bool,
+            "patterns_added": list[str],
+            "patterns_existing": list[str],
+        }
+    """
+    cursorignore_path = project_root / ".cursorignore"
+    
+    # Patterns to add
+    patterns_to_add = [
+        ".tapps-agents/backups/",
+        ".tapps-agents/archives/",
+        ".tapps-agents/artifacts/",
+    ]
+    
+    # Read existing file
+    existing_content = ""
+    if cursorignore_path.exists():
+        existing_content = cursorignore_path.read_text(encoding="utf-8")
+    
+    # Check which patterns are missing
+    missing_patterns = [
+        p for p in patterns_to_add
+        if p not in existing_content
+    ]
+    
+    if not missing_patterns:
+        return {
+            "updated": False,
+            "patterns_added": [],
+            "patterns_existing": patterns_to_add,
+        }
+    
+    # Append missing patterns
+    new_content = existing_content
+    if new_content and not new_content.endswith("\n"):
+        new_content += "\n"
+    
+    new_content += "\n# TappsCodingAgents generated artifacts (auto-added)\n"
+    for pattern in missing_patterns:
+        new_content += f"{pattern}\n"
+    
+    cursorignore_path.write_text(new_content, encoding="utf-8")
+    
+    return {
+        "updated": True,
+        "patterns_added": missing_patterns,
+        "patterns_existing": [p for p in patterns_to_add if p not in missing_patterns],
+    }
 
 
 def handle_generate_rules_command(args: object) -> None:
@@ -2396,6 +2464,81 @@ def handle_workflow_state_show_command(args: object) -> None:
         
     except Exception as e:
         print(f"Error loading state: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def handle_cleanup_workflow_docs_command(args: object) -> None:
+    """Handle 'cleanup workflow-docs' command"""
+    from ...core.cleanup_tool import CleanupTool
+
+    tool = CleanupTool()
+
+    # Get config values or use command-line overrides
+    config = tool.config.cleanup.workflow_docs
+    keep_latest = getattr(args, "keep_latest", None) or config.keep_latest
+    retention_days = getattr(args, "retention_days", None) or config.retention_days
+    
+    # Handle archive flag
+    archive_enabled = config.archive_enabled
+    if getattr(args, "archive", False):
+        archive_enabled = True
+    elif getattr(args, "no_archive", False):
+        archive_enabled = False
+    
+    archive_dir = config.archive_dir if archive_enabled else None
+    dry_run = getattr(args, "dry_run", False)
+
+    if dry_run:
+        print("DRY RUN: Would clean up workflow documentation with the following settings:")
+        print(f"  Keep latest: {keep_latest} workflows")
+        print(f"  Retention: {retention_days} days")
+        print(f"  Archive enabled: {archive_enabled}")
+        if archive_dir:
+            print(f"  Archive directory: {archive_dir}")
+        print()
+
+    try:
+        results = tool.cleanup_workflow_docs(
+            keep_latest=keep_latest,
+            retention_days=retention_days,
+            archive_dir=archive_dir,
+            dry_run=dry_run,
+        )
+
+        print(f"\n{'='*80}")
+        print("Workflow Documentation Cleanup Complete")
+        print(f"{'='*80}\n")
+        print(f"Kept: {results['kept']} workflows visible")
+        print(f"Archived: {results['archived']} workflows ({results['total_size_mb']:.2f} MB)")
+        
+        if results['archived_workflows']:
+            print("\nArchived workflows:")
+            for workflow_id in results['archived_workflows'][:10]:  # Show first 10
+                print(f"  - {workflow_id}")
+            if len(results['archived_workflows']) > 10:
+                print(f"  ... and {len(results['archived_workflows']) - 10} more")
+        
+        if results['kept_workflows']:
+            print("\nKept workflows:")
+            for workflow_id in results['kept_workflows'][:10]:  # Show first 10
+                print(f"  - {workflow_id}")
+            if len(results['kept_workflows']) > 10:
+                print(f"  ... and {len(results['kept_workflows']) - 10} more")
+        
+        if results['errors']:
+            print("\nErrors encountered:")
+            for error in results['errors']:
+                print(f"  ⚠️  {error}")
+        
+        if dry_run:
+            print("\n⚠️  This was a dry run. Run without --dry-run to perform actual cleanup.")
+        
+        print()
+        
+    except Exception as e:
+        print(f"Error during cleanup: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         sys.exit(1)
 
 

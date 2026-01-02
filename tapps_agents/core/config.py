@@ -794,6 +794,47 @@ class BranchCleanupConfig(BaseModel):
     )
 
 
+class WorkflowDocsCleanupConfig(BaseModel):
+    """Configuration for workflow documentation cleanup"""
+
+    enabled: bool = Field(
+        default=True,
+        description="Enable workflow documentation cleanup",
+    )
+    keep_latest: int = Field(
+        default=5,
+        ge=1,
+        le=100,
+        description="Keep N most recent workflows visible",
+    )
+    retention_days: int = Field(
+        default=30,
+        ge=1,
+        description="Archive workflows older than N days",
+    )
+    archive_enabled: bool = Field(
+        default=True,
+        description="Enable archival of old workflows",
+    )
+    archive_dir: Path = Field(
+        default=Path(".tapps-agents/archives/workflows/"),
+        description="Directory for archived workflows (relative to project root)",
+    )
+    exclude_patterns: list[str] = Field(
+        default_factory=list,
+        description="Workflow IDs or patterns to never archive",
+    )
+
+
+class CleanupConfig(BaseModel):
+    """Configuration for cleanup operations"""
+
+    workflow_docs: WorkflowDocsCleanupConfig = Field(
+        default_factory=WorkflowDocsCleanupConfig,
+        description="Workflow documentation cleanup configuration",
+    )
+
+
 class WorkflowConfig(BaseModel):
     """Configuration for workflow execution"""
 
@@ -1081,6 +1122,10 @@ class ProjectConfig(BaseModel):
     context_intelligence: ContextIntelligenceConfig = Field(
         default_factory=ContextIntelligenceConfig,
         description="Context Intelligence Engine configuration (Tier 1)",
+    )
+    cleanup: CleanupConfig = Field(
+        default_factory=CleanupConfig,
+        description="Cleanup operations configuration",
     )
 
     model_config = {

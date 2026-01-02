@@ -375,6 +375,14 @@ def route_command(args: argparse.Namespace) -> None:
         top_level.handle_status_command(args)
     elif args.agent == "doctor":
         top_level.handle_doctor_command(args)
+    elif args.agent == "cleanup":
+        cleanup_type = getattr(args, "cleanup_type", None)
+        if cleanup_type == "workflow-docs":
+            top_level.handle_cleanup_workflow_docs_command(args)
+        else:
+            print(f"Unknown cleanup type: {cleanup_type}", file=sys.stderr)
+            print("Use 'tapps-agents cleanup --help' for available cleanup operations", file=sys.stderr)
+            sys.exit(1)
     elif args.agent == "health":
         from .commands import health
         if hasattr(args, "command"):

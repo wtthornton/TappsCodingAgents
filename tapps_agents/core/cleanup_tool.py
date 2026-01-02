@@ -164,11 +164,135 @@ class CleanupTool:
             "dry_run": dry_run,
         }
 
+    def cleanup_workflow_docs(
+        self,
+        keep_latest: int = 5,
+        retention_days: int = 30,
+        archive_dir: Path | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Clean up old workflow documentation directories.
+
+        Args:
+            keep_latest: Number of most recent workflows to keep visible (default: 5)
+            retention_days: Archive workflows older than this many days (default: 30)
+            archive_dir: Directory for archived workflows. If None, archival disabled.
+            dry_run: If True, preview changes without making them (default: False)
+
+        Returns:
+            Dictionary with cleanup results:
+            {
+                "archived": int,
+                "kept": int,
+                "total_size_mb": float,
+                "archived_workflows": list[str],
+                "kept_workflows": list[str],
+                "dry_run": bool,
+                "errors": list[str],
+            }
+        """
+        import sys
+        import shutil
+        import logging
+
+        logger = logging.getLogger(__name__)
+
+        workflow_base_dir = self.project_root / "docs" / "workflows" / "simple-mode"
+        if not workflow_base_dir.exists():
+            return {
+                "archived": 0,
+                "kept": 0,
+                "total_size_mb": 0.0,
+                "archived_workflows": [],
+                "kept_workflows": [],
+                "dry_run": dry_run,
+                "errors": [],
+            }
+
+        # Get all workflow directories
+        workflow_dirs = []
+        for item in workflow_base_dir.iterdir():
+            if item.is_dir() and item.name not in ["latest"]:
+                # Check if it's a workflow directory (has step files or matches pattern)
+                step_files = list(item.glob("step*.md"))
+                if step_files or ("-" in item.name and len(item.name.split("-")) >= 2):
+                    try:
+                        mtime = datetime.fromtimestamp(item.stat().st_mtime)
+                        workflow_dirs.append((item, mtime))
+                    except Exception as e:
+                        logger.warning(f"Error getting mtime for {item}: {e}")
+
+        # Sort by modification time (newest first)
+        workflow_dirs.sort(key=lambda x: x[1], reverse=True)
+
+        # Keep latest N workflows
+        kept_workflows = workflow_dirs[:keep_latest]
+        workflows_to_process = workflow_dirs[keep_latest:]
+
+        # Process workflows for archival
+        archived_count = 0
+        archived_workflows = []
+        kept_workflow_names = [w[0].name for w in kept_workflows]
+        total_size = 0
+        errors = []
+
+        if archive_dir and retention_days > 0:
+            cutoff_date = datetime.now() - timedelta(days=retention_days)
+            archive_path = self.project_root / archive_dir if isinstance(archive_dir, Path) else self.project_root / Path(archive_dir)
+
+            for workflow_dir, mtime in workflows_to_process:
+                if mtime < cutoff_date:
+                    try:
+                        # Calculate size
+                        size = sum(
+                            f.stat().st_size
+                            for f in workflow_dir[0].rglob("*")
+                            if f.is_file()
+                        )
+                        total_size += size
+
+                        if dry_run:
+                            print(f"Would archive: {workflow_dir[0].name} ({size / 1024 / 1024:.2f} MB)")
+                        else:
+                            # Archive workflow (Windows-compatible)
+                            dest_dir = archive_path / workflow_dir[0].name
+                            archive_path.mkdir(parents=True, exist_ok=True)
+
+                            if sys.platform == "win32":
+                                # Windows: Copy then delete
+                                shutil.copytree(workflow_dir[0], dest_dir, dirs_exist_ok=True)
+                                shutil.rmtree(workflow_dir[0])
+                            else:
+                                # Unix: Move
+                                shutil.move(str(workflow_dir[0]), str(dest_dir))
+
+                            print(f"Archived: {workflow_dir[0].name}")
+                        archived_count += 1
+                        archived_workflows.append(workflow_dir[0].name)
+                    except Exception as e:
+                        error_msg = f"Failed to archive {workflow_dir[0].name}: {e}"
+                        logger.error(error_msg)
+                        errors.append(error_msg)
+
+        return {
+            "archived": archived_count,
+            "kept": len(kept_workflows),
+            "total_size_mb": total_size / 1024 / 1024,
+            "archived_workflows": archived_workflows,
+            "kept_workflows": kept_workflow_names,
+            "dry_run": dry_run,
+            "errors": errors,
+        }
+
     def cleanup_all(
         self,
         worktree_days: int = 7,
         analytics_days: int = 90,
         cache_days: int = 30,
+        workflow_keep_latest: int | None = None,
+        workflow_retention_days: int | None = None,
+        workflow_archive: bool | None = None,
         dry_run: bool = False,
     ) -> dict[str, Any]:
         """
@@ -178,6 +302,9 @@ class CleanupTool:
             worktree_days: Days to retain worktrees
             analytics_days: Days to retain analytics
             cache_days: Days to retain cache
+            workflow_keep_latest: Keep N most recent workflows (None = use config)
+            workflow_retention_days: Archive workflows older than N days (None = use config)
+            workflow_archive: Enable archival (None = use config)
             dry_run: If True, only report what would be removed
 
         Returns:
@@ -189,8 +316,38 @@ class CleanupTool:
             "cache": self.cleanup_cache(cache_days, dry_run),
         }
 
-        total_removed = sum(r["removed"] for r in results.values())
-        total_size = sum(r["total_size"] for r in results.values())
+        # Workflow docs cleanup
+        workflow_config = self.config.cleanup.workflow_docs
+        if workflow_config.enabled:
+            keep_latest = workflow_keep_latest or workflow_config.keep_latest
+            retention_days = workflow_retention_days or workflow_config.retention_days
+            archive_enabled = workflow_archive if workflow_archive is not None else workflow_config.archive_enabled
+            archive_dir = workflow_config.archive_dir if archive_enabled else None
+
+            results["workflow_docs"] = self.cleanup_workflow_docs(
+                keep_latest=keep_latest,
+                retention_days=retention_days,
+                archive_dir=archive_dir,
+                dry_run=dry_run,
+            )
+        else:
+            results["workflow_docs"] = {
+                "archived": 0,
+                "kept": 0,
+                "total_size_mb": 0.0,
+                "archived_workflows": [],
+                "kept_workflows": [],
+                "dry_run": dry_run,
+                "errors": [],
+            }
+
+        total_removed = sum(r.get("removed", 0) for r in results.values() if isinstance(r, dict))
+        total_size = sum(
+            r.get("total_size", 0) if isinstance(r, dict) and "total_size" in r
+            else r.get("total_size_mb", 0) * 1024 * 1024 if isinstance(r, dict) and "total_size_mb" in r
+            else 0
+            for r in results.values()
+        )
 
         results["summary"] = {
             "total_removed": total_removed,
