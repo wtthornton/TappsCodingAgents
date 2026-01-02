@@ -25,7 +25,6 @@ from ..core.project_profile import (
 )
 from ..core.runtime_mode import is_cursor_mode
 from .auto_progression import AutoProgressionManager, ProgressionAction
-from .background_auto_executor import BackgroundAgentAutoExecutor
 from .checkpoint_manager import (
     CheckpointConfig,
     CheckpointFrequency,

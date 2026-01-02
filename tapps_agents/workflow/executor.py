@@ -289,35 +289,6 @@ class WorkflowExecutor:
             step_count=len(self.workflow.steps),
         )
 
-        # Generate Background Agent configs (Epic 9)
-        if self.background_agent_generator:
-            try:
-                configs = self.background_agent_generator.generate_workflow_configs(
-                    workflow=self.workflow,
-                    workflow_id=workflow_id,
-                )
-                self.background_agent_generator.apply_workflow_configs(
-                    configs=configs,
-                    workflow_id=workflow_id,
-                )
-                # Validate generated configs
-                is_valid, errors = self.background_agent_generator.validate_config()
-                if not is_valid:
-                    self.logger.warning(
-                        "Background Agent config validation warnings",
-                        errors=errors,
-                    )
-                else:
-                    self.logger.info(
-                        "Background Agent configs generated",
-                        config_count=len(configs),
-                    )
-            except Exception as e:
-                self.logger.warning(
-                    "Failed to generate Background Agent configs",
-                    error=str(e),
-                )
-
         # Initialize progress monitor
         self.progress_monitor = WorkflowProgressMonitor(
             workflow=self.workflow,
@@ -582,7 +553,6 @@ class WorkflowExecutor:
                 error=self.state.error,
             )
             self._notify_observers(event)
-            self._cleanup_background_agents()
             self.save_state()
             return True
         return False
@@ -613,7 +583,6 @@ class WorkflowExecutor:
                 status="completed",
             )
             self._notify_observers(event)
-            self._cleanup_background_agents()
             self.save_state()
             return True
         else:
@@ -627,7 +596,6 @@ class WorkflowExecutor:
                 error=self.state.error,
             )
             self._notify_observers(event)
-            self._cleanup_background_agents()
             self.save_state()
             return True
 
@@ -724,7 +692,6 @@ class WorkflowExecutor:
                     step_logger.error(
                         f"Workflow aborted: {decision.reason}",
                     )
-                self._cleanup_background_agents()
                 self.save_state()
                 return True
             elif decision.action == ProgressionAction.CONTINUE:
@@ -757,7 +724,6 @@ class WorkflowExecutor:
                 error=str(result.error),
                 action=result.step.action,
             )
-        self._cleanup_background_agents()
         self.save_state()
         return True
 
@@ -961,7 +927,6 @@ class WorkflowExecutor:
             workflow_id=self.state.workflow_id,
         )
         self.state.error = envelope.to_user_message()
-        self._cleanup_background_agents()
         # Emit workflow_end event
         event = self.event_log.emit_event(
             event_type="workflow_end",
@@ -977,6 +942,7 @@ class WorkflowExecutor:
                 exc_info=True,
             )
         self.save_state()
+        # Background Agent cleanup removed - Background Agents are no longer used
 
     def _generate_timeline_if_complete(self, completed_step_ids: set[str]) -> None:
         """Generate timeline if workflow completed."""
@@ -1303,28 +1269,8 @@ class WorkflowExecutor:
             # Workflow complete
             self.state.current_step = None
             self.state.status = "completed"
-            self._cleanup_background_agents()
 
         self.save_state()
-
-    def _cleanup_background_agents(self) -> None:
-        """Clean up Background Agent configs when workflow completes or fails."""
-        if self.background_agent_generator and self.state:
-            try:
-                self.background_agent_generator.cleanup_workflow_configs(
-                    workflow_id=self.state.workflow_id,
-                )
-                if self.logger:
-                    self.logger.info(
-                        "Background Agent configs cleaned up",
-                        workflow_id=self.state.workflow_id,
-                    )
-            except Exception as e:
-                if self.logger:
-                    self.logger.warning(
-                        "Failed to cleanup Background Agent configs",
-                        error=str(e),
-                    )
 
     def _generate_manifest(self) -> None:
         """
@@ -1969,7 +1915,6 @@ class WorkflowExecutor:
             if len(self.state.completed_steps) + len(self.state.skipped_steps) >= len(self.workflow.steps):
                 self.state.status = "completed"
                 self.state.current_step = None
-                self._cleanup_background_agents()
         
         self.save_state()
         if self.logger:
