@@ -1834,10 +1834,18 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     avg_scores = {}
                     for key in all_scores[0].keys():
                         if key != "metrics":
-                            values = [s.get(key, 0.0) for s in all_scores]
-                            avg_scores[key] = (
-                                sum(values) / len(values) if values else 0.0
-                            )
+                            # Filter out non-numeric values (e.g., dicts, strings)
+                            values = [
+                                s.get(key, 0.0)
+                                for s in all_scores
+                                if isinstance(s.get(key), (int, float))
+                            ]
+                            # Only calculate average if we have numeric values
+                            if values:
+                                avg_scores[key] = sum(values) / len(values)
+                            else:
+                                # Default to 0.0 if no numeric values found
+                                avg_scores[key] = 0.0
 
                     # Calculate overall score
                     avg_scores["overall_score"] = avg_scores.get("overall_score", 0.0)
