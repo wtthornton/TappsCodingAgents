@@ -14,6 +14,7 @@ from typing import Any
 from ..core.error_envelope import ErrorEnvelopeBuilder
 from ..core.runtime_mode import is_cursor_mode
 from ..quality.quality_gates import QualityGate, QualityThresholds
+from .agent_handlers.registry import AgentHandlerRegistry
 from .auto_progression import AutoProgressionManager, ProgressionAction
 from .checkpoint_manager import (
     CheckpointConfig,
@@ -23,16 +24,15 @@ from .checkpoint_manager import (
 from .error_recovery import ErrorRecoveryManager
 from .event_log import WorkflowEventLog
 from .logging_helper import WorkflowLogger
-from .observer import ObserverRegistry, WorkflowObserver
-from .validation import ValidatorRegistry, WorkflowValidator
-from .agent_handlers.registry import AgentHandlerRegistry
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .observer import ObserverRegistry, WorkflowObserver
 from .parallel_executor import ParallelStepExecutor
 from .parser import WorkflowParser
 from .progress_monitor import WorkflowProgressMonitor
 from .recommender import WorkflowRecommendation, WorkflowRecommender
 from .state_manager import AdvancedStateManager
 from .timeline import generate_timeline, save_timeline
+from .validation import ValidatorRegistry, WorkflowValidator
 
 
 class WorkflowExecutor:
@@ -410,34 +410,12 @@ class WorkflowExecutor:
             running_step_ids.update(step.id for step in ready_steps)
             self._emit_step_start_events(ready_steps)
             
-            # Print progress to terminal in headless mode (for CLI visibility)
-            if not is_cursor_mode():
-                from ..core.unicode_safe import safe_print
-                from ..cli.feedback import get_feedback
-                
-                step_names = [f"{s.agent}/{s.action}" for s in ready_steps]
-                completed = len(completed_step_ids)
-                total = len(self.workflow.steps)
-                progress_pct = int((completed / total) * 100) if total > 0 else 0
-                
-                # Update progress with step information
-                feedback = get_feedback()
-                progress_msg = f"Step {completed + 1}/{total} ({progress_pct}%): {', '.join(step_names)}"
-                feedback.progress(progress_msg, percentage=progress_pct, show_progress_bar=True)
-                
-                # Also print to terminal for visibility
-                safe_print(f"-> {progress_msg}", flush=True)
-            
-            async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
-                """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
-                artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
-                return artifacts or {}
+            # Print progress before execution
+            self._print_execution_progress(ready_steps, completed_step_ids)
 
             try:
-                results = await self.parallel_executor.execute_parallel(
-                    steps=ready_steps,
-                    execute_fn=execute_step_wrapper,
-                    state=self.state,
+                results = await self._execute_steps_parallel(
+                    ready_steps, target_path
                 )
 
                 # Process results and update state
@@ -449,13 +427,8 @@ class WorkflowExecutor:
 
                 steps_executed += len(ready_steps)
                 
-                # Print completion status in headless mode
-                if not is_cursor_mode():
-                    from ..core.unicode_safe import safe_print
-                    completed = len(completed_step_ids)
-                    total = len(self.workflow.steps)
-                    progress_pct = int((completed / total) * 100) if total > 0 else 0
-                    safe_print(f"[OK] Completed {completed}/{total} steps ({progress_pct}%)", flush=True)
+                # Print completion status
+                self._print_completion_status(completed_step_ids)
                 
                 # Always save state at end of iteration (fallback)
                 self.save_state()
@@ -919,6 +892,64 @@ class WorkflowExecutor:
                     checkpoint_metadata=checkpoint_metadata,
                 )
 
+    def _print_execution_progress(
+        self, ready_steps: list[WorkflowStep], completed_step_ids: set[str]
+    ) -> None:
+        """Print progress information before executing steps."""
+        if is_cursor_mode():
+            return
+        
+        from ..cli.feedback import get_feedback
+        from ..core.unicode_safe import safe_print
+        
+        step_names = [f"{s.agent}/{s.action}" for s in ready_steps]
+        completed = len(completed_step_ids)
+        total = len(self.workflow.steps)
+        progress_pct = int((completed / total) * 100) if total > 0 else 0
+        
+        # Update progress with step information
+        feedback = get_feedback()
+        progress_msg = f"Step {completed + 1}/{total} ({progress_pct}%): {', '.join(step_names)}"
+        feedback.progress(progress_msg, percentage=progress_pct, show_progress_bar=True)
+        
+        # Also print to terminal for visibility
+        safe_print(f"-> {progress_msg}", flush=True)
+
+    def _print_completion_status(self, completed_step_ids: set[str]) -> None:
+        """Print completion status after steps finish."""
+        if is_cursor_mode():
+            return
+        
+        from ..core.unicode_safe import safe_print
+        completed = len(completed_step_ids)
+        total = len(self.workflow.steps)
+        progress_pct = int((completed / total) * 100) if total > 0 else 0
+        safe_print(f"[OK] Completed {completed}/{total} steps ({progress_pct}%)", flush=True)
+
+    async def _execute_steps_parallel(
+        self, ready_steps: list[WorkflowStep], target_path: Path | None
+    ) -> list[Any]:
+        """
+        Execute steps in parallel using the parallel executor.
+        
+        Args:
+            ready_steps: Steps ready to execute
+            target_path: Target file path
+            
+        Returns:
+            List of execution results
+        """
+        async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
+            """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
+            artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
+            return artifacts or {}
+
+        return await self.parallel_executor.execute_parallel(
+            steps=ready_steps,
+            execute_fn=execute_step_wrapper,
+            state=self.state,
+        )
+
     def _handle_execution_exception(self, e: Exception) -> None:
         """Handle exception during workflow execution."""
         self.state.status = "failed"
@@ -1153,22 +1184,6 @@ class WorkflowExecutor:
             step_execution.error = envelope.to_user_message()
             raise
 
-        except Exception as e:
-            # Mark step execution as failed
-            step_execution.completed_at = datetime.now()
-            step_execution.duration_seconds = (
-                step_execution.completed_at - step_execution.started_at
-            ).total_seconds()
-            step_execution.status = "failed"
-            envelope = ErrorEnvelopeBuilder.from_exception(
-                e,
-                workflow_id=self.state.workflow_id if self.state else None,
-                step_id=step.id,
-                agent=step.agent or "",
-            )
-            step_execution.error = envelope.to_user_message()
-            raise
-
     def get_current_step(self) -> WorkflowStep | None:
         """Get the current workflow step."""
         if not self.state or not self.workflow:
@@ -1282,7 +1297,11 @@ class WorkflowExecutor:
             return
         
         try:
-            from .manifest import generate_manifest, save_manifest, sync_manifest_to_project_root
+            from .manifest import (
+                generate_manifest,
+                save_manifest,
+                sync_manifest_to_project_root,
+            )
             
             # Generate manifest
             manifest_content = generate_manifest(self.workflow, self.state)

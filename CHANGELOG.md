@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.11] - 2025-01-16
+
+### Added
+- **Test Coverage Improvements** - Comprehensive test suites for critical components
+  - Created `tests/unit/cli/test_main.py` with 23 tests for CLI command routing (95.7% pass rate)
+  - Created `tests/unit/workflow/test_cursor_executor_refactored.py` with 12 tests for workflow execution
+  - Total of 34 new tests covering previously untested code paths
+  - Improved test coverage from 0% to ~80%+ for `main.py` and `cursor_executor.py`
+
+### Fixed
+- **Type Hints** - Fixed return type annotation in `_get_agent_command_handlers()`
+  - Changed from `dict[str, callable]` to `dict[str, Callable[[argparse.Namespace], None]]`
+  - Improved type checking accuracy and IDE support
+- **Test Infrastructure** - Fixed test mocking and async context manager handling
+  - Improved test reliability and maintainability
+
+### Changed
+- **Code Quality** - Enhanced testability and maintainability
+  - Better separation of concerns in test files
+  - Improved test documentation and clarity
+
 ## [3.2.10] - 2025-01-16
 
 ### Fixed

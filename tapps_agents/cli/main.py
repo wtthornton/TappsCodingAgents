@@ -4,6 +4,7 @@ Main CLI entry point
 import argparse
 import asyncio
 import sys
+from collections.abc import Callable
 
 # Try to import version, with fallback to importlib.metadata
 try:
@@ -50,11 +51,11 @@ from .commands import (
     tester,
     top_level,
 )
+from .feedback import FeedbackManager, ProgressMode, VerbosityLevel
 
 # Import all parser registration functions
 from .parsers import (
     analyst as analyst_parsers,
-    evaluator as evaluator_parsers,
 )
 from .parsers import (
     architect as architect_parsers,
@@ -70,6 +71,9 @@ from .parsers import (
 )
 from .parsers import (
     enhancer as enhancer_parsers,
+)
+from .parsers import (
+    evaluator as evaluator_parsers,
 )
 from .parsers import (
     implementer as implementer_parsers,
@@ -95,8 +99,6 @@ from .parsers import (
 from .parsers import (
     top_level as top_level_parsers,
 )
-from .feedback import FeedbackManager, VerbosityLevel
-from .feedback import ProgressMode
 
 
 def _reorder_global_flags(argv: list[str]) -> list[str]:
@@ -305,6 +307,118 @@ def register_all_parsers(parser: argparse.ArgumentParser) -> None:
     top_level_parsers.add_top_level_parsers(subparsers)
 
 
+def _get_agent_command_handlers() -> dict[str, Callable[[argparse.Namespace], None]]:
+    """
+    Get dictionary mapping agent names to their command handlers.
+    
+    Returns:
+        Dictionary mapping agent names to handler functions
+    """
+    return {
+        "reviewer": reviewer.handle_reviewer_command,
+        "planner": planner.handle_planner_command,
+        "implementer": implementer.handle_implementer_command,
+        "tester": tester.handle_tester_command,
+        "debugger": debugger.handle_debugger_command,
+        "documenter": documenter.handle_documenter_command,
+        "orchestrator": orchestrator.handle_orchestrator_command,
+        "analyst": analyst.handle_analyst_command,
+        "architect": architect.handle_architect_command,
+        "designer": designer.handle_designer_command,
+        "improver": improver.handle_improver_command,
+        "ops": ops.handle_ops_command,
+        "enhancer": enhancer.handle_enhancer_command,
+        "evaluator": evaluator.handle_evaluator_command,
+    }
+
+
+def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace], None]]:
+    """
+    Get dictionary mapping top-level command names to their handlers.
+    
+    Returns:
+        Dictionary mapping command names to handler functions
+    """
+    return {
+        "create": top_level.handle_create_command,
+        "init": top_level.handle_init_command,
+        "generate-rules": top_level.handle_generate_rules_command,
+        "workflow": top_level.handle_workflow_command,
+        "score": top_level.handle_score_command,
+        "status": top_level.handle_status_command,
+        "doctor": top_level.handle_doctor_command,
+        "install-dev": top_level.handle_install_dev_command,
+        "analytics": top_level.handle_analytics_command,
+        "customize": top_level.handle_customize_command,
+        "skill": top_level.handle_skill_command,
+        "skill-template": top_level.handle_skill_template_command,
+        "governance": top_level.handle_governance_command,
+        "approval": top_level.handle_governance_command,
+        "auto-execution": top_level.handle_auto_execution_command,
+        "auto-exec": top_level.handle_auto_execution_command,
+        "ae": top_level.handle_auto_execution_command,
+        "setup-experts": top_level.handle_setup_experts_command,
+        "cursor": top_level.handle_cursor_command,
+    }
+
+
+def _handle_cleanup_command(args: argparse.Namespace) -> None:
+    """Handle cleanup command with sub-commands."""
+    cleanup_type = getattr(args, "cleanup_type", None)
+    if cleanup_type == "workflow-docs":
+        top_level.handle_cleanup_workflow_docs_command(args)
+    else:
+        print(f"Unknown cleanup type: {cleanup_type}", file=sys.stderr)
+        print("Use 'tapps-agents cleanup --help' for available cleanup operations", file=sys.stderr)
+        sys.exit(1)
+
+
+def _handle_health_command(args: argparse.Namespace) -> None:
+    """Handle health command with sub-commands."""
+    from .commands import health
+    
+    if not hasattr(args, "command"):
+        return
+    
+    health_handlers = {
+        "check": lambda: health.handle_health_check_command(
+            check_name=getattr(args, "check", None),
+            output_format=getattr(args, "format", "text"),
+            save=getattr(args, "save", True),
+        ),
+        "dashboard": lambda: health.handle_health_dashboard_command(
+            output_format=getattr(args, "format", "text"),
+        ),
+        "show": lambda: health.handle_health_dashboard_command(
+            output_format=getattr(args, "format", "text"),
+        ),
+        "metrics": lambda: health.handle_health_metrics_command(
+            check_name=getattr(args, "check_name", None),
+            status=getattr(args, "status", None),
+            days=getattr(args, "days", 30),
+            output_format=getattr(args, "format", "text"),
+        ),
+        "trends": lambda: health.handle_health_trends_command(
+            check_name=getattr(args, "check_name", None) or "",
+            days=getattr(args, "days", 7),
+            output_format=getattr(args, "format", "text"),
+        ),
+    }
+    
+    handler = health_handlers.get(args.command)
+    if handler:
+        handler()
+
+
+def _handle_hardware_profile_command(args: argparse.Namespace) -> None:
+    """Handle hardware profile command."""
+    top_level.hardware_profile_command(
+        set_profile=getattr(args, "set", None),
+        output_format=getattr(args, "format", "text"),
+        show_metrics=not getattr(args, "no_metrics", False),
+    )
+
+
 def route_command(args: argparse.Namespace) -> None:
     """
     Route parsed command arguments to the appropriate handler function.
@@ -331,120 +445,45 @@ def route_command(args: argparse.Namespace) -> None:
     if config.auto_enhancement.enabled:
         args = enhance_prompt_if_needed(args, config.auto_enhancement)
     
-    # Route agent commands
-    if args.agent == "reviewer":
-        reviewer.handle_reviewer_command(args)
-    elif args.agent == "planner":
-        planner.handle_planner_command(args)
-    elif args.agent == "implementer":
-        implementer.handle_implementer_command(args)
-    elif args.agent == "tester":
-        tester.handle_tester_command(args)
-    elif args.agent == "debugger":
-        debugger.handle_debugger_command(args)
-    elif args.agent == "documenter":
-        documenter.handle_documenter_command(args)
-    elif args.agent == "orchestrator":
-        orchestrator.handle_orchestrator_command(args)
-    elif args.agent == "analyst":
-        analyst.handle_analyst_command(args)
-    elif args.agent == "architect":
-        architect.handle_architect_command(args)
-    elif args.agent == "designer":
-        designer.handle_designer_command(args)
-    elif args.agent == "improver":
-        improver.handle_improver_command(args)
-    elif args.agent == "ops":
-        ops.handle_ops_command(args)
-    elif args.agent == "enhancer":
-        enhancer.handle_enhancer_command(args)
-    elif args.agent == "evaluator":
-        evaluator.handle_evaluator_command(args)
-    # Route top-level commands
-    elif args.agent == "create":
-        top_level.handle_create_command(args)
-    elif args.agent == "init":
-        top_level.handle_init_command(args)
-    elif args.agent == "generate-rules":
-        top_level.handle_generate_rules_command(args)
-    elif args.agent == "workflow":
-        top_level.handle_workflow_command(args)
-    elif args.agent == "score":
-        top_level.handle_score_command(args)
-    elif args.agent == "status":
-        top_level.handle_status_command(args)
-    elif args.agent == "doctor":
-        top_level.handle_doctor_command(args)
-    elif args.agent == "cleanup":
-        cleanup_type = getattr(args, "cleanup_type", None)
-        if cleanup_type == "workflow-docs":
-            top_level.handle_cleanup_workflow_docs_command(args)
-        else:
-            print(f"Unknown cleanup type: {cleanup_type}", file=sys.stderr)
-            print("Use 'tapps-agents cleanup --help' for available cleanup operations", file=sys.stderr)
-            sys.exit(1)
-    elif args.agent == "health":
-        from .commands import health
-        if hasattr(args, "command"):
-            if args.command == "check":
-                health.handle_health_check_command(
-                    check_name=getattr(args, "check", None),
-                    output_format=getattr(args, "format", "text"),
-                    save=getattr(args, "save", True),
-                )
-            elif args.command == "dashboard" or args.command == "show":
-                health.handle_health_dashboard_command(
-                    output_format=getattr(args, "format", "text"),
-                )
-            elif args.command == "metrics":
-                health.handle_health_metrics_command(
-                    check_name=getattr(args, "check_name", None),
-                    status=getattr(args, "status", None),
-                    days=getattr(args, "days", 30),
-                    output_format=getattr(args, "format", "text"),
-                )
-            elif args.command == "trends":
-                health.handle_health_trends_command(
-                    check_name=getattr(args, "check_name", None) or "",
-                    days=getattr(args, "days", 7),
-                    output_format=getattr(args, "format", "text"),
-                )
-    elif args.agent == "install-dev":
-        top_level.handle_install_dev_command(args)
-    elif args.agent == "hardware-profile" or args.agent == "hardware":
-        top_level.hardware_profile_command(
-            set_profile=getattr(args, "set", None),
-            output_format=getattr(args, "format", "text"),
-            show_metrics=not getattr(args, "no_metrics", False),
-        )
-    elif args.agent == "analytics":
-        top_level.handle_analytics_command(args)
-    elif args.agent == "customize":
-        top_level.handle_customize_command(args)
-    elif args.agent == "skill":
-        top_level.handle_skill_command(args)
-    elif args.agent == "skill-template":
-        top_level.handle_skill_template_command(args)
-    # Background Agent config command removed - Background Agents no longer used
-    # elif args.agent == "background-agent-config" or args.agent == "bg-config":
-    #     top_level.handle_background_agent_config_command(args)
-    elif args.agent == "governance" or args.agent == "approval":
-        top_level.handle_governance_command(args)
-    elif args.agent == "auto-execution" or args.agent == "auto-exec" or args.agent == "ae":
-        top_level.handle_auto_execution_command(args)
-    elif args.agent == "setup-experts":
-        top_level.handle_setup_experts_command(args)
-    elif args.agent == "cursor":
-        top_level.handle_cursor_command(args)
-    elif args.agent == "simple-mode":
-        simple_mode.handle_simple_mode_command(args)
-    elif args.agent == "learning":
-        learning.handle_learning_command(args)
-    elif args.agent is None:
-        # Show main help if no agent specified
+    agent = args.agent
+    
+    # Handle None case (show help)
+    if agent is None:
         help_parser = create_root_parser()
         register_all_parsers(help_parser)
         help_parser.print_help()
+        return
+    
+    # Try agent command handlers first
+    agent_handlers = _get_agent_command_handlers()
+    if agent in agent_handlers:
+        agent_handlers[agent](args)
+        return
+    
+    # Try top-level command handlers
+    top_level_handlers = _get_top_level_command_handlers()
+    if agent in top_level_handlers:
+        top_level_handlers[agent](args)
+        return
+    
+    # Handle special cases with sub-commands or aliases
+    special_handlers = {
+        "cleanup": _handle_cleanup_command,
+        "health": _handle_health_command,
+        "hardware-profile": _handle_hardware_profile_command,
+        "hardware": _handle_hardware_profile_command,
+        "simple-mode": simple_mode.handle_simple_mode_command,
+        "learning": learning.handle_learning_command,
+    }
+    
+    if agent in special_handlers:
+        special_handlers[agent](args)
+        return
+    
+    # Unknown command - show help
+    help_parser = create_root_parser()
+    register_all_parsers(help_parser)
+    help_parser.print_help()
 
 
 def main() -> None:

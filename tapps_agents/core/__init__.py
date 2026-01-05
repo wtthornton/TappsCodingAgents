@@ -1,4 +1,35 @@
-"""Core framework components"""
+"""
+Core framework components.
+
+This module provides the foundational components for the TappsCodingAgents framework,
+including:
+
+- Base Agent Classes: BaseAgent and related mixins for building custom agents
+- Context Management: ContextManager, TieredContextBuilder for managing
+  execution context
+- Caching: UnifiedCache, AdaptiveCacheConfig for performance optimization
+- Learning Systems: AgentLearner, PatternExtractor for agent improvement
+- Session Management: SessionManager, TaskMemory for stateful operations
+- Resource Management: ResourceAwareExecutor, HardwareProfiler for resource optimization
+- Visual Feedback: VisualAnalyzer, UIComparator for UI/UX analysis
+
+All components are designed to work together seamlessly and can be imported
+directly from this module.
+
+Example:
+    ```python
+    from tapps_agents.core import (
+        BaseAgent,
+        ContextManager,
+        UnifiedCache,
+        AgentLearner,
+    )
+    
+    # Create agent with learning capabilities
+    agent = BaseAgent(name="my_agent")
+    learner = AgentLearner(agent=agent)
+    ```
+"""
 
 from .adaptive_cache_config import (
     AdaptiveCacheConfig,
@@ -13,6 +44,10 @@ from .agent_learning import (
     PatternExtractor,
     PromptOptimizer,
     PromptVariant,
+)
+from .anonymization import (
+    AnonymizationPipeline,
+    AnonymizationReport,
 )
 from .ast_parser import ASTParser
 from .best_practice_consultant import (
@@ -44,6 +79,10 @@ from .docker_utils import (
     run_docker_ps_native,
     run_docker_ps_simple,
 )
+from .export_schema import (
+    ExportSchema,
+    ValidationResult,
+)
 from .hardware_profiler import (
     CacheOptimizationProfile,
     HardwareProfile,
@@ -67,19 +106,11 @@ from .learning_decision import (
     LearningDecision,
     LearningDecisionEngine,
 )
-from .learning_integration import LearningAwareMixin
 from .learning_export import (
     ExportMetadata,
     LearningDataExporter,
 )
-from .anonymization import (
-    AnonymizationPipeline,
-    AnonymizationReport,
-)
-from .export_schema import (
-    ExportSchema,
-    ValidationResult,
-)
+from .learning_integration import LearningAwareMixin
 from .long_duration_support import (
     DurabilityGuarantee,
     DurabilityLevel,

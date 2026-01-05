@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
-import json
 import os
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path
-from typing import Any, AsyncIterator
+from typing import Any
 
 from ..core.project_profile import (
     ProjectProfile,
@@ -31,9 +31,10 @@ from .checkpoint_manager import (
     WorkflowCheckpointManager,
 )
 from .error_recovery import ErrorContext, ErrorRecoveryManager
-from .logging_helper import WorkflowLogger
 from .event_bus import FileBasedEventBus
 from .events import EventType, WorkflowEvent
+from .logging_helper import WorkflowLogger
+from .marker_writer import MarkerWriter
 from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
 from .progress_manager import ProgressUpdateManager
@@ -41,7 +42,6 @@ from .skill_invoker import SkillInvoker
 from .state_manager import AdvancedStateManager
 from .state_persistence_config import StatePersistenceConfigManager
 from .worktree_manager import WorktreeManager
-from .marker_writer import MarkerWriter
 
 
 class CursorWorkflowExecutor:
@@ -156,7 +156,7 @@ class CursorWorkflowExecutor:
             import logging
             logger = logging.getLogger(__name__)
             logger.info(
-                f"Auto-execution FORCED ENABLED by --auto flag (overriding config)",
+                "Auto-execution FORCED ENABLED by --auto flag (overriding config)",
                 extra={"auto_mode": True, "auto_execution_enabled": True}
             )
         else:
@@ -318,7 +318,7 @@ class CursorWorkflowExecutor:
         # Start progress monitoring (non-blocking)
         import asyncio
         try:
-            loop = asyncio.get_running_loop()
+            asyncio.get_running_loop()
             asyncio.create_task(self.progress_manager.start())
         except RuntimeError:
             # No running event loop - progress manager will start when event loop is available
@@ -439,7 +439,11 @@ class CursorWorkflowExecutor:
             return
         
         try:
-            from .manifest import generate_manifest, save_manifest, sync_manifest_to_project_root
+            from .manifest import (
+                generate_manifest,
+                save_manifest,
+                sync_manifest_to_project_root,
+            )
             
             # Generate manifest
             manifest_content = generate_manifest(self.workflow, self.state)
@@ -488,9 +492,10 @@ class CursorWorkflowExecutor:
         Returns:
             Final workflow state
         """
-        from tapps_agents.core.config import load_config
         import asyncio
         from datetime import datetime
+
+        from tapps_agents.core.config import load_config
         
         config = load_config()
         # Use 2x step timeout for overall workflow timeout (default: 2 hours)
@@ -592,7 +597,7 @@ class CursorWorkflowExecutor:
                 _run_workflow_inner(),
                 timeout=workflow_timeout
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             if self.state:
                 self.state.status = "failed"
                 self.state.error = f"Workflow timeout after {workflow_timeout}s"
@@ -608,7 +613,7 @@ class CursorWorkflowExecutor:
             raise TimeoutError(
                 f"Workflow execution exceeded {workflow_timeout}s timeout. "
                 f"Increase timeout in config (workflow.timeout_seconds) or check for blocking operations."
-            )
+            ) from None
 
     async def _initialize_run(
         self,
@@ -1251,51 +1256,51 @@ class CursorWorkflowExecutor:
                 # Artifacts are extracted after completion
 
                 # Extract artifacts from worktree
-                    artifacts = await self.worktree_manager.extract_artifacts(
-                        worktree_path=worktree_path,
-                        step=step,
+                artifacts = await self.worktree_manager.extract_artifacts(
+                    worktree_path=worktree_path,
+                    step=step,
+                )
+
+                # Convert artifacts to dict format
+                artifacts_dict: dict[str, dict[str, Any]] = {}
+                found_artifact_paths = []
+                for artifact in artifacts:
+                    artifacts_dict[artifact.name] = {
+                        "name": artifact.name,
+                        "path": artifact.path,
+                        "status": artifact.status,
+                        "created_by": artifact.created_by,
+                        "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
+                        "metadata": artifact.metadata or {},
+                    }
+                    found_artifact_paths.append(artifact.path)
+
+                # Write DONE marker for successful completion
+                step_completed_at = datetime.now()
+                duration = (step_completed_at - step_started_at).total_seconds()
+                
+                marker_path = self.marker_writer.write_done_marker(
+                    workflow_id=self.state.workflow_id,
+                    step_id=step.id,
+                    agent=agent_name,
+                    action=action,
+                    worktree_name=worktree_name,
+                    worktree_path=str(worktree_path),
+                    expected_artifacts=step.creates or [],
+                    found_artifacts=found_artifact_paths,
+                    duration_seconds=duration,
+                    started_at=step_started_at,
+                    completed_at=step_completed_at,
+                )
+                
+                if self.logger:
+                    self.logger.debug(
+                        f"DONE marker written for step {step.id}",
+                        marker_path=str(marker_path),
                     )
 
-                    # Convert artifacts to dict format
-                    artifacts_dict: dict[str, dict[str, Any]] = {}
-                    found_artifact_paths = []
-                    for artifact in artifacts:
-                        artifacts_dict[artifact.name] = {
-                            "name": artifact.name,
-                            "path": artifact.path,
-                            "status": artifact.status,
-                            "created_by": artifact.created_by,
-                            "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
-                            "metadata": artifact.metadata or {},
-                        }
-                        found_artifact_paths.append(artifact.path)
-
-                    # Write DONE marker for successful completion
-                    step_completed_at = datetime.now()
-                    duration = (step_completed_at - step_started_at).total_seconds()
-                    
-                    marker_path = self.marker_writer.write_done_marker(
-                        workflow_id=self.state.workflow_id,
-                        step_id=step.id,
-                        agent=agent_name,
-                        action=action,
-                        worktree_name=worktree_name,
-                        worktree_path=str(worktree_path),
-                        expected_artifacts=step.creates or [],
-                        found_artifacts=found_artifact_paths,
-                        duration_seconds=duration,
-                        started_at=step_started_at,
-                        completed_at=step_completed_at,
-                    )
-                    
-                    if self.logger:
-                        self.logger.debug(
-                            f"DONE marker written for step {step.id}",
-                            marker_path=str(marker_path),
-                        )
-
-                    # Worktree cleanup is handled by context manager
-                    return artifacts_dict if artifacts_dict else None
+                # Worktree cleanup is handled by context manager
+                return artifacts_dict if artifacts_dict else None
                 
             except (TimeoutError, RuntimeError) as e:
                 # Write FAILED marker for timeout or execution errors

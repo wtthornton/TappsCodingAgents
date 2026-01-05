@@ -72,6 +72,33 @@ Simple Mode detects intent from keywords:
 - **Test**: test, verify, validate, coverage, testing
 - **Full**: full, complete, sdlc, lifecycle, everything
 
+## ⚠️ CRITICAL: Explicit Command Precedence
+
+**When a user explicitly specifies a command (e.g., `*build`, `*full`, `*review`), you MUST respect that command regardless of keywords in the prompt.**
+
+**Examples:**
+- ✅ `@simple-mode *build "Improve test coverage and code quality"` → Use **BUILD** workflow (7 steps)
+- ✅ `@simple-mode *build "Add comprehensive unit tests"` → Use **BUILD** workflow (7 steps)
+- ✅ `@simple-mode *full "Build a new feature"` → Use **FULL** workflow (9 steps)
+- ❌ **DO NOT** switch from `*build` to `*full` just because the prompt contains words like "comprehensive", "quality", "complete", or "improve"
+
+**When to Use Each Workflow:**
+
+| Use Case | Workflow | Why |
+|----------|----------|-----|
+| New features | `*build` | 7-step workflow covers design → implementation → testing |
+| Quality improvements | `*build` | Can refactor/improve existing code with full design cycle |
+| Bug fixes | `*fix` | Focused debugging → fix → test workflow |
+| Code reviews | `*review` | Review → improve workflow |
+| Test generation | `*test` | Test-focused workflow |
+| Framework development | `*full` | Requires requirements → security → documentation (9 steps) |
+| Enterprise/critical features | `*full` | When user explicitly requests full SDLC with security scanning |
+
+**Key Rule:** If the user says `*build`, use BUILD workflow. Only use `*full` if:
+1. User explicitly says `*full`
+2. Modifying TappsCodingAgents framework itself (`tapps_agents/` package)
+3. User explicitly requests "full SDLC" or "complete lifecycle"
+
 ## Skill Orchestration Workflows
 
 ### Build Workflow (MUST FOLLOW ALL STEPS)
