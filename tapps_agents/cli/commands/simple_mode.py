@@ -509,7 +509,7 @@ def handle_simple_mode_full(args: object) -> None:
     
     print("Executing workflow steps...")
     print(f"Runtime mode: {runtime_mode.value}")
-    print(f"Auto-execution: {'enabled' if effective_auto_mode else 'disabled'}")
+    print(f"Auto-execution: {'enabled' if auto_mode else 'disabled'}")
     
     from ...core.unicode_safe import safe_print
     if is_cursor_mode():

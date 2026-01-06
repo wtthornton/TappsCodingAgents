@@ -1,0 +1,12 @@
+{
+  "event_type": "step_started",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "complete",
+  "data": {
+    "agent": "orchestrator",
+    "action": "finalize",
+    "step_id": "complete"
+  },
+  "timestamp": "2026-01-06T13:46:15.845820",
+  "correlation_id": "simple-full-20260106-134614:complete"
+}

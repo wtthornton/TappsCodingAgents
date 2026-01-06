@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "test-coverage-improvements-priority-2-1-enhance-agent-exe.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\stories\\test-coverage-improvements-priority-2-1-enhance-agent-exe.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.427874",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

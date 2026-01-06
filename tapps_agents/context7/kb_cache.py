@@ -175,11 +175,23 @@ class KBCache:
 
         self.cache_root = root
         self.cache_dir = root  # Alias for backward compatibility
-        self.cache_structure = CacheStructure(root)
-        self.metadata_manager = metadata_manager or MetadataManager(
-            self.cache_structure
-        )
-        self.cache_structure.initialize()
+        try:
+            self.cache_structure = CacheStructure(root)
+            self.metadata_manager = metadata_manager or MetadataManager(
+                self.cache_structure
+            )
+            self.cache_structure.initialize()
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Failed to initialize KBCache at {root}: {e}. "
+                f"KBCache will not be available."
+            )
+            # Set minimal attributes to prevent AttributeError
+            self.cache_structure = None
+            self.metadata_manager = metadata_manager
+            raise
 
     def get(self, library: str, topic: str) -> CacheEntry | None:
         """
@@ -263,25 +275,51 @@ class KBCache:
         if not entry.cached_at:
             entry.cached_at = datetime.now(UTC).isoformat() + "Z"
 
-        # Use file locking for atomic writes
+        # Use file locking for atomic writes (with short timeout for faster fail)
         lock_file = get_cache_lock_file(self.cache_root, library=library)
-        with cache_lock(lock_file):
-            # Ensure library directory exists
-            self.cache_structure.ensure_library_dir(library)
+        try:
+            with cache_lock(lock_file, timeout=3.0):  # Short timeout - fail fast
+                # Ensure library directory exists
+                self.cache_structure.ensure_library_dir(library)
 
-            # Write markdown file
-            doc_file = self.cache_structure.get_library_doc_file(library, topic)
-            doc_file.write_text(entry.to_markdown(), encoding="utf-8")
+                # Write markdown file
+                doc_file = self.cache_structure.get_library_doc_file(library, topic)
+                doc_file.write_text(entry.to_markdown(), encoding="utf-8")
 
-            # Update metadata
-            self.metadata_manager.update_library_metadata(
-                library, context7_id=context7_id, topic=topic
+                # Update metadata (non-critical, continue if fails)
+                try:
+                    self.metadata_manager.update_library_metadata(
+                        library, context7_id=context7_id, topic=topic
+                    )
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"Failed to update library metadata: {e}")
+
+                # Update cache index (non-critical, continue if fails)
+                try:
+                    self.metadata_manager.update_cache_index(
+                        library, topic, context7_id=context7_id
+                    )
+                except Exception as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.debug(f"Failed to update cache index: {e}")
+        except RuntimeError as e:
+            # Cache lock acquisition failed - log and continue without caching
+            # This allows the operation to continue even if cache write fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Failed to acquire cache lock for {library}/{topic}: {e}. "
+                f"Continuing without caching."
             )
-
-            # Update cache index
-            self.metadata_manager.update_cache_index(
-                library, topic, context7_id=context7_id
-            )
+            # Don't raise - allow operation to continue without cache
+        except (OSError, PermissionError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to store cache entry for {library}/{topic}: {e}")
+            # Don't raise - allow operation to continue without cache
 
         return entry
 

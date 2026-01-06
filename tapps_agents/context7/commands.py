@@ -84,58 +84,86 @@ class Context7Commands:
             self.enabled = False
             return
 
-        self.enabled = True
-        self.config = context7_config
-        self.project_root = project_root
+        # Wrap initialization in try-except to prevent failures from breaking commands
+        try:
+            self.enabled = True
+            self.config = context7_config
+            self.project_root = project_root
 
-        # Initialize cache structure
-        cache_root = project_root / context7_config.knowledge_base.location
-        self.cache_structure = CacheStructure(cache_root)
-        self.cache_structure.initialize()
+            # Initialize cache structure
+            cache_root = project_root / context7_config.knowledge_base.location
+            self.cache_structure = CacheStructure(cache_root)
+            self.cache_structure.initialize()
 
-        # Initialize components
-        self.metadata_manager = MetadataManager(self.cache_structure)
-        self.kb_cache = KBCache(self.cache_structure.cache_root, self.metadata_manager)
-        self.fuzzy_matcher = FuzzyMatcher(threshold=0.7)
-        self.analytics = Analytics(self.cache_structure, self.metadata_manager)
-        self.staleness_policy_manager = StalenessPolicyManager()
-        self.refresh_queue = RefreshQueue(
-            self.cache_structure.refresh_queue_file, self.staleness_policy_manager
-        )
-        # Parse max_cache_size string (e.g., "100MB") to bytes
-        max_cache_size_bytes = _parse_size_string(
-            context7_config.knowledge_base.max_cache_size
-        )
+            # Initialize components
+            self.metadata_manager = MetadataManager(self.cache_structure)
+            self.kb_cache = KBCache(self.cache_structure.cache_root, self.metadata_manager)
+            self.fuzzy_matcher = FuzzyMatcher(threshold=0.7)
+            self.analytics = Analytics(self.cache_structure, self.metadata_manager)
+            self.staleness_policy_manager = StalenessPolicyManager()
+            self.refresh_queue = RefreshQueue(
+                self.cache_structure.refresh_queue_file, self.staleness_policy_manager
+            )
+            # Parse max_cache_size string (e.g., "100MB") to bytes
+            max_cache_size_bytes = _parse_size_string(
+                context7_config.knowledge_base.max_cache_size
+            )
 
-        self.cleanup = KBCleanup(
-            self.cache_structure,
-            self.metadata_manager,
-            self.staleness_policy_manager,
-            self.analytics,
-            max_cache_size_bytes=max_cache_size_bytes,
-        )
-        self.cross_refs = CrossReferenceManager(self.cache_structure)
+            self.cleanup = KBCleanup(
+                self.cache_structure,
+                self.metadata_manager,
+                self.staleness_policy_manager,
+                self.analytics,
+                max_cache_size_bytes=max_cache_size_bytes,
+            )
+            self.cross_refs = CrossReferenceManager(self.cache_structure)
 
-        # KB lookup (will need MCP Gateway for API calls)
-        self.kb_lookup = KBLookup(
-            kb_cache=self.kb_cache,
-            mcp_gateway=None,  # Set via set_mcp_gateway
-            fuzzy_threshold=0.7,
-        )
+            # KB lookup (will need MCP Gateway for API calls)
+            self.kb_lookup = KBLookup(
+                kb_cache=self.kb_cache,
+                mcp_gateway=None,  # Set via set_mcp_gateway
+                fuzzy_threshold=0.7,
+            )
 
-        # Cache warmer
-        self.cache_warmer = CacheWarmer(
-            kb_cache=self.kb_cache,
-            kb_lookup=self.kb_lookup,
-            cache_structure=self.cache_structure,
-            metadata_manager=self.metadata_manager,
-            project_root=self.project_root,
-        )
+            # Cache warmer
+            self.cache_warmer = CacheWarmer(
+                kb_cache=self.kb_cache,
+                kb_lookup=self.kb_lookup,
+                cache_structure=self.cache_structure,
+                metadata_manager=self.metadata_manager,
+                project_root=self.project_root,
+            )
+        except Exception as e:
+            # If Context7 initialization fails, disable it gracefully
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Context7Commands initialization failed, disabling Context7 features: {e}. "
+                f"Commands will continue to work without Context7."
+            )
+            self.enabled = False
+            # Set minimal attributes to prevent AttributeError
+            self.config = context7_config
+            self.project_root = project_root
+            self.cache_structure = None
+            self.metadata_manager = None
+            self.kb_cache = None
+            self.fuzzy_matcher = None
+            self.analytics = None
+            self.staleness_policy_manager = None
+            self.refresh_queue = None
+            self.cleanup = None
+            self.cross_refs = None
+            self.kb_lookup = None
+            self.cache_warmer = None
 
     def set_mcp_gateway(self, mcp_gateway):
         """Set MCP Gateway for API calls."""
+        if not self.enabled or self.kb_lookup is None:
+            return
         self.kb_lookup.mcp_gateway = mcp_gateway
-        self.cache_warmer.kb_lookup = self.kb_lookup
+        if self.cache_warmer is not None:
+            self.cache_warmer.kb_lookup = self.kb_lookup
 
     async def cmd_docs(self, library: str, topic: str | None = None) -> dict[str, Any]:
         """
@@ -150,7 +178,7 @@ class Context7Commands:
         Returns:
             Dictionary with documentation result
         """
-        if not self.enabled:
+        if not self.enabled or self.kb_lookup is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -191,7 +219,7 @@ class Context7Commands:
         Returns:
             Dictionary with resolution result
         """
-        if not self.enabled:
+        if not self.enabled or self.kb_lookup is None:
             return {"error": "Context7 is not enabled"}
 
         # Use backup client with automatic fallback (MCP Gateway -> HTTP)
@@ -199,7 +227,7 @@ class Context7Commands:
 
         try:
             result = await call_context7_resolve_with_fallback(
-                library, self.kb_lookup.mcp_gateway
+                library, self.kb_lookup.mcp_gateway if self.kb_lookup else None
             )
 
             if result.get("success"):
@@ -223,7 +251,7 @@ class Context7Commands:
         Returns:
             Dictionary with status information
         """
-        if not self.enabled:
+        if not self.enabled or self.analytics is None or self.cleanup is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -263,7 +291,7 @@ class Context7Commands:
         Returns:
             Dictionary with health check information
         """
-        if not self.enabled:
+        if not self.enabled or self.analytics is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -285,7 +313,7 @@ class Context7Commands:
         Returns:
             Dictionary with search results
         """
-        if not self.enabled:
+        if not self.enabled or self.metadata_manager is None or self.fuzzy_matcher is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -353,7 +381,7 @@ class Context7Commands:
         This is used by startup routines to refresh stale entries incrementally.
         If the MCP gateway is not available, we soft-fail with a clear error.
         """
-        if not self.enabled:
+        if not self.enabled or self.kb_lookup is None or self.refresh_queue is None or self.kb_cache is None:
             return {
                 "success": False,
                 "error": "Context7 is not enabled",
@@ -461,7 +489,7 @@ class Context7Commands:
         Returns:
             Dictionary with refresh result
         """
-        if not self.enabled:
+        if not self.enabled or self.refresh_queue is None or self.metadata_manager is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -542,7 +570,7 @@ class Context7Commands:
         Returns:
             Dictionary with cleanup result
         """
-        if not self.enabled:
+        if not self.enabled or self.cleanup is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -576,7 +604,7 @@ class Context7Commands:
         Returns:
             Dictionary with rebuild result
         """
-        if not self.enabled:
+        if not self.enabled or self.metadata_manager is None or self.cache_structure is None:
             return {"error": "Context7 is not enabled"}
 
         try:
@@ -632,7 +660,7 @@ class Context7Commands:
         Returns:
             Dictionary with warming result
         """
-        if not self.enabled:
+        if not self.enabled or self.kb_lookup is None or self.cache_warmer is None:
             return {"error": "Context7 is not enabled"}
 
         if not self.kb_lookup.mcp_gateway:
@@ -668,7 +696,7 @@ class Context7Commands:
         Returns:
             Dictionary with populate result
         """
-        if not self.enabled:
+        if not self.enabled or self.kb_lookup is None or self.kb_cache is None:
             return {"error": "Context7 is not enabled"}
 
         if not self.kb_lookup.mcp_gateway:

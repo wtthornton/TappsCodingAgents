@@ -58,6 +58,10 @@ Use explicit commands for guaranteed workflow execution:
 | `*review {file}` | Review code quality | @reviewer → @improver |
 | `*fix {file} {description}` | Fix bugs/errors | @debugger → @implementer → @tester |
 | `*test {file}` | Generate tests | @tester |
+| `*explore {query}` | Explore codebase | @analyst → @reviewer |
+| `*refactor {file}` | Refactor code | @reviewer → @architect → @implementer → @tester → @reviewer |
+| `*plan-analysis {description}` | Safe planning (read-only) | @analyst → @architect → @reviewer |
+| `*pr {title}` | Create pull request | @reviewer → @documenter |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
 | `*help` | Show help | - |
 | `*status` | Check status | - |
@@ -70,6 +74,10 @@ Simple Mode detects intent from keywords:
 - **Review**: review, check, analyze, inspect, examine, score, quality, audit
 - **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken
 - **Test**: test, verify, validate, coverage, testing
+- **Explore**: explore, understand, navigate, find, discover, overview, codebase, trace, search, locate
+- **Refactor**: refactor, modernize, update, improve code, modernize code, legacy, deprecated
+- **Plan**: plan, planning, analyze, analysis, design, proposal, strategy, roadmap
+- **PR**: pr, pull request, create pr, open pr, merge request, mr
 - **Full**: full, complete, sdlc, lifecycle, everything
 
 ## ⚠️ CRITICAL: Explicit Command Precedence
@@ -91,6 +99,10 @@ Simple Mode detects intent from keywords:
 | Bug fixes | `*fix` | Focused debugging → fix → test workflow |
 | Code reviews | `*review` | Review → improve workflow |
 | Test generation | `*test` | Test-focused workflow |
+| Codebase exploration | `*explore` | Understand and navigate existing codebases |
+| Code modernization | `*refactor` | Systematic refactoring with pattern detection |
+| Safe planning | `*plan-analysis` | Read-only analysis without code modifications |
+| Pull requests | `*pr` | PR creation with quality scores |
 | Framework development | `*full` | Requires requirements → security → documentation (9 steps) |
 | Enterprise/critical features | `*full` | When user explicitly requests full SDLC with security scanning |
 

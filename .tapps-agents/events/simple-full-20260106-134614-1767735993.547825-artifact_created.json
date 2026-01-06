@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "FRAMEWORK_DEVELOPMENT_WORKFLOW_COMPLETE.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\FRAMEWORK_DEVELOPMENT_WORKFLOW_COMPLETE.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.547825",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

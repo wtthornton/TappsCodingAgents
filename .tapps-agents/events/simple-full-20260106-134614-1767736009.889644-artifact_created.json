@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "CONTEXT7_IMPLEMENTATION_SUMMARY.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\CONTEXT7_IMPLEMENTATION_SUMMARY.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T13:46:49.889644",
+  "correlation_id": "simple-full-20260106-134614:planning"
+}

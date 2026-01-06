@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "test_cli_create_cursor_integration.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\integration\\test_cli_create_cursor_integration.py",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.434304",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

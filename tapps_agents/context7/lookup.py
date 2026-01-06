@@ -156,6 +156,24 @@ class KBLookup:
         Returns:
             LookupResult with documentation content
         """
+        # #region agent log
+        import json
+        from datetime import datetime
+        from pathlib import Path
+        log_path = Path.cwd() / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "context7/lookup.py:lookup:entry",
+                    "message": "KBLookup.lookup called",
+                    "data": {"library": library, "topic": topic},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         start_time = datetime.now(UTC)
 
         # Default topic if not provided
@@ -163,7 +181,35 @@ class KBLookup:
             topic = "overview"
 
         # Step 1: Check KB cache (exact match)
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "context7/lookup.py:lookup:before_cache_check",
+                    "message": "About to check KB cache",
+                    "data": {"library": library, "topic": topic},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         cached_entry = self.kb_cache.get(library, topic)
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "context7/lookup.py:lookup:after_cache_check",
+                    "message": "Cache check completed",
+                    "data": {"library": library, "cached": cached_entry is not None},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         if cached_entry:
             response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
             # R4: Record cache hit with latency
@@ -304,10 +350,52 @@ class KBLookup:
         # Use backup client with automatic fallback (MCP Gateway -> HTTP)
         from .backup_client import call_context7_resolve_with_fallback
 
+        # #region agent log
         try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "context7/lookup.py:lookup:before_resolve",
+                    "message": "About to resolve library ID",
+                    "data": {"library": library, "topic": topic, "has_mcp_gateway": self.mcp_gateway is not None},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
+        try:
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "context7/lookup.py:lookup:before_await_resolve",
+                        "message": "About to await call_context7_resolve_with_fallback",
+                        "data": {"library": library},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
             resolve_result = await call_context7_resolve_with_fallback(
                 library, self.mcp_gateway
             )
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "context7/lookup.py:lookup:after_resolve",
+                        "message": "call_context7_resolve_with_fallback returned",
+                        "data": {"library": library, "success": resolve_result.get("success") if isinstance(resolve_result, dict) else None},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
             if resolve_result.get("success"):
                 matches = resolve_result.get("result", {}).get("matches", [])
                 if matches and len(matches) > 0:
@@ -420,12 +508,21 @@ class KBLookup:
 
             # Step 5: Store in cache if we got content
             if content:
-                cached_entry = self.kb_cache.store(
-                    library=library,
-                    topic=topic,
-                    content=content,
-                    context7_id=context7_id,
-                )
+                try:
+                    cached_entry = self.kb_cache.store(
+                        library=library,
+                        topic=topic,
+                        content=content,
+                        context7_id=context7_id,
+                    )
+                except (RuntimeError, OSError, PermissionError) as e:
+                    # Cache lock or file write failed - log but continue
+                    # The content is still available, just not cached
+                    logger.debug(
+                        f"Failed to cache Context7 docs for {library}/{topic}: {e}. "
+                        f"Content retrieved but not cached."
+                    )
+                    cached_entry = None
 
                 response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
                 # R4: Record latency for API call (already recorded API call above)

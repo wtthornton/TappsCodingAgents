@@ -5,6 +5,7 @@ Provides atomic write operations to prevent cache corruption under parallel agen
 """
 
 import logging
+import os
 import sys
 import time
 from collections.abc import Generator
@@ -25,13 +26,13 @@ else:
 class CacheLock:
     """File-based lock for cache operations."""
 
-    def __init__(self, lock_file: Path, timeout: float = 30.0):
+    def __init__(self, lock_file: Path, timeout: float = 5.0):
         """
         Initialize cache lock.
 
         Args:
             lock_file: Path to lock file
-            timeout: Maximum time to wait for lock (seconds)
+            timeout: Maximum time to wait for lock (seconds) - reduced from 30s for faster fail
         """
         self.lock_file = Path(lock_file)
         self.timeout = timeout
@@ -52,29 +53,37 @@ class CacheLock:
         while time.time() - start_time < self.timeout:
             try:
                 if WINDOWS:
-                    # Windows file locking using msvcrt
+                    # Windows: use atomic exclusive file creation to avoid truncating
+                    # existing lock files (which would otherwise refresh mtime and
+                    # prevent stale-lock detection from ever triggering).
                     try:
-                        self.lock_fd = open(self.lock_file, "w")
-                        # Try to lock the file (non-blocking)
-                        # On Windows, we use a simple exclusive file creation approach
-                        # since msvcrt.locking has limitations
-                        # Create lock file atomically
-                        if self.lock_file.exists():
-                            # Check if lock is stale (older than timeout)
-                            import os
-                            lock_age = time.time() - os.path.getmtime(self.lock_file)
-                            if lock_age > self.timeout:
-                                # Stale lock, remove it
-                                try:
-                                    self.lock_file.unlink()
-                                except Exception:
-                                    pass
-                            else:
-                                self.lock_fd.close()
-                                self.lock_fd = None
-                                time.sleep(0.1)
-                                continue
-                        # Write PID to lock file for debugging
+                        try:
+                            fd = os.open(
+                                str(self.lock_file),
+                                os.O_CREAT | os.O_EXCL | os.O_WRONLY,
+                            )
+                        except FileExistsError:
+                            # Lock exists: if stale, attempt cleanup; otherwise wait and retry.
+                            try:
+                                lock_age = time.time() - os.path.getmtime(self.lock_file)
+                                if lock_age > self.timeout:
+                                    try:
+                                        self.lock_file.unlink()
+                                        logger.debug(
+                                            f"Removed stale lock file: {self.lock_file}"
+                                        )
+                                    except Exception as e:
+                                        # On Windows, an in-use lock file may not be removable.
+                                        logger.debug(f"Failed to remove stale lock: {e}")
+                            except (OSError, FileNotFoundError):
+                                # Lock was removed between exists check and stat - retry immediately.
+                                pass
+
+                            time.sleep(0.1)
+                            continue
+
+                        # Successfully created lock file exclusively -> acquire.
+                        self.lock_fd = os.fdopen(fd, "w")
                         self.lock_fd.write(str(os.getpid()))
                         self.lock_fd.flush()
                         return True
@@ -143,7 +152,7 @@ class CacheLock:
 
 
 @contextmanager
-def cache_lock(lock_file: Path, timeout: float = 30.0) -> Generator[CacheLock]:
+def cache_lock(lock_file: Path, timeout: float = 5.0) -> Generator[CacheLock]:
     """
     Context manager for cache locking.
 

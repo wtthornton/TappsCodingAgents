@@ -1,0 +1,13 @@
+{
+  "event_type": "workflow_started",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": null,
+  "data": {
+    "workflow_name": "Simple Full Lifecycle",
+    "workflow_version": "1.0.0",
+    "step_count": 19,
+    "user_prompt": ""
+  },
+  "timestamp": "2026-01-06T13:46:14.209951",
+  "correlation_id": "simple-full-20260106-134614"
+}

@@ -840,7 +840,7 @@ Provide structured JSON response with the following format:
                     # Try to execute the skill command
                     skill_result = await self._try_execute_skill(
                         req_data["skill_command"],
-                        worktree_path=self.config.project_root or Path.cwd(),
+                        worktree_path=self._project_root if hasattr(self, '_project_root') and self._project_root else Path.cwd(),
                     )
                     # If we got a result, merge it into requirements
                     if skill_result and "result" in skill_result:
@@ -1050,7 +1050,7 @@ Provide structured JSON response with the following format:
             List of file paths (max 10), sorted by relevance
         """
         related_files: set[str] = set()
-        project_root = self.config.project_root if self.config else Path.cwd()
+        project_root = self._project_root if hasattr(self, '_project_root') and self._project_root else Path.cwd()
         max_files = self.MAX_RELATED_FILES
         
         try:
@@ -1352,7 +1352,7 @@ Provide structured JSON response with the following format:
             for file_path in related_files[:self.MAX_RELATED_FILES]:
                 # Get relative path for cleaner display
                 try:
-                    project_root = self.config.project_root if self.config else Path.cwd()
+                    project_root = self._project_root if hasattr(self, '_project_root') and self._project_root else Path.cwd()
                     rel_path = Path(file_path).relative_to(project_root)
                     lines.append(f"- `{rel_path}`")
                 except Exception:
@@ -1386,7 +1386,7 @@ Provide structured JSON response with the following format:
                 ref_type = ref.get("type", "unknown")
                 details = ref.get("details", "")
                 try:
-                    project_root = self.config.project_root if self.config else Path.cwd()
+                    project_root = self._project_root if hasattr(self, '_project_root') and self._project_root else Path.cwd()
                     source_rel = Path(source).relative_to(project_root)
                     target_rel = Path(target).relative_to(project_root)
                     lines.append(f"- `{source_rel}` → `{target_rel}` ({ref_type})")

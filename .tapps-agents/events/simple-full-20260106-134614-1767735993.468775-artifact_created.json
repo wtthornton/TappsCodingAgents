@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "test_analytics.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\context7\\test_analytics.py",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.468775",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

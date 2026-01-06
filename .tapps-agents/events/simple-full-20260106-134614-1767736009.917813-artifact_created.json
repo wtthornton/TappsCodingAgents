@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "SIMPLE_MODE_PHASE2_FEATURES.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\SIMPLE_MODE_PHASE2_FEATURES.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T13:46:49.917813",
+  "correlation_id": "simple-full-20260106-134614:planning"
+}

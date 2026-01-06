@@ -2027,6 +2027,145 @@ Simple Mode provides natural language orchestration with structured workflows. U
    - Optionally generates integration tests
    - Runs tests and reports coverage
 
+### Explore Workflow (`*explore`)
+
+**Purpose:** Explore and understand existing codebases
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *explore "authentication system"
+@simple-mode *explore --find "user login code"
+@simple-mode *explore --trace "login flow from frontend to database"
+```
+
+**When to Use:**
+- Understanding codebase structure
+- Finding related code
+- Tracing execution flows
+- Discovering architecture patterns
+- Learning how existing code works
+
+**Workflow Steps:**
+1. **@analyst *gather-requirements** - Requirements understanding
+   - Analyzes query to understand exploration goals
+2. **Code Discovery** - Find relevant files
+   - Searches codebase for files matching query keywords
+   - Identifies related modules and components
+3. **@reviewer *analyze-project** - Architecture analysis
+   - Analyzes project structure and architecture
+   - Identifies patterns and relationships
+4. **Flow Tracing** (optional) - Execution path analysis
+   - Traces execution paths through codebase
+   - Maps data flow and control flow
+5. **Summary Generation** - Exploration report
+   - Generates comprehensive exploration report
+   - Documents findings and relationships
+
+### Refactor Workflow (`*refactor`)
+
+**Purpose:** Systematic code modernization with safety checks
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *refactor src/utils/legacy.py
+@simple-mode *refactor src/api --pattern "**/*.js" --modernize
+```
+
+**When to Use:**
+- Modernizing legacy code
+- Updating deprecated patterns
+- Improving code structure
+- Migrating to new frameworks/patterns
+
+**Workflow Steps:**
+1. **@reviewer *review** - Identify legacy patterns
+   - Reviews code to identify legacy/deprecated patterns
+   - Documents current structure
+2. **@architect *design** - Design modern architecture
+   - Designs modern architecture and patterns
+   - Creates refactoring plan
+3. **Plan Generation** - Create refactoring plan
+   - Breaks down refactoring into incremental steps
+   - Identifies dependencies and risks
+4. **@implementer *refactor** - Apply refactoring incrementally
+   - Applies refactoring file-by-file
+   - Preserves behavior while modernizing code
+5. **@tester *test** - Verify behavior preservation
+   - Generates/updates tests after each refactoring
+   - Ensures behavior is preserved
+6. **@reviewer *review** - Final quality check
+   - Reviews refactored code
+   - Verifies quality improvements
+
+### Plan Analysis Workflow (`*plan-analysis`)
+
+**Purpose:** Safe read-only code analysis and planning
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *plan-analysis "Refactor authentication to OAuth2"
+@simple-mode *plan-analysis --explore "payment processing system"
+```
+
+**When to Use:**
+- Planning complex changes safely
+- Analyzing impact before implementation
+- Understanding system dependencies
+- Creating migration strategies
+- Risk assessment
+
+**Workflow Steps:**
+1. **@analyst *gather-requirements** - Requirements analysis (read-only)
+   - Gathers requirements without modifying code
+2. **Code Exploration** (optional) - Find related files
+   - Discovers related files and dependencies
+3. **@architect *design** - Architecture planning (read-only)
+   - Designs new architecture without implementation
+   - Plans migration strategy
+4. **@reviewer *analyze-project** - Impact analysis (read-only)
+   - Analyzes impact on existing codebase
+   - Identifies risks and dependencies
+5. **Plan Generation** - Comprehensive plan document
+   - Creates detailed plan document
+   - Documents architecture, dependencies, risks, and steps
+
+**Note:** This workflow is read-only - no code modifications are made.
+
+### PR Workflow (`*pr`)
+
+**Purpose:** Create pull requests with quality scores
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *pr "Add user authentication feature"
+@simple-mode *pr --from-branch feature/auth
+```
+
+**When to Use:**
+- Creating pull requests after feature completion
+- Integrating quality scores into PR descriptions
+- Automating PR workflow
+
+**Workflow Steps:**
+1. **Change Analysis** - Analyze Git changes
+   - Analyzes git diff to identify changed files
+   - Extracts change summaries
+2. **@reviewer *review** - Final quality check
+   - Reviews changed files
+   - Generates quality scores
+3. **@documenter *document** - Generate PR description
+   - Generates PR description from changes and scores
+   - Includes quality metrics and recommendations
+4. **PR Creation** - Create via Git API/CLI
+   - Creates PR via GitHub CLI (or fallback to metadata file)
+   - Includes quality scores in PR description
+
+**Features:**
+- Automatic change analysis via Git diff
+- Quality score integration
+- Auto-generated PR descriptions
+- GitHub CLI integration (with fallback to metadata file)
+
 ### Epic Workflow (`*epic`)
 
 **Purpose:** Execute all stories in an Epic document in dependency order
@@ -2240,6 +2379,10 @@ Simple Mode automatically detects intent from keywords:
 - **Review**: review, check, analyze, inspect, examine, score, quality, audit, assess, evaluate
 - **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken, correct
 - **Test**: test, verify, validate, coverage, testing, tests
+- **Explore**: explore, understand, navigate, find, discover, overview, codebase, trace, search, locate
+- **Refactor**: refactor, modernize, update, improve code, modernize code, legacy, deprecated
+- **Plan**: plan, planning, analyze, analysis, design, proposal, strategy, roadmap
+- **PR**: pr, pull request, create pr, open pr, merge request, mr
 - **Epic**: epic, implement epic, execute epic, run epic, story, stories
 - **Full**: full, complete, sdlc, lifecycle, everything
 
@@ -2249,6 +2392,10 @@ Simple Mode automatically detects intent from keywords:
 @simple-mode Review my authentication code
 @simple-mode Fix the error in auth.py
 @simple-mode Add tests for service.py
+@simple-mode Explore the authentication system
+@simple-mode Refactor legacy code in utils.py
+@simple-mode Plan analysis for OAuth2 migration
+@simple-mode PR "Add user authentication feature"
 @simple-mode Execute epic docs/prd/epic-51.md
 ```
 

@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "test_unified_cache.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\test_unified_cache.py",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T13:46:49.810049",
+  "correlation_id": "simple-full-20260106-134614:planning"
+}

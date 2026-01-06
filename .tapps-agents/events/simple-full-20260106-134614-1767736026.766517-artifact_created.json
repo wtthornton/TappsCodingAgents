@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "test_expert_profile_integration.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\experts\\test_expert_profile_integration.py",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T13:47:06.766517",
+  "correlation_id": "simple-full-20260106-134614:design"
+}

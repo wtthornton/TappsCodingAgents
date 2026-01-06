@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "workflow-summary.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\workflows\\simple-mode\\build-md-files-fix-20251231-013115\\workflow-summary.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.630281",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

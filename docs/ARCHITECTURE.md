@@ -141,6 +141,18 @@ When advanced state management is enabled (default in `WorkflowExecutor`), state
 - migration support
 - recovery from history (`.tapps-agents/workflow-state/history/`)
 
+**2025 Enhancements** ✅ (January 2026):
+- **Durable Workflow State** (`tapps_agents/workflow/durable_state.py`):
+  - Event-sourced state with append-only event log (JSONL format)
+  - Checkpoint-based resume from any failure point
+  - Complete audit trail for workflow execution
+  - `get_resumable_workflows()` for listing workflows that can be resumed
+- **Streaming Workflow Executor** (`tapps_agents/workflow/streaming.py`):
+  - Progressive streaming with per-step timeouts
+  - Automatic checkpointing on timeout
+  - SSE and Markdown formatting for Cursor integration
+  - Resume command generation (`@simple-mode *resume <workflow_id>`)
+
 ### 6) Project Profiling
 
 Project profiling lives in `tapps_agents/core/project_profile.py` and persists to:
@@ -152,6 +164,27 @@ See `docs/PROJECT_PROFILING_GUIDE.md`.
 ### 7) Context7 Integration
 
 Context7 integration lives under `tapps_agents/context7/` and is configured via `context7:` in `.tapps-agents/config.yaml`.
+
+**2025 Performance Enhancements** ✅ (January 2026):
+- **Non-Blocking Cache** (`tapps_agents/context7/async_cache.py`):
+  - `AsyncLRUCache`: Thread-safe in-memory cache with O(1) operations
+  - Background write queue for non-blocking disk persistence
+  - Atomic file rename pattern (no file locking needed)
+  - `CacheStats` for monitoring hit rates and performance
+- **Circuit Breaker** (`tapps_agents/context7/circuit_breaker.py`):
+  - `CircuitBreaker`: CLOSED → OPEN → HALF_OPEN state machine
+  - `ParallelExecutor`: Bounded concurrency (default: 5) with fail-fast
+  - Global circuit breaker for Context7 operations
+  - Auto-recovery after configurable timeout (default: 30s)
+- **Cache Pre-warming** (`tapps_agents/context7/cache_prewarm.py`):
+  - `DependencyDetector`: Detects from requirements.txt, pyproject.toml, package.json
+  - `CachePrewarmer`: Background pre-warming with priority ordering
+  - Integration with `tapps-agents init` for automatic population
+  - Expert library prioritization (fastapi, pytest, react, etc.)
+- **Lock Timeout Optimization** (`tapps_agents/context7/cache_locking.py`):
+  - Reduced timeout from 30s → 5s (3s for cache store)
+  - Graceful degradation on lock failures
+  - **Result**: Eliminated 150+ second cache lock timeouts
 
 ### 8) Quality Analysis (Reviewer)
 

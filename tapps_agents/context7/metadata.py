@@ -108,12 +108,18 @@ class MetadataManager:
         Args:
             metadata: LibraryMetadata instance
         """
-        # Ensure library directory exists
-        self.cache_structure.ensure_library_dir(metadata.library)
+        try:
+            # Ensure library directory exists
+            self.cache_structure.ensure_library_dir(metadata.library)
 
-        meta_file = self.cache_structure.get_library_meta_file(metadata.library)
-        with open(meta_file, "w", encoding="utf-8") as f:
-            yaml.dump(metadata.to_dict(), f, default_flow_style=False, sort_keys=False)
+            meta_file = self.cache_structure.get_library_meta_file(metadata.library)
+            with open(meta_file, "w", encoding="utf-8") as f:
+                yaml.dump(metadata.to_dict(), f, default_flow_style=False, sort_keys=False)
+        except (OSError, yaml.YAMLError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to save library metadata for {metadata.library}: {e}")
+            # Don't raise - allow caller to continue
 
     def update_library_metadata(
         self,
@@ -171,9 +177,15 @@ class MetadataManager:
         Args:
             index: CacheIndex instance
         """
-        index.last_updated = datetime.now(UTC).isoformat() + "Z"
-        with open(self.cache_structure.index_file, "w", encoding="utf-8") as f:
-            yaml.dump(index.to_dict(), f, default_flow_style=False, sort_keys=False)
+        try:
+            index.last_updated = datetime.now(UTC).isoformat() + "Z"
+            with open(self.cache_structure.index_file, "w", encoding="utf-8") as f:
+                yaml.dump(index.to_dict(), f, default_flow_style=False, sort_keys=False)
+        except (OSError, yaml.YAMLError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to save cache index: {e}")
+            # Don't raise - allow caller to continue
 
     def update_cache_index(
         self,

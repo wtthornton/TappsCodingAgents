@@ -31,6 +31,8 @@ class LibraryDetector:
             project_root: Optional project root directory
         """
         self.project_root = project_root or Path.cwd()
+        # Detect internal project modules to filter them out
+        self._internal_modules = self._detect_internal_modules()
 
     def detect_from_code(self, code: str, language: str = "python") -> list[str]:
         """
@@ -67,14 +69,15 @@ class LibraryDetector:
                     for alias in node.names:
                         # Extract top-level package name
                         lib_name = alias.name.split(".")[0]
-                        # Filter out standard library
-                        if not self._is_stdlib(lib_name):
+                        # Filter out standard library and internal modules
+                        if not self._is_stdlib(lib_name) and not self._is_internal_module(lib_name):
                             libraries.add(lib_name)
                 elif isinstance(node, ast.ImportFrom):
                     if node.module:
                         # Extract top-level package name
                         lib_name = node.module.split(".")[0]
-                        if not self._is_stdlib(lib_name):
+                        # Filter out standard library and internal modules
+                        if not self._is_stdlib(lib_name) and not self._is_internal_module(lib_name):
                             libraries.add(lib_name)
         except SyntaxError:
             # Fallback to regex for invalid syntax
@@ -92,7 +95,7 @@ class LibraryDetector:
         for match in matches:
             # Extract package name (before /)
             lib_name = match.split("/")[0].replace("@", "")
-            if not self._is_stdlib(lib_name):
+            if not self._is_stdlib(lib_name) and not self._is_internal_module(lib_name):
                 libraries.add(lib_name)
 
         # require() patterns
@@ -100,7 +103,7 @@ class LibraryDetector:
         matches = re.findall(require_pattern, code)
         for match in matches:
             lib_name = match.split("/")[0].replace("@", "")
-            if not self._is_stdlib(lib_name):
+            if not self._is_stdlib(lib_name) and not self._is_internal_module(lib_name):
                 libraries.add(lib_name)
 
         return libraries
@@ -121,7 +124,7 @@ class LibraryDetector:
                 matches = re.findall(pattern, code, re.MULTILINE)
                 for match in matches:
                     lib_name = match.split(".")[0]
-                    if not self._is_stdlib(lib_name):
+                    if not self._is_stdlib(lib_name) and not self._is_internal_module(lib_name):
                         libraries.add(lib_name)
 
         return libraries
@@ -274,6 +277,46 @@ class LibraryDetector:
             "formatter",
         }
         return lib_name.lower() in stdlib_modules
+
+    def _detect_internal_modules(self) -> set[str]:
+        """
+        Detect internal project modules to filter them out from library detection.
+        
+        Returns:
+            Set of internal module names (e.g., 'tapps_agents', 'core', 'mcp', etc.)
+        """
+        internal_modules = set()
+        
+        # Check for tapps_agents package structure
+        tapps_agents_dir = self.project_root / "tapps_agents"
+        if tapps_agents_dir.exists():
+            # Add top-level package name
+            internal_modules.add("tapps_agents")
+            
+            # Add subdirectories that are internal modules
+            for item in tapps_agents_dir.iterdir():
+                if item.is_dir() and not item.name.startswith("_"):
+                    internal_modules.add(item.name)
+        
+        # Common internal module patterns
+        internal_modules.update({
+            "core", "mcp", "security", "uuid",  # Common internal modules
+            "agents", "context7", "experts", "workflow", "cli",  # Framework modules
+        })
+        
+        return internal_modules
+
+    def _is_internal_module(self, lib_name: str) -> bool:
+        """
+        Check if library is an internal project module.
+        
+        Args:
+            lib_name: Library name to check
+            
+        Returns:
+            True if it's an internal module, False otherwise
+        """
+        return lib_name.lower() in self._internal_modules
 
     def detect_from_project_files(self) -> list[str]:
         """

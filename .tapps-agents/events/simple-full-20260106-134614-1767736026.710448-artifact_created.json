@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "context7-automatic-integration-universal-context7-auto-detect.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\stories\\context7-automatic-integration-universal-context7-auto-detect.md",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T13:47:06.710448",
+  "correlation_id": "simple-full-20260106-134614:design"
+}

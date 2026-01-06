@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "RELEASE_VERSION_TAG_WARNING.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\RELEASE_VERSION_TAG_WARNING.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.584117",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

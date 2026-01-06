@@ -1,4 +1,10 @@
-"""Workflow Engine - YAML-based workflow orchestration."""
+"""Workflow Engine - YAML-based workflow orchestration.
+
+2025 Enhancements:
+- DurableWorkflowState: Event-sourced state with checkpoints for resume
+- Automatic recovery from any failure point
+- Complete audit trail via event log
+"""
 
 # Foreground Agent Artifacts (Epic 2)
 from .code_artifact import CodeArtifact, CodeChange
@@ -20,6 +26,17 @@ from .detector import (
 # Background Agents removed - Artifact classes remain (data structures only)
 # Background Agent Artifacts (data structures, not Background Agent implementations)
 from .docs_artifact import DocFileResult, DocumentationArtifact
+
+# 2025: Durable Workflow State Machine
+from .durable_state import (
+    Checkpoint,
+    DurableWorkflowState,
+    EventStore,
+    EventType,
+    WorkflowEvent as DurableWorkflowEvent,
+    get_durable_state,
+    resume_workflow,
+)
 from .enhancement_artifact import EnhancementArtifact, EnhancementStage
 from .event_log import WorkflowEvent, WorkflowEventLog
 from .executor import WorkflowExecutor
@@ -121,4 +138,12 @@ __all__ = [
     "WorkflowEvent",
     "WorkflowProgressMonitor",
     "ProgressMetrics",
+    # 2025: Durable Workflow State Machine
+    "DurableWorkflowState",
+    "DurableWorkflowEvent",
+    "EventStore",
+    "EventType",
+    "Checkpoint",
+    "get_durable_state",
+    "resume_workflow",
 ]

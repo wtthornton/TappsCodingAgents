@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "HELP_FUNCTIONS_PERFORMANCE_ANALYSIS.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\HELP_FUNCTIONS_PERFORMANCE_ANALYSIS.md",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T13:47:06.828932",
+  "correlation_id": "simple-full-20260106-134614:design"
+}

@@ -54,7 +54,7 @@ Add tests for service.py
 
 ## Intent Types
 
-Simple Mode supports five main intent types:
+Simple Mode supports nine main intent types:
 
 ### 1. Build
 
@@ -113,7 +113,77 @@ Generate and run tests.
 
 **Workflow:** Tester
 
-### 5. Epic
+### 5. Explore
+
+Explore and understand existing codebases.
+
+**Examples:**
+- "Explore the authentication system"
+- "Find code related to user login"
+- "Understand how payment processing works"
+- "Trace the login flow from frontend to database"
+
+**Workflow:** Analyst → Code Discovery → Architecture Analysis → Flow Tracing → Summary Generation
+
+**Features:**
+- File discovery based on query keywords
+- Architecture analysis using reviewer
+- Flow tracing for execution paths
+- Automatic exploration report generation
+
+### 6. Refactor
+
+Systematic code modernization with safety checks.
+
+**Examples:**
+- "Refactor legacy code in utils.py"
+- "Modernize authentication code"
+- "Update deprecated API usage"
+
+**Workflow:** Reviewer → Architect → Plan Generation → Implementer → Tester → Reviewer
+
+**Features:**
+- Legacy pattern detection
+- Modern architecture design
+- Incremental refactoring (file-by-file)
+- Test verification after each refactoring
+- Final quality review
+
+### 7. Plan Analysis
+
+Safe, read-only code analysis and planning.
+
+**Examples:**
+- "Plan refactoring authentication to OAuth2"
+- "Analyze impact of adding payment system"
+- "Design migration strategy"
+
+**Workflow:** Analyst → Architect → Impact Analysis → Plan Generation
+
+**Features:**
+- Read-only operations (no code modifications)
+- Requirements gathering
+- Architecture planning
+- Impact analysis
+- Comprehensive plan document generation
+
+### 8. PR (Pull Request)
+
+Create and manage pull requests.
+
+**Examples:**
+- "Create PR for authentication feature"
+- "Open pull request for feature/auth branch"
+
+**Workflow:** Reviewer → Documenter → PR Creation
+
+**Features:**
+- Automatic change analysis via Git diff
+- Quality score integration
+- Auto-generated PR descriptions
+- GitHub CLI integration (with fallback to metadata file)
+
+### 9. Epic
 
 Execute Epic workflows - implement all stories in an Epic document.
 
@@ -145,6 +215,10 @@ Simple Mode understands many ways to express the same intent:
 - **Review synonyms**: review, check, analyze, inspect, examine, score, quality, audit, assess, evaluate
 - **Fix synonyms**: fix, repair, resolve, debug, error, bug, issue, problem, broken, correct
 - **Test synonyms**: test, verify, validate, coverage, testing, tests
+- **Explore synonyms**: explore, understand, navigate, find, discover, overview, codebase, trace, search, locate
+- **Refactor synonyms**: refactor, modernize, update, improve code, modernize code, legacy, deprecated
+- **Plan synonyms**: plan, planning, analyze, analysis, design, proposal, strategy, roadmap
+- **PR synonyms**: pr, pull request, create pr, open pr, merge request, mr
 - **Epic synonyms**: epic, execute epic, run epic, implement epic, epic workflow
 
 ## Phase 2 Features (New!)
@@ -198,6 +272,10 @@ Use the `@simple-mode` skill:
 @simple-mode Review my authentication code
 @simple-mode Fix the error in auth.py
 @simple-mode Add tests for service.py
+@simple-mode Explore the authentication system
+@simple-mode Refactor legacy code in utils.py
+@simple-mode Plan analysis for OAuth2 migration
+@simple-mode PR "Add user authentication feature"
 @simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
 ```
 

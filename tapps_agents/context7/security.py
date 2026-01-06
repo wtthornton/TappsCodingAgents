@@ -86,21 +86,31 @@ class APIKeyManager:
         if not CRYPTO_AVAILABLE:
             return
 
-        if self.master_key_file.exists():
-            # Load existing key
-            self._master_key = self.master_key_file.read_bytes()
-        else:
-            # Generate new key
-            self._master_key = Fernet.generate_key()
-            # Store with restricted permissions (owner read/write only)
-            self.master_key_file.write_bytes(self._master_key)
-            try:
-                os.chmod(self.master_key_file, 0o600)
-            except Exception:
-                # Windows may not support chmod; best-effort only.
-                logger.debug("chmod not supported for master key file", exc_info=True)
+        try:
+            if self.master_key_file.exists():
+                # Load existing key
+                self._master_key = self.master_key_file.read_bytes()
+            else:
+                # Generate new key
+                self._master_key = Fernet.generate_key()
+                # Store with restricted permissions (owner read/write only)
+                self.master_key_file.write_bytes(self._master_key)
+                try:
+                    os.chmod(self.master_key_file, 0o600)
+                except Exception:
+                    # Windows may not support chmod; best-effort only.
+                    logger.debug("chmod not supported for master key file", exc_info=True)
 
-        self._cipher = Fernet(self._master_key)
+            if self._master_key:
+                self._cipher = Fernet(self._master_key)
+        except Exception as e:
+            # If master key initialization fails, log and continue without encryption
+            logger.warning(
+                f"Failed to initialize encryption master key: {e}. "
+                f"API keys will not be encrypted. This is non-fatal."
+            )
+            self._master_key = None
+            self._cipher = None
 
     def encrypt_api_key(self, api_key: str) -> str:
         """

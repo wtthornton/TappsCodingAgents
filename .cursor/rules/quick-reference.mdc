@@ -1,3 +1,9 @@
+---
+description: Quick reference guide for TappsCodingAgents commands and common usage patterns. For complete documentation, see command-reference.mdc.
+globs: []
+alwaysApply: true
+---
+
 # TappsCodingAgents Quick Reference
 
 **For complete command documentation, see `.cursor/rules/command-reference.mdc`**

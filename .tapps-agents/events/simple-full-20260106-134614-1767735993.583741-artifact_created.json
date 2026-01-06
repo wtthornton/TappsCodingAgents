@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "RELEASE_QUICK_REFERENCE.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\RELEASE_QUICK_REFERENCE.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.583741",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

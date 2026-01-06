@@ -59,6 +59,14 @@ From the target project root (after installing `tapps-agents`):
 
 This repo includes `.cursorignore` to prevent Cursor from indexing large/generated directories (venv, caches, reports, worktrees).
 
+**2025 Performance Enhancements** ✅ (January 2026):
+- **Non-blocking cache**: Lock-free in-memory LRU cache eliminates 150+ second timeouts
+- **Streaming responses**: Progressive workflow feedback prevents Cursor response timeouts
+- **Circuit breaker**: Fail-fast semantics prevent cascading failures
+- **Cache pre-warming**: Automatic dependency detection and pre-warming during `init`
+- **Durable state**: Workflows can resume from any checkpoint after interruption
+- See [Simple Mode Timeout Analysis](SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md) for complete details
+
 ## SDLC Quality Engine (Planned)
 
 The framework is being enhanced with a **self-correcting quality engine** that achieves "zero issues" consistently across any codebase.

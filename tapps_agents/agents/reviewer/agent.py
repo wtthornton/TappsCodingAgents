@@ -452,8 +452,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Returns:
             Dictionary with tool results
         """
-        import asyncio
-        
         reviewer_config = self.config.agents.reviewer if self.config else None
         enable_parallel = (
             reviewer_config.enable_parallel_tools if reviewer_config else True
@@ -602,7 +600,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         """
         # Validate file_path (manual validation since decorator doesn't handle Path well)
         file_path = validate_file_path_input(file_path, must_exist=True, method_name="review_file")
-        import asyncio
         
         # Get timeout configuration
         reviewer_config = self.config.agents.reviewer if self.config else None
@@ -648,9 +645,58 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         max_file_size: int,
     ) -> dict[str, Any]:
         """Internal review implementation without timeout wrapper."""
+        # #region agent log
+        import json
+        from datetime import datetime
+        from pathlib import Path as PathType
+        log_path = PathType.cwd() / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "G",
+                    "location": "reviewer/agent.py:_review_file_internal:entry",
+                    "message": "_review_file_internal called",
+                    "data": {"file": str(file_path), "include_scoring": include_scoring},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception as e:
+            # Log to stderr if file write fails
+            import sys
+            print(f"DEBUG LOG WRITE FAILED: {e}", file=sys.stderr)
+        # #endregion
         # Use centralized path validation from BaseAgent
         # _validate_path handles existence, size, and path traversal checks
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "G",
+                    "location": "reviewer/agent.py:_review_file_internal:before_validate",
+                    "message": "About to validate path",
+                    "data": {"file": str(file_path)},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         self._validate_path(file_path, max_file_size=max_file_size)
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "G",
+                    "location": "reviewer/agent.py:_review_file_internal:after_validate",
+                    "message": "Path validation completed",
+                    "data": {"file": str(file_path)},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
 
         # Read code
         try:
@@ -678,50 +724,243 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         libraries_used = []
         
         # Get Context7 helper if available
+        # Ensure MCP gateway is initialized (required for Context7 MCP integration)
+        if self.mcp_gateway is None:
+            try:
+                # Initialize MCP gateway if not already initialized
+                # This ensures Context7 can use MCP tools via Cursor
+                from ...mcp.gateway import MCPGateway
+                self.mcp_gateway = MCPGateway()
+                logger.debug("E2: MCP gateway initialized for Context7")
+            except Exception as e:
+                logger.debug(f"MCP gateway initialization failed: {e}")
+        
         context7_helper = None
+        # #region agent log
+        import json
+        from datetime import datetime
+        log_path = Path.cwd() / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "location": "reviewer/agent.py:review_file:before_helper_creation",
+                    "message": "About to create Context7 helper",
+                    "data": {"config_exists": self.config is not None, "project_root": str(self._project_root) if self._project_root else None, "mcp_gateway": self.mcp_gateway is not None},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         try:
             from ...context7.agent_integration import get_context7_helper
+            logger.info(f"E2: Attempting to create Context7 helper (config={self.config is not None}, project_root={self._project_root})")
             context7_helper = get_context7_helper(self, self.config, self._project_root)
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                        "location": "reviewer/agent.py:review_file:after_helper_creation",
+                        "message": "Context7 helper created",
+                        "data": {"helper_created": context7_helper is not None, "helper_enabled": context7_helper.enabled if context7_helper else False, "has_library_detector": context7_helper.library_detector is not None if context7_helper else False},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
+            if context7_helper:
+                logger.info(f"E2: Context7 helper initialized, enabled={context7_helper.enabled}, has_library_detector={context7_helper.library_detector is not None}")
+            else:
+                logger.warning("E2: Context7 helper is None - get_context7_helper returned None")
         except Exception as e:
-            logger.debug(f"Context7 helper not available: {e}")
+            logger.error(f"E2: Context7 helper creation failed: {e}", exc_info=True)
+            import traceback
+            logger.error(f"E2: Traceback: {traceback.format_exc()}")
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "reviewer/agent.py:review_file:helper_creation_error",
+                        "message": "Context7 helper creation exception",
+                        "data": {"error": str(e), "error_type": type(e).__name__},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
         
         if context7_helper and context7_helper.enabled:
+            logger.info(f"E2: Context7 helper enabled, library detector: {context7_helper.library_detector is not None}")
             try:
                 # E2: Detect libraries ONLY from code (not project files)
                 # This ensures we only verify libraries actually used in the code
                 language_str = file_type.lower()  # "python", "typescript", etc.
-                if code:
+                logger.info(f"E2: Detecting libraries from code (language: {language_str}, code length: {len(code) if code else 0})")
+                # #region agent log
+                try:
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        f.write(json.dumps({
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "D",
+                            "location": "reviewer/agent.py:review_file:before_library_detection",
+                            "message": "About to detect libraries",
+                            "data": {"has_code": code is not None, "code_length": len(code) if code else 0, "has_detector": context7_helper.library_detector is not None, "language": language_str},
+                            "timestamp": int(datetime.now().timestamp() * 1000)
+                        }) + "\n")
+                except: pass
+                # #endregion
+                if code and context7_helper.library_detector:
                     libraries_used = context7_helper.library_detector.detect_from_code(
                         code=code,
                         language=language_str
                     )
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "D",
+                                "location": "reviewer/agent.py:review_file:after_library_detection",
+                                "message": "Library detection completed",
+                                "data": {"libraries_found": len(libraries_used), "libraries": libraries_used},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
+                    logger.info(f"E2: Library detection completed: {len(libraries_used)} libraries found: {libraries_used}")
                 else:
                     libraries_used = []
-                
-                if libraries_used:
+                    if not code:
+                        logger.warning("E2: No code provided, skipping library detection")
+                    if not context7_helper.library_detector:
+                        logger.warning("E2: Library detector not available in Context7 helper")
+            except Exception as e:
+                logger.error(f"E2: Library detection failed: {e}", exc_info=True)
+                libraries_used = []
+            
+            if libraries_used:
+                # #region agent log
+                try:
+                    with open(log_path, "a", encoding="utf-8") as f:
+                        f.write(json.dumps({
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "F",
+                            "location": "reviewer/agent.py:review_file:inside_if_libraries_used",
+                            "message": "Entering if libraries_used block",
+                            "data": {"libraries_used": libraries_used, "libraries_count": len(libraries_used)},
+                            "timestamp": int(datetime.now().timestamp() * 1000)
+                        }) + "\n")
+                except: pass
+                # #endregion
+                try:
                     # Pre-process code once for efficient string matching
                     code_lower = code.lower() if code else ""
                     
                     # Verify all libraries in parallel for better performance
                     async def verify_library(lib: str) -> tuple[str, dict[str, Any]]:
                         """Verify a single library with parallel doc fetches."""
+                        # #region agent log
+                        try:
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write(json.dumps({
+                                    "sessionId": "debug-session",
+                                    "runId": "run1",
+                                    "hypothesisId": "E",
+                                    "location": "reviewer/agent.py:verify_library:entry",
+                                    "message": "verify_library called",
+                                    "data": {"library": lib},
+                                    "timestamp": int(datetime.now().timestamp() * 1000)
+                                }) + "\n")
+                        except: pass
+                        # #endregion
                         try:
                             # Run both doc fetches in parallel for each library
-                            lib_docs_task = context7_helper.get_documentation(
-                                library=lib,
-                                topic=None,  # Get full API reference
-                                use_fuzzy_match=True
+                            # #region agent log
+                            try:
+                                with open(log_path, "a", encoding="utf-8") as f:
+                                    f.write(json.dumps({
+                                        "sessionId": "debug-session",
+                                        "runId": "run1",
+                                        "hypothesisId": "E",
+                                        "location": "reviewer/agent.py:verify_library:before_get_docs",
+                                        "message": "About to call get_documentation",
+                                        "data": {"library": lib, "helper_enabled": context7_helper.enabled if context7_helper else False},
+                                        "timestamp": int(datetime.now().timestamp() * 1000)
+                                    }) + "\n")
+                            except: pass
+                            # #endregion
+                            # Add timeout to each get_documentation call to prevent hanging
+                            # Use asyncio.wait_for with a reasonable timeout
+                            lib_docs_task = asyncio.wait_for(
+                                context7_helper.get_documentation(
+                                    library=lib,
+                                    topic=None,  # Get full API reference
+                                    use_fuzzy_match=True
+                                ),
+                                timeout=15.0  # 15s timeout per call
                             )
-                            best_practices_task = context7_helper.get_documentation(
-                                library=lib,
-                                topic="best-practices",
-                                use_fuzzy_match=True
+                            # #region agent log
+                            try:
+                                with open(log_path, "a", encoding="utf-8") as f:
+                                    f.write(json.dumps({
+                                        "sessionId": "debug-session",
+                                        "runId": "run1",
+                                        "hypothesisId": "E",
+                                        "location": "reviewer/agent.py:verify_library:after_first_get_docs",
+                                        "message": "First get_documentation call returned (coroutine created)",
+                                        "data": {"library": lib},
+                                        "timestamp": int(datetime.now().timestamp() * 1000)
+                                    }) + "\n")
+                            except: pass
+                            # #endregion
+                            best_practices_task = asyncio.wait_for(
+                                context7_helper.get_documentation(
+                                    library=lib,
+                                    topic="best-practices",
+                                    use_fuzzy_match=True
+                                ),
+                                timeout=15.0  # 15s timeout per call
                             )
-                            
+                            # #region agent log
+                            try:
+                                with open(log_path, "a", encoding="utf-8") as f:
+                                    f.write(json.dumps({
+                                        "sessionId": "debug-session",
+                                        "runId": "run1",
+                                        "hypothesisId": "E",
+                                        "location": "reviewer/agent.py:verify_library:before_gather",
+                                        "message": "About to await asyncio.gather",
+                                        "data": {"library": lib},
+                                        "timestamp": int(datetime.now().timestamp() * 1000)
+                                    }) + "\n")
+                            except: pass
+                            # #endregion
                             lib_docs, best_practices = await asyncio.gather(
                                 lib_docs_task, best_practices_task,
                                 return_exceptions=True  # Don't fail all if one fails
                             )
+                            # #region agent log
+                            try:
+                                with open(log_path, "a", encoding="utf-8") as f:
+                                    f.write(json.dumps({
+                                        "sessionId": "debug-session",
+                                        "runId": "run1",
+                                        "hypothesisId": "E",
+                                        "location": "reviewer/agent.py:verify_library:after_gather",
+                                        "message": "asyncio.gather completed",
+                                        "data": {"library": lib, "lib_docs_success": lib_docs is not None if not isinstance(lib_docs, Exception) else False},
+                                        "timestamp": int(datetime.now().timestamp() * 1000)
+                                    }) + "\n")
+                            except: pass
+                            # #endregion
                             
                             # Handle exceptions gracefully
                             if isinstance(lib_docs, Exception):
@@ -751,32 +990,165 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                             })
                     
                     # Verify all libraries in parallel with timeout protection
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "E",
+                                "location": "reviewer/agent.py:review_file:before_verify_all",
+                                "message": "About to verify all libraries",
+                                "data": {"libraries": libraries_used, "count": len(libraries_used)},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "E",
+                                "location": "reviewer/agent.py:review_file:before_create_coroutines",
+                                "message": "About to create coroutines",
+                                "data": {"libraries": libraries_used},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
+                    coroutines = [verify_library(lib) for lib in libraries_used]
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "E",
+                                "location": "reviewer/agent.py:review_file:after_create_coroutines",
+                                "message": "Coroutines created",
+                                "data": {"coroutine_count": len(coroutines)},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "E",
+                                "location": "reviewer/agent.py:review_file:before_gather",
+                                "message": "About to call asyncio.gather",
+                                "data": {"coroutine_count": len(coroutines)},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
                     try:
                         results = await asyncio.wait_for(
-                            asyncio.gather(*[verify_library(lib) for lib in libraries_used]),
+                            asyncio.gather(*coroutines, return_exceptions=True),
                             timeout=30.0  # 30s total timeout for all libraries
                         )
-                        context7_verification.update(dict(results))
                     except asyncio.TimeoutError:
-                        logger.warning(f"Library verification timed out for {len(libraries_used)} libraries")
-                        # Mark all as failed
+                        # If Context7 hangs, log and continue without it
+                        logger.warning(
+                            f"Context7 library verification timed out after 30s for {len(libraries_used)} libraries. "
+                            f"Continuing review without Context7 verification."
+                        )
+                        # #region agent log
+                        try:
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write(json.dumps({
+                                    "sessionId": "debug-session",
+                                    "runId": "run1",
+                                    "hypothesisId": "E",
+                                    "location": "reviewer/agent.py:review_file:timeout",
+                                    "message": "Context7 verification timed out",
+                                    "data": {"libraries": libraries_used},
+                                    "timestamp": int(datetime.now().timestamp() * 1000)
+                                }) + "\n")
+                        except: pass
+                        # #endregion
+                        # Mark all as failed due to timeout
+                        results = []
                         for lib in libraries_used:
-                            if lib not in context7_verification:
-                                context7_verification[lib] = {
-                                    "api_docs_available": False,
-                                    "best_practices_available": False,
-                                    "api_mentioned": False,
-                                    "error": "timeout"
-                                }
-                    
+                            results.append((lib, {
+                                "api_docs_available": False,
+                                "best_practices_available": False,
+                                "api_mentioned": False,
+                                "error": "timeout"
+                            }))
+                    # #region agent log
+                    try:
+                        with open(log_path, "a", encoding="utf-8") as f:
+                            f.write(json.dumps({
+                                "sessionId": "debug-session",
+                                "runId": "run1",
+                                "hypothesisId": "E",
+                                "location": "reviewer/agent.py:review_file:after_verify_all",
+                                "message": "All libraries verified",
+                                "data": {"results_count": len(results)},
+                                "timestamp": int(datetime.now().timestamp() * 1000)
+                            }) + "\n")
+                    except: pass
+                    # #endregion
+                    context7_verification.update(dict(results))
                     logger.debug(f"E2: Verified {len(libraries_used)} libraries with Context7")
-            except Exception as e:
-                logger.debug(f"E2: Context7 API verification failed: {e}")
+                except asyncio.TimeoutError:
+                    logger.warning(f"Library verification timed out for {len(libraries_used)} libraries")
+                    # Mark all as failed
+                    for lib in libraries_used:
+                        if lib not in context7_verification:
+                            context7_verification[lib] = {
+                                "api_docs_available": False,
+                                "best_practices_available": False,
+                                "api_mentioned": False,
+                                "error": "timeout"
+                            }
+                except Exception as e:
+                    logger.debug(f"E2: Context7 API verification failed: {e}")
         
-        # Store Context7 verification results
-        if context7_verification:
-            result["context7_verification"] = context7_verification
-            result["libraries_detected"] = libraries_used
+        # Store Context7 verification results (always store, even if empty, for debugging)
+        result["context7_verification"] = context7_verification
+        result["libraries_detected"] = libraries_used
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "F",
+                    "location": "reviewer/agent.py:review_file:store_results",
+                    "message": "Storing Context7 results in result dict",
+                    "data": {"libraries_detected_count": len(libraries_used), "libraries_detected": libraries_used, "context7_verification_count": len(context7_verification), "result_keys": list(result.keys())},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
+        # Add debug info if Context7 was attempted
+        if context7_helper:
+            result["context7_debug"] = {
+                "helper_enabled": context7_helper.enabled,
+                "has_library_detector": context7_helper.library_detector is not None,
+                "mcp_gateway_available": self.mcp_gateway is not None,
+            }
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "F",
+                        "location": "reviewer/agent.py:review_file:store_debug",
+                        "message": "Stored context7_debug in result",
+                        "data": {"context7_debug": result.get("context7_debug", {})},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
 
         # Enhancement 4: Proactive Context7 suggestions based on library-specific patterns
         # Use extensible pattern registry instead of hard-coded logic
@@ -803,7 +1175,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         # Calculate scores based on file type with timeout protection
         if include_scoring:
-            import asyncio
             from ...core.language_detector import Language
             from .scoring import ScorerFactory
 
@@ -1175,8 +1546,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Raises:
             TimeoutError: If linting exceeds configured timeout
         """
-        import asyncio
-        
         # Use centralized path validation from BaseAgent
         self._validate_path(file_path)
         
@@ -1325,8 +1694,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Raises:
             TimeoutError: If type checking exceeds configured timeout
         """
-        import asyncio
-        
         # Use centralized path validation from BaseAgent
         self._validate_path(file_path)
         
@@ -1754,8 +2121,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Returns:
             Dictionary with service analysis results and aggregation
         """
-        import asyncio
-
         if project_root is None:
             project_root = Path.cwd()
 

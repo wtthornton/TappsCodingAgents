@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "test_doc_validator.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\documenter\\test_doc_validator.py",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T13:47:06.763291",
+  "correlation_id": "simple-full-20260106-134614:design"
+}

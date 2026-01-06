@@ -31,8 +31,41 @@ def _ensure_context7_api_key() -> str | None:
     Returns:
         API key string if available, None otherwise
     """
+    # #region agent log
+    import json
+    from datetime import datetime
+    from pathlib import Path
+    log_path = Path.cwd() / ".cursor" / "debug.log"
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "backup_client.py:_ensure_context7_api_key:entry",
+                "message": "_ensure_context7_api_key called",
+                "data": {"env_key_exists": os.getenv("CONTEXT7_API_KEY") is not None},
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }) + "\n")
+    except: pass
+    # #endregion
+    
     # First check environment variable
     api_key = os.getenv("CONTEXT7_API_KEY")
+    # #region agent log
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "backup_client.py:_ensure_context7_api_key:env_check",
+                "message": "Checked environment variable",
+                "data": {"api_key_from_env": api_key is not None, "key_length": len(api_key) if api_key else 0},
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }) + "\n")
+    except: pass
+    # #endregion
     if api_key:
         return api_key
     
@@ -42,15 +75,71 @@ def _ensure_context7_api_key() -> str | None:
         
         key_manager = APIKeyManager()
         api_key = key_manager.load_api_key("context7")
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "location": "backup_client.py:_ensure_context7_api_key:storage_load",
+                    "message": "Loaded from encrypted storage",
+                    "data": {"api_key_loaded": api_key is not None, "key_length": len(api_key) if api_key else 0},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
         
         if api_key:
             # Set in environment for future use
             os.environ["CONTEXT7_API_KEY"] = api_key
             logger.debug("Loaded Context7 API key from encrypted storage")
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "A",
+                        "location": "backup_client.py:_ensure_context7_api_key:env_set",
+                        "message": "API key set in environment",
+                        "data": {"env_set_success": True},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
             return api_key
     except Exception as e:
         logger.debug(f"Could not load API key from encrypted storage: {e}")
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "location": "backup_client.py:_ensure_context7_api_key:error",
+                    "message": "Failed to load from storage",
+                    "data": {"error": str(e)},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
     
+    # #region agent log
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "location": "backup_client.py:_ensure_context7_api_key:return_none",
+                "message": "Returning None - no API key available",
+                "data": {},
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }) + "\n")
+    except: pass
+    # #endregion
     return None
 
 
@@ -143,9 +232,9 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 "sessionId": "debug-session",
                 "runId": "run1",
                 "hypothesisId": "B",
-                "location": "backup_client.py:66",
-                "message": "api_key captured in closure",
-                "data": {"api_key_captured": api_key is not None, "key_length": len(api_key) if api_key else 0},
+                "location": "backup_client.py:create_fallback_http_client:api_key_check",
+                "message": "API key check after _ensure_context7_api_key",
+                "data": {"api_key_available": api_key is not None, "key_length": len(api_key) if api_key else 0, "env_key_after": os.getenv("CONTEXT7_API_KEY") is not None},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
     except: pass
@@ -510,14 +599,73 @@ def get_context7_client_with_fallback(
     
     # Check if MCP tools are available (R1: improved detection)
     mcp_available, mcp_source = check_mcp_tools_available(mcp_gateway)
+    
+    # CRITICAL FIX: Python code cannot call Cursor's MCP tools directly
+    # Even though MCP tools are "available" in Cursor mode, Python code must use HTTP fallback
+    # Only the AI assistant (via Cursor chat) can use MCP tools directly
+    from ..core.runtime_mode import is_cursor_mode
+    # #region agent log
+    import json
+    from datetime import datetime
+    from pathlib import Path
+    log_path = Path.cwd() / ".cursor" / "debug.log"
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run2",
+                "hypothesisId": "F",
+                "location": "backup_client.py:get_context7_client_with_fallback:before_fix",
+                "message": "Before MCP fix check",
+                "data": {"mcp_available": mcp_available, "mcp_source": mcp_source, "is_cursor_mode": is_cursor_mode()},
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }) + "\n")
+    except: pass
+    # #endregion
+    if mcp_available and mcp_source == "cursor_mcp":
+        # In Cursor mode, MCP tools are available to AI assistant but NOT to Python code
+        # Force HTTP fallback for Python code execution
+        logger.debug(
+            "Context7 MCP tools available in Cursor but Python code cannot call them. "
+            "Using HTTP fallback with API key."
+        )
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run2",
+                    "hypothesisId": "F",
+                    "location": "backup_client.py:get_context7_client_with_fallback:fix_applied",
+                    "message": "FIX APPLIED: Forcing HTTP fallback for Cursor MCP",
+                    "data": {"mcp_available_before": True, "mcp_available_after": False},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
+        mcp_available = False  # Force HTTP fallback
+    
     if mcp_available:
         # Use MCP - no API key needed!
-        # Note: In Cursor mode, Python code cannot directly call MCP tools,
-        # but AI assistant can use them via MCP tool functions
+        # This path is only for local gateway (not Cursor MCP)
         return mcp_gateway, True, mcp_source, None, None
     
     # Fallback to direct HTTP - requires API key
     api_available = check_context7_api_available()
+    # #region agent log
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run2",
+                "hypothesisId": "F",
+                "location": "backup_client.py:get_context7_client_with_fallback:http_fallback",
+                "message": "Using HTTP fallback path",
+                "data": {"mcp_available": mcp_available, "api_available": api_available},
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }) + "\n")
+    except: pass
+    # #endregion
     if not api_available:
         # R2/R3: Neither MCP nor API key available - provide clear error message
         from ..core.runtime_mode import is_cursor_mode
@@ -539,6 +687,20 @@ def get_context7_client_with_fallback(
         return mcp_gateway, False, "none", None, None
     
     resolve_client, get_docs_client = create_fallback_http_client()
+    # #region agent log
+    try:
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(json.dumps({
+                "sessionId": "debug-session",
+                "runId": "run2",
+                "hypothesisId": "F",
+                "location": "backup_client.py:get_context7_client_with_fallback:return_http",
+                "message": "Returning HTTP fallback clients",
+                "data": {"use_mcp": False, "resolve_client_created": resolve_client is not None, "get_docs_client_created": get_docs_client is not None},
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }) + "\n")
+    except: pass
+    # #endregion
     return mcp_gateway, False, "none", resolve_client, get_docs_client
 
 

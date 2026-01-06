@@ -43,19 +43,79 @@ class Context7AgentHelper:
         if project_root is None:
             project_root = Path.cwd()
 
+        # #region agent log
+        import json
+        from datetime import datetime
+        log_path = Path.cwd() / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "location": "context7/agent_integration.py:__init__:entry",
+                    "message": "Context7AgentHelper __init__ called",
+                    "data": {"config_exists": config is not None, "context7_config_exists": config.context7 is not None if config else False, "context7_enabled": config.context7.enabled if config and config.context7 else False},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
+        
         # Check if Context7 is enabled
         context7_config = config.context7
         if not context7_config or not context7_config.enabled:
             self.enabled = False
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                        "location": "context7/agent_integration.py:__init__:disabled",
+                        "message": "Context7 disabled in config",
+                        "data": {"context7_config": context7_config is not None, "enabled": context7_config.enabled if context7_config else False},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
             return
 
         # Ensure API key is available (loads from encrypted storage if needed)
         # This ensures agents don't need to manually pass the API key
         try:
             from .backup_client import _ensure_context7_api_key
-            _ensure_context7_api_key()
+            api_key_result = _ensure_context7_api_key()
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "A",
+                        "location": "context7/agent_integration.py:__init__:api_key_ensured",
+                        "message": "API key ensured",
+                        "data": {"api_key_available": api_key_result is not None, "key_length": len(api_key_result) if api_key_result else 0},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
         except Exception as e:
             logger.debug(f"Could not ensure Context7 API key availability: {e}")
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "A",
+                        "location": "context7/agent_integration.py:__init__:api_key_error",
+                        "message": "API key ensure failed",
+                        "data": {"error": str(e)},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
 
         # Validate credentials (non-blocking, only warn if Context7 is actually needed)
         # Context7 is optional - only warn if it's explicitly required for the operation
@@ -81,29 +141,92 @@ class Context7AgentHelper:
         except Exception as e:
             logger.debug(f"Context7 credential validation error: {e}", exc_info=True)
 
-        self.enabled = True
-        self.config = context7_config
-        self.project_root = project_root
+        # Wrap initialization in try-except to prevent Context7 failures from breaking agents
+        try:
+            self.enabled = True
+            self.config = context7_config
+            self.project_root = project_root
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                        "location": "context7/agent_integration.py:__init__:enabled",
+                        "message": "Context7AgentHelper enabled=True",
+                        "data": {"enabled": True},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
 
-        # Initialize cache structure
-        cache_root = project_root / context7_config.knowledge_base.location
-        self.cache_structure = CacheStructure(cache_root)
-        self.cache_structure.initialize()
+            # Initialize cache structure
+            cache_root = project_root / context7_config.knowledge_base.location
+            self.cache_structure = CacheStructure(cache_root)
+            self.cache_structure.initialize()
 
-        # Initialize components
-        self.metadata_manager = MetadataManager(self.cache_structure)
-        self.kb_cache = KBCache(self.cache_structure.cache_root, self.metadata_manager)
-        self.fuzzy_matcher = FuzzyMatcher(threshold=0.7)
-        self.analytics = Analytics(self.cache_structure, self.metadata_manager)
+            # Initialize components
+            self.metadata_manager = MetadataManager(self.cache_structure)
+            self.kb_cache = KBCache(self.cache_structure.cache_root, self.metadata_manager)
+            self.fuzzy_matcher = FuzzyMatcher(threshold=0.7)
+            self.analytics = Analytics(self.cache_structure, self.metadata_manager)
 
-        # Initialize KB lookup with MCP Gateway
-        self.mcp_gateway = mcp_gateway
-        self.kb_lookup = KBLookup(
-            kb_cache=self.kb_cache, mcp_gateway=mcp_gateway, fuzzy_threshold=0.7
-        )
+            # Initialize KB lookup with MCP Gateway
+            self.mcp_gateway = mcp_gateway
+            self.kb_lookup = KBLookup(
+                kb_cache=self.kb_cache, mcp_gateway=mcp_gateway, fuzzy_threshold=0.7
+            )
 
-        # Initialize library detector for Option 3 quality uplift
-        self.library_detector = LibraryDetector(project_root=project_root)
+            # Initialize library detector for Option 3 quality uplift
+            self.library_detector = LibraryDetector(project_root=project_root)
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                        "location": "context7/agent_integration.py:__init__:library_detector_init",
+                        "message": "Library detector initialized",
+                        "data": {"library_detector_created": self.library_detector is not None},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
+        except Exception as e:
+            # If Context7 initialization fails, disable it gracefully
+            # This prevents Context7 failures from breaking agent initialization
+            logger.warning(
+                f"Context7 initialization failed, disabling Context7 features: {e}. "
+                f"Agents will continue to work without Context7."
+            )
+            self.enabled = False
+            # Set minimal attributes to prevent AttributeError
+            self.config = context7_config
+            self.project_root = project_root
+            self.cache_structure = None
+            self.metadata_manager = None
+            self.kb_cache = None
+            self.fuzzy_matcher = None
+            self.analytics = None
+            self.mcp_gateway = mcp_gateway
+            self.kb_lookup = None
+            self.library_detector = None
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                        "location": "context7/agent_integration.py:__init__:init_failed",
+                        "message": "Context7 initialization failed, disabled",
+                        "data": {"error": str(e), "enabled": False},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
 
     async def get_documentation(
         self, library: str, topic: str | None = None, use_fuzzy_match: bool = True
@@ -119,13 +242,59 @@ class Context7AgentHelper:
         Returns:
             Dictionary with documentation content, or None if not found
         """
-        if not self.enabled:
+        # #region agent log
+        import json
+        from datetime import datetime
+        from pathlib import Path
+        log_path = Path.cwd() / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "context7/agent_integration.py:get_documentation:entry",
+                    "message": "get_documentation called",
+                    "data": {"library": library, "topic": topic, "enabled": self.enabled},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except: pass
+        # #endregion
+        if not self.enabled or self.kb_lookup is None:
             return None
 
         try:
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "context7/agent_integration.py:get_documentation:before_lookup",
+                        "message": "About to call kb_lookup.lookup",
+                        "data": {"library": library, "topic": topic},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
             result = await self.kb_lookup.lookup(
                 library=library, topic=topic, use_fuzzy_match=use_fuzzy_match
             )
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "E",
+                        "location": "context7/agent_integration.py:get_documentation:after_lookup",
+                        "message": "kb_lookup.lookup returned",
+                        "data": {"library": library, "success": result.success if hasattr(result, 'success') else None},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except: pass
+            # #endregion
 
             if result.success:
                 return {
@@ -147,7 +316,15 @@ class Context7AgentHelper:
                         f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
                     )
                 elif "quota" in error_lower:
-                    logger.warning(
+                    # Avoid log spam: once quota is exceeded, subsequent calls are expected to fail.
+                    try:
+                        from .backup_client import is_context7_quota_exceeded
+                        already_exceeded = is_context7_quota_exceeded()
+                    except Exception:
+                        already_exceeded = False
+
+                    log_fn = logger.debug if already_exceeded else logger.warning
+                    log_fn(
                         f"Context7 quota exceeded for library '{library}' "
                         f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
                     )
@@ -157,8 +334,24 @@ class Context7AgentHelper:
                         f"Context7 lookup unavailable for library '{library}' "
                         f"(topic: {topic}): {result.error}. Continuing without Context7 documentation."
                     )
+        except (RuntimeError, OSError, PermissionError) as e:
+            # Cache lock or file operation failed - log but don't fail the agent
+            # These are non-critical errors that shouldn't break agent functionality
+            error_msg = str(e)
+            if "cache lock" in error_msg.lower() or "lock" in error_msg.lower():
+                # Cache lock failures are expected in high-concurrency scenarios
+                logger.debug(
+                    f"Context7 cache lock unavailable for library '{library}' (topic: {topic}): {e}. "
+                    f"Continuing without Context7 documentation."
+                )
+            else:
+                logger.warning(
+                    f"Context7 lookup error for library '{library}' (topic: {topic}): {e}. "
+                    f"Continuing without Context7 documentation.",
+                    exc_info=True
+                )
         except Exception as e:
-            # Log error but don't fail the agent
+            # Other unexpected errors - log but don't fail the agent
             logger.warning(
                 f"Context7 lookup error for library '{library}' (topic: {topic}): {e}. "
                 f"Continuing without Context7 documentation.",
@@ -219,7 +412,7 @@ class Context7AgentHelper:
         Returns:
             True if cached, False otherwise
         """
-        if not self.enabled:
+        if not self.enabled or self.kb_cache is None:
             return False
 
         if topic is None:
@@ -234,7 +427,7 @@ class Context7AgentHelper:
         Returns:
             Dictionary with cache statistics
         """
-        if not self.enabled:
+        if not self.enabled or self.analytics is None:
             return {"enabled": False}
 
         try:
@@ -358,16 +551,23 @@ class Context7AgentHelper:
         libraries: list[str],
         topic: str | None = None,
         use_fuzzy_match: bool = True,
+        max_concurrency: int = 5,
+        per_library_timeout: float = 5.0,
     ) -> dict[str, dict[str, Any] | None]:
         """
-        Get documentation for multiple libraries in parallel.
+        Get documentation for multiple libraries in parallel with circuit breaker.
         
-        Option 3 Enhancement: Batch Context7 documentation retrieval.
+        2025 Architecture: Bounded parallelism + circuit breaker for resilience.
+        - Max 5 concurrent requests (prevents resource exhaustion)
+        - 5s timeout per library (prevents cascading delays)
+        - Circuit breaker opens after 3 failures (fast-fails subsequent requests)
 
         Args:
             libraries: List of library names
             topic: Optional topic name (e.g., "hooks", "routing")
             use_fuzzy_match: Whether to use fuzzy matching
+            max_concurrency: Maximum concurrent library lookups (default: 5)
+            per_library_timeout: Timeout per library in seconds (default: 5.0)
 
         Returns:
             Dictionary mapping library names to their documentation (or None if not found)
@@ -377,21 +577,60 @@ class Context7AgentHelper:
 
         import asyncio
 
-        # Fetch documentation for all libraries in parallel
-        tasks = [
-            self.get_documentation(library=lib, topic=topic, use_fuzzy_match=use_fuzzy_match)
-            for lib in libraries
-        ]
-        results = await asyncio.gather(*tasks, return_exceptions=True)
+        from .circuit_breaker import get_parallel_executor
+
+        # Get parallel executor with circuit breaker
+        executor = get_parallel_executor(max_concurrency=max_concurrency)
+
+        # Define the lookup function for each library
+        async def lookup_library(lib: str) -> tuple[str, dict[str, Any] | None]:
+            try:
+                result = await asyncio.wait_for(
+                    self.get_documentation(
+                        library=lib, topic=topic, use_fuzzy_match=use_fuzzy_match
+                    ),
+                    timeout=per_library_timeout,
+                )
+                return (lib, result)
+            except asyncio.TimeoutError:
+                logger.debug(f"Context7 lookup timeout for {lib} ({per_library_timeout}s)")
+                return (lib, None)
+            except Exception as e:
+                logger.debug(f"Context7 lookup error for {lib}: {e}")
+                return (lib, None)
+
+        # Execute all lookups in parallel with circuit breaker
+        results = await executor.execute_all(
+            items=libraries,
+            func=lookup_library,
+            fallback=None,
+        )
 
         # Map results to libraries
         library_docs = {}
-        for lib, result in zip(libraries, results):
-            if isinstance(result, Exception):
-                logger.warning(f"Error fetching docs for {lib}: {result}")
-                library_docs[lib] = None
+        for result in results:
+            if result is None:
+                continue
+            if isinstance(result, tuple) and len(result) == 2:
+                lib, doc = result
+                library_docs[lib] = doc
             else:
-                library_docs[lib] = result
+                logger.debug(f"Unexpected result format: {result}")
+
+        # Ensure all libraries are in the result (even if lookup failed)
+        for lib in libraries:
+            if lib not in library_docs:
+                library_docs[lib] = None
+
+        # Log circuit breaker status if any failures
+        cb_stats = executor.stats.get("circuit_breaker", {}).get("stats", {})
+        if cb_stats.get("failed_requests", 0) > 0:
+            logger.debug(
+                f"Context7 parallel lookup completed. "
+                f"Success: {cb_stats.get('successful_requests', 0)}, "
+                f"Failed: {cb_stats.get('failed_requests', 0)}, "
+                f"Rejected: {cb_stats.get('rejected_requests', 0)}"
+            )
 
         return library_docs
 

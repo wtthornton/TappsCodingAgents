@@ -26,38 +26,60 @@ class CacheStructure:
 
     def initialize(self):
         """Initialize cache directory structure."""
-        self.cache_root.mkdir(parents=True, exist_ok=True)
-        self.libraries_dir.mkdir(parents=True, exist_ok=True)
-        self.topics_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            self.cache_root.mkdir(parents=True, exist_ok=True)
+            self.libraries_dir.mkdir(parents=True, exist_ok=True)
+            self.topics_dir.mkdir(parents=True, exist_ok=True)
 
-        # Create index.yaml if it doesn't exist
-        if not self.index_file.exists():
-            self._create_index_file()
+            # Create index.yaml if it doesn't exist
+            if not self.index_file.exists():
+                self._create_index_file()
 
-        # Create cross-references.yaml if it doesn't exist
-        if not self.cross_refs_file.exists():
-            self._create_cross_refs_file()
+            # Create cross-references.yaml if it doesn't exist
+            if not self.cross_refs_file.exists():
+                self._create_cross_refs_file()
 
-        # Create refresh queue file if it doesn't exist
-        if not self.refresh_queue_file.exists():
-            self.refresh_queue_file.touch()
+            # Create refresh queue file if it doesn't exist
+            if not self.refresh_queue_file.exists():
+                self.refresh_queue_file.touch()
+        except (OSError, PermissionError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                f"Failed to initialize Context7 cache structure at {self.cache_root}: {e}. "
+                f"Context7 cache features will be limited."
+            )
+            # Re-raise to allow caller to handle
+            raise
 
     def _create_index_file(self):
         """Create initial index.yaml file."""
-        index_data = {
-            "version": "1.0",
-            "last_updated": None,
-            "total_entries": 0,
-            "libraries": {},
-        }
-        with open(self.index_file, "w", encoding="utf-8") as f:
-            yaml.dump(index_data, f, default_flow_style=False, sort_keys=False)
+        try:
+            index_data = {
+                "version": "1.0",
+                "last_updated": None,
+                "total_entries": 0,
+                "libraries": {},
+            }
+            with open(self.index_file, "w", encoding="utf-8") as f:
+                yaml.dump(index_data, f, default_flow_style=False, sort_keys=False)
+        except (OSError, yaml.YAMLError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create index file {self.index_file}: {e}")
+            raise
 
     def _create_cross_refs_file(self):
         """Create initial cross-references.yaml file."""
-        cross_refs_data = {"version": "1.0", "last_updated": None, "topics": {}}
-        with open(self.cross_refs_file, "w", encoding="utf-8") as f:
-            yaml.dump(cross_refs_data, f, default_flow_style=False, sort_keys=False)
+        try:
+            cross_refs_data = {"version": "1.0", "last_updated": None, "topics": {}}
+            with open(self.cross_refs_file, "w", encoding="utf-8") as f:
+                yaml.dump(cross_refs_data, f, default_flow_style=False, sort_keys=False)
+        except (OSError, yaml.YAMLError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create cross-refs file {self.cross_refs_file}: {e}")
+            raise
 
     def get_library_dir(self, library: str) -> Path:
         """
@@ -117,9 +139,18 @@ class CacheStructure:
 
         Returns:
             Path to library directory
+
+        Raises:
+            OSError: If directory creation fails
         """
         lib_dir = self.get_library_dir(library)
-        lib_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            lib_dir.mkdir(parents=True, exist_ok=True)
+        except (OSError, PermissionError) as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Failed to create library directory {lib_dir}: {e}")
+            raise
         return lib_dir
 
     def ensure_topic_dir(self, topic: str) -> Path:

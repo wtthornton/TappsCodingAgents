@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-134614",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "TAPPS_AGENTS_CONTEXT7_SDLC_WORKFLOW_ANALYSIS.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\TAPPS_AGENTS_CONTEXT7_SDLC_WORKFLOW_ANALYSIS.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T13:46:33.600407",
+  "correlation_id": "simple-full-20260106-134614:requirements"
+}

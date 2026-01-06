@@ -45,6 +45,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Deployment Guide](DEPLOYMENT.md)**
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Includes Playwright MCP troubleshooting
 - **[Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
+- **[Simple Mode Timeout Analysis](SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md)** - 2025 performance enhancements and timeout fixes
 - **[Test Suite Documentation](../tests/README.md)** - Complete test suite overview
 - **[E2E Test Suite](../tests/e2e/README.md)** - End-to-end test documentation
 - **[Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md)** - Playwright MCP detection and integration guide

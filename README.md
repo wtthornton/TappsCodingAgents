@@ -62,7 +62,7 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 
 See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
 
-- **Workflow Agents** (28): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
+- **Workflow Agents** (112): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making and RAG integration
 - **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
@@ -73,7 +73,7 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
 - **Fine-Tuning Support**: LoRA adapters for domain specialization (planned)
 - **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases complete)
   - **14 Cursor Skills** ✅ (All agents available as Cursor Skills: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester)
-  - **Simple Mode Skill** ✅ (Natural language orchestration with 6 workflows: build, review, fix, test, epic, resume)
+  - **Simple Mode Skill** ✅ (Natural language orchestration with 10 workflows: build, review, fix, test, explore, refactor, plan-analysis, pr, epic, full)
   - **Claude Desktop Commands** ✅ (16 commands available in Claude Desktop - same functionality as Skills)
   - **Unified Experience** ✅ (Commands and Skills work together - choose your interface)
   - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills with template generation)
@@ -87,11 +87,15 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
   - Customize agent behavior based on user role
   - 5 built-in role templates with sensible defaults
   - Fully customizable and extensible
-- **Simple Mode** ✅: Streamlined natural language interface with 6 orchestrators
-  - **Build Orchestrator**: Complete feature development (enhancer → planner → architect → designer → implementer → reviewer → tester → documenter)
+- **Simple Mode** ✅: Streamlined natural language interface with 10 orchestrators
+  - **Build Orchestrator**: Complete feature development (enhancer → planner → architect → designer → implementer → reviewer → tester)
   - **Review Orchestrator**: Code quality review with improvement suggestions
   - **Fix Orchestrator**: Systematic bug fixing with debugging and verification
   - **Test Orchestrator**: Test generation and execution
+  - **Explore Orchestrator**: Codebase exploration and navigation (analyst → reviewer → code discovery)
+  - **Refactor Orchestrator**: Systematic code modernization (reviewer → architect → implementer → tester → reviewer)
+  - **Plan Analysis Orchestrator**: Safe read-only code analysis and planning (analyst → architect → reviewer)
+  - **PR Orchestrator**: Pull request creation with quality scores (reviewer → documenter → PR creation)
   - **Epic Orchestrator**: Execute Epic documents with story dependency resolution
   - **Resume Orchestrator**: Resume interrupted workflows
 - **Workflow Presets** (11): Predefined YAML workflows (rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues)
@@ -205,6 +209,10 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
    @simple-mode Review my authentication code
    @simple-mode Fix the error in auth.py
    @simple-mode Add tests for service.py
+   @simple-mode Explore the authentication system
+   @simple-mode Refactor legacy code in utils.py
+   @simple-mode Plan analysis for OAuth2 migration
+   @simple-mode PR "Add user authentication feature"
    @simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
    ```
    
@@ -271,6 +279,38 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 🎉 **ALL 7 PHASES COMPLETE - Cursor AI Integration Plan 2025** 🎉
 
 🎉 **JANUARY 2026 ENHANCEMENTS COMPLETE** 🎉
+
+✅ **2025 Performance & Resilience Enhancements** (January 2026)
+- **Non-Blocking Cache Architecture** ✅ (`tapps_agents/context7/async_cache.py`)
+  - Lock-free in-memory LRU cache with O(1) reads/writes
+  - Background write queue for non-blocking disk persistence
+  - Atomic file rename pattern (no file locking needed)
+  - **Result**: Eliminated 150+ second cache lock timeouts
+- **Streaming Workflow Responses** ✅ (`tapps_agents/workflow/streaming.py`)
+  - Progressive streaming with per-step timeouts (30s default)
+  - Automatic checkpointing for resume capability
+  - SSE and Markdown formatting for Cursor integration
+  - **Result**: Workflows survive Cursor response timeouts
+- **Circuit Breaker Pattern** ✅ (`tapps_agents/context7/circuit_breaker.py`)
+  - CLOSED → OPEN → HALF_OPEN state machine
+  - Bounded parallelism with fail-fast semantics
+  - Auto-recovery after configurable timeout
+  - **Result**: Prevents cascading failures in parallel operations
+- **Intelligent Cache Pre-warming** ✅ (`tapps_agents/context7/cache_prewarm.py`)
+  - Automatic dependency detection (requirements.txt, pyproject.toml, package.json)
+  - Priority-based library ordering (fastapi, pytest, etc.)
+  - Background pre-warming during `tapps-agents init`
+  - **Result**: Zero cold-cache delays during workflow execution
+- **Durable Workflow State Machine** ✅ (`tapps_agents/workflow/durable_state.py`)
+  - Event-sourced state with append-only event log
+  - Checkpoint-based resume from any failure point
+  - Complete audit trail for workflow execution
+  - **Result**: Workflows can resume after any interruption
+- **Lock Timeout Optimization** ✅ (`tapps_agents/context7/cache_locking.py`)
+  - Reduced timeout from 30s → 5s (3s for cache store)
+  - Graceful degradation on lock failures
+  - **Result**: Planner command completes in 559ms (was 150+ seconds)
+- See [Simple Mode Timeout Analysis](docs/SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md) for complete details
 
 ✅ **P2 Medium Priority Enhancements - All Complete**
 - **Project Profiling System** ✅ (Auto-detection of project characteristics for context-aware expert guidance)
@@ -520,10 +560,14 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `workflow resume` - Resume interrupted workflow
 
 **Simple Mode Workflows** (in Cursor chat with `@simple-mode`):
-- `*build <description>` - Complete feature development workflow (8 steps)
+- `*build <description>` - Complete feature development workflow (7 steps)
 - `*review <file>` - Code quality review with improvements
 - `*fix <file> <description>` - Systematic bug fixing workflow
 - `*test <file>` - Test generation and execution
+- `*explore <query>` - Codebase exploration and navigation
+- `*refactor <file>` - Systematic code modernization with safety checks
+- `*plan-analysis <description>` - Safe read-only code analysis and planning
+- `*pr <title>` - Pull request creation with quality scores
 - `*epic <epic-doc.md>` - Execute Epic documents with dependency resolution
 - `*full <description>` - Full SDLC workflow (9 steps)
 
