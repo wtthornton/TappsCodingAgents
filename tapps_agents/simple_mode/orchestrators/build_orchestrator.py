@@ -22,6 +22,8 @@ from tapps_agents.workflow.models import Artifact
 from tapps_agents.workflow.step_checkpoint import StepCheckpointManager
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
+from .deliverable_checklist import DeliverableChecklist
+from .requirements_tracer import RequirementsTracer
 
 logger = logging.getLogger(__name__)
 
@@ -337,6 +339,25 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         else:
             logger.info("Fast mode: Skipping enhancement step")
 
+        # Initialize checklist and tracer for verification (after Step 1)
+        checklist = DeliverableChecklist(requirements={"enhanced_prompt": enhanced_prompt})
+        tracer = RequirementsTracer(requirements={})
+        workflow_state = {
+            "checklist": checklist,
+            "tracer": tracer,
+            "loopback_count": 0,
+        }
+        
+        # Track documentation files created
+        if doc_manager:
+            checklist.add_deliverable(
+                "documentation",
+                "Step 1: Enhanced prompt",
+                doc_manager.get_step_file_path(1, "enhanced-prompt") if doc_manager else Path(),
+                status="complete",
+                metadata={"step_number": 1},
+            )
+
         # Step 2-4: Planning, Architecture, Design (skip in fast mode)
         # Create multi-agent orchestrator
         orchestrator = MultiAgentOrchestrator(
@@ -432,6 +453,63 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                             status = "success" if task_success else "failed"
                             on_step_complete(task_step_num, task_step_name, status)
                         
+                        # Track documentation in checklist
+                        if doc_manager:
+                            doc_file_path = doc_manager.get_step_file_path(task_step_num, f"{agent_name}-result")
+                            checklist.add_deliverable(
+                                "documentation",
+                                f"Step {task_step_num}: {agent_name.title()} Result",
+                                doc_file_path,
+                                status="complete",
+                                metadata={"step_number": task_step_num},
+                            )
+                        
+                        # Extract requirement IDs from user stories (Step 2)
+                        if agent_name == "planner" and task_success:
+                            try:
+                                # Try to extract user stories from result
+                                user_stories_data = task_result.get("result") or task_result.get("output") or str(task_result)
+                                # Try to parse as JSON if possible, otherwise extract IDs from text
+                                import json
+                                try:
+                                    if isinstance(user_stories_data, str):
+                                        user_stories_parsed = json.loads(user_stories_data)
+                                    else:
+                                        user_stories_parsed = user_stories_data
+                                    
+                                    if isinstance(user_stories_parsed, list):
+                                        req_ids = tracer.extract_requirement_ids(user_stories_parsed)
+                                        # Build requirements dict from user stories
+                                        requirements_dict = {}
+                                        for story in user_stories_parsed:
+                                            req_id = story.get("id") or story.get("requirement_id")
+                                            if req_id:
+                                                requirements_dict[req_id] = story
+                                        if requirements_dict:
+                                            tracer.requirements = requirements_dict
+                                            logger.info(f"Extracted {len(requirements_dict)} requirement IDs from user stories")
+                                except (json.JSONDecodeError, AttributeError, TypeError):
+                                    # Fallback: extract IDs from text
+                                    req_ids = tracer.extract_requirement_ids([{"id": None, "text": str(user_stories_data)}])
+                                    logger.debug(f"Extracted {len(req_ids)} requirement IDs from user stories text")
+                            except Exception as e:
+                                logger.debug(f"Failed to extract requirement IDs from planner result: {e}")
+                        
+                        # Track implemented files (Step 5)
+                        if agent_name == "implementer" and task_success:
+                            implemented_files_list = self._extract_implemented_files(task_result)
+                            for file_path in implemented_files_list:
+                                checklist.add_deliverable(
+                                    "core_code",
+                                    f"Implementation: {file_path.name}",
+                                    file_path,
+                                    status="complete",
+                                    metadata={"step_number": 5},
+                                )
+                                # Link to requirements (if we have any)
+                                for req_id in tracer.requirements.keys():
+                                    tracer.add_trace(req_id, "code", file_path)
+                        
                         # Save checkpoint and documentation for each step
                         if checkpoint_manager:
                             checkpoint_manager.save_checkpoint(
@@ -466,7 +544,11 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         steps_executed.append("implement")
 
         # Step 6-7: Review and Test (if not in fast_mode)
+        implemented_files_list = []
         if not fast_mode:
+            # Extract implemented files from result
+            implemented_files_list = self._extract_implemented_files(result)
+            
             # Add reviewer and tester steps
             step_6_name = "Review code quality"
             step_7_name = "Generate tests"
@@ -501,6 +583,22 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     review_test_result = await orchestrator.execute_parallel(review_test_tasks)
                     steps_executed.extend(["review", "test"])
                     
+                    # Track test files from tester result (Step 7 enhancement)
+                    tester_result = review_test_result.get("results", {}).get("tester-1", {})
+                    if tester_result:
+                        test_files_list = self._extract_test_files(tester_result)
+                        for test_file in test_files_list:
+                            checklist.add_deliverable(
+                                "tests",
+                                f"Test: {test_file.name}",
+                                test_file,
+                                status="complete",
+                                metadata={"step_number": 7},
+                            )
+                            # Link tests to requirements
+                            for req_id in tracer.requirements.keys():
+                                tracer.add_trace(req_id, "tests", test_file)
+                    
                     # Notify step completions
                     if on_step_complete:
                         on_step_complete(6, step_6_name, "success")
@@ -513,6 +611,54 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     elif on_step_complete:
                         on_step_complete(6, step_6_name, "failed")
                         on_step_complete(7, step_7_name, "failed")
+
+        # Step 8: Comprehensive Verification (NEW)
+        verification_result = None
+        if not fast_mode:
+            step_8_name = "Comprehensive verification"
+            if on_step_start:
+                on_step_start(8, step_8_name)
+            try:
+                # Prepare requirements dict from tracer
+                requirements_dict = tracer.requirements or {}
+                
+                verification_result = await self._step_8_verification(
+                    workflow_id=workflow_id,
+                    requirements=requirements_dict,
+                    checklist=checklist,
+                    tracer=tracer,
+                    implemented_files=implemented_files_list,
+                    doc_manager=doc_manager,
+                )
+                
+                steps_executed.append("verification")
+                
+                # Handle gaps with loopback if needed
+                if not verification_result.get("complete") and verification_result.get("loopback_step"):
+                    loopback_result = await self._handle_verification_gaps(
+                        gaps=verification_result.get("gaps", []),
+                        current_step=8,
+                        checklist=checklist,
+                        tracer=tracer,
+                        workflow_state=workflow_state,
+                    )
+                    
+                    if loopback_result.get("loopback"):
+                        logger.warning(
+                            f"Workflow verification incomplete. "
+                            f"Loopback recommended to Step {loopback_result.get('loopback_step')}. "
+                            f"Gaps: {len(verification_result.get('gaps', []))} items"
+                        )
+                
+                if on_step_complete:
+                    status = "success" if verification_result.get("complete") else "warning"
+                    on_step_complete(8, step_8_name, status)
+            except Exception as e:
+                logger.warning(f"Step 8 verification failed: {e}")
+                if on_step_error:
+                    on_step_error(8, step_8_name, e)
+                elif on_step_complete:
+                    on_step_complete(8, step_8_name, "failed")
 
         # Step 8: Framework change detection and documentation update
         doc_update_result = None
@@ -576,6 +722,9 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             "context7": context7_info,  # Enhancement 3: Include Context7 detection info
             "evaluation": evaluation_result,  # Optional evaluation result
             "documentation": doc_update_result,  # Documentation update result
+            "verification": verification_result,  # Step 8 verification result
+            "checklist": checklist.to_dict() if not fast_mode else None,  # Deliverable checklist
+            "tracer": tracer.to_dict() if not fast_mode else None,  # Requirements tracer
         }
 
     def _enrich_implementer_context(
@@ -917,3 +1066,385 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 "error": str(e),
             }
 
+    def _extract_implemented_files(self, result: dict[str, Any]) -> list[Path]:
+        """Extract implemented file paths from implementation result.
+        
+        Args:
+            result: Implementation result dictionary
+            
+        Returns:
+            List of implemented file paths
+        """
+        files = []
+        
+        # Try to extract from results
+        implementer_result = result.get("results", {}).get("implementer-1", {})
+        if not implementer_result:
+            # Try direct access
+            implementer_result = result
+        
+        # Check for file paths in various formats
+        # Format 1: Direct file_path or file_paths
+        if "file_path" in implementer_result:
+            file_path_str = implementer_result["file_path"]
+            if isinstance(file_path_str, str):
+                file_path = self.project_root / file_path_str
+                if file_path.exists():
+                    files.append(file_path)
+        
+        if "file_paths" in implementer_result:
+            file_paths_list = implementer_result["file_paths"]
+            if isinstance(file_paths_list, list):
+                for fp in file_paths_list:
+                    if isinstance(fp, str):
+                        file_path = self.project_root / fp
+                    elif isinstance(fp, Path):
+                        file_path = fp
+                    else:
+                        continue
+                    if file_path.exists():
+                        files.append(file_path)
+        
+        # Format 2: Artifacts
+        artifacts = implementer_result.get("artifacts", [])
+        if isinstance(artifacts, list):
+            for artifact in artifacts:
+                if isinstance(artifact, dict) and "path" in artifact:
+                    file_path = Path(artifact["path"])
+                    if file_path.exists():
+                        files.append(file_path)
+        
+        # Format 3: Check result text for file paths
+        result_text = str(implementer_result.get("result", "")) or str(implementer_result.get("output", ""))
+        if result_text:
+            # Look for common file patterns
+            import re
+            # Match: file paths like "src/file.py" or "tapps_agents/..."
+            pattern = r"(?:^|\s)([a-zA-Z0-9_/\\-]+\.(py|yaml|yml|md|txt|json))\b"
+            matches = re.findall(pattern, result_text)
+            for match in matches[:10]:  # Limit to 10 files
+                file_path = self.project_root / match[0]
+                if file_path.exists() and file_path not in files:
+                    files.append(file_path)
+        
+        logger.debug(f"Extracted {len(files)} implemented files from result")
+        return files
+
+    def _extract_test_files(self, tester_result: dict[str, Any]) -> list[Path]:
+        """Extract test file paths from tester result.
+        
+        Args:
+            tester_result: Tester result dictionary
+            
+        Returns:
+            List of test file paths
+        """
+        files = []
+        
+        # Similar extraction logic as _extract_implemented_files
+        if "file_path" in tester_result:
+            file_path_str = tester_result["file_path"]
+            if isinstance(file_path_str, str):
+                file_path = self.project_root / file_path_str
+                if file_path.exists():
+                    files.append(file_path)
+        
+        if "file_paths" in tester_result:
+            file_paths_list = tester_result["file_paths"]
+            if isinstance(file_paths_list, list):
+                for fp in file_paths_list:
+                    if isinstance(fp, str):
+                        file_path = self.project_root / fp
+                    elif isinstance(fp, Path):
+                        file_path = fp
+                    else:
+                        continue
+                    if file_path.exists():
+                        files.append(file_path)
+        
+        # Check result text for test file patterns
+        result_text = str(tester_result.get("result", "")) or str(tester_result.get("output", ""))
+        if result_text:
+            import re
+            # Match test files: test_*.py or *_test.py
+            pattern = r"(?:^|\s)((?:test_|_test)[a-zA-Z0-9_/\\-]+\.py)\b"
+            matches = re.findall(pattern, result_text)
+            for match in matches[:10]:  # Limit to 10 files
+                file_path = self.project_root / match
+                if file_path.exists() and file_path not in files:
+                    files.append(file_path)
+        
+        logger.debug(f"Extracted {len(files)} test files from tester result")
+        return files
+
+    async def _step_8_verification(
+        self,
+        workflow_id: str,
+        requirements: dict[str, Any],
+        checklist: DeliverableChecklist,
+        tracer: RequirementsTracer,
+        implemented_files: list[Path],
+        doc_manager: WorkflowDocumentationManager | None = None,
+    ) -> dict[str, Any]:
+        """Verify all requirements are fully implemented.
+
+        Args:
+            workflow_id: Workflow ID
+            requirements: Requirements dict
+            checklist: DeliverableChecklist instance
+            tracer: RequirementsTracer instance
+            implemented_files: List of implemented files
+            doc_manager: Documentation manager
+
+        Returns:
+            Dictionary with verification results and gaps
+        """
+        logger.info("Step 8: Running comprehensive verification")
+
+        verification_results = {
+            "core_implementation": self._verify_core_code(implemented_files),
+            "related_files": self._verify_related_files(checklist, implemented_files),
+            "documentation": self._verify_documentation(checklist),
+            "tests": self._verify_tests(checklist),
+            "templates": self._verify_templates(checklist),
+            "requirements": tracer.verify_all_requirements(),
+        }
+
+        # Identify gaps
+        gaps = []
+        checklist_verification = checklist.verify_completeness()
+        gaps.extend(checklist_verification.get("gaps", []))
+
+        # Add requirement gaps
+        req_verification = verification_results["requirements"]
+        gaps.extend(req_verification.get("gaps", []))
+
+        # Determine loopback step
+        loopback_step = None
+        if gaps:
+            loopback_step = self._determine_loopback_step(gaps)
+
+        # Generate verification report
+        report = self._generate_verification_report(
+            verification_results, gaps, loopback_step
+        )
+
+        # Save verification report
+        if doc_manager:
+            doc_manager.save_step_documentation(
+                step_number=8,
+                content=report,
+                step_name="verification",
+            )
+
+        return {
+            "complete": len(gaps) == 0,
+            "gaps": gaps,
+            "verification_results": verification_results,
+            "loopback_step": loopback_step,
+            "report": report,
+        }
+
+    def _verify_core_code(self, implemented_files: list[Path]) -> dict[str, Any]:
+        """Verify core implementation exists."""
+        return {
+            "files_found": len(implemented_files),
+            "files": [str(f) for f in implemented_files],
+            "complete": len(implemented_files) > 0,
+        }
+
+    def _verify_related_files(
+        self, checklist: DeliverableChecklist, core_files: list[Path]
+    ) -> dict[str, Any]:
+        """Verify related files are discovered and updated."""
+        related_files = checklist.discover_related_files(
+            core_files, self.project_root
+        )
+        return {
+            "related_files_found": len(related_files),
+            "files": [str(f) for f in related_files],
+            "complete": True,  # Discovery is verification, not requirement
+        }
+
+    def _verify_documentation(self, checklist: DeliverableChecklist) -> dict[str, Any]:
+        """Verify documentation completeness."""
+        doc_items = checklist.checklist.get("documentation", [])
+        complete_count = sum(1 for item in doc_items if item["status"] == "complete")
+        return {
+            "total": len(doc_items),
+            "complete": complete_count,
+            "complete_ratio": complete_count / len(doc_items) if doc_items else 1.0,
+        }
+
+    def _verify_tests(self, checklist: DeliverableChecklist) -> dict[str, Any]:
+        """Verify test coverage."""
+        test_items = checklist.checklist.get("tests", [])
+        complete_count = sum(1 for item in test_items if item["status"] == "complete")
+        return {
+            "total": len(test_items),
+            "complete": complete_count,
+            "complete_ratio": complete_count / len(test_items) if test_items else 0.0,
+        }
+
+    def _verify_templates(self, checklist: DeliverableChecklist) -> dict[str, Any]:
+        """Verify templates are updated."""
+        template_items = checklist.checklist.get("templates", [])
+        complete_count = sum(1 for item in template_items if item["status"] == "complete")
+        return {
+            "total": len(template_items),
+            "complete": complete_count,
+            "complete_ratio": complete_count / len(template_items) if template_items else 1.0,
+        }
+
+    def _determine_loopback_step(self, gaps: list[dict[str, Any]]) -> int:
+        """Determine which step to loop back to based on gap types.
+
+        Args:
+            gaps: List of gap dictionaries
+
+        Returns:
+            Step number to loop back to (1-7)
+        """
+        gap_categories = set(gap.get("category", "") for gap in gaps)
+        gap_types = set()
+        for gap in gaps:
+            if "missing_types" in gap:
+                gap_types.update(gap["missing_types"])
+
+        # Determine loopback based on gap types
+        if "code" in gap_types or "core_code" in gap_categories:
+            return 5  # Loop back to implementation
+        if "tests" in gap_types or "tests" in gap_categories:
+            return 7  # Loop back to testing
+        if "docs" in gap_types or "documentation" in gap_categories:
+            return 4  # Loop back to design (or could be Step 9 documenter)
+        if "templates" in gap_categories:
+            return 5  # Loop back to implementation
+        if "related_files" in gap_categories:
+            return 5  # Loop back to implementation
+
+        # Default: loop back to planning if requirements missing
+        return 2
+
+    def _generate_verification_report(
+        self,
+        verification_results: dict[str, Any],
+        gaps: list[dict[str, Any]],
+        loopback_step: int | None,
+    ) -> str:
+        """Generate verification report in markdown format."""
+        report_lines = [
+            "# Step 8: Comprehensive Verification Report",
+            "",
+            "## Verification Results",
+            "",
+        ]
+
+        # Core implementation
+        core = verification_results.get("core_implementation", {})
+        report_lines.append(f"- **Core Implementation**: {core.get('files_found', 0)} files")
+
+        # Related files
+        related = verification_results.get("related_files", {})
+        report_lines.append(f"- **Related Files**: {related.get('related_files_found', 0)} files")
+
+        # Documentation
+        docs = verification_results.get("documentation", {})
+        report_lines.append(
+            f"- **Documentation**: {docs.get('complete', 0)}/{docs.get('total', 0)} complete"
+        )
+
+        # Tests
+        tests = verification_results.get("tests", {})
+        report_lines.append(
+            f"- **Tests**: {tests.get('complete', 0)}/{tests.get('total', 0)} complete"
+        )
+
+        # Requirements
+        reqs = verification_results.get("requirements", {})
+        report_lines.append(f"- **Requirements**: {'Complete' if reqs.get('complete') else 'Incomplete'}")
+
+        # Gaps
+        if gaps:
+            report_lines.extend([
+                "",
+                "## Gaps Found",
+                "",
+            ])
+            for gap in gaps:
+                category = gap.get("category", gap.get("requirement_id", "Unknown"))
+                item = gap.get("item", gap.get("missing_types", []))
+                report_lines.append(f"- **{category}**: {item}")
+
+        # Loopback decision
+        if loopback_step:
+            report_lines.extend([
+                "",
+                "## Loopback Decision",
+                "",
+                f"Gaps found. Loop back to **Step {loopback_step}** to fix issues.",
+            ])
+        else:
+            report_lines.extend([
+                "",
+                "## Status",
+                "",
+                "✅ All deliverables verified. Workflow complete.",
+            ])
+
+        return "\n".join(report_lines)
+
+    async def _handle_verification_gaps(
+        self,
+        gaps: list[dict[str, Any]],
+        current_step: int,
+        checklist: DeliverableChecklist,
+        tracer: RequirementsTracer,
+        workflow_state: dict[str, Any],
+        max_iterations: int = 3,
+    ) -> dict[str, Any]:
+        """Handle gaps found during verification.
+
+        Args:
+            gaps: List of gap dictionaries
+            current_step: Current step number
+            checklist: DeliverableChecklist instance
+            tracer: RequirementsTracer instance
+            workflow_state: Current workflow state
+            max_iterations: Maximum loopback iterations (default: 3)
+
+        Returns:
+            Dictionary with loopback decision and results
+        """
+        loopback_count = workflow_state.get("loopback_count", 0)
+
+        if loopback_count >= max_iterations:
+            logger.warning(
+                f"Maximum loopback iterations ({max_iterations}) reached. Stopping."
+            )
+            return {
+                "loopback": False,
+                "reason": "max_iterations_reached",
+                "loopback_count": loopback_count,
+            }
+
+        loopback_step = self._determine_loopback_step(gaps)
+
+        if loopback_step < current_step:
+            logger.info(
+                f"Gaps found: {len(gaps)} items missing. "
+                f"Looping back to Step {loopback_step} (iteration {loopback_count + 1})"
+            )
+            return {
+                "loopback": True,
+                "loopback_step": loopback_step,
+                "loopback_count": loopback_count + 1,
+                "gaps": gaps,
+            }
+
+        # Gaps can be fixed in current or next step
+        return {
+            "loopback": False,
+            "reason": "gaps_fixable_in_current_step",
+            "gaps": gaps,
+        }

@@ -838,10 +838,6 @@ class CleanupConfig(BaseModel):
 class WorkflowConfig(BaseModel):
     """Configuration for workflow execution"""
 
-    auto_execution_enabled: bool = Field(
-        default=True,
-        description="Enable Background Agent auto-execution for workflow steps. Defaults to True for better user experience.",
-    )
     polling_interval: float = Field(
         default=5.0,
         ge=1.0,
@@ -851,11 +847,6 @@ class WorkflowConfig(BaseModel):
         default=3600.0,
         ge=1.0,
         description="Maximum time to wait for step completion (seconds)",
-    )
-    duration_threshold_seconds: float = Field(
-        default=30.0,
-        ge=1.0,
-        description="Task duration threshold in seconds. Tasks estimated to take longer than this will use background agents. Tasks shorter than this will use direct execution.",
     )
     state_persistence: StatePersistenceConfig = Field(
         default_factory=StatePersistenceConfig,

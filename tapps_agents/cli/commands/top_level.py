@@ -217,7 +217,7 @@ def handle_create_command(args: object) -> None:
         )
 
     # Cursor-first default:
-    # - Workflows need Cursor Skills/Background Agents to produce artifacts for LLM-driven steps.
+    # - Workflows need Cursor Skills to produce artifacts for LLM-driven steps.
     # - Users can still force headless mode by setting TAPPS_AGENTS_MODE=headless explicitly.
     if cursor_mode_flag:
         os.environ["TAPPS_AGENTS_MODE"] = "cursor"
@@ -227,7 +227,7 @@ def handle_create_command(args: object) -> None:
     if feedback.verbosity.value != "quiet":
         mode = os.environ.get("TAPPS_AGENTS_MODE", "headless")
         if mode == "cursor":
-            safe_print("[OK] Cursor-first mode: workflows use Cursor Skills / Background Agents (or file-based Skill commands).")
+            safe_print("[OK] Cursor-first mode: workflows use Cursor Skills (or file-based Skill commands).")
             safe_print("     To force local-only execution: set TAPPS_AGENTS_MODE=headless (note: LLM steps won't execute without Cursor Skills).")
         else:
             safe_print("[WARN] Headless mode: local-only execution. LLM-driven workflow steps will not auto-generate artifacts without Cursor Skills.")
@@ -785,7 +785,7 @@ def handle_workflow_command(args: object) -> None:
         
         from ...core.unicode_safe import safe_print
         if is_cursor_mode():
-            safe_print("[OK] Cursor-first mode: workflow will use Cursor Skills / Background Agents (or file-based Skill commands).")
+            safe_print("[OK] Cursor-first mode: workflow will use Cursor Skills (or file-based Skill commands).")
             safe_print("     If auto-execution is disabled, workflow will wait for manual execution.\n")
         else:
             safe_print("[WARN] Headless mode: local-only execution. LLM-driven workflow steps will not auto-generate artifacts without Cursor Skills.")
@@ -1045,168 +1045,6 @@ def handle_governance_command(args: object) -> None:
             sys.exit(1)
 
 
-def handle_auto_execution_command(args: object) -> None:
-    """Handle auto-execution monitoring command (DEPRECATED - Background Agents removed)"""
-    import sys
-    
-    print("Error: Background Agents have been removed from the framework.", file=sys.stderr)
-    print("The 'auto-exec' command is no longer available.", file=sys.stderr)
-    print("Workflows now use direct execution via Cursor Skills.", file=sys.stderr)
-    sys.exit(1)
-
-    project_root = Path.cwd()
-
-    if command == "status":
-        # Show current execution status
-        from ...workflow.execution_metrics import ExecutionMetricsCollector
-
-        format_type = getattr(args, "format", "text")
-        workflow_id = getattr(args, "workflow_id", None)
-
-        collector = ExecutionMetricsCollector(project_root=project_root)
-        metrics = collector.get_metrics(workflow_id=workflow_id, limit=10)
-
-        if format_type == "json":
-            print(json.dumps([m.to_dict() for m in metrics], indent=2))
-        else:
-            if not metrics:
-                print("No recent executions found.")
-            else:
-                print("Recent Executions:")
-                print("-" * 80)
-                for metric in metrics:
-                    status_icon = "[OK]" if metric.status == "success" else "[FAIL]"
-                    print(f"{status_icon} {metric.workflow_id}/{metric.step_id}")
-                    print(f"   Command: {metric.command}")
-                    print(f"   Status: {metric.status}")
-                    print(f"   Duration: {metric.duration_ms:.0f}ms")
-                    if metric.retry_count > 0:
-                        print(f"   Retries: {metric.retry_count}")
-                    print()
-
-    elif command == "history":
-        # Show execution history
-        from ...workflow.execution_metrics import ExecutionMetricsCollector
-
-        format_type = getattr(args, "format", "text")
-        workflow_id = getattr(args, "workflow_id", None)
-        limit = getattr(args, "limit", 20)
-
-        collector = ExecutionMetricsCollector(project_root=project_root)
-        metrics = collector.get_metrics(workflow_id=workflow_id, limit=limit)
-
-        if format_type == "json":
-            print(json.dumps([m.to_dict() for m in metrics], indent=2))
-        else:
-            if not metrics:
-                print("No execution history found.")
-            else:
-                print(f"Execution History (showing {len(metrics)} most recent):")
-                print("=" * 80)
-                for metric in metrics:
-                    status_icon = "[OK]" if metric.status == "success" else "[FAIL]"
-                    print(f"{status_icon} {metric.started_at}")
-                    print(f"   Workflow: {metric.workflow_id}")
-                    print(f"   Step: {metric.step_id}")
-                    print(f"   Command: {metric.command}")
-                    print(f"   Status: {metric.status}")
-                    print(f"   Duration: {metric.duration_ms:.0f}ms")
-                    if metric.error_message:
-                        print(f"   Error: {metric.error_message}")
-                    print()
-
-    elif command == "metrics":
-        # Show metrics summary
-        from ...workflow.execution_metrics import ExecutionMetricsCollector
-
-        format_type = getattr(args, "format", "text")
-
-        collector = ExecutionMetricsCollector(project_root=project_root)
-        summary = collector.get_summary()
-
-        if format_type == "json":
-            print(json.dumps(summary, indent=2))
-        else:
-            print("Execution Metrics Summary")
-            print("=" * 80)
-            print(f"Total Executions: {summary['total_executions']}")
-            print(f"Success Rate: {summary['success_rate']:.1%}")
-            print(f"Average Duration: {summary['average_duration_ms']:.0f}ms")
-            print(f"Total Retries: {summary['total_retries']}")
-            if summary.get("by_status"):
-                print("\nBy Status:")
-                for status, count in summary["by_status"].items():
-                    if count > 0:
-                        print(f"  {status}: {count}")
-
-    elif command == "health":
-        # Run health checks
-        from ...workflow.health_checker import HealthChecker
-
-        format_type = getattr(args, "format", "text")
-
-        checker = HealthChecker(project_root=project_root)
-        results = checker.check_all()
-        overall = checker.get_overall_status()
-
-        if format_type == "json":
-            print(json.dumps({
-                "overall_status": overall,
-                "checks": [
-                    {
-                        "name": r.name,
-                        "status": r.status,
-                        "message": r.message,
-                        "details": r.details,
-                    }
-                    for r in results
-                ],
-            }, indent=2))
-        else:
-            status_icon = "[OK]" if overall == "healthy" else "[WARN]" if overall == "degraded" else "[FAIL]"
-            print(f"{status_icon} Overall Status: {overall.upper()}")
-            print("=" * 80)
-            for result in results:
-                icon = "[OK]" if result.status == "healthy" else "[WARN]" if result.status == "degraded" else "[FAIL]"
-                print(f"{icon} {result.name}: {result.status.upper()}")
-                print(f"   {result.message}")
-                if result.details:
-                    for key, value in result.details.items():
-                        print(f"   {key}: {value}")
-                print()
-
-    elif command == "debug":
-        # Enable/disable debug mode
-        from ...workflow.auto_execution_config import AutoExecutionConfigManager
-
-        action = getattr(args, "action", "status")
-        manager = AutoExecutionConfigManager(project_root=project_root)
-        manager.load()  # Load config (may be used in future)
-
-        if action == "on":
-            # Enable debug logging
-            import logging
-            logging.getLogger("tapps_agents.workflow").setLevel(logging.DEBUG)
-            print("Debug mode enabled (verbose logging)")
-        elif action == "off":
-            # Disable debug logging
-            import logging
-            logging.getLogger("tapps_agents.workflow").setLevel(logging.INFO)
-            print("Debug mode disabled")
-        else:  # status
-            # Show debug status
-            import logging
-            level = logging.getLogger("tapps_agents.workflow").level
-            is_debug = level <= logging.DEBUG
-            print(f"Debug mode: {'ON' if is_debug else 'OFF'}")
-            print(f"Log level: {logging.getLevelName(level)}")
-
-    else:
-        print(f"Error: Unknown command: {command}", file=sys.stderr)
-        sys.exit(1)
-
-
-# Background Agent config command removed - Background Agents are no longer used
 
 
 def handle_skill_command(args: object) -> None:
@@ -1833,7 +1671,6 @@ def _print_next_steps() -> None:
     print("Why Init Matters:")
     print("  • Cursor Skills: Enables @agent-name commands in Cursor chat")
     print("  • Cursor Rules: Provides context to AI about your project")
-    print("  • Background Agents: Auto-executes quality checks and workflows")
     print("  • Context7 MCP: Library documentation lookup (configured in .cursor/mcp.json)")
     print("  • Experts + RAG: Business-domain knowledge for better code generation")
     print("    - Built-in technical experts: Auto-loaded from tech stack")

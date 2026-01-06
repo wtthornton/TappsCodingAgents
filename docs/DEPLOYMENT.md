@@ -35,7 +35,7 @@ python -m tapps_agents.cli --help
 
 ## Cursor-first note
 
-When using TappsCodingAgents inside Cursor (Skills / Background Agents), Cursor uses the developer’s configured model.
+When using TappsCodingAgents inside Cursor (Skills), Cursor uses the developer's configured model.
 The framework runs tools-only in that environment.
 
 If you explicitly want MAL for a headless CLI run, set:

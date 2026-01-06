@@ -38,11 +38,6 @@ from tests.e2e.fixtures.workflow_runner import (
     WorkflowRunner,
 )
 
-# Import fixtures from background_agent_fixtures for auto-execution tests
-from tests.fixtures.background_agent_fixtures import (
-    auto_execution_config_file,
-    temp_project_root,
-)
 
 
 @pytest.fixture

@@ -7,7 +7,7 @@ Discovers, loads, and manages custom Skills alongside built-in Skills.
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 import yaml
@@ -15,7 +15,7 @@ import yaml
 
 @dataclass
 class SkillMetadata:
-    """Metadata for a Skill."""
+    """Metadata for a Skill with enhanced fields."""
 
     name: str
     path: Path
@@ -25,6 +25,10 @@ class SkillMetadata:
     allowed_tools: list[str] | None = None
     model_profile: str | None = None
     version: str | None = None
+    # Enhanced metadata fields
+    author: str | None = None
+    category: str | None = None
+    tags: list[str] = field(default_factory=list)
 
 
 class SkillRegistry:
@@ -224,9 +228,91 @@ class CustomSkillLoader:
 
         return custom_skills
 
+    def _get_package_skills_dir(self) -> Path:
+        """Get package skills directory (SYSTEM scope).
+        
+        Returns:
+            Path to package skills directory
+        """
+        from .init_project import _resource_at
+        
+        packaged_skills = _resource_at("claude", "skills")
+        if packaged_skills is not None and packaged_skills.is_dir():
+            return packaged_skills
+        
+        # Fallback: framework source directory
+        current_file = Path(__file__)
+        framework_root = current_file.parent.parent.parent
+        return framework_root / "tapps_agents" / "resources" / "claude" / "skills"
+
+    def _find_git_root(self, start_path: Path) -> Path:
+        """Find git root directory starting from start_path.
+        
+        Args:
+            start_path: Starting directory path
+            
+        Returns:
+            Git root directory, or start_path if not in git repo
+        """
+        current = start_path.resolve()
+        while current != current.parent:
+            if (current / ".git").exists():
+                return current
+            current = current.parent
+        return start_path
+
+    def discover_skills_multi_scope(self, project_root: Path) -> list[SkillMetadata]:
+        """Discover skills from multiple scopes with precedence.
+        
+        Scopes (in order of precedence):
+        1. REPO (current): project_root/.claude/skills/
+        2. REPO (parent): project_root/../.claude/skills/
+        3. REPO (git root): git_root/.claude/skills/
+        4. USER: ~/.tapps-agents/skills/
+        5. SYSTEM: package_skills_dir/
+        
+        Precedence: REPO > USER > SYSTEM (first scope wins)
+        
+        Args:
+            project_root: Project root directory
+            
+        Returns:
+            List of discovered Skill metadata
+        """
+        git_root = self._find_git_root(project_root)
+        
+        scopes = [
+            # REPO scopes (highest priority)
+            project_root / ".claude" / "skills",
+            project_root.parent / ".claude" / "skills",
+            git_root / ".claude" / "skills",
+            
+            # USER scope (personal skills)
+            Path.home() / ".tapps-agents" / "skills",
+            
+            # SYSTEM scope (built-in, lowest priority)
+            self._get_package_skills_dir(),
+        ]
+        
+        discovered_skills = {}
+        for scope in scopes:
+            if scope.exists() and scope.is_dir():
+                for skill_dir in scope.iterdir():
+                    if skill_dir.is_dir() and (skill_dir / "SKILL.md").exists():
+                        # REPO skills override USER/SYSTEM
+                        if skill_dir.name not in discovered_skills:
+                            metadata = self.parse_skill_metadata(skill_dir)
+                            if metadata:
+                                discovered_skills[skill_dir.name] = metadata
+        
+        return list(discovered_skills.values())
+
     def parse_skill_metadata(self, skill_dir: Path) -> SkillMetadata | None:
         """
-        Parse Skill metadata from SKILL.md file.
+        Parse Skill metadata from SKILL.md file using progressive disclosure.
+        
+        Only reads first 2KB of SKILL.md (enough for YAML frontmatter).
+        Full content is loaded by Cursor when skill is invoked.
 
         Args:
             skill_dir: Path to Skill directory
@@ -239,7 +325,9 @@ class CustomSkillLoader:
             return None
 
         try:
-            content = skill_file.read_text(encoding="utf-8")
+            # PROGRESSIVE DISCLOSURE: Read only first 2KB
+            # Frontmatter is always at top, typically <500 bytes
+            content = skill_file.read_text(encoding="utf-8")[:2048]
 
             # Parse YAML frontmatter
             frontmatter_match = re.match(
@@ -254,15 +342,22 @@ class CustomSkillLoader:
             if not isinstance(metadata, dict):
                 return None
 
-            # Extract metadata
+            # Extract metadata (existing + enhanced fields)
             name = metadata.get("name", skill_dir.name)
             description = metadata.get("description")
+            version = metadata.get("version")
+            author = metadata.get("author")
+            category = metadata.get("category")
+            tags = metadata.get("tags", [])
+            if isinstance(tags, str):
+                # Parse comma-separated string
+                tags = [tag.strip() for tag in tags.split(",")]
+            
             allowed_tools = metadata.get("allowed-tools")
             if isinstance(allowed_tools, str):
                 # Parse comma-separated string
                 allowed_tools = [tool.strip() for tool in allowed_tools.split(",")]
             model_profile = metadata.get("model_profile")
-            version = metadata.get("version")
 
             # Determine if built-in or custom
             builtin_names = set(self.get_builtin_skill_names())
@@ -275,9 +370,12 @@ class CustomSkillLoader:
                 is_builtin=is_builtin,
                 is_custom=is_custom,
                 description=description,
+                version=version,
+                author=author,
+                category=category,
+                tags=tags,
                 allowed_tools=allowed_tools,
                 model_profile=model_profile,
-                version=version,
             )
         except Exception:
             # Parsing failed, return None
@@ -365,7 +463,7 @@ def get_skill_registry() -> SkillRegistry:
 
 def initialize_skill_registry(project_root: Path | None = None) -> SkillRegistry:
     """
-    Initialize Skill registry with all Skills (built-in and custom).
+    Initialize Skill registry with multi-scope discovery.
 
     Args:
         project_root: Project root directory (defaults to current directory)
@@ -376,12 +474,16 @@ def initialize_skill_registry(project_root: Path | None = None) -> SkillRegistry
     registry = get_skill_registry()
     loader = CustomSkillLoader(project_root=project_root)
 
-    # Register built-in Skill names
+    # Register built-in Skill names (for is_builtin detection)
     builtin_names = loader.get_builtin_skill_names()
     registry.register_builtin_skills(builtin_names)
 
-    # Load and register all Skills
-    all_skills = loader.load_all_skills()
+    # Use multi-scope discovery instead of load_all_skills()
+    if project_root is None:
+        project_root = Path.cwd()
+    all_skills = loader.discover_skills_multi_scope(project_root)
+
+    # Register all discovered skills
     for skill in all_skills:
         priority = "custom" if skill.is_custom else "builtin"
         registry.register_skill(skill, priority=priority)

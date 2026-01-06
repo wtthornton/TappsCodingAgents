@@ -1,174 +1,189 @@
-# Step 1: Enhanced Prompt - Fix Suggestions Generation Bug
+# Step 1: Enhanced Prompt - Codebase Context Injection Implementation
 
 ## Original Prompt
-Fix the bug where `linting_score`, `type_checking_score`, and `duplication_score` return empty suggestions arrays even when scores indicate areas for improvement.
+
+Implement codebase context injection for the enhancer agent's `_stage_codebase_context` method. Currently, this method returns placeholder data. According to the analysis document (ANALYSIS_PROMPT_ENHANCEMENT_COMPARISON.md), this is the HIGH PRIORITY recommendation that provides real value for brownfield development.
 
 ## Enhanced Prompt with Requirements Analysis
 
-### Problem Statement
-The `ScoreValidator._generate_category_suggestions()` method in `tapps_agents/agents/reviewer/score_validator.py` is missing implementation for three quality metric categories:
-- `linting` (Ruff/ESLint issues)
-- `type_checking` (mypy/TypeScript errors)
-- `duplication` (jscpd duplicate code)
+### Functional Requirements
 
-When these scores are below threshold (e.g., 5.0/10), users receive scores indicating "acceptable but could be improved" but no actionable suggestions to address the issues.
+1. **Codebase Search Integration**
+   - Use semantic search to find related files based on prompt analysis
+   - Search by detected domains (e.g., "authentication", "payments", "user-management")
+   - Search by detected technologies (e.g., "FastAPI", "SQLAlchemy", "pytest")
+   - Limit results to top 10 most relevant files
+   - Support both file path and content-based search
 
-### Requirements Analysis
+2. **Pattern Extraction**
+   - Extract existing patterns from related files
+   - Identify common code patterns (e.g., API route patterns, service patterns, test patterns)
+   - Extract architectural patterns (e.g., dependency injection, repository pattern)
+   - Identify coding conventions and style patterns
 
-#### Functional Requirements
-1. **FR1: Add Missing Category Cases**
-   - Add `elif category == "linting"` case to `_generate_category_suggestions()`
-   - Add `elif category == "type_checking"` case to `_generate_category_suggestions()`
-   - Add `elif category == "duplication"` case to `_generate_category_suggestions()`
-   - Each case must return non-empty list of suggestions when score < 7.0
+3. **Cross-Reference Detection**
+   - Find files that import or reference related files
+   - Identify dependency relationships between files
+   - Map module dependencies and imports
+   - Track file usage across the codebase
 
-2. **FR2: Language-Specific Suggestions**
-   - Python: Include Ruff and mypy-specific guidance
-   - TypeScript/JavaScript: Include ESLint and TypeScript compiler guidance
-   - React: Include React-specific patterns for duplication
+4. **Context Summary Generation**
+   - Generate human-readable summary of codebase context
+   - Include related files list with brief descriptions
+   - Document existing patterns for consistency
+   - Highlight cross-references and dependencies
+   - Format context for inclusion in enhanced prompts
 
-3. **FR3: Suggestion Quality**
-   - Suggestions must be actionable (specific commands, tools, practices)
-   - Suggestions must reference actual tools used (Ruff, mypy, jscpd, ESLint)
-   - Suggestions must include improvement thresholds
+### Non-Functional Requirements
 
-#### Non-Functional Requirements
-1. **NFR1: Backward Compatibility**
-   - Must not break existing category suggestions
-   - Must not change API signatures
-   - Must maintain existing behavior for all other categories
+1. **Performance**
+   - Codebase search should complete within 5 seconds for typical projects
+   - Pattern extraction should be efficient (avoid full codebase scans)
+   - Cache search results when possible
+   - Limit file reads to necessary files only
 
-2. **NFR2: Code Quality**
-   - Follow existing code style and patterns
-   - Add type hints where appropriate
-   - Include docstrings for new logic
+2. **Reliability**
+   - Gracefully handle missing files or permission errors
+   - Provide fallback when codebase search fails
+   - Return empty context rather than failing the entire enhancement
+   - Log warnings for search failures without breaking workflow
 
-3. **NFR3: Test Coverage**
-   - Unit tests for each new category case
-   - Integration tests for full scoring → validation flow
-   - Edge case tests (score = 0.0, 5.0, 7.0, 10.0)
+3. **Maintainability**
+   - Use existing codebase_search tool if available
+   - Follow existing enhancer agent patterns
+   - Integrate with existing stage pipeline seamlessly
+   - Support configuration for search parameters
 
-### Architecture Guidance
+### Technical Constraints
 
-#### System Context
-- **Component**: `ScoreValidator` class in `score_validator.py`
-- **Method**: `_generate_category_suggestions()` (private method)
-- **Dependencies**: `Language` enum from `core.language_detector`
-- **Integration Points**: 
-  - Called by `explain_score()` → `validate_score()` → `validate_all_scores()`
-  - Used by `CodeScorer.score_file()` via validation pipeline
+1. **Integration Points**
+   - Must work with existing `_stage_codebase_context` method signature
+   - Must use `analysis` dict from previous stage (contains domains, technologies)
+   - Must return dict with keys: `related_files`, `existing_patterns`, `cross_references`, `codebase_context`, `file_count`
+   - Must be async to match other stage methods
 
-#### Design Patterns
-- **Strategy Pattern**: Each category has its own suggestion generation strategy
-- **Template Method**: Base structure with category-specific implementations
-- **Language Adapter**: Language-specific suggestions adapt to tool ecosystem
+2. **Dependencies**
+   - Use codebase_search tool (if available) or semantic search capabilities
+   - Leverage existing file system utilities
+   - Use project config for project root path
+   - Follow existing logging patterns
 
-#### Implementation Approach
-1. **Additive Changes Only**: Add new `elif` branches, don't modify existing logic
-2. **Consistent Structure**: Follow existing pattern (base suggestions + language-specific)
-3. **Reusable Patterns**: Extract common suggestion patterns where possible
+3. **Error Handling**
+   - Catch and log exceptions without breaking enhancement pipeline
+   - Return valid dict structure even on errors
+   - Provide meaningful error messages in logs
 
-### Codebase Context
+### Assumptions
 
-#### Related Files
-- `tapps_agents/agents/reviewer/score_validator.py` - Main implementation file
-- `tapps_agents/agents/reviewer/scoring.py` - Calls validator, provides context
-- `tapps_agents/agents/reviewer/agent.py` - Formats review output
-- `tests/unit/test_scoring.py` - Test coverage location
+1. Codebase search tool or semantic search capability exists or can be implemented
+2. Project root is available via `self.config.project_root`
+3. Related files can be identified through semantic search or pattern matching
+4. Pattern extraction can be done through code analysis or heuristics
+5. Cross-references can be found through import/usage analysis
 
-#### Existing Patterns
-```python
-# Current pattern for other categories:
-elif category == "test_coverage":
-    suggestions.extend([
-        f"Increase test coverage to at least {self.GOOD_THRESHOLD*10:.0f}%",
-        "Add unit tests for critical functions",
-        "Include edge cases and error handling in tests",
-        "Add integration tests for important workflows",
-    ])
+## Architecture Guidance
+
+### System Design
+
+The codebase context injection should:
+
+1. **Search Strategy**
+   - Use semantic search for domain/technology-based file discovery
+   - Fall back to keyword search if semantic search unavailable
+   - Prioritize files in main source directories (src/, tapps_agents/, etc.)
+   - Filter out test files, generated files, and build artifacts
+
+2. **Pattern Extraction Strategy**
+   - Analyze file structure and imports for architectural patterns
+   - Extract function/class naming conventions
+   - Identify common code structures (routers, services, models)
+   - Document patterns in structured format
+
+3. **Cross-Reference Strategy**
+   - Parse import statements to build dependency graph
+   - Track file usage through static analysis
+   - Identify related modules and packages
+   - Map relationships between components
+
+### Design Patterns
+
+- **Strategy Pattern**: Different search strategies (semantic, keyword, pattern-based)
+- **Adapter Pattern**: Adapt codebase_search tool to enhancer agent interface
+- **Template Method**: Standard pattern extraction workflow
+- **Facade Pattern**: Simplify complex codebase analysis operations
+
+### Technology Recommendations
+
+- Use existing `codebase_search` tool if available (from Cursor tools)
+- Leverage Python's `ast` module for code analysis
+- Use `pathlib` for file system operations
+- Consider `grep` or `ripgrep` for pattern matching if needed
+
+## Quality Standards
+
+### Code Quality
+- Follow existing enhancer agent code style
+- Maintain async/await patterns
+- Use type hints for all methods
+- Add comprehensive docstrings
+- Include error handling and logging
+
+### Testing Requirements
+- Unit tests for each helper method
+- Integration tests for full codebase context stage
+- Test error handling and edge cases
+- Test with various project structures
+- Verify performance requirements
+
+### Documentation
+- Document search strategies
+- Explain pattern extraction algorithms
+- Provide examples of generated context
+- Update enhancer agent documentation
+
+## Implementation Strategy
+
+### Phase 1: Basic Implementation
+1. Implement `_find_related_files` method using codebase_search
+2. Implement basic pattern extraction
+3. Implement cross-reference detection
+4. Generate context summary
+
+### Phase 2: Enhancement
+1. Add caching for search results
+2. Improve pattern extraction accuracy
+3. Add configuration options
+4. Optimize performance
+
+### Phase 3: Integration
+1. Integrate with synthesis stage
+2. Test with real prompts
+3. Verify context quality
+4. Update documentation
+
+## Expected Output Format
+
+The enhanced prompt should include:
+
+```markdown
+## Codebase Context
+
+### Related Files
+- `tapps_agents/core/codebase_search.py` - Codebase search utilities
+- `tapps_agents/agents/enhancer/agent.py` - Enhancer agent implementation
+- ...
+
+### Existing Patterns
+- API routes follow FastAPI router pattern
+- Services use dependency injection
+- Tests use pytest fixtures
+- ...
+
+### Cross-References
+- `enhancer/agent.py` imports `codebase_search` from `core`
+- `build_orchestrator.py` uses enhanced prompts from enhancer
+- ...
+
+### Context Summary
+[Human-readable summary of codebase context relevant to the prompt]
 ```
-
-#### Tool Integration Points
-- `CodeScorer.get_ruff_issues()` - Returns Ruff diagnostics (available but not used in suggestions)
-- `CodeScorer.get_mypy_errors()` - Returns mypy errors (available but not used in suggestions)
-- `CodeScorer.get_duplication_report()` - Returns jscpd report (available but not used in suggestions)
-
-### Quality Standards
-
-#### Code Quality Thresholds
-- **Complexity Score**: Maintain < 5.0 (current code is simple)
-- **Security Score**: Maintain ≥ 8.0 (no security concerns)
-- **Maintainability Score**: Maintain ≥ 7.0 (follow existing patterns)
-- **Test Coverage**: Achieve ≥ 80% for new code
-- **Linting Score**: Achieve ≥ 9.0 (fix all Ruff issues)
-- **Type Checking Score**: Achieve ≥ 9.0 (fix all mypy errors)
-
-#### Best Practices
-- Follow PEP 8 for Python code
-- Use type hints for all function parameters and returns
-- Add docstrings for all new methods
-- Write tests before implementation (TDD approach)
-- Keep functions focused and under 50 lines
-- Use descriptive variable names
-
-### Expert Guidance
-
-#### Code Quality Expert
-- Suggestions should be specific and actionable
-- Reference actual tool commands users can run
-- Include improvement thresholds (e.g., "aim for < 3% duplication")
-- Prioritize high-impact, low-effort suggestions
-
-#### Python Expert
-- Ruff is the modern Python linter (replaces flake8, pylint)
-- mypy is the standard Python type checker
-- jscpd works for Python but is primarily a JavaScript tool
-- Use `typing` module for type hints (Python 3.9+ can use built-in types)
-
-#### TypeScript Expert
-- ESLint is the standard JavaScript/TypeScript linter
-- TypeScript compiler provides type checking
-- jscpd is well-suited for JavaScript/TypeScript duplication detection
-- Enable strict mode in tsconfig.json for better type safety
-
-### Success Criteria
-
-1. ✅ All three categories (`linting`, `type_checking`, `duplication`) generate suggestions when score < 7.0
-2. ✅ Suggestions are language-specific (Python vs TypeScript/JavaScript)
-3. ✅ Suggestions reference actual tools (Ruff, mypy, jscpd, ESLint)
-4. ✅ No regression in existing category suggestions
-5. ✅ Unit tests pass for all new cases
-6. ✅ Integration tests verify suggestions appear in review output
-
-### Implementation Constraints
-
-- **Time Constraint**: Critical fix, should be completed quickly
-- **Risk Tolerance**: Low - additive changes only, no breaking modifications
-- **Dependencies**: None - uses existing Language enum and patterns
-- **Backward Compatibility**: Must maintain 100% backward compatibility
-
-### Enhanced Specification
-
-**Implement missing suggestion generation for `linting`, `type_checking`, and `duplication` categories in `ScoreValidator._generate_category_suggestions()` method.**
-
-**Requirements:**
-1. Add three new `elif` branches following existing pattern
-2. Include base suggestions applicable to all languages
-3. Add language-specific suggestions for Python and TypeScript/JavaScript/React
-4. Reference actual tools (Ruff, mypy, jscpd, ESLint, TypeScript compiler)
-5. Include actionable commands users can run
-6. Maintain consistency with existing suggestion format
-7. Add comprehensive unit tests
-8. Verify no regression in existing functionality
-
-**Quality Gates:**
-- All new code must pass linting (Ruff) with score ≥ 9.0
-- All new code must pass type checking (mypy) with score ≥ 9.0
-- Test coverage must be ≥ 80% for new code
-- Overall code quality score must be ≥ 75/100
-
-**Deliverables:**
-1. Updated `score_validator.py` with three new category cases
-2. Unit tests in `test_scoring.py` or new test file
-3. Integration test verifying suggestions appear in review output
-4. Documentation update if needed

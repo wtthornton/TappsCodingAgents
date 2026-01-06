@@ -74,9 +74,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Improved workflow worktree management with automatic branch cleanup
 
 ### Changed
-- **Background Agents** - Made background agents opt-in instead of default in init/install
-  - Users must explicitly enable background agents during initialization
-  - Improved user control over automatic workflow execution
+- **Background Agents** - Removed background agents from the framework
+  - Background Agents have been completely removed
+  - Workflows now use direct execution via Cursor Skills only
+  - All background agent configuration, code, and documentation removed
 - **Command Documentation Coverage** - Improved documentation for Priority 1-3 commands
   - Enhanced command reference documentation
   - Better coverage of command options and usage patterns

@@ -46,7 +46,7 @@ from .worktree_manager import WorktreeManager
 
 class CursorWorkflowExecutor:
     """
-    Cursor-native workflow executor that uses Skills and Background Agents.
+    Cursor-native workflow executor that uses Skills.
     
     This executor is used when running in Cursor mode (TAPPS_AGENTS_MODE=cursor).
     It invokes Cursor Skills for LLM operations.
@@ -142,27 +142,7 @@ class CursorWorkflowExecutor:
             compression = False
         self.state_manager = AdvancedStateManager(state_dir, compression=compression)
         
-        # Initialize Background Agent auto-executor (Epic 7)
-        # Load config to check if auto-execution is enabled
-        # Default to True for better user experience (can be overridden by config)
-        from ..core.config import load_config
-        config = load_config()
-        
-        # If auto_mode is True (from --auto flag), force enable auto-execution
-        # Otherwise use config setting (defaults to True)
-        if auto_mode:
-            self.auto_execution_enabled = True
-            # Log that --auto flag is forcing auto-execution
-            import logging
-            logger = logging.getLogger(__name__)
-            logger.info(
-                "Auto-execution FORCED ENABLED by --auto flag (overriding config)",
-                extra={"auto_mode": True, "auto_execution_enabled": True}
-            )
-        else:
-            self.auto_execution_enabled = config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled is not None else True
-        
-        # Background Agent auto-executor removed - always use direct execution/Skills
+        # Always use direct execution via Skills (Background Agents removed)
         
         # Initialize marker writer for durable step completion tracking
         self.marker_writer = MarkerWriter(project_root=self.project_root)
@@ -217,32 +197,7 @@ class CursorWorkflowExecutor:
         self.workflow = workflow
         
         # Check workflow metadata for auto-execution override (per-workflow config)
-        # If auto_mode is True (from --auto flag), force enable auto-execution
-        if self.auto_mode:
-            self.auto_execution_enabled_workflow = True
-            if self.logger:
-                self.logger.info(
-                    "Auto-execution FORCED ENABLED for this workflow by --auto flag",
-                    extra={
-                        "auto_mode": True,
-                        "auto_execution_enabled_workflow": True,
-                        "auto_execution_enabled": self.auto_execution_enabled,
-                    }
-                )
-        elif workflow.metadata and "auto_execution" in workflow.metadata:
-            self.auto_execution_enabled_workflow = bool(workflow.metadata["auto_execution"])
-            if self.logger:
-                self.logger.info(
-                    f"Auto-execution set from workflow metadata: {self.auto_execution_enabled_workflow}",
-                    extra={
-                        "auto_execution_enabled_workflow": self.auto_execution_enabled_workflow,
-                        "auto_execution_enabled": self.auto_execution_enabled,
-                    }
-                )
-        else:
-            self.auto_execution_enabled_workflow = None  # Use global config
-        
-        # Background Agent auto-executor removed - always use direct execution/Skills
+        # Always use direct execution via Skills (Background Agents removed)
         
         # Use consistent workflow_id format: {workflow.id}-{timestamp}
         workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
@@ -1550,7 +1505,7 @@ class CursorWorkflowExecutor:
                 artifacts=artifacts_list,
             )
 
-            # Invoke Skill via SkillInvoker (creates command files for Background Agents)
+            # Invoke Skill via SkillInvoker (direct execution)
             result = await self.skill_invoker.invoke_skill(
                 agent_name=agent_name,
                 action=action,
@@ -1560,7 +1515,7 @@ class CursorWorkflowExecutor:
                 state=self.state,
             )
 
-            # Wait for Skill to complete (Background Agents execute automatically)
+            # Wait for Skill to complete (direct execution)
             # Poll for artifacts or completion marker
             import asyncio
 

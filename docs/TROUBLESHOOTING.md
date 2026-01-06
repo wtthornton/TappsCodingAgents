@@ -113,7 +113,7 @@ Some browser-related functionality can run in a mocked mode if the **Python Play
 - **Python Playwright Package**: Browser automation from CLI (required for CLI usage)
 
 **If you're using Cursor:**
-- If **Playwright MCP is configured**, you can ignore this message: browser automation should be done via Cursor Skills/Background Agents using Playwright MCP tools.
+- If **Playwright MCP is configured**, you can ignore this message: browser automation should be done via Cursor Skills using Playwright MCP tools.
 - To check if Playwright MCP is configured, run: `tapps-agents doctor` and look for "Playwright MCP" status.
 - To configure Playwright MCP, add it to `.cursor/mcp.json`:
   ```json
@@ -146,11 +146,9 @@ python -m pytest -q
 
 (And ensure you installed dependencies in your venv.)
 
-## Background Agents
+## Unicode Encoding Errors on Windows
 
-### Unicode Encoding Errors on Windows
-
-**Problem:** When running background agents or quality reports on Windows, you may encounter:
+**Problem:** When running quality reports on Windows, you may encounter:
 ```
 UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 3626: character maps to <undefined>
 ```
@@ -171,9 +169,9 @@ UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 3626: cha
    $env:PYTHONIOENCODING='utf-8'
    ```
 
-### Background Agent Not Showing Progress
+## Execution Progress Indicators
 
-**Problem:** Background agents run but you don't see when they start or complete.
+**Problem:** Workflows run but you don't see when they start or complete.
 
 **Solution:** Execution indicators were added in version 2.0.6+. You should see:
 - Clear start indicators when tasks begin
@@ -184,7 +182,6 @@ UnicodeDecodeError: 'charmap' codec can't decode byte 0x9d in position 3626: cha
 If indicators are not showing:
 1. Ensure you're using version 2.0.6 or later
 2. Check that output is not being redirected (indicators print to stderr)
-3. Verify `.cursor/background-agents.yaml` is properly configured
 
 ## Workflow State Files
 

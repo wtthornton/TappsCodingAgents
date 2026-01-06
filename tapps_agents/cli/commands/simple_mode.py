@@ -40,11 +40,14 @@ def handle_simple_mode_command(args: object) -> None:
         handle_simple_mode_resume(args)
     else:
         feedback = get_feedback()
+        # Provide a more helpful error message with all available commands
+        available_commands = ["on", "off", "status", "init", "configure", "progress", "full", "build", "resume"]
+        command_list = ", ".join(available_commands)
         feedback.error(
-            "Invalid simple-mode command",
+            f"Invalid simple-mode command: {command or '(none provided)'}",
             error_code="invalid_command",
-            context={"command": command},
-            remediation="Use: on, off, status, init, configure, progress, full, build, or resume",
+            context={"command": command, "available_commands": available_commands},
+            remediation=f"Use one of: {command_list}",
             exit_code=2,
         )
 
@@ -491,34 +494,8 @@ def handle_simple_mode_full(args: object) -> None:
     user_prompt = getattr(args, "prompt", None)
     auto_mode = getattr(args, "auto", False)
     
-    # Force auto-execution for Simple Mode full (unless explicitly disabled)
-    from ...core.config import load_config
-    config = load_config()
-    # config.workflow.auto_execution_enabled defaults to True, so this check is mainly for explicit False
-    if not auto_mode and config.workflow.auto_execution_enabled is False:
-        from ...core.unicode_safe import safe_print
-        safe_print("\n[WARNING] Auto-execution is disabled. Simple Mode full workflow requires auto-execution.", flush=True)
-        safe_print("[TIP] Enable auto-execution:", flush=True)
-        safe_print("  1. Add --auto flag: simple-mode full --prompt '...' --auto", flush=True)
-        safe_print("  2. Or enable in config: workflow.auto_execution_enabled: true", flush=True)
-        safe_print("  3. Or set TAPPS_AGENTS_MODE=headless for direct execution\n", flush=True)
-        
-        # Ask user if they want to continue (in interactive mode)
-        if sys.stdin.isatty():
-            response = input("Continue anyway? (y/N): ").strip().lower()
-            if response != 'y':
-                feedback.error(
-                    "Auto-execution required",
-                    error_code="auto_execution_required",
-                    remediation="Use --auto flag or enable auto-execution in config",
-                    exit_code=1,
-                )
-                return
-    
     # Execute with auto_mode
-    # If auto_mode is False but config has auto_execution_enabled=True, use that
-    effective_auto_mode = auto_mode or (config.workflow.auto_execution_enabled if config.workflow.auto_execution_enabled else True)
-    executor = WorkflowExecutor(auto_detect=False, auto_mode=effective_auto_mode)
+    executor = WorkflowExecutor(auto_detect=False, auto_mode=auto_mode)
     
     if user_prompt:
         executor.user_prompt = user_prompt

@@ -1,275 +1,372 @@
-# Step 3: Architecture Design - Fix Suggestions Generation Bug
+# Step 3: Architecture Design - Codebase Context Injection
 
 ## System Architecture
 
 ### Component Overview
 
+The codebase context injection system consists of four main components:
+
+1. **File Discovery Module** - Finds related files using semantic search
+2. **Pattern Extraction Module** - Extracts patterns from related files
+3. **Cross-Reference Analyzer** - Detects dependencies and relationships
+4. **Context Synthesizer** - Generates human-readable context summary
+
+### Architecture Diagram
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    Code Quality Review System                 │
+│                    Enhancer Agent                            │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐  │
+│  │         _stage_codebase_context()                     │  │
+│  │                                                       │  │
+│  │  ┌────────────────┐  ┌──────────────────────────┐  │  │
+│  │  │ File Discovery │  │ Pattern Extraction       │  │  │
+│  │  │                │  │                          │  │  │
+│  │  │ - Semantic     │  │ - Architectural patterns │  │  │
+│  │  │   search       │  │ - Coding conventions     │  │  │
+│  │  │ - Domain-based │  │ - Code structures         │  │  │
+│  │  │ - Tech-based   │  │ - Style patterns          │  │  │
+│  │  └────────────────┘  └──────────────────────────┘  │  │
+│  │                                                       │  │
+│  │  ┌────────────────┐  ┌──────────────────────────┐  │  │
+│  │  │ Cross-Reference │  │ Context Synthesizer      │  │  │
+│  │  │ Analyzer        │  │                          │  │  │
+│  │  │                 │  │ - Summary generation     │  │  │
+│  │  │ - Import graph  │  │ - Format for prompts     │  │  │
+│  │  │ - Usage tracking│  │ - Metadata inclusion     │  │  │
+│  │  │ - Dependencies  │  │                          │  │  │
+│  │  └────────────────┘  └──────────────────────────┘  │  │
+│  └──────────────────────────────────────────────────────┘  │
+│                                                              │
 └─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    CodeScorer.score_file()                    │
-│  - Calculates linting_score, type_checking_score,            │
-│    duplication_score                                         │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│          ScoreValidator.validate_all_scores()                │
-│  - Validates all scores                                      │
-│  - Calls validate_score() for each category                  │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              ScoreValidator.validate_score()                  │
-│  - Validates individual score                                │
-│  - Calls explain_score() for explanations                    │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│           ScoreValidator.explain_score()                      │
-│  - Generates score explanation                                │
-│  - Calls _generate_category_suggestions()                    │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│    ScoreValidator._generate_category_suggestions() ⭐        │
-│  - Generates category-specific suggestions                   │
-│  - [NEW] Add linting, type_checking, duplication cases      │
-└─────────────────────────────────────────────────────────────┘
+         │                    │                    │
+         ▼                    ▼                    ▼
+┌────────────────┐  ┌────────────────┐  ┌────────────────┐
+│ codebase_search│  │ AST Parser     │  │ File System    │
+│ Tool           │  │                │  │ Utilities      │
+└────────────────┘  └────────────────┘  └────────────────┘
 ```
 
-### Design Patterns
+## Component Design
 
-#### 1. Strategy Pattern
-Each quality category has its own suggestion generation strategy:
-- `complexity` → Complexity reduction suggestions
-- `security` → Security improvement suggestions
-- `linting` → Linting tool suggestions (NEW)
-- `type_checking` → Type safety suggestions (NEW)
-- `duplication` → Code deduplication suggestions (NEW)
+### 1. File Discovery Module
 
-#### 2. Template Method Pattern
-Base structure with category-specific implementations:
-```python
-def _generate_category_suggestions(category, score, language):
-    suggestions = []
-    
-    if category == "linting":
-        # Base suggestions (all languages)
-        suggestions.extend([...])
-        
-        # Language-specific suggestions
-        if language == Language.PYTHON:
-            suggestions.extend([...])
-        elif language in [Language.TYPESCRIPT, Language.JAVASCRIPT]:
-            suggestions.extend([...])
-    
-    return suggestions
-```
-
-#### 3. Language Adapter Pattern
-Language-specific suggestions adapt to tool ecosystem:
-- Python → Ruff, mypy, jscpd
-- TypeScript/JavaScript → ESLint, TypeScript compiler, jscpd
-- React → ESLint, TypeScript, React-specific patterns
-
-### Component Design
-
-#### ScoreValidator Class
-**Location:** `tapps_agents/agents/reviewer/score_validator.py`
+**Purpose:** Find related files based on prompt analysis
 
 **Responsibilities:**
-- Validate score ranges
-- Generate score explanations
-- Generate improvement suggestions
-- Calibrate scores against baselines
+- Execute semantic search queries based on domains and technologies
+- Filter and rank search results
+- Limit results to top 10 most relevant files
+- Filter out irrelevant files (tests, generated, build artifacts)
 
-**Methods to Modify:**
-- `_generate_category_suggestions()` - Add three new `elif` branches
-
-**Dependencies:**
-- `Language` enum from `core.language_detector`
-- No external dependencies
-
-#### Integration Points
-
-1. **Scoring Pipeline** (`scoring.py`)
-   - `CodeScorer.score_file()` calculates scores
-   - Calls `ScoreValidator.validate_all_scores()`
-   - Returns validated scores with explanations
-
-2. **Review Agent** (`agent.py`)
-   - Formats review output
-   - Includes suggestions in review results
-   - No changes needed (uses existing structure)
-
-### Data Flow
-
-```
-Input: scores = {
-    "linting_score": 5.0,
-    "type_checking_score": 5.0,
-    "duplication_score": 8.0,
-    ...
-}
-
-↓
-
-ScoreValidator.validate_all_scores(scores, language=Language.PYTHON)
-
-↓
-
-For each score:
-    validate_score(score, category, language)
-        ↓
-    explain_score(score, category, language)
-        ↓
-    _generate_category_suggestions(category, score, language)
-        ↓
-    Returns: ["suggestion1", "suggestion2", ...]
-
-↓
-
-Output: {
-    "linting": ValidationResult(
-        valid=True,
-        score=5.0,
-        explanation="...",
-        suggestions=["Run 'ruff check' to identify issues", ...]  # NEW
-    ),
-    "type_checking": ValidationResult(
-        valid=True,
-        score=5.0,
-        explanation="...",
-        suggestions=["Add type annotations to functions", ...]  # NEW
-    ),
-    ...
-}
+**Interface:**
+```python
+async def _find_related_files(
+    self, 
+    prompt: str, 
+    analysis: dict[str, Any]
+) -> list[str]:
+    """
+    Find related files using semantic search.
+    
+    Args:
+        prompt: Original user prompt
+        analysis: Analysis stage output (contains domains, technologies)
+    
+    Returns:
+        List of file paths (max 10)
+    """
 ```
 
-### Architecture Decisions
+**Implementation Strategy:**
+- Use `codebase_search` tool if available (from Cursor tools)
+- Fall back to keyword-based file search if semantic search unavailable
+- Search by domains: `f"files related to {domain}"` for each domain
+- Search by technologies: `f"files using {tech}"` for each technology
+- Combine results and deduplicate
+- Filter by file extensions and paths (exclude tests, generated files)
+- Rank by relevance and return top 10
 
-#### Decision 1: Additive Changes Only
-**Decision:** Add new `elif` branches without modifying existing logic  
-**Rationale:** Minimize risk, maintain backward compatibility  
-**Impact:** Low risk, no breaking changes
+**Error Handling:**
+- Catch search exceptions and log warnings
+- Return empty list on failure (doesn't break pipeline)
+- Provide fallback to simple file system search
 
-#### Decision 2: Follow Existing Pattern
-**Decision:** Use same structure as existing categories (base + language-specific)  
-**Rationale:** Consistency, maintainability, easier to understand  
-**Impact:** Consistent codebase, easier maintenance
+### 2. Pattern Extraction Module
 
-#### Decision 3: Language-Specific Suggestions
-**Decision:** Include language-specific suggestions for Python and TypeScript/JavaScript  
-**Rationale:** Different tools for different languages, better user experience  
-**Impact:** More relevant suggestions, better user guidance
+**Purpose:** Extract existing patterns from related files
 
-#### Decision 4: Tool References
-**Decision:** Reference actual tools (Ruff, mypy, jscpd, ESLint) in suggestions  
-**Rationale:** Actionable suggestions, users can run commands directly  
-**Impact:** Better user experience, actionable feedback
+**Responsibilities:**
+- Analyze file structure and imports
+- Identify architectural patterns
+- Extract coding conventions
+- Document patterns in structured format
 
-### Performance Considerations
-
-**Impact:** Minimal
-- Adding three `elif` branches is O(1) operation
-- No additional API calls or I/O operations
-- No performance degradation expected
-
-**Optimization:** None needed
-- Simple conditional logic
-- No loops or complex computations
-- Suggestions are generated on-demand (not cached, but that's acceptable)
-
-### Scalability Considerations
-
-**Future Extensions:**
-- Context-aware suggestions (Phase 2 enhancement)
-- Dynamic suggestion generation from tool output (Phase 3 enhancement)
-- Suggestion prioritization (Phase 4 enhancement)
-
-**Design for Extension:**
-- Method signature supports context parameter (already exists)
-- Easy to add more language-specific cases
-- Can enhance with tool output integration later
-
-### Security Considerations
-
-**No Security Impact:**
-- No user input processing
-- No external API calls
-- No file system operations
-- Static suggestion generation only
-
-### Error Handling
-
-**Error Scenarios:**
-1. **Unknown category**: Returns empty list (current behavior, acceptable)
-2. **Invalid score**: Handled by `validate_score()` before calling `_generate_category_suggestions()`
-3. **Invalid language**: Language-specific suggestions skipped, base suggestions returned
-
-**Error Handling Strategy:**
-- Graceful degradation (return empty list for unknown categories)
-- Validation happens upstream (in `validate_score()`)
-- No exceptions raised from `_generate_category_suggestions()`
-
-### Testing Architecture
-
-#### Unit Test Structure
-```
-tests/unit/test_score_validator.py
-├── TestLintingSuggestions
-│   ├── test_linting_suggestions_below_threshold
-│   ├── test_linting_suggestions_python_specific
-│   ├── test_linting_suggestions_typescript_specific
-│   └── test_linting_suggestions_above_threshold
-├── TestTypeCheckingSuggestions
-│   ├── test_type_checking_suggestions_below_threshold
-│   ├── test_type_checking_suggestions_python_specific
-│   ├── test_type_checking_suggestions_typescript_specific
-│   └── test_type_checking_suggestions_above_threshold
-└── TestDuplicationSuggestions
-    ├── test_duplication_suggestions_below_threshold
-    ├── test_duplication_suggestions_python_specific
-    ├── test_duplication_suggestions_typescript_specific
-    └── test_duplication_suggestions_above_threshold
+**Interface:**
+```python
+async def _extract_patterns(
+    self, 
+    related_files: list[str]
+) -> list[dict[str, Any]]:
+    """
+    Extract patterns from related files.
+    
+    Args:
+        related_files: List of file paths to analyze
+    
+    Returns:
+        List of pattern dictionaries with type, description, examples
+    """
 ```
 
-#### Integration Test Structure
+**Implementation Strategy:**
+- Read file contents (limit to source files, skip large files)
+- Parse imports to identify architectural patterns
+- Analyze import structure to identify patterns (e.g., dependency injection)
+- Extract function/class naming conventions
+- Identify common code structures (routers, services, models, tests)
+- Use AST parsing for deeper analysis if needed
+- Document patterns with examples
+
+**Pattern Types:**
+- **Architectural Patterns**: Dependency injection, repository pattern, service layer
+- **Code Structure**: Router patterns, service patterns, model patterns
+- **Naming Conventions**: Function names, class names, variable names
+- **Style Patterns**: Import organization, docstring format, type hints
+
+**Error Handling:**
+- Skip files that can't be read (permissions, encoding issues)
+- Log warnings for parsing failures
+- Return empty list if all files fail
+
+### 3. Cross-Reference Analyzer
+
+**Purpose:** Detect dependencies and relationships between files
+
+**Responsibilities:**
+- Parse import statements
+- Build dependency graph
+- Track file usage
+- Map relationships between components
+
+**Interface:**
+```python
+async def _find_cross_references(
+    self, 
+    related_files: list[str]
+) -> list[dict[str, Any]]:
+    """
+    Find cross-references between files.
+    
+    Args:
+        related_files: List of file paths to analyze
+    
+    Returns:
+        List of cross-reference dictionaries with source, target, type
+    """
 ```
-tests/integration/test_suggestions_integration.py
-├── test_linting_suggestions_in_review_output
-├── test_type_checking_suggestions_in_review_output
-└── test_duplication_suggestions_in_review_output
+
+**Implementation Strategy:**
+- Parse Python files using AST module
+- Extract import statements (absolute, relative, from imports)
+- Build import graph (which files import which)
+- Track usage through function calls and class instantiations
+- Identify module relationships
+- Map package dependencies
+
+**Cross-Reference Types:**
+- **Imports**: Direct imports between files
+- **Usage**: Files that use classes/functions from other files
+- **Dependencies**: Module-level dependencies
+- **Relationships**: Related modules in same package
+
+**Error Handling:**
+- Handle syntax errors in files gracefully
+- Skip files that can't be parsed
+- Log warnings for parsing failures
+- Return empty list if all files fail
+
+### 4. Context Synthesizer
+
+**Purpose:** Generate human-readable context summary
+
+**Responsibilities:**
+- Combine related files, patterns, and cross-references
+- Format context for inclusion in enhanced prompts
+- Generate summary text
+- Include metadata
+
+**Interface:**
+```python
+def _generate_context_summary(
+    self,
+    related_files: list[str],
+    existing_patterns: list[dict[str, Any]],
+    cross_references: list[dict[str, Any]]
+) -> str:
+    """
+    Generate context summary from analysis results.
+    
+    Args:
+        related_files: List of related file paths
+        existing_patterns: List of extracted patterns
+        cross_references: List of cross-references
+    
+    Returns:
+        Human-readable context summary (markdown format)
+    """
 ```
 
-### Deployment Considerations
+**Implementation Strategy:**
+- Format related files as bullet list with brief descriptions
+- Document patterns with examples
+- List cross-references showing relationships
+- Generate summary paragraph explaining context relevance
+- Format as markdown for inclusion in enhanced prompts
 
-**Deployment Impact:** None
-- No configuration changes
-- No database migrations
-- No external service dependencies
-- Pure code change, deploy with next release
+**Output Format:**
+```markdown
+## Codebase Context
 
-**Rollback Plan:** Standard git revert
-- Changes are isolated to one method
-- No side effects
-- Easy to revert if issues found
+### Related Files
+- `path/to/file1.py` - Description of file purpose
+- `path/to/file2.py` - Description of file purpose
 
-### Monitoring and Observability
+### Existing Patterns
+- **Architectural Pattern**: Dependency injection pattern used in services
+- **Code Structure**: FastAPI routers follow `/api/v1/{resource}` pattern
+- **Naming Convention**: Services use `{Resource}Service` naming
 
-**Metrics to Track:**
-- Suggestion generation success rate (should be 100%)
-- Average suggestions per category (should be > 0 for scores < 7.0)
-- User feedback on suggestion quality (future enhancement)
+### Cross-References
+- `enhancer/agent.py` imports `codebase_search` from `core`
+- `build_orchestrator.py` uses enhanced prompts from enhancer
 
-**Logging:**
-- No additional logging needed (existing logging sufficient)
-- Can add debug logs if needed for troubleshooting
+### Context Summary
+[Human-readable summary explaining how codebase context relates to prompt]
+```
+
+## Data Flow
+
+### Enhancement Pipeline Integration
+
+```
+1. Analysis Stage
+   └─> Output: { domains: [...], technologies: [...] }
+       │
+       ▼
+2. Codebase Context Stage
+   ├─> Input: prompt, analysis
+   ├─> File Discovery: Find related files
+   ├─> Pattern Extraction: Extract patterns
+   ├─> Cross-Reference: Find dependencies
+   ├─> Context Synthesis: Generate summary
+   └─> Output: { related_files, patterns, cross_references, codebase_context }
+       │
+       ▼
+3. Synthesis Stage
+   └─> Includes codebase context in enhanced prompt
+```
+
+## Technology Stack
+
+### Core Technologies
+- **Python 3.10+**: Async/await support
+- **AST Module**: Python code parsing
+- **pathlib**: File system operations
+- **codebase_search**: Semantic search tool (if available)
+
+### Dependencies
+- Existing enhancer agent infrastructure
+- Project config for project root
+- Logging utilities
+- Error handling patterns
+
+## Performance Considerations
+
+### Optimization Strategies
+1. **Caching**: Cache search results for repeated queries
+2. **Lazy Loading**: Only read files when needed
+3. **Parallel Processing**: Process multiple files concurrently
+4. **Early Termination**: Stop searching after finding enough results
+5. **File Filtering**: Skip large files, generated files, test files
+
+### Performance Targets
+- Codebase search: < 5 seconds
+- Pattern extraction: < 2 seconds
+- Cross-reference analysis: < 2 seconds
+- Total stage execution: < 10 seconds
+
+## Scalability Considerations
+
+### Large Codebases
+- Limit file reads to top 10 most relevant files
+- Use efficient search algorithms
+- Cache results to avoid repeated searches
+- Process files in batches if needed
+
+### Small Codebases
+- Handle gracefully when few files found
+- Provide meaningful context even with limited information
+- Don't fail if no related files found
+
+## Security Considerations
+
+### File Access
+- Respect file permissions
+- Don't read sensitive files (config, secrets)
+- Handle permission errors gracefully
+- Log access for auditing
+
+### Code Execution
+- AST parsing is safe (no code execution)
+- No eval() or exec() calls
+- Read-only file operations
+
+## Error Handling Strategy
+
+### Graceful Degradation
+- Return empty context if search fails (don't break pipeline)
+- Log warnings for debugging
+- Provide fallback mechanisms
+- Maintain valid return structure
+
+### Error Types
+1. **Search Failures**: Log warning, return empty list
+2. **File Read Errors**: Skip file, continue with others
+3. **Parsing Errors**: Skip file, log warning
+4. **Permission Errors**: Skip file, log warning
+
+## Integration Points
+
+### Enhancer Agent Integration
+- Called from `_enhance_full()` method
+- Receives `analysis` dict from analysis stage
+- Returns context dict for synthesis stage
+- Maintains async/await pattern
+
+### Synthesis Stage Integration
+- Context included in synthesis prompt
+- Formatted as markdown section
+- Optional (enhancement works without context)
+
+## Testing Strategy
+
+### Unit Tests
+- Test file discovery with mock search results
+- Test pattern extraction with sample files
+- Test cross-reference detection with sample imports
+- Test context summary generation
+
+### Integration Tests
+- Test full codebase context stage
+- Test with real codebase
+- Test error handling scenarios
+- Test performance with various codebase sizes
+
+### Edge Cases
+- Empty codebase
+- No related files found
+- All files fail to parse
+- Search tool unavailable
+- Permission errors

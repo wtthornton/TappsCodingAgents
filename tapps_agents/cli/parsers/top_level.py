@@ -838,7 +838,6 @@ Example:
 Shows:
   • Active worktrees and their status
   • Progress files and execution status
-  • Background agent configuration status
   • Recent results
   
 Use --detailed for full information, --worktrees-only for worktree info only.
@@ -1047,92 +1046,6 @@ Use this for quality control and ensuring only validated knowledge enters your p
         help="Reason for rejection (e.g., 'Incorrect information', 'Outdated pattern', 'Not applicable to our project'). Stored for audit purposes.",
     )
 
-    # Auto-execution monitoring commands (Story 7.9)
-    auto_exec_parser = subparsers.add_parser(
-        "auto-execution",
-        aliases=["auto-exec", "ae"],
-        help="Monitor and manage workflow auto-execution (deprecated)",
-        description="""Monitor and manage workflow auto-execution status, metrics, and health (deprecated - Background Agents removed).
-        
-This command is deprecated as Background Agents have been removed from the framework.
-Workflows now use direct execution and Cursor Skills instead.""",
-    )
-    auto_exec_subparsers = auto_exec_parser.add_subparsers(
-        dest="command", help="Auto-execution subcommand (status, history, metrics, health, debug)"
-    )
-
-    auto_exec_status_parser = auto_exec_subparsers.add_parser(
-        "status",
-        help="Display current auto-execution status and active workflows",
-        description="Show the current status of Background Agent auto-execution including any workflows currently running, queued executions, and recent activity. Use --workflow-id to filter to a specific workflow.",
-    )
-    auto_exec_status_parser.add_argument(
-        "--workflow-id",
-        help="Filter status output to show only information for a specific workflow ID",
-    )
-    auto_exec_status_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        help="Output format: 'text' for human-readable status, 'json' for structured data (default: text)",
-    )
-
-    auto_exec_history_parser = auto_exec_subparsers.add_parser(
-        "history",
-        help="Display history of auto-executed workflows",
-        description="Show a history of workflows that were automatically executed by Background Agents. Includes execution times, outcomes, triggers, and durations. Use --workflow-id to filter to a specific workflow type and --limit to control the number of entries shown.",
-    )
-    auto_exec_history_parser.add_argument(
-        "--workflow-id",
-        help="Filter history to show only executions for a specific workflow ID or workflow type",
-    )
-    auto_exec_history_parser.add_argument(
-        "--limit",
-        type=int,
-        default=20,
-        help="Maximum number of execution records to display (default: 20). Increase for longer history, decrease for recent executions only.",
-    )
-    auto_exec_history_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        help="Output format: 'text' for human-readable history, 'json' for structured data (default: text)",
-    )
-
-    auto_exec_metrics_parser = auto_exec_subparsers.add_parser(
-        "metrics",
-        help="Display auto-execution performance metrics summary",
-        description="Show aggregated performance metrics for auto-execution including success rates, average execution times, trigger frequencies, and error rates. Useful for monitoring overall auto-execution health and performance.",
-    )
-    auto_exec_metrics_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        help="Output format: 'text' for human-readable metrics, 'json' for structured data (default: text)",
-    )
-
-    auto_exec_health_parser = auto_exec_subparsers.add_parser(
-        "health",
-        help="Run health checks on auto-execution system",
-        description="Perform comprehensive health checks on the Background Agent auto-execution system including configuration validity, trigger monitoring status, resource availability, and error detection. Use this to diagnose issues with auto-execution.",
-    )
-    auto_exec_health_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        help="Output format: 'text' for human-readable health report, 'json' for structured health data (default: text)",
-    )
-
-    auto_exec_debug_parser = auto_exec_subparsers.add_parser(
-        "debug",
-        help="Enable, disable, or check debug mode status",
-        description="Control debug logging for Background Agent auto-execution. Debug mode provides detailed logging of trigger detection, execution decisions, and workflow launches. Use 'on' to enable, 'off' to disable, or 'status' to check current state.",
-    )
-    auto_exec_debug_parser.add_argument(
-        "action",
-        choices=["on", "off", "status"],
-        help="Debug action: 'on' to enable detailed debug logging, 'off' to disable, 'status' to check current debug mode state",
-    )
 
     # Customization template generator command
     customize_parser = subparsers.add_parser(
@@ -1332,7 +1245,6 @@ NOTE: This is a legacy command. For new code, use 'skill template' instead. This
 Checks the status of:
   • Cursor Skills (.claude/skills/) - Agent capability definitions
   • Cursor Rules (.cursor/rules/) - Natural language workflow commands and project context
-  • Background Agents (.cursor/background-agents.yaml) - Auto-execution configuration
   • Configuration files and directory structure
 
 Use this to ensure all Cursor integration components are properly installed and configured for your project.""",
@@ -1352,7 +1264,6 @@ Use this to ensure all Cursor integration components are properly installed and 
 Performs comprehensive checks:
   • Validates Skills directory structure and files
   • Checks Cursor Rules file presence and format
-  • Validates Background Agent configuration
   • Verifies required directories exist
   • Checks file permissions and accessibility
 
@@ -1382,6 +1293,8 @@ Use natural language commands instead of agent-specific syntax.""",
     simple_mode_subparsers = simple_mode_parser.add_subparsers(
         dest="command",
         help="Simple Mode command",
+        required=True,
+        metavar="COMMAND",
     )
 
     # Simple Mode: on/off

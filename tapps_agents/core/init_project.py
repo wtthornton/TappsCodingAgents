@@ -427,6 +427,20 @@ def init_workflow_presets(
     return len(copied) > 0, copied
 
 
+def init_user_skills_directory() -> Path:
+    """Create USER scope skills directory if it doesn't exist.
+    
+    USER scope allows users to create personal skills that work across all projects.
+    Location: ~/.tapps-agents/skills/
+    
+    Returns:
+        Path to USER skills directory
+    """
+    user_skills_dir = Path.home() / ".tapps-agents" / "skills"
+    user_skills_dir.mkdir(parents=True, exist_ok=True)
+    return user_skills_dir
+
+
 def init_claude_skills(project_root: Path | None = None, source_dir: Path | None = None):
     """
     Initialize Claude/Cursor Skills directory for a project.
@@ -436,6 +450,9 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
     """
     if project_root is None:
         project_root = Path.cwd()
+    
+    # Create USER scope directory for personal skills
+    init_user_skills_directory()
 
     if source_dir is None:
         packaged = _resource_at("claude", "skills")
@@ -1830,7 +1847,6 @@ def detect_existing_installation(project_root: Path) -> dict[str, Any]:
             result["indicators"].append("workflows/presets/ (framework presets)")
             result["installed"] = True
     
-    # Background Agents removed - no longer checked
     
     return result
 
@@ -2228,8 +2244,6 @@ def init_project(
         if copied_commands:
             results["files_created"].extend(copied_commands)
 
-    # Background Agents removed - no longer supported
-    results["background_agents"] = False
 
     # Initialize customizations directory
     success, customizations_path = init_customizations_directory(project_root)

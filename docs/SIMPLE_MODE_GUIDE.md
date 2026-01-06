@@ -20,7 +20,6 @@ This sets up:
 - `workflows/presets/` - Workflow preset YAML files
 - `.claude/skills/` - Cursor Skills (use in Cursor IDE)
 - `.claude/commands/` - Claude Desktop Commands (use in Claude Desktop)
-- `.cursor/background-agents.yaml` - Background Agents config
 
 ### 2. Enable Simple Mode
 

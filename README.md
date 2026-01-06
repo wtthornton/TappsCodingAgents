@@ -62,7 +62,7 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 
 See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
 
-- **Workflow Agents** (14): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
+- **Workflow Agents** (28): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making and RAG integration
 - **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making

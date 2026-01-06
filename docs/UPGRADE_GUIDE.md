@@ -31,7 +31,6 @@ This automatically installs:
 - ✅ Cursor Skills (`.claude/skills/`)
 - ✅ Claude Desktop Commands (`.claude/commands/`)
 - ✅ Cursor Rules (`.cursor/rules/`)
-- ✅ Background Agents config (`.cursor/background-agents.yaml`)
 - ✅ Workflow presets (`workflows/presets/`)
 
 **That's it!** Your project is now set up with both Skills and Commands.
@@ -85,7 +84,6 @@ tapps-agents init --reset
 - Framework Skills (`.claude/skills/`)
 - Framework Commands (`.claude/commands/`)
 - Framework Rules (`.cursor/rules/`)
-- Framework Background Agents config (`.cursor/background-agents.yaml`)
 
 **What's preserved:**
 - Your customizations (`.tapps-agents/customizations/`)

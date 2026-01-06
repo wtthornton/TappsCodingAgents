@@ -411,6 +411,155 @@ Reports are saved to `.tapps-agents/evaluations/` by default, with filenames lik
 - `evaluation-2025-01-15-143022.md`
 - `workflow-workflow-123-evaluation.md`
 
+## Analyst Agent
+
+Analyst Agent - Requirements gathering and technical research.
+
+### Commands
+
+- `description` - See agent documentation
+
+
+## Architect Agent
+
+Architect Agent - System and security architecture design.
+
+### Commands
+
+- `sequence` - See agent documentation
+- `component` - See agent documentation
+- `deployment` - See agent documentation
+- `requirements` - See agent documentation
+- `class` - See agent documentation
+
+
+## Debugger Agent
+
+Debugger Agent - Error analysis and debugging.
+
+
+## Designer Agent
+
+Designer Agent - API contracts, data models, UI/UX specifications.
+
+### Commands
+
+- `requirements` - See agent documentation
+- `page` - See agent documentation
+- `flow` - See agent documentation
+- `component` - See agent documentation
+
+
+## Documenter Agent
+
+Documenter Agent - Documentation generation.
+
+
+## Enhancer Agent
+
+Enhancer Agent - Transforms simple prompts into comprehensive, context-aware prompts.
+
+### Commands
+
+- `enhance` - See agent documentation
+- `quality` - See agent documentation
+- `requirements` - See agent documentation
+- `synthesis` - See agent documentation
+- `architecture` - See agent documentation
+- `codebase_context` - See agent documentation
+- `analysis` - See agent documentation
+- `implementation` - See agent documentation
+
+
+## Evaluator Agent
+
+Evaluator Agent - Evaluates TappsCodingAgents framework effectiveness.
+
+
+## Implementer Agent
+
+Implementer Agent - Code generation and file writing.
+
+
+## Improver Agent
+
+Improver Agent - Code refactoring, performance optimization, and quality improvements.
+
+### Commands
+
+- `memory` - See agent documentation
+- `Edit` - See agent documentation
+- `Glob` - See agent documentation
+- `both` - See agent documentation
+- `Grep` - See agent documentation
+- `Write` - See agent documentation
+- `Bash` - See agent documentation
+- `help` - See agent documentation
+- `type` - See agent documentation
+- `instruction` - See agent documentation
+- `Read` - See agent documentation
+- `performance` - See agent documentation
+- `file_path` - See agent documentation
+
+
+## Ops Agent
+
+Ops Agent - Security scanning, compliance, deployment, and infrastructure management.
+
+### Commands
+
+- `kubernetes` - See agent documentation
+- `Write` - See agent documentation
+- `xss` - See agent documentation
+- `all` - See agent documentation
+- `target` - See agent documentation
+- `GDPR` - See agent documentation
+- `terraform` - See agent documentation
+- `Edit` - See agent documentation
+- `production` - See agent documentation
+- `help` - See agent documentation
+- `environment` - See agent documentation
+- `Glob` - See agent documentation
+- `staging` - See agent documentation
+- `Grep` - See agent documentation
+- `Bash` - See agent documentation
+- `type` - See agent documentation
+- `HIPAA` - See agent documentation
+- `local` - See agent documentation
+- `docker` - See agent documentation
+- `secrets` - See agent documentation
+- `SOC2` - See agent documentation
+- `general` - See agent documentation
+- `sql_injection` - See agent documentation
+- `Read` - See agent documentation
+
+
+## Orchestrator Agent
+
+Orchestrator Agent - Coordinates YAML-defined workflows and makes gate decisions.
+
+### Commands
+
+- `on_fail` - See agent documentation
+- `on_pass` - See agent documentation
+- `help` - See agent documentation
+
+
+## Planner Agent
+
+Planner Agent - Story/epic planning and task breakdown.
+
+
+## Reviewer Agent
+
+Reviewer Agent - Code review with Code Scoring.
+
+
+## Tester Agent
+
+Tester Agent - Test generation and execution.
+
+
 ## Related Documentation
 
 - `docs/CONFIGURATION.md`

@@ -53,6 +53,24 @@ class EnhancerAgent(BaseAgent):
     - Synthesize enhanced prompt
     """
 
+    # Codebase context constants
+    MAX_FILE_SIZE_KB = 100
+    MAX_RELATED_FILES = 10
+    MAX_PATTERNS = 5
+    MAX_CROSS_REFERENCES = 5
+    MAX_PROMPT_KEYWORDS = 5
+    
+    DEFAULT_EXCLUDE_PATTERNS = [
+        "**/test_*.py",
+        "**/__pycache__/**",
+        "**/build/**",
+        "**/dist/**",
+        "**/.venv/**",
+        "**/venv/**",
+        "**/node_modules/**",
+        "**/.git/**",
+    ]
+
     def __init__(self, config: ProjectConfig | None = None):
         super().__init__(
             agent_id="enhancer", agent_name="Enhancer Agent", config=config
@@ -985,14 +1003,419 @@ Provide structured JSON response with the following format:
         self, prompt: str, analysis: dict[str, Any]
     ) -> dict[str, Any]:
         """Stage 4: Inject codebase context."""
-        # This would analyze the codebase and find related files
-        # For now, return empty context
-        return {
-            "related_files": [],
-            "existing_patterns": [],
-            "cross_references": [],
-            "codebase_context": "No codebase context available",
-        }
+        try:
+            # Find related files using semantic/keyword search
+            related_files = await self._find_related_files(prompt, analysis)
+            
+            # Extract patterns from related files
+            existing_patterns = await self._extract_patterns(related_files)
+            
+            # Find cross-references between files
+            cross_references = await self._find_cross_references(related_files)
+            
+            # Generate context summary
+            codebase_context = self._generate_context_summary(
+                related_files, existing_patterns, cross_references
+            )
+            
+            return {
+                "related_files": related_files,
+                "existing_patterns": existing_patterns,
+                "cross_references": cross_references,
+                "codebase_context": codebase_context,
+                "file_count": len(related_files),
+            }
+        except Exception as e:
+            logger.warning(f"Codebase context injection failed: {e}", exc_info=True)
+            # Return empty context on failure (don't break enhancement pipeline)
+            return {
+                "related_files": [],
+                "existing_patterns": [],
+                "cross_references": [],
+                "codebase_context": "No codebase context available (search failed)",
+                "file_count": 0,
+            }
+    
+    async def _find_related_files(
+        self, prompt: str, analysis: dict[str, Any]
+    ) -> list[str]:
+        """
+        Find related files using semantic/keyword search.
+        
+        Args:
+            prompt: Original user prompt
+            analysis: Analysis stage output (contains domains, technologies)
+        
+        Returns:
+            List of file paths (max 10), sorted by relevance
+        """
+        related_files: set[str] = set()
+        project_root = self.config.project_root if self.config else Path.cwd()
+        max_files = self.MAX_RELATED_FILES
+        
+        try:
+            domains = analysis.get("domains", [])
+            technologies = analysis.get("technologies", [])
+            
+            # Build search terms from domains and technologies
+            search_terms: list[str] = []
+            search_terms.extend(domains)
+            search_terms.extend(technologies)
+            
+            # Also extract keywords from prompt
+            prompt_keywords = [
+                word.lower()
+                for word in prompt.split()
+                if len(word) > 3 and word.isalnum()
+            ]
+            search_terms.extend(prompt_keywords[:self.MAX_PROMPT_KEYWORDS])
+            
+            if not search_terms:
+                logger.debug("No search terms available for codebase context")
+                return []
+            
+            # Search for Python files in project
+            # Exclude test files, generated files, build artifacts
+            exclude_patterns = self.DEFAULT_EXCLUDE_PATTERNS
+            
+            # Find Python files in project
+            python_files: list[Path] = []
+            for pattern in ["**/*.py"]:
+                try:
+                    files = list(project_root.glob(pattern))
+                    python_files.extend(files)
+                except Exception as e:
+                    logger.debug(f"Failed to glob pattern {pattern}: {e}")
+            
+            # Filter out excluded files
+            filtered_files: list[Path] = []
+            for file_path in python_files:
+                file_str = str(file_path)
+                if any(
+                    file_path.match(pattern) or pattern.replace("**/", "") in file_str
+                    for pattern in exclude_patterns
+                ):
+                    continue
+                # Skip large files
+                try:
+                    if file_path.stat().st_size > self.MAX_FILE_SIZE_KB * 1024:
+                        continue
+                except Exception:
+                    continue
+                filtered_files.append(file_path)
+            
+            # Score files by relevance (simple keyword matching)
+            scored_files: list[tuple[Path, float]] = []
+            for file_path in filtered_files:
+                score = 0.0
+                try:
+                    # Read file content for keyword matching
+                    content = file_path.read_text(encoding="utf-8", errors="ignore").lower()
+                    file_name = file_path.name.lower()
+                    file_path_str = str(file_path).lower()
+                    
+                    # Score based on search terms
+                    for term in search_terms:
+                        term_lower = term.lower()
+                        # Higher score for filename matches
+                        if term_lower in file_name:
+                            score += 3.0
+                        # Medium score for path matches
+                        elif term_lower in file_path_str:
+                            score += 2.0
+                        # Lower score for content matches
+                        elif term_lower in content:
+                            score += 1.0
+                except Exception as e:
+                    logger.debug(f"Failed to read file {file_path}: {e}")
+                    continue
+                
+                if score > 0:
+                    scored_files.append((file_path, score))
+            
+            # Sort by score (highest first) and limit
+            scored_files.sort(key=lambda x: x[1], reverse=True)
+            related_files = {str(path) for path, _ in scored_files[:max_files]}
+            
+            logger.info(f"Found {len(related_files)} related files for codebase context")
+            return list(related_files)
+            
+        except Exception as e:
+            logger.warning(f"File discovery failed: {e}", exc_info=True)
+            return []
+    
+    async def _extract_patterns(
+        self, related_files: list[str]
+    ) -> list[dict[str, Any]]:
+        """
+        Extract patterns from related files.
+        
+        Args:
+            related_files: List of file paths to analyze
+        
+        Returns:
+            List of pattern dictionaries
+        """
+        patterns: list[dict[str, Any]] = []
+        
+        if not related_files:
+            return patterns
+        
+        try:
+            import ast
+            
+            # Track patterns across files
+            import_patterns: dict[str, int] = {}
+            class_patterns: dict[str, int] = {}
+            function_patterns: dict[str, int] = {}
+            
+            for file_path_str in related_files[:self.MAX_RELATED_FILES]:
+                try:
+                    file_path = Path(file_path_str)
+                    if not file_path.exists():
+                        continue
+                    
+                    content = file_path.read_text(encoding="utf-8", errors="ignore")
+                    
+                    # Parse AST
+                    try:
+                        tree = ast.parse(content, filename=str(file_path))
+                    except SyntaxError:
+                        continue
+                    
+                    # Extract import patterns
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.Import):
+                            for alias in node.names:
+                                import_path = alias.name.split(".")[0]
+                                import_patterns[import_path] = import_patterns.get(import_path, 0) + 1
+                        elif isinstance(node, ast.ImportFrom):
+                            if node.module:
+                                import_path = node.module.split(".")[0]
+                                import_patterns[import_path] = import_patterns.get(import_path, 0) + 1
+                        
+                        # Extract class patterns
+                        if isinstance(node, ast.ClassDef):
+                            class_name = node.name
+                            # Detect naming patterns
+                            if class_name.endswith("Service"):
+                                class_patterns["Service"] = class_patterns.get("Service", 0) + 1
+                            elif class_name.endswith("Agent"):
+                                class_patterns["Agent"] = class_patterns.get("Agent", 0) + 1
+                            elif class_name.endswith("Router"):
+                                class_patterns["Router"] = class_patterns.get("Router", 0) + 1
+                        
+                        # Extract function patterns
+                        if isinstance(node, ast.FunctionDef):
+                            func_name = node.name
+                            if func_name.startswith("test_"):
+                                function_patterns["test_"] = function_patterns.get("test_", 0) + 1
+                            elif func_name.startswith("async def"):
+                                function_patterns["async"] = function_patterns.get("async", 0) + 1
+                
+                except Exception as e:
+                    logger.debug(f"Failed to extract patterns from {file_path_str}: {e}")
+                    continue
+            
+            # Convert to pattern dictionaries
+            # Architectural patterns (common imports)
+            common_imports = [
+                imp for imp, count in import_patterns.items()
+                if count >= 2 and imp not in ["typing", "pathlib", "logging"]
+            ]
+            if common_imports:
+                patterns.append({
+                    "type": "architectural",
+                    "name": "Common Import Patterns",
+                    "description": f"Commonly imported modules: {', '.join(common_imports[:5])}",
+                    "examples": related_files[:3],
+                    "confidence": min(1.0, len(common_imports) / 5.0),
+                })
+            
+            # Code structure patterns
+            if class_patterns:
+                structure_types = [t for t, count in class_patterns.items() if count >= 2]
+                if structure_types:
+                    patterns.append({
+                        "type": "structure",
+                        "name": "Class Structure Patterns",
+                        "description": f"Common class types: {', '.join(structure_types)}",
+                        "examples": related_files[:3],
+                        "confidence": min(1.0, len(structure_types) / 3.0),
+                    })
+            
+            logger.debug(f"Extracted {len(patterns)} patterns from {len(related_files)} files")
+            
+        except Exception as e:
+            logger.warning(f"Pattern extraction failed: {e}", exc_info=True)
+        
+        return patterns
+    
+    async def _find_cross_references(
+        self, related_files: list[str]
+    ) -> list[dict[str, Any]]:
+        """
+        Find cross-references between files.
+        
+        Args:
+            related_files: List of file paths to analyze
+        
+        Returns:
+            List of cross-reference dictionaries
+        """
+        cross_references: list[dict[str, Any]] = []
+        
+        if not related_files:
+            return cross_references
+        
+        try:
+            import ast
+            
+            # Build file to module mapping
+            file_modules: dict[str, str] = {}
+            for file_path_str in related_files:
+                try:
+                    file_path = Path(file_path_str)
+                    # Convert file path to module path
+                    # e.g., tapps_agents/agents/enhancer/agent.py -> tapps_agents.agents.enhancer.agent
+                    parts = file_path.parts
+                    if "tapps_agents" in parts:
+                        idx = parts.index("tapps_agents")
+                        module_parts = parts[idx:-1]  # Exclude filename
+                        module_name = ".".join(module_parts)
+                        file_modules[file_path_str] = module_name
+                except Exception:
+                    continue
+            
+            # Analyze imports in each file
+            for file_path_str in related_files:
+                try:
+                    file_path = Path(file_path_str)
+                    if not file_path.exists():
+                        continue
+                    
+                    content = file_path.read_text(encoding="utf-8", errors="ignore")
+                    
+                    try:
+                        tree = ast.parse(content, filename=str(file_path))
+                    except SyntaxError:
+                        continue
+                    
+                    # Extract imports
+                    for node in ast.walk(tree):
+                        if isinstance(node, ast.ImportFrom):
+                            if node.module:
+                                # Check if imported module matches any related file
+                                for target_file, target_module in file_modules.items():
+                                    if target_file != file_path_str and node.module.startswith(target_module):
+                                        cross_references.append({
+                                            "source": str(file_path),
+                                            "target": target_file,
+                                            "type": "import",
+                                            "details": f"imports from {node.module}",
+                                        })
+                
+                except Exception as e:
+                    logger.debug(f"Failed to analyze cross-references in {file_path_str}: {e}")
+                    continue
+            
+            logger.debug(f"Found {len(cross_references)} cross-references")
+            
+        except Exception as e:
+            logger.warning(f"Cross-reference detection failed: {e}", exc_info=True)
+        
+        return cross_references
+    
+    def _generate_context_summary(
+        self,
+        related_files: list[str],
+        existing_patterns: list[dict[str, Any]],
+        cross_references: list[dict[str, Any]],
+    ) -> str:
+        """
+        Generate human-readable context summary.
+        
+        Args:
+            related_files: List of related file paths
+            existing_patterns: List of extracted patterns
+            cross_references: List of cross-references
+        
+        Returns:
+            Markdown-formatted context summary
+        """
+        lines: list[str] = []
+        lines.append("## Codebase Context\n")
+        
+        # Related files section
+        if related_files:
+            lines.append("### Related Files")
+            for file_path in related_files[:self.MAX_RELATED_FILES]:
+                # Get relative path for cleaner display
+                try:
+                    project_root = self.config.project_root if self.config else Path.cwd()
+                    rel_path = Path(file_path).relative_to(project_root)
+                    lines.append(f"- `{rel_path}`")
+                except Exception:
+                    lines.append(f"- `{file_path}`")
+            lines.append("")
+        else:
+            lines.append("### Related Files")
+            lines.append("- No related files found")
+            lines.append("")
+        
+        # Existing patterns section
+        if existing_patterns:
+            lines.append("### Existing Patterns")
+            for pattern in existing_patterns[:self.MAX_PATTERNS]:
+                pattern_type = pattern.get("type", "unknown")
+                pattern_name = pattern.get("name", "Unknown Pattern")
+                pattern_desc = pattern.get("description", "")
+                lines.append(f"- **{pattern_name}** ({pattern_type}): {pattern_desc}")
+            lines.append("")
+        else:
+            lines.append("### Existing Patterns")
+            lines.append("- No patterns extracted")
+            lines.append("")
+        
+        # Cross-references section
+        if cross_references:
+            lines.append("### Cross-References")
+            for ref in cross_references[:self.MAX_CROSS_REFERENCES]:
+                source = ref.get("source", "")
+                target = ref.get("target", "")
+                ref_type = ref.get("type", "unknown")
+                details = ref.get("details", "")
+                try:
+                    project_root = self.config.project_root if self.config else Path.cwd()
+                    source_rel = Path(source).relative_to(project_root)
+                    target_rel = Path(target).relative_to(project_root)
+                    lines.append(f"- `{source_rel}` → `{target_rel}` ({ref_type})")
+                    if details:
+                        lines.append(f"  - {details}")
+                except Exception:
+                    lines.append(f"- `{source}` → `{target}` ({ref_type})")
+            lines.append("")
+        else:
+            lines.append("### Cross-References")
+            lines.append("- No cross-references found")
+            lines.append("")
+        
+        # Context summary
+        lines.append("### Context Summary")
+        if related_files:
+            lines.append(
+                f"Found {len(related_files)} related files in the codebase. "
+                f"Extracted {len(existing_patterns)} patterns and "
+                f"{len(cross_references)} cross-references. "
+                "Use these as reference when implementing new features."
+            )
+        else:
+            lines.append(
+                "No codebase context available. This may be a new project or "
+                "the search did not find relevant files."
+            )
+        
+        return "\n".join(lines)
 
     async def _stage_quality(
         self, prompt: str, requirements: dict[str, Any]

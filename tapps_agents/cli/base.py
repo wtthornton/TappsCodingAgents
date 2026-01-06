@@ -10,6 +10,7 @@ This module provides standardized patterns for:
 import argparse
 import asyncio
 import json
+import os
 import sys
 from collections.abc import Callable
 from typing import Any, TypeVar
@@ -368,7 +369,43 @@ class HelpfulArgumentParser(argparse.ArgumentParser):
     
     Provides helpful hints for common errors like unrecognized arguments,
     missing required arguments, and invalid choices.
+    Also handles Windows encoding issues when printing help.
     """
+    
+    def _ensure_windows_encoding(self) -> None:
+        """Ensure Windows console encoding is set up for UTF-8."""
+        if sys.platform == "win32":
+            os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+            try:
+                if hasattr(sys.stdout, 'reconfigure'):
+                    sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+                if hasattr(sys.stderr, 'reconfigure'):
+                    sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+            except (AttributeError, ValueError, OSError):
+                pass
+    
+    def print_help(self, file=None) -> None:
+        """
+        Override print_help to ensure Windows encoding is set up.
+        
+        Args:
+            file: File object to write to (default: sys.stdout)
+        """
+        self._ensure_windows_encoding()
+        try:
+            super().print_help(file=file)
+        except (UnicodeEncodeError, OSError) as e:
+            # If encoding fails, try ASCII-safe version
+            try:
+                help_text = self.format_help()
+                safe_text = help_text.encode('ascii', 'replace').decode('ascii')
+                output_file = file or sys.stdout
+                print(safe_text, file=output_file)
+            except Exception:
+                # Last resort: print basic error
+                error_file = file or sys.stderr
+                print("Help text unavailable due to encoding issues.", file=error_file)
+                print(f"Error: {e}", file=error_file)
     
     def error(self, message: str) -> None:
         """

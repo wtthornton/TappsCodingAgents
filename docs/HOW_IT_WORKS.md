@@ -1,6 +1,6 @@
 ## How TappsCodingAgents Works (Cursor-first, 2025)
 
-This project is designed to work **inside Cursor** with agents and background agents, while keeping **local LLM support optional**.
+This project is designed to work **inside Cursor** with agents, while keeping **local LLM support optional**.
 
 ### The mental model
 
@@ -15,16 +15,20 @@ This project is designed to work **inside Cursor** with agents and background ag
 **In this framework repo (shipped templates):**
 - **`tapps_agents/resources/claude/skills/`**: Packaged Skills templates (13 agent skills + Simple Mode skill).
 - **`tapps_agents/resources/cursor/rules/*.mdc`**: Packaged Cursor Rules templates (7 rule files, including `simple-mode.mdc` and `command-reference.mdc`).
-- **`tapps_agents/resources/cursor/background-agents.yaml`**: Packaged Background Agents template.
 - **`tapps_agents/resources/workflows/presets/`**: Workflow presets (8 presets, including 3 Simple Mode workflows).
 
 **In target repos (after `tapps-agents init`):**
 - **`.claude/skills/`**: Installed Cursor Skills definitions (copied from packaged templates).
 - **`.cursor/`**:
   - `.cursor/rules/*.mdc`: Installed Cursor Rules (copied from packaged templates).
-  - `.cursor/background-agents.yaml`: Installed Background Agents config (copied from packaged template).
 - **`.tapps-agents/`**: Runtime state (config + caches + reports + worktrees).  
   Most of this is **machine-local** and should not be committed.
+
+**Multi-Scope Skill Discovery:**
+- **REPO Scope**: `.claude/skills/` (current, parent, git root) - Project-specific skills
+- **USER Scope**: `~/.tapps-agents/skills/` - Personal skills across all projects
+- **SYSTEM Scope**: Package skills directory - Built-in framework skills
+- **Precedence**: REPO > USER > SYSTEM (project skills override personal/system skills)
 
 ### Runtime model policy (Cursor-first)
 
@@ -35,10 +39,6 @@ This project is designed to work **inside Cursor** with agents and background ag
 - Instructions are executed by Cursor Skills, which use the developer's configured model.
 - No local LLM (Ollama) or API keys required - Cursor handles all LLM operations.
 
-### Background Agents: two modes
-
-- **Artifacts-only (default)**: writes results to `.tapps-agents/reports/` (no PRs).
-- **PR-mode (opt-in)**: enables PR delivery explicitly (used only when you ask for a PR).
 
 ### Recommended setup for another repo
 
@@ -47,7 +47,6 @@ From the target project root (after installing `tapps-agents`):
 - `tapps-agents init`
   - Copies Cursor Rules templates from `tapps_agents/resources/cursor/rules/*.mdc` → `.cursor/rules/` (including `simple-mode.mdc`)
   - Copies Skills templates from `tapps_agents/resources/claude/skills/` → `.claude/skills/` (including Simple Mode skill)
-  - Copies Background Agents template from `tapps_agents/resources/cursor/background-agents.yaml` → `.cursor/background-agents.yaml`
   - Copies workflow presets from `tapps_agents/resources/workflows/presets/*.yaml` → `workflows/presets/` (including 3 Simple Mode workflows)
   - Optionally creates `.tapps-agents/config.yaml`
 

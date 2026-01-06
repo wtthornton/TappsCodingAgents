@@ -158,50 +158,6 @@ def validate_claude_skills(project_root: Path) -> dict[str, Any]:
     return results
 
 
-def validate_background_agents(project_root: Path) -> dict[str, Any]:
-    """
-    Validate Background Agents configuration file.
-
-    Args:
-        project_root: Project root directory
-
-    Returns:
-        Dictionary with validation results
-    """
-    bg_file = project_root / ".cursor" / "background-agents.yaml"
-    results: dict[str, Any] = {
-        "valid": True,
-        "errors": [],
-        "warnings": [],
-    }
-
-    if not bg_file.exists():
-        results["valid"] = False
-        results["errors"].append(".cursor/background-agents.yaml does not exist")
-        return results
-
-    # Validate YAML syntax
-    try:
-        content = bg_file.read_text(encoding="utf-8")
-        data = yaml.safe_load(content)
-        if not isinstance(data, dict):
-            results["valid"] = False
-            results["errors"].append(
-                "background-agents.yaml does not contain a valid YAML dictionary"
-            )
-        elif "agents" not in data:
-            results["warnings"].append(
-                "background-agents.yaml missing 'agents' key"
-            )
-    except yaml.YAMLError as e:
-        results["valid"] = False
-        results["errors"].append(f"background-agents.yaml has invalid YAML: {e}")
-    except Exception as e:
-        results["warnings"].append(f"Error reading background-agents.yaml: {e}")
-
-    return results
-
-
 def validate_cursorignore(project_root: Path) -> dict[str, Any]:
     """
     Validate .cursorignore file.
@@ -254,7 +210,6 @@ def validate_cursor_setup(project_root: Path | None = None) -> dict[str, Any]:
         "overall_valid": True,
         "cursor_rules": validate_cursor_rules(project_root),
         "claude_skills": validate_claude_skills(project_root),
-        "background_agents": validate_background_agents(project_root),
         "cursorignore": validate_cursorignore(project_root),
     }
 
@@ -262,7 +217,6 @@ def validate_cursor_setup(project_root: Path | None = None) -> dict[str, Any]:
     all_valid = (
         results["cursor_rules"]["valid"]
         and results["claude_skills"]["valid"]
-        and results["background_agents"]["valid"]
     )
 
     results["overall_valid"] = all_valid
@@ -271,7 +225,7 @@ def validate_cursor_setup(project_root: Path | None = None) -> dict[str, Any]:
     all_errors: list[str] = []
     all_warnings: list[str] = []
 
-    for section in ["cursor_rules", "claude_skills", "background_agents", "cursorignore"]:
+    for section in ["cursor_rules", "claude_skills", "cursorignore"]:
         section_results = results[section]
         all_errors.extend(section_results.get("errors", []))
         all_warnings.extend(section_results.get("warnings", []))

@@ -56,11 +56,12 @@ tapps-agents init
 ```
 
 This installs (by copying from packaged templates in `tapps_agents/resources/*`):
-- **Cursor Skills**: `.claude/skills/` (13 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
+- **Cursor Skills**: `.claude/skills/` (14 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
 - **Claude Desktop Commands**: `.claude/commands/` (16 commands from `tapps_agents/resources/claude/commands/`)
 - **Cursor Rules**: `.cursor/rules/*.mdc` (7 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc` and `command-reference.mdc`)
 - **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
+- **USER Scope Directory**: `~/.tapps-agents/skills/` (created automatically for personal skills)
 
 > **Important**: 
 > - Skills and Commands are **model-agnostic**. Cursor/Claude Desktop uses the developer's configured model (Auto or pinned).
@@ -236,6 +237,73 @@ tapps-agents simple-mode init
 ```
 
 See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
+
+---
+
+## Skill System Features
+
+### Multi-Scope Skill Discovery
+
+TappsCodingAgents supports discovering skills from multiple scopes, allowing you to:
+- **REPO Scope**: Project-specific skills (`.claude/skills/` in current, parent, or git root)
+- **USER Scope**: Personal skills that work across all projects (`~/.tapps-agents/skills/`)
+- **SYSTEM Scope**: Built-in framework skills (package directory)
+
+**Scope Precedence**: REPO > USER > SYSTEM (project skills override personal/system skills)
+
+**Creating Personal Skills**:
+```bash
+# Create personal skill directory (created automatically on init)
+mkdir -p ~/.tapps-agents/skills/my-custom-skill
+
+# Create SKILL.md with your custom skill
+cat > ~/.tapps-agents/skills/my-custom-skill/SKILL.md << 'EOF'
+---
+name: my-custom-skill
+description: My personal custom skill
+version: 1.0.0
+author: Your Name
+category: custom
+tags: [custom, personal]
+allowed-tools: Read, Write
+---
+
+# My Custom Skill
+
+Your skill instructions here.
+EOF
+```
+
+The skill will be available in all your projects automatically!
+
+### Enhanced Skill Metadata
+
+Skills now support enhanced metadata fields:
+- `version`: Semantic versioning (e.g., "1.0.0")
+- `author`: Skill author (e.g., "TappsCodingAgents Team" or your name)
+- `category`: Skill category (quality, development, testing, planning, design, documentation, operations, orchestration)
+- `tags`: List of tags for organization and searchability
+
+**Example**:
+```yaml
+---
+name: reviewer
+description: Code reviewer providing objective quality metrics...
+version: 1.0.0
+author: TappsCodingAgents Team
+category: quality
+tags: [review, quality, metrics, security, linting]
+allowed-tools: Read, Write, Edit, Grep, Glob, Bash
+model_profile: reviewer_profile
+---
+```
+
+### Progressive Disclosure
+
+Skills use progressive disclosure for efficient loading:
+- Only metadata (first 2KB) is read at startup
+- Full SKILL.md content is loaded by Cursor when skill is invoked
+- Improves startup performance and scalability
 
 ---
 

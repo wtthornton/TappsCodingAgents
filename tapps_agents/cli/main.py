@@ -3,6 +3,7 @@ Main CLI entry point
 """
 import argparse
 import asyncio
+import os
 import sys
 from collections.abc import Callable
 
@@ -168,7 +169,7 @@ Key Features:
   • Industry Experts: Domain-specific knowledge with weighted decision-making
   • Workflow Presets: Rapid development, full SDLC, bug fixes, quality improvement
   • Code Quality Tools: Scoring, linting, type checking, duplication detection
-  • Cursor Integration: Skills, Background Agents, and natural language commands
+  • Cursor Integration: Skills and natural language commands
 
 For detailed documentation, visit: https://github.com/your-repo/docs""",
         epilog="""QUICK START COMMANDS:
@@ -354,9 +355,6 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "skill-template": top_level.handle_skill_template_command,
         "governance": top_level.handle_governance_command,
         "approval": top_level.handle_governance_command,
-        "auto-execution": top_level.handle_auto_execution_command,
-        "auto-exec": top_level.handle_auto_execution_command,
-        "ae": top_level.handle_auto_execution_command,
         "setup-experts": top_level.handle_setup_experts_command,
         "cursor": top_level.handle_cursor_command,
     }
@@ -451,7 +449,7 @@ def route_command(args: argparse.Namespace) -> None:
     if agent is None:
         help_parser = create_root_parser()
         register_all_parsers(help_parser)
-        help_parser.print_help()
+        _safe_print_help(help_parser)
         return
     
     # Try agent command handlers first
@@ -483,11 +481,60 @@ def route_command(args: argparse.Namespace) -> None:
     # Unknown command - show help
     help_parser = create_root_parser()
     register_all_parsers(help_parser)
-    help_parser.print_help()
+    _safe_print_help(help_parser)
+
+
+def _setup_windows_encoding() -> None:
+    """
+    Set up UTF-8 encoding for Windows console to prevent encoding errors.
+    
+    This must be called before any argparse operations or help text printing.
+    """
+    if sys.platform == "win32":
+        # Set environment variable for subprocess encoding
+        os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+        
+        # Reconfigure stdout/stderr to UTF-8 if possible (Python 3.7+)
+        try:
+            if hasattr(sys.stdout, 'reconfigure'):
+                sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+            if hasattr(sys.stderr, 'reconfigure'):
+                sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+        except (AttributeError, ValueError, OSError):
+            # Fallback: use environment variable only
+            # Some terminals may not support reconfiguration
+            pass
+
+
+def _safe_print_help(parser: argparse.ArgumentParser) -> None:
+    """
+    Safely print argparse help text with Windows encoding handling.
+    
+    Args:
+        parser: ArgumentParser instance to print help for
+    """
+    try:
+        parser.print_help()
+    except (UnicodeEncodeError, OSError) as e:
+        # If encoding fails, try to print ASCII-safe version
+        try:
+            # Get help text and encode safely
+            help_text = parser.format_help()
+            # Replace any problematic Unicode characters with ASCII equivalents
+            safe_text = help_text.encode('ascii', 'replace').decode('ascii')
+            print(safe_text, file=sys.stdout)
+        except Exception:
+            # Last resort: print basic error message
+            print("Help text unavailable due to encoding issues.", file=sys.stderr)
+            print(f"Error: {e}", file=sys.stderr)
+            sys.exit(1)
 
 
 def main() -> None:
     """Main CLI entry point - supports both *command and command formats"""
+    # Set up Windows encoding FIRST, before any argparse operations
+    _setup_windows_encoding()
+    
     # Run startup routines (documentation refresh) before main
     from ..core.startup import startup_routines
     
@@ -508,7 +555,20 @@ def main() -> None:
 
     # Parse arguments
     argv = _reorder_global_flags(sys.argv[1:])
-    args = parser.parse_args(argv)
+    try:
+        args = parser.parse_args(argv)
+    except SystemExit as e:
+        # argparse raises SystemExit(0) for --help, SystemExit(2) for errors
+        # We need to handle this gracefully with encoding safety
+        if e.code == 0:
+            # --help was used, argparse already printed help, but we need to ensure encoding
+            # If we get here, argparse.print_help() was called internally
+            # The encoding setup at the start should have handled it, but exit cleanly
+            sys.exit(0)
+        else:
+            # Parse error - argparse already printed error message
+            # Ensure encoding was set up, then exit with error code
+            sys.exit(e.code)
     
     # Set verbosity level from arguments
     verbosity_str = getattr(args, "verbosity", None)

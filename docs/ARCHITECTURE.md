@@ -103,11 +103,9 @@ Key pieces:
 
 - **Workflow parsing**: `tapps_agents/workflow/parser.py` - YAML parsing with strict schema enforcement (Epic 6)
 - **Parallel execution**: `tapps_agents/workflow/parallel_executor.py` - Executes independent steps in parallel (up to 8 concurrent)
-- **Background Agent integration**: `tapps_agents/workflow/background_auto_executor.py` - Auto-execution via Background Agents
 - **Cursor executor**: `tapps_agents/workflow/cursor_executor.py` - Cursor-native execution with parallel support
 - **Task manifest generation**: `tapps_agents/workflow/manifest.py` - Auto-generated task checklists (Epic 7)
 - **Cursor Rules generation**: `tapps_agents/workflow/rules_generator.py` - Auto-generated Cursor Rules docs (Epic 8)
-- **Background Agent generation**: `tapps_agents/workflow/background_agent_generator.py` - Auto-generated Background Agent configs (Epic 9)
 
 **YAML-First Architecture** ✅ (Epics 6-10 Complete):
 - **YAML is the single source of truth** - All workflow definitions in YAML with strict schema enforcement
@@ -115,13 +113,11 @@ Key pieces:
 - **Auto-generated artifacts**:
   - **Task Manifests** (Epic 7): Auto-generated from workflow YAML + state
   - **Cursor Rules Documentation** (Epic 8): Auto-generated from workflow YAML
-  - **Background Agent Configs** (Epic 9): Auto-generated from workflow steps
 - **Dependency-based parallelism** - Automatic parallel execution based on step dependencies (no `parallel_tasks`)
 - See [YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md) for complete details
 
 **Execution Features:**
 - Automatic parallel execution of independent workflow steps
-- Background Agent integration for asynchronous step execution
 - Worktree isolation for concurrent step execution
 - See [Full SDLC Execution Architecture](FULL_SDLC_EXECUTION_ARCHITECTURE.md) for complete execution flow documentation
 - **Workflow execution**: `tapps_agents/workflow/executor.py`
@@ -220,4 +216,3 @@ An always-on orchestrator that automatically detects project domains, creates an
 - `docs/prd/epic-6-yaml-schema-enforcement.md` - YAML Schema Enforcement epic (complete)
 - `docs/prd/epic-7-task-manifest-generation.md` - Task Manifest Generation epic (complete)
 - `docs/prd/epic-8-automated-documentation-generation.md` - Automated Documentation Generation epic (complete)
-- `docs/prd/epic-9-background-agent-auto-generation.md` - Background Agent Auto-Generation epic (complete)

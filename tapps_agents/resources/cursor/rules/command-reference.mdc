@@ -44,11 +44,11 @@ tapps-agents reviewer score README.md --no-progress
 ## Top-Level Commands
 
 ### `init` - Initialize Project
-**Purpose:** Set up TappsCodingAgents in your project (Cursor Rules, Skills, config). **This is the first command you should run on any project** to enable all tapps-agents capabilities in Cursor IDE. Background Agents are opt-in (use `--background-agents` flag).
+**Purpose:** Set up TappsCodingAgents in your project (Cursor Rules, Skills, config). **This is the first command you should run on any project** to enable all tapps-agents capabilities in Cursor IDE.
 
 **CLI Syntax:**
 ```bash
-tapps-agents init [--no-rules] [--no-presets] [--no-config] [--no-skills] [--background-agents] [--no-background-agents] [--no-cache] [--no-cursorignore] [--reset] [--upgrade] [--no-backup] [--reset-mcp] [--preserve-custom] [--rollback <path>] [--yes] [--dry-run]
+tapps-agents init [--no-rules] [--no-presets] [--no-config] [--no-skills] [--no-cache] [--no-cursorignore] [--reset] [--upgrade] [--no-backup] [--reset-mcp] [--preserve-custom] [--rollback <path>] [--yes] [--dry-run]
 ```
 
 **When to Use:**
@@ -145,13 +145,6 @@ When you run `tapps-agents init` on any project (new or existing), it:
   - **When to use**: If you only use CLI commands, not Cursor chat
   - **Why**: Reduces setup time, but disables `@agent-name` commands in Cursor
 
-- `--background-agents`: Install Background Agents config (opt-in, not installed by default)
-  - **When to use**: If you want automatic workflow execution in Cursor IDE
-  - **Why**: Enables automatic quality checks, testing, and security scans via Background Agents
-
-- `--no-background-agents`: (Deprecated) Explicitly skip Background Agents config
-  - **When to use**: No longer needed - Background Agents are not installed by default
-  - **Why**: Kept for backward compatibility only
 
 - `--no-cache`: Skip pre-populating Context7 cache
   - **When to use**: If Context7 is not configured or you want to populate manually
@@ -271,20 +264,19 @@ tapps-agents simple-mode full --prompt "Build feature" --auto
 
 **CLI Syntax:**
 ```bash
-tapps-agents create "<description>" [--workflow <preset>] [--cursor-mode]
+tapps-agents create "<description>" [--workflow <preset>]
 ```
 
 **Parameters:**
 - `description` (required): Natural language description
 - `--workflow`: `full` (default), `rapid`, `enterprise`, `feature`
-- `--cursor-mode`: Use Cursor Background Agents
 
 ### `workflow` - Run Preset Workflows
 **Purpose:** Execute predefined workflow presets
 
 **CLI Syntax:**
 ```bash
-tapps-agents workflow <preset> [--prompt "<description>"] [--file <path>] [--auto] [--cursor-mode]
+tapps-agents workflow <preset> [--prompt "<description>"] [--file <path>] [--auto]
 ```
 
 **Available Presets:**
@@ -303,7 +295,6 @@ tapps-agents workflow <preset> [--prompt "<description>"] [--file <path>] [--aut
 - `--prompt` / `-p`: Natural language description
 - `--file`: Target file/directory
 - `--auto`: Fully automated execution
-- `--cursor-mode`: Use Cursor Background Agents
 
 **Workflow State Management:**
 ```bash
