@@ -58,6 +58,10 @@ Use explicit commands for guaranteed workflow execution:
 | `*review {file}` | Review code quality | @reviewer → @improver |
 | `*fix {file} {description}` | Fix bugs/errors | @debugger → @implementer → @tester |
 | `*test {file}` | Generate tests | @tester |
+| `*explore {query}` | Explore codebase | @analyst → @reviewer |
+| `*refactor {file}` | Refactor code | @reviewer → @architect → @implementer → @tester → @reviewer |
+| `*plan-analysis {description}` | Safe planning (read-only) | @analyst → @architect → @reviewer |
+| `*pr {title}` | Create pull request | @reviewer → @documenter |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
 | `*help` | Show help | - |
 | `*status` | Check status | - |
@@ -70,6 +74,10 @@ Simple Mode detects intent from keywords:
 - **Review**: review, check, analyze, inspect, examine, score, quality, audit
 - **Fix**: fix, repair, resolve, debug, error, bug, issue, problem, broken
 - **Test**: test, verify, validate, coverage, testing
+- **Explore**: explore, understand, navigate, find, discover, overview, codebase, trace, search, locate
+- **Refactor**: refactor, modernize, update, improve code, modernize code, legacy, deprecated
+- **Plan**: plan, planning, analyze, analysis, design, proposal, strategy, roadmap
+- **PR**: pr, pull request, create pr, open pr, merge request, mr
 - **Full**: full, complete, sdlc, lifecycle, everything
 
 ## ⚠️ CRITICAL: Explicit Command Precedence
@@ -163,6 +171,42 @@ Step 7: @tester *test {target_file}
 ### Test Workflow
 ```
 1. @tester *test {file}                    → Tests generated
+```
+
+### Explore Workflow
+```
+1. @analyst *gather-requirements "{query}" → Requirements understanding
+2. Code Discovery                            → Find relevant files
+3. @reviewer *analyze-project               → Architecture analysis
+4. Flow Tracing (optional)                  → Execution path analysis
+5. Summary Generation                       → Exploration report
+```
+
+### Refactor Workflow
+```
+1. @reviewer *review {files}                → Identify legacy patterns
+2. @architect *design "{modern patterns}"   → Design modern architecture
+3. Plan Generation                          → Create refactoring plan
+4. @implementer *refactor {file}            → Apply refactoring incrementally
+5. @tester *test {file}                     → Verify behavior preservation
+6. @reviewer *review {files}                → Final quality check
+```
+
+### Plan Analysis Workflow (Read-Only)
+```
+1. @analyst *gather-requirements "{query}"  → Requirements analysis
+2. Code Exploration (optional)              → Find related files
+3. @architect *design "{plan}"              → Architecture planning
+4. @reviewer *analyze-project               → Impact analysis
+5. Plan Generation                          → Comprehensive plan document
+```
+
+### PR Workflow
+```
+1. Change Analysis                          → Analyze Git changes
+2. @reviewer *review {changed_files}        → Final quality check
+3. @documenter *document                    → Generate PR description
+4. PR Creation                              → Create via Git API/CLI
 ```
 
 ### Full SDLC Workflow

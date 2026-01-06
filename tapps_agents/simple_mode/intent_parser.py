@@ -19,6 +19,10 @@ class IntentType(Enum):
     FIX = "fix"
     TEST = "test"
     EPIC = "epic"
+    EXPLORE = "explore"
+    REFACTOR = "refactor"
+    PLAN_ANALYSIS = "plan-analysis"
+    PR = "pr"
     UNKNOWN = "unknown"
 
 
@@ -43,6 +47,14 @@ class Intent:
             return ["tester"]
         elif self.type == IntentType.EPIC:
             return ["epic-orchestrator"]
+        elif self.type == IntentType.EXPLORE:
+            return ["analyst", "reviewer"]
+        elif self.type == IntentType.REFACTOR:
+            return ["reviewer", "architect", "implementer", "tester"]
+        elif self.type == IntentType.PLAN_ANALYSIS:
+            return ["analyst", "architect", "reviewer"]
+        elif self.type == IntentType.PR:
+            return ["reviewer", "documenter"]
         else:
             return []
 
@@ -116,6 +128,54 @@ class IntentParser:
             "stories",
         ]
 
+        # Explore intent keywords
+        self.explore_keywords = [
+            "explore",
+            "understand",
+            "navigate",
+            "find",
+            "discover",
+            "overview",
+            "codebase",
+            "trace",
+            "search",
+            "locate",
+        ]
+
+        # Refactor intent keywords
+        self.refactor_keywords = [
+            "refactor",
+            "modernize",
+            "update",
+            "improve code",
+            "modernize code",
+            "legacy",
+            "deprecated",
+            "upgrade code",
+        ]
+
+        # Plan Analysis intent keywords
+        self.plan_analysis_keywords = [
+            "plan",
+            "planning",
+            "analyze",
+            "analysis",
+            "design",
+            "proposal",
+            "strategy",
+            "roadmap",
+        ]
+
+        # PR intent keywords
+        self.pr_keywords = [
+            "pr",
+            "pull request",
+            "create pr",
+            "open pr",
+            "merge request",
+            "mr",
+        ]
+
         # Simple Mode intent keywords
         self.simple_mode_keywords = [
             "@simple-mode",
@@ -168,7 +228,7 @@ class IntentParser:
             # Force Simple Mode workflow
             parameters["force_simple_mode"] = True
 
-        # Check for explicit *epic command
+        # Check for explicit command patterns
         if input_text.strip().startswith("*epic") or input_text.strip().startswith("@simple-mode *epic"):
             # Extract epic path
             epic_path = input_text.replace("*epic", "").replace("@simple-mode", "").strip()
@@ -181,6 +241,38 @@ class IntentParser:
                 original_input=input_text,
             )
 
+        if input_text.strip().startswith("*explore") or input_text.strip().startswith("@simple-mode *explore"):
+            return Intent(
+                type=IntentType.EXPLORE,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
+        if input_text.strip().startswith("*refactor") or input_text.strip().startswith("@simple-mode *refactor"):
+            return Intent(
+                type=IntentType.REFACTOR,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
+        if input_text.strip().startswith("*plan") or input_text.strip().startswith("@simple-mode *plan") or "plan-analysis" in input_lower:
+            return Intent(
+                type=IntentType.PLAN_ANALYSIS,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
+        if input_text.strip().startswith("*pr") or input_text.strip().startswith("@simple-mode *pr") or "pull request" in input_lower:
+            return Intent(
+                type=IntentType.PR,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
         # Score each intent type
         scores = {
             IntentType.BUILD: self._score_intent(input_lower, self.build_keywords),
@@ -188,6 +280,10 @@ class IntentParser:
             IntentType.FIX: self._score_intent(input_lower, self.fix_keywords),
             IntentType.TEST: self._score_intent(input_lower, self.test_keywords),
             IntentType.EPIC: self._score_intent(input_lower, self.epic_keywords),
+            IntentType.EXPLORE: self._score_intent(input_lower, self.explore_keywords),
+            IntentType.REFACTOR: self._score_intent(input_lower, self.refactor_keywords),
+            IntentType.PLAN_ANALYSIS: self._score_intent(input_lower, self.plan_analysis_keywords),
+            IntentType.PR: self._score_intent(input_lower, self.pr_keywords),
         }
 
         # Find best match

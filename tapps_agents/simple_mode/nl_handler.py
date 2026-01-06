@@ -13,7 +13,11 @@ from .intent_parser import Intent, IntentParser, IntentType
 from .orchestrators import (
     BuildOrchestrator,
     EpicOrchestrator,
+    ExploreOrchestrator,
     FixOrchestrator,
+    PlanAnalysisOrchestrator,
+    PROrchestrator,
+    RefactorOrchestrator,
     ReviewOrchestrator,
     TestOrchestrator,
 )
@@ -54,6 +58,18 @@ class SimpleModeHandler:
                 project_root=self.project_root, config=self.config
             ),
             IntentType.EPIC: EpicOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.EXPLORE: ExploreOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.REFACTOR: RefactorOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.PLAN_ANALYSIS: PlanAnalysisOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.PR: PROrchestrator(
                 project_root=self.project_root, config=self.config
             ),
         }
