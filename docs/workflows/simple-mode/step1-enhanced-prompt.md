@@ -1,189 +1,105 @@
-# Step 1: Enhanced Prompt - Codebase Context Injection Implementation
+# Step 1: Enhanced Prompt - Doctor Cache Status Feature
 
 ## Original Prompt
+Add basic Context7 cache status checks to doctor command: check if Context7 is enabled, cache directory is accessible, and cache is populated (entry count). Keep detailed metrics in health check. Add doctor --full flag to run both doctor and health checks.
 
-Implement codebase context injection for the enhancer agent's `_stage_codebase_context` method. Currently, this method returns placeholder data. According to the analysis document (ANALYSIS_PROMPT_ENHANCEMENT_COMPARISON.md), this is the HIGH PRIORITY recommendation that provides real value for brownfield development.
+## Enhanced Specification
 
-## Enhanced Prompt with Requirements Analysis
+### Intent Analysis
+- **Primary Intent**: Extend doctor command with lightweight cache status validation
+- **Scope**: Framework enhancement (modifying `tapps_agents/core/doctor.py` and CLI handlers)
+- **Workflow Type**: Feature enhancement (build workflow)
+- **Domains**: CLI, health monitoring, cache management
 
-### Functional Requirements
+### Requirements
 
-1. **Codebase Search Integration**
-   - Use semantic search to find related files based on prompt analysis
-   - Search by detected domains (e.g., "authentication", "payments", "user-management")
-   - Search by detected technologies (e.g., "FastAPI", "SQLAlchemy", "pytest")
-   - Limit results to top 10 most relevant files
-   - Support both file path and content-based search
+#### Functional Requirements
+1. **Basic Cache Status in Doctor**
+   - Check if Context7 is enabled in config
+   - Verify cache directory exists and is accessible
+   - Report cache population status (entry count only)
+   - Provide basic remediation if issues found
 
-2. **Pattern Extraction**
-   - Extract existing patterns from related files
-   - Identify common code patterns (e.g., API route patterns, service patterns, test patterns)
-   - Extract architectural patterns (e.g., dependency injection, repository pattern)
-   - Identify coding conventions and style patterns
+2. **Doctor --full Flag**
+   - Add `--full` flag to doctor command parser
+   - When `--full` is used, run both doctor checks AND health checks
+   - Maintain backward compatibility (default behavior unchanged)
 
-3. **Cross-Reference Detection**
-   - Find files that import or reference related files
-   - Identify dependency relationships between files
-   - Map module dependencies and imports
-   - Track file usage across the codebase
+3. **Separation of Concerns**
+   - Keep detailed cache metrics in health check system (already exists)
+   - Doctor provides only basic status (enabled/disabled, accessible, populated)
+   - Health check provides detailed metrics (hit rate, response time, staleness, etc.)
 
-4. **Context Summary Generation**
-   - Generate human-readable summary of codebase context
-   - Include related files list with brief descriptions
-   - Document existing patterns for consistency
-   - Highlight cross-references and dependencies
-   - Format context for inclusion in enhanced prompts
+#### Non-Functional Requirements
+- **Performance**: Doctor checks must remain fast (<2s)
+- **Backward Compatibility**: Existing doctor behavior unchanged
+- **Error Handling**: Graceful degradation if Context7 not configured
+- **Windows Compatibility**: All file operations must work on Windows
 
-### Non-Functional Requirements
+### Architecture Guidance
 
-1. **Performance**
-   - Codebase search should complete within 5 seconds for typical projects
-   - Pattern extraction should be efficient (avoid full codebase scans)
-   - Cache search results when possible
-   - Limit file reads to necessary files only
+#### Integration Points
+- `tapps_agents/core/doctor.py` - Add cache status checks to `collect_doctor_report()`
+- `tapps_agents/cli/commands/top_level.py` - Modify `handle_doctor_command()` to support `--full`
+- `tapps_agents/cli/parsers/top_level.py` - Add `--full` argument to doctor parser
+- `tapps_agents/context7/analytics.py` - Reuse `Analytics.get_cache_metrics()` for entry count
+- `tapps_agents/context7/cache_structure.py` - Reuse for cache directory validation
 
-2. **Reliability**
-   - Gracefully handle missing files or permission errors
-   - Provide fallback when codebase search fails
-   - Return empty context rather than failing the entire enhancement
-   - Log warnings for search failures without breaking workflow
+#### Design Patterns
+- **Reuse Existing Components**: Leverage `Context7CacheHealthCheck` logic but simplified
+- **Fail-Safe**: If Context7 not configured, report as "not configured" (warn, not error)
+- **Lazy Loading**: Only initialize Context7 components if Context7 is enabled
 
-3. **Maintainability**
-   - Use existing codebase_search tool if available
-   - Follow existing enhancer agent patterns
-   - Integrate with existing stage pipeline seamlessly
-   - Support configuration for search parameters
+### Codebase Context
 
-### Technical Constraints
+#### Related Files
+- `tapps_agents/core/doctor.py` - Main doctor implementation (add cache checks here)
+- `tapps_agents/cli/commands/top_level.py` - Doctor command handler (add --full support)
+- `tapps_agents/cli/parsers/top_level.py` - Doctor parser (add --full argument)
+- `tapps_agents/health/checks/context7_cache.py` - Reference for cache validation logic
+- `tapps_agents/context7/analytics.py` - For getting cache metrics
+- `tapps_agents/context7/cache_structure.py` - For cache directory structure
 
-1. **Integration Points**
-   - Must work with existing `_stage_codebase_context` method signature
-   - Must use `analysis` dict from previous stage (contains domains, technologies)
-   - Must return dict with keys: `related_files`, `existing_patterns`, `cross_references`, `codebase_context`, `file_count`
-   - Must be async to match other stage methods
+#### Existing Patterns
+- Doctor uses `DoctorFinding` dataclass for findings
+- Findings have severity: "ok", "warn", "error"
+- Findings include remediation messages
+- Health checks use `HealthCheckResult` with status and score
 
-2. **Dependencies**
-   - Use codebase_search tool (if available) or semantic search capabilities
-   - Leverage existing file system utilities
-   - Use project config for project root path
-   - Follow existing logging patterns
+### Quality Standards
 
-3. **Error Handling**
-   - Catch and log exceptions without breaking enhancement pipeline
-   - Return valid dict structure even on errors
-   - Provide meaningful error messages in logs
+#### Security
+- No sensitive data exposure in cache status
+- Validate file paths to prevent directory traversal
 
-### Assumptions
+#### Testing
+- Unit tests for cache status checks
+- Integration tests for --full flag
+- Test with Context7 enabled/disabled
+- Test with cache empty/populated
+- Test cache directory permission errors
 
-1. Codebase search tool or semantic search capability exists or can be implemented
-2. Project root is available via `self.config.project_root`
-3. Related files can be identified through semantic search or pattern matching
-4. Pattern extraction can be done through code analysis or heuristics
-5. Cross-references can be found through import/usage analysis
+#### Documentation
+- Update doctor command help text
+- Document --full flag behavior
+- Update command reference documentation
 
-## Architecture Guidance
+### Implementation Strategy
 
-### System Design
+#### Task Breakdown
+1. Add cache status helper function to `doctor.py`
+2. Integrate cache checks into `collect_doctor_report()`
+3. Add `--full` argument to doctor parser
+4. Modify `handle_doctor_command()` to support --full
+5. Add tests for new functionality
+6. Update documentation
 
-The codebase context injection should:
+#### Dependencies
+- Context7 integration must be importable (optional dependency)
+- Cache structure must be accessible
+- Health check system must be available for --full flag
 
-1. **Search Strategy**
-   - Use semantic search for domain/technology-based file discovery
-   - Fall back to keyword search if semantic search unavailable
-   - Prioritize files in main source directories (src/, tapps_agents/, etc.)
-   - Filter out test files, generated files, and build artifacts
+### Synthesis
 
-2. **Pattern Extraction Strategy**
-   - Analyze file structure and imports for architectural patterns
-   - Extract function/class naming conventions
-   - Identify common code structures (routers, services, models)
-   - Document patterns in structured format
-
-3. **Cross-Reference Strategy**
-   - Parse import statements to build dependency graph
-   - Track file usage through static analysis
-   - Identify related modules and packages
-   - Map relationships between components
-
-### Design Patterns
-
-- **Strategy Pattern**: Different search strategies (semantic, keyword, pattern-based)
-- **Adapter Pattern**: Adapt codebase_search tool to enhancer agent interface
-- **Template Method**: Standard pattern extraction workflow
-- **Facade Pattern**: Simplify complex codebase analysis operations
-
-### Technology Recommendations
-
-- Use existing `codebase_search` tool if available (from Cursor tools)
-- Leverage Python's `ast` module for code analysis
-- Use `pathlib` for file system operations
-- Consider `grep` or `ripgrep` for pattern matching if needed
-
-## Quality Standards
-
-### Code Quality
-- Follow existing enhancer agent code style
-- Maintain async/await patterns
-- Use type hints for all methods
-- Add comprehensive docstrings
-- Include error handling and logging
-
-### Testing Requirements
-- Unit tests for each helper method
-- Integration tests for full codebase context stage
-- Test error handling and edge cases
-- Test with various project structures
-- Verify performance requirements
-
-### Documentation
-- Document search strategies
-- Explain pattern extraction algorithms
-- Provide examples of generated context
-- Update enhancer agent documentation
-
-## Implementation Strategy
-
-### Phase 1: Basic Implementation
-1. Implement `_find_related_files` method using codebase_search
-2. Implement basic pattern extraction
-3. Implement cross-reference detection
-4. Generate context summary
-
-### Phase 2: Enhancement
-1. Add caching for search results
-2. Improve pattern extraction accuracy
-3. Add configuration options
-4. Optimize performance
-
-### Phase 3: Integration
-1. Integrate with synthesis stage
-2. Test with real prompts
-3. Verify context quality
-4. Update documentation
-
-## Expected Output Format
-
-The enhanced prompt should include:
-
-```markdown
-## Codebase Context
-
-### Related Files
-- `tapps_agents/core/codebase_search.py` - Codebase search utilities
-- `tapps_agents/agents/enhancer/agent.py` - Enhancer agent implementation
-- ...
-
-### Existing Patterns
-- API routes follow FastAPI router pattern
-- Services use dependency injection
-- Tests use pytest fixtures
-- ...
-
-### Cross-References
-- `enhancer/agent.py` imports `codebase_search` from `core`
-- `build_orchestrator.py` uses enhanced prompts from enhancer
-- ...
-
-### Context Summary
-[Human-readable summary of codebase context relevant to the prompt]
-```
+**Enhanced Prompt:**
+Extend the doctor command with lightweight Context7 cache status validation. Add three basic checks: (1) Context7 enabled in config, (2) cache directory accessible, (3) cache populated (entry count). Keep detailed metrics in health check system. Add `--full` flag to run both doctor and health checks together. Maintain backward compatibility and fast execution time. Use existing Context7 components for validation logic but keep doctor checks minimal and fast.

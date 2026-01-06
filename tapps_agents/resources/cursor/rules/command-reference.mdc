@@ -366,8 +366,45 @@ tapps-agents score <file> [--format json|text]
 
 **CLI Syntax:**
 ```bash
-tapps-agents doctor [--format json|text] [--config-path <path>]
+tapps-agents doctor [--format json|text] [--config-path <path>] [--full]
 ```
+
+**Parameters:**
+- `--format json|text`: Output format (default: `text`)
+- `--config-path <path>`: Explicit path to config file if not in default location
+- `--full`: Run both doctor checks and health checks for comprehensive diagnostics
+
+**What It Checks:**
+- Python version compatibility
+- Required tools (ruff, mypy, pytest, etc.)
+- MCP server configuration (Context7, Playwright)
+- Cursor integration components (Rules, Skills, Background Agents)
+- Workflow presets
+- Project configuration
+- **Context7 cache status** (enabled/disabled, directory accessible, entry count)
+
+**When to Use:**
+- **Initial setup verification**: After `tapps-agents init` to verify installation
+- **Troubleshooting**: When commands aren't working as expected
+- **CI/CD validation**: Ensure environment is properly configured
+- **Comprehensive diagnostics**: Use `--full` flag for detailed health checks including cache metrics
+
+**Examples:**
+```bash
+# Basic environment check
+tapps-agents doctor
+
+# JSON output for automation
+tapps-agents doctor --format json
+
+# Comprehensive diagnostics (doctor + health checks)
+tapps-agents doctor --full
+
+# Full diagnostics with JSON output
+tapps-agents doctor --full --format json
+```
+
+**Note:** The `--full` flag runs both doctor checks (environment validation) and health checks (operational metrics). Doctor provides basic Context7 cache status; health checks provide detailed metrics (hit rate, response time, staleness analysis).
 
 ### `cursor` - Cursor AI Integration Verification
 **Purpose:** Verify and manage Cursor AI integration components

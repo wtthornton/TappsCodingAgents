@@ -1986,19 +1986,70 @@ def handle_generate_rules_command(args: object) -> None:
 def handle_doctor_command(args: object) -> None:
     """Handle doctor command"""
     from ...core.doctor import collect_doctor_report
+    from ..feedback import get_feedback
     
     config_path = getattr(args, "config_path", None)
+    full_mode = getattr(args, "full", False)
+    output_format = getattr(args, "format", "text")
+    
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    
+    # Collect doctor report
     report = collect_doctor_report(
         config_path=Path(config_path) if config_path else None
     )
 
-    if getattr(args, "format", "text") == "json":
-        format_json_output(report)
+    # If --full flag, also run health checks
+    health_results = None
+    if full_mode:
+        feedback.start_operation("Doctor", "Running comprehensive diagnostics (doctor + health checks)")
+        feedback.running("Running health checks...", step=1, total_steps=2)
+        
+        try:
+            from ...health.checks.context7_cache import Context7CacheHealthCheck
+            from ...health.registry import HealthCheckRegistry
+            from ...health.orchestrator import HealthOrchestrator
+            from ...health.collector import HealthMetricsCollector
+            
+            project_root = Path.cwd()
+            registry = HealthCheckRegistry()
+            registry.register(Context7CacheHealthCheck(project_root=project_root))
+            
+            metrics_collector = HealthMetricsCollector(project_root=project_root)
+            orchestrator = HealthOrchestrator(
+                registry=registry, metrics_collector=metrics_collector, project_root=project_root
+            )
+            
+            health_results = orchestrator.run_all_checks()
+            feedback.running("Health checks completed", step=2, total_steps=2)
+        except Exception as e:
+            feedback.warning(f"Could not run health checks: {e}")
+            health_results = None
+        
+        feedback.clear_progress()
+
+    if output_format == "json":
+        result = report.copy()
+        if health_results:
+            result["health_checks"] = {
+                "results": [
+                    {
+                        "name": r.name,
+                        "status": r.status,
+                        "score": r.score,
+                        "message": r.message,
+                        "details": r.details,
+                    }
+                    for r in health_results.values()
+                ]
+            }
+        format_json_output(result)
     else:
         policy = report.get("policy", {})
         targets = report.get("targets", {})
         print("\n" + "=" * 60)
-        print("TappsCodingAgents Doctor Report")
+        print("TappsCodingAgents Doctor Report" + (" (Full Diagnostics)" if full_mode else ""))
         print("=" * 60)
         print(
             f"\nTargets: python={targets.get('python')} requires={targets.get('python_requires')}"
@@ -2027,6 +2078,33 @@ def handle_doctor_command(args: object) -> None:
             print("💡 Quick Fix: Install all missing development tools with:")
             print("   python -m tapps_agents.cli install-dev")
             print("-" * 60)
+        
+        # Show health check results if --full
+        if full_mode and health_results:
+            print("\n" + "=" * 60)
+            print("Health Check Results")
+            print("=" * 60)
+            for result in health_results.values():
+                status_symbol = "✅" if result.status == "healthy" else "⚠️" if result.status == "degraded" else "❌"
+                print(f"\n{status_symbol} {result.name}: {result.status} (score: {result.score:.1f}/100)")
+                print(f"   {result.message}")
+                if result.details:
+                    key_metrics = []
+                    for key, value in result.details.items():
+                        if isinstance(value, (int, float)) and key in ["hit_rate", "avg_response_time_ms", "total_entries"]:
+                            if key == "hit_rate":
+                                key_metrics.append(f"{key}: {value:.1f}%")
+                            elif key == "avg_response_time_ms":
+                                key_metrics.append(f"{key}: {value:.0f}ms")
+                            else:
+                                key_metrics.append(f"{key}: {value}")
+                    if key_metrics:
+                        print(f"   Metrics: {' | '.join(key_metrics)}")
+                if result.remediation:
+                    if isinstance(result.remediation, list) and result.remediation:
+                        print(f"   Remediation: {result.remediation[0]}")
+                    elif isinstance(result.remediation, str):
+                        print(f"   Remediation: {result.remediation}")
 
 
 def handle_install_dev_command(args: object) -> None:

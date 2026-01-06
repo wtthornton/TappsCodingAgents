@@ -100,6 +100,106 @@ def _get_python_module_name(tool_name: str) -> str:
     return module_map.get(tool_name, tool_name.replace("-", "_"))
 
 
+def _check_context7_cache_status(
+    config: ProjectConfig, project_root: Path
+) -> DoctorFinding | None:
+    """
+    Check basic Context7 cache status for doctor command.
+    
+    Provides lightweight status checks:
+    - Context7 enabled in config
+    - Cache directory accessible
+    - Cache populated (entry count)
+    
+    Detailed metrics remain in health check system.
+    
+    Args:
+        config: Project configuration
+        project_root: Project root directory
+        
+    Returns:
+        DoctorFinding with cache status, or None if Context7 not available
+    """
+    # Check if Context7 is enabled
+    if not (config.context7 and config.context7.enabled):
+        return DoctorFinding(
+            severity="ok",
+            code="CONTEXT7_CACHE",
+            message="Context7: Disabled (optional feature)",
+        )
+    
+    # Try to import Context7 components (optional dependency)
+    try:
+        from ..context7.analytics import Analytics
+        from ..context7.cache_structure import CacheStructure
+        from ..context7.metadata import MetadataManager
+    except ImportError:
+        # Context7 not available - skip check
+        return None
+    
+    # Determine cache root
+    if config.context7.knowledge_base:
+        cache_root = project_root / config.context7.knowledge_base.location
+    else:
+        cache_root = project_root / ".tapps-agents" / "kb" / "context7-cache"
+    
+    # Check cache directory existence and accessibility
+    cache_exists = cache_root.exists()
+    cache_writable = False
+    if cache_exists:
+        try:
+            test_file = cache_root / ".doctor_test"
+            test_file.write_text("test", encoding="utf-8")
+            test_file.unlink()
+            cache_writable = True
+        except Exception:
+            cache_writable = False
+    
+    if not cache_exists or not cache_writable:
+        return DoctorFinding(
+            severity="warn",
+            code="CONTEXT7_CACHE",
+            message=f"Context7 Cache: Directory not accessible ({cache_root.name})",
+            remediation=(
+                f"Create cache directory: mkdir -p {cache_root}\n"
+                f"Or fix permissions if directory exists."
+            ),
+        )
+    
+    # Get cache entry count (lightweight check)
+    try:
+        cache_structure = CacheStructure(cache_root)
+        metadata_manager = MetadataManager(cache_structure)
+        analytics = Analytics(cache_structure, metadata_manager)
+        cache_metrics = analytics.get_cache_metrics()
+        
+        if cache_metrics.total_entries == 0:
+            return DoctorFinding(
+                severity="warn",
+                code="CONTEXT7_CACHE",
+                message="Context7 Cache: Empty (0 entries)",
+                remediation=(
+                    "Cache is empty. Run cache pre-population:\n"
+                    "  python scripts/prepopulate_context7_cache.py\n"
+                    "Or wait for automatic cache population during agent execution."
+                ),
+            )
+        else:
+            return DoctorFinding(
+                severity="ok",
+                code="CONTEXT7_CACHE",
+                message=f"Context7 Cache: {cache_metrics.total_entries} entries, {cache_metrics.total_libraries} libraries",
+            )
+    except Exception:
+        # If we can't get metrics, at least report directory is accessible
+        return DoctorFinding(
+            severity="warn",
+            code="CONTEXT7_CACHE",
+            message="Context7 Cache: Accessible but metrics unavailable",
+            remediation="Check cache directory permissions and structure.",
+        )
+
+
 def collect_doctor_report(
     *,
     project_root: Path | None = None,
@@ -573,6 +673,11 @@ def collect_doctor_report(
                 ),
             )
         )
+
+    # --- Context7 Cache Status check ---
+    cache_status_finding = _check_context7_cache_status(config, root)
+    if cache_status_finding:
+        findings.append(cache_status_finding)
 
     return {
         "policy": {

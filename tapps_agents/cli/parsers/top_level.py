@@ -639,6 +639,11 @@ Example: tapps-agents doctor""",
     doctor_parser.add_argument(
         "--config-path", help="Explicit path to .tapps-agents/config.yaml file if not in default location. Useful when running doctor from outside project root."
     )
+    doctor_parser.add_argument(
+        "--full",
+        action="store_true",
+        help="Run both doctor checks and health checks for comprehensive diagnostics",
+    )
 
     # Health check command
     health_parser = subparsers.add_parser(

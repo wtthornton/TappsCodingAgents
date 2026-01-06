@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Doctor Command Enhancements** - Added Context7 cache status checks to doctor command
+  - Basic cache status now shown in `tapps-agents doctor` output
+  - Checks Context7 enabled/disabled, cache directory accessibility, and entry count
+  - Added `--full` flag to run both doctor and health checks together
+  - Comprehensive test suite for cache status checks (`tests/unit/core/test_doctor_cache_status.py`)
+  - Maintains separation: basic status in doctor, detailed metrics in health checks
+
 ## [3.2.11] - 2025-01-16
 
 ### Added
