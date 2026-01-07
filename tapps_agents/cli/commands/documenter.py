@@ -58,7 +58,7 @@ def handle_documenter_command(args: object) -> None:
                     output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
-        elif command == "generate-docs":
+        elif command in ("generate-docs", "document-api"):
             result = asyncio.run(
                 documenter.run(
                     "generate-docs",

@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "context7-automatic-integration-debuggeragent-context7-integra.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\stories\\context7-automatic-integration-debuggeragent-context7-integra.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:18:57.929243",
+  "correlation_id": "simple-full-20260106-151749:planning"
+}

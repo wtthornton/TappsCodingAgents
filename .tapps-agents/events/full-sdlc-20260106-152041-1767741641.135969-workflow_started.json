@@ -1,0 +1,13 @@
+{
+  "event_type": "workflow_started",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": null,
+  "data": {
+    "workflow_name": "Full SDLC Pipeline",
+    "workflow_version": "1.0.0",
+    "step_count": 10,
+    "user_prompt": ""
+  },
+  "timestamp": "2026-01-06T15:20:41.135969",
+  "correlation_id": "full-sdlc-20260106-152041"
+}

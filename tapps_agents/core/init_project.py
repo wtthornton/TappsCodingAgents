@@ -22,6 +22,32 @@ from .tech_stack_priorities import get_priorities_for_frameworks
 
 logger = logging.getLogger(__name__)
 
+
+def _convert_paths_to_strings(obj: Any) -> Any:
+    """
+    Recursively convert Path objects to strings for YAML serialization.
+    
+    YAML's safe_dump cannot serialize Path objects (WindowsPath/PosixPath).
+    This function walks through dicts and lists, converting any Path objects
+    to their string representation.
+    
+    Args:
+        obj: Any object (dict, list, Path, or primitive)
+        
+    Returns:
+        The same structure with Path objects converted to strings
+    """
+    if isinstance(obj, Path):
+        return str(obj)
+    elif isinstance(obj, dict):
+        return {k: _convert_paths_to_strings(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [_convert_paths_to_strings(item) for item in obj]
+    elif isinstance(obj, tuple):
+        return tuple(_convert_paths_to_strings(item) for item in obj)
+    return obj
+
+
 # Framework-managed file names (whitelist approach)
 FRAMEWORK_CURSOR_RULES = {
     "workflow-presets.mdc",
@@ -281,8 +307,11 @@ def init_project_config(
             project_type_info = None
     
     # Write config file
+    # Convert Path objects to strings before YAML serialization
+    # (YAML safe_dump cannot handle WindowsPath/PosixPath objects)
+    serializable_config = _convert_paths_to_strings(final_config)
     config_file.write_text(
-        yaml.safe_dump(final_config, sort_keys=False, default_flow_style=False),
+        yaml.safe_dump(serializable_config, sort_keys=False, default_flow_style=False),
         encoding="utf-8",
     )
     

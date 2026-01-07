@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "validation_helpers.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\cli\\validation_helpers.py",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:21:49.927510",
+  "correlation_id": "full-sdlc-20260106-152041:planning"
+}

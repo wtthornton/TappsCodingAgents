@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "FINAL_SUMMARY.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\workflows\\simple-mode-framework-improvements\\FINAL_SUMMARY.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:18:58.374180",
+  "correlation_id": "simple-full-20260106-151749:planning"
+}

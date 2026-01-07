@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "test_redaction.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\workflow\\test_redaction.py",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:18:58.138573",
+  "correlation_id": "simple-full-20260106-151749:planning"
+}

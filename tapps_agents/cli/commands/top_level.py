@@ -1880,12 +1880,12 @@ def handle_init_command(args: object) -> None:
     _print_next_steps()
 
 
-def _update_cursorignore_patterns(project_root: Path) -> dict[str, Any]:
+def _update_cursorignore_patterns(project_root: Path | str) -> dict[str, Any]:
     """
     Update .cursorignore with TappsCodingAgents patterns.
     
     Args:
-        project_root: Project root directory
+        project_root: Project root directory (Path or string)
         
     Returns:
         Dictionary with update results:
@@ -1895,6 +1895,9 @@ def _update_cursorignore_patterns(project_root: Path) -> dict[str, Any]:
             "patterns_existing": list[str],
         }
     """
+    # Convert string to Path if needed
+    if isinstance(project_root, str):
+        project_root = Path(project_root)
     cursorignore_path = project_root / ".cursorignore"
     
     # Patterns to add

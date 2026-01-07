@@ -51,7 +51,7 @@ Example:
 
     generate_docs_parser = documenter_subparsers.add_parser(
         "generate-docs", 
-        aliases=["*generate-docs"], 
+        aliases=["*generate-docs", "document-api", "*document-api"], 
         help="Generate API documentation from code",
         description="""Generate API documentation from source code.
         

@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "test_workflow_parsing.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\smoke\\test_workflow_parsing.py",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:18:58.211439",
+  "correlation_id": "simple-full-20260106-151749:planning"
+}

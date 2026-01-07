@@ -364,6 +364,29 @@ class KBLookup:
                 }) + "\n")
         except: pass
         # #endregion
+        
+        # CRITICAL FIX: Check quota BEFORE making API calls
+        # This prevents unnecessary API calls when quota is already exceeded
+        try:
+            from .backup_client import is_context7_quota_exceeded, get_context7_quota_message
+            if is_context7_quota_exceeded():
+                quota_msg = get_context7_quota_message() or "Monthly quota exceeded"
+                response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+                logger.debug(
+                    f"Context7 API quota exceeded for '{library}' (topic: {topic}): {quota_msg}. "
+                    f"Skipping API call. Consider upgrading your Context7 plan or waiting for quota reset."
+                )
+                return LookupResult(
+                    success=False,
+                    source="api",
+                    library=library,
+                    topic=topic,
+                    error=f"Context7 API quota exceeded: {quota_msg}. Consider upgrading your plan or waiting for quota reset.",
+                    response_time_ms=response_time,
+                )
+        except Exception:
+            pass  # If quota check fails, continue (graceful degradation)
+        
         try:
             # #region agent log
             try:
@@ -424,11 +447,24 @@ class KBLookup:
             elif "quota exceeded" in resolve_result.get("error", "").lower():
                 # R3: Quota exceeded - clear error message with actionable guidance
                 error_msg = resolve_result.get("error", "Context7 API quota exceeded")
-                logger.warning(
-                    f"Context7 API quota exceeded for library '{library}' (topic: {topic}): {error_msg}. "
-                    f"Consider upgrading your Context7 plan or waiting for quota reset. "
-                    f"Continuing without Context7 documentation."
-                )
+                # Avoid log spam: once quota is exceeded, subsequent calls are expected to fail.
+                try:
+                    from .backup_client import is_context7_quota_exceeded
+                    already_exceeded = is_context7_quota_exceeded()
+                except Exception:
+                    already_exceeded = False
+
+                if already_exceeded:
+                    logger.debug(
+                        f"Context7 API quota exceeded for '{library}' (topic: {topic}): {error_msg}. "
+                        f"Continuing without Context7 documentation."
+                    )
+                else:
+                    logger.warning(
+                        f"Context7 API quota exceeded for library '{library}' (topic: {topic}): {error_msg}. "
+                        f"Consider upgrading your Context7 plan or waiting for quota reset. "
+                        f"Continuing without Context7 documentation."
+                    )
                 response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
                 return LookupResult(
                     success=False,

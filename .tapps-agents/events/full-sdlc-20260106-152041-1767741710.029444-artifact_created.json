@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "PRIORITY2-CONTENT-EXTRACTION-COMPLETE.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\workflows\\simple-mode\\PRIORITY2-CONTENT-EXTRACTION-COMPLETE.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:21:50.029444",
+  "correlation_id": "full-sdlc-20260106-152041:planning"
+}

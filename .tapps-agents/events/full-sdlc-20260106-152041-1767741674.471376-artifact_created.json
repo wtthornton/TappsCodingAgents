@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "QUALITY_GATES_SETUP.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\QUALITY_GATES_SETUP.md",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T15:21:14.471376",
+  "correlation_id": "full-sdlc-20260106-152041:requirements"
+}

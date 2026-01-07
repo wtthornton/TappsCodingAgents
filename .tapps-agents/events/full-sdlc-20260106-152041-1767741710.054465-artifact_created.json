@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "step4-api-design.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\workflows\\simple-mode-framework-improvements\\step4-api-design.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:21:50.054465",
+  "correlation_id": "full-sdlc-20260106-152041:planning"
+}

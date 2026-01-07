@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "mock_agents.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\fixtures\\mock_agents.py",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:21:49.935482",
+  "correlation_id": "full-sdlc-20260106-152041:planning"
+}

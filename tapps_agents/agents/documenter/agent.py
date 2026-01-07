@@ -71,6 +71,10 @@ class DocumenterAgent(BaseAgent):
                     "description": "Generate documentation for a file",
                 },
                 {
+                    "command": "*document-api",
+                    "description": "Document API endpoints (alias for generate-docs)",
+                },
+                {
                     "command": "*generate-docs",
                     "description": "Generate API documentation",
                 },
@@ -98,6 +102,9 @@ class DocumenterAgent(BaseAgent):
         """Execute a command."""
         if command == "document":
             return await self.document_command(**kwargs)
+        elif command == "document-api":
+            # Backward-compatible alias used by docs and CLI help.
+            return await self.generate_docs_command(**kwargs)
         elif command == "generate-docs":
             return await self.generate_docs_command(**kwargs)
         elif command == "update-readme":

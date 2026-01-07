@@ -1,0 +1,13 @@
+{
+  "event_type": "step_completed",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "planning",
+  "data": {
+    "agent": "planner",
+    "action": "create_stories",
+    "duration_seconds": 30.759392,
+    "artifact_count": 474
+  },
+  "timestamp": "2026-01-06T15:18:57.927221",
+  "correlation_id": "simple-full-20260106-151749:planning"
+}

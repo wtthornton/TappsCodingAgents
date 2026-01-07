@@ -561,6 +561,7 @@ class Context7AgentHelper:
         - Max 5 concurrent requests (prevents resource exhaustion)
         - 5s timeout per library (prevents cascading delays)
         - Circuit breaker opens after 3 failures (fast-fails subsequent requests)
+        - Early quota detection prevents unnecessary API calls
 
         Args:
             libraries: List of library names
@@ -575,6 +576,23 @@ class Context7AgentHelper:
         if not self.enabled:
             return {lib: None for lib in libraries}
 
+        # CRITICAL FIX: Check quota BEFORE starting parallel execution
+        # This prevents making multiple API calls when quota is already exceeded
+        try:
+            from .backup_client import is_context7_quota_exceeded, get_context7_quota_message
+            if is_context7_quota_exceeded():
+                quota_msg = get_context7_quota_message() or "Monthly quota exceeded"
+                logger.warning(
+                    f"Context7 API quota exceeded ({quota_msg}). "
+                    f"Skipping documentation lookup for {len(libraries)} libraries. "
+                    f"Consider upgrading your Context7 plan or waiting for quota reset."
+                )
+                # Return empty results for all libraries without making API calls
+                return {lib: None for lib in libraries}
+        except Exception as e:
+            # If quota check fails, log but continue (graceful degradation)
+            logger.debug(f"Error checking Context7 quota status: {e}. Continuing with lookups.")
+
         import asyncio
 
         from .circuit_breaker import get_parallel_executor
@@ -584,6 +602,14 @@ class Context7AgentHelper:
 
         # Define the lookup function for each library
         async def lookup_library(lib: str) -> tuple[str, dict[str, Any] | None]:
+            # Check quota again before each individual lookup (defense in depth)
+            try:
+                from .backup_client import is_context7_quota_exceeded
+                if is_context7_quota_exceeded():
+                    return (lib, None)  # Fast-fail without API call
+            except Exception:
+                pass  # Continue if quota check fails
+            
             try:
                 result = await asyncio.wait_for(
                     self.get_documentation(

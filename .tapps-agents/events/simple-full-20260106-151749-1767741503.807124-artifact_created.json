@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "test_module_path_sanitizer.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\core\\test_module_path_sanitizer.py",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T15:18:23.807124",
+  "correlation_id": "simple-full-20260106-151749:requirements"
+}

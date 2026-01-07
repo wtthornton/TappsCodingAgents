@@ -1224,11 +1224,12 @@ def get_default_config() -> dict[str, Any]:
     Get default configuration as a dictionary (for template generation).
 
     Returns:
-        Dictionary representation of default config
+        Dictionary representation of default config with Path objects as strings
     """
     config = ProjectConfig()
-    # Use model_dump with defaults, but exclude None values for cleaner output
-    return config.model_dump(exclude_none=True)
+    # Use model_dump with mode="json" to serialize Path objects as strings
+    # This is required for YAML serialization (yaml.safe_dump can't handle Path objects)
+    return config.model_dump(exclude_none=True, mode="json")
 
 
 def get_expert_config(config: ProjectConfig | None = None) -> ExpertConfig:

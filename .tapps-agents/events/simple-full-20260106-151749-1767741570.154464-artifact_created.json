@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "ci_safety.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\e2e\\fixtures\\ci_safety.py",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T15:19:30.154464",
+  "correlation_id": "simple-full-20260106-151749:design"
+}

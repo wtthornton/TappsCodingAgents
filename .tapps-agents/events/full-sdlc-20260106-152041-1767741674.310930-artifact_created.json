@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "requirements",
+  "data": {
+    "artifact_name": "test_weight_distributor.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\unit\\experts\\test_weight_distributor.py",
+    "created_by": "requirements"
+  },
+  "timestamp": "2026-01-06T15:21:14.310930",
+  "correlation_id": "full-sdlc-20260106-152041:requirements"
+}

@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "full-sdlc-20260106-152041",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "test_execute_startup.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\test_execute_startup.py",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:21:49.770374",
+  "correlation_id": "full-sdlc-20260106-152041:planning"
+}

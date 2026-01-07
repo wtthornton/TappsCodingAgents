@@ -212,7 +212,36 @@ class CircuitBreaker:
 
         except Exception as e:
             async with self._lock:
+                # CRITICAL FIX: Detect quota errors and open circuit immediately
+                error_msg = str(e).lower()
+                error_type = type(e).__name__
+                
+                # Check if this is a quota error (429 status, quota exceeded message, etc.)
+                is_quota_error = (
+                    "quota exceeded" in error_msg
+                    or "429" in error_msg
+                    or error_type == "CircuitBreakerOpen" and "quota" in error_msg
+                )
+                
+                if is_quota_error:
+                    # Immediately open circuit on quota error - no need to wait for threshold
+                    if self._stats.state == CircuitState.CLOSED:
+                        self._stats.state = CircuitState.OPEN
+                        self._stats.last_state_change = time.time()
+                        logger.warning(
+                            f"Circuit breaker [{self.config.name}] OPENED immediately due to quota error. "
+                            f"Subsequent requests will be rejected without API calls."
+                        )
+                    # Mark quota as exceeded globally
+                    try:
+                        from .backup_client import _mark_context7_quota_exceeded
+                        quota_msg = str(e) if "quota" in error_msg.lower() else "Quota exceeded"
+                        _mark_context7_quota_exceeded(quota_msg)
+                    except Exception:
+                        pass  # If quota marking fails, continue
+                
                 await self._record_failure()
+            
             logger.debug(
                 f"Circuit breaker [{self.config.name}] call failed: {e}"
             )

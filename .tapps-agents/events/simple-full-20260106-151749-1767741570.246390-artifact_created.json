@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "SECTION_3.3_EXPLANATION.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\workflows\\simple-mode-framework-improvements\\SECTION_3.3_EXPLANATION.md",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T15:19:30.246390",
+  "correlation_id": "simple-full-20260106-151749:design"
+}

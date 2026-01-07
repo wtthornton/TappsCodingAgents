@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "planning",
+  "data": {
+    "artifact_name": "RELEASE_DOCUMENTATION_INDEX.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\RELEASE_DOCUMENTATION_INDEX.md",
+    "created_by": "planning"
+  },
+  "timestamp": "2026-01-06T15:18:58.277682",
+  "correlation_id": "simple-full-20260106-151749:planning"
+}

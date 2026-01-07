@@ -1,0 +1,13 @@
+{
+  "event_type": "step_completed",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "requirements",
+  "data": {
+    "agent": "analyst",
+    "action": "gather_requirements",
+    "duration_seconds": 34.541493,
+    "artifact_count": 473
+  },
+  "timestamp": "2026-01-06T15:18:23.676216",
+  "correlation_id": "simple-full-20260106-151749:requirements"
+}

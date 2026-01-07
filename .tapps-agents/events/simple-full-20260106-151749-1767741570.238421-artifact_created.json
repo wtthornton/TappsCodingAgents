@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "step4-design.md",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\docs\\workflows\\simple-mode\\phase1-critical-fixes-20250116-000000\\step4-design.md",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T15:19:30.238421",
+  "correlation_id": "simple-full-20260106-151749:design"
+}

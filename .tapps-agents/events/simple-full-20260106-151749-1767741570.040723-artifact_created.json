@@ -1,0 +1,12 @@
+{
+  "event_type": "artifact_created",
+  "workflow_id": "simple-full-20260106-151749",
+  "step_id": "design",
+  "data": {
+    "artifact_name": "test_error_recovery.py",
+    "artifact_path": "C:\\cursor\\TappsCodingAgents\\tests\\cli\\test_error_recovery.py",
+    "created_by": "design"
+  },
+  "timestamp": "2026-01-06T15:19:30.040723",
+  "correlation_id": "simple-full-20260106-151749:design"
+}

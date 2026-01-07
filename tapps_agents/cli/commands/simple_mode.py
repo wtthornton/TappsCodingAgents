@@ -457,20 +457,20 @@ def handle_simple_mode_build(args: object) -> None:
 
 
 def handle_simple_mode_full(args: object) -> None:
-    """Handle simple-mode full command - runs full lifecycle workflow with testing and loopbacks."""
+    """Handle simple-mode full command - runs the Full SDLC workflow (requirements -> security -> docs)."""
     feedback = get_feedback()
-    feedback.start_operation("Starting Simple Full Lifecycle Workflow")
+    feedback.start_operation("Starting Full SDLC Workflow")
     
-    # Load the simple-full workflow preset
+    # Load the full SDLC workflow preset (matches docs: @simple-mode *full)
     loader = PresetLoader()
-    workflow = loader.load_preset("simple-full")
+    workflow = loader.load_preset("full-sdlc")
     
     if not workflow:
         feedback.error(
             "Workflow not found",
             error_code="workflow_not_found",
-            context={"preset": "simple-full"},
-            remediation="Ensure simple-full.yaml exists in workflows/presets/",
+            context={"preset": "full-sdlc"},
+            remediation="Ensure full-sdlc.yaml exists in workflows/presets/",
             exit_code=1,
         )
         return
@@ -524,7 +524,7 @@ def handle_simple_mode_full(args: object) -> None:
         state = asyncio.run(executor.execute(workflow=workflow, target_file=target_file))
         
         if state.status == "completed":
-            feedback.success("Simple Full Lifecycle Workflow completed successfully")
+            feedback.success("Full SDLC Workflow completed successfully")
             print("\n✅ Workflow completed successfully!")
             print(f"\nWorkflow ID: {state.workflow_id}")
             print(f"Steps completed: {len(state.completed_steps)}/{len(workflow.steps)}")
