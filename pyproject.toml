@@ -43,6 +43,8 @@ dependencies = [
     "packaging>=23.2,<25",
     # CLI UX (progress spinners/bars, live updates)
     "rich>=14.1.0",
+    # Async I/O (async file operations for performance - optional with fallback)
+    "aiofiles>=24.1.0",
 ]
 
 [project.optional-dependencies]

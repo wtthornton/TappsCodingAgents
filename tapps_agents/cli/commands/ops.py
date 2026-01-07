@@ -1,14 +1,22 @@
 """
 Ops agent command handlers
+
+Performance-optimized with:
+- Result caching for audit-dependencies (based on requirements files)
 """
 import asyncio
+from pathlib import Path
 
 from ...agents.ops.agent import OpsAgent
+from ...core.agent_cache import get_agent_cache, AgentResultCache
 from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
+
+# Version for cache invalidation on agent updates
+OPS_CACHE_VERSION = AgentResultCache.CACHE_VERSION
 
 
 def handle_ops_command(args: object) -> None:
@@ -79,12 +87,39 @@ def handle_ops_command(args: object) -> None:
                 )
             )
         elif command == "audit-dependencies":
-            result = asyncio.run(
-                ops.run(
-                    "audit-dependencies",
-                    severity_threshold=getattr(args, "severity_threshold", "high"),
+            # Cache based on dependency files (requirements.txt, pyproject.toml)
+            cache = get_agent_cache("ops")
+            cwd = Path.cwd()
+            
+            # Find dependency files to use as cache key
+            dep_files = []
+            for dep_file in ["requirements.txt", "pyproject.toml", "setup.py", "Pipfile"]:
+                path = cwd / dep_file
+                if path.exists():
+                    dep_files.append(path)
+            
+            # Check cache if we have dependency files
+            cached_result = None
+            if dep_files:
+                cached_result = asyncio.run(
+                    cache.get_cached_result(dep_files, "audit-dependencies", OPS_CACHE_VERSION)
                 )
-            )
+            
+            if cached_result is not None:
+                result = cached_result
+                feedback.info("Using cached result (dependency files unchanged)")
+            else:
+                result = asyncio.run(
+                    ops.run(
+                        "audit-dependencies",
+                        severity_threshold=getattr(args, "severity_threshold", "high"),
+                    )
+                )
+                # Cache if we have dependency files
+                if dep_files:
+                    asyncio.run(
+                        cache.save_result(dep_files, "audit-dependencies", OPS_CACHE_VERSION, result)
+                    )
         else:
             # Invalid command - show help without activation
             help_text = get_static_help("ops")

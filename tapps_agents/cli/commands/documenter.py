@@ -1,14 +1,22 @@
 """
 Documenter agent command handlers
+
+Performance-optimized with:
+- Result caching for document and generate-docs commands
 """
 import asyncio
+from pathlib import Path
 
 from ...agents.documenter.agent import DocumenterAgent
+from ...core.agent_cache import get_agent_cache, AgentResultCache
 from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
 from .common import check_result_error, format_json_output
+
+# Version for cache invalidation on agent updates
+DOCUMENTER_CACHE_VERSION = AgentResultCache.CACHE_VERSION
 
 
 def handle_documenter_command(args: object) -> None:
@@ -47,25 +55,57 @@ def handle_documenter_command(args: object) -> None:
     
     # Only activate for commands that need it
     documenter = DocumenterAgent()
+    cache = get_agent_cache("documenter")
+    
     try:
         asyncio.run(documenter.activate(offline_mode=offline_mode))
         if command == "document":
-            result = asyncio.run(
-                documenter.run(
-                    "document",
-                    file=args.file,
-                    output_format=getattr(args, "output_format", "markdown"),
-                    output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
-                )
+            file_path_obj = Path(args.file).resolve()
+            
+            # Check cache first
+            cached_result = asyncio.run(
+                cache.get_cached_result(file_path_obj, "document", DOCUMENTER_CACHE_VERSION)
             )
+            
+            if cached_result is not None:
+                result = cached_result
+                feedback.info("Using cached result (file unchanged)")
+            else:
+                result = asyncio.run(
+                    documenter.run(
+                        "document",
+                        file=args.file,
+                        output_format=getattr(args, "output_format", "markdown"),
+                        output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
+                    )
+                )
+                # Cache the result
+                asyncio.run(
+                    cache.save_result(file_path_obj, "document", DOCUMENTER_CACHE_VERSION, result)
+                )
         elif command in ("generate-docs", "document-api"):
-            result = asyncio.run(
-                documenter.run(
-                    "generate-docs",
-                    file=args.file,
-                    output_format=getattr(args, "output_format", "markdown"),
-                )
+            file_path_obj = Path(args.file).resolve()
+            
+            # Check cache first
+            cached_result = asyncio.run(
+                cache.get_cached_result(file_path_obj, "generate-docs", DOCUMENTER_CACHE_VERSION)
             )
+            
+            if cached_result is not None:
+                result = cached_result
+                feedback.info("Using cached result (file unchanged)")
+            else:
+                result = asyncio.run(
+                    documenter.run(
+                        "generate-docs",
+                        file=args.file,
+                        output_format=getattr(args, "output_format", "markdown"),
+                    )
+                )
+                # Cache the result
+                asyncio.run(
+                    cache.save_result(file_path_obj, "generate-docs", DOCUMENTER_CACHE_VERSION, result)
+                )
         elif command == "update-readme":
             result = asyncio.run(
                 documenter.run(
