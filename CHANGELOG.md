@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.13] - 2026-01-06
+
+### Fixed
+- **Critical Import Error in v3.2.12** - Fixed missing `WarmingResult` and `run_predictive_warming` exports
+  - `tapps_agents/context7/__init__.py` was importing `WarmingResult` and `run_predictive_warming` from `cache_warming.py`
+  - These symbols were missing from `cache_warming.py` in the v3.2.12 release
+  - Added missing code:
+    - `WarmingResult` dataclass for cache warming operation results
+    - `WELL_KNOWN_LIBRARIES` dictionary for priority-based library detection
+    - `get_prioritized_libraries()` method for library prioritization
+    - `warm_cache_predictive()` async method for predictive cache warming
+    - `run_predictive_warming()` convenience function
+  - This fix resolves the `ImportError` when installing v3.2.12 from PyPI or GitHub
+  - **Impact**: Users installing v3.2.12 will now get a working package
+
 ## [3.2.12] - 2026-01-06
 
 ### Added
