@@ -2,6 +2,12 @@
 Build Orchestrator - Coordinates feature development workflow.
 
 Coordinates: Enhancer → Planner → Architect → Designer → Implementer
+
+2025 Python 3.13+ patterns:
+- Pydantic v2 for structured step results
+- Decorator-based formatter registry
+- Agent contract validation
+- Step dependency management with failure cascades
 """
 
 import logging
@@ -24,6 +30,22 @@ from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 from .deliverable_checklist import DeliverableChecklist
 from .requirements_tracer import RequirementsTracer
+
+# New 2025 modules for workflow documentation quality
+from ..agent_contracts import AgentContractValidator
+from ..file_inference import TargetFileInferencer
+from ..result_formatters import (
+    FormatterRegistry,
+    format_failed_step,
+    format_skipped_step,
+    format_step_result,
+)
+from ..step_dependencies import (
+    StepDependencyManager,
+    StepExecutionState,
+    WorkflowStep,
+)
+from ..step_results import StepResultParser, StepStatus
 
 logger = logging.getLogger(__name__)
 
@@ -375,6 +397,9 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 "architect": (3, "Design architecture"),
                 "designer": (4, "Design API/data models"),
             }
+            # FIXED: Use correct command names and parameters per agent contracts
+            # - Architect: "design-system" with "requirements" (not "design" with "specification")
+            # - Designer: "design-api" with "requirements" (not "specification")
             agent_tasks = [
                 {
                     "agent_id": "planner-1",
@@ -387,8 +412,8 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 {
                     "agent_id": "architect-1",
                     "agent": "architect",
-                    "command": "design",
-                    "args": {"specification": enhanced_prompt},
+                    "command": "design-system",  # FIXED: was "design"
+                    "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
                     "step_num": 3,
                     "step_name": "Design architecture",
                 },
@@ -396,11 +421,23 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     "agent_id": "designer-1",
                     "agent": "designer",
                     "command": "design-api",
-                    "args": {"specification": enhanced_prompt},
+                    "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
                     "step_num": 4,
                     "step_name": "Design API/data models",
                 },
             ]
+            
+            # Validate agent tasks before execution (pre-execution contract validation)
+            validator = AgentContractValidator()
+            validation_result = validator.validate_tasks(agent_tasks)
+            if not validation_result.valid:
+                logger.error(f"Agent task validation failed: {validation_result.errors}")
+                # Log errors but continue - let agents report their own errors
+                for error in validation_result.errors:
+                    logger.warning(f"Contract validation error: {error}")
+            if validation_result.warnings:
+                for warning in validation_result.warnings:
+                    logger.debug(f"Contract validation warning: {warning}")
             
             # Notify step starts for steps 2-4
             for task in agent_tasks:
@@ -414,6 +451,20 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             doc_manager=doc_manager,
             enhanced_prompt=enhanced_prompt if not fast_mode else original_description,
         )
+        
+        # FIXED: Implementer requires file_path parameter
+        # Use TargetFileInferencer to infer target file from description
+        if "file_path" not in implementer_args or not implementer_args.get("file_path"):
+            file_inferencer = TargetFileInferencer(self.project_root)
+            inferred_path = file_inferencer.infer_target_file(
+                description=original_description,
+                context={
+                    "architecture": implementer_args.get("architecture"),
+                    "api_design": implementer_args.get("api_design"),
+                },
+            )
+            implementer_args["file_path"] = inferred_path
+            logger.info(f"Inferred target file path: {inferred_path}")
         
         step_5_num = 5 if not fast_mode else 1
         step_5_name = "Implement code"
@@ -520,7 +571,26 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                                 step_name=f"{agent_name}-result",
                             )
                         if doc_manager:
-                            doc_content = f"# Step {task_step_num}: {agent_name.title()} Result\n\n{task_result}"
+                            # FIXED: Use structured result parser and formatters
+                            # instead of raw JSON dumps
+                            parsed_result = StepResultParser.parse(
+                                agent_name=agent_name,
+                                raw=task_result,
+                                step_number=task_step_num,
+                            )
+                            
+                            # FIXED: Save appropriate documentation based on success/failure
+                            if task_success:
+                                doc_content = format_step_result(parsed_result)
+                            else:
+                                # Extract error message for placeholder documentation
+                                error_msg = self._extract_error_message(task_result)
+                                doc_content = format_failed_step(
+                                    step_number=task_step_num,
+                                    agent_name=agent_name,
+                                    error_message=error_msg,
+                                )
+                            
                             doc_manager.save_step_documentation(
                                 step_number=task_step_num,
                                 content=doc_content,
@@ -622,6 +692,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 # Prepare requirements dict from tracer
                 requirements_dict = tracer.requirements or {}
                 
+                # FIXED: Pass agent results to enable failure detection
                 verification_result = await self._step_8_verification(
                     workflow_id=workflow_id,
                     requirements=requirements_dict,
@@ -629,6 +700,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     tracer=tracer,
                     implemented_files=implemented_files_list,
                     doc_manager=doc_manager,
+                    agent_results=result.get("results", {}),
                 )
                 
                 steps_executed.append("verification")
@@ -1185,6 +1257,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         tracer: RequirementsTracer,
         implemented_files: list[Path],
         doc_manager: WorkflowDocumentationManager | None = None,
+        agent_results: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         """Verify all requirements are fully implemented.
 
@@ -1195,6 +1268,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             tracer: RequirementsTracer instance
             implemented_files: List of implemented files
             doc_manager: Documentation manager
+            agent_results: Results from all agent steps (to detect failures)
 
         Returns:
             Dictionary with verification results and gaps
@@ -1218,6 +1292,21 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         # Add requirement gaps
         req_verification = verification_results["requirements"]
         gaps.extend(req_verification.get("gaps", []))
+
+        # FIXED: Check for agent failures (prevents false "All deliverables verified")
+        agent_results = agent_results or {}
+        agent_failures = self._detect_agent_failures(agent_results)
+        if agent_failures:
+            verification_results["agent_failures"] = agent_failures
+            # Add agent failures as gaps
+            for failure in agent_failures:
+                gaps.append({
+                    "category": "agent_failure",
+                    "step": failure.get("step"),
+                    "agent": failure.get("agent"),
+                    "error": failure.get("error"),
+                    "item": f"Step {failure.get('step')} ({failure.get('agent')}) failed: {failure.get('error', 'Unknown error')[:100]}",
+                })
 
         # Determine loopback step
         loopback_step = None
@@ -1244,6 +1333,90 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             "loopback_step": loopback_step,
             "report": report,
         }
+
+    def _extract_error_message(self, task_result: dict[str, Any]) -> str:
+        """Extract error message from a failed task result.
+
+        Args:
+            task_result: Result dictionary from agent execution
+
+        Returns:
+            Error message string
+        """
+        # Try various formats agents use to report errors
+        if "error" in task_result:
+            return str(task_result["error"])
+        
+        if "result" in task_result:
+            nested = task_result["result"]
+            if isinstance(nested, dict) and "error" in nested:
+                return str(nested["error"])
+            if isinstance(nested, str) and ("error" in nested.lower() or "failed" in nested.lower()):
+                return nested[:500]
+        
+        if "message" in task_result:
+            return str(task_result["message"])
+        
+        if task_result.get("success") is False:
+            return "Agent execution failed (no specific error message)"
+        
+        return "Unknown error"
+
+    def _detect_agent_failures(self, results: dict[str, Any]) -> list[dict[str, Any]]:
+        """Detect agent failures from execution results.
+
+        Args:
+            results: Results dictionary from multi-agent orchestrator
+
+        Returns:
+            List of failure dictionaries with step, agent, and error info
+        """
+        failures = []
+        
+        # Step mapping for agent IDs
+        step_mapping = {
+            "planner-1": (2, "planner"),
+            "architect-1": (3, "architect"),
+            "designer-1": (4, "designer"),
+            "implementer-1": (5, "implementer"),
+            "reviewer-1": (6, "reviewer"),
+            "tester-1": (7, "tester"),
+        }
+        
+        # Check each agent result
+        for agent_id, (step_num, agent_name) in step_mapping.items():
+            agent_result = results.get(agent_id, {})
+            
+            # Check for error in various formats
+            error = None
+            
+            # Format 1: Direct error field
+            if "error" in agent_result:
+                error = agent_result["error"]
+            
+            # Format 2: Nested result with error
+            elif "result" in agent_result:
+                nested = agent_result["result"]
+                if isinstance(nested, dict) and "error" in nested:
+                    error = nested["error"]
+                elif isinstance(nested, str) and "error" in nested.lower():
+                    # Check if result string contains error message
+                    if "Unknown command" in nested or "required" in nested.lower():
+                        error = nested
+            
+            # Format 3: Success flag is False
+            elif agent_result.get("success") is False:
+                error = agent_result.get("message", "Agent reported failure")
+            
+            if error:
+                failures.append({
+                    "step": step_num,
+                    "agent": agent_name,
+                    "agent_id": agent_id,
+                    "error": str(error),
+                })
+        
+        return failures
 
     def _verify_core_code(self, implemented_files: list[Path]) -> dict[str, Any]:
         """Verify core implementation exists."""
@@ -1340,6 +1513,24 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             "",
         ]
 
+        # FIXED: Check for agent failures first (most critical issue)
+        agent_failures = verification_results.get("agent_failures", [])
+        if agent_failures:
+            report_lines.extend([
+                "## ❌ Agent Failures Detected",
+                "",
+                "The following workflow steps failed to execute:",
+                "",
+            ])
+            for failure in agent_failures:
+                step = failure.get("step", "?")
+                agent = failure.get("agent", "unknown")
+                error = failure.get("error", "Unknown error")
+                # Truncate long error messages
+                error_preview = error[:200] + "..." if len(error) > 200 else error
+                report_lines.append(f"- **Step {step} ({agent})**: {error_preview}")
+            report_lines.append("")
+
         # Core implementation
         core = verification_results.get("core_implementation", {})
         report_lines.append(f"- **Core Implementation**: {core.get('files_found', 0)} files")
@@ -1364,14 +1555,15 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         reqs = verification_results.get("requirements", {})
         report_lines.append(f"- **Requirements**: {'Complete' if reqs.get('complete') else 'Incomplete'}")
 
-        # Gaps
-        if gaps:
+        # Gaps (excluding agent failures which are shown above)
+        non_failure_gaps = [g for g in gaps if g.get("category") != "agent_failure"]
+        if non_failure_gaps:
             report_lines.extend([
                 "",
                 "## Gaps Found",
                 "",
             ])
-            for gap in gaps:
+            for gap in non_failure_gaps:
                 category = gap.get("category", gap.get("requirement_id", "Unknown"))
                 item = gap.get("item", gap.get("missing_types", []))
                 report_lines.append(f"- **{category}**: {item}")
