@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-3.2.9-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.3.0-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -311,6 +311,30 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - Graceful degradation on lock failures
   - **Result**: Planner command completes in 559ms (was 150+ seconds)
 - See [Simple Mode Timeout Analysis](docs/SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md) for complete details
+
+✅ **v3.3.0 - Simple Mode Workflow Quality Improvements** (January 2026)
+- **Agent Contract Validation** ✅ (`tapps_agents/simple_mode/agent_contracts.py`)
+  - Pydantic v2 contracts for type-safe agent task validation
+  - Pre-execution parameter validation prevents "Unknown command" errors
+  - 7 agent contracts covering all build workflow steps
+- **Target File Inference** ✅ (`tapps_agents/simple_mode/file_inference.py`)
+  - Intelligent file path inference from natural language descriptions
+  - Pattern-based routing (API, model, service, test, util paths)
+  - Context-aware inference from previous workflow steps
+- **Result Formatters** ✅ (`tapps_agents/simple_mode/result_formatters.py`)
+  - Decorator-based formatter registry pattern
+  - Converts raw agent output to formatted markdown documentation
+  - Per-agent formatters for all build workflow steps
+- **Step Dependency Management** ✅ (`tapps_agents/simple_mode/step_dependencies.py`)
+  - DAG-based step dependency graph
+  - Failure cascade handling with skip logic
+  - Parallel execution support with `asyncio.TaskGroup`
+- **Structured Step Results** ✅ (`tapps_agents/simple_mode/step_results.py`)
+  - Pydantic v2 models for type-safe step results
+  - Status tracking (SUCCESS, FAILED, SKIPPED, RUNNING)
+  - Result parser with error handling
+- **Step 8 Verification Fix** ✅ - Correctly detects and reports agent failures
+- **97 New Unit Tests** ✅ - Comprehensive test coverage for all new modules
 
 ✅ **P2 Medium Priority Enhancements - All Complete**
 - **Project Profiling System** ✅ (Auto-detection of project characteristics for context-aware expert guidance)
@@ -694,7 +718,7 @@ See [Release Guide](docs/RELEASE_GUIDE.md) for complete release process.
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 3.2.9  
+**Version**: 3.3.0  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

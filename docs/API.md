@@ -1,6 +1,6 @@
 # API Reference
 
-**Version**: 3.2.1  
+**Version**: 3.3.0  
 **Last Updated**: January 2026
 
 ## Overview

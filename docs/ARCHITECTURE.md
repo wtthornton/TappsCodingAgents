@@ -25,7 +25,7 @@ These shard files exist to keep agent context small while remaining accurate.
 
 # Architecture Overview
 
-**Version**: 3.2.1  
+**Version**: 3.3.0  
 **Last Updated**: January 2026
 
 ## System Architecture
@@ -152,6 +152,41 @@ When advanced state management is enabled (default in `WorkflowExecutor`), state
   - Automatic checkpointing on timeout
   - SSE and Markdown formatting for Cursor integration
   - Resume command generation (`@simple-mode *resume <workflow_id>`)
+
+### 5.1) Simple Mode Architecture (v3.3.0)
+
+Simple Mode lives under `tapps_agents/simple_mode/` and provides natural language orchestration with enhanced quality controls.
+
+**Core Modules (v3.3.0):**
+- **Agent Contract Validation** (`agent_contracts.py`):
+  - Pydantic v2 contracts for type-safe agent task validation
+  - Pre-execution parameter validation prevents "Unknown command" errors
+  - 7 agent contracts: EnhancerTask, PlannerTask, ArchitectTask, DesignerTask, ImplementerTask, ReviewerTask, TesterTask
+- **Target File Inference** (`file_inference.py`):
+  - Intelligent file path inference from natural language descriptions
+  - Pattern-based routing (API→api/, Model→models/, Service→services/, etc.)
+  - Context-aware inference from previous workflow steps
+- **Result Formatters** (`result_formatters.py`):
+  - Decorator-based formatter registry pattern (@register_formatter)
+  - Converts raw agent output to formatted markdown documentation
+  - Per-agent formatters for enhancer, planner, architect, designer, implementer, reviewer, tester
+- **Step Dependency Management** (`step_dependencies.py`):
+  - DAG-based step dependency graph
+  - Topological sorting for execution ordering
+  - Failure cascade handling with skip logic
+  - Parallel execution support with `asyncio.TaskGroup`
+- **Structured Step Results** (`step_results.py`):
+  - Pydantic v2 models for type-safe step results (StepResult, WorkflowResult)
+  - Status tracking: SUCCESS, FAILED, SKIPPED, RUNNING
+  - Result parser with error handling
+
+**Orchestrators** (`orchestrators/`):
+- BuildOrchestrator, ReviewOrchestrator, FixOrchestrator, TestOrchestrator
+- EpicOrchestrator (multi-story execution with dependency resolution)
+- ExploreOrchestrator, RefactorOrchestrator, PlanAnalysisOrchestrator, PROrchestrator
+- ResumeOrchestrator (checkpoint-based workflow resume)
+
+See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for usage documentation.
 
 ### 6) Project Profiling
 

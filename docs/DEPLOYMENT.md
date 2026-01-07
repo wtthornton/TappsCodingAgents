@@ -3,8 +3,8 @@
 > **📘 CANONICAL DOCUMENTATION** - This is the authoritative deployment guide.  
 > **For release process, see:** [RELEASE_GUIDE.md](RELEASE_GUIDE.md)
 
-**Version**: 3.2.3  
-**Last Updated**: January 2025
+**Version**: 3.3.0  
+**Last Updated**: January 2026
 
 ## Overview
 
