@@ -51,10 +51,16 @@ reports/
 .tapps-agents/cache/
 .tapps-agents/progress/
 .tapps-agents/workflow-state/
+.tapps-agents/backups/
+.tapps-agents/archives/
 .tapps-agents/*.json
 .tapps-agents/*.jsonl
 .tapps-agents/*.encrypted
 .tapps-agents/.master-key
+
+# Cursor IDE
+.cursor/debug.log
+.cursor/*.log
 
 # Local dev artifacts
 debug-report.md
