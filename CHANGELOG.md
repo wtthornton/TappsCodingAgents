@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.2.14] - 2026-01-07
+
+### Fixed
+- **Critical: Context7 API Authentication Header** - Fixed authentication header format
+  - **Problem**: API calls were failing with HTTP 429 "quota exceeded" error, but it was actually an authentication failure
+  - **Root Cause**: Code was using `Authorization: Bearer {key}` but Context7 API expects `X-API-Key: {key}` header
+  - **Symptoms**: Dashboard showed 0/500 requests (no authenticated requests counted), `x-clerk-auth-status: signed-out`
+  - **Fix**: Changed header from `Authorization: Bearer` to `X-API-Key` in `backup_client.py`
+  - **Impact**: All Context7 HTTP fallback API calls now authenticate correctly
+
+### Added
+- **Context7 Quota Handling Improvements**
+  - Early quota detection before parallel execution
+  - Circuit breaker integration for quota errors
+  - Better error messages for quota exceeded scenarios
+- **Documentation**: `docs/CONTEXT7_QUOTA_FIX.md` - Comprehensive documentation of the fix
+
 ## [3.2.13] - 2026-01-06
 
 ### Fixed
