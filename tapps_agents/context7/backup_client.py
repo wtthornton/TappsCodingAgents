@@ -11,6 +11,7 @@ Pattern:
 
 import logging
 import os
+import time
 import urllib.parse
 from typing import Any, Callable
 
@@ -19,6 +20,31 @@ import httpx
 from ..mcp.gateway import MCPGateway
 
 logger = logging.getLogger(__name__)
+
+_CONTEXT7_QUOTA_EXCEEDED: bool = False
+_CONTEXT7_QUOTA_MESSAGE: str | None = None
+
+
+def is_context7_quota_exceeded() -> bool:
+    """Return True if a Context7 quota-exceeded response was observed in this process."""
+    return _CONTEXT7_QUOTA_EXCEEDED
+
+
+def get_context7_quota_message() -> str | None:
+    """Return the last Context7 quota-exceeded message observed in this process."""
+    return _CONTEXT7_QUOTA_MESSAGE
+
+
+def _mark_context7_quota_exceeded(message: str) -> None:
+    """Mark Context7 quota as exceeded (best-effort) to suppress repeated HTTP calls and log spam."""
+    global _CONTEXT7_QUOTA_EXCEEDED, _CONTEXT7_QUOTA_MESSAGE
+    _CONTEXT7_QUOTA_MESSAGE = message
+    if _CONTEXT7_QUOTA_EXCEEDED:
+        return
+    _CONTEXT7_QUOTA_EXCEEDED = True
+    logger.warning(
+        "Context7 API quota exceeded. Further Context7 HTTP fallback calls will be skipped for this run."
+    )
 
 
 def _ensure_context7_api_key() -> str | None:
@@ -282,6 +308,15 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 "error": "Offline mode",
                 "result": {"matches": []}
             }
+
+        # Fast-fail if quota already exceeded (avoid repeated HTTP calls / log spam)
+        if is_context7_quota_exceeded():
+            msg = get_context7_quota_message() or "Monthly quota exceeded"
+            return {
+                "success": False,
+                "error": f"Context7 API quota exceeded: {msg}",
+                "result": {"matches": []},
+            }
         # #region agent log
         import json
         from datetime import datetime
@@ -305,7 +340,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 response = client.get(
                     f"{BASE_URL}/search",
                     headers={
-                        "Authorization": f"Bearer {api_key}",
+                        "X-API-Key": api_key,
                         "Content-Type": "application/json",
                     },
                     params={"query": library_name},
@@ -359,12 +394,33 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                         },
                     }
                 elif response.status_code == 429:
-                    # Quota exceeded - provide helpful error message
+                    # CRITICAL FIX: Quota exceeded - mark immediately and open circuit breaker
                     try:
                         error_data = response.json()
                         quota_message = error_data.get("message", "Daily quota exceeded")
                     except Exception:
                         quota_message = "Daily quota exceeded"
+                    
+                    # Mark quota as exceeded globally (this prevents future API calls)
+                    _mark_context7_quota_exceeded(quota_message)
+                    
+                    # CRITICAL FIX: Open circuit breaker immediately on quota error
+                    # This prevents subsequent parallel calls from attempting API requests
+                    try:
+                        from .circuit_breaker import get_context7_circuit_breaker, CircuitState
+                        circuit_breaker = get_context7_circuit_breaker()
+                        # Force open circuit breaker immediately (bypass threshold)
+                        if hasattr(circuit_breaker, '_stats'):
+                            circuit_breaker._stats.state = CircuitState.OPEN
+                            circuit_breaker._stats.last_failure_time = time.time()
+                            circuit_breaker._stats.last_state_change = time.time()
+                            logger.warning(
+                                f"Context7 circuit breaker opened immediately due to quota error (429). "
+                                f"Subsequent requests will be rejected without API calls."
+                            )
+                    except Exception as cb_error:
+                        logger.debug(f"Could not open circuit breaker on quota error: {cb_error}")
+                    
                     # #region agent log
                     try:
                         with open(log_path, "a", encoding="utf-8") as f:
@@ -478,6 +534,11 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
         - mode: "code" or "info"
         - type: "json" (for structured response) or "txt"
         """
+        # Fast-fail if quota already exceeded (avoid repeated HTTP calls / log spam)
+        if is_context7_quota_exceeded():
+            msg = get_context7_quota_message() or "Monthly quota exceeded"
+            return {"success": False, "error": f"Context7 API quota exceeded: {msg}", "result": {}}
+
         try:
             with httpx.Client(timeout=30.0) as client:
                 # Remove leading slash from context7_id if present (API expects format like "vercel/next.js")
@@ -494,7 +555,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 response = client.get(
                     endpoint,
                     headers={
-                        "Authorization": f"Bearer {api_key}",
+                        "X-API-Key": api_key,
                         "Content-Type": "application/json",
                     },
                     params=params,
@@ -552,6 +613,39 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                                 "content": response.text,
                             },
                         }
+                elif response.status_code == 429:
+                    # CRITICAL FIX: Quota exceeded - mark immediately and open circuit breaker
+                    try:
+                        error_data = response.json()
+                        quota_message = error_data.get("message", "Daily quota exceeded")
+                    except Exception:
+                        quota_message = "Daily quota exceeded"
+                    
+                    # Mark quota as exceeded globally (this prevents future API calls)
+                    _mark_context7_quota_exceeded(quota_message)
+                    
+                    # CRITICAL FIX: Open circuit breaker immediately on quota error
+                    # This prevents subsequent parallel calls from attempting API requests
+                    try:
+                        from .circuit_breaker import get_context7_circuit_breaker, CircuitState
+                        circuit_breaker = get_context7_circuit_breaker()
+                        # Force open circuit breaker immediately (bypass threshold)
+                        if hasattr(circuit_breaker, '_stats'):
+                            circuit_breaker._stats.state = CircuitState.OPEN
+                            circuit_breaker._stats.last_failure_time = time.time()
+                            circuit_breaker._stats.last_state_change = time.time()
+                            logger.warning(
+                                f"Context7 circuit breaker opened immediately due to quota error (429). "
+                                f"Subsequent requests will be rejected without API calls."
+                            )
+                    except Exception as cb_error:
+                        logger.debug(f"Could not open circuit breaker on quota error: {cb_error}")
+                    
+                    return {
+                        "success": False,
+                        "error": f"Context7 API quota exceeded: {quota_message}",
+                        "result": {},
+                    }
                 else:
                     return {
                         "success": False,
