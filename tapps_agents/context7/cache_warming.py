@@ -2,11 +2,18 @@
 Cache Warming Strategies for Context7 KB cache.
 
 Implements automatic cache warming based on project dependencies and usage patterns.
+
+2025 Enhancement: Predictive pre-warming with priority-based library detection.
+- Detects project dependencies (requirements.txt, pyproject.toml, package.json)
+- Prioritizes commonly used libraries
+- Background async warming (non-blocking)
+- Integrates with `tapps-agents init` for immediate cache population
 """
 
+import asyncio
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +26,64 @@ from .staleness_policies import StalenessPolicyManager
 logger = logging.getLogger(__name__)
 
 
+# Well-known libraries that Context7 has high-quality documentation for
+# Priority: 1 = most important, 3 = least important
+WELL_KNOWN_LIBRARIES: dict[str, int] = {
+    # Python Web Frameworks (Priority 1)
+    "fastapi": 1,
+    "django": 1,
+    "flask": 1,
+    "starlette": 2,
+    "aiohttp": 2,
+    # Python Data/ML (Priority 1)
+    "pydantic": 1,
+    "sqlalchemy": 1,
+    "numpy": 1,
+    "pandas": 1,
+    # Python Testing (Priority 1)
+    "pytest": 1,
+    "unittest": 2,
+    # Python HTTP (Priority 2)
+    "requests": 2,
+    "httpx": 2,
+    "urllib3": 3,
+    # Python Async (Priority 2)
+    "asyncio": 2,
+    "aiofiles": 3,
+    # Python CLI/Utils (Priority 2)
+    "click": 2,
+    "typer": 2,
+    "rich": 2,
+    "pyyaml": 2,
+    # JavaScript/TypeScript (Priority 1)
+    "react": 1,
+    "vue": 1,
+    "angular": 1,
+    "nextjs": 1,
+    "express": 1,
+    "typescript": 1,
+    # JavaScript Testing (Priority 1)
+    "jest": 1,
+    "vitest": 1,
+    "playwright": 1,
+    "cypress": 2,
+    # JavaScript Utils (Priority 2)
+    "axios": 2,
+    "lodash": 2,
+    "dayjs": 3,
+    "moment": 3,
+    # AI/ML (Priority 1)
+    "openai": 1,
+    "anthropic": 1,
+    "langchain": 1,
+    "llamaindex": 2,
+    # Infrastructure (Priority 2)
+    "docker": 2,
+    "kubernetes": 2,
+    "terraform": 2,
+}
+
+
 @dataclass
 class WarmingStrategy:
     """Strategy for cache warming."""
@@ -26,8 +91,22 @@ class WarmingStrategy:
     name: str
     priority: int  # 1-10, higher = more urgent
     libraries: list[str]
-    topics: list[str] = None  # None means all common topics
+    topics: list[str] | None = None  # None means all common topics
     auto_detect: bool = True  # Whether to auto-detect from project
+
+
+@dataclass
+class WarmingResult:
+    """Result of cache warming operation."""
+
+    success: bool
+    warmed: int
+    skipped: int
+    failed: int
+    total_requested: int
+    duration_ms: float
+    libraries_warmed: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
 
 class CacheWarmer:
@@ -282,3 +361,244 @@ class CacheWarmer:
             )
 
         return recommendations
+
+    def get_prioritized_libraries(self, max_count: int = 20) -> list[str]:
+        """
+        Get prioritized list of libraries for pre-warming.
+
+        Combines:
+        1. Project dependencies (detected from files)
+        2. Well-known libraries (from WELL_KNOWN_LIBRARIES)
+
+        Sorted by priority (project deps first, then by well-known priority).
+
+        Args:
+            max_count: Maximum number of libraries to return
+
+        Returns:
+            List of library names sorted by priority
+        """
+        # Detect project libraries
+        detected = set(self.detect_project_libraries())
+
+        # Score libraries: project deps get +10, well-known get their priority
+        scored: list[tuple[str, int]] = []
+
+        for lib in detected:
+            lib_lower = lib.lower()
+            well_known_priority = WELL_KNOWN_LIBRARIES.get(lib_lower, 3)
+            # Project deps get +10 bonus
+            score = 10 + (4 - well_known_priority)  # Invert so priority 1 = highest
+            scored.append((lib_lower, score))
+
+        # Add well-known libraries not in project (lower priority)
+        for lib, priority in WELL_KNOWN_LIBRARIES.items():
+            if lib not in detected:
+                score = 4 - priority  # priority 1 = score 3, priority 3 = score 1
+                scored.append((lib, score))
+
+        # Sort by score (descending) and take top N
+        scored.sort(key=lambda x: x[1], reverse=True)
+        return [lib for lib, _ in scored[:max_count]]
+
+    async def warm_cache_predictive(
+        self,
+        max_libraries: int = 20,
+        max_concurrency: int = 5,
+        per_library_timeout: float = 5.0,
+        on_progress: Any | None = None,
+    ) -> WarmingResult:
+        """
+        Predictive cache warming with bounded parallelism.
+
+        2025 Architecture:
+        - Detects project dependencies automatically
+        - Prioritizes well-known libraries
+        - Uses circuit breaker for resilience
+        - Bounded concurrency (default: 5 parallel)
+        - Per-library timeout (default: 5s)
+
+        Args:
+            max_libraries: Maximum number of libraries to warm (default: 20)
+            max_concurrency: Maximum concurrent lookups (default: 5)
+            per_library_timeout: Timeout per library in seconds (default: 5.0)
+            on_progress: Optional callback(library, status, current, total)
+
+        Returns:
+            WarmingResult with statistics
+        """
+        import time
+
+        from .circuit_breaker import get_parallel_executor
+
+        start_time = time.time()
+
+        # Get prioritized libraries
+        libraries = self.get_prioritized_libraries(max_count=max_libraries)
+
+        if not libraries:
+            return WarmingResult(
+                success=False,
+                warmed=0,
+                skipped=0,
+                failed=0,
+                total_requested=0,
+                duration_ms=0,
+                errors=["No libraries detected for warming"],
+            )
+
+        # Get parallel executor with circuit breaker
+        executor = get_parallel_executor(max_concurrency=max_concurrency)
+
+        warmed = 0
+        skipped = 0
+        failed = 0
+        errors: list[str] = []
+        libraries_warmed: list[str] = []
+
+        async def warm_library(lib: str) -> tuple[str, str, str | None]:
+            """Warm a single library. Returns (library, status, error)."""
+            topic = "overview"
+
+            # Check if already cached and not stale
+            if self.kb_cache.exists(lib, topic):
+                entry = self.kb_cache.get(lib, topic)
+                if entry and entry.cached_at:
+                    is_stale = self.policy_manager.is_entry_stale(lib, entry.cached_at)
+                    if not is_stale:
+                        return (lib, "skipped", None)
+
+            try:
+                result = await asyncio.wait_for(
+                    self.kb_lookup.lookup(library=lib, topic=topic, use_fuzzy_match=False),
+                    timeout=per_library_timeout,
+                )
+                if result.success:
+                    return (lib, "warmed", None)
+                else:
+                    return (lib, "failed", result.error)
+            except asyncio.TimeoutError:
+                return (lib, "failed", f"Timeout after {per_library_timeout}s")
+            except Exception as e:
+                return (lib, "failed", str(e))
+
+        # Execute warming in parallel
+        results = await executor.execute_all(
+            items=libraries,
+            func=warm_library,
+            fallback=None,
+        )
+
+        # Process results
+        for i, result in enumerate(results):
+            library = libraries[i]
+
+            # Report progress
+            if on_progress:
+                try:
+                    on_progress(library, "processing", i + 1, len(libraries))
+                except Exception:
+                    pass
+
+            if result is None:
+                failed += 1
+                errors.append(f"{library}: Circuit breaker open")
+                continue
+
+            if isinstance(result, tuple) and len(result) == 3:
+                lib, status, error = result
+                if status == "warmed":
+                    warmed += 1
+                    libraries_warmed.append(lib)
+                elif status == "skipped":
+                    skipped += 1
+                else:
+                    failed += 1
+                    if error:
+                        errors.append(f"{lib}: {error}")
+            else:
+                failed += 1
+                errors.append(f"{library}: Unexpected result format")
+
+        duration_ms = (time.time() - start_time) * 1000
+
+        return WarmingResult(
+            success=warmed > 0,
+            warmed=warmed,
+            skipped=skipped,
+            failed=failed,
+            total_requested=len(libraries),
+            duration_ms=duration_ms,
+            libraries_warmed=libraries_warmed,
+            errors=errors[:10],  # Limit errors to 10
+        )
+
+
+async def run_predictive_warming(
+    project_root: Path | None = None,
+    max_libraries: int = 20,
+    max_concurrency: int = 5,
+    on_progress: Any | None = None,
+) -> WarmingResult:
+    """
+    Convenience function to run predictive cache warming.
+
+    Can be called during `tapps-agents init` or manually.
+
+    Args:
+        project_root: Project root path (default: cwd)
+        max_libraries: Maximum libraries to warm (default: 20)
+        max_concurrency: Max concurrent lookups (default: 5)
+        on_progress: Optional progress callback
+
+    Returns:
+        WarmingResult with statistics
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    try:
+        # Initialize components
+        cache_root = project_root / ".tapps-agents" / "kb" / "context7-cache"
+        cache_structure = CacheStructure(cache_root)
+        cache_structure.initialize()
+
+        metadata_manager = MetadataManager(cache_structure)
+        kb_cache = KBCache(cache_root, metadata_manager)
+
+        # Initialize KB lookup (with MCP gateway if available)
+        from ..mcp.gateway import MCPGateway
+        
+        try:
+            mcp_gateway = MCPGateway()
+        except Exception:
+            mcp_gateway = None
+
+        kb_lookup = KBLookup(kb_cache=kb_cache, mcp_gateway=mcp_gateway)
+
+        # Create warmer and run
+        warmer = CacheWarmer(
+            kb_cache=kb_cache,
+            kb_lookup=kb_lookup,
+            cache_structure=cache_structure,
+            metadata_manager=metadata_manager,
+            project_root=project_root,
+        )
+
+        return await warmer.warm_cache_predictive(
+            max_libraries=max_libraries,
+            max_concurrency=max_concurrency,
+            on_progress=on_progress,
+        )
+
+    except Exception as e:
+        logger.warning(f"Predictive warming failed: {e}")
+        return WarmingResult(
+            success=False,
+            warmed=0,
+            skipped=0,
+            failed=0,
+            total_requested=0,
+            duration_ms=0,
+            errors=[str(e)],
+        )
