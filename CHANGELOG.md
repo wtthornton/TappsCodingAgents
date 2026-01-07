@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.0] - 2026-01-07
+
+### Added
+- **Workflow Documentation Quality Improvements** - Complete architectural overhaul for Simple Mode build workflow
+  - **Agent Contract Validation** (`agent_contracts.py`)
+    - Pydantic v2 contracts for type-safe agent task validation
+    - Pre-execution parameter validation prevents "Unknown command" errors
+    - 7 agent contracts covering all build workflow steps
+  - **Target File Inference** (`file_inference.py`)
+    - Intelligent file path inference from natural language descriptions
+    - Pattern-based routing (API, model, service, test, util paths)
+    - Context-aware inference from previous workflow steps
+  - **Result Formatters** (`result_formatters.py`)
+    - Decorator-based formatter registry pattern
+    - Converts raw agent output to formatted markdown documentation
+    - Per-agent formatters for enhancer, planner, architect, designer, implementer, reviewer, tester
+  - **Step Dependency Management** (`step_dependencies.py`)
+    - DAG-based step dependency graph
+    - Failure cascade handling with skip logic
+    - Parallel execution support with `asyncio.TaskGroup`
+  - **Structured Step Results** (`step_results.py`)
+    - Pydantic v2 models for type-safe step results
+    - Status tracking (SUCCESS, FAILED, SKIPPED, RUNNING)
+    - Result parser with error handling
+
+### Fixed
+- **Step 8 Verification** - Now correctly detects and reports agent failures
+  - Previously falsely claimed "All deliverables verified" even when steps failed
+  - Now shows "Agent Failures Detected" with specific error messages
+  - Provides loopback recommendations for failed workflows
+- **Agent Command Mismatches** - Fixed incorrect command names and parameters in BuildOrchestrator
+  - Architect: `*design` → `*design-system` with `requirements` parameter
+  - Designer: `*design-api` with `requirements` parameter
+  - Implementer: `*implement` with `specification` and `file_path` parameters
+- **Documentation Quality** - Failed steps now generate placeholder documentation with error details instead of raw JSON
+
+### Tests
+- Added 97 unit tests for all new modules (all passing)
+  - `test_agent_contracts.py` - 14 tests
+  - `test_file_inference.py` - 17 tests
+  - `test_result_formatters.py` - 18 tests
+  - `test_step_dependencies.py` - 26 tests
+  - `test_step_results.py` - 14 tests
+
 ## [3.2.14] - 2026-01-07
 
 ### Fixed
