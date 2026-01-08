@@ -151,6 +151,7 @@ class ExecutionMetricsCollector:
             List of ExecutionMetric instances
         """
         metrics: list[ExecutionMetric] = []
+        seen_ids: set[str] = set()
 
         # Search recent cache first
         for metric in reversed(self._recent_metrics):
@@ -164,18 +165,22 @@ class ExecutionMetricsCollector:
             if status and metric.status != status:
                 continue
 
+            # Avoid duplicates
+            if metric.execution_id in seen_ids:
+                continue
+            seen_ids.add(metric.execution_id)
             metrics.append(metric)
 
         # If we need more, search files
         if len(metrics) < limit:
-            metrics.extend(
-                self._load_metrics_from_files(
-                    workflow_id=workflow_id,
-                    step_id=step_id,
-                    status=status,
-                    limit=limit - len(metrics),
-                )
+            file_metrics = self._load_metrics_from_files(
+                workflow_id=workflow_id,
+                step_id=step_id,
+                status=status,
+                limit=limit - len(metrics),
+                exclude_ids=seen_ids,
             )
+            metrics.extend(file_metrics)
 
         return metrics[:limit]
 
@@ -185,9 +190,11 @@ class ExecutionMetricsCollector:
         step_id: str | None = None,
         status: str | None = None,
         limit: int = 100,
+        exclude_ids: set[str] | None = None,
     ) -> list[ExecutionMetric]:
         """Load metrics from files."""
         metrics: list[ExecutionMetric] = []
+        exclude_ids = exclude_ids or set()
 
         # Get all metrics files, sorted by date (newest first)
         metrics_files = sorted(
@@ -211,6 +218,10 @@ class ExecutionMetricsCollector:
                         try:
                             data = json.loads(line.strip())
                             metric = ExecutionMetric.from_dict(data)
+
+                            # Skip if already seen (from cache)
+                            if metric.execution_id in exclude_ids:
+                                continue
 
                             # Apply filters
                             if workflow_id and metric.workflow_id != workflow_id:
