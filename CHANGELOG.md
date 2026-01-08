@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.1] - 2026-01-16
+
+### Updated
+- **Metrics Access Guide** - Enhanced documentation for external projects to access TappsCodingAgents performance metrics
+- **Reviewer Agent** - Improvements to code review capabilities and CLI integration
+- **CLI Parsers** - Updates across all agent CLI parsers for improved consistency and functionality
+- **Core Workflow Components** - Enhancements to workflow execution and state management
+
 ## [3.3.0] - 2026-01-07
 
 ### Added
