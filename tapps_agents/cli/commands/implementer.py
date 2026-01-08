@@ -22,6 +22,10 @@ async def implement_command(
     from ..network_detection import NetworkDetector
     from ...core.network_errors import NetworkRequiredError
     from ..base import handle_network_error
+    from ..feedback import suggest_simple_mode
+    
+    # Suggest using @simple-mode for better outcomes
+    suggest_simple_mode("implement", description=specification[:50], file_path=file_path)
     
     feedback = get_feedback()
     feedback.format_type = output_format
@@ -191,11 +195,14 @@ async def refactor_command(
 ):
     """Refactor existing code file"""
     from ..utils.output_handler import write_output
-    from ..feedback import get_feedback
+    from ..feedback import get_feedback, suggest_simple_mode
     from ..command_classifier import CommandClassifier, CommandNetworkRequirement
     from ..network_detection import NetworkDetector
     from ...core.network_errors import NetworkRequiredError
     from ..base import handle_network_error
+    
+    # Suggest using @simple-mode for better outcomes
+    suggest_simple_mode("refactor", description=instruction[:50], file_path=file_path)
     
     feedback = get_feedback()
     feedback.format_type = output_format

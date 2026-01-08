@@ -788,6 +788,57 @@ class FeedbackManager:
         print(f"[RUNNING] {message}{step_info}", file=sys.stderr)
 
 
+def suggest_simple_mode(
+    task_type: str,
+    description: str | None = None,
+    file_path: str | None = None,
+) -> None:
+    """
+    Suggest using @simple-mode for better outcomes.
+    
+    Call this at the start of CLI commands that could benefit from workflow orchestration.
+    
+    Args:
+        task_type: Type of task - "build", "fix", "review", "test", "refactor"
+        description: Optional description for the task
+        file_path: Optional file path for the task
+    """
+    feedback = FeedbackManager.get_instance()
+    
+    # Don't show in quiet mode
+    if feedback.verbosity == VerbosityLevel.QUIET:
+        return
+    
+    # Build the suggestion message
+    commands = {
+        "build": f'@simple-mode *build "{description or "your feature description"}"',
+        "implement": f'@simple-mode *build "{description or "your feature description"}"',
+        "fix": f'@simple-mode *fix {file_path or "<file>"} "{description or "error description"}"',
+        "debug": f'@simple-mode *fix {file_path or "<file>"} "{description or "error description"}"',
+        "review": f'@simple-mode *review {file_path or "<file>"}',
+        "test": f'@simple-mode *test {file_path or "<file>"}',
+        "refactor": f'@simple-mode *refactor {file_path or "<file>"}',
+    }
+    
+    simple_mode_cmd = commands.get(task_type, f'@simple-mode *build "{description or "your task"}"')
+    
+    # Print tip box
+    print(file=sys.stderr)
+    print("╭" + "─" * 68 + "╮", file=sys.stderr)
+    print("│  TIP: For better outcomes, use @simple-mode in Cursor IDE          │", file=sys.stderr)
+    print("│                                                                    │", file=sys.stderr)
+    # Truncate command if too long
+    if len(simple_mode_cmd) > 60:
+        display_cmd = simple_mode_cmd[:57] + "..."
+    else:
+        display_cmd = simple_mode_cmd
+    print(f"│    {display_cmd:<62} │", file=sys.stderr)
+    print("│                                                                    │", file=sys.stderr)
+    print("│  This orchestrates a complete workflow with quality gates.        │", file=sys.stderr)
+    print("╰" + "─" * 68 + "╯", file=sys.stderr)
+    print(file=sys.stderr)
+
+
 # Convenience functions for easy access
 def get_feedback() -> FeedbackManager:
     """Get the feedback manager instance."""

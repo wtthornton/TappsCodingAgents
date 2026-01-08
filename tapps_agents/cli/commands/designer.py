@@ -49,7 +49,8 @@ def handle_designer_command(args: object) -> None:
     designer = DesignerAgent()
     try:
         asyncio.run(designer.activate(offline_mode=offline_mode))
-        if command == "design-api":
+        if command in ("design-api", "api-design"):
+            # Support both command names: design-api (internal) and api-design (CLI alias)
             result = asyncio.run(
                 designer.run(
                     "design-api",
@@ -58,7 +59,8 @@ def handle_designer_command(args: object) -> None:
                     output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
-        elif command == "design-data-model":
+        elif command in ("design-data-model", "data-model-design"):
+            # Support both command names: design-data-model (internal) and data-model-design (CLI alias)
             result = asyncio.run(
                 designer.run(
                     "design-data-model",
@@ -67,7 +69,8 @@ def handle_designer_command(args: object) -> None:
                     output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
-        elif command == "design-ui":
+        elif command in ("design-ui", "ui-ux-design"):
+            # Support both command names: design-ui (internal) and ui-ux-design (CLI alias)
             result = asyncio.run(
                 designer.run(
                     "design-ui",
@@ -76,7 +79,8 @@ def handle_designer_command(args: object) -> None:
                     output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
-        elif command == "create-wireframe":
+        elif command in ("create-wireframe", "wireframes"):
+            # Support both command names: create-wireframe (internal) and wireframes (CLI alias)
             result = asyncio.run(
                 designer.run(
                     "create-wireframe",
@@ -85,7 +89,8 @@ def handle_designer_command(args: object) -> None:
                     output_file=getattr(args, "output", None) or getattr(args, "output_file", None),
                 )
             )
-        elif command == "define-design-system":
+        elif command in ("define-design-system", "design-system"):
+            # Support both command names: define-design-system (internal) and design-system (CLI alias)
             result = asyncio.run(
                 designer.run(
                     "define-design-system",

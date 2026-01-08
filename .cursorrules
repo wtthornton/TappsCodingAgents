@@ -2,37 +2,65 @@
 
 This project uses Cursor Skills and Rules for AI assistance.
 
+## ⚠️ IMPORTANT: Default to @simple-mode
+
+**For ALL development tasks, DEFAULT to using `@simple-mode` unless the user explicitly requests a specific agent.**
+
+### Why @simple-mode is the Default
+
+When users ask you to implement features, fix bugs, review code, or write tests, you should:
+
+1. **FIRST** suggest using `@simple-mode *build`, `@simple-mode *fix`, `@simple-mode *review`, or `@simple-mode *test`
+2. **ONLY** use individual agents (`@implementer`, `@reviewer`, etc.) if:
+   - User explicitly requests a specific agent
+   - Task is a simple one-off operation (e.g., just scoring a file)
+   - User has already gone through the workflow
+
+### Default Commands to Use
+
+| User Request | Default Response |
+|--------------|------------------|
+| "Add/implement/create a feature" | `@simple-mode *build "description"` |
+| "Fix this bug/error" | `@simple-mode *fix <file> "description"` |
+| "Review this code" | `@simple-mode *review <file>` |
+| "Add tests" | `@simple-mode *test <file>` |
+| "Refactor this code" | `@simple-mode *refactor <file>` |
+| "Score this file" (quick check) | `@reviewer *score <file>` (exception: simple operation) |
+
+### Example Behavior
+
+```
+User: "Add user authentication to my app"
+
+✅ CORRECT Response:
+"I'll use the Simple Mode build workflow to implement this properly:
+@simple-mode *build 'Add user authentication with login, logout, and session management'"
+
+❌ WRONG Response:
+"I'll implement this directly..." [starts editing files without workflow]
+```
+
 ## Quick Reference
 
-- **Skills**: Use `@agent-name` in chat (e.g., `@reviewer`, `@implementer`)
+- **Primary Interface**: `@simple-mode` (orchestrates all agents automatically)
+- **Individual Skills**: Use `@agent-name` only for specific operations
 - **Rules**: See `.cursor/rules/` for detailed project context
-- **Background Agents**: See `.cursor/background-agents.yaml` for autonomous task execution
-- **Command Reference**: See `.cursor/rules/command-reference.mdc` for complete command documentation
+- **Command Reference**: See `.cursor/rules/command-reference.mdc` for complete documentation
 
-## Available Skills (13 Agents)
+## Simple Mode Commands (PRIMARY)
 
-### Core Development
-- `@reviewer` - Code review with objective quality metrics (5 metrics: complexity, security, maintainability, test coverage, performance)
-- `@implementer` - Code generation and refactoring
-- `@tester` - Test generation and execution
-- `@debugger` - Error analysis and code tracing
+```
+@simple-mode *build "description"     # 7-step feature workflow (RECOMMENDED)
+@simple-mode *review <file>           # Code quality review
+@simple-mode *fix <file> "error"      # Bug fixing workflow
+@simple-mode *test <file>             # Test generation
+@simple-mode *refactor <file>         # Refactoring workflow
+@simple-mode *full "description"      # Full 9-step SDLC (for framework development)
+```
 
-### Planning & Design
-- `@analyst` - Requirements gathering and analysis
-- `@planner` - Story creation and task breakdown
-- `@architect` - System design and architecture
-- `@designer` - API contracts and data model design
+## Individual Agent Commands (ADVANCED)
 
-### Quality & Operations
-- `@improver` - Code refactoring and optimization
-- `@ops` - Security scanning, compliance, deployment
-- `@documenter` - API documentation and README generation
-
-### Orchestration & Enhancement
-- `@orchestrator` - Workflow coordination and multi-agent orchestration
-- `@enhancer` - Prompt enhancement utility with expert integration
-
-## Quick Commands
+Use these only for targeted, single-purpose operations:
 
 ### Code Review
 ```
