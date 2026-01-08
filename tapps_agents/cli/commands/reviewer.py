@@ -60,10 +60,50 @@ def _format_text_review_result(result: dict[str, Any]) -> str:
         lines.append(f"  Complexity: {scoring.get('complexity_score', 0.0):.1f}/10")
         lines.append(f"  Security: {scoring.get('security_score', 0.0):.1f}/10")
         lines.append(f"  Maintainability: {scoring.get('maintainability_score', 0.0):.1f}/10")
+        
+        # P1 Improvement: Show linting and type checking scores with issue counts
+        linting_score = scoring.get('linting_score', 0.0)
+        linting_count = scoring.get('linting_issue_count', 0)
+        type_score = scoring.get('type_checking_score', 0.0)
+        type_count = scoring.get('type_issue_count', 0)
+        
+        linting_suffix = f" ({linting_count} issues)" if linting_count > 0 else ""
+        type_suffix = f" ({type_count} issues)" if type_count > 0 else ""
+        
+        lines.append(f"  Linting: {linting_score:.1f}/10{linting_suffix}")
+        lines.append(f"  Type Checking: {type_score:.1f}/10{type_suffix}")
+        
         if "threshold" in result:
             lines.append(f"  Threshold: {result.get('threshold')}")
         if "passed" in result:
             lines.append(f"  Status: {'Passed' if result.get('passed') else 'Failed'}")
+        
+        # P1 Improvement: Show actual linting issues
+        linting_issues = scoring.get('linting_issues', [])
+        if linting_issues:
+            lines.append("")
+            lines.append(f"Linting Issues ({len(linting_issues)}):")
+            for issue in linting_issues[:10]:  # Show top 10
+                code = issue.get('code', '???')
+                msg = issue.get('message', 'Unknown issue')
+                line = issue.get('line', 0)
+                lines.append(f"  Line {line}: [{code}] {msg}")
+            if len(linting_issues) > 10:
+                lines.append(f"  ... and {len(linting_issues) - 10} more")
+        
+        # P1 Improvement: Show actual type checking issues
+        type_issues = scoring.get('type_issues', [])
+        if type_issues:
+            lines.append("")
+            lines.append(f"Type Issues ({len(type_issues)}):")
+            for issue in type_issues[:10]:  # Show top 10
+                msg = issue.get('message', 'Unknown issue')
+                line = issue.get('line', 0)
+                error_code = issue.get('error_code', '')
+                code_suffix = f" [{error_code}]" if error_code else ""
+                lines.append(f"  Line {line}: {msg}{code_suffix}")
+            if len(type_issues) > 10:
+                lines.append(f"  ... and {len(type_issues) - 10} more")
 
     feedback = result.get("feedback") or {}
     summary = feedback.get("summary")
@@ -990,6 +1030,7 @@ async def lint_command(
     output_file: str | None = None,
     fail_on_issues: bool = False,
     verbose_output: bool = False,
+    isolated: bool = False,
 ) -> None:
     """Run linting on file(s) with consistent async execution and output handling."""
     from ..command_classifier import CommandClassifier, CommandNetworkRequirement
@@ -1050,12 +1091,13 @@ async def lint_command(
                 result = cached_result
                 feedback.info("Using cached result (file unchanged)")
             else:
-                result = await reviewer.run("lint", file=str(file_path_obj))
+                result = await reviewer.run("lint", file=str(file_path_obj), isolated=isolated)
                 check_result_error(result)
-                # Cache the result
-                await cache.save_result(
-                    file_path_obj, "lint", REVIEWER_CACHE_VERSION, result
-                )
+                # Cache the result (only if not isolated, as isolated results may differ)
+                if not isolated:
+                    await cache.save_result(
+                        file_path_obj, "lint", REVIEWER_CACHE_VERSION, result
+                    )
             feedback.clear_progress()
 
             if output_file:
@@ -1421,6 +1463,7 @@ def handle_reviewer_command(args: object) -> None:
         elif command == "lint":
             fail_on_issues = bool(getattr(args, "fail_on_issues", False))
             verbose_output = bool(getattr(args, "verbose_output", False))
+            isolated = bool(getattr(args, "isolated", False))
             run_async_command(
                 lint_command(
                     file_path=single_file,
@@ -1431,6 +1474,7 @@ def handle_reviewer_command(args: object) -> None:
                     output_file=output_file,
                     fail_on_issues=fail_on_issues,
                     verbose_output=verbose_output,
+                    isolated=isolated,
                 )
             )
         elif command == "type-check":

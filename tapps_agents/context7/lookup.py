@@ -26,7 +26,7 @@ class LookupResult:
 
     success: bool
     content: str | None = None
-    source: str = "cache"  # "cache", "api", "fuzzy_match"
+    source: str = "cache"  # "cache", "api", "fuzzy_match", "stale_fallback", "stale_fuzzy_fallback"
     library: str | None = None
     topic: str | None = None
     context7_id: str | None = None
@@ -35,6 +35,7 @@ class LookupResult:
     response_time_ms: float = 0.0
     fuzzy_score: float | None = None
     matched_topic: str | None = None
+    warning: str | None = None  # P1 Improvement: Warning message for stale data
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -49,6 +50,7 @@ class LookupResult:
             "response_time_ms": self.response_time_ms,
             "fuzzy_score": self.fuzzy_score,
             "matched_topic": self.matched_topic,
+            "warning": self.warning,
         }
 
 
@@ -134,6 +136,112 @@ class KBLookup:
                     tasks_processed += 1
         except Exception as e:
             logger.warning(f"Background refresh processing failed: {e}")
+
+    def _try_stale_cache_fallback(
+        self, 
+        library: str, 
+        topic: str | None, 
+        start_time: "datetime",
+        max_stale_days: int = 30
+    ) -> LookupResult | None:
+        """
+        Try to get stale cached data as a fallback when API fails.
+        
+        P1 Improvement: Graceful Context7 failure handling with cache fallback.
+        
+        Args:
+            library: Library name
+            topic: Optional topic name
+            start_time: Lookup start time for response time calculation
+            max_stale_days: Maximum age in days for stale data (default 30)
+            
+        Returns:
+            LookupResult with stale data if available, None otherwise
+        """
+        from datetime import UTC
+        try:
+            # Try exact match first
+            cached_entry = self.kb_cache.get(library, topic)
+            if cached_entry and cached_entry.content:
+                # Check if entry is within acceptable staleness
+                if cached_entry.cached_at:
+                    try:
+                        cached_time = datetime.fromisoformat(
+                            cached_entry.cached_at.replace("Z", "+00:00")
+                        )
+                        age_days = (datetime.now(UTC) - cached_time).days
+                        
+                        if age_days <= max_stale_days:
+                            response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+                            return LookupResult(
+                                success=True,
+                                content=cached_entry.content,
+                                source="stale_fallback",  # Indicate stale fallback
+                                library=library,
+                                topic=topic,
+                                context7_id=cached_entry.context7_id,
+                                cached_entry=cached_entry,
+                                response_time_ms=response_time,
+                                warning=f"Using stale cached data (age: {age_days} days). API was unavailable.",
+                            )
+                    except (ValueError, TypeError):
+                        # Can't parse date, use data anyway with warning
+                        response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+                        return LookupResult(
+                            success=True,
+                            content=cached_entry.content,
+                            source="stale_fallback",
+                            library=library,
+                            topic=topic,
+                            context7_id=cached_entry.context7_id,
+                            cached_entry=cached_entry,
+                            response_time_ms=response_time,
+                            warning="Using cached data (age unknown). API was unavailable.",
+                        )
+            
+            # Try fuzzy match for stale data
+            if self.fuzzy_matcher:
+                from .metadata import MetadataManager
+                metadata_manager = MetadataManager(self.kb_cache.cache_structure)
+                index = metadata_manager.load_cache_index()
+                
+                available_entries = []
+                for lib_name, lib_data in index.libraries.items():
+                    topics = lib_data.get("topics", {})
+                    for topic_name in topics.keys():
+                        available_entries.append((lib_name, topic_name))
+                
+                if available_entries:
+                    fuzzy_matches = self.fuzzy_matcher.find_matching_entry(
+                        library_query=library,
+                        topic_query=topic,
+                        available_entries=available_entries,
+                        max_results=1,
+                    )
+                    
+                    if fuzzy_matches:
+                        best_match = fuzzy_matches[0]
+                        fuzzy_entry = self.kb_cache.get(best_match.library, best_match.topic)
+                        if fuzzy_entry and fuzzy_entry.content:
+                            response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+                            return LookupResult(
+                                success=True,
+                                content=fuzzy_entry.content,
+                                source="stale_fuzzy_fallback",
+                                library=best_match.library,
+                                topic=best_match.topic,
+                                context7_id=fuzzy_entry.context7_id,
+                                cached_entry=fuzzy_entry,
+                                response_time_ms=response_time,
+                                fuzzy_score=best_match.score,
+                                matched_topic=best_match.topic,
+                                warning=f"Using fuzzy-matched stale data for '{best_match.library}/{best_match.topic}'. API was unavailable.",
+                            )
+            
+            return None
+        except Exception as e:
+            logger.debug(f"Stale cache fallback failed for {library}/{topic}: {e}")
+            return None
 
     async def lookup(
         self, library: str, topic: str | None = None, use_fuzzy_match: bool = False
@@ -581,6 +689,15 @@ class KBLookup:
 
         # If we reach here, lookup failed
         response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
+        
+        # P1 Improvement: Try stale cache fallback before returning failure
+        stale_result = self._try_stale_cache_fallback(library, topic, start_time)
+        if stale_result and stale_result.success:
+            logger.info(
+                f"Context7 API failed for '{library}' (topic: {topic}), "
+                f"using stale cached data as fallback."
+            )
+            return stale_result
         
         # Provide more specific error message based on why we failed
         if context7_id is None:

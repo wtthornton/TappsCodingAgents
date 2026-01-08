@@ -195,10 +195,20 @@ class CodeScorer(BaseScorer):
         # Linting Score (0-10, higher is better) - Phase 6.1
         scores["linting_score"] = self._calculate_linting_score(file_path)
         metrics["linting"] = float(scores["linting_score"])
+        
+        # Get actual linting issues for transparency (P1 Improvement)
+        linting_issues = self.get_ruff_issues(file_path)
+        scores["linting_issues"] = self._format_ruff_issues(linting_issues)
+        scores["linting_issue_count"] = len(linting_issues)
 
         # Type Checking Score (0-10, higher is better) - Phase 6.2
         scores["type_checking_score"] = self._calculate_type_checking_score(file_path)
         metrics["type_checking"] = float(scores["type_checking_score"])
+        
+        # Get actual type checking issues for transparency (P1 Improvement)
+        type_issues = self.get_mypy_errors(file_path)
+        scores["type_issues"] = type_issues  # Already formatted
+        scores["type_issue_count"] = len(type_issues)
 
         # Duplication Score (0-10, higher is better) - Phase 6.4
         scores["duplication_score"] = self._calculate_duplication_score(file_path)
@@ -905,6 +915,54 @@ class CodeScorer(BaseScorer):
 
         except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
             return []
+
+    def _format_ruff_issues(self, diagnostics: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """
+        Format raw ruff diagnostics into a cleaner structure for output.
+        
+        P1 Improvement: Include actual lint errors in score output.
+        
+        Args:
+            diagnostics: Raw ruff JSON diagnostics
+            
+        Returns:
+            List of formatted issues with line, code, message, severity
+        """
+        formatted = []
+        for diag in diagnostics:
+            # Extract code info (ruff format: {"code": {"name": "F401", ...}})
+            code_info = diag.get("code", {})
+            if isinstance(code_info, dict):
+                code = code_info.get("name", "")
+            else:
+                code = str(code_info)
+            
+            # Determine severity from code prefix
+            severity = "warning"
+            if code.startswith("E") or code.startswith("F"):
+                severity = "error"
+            elif code.startswith("W"):
+                severity = "warning"
+            elif code.startswith("I"):
+                severity = "info"
+            
+            # Get location info
+            location = diag.get("location", {})
+            line = location.get("row", 0) if isinstance(location, dict) else 0
+            column = location.get("column", 0) if isinstance(location, dict) else 0
+            
+            formatted.append({
+                "code": code,
+                "message": diag.get("message", ""),
+                "line": line,
+                "column": column,
+                "severity": severity,
+            })
+        
+        # Sort by line number
+        formatted.sort(key=lambda x: (x.get("line", 0), x.get("column", 0)))
+        
+        return formatted
 
     def _calculate_duplication_score(self, file_path: Path) -> float:
         """

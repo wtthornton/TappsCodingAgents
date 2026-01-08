@@ -202,6 +202,11 @@ Example:
         action="store_true",
         help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
+    lint_parser.add_argument(
+        "--isolated",
+        action="store_true",
+        help="Run ruff in isolated mode, ignoring project pyproject.toml/ruff.toml. Useful for linting specific files without project-wide rules affecting results.",
+    )
 
     type_check_parser = reviewer_subparsers.add_parser(
         "type-check",

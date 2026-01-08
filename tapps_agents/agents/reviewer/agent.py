@@ -366,8 +366,11 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             file_path = kwargs.get("file")
             if not file_path:
                 return {"error": "File path required. Usage: *lint <file>"}
+            
+            # P1 Improvement: Support isolated mode for target-aware linting
+            isolated = kwargs.get("isolated", False)
 
-            return await self.lint_file(Path(file_path))
+            return await self.lint_file(Path(file_path), isolated=isolated)
 
         elif command == "type-check":
             file_path = kwargs.get("file")
@@ -1529,7 +1532,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "skill_command": instruction.to_skill_command(),
         }
 
-    async def lint_file(self, file_path: Path) -> dict[str, Any]:
+    async def lint_file(self, file_path: Path, isolated: bool = False) -> dict[str, Any]:
         """
         Run Ruff linting on a file and return detailed issues with timeout protection.
 
@@ -1537,6 +1540,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
 
         Args:
             file_path: Path to code file (Python only)
+            isolated: If True, run ruff in isolated mode ignoring project config.
+                     P1 Improvement: Makes linting target-aware.
 
         Returns:
             Dictionary with linting results:
@@ -1562,7 +1567,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         
         try:
             return await asyncio.wait_for(
-                self._lint_file_internal(file_path),
+                self._lint_file_internal(file_path, isolated=isolated),
                 timeout=tool_timeout,
             )
         except asyncio.TimeoutError:
@@ -1580,7 +1585,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "error": f"Linting operation timed out after {tool_timeout}s",
             }
     
-    async def _lint_file_internal(self, file_path: Path) -> dict[str, Any]:
+    async def _lint_file_internal(self, file_path: Path, isolated: bool = False) -> dict[str, Any]:
         """Internal linting implementation without timeout wrapper."""
 
         file_ext = file_path.suffix.lower()
@@ -1617,8 +1622,15 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             }
         elif file_ext == ".py":
             # Use Ruff for Python files
-            linting_score = self.scorer._calculate_linting_score(file_path)
-            issues_raw = self.scorer.get_ruff_issues(file_path)
+            # P1 Improvement: Support isolated mode for target-aware linting
+            if isolated:
+                # Run ruff directly with --isolated flag to ignore project config
+                issues_raw = self._run_ruff_isolated(file_path)
+                # Calculate score from isolated results
+                linting_score = self._calculate_score_from_issues(issues_raw)
+            else:
+                linting_score = self.scorer._calculate_linting_score(file_path)
+                issues_raw = self.scorer.get_ruff_issues(file_path)
 
             # Defensive check: ensure issues is a list and filter out non-dict items
             if not isinstance(issues_raw, list):
@@ -1678,6 +1690,100 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "message": "Linting only supported for Python and TypeScript/JavaScript files",
                 "tool": "none",
             }
+
+    def _run_ruff_isolated(self, file_path: Path) -> list[dict[str, Any]]:
+        """
+        Run ruff in isolated mode, ignoring project configuration.
+        
+        P1 Improvement: Target-aware linting that only applies ruff defaults,
+        not project-specific rules that might scan unrelated files.
+        
+        Args:
+            file_path: Path to Python file to lint
+            
+        Returns:
+            List of diagnostic dictionaries from ruff
+        """
+        import subprocess
+        import sys
+        import json
+        
+        try:
+            result = subprocess.run(  # nosec B603
+                [
+                    sys.executable,
+                    "-m",
+                    "ruff",
+                    "check",
+                    "--isolated",  # Ignore pyproject.toml, ruff.toml
+                    "--no-cache",  # Don't use cache for isolated runs
+                    "--output-format=json",
+                    str(file_path),
+                ],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=30,
+            )
+            
+            if result.returncode == 0 and not result.stdout.strip():
+                return []
+            
+            try:
+                diagnostics = json.loads(result.stdout) if result.stdout.strip() else []
+                return diagnostics
+            except json.JSONDecodeError:
+                return []
+                
+        except (subprocess.TimeoutExpired, FileNotFoundError, Exception) as e:
+            logger.warning(f"Isolated ruff run failed for {file_path}: {e}")
+            return []
+
+    def _calculate_score_from_issues(self, issues: list[dict[str, Any]]) -> float:
+        """
+        Calculate a linting score from a list of ruff issues.
+        
+        P1 Improvement: Score calculation for isolated mode.
+        
+        Args:
+            issues: List of ruff diagnostic dictionaries
+            
+        Returns:
+            Linting score (0-10, higher is better)
+        """
+        if not issues:
+            return 10.0
+        
+        # Count issues by severity
+        error_count = 0
+        warning_count = 0
+        fatal_count = 0
+        
+        for d in issues:
+            code_info = d.get("code", {})
+            if isinstance(code_info, dict):
+                code_name = code_info.get("name", "")
+            else:
+                code_name = str(code_info)
+            
+            if code_name.startswith("E"):
+                error_count += 1
+            elif code_name.startswith("W"):
+                warning_count += 1
+            elif code_name.startswith("F"):
+                fatal_count += 1
+        
+        # Calculate score: Start at 10, deduct points
+        # Errors (E): -2 points each
+        # Fatal (F): -3 points each
+        # Warnings (W): -0.5 points each
+        score = 10.0
+        score -= error_count * 2.0
+        score -= fatal_count * 3.0
+        score -= warning_count * 0.5
+        
+        return max(0.0, min(10.0, score))
 
     async def type_check_file(self, file_path: Path) -> dict[str, Any]:
         """
