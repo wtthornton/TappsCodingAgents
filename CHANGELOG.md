@@ -7,6 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.0] - 2026-01-08
+
+### Added
+- **Default to @simple-mode for All Development Tasks** - Major UX improvement based on user feedback
+  - Cursor rules now automatically route feature requests to `@simple-mode *build`
+  - Added automatic routing rules table in `.cursorrules` and cursor rule files
+  - New `suggest_simple_mode()` helper shows CLI tip boxes recommending workflow usage
+  - Init output prominently displays 7-step workflow explanation
+
+### Fixed
+- **Designer CLI Command Mapping** - Fixed mismatch between CLI parser names and command handlers
+  - `ui-ux-design` now correctly routes to `design-ui` ✅
+  - `api-design` now correctly routes to `design-api` ✅
+  - `data-model-design` now correctly routes to `design-data-model` ✅
+  - `wireframes` now correctly routes to `create-wireframe` ✅
+  - `design-system` now correctly routes to `define-design-system` ✅
+
+### Changed
+- **Init Next Steps** - Completely redesigned output to emphasize Simple Mode workflow
+  - Shows prominent box recommending `@simple-mode *build`
+  - Explains complete 7-step workflow with agent sequence
+  - Individual agent commands now labeled as "Advanced"
+- **Cursor Rules** - Updated to enforce @simple-mode as default
+  - Added "Automatic Routing Rules" section
+  - Added "When NOT to Use @simple-mode" exceptions
+  - Added example correct/incorrect behavior
+
+### Documentation
+- Updated `simple-mode.mdc` with default-to-simple-mode guidance
+- Updated `quick-reference.mdc` with quick decision guide
+- Updated `.cursorrules` project root file
+
 ## [3.3.2] - 2026-01-08
 
 ### Added
