@@ -198,6 +198,25 @@ class TestLoadConfig:
         assert isinstance(config, ProjectConfig)
         assert config.agents.reviewer.quality_threshold == 70.0
 
+    def test_load_config_with_utf8_bom(self, tmp_path: Path):
+        """Test loading config file with UTF-8 BOM (common on Windows)."""
+        config_file = tmp_path / "config.yaml"
+        config_data = {
+            "project_name": "BOMTestProject",
+            "agents": {
+                "reviewer": {"quality_threshold": 90.0}
+            },
+        }
+        # Write YAML content with UTF-8 BOM prefix
+        yaml_content = yaml.dump(config_data)
+        # UTF-8 BOM: \xef\xbb\xbf (bytes) prepended to content
+        config_file.write_bytes(b"\xef\xbb\xbf" + yaml_content.encode("utf-8"))
+
+        # Should load successfully despite BOM
+        config = load_config(config_file)
+        assert config.project_name == "BOMTestProject"
+        assert config.agents.reviewer.quality_threshold == 90.0
+
     def test_get_default_config(self):
         """Test that get_default_config returns a dictionary"""
         config_dict = get_default_config()

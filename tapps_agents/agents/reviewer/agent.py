@@ -680,7 +680,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     "data": {"file": str(file_path)},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except Exception:
+            # Silently ignore debug log write failures (non-critical)
+            pass
         # #endregion
         self._validate_path(file_path, max_file_size=max_file_size)
         # #region agent log
@@ -695,7 +697,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     "data": {"file": str(file_path)},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except Exception:
+            # Silently ignore debug log write failures (non-critical)
+            pass
         # #endregion
 
         # Read code
@@ -751,7 +755,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     "data": {"config_exists": self.config is not None, "project_root": str(self._project_root) if self._project_root else None, "mcp_gateway": self.mcp_gateway is not None},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         try:
             from ...context7.agent_integration import get_context7_helper
@@ -769,7 +774,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                         "data": {"helper_created": context7_helper is not None, "helper_enabled": context7_helper.enabled if context7_helper else False, "has_library_detector": context7_helper.library_detector is not None if context7_helper else False},
                         "timestamp": int(datetime.now().timestamp() * 1000)
                     }) + "\n")
-            except: pass
+            except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+                pass
             # #endregion
             if context7_helper:
                 logger.info(f"E2: Context7 helper initialized, enabled={context7_helper.enabled}, has_library_detector={context7_helper.library_detector is not None}")
@@ -791,7 +797,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                         "data": {"error": str(e), "error_type": type(e).__name__},
                         "timestamp": int(datetime.now().timestamp() * 1000)
                     }) + "\n")
-            except: pass
+            except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+                pass
             # #endregion
         
         if context7_helper and context7_helper.enabled:

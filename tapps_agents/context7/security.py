@@ -182,7 +182,7 @@ class APIKeyManager:
             }
 
         # Save to file
-        with open(self.keys_file, "w") as f:
+        with open(self.keys_file, "w", encoding="utf-8") as f:
             yaml.safe_dump(keys, f, default_flow_style=False)
 
         # Restrict file permissions
@@ -223,7 +223,7 @@ class APIKeyManager:
             return {}
 
         try:
-            with open(self.keys_file) as f:
+            with open(self.keys_file, encoding="utf-8") as f:
                 return yaml.safe_load(f) or {}
         except Exception:
             return {}
@@ -233,7 +233,7 @@ class APIKeyManager:
         keys = self.load_all_keys()
         if key_name in keys:
             del keys[key_name]
-            with open(self.keys_file, "w") as f:
+            with open(self.keys_file, "w", encoding="utf-8") as f:
                 yaml.safe_dump(keys, f, default_flow_style=False)
 
 

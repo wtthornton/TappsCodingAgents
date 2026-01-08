@@ -172,7 +172,8 @@ class KBLookup:
                     "data": {"library": library, "topic": topic},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         start_time = datetime.now(UTC)
 
@@ -193,7 +194,8 @@ class KBLookup:
                     "data": {"library": library, "topic": topic},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         cached_entry = self.kb_cache.get(library, topic)
         # #region agent log
@@ -208,7 +210,8 @@ class KBLookup:
                     "data": {"library": library, "cached": cached_entry is not None},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         if cached_entry:
             response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
@@ -362,7 +365,8 @@ class KBLookup:
                     "data": {"library": library, "topic": topic, "has_mcp_gateway": self.mcp_gateway is not None},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         
         # CRITICAL FIX: Check quota BEFORE making API calls

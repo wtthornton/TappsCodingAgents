@@ -50,14 +50,14 @@ def atomic_write_json(
         
         # Atomic rename (works on most filesystems)
         temp_path.replace(path)
-    except Exception as e:
+    except Exception:
         # Clean up temp file on error
         if temp_path.exists():
             try:
                 temp_path.unlink()
             except Exception:
                 pass
-        raise e
+        raise
 
 
 def is_valid_json_file(path: Path, min_size: int = 100) -> bool:

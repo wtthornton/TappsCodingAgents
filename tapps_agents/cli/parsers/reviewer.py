@@ -79,6 +79,11 @@ Example:
         type=float,
         help="Exit with code 1 if the overall score is below this threshold (0-100). Useful for CI.",
     )
+    review_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     score_parser = reviewer_subparsers.add_parser(
         "score",
@@ -134,6 +139,11 @@ Example:
         type=float,
         help="Exit with code 1 if the overall score is below this threshold (0-100). Useful for CI.",
     )
+    score_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     lint_parser = reviewer_subparsers.add_parser(
         "lint",
@@ -186,6 +196,11 @@ Example:
         "--fail-on-issues",
         action="store_true",
         help="Exit with code 1 if any lint issues are found (or any files fail in batch mode). Useful for CI.",
+    )
+    lint_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     type_check_parser = reviewer_subparsers.add_parser(
@@ -242,6 +257,11 @@ Example:
         action="store_true",
         help="Exit with code 1 if any type-check errors are found (or any files fail in batch mode). Useful for CI.",
     )
+    type_check_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     report_parser = reviewer_subparsers.add_parser(
         "report",
@@ -272,6 +292,11 @@ Example:
     )
     report_parser.add_argument(
         "--output-dir", help="Directory path where quality reports will be saved. Defaults to 'reports/quality/' in the project root. Directory will be created if it doesn't exist."
+    )
+    report_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     duplication_parser = reviewer_subparsers.add_parser(
@@ -329,6 +354,11 @@ Example:
     analyze_project_parser.add_argument(
         "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured analysis data (default), 'text' for human-readable analysis report"
     )
+    analyze_project_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     analyze_services_parser = reviewer_subparsers.add_parser(
         "analyze-services",
@@ -360,6 +390,11 @@ Example:
     )
     analyze_services_parser.add_argument(
         "--format", choices=["json", "text"], default="json", help="Output format: 'json' for structured analysis data (default), 'text' for human-readable analysis report"
+    )
+    analyze_services_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     docs_parser = reviewer_subparsers.add_parser(

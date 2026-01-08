@@ -48,7 +48,7 @@ class DockerComposeValidator:
         health_checks = {}
         
         try:
-            with open(compose_file, 'r') as f:
+            with open(compose_file, 'r', encoding='utf-8') as f:
                 compose_data = yaml.safe_load(f)
         except Exception as e:
             return {

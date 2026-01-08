@@ -35,8 +35,30 @@ class LibraryMetadata:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> LibraryMetadata:
-        """Create from dictionary."""
-        return cls(**data)
+        """
+        Create from dictionary with backwards compatibility.
+        
+        Filters out unknown fields that may exist in older cache entries
+        (e.g., 'library_version' from pre-3.3.0 cache formats) to prevent
+        TypeError on instantiation.
+        """
+        # Valid field names for this dataclass - filter out any unknown fields
+        # from older cache versions to ensure backwards compatibility
+        valid_fields = {
+            "library",
+            "context7_id",
+            "trust_score",
+            "topics",
+            "total_docs",
+            "total_size_bytes",
+            "total_tokens",
+            "last_updated",
+            "last_accessed",
+            "cache_hits",
+        }
+        # Filter to only valid fields
+        filtered_data = {k: v for k, v in data.items() if k in valid_fields}
+        return cls(**filtered_data)
 
 
 @dataclass

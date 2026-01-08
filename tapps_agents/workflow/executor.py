@@ -1050,7 +1050,7 @@ class WorkflowExecutor:
                     review_result = self.state.variables.get("reviewer_result", {})
                     if review_result:
                         scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
-                        thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
+                        thresholds_config = scoring_config.get("thresholds", {})  # scoring_config is always a dict
                         thresholds = QualityThresholds.from_dict(thresholds_config)
                         
                         quality_gate = QualityGate(thresholds=thresholds)
@@ -1453,7 +1453,7 @@ class WorkflowExecutor:
         
         return {
             "workflow_id": state.workflow_id,
-            "started_at": state.started_at.isoformat(),
+            "started_at": state.started_at.isoformat() if state.started_at else None,
             "current_step": state.current_step,
             "completed_steps": list(state.completed_steps or []),
             "skipped_steps": list(state.skipped_steps or []),

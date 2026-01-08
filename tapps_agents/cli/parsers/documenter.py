@@ -48,6 +48,11 @@ Example:
         "--output-format", default="markdown", help="Output format for documentation: 'markdown' for Markdown format (default), 'rst' for reStructuredText, 'html' for HTML documentation"
     )
     document_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
+    document_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     generate_docs_parser = documenter_subparsers.add_parser(
         "generate-docs", 
@@ -69,6 +74,11 @@ Use this to generate API documentation for REST APIs, GraphQL schemas, or functi
     generate_docs_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     generate_docs_parser.add_argument(
         "--output-format", default="markdown", help="Output format for API documentation: 'markdown' for Markdown (default), 'rst' for reStructuredText, 'html' for HTML, 'openapi' for OpenAPI/Swagger YAML"
+    )
+    generate_docs_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     update_readme_parser = documenter_subparsers.add_parser(

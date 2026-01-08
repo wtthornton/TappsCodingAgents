@@ -83,7 +83,7 @@ class CacheLock:
                             continue
 
                         # Successfully created lock file exclusively -> acquire.
-                        self.lock_fd = os.fdopen(fd, "w")
+                        self.lock_fd = os.fdopen(fd, "w", encoding="utf-8")
                         self.lock_fd.write(str(os.getpid()))
                         self.lock_fd.flush()
                         return True
@@ -100,7 +100,7 @@ class CacheLock:
                     # Unix file locking
                     if fcntl is None:
                         raise RuntimeError("fcntl not available on this platform")
-                    self.lock_fd = open(self.lock_file, "w")
+                    self.lock_fd = open(self.lock_file, "w", encoding="utf-8")
                     try:
                         fcntl.flock(self.lock_fd.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
                         return True

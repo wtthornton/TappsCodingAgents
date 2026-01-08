@@ -172,7 +172,7 @@ class MultiAgentOrchestrator:
 
             # Save aggregated results
             result_file = self.output_dir / f"{task_id}-aggregated.json"
-            with open(result_file, "w") as f:
+            with open(result_file, "w", encoding="utf-8") as f:
                 json.dump(aggregated, f, indent=2)
 
             # Finish performance monitoring

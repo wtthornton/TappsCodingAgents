@@ -45,6 +45,11 @@ Use --instruction to specify particular refactoring goals, or let the agent iden
     )
     refactor_improver_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     refactor_improver_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    refactor_improver_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     optimize_parser = improver_subparsers.add_parser(
         "optimize",
@@ -76,6 +81,11 @@ Use --type to specify the optimization focus.""",
     )
     optimize_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     optimize_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    optimize_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     improve_quality_parser = improver_subparsers.add_parser(
         "improve-quality",
@@ -100,6 +110,11 @@ This is a general quality improvement that addresses multiple concerns simultane
     )
     improve_quality_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     improve_quality_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    improve_quality_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     improver_subparsers.add_parser(
         "help", aliases=["*help"], help="Show improver commands"

@@ -48,6 +48,11 @@ Example:
     debug_parser.add_argument("--stack-trace", help="Full stack trace from the error. Can be a file path or the stack trace text. Provides execution context for better debugging.")
     debug_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     debug_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    debug_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     analyze_error_parser = debugger_subparsers.add_parser(
         "analyze-error",
@@ -72,6 +77,11 @@ Use this for in-depth error analysis when you have both error message and stack 
     )
     analyze_error_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     analyze_error_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    analyze_error_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     trace_parser = debugger_subparsers.add_parser(
         "trace", 
@@ -94,6 +104,11 @@ Use this to understand how code executes and identify unexpected execution paths
     trace_parser.add_argument("--line", type=int, help="Line number to start tracing from. Useful for tracing from a specific point in the code.")
     trace_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     trace_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
+    trace_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     debugger_subparsers.add_parser(
         "help", aliases=["*help"], help="Show debugger commands"

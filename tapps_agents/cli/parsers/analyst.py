@@ -62,6 +62,11 @@ Example:
         choices=["quick", "full"],
         help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
+    gather_req_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     stakeholder_parser = analyst_subparsers.add_parser(
         "stakeholder-analysis",

@@ -347,7 +347,14 @@ def _process_conditional_blocks(
         # Extract true and false branches
         if else_pos is not None:
             true_branch = content[if_match.end() : else_pos]
-            false_branch = content[CONDITIONAL_ELSE_PATTERN.search(content, else_pos).end() : endif_match.start()]
+            # Find the else pattern again to get its end position
+            else_match = CONDITIONAL_ELSE_PATTERN.search(content, else_pos)
+            if else_match is None:
+                # Should not happen if logic is correct, but handle defensively
+                true_branch = content[if_match.end() : endif_match.start()]
+                false_branch = ""
+            else:
+                false_branch = content[else_match.end() : endif_match.start()]
         else:
             true_branch = content[if_match.end() : endif_match.start()]
             false_branch = ""

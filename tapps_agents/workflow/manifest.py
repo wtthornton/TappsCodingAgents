@@ -101,7 +101,8 @@ class TaskManifestGenerator:
         if skipped_count > 0:
             lines.append(f"**Skipped**: {skipped_count} steps")
         
-        lines.append(f"**Started**: {self.state.started_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        if self.state.started_at:
+            lines.append(f"**Started**: {self.state.started_at.strftime('%Y-%m-%d %H:%M:%S')}")
 
         if self.state.status == "completed":
             # Find completion time from last step execution

@@ -78,7 +78,7 @@ class ReviewerHandler(AgentExecutionHandler):
         """Evaluate quality gate and update state."""
         # Extract scoring thresholds from step configuration
         scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
-        thresholds_config = scoring_config.get("thresholds", {}) if scoring_config else {}
+        thresholds_config = scoring_config.get("thresholds", {})  # scoring_config is always a dict
         
         # Create quality thresholds from step config or use defaults
         thresholds = QualityThresholds.from_dict(thresholds_config)

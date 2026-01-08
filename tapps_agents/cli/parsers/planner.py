@@ -61,6 +61,11 @@ Example:
         choices=["quick", "full"],
         help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
+    plan_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     create_story_parser = planner_subparsers.add_parser(
         "create-story",
@@ -102,6 +107,11 @@ Example:
         choices=["quick", "full"],
         help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
+    create_story_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     list_stories_parser = planner_subparsers.add_parser(
         "list-stories",
@@ -122,6 +132,11 @@ Example:
     list_stories_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     list_stories_parser.add_argument(
         "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured story list (default), 'text' for human-readable list, 'markdown' for markdown format"
+    )
+    list_stories_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     planner_subparsers.add_parser(

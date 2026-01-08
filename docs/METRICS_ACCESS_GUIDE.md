@@ -753,6 +753,7 @@ Export metrics to external monitoring systems:
 ```python
 from pathlib import Path
 import json
+import time
 import requests  # For HTTP APIs
 from tapps_agents.workflow.analytics_accessor import CursorAnalyticsAccessor
 

@@ -14,7 +14,6 @@ import asyncio
 import json
 import logging
 import os
-import tempfile
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -220,28 +219,12 @@ class EventStore:
         """
         Save checkpoint (atomic write with rename).
         """
-        workflow_dir = self._get_workflow_dir(checkpoint.workflow_id)
-        workflow_dir.mkdir(parents=True, exist_ok=True)
-        
         checkpoint_file = self._get_checkpoint_file(checkpoint.workflow_id)
         
-        # Atomic write: write to temp, then rename
-        fd, temp_path = tempfile.mkstemp(
-            suffix=".json",
-            prefix="checkpoint_",
-            dir=workflow_dir,
-        )
-        try:
-            with os.fdopen(fd, "w", encoding="utf-8") as f:
-                json.dump(checkpoint.to_dict(), f, indent=2)
-            
-            os.replace(temp_path, checkpoint_file)
-        except Exception:
-            try:
-                os.unlink(temp_path)
-            except Exception:
-                pass
-            raise
+        # Use the atomic_write_json utility for consistent, reliable atomic writes
+        from .file_utils import atomic_write_json
+        
+        atomic_write_json(checkpoint_file, checkpoint.to_dict(), indent=2)
     
     def get_checkpoint(self, workflow_id: str) -> WorkflowCheckpoint | None:
         """
@@ -253,7 +236,20 @@ class EventStore:
             return None
         
         try:
-            data = json.loads(checkpoint_file.read_text(encoding="utf-8"))
+            # Use safe_load_json for robust reading (handles concurrent writes, retries, validation)
+            from .file_utils import safe_load_json
+            
+            data = safe_load_json(
+                checkpoint_file,
+                retries=3,
+                backoff=0.5,
+                min_age_seconds=0.0,  # Checkpoints are written atomically, so no min age needed
+                min_size=10,  # Minimum size for valid JSON checkpoint
+            )
+            
+            if data is None:
+                return None
+            
             return WorkflowCheckpoint.from_dict(data)
         except Exception as e:
             logger.warning(f"Failed to load checkpoint: {e}")
@@ -375,7 +371,7 @@ class DurableWorkflowState:
             id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=event_type,
-            timestamp=datetime.now(UTC).isoformat() + "Z",
+            timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             data=data or {},
             sequence_number=self._sequence_number,
         )
@@ -399,7 +395,7 @@ class DurableWorkflowState:
             step_index=self._current_step,
             step_name=self._current_step_name,
             status=self._status,
-            created_at=datetime.now(UTC).isoformat() + "Z",
+            created_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             outputs=self._outputs.copy(),
             quality_scores=self._quality_scores.copy(),
             artifacts=self._artifacts.copy(),
@@ -691,12 +687,16 @@ def resume_workflow(
         store_dir: Directory containing workflow state
         
     Returns:
-        DurableWorkflowState ready to resume, or None if not found
+        DurableWorkflowState ready to resume, or None if not found or not resumable
     """
     state = DurableWorkflowState.load_from_checkpoint(workflow_id, store_dir)
     
-    if state and state.status == WorkflowStatus.PAUSED:
+    if state is None:
+        return None
+    
+    if state.status == WorkflowStatus.PAUSED:
         state.resume()
         return state
     
-    return state
+    # State exists but is not resumable (COMPLETED, FAILED, CANCELLED, etc.)
+    return None

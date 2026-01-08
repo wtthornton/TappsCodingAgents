@@ -1158,7 +1158,9 @@ def load_config(config_path: Path | None = None) -> ProjectConfig:
         return ProjectConfig()
 
     try:
-        with open(config_path, encoding="utf-8") as f:
+        # Use utf-8-sig to automatically handle UTF-8 BOM (common on Windows)
+        # This prevents YAML parsing failures when files have BOM prefix (\xef\xbb\xbf)
+        with open(config_path, encoding="utf-8-sig") as f:
             data = yaml.safe_load(f)
 
         if data is None:
@@ -1190,7 +1192,8 @@ def save_config(config_path: Path, config: ProjectConfig) -> None:
     existing_data: dict[str, Any] = {}
     if config_path.exists():
         try:
-            with open(config_path, encoding="utf-8") as f:
+            # Use utf-8-sig to handle UTF-8 BOM (common on Windows)
+            with open(config_path, encoding="utf-8-sig") as f:
                 existing_data = yaml.safe_load(f) or {}
         except Exception:
             # If we can't read existing config, start fresh

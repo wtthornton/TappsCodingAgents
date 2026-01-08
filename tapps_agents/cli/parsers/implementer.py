@@ -73,6 +73,11 @@ Example:
         choices=["quick", "full"],
         help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
+    implement_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     generate_code_parser = implementer_subparsers.add_parser(
         "generate-code",
@@ -121,6 +126,11 @@ Example:
         choices=["quick", "full"],
         help="Override enhancement mode: 'quick' for fast 3-stage enhancement, 'full' for complete 7-stage enhancement",
     )
+    generate_code_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     refactor_parser = implementer_subparsers.add_parser(
         "refactor",
@@ -144,6 +154,11 @@ Example:
     refactor_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     refactor_parser.add_argument(
         "--format", choices=["json", "text", "markdown", "diff"], default="json", help="Output format: 'json' for structured output with change descriptions (default), 'text' for plain refactored code, 'markdown' for markdown format, 'diff' for showing changes only"
+    )
+    refactor_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     implementer_subparsers.add_parser(

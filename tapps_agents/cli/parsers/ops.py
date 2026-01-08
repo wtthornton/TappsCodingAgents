@@ -50,6 +50,11 @@ Example:
         default="all",
         help="Type of security scan to perform: 'all' for comprehensive scan (default), 'sql_injection' for SQL injection vulnerabilities, 'xss' for cross-site scripting, 'secrets' for exposed credentials, or other specific vulnerability types",
     )
+    security_scan_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     compliance_check_parser = ops_subparsers.add_parser(
         "compliance-check",
@@ -71,6 +76,11 @@ Example:
         "--type",
         default="general",
         help="Compliance standard to check: 'general' for general security best practices (default), 'GDPR' for General Data Protection Regulation, 'HIPAA' for Health Insurance Portability, 'SOC2' for Service Organization Control, 'all' for comprehensive compliance check",
+    )
+    compliance_check_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     deploy_parser = ops_subparsers.add_parser(
@@ -129,6 +139,11 @@ Use this to bootstrap infrastructure setup for your project.""",
     audit_dependencies_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     audit_dependencies_parser.add_argument(
         "--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured vulnerability data (default), 'text' for human-readable report, 'markdown' for markdown format"
+    )
+    audit_dependencies_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
     ops_subparsers.add_parser("help", aliases=["*help"], help="Show ops commands")

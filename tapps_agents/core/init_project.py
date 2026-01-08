@@ -671,6 +671,46 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
     return created, str(dest_file)
 
 
+def normalize_config_encoding(file_path: Path) -> tuple[bool, str | None]:
+    """
+    Normalize encoding of a config file by removing UTF-8 BOM if present.
+    
+    On Windows, files may be saved with UTF-8 BOM (Byte Order Mark: \\xef\\xbb\\xbf)
+    by editors like Notepad. This can cause JSON parsing failures. This function
+    reads the file with utf-8-sig (which strips BOM) and rewrites with plain utf-8.
+    
+    Args:
+        file_path: Path to the config file to normalize
+        
+    Returns:
+        Tuple of (normalized, message) where:
+        - normalized: True if file was modified, False if no changes needed
+        - message: Description of what was done or None
+    """
+    if not file_path.exists():
+        return False, None
+    
+    try:
+        # Read with utf-8-sig to strip any BOM
+        with open(file_path, "r", encoding="utf-8-sig") as f:
+            content = f.read()
+        
+        # Check if file had BOM by comparing raw bytes
+        raw_bytes = file_path.read_bytes()
+        has_bom = raw_bytes.startswith(b"\xef\xbb\xbf")
+        
+        if has_bom:
+            # Rewrite without BOM using plain utf-8
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            return True, f"Removed UTF-8 BOM from {file_path.name}"
+        
+        return False, None
+    except Exception as e:
+        logger.warning(f"Failed to normalize encoding for {file_path}: {e}")
+        return False, None
+
+
 def init_cursor_mcp_config(project_root: Path | None = None, overwrite: bool = False) -> tuple[bool, str | None]:
     """
     Initialize `.cursor/mcp.json` with Context7 MCP server configuration.
@@ -1245,7 +1285,9 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
     optional_servers = {
         "Playwright": {
             "name": "Playwright MCP Server",
-            "package": "@playwright/mcp-server",
+            # Support multiple package name variants - @playwright/mcp is the actual package,
+            # @playwright/mcp-server was a previous/alternative name
+            "packages": ["@playwright/mcp", "@playwright/mcp-server"],
             "command": "npx",
             "description": "Browser automation (optional, Cursor may provide this)",
             "required": False,
@@ -1267,7 +1309,9 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
         if config_path.exists():
             mcp_status["configuration_files"].append(str(config_path))
             try:
-                with open(config_path, encoding="utf-8") as f:
+                # Use utf-8-sig to automatically handle UTF-8 BOM (common on Windows)
+                # This prevents JSON parsing failures when files have BOM prefix (\xef\xbb\xbf)
+                with open(config_path, encoding="utf-8-sig") as f:
                     mcp_config = json.load(f)
                     break
             except Exception:
@@ -1303,9 +1347,18 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
                 for server_name, server_config in mcp_servers.items():
                     # Check for package name in args (npx format)
                     args = server_config.get("args", [])
-                    if server_info["package"] in args:
-                        detected = True
-                        reason = f"Configured as '{server_name}' in MCP settings (npx)"
+                    # Support both single package and multiple package variants
+                    packages_to_check = server_info.get("packages", [server_info.get("package")])
+                    if isinstance(packages_to_check, str):
+                        packages_to_check = [packages_to_check]
+                    
+                    # Check if any package variant is in args (including version suffixes like @0.0.35)
+                    for pkg in packages_to_check:
+                        if pkg and any(pkg in arg for arg in args):
+                            detected = True
+                            reason = f"Configured as '{server_name}' in MCP settings (npx)"
+                            break
+                    if detected:
                         break
                     
                     # Check for URL-based configuration (Context7 can use URL format)
@@ -1355,12 +1408,16 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
                 }
             )
         else:
+            # Get the primary package name (first from packages list or single package)
+            packages = server_info.get("packages", [server_info.get("package")])
+            primary_package = packages[0] if packages else server_info.get("package")
+            
             status_entry = {
                 "id": server_id,
                 "name": server_info["name"],
                 "status": "missing",
                 "required": server_info["required"],
-                "package": server_info["package"],
+                "package": primary_package,
                 "description": server_info["description"],
             }
             mcp_status["missing_servers"].append(status_entry)
@@ -1476,7 +1533,8 @@ async def pre_populate_context7_cache(
                         "data": {"error": str(e), "traceback": traceback.format_exc()},
                         "timestamp": int(datetime.now().timestamp() * 1000)
                     }) + "\n")
-            except: pass
+            except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+                pass
         # #endregion
         if not os.getenv("CONTEXT7_API_KEY"):
             # #region agent log
@@ -2303,6 +2361,23 @@ def init_project(
     }
     if mcp_path:
         results["files_created"].append(mcp_path)
+    
+    # Normalize MCP config encoding (fix UTF-8 BOM issues on Windows)
+    mcp_config_file = project_root / ".cursor" / "mcp.json"
+    if mcp_config_file.exists():
+        normalized, normalize_msg = normalize_config_encoding(mcp_config_file)
+        if normalized:
+            results["mcp_encoding_normalized"] = normalize_msg
+            logger.info(normalize_msg)
+    
+    # Normalize project config encoding (fix UTF-8 BOM issues on Windows)
+    # User-editable config files may have BOM if edited with certain Windows editors
+    project_config_file = project_root / ".tapps-agents" / "config.yaml"
+    if project_config_file.exists():
+        normalized, normalize_msg = normalize_config_encoding(project_config_file)
+        if normalized:
+            results["config_encoding_normalized"] = normalize_msg
+            logger.info(normalize_msg)
     
     # Detect MCP servers
     mcp_status = detect_mcp_servers(project_root)

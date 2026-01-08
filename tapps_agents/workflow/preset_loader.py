@@ -99,7 +99,9 @@ class PresetLoader:
                         # For packaged resources, we'll need to handle them differently
                         # For now, we'll fall through to cwd, but log this
                         logger.debug("Found packaged presets, but using cwd fallback")
-                except Exception:
+                except Exception as e:
+                    # Log but continue - packaged presets may not be accessible
+                    logger.debug(f"Could not access packaged presets: {e}")
                     pass
 
         # 3. Fallback: try current working directory (for project-specific presets)
@@ -226,8 +228,8 @@ class PresetLoader:
                     # For Traversable, we need to read it and write to a temp location
                     # since the parser expects a Path object
                     import tempfile
-                    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as tmp:
-                        tmp.write(packaged_preset.read_text())
+                    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8') as tmp:
+                        tmp.write(packaged_preset.read_text(encoding='utf-8'))
                         tmp_path = Path(tmp.name)
                         logger.debug(f"Using packaged preset from temp file: {tmp_path}")
                         return tmp_path

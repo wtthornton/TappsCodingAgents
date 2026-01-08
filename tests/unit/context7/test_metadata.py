@@ -38,6 +38,46 @@ class TestMetadataModels:
         assert "components" in metadata.topics
         assert metadata.total_docs == 2
 
+    def test_library_metadata_from_dict_filters_unknown_fields(self):
+        """Test that LibraryMetadata.from_dict filters out unknown fields (backwards compatibility).
+        
+        This test verifies the fix for Issue #3: Cache entries from older versions
+        that contain fields like 'library_version' should not cause TypeError on load.
+        """
+        # Simulate cache data from older version (pre-3.3.0) with extra fields
+        old_cache_data = {
+            "library": "fastapi",
+            "context7_id": "/tiangolo/fastapi",
+            "trust_score": 0.95,
+            "topics": ["routing", "middleware"],
+            "total_docs": 10,
+            "total_size_bytes": 5000,
+            "total_tokens": 1000,
+            "last_updated": "2024-01-01T00:00:00Z",
+            "last_accessed": "2024-01-02T00:00:00Z",
+            "cache_hits": 5,
+            # Unknown fields from older cache format
+            "library_version": "0.100.0",  # This field no longer exists
+            "deprecated_field": "some_value",  # Another unknown field
+            "source_url": "https://example.com",  # Another unknown field
+        }
+        
+        # Should not raise TypeError
+        metadata = LibraryMetadata.from_dict(old_cache_data)
+        
+        # Valid fields should be loaded
+        assert metadata.library == "fastapi"
+        assert metadata.context7_id == "/tiangolo/fastapi"
+        assert metadata.trust_score == 0.95
+        assert metadata.topics == ["routing", "middleware"]
+        assert metadata.total_docs == 10
+        assert metadata.cache_hits == 5
+        
+        # Unknown fields should NOT be present (filtered out)
+        assert not hasattr(metadata, "library_version")
+        assert not hasattr(metadata, "deprecated_field")
+        assert not hasattr(metadata, "source_url")
+
     def test_cache_index_creation(self):
         """Test CacheIndex creation."""
         index = CacheIndex()

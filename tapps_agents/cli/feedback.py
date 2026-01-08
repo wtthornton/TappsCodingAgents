@@ -602,6 +602,7 @@ class FeedbackManager:
         data: dict[str, Any] | str,
         message: str | None = None,
         warnings: list[str] | None = None,
+        compact: bool = True,  # Default to compact mode to prevent Cursor crashes
         **kwargs: Any,  # Accept additional kwargs for backward compatibility
     ) -> None:
         """
@@ -611,7 +612,15 @@ class FeedbackManager:
             data: Result data (dict for JSON, str for text)
             message: Optional summary message
             warnings: Optional list of warnings
+            compact: If True (default), remove verbose debug data to prevent large output
         """
+        # Apply output compaction to prevent overwhelming Cursor's terminal
+        # Large outputs can cause Cursor to crash with "Connection Error"
+        if compact and isinstance(data, dict):
+            from .output_compactor import clean_debug_output, limit_output_size
+            data = clean_debug_output(data)
+            data = limit_output_size(data)
+        
         if self.format_type == "json":
             output: dict[str, Any] = {
                 "success": True,
@@ -833,7 +842,8 @@ def output_result(
     data: dict[str, Any] | str,
     message: str | None = None,
     warnings: list[str] | None = None,
+    compact: bool = True,
 ) -> None:
     """Output final result data."""
-    get_feedback().output_result(data, message, warnings)
+    get_feedback().output_result(data, message, warnings, compact=compact)
 

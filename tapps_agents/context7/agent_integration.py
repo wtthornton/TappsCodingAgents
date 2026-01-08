@@ -58,7 +58,8 @@ class Context7AgentHelper:
                     "data": {"config_exists": config is not None, "context7_config_exists": config.context7 is not None if config else False, "context7_enabled": config.context7.enabled if config and config.context7 else False},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         
         # Check if Context7 is enabled
@@ -258,7 +259,8 @@ class Context7AgentHelper:
                     "data": {"library": library, "topic": topic, "enabled": self.enabled},
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
-        except: pass
+        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            pass
         # #endregion
         if not self.enabled or self.kb_lookup is None:
             return None

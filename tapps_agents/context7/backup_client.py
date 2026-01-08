@@ -73,7 +73,8 @@ def _ensure_context7_api_key() -> str | None:
                 "data": {"env_key_exists": os.getenv("CONTEXT7_API_KEY") is not None},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     
     # First check environment variable
@@ -90,7 +91,8 @@ def _ensure_context7_api_key() -> str | None:
                 "data": {"api_key_from_env": api_key is not None, "key_length": len(api_key) if api_key else 0},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     if api_key:
         return api_key
@@ -164,7 +166,8 @@ def _ensure_context7_api_key() -> str | None:
                 "data": {},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     return None
 
@@ -248,7 +251,8 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 "data": {"api_key_at_creation": os.getenv("CONTEXT7_API_KEY") is not None},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     api_key = _ensure_context7_api_key()
     # #region agent log
@@ -263,7 +267,8 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 "data": {"api_key_available": api_key is not None, "key_length": len(api_key) if api_key else 0, "env_key_after": os.getenv("CONTEXT7_API_KEY") is not None},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     if not api_key:
         # #region agent log
@@ -714,7 +719,8 @@ def get_context7_client_with_fallback(
                 "data": {"mcp_available": mcp_available, "mcp_source": mcp_source, "is_cursor_mode": is_cursor_mode()},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     if mcp_available and mcp_source == "cursor_mcp":
         # In Cursor mode, MCP tools are available to AI assistant but NOT to Python code
@@ -758,7 +764,8 @@ def get_context7_client_with_fallback(
                 "data": {"mcp_available": mcp_available, "api_available": api_available},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     if not api_available:
         # R2/R3: Neither MCP nor API key available - provide clear error message
@@ -793,7 +800,8 @@ def get_context7_client_with_fallback(
                 "data": {"use_mcp": False, "resolve_client_created": resolve_client is not None, "get_docs_client_created": get_docs_client is not None},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     return mcp_gateway, False, "none", resolve_client, get_docs_client
 
@@ -831,7 +839,8 @@ async def call_context7_resolve_with_fallback(
                 "data": {"use_mcp": use_mcp, "resolve_client": resolve_client is not None, "library": library_name},
                 "timestamp": int(datetime.now().timestamp() * 1000)
             }) + "\n")
-    except: pass
+    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+        pass
     # #endregion
     if use_mcp:
         # R1: Handle Cursor MCP vs local gateway differently

@@ -53,6 +53,11 @@ This transforms a simple prompt into a comprehensive, actionable specification r
     )
     enhance_parser.add_argument("--output", help="Path to output file where enhanced specification will be saved. If not provided, output is printed to stdout. File extension should match the format.")
     enhance_parser.add_argument("--config", help="Path to custom enhancement configuration file. Allows customization of enhancement stages, prompts, and output structure.")
+    enhance_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     enhance_quick_parser = enhancer_subparsers.add_parser(
         "enhance-quick",
@@ -75,6 +80,11 @@ Skips implementation, testing, and documentation planning stages. Use this when 
         help="Output format for the enhanced specification: 'markdown' for Markdown format (default), 'json' for structured JSON, 'yaml' for YAML format",
     )
     enhance_quick_parser.add_argument("--output", help="Path to output file where enhanced specification will be saved. If not provided, output is printed to stdout.")
+    enhance_quick_parser.add_argument(
+        "--verbose-output",
+        action="store_true",
+        help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
+    )
 
     enhance_stage_parser = enhancer_subparsers.add_parser(
         "enhance-stage",

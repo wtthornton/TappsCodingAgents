@@ -111,6 +111,7 @@ async def review_command(
     max_workers: int = 4,
     output_file: str | None = None,
     fail_under: float | None = None,
+    verbose_output: bool = False,
 ):
     """
     Review code file(s) (supports both *review and review commands).
@@ -232,7 +233,7 @@ async def review_command(
                 feedback.success(f"Results written to {output_file}")
             else:
                 if output_format == "json":
-                    feedback.output_result(result, message="Review completed successfully", warnings=None)
+                    feedback.output_result(result, message="Review completed successfully", warnings=None, compact=not verbose_output)
                 elif output_format in ("markdown", "html"):
                     # Print raw content to stdout
                     output_content = (
@@ -275,6 +276,7 @@ async def review_command(
                     feedback.output_result(
                         result,
                         message=f"Review completed: {result['successful']}/{result['total']} files successful",
+                        compact=not verbose_output,
                     )
                 elif output_format in ("markdown", "html"):
                     output_content = (
@@ -833,6 +835,7 @@ async def score_command(
     max_workers: int = 4,
     output_file: str | None = None,
     fail_under: float | None = None,
+    verbose_output: bool = False,
 ):
     """
     Score code file(s) (supports both *score and score commands).
@@ -926,7 +929,7 @@ async def score_command(
                 feedback.success(f"Results written to {output_file}")
             else:
                 if output_format == "json":
-                    feedback.output_result(result, message="Scoring completed", warnings=None)
+                    feedback.output_result(result, message="Scoring completed", warnings=None, compact=not verbose_output)
                 elif output_format in ("markdown", "html"):
                     print(output_content)
                 else:
@@ -959,7 +962,7 @@ async def score_command(
                 feedback.success(f"Results written to {output_file}")
             else:
                 if output_format == "json":
-                    feedback.output_result(result, message=f"Scoring completed: {result['successful']}/{result['total']} files successful")
+                    feedback.output_result(result, message=f"Scoring completed: {result['successful']}/{result['total']} files successful", compact=not verbose_output)
                 elif output_format in ("markdown", "html"):
                     print(output_content)
                 else:
@@ -986,6 +989,7 @@ async def lint_command(
     max_workers: int = 4,
     output_file: str | None = None,
     fail_on_issues: bool = False,
+    verbose_output: bool = False,
 ) -> None:
     """Run linting on file(s) with consistent async execution and output handling."""
     from ..command_classifier import CommandClassifier, CommandNetworkRequirement
@@ -1067,7 +1071,7 @@ async def lint_command(
                 feedback.success(f"Results written to {output_file}")
             else:
                 if output_format == "json":
-                    feedback.output_result(result, message="Linting completed")
+                    feedback.output_result(result, message="Linting completed", compact=not verbose_output)
                 elif output_format in ("markdown", "html"):
                     print(
                         format_markdown(result)
@@ -1110,6 +1114,7 @@ async def lint_command(
                     feedback.output_result(
                         result,
                         message=f"Linting completed: {result.get('successful', 0)}/{result.get('total', 0)} files successful",
+                        compact=not verbose_output,
                     )
                 elif output_format in ("markdown", "html"):
                     print(
@@ -1139,6 +1144,7 @@ async def type_check_command(
     max_workers: int = 4,
     output_file: str | None = None,
     fail_on_issues: bool = False,
+    verbose_output: bool = False,
 ) -> None:
     """Run type-checking on file(s) with consistent async execution and output handling."""
     from ..command_classifier import CommandClassifier, CommandNetworkRequirement
@@ -1220,7 +1226,7 @@ async def type_check_command(
                 feedback.success(f"Results written to {output_file}")
             else:
                 if output_format == "json":
-                    feedback.output_result(result, message="Type checking completed")
+                    feedback.output_result(result, message="Type checking completed", compact=not verbose_output)
                 elif output_format in ("markdown", "html"):
                     print(
                         format_markdown(result)
@@ -1253,6 +1259,7 @@ async def type_check_command(
                     feedback.output_result(
                         result,
                         message=f"Type checking completed: {result['successful']}/{result['total']} files successful",
+                        compact=not verbose_output,
                     )
                 elif output_format in ("markdown", "html"):
                     print(
@@ -1383,6 +1390,7 @@ def handle_reviewer_command(args: object) -> None:
     try:
         if command == "review":
             fail_under = getattr(args, "fail_under", None)
+            verbose_output = bool(getattr(args, "verbose_output", False))
             run_async_command(
                 review_command(
                     file_path=single_file,
@@ -1392,10 +1400,12 @@ def handle_reviewer_command(args: object) -> None:
                     max_workers=max_workers,
                     output_file=output_file,
                     fail_under=fail_under,
+                    verbose_output=verbose_output,
                 )
             )
         elif command == "score":
             fail_under = getattr(args, "fail_under", None)
+            verbose_output = bool(getattr(args, "verbose_output", False))
             run_async_command(
                 score_command(
                     file_path=single_file,
@@ -1405,10 +1415,12 @@ def handle_reviewer_command(args: object) -> None:
                     max_workers=max_workers,
                     output_file=output_file,
                     fail_under=fail_under,
+                    verbose_output=verbose_output,
                 )
             )
         elif command == "lint":
             fail_on_issues = bool(getattr(args, "fail_on_issues", False))
+            verbose_output = bool(getattr(args, "verbose_output", False))
             run_async_command(
                 lint_command(
                     file_path=single_file,
@@ -1418,10 +1430,12 @@ def handle_reviewer_command(args: object) -> None:
                     max_workers=max_workers,
                     output_file=output_file,
                     fail_on_issues=fail_on_issues,
+                    verbose_output=verbose_output,
                 )
             )
         elif command == "type-check":
             fail_on_issues = bool(getattr(args, "fail_on_issues", False))
+            verbose_output = bool(getattr(args, "verbose_output", False))
             run_async_command(
                 type_check_command(
                     file_path=single_file,
@@ -1431,6 +1445,7 @@ def handle_reviewer_command(args: object) -> None:
                     max_workers=max_workers,
                     output_file=output_file,
                     fail_on_issues=fail_on_issues,
+                    verbose_output=verbose_output,
                 )
             )
         elif command == "report":
@@ -1488,7 +1503,8 @@ def handle_reviewer_command(args: object) -> None:
                 if len(report_paths) <= 5:  # Only show paths if not too many
                     summary["report_files"] = report_paths
             
-            feedback.output_result(result, message="Report generated successfully", warnings=None)
+            verbose_output = bool(getattr(args, "verbose_output", False))
+            feedback.output_result(result, message="Report generated successfully", warnings=None, compact=not verbose_output)
         elif command == "duplication":
             # Duplication check is offline - no network check needed
             feedback.start_operation("Duplication Check")
@@ -1534,7 +1550,8 @@ def handle_reviewer_command(args: object) -> None:
             )
             check_result_error(result)
             feedback.clear_progress()
-            feedback.output_result(result, message="Project analysis completed")
+            verbose_output = bool(getattr(args, "verbose_output", False))
+            feedback.output_result(result, message="Project analysis completed", compact=not verbose_output)
         elif command == "analyze-services":
             # Service analysis may need network - check if required
             from ..command_classifier import CommandClassifier, CommandNetworkRequirement
@@ -1567,7 +1584,8 @@ def handle_reviewer_command(args: object) -> None:
             )
             check_result_error(result)
             feedback.clear_progress()
-            feedback.output_result(result, message="Service analysis completed")
+            verbose_output = bool(getattr(args, "verbose_output", False))
+            feedback.output_result(result, message="Service analysis completed", compact=not verbose_output)
         elif command == "docs":
             run_async_command(
                 docs_command(
