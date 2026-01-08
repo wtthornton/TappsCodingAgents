@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.3.2] - 2026-01-08
+
+### Added
+- **Reviewer Agent Improvements** - Based on user feedback (5/10 rating)
+  - **Include Actual Errors in Score Output** (P1)
+    - Score command now shows actual ruff and mypy issues, not just scores
+    - New fields: `linting_issues`, `linting_issue_count`, `type_issues`, `type_issue_count`
+    - Text output format shows "Line X: [CODE] message" for each issue
+    - Users can now see specific errors without running tools separately
+  - **Target-Aware Lint with `--isolated` Mode** (P1)
+    - New `--isolated` flag runs ruff ignoring project pyproject.toml/ruff.toml
+    - Useful for linting specific files without project-wide rules affecting results
+    - Isolated results are not cached to avoid configuration confusion
+  - **Context7 Stale Cache Fallback** (P2)
+    - When Context7 API fails (quota/network), falls back to stale cached data
+    - Returns data up to 30 days old with warning message
+    - Also tries fuzzy matching on stale entries for better coverage
+    - New `LookupResult.warning` field for stale data notifications
+
+### Documentation
+- Added `docs/REVIEWER_IMPROVEMENTS_PLAN.md` - Detailed improvement plan with analysis
+
 ## [3.3.1] - 2026-01-16
 
 ### Updated
