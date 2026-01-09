@@ -7,6 +7,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.0] - 2026-01-09
+
+### Added
+- **TypeScript Security Analysis** - Real security pattern detection for TypeScript/JavaScript files
+  - Detects dangerous patterns: `eval()`, `innerHTML`, `dangerouslySetInnerHTML`, `document.write`, etc.
+  - CWE IDs included for all security patterns (CWE-94, CWE-79)
+  - `SecurityIssue` dataclass for structured security reporting
+  - Security score now reflects actual issues found (not default 5.0)
+
+- **Improver Auto-Apply Option** - Automatically apply code improvements
+  - New `--auto-apply` flag: Apply improvements with automatic backup
+  - New `--preview` flag: Show diff without modifying file
+  - Timestamped backups stored in `.tapps-agents/backups/`
+  - Verification review runs after auto-apply to confirm improvements
+  - `DiffResult` dataclass with unified diff and line statistics
+
+- **Score Explanation Mode** - Detailed explanations for all scores
+  - New `--explain` flag for `reviewer score` command
+  - Explanations include: reason, identified issues, recommendations
+  - Tool availability status (ESLint, TypeScript compiler)
+  - Works for both Python and TypeScript/JavaScript files
+
+- **Traceability Documentation** - Requirements to implementation mapping
+  - `TRACEABILITY_MATRIX.md` - Links requirements → stories → implementation → tests
+  - `STORY_VERIFICATION_CHECKLIST.md` - Acceptance criteria verification
+  - Gherkin-to-test mapping in test files
+
+### Tests
+- 56 new tests for TypeScript enhancement features
+- `tests/agents/reviewer/test_typescript_security.py` (26 tests)
+- `tests/agents/improver/test_auto_apply.py` (18 tests)
+- Acceptance criteria tests mapped to Gherkin scenarios
+
+### Documentation
+- `docs/TYPESCRIPT_SUPPORT.md` - Complete TypeScript support guide
+- `docs/RECOMMENDATIONS_IMPLEMENTATION_SUMMARY.md` - Implementation report
+- Updated workflow documentation in `docs/workflows/simple-mode/`
+
 ## [3.4.1] - 2026-01-09
 
 ### Fixed
