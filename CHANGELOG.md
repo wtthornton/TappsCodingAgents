@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.1] - 2026-01-09
+
+### Fixed
+- **Missing Evaluator Agent** - Added evaluator to AGENT_TYPES list and CLI help text
+  - Evaluator agent was missing from skill-template command agent type choices
+  - Added evaluator to CLI help text in AGENT COMMANDS section
+  - Updated skill-template help text to include evaluator in agent type list
+
+### Changed
+- **Init Process Documentation** - Comprehensive review and optimization of all init-related documentation
+  - Fixed missing evaluator skill in FRAMEWORK_SKILLS list (init_project.py)
+  - Added missing simple-mode workflow presets to FRAMEWORK_WORKFLOW_PRESETS
+  - Updated all documentation files to reflect 14 agents + simple-mode (15 total)
+  - Added evaluator agent documentation to command-reference.mdc and agent-capabilities.mdc
+  - Updated project-context.mdc with accurate agent count and Cursor Skills reference
+  - Added workflow execution flags documentation to workflow-presets.mdc
+  - Ensured consistency between resource files and installed .cursor/rules/ files
+  - All framework file counts now match actual resources (15 skills, 7 rules, 8 presets)
+
 ## [3.5.0] - 2026-01-09
 
 ### Added
