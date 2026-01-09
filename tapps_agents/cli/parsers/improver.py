@@ -108,6 +108,16 @@ This is a general quality improvement that addresses multiple concerns simultane
         "--focus",
         help="Comma-separated list of quality aspects to focus on (e.g., 'security, maintainability, type-safety'). If not provided, performs comprehensive quality improvement.",
     )
+    improve_quality_parser.add_argument(
+        "--auto-apply",
+        action="store_true",
+        help="Automatically apply improvements to the file. Creates a backup before modifying. Returns a diff of changes made and runs verification review.",
+    )
+    improve_quality_parser.add_argument(
+        "--preview",
+        action="store_true",
+        help="Preview improvements as a diff without modifying the file. Shows what changes would be made without applying them.",
+    )
     improve_quality_parser.add_argument("--output", help="Output file path. If specified, results will be written to this file instead of stdout. Format is determined by file extension or --format option.")
     improve_quality_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
     improve_quality_parser.add_argument(

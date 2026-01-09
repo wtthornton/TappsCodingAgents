@@ -3,17 +3,139 @@ TypeScript Scorer - Code quality scoring for TypeScript and JavaScript files
 
 Phase 6.4.4: TypeScript & JavaScript Support
 Phase 1.2: Enhanced maintainability scoring
+Phase 7.1: Security Analysis & Score Explanations (Evaluation Enhancement)
 """
 
 import json
 import re
 import shutil
 import subprocess  # nosec B404 - used with fixed args, no shell
+from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Any
 
 from ...core.subprocess_utils import wrap_windows_cmd_shim
 from .scoring import BaseScorer
+
+
+# Security patterns for JavaScript/TypeScript code analysis
+# Phase 7.1: Comprehensive security pattern detection
+DANGEROUS_PATTERNS: dict[str, dict[str, Any]] = {
+    "eval": {
+        "pattern": r"\beval\s*\(",
+        "severity": "HIGH",
+        "message": "eval() can execute arbitrary code",
+        "recommendation": "Use JSON.parse() for JSON, or safer alternatives like Function constructors with validation",
+        "cwe_id": "CWE-95",
+    },
+    "innerHTML": {
+        "pattern": r"\.innerHTML\s*=",
+        "severity": "MEDIUM",
+        "message": "innerHTML can lead to XSS vulnerabilities",
+        "recommendation": "Use textContent for plain text, or sanitize input with DOMPurify",
+        "cwe_id": "CWE-79",
+    },
+    "outerHTML": {
+        "pattern": r"\.outerHTML\s*=",
+        "severity": "MEDIUM",
+        "message": "outerHTML can lead to XSS vulnerabilities",
+        "recommendation": "Use DOM manipulation methods instead",
+        "cwe_id": "CWE-79",
+    },
+    "document.write": {
+        "pattern": r"\bdocument\.write\s*\(",
+        "severity": "MEDIUM",
+        "message": "document.write can be exploited for XSS",
+        "recommendation": "Use DOM manipulation methods like appendChild instead",
+        "cwe_id": "CWE-79",
+    },
+    "Function constructor": {
+        "pattern": r"\bnew\s+Function\s*\(",
+        "severity": "HIGH",
+        "message": "Function constructor can execute arbitrary code",
+        "recommendation": "Use arrow functions or regular function declarations",
+        "cwe_id": "CWE-95",
+    },
+    "setTimeout string": {
+        "pattern": r"\bsetTimeout\s*\(\s*['\"`]",
+        "severity": "MEDIUM",
+        "message": "setTimeout with string argument can execute arbitrary code",
+        "recommendation": "Use function reference instead of string",
+        "cwe_id": "CWE-95",
+    },
+    "setInterval string": {
+        "pattern": r"\bsetInterval\s*\(\s*['\"`]",
+        "severity": "MEDIUM",
+        "message": "setInterval with string argument can execute arbitrary code",
+        "recommendation": "Use function reference instead of string",
+        "cwe_id": "CWE-95",
+    },
+    "insertAdjacentHTML": {
+        "pattern": r"\.insertAdjacentHTML\s*\(",
+        "severity": "MEDIUM",
+        "message": "insertAdjacentHTML can lead to XSS vulnerabilities",
+        "recommendation": "Sanitize input before insertion or use safe DOM methods",
+        "cwe_id": "CWE-79",
+    },
+}
+
+# React-specific security patterns
+REACT_SECURITY_PATTERNS: dict[str, dict[str, Any]] = {
+    "dangerouslySetInnerHTML": {
+        "pattern": r"dangerouslySetInnerHTML",
+        "severity": "HIGH",
+        "message": "dangerouslySetInnerHTML can lead to XSS vulnerabilities",
+        "recommendation": "Sanitize content with DOMPurify or avoid using if possible",
+        "cwe_id": "CWE-79",
+    },
+    "javascript: URL": {
+        "pattern": r"href\s*=\s*[{'\"`]javascript:",
+        "severity": "HIGH",
+        "message": "javascript: URLs can execute arbitrary code",
+        "recommendation": "Use onClick handlers instead of javascript: URLs",
+        "cwe_id": "CWE-79",
+    },
+    "target _blank": {
+        "pattern": r"target\s*=\s*['\"`]_blank['\"`](?!.*rel\s*=)",
+        "severity": "LOW",
+        "message": "Links with target='_blank' without rel='noopener' can be exploited",
+        "recommendation": "Add rel='noopener noreferrer' to external links",
+        "cwe_id": "CWE-1022",
+    },
+}
+
+
+@dataclass
+class SecurityIssue:
+    """Represents a security issue found in code."""
+    
+    pattern: str
+    severity: str  # "HIGH", "MEDIUM", "LOW"
+    line: int
+    column: int | None
+    message: str
+    recommendation: str
+    cwe_id: str | None
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
+
+
+@dataclass
+class ScoreExplanation:
+    """Explanation for a code quality score."""
+    
+    score: float
+    reason: str
+    issues: list[str]
+    recommendations: list[str]
+    tool_status: str  # "available", "unavailable", "error", "pattern_based"
+    tool_name: str | None = None
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
 
 
 class TypeScriptScorer(BaseScorer):
@@ -107,7 +229,7 @@ class TypeScriptScorer(BaseScorer):
         metrics: dict[str, float] = {}
         scores: dict[str, Any] = {
             "complexity_score": 0.0,
-            "security_score": 5.0,  # Default neutral score
+            "security_score": 0.0,  # Will be calculated by _calculate_security_score
             "maintainability_score": 0.0,
             "test_coverage_score": 0.0,
             "performance_score": 5.0,  # Default, will be overridden by PerformanceScorer
@@ -123,6 +245,12 @@ class TypeScriptScorer(BaseScorer):
         # Linting Score (0-10, higher is better) - ESLint
         scores["linting_score"] = self._calculate_linting_score(file_path)
         metrics["linting"] = float(scores["linting_score"])
+        
+        # Security Score (0-10, higher is better) - Phase 7.1 Enhancement
+        security_result = self._calculate_security_score(code, file_path)
+        scores["security_score"] = security_result["score"]
+        scores["_security_issues"] = security_result.get("issues", [])
+        metrics["security"] = float(scores["security_score"])
 
         # Type Checking Score (0-10, higher is better) - TypeScript compiler
         if file_path.suffix in [".ts", ".tsx"]:
@@ -210,6 +338,27 @@ class TypeScriptScorer(BaseScorer):
         # Add explanations to result if any
         if score_explanations:
             scores["_explanations"] = score_explanations
+
+        # Phase 7.1: Generate comprehensive explanations
+        enhanced_explanations = self._generate_explanations(
+            scores,
+            scores.get("_security_issues", []),
+            self.has_eslint,
+            self.has_tsc
+        )
+        if enhanced_explanations:
+            # Merge with existing explanations
+            if "_explanations" not in scores:
+                scores["_explanations"] = {}
+            scores["_explanations"].update(enhanced_explanations)
+        
+        # Add tool status
+        scores["_tool_status"] = {
+            "eslint": "available" if self.has_eslint else "unavailable",
+            "tsc": "available" if self.has_tsc else "unavailable",
+            "security_scanner": "pattern_based",
+            "npm": "available" if self.has_npm else "unavailable",
+        }
 
         return scores
 
@@ -647,3 +796,271 @@ class TypeScriptScorer(BaseScorer):
 
         except Exception as e:
             return {"available": False, "error": str(e)}
+
+    # ========================================================================
+    # Phase 7.1: Security Analysis Enhancement
+    # ========================================================================
+    
+    def _calculate_security_score(
+        self, code: str, file_path: Path
+    ) -> dict[str, Any]:
+        """
+        Calculate security score based on dangerous patterns.
+        
+        Phase 7.1: Security Analysis Enhancement
+        
+        Args:
+            code: Source code content
+            file_path: Path to the file (for React detection)
+            
+        Returns:
+            Dictionary with:
+                - score: Security score from 0.0 to 10.0 (higher is better)
+                - issues: List of SecurityIssue dictionaries
+                - high_count, medium_count, low_count: Issue counts by severity
+        """
+        issues = self._detect_dangerous_patterns(code, file_path)
+        
+        # Calculate score based on issues
+        # Base score: 10.0
+        # HIGH severity: -2.0 each
+        # MEDIUM severity: -1.0 each
+        # LOW severity: -0.5 each
+        base_score = 10.0
+        high_count = sum(1 for i in issues if i.severity == "HIGH")
+        medium_count = sum(1 for i in issues if i.severity == "MEDIUM")
+        low_count = sum(1 for i in issues if i.severity == "LOW")
+        
+        penalty = (high_count * 2.0) + (medium_count * 1.0) + (low_count * 0.5)
+        score = max(0.0, min(10.0, base_score - penalty))
+        
+        return {
+            "score": score,
+            "issues": [i.to_dict() for i in issues],
+            "high_count": high_count,
+            "medium_count": medium_count,
+            "low_count": low_count,
+            "total_issues": len(issues),
+        }
+    
+    def _detect_dangerous_patterns(
+        self, code: str, file_path: Path | None = None
+    ) -> list[SecurityIssue]:
+        """
+        Detect dangerous JavaScript/TypeScript patterns.
+        
+        Phase 7.1: Security Analysis Enhancement
+        
+        Args:
+            code: Source code to analyze
+            file_path: Optional path to detect React files
+            
+        Returns:
+            List of SecurityIssue objects
+        """
+        issues: list[SecurityIssue] = []
+        lines = code.split("\n")
+        
+        # Check if this is a React file
+        is_react = False
+        if file_path and file_path.suffix in [".tsx", ".jsx"]:
+            is_react = True
+        elif "react" in code.lower() or "import React" in code:
+            is_react = True
+        
+        # Detect general JavaScript/TypeScript patterns
+        for pattern_name, pattern_info in DANGEROUS_PATTERNS.items():
+            regex = re.compile(pattern_info["pattern"])
+            for line_num, line in enumerate(lines, 1):
+                # Skip comments
+                stripped = line.strip()
+                if stripped.startswith("//") or stripped.startswith("*"):
+                    continue
+                
+                matches = list(regex.finditer(line))
+                for match in matches:
+                    issues.append(SecurityIssue(
+                        pattern=pattern_name,
+                        severity=pattern_info["severity"],
+                        line=line_num,
+                        column=match.start() + 1,
+                        message=pattern_info["message"],
+                        recommendation=pattern_info["recommendation"],
+                        cwe_id=pattern_info.get("cwe_id"),
+                    ))
+        
+        # Detect React-specific patterns
+        if is_react:
+            for pattern_name, pattern_info in REACT_SECURITY_PATTERNS.items():
+                regex = re.compile(pattern_info["pattern"])
+                for line_num, line in enumerate(lines, 1):
+                    # Skip comments
+                    stripped = line.strip()
+                    if stripped.startswith("//") or stripped.startswith("*"):
+                        continue
+                    
+                    matches = list(regex.finditer(line))
+                    for match in matches:
+                        issues.append(SecurityIssue(
+                            pattern=pattern_name,
+                            severity=pattern_info["severity"],
+                            line=line_num,
+                            column=match.start() + 1,
+                            message=pattern_info["message"],
+                            recommendation=pattern_info["recommendation"],
+                            cwe_id=pattern_info.get("cwe_id"),
+                        ))
+        
+        return issues
+    
+    def get_security_issues(
+        self, code: str, file_path: Path
+    ) -> dict[str, Any]:
+        """
+        Get detailed security issues for external access.
+        
+        Phase 7.1: Security Analysis Enhancement
+        
+        Args:
+            code: Source code content
+            file_path: Path to the file
+            
+        Returns:
+            Dictionary with security analysis results
+        """
+        result = self._calculate_security_score(code, file_path)
+        result["available"] = True
+        return result
+    
+    def _generate_explanations(
+        self,
+        scores: dict[str, Any],
+        security_issues: list[dict[str, Any]],
+        eslint_available: bool,
+        tsc_available: bool,
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Generate explanations for each score.
+        
+        Phase 7.1: Score Explanation Enhancement
+        
+        Args:
+            scores: Calculated scores dictionary
+            security_issues: List of security issues found
+            eslint_available: Whether ESLint is available
+            tsc_available: Whether TypeScript compiler is available
+            
+        Returns:
+            Dictionary of explanations keyed by score name
+        """
+        explanations: dict[str, dict[str, Any]] = {}
+        
+        # Security score explanation
+        security_score = scores.get("security_score", 5.0)
+        if security_issues:
+            high_issues = [i for i in security_issues if i.get("severity") == "HIGH"]
+            medium_issues = [i for i in security_issues if i.get("severity") == "MEDIUM"]
+            low_issues = [i for i in security_issues if i.get("severity") == "LOW"]
+            
+            issue_summary = []
+            if high_issues:
+                issue_summary.append(f"{len(high_issues)} HIGH severity")
+            if medium_issues:
+                issue_summary.append(f"{len(medium_issues)} MEDIUM severity")
+            if low_issues:
+                issue_summary.append(f"{len(low_issues)} LOW severity")
+            
+            explanations["security_score"] = ScoreExplanation(
+                score=security_score,
+                reason=f"{len(security_issues)} security issue(s) detected: {', '.join(issue_summary)}",
+                issues=[f"{i.get('pattern')} at line {i.get('line')}: {i.get('message')}" for i in security_issues[:5]],
+                recommendations=[i.get("recommendation", "") for i in security_issues[:3] if i.get("recommendation")],
+                tool_status="pattern_based",
+                tool_name="TypeScriptSecurityScanner",
+            ).to_dict()
+        else:
+            explanations["security_score"] = ScoreExplanation(
+                score=security_score,
+                reason="No security issues detected",
+                issues=[],
+                recommendations=["Code appears secure. Continue following security best practices."],
+                tool_status="pattern_based",
+                tool_name="TypeScriptSecurityScanner",
+            ).to_dict()
+        
+        # Linting score explanation
+        linting_score = scores.get("linting_score", 5.0)
+        if not eslint_available:
+            explanations["linting_score"] = ScoreExplanation(
+                score=linting_score,
+                reason="ESLint not available - using neutral score",
+                issues=["ESLint is not installed or not accessible via npx"],
+                recommendations=["Install ESLint: npm install -g eslint", "Or install locally: npm install --save-dev eslint"],
+                tool_status="unavailable",
+                tool_name="ESLint",
+            ).to_dict()
+        elif linting_score < 7.0:
+            explanations["linting_score"] = ScoreExplanation(
+                score=linting_score,
+                reason=f"ESLint found issues (score: {linting_score:.1f}/10)",
+                issues=["Multiple linting violations detected"],
+                recommendations=["Run 'npx eslint --fix' to auto-fix issues", "Review ESLint configuration"],
+                tool_status="available",
+                tool_name="ESLint",
+            ).to_dict()
+        
+        # Type checking score explanation
+        type_checking_score = scores.get("type_checking_score", 5.0)
+        if not tsc_available:
+            explanations["type_checking_score"] = ScoreExplanation(
+                score=type_checking_score,
+                reason="TypeScript compiler not available - using neutral score",
+                issues=["TypeScript is not installed or not accessible via npx"],
+                recommendations=["Install TypeScript: npm install -g typescript", "Or install locally: npm install --save-dev typescript"],
+                tool_status="unavailable",
+                tool_name="TypeScript Compiler (tsc)",
+            ).to_dict()
+        elif type_checking_score < 7.0:
+            explanations["type_checking_score"] = ScoreExplanation(
+                score=type_checking_score,
+                reason=f"TypeScript compiler found type errors (score: {type_checking_score:.1f}/10)",
+                issues=["Type checking errors detected"],
+                recommendations=["Fix type errors reported by tsc", "Enable strict mode in tsconfig.json for better type safety"],
+                tool_status="available",
+                tool_name="TypeScript Compiler (tsc)",
+            ).to_dict()
+        
+        # Complexity score explanation
+        complexity_score = scores.get("complexity_score", 5.0)
+        if complexity_score > 7.0:
+            explanations["complexity_score"] = ScoreExplanation(
+                score=complexity_score,
+                reason=f"High cyclomatic complexity detected (score: {complexity_score:.1f}/10)",
+                issues=["Code has many decision points (if/else, loops, ternary operators)"],
+                recommendations=[
+                    "Extract complex logic into smaller functions",
+                    "Consider using early returns to reduce nesting",
+                    "Apply the single responsibility principle",
+                ],
+                tool_status="available",
+                tool_name="Complexity Analyzer",
+            ).to_dict()
+        
+        # Maintainability score explanation
+        maintainability_score = scores.get("maintainability_score", 5.0)
+        if maintainability_score < 6.0:
+            explanations["maintainability_score"] = ScoreExplanation(
+                score=maintainability_score,
+                reason=f"Low maintainability score (score: {maintainability_score:.1f}/10)",
+                issues=["Code may be difficult to maintain"],
+                recommendations=[
+                    "Add JSDoc comments to functions and classes",
+                    "Use TypeScript interfaces for type definitions",
+                    "Break down large functions into smaller ones",
+                    "Follow consistent naming conventions",
+                ],
+                tool_status="available",
+                tool_name="Maintainability Analyzer",
+            ).to_dict()
+        
+        return explanations

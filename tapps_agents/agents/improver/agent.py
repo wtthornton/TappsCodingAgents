@@ -1,9 +1,15 @@
 """
 Improver Agent - Refactors and enhances existing code
+
+Phase 7.1: Auto-Apply Enhancement - adds --auto-apply and --preview flags
 """
 
+import difflib
 import inspect
 import logging
+import shutil
+from dataclasses import dataclass, asdict
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -14,6 +20,20 @@ from ...core.instructions import GenericInstruction
 from ...core.tiered_context import ContextTier
 
 logger = logging.getLogger(__name__)
+
+
+@dataclass
+class DiffResult:
+    """Result of code diff generation."""
+    
+    unified_diff: str
+    lines_added: int
+    lines_removed: int
+    has_changes: bool
+    
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary."""
+        return asdict(self)
 
 
 class ImproverAgent(BaseAgent):
@@ -302,11 +322,26 @@ Return only the optimized code, wrapped in ```python code blocks."""
         }
 
     async def _handle_improve_quality(
-        self, file_path: str | None = None, focus: str | None = None, **kwargs: Any
+        self,
+        file_path: str | None = None,
+        focus: str | None = None,
+        auto_apply: bool = False,
+        preview: bool = False,
+        **kwargs: Any,
     ) -> dict[str, Any]:
-        """Improve overall code quality (structure, patterns, best practices)."""
+        """
+        Improve overall code quality (structure, patterns, best practices).
+        
+        Phase 7.1 Enhancement: Added --auto-apply and --preview flags.
+        
+        Args:
+            file_path: Path to file to improve
+            focus: Specific areas to focus on (comma-separated)
+            auto_apply: If True, automatically apply improvements
+            preview: If True, show diff preview without applying
+        """
         if not file_path:
-            return {"error": "File path required. Usage: *improve-quality <file_path>"}
+            return {"error": "File path required. Usage: *improve-quality <file_path> [--auto-apply] [--preview]"}
 
         file_path_obj = Path(file_path)
         if not file_path_obj.is_absolute():
@@ -389,12 +424,6 @@ Provide improved code that:
 
 Return only the improved code, wrapped in ```python code blocks."""
 
-        # Issue 8 Fix: Return instruction object for Cursor Skills execution
-        # Note: MAL has been removed from the project. In Cursor-first mode,
-        # code improvement is handled by Cursor Skills using the instruction object.
-        # The instruction object contains all necessary information for Cursor AI
-        # to improve the code when executed in Cursor chat.
-
         # Prepare instruction for Cursor Skills (always returned for compatibility)
         instruction = GenericInstruction(
             agent_name="improver",
@@ -403,8 +432,71 @@ Return only the improved code, wrapped in ```python code blocks."""
             parameters={"file_path": str(file_path), "focus": focus},
         )
 
+        # Phase 7.1: Generate diff preview if requested or for auto-apply
+        diff_result = None
+        if preview or auto_apply:
+            # Note: In Cursor-first mode, actual code generation is done by Cursor AI.
+            # The diff is generated from placeholder improved code for preview purposes.
+            # When auto_apply is True, Cursor AI should use this as a signal to apply changes.
+            diff_result = self._generate_diff(
+                current_code, 
+                current_code,  # Placeholder - actual improvement done by Cursor AI
+                str(file_path)
+            )
+        
+        # Phase 7.1: Handle auto-apply mode
+        if auto_apply:
+            # Create backup before any modifications
+            backup_path = self._create_backup(str(file_path_obj))
+            
+            result = {
+                "message": f"Auto-apply mode enabled for {file_path}",
+                "mode": "auto_apply",
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "file": str(file_path),
+                "backup": str(backup_path) if backup_path else None,
+                "auto_apply": True,
+                "note": "⚠️ AUTO-APPLY MODE: Cursor AI should automatically apply improvements and verify:",
+                "execution_instructions": [
+                    f"1. Read the file: {file_path}",
+                    "2. Apply the improvements from the 'prompt' field",
+                    "3. Write the improved code to the file",
+                    f"4. Backup has been created at: {backup_path}",
+                    "5. Run verification review after applying changes",
+                    "6. Report the diff of changes made",
+                    "",
+                    "APPLY THE CHANGES - do not just return the instruction!",
+                ],
+            }
+            return result
+        
+        # Phase 7.1: Handle preview mode
+        if preview:
+            result = {
+                "message": f"Preview mode for {file_path}",
+                "mode": "preview",
+                "instruction": instruction.to_dict(),
+                "skill_command": instruction.to_skill_command(),
+                "file": str(file_path),
+                "preview": True,
+                "note": "⚠️ PREVIEW MODE: Show what would change without applying:",
+                "execution_instructions": [
+                    f"1. Read the file: {file_path}",
+                    "2. Generate improved code based on the 'prompt' field",
+                    "3. Show a DIFF of proposed changes (do NOT apply)",
+                    "4. Show statistics: lines added, lines removed",
+                    "5. Suggest: 'Use --auto-apply to apply these changes'",
+                    "",
+                    "DO NOT APPLY CHANGES - only show the preview!",
+                ],
+            }
+            return result
+        
+        # Default mode: Return instruction object for manual execution
         result = {
             "message": f"Code quality improvement instruction prepared for {file_path}",
+            "mode": "instruction",
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "file": str(file_path),
@@ -418,6 +510,9 @@ Return only the improved code, wrapped in ```python code blocks."""
                 "5. Explain what improvements you made and why",
                 "",
                 "DO NOT just return the instruction object - you must execute it by improving the code!",
+                "",
+                "TIP: Use --auto-apply to automatically apply improvements",
+                "TIP: Use --preview to see changes before applying",
             ],
         }
         
@@ -477,3 +572,183 @@ Return only the improved code, wrapped in ```python code blocks."""
 
         # If no code blocks, return the response as-is
         return response.strip()
+    
+    # ========================================================================
+    # Phase 7.1: Auto-Apply Enhancement Methods
+    # ========================================================================
+    
+    def _create_backup(self, file_path: str) -> Path | None:
+        """
+        Create backup of file before modifications.
+        
+        Phase 7.1: Auto-Apply Enhancement
+        
+        Args:
+            file_path: Path to file to backup
+            
+        Returns:
+            Path to backup file, or None if backup failed
+            
+        Backup Location:
+            .tapps-agents/backups/<filename>.<timestamp>.backup
+        """
+        try:
+            file_path_obj = Path(file_path)
+            if not file_path_obj.is_absolute():
+                file_path_obj = self.project_root / file_path_obj
+            
+            if not file_path_obj.exists():
+                logger.warning(f"Cannot backup non-existent file: {file_path}")
+                return None
+            
+            # Create backup directory
+            backup_dir = self.project_root / ".tapps-agents" / "backups"
+            backup_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Generate backup filename with timestamp
+            timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            backup_filename = f"{file_path_obj.name}.{timestamp}.backup"
+            backup_path = backup_dir / backup_filename
+            
+            # Copy file to backup location
+            shutil.copy2(file_path_obj, backup_path)
+            logger.info(f"Created backup: {backup_path}")
+            
+            return backup_path
+            
+        except Exception as e:
+            logger.error(f"Failed to create backup for {file_path}: {e}")
+            return None
+    
+    def _apply_improvements(
+        self, file_path: str, improved_code: str
+    ) -> dict[str, Any]:
+        """
+        Apply improved code to file.
+        
+        Phase 7.1: Auto-Apply Enhancement
+        
+        Args:
+            file_path: Path to file to modify
+            improved_code: Improved code content
+            
+        Returns:
+            Dictionary with result status
+        """
+        try:
+            file_path_obj = Path(file_path)
+            if not file_path_obj.is_absolute():
+                file_path_obj = self.project_root / file_path_obj
+            
+            if not improved_code or not improved_code.strip():
+                return {"success": False, "error": "Improved code is empty"}
+            
+            # Write improved code
+            file_path_obj.write_text(improved_code, encoding="utf-8")
+            logger.info(f"Applied improvements to: {file_path}")
+            
+            return {
+                "success": True,
+                "file": str(file_path_obj),
+                "bytes_written": len(improved_code.encode("utf-8")),
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to apply improvements to {file_path}: {e}")
+            return {"success": False, "error": str(e)}
+    
+    def _generate_diff(
+        self, original: str, improved: str, file_path: str = "file"
+    ) -> dict[str, Any]:
+        """
+        Generate unified diff between original and improved code.
+        
+        Phase 7.1: Auto-Apply Enhancement
+        
+        Args:
+            original: Original code content
+            improved: Improved code content
+            file_path: File path for diff header
+            
+        Returns:
+            Dictionary with diff result
+        """
+        try:
+            original_lines = original.splitlines(keepends=True)
+            improved_lines = improved.splitlines(keepends=True)
+            
+            # Generate unified diff
+            diff_lines = list(difflib.unified_diff(
+                original_lines,
+                improved_lines,
+                fromfile=f"original/{file_path}",
+                tofile=f"improved/{file_path}",
+                lineterm="",
+            ))
+            
+            unified_diff = "".join(diff_lines)
+            
+            # Calculate statistics
+            lines_added = sum(1 for line in diff_lines if line.startswith("+") and not line.startswith("+++"))
+            lines_removed = sum(1 for line in diff_lines if line.startswith("-") and not line.startswith("---"))
+            has_changes = bool(diff_lines)
+            
+            return DiffResult(
+                unified_diff=unified_diff,
+                lines_added=lines_added,
+                lines_removed=lines_removed,
+                has_changes=has_changes,
+            ).to_dict()
+            
+        except Exception as e:
+            logger.error(f"Failed to generate diff: {e}")
+            return DiffResult(
+                unified_diff="",
+                lines_added=0,
+                lines_removed=0,
+                has_changes=False,
+            ).to_dict()
+    
+    async def _verify_changes(self, file_path: str) -> dict[str, Any]:
+        """
+        Run verification review after applying changes.
+        
+        Phase 7.1: Auto-Apply Enhancement
+        
+        Args:
+            file_path: Path to modified file
+            
+        Returns:
+            Dictionary with verification results
+        """
+        try:
+            # Import reviewer agent for verification
+            from ..reviewer.agent import ReviewerAgent
+            
+            reviewer = ReviewerAgent(config=self.config)
+            await reviewer.activate(self.project_root, offline_mode=True)
+            
+            file_path_obj = Path(file_path)
+            if not file_path_obj.is_absolute():
+                file_path_obj = self.project_root / file_path_obj
+            
+            # Run review
+            review_result = await reviewer.review_file(file_path_obj)
+            
+            # Extract score
+            scores = review_result.get("scoring", {})
+            overall_score = scores.get("overall_score", 0.0)
+            
+            return {
+                "verified": True,
+                "new_score": overall_score,
+                "scores": scores,
+                "review": review_result,
+            }
+            
+        except Exception as e:
+            logger.error(f"Failed to verify changes for {file_path}: {e}")
+            return {
+                "verified": False,
+                "error": str(e),
+            }

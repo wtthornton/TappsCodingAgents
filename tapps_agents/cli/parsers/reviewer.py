@@ -144,6 +144,11 @@ Example:
         action="store_true",
         help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
+    score_parser.add_argument(
+        "--explain",
+        action="store_true",
+        help="Include detailed explanations for each score, with reasons, identified issues, and recommendations. Especially useful for TypeScript/JavaScript files where tools may not be available.",
+    )
 
     lint_parser = reviewer_subparsers.add_parser(
         "lint",

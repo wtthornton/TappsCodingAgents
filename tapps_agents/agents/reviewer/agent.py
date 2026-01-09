@@ -340,10 +340,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             file_path = kwargs.get("file")
             if not file_path:
                 return {"error": "File path required. Usage: *score <file>"}
+            
+            explain = kwargs.get("explain", False)
 
             try:
                 return await self.review_file(
-                    Path(file_path), include_scoring=True, include_llm_feedback=False
+                    Path(file_path), include_scoring=True, include_llm_feedback=False, include_explanations=explain
                 )
             except (FileNotFoundError, ValueError) as e:
                 error_msg = str(e)
@@ -574,15 +576,89 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         except Exception:
             return 10.0  # No penalty on error
 
+    def _generate_python_explanations(self, scores: dict[str, Any]) -> dict[str, Any]:
+        """
+        Generate explanations for Python code scores.
+        
+        Args:
+            scores: Dictionary of score values
+            
+        Returns:
+            Dictionary of explanations for each score
+        """
+        explanations = {}
+        
+        # Complexity explanation
+        complexity = scores.get("complexity_score", 10.0)
+        if complexity < 7.0:
+            explanations["complexity_score"] = {
+                "score": complexity,
+                "reason": "High cyclomatic complexity detected",
+                "recommendations": [
+                    "Break down large functions into smaller, focused functions",
+                    "Reduce nested conditionals using guard clauses",
+                    "Consider using polymorphism instead of large switch/if-else chains",
+                ]
+            }
+        
+        # Security explanation
+        security = scores.get("security_score", 10.0)
+        if security < 7.0:
+            bandit_issues = scores.get("bandit_issues", [])
+            explanations["security_score"] = {
+                "score": security,
+                "reason": f"{len(bandit_issues)} security issues detected by Bandit",
+                "issues": bandit_issues[:5] if bandit_issues else [],
+                "recommendations": [
+                    "Review Bandit findings and address HIGH severity issues first",
+                    "Consider input validation and sanitization",
+                    "Review cryptographic practices",
+                ]
+            }
+        
+        # Linting explanation
+        linting = scores.get("linting_score", 10.0)
+        if linting < 8.0:
+            linting_issues = scores.get("linting_issues", [])
+            explanations["linting_score"] = {
+                "score": linting,
+                "reason": f"{len(linting_issues)} linting issues found by Ruff",
+                "issues": linting_issues[:5] if linting_issues else [],
+                "recommendations": [
+                    "Run 'ruff check --fix' to auto-fix fixable issues",
+                    "Review code style guidelines",
+                    "Consider adding ruff to pre-commit hooks",
+                ]
+            }
+        
+        # Type checking explanation
+        type_score = scores.get("type_checking_score", 10.0)
+        if type_score < 8.0:
+            type_issues = scores.get("type_issues", [])
+            explanations["type_checking_score"] = {
+                "score": type_score,
+                "reason": f"{len(type_issues)} type errors found by mypy",
+                "issues": type_issues[:5] if type_issues else [],
+                "recommendations": [
+                    "Add type annotations to function signatures",
+                    "Use typing module for complex types",
+                    "Consider running 'mypy --strict' locally",
+                ]
+            }
+        
+        return explanations
+
     @validate_inputs(
         include_scoring=validate_boolean,
         include_llm_feedback=validate_boolean,
+        include_explanations=validate_boolean,
     )
     async def review_file(
         self,
         file_path: Path,
         include_scoring: bool = True,
         include_llm_feedback: bool = True,
+        include_explanations: bool = False,
     ) -> dict[str, Any]:
         """
         Review a code file with timeout protection and improved error handling.
@@ -591,6 +667,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             file_path: Path to code file
             include_scoring: Include code scores
             include_llm_feedback: Include LLM-generated feedback (via Cursor Skills)
+            include_explanations: Include detailed score explanations (useful for TypeScript)
 
         Returns:
             Review results with scores and feedback
@@ -617,7 +694,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         try:
             return await asyncio.wait_for(
                 self._review_file_internal(
-                    file_path, include_scoring, include_llm_feedback, max_file_size
+                    file_path, include_scoring, include_llm_feedback, max_file_size, include_explanations
                 ),
                 timeout=operation_timeout,
             )
@@ -646,6 +723,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         include_scoring: bool,
         include_llm_feedback: bool,
         max_file_size: int,
+        include_explanations: bool = False,
     ) -> dict[str, Any]:
         """Internal review implementation without timeout wrapper."""
         # #region agent log
@@ -1259,6 +1337,34 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     # Continue without dependency security penalty
 
             result["scoring"] = scores
+            
+            # Add score explanations if requested (especially useful for TypeScript)
+            if include_explanations:
+                explanations = {}
+                if file_type in ("typescript", "javascript") and hasattr(self, 'typescript_scorer'):
+                    try:
+                        # Get security issues for explanation
+                        security_issues = self.typescript_scorer.get_security_issues(code, file_path)
+                        security_issues_list = [
+                            {"pattern": i.pattern, "severity": i.severity, "line": i.line, 
+                             "message": i.message, "recommendation": i.recommendation}
+                            for i in security_issues
+                        ] if security_issues else []
+                        
+                        # Generate explanations
+                        eslint_available = self.typescript_scorer._check_eslint_available()
+                        tsc_available = self.typescript_scorer._check_tsc_available()
+                        explanations = self.typescript_scorer._generate_explanations(
+                            scores, security_issues_list, eslint_available, tsc_available
+                        )
+                    except Exception as e:
+                        logger.debug(f"Failed to generate TypeScript explanations: {e}")
+                        explanations = {"error": str(e)}
+                else:
+                    # Generic explanations for Python
+                    explanations = self._generate_python_explanations(scores)
+                
+                result["score_explanations"] = explanations
         
         # NEW: Library detection and Context7 integration (Priority 1 & 2)
         library_recommendations = {}
@@ -2614,7 +2720,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     )
                 )
 
-        # 3. Extract type checking errors (mypy)
+        # 3. Extract type checking errors (mypy for Python, tsc for TypeScript)
         try:
             type_result = await self.type_check_file(file_path)
             type_errors = type_result.get("errors", [])
@@ -2635,6 +2741,103 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     )
         except Exception as e:
             logger.debug(f"Failed to extract type errors: {e}")
+        
+        # Phase 7.1: Extract TypeScript-specific findings
+        file_ext = file_path.suffix.lower()
+        if file_ext in [".ts", ".tsx", ".js", ".jsx"] and self.typescript_scorer:
+            # 3a. Extract ESLint issues for TypeScript/JavaScript
+            try:
+                eslint_result = self.typescript_scorer.get_eslint_issues(file_path)
+                if eslint_result.get("available") and eslint_result.get("issues"):
+                    for file_result in eslint_result.get("issues", [])[:3]:  # Limit files
+                        messages = file_result.get("messages", [])
+                        for msg in messages[:5]:  # Limit messages per file
+                            finding_counter["linting"] += 1
+                            severity = Severity.HIGH if msg.get("severity") == 2 else Severity.MEDIUM
+                            rule_id = msg.get("ruleId", "unknown")
+                            message = msg.get("message", "ESLint issue")
+                            line = msg.get("line")
+                            column = msg.get("column")
+                            
+                            findings.append(
+                                ReviewFinding(
+                                    id=f"TASK-{task_number}-ESLINT-{finding_counter['linting']:03d}",
+                                    severity=severity,
+                                    category="standards",
+                                    file=file_str,
+                                    line=line,
+                                    finding=f"[{rule_id}] {message}" + (f" (column {column})" if column else ""),
+                                    impact="Code does not meet ESLint linting standards",
+                                    suggested_fix=f"Fix ESLint issue: {rule_id}",
+                                )
+                            )
+            except Exception as e:
+                logger.debug(f"Failed to extract ESLint issues: {e}")
+            
+            # 3b. Extract TypeScript type errors
+            if file_ext in [".ts", ".tsx"]:
+                try:
+                    tsc_result = self.typescript_scorer.get_type_errors(file_path)
+                    if tsc_result.get("available") and tsc_result.get("errors"):
+                        for error_line in tsc_result.get("errors", [])[:5]:  # Limit to 5
+                            finding_counter["type"] += 1
+                            # Parse error format: "file.ts(10,5): error TS2345: ..."
+                            import re
+                            match = re.search(r"\((\d+),(\d+)\):\s+error\s+(TS\d+):\s+(.+)", error_line)
+                            if match:
+                                line = int(match.group(1))
+                                column = int(match.group(2))
+                                error_code = match.group(3)
+                                message = match.group(4)
+                            else:
+                                line = None
+                                column = None
+                                error_code = "TS0000"
+                                message = error_line
+                            
+                            findings.append(
+                                ReviewFinding(
+                                    id=f"TASK-{task_number}-TSC-{finding_counter['type']:03d}",
+                                    severity=Severity.HIGH,
+                                    category="standards",
+                                    file=file_str,
+                                    line=line,
+                                    finding=f"[{error_code}] {message}",
+                                    impact="TypeScript type error may cause runtime issues",
+                                    suggested_fix=f"Fix TypeScript error: {error_code}",
+                                )
+                            )
+                except Exception as e:
+                    logger.debug(f"Failed to extract TypeScript errors: {e}")
+            
+            # 3c. Extract TypeScript security issues (Phase 7.1)
+            try:
+                code = file_path.read_text(encoding="utf-8")
+                security_result = self.typescript_scorer.get_security_issues(code, file_path)
+                if security_result.get("available") and security_result.get("issues"):
+                    for issue in security_result.get("issues", [])[:5]:  # Limit to 5
+                        finding_counter["security"] += 1
+                        severity_str = issue.get("severity", "MEDIUM")
+                        severity = Severity.HIGH if severity_str == "HIGH" else (
+                            Severity.LOW if severity_str == "LOW" else Severity.MEDIUM
+                        )
+                        
+                        findings.append(
+                            ReviewFinding(
+                                id=f"TASK-{task_number}-TSSEC-{finding_counter['security']:03d}",
+                                severity=severity,
+                                category="security",
+                                file=file_str,
+                                line=issue.get("line"),
+                                finding=f"[{issue.get('pattern')}] {issue.get('message')}" + (
+                                    f" ({issue.get('cwe_id')})" if issue.get('cwe_id') else ""
+                                ),
+                                impact=issue.get("message", "Security vulnerability"),
+                                suggested_fix=issue.get("recommendation", "Review security best practices"),
+                            )
+                        )
+            except Exception as e:
+                logger.debug(f"Failed to extract TypeScript security issues: {e}")
 
         # 4. Extract maintainability/complexity issues (if significant)
         if maintainability_score < 6.0:

@@ -876,6 +876,7 @@ async def score_command(
     output_file: str | None = None,
     fail_under: float | None = None,
     verbose_output: bool = False,
+    explain: bool = False,
 ):
     """
     Score code file(s) (supports both *score and score commands).
@@ -945,7 +946,7 @@ async def score_command(
                 result = cached_result
                 feedback.info("Using cached result (file unchanged)")
             else:
-                result = await reviewer.run("score", file=str(file_path_obj))
+                result = await reviewer.run("score", file=str(file_path_obj), explain=explain)
                 check_result_error(result)
                 # Cache the result
                 await cache.save_result(
@@ -1448,6 +1449,7 @@ def handle_reviewer_command(args: object) -> None:
         elif command == "score":
             fail_under = getattr(args, "fail_under", None)
             verbose_output = bool(getattr(args, "verbose_output", False))
+            explain = bool(getattr(args, "explain", False))
             run_async_command(
                 score_command(
                     file_path=single_file,
@@ -1458,6 +1460,7 @@ def handle_reviewer_command(args: object) -> None:
                     output_file=output_file,
                     fail_under=fail_under,
                     verbose_output=verbose_output,
+                    explain=explain,
                 )
             )
         elif command == "lint":

@@ -67,8 +67,16 @@ def handle_improver_command(args: object) -> None:
             )
         elif command == "improve-quality":
             focus = getattr(args, "focus", None)
+            auto_apply = getattr(args, "auto_apply", False)
+            preview = getattr(args, "preview", False)
             result = asyncio.run(
-                improver.run("improve-quality", file_path=args.file_path, focus=focus)
+                improver.run(
+                    "improve-quality", 
+                    file_path=args.file_path, 
+                    focus=focus,
+                    auto_apply=auto_apply,
+                    preview=preview,
+                )
             )
         else:
             # Invalid command - show help without activation
