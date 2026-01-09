@@ -195,6 +195,7 @@ AGENT COMMANDS:
   • designer     - API design, data models, UI/UX design, wireframes
   • documenter   - Generate documentation, update README, docstrings
   • enhancer     - Transform simple prompts into comprehensive specifications
+  • evaluator    - Framework effectiveness evaluation and usage analysis
   • implementer  - Code generation, refactoring, file writing
   • improver     - Code refactoring, performance optimization, quality improvement
   • ops          - Security scanning, compliance checks, deployment

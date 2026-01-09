@@ -11,6 +11,7 @@ AGENT_TYPES = [
     "designer",
     "documenter",
     "enhancer",
+    "evaluator",
     "implementer",
     "improver",
     "ops",
@@ -1210,7 +1211,7 @@ NOTE: This is a legacy command. For new code, use 'skill template' instead. This
     skill_template_legacy_parser.add_argument(
         "--type",
         choices=AGENT_TYPES,
-        help="Base agent type for template defaults. Determines default capabilities and tool access. Choose from: analyst, architect, debugger, designer, documenter, enhancer, implementer, improver, ops, orchestrator, planner, reviewer, tester",
+        help="Base agent type for template defaults. Determines default capabilities and tool access. Choose from: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester",
     )
     skill_template_legacy_parser.add_argument(
         "--description",
@@ -1250,7 +1251,7 @@ NOTE: This is a legacy command. For new code, use 'skill template' instead. This
     skill_template_parser.add_argument(
         "--type",
         choices=AGENT_TYPES,
-        help="Base agent type for template defaults. Determines default capabilities and tool access. Choose from: analyst, architect, debugger, designer, documenter, enhancer, implementer, improver, ops, orchestrator, planner, reviewer, tester",
+        help="Base agent type for template defaults. Determines default capabilities and tool access. Choose from: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester",
     )
     skill_template_parser.add_argument(
         "--description",
