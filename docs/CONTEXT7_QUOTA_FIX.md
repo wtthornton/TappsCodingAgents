@@ -1,40 +1,33 @@
 # Context7 API Fixes
 
-## Issue 1: Incorrect API Authentication Header (CRITICAL)
+## Issue 1: API Authentication Header (Updated January 2026)
 
 ### Problem
 
-The Context7 HTTP fallback client was using the wrong authentication header format:
+The Context7 API authentication method was tested and verified. Testing showed:
 
 ```python
-# WRONG - Context7 rejects this with 429 error (misleading)
-headers = {"Authorization": f"Bearer {api_key}"}
-
-# CORRECT - Context7 API expects X-API-Key header
-headers = {"X-API-Key": api_key}
+# Testing results:
+# Authorization: Bearer {key} -> Quota Tier: "free" (AUTHENTICATED)
+# X-API-Key: {key}            -> Quota Tier: "anonymous" (NOT authenticated)
 ```
 
-### Symptoms
+### Correct Authentication
 
-- Dashboard showed **0/500** requests used (no authenticated requests counted)
-- API returned **HTTP 429** with `x-clerk-auth-status: signed-out`
-- Error message said "quota exceeded" but it was actually an authentication failure
-- The `x-clerk-auth-message` header indicated: "Invalid JWT form"
+Context7 API uses **Bearer token authentication**:
+
+```python
+# CORRECT - Context7 API expects Authorization Bearer header
+headers = {"Authorization": f"Bearer {api_key}"}
+```
 
 ### Solution
 
-Changed authentication header in `tapps_agents/context7/backup_client.py`:
+Authentication header in `tapps_agents/context7/backup_client.py` uses:
 
 ```python
-# Before (WRONG)
 headers={
     "Authorization": f"Bearer {api_key}",
-    "Content-Type": "application/json",
-},
-
-# After (CORRECT)
-headers={
-    "X-API-Key": api_key,
     "Content-Type": "application/json",
 },
 ```
@@ -244,22 +237,35 @@ To test the fix:
 
 ### Authentication
 
-Context7 API requires the `X-API-Key` header (NOT Bearer token):
+Context7 API uses Bearer token authentication:
 
 ```bash
-curl -X GET "https://context7.com/api/v2/libs/search?libraryName=fastapi&query=routing" \
-  -H "X-API-Key: YOUR_API_KEY"
+curl -X GET "https://context7.com/api/v2/search?query=fastapi" \
+  -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
 ### Endpoints
 
 | Endpoint | Purpose | Parameters |
 |----------|---------|------------|
-| `/api/v2/libs/search` | Search for libraries | `libraryName`, `query` |
-| `/api/v2/context` | Get documentation | `libraryId`, `query`, `type` |
+| `/api/v2/search` | Search for libraries | `query` |
+| `/api/v2/docs/{mode}/{library_id}` | Get documentation | `type`, `topic`, `page` |
 
 ### Rate Limits
 
 - Free tier: 500 requests/month
-- Quota is shared across all API keys in an account
+- Each API key has its own quota counter
 - Check `ratelimit-remaining` header for current quota
+
+### Updating API Key
+
+If your API key has exhausted quota, you can create a new key at https://context7.com/dashboard
+and update it using:
+
+```bash
+# Option 1: Environment variable (temporary)
+$env:CONTEXT7_API_KEY="your-new-api-key"
+
+# Option 2: Store in encrypted storage (permanent)
+python scripts/update_context7_key.py --key "your-new-api-key"
+```

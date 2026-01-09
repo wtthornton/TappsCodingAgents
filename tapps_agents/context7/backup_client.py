@@ -345,7 +345,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 response = client.get(
                     f"{BASE_URL}/search",
                     headers={
-                        "X-API-Key": api_key,
+                        "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json",
                     },
                     params={"query": library_name},
@@ -560,7 +560,7 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 response = client.get(
                     endpoint,
                     headers={
-                        "X-API-Key": api_key,
+                        "Authorization": f"Bearer {api_key}",
                         "Content-Type": "application/json",
                     },
                     params=params,

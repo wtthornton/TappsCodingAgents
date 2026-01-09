@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-01-07T03:27:05.780559+00:00Z
-total_entries: 37
+last_updated: 2026-01-09T15:17:11.182167+00:00Z
+total_entries: 38
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -178,3 +178,8 @@ libraries:
     topics:
       overview:
         cached_at: 2026-01-07T03:27:05.780530+00:00Z
+  nextjs:
+    context7_id: /websites/nextjs
+    topics:
+      routing:
+        cached_at: 2026-01-09T15:17:11.182130+00:00Z
