@@ -101,6 +101,36 @@ TappsCodingAgents provides 5 preset workflows that can be executed with simple o
 - Overall score: ≥60
 - Security: ≥7.0
 
+## Workflow Execution Flags
+
+All workflow commands support these flags for better control:
+
+```bash
+# Pre-flight validation (check before running)
+tapps-agents workflow rapid --dry-run --prompt "Add feature"
+
+# Explicit mode control
+tapps-agents workflow rapid --cli-mode --prompt "Add feature"   # Force CLI/headless
+tapps-agents workflow rapid --cursor-mode --prompt "Add feature" # Force Cursor Skills
+
+# Resume/partial execution
+tapps-agents workflow rapid --continue-from implementation --prompt "Add feature"
+tapps-agents workflow rapid --skip-steps "enhance,plan" --prompt "Add feature"
+
+# Output control
+tapps-agents workflow rapid --print-paths --prompt "Add feature"  # Show artifact paths (default)
+tapps-agents workflow rapid --no-print-paths --prompt "Add feature"
+```
+
+**Flag Reference:**
+- `--dry-run`: Validate workflow without executing (pre-flight check)
+- `--cli-mode`: Force CLI/headless mode (direct LLM calls)
+- `--cursor-mode`: Force Cursor mode (uses Cursor Skills)
+- `--continue-from <step>`: Resume from a specific step
+- `--skip-steps <steps>`: Skip comma-separated list of steps
+- `--print-paths`: Print artifact file paths after each step (default: on)
+- `--no-print-paths`: Disable artifact path printing
+
 ## Usage in Cursor AI
 
 When working in Cursor AI, you can:

@@ -835,6 +835,37 @@ class CleanupConfig(BaseModel):
     )
 
 
+class WorkflowArtifactConfig(BaseModel):
+    """Configuration for workflow artifact paths and naming."""
+    
+    base_dir: str = Field(
+        default="docs/workflows",
+        description="Base directory for workflow artifacts (relative to project root)",
+    )
+    simple_mode_subdir: str = Field(
+        default="simple-mode",
+        description="Subdirectory for Simple Mode workflow artifacts",
+    )
+    auto_detect_existing: bool = Field(
+        default=True,
+        description="Auto-detect existing artifacts and adjust paths to avoid conflicts",
+    )
+    naming_pattern: str = Field(
+        default="{workflow_id}/{step_name}.md",
+        description="Pattern for artifact file naming. Supports: {workflow_id}, {step_name}, {timestamp}, {agent}",
+    )
+    print_paths_on_completion: bool = Field(
+        default=True,
+        description="Print artifact file paths after each step completes",
+    )
+    
+    def get_artifact_dir(self, project_root: str | None = None) -> str:
+        """Get the full artifact directory path."""
+        from pathlib import Path
+        base = Path(project_root) if project_root else Path.cwd()
+        return str(base / self.base_dir / self.simple_mode_subdir)
+
+
 class WorkflowConfig(BaseModel):
     """Configuration for workflow execution"""
 
@@ -855,6 +886,18 @@ class WorkflowConfig(BaseModel):
     branch_cleanup: BranchCleanupConfig = Field(
         default_factory=BranchCleanupConfig,
         description="Git branch cleanup configuration for workflow worktrees",
+    )
+    artifacts: WorkflowArtifactConfig = Field(
+        default_factory=WorkflowArtifactConfig,
+        description="Artifact paths and naming configuration",
+    )
+    graceful_partial_completion: bool = Field(
+        default=True,
+        description="Save partial results on failure instead of losing all progress",
+    )
+    pre_flight_validation: bool = Field(
+        default=True,
+        description="Run pre-flight validation before workflow execution",
     )
 
 

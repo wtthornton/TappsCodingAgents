@@ -570,6 +570,153 @@ def handle_workflow_recommend_command(args: object) -> None:
         sys.exit(1)
 
 
+def _handle_workflow_dry_run(workflow: Any, args: object, feedback: Any) -> None:
+    """
+    Handle workflow dry-run validation (Issue fix: No pre-flight checks).
+    
+    Validates workflow without executing, showing what would happen.
+    """
+    from ...core.config import load_config
+    from ...core.runtime_mode import detect_runtime_mode
+    from ...core.unicode_safe import safe_print
+    
+    print(f"\n{'='*60}")
+    print(f"DRY RUN: {workflow.name}")
+    print(f"{'='*60}")
+    print(f"Description: {workflow.description}")
+    print()
+    
+    # Check runtime mode
+    runtime_mode = detect_runtime_mode()
+    cli_mode = getattr(args, "cli_mode", False)
+    cursor_mode = getattr(args, "cursor_mode", False)
+    
+    print("📋 Configuration:")
+    print(f"   Runtime mode: {runtime_mode.value}")
+    if cli_mode:
+        print("   Mode override: --cli-mode (headless execution)")
+    elif cursor_mode:
+        print("   Mode override: --cursor-mode (Cursor Skills)")
+    
+    # Check target file
+    target_file = getattr(args, "file", None)
+    user_prompt = getattr(args, "prompt", None)
+    
+    print()
+    print("📁 Inputs:")
+    if target_file:
+        target_path = Path(target_file)
+        if target_path.exists():
+            safe_print(f"   [OK] Target file exists: {target_file}")
+        else:
+            safe_print(f"   [WARN] Target file not found: {target_file}")
+    else:
+        print("   Target file: Not specified")
+    
+    if user_prompt:
+        print(f"   Prompt: {user_prompt[:50]}..." if len(user_prompt) > 50 else f"   Prompt: {user_prompt}")
+    else:
+        print("   Prompt: Not specified")
+    
+    # Check artifact paths
+    config = load_config()
+    artifact_config = config.workflow.artifacts
+    artifact_dir = artifact_config.get_artifact_dir()
+    
+    print()
+    print("📂 Artifact Paths:")
+    print(f"   Base directory: {artifact_config.base_dir}")
+    print(f"   Simple Mode subdir: {artifact_config.simple_mode_subdir}")
+    print(f"   Full path: {artifact_dir}")
+    
+    artifact_path = Path(artifact_dir)
+    if artifact_path.exists():
+        existing_files = list(artifact_path.glob("*.md"))
+        if existing_files:
+            safe_print(f"   [WARN] Existing artifacts found: {len(existing_files)} files")
+            for f in existing_files[:3]:
+                print(f"      - {f.name}")
+            if len(existing_files) > 3:
+                print(f"      ... and {len(existing_files) - 3} more")
+        else:
+            safe_print("   [OK] No existing artifacts")
+    else:
+        safe_print("   [OK] Directory will be created")
+    
+    # List workflow steps
+    print()
+    print(f"📝 Workflow Steps ({len(workflow.steps)} total):")
+    
+    continue_from = getattr(args, "continue_from", None)
+    skip_steps_str = getattr(args, "skip_steps", None)
+    skip_steps = skip_steps_str.split(",") if skip_steps_str else []
+    
+    found_continue_from = False
+    for i, step in enumerate(workflow.steps, 1):
+        step_id = step.id
+        agent = step.agent or "unknown"
+        action = step.action or "execute"
+        
+        status = ""
+        if continue_from and not found_continue_from:
+            if step_id == continue_from:
+                found_continue_from = True
+                status = " [RESUME FROM HERE]"
+            else:
+                status = " [SKIP - before continue point]"
+        elif step_id in skip_steps:
+            status = " [SKIP - user requested]"
+        
+        print(f"   {i}. {step_id}: @{agent} *{action}{status}")
+    
+    if continue_from and not found_continue_from:
+        safe_print(f"\n   [FAIL] Step '{continue_from}' not found in workflow!")
+        print(f"   Available steps: {', '.join(s.id for s in workflow.steps)}")
+    
+    # Environment check
+    print()
+    print("🔧 Environment:")
+    try:
+        from ...core.doctor import collect_doctor_report
+        report = collect_doctor_report()
+        findings = report.get("findings", [])
+        errors = [f for f in findings if f.get("severity") == "error"]
+        warnings = [f for f in findings if f.get("severity") == "warn"]
+        
+        if errors:
+            safe_print(f"   [FAIL] {len(errors)} error(s) found")
+            for err in errors[:2]:
+                print(f"      - {err.get('message', 'Unknown error')}")
+        elif warnings:
+            safe_print(f"   [WARN] {len(warnings)} warning(s) found")
+        else:
+            safe_print("   [OK] Environment ready")
+    except Exception as e:
+        safe_print(f"   [WARN] Could not check environment: {e}")
+    
+    # Summary
+    print()
+    print("="*60)
+    print("DRY RUN COMPLETE")
+    print("="*60)
+    print()
+    print("To execute this workflow, remove --dry-run flag:")
+    
+    cmd_parts = ["tapps-agents", "workflow", getattr(args, "preset", "rapid")]
+    if user_prompt:
+        cmd_parts.extend(["--prompt", f'"{user_prompt}"'])
+    if target_file:
+        cmd_parts.extend(["--file", target_file])
+    if getattr(args, "auto", False):
+        cmd_parts.append("--auto")
+    if continue_from:
+        cmd_parts.extend(["--continue-from", continue_from])
+    if skip_steps:
+        cmd_parts.extend(["--skip-steps", ",".join(skip_steps)])
+    
+    print(f"  {' '.join(cmd_parts)}")
+
+
 def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
@@ -754,17 +901,50 @@ def handle_workflow_command(args: object) -> None:
                 )
                 return
 
-        # Cursor-first default for workflow execution.
-        # Workflows frequently require Cursor Skills to materialize artifacts for LLM-driven steps.
-        # Respect explicit user override via TAPPS_AGENTS_MODE.
-        if "TAPPS_AGENTS_MODE" not in os.environ:
+        # Handle explicit mode flags (Issue fix: CLI/Cursor mode confusion)
+        cli_mode = getattr(args, "cli_mode", False)
+        cursor_mode = getattr(args, "cursor_mode", False)
+        
+        if cli_mode and cursor_mode:
+            feedback.error(
+                "Cannot specify both --cli-mode and --cursor-mode",
+                error_code="validation_error",
+                remediation="Choose one: --cli-mode for headless execution, --cursor-mode for Cursor Skills",
+                exit_code=2,
+            )
+            return
+        
+        # Set mode based on explicit flags
+        if cli_mode:
+            os.environ["TAPPS_AGENTS_MODE"] = "headless"
+        elif cursor_mode:
             os.environ["TAPPS_AGENTS_MODE"] = "cursor"
+        elif "TAPPS_AGENTS_MODE" not in os.environ:
+            # Cursor-first default for workflow execution.
+            # Workflows frequently require Cursor Skills to materialize artifacts for LLM-driven steps.
+            os.environ["TAPPS_AGENTS_MODE"] = "cursor"
+        
+        # Handle dry-run validation (Issue fix: No pre-flight checks)
+        dry_run = getattr(args, "dry_run", False)
+        if dry_run:
+            _handle_workflow_dry_run(workflow, args, feedback)
+            return
+        
+        # Handle continue-from flag (Issue fix: All-or-nothing execution)
+        continue_from = getattr(args, "continue_from", None)
+        skip_steps_str = getattr(args, "skip_steps", None)
+        skip_steps = skip_steps_str.split(",") if skip_steps_str else []
+        print_paths = getattr(args, "print_paths", True)
 
         print(f"\n{'='*60}")
         print(f"Starting: {workflow.name}")
         print(f"{'='*60}")
         print(f"Description: {workflow.description}")
         print(f"Steps: {len(workflow.steps)}")
+        if continue_from:
+            print(f"Continuing from: {continue_from}")
+        if skip_steps:
+            print(f"Skipping steps: {', '.join(skip_steps)}")
         print()
 
         # Execute workflow (start + run steps until completion)
@@ -775,6 +955,11 @@ def handle_workflow_command(args: object) -> None:
         # Store prompt in executor state if provided
         if user_prompt:
             executor.user_prompt = user_prompt
+        
+        # Store new flags in executor for step handling
+        executor.continue_from = continue_from
+        executor.skip_steps = skip_steps
+        executor.print_paths = print_paths
         
         # Check runtime mode and warn user
         from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode

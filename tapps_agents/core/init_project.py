@@ -66,6 +66,7 @@ FRAMEWORK_SKILLS = {
     "designer",
     "documenter",
     "enhancer",
+    "evaluator",  # Added: Quality evaluation skill
     "implementer",
     "improver",
     "ops",
@@ -82,6 +83,9 @@ FRAMEWORK_WORKFLOW_PRESETS = {
     "maintenance.yaml",
     "quality.yaml",
     "quick-fix.yaml",
+    "simple-fix-issues.yaml",
+    "simple-improve-quality.yaml",
+    "simple-new-feature.yaml",
 }
 
 try:

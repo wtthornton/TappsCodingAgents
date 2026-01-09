@@ -74,29 +74,95 @@ class ErrorEnvelope:
         Returns:
             Human-readable error message with next steps
         """
-        parts = [self.message]
+        # Use ASCII-safe symbols for Windows compatibility
+        parts = [f"\n[ERROR] {self.message}"]
 
         if self.recoverable:
-            parts.append("This error may be recoverable.")
+            parts.append("\n[RECOVERABLE] This error may be recoverable.")
             if self.retry_after:
-                parts.append(f"You can retry after {self.retry_after} seconds.")
+                parts.append(f"   You can retry after {self.retry_after} seconds.")
+
+        # Add actionable next steps
+        next_steps = self._get_actionable_next_steps()
+        if next_steps:
+            parts.append("\n[NEXT STEPS]")
+            for i, step in enumerate(next_steps, 1):
+                parts.append(f"   {i}. {step}")
 
         # Add category-specific guidance
         guidance = self._get_category_guidance()
         if guidance:
-            parts.append(guidance)
+            parts.append(f"\n[HINT] {guidance}")
 
         # Add correlation info for debugging
         if self.workflow_id or self.step_id:
-            correlation_parts = []
+            parts.append("\n[REFERENCE]")
             if self.workflow_id:
-                correlation_parts.append(f"workflow_id={self.workflow_id}")
+                parts.append(f"   workflow_id: {self.workflow_id}")
             if self.step_id:
-                correlation_parts.append(f"step_id={self.step_id}")
-            if correlation_parts:
-                parts.append(f"Reference: {', '.join(correlation_parts)}")
+                parts.append(f"   step_id: {self.step_id}")
+            # Add state location hint
+            parts.append("   state_dir: .tapps-agents/workflow-state/")
 
-        return " ".join(parts)
+        return "\n".join(parts)
+
+    def _get_actionable_next_steps(self) -> list[str]:
+        """Get actionable next steps based on error code and category."""
+        steps: list[str] = []
+        
+        # File not found errors
+        if self.code == "file_not_found":
+            steps.append("Check if the file exists: ls -la <path>")
+            steps.append("Run with different target: tapps-agents workflow <preset> --file <correct_path>")
+            if self.step_id:
+                steps.append(f"Resume from this step: tapps-agents workflow resume --continue-from {self.step_id}")
+        
+        # Configuration errors
+        elif self.category == "configuration":
+            steps.append("Verify config: tapps-agents doctor --full")
+            steps.append("Reinitialize config: tapps-agents init --reset")
+            steps.append("Check config file: cat .tapps-agents/config.yaml")
+        
+        # External dependency errors (Context7, etc.)
+        elif self.category == "external_dependency":
+            steps.append("Check service status: tapps-agents health check")
+            steps.append("Verify API keys in environment variables")
+            steps.append("Run without external dependencies: tapps-agents workflow <preset> --cli-mode")
+        
+        # Workflow execution errors
+        elif self.code == "workflow_execution_error":
+            steps.append("View workflow state: tapps-agents workflow state list")
+            if self.workflow_id:
+                steps.append(f"Show details: tapps-agents workflow state show {self.workflow_id}")
+                steps.append(f"Resume workflow: tapps-agents workflow resume --workflow-id {self.workflow_id}")
+            steps.append("Try individual agent: tapps-agents <agent> <command> <args>")
+        
+        # Timeout errors
+        elif self.category == "timeout":
+            steps.append("Increase timeout: Set TAPPS_AGENTS_TIMEOUT=7200 (2 hours)")
+            steps.append("Check for stuck processes: tapps-agents status --detailed")
+            if self.step_id:
+                steps.append(f"Resume from failed step: tapps-agents workflow resume --continue-from {self.step_id}")
+        
+        # Permission errors
+        elif self.category == "permission":
+            steps.append("Check file permissions: ls -la <path>")
+            steps.append("Ensure write access to project directory")
+            steps.append("Try running with elevated permissions if needed")
+        
+        # Validation errors
+        elif self.category == "validation":
+            steps.append("Review input parameters")
+            steps.append("Check command syntax: tapps-agents <command> --help")
+            steps.append("Validate with dry-run: tapps-agents workflow <preset> --dry-run")
+        
+        # Generic fallback
+        if not steps:
+            steps.append("Check logs: .tapps-agents/logs/")
+            steps.append("Run diagnostics: tapps-agents doctor --full")
+            steps.append("View workflow state: tapps-agents workflow state list")
+        
+        return steps
 
     def _get_category_guidance(self) -> str | None:
         """Get category-specific guidance message."""

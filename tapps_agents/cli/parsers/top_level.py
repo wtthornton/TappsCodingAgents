@@ -89,6 +89,48 @@ Examples:
         action="store_true",
         help="Enable fully automated execution mode. Skips all interactive prompts and uses default decisions. Recommended for CI/CD pipelines and batch processing. Without this flag, workflow will prompt for confirmation at key decision points.",
     )
+    # Issue fix: Explicit CLI/Cursor mode flags to avoid confusion
+    common_workflow_args.add_argument(
+        "--cli-mode",
+        action="store_true",
+        help="Force CLI/headless mode for workflow execution. Uses direct LLM calls instead of Cursor Skills. Useful when running from terminal outside Cursor or in CI/CD pipelines.",
+    )
+    common_workflow_args.add_argument(
+        "--cursor-mode",
+        action="store_true",
+        help="Force Cursor mode for workflow execution. Uses Cursor Skills for LLM operations. This is the default when running inside Cursor IDE.",
+    )
+    # Issue fix: Dry-run validation before execution
+    common_workflow_args.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Validate workflow without executing. Shows what steps would run, checks for existing artifacts, validates environment, and reports potential issues. Use before running to catch problems early.",
+    )
+    # Issue fix: Continue from specific step
+    common_workflow_args.add_argument(
+        "--continue-from",
+        metavar="STEP",
+        help="Continue workflow from a specific step (e.g., 'implement', 'review'). Skips earlier steps. Useful when earlier steps completed but workflow failed later. Use 'tapps-agents workflow state list' to see available steps.",
+    )
+    # Issue fix: Skip specific steps
+    common_workflow_args.add_argument(
+        "--skip-steps",
+        metavar="STEPS",
+        help="Comma-separated list of steps to skip (e.g., 'enhance,plan'). Useful when those steps were already completed manually or are not needed.",
+    )
+    # Issue fix: Print artifact paths after each step
+    common_workflow_args.add_argument(
+        "--print-paths",
+        action="store_true",
+        default=True,
+        help="Print artifact file paths after each step completes (default: True). Shows where workflow outputs are saved.",
+    )
+    common_workflow_args.add_argument(
+        "--no-print-paths",
+        action="store_false",
+        dest="print_paths",
+        help="Disable printing artifact paths after each step.",
+    )
 
     # Short aliases
     full_parser = workflow_subparsers.add_parser(

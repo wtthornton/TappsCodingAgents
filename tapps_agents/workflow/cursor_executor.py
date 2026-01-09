@@ -86,6 +86,11 @@ class CursorWorkflowExecutor:
         self.logger: WorkflowLogger | None = None  # Initialized in start() with workflow_id
         self.progress_manager: ProgressUpdateManager | None = None  # Initialized in start() with workflow
         
+        # Issue fix: Support for continue-from and skip-steps flags
+        self.continue_from: str | None = None
+        self.skip_steps: list[str] = []
+        self.print_paths: bool = True  # Issue fix: Print artifact paths after each step
+        
         # Initialize event bus for event-driven communication (Phase 2)
         self.event_bus = FileBasedEventBus(project_root=self.project_root)
         
@@ -150,6 +155,41 @@ class CursorWorkflowExecutor:
     def _state_dir(self) -> Path:
         """Get state directory path."""
         return self.project_root / ".tapps-agents" / "workflow-state"
+
+    def _print_step_artifacts(
+        self,
+        step: Any,
+        artifacts: dict[str, Any],
+        step_execution: Any,
+    ) -> None:
+        """
+        Print artifact paths after step completion (Issue fix: Hidden workflow state).
+        
+        Provides clear visibility into where workflow outputs are saved.
+        """
+        from ..core.unicode_safe import safe_print
+        
+        duration = step_execution.duration_seconds if step_execution else 0
+        duration_str = f"{duration:.1f}s" if duration else "N/A"
+        
+        safe_print(f"\n[OK] Step '{step.id}' completed ({duration_str})")
+        
+        if artifacts:
+            print("   📄 Artifacts created:")
+            for art_name, art_data in artifacts.items():
+                if isinstance(art_data, dict):
+                    path = art_data.get("path", "")
+                    if path:
+                        print(f"      - {path}")
+                    else:
+                        print(f"      - {art_name} (in-memory)")
+                else:
+                    print(f"      - {art_name}")
+        
+        # Also print workflow state location for reference
+        if self.state:
+            state_dir = self._state_dir()
+            print(f"   📁 State: {state_dir / self.state.workflow_id}")
 
     def _profile_project(self) -> None:
         """
@@ -954,6 +994,10 @@ class CursorWorkflowExecutor:
         review_result = None
         if result.step.agent == "reviewer":
             review_result = self.state.variables.get("reviewer_result")
+        
+        # Issue fix: Print artifact paths after each step (Hidden workflow state)
+        if self.print_paths and result.artifacts:
+            self._print_step_artifacts(result.step, result.artifacts, result.step_execution)
         
         # Publish step completed event (Phase 2)
         await self.event_bus.publish(

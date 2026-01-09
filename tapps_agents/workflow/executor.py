@@ -69,6 +69,11 @@ class WorkflowExecutor:
         self.state_manager: AdvancedStateManager | None = None
         self.parallel_executor = ParallelStepExecutor(max_parallel=8, default_timeout_seconds=3600.0)
         self.logger: WorkflowLogger | None = None  # Initialized in start() with workflow_id
+        
+        # Issue fix: Support for continue-from and skip-steps flags
+        self.continue_from: str | None = None
+        self.skip_steps: list[str] = []
+        self.print_paths: bool = True  # Issue fix: Print artifact paths after each step
 
         # Initialize auto-progression manager (Epic 10)
         auto_progression_enabled = os.getenv("TAPPS_AGENTS_AUTO_PROGRESSION", "true").lower() == "true"
@@ -731,6 +736,10 @@ class WorkflowExecutor:
                         "status": artifact.status,
                     }
         
+        # Issue fix: Print artifact paths after each step (Hidden workflow state)
+        if self.print_paths and artifact_summaries:
+            self._print_step_artifacts(result.step, artifact_summaries, result.step_execution)
+        
         # Emit step_finish event
         event = self.event_log.emit_event(
             event_type="step_finish",
@@ -776,6 +785,38 @@ class WorkflowExecutor:
         
         # Generate task manifest (Epic 7)
         self._generate_manifest()
+
+    def _print_step_artifacts(
+        self,
+        step: Any,
+        artifact_summaries: dict[str, dict[str, Any]],
+        step_execution: Any,
+    ) -> None:
+        """
+        Print artifact paths after step completion (Issue fix: Hidden workflow state).
+        
+        Provides clear visibility into where workflow outputs are saved.
+        """
+        from ..core.unicode_safe import safe_print
+        
+        duration = step_execution.duration_seconds if step_execution else 0
+        duration_str = f"{duration:.1f}s" if duration else "N/A"
+        
+        safe_print(f"\n[OK] Step '{step.id}' completed ({duration_str})")
+        
+        if artifact_summaries:
+            print("   📄 Artifacts created:")
+            for art_name, art_summary in artifact_summaries.items():
+                path = art_summary.get("path", "")
+                if path:
+                    print(f"      - {path}")
+                else:
+                    print(f"      - {art_name} (in-memory)")
+        
+        # Also print workflow state location for reference
+        if self.state:
+            state_dir = self._state_dir()
+            print(f"   📁 State: {state_dir / self.state.workflow_id}")
 
     def _run_validators_for_step(self, result: Any) -> None:
         """Run validators for the completed step's phase."""
