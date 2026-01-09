@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.4.1] - 2026-01-09
+
+### Fixed
+- **Context7 API Authentication** - Corrected authentication header in HTTP fallback client
+  - Changed from `X-API-Key` header to `Authorization: Bearer` token
+  - Verified Bearer token correctly authenticates (Quota Tier: free/pro vs anonymous)
+  - API calls now properly authenticate and respect quota limits
+  - KB-first cache lookup continues to work correctly for cached libraries
+
+### Added
+- **Context7 API Key Management Utility** - New `scripts/update_context7_key.py` script
+  - Store, verify, and test Context7 API keys
+  - Loads keys from encrypted storage automatically
+  - Tests API connection with proper authentication
+
+### Documentation
+- Updated `docs/CONTEXT7_QUOTA_FIX.md` with correct authentication method
+- Documented verified authentication patterns and quota handling
+
 ## [3.4.0] - 2026-01-08
 
 ### Added
