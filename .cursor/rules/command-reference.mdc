@@ -110,7 +110,10 @@ When you run `tapps-agents init` on any project (new or existing), it:
    - Quality thresholds and automation settings
 
 5. **Workflow Presets** (`workflows/presets/`):
-   - 5 predefined workflow YAML files (full, rapid, fix, quality, hotfix)
+   - 11 workflow preset YAML files (8 framework-managed, 3 additional)
+   - Framework-managed: full-sdlc, rapid-dev, maintenance, quality, quick-fix, simple-fix-issues, simple-improve-quality, simple-new-feature
+   - Additional: brownfield-analysis, feature-implementation, simple-full
+   - All files are copied during init; only framework-managed files are reset during `--reset`
    - Can be customized per project
 
 6. **MCP Config** (`.cursor/mcp.json`):

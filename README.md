@@ -62,7 +62,7 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 
 See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
 
-- **Workflow Agents** (112): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
+- **Workflow Agents** (14): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
 - **Industry Experts** (N): Business domain knowledge with weighted decision-making and RAG integration
 - **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
@@ -74,7 +74,7 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
 - **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases complete)
   - **14 Cursor Skills** ✅ (All agents available as Cursor Skills: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester)
   - **Simple Mode Skill** ✅ (Natural language orchestration with 10 workflows: build, review, fix, test, explore, refactor, plan-analysis, pr, epic, full)
-  - **Claude Desktop Commands** ✅ (16 commands available in Claude Desktop - same functionality as Skills)
+  - **Claude Desktop Commands** ✅ (15 commands available in Claude Desktop - same functionality as Skills)
   - **Unified Experience** ✅ (Commands and Skills work together - choose your interface)
   - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills with template generation)
   - **Multi-Agent Orchestration** ✅ (Parallel execution with structured concurrency via TaskGroup, conflict resolution, result aggregation)
