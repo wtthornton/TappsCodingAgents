@@ -173,7 +173,9 @@ class FrameworkChangeDetector:
             agents_dir = self.agents_dir
 
         if not agents_dir.exists():
-            logger.warning(f"Agents directory not found: {agents_dir}")
+            # This is expected when the package is installed (not in development mode)
+            # Only log at debug level to avoid alarming users
+            logger.debug(f"Agents directory not found: {agents_dir} (expected when package is installed)")
             return []
 
         agents = []

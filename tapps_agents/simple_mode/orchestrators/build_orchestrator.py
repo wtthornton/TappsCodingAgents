@@ -1391,6 +1391,11 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         Returns:
             Error message string
         """
+        # Check if result is completely missing (empty dict with no keys)
+        # This happens when agent_id is not found in results
+        if not task_result or (isinstance(task_result, dict) and len(task_result) == 0):
+            return "Agent execution result not found (agent may not have been executed or result was not returned)"
+        
         # Try various formats agents use to report errors
         if "error" in task_result:
             error_val = task_result["error"]
