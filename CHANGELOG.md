@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.3] - 2026-01-09
+
+### Fixed
+- **Framework Change Detector** - Improved handling when agents directory not found
+  - Changed warning to debug level when package is installed (expected behavior)
+  - Added clarifying message that this is normal when using installed package
+  - Reduces noise in logs for users running from installed packages
+
+- **Error Handling** - Improved error message extraction for missing agent results
+  - Better detection of missing agent execution results
+  - More actionable error messages indicating when agent results are not returned
+  - Improved diagnostics for debugging workflow execution failures
+
 ## [3.5.2] - 2026-01-09
 
 ### Changed
