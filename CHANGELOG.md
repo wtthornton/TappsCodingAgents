@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.2] - 2026-01-09
+
+### Changed
+- **Artifact System Migration** - Migrated artifacts from dataclasses to Pydantic BaseModel
+  - Improved type safety and validation for workflow artifacts
+  - Better integration with Pydantic v2 patterns
+  - Enhanced serialization and deserialization capabilities
+
+### Added
+- **Progress Tracking Enhancement** - Phase 3 implementation with Progress.txt and story-level granularity
+  - Enhanced workflow progress tracking at story level
+  - Improved visibility into workflow execution progress
+
+### Fixed
+- **Code Quality** - Fixed duplicate import patterns across codebase
+  - Removed redundant imports to improve code clarity
+  - Enhanced code maintainability
+
+### Documentation
+- **Documentation Updates** - Updated command-reference.mdc and README.md
+  - Improved command reference documentation
+  - Enhanced README with latest information
+
 ## [3.5.1] - 2026-01-09
 
 ### Fixed
