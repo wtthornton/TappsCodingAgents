@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 from ..cli.feedback import get_feedback
+from ..core.unicode_safe import safe_print
 
 
 class SimpleModeErrorHandler:
@@ -78,44 +79,44 @@ class SimpleModeErrorHandler:
         suggestion = template.get("suggestion", "Please check the error and try again")
         recovery = template.get("recovery", "none")
 
-        # Display friendly error message
-        print("\n" + "=" * 70)
-        print("❌ Error")
-        print("=" * 70)
-        print(f"\n{message}")
+        # Display friendly error message (using safe_print for Windows Unicode compatibility)
+        safe_print("\n" + "=" * 70)
+        safe_print("❌ Error")
+        safe_print("=" * 70)
+        safe_print(f"\n{message}")
 
         if context:
-            print("\nDetails:")
+            safe_print("\nDetails:")
             for key, value in context.items():
-                print(f"  • {key}: {value}")
+                safe_print(f"  • {key}: {value}")
 
         if original_exception:
-            print(f"\nTechnical details: {str(original_exception)}")
+            safe_print(f"\nTechnical details: {str(original_exception)}")
 
-        print(f"\n💡 {suggestion}")
+        safe_print(f"\n💡 {suggestion}")
 
         # Attempt automatic recovery if possible
         if recovery != "none":
             self._attempt_recovery(recovery, error_code, context)
 
-        print("=" * 70)
-        print()
+        safe_print("=" * 70)
+        safe_print()
 
     def _attempt_recovery(
         self, recovery_strategy: str, error_code: str, context: dict[str, Any] | None
     ) -> None:
         """Attempt automatic recovery based on strategy."""
         if recovery_strategy == "auto_init":
-            print("\n🔄 Attempting automatic recovery...")
-            print("   Would you like to run the setup wizard? (This is a placeholder)")
+            safe_print("\n🔄 Attempting automatic recovery...")
+            safe_print("   Would you like to run the setup wizard? (This is a placeholder)")
             # In a real implementation, this could prompt the user or auto-run init
 
         elif recovery_strategy == "suggest_alternatives":
-            print("\n💡 Common command patterns:")
-            print("   • Build: 'build a user API', 'create a new feature'")
-            print("   • Review: 'review my code', 'check quality of auth.py'")
-            print("   • Fix: 'fix the error', 'debug the issue'")
-            print("   • Test: 'add tests', 'generate tests for service.py'")
+            safe_print("\n💡 Common command patterns:")
+            safe_print("   • Build: 'build a user API', 'create a new feature'")
+            safe_print("   • Review: 'review my code', 'check quality of auth.py'")
+            safe_print("   • Fix: 'fix the error', 'debug the issue'")
+            safe_print("   • Test: 'add tests', 'generate tests for service.py'")
 
         elif recovery_strategy == "check_path":
             if context and "file_path" in context:
@@ -124,31 +125,31 @@ class SimpleModeErrorHandler:
                     # Try relative to project root
                     abs_path = self.project_root / file_path
                     if abs_path.exists():
-                        print(f"\n💡 Found file at: {abs_path}")
+                        safe_print(f"\n💡 Found file at: {abs_path}")
                     else:
-                        print(f"\n💡 Searched for: {abs_path} (not found)")
+                        safe_print(f"\n💡 Searched for: {abs_path} (not found)")
 
         elif recovery_strategy == "retry_with_details":
-            print("\n💡 Try running with more details:")
-            print("   • Check the workflow logs in .tapps-agents/workflow-state/")
-            print("   • Run 'tapps-agents simple-mode status' to verify configuration")
+            safe_print("\n💡 Try running with more details:")
+            safe_print("   • Check the workflow logs in .tapps-agents/workflow-state/")
+            safe_print("   • Run 'tapps-agents simple-mode status' to verify configuration")
 
         elif recovery_strategy == "check_config":
-            print("\n💡 Configuration check:")
-            print("   • Run 'tapps-agents simple-mode status'")
-            print("   • Verify agents are properly installed")
+            safe_print("\n💡 Configuration check:")
+            safe_print("   • Run 'tapps-agents simple-mode status'")
+            safe_print("   • Verify agents are properly installed")
 
         elif recovery_strategy == "check_permissions":
             if context and "file_path" in context:
                 file_path = Path(context["file_path"])
                 if file_path.exists():
-                    print(f"\n💡 File exists but may not be readable/writable")
-                    print(f"   Path: {file_path}")
-                    print(f"   Try: chmod +rw {file_path}")
+                    safe_print(f"\n💡 File exists but may not be readable/writable")
+                    safe_print(f"   Path: {file_path}")
+                    safe_print(f"   Try: chmod +rw {file_path}")
 
         elif recovery_strategy == "run_config_wizard":
-            print("\n💡 Run the configuration wizard:")
-            print("   tapps-agents simple-mode configure")
+            safe_print("\n💡 Run the configuration wizard:")
+            safe_print("   tapps-agents simple-mode configure")
 
     def format_friendly_error(
         self, error: Exception, context: dict[str, Any] | None = None

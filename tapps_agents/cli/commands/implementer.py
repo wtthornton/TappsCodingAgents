@@ -4,9 +4,12 @@ Implementer agent command handlers
 import asyncio
 
 from ...agents.implementer.agent import ImplementerAgent
-from ..base import normalize_command
+from ...core.network_errors import NetworkRequiredError
+from ..base import handle_network_error, normalize_command
+from ..command_classifier import CommandClassifier, CommandNetworkRequirement
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
+from ..network_detection import NetworkDetector
 from .common import check_result_error, format_json_output
 
 
@@ -18,10 +21,6 @@ async def implement_command(
     output_format: str = "json",
 ):
     """Generate and write code to file (with review)"""
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
-    from ...core.network_errors import NetworkRequiredError
-    from ..base import handle_network_error
     from ..feedback import suggest_simple_mode
     
     # Suggest using @simple-mode for better outcomes
@@ -116,10 +115,6 @@ async def generate_code_command(
     output_format: str = "json",
 ):
     """Generate code from specification (no file write)"""
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
-    from ...core.network_errors import NetworkRequiredError
-    from ..base import handle_network_error
     
     feedback = get_feedback()
     feedback.format_type = output_format
@@ -195,11 +190,7 @@ async def refactor_command(
 ):
     """Refactor existing code file"""
     from ..utils.output_handler import write_output
-    from ..feedback import get_feedback, suggest_simple_mode
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
-    from ...core.network_errors import NetworkRequiredError
-    from ..base import handle_network_error
+    from ..feedback import suggest_simple_mode
     
     # Suggest using @simple-mode for better outcomes
     suggest_simple_mode("refactor", description=instruction[:50], file_path=file_path)

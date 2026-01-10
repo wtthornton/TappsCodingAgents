@@ -4,18 +4,20 @@ Planner agent command handlers
 import asyncio
 
 from ...agents.planner.agent import PlannerAgent
-from ..base import normalize_command
+from ...core.network_errors import NetworkRequiredError
+from ..base import handle_network_error, normalize_command
+from ..command_classifier import CommandClassifier, CommandNetworkRequirement
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
+from ..network_detection import NetworkDetector
 from .common import check_result_error, format_json_output
 
 
 async def plan_command(description: str, output_format: str = "json"):
     """Create a plan for a feature/requirement"""
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
-    from ...core.network_errors import NetworkRequiredError
-    from ..base import handle_network_error
+    import logging
+    
+    logger = logging.getLogger(__name__)
     
     feedback = get_feedback()
     feedback.format_type = output_format
@@ -110,10 +112,6 @@ async def create_story_command(
     feedback.running("Analyzing story requirements...", step=1, total_steps=3)
     
     # Check network requirement - create-story requires network
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
-    from ...core.network_errors import NetworkRequiredError
-    from ..base import handle_network_error
     
     requirement = CommandClassifier.get_network_requirement("planner", "create-story")
     if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
