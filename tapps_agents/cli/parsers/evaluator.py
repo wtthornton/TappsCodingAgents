@@ -86,6 +86,128 @@ Example:
         help="Output file path. If specified, report will be written to this file. Default: .tapps-agents/evaluations/evaluation-{workflow_id}-{timestamp}.md"
     )
 
+    submit_feedback_parser = evaluator_subparsers.add_parser(
+        "submit-feedback",
+        aliases=["*submit-feedback"],
+        help="Submit external feedback about framework performance",
+        description="""Submit feedback about TappsCodingAgents performance from external projects.
+        
+Allows external projects to provide structured feedback including:
+  • Performance ratings (1.0-10.0 scale)
+  • Improvement suggestions
+  • Optional context (workflow_id, agent_id, task_type)
+  • Optional metrics (execution_time_seconds, quality_score, etc.)
+
+Example:
+  tapps-agents evaluator submit-feedback \\
+    --rating overall=8.5 --rating usability=7.0 \\
+    --suggestion "Improve error messages" \\
+    --workflow-id workflow-123 --agent-id reviewer
+  
+  # From JSON file
+  tapps-agents evaluator submit-feedback --file feedback.json""",
+    )
+    submit_feedback_parser.add_argument(
+        "--rating",
+        action="append",
+        dest="ratings",
+        metavar="METRIC=VALUE",
+        help="Performance rating (can specify multiple: --rating overall=8.5 --rating usability=7.0)"
+    )
+    submit_feedback_parser.add_argument(
+        "--suggestion",
+        action="append",
+        dest="suggestions",
+        metavar="TEXT",
+        help="Improvement suggestion (can specify multiple)"
+    )
+    submit_feedback_parser.add_argument(
+        "--workflow-id",
+        help="Optional workflow identifier"
+    )
+    submit_feedback_parser.add_argument(
+        "--agent-id",
+        help="Optional agent identifier"
+    )
+    submit_feedback_parser.add_argument(
+        "--task-type",
+        help="Optional task type (e.g., 'code-review', 'test-generation')"
+    )
+    submit_feedback_parser.add_argument(
+        "--metric",
+        action="append",
+        dest="metrics",
+        metavar="KEY=VALUE",
+        help="Optional performance metric (can specify multiple: --metric execution_time_seconds=45.2)"
+    )
+    submit_feedback_parser.add_argument(
+        "--project-id",
+        help="Optional project identifier"
+    )
+    submit_feedback_parser.add_argument(
+        "--file",
+        help="JSON file with feedback data (alternative to command-line arguments)"
+    )
+
+    get_feedback_parser = evaluator_subparsers.add_parser(
+        "get-feedback",
+        aliases=["*get-feedback"],
+        help="Retrieve feedback by ID",
+        description="""Retrieve a specific feedback entry by UUID.
+
+Example:
+  tapps-agents evaluator get-feedback 550e8400-e29b-41d4-a716-446655440000""",
+    )
+    get_feedback_parser.add_argument(
+        "feedback_id",
+        help="Feedback UUID"
+    )
+    get_feedback_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)"
+    )
+
+    list_feedback_parser = evaluator_subparsers.add_parser(
+        "list-feedback",
+        aliases=["*list-feedback"],
+        help="List feedback entries with optional filtering",
+        description="""List feedback entries with optional filtering.
+
+Example:
+  tapps-agents evaluator list-feedback
+  tapps-agents evaluator list-feedback --workflow-id workflow-123
+  tapps-agents evaluator list-feedback --start-date 2026-01-01 --end-date 2026-01-31""",
+    )
+    list_feedback_parser.add_argument(
+        "--workflow-id",
+        help="Filter by workflow ID"
+    )
+    list_feedback_parser.add_argument(
+        "--agent-id",
+        help="Filter by agent ID"
+    )
+    list_feedback_parser.add_argument(
+        "--start-date",
+        help="Filter by start date (YYYY-MM-DD)"
+    )
+    list_feedback_parser.add_argument(
+        "--end-date",
+        help="Filter by end date (YYYY-MM-DD)"
+    )
+    list_feedback_parser.add_argument(
+        "--limit",
+        type=int,
+        help="Maximum number of entries to return"
+    )
+    list_feedback_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)"
+    )
+
     evaluator_subparsers.add_parser(
         "help", aliases=["*help"], help="Show evaluator commands"
     )

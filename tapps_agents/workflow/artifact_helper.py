@@ -58,7 +58,11 @@ def write_artifact(
     artifact_path = output_dir / filename
 
     # Write JSON artifact
-    artifact_dict = artifact.to_dict()
+    # Use model_dump for Pydantic models, fall back to to_dict for backward compatibility
+    if hasattr(artifact, "model_dump"):
+        artifact_dict = artifact.model_dump(mode="json", exclude_none=False)
+    else:
+        artifact_dict = artifact.to_dict()
     with open(artifact_path, "w", encoding="utf-8") as f:
         json.dump(artifact_dict, f, indent=2)
 
@@ -85,7 +89,11 @@ def _generate_markdown_summary(
     lines = [f"# {artifact.__class__.__name__}", ""]
 
     # Common fields
-    lines.append(f"**Status**: {artifact.status}")
+    # Handle status enum (Pydantic models) or string (legacy)
+    status_value = artifact.status
+    if hasattr(status_value, "value"):
+        status_value = status_value.value
+    lines.append(f"**Status**: {status_value}")
     lines.append(f"**Timestamp**: {artifact.timestamp}")
     if artifact.correlation_id:
         lines.append(f"**Correlation ID**: {artifact.correlation_id}")

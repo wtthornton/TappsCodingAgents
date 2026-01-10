@@ -6,13 +6,16 @@ Defines versioned JSON schema for context management results from Background Age
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class LibraryCacheEntry:
+from .common_enums import ArtifactStatus
+from .metadata_models import ArtifactMetadata
+
+
+class LibraryCacheEntry(BaseModel):
     """Library cache entry information."""
 
     library_name: str
@@ -23,9 +26,10 @@ class LibraryCacheEntry:
     last_accessed: str | None = None
     error_message: str | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class ContextQuery:
+
+class ContextQuery(BaseModel):
     """Context query result."""
 
     query: str
@@ -35,30 +39,33 @@ class ContextQuery:
     execution_time_seconds: float | None = None
     error_message: str | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class ProjectProfile:
+
+class ProjectProfile(BaseModel):
     """Project profiling information."""
 
     deployment_type: str | None = None  # "cloud_native", "on_premise", "hybrid"
     tenancy: str | None = None  # "single_tenant", "multi_tenant"
     user_scale: str | None = None  # "small", "medium", "large", "enterprise"
-    compliance: list[str] = field(default_factory=list)  # e.g., ["HIPAA", "SOC2"]
+    compliance: list[str] = Field(default_factory=list)  # e.g., ["HIPAA", "SOC2"]
     security_posture: str | None = None  # "low", "medium", "high"
-    relevant_experts: list[str] = field(default_factory=list)
+    relevant_experts: list[str] = Field(default_factory=list)
+
+    model_config = {"extra": "forbid"}
 
 
-@dataclass
-class ContextArtifact:
+class ContextArtifact(BaseModel):
     """
     Versioned context & knowledge artifact.
 
     Schema version: 1.0
+    Migrated to Pydantic BaseModel for runtime validation and type safety.
     """
 
     schema_version: str = "1.0"
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    status: str = "pending"  # "pending", "running", "completed", "failed", "cancelled", "timeout"
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    status: ArtifactStatus = ArtifactStatus.PENDING
     worktree_path: str | None = None
     correlation_id: str | None = None
 
@@ -66,14 +73,14 @@ class ContextArtifact:
     operation_type: str | None = None  # "cache_population", "query", "profiling", "cache_optimization"
 
     # Cache management
-    libraries_cached: list[LibraryCacheEntry] = field(default_factory=list)
+    libraries_cached: list[LibraryCacheEntry] = Field(default_factory=list)
     cache_population_success: int = 0
     cache_population_failed: int = 0
     total_cache_size_bytes: int = 0
     cache_hit_rate: float = 0.0
 
     # Query results
-    queries_executed: list[ContextQuery] = field(default_factory=list)
+    queries_executed: list[ContextQuery] = Field(default_factory=list)
     total_queries: int = 0
     cache_hits: int = 0
     cache_misses: int = 0
@@ -93,33 +100,9 @@ class ContextArtifact:
 
     # Metadata
     execution_time_seconds: float | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: ArtifactMetadata = Field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        data = asdict(self)
-        # Convert nested objects to dicts
-        data["libraries_cached"] = [asdict(lc) for lc in self.libraries_cached]
-        data["queries_executed"] = [asdict(cq) for cq in self.queries_executed]
-        if self.project_profile:
-            data["project_profile"] = asdict(self.project_profile)
-        return data
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> ContextArtifact:
-        """Create from dictionary."""
-        # Convert nested dicts back to objects
-        if "libraries_cached" in data:
-            data["libraries_cached"] = [
-                LibraryCacheEntry(**lc) for lc in data["libraries_cached"]
-            ]
-        if "queries_executed" in data:
-            data["queries_executed"] = [
-                ContextQuery(**cq) for cq in data["queries_executed"]
-            ]
-        if "project_profile" in data and data["project_profile"]:
-            data["project_profile"] = ProjectProfile(**data["project_profile"])
-        return cls(**data)
+    model_config = {"extra": "forbid"}
 
     def add_library_cache_entry(self, entry: LibraryCacheEntry) -> None:
         """Add a library cache entry."""
@@ -148,20 +131,100 @@ class ContextArtifact:
         self.project_profile = profile
 
     def mark_completed(self) -> None:
-        """Mark operation as completed."""
-        self.status = "completed"
+        """Mark context operation as completed."""
+        self.status = ArtifactStatus.COMPLETED
 
     def mark_failed(self, error: str) -> None:
-        """Mark operation as failed."""
-        self.status = "failed"
+        """Mark context operation as failed."""
+        self.status = ArtifactStatus.FAILED
         self.error = error
 
     def mark_cancelled(self) -> None:
-        """Mark operation as cancelled."""
-        self.status = "cancelled"
+        """Mark context operation as cancelled."""
+        self.status = ArtifactStatus.CANCELLED
         self.cancelled = True
 
     def mark_timeout(self) -> None:
-        """Mark operation as timed out."""
-        self.status = "timeout"
+        """Mark context operation as timed out."""
+        self.status = ArtifactStatus.TIMEOUT
         self.timeout = True
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> ContextArtifact:
+        """
+        Create from dictionary (backward compatibility with old dataclass format).
+
+        This method supports both old dataclass format and new Pydantic format.
+        """
+        # Try Pydantic validation first (new format)
+        try:
+            return cls.model_validate(data)
+        except Exception:
+            # Fall back to manual conversion (old dataclass format)
+            return cls._from_dict_legacy(data)
+
+    @classmethod
+    def _from_dict_legacy(cls, data: dict[str, Any]) -> ContextArtifact:
+        """Convert from legacy dataclass format."""
+        # Convert libraries_cached from list of dicts to list of LibraryCacheEntry objects
+        libraries_cached = []
+        if "libraries_cached" in data:
+            for lce_data in data["libraries_cached"]:
+                if isinstance(lce_data, dict):
+                    libraries_cached.append(LibraryCacheEntry(**lce_data))
+                else:
+                    libraries_cached.append(lce_data)
+
+        # Convert queries_executed from list of dicts to list of ContextQuery objects
+        queries_executed = []
+        if "queries_executed" in data:
+            for cq_data in data["queries_executed"]:
+                if isinstance(cq_data, dict):
+                    queries_executed.append(ContextQuery(**cq_data))
+                else:
+                    queries_executed.append(cq_data)
+
+        # Convert project_profile from dict to ProjectProfile object
+        project_profile = None
+        if "project_profile" in data and data["project_profile"]:
+            profile_data = data["project_profile"]
+            if isinstance(profile_data, dict):
+                project_profile = ProjectProfile(**profile_data)
+            elif isinstance(profile_data, ProjectProfile):
+                project_profile = profile_data
+
+        # Convert status string to enum
+        status = ArtifactStatus.PENDING
+        if "status" in data and data["status"]:
+            try:
+                status = ArtifactStatus(data["status"].lower())
+            except ValueError:
+                pass
+
+        # Build new artifact
+        artifact_data = data.copy()
+        artifact_data["libraries_cached"] = libraries_cached
+        artifact_data["queries_executed"] = queries_executed
+        artifact_data["project_profile"] = project_profile
+        artifact_data["status"] = status
+
+        # Remove methods that might cause issues
+        artifact_data.pop("to_dict", None)
+        artifact_data.pop("from_dict", None)
+        artifact_data.pop("add_library_cache_entry", None)
+        artifact_data.pop("add_query", None)
+        artifact_data.pop("set_project_profile", None)
+        artifact_data.pop("mark_completed", None)
+        artifact_data.pop("mark_failed", None)
+        artifact_data.pop("mark_cancelled", None)
+        artifact_data.pop("mark_timeout", None)
+
+        return cls(**artifact_data)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert to dictionary (backward compatibility method).
+
+        For new code, use model_dump(mode="json") instead.
+        """
+        return self.model_dump(mode="json", exclude_none=False)

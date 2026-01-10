@@ -88,10 +88,10 @@ class WorkflowEvent:
     def from_dict(cls, data: dict[str, Any]) -> WorkflowEvent:
         """Create from dictionary."""
         return cls(
-            id=data["id"],
-            workflow_id=data["workflow_id"],
-            event_type=WorkflowEventType(data["event_type"]),
-            timestamp=data["timestamp"],
+            id=data.get("id", ""),
+            workflow_id=data.get("workflow_id", ""),
+            event_type=WorkflowEventType(data.get("event_type", "workflow_started")),
+            timestamp=data.get("timestamp", ""),
             data=data.get("data", {}),
             sequence_number=data.get("sequence_number", 0),
         )
@@ -133,11 +133,11 @@ class WorkflowCheckpoint:
     def from_dict(cls, data: dict[str, Any]) -> WorkflowCheckpoint:
         """Create from dictionary."""
         return cls(
-            workflow_id=data["workflow_id"],
-            step_index=data["step_index"],
-            step_name=data["step_name"],
-            status=WorkflowStatus(data["status"]),
-            created_at=data["created_at"],
+            workflow_id=data.get("workflow_id", ""),
+            step_index=data.get("step_index", 0),
+            step_name=data.get("step_name", ""),
+            status=WorkflowStatus(data.get("status", "pending")),
+            created_at=data.get("created_at", ""),
             outputs=data.get("outputs", {}),
             quality_scores=data.get("quality_scores", {}),
             artifacts=data.get("artifacts", []),
@@ -189,7 +189,12 @@ class EventStore:
         with open(events_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(event.to_dict()) + "\n")
             f.flush()
-            os.fsync(f.fileno())  # Ensure durability
+            try:
+                os.fsync(f.fileno())  # Ensure durability
+            except OSError:
+                # fsync can fail on some systems (e.g., network drives on Windows)
+                # Continue anyway as flush() provides some durability guarantees
+                pass
     
     def get_events(self, workflow_id: str) -> list[WorkflowEvent]:
         """
@@ -367,11 +372,23 @@ class DurableWorkflowState:
         """Create and store a new event."""
         self._sequence_number += 1
         
+        # Format timestamp with Z suffix for UTC (ISO 8601)
+        # Use isoformat and replace +00:00 with Z for reliable UTC formatting
+        now = datetime.now(UTC)
+        timestamp_str = now.isoformat()
+        # Replace +00:00 or +00:00:00 with Z (handle various ISO format variations)
+        if timestamp_str.endswith("+00:00"):
+            timestamp = timestamp_str[:-6] + "Z"
+        elif timestamp_str.endswith("+00:00:00"):
+            timestamp = timestamp_str[:-9] + "Z"
+        else:
+            timestamp = timestamp_str  # Fallback to original if format is unexpected
+        
         event = WorkflowEvent(
             id=str(uuid.uuid4()),
             workflow_id=self.workflow_id,
             event_type=event_type,
-            timestamp=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            timestamp=timestamp,
             data=data or {},
             sequence_number=self._sequence_number,
         )
@@ -390,12 +407,24 @@ class DurableWorkflowState:
     
     def _create_checkpoint(self) -> WorkflowCheckpoint:
         """Create and save a checkpoint."""
+        # Format timestamp with Z suffix for UTC (ISO 8601)
+        # Use isoformat and replace +00:00 with Z for reliable UTC formatting
+        now = datetime.now(UTC)
+        timestamp_str = now.isoformat()
+        # Replace +00:00 or +00:00:00 with Z (handle various ISO format variations)
+        if timestamp_str.endswith("+00:00"):
+            created_at = timestamp_str[:-6] + "Z"
+        elif timestamp_str.endswith("+00:00:00"):
+            created_at = timestamp_str[:-9] + "Z"
+        else:
+            created_at = timestamp_str  # Fallback to original if format is unexpected
+        
         checkpoint = WorkflowCheckpoint(
             workflow_id=self.workflow_id,
             step_index=self._current_step,
             step_name=self._current_step_name,
             status=self._status,
-            created_at=datetime.now(UTC).isoformat().replace("+00:00", "Z"),
+            created_at=created_at,
             outputs=self._outputs.copy(),
             quality_scores=self._quality_scores.copy(),
             artifacts=self._artifacts.copy(),

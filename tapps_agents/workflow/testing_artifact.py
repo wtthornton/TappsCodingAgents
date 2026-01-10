@@ -6,13 +6,16 @@ Defines versioned JSON schema for testing results from Background Agents.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class TestResult:
+from .common_enums import ArtifactStatus
+from .metadata_models import ArtifactMetadata
+
+
+class TestResult(BaseModel):
     """Result from test execution."""
 
     test_name: str
@@ -22,30 +25,33 @@ class TestResult:
     stdout: str | None = None
     stderr: str | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class CoverageSummary:
+
+class CoverageSummary(BaseModel):
     """Test coverage summary."""
 
     total_lines: int = 0
     covered_lines: int = 0
     coverage_percentage: float = 0.0
-    missing_lines: list[int] = field(default_factory=list)
+    missing_lines: list[int] = Field(default_factory=list)
     branch_coverage: float | None = None
     statement_coverage: float | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class TestingArtifact:
+
+class TestingArtifact(BaseModel):
     """
     Versioned testing analysis artifact.
 
     Schema version: 1.0
+    Migrated to Pydantic BaseModel for runtime validation and type safety.
     """
 
     schema_version: str = "1.0"
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    status: str = "pending"  # "pending", "running", "completed", "failed", "cancelled", "timeout", "not_run"
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    status: ArtifactStatus = ArtifactStatus.PENDING
     worktree_path: str | None = None
     correlation_id: str | None = None
 
@@ -60,7 +66,7 @@ class TestingArtifact:
     success_rate: float = 0.0
 
     # Individual test results (optional, for detailed reporting)
-    test_results: list[TestResult] = field(default_factory=list)
+    test_results: list[TestResult] = Field(default_factory=list)
 
     # Coverage information
     coverage_enabled: bool = False
@@ -79,37 +85,13 @@ class TestingArtifact:
     not_run_reason: str | None = None  # Explanation if tests were not run
 
     # Metadata
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: ArtifactMetadata = Field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        data = asdict(self)
-        # Convert TestResult and CoverageSummary objects to dicts
-        data["test_results"] = [asdict(tr) for tr in self.test_results]
-        if self.coverage:
-            data["coverage"] = asdict(self.coverage)
-        return data
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> TestingArtifact:
-        """Create from dictionary."""
-        # Convert test result dicts back to TestResult objects
-        test_results = []
-        if "test_results" in data:
-            test_results = [TestResult(**tr) for tr in data["test_results"]]
-        data["test_results"] = test_results
-
-        # Convert coverage dict back to CoverageSummary
-        if "coverage" in data and data["coverage"]:
-            data["coverage"] = CoverageSummary(**data["coverage"])
-        else:
-            data["coverage"] = None
-
-        return cls(**data)
+    model_config = {"extra": "forbid"}
 
     def mark_completed(self) -> None:
         """Mark test execution as completed."""
-        self.status = "completed"
+        self.status = ArtifactStatus.COMPLETED
         self.tests_run = True
         # Calculate success rate
         if self.total_tests > 0:
@@ -117,22 +99,88 @@ class TestingArtifact:
 
     def mark_failed(self, error: str) -> None:
         """Mark test execution as failed."""
-        self.status = "failed"
+        self.status = ArtifactStatus.FAILED
         self.error = error
         self.tests_run = True
 
     def mark_cancelled(self) -> None:
         """Mark test execution as cancelled."""
-        self.status = "cancelled"
+        self.status = ArtifactStatus.CANCELLED
         self.cancelled = True
 
     def mark_timeout(self) -> None:
         """Mark test execution as timed out."""
-        self.status = "timeout"
+        self.status = ArtifactStatus.TIMEOUT
         self.timeout = True
 
     def mark_not_run(self, reason: str) -> None:
         """Mark tests as not run with explanation."""
-        self.status = "not_run"
+        self.status = ArtifactStatus.NOT_RUN
         self.not_run_reason = reason
         self.tests_run = False
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> TestingArtifact:
+        """
+        Create from dictionary (backward compatibility with old dataclass format).
+
+        This method supports both old dataclass format and new Pydantic format.
+        """
+        # Try Pydantic validation first (new format)
+        try:
+            return cls.model_validate(data)
+        except Exception:
+            # Fall back to manual conversion (old dataclass format)
+            return cls._from_dict_legacy(data)
+
+    @classmethod
+    def _from_dict_legacy(cls, data: dict[str, Any]) -> TestingArtifact:
+        """Convert from legacy dataclass format."""
+        # Convert test_results from dict to TestResult objects
+        test_results = []
+        if "test_results" in data:
+            for tr_data in data["test_results"]:
+                if isinstance(tr_data, dict):
+                    test_results.append(TestResult(**tr_data))
+                else:
+                    test_results.append(tr_data)
+
+        # Convert coverage from dict to CoverageSummary object
+        coverage = None
+        if "coverage" in data and data["coverage"]:
+            coverage_data = data["coverage"]
+            if isinstance(coverage_data, dict):
+                coverage = CoverageSummary(**coverage_data)
+            elif isinstance(coverage_data, CoverageSummary):
+                coverage = coverage_data
+
+        # Convert status string to enum
+        status = ArtifactStatus.PENDING
+        if "status" in data and data["status"]:
+            try:
+                status = ArtifactStatus(data["status"].lower())
+            except ValueError:
+                pass
+
+        # Build new artifact
+        artifact_data = data.copy()
+        artifact_data["test_results"] = test_results
+        artifact_data["coverage"] = coverage
+        artifact_data["status"] = status
+
+        # Remove methods that might cause issues
+        artifact_data.pop("to_dict", None)
+        artifact_data.pop("from_dict", None)
+        artifact_data.pop("mark_completed", None)
+        artifact_data.pop("mark_failed", None)
+        artifact_data.pop("mark_cancelled", None)
+
+        return cls(**artifact_data)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert to dictionary (backward compatibility method).
+
+        For new code, use model_dump(mode="json") instead.
+        """
+        return self.model_dump(mode="json", exclude_none=False)

@@ -32,6 +32,31 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+def _safe_exception_str(e: Exception) -> str:
+    """
+    Safely convert exception to string, handling Unicode encoding errors.
+    
+    Args:
+        e: Exception to convert
+        
+    Returns:
+        Safe string representation of exception
+    """
+    try:
+        return str(e)
+    except (UnicodeEncodeError, UnicodeDecodeError):
+        try:
+            # Use repr as fallback
+            return repr(e)
+        except Exception:
+            # Last resort: just the exception type and message without encoding
+            try:
+                return f"{type(e).__name__}: {e.args[0] if e.args else 'Unknown error'}"
+            except Exception:
+                return f"{type(e).__name__}"
+                return f"{type(e).__name__}"
+
+
 class EnhancerAgent(BaseAgent):
     """
     Enhancer Agent - Transforms simple prompts into comprehensive, context-aware prompts.
@@ -395,7 +420,7 @@ class EnhancerAgent(BaseAgent):
                     if isinstance(result, dict):
                         result["output_file"] = str(output_path)
                 else:
-                    output_path.write_text(result)
+                    output_path.write_text(result, encoding="utf-8")
                     # For markdown, result is a string, so we can't add to it
                     # Return dict with both the markdown and file path
                     result = {
@@ -412,7 +437,8 @@ class EnhancerAgent(BaseAgent):
             }
 
         except Exception as e:
-            return {"error": f"Enhancement failed: {str(e)}", "session_id": session_id}
+            error_msg = _safe_exception_str(e)
+            return {"error": f"Enhancement failed: {error_msg}", "session_id": session_id}
 
     async def _enhance_quick(
         self,
@@ -517,7 +543,7 @@ class EnhancerAgent(BaseAgent):
                     if isinstance(result, dict):
                         result["output_file"] = str(output_path)
                 else:
-                    output_path.write_text(result)
+                    output_path.write_text(result, encoding="utf-8")
                     # For markdown, result is a string, so we can't add to it
                     # Return dict with both the markdown and file path
                     result = {
@@ -538,8 +564,9 @@ class EnhancerAgent(BaseAgent):
             }
 
         except Exception as e:
+            error_msg = _safe_exception_str(e)
             return {
-                "error": f"Quick enhancement failed: {str(e)}",
+                "error": f"Quick enhancement failed: {error_msg}",
                 "session_id": session_id,
             }
 
@@ -614,8 +641,9 @@ class EnhancerAgent(BaseAgent):
             }
 
         except Exception as e:
+            error_msg = _safe_exception_str(e)
             return {
-                "error": f"Stage {stage} failed: {str(e)}",
+                "error": f"Stage {stage} failed: {error_msg}",
                 "session_id": session_id,
             }
 
@@ -1723,7 +1751,7 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         sessions_dir.mkdir(parents=True, exist_ok=True)
 
         session_file = sessions_dir / f"{session_id}.json"
-        session_file.write_text(self._safe_json_dumps(session, indent=2))
+        session_file.write_text(self._safe_json_dumps(session, indent=2), encoding="utf-8")
 
     def _load_session(self, session_id: str) -> dict[str, Any] | None:
         """Load session from disk."""

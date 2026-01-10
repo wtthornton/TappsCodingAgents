@@ -3,8 +3,10 @@ Enhancer agent command handlers
 """
 import asyncio
 import json
+import sys
 
 from ...agents.enhancer.agent import EnhancerAgent
+from ...core.unicode_safe import safe_print
 from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
@@ -92,15 +94,21 @@ def handle_enhancer_command(args: object) -> None:
         check_result_error(result)
 
         # Format output
-        if getattr(args, "format", "markdown") == "json":
+        output_format = getattr(args, "format", "markdown")
+        if output_format == "json":
             feedback.output_result(result, message="Enhancement completed successfully")
         else:
+            # For markdown format, use safe_print to handle Unicode encoding on Windows
             enhanced = result.get("enhanced_prompt", {})
             feedback.success("Enhancement completed successfully")
+            
             if isinstance(enhanced, dict):
-                print(enhanced.get("enhanced_prompt", json.dumps(enhanced, indent=2)))
+                enhanced_text = enhanced.get("enhanced_prompt", json.dumps(enhanced, indent=2, ensure_ascii=False))
             else:
-                print(enhanced)
+                enhanced_text = enhanced
+            
+            # Use safe_print to handle Unicode characters on Windows
+            safe_print(enhanced_text)
     finally:
         safe_close_agent_sync(enhancer)
 

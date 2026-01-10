@@ -24,6 +24,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, ValidationError
 
+from .metadata_models import RetryPolicy, TaskInputs, TaskResults
+
 SCHEMA_VERSION: str = "1.0"
 
 
@@ -78,9 +80,9 @@ class TaskAssignmentMessage(BaseMessage):
     message_type: Literal["task_assignment"] = "task_assignment"
     assigned_to: str | None = None
     priority: Literal["low", "medium", "high"] = "medium"
-    inputs: dict[str, Any] = Field(default_factory=dict)
+    inputs: TaskInputs = Field(default_factory=TaskInputs)
     timeout_seconds: int | None = None
-    retry_policy: dict[str, Any] = Field(default_factory=dict)
+    retry_policy: RetryPolicy = Field(default_factory=RetryPolicy)
 
 
 class StatusUpdateMessage(BaseMessage):
@@ -93,7 +95,7 @@ class StatusUpdateMessage(BaseMessage):
 class TaskCompleteMessage(BaseMessage):
     message_type: Literal["task_complete"] = "task_complete"
     status: Literal["completed", "failed"]
-    results: dict[str, Any] = Field(default_factory=dict)
+    results: TaskResults = Field(default_factory=TaskResults)
 
 
 type Message = TaskAssignmentMessage | StatusUpdateMessage | TaskCompleteMessage

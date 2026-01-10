@@ -6,13 +6,16 @@ Defines versioned JSON schema for operations results from Background Agents.
 
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from typing import Any
 
+from pydantic import BaseModel, Field
 
-@dataclass
-class SecurityIssue:
+from .common_enums import ArtifactStatus, OperationType
+from .metadata_models import ArtifactMetadata
+
+
+class SecurityIssue(BaseModel):
     """Security issue found during scanning."""
 
     severity: str  # "high", "medium", "low", "info"
@@ -22,9 +25,10 @@ class SecurityIssue:
     line: int | None = None
     recommendation: str | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class ComplianceCheck:
+
+class ComplianceCheck(BaseModel):
     """Compliance check result."""
 
     check: str
@@ -32,9 +36,10 @@ class ComplianceCheck:
     message: str
     recommendation: str | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class DeploymentStep:
+
+class DeploymentStep(BaseModel):
     """Deployment step."""
 
     step: int
@@ -43,9 +48,10 @@ class DeploymentStep:
     description: str | None = None
     status: str = "pending"  # "pending", "completed", "failed", "skipped"
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class InfrastructureFile:
+
+class InfrastructureFile(BaseModel):
     """Infrastructure file created."""
 
     file_path: str
@@ -53,49 +59,51 @@ class InfrastructureFile:
     status: str = "created"  # "created", "updated", "error"
     error_message: str | None = None
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class OperationsArtifact:
+
+class OperationsArtifact(BaseModel):
     """
     Versioned operations artifact.
 
     Schema version: 1.0
+    Migrated to Pydantic BaseModel for runtime validation and type safety.
     """
 
     schema_version: str = "1.0"
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    status: str = "pending"  # "pending", "running", "completed", "failed", "cancelled", "timeout"
+    timestamp: str = Field(default_factory=lambda: datetime.now().isoformat())
+    status: ArtifactStatus = ArtifactStatus.PENDING
     worktree_path: str | None = None
     correlation_id: str | None = None
 
     # Operation type
-    operation_type: str | None = None  # "security_scan", "compliance_check", "deploy", "infrastructure_setup", "dependency_audit"
+    operation_type: OperationType | None = None
 
     # Security scan results
-    security_issues: list[SecurityIssue] = field(default_factory=list)
+    security_issues: list[SecurityIssue] = Field(default_factory=list)
     security_issue_count: int = 0
-    security_severity_breakdown: dict[str, int] = field(default_factory=dict)
+    security_severity_breakdown: dict[str, int] = Field(default_factory=dict)
 
     # Compliance check results
     compliance_type: str | None = None
     compliance_status: str | None = None  # "compliant", "non_compliant", "partial", "unknown"
-    compliance_checks: list[ComplianceCheck] = field(default_factory=list)
+    compliance_checks: list[ComplianceCheck] = Field(default_factory=list)
 
     # Deployment results
     deployment_target: str | None = None
     deployment_environment: str | None = None
-    deployment_steps: list[DeploymentStep] = field(default_factory=list)
+    deployment_steps: list[DeploymentStep] = Field(default_factory=list)
     deployment_status: str | None = None  # "planned", "executed", "failed"
 
     # Infrastructure setup results
     infrastructure_type: str | None = None
-    infrastructure_files: list[InfrastructureFile] = field(default_factory=list)
+    infrastructure_files: list[InfrastructureFile] = Field(default_factory=list)
 
     # Dependency audit results
-    dependency_vulnerabilities: list[dict[str, Any]] = field(default_factory=list)
+    dependency_vulnerabilities: list[dict[str, Any]] = Field(default_factory=list)
     vulnerability_count: int = 0
-    severity_breakdown: dict[str, int] = field(default_factory=dict)
-    tools_available: dict[str, bool] = field(default_factory=dict)
+    severity_breakdown: dict[str, int] = Field(default_factory=dict)
+    tools_available: dict[str, bool] = Field(default_factory=dict)
 
     # Error information
     error: str | None = None
@@ -104,39 +112,9 @@ class OperationsArtifact:
 
     # Metadata
     execution_time_seconds: float | None = None
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: ArtifactMetadata = Field(default_factory=dict)
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary for JSON serialization."""
-        data = asdict(self)
-        # Convert nested objects to dicts
-        data["security_issues"] = [asdict(si) for si in self.security_issues]
-        data["compliance_checks"] = [asdict(cc) for cc in self.compliance_checks]
-        data["deployment_steps"] = [asdict(ds) for ds in self.deployment_steps]
-        data["infrastructure_files"] = [asdict(inf) for inf in self.infrastructure_files]
-        return data
-
-    @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> OperationsArtifact:
-        """Create from dictionary."""
-        # Convert nested dicts back to objects
-        if "security_issues" in data:
-            data["security_issues"] = [
-                SecurityIssue(**si) for si in data["security_issues"]
-            ]
-        if "compliance_checks" in data:
-            data["compliance_checks"] = [
-                ComplianceCheck(**cc) for cc in data["compliance_checks"]
-            ]
-        if "deployment_steps" in data:
-            data["deployment_steps"] = [
-                DeploymentStep(**ds) for ds in data["deployment_steps"]
-            ]
-        if "infrastructure_files" in data:
-            data["infrastructure_files"] = [
-                InfrastructureFile(**inf) for inf in data["infrastructure_files"]
-            ]
-        return cls(**data)
+    model_config = {"extra": "forbid"}
 
     def add_security_issue(self, issue: SecurityIssue) -> None:
         """Add a security issue."""
@@ -155,25 +133,125 @@ class OperationsArtifact:
         """Add a deployment step."""
         self.deployment_steps.append(step)
 
-    def add_infrastructure_file(self, file: InfrastructureFile) -> None:
+    def add_infrastructure_file(self, infra_file: InfrastructureFile) -> None:
         """Add an infrastructure file."""
-        self.infrastructure_files.append(file)
+        self.infrastructure_files.append(infra_file)
 
     def mark_completed(self) -> None:
-        """Mark operation as completed."""
-        self.status = "completed"
+        """Mark operations as completed."""
+        self.status = ArtifactStatus.COMPLETED
 
     def mark_failed(self, error: str) -> None:
-        """Mark operation as failed."""
-        self.status = "failed"
+        """Mark operations as failed."""
+        self.status = ArtifactStatus.FAILED
         self.error = error
 
     def mark_cancelled(self) -> None:
-        """Mark operation as cancelled."""
-        self.status = "cancelled"
+        """Mark operations as cancelled."""
+        self.status = ArtifactStatus.CANCELLED
         self.cancelled = True
 
     def mark_timeout(self) -> None:
-        """Mark operation as timed out."""
-        self.status = "timeout"
+        """Mark operations as timed out."""
+        self.status = ArtifactStatus.TIMEOUT
         self.timeout = True
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> OperationsArtifact:
+        """
+        Create from dictionary (backward compatibility with old dataclass format).
+
+        This method supports both old dataclass format and new Pydantic format.
+        """
+        # Try Pydantic validation first (new format)
+        try:
+            return cls.model_validate(data)
+        except Exception:
+            # Fall back to manual conversion (old dataclass format)
+            return cls._from_dict_legacy(data)
+
+    @classmethod
+    def _from_dict_legacy(cls, data: dict[str, Any]) -> OperationsArtifact:
+        """Convert from legacy dataclass format."""
+        # Convert security_issues from list of dicts to list of SecurityIssue objects
+        security_issues = []
+        if "security_issues" in data:
+            for si_data in data["security_issues"]:
+                if isinstance(si_data, dict):
+                    security_issues.append(SecurityIssue(**si_data))
+                else:
+                    security_issues.append(si_data)
+
+        # Convert compliance_checks from list of dicts to list of ComplianceCheck objects
+        compliance_checks = []
+        if "compliance_checks" in data:
+            for cc_data in data["compliance_checks"]:
+                if isinstance(cc_data, dict):
+                    compliance_checks.append(ComplianceCheck(**cc_data))
+                else:
+                    compliance_checks.append(cc_data)
+
+        # Convert deployment_steps from list of dicts to list of DeploymentStep objects
+        deployment_steps = []
+        if "deployment_steps" in data:
+            for ds_data in data["deployment_steps"]:
+                if isinstance(ds_data, dict):
+                    deployment_steps.append(DeploymentStep(**ds_data))
+                else:
+                    deployment_steps.append(ds_data)
+
+        # Convert infrastructure_files from list of dicts to list of InfrastructureFile objects
+        infrastructure_files = []
+        if "infrastructure_files" in data:
+            for inf_data in data["infrastructure_files"]:
+                if isinstance(inf_data, dict):
+                    infrastructure_files.append(InfrastructureFile(**inf_data))
+                else:
+                    infrastructure_files.append(inf_data)
+
+        # Convert status string to enum
+        status = ArtifactStatus.PENDING
+        if "status" in data and data["status"]:
+            try:
+                status = ArtifactStatus(data["status"].lower())
+            except ValueError:
+                pass
+
+        # Convert operation_type string to enum
+        operation_type = None
+        if "operation_type" in data and data["operation_type"]:
+            try:
+                operation_type = OperationType(data["operation_type"].lower().replace("-", "_"))
+            except ValueError:
+                pass
+
+        # Build new artifact
+        artifact_data = data.copy()
+        artifact_data["security_issues"] = security_issues
+        artifact_data["compliance_checks"] = compliance_checks
+        artifact_data["deployment_steps"] = deployment_steps
+        artifact_data["infrastructure_files"] = infrastructure_files
+        artifact_data["status"] = status
+        artifact_data["operation_type"] = operation_type
+
+        # Remove methods that might cause issues
+        artifact_data.pop("to_dict", None)
+        artifact_data.pop("from_dict", None)
+        artifact_data.pop("add_security_issue", None)
+        artifact_data.pop("add_compliance_check", None)
+        artifact_data.pop("add_deployment_step", None)
+        artifact_data.pop("add_infrastructure_file", None)
+        artifact_data.pop("mark_completed", None)
+        artifact_data.pop("mark_failed", None)
+        artifact_data.pop("mark_cancelled", None)
+        artifact_data.pop("mark_timeout", None)
+
+        return cls(**artifact_data)
+
+    def to_dict(self) -> dict[str, Any]:
+        """
+        Convert to dictionary (backward compatibility method).
+
+        For new code, use model_dump(mode="json") instead.
+        """
+        return self.model_dump(mode="json", exclude_none=False)

@@ -481,6 +481,8 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         })
 
         # Execute agent tasks
+        workflow_errors = []  # Track errors for final reporting
+        result = {"success": True, "results": {}}  # Default result
         if agent_tasks:
             try:
                 result = await orchestrator.execute_parallel(agent_tasks)
@@ -495,6 +497,17 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     # Check if task succeeded
                     task_result = result.get("results", {}).get(task["agent_id"], {})
                     task_success = result.get("success", True) and task_result.get("success", True)
+                    
+                    # Collect error information if task failed
+                    if not task_success:
+                        error_msg = self._extract_error_message(task_result)
+                        workflow_errors.append({
+                            "step": task_step_num,
+                            "agent": agent_name,
+                            "agent_id": task.get("agent_id"),
+                            "error": error_msg,
+                        })
+                        logger.error(f"Step {task_step_num} ({agent_name}) failed: {error_msg}")
                     
                     if agent_name in ["planner", "architect", "designer", "implementer"]:
                         steps_executed.append(agent_name)
@@ -598,7 +611,17 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                             )
                         step_number += 1
             except Exception as e:
-                # Handle execution errors
+                # Handle execution errors - capture exception as workflow error
+                error_str = str(e)
+                workflow_errors.append({
+                    "step": 0,  # Unknown step
+                    "agent": "orchestrator",
+                    "agent_id": "orchestrator",
+                    "error": f"Workflow execution exception: {error_str}",
+                })
+                logger.error(f"Workflow execution failed: {e}", exc_info=True)
+                
+                # Notify step errors
                 for task in agent_tasks:
                     task_step_num = task.get("step_num", 0)
                     task_step_name = task.get("step_name", task["agent"])
@@ -606,7 +629,13 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                         on_step_error(task_step_num, task_step_name, e)
                     elif on_step_complete:
                         on_step_complete(task_step_num, task_step_name, "failed")
-                raise
+                
+                # Set result to indicate failure
+                result = {
+                    "success": False,
+                    "error": error_str,
+                    "results": {},
+                }
         else:
             # Fast mode: Only implementation
             result = await orchestrator.execute_parallel(agent_tasks)
@@ -777,15 +806,34 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             except Exception as e:
                 logger.warning(f"Failed to create workflow summary: {e}")
 
+        # Determine overall success and collect error message
+        overall_success = result.get("success", False) if agent_tasks else True
+        error_message = None
+        
+        if workflow_errors:
+            # Build error message from collected errors
+            error_parts = []
+            for err in workflow_errors:
+                error_parts.append(f"Step {err['step']} ({err['agent']}): {err['error']}")
+            error_message = "; ".join(error_parts)
+        elif not overall_success:
+            # Fallback: extract error from result
+            if "error" in result:
+                error_message = str(result["error"])
+            else:
+                error_message = "Workflow execution failed (see results for details)"
+        
         return {
             "type": "build",
-            "success": result.get("success", False),
+            "success": overall_success,
+            "error": error_message,  # Include error message for reporting
+            "errors": workflow_errors,  # Include detailed error list
             "fast_mode": fast_mode,
             "workflow_id": workflow_id,
             "steps_executed": steps_executed,
-            "agents_executed": result.get("total_agents", 0),
-            "results": result.get("results", {}),
-            "summary": result.get("summary", {}),
+            "agents_executed": result.get("total_agents", 0) if agent_tasks else 0,
+            "results": result.get("results", {}) if agent_tasks else {},
+            "summary": result.get("summary", {}) if agent_tasks else {},
             "enhancement": {
                 "original_prompt": original_description,
                 "enhanced_prompt": enhanced_prompt,
@@ -1345,22 +1393,79 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         """
         # Try various formats agents use to report errors
         if "error" in task_result:
-            return str(task_result["error"])
+            error_val = task_result["error"]
+            if isinstance(error_val, (str, int, float)):
+                return str(error_val)
+            elif isinstance(error_val, dict):
+                # Try to extract message from error dict
+                if "message" in error_val:
+                    return str(error_val["message"])
+                if "error" in error_val:
+                    return str(error_val["error"])
+                # Fall back to string representation
+                return str(error_val)[:500]
         
         if "result" in task_result:
             nested = task_result["result"]
-            if isinstance(nested, dict) and "error" in nested:
-                return str(nested["error"])
-            if isinstance(nested, str) and ("error" in nested.lower() or "failed" in nested.lower()):
-                return nested[:500]
+            if isinstance(nested, dict):
+                # Check for nested error fields
+                if "error" in nested:
+                    error_val = nested["error"]
+                    if isinstance(error_val, str):
+                        return error_val
+                    elif isinstance(error_val, dict) and "message" in error_val:
+                        return str(error_val["message"])
+                    return str(error_val)[:500]
+                if "message" in nested:
+                    return str(nested["message"])
+                # Check for exception information
+                if "exception" in nested:
+                    return str(nested["exception"])
+                if "traceback" in nested:
+                    # Extract first line of traceback
+                    tb = nested["traceback"]
+                    if isinstance(tb, str):
+                        lines = tb.split("\n")
+                        if lines:
+                            return lines[0][:500]
+            elif isinstance(nested, str):
+                if "error" in nested.lower() or "failed" in nested.lower() or "exception" in nested.lower():
+                    return nested[:500]
         
         if "message" in task_result:
             return str(task_result["message"])
         
-        if task_result.get("success") is False:
-            return "Agent execution failed (no specific error message)"
+        # Check for exception info at top level
+        if "exception" in task_result:
+            return str(task_result["exception"])
         
-        return "Unknown error"
+        if "traceback" in task_result:
+            tb = task_result["traceback"]
+            if isinstance(tb, str):
+                lines = tb.split("\n")
+                if lines:
+                    return lines[0][:500]
+        
+        # Check performance metrics for error info
+        if "performance_metrics" in task_result:
+            perf = task_result["performance_metrics"]
+            if isinstance(perf, dict) and "error" in perf:
+                return str(perf["error"])[:500]
+        
+        if task_result.get("success") is False:
+            # Try to extract any useful info from the result structure
+            result_str = str(task_result)
+            if len(result_str) < 500:
+                return f"Agent execution failed: {result_str}"
+            return "Agent execution failed (no specific error message available)"
+        
+        # Last resort: return structured representation
+        if task_result:
+            # Return a summary of available keys
+            keys = list(task_result.keys())[:5]
+            return f"Unknown error (available keys: {', '.join(keys)})"
+        
+        return "Unknown error (empty result)"
 
     def _detect_agent_failures(self, results: dict[str, Any]) -> list[dict[str, Any]]:
         """Detect agent failures from execution results.

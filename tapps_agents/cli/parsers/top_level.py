@@ -132,6 +132,18 @@ Examples:
         dest="print_paths",
         help="Disable printing artifact paths after each step.",
     )
+    common_workflow_args.add_argument(
+        "--autonomous",
+        action="store_true",
+        help="Enable autonomous execution mode. Runs workflow in a loop until completion or max iterations reached. Perfect for overnight execution. Requires --max-iterations to be set (default: 10).",
+    )
+    common_workflow_args.add_argument(
+        "--max-iterations",
+        type=int,
+        default=10,
+        metavar="N",
+        help="Maximum number of iterations for autonomous execution (default: 10). Only used with --autonomous flag.",
+    )
 
     # Short aliases
     full_parser = workflow_subparsers.add_parser(
