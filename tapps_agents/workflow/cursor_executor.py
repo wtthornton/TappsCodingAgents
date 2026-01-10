@@ -1603,7 +1603,12 @@ class CursorWorkflowExecutor:
             for artifact in artifacts:
                 self.state.artifacts[artifact.name] = artifact
 
-            # Update step execution
+            # Story-level step handling (Phase 3: Story-Level Granularity)
+            # Verify acceptance criteria BEFORE marking step as completed
+            if step.metadata and step.metadata.get("story_id"):
+                self._handle_story_completion(step, artifacts, step_execution)
+
+            # Update step execution (after story verification)
             step_execution.completed_at = datetime.now()
             step_execution.status = "completed"
             step_execution.result = result
@@ -1673,6 +1678,108 @@ class CursorWorkflowExecutor:
                 params["target_file"] = self.state.variables["target_file"]
         
         return params
+
+    def _handle_story_completion(
+        self, step: WorkflowStep, artifacts: list[Artifact], step_execution: StepExecution
+    ) -> None:
+        """
+        Handle story-level step completion (Phase 3: Story-Level Granularity).
+        
+        Verifies acceptance criteria, logs to progress.txt, and tracks story completion.
+        
+        Args:
+            step: Completed workflow step with story metadata
+            artifacts: Artifacts created by the step
+            step_execution: Step execution record to update if criteria fail
+        """
+        if not step.metadata:
+            return
+        
+        story_id = step.metadata.get("story_id")
+        story_title = step.metadata.get("story_title")
+        acceptance_criteria = step.metadata.get("acceptance_criteria", [])
+        
+        if not story_id:
+            return  # Not a story-level step
+        
+        # Verify acceptance criteria if provided
+        passes = True
+        verification_result = None
+        
+        if acceptance_criteria:
+            from .acceptance_verifier import AcceptanceCriteriaVerifier
+            
+            # Convert artifacts list to dict
+            artifacts_dict = {art.name: art for art in artifacts}
+            
+            # Get code files from artifacts
+            code_files = []
+            for art in artifacts:
+                if art.path:
+                    art_path = Path(art.path)
+                    if art_path.exists() and art_path.suffix in [".py", ".js", ".ts", ".tsx", ".jsx", ".java", ".go", ".rs"]:
+                        code_files.append(art_path)
+            
+            # Verify criteria
+            verifier = AcceptanceCriteriaVerifier()
+            verification_result = verifier.verify(
+                criteria=acceptance_criteria,
+                artifacts=artifacts_dict,
+                code_files=code_files if code_files else None,
+            )
+            passes = verification_result.get("all_passed", True)
+            
+            # Store verification result in state variables
+            if "story_verifications" not in self.state.variables:
+                self.state.variables["story_verifications"] = {}
+            self.state.variables["story_verifications"][story_id] = verification_result
+        
+        # Track story completion in state.variables
+        if "story_completions" not in self.state.variables:
+            self.state.variables["story_completions"] = {}
+        self.state.variables["story_completions"][story_id] = passes
+        
+        # Log to progress.txt if progress logger is available
+        try:
+            from .progress_logger import ProgressLogger
+            
+            progress_file = self.project_root / ".tapps-agents" / "progress.txt"
+            progress_logger = ProgressLogger(progress_file)
+            
+            # Extract files changed
+            files_changed = [art.path for art in artifacts if art.path]
+            
+            # Extract learnings from verification result
+            learnings = []
+            if verification_result and not passes:
+                failed_criteria = [
+                    r["criterion"]
+                    for r in verification_result.get("results", [])
+                    if not r.get("passed", False)
+                ]
+                if failed_criteria:
+                    learnings.append(f"Acceptance criteria not met: {', '.join(failed_criteria)}")
+            
+            # Log story completion
+            progress_logger.log_story_completion(
+                story_id=story_id,
+                story_title=story_title or step.id,
+                passes=passes,
+                files_changed=files_changed if files_changed else None,
+                learnings=learnings if learnings else None,
+            )
+        except Exception:
+            # Don't fail workflow if progress logging fails
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning("Failed to log story completion to progress.txt", exc_info=True)
+        
+        # If acceptance criteria not met, mark step as failed and raise exception
+        if not passes:
+            step_execution.status = "failed"
+            step_execution.error = f"Acceptance criteria not met for story {story_id}"
+            # Raise exception to prevent advancing to next step
+            raise ValueError(f"Story {story_id} failed acceptance criteria verification")
 
     def _advance_step(self) -> None:
         """Advance to the next workflow step."""

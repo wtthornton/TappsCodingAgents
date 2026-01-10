@@ -717,6 +717,201 @@ def _handle_workflow_dry_run(workflow: Any, args: object, feedback: Any) -> None
     print(f"  {' '.join(cmd_parts)}")
 
 
+def _extract_files_changed_from_state(state: Any) -> list[str]:
+    """Extract list of file paths from workflow state artifacts."""
+    files_changed = []
+    if state and hasattr(state, "artifacts"):
+        for artifact in state.artifacts.values():
+            if hasattr(artifact, "path") and artifact.path:
+                files_changed.append(artifact.path)
+    return files_changed
+
+
+def _extract_story_info_from_workflow(workflow: Any, state: Any) -> tuple[str | None, str | None]:
+    """Extract story information from workflow steps and state."""
+    story_title = None
+    story_id = None
+    
+    if workflow and hasattr(workflow, "steps") and state:
+        # Get current step
+        current_step_id = state.current_step if hasattr(state, "current_step") else None
+        if current_step_id:
+            # Find current step
+            for step in workflow.steps:
+                if step.id == current_step_id:
+                    # Check metadata for story information
+                    if hasattr(step, "metadata") and step.metadata:
+                        story_id = step.metadata.get("story_id")
+                        story_title = step.metadata.get("story_title")
+                    # Fallback to step ID/action if no story metadata
+                    if not story_title:
+                        story_title = f"{step.agent}/{step.action}" if hasattr(step, "agent") else step.id
+                    break
+    
+    return story_title, story_id
+
+
+def _extract_learnings_from_state(state: Any) -> list[str]:
+    """Extract learnings from workflow state (from variables or step executions)."""
+    learnings = []
+    
+    if state:
+        # Check state variables for learnings
+        if hasattr(state, "variables") and state.variables:
+            state_learnings = state.variables.get("learnings", [])
+            if isinstance(state_learnings, list):
+                learnings.extend(state_learnings)
+        
+        # Extract learnings from step execution metadata if available
+        if hasattr(state, "step_executions"):
+            for step_exec in state.step_executions:
+                if hasattr(step_exec, "metadata") and step_exec.metadata:
+                    step_learnings = step_exec.metadata.get("learnings", [])
+                    if isinstance(step_learnings, list):
+                        learnings.extend(step_learnings)
+    
+    return learnings
+
+
+def _handle_autonomous_workflow_execution(
+    workflow: Any,
+    args: object,
+    executor: Any,
+    user_prompt: str | None,
+    target_file: str | None,
+) -> None:
+    """Handle autonomous execution loop (2025 architecture)."""
+    from datetime import datetime
+    from pathlib import Path
+    from ...workflow.parser import WorkflowParser
+    from ...workflow.progress_logger import ProgressLogger
+    from ...core.unicode_safe import safe_print
+    
+    autonomous = getattr(args, "autonomous", False)
+    max_iterations = getattr(args, "max_iterations", 10)
+    
+    if not autonomous:
+        return  # Fall through to normal execution
+    
+    # Initialize progress logger
+    project_root = Path.cwd()
+    progress_file = project_root / ".tapps-agents" / "progress.txt"
+    progress_logger = ProgressLogger(progress_file)
+    
+    iteration = 1
+    start_time = datetime.now()
+    final_state = None
+    
+    while iteration <= max_iterations:
+        safe_print(f"\nIteration {iteration}/{max_iterations}: ", end="")
+        
+        if iteration == 1:
+            # First iteration: start new workflow
+            executor.user_prompt = user_prompt  # Store prompt
+            safe_print("Starting workflow execution...")
+            final_state = asyncio.run(executor.execute(workflow=workflow, target_file=target_file))
+            # State is already saved by execute(), autonomous variables will be set in next iteration if needed
+        else:
+            # Subsequent iterations: resume workflow (like resume command)
+            try:
+                safe_print("Resuming workflow execution...")
+                executor.state = executor.load_last_state()
+                # Load workflow from state (like resume command)
+                # load_last_state() already attempts to reload workflow if path is available
+                # If workflow is still None, try loading from state variables
+                if not executor.workflow:
+                    workflow_path = executor.state.variables.get("_workflow_path")
+                    if workflow_path:
+                        parser = WorkflowParser()
+                        executor.workflow = parser.parse_file(Path(workflow_path))
+                # Reset status if failed (allow retry, like resume command)
+                if executor.state.status == "failed":
+                    executor.state.status = "running"
+                executor.state.variables["autonomous_iteration"] = iteration
+                executor.save_state()  # Persist variables before execute
+                final_state = asyncio.run(executor.execute(workflow=None, target_file=target_file))
+            except FileNotFoundError:
+                safe_print("[FAIL] No workflow state found to resume")
+                break
+            except ValueError as e:
+                # Handle case where workflow can't be loaded (e.g., preset without path)
+                safe_print(f"[FAIL] Cannot resume workflow: {e}")
+                break
+        
+        # Log iteration to progress.txt (Phase 3)
+        if final_state:
+            # Extract information for logging
+            files_changed = _extract_files_changed_from_state(final_state)
+            learnings = _extract_learnings_from_state(final_state)
+            
+            # Get workflow for story extraction (try executor.workflow, fallback to passed workflow)
+            workflow_for_story = workflow
+            if hasattr(executor, "workflow") and executor.workflow:
+                workflow_for_story = executor.workflow
+            
+            story_title, story_id = _extract_story_info_from_workflow(
+                workflow_for_story,
+                final_state
+            )
+            thread_id = final_state.workflow_id if hasattr(final_state, "workflow_id") else None
+            
+            # Log to progress.txt
+            progress_logger.log_iteration(
+                iteration=iteration,
+                story_title=story_title,
+                files_changed=files_changed if files_changed else None,
+                learnings=learnings if learnings else None,
+                thread_id=thread_id,
+                status=final_state.status,
+            )
+        
+        # Check status and decide next action
+        if final_state.status == "completed":
+            safe_print(f"[OK] Workflow completed successfully")
+            break
+        elif final_state.status == "failed":
+            safe_print(f"[FAIL] Workflow failed: {final_state.error}")
+            # Phase 1: retry if iterations remain (can enhance with smart retry logic later)
+        elif final_state.status == "running":
+            safe_print(f"[INFO] Workflow interrupted, will resume next iteration")
+        
+        iteration += 1
+    
+    # Print final summary (ensure final_state exists)
+    if final_state:
+        elapsed = (datetime.now() - start_time).total_seconds()
+        _print_autonomous_summary(iteration - 1, max_iterations, final_state, elapsed)
+
+
+def _print_autonomous_summary(
+    iteration: int,
+    max_iterations: int,
+    final_state: Any,
+    elapsed: float,
+) -> None:
+    """Print autonomous execution summary."""
+    from ...core.unicode_safe import safe_print
+    
+    safe_print(f"\n{'='*60}")
+    safe_print("Autonomous Execution Summary")
+    safe_print(f"{'='*60}")
+    safe_print(f"Iterations: {iteration}/{max_iterations}")
+    safe_print(f"Final Status: {final_state.status}")
+    safe_print(f"Completed Steps: {len(final_state.completed_steps)}")
+    safe_print(f"Total Time: {elapsed:.1f} seconds ({elapsed/60:.1f} minutes)")
+    
+    if final_state.status == "completed":
+        safe_print("[OK] Workflow completed successfully!")
+    elif final_state.status == "failed":
+        safe_print(f"[FAIL] Workflow failed: {final_state.error}")
+    elif iteration >= max_iterations:
+        safe_print(f"[WARN] Max iterations ({max_iterations}) reached before completion")
+        safe_print(f"Current step: {final_state.current_step or 'N/A'}")
+        safe_print("Use 'tapps-agents workflow resume' to continue")
+    
+    safe_print(f"{'='*60}\n")
+
+
 def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
@@ -936,17 +1131,6 @@ def handle_workflow_command(args: object) -> None:
         skip_steps = skip_steps_str.split(",") if skip_steps_str else []
         print_paths = getattr(args, "print_paths", True)
 
-        print(f"\n{'='*60}")
-        print(f"Starting: {workflow.name}")
-        print(f"{'='*60}")
-        print(f"Description: {workflow.description}")
-        print(f"Steps: {len(workflow.steps)}")
-        if continue_from:
-            print(f"Continuing from: {continue_from}")
-        if skip_steps:
-            print(f"Skipping steps: {', '.join(skip_steps)}")
-        print()
-
         # Execute workflow (start + run steps until completion)
         executor = WorkflowExecutor(auto_detect=False, auto_mode=getattr(args, "auto", False))
         target_file = getattr(args, "file", None)
@@ -960,6 +1144,29 @@ def handle_workflow_command(args: object) -> None:
         executor.continue_from = continue_from
         executor.skip_steps = skip_steps
         executor.print_paths = print_paths
+        
+        # Handle autonomous execution mode (Phase 1: Autonomous Execution Loop)
+        autonomous = getattr(args, "autonomous", False)
+        if autonomous:
+            _handle_autonomous_workflow_execution(
+                workflow=workflow,
+                args=args,
+                executor=executor,
+                user_prompt=user_prompt,
+                target_file=target_file,
+            )
+            return
+        
+        print(f"\n{'='*60}")
+        print(f"Starting: {workflow.name}")
+        print(f"{'='*60}")
+        print(f"Description: {workflow.description}")
+        print(f"Steps: {len(workflow.steps)}")
+        if continue_from:
+            print(f"Continuing from: {continue_from}")
+        if skip_steps:
+            print(f"Skipping steps: {', '.join(skip_steps)}")
+        print()
         
         # Check runtime mode and warn user
         from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
