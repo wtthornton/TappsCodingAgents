@@ -200,7 +200,29 @@ class MultiAgentOrchestrator:
                 worktree_paths if "worktree_paths" in locals() else {}
             )
 
-            return {"success": False, "error": str(e), "task_id": task_id}
+            # FIXED: Include results dictionary with failure entries for all expected agents
+            # This ensures BuildOrchestrator can properly detect which agents failed
+            error_results = {}
+            for task in agent_tasks:
+                agent_id = task.get("agent_id", "unknown")
+                agent_name = task.get("agent", "unknown")
+                error_results[agent_id] = {
+                    "agent_id": agent_id,
+                    "agent": agent_name,
+                    "command": task.get("command", "unknown"),
+                    "success": False,
+                    "error": str(e),
+                }
+
+            return {
+                "success": False,
+                "error": str(e),
+                "task_id": task_id,
+                "results": error_results,
+                "total_agents": len(agent_tasks),
+                "successful_agents": 0,
+                "failed_agents": len(agent_tasks),
+            }
 
     async def _execute_agent_task(
         self, task: dict[str, Any], worktree_path: Path | None = None
