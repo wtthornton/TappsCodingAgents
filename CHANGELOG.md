@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.5] - 2026-01-16
+
+### Fixed
+- **Framework Change Detector** - Fixed 5 bugs in `framework_change_detector.py`
+  - Fixed incorrect `modified_agents` logic that included all existing agents instead of only modified ones
+  - Added exception handling for `PermissionError` and `OSError` when scanning agent directories (Windows compatibility)
+  - Fixed regex injection vulnerability by escaping special characters in agent names
+  - Improved path construction robustness with directory structure validation
+  - Fixed command extraction to preserve order using `dict.fromkeys()` instead of `set()`
+
+### Tests
+- **Framework Change Detector Tests** - Added comprehensive unit test coverage for all 5 bug fixes
+  - Added test for `modified_agents` bug fix
+  - Added tests for `PermissionError`/`OSError` handling
+  - Added test for regex escaping with special characters
+  - Added test for improved path construction
+  - Added test for command order preservation
+  - All 18 tests passing (13 existing + 5 new)
+
 ## [3.5.4] - 2026-01-11
 
 ### Added
