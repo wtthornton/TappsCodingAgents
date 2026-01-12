@@ -1,0 +1,356 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/ReviewArtifact.json",
+  "title": "ReviewArtifact",
+  "description": "Versioned review artifact.\n\nSchema version: 1.0\nMigrated to Pydantic BaseModel for runtime validation and type safety.",
+  "version": "1.0",
+  "$defs": {
+    "ArtifactMetadata": {
+      "additionalProperties": false,
+      "description": "Flexible but typed metadata structure for artifacts.\n\nUses TypedDict with total=False to allow partial metadata while maintaining\ntype hints for known fields.",
+      "properties": {
+        "agent_version": {
+          "title": "Agent Version",
+          "type": "string"
+        },
+        "execution_context": {
+          "title": "Execution Context",
+          "type": "string"
+        },
+        "custom_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Tags",
+          "type": "array"
+        },
+        "related_artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Artifacts",
+          "type": "array"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "execution_mode": {
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "ArtifactStatus": {
+      "description": "Status of an artifact during workflow execution.",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timeout",
+        "not_run"
+      ],
+      "title": "ArtifactStatus",
+      "type": "string"
+    },
+    "ReviewComment": {
+      "additionalProperties": false,
+      "description": "A single review comment.",
+      "properties": {
+        "file": {
+          "title": "File",
+          "type": "string"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "severity": {
+          "default": "suggestion",
+          "title": "Severity",
+          "type": "string"
+        },
+        "message": {
+          "default": "",
+          "title": "Message",
+          "type": "string"
+        },
+        "category": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Category"
+        }
+      },
+      "required": [
+        "file"
+      ],
+      "title": "ReviewComment",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ArtifactStatus",
+      "default": "pending"
+    },
+    "worktree_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree Path"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlation Id"
+    },
+    "overall_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Overall Score"
+    },
+    "complexity_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Complexity Score"
+    },
+    "security_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Score"
+    },
+    "maintainability_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Maintainability Score"
+    },
+    "test_coverage_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Test Coverage Score"
+    },
+    "performance_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Performance Score"
+    },
+    "linting_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Linting Score"
+    },
+    "type_checking_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Type Checking Score"
+    },
+    "duplication_score": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duplication Score"
+    },
+    "decision": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Decision"
+    },
+    "passed": {
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Passed"
+    },
+    "threshold": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Threshold"
+    },
+    "comments": {
+      "items": {
+        "$ref": "#/$defs/ReviewComment"
+      },
+      "title": "Comments",
+      "type": "array"
+    },
+    "security_findings": {
+      "items": {
+        "$ref": "#/$defs/ReviewComment"
+      },
+      "title": "Security Findings",
+      "type": "array"
+    },
+    "refactoring_suggestions": {
+      "items": {
+        "$ref": "#/$defs/ReviewComment"
+      },
+      "title": "Refactoring Suggestions",
+      "type": "array"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "cancelled": {
+      "default": false,
+      "title": "Cancelled",
+      "type": "boolean"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "type": "object"
+}

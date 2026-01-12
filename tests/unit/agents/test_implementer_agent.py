@@ -28,6 +28,8 @@ class TestImplementerAgentInitialization:
         mock_config.agents.implementer.auto_approve_threshold = 80.0
         mock_config.agents.implementer.backup_files = True
         mock_config.agents.implementer.max_file_size = 10 * 1024 * 1024
+        mock_config.context7 = MagicMock()
+        mock_config.context7.enabled = False
         mock_load_config.return_value = mock_config
         
         agent = ImplementerAgent()

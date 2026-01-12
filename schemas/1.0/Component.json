@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/Component.json",
+  "title": "Component",
+  "description": "Represents a system component.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "component_type": {
+      "title": "Component Type",
+      "type": "string"
+    },
+    "technology": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Technology"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "dependencies": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "expert_recommendations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "Expert Recommendations",
+      "type": "object"
+    }
+  },
+  "required": [
+    "name",
+    "component_type"
+  ],
+  "type": "object"
+}

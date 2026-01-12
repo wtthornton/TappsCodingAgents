@@ -1,0 +1,275 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/EnhancementArtifact.json",
+  "title": "EnhancementArtifact",
+  "description": "Versioned enhancement artifact.\n\nSchema version: 1.0\nMigrated to Pydantic BaseModel for runtime validation and type safety.",
+  "version": "1.0",
+  "$defs": {
+    "ArtifactMetadata": {
+      "additionalProperties": false,
+      "description": "Flexible but typed metadata structure for artifacts.\n\nUses TypedDict with total=False to allow partial metadata while maintaining\ntype hints for known fields.",
+      "properties": {
+        "agent_version": {
+          "title": "Agent Version",
+          "type": "string"
+        },
+        "execution_context": {
+          "title": "Execution Context",
+          "type": "string"
+        },
+        "custom_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Tags",
+          "type": "array"
+        },
+        "related_artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Artifacts",
+          "type": "array"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "execution_mode": {
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "ArtifactStatus": {
+      "description": "Status of an artifact during workflow execution.",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timeout",
+        "not_run"
+      ],
+      "title": "ArtifactStatus",
+      "type": "string"
+    },
+    "EnhancementStage": {
+      "additionalProperties": false,
+      "description": "Represents a single enhancement stage result.",
+      "properties": {
+        "stage_name": {
+          "title": "Stage Name",
+          "type": "string"
+        },
+        "status": {
+          "default": "pending",
+          "title": "Status",
+          "type": "string"
+        },
+        "output": {
+          "additionalProperties": true,
+          "title": "Output",
+          "type": "object"
+        },
+        "error": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error"
+        },
+        "execution_time_seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Time Seconds"
+        }
+      },
+      "required": [
+        "stage_name"
+      ],
+      "title": "EnhancementStage",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ArtifactStatus",
+      "default": "pending"
+    },
+    "worktree_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree Path"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlation Id"
+    },
+    "session_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Session Id"
+    },
+    "original_prompt": {
+      "default": "",
+      "title": "Original Prompt",
+      "type": "string"
+    },
+    "enhanced_prompt": {
+      "default": "",
+      "title": "Enhanced Prompt",
+      "type": "string"
+    },
+    "stages": {
+      "additionalProperties": {
+        "$ref": "#/$defs/EnhancementStage"
+      },
+      "title": "Stages",
+      "type": "object"
+    },
+    "intent": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Intent"
+    },
+    "domains": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Domains",
+      "type": "array"
+    },
+    "scope": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Scope"
+    },
+    "complexity": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Complexity"
+    },
+    "workflow_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Workflow Type"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "cancelled": {
+      "default": false,
+      "title": "Cancelled",
+      "type": "boolean"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "type": "object"
+}

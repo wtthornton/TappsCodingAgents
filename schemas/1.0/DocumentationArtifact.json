@@ -1,0 +1,269 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/DocumentationArtifact.json",
+  "title": "DocumentationArtifact",
+  "description": "Versioned documentation artifact.\n\nSchema version: 1.0\nMigrated to Pydantic BaseModel for runtime validation and type safety.",
+  "version": "1.0",
+  "$defs": {
+    "ArtifactMetadata": {
+      "additionalProperties": false,
+      "description": "Flexible but typed metadata structure for artifacts.\n\nUses TypedDict with total=False to allow partial metadata while maintaining\ntype hints for known fields.",
+      "properties": {
+        "agent_version": {
+          "title": "Agent Version",
+          "type": "string"
+        },
+        "execution_context": {
+          "title": "Execution Context",
+          "type": "string"
+        },
+        "custom_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Tags",
+          "type": "array"
+        },
+        "related_artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Artifacts",
+          "type": "array"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "execution_mode": {
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "ArtifactStatus": {
+      "description": "Status of an artifact during workflow execution.",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timeout",
+        "not_run"
+      ],
+      "title": "ArtifactStatus",
+      "type": "string"
+    },
+    "DocFileResult": {
+      "additionalProperties": false,
+      "description": "Result from documenting a single file.",
+      "properties": {
+        "file_path": {
+          "title": "File Path",
+          "type": "string"
+        },
+        "doc_type": {
+          "title": "Doc Type",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "output_file": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output File"
+        },
+        "lines_added": {
+          "default": 0,
+          "title": "Lines Added",
+          "type": "integer"
+        },
+        "lines_updated": {
+          "default": 0,
+          "title": "Lines Updated",
+          "type": "integer"
+        },
+        "error_message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Message"
+        },
+        "execution_time_seconds": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Execution Time Seconds"
+        }
+      },
+      "required": [
+        "file_path",
+        "doc_type",
+        "status"
+      ],
+      "title": "DocFileResult",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ArtifactStatus",
+      "default": "pending"
+    },
+    "worktree_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree Path"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlation Id"
+    },
+    "files_documented": {
+      "items": {
+        "$ref": "#/$defs/DocFileResult"
+      },
+      "title": "Files Documented",
+      "type": "array"
+    },
+    "total_files": {
+      "default": 0,
+      "title": "Total Files",
+      "type": "integer"
+    },
+    "successful_files": {
+      "default": 0,
+      "title": "Successful Files",
+      "type": "integer"
+    },
+    "failed_files": {
+      "default": 0,
+      "title": "Failed Files",
+      "type": "integer"
+    },
+    "skipped_files": {
+      "default": 0,
+      "title": "Skipped Files",
+      "type": "integer"
+    },
+    "total_lines_added": {
+      "default": 0,
+      "title": "Total Lines Added",
+      "type": "integer"
+    },
+    "total_lines_updated": {
+      "default": 0,
+      "title": "Total Lines Updated",
+      "type": "integer"
+    },
+    "doc_types": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Doc Types",
+      "type": "array"
+    },
+    "output_files": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Output Files",
+      "type": "array"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "cancelled": {
+      "default": false,
+      "title": "Cancelled",
+      "type": "boolean"
+    },
+    "timeout": {
+      "default": false,
+      "title": "Timeout",
+      "type": "boolean"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "type": "object"
+}

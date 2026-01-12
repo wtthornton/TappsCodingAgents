@@ -26,6 +26,8 @@ class TestDebuggerAgentInitialization:
         mock_config.agents.debugger = MagicMock()
         mock_config.agents.debugger.include_code_examples = True
         mock_config.agents.debugger.max_context_lines = 50
+        mock_config.context7 = MagicMock()
+        mock_config.context7.enabled = False
         mock_load_config.return_value = mock_config
         
         agent = DebuggerAgent()

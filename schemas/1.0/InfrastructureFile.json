@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/InfrastructureFile.json",
+  "title": "InfrastructureFile",
+  "description": "Infrastructure file created.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "file_path": {
+      "title": "File Path",
+      "type": "string"
+    },
+    "file_type": {
+      "title": "File Type",
+      "type": "string"
+    },
+    "status": {
+      "default": "created",
+      "title": "Status",
+      "type": "string"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Message"
+    }
+  },
+  "required": [
+    "file_path",
+    "file_type"
+  ],
+  "type": "object"
+}

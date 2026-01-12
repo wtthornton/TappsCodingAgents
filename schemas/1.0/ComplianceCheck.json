@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/ComplianceCheck.json",
+  "title": "ComplianceCheck",
+  "description": "Compliance check result.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "check": {
+      "title": "Check",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "message": {
+      "title": "Message",
+      "type": "string"
+    },
+    "recommendation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recommendation"
+    }
+  },
+  "required": [
+    "check",
+    "status",
+    "message"
+  ],
+  "type": "object"
+}

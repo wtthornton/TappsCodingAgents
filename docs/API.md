@@ -559,6 +559,93 @@ Reviewer Agent - Code review with Code Scoring.
 
 Tester Agent - Test generation and execution.
 
+## Data Models
+
+### Workflow Artifacts
+
+All workflow artifacts use Pydantic v2 BaseModel for type safety and validation:
+
+**Artifact Types**:
+- `PlanningArtifact` - User stories and planning data
+- `DesignArtifact` - Architecture and component design
+- `CodeArtifact` - Code generation artifacts
+- `ReviewArtifact` - Code review results
+- `TestingArtifact` - Test results and coverage
+- `QualityArtifact` - Quality analysis results
+- `OperationsArtifact` - Security, compliance, and deployment artifacts
+- `EnhancementArtifact` - Prompt enhancement artifacts
+- `DocumentationArtifact` - Documentation generation artifacts
+- `ContextArtifact` - Context analysis artifacts
+
+**Location**: `tapps_agents/workflow/*_artifact.py`
+
+**Usage**:
+```python
+from tapps_agents.workflow.planning_artifact import PlanningArtifact
+from tapps_agents.workflow.artifact_helper import load_artifact, write_artifact
+from tapps_agents.workflow.common_enums import ArtifactStatus
+
+# Load artifact (handles both old and new formats)
+artifact = load_artifact("planning.json", PlanningArtifact)
+
+# Create new artifact
+artifact = PlanningArtifact(
+    artifact_type="planning",
+    status=ArtifactStatus.COMPLETED,
+    user_stories=[...],
+)
+
+# Save artifact
+write_artifact(artifact, "planning.json")
+```
+
+### Enums
+
+Type-safe Python Enums for artifact fields:
+
+- `Priority` - Priority levels (HIGH, MEDIUM, LOW)
+- `ArtifactStatus` - Artifact execution status (PENDING, RUNNING, COMPLETED, etc.)
+- `RiskLevel` - Risk levels (LOW, MEDIUM, HIGH)
+- `OperationType` - Operation types (CREATE, UPDATE, DELETE, etc.)
+- `StoryStatus` - Story status (NOT_STARTED, IN_PROGRESS, DONE, etc.)
+
+**Location**: `tapps_agents/workflow/common_enums.py`
+
+### Structured Metadata Models
+
+Structured models for metadata, plans, inputs, and results:
+
+- `ArtifactMetadata` (TypedDict) - Flexible metadata structure
+- `PlanDetails` (BaseModel) - Structured plan information
+- `TaskInputs` (BaseModel) - Task input parameters
+- `TaskResults` (BaseModel) - Task output results
+- `RetryPolicy` (BaseModel) - Retry configuration
+
+**Location**: `tapps_agents/workflow/metadata_models.py`
+
+### JSON Schemas
+
+JSON Schema files for all artifact models are available in `schemas/1.0/`:
+
+```python
+import json
+import jsonschema
+
+# Load schema
+with open("schemas/1.0/PlanningArtifact.json") as f:
+    schema = json.load(f)
+
+# Validate artifact data
+jsonschema.validate(instance=artifact_data, schema=schema)
+```
+
+See `schemas/README.md` for complete schema documentation.
+
+### Migration Guide
+
+For detailed migration information, see:
+- **[Pydantic Migration Guide](IMPLEMENTATION/PYDANTIC_MIGRATION_GUIDE.md)** - Complete migration guide
+- **[Migration Status](IMPLEMENTATION/pydantic_migration_status.md)** - Migration status and completion details
 
 ## Related Documentation
 

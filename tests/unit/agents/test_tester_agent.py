@@ -28,6 +28,8 @@ class TestTesterAgentInitialization:
         mock_config.agents.tester.tests_dir = "tests"
         mock_config.agents.tester.coverage_threshold = 80.0
         mock_config.agents.tester.auto_write_tests = True
+        mock_config.context7 = MagicMock()
+        mock_config.context7.enabled = False
         mock_load_config.return_value = mock_config
         
         agent = TesterAgent()

@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/RetryPolicy.json",
+  "title": "RetryPolicy",
+  "description": "Structured retry policy for task assignments.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "max_retries": {
+      "default": 0,
+      "minimum": 0,
+      "title": "Max Retries",
+      "type": "integer"
+    },
+    "backoff_seconds": {
+      "default": 60,
+      "minimum": 0,
+      "title": "Backoff Seconds",
+      "type": "integer"
+    },
+    "backoff_multiplier": {
+      "default": 2.0,
+      "exclusiveMinimum": 0,
+      "title": "Backoff Multiplier",
+      "type": "number"
+    },
+    "max_backoff_seconds": {
+      "anyOf": [
+        {
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Max Backoff Seconds"
+    }
+  },
+  "type": "object"
+}

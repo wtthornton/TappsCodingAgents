@@ -48,6 +48,19 @@ class Context7AgentHelper:
         from datetime import datetime
         log_path = Path.cwd() / ".cursor" / "debug.log"
         try:
+            # Extract values before JSON serialization to handle MagicMock objects in tests
+            config_exists = config is not None
+            context7_config_exists = False
+            context7_enabled = False
+            if config and hasattr(config, 'context7'):
+                try:
+                    context7_config = config.context7
+                    context7_config_exists = context7_config is not None
+                    if context7_config_exists and hasattr(context7_config, 'enabled'):
+                        context7_enabled = bool(context7_config.enabled)
+                except (AttributeError, TypeError):
+                    pass
+            
             with open(log_path, "a", encoding="utf-8") as f:
                 f.write(json.dumps({
                     "sessionId": "debug-session",
@@ -55,7 +68,11 @@ class Context7AgentHelper:
                     "hypothesisId": "C",
                     "location": "context7/agent_integration.py:__init__:entry",
                     "message": "Context7AgentHelper __init__ called",
-                    "data": {"config_exists": config is not None, "context7_config_exists": config.context7 is not None if config else False, "context7_enabled": config.context7.enabled if config and config.context7 else False},
+                    "data": {
+                        "config_exists": config_exists,
+                        "context7_config_exists": context7_config_exists,
+                        "context7_enabled": context7_enabled
+                    },
                     "timestamp": int(datetime.now().timestamp() * 1000)
                 }) + "\n")
         except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit

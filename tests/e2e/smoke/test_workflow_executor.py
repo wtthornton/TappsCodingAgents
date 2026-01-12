@@ -19,7 +19,7 @@ from tapps_agents.workflow.parser import WorkflowParser
 class TestWorkflowExecutor:
     """Test workflow executor initialization and step advancement."""
 
-    def test_initialize_executor(self, e2e_project, mock_mal):
+    def test_initialize_executor(self, e2e_project):
         """Test workflow executor initialization."""
         executor = WorkflowExecutor(
             project_root=e2e_project,
@@ -31,7 +31,7 @@ class TestWorkflowExecutor:
         assert executor.state is None
         assert executor.workflow is None
 
-    def test_load_minimal_workflow(self, e2e_project, tmp_path, mock_mal):
+    def test_load_minimal_workflow(self, e2e_project, tmp_path):
         """Test loading a minimal workflow."""
         # Create a minimal workflow YAML
         workflow_file = tmp_path / "minimal_workflow.yaml"
@@ -67,7 +67,7 @@ workflow:
         assert executor.workflow.id == "minimal-test"
         assert len(executor.workflow.steps) == 2
 
-    def test_start_workflow(self, e2e_project, tmp_path, mock_mal):
+    def test_start_workflow(self, e2e_project, tmp_path):
         """Test starting a workflow."""
         # Create a minimal workflow
         workflow_file = tmp_path / "test_workflow.yaml"
@@ -103,7 +103,7 @@ workflow:
         assert state.current_step == "step1"
         assert len(state.completed_steps) == 0
 
-    def test_workflow_state_transitions(self, e2e_project, tmp_path, mock_mal):
+    def test_workflow_state_transitions(self, e2e_project, tmp_path):
         """Test workflow state transitions."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(
@@ -145,7 +145,7 @@ workflow:
         assert state.completed_steps is not None
         assert isinstance(state.completed_steps, list)
 
-    def test_step_execution_order(self, e2e_project, tmp_path, mock_mal):
+    def test_step_execution_order(self, e2e_project, tmp_path):
         """Test that step execution order is validated."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(
@@ -188,7 +188,7 @@ workflow:
         # Verify current step is first
         assert state.current_step == "step1"
 
-    def test_workflow_state_shape(self, e2e_project, tmp_path, mock_mal):
+    def test_workflow_state_shape(self, e2e_project, tmp_path):
         """Test that workflow state has correct shape/contract."""
         workflow_file = tmp_path / "test_workflow.yaml"
         workflow_file.write_text(

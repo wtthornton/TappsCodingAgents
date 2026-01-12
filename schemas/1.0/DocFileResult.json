@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/DocFileResult.json",
+  "title": "DocFileResult",
+  "description": "Result from documenting a single file.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "file_path": {
+      "title": "File Path",
+      "type": "string"
+    },
+    "doc_type": {
+      "title": "Doc Type",
+      "type": "string"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "output_file": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output File"
+    },
+    "lines_added": {
+      "default": 0,
+      "title": "Lines Added",
+      "type": "integer"
+    },
+    "lines_updated": {
+      "default": 0,
+      "title": "Lines Updated",
+      "type": "integer"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Message"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    }
+  },
+  "required": [
+    "file_path",
+    "doc_type",
+    "status"
+  ],
+  "type": "object"
+}

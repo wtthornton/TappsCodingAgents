@@ -1,0 +1,519 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/OperationsArtifact.json",
+  "title": "OperationsArtifact",
+  "description": "Versioned operations artifact.\n\nSchema version: 1.0\nMigrated to Pydantic BaseModel for runtime validation and type safety.",
+  "version": "1.0",
+  "$defs": {
+    "ArtifactMetadata": {
+      "additionalProperties": false,
+      "description": "Flexible but typed metadata structure for artifacts.\n\nUses TypedDict with total=False to allow partial metadata while maintaining\ntype hints for known fields.",
+      "properties": {
+        "agent_version": {
+          "title": "Agent Version",
+          "type": "string"
+        },
+        "execution_context": {
+          "title": "Execution Context",
+          "type": "string"
+        },
+        "custom_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Tags",
+          "type": "array"
+        },
+        "related_artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Artifacts",
+          "type": "array"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "execution_mode": {
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "ArtifactStatus": {
+      "description": "Status of an artifact during workflow execution.",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timeout",
+        "not_run"
+      ],
+      "title": "ArtifactStatus",
+      "type": "string"
+    },
+    "ComplianceCheck": {
+      "additionalProperties": false,
+      "description": "Compliance check result.",
+      "properties": {
+        "check": {
+          "title": "Check",
+          "type": "string"
+        },
+        "status": {
+          "title": "Status",
+          "type": "string"
+        },
+        "message": {
+          "title": "Message",
+          "type": "string"
+        },
+        "recommendation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recommendation"
+        }
+      },
+      "required": [
+        "check",
+        "status",
+        "message"
+      ],
+      "title": "ComplianceCheck",
+      "type": "object"
+    },
+    "DeploymentStep": {
+      "additionalProperties": false,
+      "description": "Deployment step.",
+      "properties": {
+        "step": {
+          "title": "Step",
+          "type": "integer"
+        },
+        "action": {
+          "title": "Action",
+          "type": "string"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Command"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "status": {
+          "default": "pending",
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step",
+        "action"
+      ],
+      "title": "DeploymentStep",
+      "type": "object"
+    },
+    "InfrastructureFile": {
+      "additionalProperties": false,
+      "description": "Infrastructure file created.",
+      "properties": {
+        "file_path": {
+          "title": "File Path",
+          "type": "string"
+        },
+        "file_type": {
+          "title": "File Type",
+          "type": "string"
+        },
+        "status": {
+          "default": "created",
+          "title": "Status",
+          "type": "string"
+        },
+        "error_message": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Message"
+        }
+      },
+      "required": [
+        "file_path",
+        "file_type"
+      ],
+      "title": "InfrastructureFile",
+      "type": "object"
+    },
+    "OperationType": {
+      "description": "Type of operation performed by an agent.",
+      "enum": [
+        "plan",
+        "create-story",
+        "list-stories",
+        "design-system",
+        "create-diagram",
+        "select-technology",
+        "design-security",
+        "define-boundaries",
+        "write-code",
+        "refactor",
+        "generate-code",
+        "review-code",
+        "score-code",
+        "lint-code",
+        "type-check",
+        "security-scan",
+        "write-tests",
+        "run-tests",
+        "generate-tests",
+        "document",
+        "generate-docs",
+        "update-readme",
+        "document-api",
+        "enhance-prompt",
+        "enhance-quick",
+        "enhance-stage",
+        "security-audit",
+        "compliance-check",
+        "deploy",
+        "infrastructure-setup",
+        "dependency-audit"
+      ],
+      "title": "OperationType",
+      "type": "string"
+    },
+    "SecurityIssue": {
+      "additionalProperties": false,
+      "description": "Security issue found during scanning.",
+      "properties": {
+        "severity": {
+          "title": "Severity",
+          "type": "string"
+        },
+        "issue_type": {
+          "title": "Issue Type",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "file_path": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "File Path"
+        },
+        "line": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Line"
+        },
+        "recommendation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recommendation"
+        }
+      },
+      "required": [
+        "severity",
+        "issue_type",
+        "description"
+      ],
+      "title": "SecurityIssue",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ArtifactStatus",
+      "default": "pending"
+    },
+    "worktree_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree Path"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlation Id"
+    },
+    "operation_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OperationType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "security_issues": {
+      "items": {
+        "$ref": "#/$defs/SecurityIssue"
+      },
+      "title": "Security Issues",
+      "type": "array"
+    },
+    "security_issue_count": {
+      "default": 0,
+      "title": "Security Issue Count",
+      "type": "integer"
+    },
+    "security_severity_breakdown": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Security Severity Breakdown",
+      "type": "object"
+    },
+    "compliance_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Compliance Type"
+    },
+    "compliance_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Compliance Status"
+    },
+    "compliance_checks": {
+      "items": {
+        "$ref": "#/$defs/ComplianceCheck"
+      },
+      "title": "Compliance Checks",
+      "type": "array"
+    },
+    "deployment_target": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Target"
+    },
+    "deployment_environment": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Environment"
+    },
+    "deployment_steps": {
+      "items": {
+        "$ref": "#/$defs/DeploymentStep"
+      },
+      "title": "Deployment Steps",
+      "type": "array"
+    },
+    "deployment_status": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Status"
+    },
+    "infrastructure_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Infrastructure Type"
+    },
+    "infrastructure_files": {
+      "items": {
+        "$ref": "#/$defs/InfrastructureFile"
+      },
+      "title": "Infrastructure Files",
+      "type": "array"
+    },
+    "dependency_vulnerabilities": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Dependency Vulnerabilities",
+      "type": "array"
+    },
+    "vulnerability_count": {
+      "default": 0,
+      "title": "Vulnerability Count",
+      "type": "integer"
+    },
+    "severity_breakdown": {
+      "additionalProperties": {
+        "type": "integer"
+      },
+      "title": "Severity Breakdown",
+      "type": "object"
+    },
+    "tools_available": {
+      "additionalProperties": {
+        "type": "boolean"
+      },
+      "title": "Tools Available",
+      "type": "object"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "cancelled": {
+      "default": false,
+      "title": "Cancelled",
+      "type": "boolean"
+    },
+    "timeout": {
+      "default": false,
+      "title": "Timeout",
+      "type": "boolean"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "type": "object"
+}

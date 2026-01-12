@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/CoverageSummary.json",
+  "title": "CoverageSummary",
+  "description": "Test coverage summary.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "total_lines": {
+      "default": 0,
+      "title": "Total Lines",
+      "type": "integer"
+    },
+    "covered_lines": {
+      "default": 0,
+      "title": "Covered Lines",
+      "type": "integer"
+    },
+    "coverage_percentage": {
+      "default": 0.0,
+      "title": "Coverage Percentage",
+      "type": "number"
+    },
+    "missing_lines": {
+      "items": {
+        "type": "integer"
+      },
+      "title": "Missing Lines",
+      "type": "array"
+    },
+    "branch_coverage": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Branch Coverage"
+    },
+    "statement_coverage": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Statement Coverage"
+    }
+  },
+  "type": "object"
+}

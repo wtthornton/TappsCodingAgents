@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/DeploymentStep.json",
+  "title": "DeploymentStep",
+  "description": "Deployment step.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "step": {
+      "title": "Step",
+      "type": "integer"
+    },
+    "action": {
+      "title": "Action",
+      "type": "string"
+    },
+    "command": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Command"
+    },
+    "description": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Description"
+    },
+    "status": {
+      "default": "pending",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "step",
+    "action"
+  ],
+  "type": "object"
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/SecurityIssue.json",
+  "title": "SecurityIssue",
+  "description": "Security issue found during scanning.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "severity": {
+      "title": "Severity",
+      "type": "string"
+    },
+    "issue_type": {
+      "title": "Issue Type",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "file_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "File Path"
+    },
+    "line": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Line"
+    },
+    "recommendation": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Recommendation"
+    }
+  },
+  "required": [
+    "severity",
+    "issue_type",
+    "description"
+  ],
+  "type": "object"
+}

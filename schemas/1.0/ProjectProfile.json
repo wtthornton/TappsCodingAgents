@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/ProjectProfile.json",
+  "title": "ProjectProfile",
+  "description": "Project profiling information.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "deployment_type": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Deployment Type"
+    },
+    "tenancy": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Tenancy"
+    },
+    "user_scale": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "User Scale"
+    },
+    "compliance": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Compliance",
+      "type": "array"
+    },
+    "security_posture": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Security Posture"
+    },
+    "relevant_experts": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Relevant Experts",
+      "type": "array"
+    }
+  },
+  "type": "object"
+}

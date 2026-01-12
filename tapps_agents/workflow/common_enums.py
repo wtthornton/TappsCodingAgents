@@ -35,6 +35,16 @@ class RiskLevel(str, Enum):
     HIGH = "high"
 
 
+class StoryStatus(str, Enum):
+    """Story execution status."""
+
+    NOT_STARTED = "not_started"
+    IN_PROGRESS = "in_progress"
+    DONE = "done"
+    BLOCKED = "blocked"
+    FAILED = "failed"
+
+
 class OperationType(str, Enum):
     """Type of operation performed by an agent."""
 

@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/ReviewComment.json",
+  "title": "ReviewComment",
+  "description": "A single review comment.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "file": {
+      "title": "File",
+      "type": "string"
+    },
+    "line": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Line"
+    },
+    "severity": {
+      "default": "suggestion",
+      "title": "Severity",
+      "type": "string"
+    },
+    "message": {
+      "default": "",
+      "title": "Message",
+      "type": "string"
+    },
+    "category": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Category"
+    }
+  },
+  "required": [
+    "file"
+  ],
+  "type": "object"
+}

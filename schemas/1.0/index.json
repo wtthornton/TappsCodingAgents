@@ -1,0 +1,158 @@
+{
+  "schema_version": "1.0",
+  "generated_at": "2026-01-11T16:12:11.075417",
+  "schemas": {
+    "PlanningArtifact": {
+      "file": "1.0\\PlanningArtifact.json",
+      "model": "PlanningArtifact"
+    },
+    "DesignArtifact": {
+      "file": "1.0\\DesignArtifact.json",
+      "model": "DesignArtifact"
+    },
+    "CodeArtifact": {
+      "file": "1.0\\CodeArtifact.json",
+      "model": "CodeArtifact"
+    },
+    "ReviewArtifact": {
+      "file": "1.0\\ReviewArtifact.json",
+      "model": "ReviewArtifact"
+    },
+    "TestingArtifact": {
+      "file": "1.0\\TestingArtifact.json",
+      "model": "TestingArtifact"
+    },
+    "QualityArtifact": {
+      "file": "1.0\\QualityArtifact.json",
+      "model": "QualityArtifact"
+    },
+    "OperationsArtifact": {
+      "file": "1.0\\OperationsArtifact.json",
+      "model": "OperationsArtifact"
+    },
+    "EnhancementArtifact": {
+      "file": "1.0\\EnhancementArtifact.json",
+      "model": "EnhancementArtifact"
+    },
+    "DocumentationArtifact": {
+      "file": "1.0\\DocumentationArtifact.json",
+      "model": "DocumentationArtifact"
+    },
+    "ContextArtifact": {
+      "file": "1.0\\ContextArtifact.json",
+      "model": "ContextArtifact"
+    },
+    "Component": {
+      "file": "1.0\\Component.json",
+      "model": "Component"
+    },
+    "CodeChange": {
+      "file": "1.0\\CodeChange.json",
+      "model": "CodeChange"
+    },
+    "ReviewComment": {
+      "file": "1.0\\ReviewComment.json",
+      "model": "ReviewComment"
+    },
+    "TestResult": {
+      "file": "1.0\\TestResult.json",
+      "model": "TestResult"
+    },
+    "CoverageSummary": {
+      "file": "1.0\\CoverageSummary.json",
+      "model": "CoverageSummary"
+    },
+    "ToolResult": {
+      "file": "1.0\\ToolResult.json",
+      "model": "ToolResult"
+    },
+    "SecurityIssue": {
+      "file": "1.0\\SecurityIssue.json",
+      "model": "SecurityIssue"
+    },
+    "ComplianceCheck": {
+      "file": "1.0\\ComplianceCheck.json",
+      "model": "ComplianceCheck"
+    },
+    "DeploymentStep": {
+      "file": "1.0\\DeploymentStep.json",
+      "model": "DeploymentStep"
+    },
+    "InfrastructureFile": {
+      "file": "1.0\\InfrastructureFile.json",
+      "model": "InfrastructureFile"
+    },
+    "EnhancementStage": {
+      "file": "1.0\\EnhancementStage.json",
+      "model": "EnhancementStage"
+    },
+    "DocFileResult": {
+      "file": "1.0\\DocFileResult.json",
+      "model": "DocFileResult"
+    },
+    "LibraryCacheEntry": {
+      "file": "1.0\\LibraryCacheEntry.json",
+      "model": "LibraryCacheEntry"
+    },
+    "ProjectProfile": {
+      "file": "1.0\\ProjectProfile.json",
+      "model": "ProjectProfile"
+    },
+    "PlanDetails": {
+      "file": "1.0\\PlanDetails.json",
+      "model": "PlanDetails"
+    },
+    "TaskInputs": {
+      "file": "1.0\\TaskInputs.json",
+      "model": "TaskInputs"
+    },
+    "TaskResults": {
+      "file": "1.0\\TaskResults.json",
+      "model": "TaskResults"
+    },
+    "RetryPolicy": {
+      "file": "1.0\\RetryPolicy.json",
+      "model": "RetryPolicy"
+    },
+    "Story": {
+      "file": "1.0\\Story.json",
+      "model": "Story"
+    }
+  },
+  "artifact_models": [
+    "PlanningArtifact",
+    "DesignArtifact",
+    "CodeArtifact",
+    "ReviewArtifact",
+    "TestingArtifact",
+    "QualityArtifact",
+    "OperationsArtifact",
+    "EnhancementArtifact",
+    "DocumentationArtifact",
+    "ContextArtifact"
+  ],
+  "nested_models": [
+    "Component",
+    "CodeChange",
+    "ReviewComment",
+    "TestResult",
+    "CoverageSummary",
+    "ToolResult",
+    "SecurityIssue",
+    "ComplianceCheck",
+    "DeploymentStep",
+    "InfrastructureFile",
+    "EnhancementStage",
+    "DocFileResult",
+    "LibraryCacheEntry",
+    "ProjectProfile",
+    "AcceptanceCriterion",
+    "Story",
+    "EpicDocument",
+    "PlanDetails",
+    "TaskInputs",
+    "TaskResults",
+    "RetryPolicy",
+    "Story"
+  ]
+}

@@ -12,8 +12,7 @@ from typing import Any
 
 from pydantic import BaseModel, Field
 
-from ..epic.models import StoryStatus
-from .common_enums import Priority, RiskLevel
+from .common_enums import Priority, RiskLevel, StoryStatus
 
 
 class AcceptanceCriterion(BaseModel):

@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/Story.json",
+  "title": "Story",
+  "description": "Unified story model for all workflows.\n\nCombines features from UserStory (PlanningArtifact) and Story (Epic models)\nto provide a single, flexible story model that works across all workflows.\n\nStory ID format is flexible: supports both numeric (e.g., \"8.1\") and\nsemantic (e.g., \"auth-001\") formats.",
+  "version": "1.0",
+  "$defs": {
+    "AcceptanceCriterion": {
+      "additionalProperties": false,
+      "description": "Acceptance criterion for a story.",
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "verified": {
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        },
+        "verification_method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verification Method"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "title": "AcceptanceCriterion",
+      "type": "object"
+    },
+    "Priority": {
+      "description": "Priority level for stories, tasks, and artifacts.",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Priority",
+      "type": "string"
+    },
+    "RiskLevel": {
+      "description": "Risk level for stories, tasks, and features.",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    },
+    "StoryStatus": {
+      "description": "Story execution status.",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "done",
+        "blocked",
+        "failed"
+      ],
+      "title": "StoryStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "story_id": {
+      "title": "Story Id",
+      "type": "string"
+    },
+    "title": {
+      "title": "Title",
+      "type": "string"
+    },
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "acceptance_criteria": {
+      "items": {
+        "$ref": "#/$defs/AcceptanceCriterion"
+      },
+      "title": "Acceptance Criteria",
+      "type": "array"
+    },
+    "epic": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Epic"
+    },
+    "domain": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Domain"
+    },
+    "priority": {
+      "$ref": "#/$defs/Priority",
+      "default": "medium"
+    },
+    "complexity": {
+      "default": 3,
+      "maximum": 5,
+      "minimum": 1,
+      "title": "Complexity",
+      "type": "integer"
+    },
+    "status": {
+      "$ref": "#/$defs/StoryStatus",
+      "default": "not_started"
+    },
+    "story_points": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Story Points"
+    },
+    "estimated_effort_hours": {
+      "anyOf": [
+        {
+          "exclusiveMinimum": 0,
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Estimated Effort Hours"
+    },
+    "risk_level": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/RiskLevel"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "dependencies": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "tasks": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tasks",
+      "type": "array"
+    },
+    "file_path": {
+      "anyOf": [
+        {
+          "format": "path",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "File Path"
+    }
+  },
+  "required": [
+    "story_id",
+    "title",
+    "description"
+  ],
+  "type": "object"
+}

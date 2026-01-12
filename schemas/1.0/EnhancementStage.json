@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/EnhancementStage.json",
+  "title": "EnhancementStage",
+  "description": "Represents a single enhancement stage result.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "stage_name": {
+      "title": "Stage Name",
+      "type": "string"
+    },
+    "status": {
+      "default": "pending",
+      "title": "Status",
+      "type": "string"
+    },
+    "output": {
+      "additionalProperties": true,
+      "title": "Output",
+      "type": "object"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    }
+  },
+  "required": [
+    "stage_name"
+  ],
+  "type": "object"
+}

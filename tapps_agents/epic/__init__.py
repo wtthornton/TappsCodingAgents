@@ -5,7 +5,9 @@ This module provides Epic document parsing and workflow orchestration
 for executing Epic stories in dependency order.
 """
 
-from .models import AcceptanceCriterion, EpicDocument, Story, StoryStatus
+from ..workflow.common_enums import StoryStatus
+
+from .models import AcceptanceCriterion, EpicDocument, Story
 from .orchestrator import EpicOrchestrator
 from .parser import EpicParser
 

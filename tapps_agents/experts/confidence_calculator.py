@@ -186,7 +186,19 @@ class ConfidenceCalculator:
             return 0.0  # Neutral if no profile or responses
 
         # Extract answers from responses
-        answers = [r.get("answer", "") for r in responses if "error" not in r]
+        # Answers may be GenericInstruction objects or strings
+        from ..core.instructions import GenericInstruction
+        answers = []
+        for r in responses:
+            if "error" not in r:
+                answer = r.get("answer", "")
+                # Convert GenericInstruction to string (use prompt field)
+                if isinstance(answer, GenericInstruction):
+                    answer = answer.prompt
+                elif not isinstance(answer, str):
+                    answer = str(answer)
+                if answer:
+                    answers.append(answer)
         if not answers:
             return 0.0
 

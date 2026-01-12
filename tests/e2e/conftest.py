@@ -178,6 +178,18 @@ def workflow_project(e2e_project: Path) -> Path:
     return e2e_project
 
 
+# mock_mal fixture for backward compatibility (not used by agents, but required by some tests)
+@pytest.fixture
+def mock_mal():
+    """
+    Mock MAL fixture for backward compatibility.
+    
+    Agents no longer use MAL, but some tests still reference this fixture.
+    This fixture returns None as the parameter is ignored by create_test_agent.
+    """
+    return None
+
+
 # Behavioral mock fixtures
 @pytest.fixture
 def behavioral_mock_planner() -> MockPlanner:

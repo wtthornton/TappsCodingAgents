@@ -22,6 +22,8 @@ class TestEnhancerAgentInitialization:
     def test_enhancer_agent_init(self, mock_load_config):
         """Test EnhancerAgent initialization."""
         mock_config = MagicMock()
+        mock_config.context7 = MagicMock()
+        mock_config.context7.enabled = False
         mock_load_config.return_value = mock_config
         
         agent = EnhancerAgent()

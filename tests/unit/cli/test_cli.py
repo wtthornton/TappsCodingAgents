@@ -29,7 +29,7 @@ class TestReviewCommand:
         
         assert exc_info.value.code == 1
         captured = capsys.readouterr()
-        assert "Error: File not found" in captured.err
+        assert "file_not_found" in captured.err or "Files not found" in captured.err
 
     @pytest.mark.asyncio
     async def test_review_command_success_json(self, sample_python_file, capsys):

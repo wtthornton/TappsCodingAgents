@@ -24,6 +24,7 @@ class TestFindRelatedFiles:
         agent = EnhancerAgent()
         agent.config = MagicMock()
         agent.config.project_root = tmp_path
+        agent._project_root = tmp_path  # Set the attribute used by _find_related_files
         return agent
 
     @pytest.mark.asyncio
@@ -340,6 +341,7 @@ class TestGenerateContextSummary:
         agent = EnhancerAgent()
         agent.config = MagicMock()
         agent.config.project_root = tmp_path
+        agent._project_root = tmp_path  # Set the attribute used by _find_related_files
         return agent
 
     def test_generate_context_summary_with_data(self, enhancer_agent, tmp_path):
@@ -409,6 +411,7 @@ class TestStageCodebaseContext:
         agent = EnhancerAgent()
         agent.config = MagicMock()
         agent.config.project_root = tmp_path
+        agent._project_root = tmp_path  # Set the attribute used by _find_related_files
         return agent
 
     @pytest.mark.asyncio

@@ -1,44 +1,43 @@
 """
 Data models for Epic parsing and orchestration.
+
+Migrated to Pydantic BaseModel for runtime validation and type safety.
 """
 
-from dataclasses import dataclass, field
+from __future__ import annotations
+
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, Field
 
-class StoryStatus(str, Enum):
-    """Story execution status."""
-
-    NOT_STARTED = "not_started"
-    IN_PROGRESS = "in_progress"
-    DONE = "done"
-    BLOCKED = "blocked"
-    FAILED = "failed"
+from ..workflow.common_enums import Priority, StoryStatus
 
 
-@dataclass
-class AcceptanceCriterion:
+class AcceptanceCriterion(BaseModel):
     """Acceptance criterion for a story."""
 
     description: str
     verified: bool = False
 
+    model_config = {"extra": "forbid"}
 
-@dataclass
-class Story:
+
+class Story(BaseModel):
     """Represents a single story within an Epic."""
 
     epic_number: int
     story_number: int
     title: str
     description: str
-    acceptance_criteria: list[AcceptanceCriterion] = field(default_factory=list)
-    dependencies: list[str] = field(default_factory=list)  # Story IDs like "8.1", "8.2"
-    story_points: int | None = None
+    acceptance_criteria: list[AcceptanceCriterion] = Field(default_factory=list)
+    dependencies: list[str] = Field(default_factory=list)  # Story IDs like "8.1", "8.2"
+    story_points: int | None = Field(default=None, ge=1)
     status: StoryStatus = StoryStatus.NOT_STARTED
     file_path: Path | None = None  # Path to story file if exists
+
+    model_config = {"extra": "forbid"}
 
     @property
     def story_id(self) -> str:
@@ -55,22 +54,23 @@ class Story:
         return other_story_id in self.dependencies
 
 
-@dataclass
-class EpicDocument:
+class EpicDocument(BaseModel):
     """Represents a parsed Epic document."""
 
     epic_number: int
     title: str
     goal: str
     description: str
-    stories: list[Story] = field(default_factory=list)
-    priority: str | None = None
+    stories: list[Story] = Field(default_factory=list)
+    priority: Priority | None = None
     timeline: str | None = None
-    prerequisites: list[str] = field(default_factory=list)
-    execution_notes: dict[str, Any] = field(default_factory=dict)
-    definition_of_done: list[str] = field(default_factory=list)
+    prerequisites: list[str] = Field(default_factory=list)
+    execution_notes: dict[str, Any] = Field(default_factory=dict)
+    definition_of_done: list[str] = Field(default_factory=list)
     status: str | None = None
     file_path: Path | None = None
+
+    model_config = {"extra": "forbid"}
 
     def get_story(self, story_id: str) -> Story | None:
         """Get a story by its ID (e.g., '8.1')."""

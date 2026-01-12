@@ -1,0 +1,313 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/DesignArtifact.json",
+  "title": "DesignArtifact",
+  "description": "Versioned design and architecture artifact.\n\nSchema version: 1.0\nMigrated to Pydantic BaseModel for runtime validation and type safety.",
+  "version": "1.0",
+  "$defs": {
+    "ArtifactMetadata": {
+      "additionalProperties": false,
+      "description": "Flexible but typed metadata structure for artifacts.\n\nUses TypedDict with total=False to allow partial metadata while maintaining\ntype hints for known fields.",
+      "properties": {
+        "agent_version": {
+          "title": "Agent Version",
+          "type": "string"
+        },
+        "execution_context": {
+          "title": "Execution Context",
+          "type": "string"
+        },
+        "custom_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Tags",
+          "type": "array"
+        },
+        "related_artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Artifacts",
+          "type": "array"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "execution_mode": {
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "ArtifactStatus": {
+      "description": "Status of an artifact during workflow execution.",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timeout",
+        "not_run"
+      ],
+      "title": "ArtifactStatus",
+      "type": "string"
+    },
+    "Component": {
+      "additionalProperties": false,
+      "description": "Represents a system component.",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "component_type": {
+          "title": "Component Type",
+          "type": "string"
+        },
+        "technology": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Technology"
+        },
+        "description": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Description"
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "expert_recommendations": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Expert Recommendations",
+          "type": "object"
+        }
+      },
+      "required": [
+        "name",
+        "component_type"
+      ],
+      "title": "Component",
+      "type": "object"
+    },
+    "OperationType": {
+      "description": "Type of operation performed by an agent.",
+      "enum": [
+        "plan",
+        "create-story",
+        "list-stories",
+        "design-system",
+        "create-diagram",
+        "select-technology",
+        "design-security",
+        "define-boundaries",
+        "write-code",
+        "refactor",
+        "generate-code",
+        "review-code",
+        "score-code",
+        "lint-code",
+        "type-check",
+        "security-scan",
+        "write-tests",
+        "run-tests",
+        "generate-tests",
+        "document",
+        "generate-docs",
+        "update-readme",
+        "document-api",
+        "enhance-prompt",
+        "enhance-quick",
+        "enhance-stage",
+        "security-audit",
+        "compliance-check",
+        "deploy",
+        "infrastructure-setup",
+        "dependency-audit"
+      ],
+      "title": "OperationType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ArtifactStatus",
+      "default": "pending"
+    },
+    "worktree_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree Path"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlation Id"
+    },
+    "operation_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OperationType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "architecture_style": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Architecture Style"
+    },
+    "components": {
+      "items": {
+        "$ref": "#/$defs/Component"
+      },
+      "title": "Components",
+      "type": "array"
+    },
+    "technology_stack": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Technology Stack",
+      "type": "array"
+    },
+    "system_design": {
+      "additionalProperties": true,
+      "title": "System Design",
+      "type": "object"
+    },
+    "database_schema": {
+      "additionalProperties": true,
+      "title": "Database Schema",
+      "type": "object"
+    },
+    "api_design": {
+      "additionalProperties": true,
+      "title": "Api Design",
+      "type": "object"
+    },
+    "security_design": {
+      "additionalProperties": true,
+      "title": "Security Design",
+      "type": "object"
+    },
+    "boundaries": {
+      "additionalProperties": true,
+      "title": "Boundaries",
+      "type": "object"
+    },
+    "diagrams": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Diagrams",
+      "type": "array"
+    },
+    "expert_guidance": {
+      "additionalProperties": true,
+      "title": "Expert Guidance",
+      "type": "object"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "cancelled": {
+      "default": false,
+      "title": "Cancelled",
+      "type": "boolean"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "type": "object"
+}

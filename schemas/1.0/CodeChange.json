@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/CodeChange.json",
+  "title": "CodeChange",
+  "description": "Represents a single code change.",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "file_path": {
+      "title": "File Path",
+      "type": "string"
+    },
+    "change_type": {
+      "title": "Change Type",
+      "type": "string"
+    },
+    "lines_added": {
+      "default": 0,
+      "title": "Lines Added",
+      "type": "integer"
+    },
+    "lines_removed": {
+      "default": 0,
+      "title": "Lines Removed",
+      "type": "integer"
+    },
+    "functions_added": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Functions Added",
+      "type": "array"
+    },
+    "functions_modified": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Functions Modified",
+      "type": "array"
+    },
+    "functions_removed": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Functions Removed",
+      "type": "array"
+    },
+    "complexity_before": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Complexity Before"
+    },
+    "complexity_after": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Complexity After"
+    },
+    "status": {
+      "default": "pending",
+      "title": "Status",
+      "type": "string"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Message"
+    }
+  },
+  "required": [
+    "file_path",
+    "change_type"
+  ],
+  "type": "object"
+}

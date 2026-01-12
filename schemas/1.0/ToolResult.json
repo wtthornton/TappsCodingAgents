@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/ToolResult.json",
+  "title": "ToolResult",
+  "description": "Result from a single quality tool (Ruff, mypy, etc.).",
+  "version": "1.0",
+  "additionalProperties": false,
+  "properties": {
+    "tool_name": {
+      "title": "Tool Name",
+      "type": "string"
+    },
+    "available": {
+      "title": "Available",
+      "type": "boolean"
+    },
+    "status": {
+      "title": "Status",
+      "type": "string"
+    },
+    "issues": {
+      "items": {
+        "additionalProperties": true,
+        "type": "object"
+      },
+      "title": "Issues",
+      "type": "array"
+    },
+    "issue_count": {
+      "default": 0,
+      "title": "Issue Count",
+      "type": "integer"
+    },
+    "error_count": {
+      "default": 0,
+      "title": "Error Count",
+      "type": "integer"
+    },
+    "warning_count": {
+      "default": 0,
+      "title": "Warning Count",
+      "type": "integer"
+    },
+    "error_message": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error Message"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    }
+  },
+  "required": [
+    "tool_name",
+    "available",
+    "status"
+  ],
+  "type": "object"
+}

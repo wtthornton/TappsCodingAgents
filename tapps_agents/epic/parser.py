@@ -9,6 +9,8 @@ import re
 from pathlib import Path
 from typing import Any
 
+from ..workflow.common_enums import Priority
+
 from .models import AcceptanceCriterion, EpicDocument, Story
 
 
@@ -136,13 +138,20 @@ class EpicParser:
             return desc_match.group(1).strip()
         return ""
 
-    def _extract_priority(self, content: str) -> str | None:
+    def _extract_priority(self, content: str) -> Priority | None:
         """Extract priority from content."""
         # Look for "Priority: High" or similar patterns
         match = re.search(
             r"(?:Priority|priority):\s*(\w+)", content, re.IGNORECASE | re.MULTILINE
         )
-        return match.group(1).strip() if match else None
+        if not match:
+            return None
+        priority_str = match.group(1).strip().lower()
+        try:
+            return Priority(priority_str)
+        except ValueError:
+            # If priority string doesn't match enum, return None
+            return None
 
     def _extract_timeline(self, content: str) -> str | None:
         """Extract timeline from content."""

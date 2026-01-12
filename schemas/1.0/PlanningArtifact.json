@@ -1,0 +1,492 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/PlanningArtifact.json",
+  "title": "PlanningArtifact",
+  "description": "Versioned planning artifact.\n\nSchema version: 1.0\nMigrated to Pydantic BaseModel for runtime validation and type safety.",
+  "version": "1.0",
+  "$defs": {
+    "AcceptanceCriterion": {
+      "additionalProperties": false,
+      "description": "Acceptance criterion for a story.",
+      "properties": {
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "verified": {
+          "default": false,
+          "title": "Verified",
+          "type": "boolean"
+        },
+        "verification_method": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Verification Method"
+        }
+      },
+      "required": [
+        "description"
+      ],
+      "title": "AcceptanceCriterion",
+      "type": "object"
+    },
+    "ArtifactMetadata": {
+      "additionalProperties": false,
+      "description": "Flexible but typed metadata structure for artifacts.\n\nUses TypedDict with total=False to allow partial metadata while maintaining\ntype hints for known fields.",
+      "properties": {
+        "agent_version": {
+          "title": "Agent Version",
+          "type": "string"
+        },
+        "execution_context": {
+          "title": "Execution Context",
+          "type": "string"
+        },
+        "custom_tags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Custom Tags",
+          "type": "array"
+        },
+        "related_artifacts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Related Artifacts",
+          "type": "array"
+        },
+        "workflow_id": {
+          "title": "Workflow Id",
+          "type": "string"
+        },
+        "step_id": {
+          "title": "Step Id",
+          "type": "string"
+        },
+        "agent_id": {
+          "title": "Agent Id",
+          "type": "string"
+        },
+        "execution_mode": {
+          "title": "Execution Mode",
+          "type": "string"
+        }
+      },
+      "title": "ArtifactMetadata",
+      "type": "object"
+    },
+    "ArtifactStatus": {
+      "description": "Status of an artifact during workflow execution.",
+      "enum": [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+        "timeout",
+        "not_run"
+      ],
+      "title": "ArtifactStatus",
+      "type": "string"
+    },
+    "OperationType": {
+      "description": "Type of operation performed by an agent.",
+      "enum": [
+        "plan",
+        "create-story",
+        "list-stories",
+        "design-system",
+        "create-diagram",
+        "select-technology",
+        "design-security",
+        "define-boundaries",
+        "write-code",
+        "refactor",
+        "generate-code",
+        "review-code",
+        "score-code",
+        "lint-code",
+        "type-check",
+        "security-scan",
+        "write-tests",
+        "run-tests",
+        "generate-tests",
+        "document",
+        "generate-docs",
+        "update-readme",
+        "document-api",
+        "enhance-prompt",
+        "enhance-quick",
+        "enhance-stage",
+        "security-audit",
+        "compliance-check",
+        "deploy",
+        "infrastructure-setup",
+        "dependency-audit"
+      ],
+      "title": "OperationType",
+      "type": "string"
+    },
+    "PlanDetails": {
+      "additionalProperties": false,
+      "description": "Structured plan information for planning artifacts.",
+      "properties": {
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        },
+        "estimated_duration_hours": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Duration Hours"
+        },
+        "key_risks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Key Risks",
+          "type": "array"
+        },
+        "assumptions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Assumptions",
+          "type": "array"
+        },
+        "constraints": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Constraints",
+          "type": "array"
+        },
+        "objectives": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Objectives",
+          "type": "array"
+        },
+        "success_criteria": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Success Criteria",
+          "type": "array"
+        }
+      },
+      "required": [
+        "summary"
+      ],
+      "title": "PlanDetails",
+      "type": "object"
+    },
+    "Priority": {
+      "description": "Priority level for stories, tasks, and artifacts.",
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ],
+      "title": "Priority",
+      "type": "string"
+    },
+    "RiskLevel": {
+      "description": "Risk level for stories, tasks, and features.",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "title": "RiskLevel",
+      "type": "string"
+    },
+    "Story": {
+      "additionalProperties": false,
+      "description": "Unified story model for all workflows.\n\nCombines features from UserStory (PlanningArtifact) and Story (Epic models)\nto provide a single, flexible story model that works across all workflows.\n\nStory ID format is flexible: supports both numeric (e.g., \"8.1\") and\nsemantic (e.g., \"auth-001\") formats.",
+      "properties": {
+        "story_id": {
+          "title": "Story Id",
+          "type": "string"
+        },
+        "title": {
+          "title": "Title",
+          "type": "string"
+        },
+        "description": {
+          "title": "Description",
+          "type": "string"
+        },
+        "acceptance_criteria": {
+          "items": {
+            "$ref": "#/$defs/AcceptanceCriterion"
+          },
+          "title": "Acceptance Criteria",
+          "type": "array"
+        },
+        "epic": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Epic"
+        },
+        "domain": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Domain"
+        },
+        "priority": {
+          "$ref": "#/$defs/Priority",
+          "default": "medium"
+        },
+        "complexity": {
+          "default": 3,
+          "maximum": 5,
+          "minimum": 1,
+          "title": "Complexity",
+          "type": "integer"
+        },
+        "status": {
+          "$ref": "#/$defs/StoryStatus",
+          "default": "not_started"
+        },
+        "story_points": {
+          "anyOf": [
+            {
+              "minimum": 1,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Story Points"
+        },
+        "estimated_effort_hours": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Estimated Effort Hours"
+        },
+        "risk_level": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/RiskLevel"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "dependencies": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "tasks": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Tasks",
+          "type": "array"
+        },
+        "file_path": {
+          "anyOf": [
+            {
+              "format": "path",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "File Path"
+        }
+      },
+      "required": [
+        "story_id",
+        "title",
+        "description"
+      ],
+      "title": "Story",
+      "type": "object"
+    },
+    "StoryStatus": {
+      "description": "Story execution status.",
+      "enum": [
+        "not_started",
+        "in_progress",
+        "done",
+        "blocked",
+        "failed"
+      ],
+      "title": "StoryStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "default": "1.0",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "timestamp": {
+      "title": "Timestamp",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/ArtifactStatus",
+      "default": "pending"
+    },
+    "worktree_path": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Worktree Path"
+    },
+    "correlation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Correlation Id"
+    },
+    "operation_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/OperationType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "plan": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PlanDetails"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "user_stories": {
+      "items": {
+        "$ref": "#/$defs/Story"
+      },
+      "title": "User Stories",
+      "type": "array"
+    },
+    "total_stories": {
+      "default": 0,
+      "title": "Total Stories",
+      "type": "integer"
+    },
+    "total_estimated_hours": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Total Estimated Hours"
+    },
+    "high_priority_stories": {
+      "default": 0,
+      "title": "High Priority Stories",
+      "type": "integer"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "cancelled": {
+      "default": false,
+      "title": "Cancelled",
+      "type": "boolean"
+    },
+    "execution_time_seconds": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Execution Time Seconds"
+    },
+    "metadata": {
+      "$ref": "#/$defs/ArtifactMetadata"
+    }
+  },
+  "type": "object"
+}
