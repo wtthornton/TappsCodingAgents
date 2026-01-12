@@ -75,7 +75,7 @@ jobs:
       - name: Verify version matches code
         run: |
           VERSION="${{ steps.version.outputs.version }}"
-          PYPROJECT_VERSION=$(python -c "import tomli; f=open('pyproject.toml','rb'); d=tomli.load(f); print(d['project']['version'])")
+          PYPROJECT_VERSION=$(python -c "import tomllib; f=open('pyproject.toml','rb'); d=tomllib.load(f); print(d['project']['version'])")
           INIT_VERSION=$(python -c "from tapps_agents import __version__; print(__version__)")
           
           if [ "$PYPROJECT_VERSION" != "$VERSION" ] || [ "$INIT_VERSION" != "$VERSION" ]; then
@@ -89,7 +89,7 @@ jobs:
 
       - name: Install GitHub CLI
         run: |
-          type -p curl >/dev/null || apt-get update && apt-get install -y curl
+          type -p curl >/dev/null || (apt-get update && apt-get install -y curl)
           curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
           chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
           echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | tee /etc/apt/sources.list.d/github-cli.list > /dev/null
@@ -287,12 +287,18 @@ jobs:
               }
             ' CHANGELOG.md > release_notes_temp.md || true
             
-            # Clean up the extracted notes
+            # Clean up the extracted notes (remove leading/trailing blank lines)
             if [ -s release_notes_temp.md ]; then
-              # Remove leading blank lines and trailing blank lines
-              sed -i '/./,$!d' release_notes_temp.md 2>/dev/null || sed -i '' '/./,$!d' release_notes_temp.md
-              tac release_notes_temp.md 2>/dev/null | sed -i '/./,$!d' 2>/dev/null || \
-                sed -i '' '1!G;h;$!d' release_notes_temp.md && sed -i '' '/./,$!d' release_notes_temp.md
+              # Remove leading blank lines
+              sed -i '/./,$!d' release_notes_temp.md 2>/dev/null || sed -i '' '/./,$!d' release_notes_temp.md 2>/dev/null || true
+              # Remove trailing blank lines
+              if command -v tac >/dev/null 2>&1; then
+                # Use tac to reverse, remove leading blanks, reverse back
+                tac release_notes_temp.md | sed '/./,$!d' | tac > release_notes_temp2.md 2>/dev/null && mv release_notes_temp2.md release_notes_temp.md 2>/dev/null || true
+              else
+                # Fallback: use awk to remove trailing blanks
+                awk '{lines[NR]=$0} END {for(i=NR;i>=1;i--) if(lines[i]!="") {start=i; break} for(i=1;i<=start;i++) print lines[i]}' release_notes_temp.md > release_notes_temp2.md 2>/dev/null && mv release_notes_temp2.md release_notes_temp.md 2>/dev/null || true
+              fi
               cat release_notes_temp.md
             else
               # Fallback: try RELEASE_NOTES file
@@ -315,7 +321,7 @@ jobs:
           head -c 500 release_notes.md
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: Release ${{ steps.version.outputs.tag }}
@@ -374,4 +380,3 @@ jobs:
           echo "**Package:** [tapps-agents](https://pypi.org/project/tapps-agents/)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "Install with: \`pip install tapps-agents\`" >> $GITHUB_STEP_SUMMARY
-

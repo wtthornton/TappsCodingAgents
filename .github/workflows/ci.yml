@@ -184,14 +184,15 @@ jobs:
           echo "### Coverage Report" >> $GITHUB_STEP_SUMMARY
           COVERAGE="${{ steps.coverage.outputs.percentage }}"
           echo "**Coverage: $COVERAGE%**" >> $GITHUB_STEP_SUMMARY
-          python -c "
-          coverage = float('$COVERAGE')
-          if coverage < 75.0:
-              print('⚠️ **Coverage below 75% threshold**') >> $GITHUB_STEP_SUMMARY
-          else:
-              print('✅ Coverage meets 75% threshold') >> $GITHUB_STEP_SUMMARY
-          "
+          if [ -n "$COVERAGE" ]; then
+            COVERAGE_FLOAT=$(echo "$COVERAGE" | awk '{print $1+0}')
+            if (( $(echo "$COVERAGE_FLOAT < 75.0" | bc -l 2>/dev/null || echo "0") )); then
+              echo "⚠️ **Coverage below 75% threshold**" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "✅ Coverage meets 75% threshold" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⚠️ Coverage percentage not available" >> $GITHUB_STEP_SUMMARY
+          fi
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "View detailed coverage report in the coverage-ci artifact or on [Codecov](https://codecov.io/gh/${{ github.repository }})." >> $GITHUB_STEP_SUMMARY
-
-
