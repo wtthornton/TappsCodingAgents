@@ -5,6 +5,7 @@ Tests agent directory scanning, CLI registration detection, and change detection
 """
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -81,6 +82,47 @@ class TestFrameworkChangeDetector:
         detector = FrameworkChangeDetector(project_root=tmp_path)
         assert detector.detect_cli_registration("test_agent") is False
 
+    def test_detect_cli_registration_regex_escaping(self, tmp_path):
+        """Test CLI registration detection with special regex characters (Bug fix 3)."""
+        cli_file = tmp_path / "tapps_agents" / "cli" / "main.py"
+        cli_file.parent.mkdir(parents=True)
+
+        # Write CLI file with agent name containing special regex characters
+        agent_name_with_special_chars = "agent+name"
+        cli_file.write_text(f'register_agent("{agent_name_with_special_chars}")')
+
+        detector = FrameworkChangeDetector(project_root=tmp_path)
+        # Should correctly match despite special characters (regex escaping)
+        assert detector.detect_cli_registration(agent_name_with_special_chars) is True
+        # Test that a different agent name with similar pattern doesn't match
+        assert detector.detect_cli_registration("agent-name") is False
+
+    def test_scan_agent_directories_permission_error(self, tmp_path):
+        """Test agent directory scanning handles PermissionError (Bug fix 2)."""
+        agents_dir = tmp_path / "tapps_agents" / "agents"
+        agents_dir.mkdir(parents=True)
+
+        detector = FrameworkChangeDetector(project_root=tmp_path)
+
+        # Mock Path.iterdir at the class level to raise PermissionError
+        with patch("pathlib.Path.iterdir", side_effect=PermissionError("Access denied")):
+            agents = detector.scan_agent_directories()
+            # Should return empty list and not crash
+            assert agents == []
+
+    def test_scan_agent_directories_os_error(self, tmp_path):
+        """Test agent directory scanning handles OSError (Bug fix 2)."""
+        agents_dir = tmp_path / "tapps_agents" / "agents"
+        agents_dir.mkdir(parents=True)
+
+        detector = FrameworkChangeDetector(project_root=tmp_path)
+
+        # Mock Path.iterdir at the class level to raise OSError
+        with patch("pathlib.Path.iterdir", side_effect=OSError("Disk error")):
+            agents = detector.scan_agent_directories()
+            # Should return empty list and not crash
+            assert agents == []
+
     def test_detect_skill_creation(self, tmp_path):
         """Test skill file detection."""
         skills_dir = (
@@ -148,6 +190,8 @@ class TestFrameworkChangeDetector:
         changes = detector.detect_changes(known_agents={"existing_agent"})
 
         assert "existing_agent" not in changes.new_agents
+        # Bug fix 1: modified_agents should be empty (not include all existing agents)
+        assert changes.modified_agents == []
 
 
 class TestAgentInfo:
@@ -198,3 +242,49 @@ class TestAgentInfo:
         assert agent_info is not None
         # Commands may or may not be extracted depending on path resolution
         # This is acceptable for now
+
+    def test_agent_info_from_directory_with_skill_proper_structure(self, tmp_path):
+        """Test agent info extraction with skill file using proper directory structure (Bug fix 4)."""
+        # Create proper tapps_agents structure
+        tapps_agents_dir = tmp_path / "tapps_agents"
+        agents_dir = tapps_agents_dir / "agents" / "test_agent"
+        agents_dir.mkdir(parents=True)
+
+        # Create agent.py
+        (agents_dir / "agent.py").write_text('class TestAgent: pass')
+
+        # Create skill file in proper location
+        skills_dir = tapps_agents_dir / "resources" / "claude" / "skills" / "test_agent"
+        skills_dir.mkdir(parents=True)
+        (skills_dir / "SKILL.md").write_text("Commands: `*test` `*run` `*build`")
+
+        agent_info = AgentInfo.from_agent_directory(agents_dir)
+
+        assert agent_info is not None
+        assert agent_info.name == "test_agent"
+        # Commands should be extracted from skill file
+        assert len(agent_info.commands) > 0
+
+    def test_agent_info_command_order_preservation(self, tmp_path):
+        """Test that command extraction preserves order (Bug fix 5)."""
+        agent_dir = tmp_path / "test_agent"
+        agent_dir.mkdir()
+
+        # Create agent.py
+        (agent_dir / "agent.py").write_text('class TestAgent: pass')
+
+        # Create skill file with commands in specific order (with duplicates)
+        skill_file = agent_dir / "SKILL.md"
+        # Include duplicate commands to test deduplication preserves order
+        skill_file.write_text("Commands: `*first` `*second` `*third` `*second` `*fourth`")
+
+        agent_info = AgentInfo.from_agent_directory(agent_dir)
+
+        assert agent_info is not None
+        # Commands should be in order, with duplicates removed
+        # Using dict.fromkeys() preserves insertion order
+        assert len(agent_info.commands) == 4  # Duplicates removed
+        assert agent_info.commands[0] == "first"
+        assert agent_info.commands[1] == "second"
+        assert agent_info.commands[2] == "third"
+        assert agent_info.commands[3] == "fourth"
