@@ -7,7 +7,28 @@
 # - docs/BACKGROUND_AGENTS_GUIDE.md
 # - templates/background_agents/auto-execution-template.yaml
 
-agents: []
+agents:
+  # Bug Fix Agent - Automated bug fixing with review loopback and auto-commit
+  # Note: Requires CLI command support (tapps-agents bug-fix-agent fix-bug)
+  - name: "TappsCodingAgents Bug Fix Agent"
+    type: "background"
+    description: "Fix bugs with automatic review loopback and commit to main"
+    commands:
+      - "python -m tapps_agents.cli bug-fix-agent fix-bug {file} {description}"
+    triggers:
+      - "Fix bug: {description}"
+      - "Fix this bug"
+      - "Auto-fix and commit"
+      - "Fix bug in {file}"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "TAPPS_AGENTS_MODE=cursor"
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file"]
+    worktree: "bug-fix-agent"
 global:
   context7_cache: .tapps-agents/kb/context7-cache
   output_directory: .tapps-agents/reports

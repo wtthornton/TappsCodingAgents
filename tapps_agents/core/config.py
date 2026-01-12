@@ -901,6 +901,59 @@ class WorkflowConfig(BaseModel):
     )
 
 
+class BugFixAgentConfig(BaseModel):
+    """Configuration for Bug Fix Agent."""
+
+    max_iterations: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum iterations for fix loopback (1-10)",
+    )
+    auto_commit: bool = Field(
+        default=True,
+        description="Automatically commit changes to main branch when quality passes",
+    )
+    quality_thresholds: dict[str, float] = Field(
+        default_factory=lambda: {
+            "overall_min": 7.0,
+            "security_min": 6.5,
+            "maintainability_min": 7.0,
+        },
+        description="Quality thresholds for bug fixes (lower than full SDLC)",
+    )
+    escalation_threshold: int = Field(
+        default=2,
+        ge=1,
+        le=5,
+        description="Escalate to human after N failed iterations (1-5)",
+    )
+    escalation_enabled: bool = Field(
+        default=True,
+        description="Enable human escalation after failed iterations",
+    )
+    pre_commit_security_scan: bool = Field(
+        default=True,
+        description="Run security scan before committing changes",
+    )
+    metrics_enabled: bool = Field(
+        default=True,
+        description="Enable metrics collection for observability",
+    )
+    commit_strategy: str = Field(
+        default="direct_main",
+        description="Commit strategy: 'direct_main' (commit directly) or 'pull_request' (create PR)",
+    )
+    auto_merge_pr: bool = Field(
+        default=False,
+        description="Auto-merge PR if quality gates pass (requires PR workflow)",
+    )
+    require_pr_review: bool = Field(
+        default=False,
+        description="Require human review before merging PR",
+    )
+
+
 class SimpleModeConfig(BaseModel):
     """Configuration for Simple Mode."""
 
@@ -1134,6 +1187,10 @@ class ProjectConfig(BaseModel):
     simple_mode: SimpleModeConfig = Field(
         default_factory=SimpleModeConfig,
         description="Simple Mode configuration (intent-based orchestration)",
+    )
+    bug_fix_agent: BugFixAgentConfig = Field(
+        default_factory=BugFixAgentConfig,
+        description="Bug Fix Agent configuration (automated bug fixing with auto-commit)",
     )
     auto_enhancement: AutoEnhancementConfig = Field(
         default_factory=AutoEnhancementConfig,

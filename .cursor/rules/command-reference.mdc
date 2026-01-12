@@ -1291,6 +1291,89 @@ tapps-agents evaluator evaluate-workflow <workflow_id> [--format json|text]
 - To identify gaps between intended and actual usage
 - For continuous improvement analysis
 
+### Bug Fix Agent (`@bug-fix-agent`)
+
+**Available Commands:**
+
+#### `*fix-bug` / `fix-bug` (Cursor Skill)
+**Purpose:** Automated bug fixing with review loopback and auto-commit to main branch. Fixes bugs, tests them, reviews quality, and automatically commits when quality gates pass.
+
+**Cursor Syntax:**
+```cursor
+@bug-fix-agent *fix-bug <file> "<bug_description>"
+```
+
+**When to Use:**
+- Automated bug fixing with quality gates
+- Bugs that need systematic debugging, fixing, testing, and review
+- When you want automatic commit to main branch after quality passes
+- Production bugs that need quick fixes with quality assurance
+
+**Workflow Steps:**
+1. **@debugger *debug** - Analyze bug and identify root cause
+2. **Loop (max 3 iterations):**
+   - **@implementer *refactor** - Apply fix
+   - **@tester *test** - Verify fix with tests
+   - **@reviewer *review** - Review code quality
+   - **Quality Gate Evaluation** - Check if scores meet thresholds:
+     - Overall score ≥ 7.0/10 (70/100)
+     - Security score ≥ 6.5/10
+     - Maintainability score ≥ 7.0/10
+   - **Decision**: If pass, exit loop; if fail and iterations < 3, continue with improvements
+3. **Git Commit** - Commit changes to main branch (if quality passed and auto_commit enabled)
+
+**Quality Thresholds:**
+- Overall Score: ≥ 7.0/10 (70/100)
+- Security Score: ≥ 6.5/10
+- Maintainability Score: ≥ 7.0/10
+
+**Note:** These thresholds are lower than full SDLC workflows (which use 8.0+ overall, 8.5+ security) to allow faster bug fixes while still ensuring minimum quality.
+
+**Parameters:**
+- `file` (required): Path to the file with the bug
+- `bug_description` (required): Description of the bug or error message
+- `--max-iterations <n>`: Maximum iterations for fix loop (default: 3)
+- `--no-commit`: Skip automatic commit (default: commit enabled)
+- `--commit-message "<message>"`: Custom commit message (auto-generated if not provided)
+
+**Examples:**
+```cursor
+@bug-fix-agent *fix-bug src/api/auth.py "KeyError: 'user_id' when processing authentication requests"
+
+@bug-fix-agent *fix-bug src/utils/validator.py "Null pointer exception in validate_email function" --max-iterations 5
+
+@bug-fix-agent *fix-bug src/service.py "Fix memory leak in process_data" --no-commit
+```
+
+**Safety Features:**
+- Maximum iteration limit (default: 3) prevents infinite loops
+- Only commits if quality gates pass
+- Never force pushes to main branch
+- Validates git repository before committing
+- Logs quality scores at each iteration
+
+**Configuration:**
+Quality thresholds and behavior can be configured in `.tapps-agents/config.yaml`:
+```yaml
+bug_fix_agent:
+  max_iterations: 3
+  auto_commit: true
+  quality_thresholds:
+    overall_min: 7.0
+    security_min: 6.5
+    maintainability_min: 7.0
+```
+
+**Output:**
+Returns structured result with:
+- Success status
+- Iteration count
+- Quality scores for each iteration
+- Commit information (hash, branch, message)
+- Review results
+
+**Warning:** This agent commits directly to the main branch. Always review commits before merging, and consider using `--no-commit` for testing.
+
 ## Simple Mode Workflows
 
 Simple Mode provides natural language orchestration with structured workflows. Use `@simple-mode` in Cursor chat. **Simple Mode is installed by `tapps-agents init`** - the skill and rule files are automatically set up.

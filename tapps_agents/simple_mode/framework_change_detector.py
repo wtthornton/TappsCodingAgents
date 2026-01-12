@@ -64,22 +64,28 @@ class AgentInfo:
         skill_md = agent_dir / "SKILL.md"
         if not skill_md.exists():
             # Check in resources/claude/skills/{agent_name}/
-            skill_md = (
-                agent_dir.parent.parent.parent
-                / "resources"
-                / "claude"
-                / "skills"
-                / agent_name
-                / "SKILL.md"
-            )
+            # More robust: find tapps_agents directory and build from there
+            # agent_dir is typically: .../tapps_agents/agents/{agent_name}/
+            # So agent_dir.parent.parent is: .../tapps_agents/
+            if agent_dir.parent.name == "agents" and agent_dir.parent.parent.name == "tapps_agents":
+                skill_md = (
+                    agent_dir.parent.parent
+                    / "resources"
+                    / "claude"
+                    / "skills"
+                    / agent_name
+                    / "SKILL.md"
+                )
 
         if skill_md.exists():
             try:
                 content = skill_md.read_text(encoding="utf-8")
-                # Extract commands from markdown
+                # Extract commands from markdown (look for command patterns like `*command` or `command`)
+                # Use a more specific pattern to reduce false positives
                 command_matches = re.findall(r"`\*?(\w+)`", content)
                 if command_matches:
-                    agent_info.commands = list(set(command_matches))
+                    # Preserve order while removing duplicates (use dict.fromkeys for Python 3.7+)
+                    agent_info.commands = list(dict.fromkeys(command_matches))
             except Exception as e:
                 logger.debug(f"Failed to extract commands from {skill_md}: {e}")
 
@@ -141,7 +147,9 @@ class FrameworkChangeDetector:
             known_set = set(known_agents)
 
             changes.new_agents = list(current_set - known_set)
-            changes.modified_agents = list(current_set & known_set)  # Could enhance to detect actual modifications
+            # Note: Actual modification detection not yet implemented
+            # For now, keep modified_agents empty until we can detect actual changes
+            changes.modified_agents = []
 
         # Extract agent info for new agents
         for agent_name in changes.new_agents:
@@ -179,11 +187,16 @@ class FrameworkChangeDetector:
             return []
 
         agents = []
-        for item in agents_dir.iterdir():
-            if item.is_dir() and not item.name.startswith("__"):
-                # Check if it's a valid agent directory (has agent.py or __init__.py)
-                if (item / "agent.py").exists() or (item / "__init__.py").exists():
-                    agents.append(item.name)
+        try:
+            for item in agents_dir.iterdir():
+                if item.is_dir() and not item.name.startswith("__"):
+                    # Check if it's a valid agent directory (has agent.py or __init__.py)
+                    if (item / "agent.py").exists() or (item / "__init__.py").exists():
+                        agents.append(item.name)
+        except PermissionError:
+            logger.warning(f"Permission denied when scanning agents directory: {agents_dir}")
+        except OSError as e:
+            logger.warning(f"OS error when scanning agents directory {agents_dir}: {e}")
 
         return sorted(agents)
 
@@ -209,11 +222,13 @@ class FrameworkChangeDetector:
 
         try:
             content = cli_file.read_text(encoding="utf-8")
+            # Escape agent_name to handle special regex characters safely
+            escaped_name = re.escape(agent_name)
             # Look for agent name in various patterns
             patterns = [
-                rf'"{agent_name}"',  # String literal
-                rf"'{agent_name}'",  # String literal
-                rf"\b{agent_name}\b",  # Word boundary
+                rf'"{escaped_name}"',  # String literal
+                rf"'{escaped_name}'",  # String literal
+                rf"\b{escaped_name}\b",  # Word boundary
             ]
             return any(re.search(pattern, content) for pattern in patterns)
         except Exception as e:
