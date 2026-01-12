@@ -3182,3 +3182,107 @@ def handle_cursor_command(args: object) -> None:
         print(f"Unknown cursor command: {cursor_command}", file=sys.stderr)
         sys.exit(1)
 
+
+def handle_continuous_bug_fix_command(args: object) -> None:
+    """Handle continuous-bug-fix command"""
+    import asyncio
+    from ...continuous_bug_fix.continuous_bug_fixer import ContinuousBugFixer
+    from ...core.config import load_config
+
+    feedback = get_feedback()
+    output_format = getattr(args, "format", "text")
+    feedback.format_type = output_format
+
+    # Parse arguments
+    test_path = getattr(args, "test_path", None)
+    max_iterations = getattr(args, "max_iterations", 10)
+    commit_strategy = getattr(args, "commit_strategy", "one-per-bug")
+    auto_commit = not getattr(args, "no_commit", False)
+
+    # Load config
+    config = load_config()
+
+    # Override config with CLI args if defaults used
+    continuous_config = getattr(config, "continuous_bug_fix", None)
+    if test_path is None and continuous_config:
+        test_path = continuous_config.test_path
+    if max_iterations == 10 and continuous_config:
+        max_iterations = continuous_config.max_iterations
+    if commit_strategy == "one-per-bug" and continuous_config:
+        commit_strategy = continuous_config.commit_strategy
+    if auto_commit and continuous_config:
+        auto_commit = continuous_config.auto_commit
+
+    feedback.start_operation(
+        "Continuous Bug Fix",
+        f"Running continuous bug finding and fixing (max {max_iterations} iterations)...",
+    )
+
+    # Execute
+    fixer = ContinuousBugFixer(config=config)
+
+    try:
+        result = asyncio.run(
+            fixer.execute(
+                test_path=test_path,
+                max_iterations=max_iterations,
+                commit_strategy=commit_strategy,
+                auto_commit=auto_commit,
+            )
+        )
+
+        feedback.clear_progress()
+
+        # Format and output result
+        if output_format == "json":
+            feedback.output_result(result)
+        else:
+            _format_continuous_bug_fix_text_output(result, feedback)
+
+    except KeyboardInterrupt:
+        feedback.info("\nInterrupted by user")
+        sys.exit(130)
+    except Exception as e:
+        feedback.error(f"Error: {e}", exit_code=1)
+
+
+def _format_continuous_bug_fix_text_output(result: dict[str, Any], feedback: Any) -> None:
+    """Format continuous bug fix results as text"""
+    print("\n" + "=" * 80)
+    print("Continuous Bug Fix Results")
+    print("=" * 80)
+    print()
+
+    print(f"Iterations Run: {result.get('iterations', 0)}")
+    print(f"Bugs Found: {result.get('bugs_found', 0)}")
+    print(f"Bugs Fixed: {result.get('bugs_fixed', 0)}")
+    print(f"Bugs Failed: {result.get('bugs_failed', 0)}")
+    print(f"Bugs Skipped: {result.get('bugs_skipped', 0)}")
+    print()
+
+    summary = result.get("summary", {})
+    if summary:
+        print("Summary:")
+        print(f"  Fix Rate: {summary.get('fix_rate', 0) * 100:.1f}%")
+        print(f"  Total Bugs Found: {summary.get('total_bugs_found', 0)}")
+        print(f"  Total Bugs Fixed: {summary.get('total_bugs_fixed', 0)}")
+        print(f"  Total Bugs Failed: {summary.get('total_bugs_failed', 0)}")
+        print()
+
+    results = result.get("results", [])
+    if results:
+        print("Iteration Details:")
+        for iteration_result in results:
+            iteration = iteration_result.get("iteration", 0)
+            bugs_found = iteration_result.get("bugs_found", 0)
+            bugs_fixed = iteration_result.get("bugs_fixed", 0)
+            bugs_failed = iteration_result.get("bugs_failed", 0)
+            print(
+                f"  Iteration {iteration}: Found {bugs_found}, Fixed {bugs_fixed}, Failed {bugs_failed}"
+            )
+        print()
+
+    if result.get("success"):
+        print("✅ Continuous bug fix completed successfully")
+    else:
+        print("⚠️  Continuous bug fix completed with some failures")

@@ -358,6 +358,8 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "approval": top_level.handle_governance_command,
         "setup-experts": top_level.handle_setup_experts_command,
         "cursor": top_level.handle_cursor_command,
+        "continuous-bug-fix": top_level.handle_continuous_bug_fix_command,
+        "bug-fix-continuous": top_level.handle_continuous_bug_fix_command,
     }
 
 

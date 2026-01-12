@@ -954,6 +954,33 @@ class BugFixAgentConfig(BaseModel):
     )
 
 
+class ContinuousBugFixConfig(BaseModel):
+    """Configuration for Continuous Bug Fix feature."""
+
+    max_iterations: int = Field(
+        default=10,
+        ge=1,
+        le=100,
+        description="Maximum loop iterations (1-100)",
+    )
+    commit_strategy: str = Field(
+        default="one-per-bug",
+        description="Commit strategy: 'one-per-bug' (default) or 'batch'",
+    )
+    auto_commit: bool = Field(
+        default=True,
+        description="Automatically commit fixes after bug-fix-agent succeeds",
+    )
+    test_path: str = Field(
+        default="tests/",
+        description="Default test directory or file to run",
+    )
+    skip_patterns: list[str] = Field(
+        default_factory=list,
+        description="Patterns for bugs to skip (not yet implemented)",
+    )
+
+
 class SimpleModeConfig(BaseModel):
     """Configuration for Simple Mode."""
 
@@ -1191,6 +1218,10 @@ class ProjectConfig(BaseModel):
     bug_fix_agent: BugFixAgentConfig = Field(
         default_factory=BugFixAgentConfig,
         description="Bug Fix Agent configuration (automated bug fixing with auto-commit)",
+    )
+    continuous_bug_fix: ContinuousBugFixConfig = Field(
+        default_factory=ContinuousBugFixConfig,
+        description="Continuous Bug Fix configuration (automated bug finding and fixing loop)",
     )
     auto_enhancement: AutoEnhancementConfig = Field(
         default_factory=AutoEnhancementConfig,

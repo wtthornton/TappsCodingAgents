@@ -550,6 +550,49 @@ Archived workflows are moved to .tapps-agents/archives/workflows/ for reference.
         help="Preview changes without making them",
     )
 
+    # Continuous bug fix command
+    continuous_bug_fix_parser = subparsers.add_parser(
+        "continuous-bug-fix",
+        aliases=["bug-fix-continuous"],
+        help="Continuously find and fix bugs from test failures",
+        description="""Run tests continuously, detect bugs, fix them using bug-fix-agent,
+and commit fixes automatically. Stops when no bugs are found or max iterations reached.
+
+Example:
+  tapps-agents continuous-bug-fix
+  tapps-agents continuous-bug-fix --test-path tests/unit/ --max-iterations 5
+  tapps-agents continuous-bug-fix --commit-strategy batch --no-commit""",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--test-path",
+        type=str,
+        default=None,
+        help="Test directory or file to run (default: tests/)",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--max-iterations",
+        type=int,
+        default=10,
+        help="Maximum loop iterations (default: 10)",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--commit-strategy",
+        choices=["one-per-bug", "batch"],
+        default="one-per-bug",
+        help="Commit strategy: one-per-bug (default) or batch",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--no-commit",
+        action="store_true",
+        help="Skip commits (dry-run mode)",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
     # Project initialization command
     init_parser = subparsers.add_parser(
         "init",
