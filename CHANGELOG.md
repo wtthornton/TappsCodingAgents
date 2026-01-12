@@ -7,6 +7,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.4] - 2026-01-11
+
+### Added
+- **JSON Schema Generation** - Complete JSON Schema files for all artifact models
+  - Generated 29 JSON Schema files in `schemas/1.0/` directory
+  - Schema generation script: `scripts/generate_artifact_schemas.py`
+  - Schema index file for easy reference
+  - Schema documentation in `schemas/README.md`
+  - Supports JSON Schema validation for artifact data
+
+- **Pydantic Migration Documentation** - Comprehensive migration documentation
+  - Complete migration guide: `docs/IMPLEMENTATION/PYDANTIC_MIGRATION_GUIDE.md`
+  - Research documentation: `docs/IMPLEMENTATION/pydantic_migration_research.md`
+  - Migration status tracking: `docs/IMPLEMENTATION/pydantic_migration_status.md`
+  - Backward compatibility analysis documentation
+
+### Changed
+- **API Documentation** - Enhanced API documentation with artifact model details
+  - Added "Data Models" section to `docs/API.md`
+  - Documented all Pydantic artifact models
+  - Documented enum types and structured metadata models
+  - Added JSON Schema usage examples
+  - Added migration guide references
+
+### Documentation
+- **Complete Pydantic Migration** - All artifact models migrated to Pydantic BaseModel
+  - All 10 artifact types now use Pydantic v2 BaseModel
+  - Type-safe enums (Priority, ArtifactStatus, RiskLevel, OperationType, StoryStatus)
+  - Structured metadata models (PlanDetails, TaskInputs, TaskResults, RetryPolicy)
+  - Unified Story model combining UserStory and Epic.Story features
+  - Epic models migrated to Pydantic
+  - Full backward compatibility maintained via `from_dict()` methods
+  - All tests passing without modification
+
 ## [3.5.3] - 2026-01-09
 
 ### Fixed
