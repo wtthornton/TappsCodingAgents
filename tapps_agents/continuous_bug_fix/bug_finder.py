@@ -76,7 +76,8 @@ class BugFinder:
         result = await self._run_pytest(test_path)
 
         if not result.get("success"):
-            logger.warning(f"Pytest execution failed: {result.get('error')}")
+            error_msg = result.get("error") or f"Pytest returned code {result.get('return_code', 'unknown')}"
+            logger.warning(f"Pytest execution failed: {error_msg}")
             return []
 
         # Parse output
@@ -126,12 +127,41 @@ class BugFinder:
                 timeout=300,  # 5 minute timeout
             )
 
-            return {
-                "success": result.returncode == 0 or result.returncode == 1,  # 1 = failures, but tests ran
+            # Return codes:
+            # 0 = all tests passed
+            # 1 = some tests failed (but pytest ran successfully)
+            # 2 = pytest error (e.g., import errors, configuration issues)
+            # Other = unexpected error
+            success = result.returncode == 0 or result.returncode == 1
+            error_msg = None
+            
+            if not success:
+                # Extract error message from stderr or stdout
+                if result.stderr:
+                    error_msg = result.stderr.split("\n")[0].strip()[:200]
+                elif result.stdout:
+                    # Look for error indicators in stdout
+                    lines = result.stdout.split("\n")
+                    for line in lines:
+                        if "ERROR" in line or "error" in line.lower():
+                            error_msg = line.strip()[:200]
+                            break
+                    if not error_msg and lines:
+                        error_msg = lines[0].strip()[:200]
+                
+                if not error_msg:
+                    error_msg = f"Pytest failed with return code {result.returncode}"
+
+            return_dict = {
+                "success": success,
                 "return_code": result.returncode,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
             }
+            if error_msg:
+                return_dict["error"] = error_msg
+            
+            return return_dict
         except subprocess.TimeoutExpired:
             return {
                 "success": False,

@@ -8,6 +8,34 @@
 # - templates/background_agents/auto-execution-template.yaml
 
 agents:
+  # Continuous Bug Fix Agent - Continuously find and fix bugs from test failures
+  # Runs tests, detects failures, fixes them automatically, and commits
+  - name: "TappsCodingAgents Continuous Bug Fix"
+    type: "background"
+    description: "Continuously run tests, find bugs from failures, fix them, and commit automatically"
+    commands:
+      # Test-based bug finding (default)
+      - "python -m tapps_agents.cli continuous-bug-fix --test-path tests/ --max-iterations 10 --format json"
+      # Proactive bug discovery (code analysis)
+      - "python -m tapps_agents.cli continuous-bug-fix --proactive --target-path . --max-bugs 20 --max-iterations 10 --format json"
+      # Custom test path
+      - "python -m tapps_agents.cli continuous-bug-fix --test-path {test_path} --max-iterations {max_iterations} --format json"
+    triggers:
+      - "Run continuous bug fix"
+      - "Find and fix all bugs"
+      - "Fix all test failures"
+      - "Continuous bug fixing"
+      - "Auto-fix all bugs from tests"
+    context7_cache: ".tapps-agents/kb/context7-cache"
+    environment:
+      - "TAPPS_AGENTS_MODE=cursor"
+      - "CONTEXT7_KB_CACHE=.tapps-agents/kb/context7-cache"
+    output:
+      format: "json"
+      location: ".tapps-agents/reports"
+      delivery: ["file"]
+    worktree: "continuous-bug-fix"
+
   # Bug Fix Agent - Automated bug fixing with review loopback and auto-commit
   # Note: Requires CLI command support (tapps-agents bug-fix-agent fix-bug)
   - name: "TappsCodingAgents Bug Fix Agent"
