@@ -287,7 +287,6 @@ Reviewer Agent Commands:
   type-check [files...]                - Type annotation validation (mypy)
   report <target> <formats>...         - Comprehensive project-wide quality reports
   duplication <target>                 - Code duplication detection
-  security-scan [files...]             - Security vulnerability scanning
   analyze-project                      - Comprehensive project analysis
   analyze-services [services...]      - Service/module analysis
   docs <library> [topic]               - Get library documentation from Context7
