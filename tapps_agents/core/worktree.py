@@ -96,6 +96,29 @@ class WorktreeManager:
         try:
             # Create worktree
             git_path = shutil.which("git") or "git"
+            
+            # Check if branch already exists (from a previous run that didn't clean up properly)
+            branch_check_cmd = [git_path, "branch", "--list", branch_name]
+            branch_check_result = subprocess.run(  # nosec B603
+                branch_check_cmd,
+                cwd=self.base_path,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            
+            if branch_check_result.stdout.strip():
+                # Branch exists but worktree doesn't - delete the orphaned branch
+                logger.warning(f"Branch {branch_name} exists without worktree, deleting it")
+                branch_delete_cmd = [git_path, "branch", "-D", branch_name]
+                subprocess.run(  # nosec B603
+                    branch_delete_cmd,
+                    cwd=self.base_path,
+                    capture_output=True,
+                    text=True,
+                    check=False,  # Don't fail if already deleted
+                )
+            
             cmd = [git_path, "worktree", "add", str(worktree_path), "-b", branch_name]
 
             subprocess.run(  # nosec B603
@@ -127,33 +150,69 @@ class WorktreeManager:
 
         # Remove git worktree (existing behavior)
         worktree_path = self.worktree_base / agent_id
+        branch_name = f"agent/{agent_id}"
 
-        if not worktree_path.exists():
-            logger.warning(f"Worktree {agent_id} does not exist")
-            return False
+        worktree_existed = worktree_path.exists()
 
         try:
-            # Remove worktree using git command
-            git_path = shutil.which("git") or "git"
-            cmd = [git_path, "worktree", "remove", str(worktree_path), "--force"]
+            # Remove worktree using git command (if it exists)
+            if worktree_existed:
+                git_path = shutil.which("git") or "git"
+                cmd = [git_path, "worktree", "remove", str(worktree_path), "--force"]
 
-            subprocess.run(  # nosec B603
-                cmd, cwd=self.base_path, capture_output=True, text=True, check=True
+                subprocess.run(  # nosec B603
+                    cmd, cwd=self.base_path, capture_output=True, text=True, check=True
+                )
+
+                logger.info(f"Removed worktree {agent_id}")
+
+            # Delete the branch if it exists (even if worktree didn't exist)
+            git_path = shutil.which("git") or "git"
+            branch_check_cmd = [git_path, "branch", "--list", branch_name]
+            branch_check_result = subprocess.run(  # nosec B603
+                branch_check_cmd,
+                cwd=self.base_path,
+                capture_output=True,
+                text=True,
+                check=False,
             )
 
-            logger.info(f"Removed worktree {agent_id}")
+            if branch_check_result.stdout.strip():
+                # Branch exists, delete it
+                branch_delete_cmd = [git_path, "branch", "-D", branch_name]
+                subprocess.run(  # nosec B603
+                    branch_delete_cmd,
+                    cwd=self.base_path,
+                    capture_output=True,
+                    text=True,
+                    check=False,  # Don't fail if branch doesn't exist
+                )
+                logger.info(f"Deleted branch {branch_name}")
+
             return True
 
         except subprocess.CalledProcessError as e:
             logger.error(f"Failed to remove worktree {agent_id}: {e.stderr}")
             # Fallback: try to remove directory manually
-            try:
-                shutil.rmtree(worktree_path)
-                logger.info(f"Manually removed worktree directory {agent_id}")
-                return True
-            except Exception as e2:
-                logger.error(f"Failed to manually remove worktree {agent_id}: {e2}")
-                return False
+            if worktree_existed:
+                try:
+                    shutil.rmtree(worktree_path)
+                    logger.info(f"Manually removed worktree directory {agent_id}")
+                    # Still try to delete branch
+                    git_path = shutil.which("git") or "git"
+                    branch_delete_cmd = [git_path, "branch", "-D", branch_name]
+                    subprocess.run(  # nosec B603
+                        branch_delete_cmd,
+                        cwd=self.base_path,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                    return True
+                except Exception as e2:
+                    logger.error(f"Failed to manually remove worktree {agent_id}: {e2}")
+                    return False
+            return False
 
     def list_worktrees(self) -> dict[str, Path]:
         """

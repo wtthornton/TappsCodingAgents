@@ -53,6 +53,24 @@ class BugFixCoordinator:
                 - result: FixOrchestrator result dict
                 - error: str | None (if failed)
         """
+        # #region agent log
+        import json
+        from datetime import datetime
+        log_path = Path.cwd() / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "location": "bug_fix_coordinator.py:fix_bug:entry",
+                    "message": "fix_bug called",
+                    "data": {"file_path": str(bug.file_path), "error_message": bug.error_message[:100]},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception:
+            pass
+        # #endregion
         try:
             # Create intent from bug description
             intent = Intent(
@@ -68,9 +86,39 @@ class BugFixCoordinator:
                 "error_message": bug.error_message,
                 "auto_commit": False,  # We handle commits separately
             }
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "B",
+                        "location": "bug_fix_coordinator.py:fix_bug:before_execute",
+                        "message": "About to call fix_orchestrator.execute",
+                        "data": {"parameters": parameters, "intent_type": str(intent.type)},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except Exception:
+                pass
+            # #endregion
 
             # Execute fix orchestrator
             result = await self.fix_orchestrator.execute(intent, parameters)
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "C",
+                        "location": "bug_fix_coordinator.py:fix_bug:after_execute",
+                        "message": "fix_orchestrator.execute returned",
+                        "data": {"success": result.get("success"), "has_error": "error" in result, "error_value": str(result.get("error", ""))[:200]},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except Exception:
+                pass
+            # #endregion
 
             return {
                 "success": result.get("success", False),
@@ -78,6 +126,21 @@ class BugFixCoordinator:
                 "error": None,
             }
         except Exception as e:
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "D",
+                        "location": "bug_fix_coordinator.py:fix_bug:exception",
+                        "message": "Exception caught in fix_bug",
+                        "data": {"exception_type": type(e).__name__, "error_message": str(e)[:500]},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except Exception:
+                pass
+            # #endregion
             logger.error(f"Error fixing bug in {bug.file_path}: {e}", exc_info=True)
             return {
                 "success": False,

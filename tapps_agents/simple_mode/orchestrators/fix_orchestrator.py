@@ -110,7 +110,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
             {
                 "agent_id": "debugger-1",
                 "agent": "debugger",
-                "command": "analyze-error",
+                "command": "debug",
                 "args": {
                     "error_message": bug_description,
                     "file": target_file,
@@ -119,11 +119,74 @@ class FixOrchestrator(SimpleModeOrchestrator):
         ]
 
         logger.info(f"Step 1/4+: Analyzing bug: {bug_description}")
+        # #region agent log
+        import json
+        from datetime import datetime
+        log_path = self.project_root / ".cursor" / "debug.log"
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "fix_orchestrator.py:execute:before_debugger",
+                    "message": "About to execute debugger",
+                    "data": {"bug_description": bug_description[:200], "target_file": target_file},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception:
+            pass
+        # #endregion
         debug_result = await orchestrator.execute_parallel(debug_tasks)
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "location": "fix_orchestrator.py:execute:after_debugger",
+                    "message": "debugger execute_parallel returned",
+                    "data": {"has_results": "results" in debug_result, "result_keys": list(debug_result.keys())},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception:
+            pass
+        # #endregion
 
         # Check if debugger succeeded
         debugger_result = debug_result.get("results", {}).get("debugger-1", {})
+        # #region agent log
+        try:
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "F",
+                    "location": "fix_orchestrator.py:execute:debugger_result_check",
+                    "message": "debugger_result structure",
+                    "data": {"success": debugger_result.get("success"), "result_keys": list(debugger_result.keys()), "has_result_key": "result" in debugger_result},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception:
+            pass
+        # #endregion
         if not debugger_result.get("success"):
+            # #region agent log
+            try:
+                with open(log_path, "a", encoding="utf-8") as f:
+                    f.write(json.dumps({
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "F",
+                        "location": "fix_orchestrator.py:execute:debugger_failed",
+                        "message": "Debugger failed",
+                        "data": {"debugger_result": str(debugger_result)[:500]},
+                        "timestamp": int(datetime.now().timestamp() * 1000)
+                    }) + "\n")
+            except Exception:
+                pass
+            # #endregion
             return {
                 "type": "fix",
                 "success": False,
@@ -133,9 +196,36 @@ class FixOrchestrator(SimpleModeOrchestrator):
                 "committed": False,
             }
 
-        fix_suggestion = debugger_result.get("result", {}).get(
-            "fix_suggestion", ""
-        )
+        # Extract fix suggestion from debugger analysis
+        # debug_command returns: {"type": "debug", "analysis": {...}, "suggestions": [...], "fix_examples": [...]}
+        debugger_analysis = debugger_result.get("result", {}).get("analysis", {})
+        suggestions = debugger_result.get("result", {}).get("suggestions", [])
+        fix_examples = debugger_result.get("result", {}).get("fix_examples", [])
+        
+        # Build fix suggestion from suggestions and examples
+        fix_suggestion_parts = []
+        if suggestions:
+            fix_suggestion_parts.extend(suggestions[:3])  # Take first 3 suggestions
+        if fix_examples:
+            fix_suggestion_parts.append("\n".join(fix_examples[:2]))  # Take first 2 examples
+        fix_suggestion = "\n\n".join(fix_suggestion_parts) if fix_suggestion_parts else ""
+        
+        # #region agent log
+        try:
+            result_inner = debugger_result.get("result", {})
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(json.dumps({
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "G",
+                    "location": "fix_orchestrator.py:execute:fix_suggestion_check",
+                    "message": "Checking fix_suggestion",
+                    "data": {"has_result_key": "result" in debugger_result, "result_keys": list(result_inner.keys()) if isinstance(result_inner, dict) else "not_dict", "has_analysis": "analysis" in result_inner, "has_suggestions": "suggestions" in result_inner, "suggestions_count": len(suggestions), "fix_examples_count": len(fix_examples), "fix_suggestion_length": len(fix_suggestion)},
+                    "timestamp": int(datetime.now().timestamp() * 1000)
+                }) + "\n")
+        except Exception:
+            pass
+        # #endregion
         if not fix_suggestion:
             return {
                 "type": "fix",
