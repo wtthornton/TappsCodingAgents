@@ -1,12 +1,14 @@
 version: '1.0'
-last_updated: 2026-01-10T00:01:46.073773+00:00Z
-total_entries: 59
+last_updated: 2026-01-13T18:43:52.768354+00:00Z
+total_entries: 110
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
     topics:
       overview:
         cached_at: 2026-01-07T03:25:49.422834+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:40:06.711297+00:00Z
   bandit:
     context7_id: /websites/bandit_readthedocs_io-en
     topics:
@@ -150,11 +152,15 @@ libraries:
     topics:
       overview:
         cached_at: 2026-01-07T03:26:56.191142+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:40:16.449041+00:00Z
   rich:
     context7_id: /textualize/rich
     topics:
       overview:
         cached_at: 2026-01-07T03:26:57.796223+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:37:02.501542+00:00Z
   ruff:
     context7_id: /astral-sh/ruff
     topics:
@@ -276,3 +282,204 @@ libraries:
     topics:
       architecture:
         cached_at: 2026-01-10T00:01:46.073763+00:00Z
+  bug_finder:
+    context7_id: /bugdetector/core
+    topics:
+      overview:
+        cached_at: 2026-01-13T06:19:59.990547+00:00Z
+      usage:
+        cached_at: 2026-01-13T06:20:11.619503+00:00Z
+  agents:
+    context7_id: /contains-studio/agents
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T06:20:06.569819+00:00Z
+  feedback:
+    context7_id: /websites/userback_io
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:36:04.869565+00:00Z
+  enum:
+    context7_id: /spatie/enum
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:36:19.872696+00:00Z
+  __future__:
+    context7_id: /futureverse/dofuture
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:36:28.081104+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:36:44.743925+00:00Z
+  output_compactor:
+    context7_id: /llmstxt/optique_dev_llms-full_txt
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:36:33.752156+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:36:49.952304+00:00Z
+  progress_heartbeat:
+    context7_id: /rsalmei/alive-progress
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:36:38.709150+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:36:56.413929+00:00Z
+  commands:
+    context7_id: /studio1902/statamic-peak-commands
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:37:07.834763+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:37:23.899546+00:00Z
+  parsers:
+    context7_id: /juliadata/parsers.jl
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:37:12.435342+00:00Z
+  cli:
+    context7_id: /yargs/cliui
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:37:18.213048+00:00Z
+  weighted decision making:
+    context7_id: /wandb/wandb
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:37:29.452405+00:00Z
+  socket:
+    context7_id: /zishang520/socket.io
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:37:34.153017+00:00Z
+  dataclasses:
+    context7_id: /myuanz/dataclassql
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:37:43.799591+00:00Z
+  main:
+    context7_id: /openjdk/jfx
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:37:50.611348+00:00Z
+      examples:
+        cached_at: 2026-01-13T18:37:57.917276+00:00Z
+  base:
+    context7_id: /cyanfox/base
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:37:59.109345+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:38:33.813530+00:00Z
+  command_classifier:
+    context7_id: /alephpiece/obsidian-slash-commander
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:38:03.853495+00:00Z
+  common:
+    context7_id: /niklasei/bevy_common_assets
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:38:08.077924+00:00Z
+  help:
+    context7_id: /websites/helpscout
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:38:13.292832+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:38:41.069865+00:00Z
+  network_detection:
+    context7_id: /websites/mmdetection_readthedocs_io_en
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:38:19.227665+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:38:45.217130+00:00Z
+  utils:
+    context7_id: /aminalaee/uuid-utils
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:38:24.653648+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:38:50.571504+00:00Z
+  health:
+    context7_id: /alexliesenfeld/health
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:39:26.337989+00:00Z
+  formatters:
+    context7_id: /shufo/blade-formatter
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:39:58.150143+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:40:12.001143+00:00Z
+  validators:
+    context7_id: /python-validators/validators
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:40:22.085922+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:40:33.596451+00:00Z
+  simple_mode:
+    context7_id: /gyverlibs/simpleportal
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-13T18:40:28.549130+00:00Z
+  workflow:
+    context7_id: /square/workflow-kotlin
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:40:37.849966+00:00Z
+  yaml:
+    context7_id: /websites/raw_githubusercontent_yaml_yaml-spec_refs_heads_main_spec_1_2
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-13T18:40:42.559145+00:00Z
+  reviewer:
+    context7_id: /reviewdog/reviewdog
+    topics:
+      overview:
+        cached_at: 2026-01-13T18:40:54.805249+00:00Z
+      usage:
+        cached_at: 2026-01-13T18:41:12.399703+00:00Z
+  continuous_bug_fix:
+    context7_id: /websites/autofix_ci
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:41:02.381328+00:00Z
+  experts:
+    context7_id: /zihanwang314/coe
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-13T18:41:06.906221+00:00Z
+  status:
+    context7_id: /llmstxt/openstatus_dev_llms_txt
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-13T18:41:17.881028+00:00Z
+  static_help:
+    context7_id: /rinckodev/constatic
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:41:28.115880+00:00Z
+  multi-agent expert systems:
+    context7_id: /solacelabs/solace-agent-mesh
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:41:56.535483+00:00Z
+  bug_fix_coordinator:
+    context7_id: /bugdetector/core
+    topics:
+      best-practices:
+        cached_at: 2026-01-13T18:43:40.150047+00:00Z
+  commit_manager:
+    context7_id: /conventional-changelog/commitlint
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-13T18:43:48.210319+00:00Z
+  proactive_bug_finder:
+    context7_id: /ml-kuleuven/problog
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-13T18:43:52.768320+00:00Z

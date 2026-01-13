@@ -116,3 +116,10 @@ workflow:
   polling_interval: 5.0             # Seconds between status checks when polling for completion
   timeout_seconds: 3600.0            # Maximum time to wait for step completion (seconds)
 
+# Continuous Bug Fix configuration
+continuous_bug_fix:
+  max_iterations: 10                # Maximum loop iterations (1-100)
+  commit_strategy: "one-per-bug"    # Commit strategy: "one-per-bug" or "batch"
+  auto_commit: true                  # Automatically commit fixes after bug-fix-agent succeeds
+  test_path: "tests/"                # Default test directory or file to run
+  skip_patterns: []                  # Patterns for bugs to skip (not yet implemented)

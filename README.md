@@ -545,6 +545,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `init` - Initialize project (Cursor Rules, Skills, config)
 - `create <description>` - Create new project from natural language description
 - `workflow <preset>` - Run workflow presets (rapid, full, fix, quality, hotfix, etc.)
+- `continuous-bug-fix` - Continuously find and fix bugs from test failures (automated bug fixing loop)
 - `score <file>` - Quick code quality scoring (shortcut for `reviewer score`)
 - `doctor` - Environment diagnostics and validation
 - `cursor verify` - Verify Cursor AI integration components

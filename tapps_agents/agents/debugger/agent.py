@@ -177,6 +177,7 @@ class DebuggerAgent(BaseAgent):
         error_message: str | None = None,
         stack_trace: str | None = None,
         code_context: str | None = None,
+        file: str | None = None,
     ) -> dict[str, Any]:
         """
         Analyze error message and stack trace.
@@ -185,15 +186,30 @@ class DebuggerAgent(BaseAgent):
             error_message: Error message
             stack_trace: Stack trace
             code_context: Code context around error
+            file: Optional file path where error occurred
         """
         if not error_message:
             return {"error": "Error message required"}
+
+        # Get code context if file provided
+        file_path = None
+        if file and not code_context:
+            file_path = Path(file)
+            if file_path.exists():
+                try:
+                    self._validate_path(file_path)
+                    code = file_path.read_text(encoding="utf-8")
+                    # Use first 100 lines as context if no line specified
+                    code_context = "\n".join(code.split("\n")[:100])
+                except (ValueError, OSError):
+                    # If validation fails or file can't be read, continue without file context
+                    pass
 
         instruction = self.error_analyzer.prepare_error_analysis(
             error_message=error_message,
             stack_trace=stack_trace,
             code_context=code_context,
-            file_path=None,
+            file_path=file_path,
         )
 
         return {

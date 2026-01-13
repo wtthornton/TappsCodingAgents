@@ -554,13 +554,24 @@ Archived workflows are moved to .tapps-agents/archives/workflows/ for reference.
     continuous_bug_fix_parser = subparsers.add_parser(
         "continuous-bug-fix",
         aliases=["bug-fix-continuous"],
-        help="Continuously find and fix bugs from test failures",
-        description="""Run tests continuously, detect bugs, fix them using bug-fix-agent,
+        help="Continuously find and fix bugs (test-based or proactive)",
+        description="""Find bugs (from test failures or via code analysis), fix them using bug-fix-agent,
 and commit fixes automatically. Stops when no bugs are found or max iterations reached.
 
-Example:
+Modes:
+  - Test-based (default): Run tests and fix failures
+  - Proactive (--proactive): Analyze code to find potential bugs without tests
+
+Examples:
+  # Test-based discovery (default)
   tapps-agents continuous-bug-fix
   tapps-agents continuous-bug-fix --test-path tests/unit/ --max-iterations 5
+  
+  # Proactive discovery (analyze code)
+  tapps-agents continuous-bug-fix --proactive --target-path src/
+  tapps-agents continuous-bug-fix --proactive --max-bugs 20 --max-iterations 10
+  
+  # Batch commits
   tapps-agents continuous-bug-fix --commit-strategy batch --no-commit""",
     )
     continuous_bug_fix_parser.add_argument(
@@ -591,6 +602,23 @@ Example:
         choices=["json", "text"],
         default="text",
         help="Output format (default: text)",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--proactive",
+        action="store_true",
+        help="Use proactive bug discovery (code analysis) instead of test-based discovery",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--target-path",
+        type=str,
+        default=None,
+        help="Directory or file to analyze (for proactive discovery, default: project root)",
+    )
+    continuous_bug_fix_parser.add_argument(
+        "--max-bugs",
+        type=int,
+        default=20,
+        help="Maximum bugs to find per iteration (for proactive discovery, default: 20)",
     )
 
     # Project initialization command

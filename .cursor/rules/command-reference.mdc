@@ -382,6 +382,76 @@ tapps-agents cleanup workflow-docs --no-archive
 - Archives workflows older than retention period to `.tapps-agents/archives/workflows/`
 - Preserves workflow history while reducing IDE clutter
 
+### `continuous-bug-fix` - Continuous Bug Finding and Fixing
+**Purpose:** Continuously run tests, detect bugs, fix them using bug-fix-agent, and commit fixes automatically. Stops when no bugs are found or max iterations reached.
+
+**CLI Syntax:**
+```bash
+tapps-agents continuous-bug-fix [--test-path <path>] [--max-iterations <n>] [--commit-strategy <strategy>] [--no-commit] [--format <format>]
+tapps-agents bug-fix-continuous [options]  # alias
+```
+
+**Parameters:**
+- `--test-path <path>`: Test directory or file to run (default: `tests/`)
+- `--max-iterations <n>`: Maximum loop iterations (default: `10`)
+- `--commit-strategy <strategy>`: Commit strategy - `one-per-bug` (default) or `batch`
+- `--no-commit`: Skip commits (dry-run mode)
+- `--format <format>`: Output format - `json` or `text` (default: `text`)
+
+**When to Use:**
+- Automatically fixing all bugs in a test suite
+- Continuous integration scenarios
+- Pre-commit hook for test failures
+- Automated bug fixing with quality gates
+
+**How It Works:**
+1. Runs pytest to detect test failures
+2. Parses failures to extract bug information (file path, error message)
+3. Calls bug-fix-agent (FixOrchestrator) to fix each bug
+4. Commits fixes automatically (if enabled)
+5. Repeats until no bugs remain or max iterations reached
+
+**Examples:**
+```bash
+# Basic usage
+tapps-agents continuous-bug-fix
+
+# Custom test path and max iterations
+tapps-agents continuous-bug-fix --test-path tests/unit/ --max-iterations 5
+
+# Batch commit strategy
+tapps-agents continuous-bug-fix --commit-strategy batch
+
+# Dry run (no commits)
+tapps-agents continuous-bug-fix --no-commit
+
+# JSON output for automation
+tapps-agents continuous-bug-fix --format json
+```
+
+**Configuration:**
+Behavior can be configured in `.tapps-agents/config.yaml`:
+```yaml
+continuous_bug_fix:
+  max_iterations: 10
+  commit_strategy: "one-per-bug"  # or "batch"
+  auto_commit: true
+  test_path: "tests/"
+  skip_patterns: []  # Optional: patterns for bugs to skip
+```
+
+**Output:**
+Returns execution results with:
+- Total bugs found
+- Bugs fixed
+- Bugs failed
+- Bugs skipped
+- Iterations run
+- Summary statistics (fix rate, etc.)
+- Detailed iteration results
+
+**Note:** This command integrates with the bug-fix-agent (FixOrchestrator) for fixing bugs. Each fix goes through quality gates before being committed.
+
 ### `score` - Quick Code Scoring
 **Purpose:** Fast code quality scoring (shortcut for `reviewer score`)
 
@@ -947,7 +1017,7 @@ tapps-agents designer design-model "<description>" [--format json|text]
 **Available Commands:**
 
 #### `*enhance` / `enhance` (Dual-Mode)
-**Purpose:** Full prompt enhancement (7-stage pipeline)
+**Purpose:** Full prompt enhancement (7-stage pipeline). Analysis stage now reliably populates all fields (intent, scope, workflow type, complexity, domains, technologies) with fallback mechanism.
 
 **CLI Syntax:**
 ```bash
@@ -961,6 +1031,8 @@ tapps-agents enhancer enhance "<prompt>" [--format json|markdown|yaml]
 
 **Parameters:**
 - `--format`: Output format (default: `markdown`)
+
+**Note**: The enhancer includes a fallback analysis mechanism that ensures all analysis fields are populated even when the analyst/LLM is unavailable, preventing "unknown" values.
 
 #### `*enhance-quick` / `enhance-quick` (Dual-Mode)
 **Purpose:** Quick prompt enhancement (stages 1-3)

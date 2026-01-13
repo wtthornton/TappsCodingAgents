@@ -13,6 +13,7 @@ from ..core.config import ProjectConfig, load_config
 from .bug_finder import BugFinder, BugInfo
 from .bug_fix_coordinator import BugFixCoordinator
 from .commit_manager import CommitManager
+from .proactive_bug_finder import ProactiveBugFinder
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,9 @@ class ContinuousBugFixer:
         self.project_root = project_root or Path.cwd()
         self.config = config or load_config()
         self.bug_finder = BugFinder(project_root=self.project_root, config=self.config)
+        self.proactive_bug_finder = ProactiveBugFinder(
+            project_root=self.project_root, config=self.config
+        )
         self.bug_fix_coordinator = BugFixCoordinator(
             project_root=self.project_root, config=self.config
         )
@@ -56,15 +60,21 @@ class ContinuousBugFixer:
         max_iterations: int = 10,
         commit_strategy: str = "one-per-bug",
         auto_commit: bool = True,
+        proactive: bool = False,
+        target_path: str | None = None,
+        max_bugs: int = 20,
     ) -> dict[str, Any]:
         """
         Execute continuous bug finding and fixing.
 
         Args:
-            test_path: Test directory or file to run
+            test_path: Test directory or file to run (for test-based discovery)
             max_iterations: Maximum loop iterations
             commit_strategy: Commit strategy - "one-per-bug" or "batch"
             auto_commit: Whether to commit fixes automatically
+            proactive: If True, use proactive bug discovery (code analysis) instead of test-based
+            target_path: Directory or file to analyze (for proactive discovery)
+            max_bugs: Maximum bugs to find per iteration (for proactive discovery)
 
         Returns:
             Dictionary with execution results
@@ -101,6 +111,9 @@ class ContinuousBugFixer:
                 commit_strategy=commit_strategy,
                 auto_commit=auto_commit,
                 commit_manager=commit_manager,
+                proactive=proactive,
+                target_path=target_path,
+                max_bugs=max_bugs,
             )
 
             results.append(iteration_result)
@@ -142,16 +155,22 @@ class ContinuousBugFixer:
         commit_strategy: str = "one-per-bug",
         auto_commit: bool = True,
         commit_manager: CommitManager | None = None,
+        proactive: bool = False,
+        target_path: str | None = None,
+        max_bugs: int = 20,
     ) -> dict[str, Any]:
         """
         Execute one iteration of bug finding and fixing.
 
         Args:
             iteration: Current iteration number
-            test_path: Test directory or file to run
+            test_path: Test directory or file to run (for test-based discovery)
             commit_strategy: Commit strategy
             auto_commit: Whether to commit fixes
             commit_manager: CommitManager instance
+            proactive: If True, use proactive bug discovery
+            target_path: Directory or file to analyze (for proactive discovery)
+            max_bugs: Maximum bugs to find (for proactive discovery)
 
         Returns:
             Dictionary with iteration results
@@ -161,8 +180,16 @@ class ContinuousBugFixer:
                 project_root=self.project_root, strategy=commit_strategy
             )
 
-        # Find bugs
-        bugs = await self.bug_finder.find_bugs(test_path=test_path)
+        # Find bugs (proactive or test-based)
+        if proactive:
+            logger.info(f"Iteration {iteration}: Using proactive bug discovery")
+            bugs = await self.proactive_bug_finder.find_bugs(
+                target_path=target_path,
+                max_bugs=max_bugs,
+            )
+        else:
+            logger.info(f"Iteration {iteration}: Using test-based bug discovery")
+            bugs = await self.bug_finder.find_bugs(test_path=test_path)
 
         if not bugs:
             return {

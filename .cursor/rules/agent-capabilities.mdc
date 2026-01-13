@@ -476,7 +476,7 @@ python -m tapps_agents.cli orchestrator integrate-service "service1" --with "ser
 
 **Capabilities**:
 - **Full Enhancement Pipeline** (7 stages):
-  1. Analysis: Intent and scope detection
+  1. Analysis: Intent, scope, workflow type, complexity, domains, and technologies detection (with fallback for reliability)
   2. Requirements: Functional/non-functional requirements
   3. Architecture: System design guidance
   4. Codebase Context: Relevant code patterns
@@ -501,6 +501,8 @@ python -m tapps_agents.cli enhancer enhance-resume <session-id>
 ```
 
 **Expert Integration**: Automatically detects domains and consults relevant Industry Experts with weighted decision-making (Primary 51%, Others 49%).
+
+**Reliability**: Includes fallback analysis mechanism - if analyst/LLM unavailable, uses keyword-based analysis to ensure all fields are populated (no "unknown" values).
 
 **Output Formats**: Markdown (default), JSON, YAML
 

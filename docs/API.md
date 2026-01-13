@@ -162,7 +162,7 @@ Both of these are supported:
 From `python -m tapps_agents.cli --help`, the CLI exposes:
 
 - **Agent subcommands**: `reviewer`, `planner`, `implementer`, `tester`, `debugger`, `documenter`, `analyst`, `architect`, `designer`, `improver`, `ops`, `enhancer`, `orchestrator`, `evaluator`
-- **Utility subcommands**: `workflow`, `init`, `doctor`, `score`, `setup-experts`, `analytics`, `create`, `hardware-profile` (or `hardware`)
+- **Utility subcommands**: `workflow`, `init`, `doctor`, `score`, `setup-experts`, `analytics`, `create`, `hardware-profile` (or `hardware`), `continuous-bug-fix`
 
 ### Command Naming (with and without `*`)
 
@@ -296,7 +296,7 @@ The enhancer agent now provides complete output with all stage data:
 
 ### Enhanced Output
 The enhancer now displays:
-- **Analysis**: Intent, scope, workflow type, complexity, domains, technologies
+- **Analysis**: Intent, scope, workflow type, complexity, domains, technologies (all fields properly populated with fallback mechanism for reliability)
 - **Requirements**: Gathered requirements from analyst and experts
 - **Architecture Guidance**: Architecture recommendations and patterns
 - **Codebase Context**: Related files and detected patterns
@@ -458,6 +458,8 @@ Documenter Agent - Documentation generation.
 ## Enhancer Agent
 
 Enhancer Agent - Transforms simple prompts into comprehensive, context-aware prompts.
+
+**Recent Improvements**: Analysis stage now properly populates all fields (intent, scope, workflow type, complexity, domains, technologies) with a reliable fallback mechanism. No more "unknown" values.
 
 ### Commands
 

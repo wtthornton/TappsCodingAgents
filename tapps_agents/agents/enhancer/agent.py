@@ -749,59 +749,76 @@ Provide structured JSON response with the following format:
   "complexity": "medium"
 }}"""
 
-        # Use analyst agent to perform analysis
+        # Perform analysis using analyst agent (now has analyze-prompt command)
         try:
+            # Use analyst agent to perform analysis
             analysis_result = await self.analyst.run(
                 "analyze-prompt",
                 description=prompt,
             )
             
-            # Extract analysis text from result
-            analysis_text = ""
-            if isinstance(analysis_result, dict):
-                analysis_text = analysis_result.get("analysis", "") or analysis_result.get("result", "") or str(analysis_result)
+            # Check for error in result
+            if isinstance(analysis_result, dict) and "error" in analysis_result:
+                logger.debug(f"Analyst returned error: {analysis_result['error']}, using fallback analysis")
+                parsed = self._fallback_analysis(prompt)
+                analysis_text = json.dumps(parsed, indent=2)
+            elif isinstance(analysis_result, dict) and analysis_result.get("success"):
+                # Analyst returned instruction/skill_command (Cursor mode)
+                # The actual analysis will be performed by the Cursor Skill
+                # For now, use fallback but note that skill will execute
+                logger.debug("Analyst returned instruction for Cursor Skill execution, using fallback for immediate results")
+                parsed = self._fallback_analysis(prompt)
+                analysis_text = analysis_result.get("analysis", json.dumps(parsed, indent=2))
             else:
-                analysis_text = str(analysis_result)
-            
-            # Parse the response to extract structured data
-            parsed = self._parse_analysis_response(analysis_text)
-            
-            # Merge detected libraries into technologies
-            if detected_libraries:
-                technologies = parsed.get("technologies", [])
-                technologies.extend([lib for lib in detected_libraries if lib not in technologies])
-                parsed["technologies"] = technologies
-            
-            return {
-                "original_prompt": prompt,
-                "intent": parsed.get("intent", "unknown"),
-                "scope": parsed.get("scope", "unknown"),
-                "workflow_type": parsed.get("workflow_type", "unknown"),
-                "domains": parsed.get("domains", []),
-                "technologies": parsed.get("technologies", []),
-                "complexity": parsed.get("complexity", "medium"),
-                "analysis": analysis_text,  # Keep raw response for reference
-                "parsed_data": parsed,  # Store parsed data
-                # C1 Enhancement: Library detection and Context7 docs
-                "detected_libraries": detected_libraries,
-                "context7_docs": {k: v is not None for k, v in context7_docs.items()},  # Store availability only
-            }
+                # Extract analysis text from result
+                analysis_text = ""
+                if isinstance(analysis_result, dict):
+                    # Check for various possible response formats
+                    analysis_text = (
+                        analysis_result.get("analysis", "") or 
+                        analysis_result.get("result", "") or 
+                        analysis_result.get("response", "") or
+                        str(analysis_result)
+                    )
+                else:
+                    analysis_text = str(analysis_result)
+                
+                # Check if we got a valid response (not an error dict string)
+                if analysis_text and not (analysis_text.startswith("{'error'") or '"error"' in analysis_text):
+                    # Parse the response to extract structured data
+                    parsed = self._parse_analysis_response(analysis_text)
+                    # If parsing failed or returned empty, use fallback
+                    if not parsed or (parsed.get("intent") == "unknown" and parsed.get("scope") == "unknown"):
+                        logger.debug("Analysis parsing returned empty/unknown values, using fallback")
+                        parsed = self._fallback_analysis(prompt)
+                else:
+                    logger.debug("Analysis result contains error, using fallback")
+                    parsed = self._fallback_analysis(prompt)
         except Exception as e:
-            logger.warning(f"Analysis stage failed: {e}, using fallback values")
-            # Return fallback values if analysis fails
-            return {
-                "original_prompt": prompt,
-                "intent": "unknown",
-                "scope": "unknown",
-                "workflow_type": "unknown",
-                "domains": [],
-                "technologies": [],
-                "complexity": "medium",
-                "analysis": f"Analysis failed: {str(e)}",
-                "parsed_data": {},
-                "detected_libraries": detected_libraries,
-                "context7_docs": {},
-            }
+            logger.debug(f"Analysis stage failed: {e}, using fallback analysis")
+            parsed = self._fallback_analysis(prompt)
+            analysis_text = json.dumps(parsed, indent=2)
+        
+        # Merge detected libraries into technologies
+        if detected_libraries:
+            technologies = parsed.get("technologies", [])
+            technologies.extend([lib for lib in detected_libraries if lib not in technologies])
+            parsed["technologies"] = technologies
+        
+        return {
+            "original_prompt": prompt,
+            "intent": parsed.get("intent", "unknown"),
+            "scope": parsed.get("scope", "unknown"),
+            "workflow_type": parsed.get("workflow_type", "unknown"),
+            "domains": parsed.get("domains", []),
+            "technologies": parsed.get("technologies", []),
+            "complexity": parsed.get("complexity", "medium"),
+            "analysis": analysis_text,  # Keep raw response for reference
+            "parsed_data": parsed,  # Store parsed data
+            # C1 Enhancement: Library detection and Context7 docs
+            "detected_libraries": detected_libraries,
+            "context7_docs": {k: v is not None for k, v in context7_docs.items()},  # Store availability only
+        }
 
     async def _stage_requirements(
         self, prompt: str, analysis: dict[str, Any]
@@ -1896,11 +1913,28 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
             lines.append(f"- **Workflow Type**: {workflow_type}")
             lines.append(f"- **Complexity**: {complexity}")
             
+            # Always show domains section, even if empty
             if domains:
                 lines.append(f"- **Detected Domains**: {', '.join(domains)}")
+            else:
+                lines.append("- **Detected Domains**: None detected")
             
+            # Always show technologies section, even if empty
             if technologies:
                 lines.append(f"- **Technologies**: {', '.join(technologies)}")
+            else:
+                lines.append("- **Technologies**: None detected")
+            
+            # Add raw analysis text if available for debugging
+            if analysis.get('analysis') and isinstance(analysis.get('analysis'), str):
+                raw_analysis = analysis.get('analysis')
+                # Only show if it's not just the JSON dump
+                if len(raw_analysis) > 200 or '"intent"' not in raw_analysis:
+                    lines.append("")
+                    lines.append("### Analysis Details")
+                    lines.append("```")
+                    lines.append(raw_analysis[:500] + ("..." if len(raw_analysis) > 500 else ""))
+                    lines.append("```")
             
             lines.append("")
 
@@ -1915,12 +1949,20 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
                 for req in reqs["functional_requirements"]:
                     lines.append(f"- {req}")
                 lines.append("")
+            else:
+                lines.append("### Functional Requirements")
+                lines.append("- *No functional requirements extracted yet. This will be populated during requirements gathering stage.*")
+                lines.append("")
             
             # Non-functional Requirements
             if reqs.get("non_functional_requirements"):
                 lines.append("### Non-Functional Requirements")
                 for req in reqs["non_functional_requirements"]:
                     lines.append(f"- {req}")
+                lines.append("")
+            else:
+                lines.append("### Non-Functional Requirements")
+                lines.append("- *No non-functional requirements extracted yet.*")
                 lines.append("")
             
             # Technical Constraints
@@ -1972,13 +2014,19 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
             if arch.get("architecture_guidance"):
                 lines.append(arch["architecture_guidance"])
                 lines.append("")
+            else:
+                lines.append("*Architecture guidance will be generated during the architecture stage.*")
+                lines.append("")
             
             # System Design
             if arch.get("system_design"):
                 lines.append("### System Design")
                 if isinstance(arch["system_design"], dict):
-                    for key, value in arch["system_design"].items():
-                        lines.append(f"**{key.title()}**: {value}")
+                    if arch["system_design"]:  # Check if dict is not empty
+                        for key, value in arch["system_design"].items():
+                            lines.append(f"**{key.title()}**: {value}")
+                    else:
+                        lines.append("*System design details pending.*")
                 else:
                     lines.append(str(arch["system_design"]))
                 lines.append("")
@@ -2093,6 +2141,102 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
 
         return "\n".join(lines)
 
+    def _fallback_analysis(self, prompt: str) -> dict[str, Any]:
+        """
+        Fallback keyword-based analysis when MAL/LLM unavailable or analyst fails.
+        
+        Performs basic analysis using keyword matching and heuristics.
+        
+        Args:
+            prompt: User prompt to analyze
+            
+        Returns:
+            Dictionary with intent, scope, workflow_type, domains, technologies, complexity
+        """
+        prompt_lower = prompt.lower()
+        word_count = len(prompt.split())
+        
+        # Detect intent
+        if any(word in prompt_lower for word in ["fix", "bug", "error", "issue", "problem", "broken"]):
+            intent = "bug-fix"
+        elif any(word in prompt_lower for word in ["refactor", "improve", "optimize", "update", "modernize"]):
+            intent = "refactor"
+        elif any(word in prompt_lower for word in ["document", "docs", "readme", "documentation"]):
+            intent = "documentation"
+        elif any(word in prompt_lower for word in ["test", "tests", "testing", "coverage"]):
+            intent = "testing"
+        elif any(word in prompt_lower for word in ["create", "add", "build", "implement", "develop", "new"]):
+            intent = "feature"
+        else:
+            intent = "feature"  # Default
+        
+        # Estimate scope (rough heuristic based on prompt length and keywords)
+        if word_count < 15:
+            scope = "small"
+        elif word_count < 50:
+            scope = "medium"
+        else:
+            scope = "large"
+        
+        # Detect workflow type
+        if any(word in prompt_lower for word in ["new", "create", "build", "add", "implement"]):
+            workflow_type = "greenfield"
+        elif any(word in prompt_lower for word in ["existing", "current", "modify", "change", "update", "enhance"]):
+            workflow_type = "brownfield"
+        elif intent == "bug-fix":
+            workflow_type = "quick-fix"
+        else:
+            workflow_type = "greenfield"
+        
+        # Detect domains (keyword-based)
+        domains = []
+        domain_keywords = {
+            "security": ["security", "auth", "authentication", "authorization", "encrypt", "ssl", "jwt", "token"],
+            "user-management": ["user", "account", "profile", "login", "logout", "session", "register"],
+            "database": ["database", "db", "sql", "query", "model", "schema", "migration"],
+            "api": ["api", "endpoint", "route", "request", "response", "rest", "graphql"],
+            "ui": ["ui", "interface", "page", "component", "frontend", "tab", "navigation", "blueprint"],
+            "integration": ["integrate", "integration", "service", "microservice", "connect"],
+        }
+        for domain, keywords in domain_keywords.items():
+            if any(keyword in prompt_lower for keyword in keywords):
+                domains.append(domain)
+        
+        # Detect technologies (keyword-based)
+        technologies = []
+        tech_keywords = {
+            "Python": ["python", "py", "fastapi", "flask", "django", "pytest"],
+            "JavaScript": ["javascript", "js", "node", "react", "vue", "angular"],
+            "TypeScript": ["typescript", "ts"],
+            "FastAPI": ["fastapi"],
+            "React": ["react"],
+            "Playwright": ["playwright"],
+            "Puppeteer": ["puppeteer"],
+            "Home Assistant": ["home assistant", "homeassistant", "ha"],
+        }
+        for tech, keywords in tech_keywords.items():
+            if any(keyword in prompt_lower for keyword in keywords):
+                if tech not in technologies:
+                    technologies.append(tech)
+        
+        # Estimate complexity
+        complexity_keywords = ["complex", "advanced", "sophisticated", "integrate", "system", "multiple", "scoring", "pattern"]
+        if any(keyword in prompt_lower for keyword in complexity_keywords) or word_count > 60:
+            complexity = "high"
+        elif word_count < 20:
+            complexity = "low"
+        else:
+            complexity = "medium"
+        
+        return {
+            "intent": intent,
+            "scope": scope,
+            "workflow_type": workflow_type,
+            "domains": domains if domains else [],
+            "technologies": technologies if technologies else [],
+            "complexity": complexity,
+        }
+    
     def _parse_analysis_response(self, response_text: str) -> dict[str, Any]:
         """
         Parse analysis response to extract structured data.
@@ -2114,58 +2258,132 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
         # Look for JSON code blocks first
         import re
         
-        # Try to find JSON in code blocks
+        # Try to find JSON in code blocks (improved regex to handle nested objects)
         json_match = re.search(r'```(?:json)?\s*(\{.*?\})\s*```', response_text, re.DOTALL)
         if json_match:
             try:
                 parsed = json.loads(json_match.group(1))
-                return parsed
+                # Validate that we got meaningful data
+                if parsed and isinstance(parsed, dict) and len(parsed) > 0:
+                    return parsed
             except json.JSONDecodeError:
                 pass
         
-        # Try to find JSON object directly
-        json_match = re.search(r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}', response_text, re.DOTALL)
-        if json_match:
-            try:
-                parsed = json.loads(json_match.group(0))
-                return parsed
-            except json.JSONDecodeError:
-                pass
+        # Try to find JSON object directly (improved to handle nested structures)
+        # Look for balanced braces
+        brace_count = 0
+        start_idx = -1
+        for i, char in enumerate(response_text):
+            if char == '{':
+                if brace_count == 0:
+                    start_idx = i
+                brace_count += 1
+            elif char == '}':
+                brace_count -= 1
+                if brace_count == 0 and start_idx >= 0:
+                    try:
+                        json_str = response_text[start_idx:i+1]
+                        parsed = json.loads(json_str)
+                        if parsed and isinstance(parsed, dict) and len(parsed) > 0:
+                            return parsed
+                    except json.JSONDecodeError:
+                        pass
+                    start_idx = -1
         
         # Fallback: try to extract fields using regex patterns
-        # Extract intent
-        intent_match = re.search(r'"intent"\s*:\s*"([^"]+)"|intent[:\s]+([a-z-]+)', response_text, re.IGNORECASE)
-        if intent_match:
-            parsed["intent"] = intent_match.group(1) or intent_match.group(2) or "unknown"
+        # Extract intent (handle multiple formats: "intent": "value", intent: value, Intent: value)
+        intent_patterns = [
+            r'"intent"\s*:\s*"([^"]+)"',
+            r"'intent'\s*:\s*'([^']+)'",
+            r'intent[:\s]+([a-z-]+)',
+            r'Intent[:\s]+([a-z-]+)',
+        ]
+        for pattern in intent_patterns:
+            intent_match = re.search(pattern, response_text, re.IGNORECASE)
+            if intent_match:
+                parsed["intent"] = intent_match.group(1).strip() if intent_match.group(1) else "unknown"
+                break
         
         # Extract scope
-        scope_match = re.search(r'"scope"\s*:\s*"([^"]+)"|scope[:\s]+(small|medium|large)', response_text, re.IGNORECASE)
-        if scope_match:
-            parsed["scope"] = scope_match.group(1) or scope_match.group(2) or "unknown"
+        scope_patterns = [
+            r'"scope"\s*:\s*"([^"]+)"',
+            r"'scope'\s*:\s*'([^']+)'",
+            r'scope[:\s]+(small|medium|large)',
+            r'Scope[:\s]+(small|medium|large)',
+        ]
+        for pattern in scope_patterns:
+            scope_match = re.search(pattern, response_text, re.IGNORECASE)
+            if scope_match:
+                parsed["scope"] = scope_match.group(1).strip() if scope_match.group(1) else "unknown"
+                break
         
         # Extract workflow_type
-        workflow_match = re.search(r'"workflow_type"\s*:\s*"([^"]+)"|workflow[:\s]+(greenfield|brownfield|quick-fix)', response_text, re.IGNORECASE)
-        if workflow_match:
-            parsed["workflow_type"] = workflow_match.group(1) or workflow_match.group(2) or "unknown"
+        workflow_patterns = [
+            r'"workflow_type"\s*:\s*"([^"]+)"',
+            r"'workflow_type'\s*:\s*'([^']+)'",
+            r'"workflowType"\s*:\s*"([^"]+)"',
+            r'workflow[:\s]+(greenfield|brownfield|quick-fix|quickfix)',
+            r'Workflow[:\s]+(greenfield|brownfield|quick-fix|quickfix)',
+        ]
+        for pattern in workflow_patterns:
+            workflow_match = re.search(pattern, response_text, re.IGNORECASE)
+            if workflow_match:
+                parsed["workflow_type"] = workflow_match.group(1).strip() if workflow_match.group(1) else "unknown"
+                break
         
-        # Extract domains (list)
-        domains_match = re.search(r'"domains"\s*:\s*\[(.*?)\]', response_text, re.DOTALL)
-        if domains_match:
-            domains_str = domains_match.group(1)
-            domains = [d.strip().strip('"\'') for d in domains_str.split(',') if d.strip()]
-            parsed["domains"] = domains
+        # Extract domains (list) - handle various formats
+        domains_patterns = [
+            r'"domains"\s*:\s*\[(.*?)\]',
+            r"'domains'\s*:\s*\[(.*?)\]",
+            r'"domain"\s*:\s*\[(.*?)\]',  # singular form
+            r'domains?[:\s]+\[(.*?)\]',  # with or without quotes
+        ]
+        for pattern in domains_patterns:
+            domains_match = re.search(pattern, response_text, re.DOTALL | re.IGNORECASE)
+            if domains_match:
+                domains_str = domains_match.group(1)
+                # Handle both quoted and unquoted items
+                domains = []
+                for item in domains_str.split(','):
+                    cleaned = item.strip().strip('"\'[]')
+                    if cleaned:
+                        domains.append(cleaned)
+                if domains:
+                    parsed["domains"] = domains
+                break
         
-        # Extract technologies (list)
-        tech_match = re.search(r'"technologies"\s*:\s*\[(.*?)\]', response_text, re.DOTALL)
-        if tech_match:
-            tech_str = tech_match.group(1)
-            technologies = [t.strip().strip('"\'') for t in tech_str.split(',') if t.strip()]
-            parsed["technologies"] = technologies
+        # Extract technologies (list) - handle various formats
+        tech_patterns = [
+            r'"technologies"\s*:\s*\[(.*?)\]',
+            r"'technologies'\s*:\s*\[(.*?)\]",
+            r'"technology"\s*:\s*\[(.*?)\]',  # singular form
+            r'technolog(?:ies|y)[:\s]+\[(.*?)\]',  # flexible matching
+        ]
+        for pattern in tech_patterns:
+            tech_match = re.search(pattern, response_text, re.DOTALL | re.IGNORECASE)
+            if tech_match:
+                tech_str = tech_match.group(1)
+                technologies = []
+                for item in tech_str.split(','):
+                    cleaned = item.strip().strip('"\'[]')
+                    if cleaned:
+                        technologies.append(cleaned)
+                if technologies:
+                    parsed["technologies"] = technologies
+                break
         
         # Extract complexity
-        complexity_match = re.search(r'"complexity"\s*:\s*"([^"]+)"|complexity[:\s]+(low|medium|high)', response_text, re.IGNORECASE)
-        if complexity_match:
-            parsed["complexity"] = complexity_match.group(1) or complexity_match.group(2) or "medium"
+        complexity_patterns = [
+            r'"complexity"\s*:\s*"([^"]+)"',
+            r"'complexity'\s*:\s*'([^']+)'",
+            r'complexity[:\s]+(low|medium|high)',
+            r'Complexity[:\s]+(low|medium|high)',
+        ]
+        for pattern in complexity_patterns:
+            complexity_match = re.search(pattern, response_text, re.IGNORECASE)
+            if complexity_match:
+                parsed["complexity"] = complexity_match.group(1).strip().lower() if complexity_match.group(1) else "medium"
+                break
         
         return parsed
 

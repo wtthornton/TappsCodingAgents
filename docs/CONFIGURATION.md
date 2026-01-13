@@ -249,6 +249,50 @@ tapps-agents simple-mode run -p "Build a REST API endpoint"
 
 See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for complete documentation.
 
+### Continuous Bug Fix Configuration
+
+Configuration for the continuous bug finding and fixing feature.
+
+```yaml
+continuous_bug_fix:
+  max_iterations: 10              # Maximum loop iterations (1-100)
+  commit_strategy: "one-per-bug"  # Commit strategy: "one-per-bug" or "batch"
+  auto_commit: true                # Automatically commit fixes after bug-fix-agent succeeds
+  test_path: "tests/"              # Default test directory or file to run
+  skip_patterns: []                # Patterns for bugs to skip (not yet implemented)
+```
+
+**Configuration Options:**
+- `max_iterations`: Maximum number of loop iterations before stopping (default: `10`, range: 1-100)
+- `commit_strategy`: How to commit fixes - `one-per-bug` (one commit per bug) or `batch` (one commit for all bugs) (default: `one-per-bug`)
+- `auto_commit`: Whether to automatically commit fixes after bug-fix-agent succeeds (default: `true`)
+- `test_path`: Default test directory or file to run (default: `tests/`)
+- `skip_patterns`: List of patterns for bugs to skip (not yet implemented, reserved for future use)
+
+**Usage:**
+```bash
+# Basic usage (uses config defaults)
+tapps-agents continuous-bug-fix
+
+# Override config with CLI arguments
+tapps-agents continuous-bug-fix --test-path tests/unit/ --max-iterations 5
+
+# Dry run (no commits)
+tapps-agents continuous-bug-fix --no-commit
+```
+
+**How It Works:**
+1. Runs pytest to detect test failures
+2. Parses failures to extract bug information (file path, error message)
+3. Calls bug-fix-agent (FixOrchestrator) to fix each bug
+4. Commits fixes automatically (if enabled)
+5. Repeats until no bugs remain or max iterations reached
+
+**Integration:**
+- Integrates with bug-fix-agent (FixOrchestrator) for fixing bugs
+- Uses git operations from `core.git_operations` for commits
+- Respects bug-fix-agent quality thresholds and configuration
+
 ## Default Values
 
 If no configuration file is provided, defaults are loaded from the Pydantic models in `tapps_agents/core/config.py`.

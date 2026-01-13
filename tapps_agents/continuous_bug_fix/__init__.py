@@ -8,6 +8,7 @@ from .bug_finder import BugFinder, BugInfo
 from .bug_fix_coordinator import BugFixCoordinator
 from .commit_manager import CommitManager
 from .continuous_bug_fixer import ContinuousBugFixer
+from .proactive_bug_finder import ProactiveBugFinder
 
 __all__ = [
     "BugFinder",
@@ -15,4 +16,5 @@ __all__ = [
     "BugFixCoordinator",
     "CommitManager",
     "ContinuousBugFixer",
+    "ProactiveBugFinder",
 ]

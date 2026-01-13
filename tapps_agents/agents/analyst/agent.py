@@ -71,6 +71,10 @@ class AnalystAgent(BaseAgent):
                 "command": "*competitive-analysis",
                 "description": "Perform competitive analysis",
             },
+            {
+                "command": "*analyze-prompt",
+                "description": "Analyze prompt for intent, scope, domains, and workflow type",
+            },
         ]
 
     async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
@@ -84,6 +88,7 @@ class AnalystAgent(BaseAgent):
         - *estimate-effort: Estimate effort and complexity
         - *assess-risk: Assess risks
         - *competitive-analysis: Competitive analysis
+        - *analyze-prompt: Analyze prompt for intent, scope, domains, and workflow type
         - *help: Show help
         """
         command = command.lstrip("*")
@@ -128,6 +133,12 @@ class AnalystAgent(BaseAgent):
             competitors = kwargs.get("competitors", [])
 
             return await self._competitive_analysis(product_description, competitors)
+
+        elif command == "analyze-prompt":
+            description = kwargs.get("description", "")
+            context = kwargs.get("context", "")
+
+            return await self._analyze_prompt(description, context)
 
         else:
             return {"error": f"Unknown command: {command}"}
@@ -386,6 +397,52 @@ Format as structured JSON."""
             "success": True,
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
+        }
+
+    async def _analyze_prompt(
+        self, description: str, context: str = ""
+    ) -> dict[str, Any]:
+        """Analyze prompt for intent, scope, domains, and workflow type."""
+        prompt = f"""Analyze the following prompt and extract structured information.
+
+Prompt:
+{description}
+
+{f"Context: {context}" if context else ""}
+
+Please analyze and extract:
+1. Intent (feature, bug-fix, refactor, documentation, testing, etc.)
+2. Detected domains (security, user-management, payments, database, api, ui, integration, etc.)
+3. Estimated scope (small: 1-2 files, medium: 3-5 files, large: 6+ files)
+4. Recommended workflow type (greenfield: new code, brownfield: existing code modification, quick-fix: urgent bug fix)
+5. Key technologies mentioned or implied (Python, JavaScript, FastAPI, React, etc.)
+6. Complexity level (low, medium, high)
+
+Provide structured JSON response with the following format:
+{{
+  "intent": "feature",
+  "scope": "medium",
+  "workflow_type": "greenfield",
+  "domains": ["security", "user-management"],
+  "technologies": ["Python", "FastAPI"],
+  "complexity": "medium"
+}}
+
+Be specific and accurate. If uncertain about a field, use reasonable defaults based on the prompt content."""
+
+        # Prepare instruction for Cursor Skills
+        instruction = GenericInstruction(
+            agent_name="analyst",
+            command="analyze-prompt",
+            prompt=prompt,
+            parameters={"description": description, "context": context},
+        )
+
+        return {
+            "success": True,
+            "instruction": instruction.to_dict(),
+            "skill_command": instruction.to_skill_command(),
+            "analysis": prompt,  # Include the analysis prompt for reference
         }
 
     async def close(self) -> None:

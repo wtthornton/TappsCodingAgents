@@ -3198,6 +3198,9 @@ def handle_continuous_bug_fix_command(args: object) -> None:
     max_iterations = getattr(args, "max_iterations", 10)
     commit_strategy = getattr(args, "commit_strategy", "one-per-bug")
     auto_commit = not getattr(args, "no_commit", False)
+    proactive = getattr(args, "proactive", False)
+    target_path = getattr(args, "target_path", None)
+    max_bugs = getattr(args, "max_bugs", 20)
 
     # Load config
     config = load_config()
@@ -3213,9 +3216,10 @@ def handle_continuous_bug_fix_command(args: object) -> None:
     if auto_commit and continuous_config:
         auto_commit = continuous_config.auto_commit
 
+    mode_str = "proactive bug discovery" if proactive else "test-based bug finding"
     feedback.start_operation(
         "Continuous Bug Fix",
-        f"Running continuous bug finding and fixing (max {max_iterations} iterations)...",
+        f"Running {mode_str} and fixing (max {max_iterations} iterations)...",
     )
 
     # Execute
@@ -3228,6 +3232,9 @@ def handle_continuous_bug_fix_command(args: object) -> None:
                 max_iterations=max_iterations,
                 commit_strategy=commit_strategy,
                 auto_commit=auto_commit,
+                proactive=proactive,
+                target_path=target_path,
+                max_bugs=max_bugs,
             )
         )
 
