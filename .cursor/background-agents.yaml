@@ -61,8 +61,8 @@ global:
   context7_cache: .tapps-agents/kb/context7-cache
   output_directory: .tapps-agents/reports
   worktree_base: .tapps-agents/worktrees
-  progress_reporting: false
+  progress_reporting: true  # Enable progress tracking for monitoring
   result_delivery:
     - file
-  max_parallel_agents: 0
-  timeout_seconds: 3600
+  max_parallel_agents: 2  # Allow 2 agents to run simultaneously for better throughput
+  timeout_seconds: 1800  # 30 minutes (reduced from 1 hour for faster failure detection)
