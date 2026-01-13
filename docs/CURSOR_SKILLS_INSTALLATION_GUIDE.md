@@ -11,11 +11,12 @@ This guide explains how to install and use TappsCodingAgents Skills in Cursor AI
 TappsCodingAgents provides **two unified interfaces** for accessing specialized SDLC agents:
 
 ### Cursor Skills (Cursor IDE)
-- **14 Cursor Skills** (`.claude/skills/`) - Use `@agent *command` syntax in Cursor IDE
+- **15 Cursor Skills** (`.claude/skills/`) - Use `@agent *command` syntax in Cursor IDE
+  - **14 agent skills**: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester
+  - **1 Simple Mode skill**: simple-mode (natural language orchestration)
 - **Objective Quality Metrics**: Code scoring with 5 metrics (complexity, security, maintainability, test coverage, performance)
 - **Quality Tools**: Ruff, mypy, bandit, jscpd, pip-audit integration
 - **Context7 Integration**: KB-first library documentation caching (90%+ cache hit rate)
-- **13 Specialized Agents**: Reviewer, Implementer, Tester, Debugger, and more
 
 ### Claude Desktop Commands (Claude Desktop)
 - **16 Claude Desktop Commands** (`.claude/commands/`) - Use `@command` syntax in Claude Desktop

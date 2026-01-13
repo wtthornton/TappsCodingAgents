@@ -13,7 +13,7 @@ This project is designed to work **inside Cursor** with agents, while keeping **
 ### Key directories
 
 **In this framework repo (shipped templates):**
-- **`tapps_agents/resources/claude/skills/`**: Packaged Skills templates (13 agent skills + Simple Mode skill).
+- **`tapps_agents/resources/claude/skills/`**: Packaged Skills templates (14 agent skills + Simple Mode skill = 15 total).
 - **`tapps_agents/resources/cursor/rules/*.mdc`**: Packaged Cursor Rules templates (7 rule files, including `simple-mode.mdc` and `command-reference.mdc`).
 - **`tapps_agents/resources/workflows/presets/`**: Workflow presets (8 presets, including 3 Simple Mode workflows).
 
