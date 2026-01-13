@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-01-13T18:43:52.768354+00:00Z
-total_entries: 110
+last_updated: 2026-01-13T22:48:38.817863+00:00Z
+total_entries: 111
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -483,3 +483,8 @@ libraries:
     topics:
       common-mistakes:
         cached_at: 2026-01-13T18:43:52.768320+00:00Z
+  context7:
+    context7_id: /fahreddinozcan/context7-docs
+    topics:
+      MCP:
+        cached_at: 2026-01-13T22:48:38.817844+00:00Z
