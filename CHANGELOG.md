@@ -7,6 +7,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.6] - 2026-01-16
+
+### Added
+- **Continuous Bug Finder and Fixer** - New feature for automated bug detection and fixing
+  - Continuously runs tests, detects bugs, fixes them using bug-fix-agent, and commits fixes automatically
+  - Stops when no bugs are found or max iterations reached
+  - Supports `one-per-bug` and `batch` commit strategies
+  - Configurable max iterations and test paths
+
+### Fixed
+- **GitHub Actions CI** - Fixed coverage threshold and summary script
+  - Adjusted coverage threshold to match project requirements
+  - Fixed summary script for better CI reporting
+
+- **Enhancer Analysis** - Fixed analysis stage to reliably populate all fields
+  - Added fallback mechanism to ensure all analysis fields are populated
+  - Prevents "unknown" values when analyst/LLM is unavailable
+  - Improved reliability of prompt enhancement workflow
+
+- **Bug Fixing Workflow** - Fixed debugger command and git worktree cleanup
+  - Corrected debugger command invocation in bug fixing workflow
+  - Improved git worktree cleanup to prevent resource leaks
+
 ## [3.5.5] - 2026-01-16
 
 ### Fixed
