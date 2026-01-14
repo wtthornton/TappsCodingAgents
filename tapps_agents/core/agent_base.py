@@ -221,6 +221,79 @@ class BaseAgent(ABC):
         """Execute agent command"""
         pass
 
+    def format_result(
+        self,
+        result: dict[str, Any],
+        command: str,
+        output_format: str = "text",
+        output_file: str | Path | None = None,
+    ) -> str | Path:
+        """
+        Format agent result in specified format and optionally save to file.
+        
+        Args:
+            result: Agent result dictionary
+            command: Command that was executed
+            output_format: Desired output format (json, text, markdown, yaml)
+            output_file: Optional path to save output file
+            
+        Returns:
+            Formatted output string, or Path if output_file was provided
+        """
+        from .output_formatter import OutputFormatter
+
+        formatted = OutputFormatter.format_output(
+            result=result,
+            agent_name=self.agent_name,
+            command=command,
+            output_format=output_format,
+        )
+
+        if output_file:
+            return OutputFormatter.save_output(
+                result=result,
+                agent_name=self.agent_name,
+                command=command,
+                output_file=output_file,
+                output_format=output_format,
+            )
+
+        return formatted
+
+    def wrap_instruction_result(
+        self,
+        instruction: Any,
+        auto_execute: bool = False,
+        include_directive: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Wrap instruction object in result with execution directive.
+        
+        Args:
+            instruction: Instruction object (CodeGenerationInstruction, etc.)
+            auto_execute: If True, include auto-execution flag
+            include_directive: If True, include _cursor_execution_directive
+            
+        Returns:
+            Result dictionary with instruction and execution directive
+        """
+        result = {
+            "success": True,
+            "type": "instruction",
+            "instruction": instruction.to_dict(),
+            "description": instruction.get_description(),
+            "skill_command": instruction.to_skill_command(),
+            "cli_command": instruction.to_cli_command(),
+        }
+
+        if include_directive:
+            directive = instruction.to_execution_directive()
+            if auto_execute:
+                directive["_cursor_execution_directive"]["auto_execute"] = True
+            result.update(directive)
+
+        return result
+
     def parse_command(self, user_input: str) -> tuple[str, dict[str, str]]:
         """
         Parse user input to extract command and arguments.

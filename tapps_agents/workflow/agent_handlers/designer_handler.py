@@ -41,32 +41,61 @@ class DesignerHandler(AgentExecutionHandler):
         Returns:
             List of created artifacts
         """
-        # Read requirements and architecture
-        requirements_path = self.project_root / "requirements.md"
-        requirements = (
-            requirements_path.read_text(encoding="utf-8")
-            if requirements_path.exists()
-            else ""
+        # Get outputs from previous steps (e.g., architect, planner)
+        from ...workflow.output_passing import WorkflowOutputPasser
+        output_passer = WorkflowOutputPasser(self.state)
+        
+        base_inputs: dict[str, Any] = {}
+        enhanced_inputs = output_passer.prepare_agent_inputs(
+            step_id=step.id,
+            agent_name="designer",
+            command=action,
+            base_inputs=base_inputs,
         )
-        arch_path = self.project_root / "architecture.md"
-        architecture = (
-            arch_path.read_text(encoding="utf-8") if arch_path.exists() else ""
-        )
+        
+        # Get requirements from enhanced inputs or fallback to file
+        requirements = enhanced_inputs.get("requirements") or enhanced_inputs.get("planner_requirements")
+        
+        # Get architecture context from enhanced inputs or fallback to file
+        context = enhanced_inputs.get("context") or enhanced_inputs.get("architect_context") or enhanced_inputs.get("architecture")
+        
+        if not requirements:
+            requirements_path = self.project_root / "requirements.md"
+            requirements = (
+                requirements_path.read_text(encoding="utf-8")
+                if requirements_path.exists()
+                else ""
+            )
+        
+        if not context:
+            arch_path = self.project_root / "architecture.md"
+            context = (
+                arch_path.read_text(encoding="utf-8") if arch_path.exists() else ""
+            )
         
         # Combine requirements and architecture for the design-api command
         api_requirements = (
-            f"{requirements}\n\nArchitecture:\n{architecture}"
-            if architecture
+            f"{requirements}\n\nArchitecture:\n{context}"
+            if context
             else requirements
         )
         
-        # Run designer agent
+        # Run designer agent with enhanced inputs
         designer_result = await self.run_agent(
             "designer",
             "design-api",
             requirements=api_requirements,
+            **{k: v for k, v in enhanced_inputs.items() if k not in ("requirements", "context", "planner_requirements", "architect_context", "architecture")},
         )
         self.state.variables["designer_result"] = designer_result
+        
+        # Store output for next steps
+        output_passer.store_agent_output(
+            step_id=step.id,
+            agent_name="designer",
+            command=action,
+            output=designer_result if isinstance(designer_result, dict) else {"result": designer_result},
+        )
         
         # Create api-design.md artifact if requested
         created_artifacts: list[dict[str, Any]] = []

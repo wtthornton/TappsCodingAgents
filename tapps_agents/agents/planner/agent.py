@@ -108,7 +108,39 @@ class PlannerAgent(BaseAgent):
             if not description:
                 return {"error": "Description required. Usage: *plan <description>"}
 
-            return await self.create_plan(description)
+            generate_doc = kwargs.get("generate_doc", False) or kwargs.get("generate-doc", False)
+            output_file = kwargs.get("output_file") or kwargs.get("output-file")
+            output_format = kwargs.get("output_format", "markdown") or kwargs.get("output-format", "markdown")
+
+            result = await self.create_plan(description)
+            
+            # Generate document if requested
+            if generate_doc:
+                from ...core.document_generator import DocumentGenerator
+                doc_generator = DocumentGenerator(project_root=self._project_root)
+                
+                # Determine output file if not provided
+                if not output_file:
+                    docs_dir = self._project_root / "docs" / "plans"
+                    docs_dir.mkdir(parents=True, exist_ok=True)
+                    # Create filename from description
+                    safe_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in description[:50])
+                    safe_name = safe_name.replace(' ', '_').lower()
+                    output_file = docs_dir / f"{safe_name}_plan.{output_format if output_format != 'html' else 'html'}"
+                
+                # Generate document
+                doc_path = doc_generator.generate_plan_doc(
+                    plan_data=result,
+                    output_file=output_file,
+                    format=output_format,
+                )
+                
+                result["document"] = {
+                    "path": str(doc_path),
+                    "format": output_format,
+                }
+            
+            return result
 
         elif command == "create-story":
             description = kwargs.get("description") or kwargs.get("text", "")
@@ -119,7 +151,38 @@ class PlannerAgent(BaseAgent):
 
             epic = kwargs.get("epic")
             priority = kwargs.get("priority", "medium")
-            return await self.create_story(description, epic=epic, priority=priority)
+            generate_doc = kwargs.get("generate_doc", False) or kwargs.get("generate-doc", False)
+            output_file = kwargs.get("output_file") or kwargs.get("output-file")
+            output_format = kwargs.get("output_format", "markdown") or kwargs.get("output-format", "markdown")
+
+            result = await self.create_story(description, epic=epic, priority=priority)
+            
+            # Generate document if requested
+            if generate_doc:
+                from ...core.document_generator import DocumentGenerator
+                doc_generator = DocumentGenerator(project_root=self._project_root)
+                
+                # Determine output file if not provided
+                if not output_file:
+                    stories_dir = self.stories_dir or (self._project_root / "stories")
+                    stories_dir.mkdir(parents=True, exist_ok=True)
+                    safe_name = "".join(c if c.isalnum() or c in (' ', '-', '_') else '_' for c in description[:50])
+                    safe_name = safe_name.replace(' ', '_').lower()
+                    output_file = stories_dir / f"{safe_name}_story.{output_format if output_format != 'html' else 'html'}"
+                
+                # Generate document
+                doc_path = doc_generator.generate_user_story_doc(
+                    story_data=result,
+                    output_file=output_file,
+                    format=output_format,
+                )
+                
+                result["document"] = {
+                    "path": str(doc_path),
+                    "format": output_format,
+                }
+            
+            return result
 
         elif command == "list-stories":
             epic_filter = kwargs.get("epic")

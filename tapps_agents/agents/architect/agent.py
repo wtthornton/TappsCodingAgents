@@ -150,8 +150,81 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
             requirements = kwargs.get("requirements", "")
             context = kwargs.get("context", "")
             output_file = kwargs.get("output_file", None)
+            generate_doc = kwargs.get("generate_doc", False) or kwargs.get("generate-doc", False)
+            generate_code = kwargs.get("generate_code", False) or kwargs.get("generate-code", False)
+            code_language = kwargs.get("code_language", "python") or kwargs.get("code-language", "python")
+            output_format = kwargs.get("output_format", "markdown") or kwargs.get("output-format", "markdown")
 
-            return await self._design_system(requirements, context, output_file)
+            result = await self._design_system(requirements, context, output_file)
+            
+            # Generate document if requested
+            if generate_doc:
+                from ...core.document_generator import DocumentGenerator
+                doc_generator = DocumentGenerator(project_root=self._project_root)
+                
+                # Determine output file if not provided
+                if not output_file:
+                    docs_dir = self._project_root / "docs" / "architecture"
+                    docs_dir.mkdir(parents=True, exist_ok=True)
+                    safe_name = "architecture_design"
+                    output_file = docs_dir / f"{safe_name}.{output_format if output_format != 'html' else 'html'}"
+                
+                # Generate document
+                doc_path = doc_generator.generate_architecture_doc(
+                    architecture_data=result,
+                    output_file=output_file,
+                    format=output_format,
+                )
+                
+                result["document"] = {
+                    "path": str(doc_path),
+                    "format": output_format,
+                }
+            
+            # Generate code skeletons if requested
+            if generate_code and "components" in str(result):
+                from ...core.code_generator import CodeGenerator
+                code_generator = CodeGenerator(project_root=self._project_root)
+                
+                # Try to extract components from result
+                components = result.get("components", [])
+                if not components and "instruction" in result:
+                    # If we have instruction, we can't generate code yet
+                    # But we can prepare for it
+                    result["code_generation_ready"] = False
+                    result["code_generation_note"] = "Code generation requires executed architecture design"
+                elif components:
+                    # Generate service skeletons for each component
+                    generated_files = []
+                    code_dir = self._project_root / "src" / "services"
+                    code_dir.mkdir(parents=True, exist_ok=True)
+                    
+                    for component in components:
+                        component_name = component.get("name", "Service") or "Service"
+                        safe_name = "".join(c if c.isalnum() or c == '_' else '_' for c in component_name)
+                        code_file = code_dir / f"{safe_name.lower()}.py"
+                        
+                        try:
+                            code_path = code_generator.generate_python_class(
+                                class_data={
+                                    "name": component_name,
+                                    "description": component.get("description", ""),
+                                    "properties": component.get("properties", []),
+                                },
+                                output_file=code_file,
+                            )
+                            generated_files.append(str(code_path))
+                        except Exception as e:
+                            logger.warning(f"Failed to generate code for component {component_name}: {e}")
+                    
+                    if generated_files:
+                        result["code"] = {
+                            "files": generated_files,
+                            "language": code_language,
+                            "type": "service_skeletons",
+                        }
+            
+            return result
 
         elif command == "create-diagram":
             architecture_description = kwargs.get("architecture_description", "")

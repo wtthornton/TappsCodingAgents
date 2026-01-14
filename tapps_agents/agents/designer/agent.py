@@ -120,15 +120,126 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
             requirements = kwargs.get("requirements", "")
             api_type = kwargs.get("api_type", "REST")
             output_file = kwargs.get("output_file", None)
+            generate_doc = kwargs.get("generate_doc", False) or kwargs.get("generate-doc", False)
+            generate_code = kwargs.get("generate_code", False) or kwargs.get("generate-code", False)
+            code_language = kwargs.get("code_language", "typescript") or kwargs.get("code-language", "typescript")
+            output_format = kwargs.get("output_format", "markdown") or kwargs.get("output-format", "markdown")
 
-            return await self._design_api(requirements, api_type, output_file)
+            result = await self._design_api(requirements, api_type, output_file)
+            
+            # Generate document if requested
+            if generate_doc:
+                from ...core.document_generator import DocumentGenerator
+                doc_generator = DocumentGenerator(project_root=self._project_root)
+                
+                # Determine output file if not provided
+                if not output_file:
+                    docs_dir = self._project_root / "docs" / "api"
+                    docs_dir.mkdir(parents=True, exist_ok=True)
+                    safe_name = "api_design"
+                    output_file = docs_dir / f"{safe_name}.{output_format if output_format != 'html' else 'html'}"
+                
+                # Generate document
+                doc_path = doc_generator.generate_api_design_doc(
+                    api_data=result,
+                    output_file=output_file,
+                    format=output_format,
+                )
+                
+                result["document"] = {
+                    "path": str(doc_path),
+                    "format": output_format,
+                }
+            
+            # Generate code if requested
+            if generate_code:
+                from ...core.code_generator import CodeGenerator
+                code_generator = CodeGenerator(project_root=self._project_root)
+                
+                # Determine code output file
+                if code_language == "typescript":
+                    code_dir = self._project_root / "src" / "api" / "clients"
+                    code_dir.mkdir(parents=True, exist_ok=True)
+                    api_name = result.get("name", "ApiClient") or "ApiClient"
+                    code_file = code_dir / f"{api_name}.ts"
+                else:
+                    code_dir = self._project_root / "src" / "api"
+                    code_dir.mkdir(parents=True, exist_ok=True)
+                    api_name = result.get("name", "api_client") or "api_client"
+                    code_file = code_dir / f"{api_name}.py"
+                
+                # Generate API client code
+                try:
+                    code_path = code_generator.generate_api_client(
+                        api_data=result,
+                        output_file=code_file,
+                        language=code_language,
+                    )
+                    
+                    result["code"] = {
+                        "path": str(code_path),
+                        "language": code_language,
+                    }
+                except Exception as e:
+                    result["code_error"] = str(e)
+            
+            return result
 
         elif command == "design-data-model":
             requirements = kwargs.get("requirements", "")
             data_source = kwargs.get("data_source", "")
             output_file = kwargs.get("output_file", None)
+            generate_code = kwargs.get("generate_code", False) or kwargs.get("generate-code", False)
+            code_language = kwargs.get("code_language", "typescript") or kwargs.get("code-language", "typescript")
 
-            return await self._design_data_model(requirements, data_source, output_file)
+            result = await self._design_data_model(requirements, data_source, output_file)
+            
+            # Generate code if requested
+            if generate_code:
+                from ...core.code_generator import CodeGenerator
+                code_generator = CodeGenerator(project_root=self._project_root)
+                
+                # Determine code output file based on language
+                if code_language == "typescript":
+                    code_dir = self._project_root / "src" / "models"
+                    code_dir.mkdir(parents=True, exist_ok=True)
+                    model_name = result.get("name", "Model") or "Model"
+                    code_file = code_dir / f"{model_name}.ts"
+                    
+                    # Generate TypeScript interface
+                    try:
+                        code_path = code_generator.generate_typescript_interface(
+                            interface_data=result,
+                            output_file=code_file,
+                        )
+                        result["code"] = {
+                            "path": str(code_path),
+                            "language": code_language,
+                            "type": "interface",
+                        }
+                    except Exception as e:
+                        result["code_error"] = str(e)
+                elif code_language == "python":
+                    code_dir = self._project_root / "src" / "models"
+                    code_dir.mkdir(parents=True, exist_ok=True)
+                    model_name = result.get("name", "model") or "model"
+                    code_file = code_dir / f"{model_name}.py"
+                    
+                    # Generate Python class
+                    try:
+                        code_path = code_generator.generate_python_class(
+                            class_data=result,
+                            output_file=code_file,
+                        )
+                        result["code"] = {
+                            "path": str(code_path),
+                            "language": code_language,
+                            "type": "class",
+                        }
+                    except Exception as e:
+                        result["code_error"] = str(e)
+            
+            return result
 
         elif command == "design-ui":
             feature_description = kwargs.get("feature_description", "")

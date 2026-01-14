@@ -3,6 +3,12 @@ Instruction models for Cursor Skills integration.
 
 These models represent structured instructions that agents prepare for execution
 via Cursor Skills.
+
+All instruction classes support:
+- Converting to Cursor Skill commands (to_skill_command)
+- Converting to CLI commands (to_cli_command)
+- Creating execution directives (to_execution_directive)
+- Human-readable descriptions (get_description)
 """
 
 from dataclasses import dataclass
@@ -28,6 +34,34 @@ class CodeGenerationInstruction:
             parts.append(f'--file "{self.file_path}"')
         parts.append(f'"{self.specification}"')
         return " ".join(parts)
+
+    def to_cli_command(self, agent_name: str = "implementer") -> str:
+        """Convert to CLI command string."""
+        parts = ["tapps-agents", agent_name, "implement"]
+        if self.file_path:
+            parts.append(f'--file "{self.file_path}"')
+        parts.append(f'"{self.specification}"')
+        return " ".join(parts)
+
+    def to_execution_directive(self) -> dict[str, Any]:
+        """Create execution directive for Cursor Skills."""
+        return {
+            "_cursor_execution_directive": {
+                "action": "execute_instruction",
+                "type": "code_generation",
+                "description": f"Generate {self.language} code: {self.specification[:100]}...",
+                "skill_command": self.to_skill_command(),
+                "cli_command": self.to_cli_command(),
+                "ready_to_execute": True,
+                "requires_review": False,
+            },
+            "instruction": self.to_dict(),
+        }
+
+    def get_description(self) -> str:
+        """Get human-readable description of this instruction."""
+        file_info = f" to {self.file_path}" if self.file_path else ""
+        return f"Generate {self.language} code{file_info}: {self.specification[:200]}..."
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -56,6 +90,33 @@ class TestGenerationInstruction:
         if self.test_framework:
             parts.append(f'--framework "{self.test_framework}"')
         return " ".join(parts)
+
+    def to_cli_command(self, agent_name: str = "tester") -> str:
+        """Convert to CLI command string."""
+        parts = ["tapps-agents", agent_name, "test"]
+        parts.append(f'--file "{self.target_file}"')
+        if self.test_framework:
+            parts.append(f'--framework "{self.test_framework}"')
+        return " ".join(parts)
+
+    def to_execution_directive(self) -> dict[str, Any]:
+        """Create execution directive for Cursor Skills."""
+        return {
+            "_cursor_execution_directive": {
+                "action": "execute_instruction",
+                "type": "test_generation",
+                "description": f"Generate {self.test_framework} tests for {self.target_file}",
+                "skill_command": self.to_skill_command(),
+                "cli_command": self.to_cli_command(),
+                "ready_to_execute": True,
+                "requires_review": False,
+            },
+            "instruction": self.to_dict(),
+        }
+
+    def get_description(self) -> str:
+        """Get human-readable description of this instruction."""
+        return f"Generate {self.test_framework} tests for {self.target_file}"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -87,6 +148,38 @@ class DocumentationInstruction:
             parts.append("--include-examples")
         return " ".join(parts)
 
+    def to_cli_command(self, agent_name: str = "documenter") -> str:
+        """Convert to CLI command string."""
+        parts = ["tapps-agents", agent_name, "document"]
+        parts.append(f'--target "{self.target_file}"')
+        if self.output_dir:
+            parts.append(f'--output-dir "{self.output_dir}"')
+        if self.docstring_format:
+            parts.append(f'--format "{self.docstring_format}"')
+        if self.include_examples:
+            parts.append("--include-examples")
+        return " ".join(parts)
+
+    def to_execution_directive(self) -> dict[str, Any]:
+        """Create execution directive for Cursor Skills."""
+        return {
+            "_cursor_execution_directive": {
+                "action": "execute_instruction",
+                "type": "documentation",
+                "description": f"Generate {self.docstring_format} documentation for {self.target_file}",
+                "skill_command": self.to_skill_command(),
+                "cli_command": self.to_cli_command(),
+                "ready_to_execute": True,
+                "requires_review": False,
+            },
+            "instruction": self.to_dict(),
+        }
+
+    def get_description(self) -> str:
+        """Get human-readable description of this instruction."""
+        format_info = f" ({self.docstring_format})" if self.docstring_format else ""
+        return f"Generate documentation{format_info} for {self.target_file}"
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
@@ -114,6 +207,35 @@ class ErrorAnalysisInstruction:
         if self.context_lines:
             parts.append(f"--context-lines {self.context_lines}")
         return " ".join(parts)
+
+    def to_cli_command(self, agent_name: str = "debugger") -> str:
+        """Convert to CLI command string."""
+        parts = ["tapps-agents", agent_name, "analyze-error"]
+        parts.append(f'--error-message "{self.error_message}"')
+        if self.stack_trace:
+            parts.append(f'--stack-trace "{self.stack_trace}"')
+        if self.context_lines:
+            parts.append(f"--context-lines {self.context_lines}")
+        return " ".join(parts)
+
+    def to_execution_directive(self) -> dict[str, Any]:
+        """Create execution directive for Cursor Skills."""
+        return {
+            "_cursor_execution_directive": {
+                "action": "execute_instruction",
+                "type": "error_analysis",
+                "description": f"Analyze error: {self.error_message[:100]}...",
+                "skill_command": self.to_skill_command(),
+                "cli_command": self.to_cli_command(),
+                "ready_to_execute": True,
+                "requires_review": False,
+            },
+            "instruction": self.to_dict(),
+        }
+
+    def get_description(self) -> str:
+        """Get human-readable description of this instruction."""
+        return f"Analyze error: {self.error_message[:200]}..."
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
@@ -144,6 +266,39 @@ class GenericInstruction:
                 else:
                     parts.append(f"--{key} {value}")
         return " ".join(parts)
+
+    def to_cli_command(self, agent_name: str | None = None) -> str:
+        """Convert to CLI command string."""
+        agent = agent_name or self.agent_name
+        parts = ["tapps-agents", agent, self.command]
+        for key, value in self.parameters.items():
+            if value is not None:
+                if isinstance(value, str):
+                    parts.append(f'--{key} "{value}"')
+                else:
+                    parts.append(f"--{key} {value}")
+        return " ".join(parts)
+
+    def to_execution_directive(self) -> dict[str, Any]:
+        """Create execution directive for Cursor Skills."""
+        return {
+            "_cursor_execution_directive": {
+                "action": "execute_instruction",
+                "type": "generic",
+                "description": f"Execute {self.agent_name} {self.command}",
+                "skill_command": self.to_skill_command(),
+                "cli_command": self.to_cli_command(),
+                "ready_to_execute": True,
+                "requires_review": len(self.prompt) > 1000,  # Review if prompt is very long
+            },
+            "instruction": self.to_dict(),
+        }
+
+    def get_description(self) -> str:
+        """Get human-readable description of this instruction."""
+        params_str = ", ".join(f"{k}={v}" for k, v in self.parameters.items() if v is not None)
+        params_info = f" with {params_str}" if params_str else ""
+        return f"Execute {self.agent_name} {self.command}{params_info}"
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""

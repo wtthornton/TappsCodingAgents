@@ -14,6 +14,7 @@ from typing import Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
+from ...core.test_generator import TestGenerator as CoreTestGenerator
 from ...experts.agent_integration import ExpertSupportMixin
 from .test_generator import TestGenerator
 
@@ -41,8 +42,9 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             config = load_config()
         self.config = config
 
-        # Initialize test generator
-        self.test_generator = TestGenerator()
+        # Initialize test generators
+        self.test_generator = TestGenerator()  # Instruction-based generator
+        self.core_test_generator = CoreTestGenerator(project_root=self.project_root if hasattr(self, 'project_root') else None)  # Template-based generator
 
         # Get tester config
         tester_config = config.agents.tester if config and config.agents else None
@@ -325,19 +327,43 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                         expert_guidance=expert_guidance,
                     )
                 
-                # Generate test code template
-                test_code = self._generate_test_template(
-                    file_path=file_path,
-                    code_analysis=code_analysis,
-                    test_framework=test_framework,
-                    expert_guidance=expert_guidance,
-                    integration=integration,
-                )
+                # Generate test code template using core test generator
+                test_framework_detected = self.core_test_generator.detect_test_framework(file_path)
                 
-                # Write test file
-                target_test_path.write_text(test_code, encoding="utf-8")
+                # Use framework-specific template generation
+                if test_framework_detected == "pytest":
+                    generated_path = self.core_test_generator.generate_pytest_test(
+                        source_file=file_path,
+                        test_content=test_code or "",  # Will be generated if empty
+                        output_file=target_test_path,
+                    )
+                elif test_framework_detected == "jest":
+                    generated_path = self.core_test_generator.generate_jest_test(
+                        source_file=file_path,
+                        test_content=test_code or "",
+                        output_file=target_test_path,
+                    )
+                elif test_framework_detected == "unittest":
+                    generated_path = self.core_test_generator.generate_unittest_test(
+                        source_file=file_path,
+                        test_content=test_code or "",
+                        output_file=target_test_path,
+                    )
+                else:
+                    # Fallback to original method
+                    test_code = self._generate_test_template(
+                        file_path=file_path,
+                        code_analysis=code_analysis,
+                        test_framework=test_framework,
+                        expert_guidance=expert_guidance,
+                        integration=integration,
+                    )
+                    target_test_path.write_text(test_code, encoding="utf-8")
+                    generated_path = target_test_path
+                
                 file_written = True
-                logger.info(f"Test file written to: {target_test_path}")
+                logger.info(f"Test file written to: {generated_path}")
+                target_test_path = generated_path  # Update path
                 
                 # Run tests after generating
                 run_result = await self._run_pytest(

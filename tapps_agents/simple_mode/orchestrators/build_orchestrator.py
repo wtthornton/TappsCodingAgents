@@ -18,6 +18,7 @@ from typing import Any, Callable
 from tapps_agents.agents.enhancer.agent import EnhancerAgent
 from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+from ..output_aggregator import SimpleModeOutputAggregator
 from tapps_agents.simple_mode.documentation_manager import (
     WorkflowDocumentationManager,
 )
@@ -217,6 +218,12 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         workflow_id = WorkflowDocumentationManager.generate_workflow_id("build")
         doc_manager: WorkflowDocumentationManager | None = None
         checkpoint_manager: StepCheckpointManager | None = None
+        
+        # Initialize output aggregator for Simple Mode enhancements
+        output_aggregator = SimpleModeOutputAggregator(
+            workflow_id=workflow_id,
+            workflow_type="build",
+        )
 
         # Initialize documentation manager if organized documentation is enabled
         if self.config and self.config.simple_mode.documentation_organized:
@@ -512,6 +519,19 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     if agent_name in ["planner", "architect", "designer", "implementer"]:
                         steps_executed.append(agent_name)
                         
+                        # Add output to aggregator (Simple Mode Enhancement)
+                        output_aggregator.add_step_output(
+                            step_number=task_step_num,
+                            step_name=task_step_name,
+                            agent_name=agent_name,
+                            output=task_result,
+                            success=task_success,
+                            metadata={
+                                "artifacts": task_result.get("artifacts", []),
+                                "file_paths": task_result.get("file_paths", []),
+                            },
+                        )
+                        
                         # Notify step completion
                         if on_step_complete:
                             status = "success" if task_success else "failed"
@@ -698,6 +718,26 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                             for req_id in tracer.requirements.keys():
                                 tracer.add_trace(req_id, "tests", test_file)
                     
+                    # Add review/test outputs to aggregator
+                    reviewer_result = review_test_result.get("results", {}).get("reviewer-1", {})
+                    if reviewer_result:
+                        output_aggregator.add_step_output(
+                            step_number=6,
+                            step_name=step_6_name,
+                            agent_name="reviewer",
+                            output=reviewer_result,
+                            success=reviewer_result.get("success", True),
+                        )
+                    if tester_result:
+                        output_aggregator.add_step_output(
+                            step_number=7,
+                            step_name=step_7_name,
+                            agent_name="tester",
+                            output=tester_result,
+                            success=tester_result.get("success", True),
+                            metadata={"test_files": test_files_list if tester_result else []},
+                        )
+                    
                     # Notify step completions
                     if on_step_complete:
                         on_step_complete(6, step_6_name, "success")
@@ -823,6 +863,10 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             else:
                 error_message = "Workflow execution failed (see results for details)"
         
+        # Aggregate all outputs (Simple Mode Enhancement)
+        aggregated_output = output_aggregator.aggregate()
+        executable_instructions = output_aggregator.get_executable_instructions()
+        
         return {
             "type": "build",
             "success": overall_success,
@@ -845,6 +889,10 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             "verification": verification_result,  # Step 8 verification result
             "checklist": checklist.to_dict() if not fast_mode else None,  # Deliverable checklist
             "tracer": tracer.to_dict() if not fast_mode else None,  # Requirements tracer
+            # Simple Mode Enhancements (Phase 6.1)
+            "aggregated_output": aggregated_output,
+            "executable_instructions": executable_instructions,
+            "output_summary": output_aggregator.format_summary(),
         }
 
     def _enrich_implementer_context(

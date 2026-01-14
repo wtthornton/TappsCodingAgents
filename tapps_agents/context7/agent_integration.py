@@ -11,6 +11,7 @@ from ..mcp.gateway import MCPGateway
 from .analytics import Analytics
 from .cache_structure import CacheStructure
 from .credential_validation import validate_context7_credentials
+from .doc_manager import Context7DocManager
 from .fuzzy_matcher import FuzzyMatcher
 from .kb_cache import KBCache
 from .library_detector import LibraryDetector
@@ -198,6 +199,13 @@ class Context7AgentHelper:
 
             # Initialize library detector for Option 3 quality uplift
             self.library_detector = LibraryDetector(project_root=project_root)
+            
+            # Initialize documentation manager for auto-save and offline access (Phase 7.1)
+            self.doc_manager = Context7DocManager(
+                cache_root=self.cache_structure.cache_root,
+                project_root=project_root,
+            )
+            
             # #region agent log
             try:
                 with open(log_path, "a", encoding="utf-8") as f:
@@ -231,6 +239,7 @@ class Context7AgentHelper:
             self.mcp_gateway = mcp_gateway
             self.kb_lookup = None
             self.library_detector = None
+            self.doc_manager = None  # Phase 7.1: Doc manager disabled on init failure
             # #region agent log
             try:
                 with open(log_path, "a", encoding="utf-8") as f:
@@ -297,9 +306,36 @@ class Context7AgentHelper:
                     }) + "\n")
             except: pass
             # #endregion
+            
+            # Check if we have saved documentation first (offline access)
+            if hasattr(self, 'doc_manager') and self.doc_manager:
+                saved_doc = self.doc_manager.get_saved_documentation(library, topic)
+                if saved_doc:
+                    logger.debug(f"Using saved documentation for {library} ({topic})")
+                    return saved_doc
+            
             result = await self.kb_lookup.lookup(
                 library=library, topic=topic, use_fuzzy_match=use_fuzzy_match
             )
+            
+            # Auto-save documentation if available
+            if result and result.success and hasattr(self, 'doc_manager') and self.doc_manager:
+                try:
+                    doc_result = {
+                        "content": result.content,
+                        "library": result.library,
+                        "topic": result.topic,
+                        "source": result.source,
+                    }
+                    self.doc_manager.save_documentation(
+                        library=library,
+                        topic=topic,
+                        documentation=doc_result,
+                        source=result.source,
+                    )
+                except Exception as e:
+                    logger.debug(f"Failed to auto-save documentation: {e}")
+            
             # #region agent log
             try:
                 with open(log_path, "a", encoding="utf-8") as f:

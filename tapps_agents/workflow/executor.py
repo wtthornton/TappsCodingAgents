@@ -1145,6 +1145,24 @@ class WorkflowExecutor:
         )
         self.state.step_executions.append(step_execution)
 
+        # Initialize output passer for automatic output passing
+        from ..workflow.output_passing import WorkflowOutputPasser
+        output_passer = WorkflowOutputPasser(self.state)
+
+        # Prepare inputs with outputs from previous steps
+        base_kwargs: dict[str, Any] = {}
+        if target_path:
+            base_kwargs["file"] = str(target_path)
+            base_kwargs["target_file"] = str(target_path)
+
+        # Get inputs from previous steps
+        enhanced_kwargs = output_passer.prepare_agent_inputs(
+            step_id=step.id,
+            agent_name=agent_name,
+            command=action,
+            base_inputs=base_kwargs,
+        )
+
         # ---- Helper: dynamic agent import + run ----
         async def run_agent(agent: str, command: str, **kwargs: Any) -> dict[str, Any]:
             module = __import__(f"tapps_agents.agents.{agent}.agent", fromlist=["*"])
@@ -1205,6 +1223,16 @@ class WorkflowExecutor:
                 step_execution.completed_at - step_execution.started_at
             ).total_seconds()
             step_execution.status = "completed"
+
+            # Store agent output for automatic passing to next steps
+            agent_result = self.state.variables.get(f"{agent_name}_result")
+            if agent_result:
+                output_passer.store_agent_output(
+                    step_id=step.id,
+                    agent_name=agent_name,
+                    command=action,
+                    output=agent_result if isinstance(agent_result, dict) else {"result": agent_result},
+                )
 
             # Default: mark step complete and advance to its `next`
             self.mark_step_complete(step_id=step.id, artifacts=created_artifacts or None)

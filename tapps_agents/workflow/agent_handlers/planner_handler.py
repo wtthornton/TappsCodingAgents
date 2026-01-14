@@ -42,26 +42,47 @@ class PlannerHandler(AgentExecutionHandler):
         Returns:
             List of created artifacts
         """
-        # Read requirements if available
-        requirements_path = self.project_root / "requirements.md"
-        requirements = (
-            requirements_path.read_text(encoding="utf-8")
-            if requirements_path.exists()
-            else ""
+        # Try to get enhanced prompt from enhancer if available
+        from ...workflow.output_passing import WorkflowOutputPasser
+        output_passer = WorkflowOutputPasser(self.state)
+        
+        # Prepare inputs with outputs from previous steps (e.g., enhancer)
+        base_inputs: dict[str, Any] = {}
+        enhanced_inputs = output_passer.prepare_agent_inputs(
+            step_id=step.id,
+            agent_name="planner",
+            command=action,
+            base_inputs=base_inputs,
         )
         
-        # Use "plan" command which creates a plan with multiple stories
-        plan_description = (
-            requirements if requirements else "Create user stories for this project"
-        )
+        # Get description from enhanced inputs or fallback to requirements file
+        plan_description = enhanced_inputs.get("description") or enhanced_inputs.get("enhancer_description")
         
-        # Run planner agent
+        if not plan_description:
+            # Read requirements if available
+            requirements_path = self.project_root / "requirements.md"
+            plan_description = (
+                requirements_path.read_text(encoding="utf-8")
+                if requirements_path.exists()
+                else "Create user stories for this project"
+            )
+        
+        # Run planner agent with enhanced inputs
         planner_result = await self.run_agent(
             "planner",
             "plan",
             description=plan_description,
+            **{k: v for k, v in enhanced_inputs.items() if k not in ("description", "enhancer_description")},
         )
         self.state.variables["planner_result"] = planner_result
+        
+        # Store output for next steps
+        output_passer.store_agent_output(
+            step_id=step.id,
+            agent_name="planner",
+            command=action,
+            output=planner_result if isinstance(planner_result, dict) else {"result": planner_result},
+        )
         
         # Create stories directory if it doesn't exist
         stories_dir = self.project_root / "stories"
