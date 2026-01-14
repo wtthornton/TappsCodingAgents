@@ -90,6 +90,7 @@ Use this at the beginning of projects to understand who is affected and how to m
     stakeholder_parser.add_argument(
         "--stakeholders", nargs="+", help="Optional list of known stakeholders to include in the analysis (e.g., 'product-owner', 'end-users', 'devops-team'). If not provided, stakeholders will be identified from the project description."
     )
+    stakeholder_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     tech_research_parser = analyst_subparsers.add_parser(
         "tech-research",
@@ -113,6 +114,7 @@ Example:
     tech_research_parser.add_argument(
         "--criteria", nargs="+", help="Space-separated list of evaluation criteria to prioritize (e.g., 'performance', 'security', 'scalability', 'cost', 'ease-of-use'). If not provided, uses standard criteria."
     )
+    tech_research_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     estimate_parser = analyst_subparsers.add_parser(
         "estimate-effort",
@@ -132,6 +134,7 @@ Use this for sprint planning, project estimation, and resource allocation.""",
     )
     estimate_parser.add_argument("feature_description", help="Description of the feature, task, or work item to estimate. Include functional requirements, technical complexity, and any known constraints.")
     estimate_parser.add_argument("--context", help="Additional context affecting estimation such as team experience, existing codebase complexity, technical debt, or external dependencies")
+    estimate_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     assess_risk_parser = analyst_subparsers.add_parser(
         "assess-risk", 
@@ -153,6 +156,7 @@ Use this early in projects to proactively identify and address potential problem
         "feature_description", help="Description of the feature or project to assess for risks. Include scope, timeline, team composition, and any known constraints or challenges."
     )
     assess_risk_parser.add_argument("--context", help="Additional context such as project history, team experience, organizational constraints, or external factors that could affect risk assessment")
+    assess_risk_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     competitive_parser = analyst_subparsers.add_parser(
         "competitive-analysis",
@@ -174,6 +178,7 @@ Use this for product planning, feature prioritization, and strategic decision-ma
     competitive_parser.add_argument(
         "--competitors", nargs="+", help="Optional list of specific competitors to analyze (e.g., 'competitor-a', 'competitor-b'). If not provided, competitors will be identified from the product description and market context."
     )
+    competitive_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     analyst_subparsers.add_parser(
         "help", aliases=["*help"], help="Show analyst commands"

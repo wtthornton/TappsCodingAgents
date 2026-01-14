@@ -113,6 +113,7 @@ Use this when making technology decisions for new components or system parts."""
     )
     tech_selection_parser.add_argument("--requirements", help="Specific requirements that technologies must meet (e.g., 'must support horizontal scaling', 'must integrate with PostgreSQL', 'must support real-time updates')")
     tech_selection_parser.add_argument("--constraints", nargs="+", help="Space-separated list of constraints (e.g., 'budget-limited', 'must-use-existing-infrastructure', 'compliance-required'). These will influence technology recommendations.")
+    tech_selection_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     security_design_parser = architect_subparsers.add_parser(
         "design-security",

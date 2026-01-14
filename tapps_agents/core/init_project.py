@@ -715,22 +715,170 @@ def normalize_config_encoding(file_path: Path) -> tuple[bool, str | None]:
         return False, None
 
 
-def init_cursor_mcp_config(project_root: Path | None = None, overwrite: bool = False) -> tuple[bool, str | None]:
+def check_npx_available() -> tuple[bool, str | None]:
+    """
+    Check if npx is available.
+    
+    Returns:
+        (available, error_message) tuple
+    """
+    try:
+        result = subprocess.run(
+            ["npx", "--version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            return True, None
+        else:
+            return False, "npx command failed"
+    except FileNotFoundError:
+        return False, "npx not found (Node.js not installed)"
+    except subprocess.TimeoutExpired:
+        return False, "npx check timed out"
+    except Exception as e:
+        return False, str(e)
+
+
+def validate_mcp_config(mcp_config_path: Path) -> dict[str, Any]:
+    """
+    Validate MCP configuration and return status.
+    
+    Args:
+        mcp_config_path: Path to MCP config file
+    
+    Returns:
+        {
+            "valid": bool,
+            "issues": list[str],
+            "warnings": list[str],
+            "recommendations": list[str]
+        }
+    """
+    result: dict[str, Any] = {
+        "valid": True,
+        "issues": [],
+        "warnings": [],
+        "recommendations": [],
+    }
+    
+    # Check if file exists
+    if not mcp_config_path.exists():
+        result["valid"] = False
+        result["issues"].append("MCP config file not found")
+        return result
+    
+    # Load and validate JSON
+    try:
+        with open(mcp_config_path, encoding="utf-8-sig") as f:
+            config = json.load(f)
+    except json.JSONDecodeError as e:
+        result["valid"] = False
+        result["issues"].append(f"Invalid JSON: {e}")
+        return result
+    except Exception as e:
+        result["valid"] = False
+        result["issues"].append(f"Failed to read config: {e}")
+        return result
+    
+    # Check for Context7
+    mcp_servers = config.get("mcpServers", {})
+    if "Context7" in mcp_servers:
+        context7_config = mcp_servers["Context7"]
+        env_vars = context7_config.get("env", {})
+        api_key_ref = env_vars.get("CONTEXT7_API_KEY", "")
+        
+        # Check if using environment variable reference
+        if isinstance(api_key_ref, str) and api_key_ref.startswith("${") and api_key_ref.endswith("}"):
+            var_name = api_key_ref[2:-1]  # Remove ${ and }
+            if not os.getenv(var_name):
+                result["valid"] = False
+                result["issues"].append(
+                    f"CONTEXT7_API_KEY environment variable not set. "
+                    f"MCP server will not work without this."
+                )
+                result["recommendations"].append(
+                    f"Set {var_name} environment variable or update MCP config with direct value"
+                )
+    
+    # Check npx availability
+    npx_available, npx_error = check_npx_available()
+    if not npx_available:
+        result["warnings"].append(
+            f"npx not available ({npx_error}). "
+            f"MCP servers that use npx will not work. "
+            f"Install Node.js to enable MCP servers."
+        )
+        result["recommendations"].append("Install Node.js: https://nodejs.org/")
+    
+    return result
+
+
+def merge_context7_into_mcp_config(mcp_config_path: Path) -> tuple[bool, str]:
+    """
+    Merge Context7 configuration into existing MCP config.
+    
+    Args:
+        mcp_config_path: Path to MCP config file
+    
+    Returns:
+        (merged, message) tuple
+    """
+    if not mcp_config_path.exists():
+        return False, "MCP config file not found"
+    
+    try:
+        with open(mcp_config_path, encoding="utf-8-sig") as f:
+            config = json.load(f)
+        
+        mcp_servers = config.setdefault("mcpServers", {})
+        
+        # Check if Context7 already exists
+        if "Context7" in mcp_servers:
+            return False, "Context7 already configured"
+        
+        # Add Context7 configuration
+        mcp_servers["Context7"] = {
+            "command": "npx",
+            "args": ["-y", "@context7/mcp-server"],
+            "env": {
+                "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
+            }
+        }
+        
+        # Write back
+        with open(mcp_config_path, "w", encoding="utf-8") as f:
+            json.dump(config, f, indent=2)
+            f.write("\n")
+        
+        return True, "Context7 configuration merged into existing MCP config"
+        
+    except json.JSONDecodeError as e:
+        return False, f"Invalid JSON in MCP config: {e}"
+    except Exception as e:
+        return False, f"Failed to merge: {e}"
+
+
+def init_cursor_mcp_config(project_root: Path | None = None, overwrite: bool = False, merge: bool = True) -> tuple[bool, str | None, dict[str, Any] | None]:
     """
     Initialize `.cursor/mcp.json` with Context7 MCP server configuration.
     
-    Creates a project-local MCP config file if it doesn't exist. Never overwrites
+    Creates a project-local MCP config file if it doesn't exist. If file exists
+    and merge=True, merges Context7 into existing config. Never overwrites
     existing files unless overwrite=True. Uses environment variable references
     for API keys (no secrets embedded).
     
     Args:
         project_root: Project root directory (defaults to cwd)
         overwrite: If True, overwrite existing file (default: False)
+        merge: If True and file exists, merge Context7 into existing config (default: True)
         
     Returns:
-        Tuple of (created, path) where:
-        - created: True if file was created, False if skipped
+        Tuple of (created, path, validation) where:
+        - created: True if file was created/merged, False if skipped
         - path: Path to mcp.json file or None if skipped
+        - validation: Validation result dict or None
     """
     if project_root is None:
         project_root = Path.cwd()
@@ -740,9 +888,21 @@ def init_cursor_mcp_config(project_root: Path | None = None, overwrite: bool = F
     
     mcp_config_file = cursor_dir / "mcp.json"
     
-    # Skip if file exists and overwrite is False
+    # If file exists and not overwriting, try to merge if merge=True
     if mcp_config_file.exists() and not overwrite:
-        return False, str(mcp_config_file)
+        if merge:
+            merged, message = merge_context7_into_mcp_config(mcp_config_file)
+            if merged:
+                # Validate after merge
+                validation = validate_mcp_config(mcp_config_file)
+                return True, str(mcp_config_file), validation
+            # Context7 already exists or merge failed
+            validation = validate_mcp_config(mcp_config_file)
+            return False, str(mcp_config_file), validation
+        else:
+            # Skip existing file
+            validation = validate_mcp_config(mcp_config_file)
+            return False, str(mcp_config_file), validation
     
     # Create MCP config with Context7 server
     mcp_config = {
@@ -764,10 +924,12 @@ def init_cursor_mcp_config(project_root: Path | None = None, overwrite: bool = F
             json.dumps(mcp_config, indent=2) + "\n",
             encoding="utf-8"
         )
-        return True, str(mcp_config_file)
+        # Validate after creation
+        validation = validate_mcp_config(mcp_config_file)
+        return True, str(mcp_config_file), validation
     except Exception as e:
         logger.warning(f"Failed to create MCP config: {e}")
-        return False, None
+        return False, None, None
 
 
 def init_experts_scaffold(project_root: Path | None = None) -> dict[str, Any]:
@@ -2358,10 +2520,21 @@ def init_project(
         results["files_created"].append(tech_stack_path)
 
     # Initialize MCP config (project-local)
-    mcp_created, mcp_path = init_cursor_mcp_config(project_root, overwrite=False)
+    mcp_created, mcp_path, mcp_validation = init_cursor_mcp_config(
+        project_root, 
+        overwrite=reset_mcp,
+        merge=True
+    )
+    
+    # Check npx availability
+    npx_available, npx_error = check_npx_available()
+    
     results["mcp_config"] = {
         "created": mcp_created,
         "path": mcp_path,
+        "validation": mcp_validation,
+        "npx_available": npx_available,
+        "npx_error": npx_error,
     }
     if mcp_path:
         results["files_created"].append(mcp_path)

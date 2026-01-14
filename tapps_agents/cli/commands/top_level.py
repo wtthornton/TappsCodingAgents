@@ -1787,15 +1787,8 @@ def _print_init_results(results: dict[str, Any]) -> None:
     else:
         print("  .cursorignore: Skipped or already exists")
     
-    # Show MCP config
-    mcp_config = results.get("mcp_config", {})
-    if mcp_config.get("created"):
-        print("  MCP Config: Created")
-        print(f"    - {mcp_config.get('path', '.cursor/mcp.json')}")
-        print("    - Context7 MCP server configured (project-local)")
-    elif mcp_config.get("path"):
-        print("  MCP Config: Already exists")
-        print(f"    - {mcp_config.get('path')}")
+    # Show MCP config (will be shown in dedicated section)
+    # MCP status is now shown in _print_mcp_status() function
     
     # Show experts scaffold
     experts_scaffold = results.get("experts_scaffold", {})
@@ -1894,6 +1887,61 @@ def _print_tech_stack(tech_stack: dict[str, Any]) -> None:
         print(f"  Detected Files: {', '.join(tech_stack['detected_files'])}")
     else:
         print("  Detected Files: None")
+
+
+def _print_mcp_status(results: dict[str, Any]) -> None:
+    """Print MCP configuration status."""
+    from ...core.unicode_safe import safe_print
+    
+    mcp_config = results.get("mcp_config", {})
+    if not mcp_config:
+        return
+    
+    print("\n" + "=" * 60)
+    print("MCP Configuration Status")
+    print("=" * 60)
+    
+    # Show config file status
+    if mcp_config.get("created"):
+        safe_print("  [OK] MCP Config: Created")
+        print(f"    - {mcp_config.get('path', '.cursor/mcp.json')}")
+        print("    - Context7 MCP server configured (project-local)")
+    elif mcp_config.get("path"):
+        print("  MCP Config: Already exists")
+        print(f"    - {mcp_config.get('path')}")
+    
+    # Show validation status
+    mcp_validation = mcp_config.get("validation")
+    if mcp_validation:
+        if not mcp_validation.get("valid", True):
+            safe_print("\n  [ERROR] MCP Configuration Issues:")
+            for issue in mcp_validation.get("issues", []):
+                print(f"    - {issue}")
+        if mcp_validation.get("warnings"):
+            safe_print("\n  [WARN] Warnings:")
+            for warning in mcp_validation.get("warnings", []):
+                print(f"    - {warning}")
+        if mcp_validation.get("recommendations"):
+            safe_print("\n  [INFO] Recommendations:")
+            for rec in mcp_validation.get("recommendations", []):
+                print(f"    - {rec}")
+    
+    # Show npx availability
+    npx_available = mcp_config.get("npx_available", True)
+    npx_error = mcp_config.get("npx_error")
+    if not npx_available:
+        safe_print("\n  [WARN] npx not available:")
+        print(f"    - {npx_error}")
+        print("    - Install Node.js: https://nodejs.org/")
+        print("    - MCP servers that use npx will not work without Node.js")
+    
+    # Show overall status
+    if mcp_validation and mcp_validation.get("valid", True) and npx_available:
+        safe_print("\n  [OK] MCP configuration is ready!")
+    elif mcp_validation and not mcp_validation.get("valid", True):
+        safe_print("\n  [ERROR] MCP configuration has issues that need to be fixed.")
+    else:
+        safe_print("\n  [WARN] MCP configuration may have issues.")
 
 
 def _print_cache_results(results: dict[str, Any]) -> None:
@@ -2281,6 +2329,18 @@ def handle_init_command(args: object) -> None:
         reset_mcp=getattr(args, "reset_mcp", False),
         preserve_custom=getattr(args, "preserve_custom", True),
     )
+    
+    # Offer interactive Context7 setup if API key is missing
+    mcp_config = results.get("mcp_config", {})
+    mcp_validation = mcp_config.get("validation")
+    if mcp_validation and not mcp_validation.get("valid", True):
+        # Check if the issue is missing API key
+        issues = mcp_validation.get("issues", [])
+        api_key_missing = any("CONTEXT7_API_KEY" in issue for issue in issues)
+        
+        if api_key_missing and not getattr(args, "yes", False):
+            from ...core.mcp_setup import offer_context7_setup
+            offer_context7_setup(results["project_root"], interactive=True)
 
     _print_init_results(results)
     
@@ -2299,6 +2359,10 @@ def handle_init_command(args: object) -> None:
     # Show cache pre-population results
     if results.get("cache_prepopulated") is not None:
         _print_cache_results(results)
+    
+    # Show MCP status
+    if results.get("mcp_config"):
+        _print_mcp_status(results)
 
     # Update .cursorignore patterns if cursorignore was created/updated
     if results.get("cursorignore") or not getattr(args, "no_cursorignore", False):

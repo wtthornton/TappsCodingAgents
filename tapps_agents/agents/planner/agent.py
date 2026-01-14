@@ -67,6 +67,26 @@ class PlannerAgent(BaseAgent):
                 "command": "*list-stories",
                 "description": "List all stories in the project",
             },
+            {
+                "command": "*evaluate-stories",
+                "description": "Evaluate story quality using INVEST criteria",
+            },
+            {
+                "command": "*validate-stories",
+                "description": "Validate stories for completeness and quality",
+            },
+            {
+                "command": "*trace-stories",
+                "description": "Map stories to acceptance criteria and test cases",
+            },
+            {
+                "command": "*review-stories",
+                "description": "Structured review of stories with INVEST checklist",
+            },
+            {
+                "command": "*calibrate-estimates",
+                "description": "Get calibrated estimates based on historical accuracy",
+            },
         ]
 
     async def run(self, command: str, **kwargs) -> dict[str, Any]:
@@ -105,6 +125,60 @@ class PlannerAgent(BaseAgent):
             epic_filter = kwargs.get("epic")
             status_filter = kwargs.get("status")
             return await self.list_stories(epic=epic_filter, status=status_filter)
+
+        elif command == "evaluate-stories":
+            stories = kwargs.get("stories", [])
+            if isinstance(stories, str):
+                # Try to load from file
+                story_path = Path(stories)
+                if story_path.exists():
+                    import json
+                    stories = json.loads(story_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Stories file not found: {stories}"}
+
+            return await self._evaluate_stories(stories)
+
+        elif command == "validate-stories":
+            stories = kwargs.get("stories", [])
+            if isinstance(stories, str):
+                # Try to load from file
+                story_path = Path(stories)
+                if story_path.exists():
+                    import json
+                    stories = json.loads(story_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Stories file not found: {stories}"}
+
+            return await self._validate_stories(stories)
+
+        elif command == "trace-stories":
+            stories = kwargs.get("stories", [])
+            test_cases = kwargs.get("test_cases", [])
+            output_file = kwargs.get("output_file", None)
+
+            return await self._trace_stories(stories, test_cases, output_file)
+
+        elif command == "review-stories":
+            stories = kwargs.get("stories", [])
+            if isinstance(stories, str):
+                story_path = Path(stories)
+                if story_path.exists():
+                    import json
+                    stories = json.loads(story_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Stories file not found: {stories}"}
+
+            return await self._review_stories(stories)
+
+        elif command == "calibrate-estimates":
+            estimated_points = kwargs.get("estimated_points", 0)
+            complexity = kwargs.get("complexity", "medium")
+
+            if estimated_points <= 0:
+                return {"error": "estimated_points must be greater than 0"}
+
+            return await self._calibrate_estimates(estimated_points, complexity)
 
         else:
             return {
@@ -648,6 +722,204 @@ Each story is saved as a Markdown file with YAML frontmatter.
 """
 
         return {"type": "help", "content": content}
+
+    async def _evaluate_stories(self, stories: list[dict[str, Any]]) -> dict[str, Any]:
+        """Evaluate story quality using INVEST criteria."""
+        from ...core.story_evaluator import StoryEvaluator
+
+        evaluator = StoryEvaluator()
+        results = []
+
+        for story in stories:
+            score = evaluator.evaluate(story)
+            results.append(
+                {
+                    "story_id": story.get("id", "unknown"),
+                    "title": story.get("title", "Untitled"),
+                    "score": {
+                        "overall": score.overall,
+                        "independent": score.independent,
+                        "negotiable": score.negotiable,
+                        "valuable": score.valuable,
+                        "estimable": score.estimable,
+                        "small": score.small,
+                        "testable": score.testable,
+                    },
+                    "issues": score.issues,
+                    "strengths": score.strengths,
+                    "recommendations": score.recommendations,
+                }
+            )
+
+        # Calculate average scores
+        avg_scores = {
+            "overall": sum(r["score"]["overall"] for r in results) / len(results) if results else 0.0,
+            "independent": sum(r["score"]["independent"] for r in results) / len(results) if results else 0.0,
+            "negotiable": sum(r["score"]["negotiable"] for r in results) / len(results) if results else 0.0,
+            "valuable": sum(r["score"]["valuable"] for r in results) / len(results) if results else 0.0,
+            "estimable": sum(r["score"]["estimable"] for r in results) / len(results) if results else 0.0,
+            "small": sum(r["score"]["small"] for r in results) / len(results) if results else 0.0,
+            "testable": sum(r["score"]["testable"] for r in results) / len(results) if results else 0.0,
+        }
+
+        return {
+            "success": True,
+            "stories_evaluated": len(results),
+            "average_scores": avg_scores,
+            "story_results": results,
+        }
+
+    async def _validate_stories(self, stories: list[dict[str, Any]]) -> dict[str, Any]:
+        """Validate stories for completeness and quality."""
+        from ...core.story_evaluator import StoryEvaluator
+
+        evaluator = StoryEvaluator()
+        results = []
+        all_valid = True
+
+        for story in stories:
+            result = evaluator.validate(story)
+            all_valid = all_valid and result.is_valid
+            results.append(
+                {
+                    "story_id": story.get("id", "unknown"),
+                    "title": story.get("title", "Untitled"),
+                    "is_valid": result.is_valid,
+                    "score": {
+                        "overall": result.score.overall,
+                        "independent": result.score.independent,
+                        "negotiable": result.score.negotiable,
+                        "valuable": result.score.valuable,
+                        "estimable": result.score.estimable,
+                        "small": result.score.small,
+                        "testable": result.score.testable,
+                    },
+                    "missing_elements": result.missing_elements,
+                    "weak_acceptance_criteria": result.weak_acceptance_criteria,
+                    "dependency_issues": result.dependency_issues,
+                    "issues": result.score.issues,
+                    "recommendations": result.score.recommendations,
+                }
+            )
+
+        return {
+            "success": True,
+            "all_valid": all_valid,
+            "stories_validated": len(results),
+            "validation_results": results,
+        }
+
+    async def _trace_stories(
+        self, stories: list[dict[str, Any]], test_cases: list[dict[str, Any]], output_file: str | None = None
+    ) -> dict[str, Any]:
+        """Map stories to acceptance criteria and test cases."""
+        from ...core.traceability import TraceabilityManager
+
+        manager = TraceabilityManager()
+        matrix = manager.get_matrix()
+
+        traceability_map = []
+
+        for story in stories:
+            story_id = story.get("id", "unknown")
+            matrix.add_story(story_id, story)
+
+            acceptance_criteria = story.get("acceptance_criteria", [])
+            linked_tests = []
+
+            # Link test cases to acceptance criteria
+            for test_case in test_cases:
+                test_story_id = test_case.get("story_id") or test_case.get("related_story")
+                if test_story_id == story_id:
+                    test_id = test_case.get("id", "unknown")
+                    linked_tests.append(test_id)
+
+                    # Link story to test
+                    matrix.link("story", story_id, "test", test_id, "validates", 1.0)
+
+            traceability_map.append(
+                {
+                    "story_id": story_id,
+                    "title": story.get("title", "Untitled"),
+                    "acceptance_criteria": acceptance_criteria,
+                    "linked_tests": linked_tests,
+                    "coverage": len(linked_tests) / len(acceptance_criteria) * 100.0 if acceptance_criteria else 0.0,
+                }
+            )
+
+        # Save matrix
+        manager.save_matrix()
+
+        # Generate report
+        report = {
+            "stories_traced": len(traceability_map),
+            "total_acceptance_criteria": sum(len(m["acceptance_criteria"]) for m in traceability_map),
+            "total_tests": len(test_cases),
+            "average_coverage": sum(m["coverage"] for m in traceability_map) / len(traceability_map) if traceability_map else 0.0,
+            "traceability_map": traceability_map,
+        }
+
+        # Save to file if specified
+        if output_file:
+            output_path = Path(output_file)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            import yaml
+            with open(output_path, "w", encoding="utf-8") as f:
+                yaml.dump(report, f, default_flow_style=False)
+
+        return {
+            "success": True,
+            "traceability_report": report,
+            "matrix_file": str(manager.matrix_file),
+            "output_file": str(output_path) if output_file else None,
+        }
+
+    async def _review_stories(self, stories: list[dict[str, Any]]) -> dict[str, Any]:
+        """Structured review of stories with INVEST checklist."""
+        from ...core.review_checklists import StoryReviewChecklist
+
+        checklist = StoryReviewChecklist()
+        results = []
+
+        for story in stories:
+            result = checklist.review(story)
+            results.append(
+                {
+                    "story_id": story.get("id", "unknown"),
+                    "title": story.get("title", "Untitled"),
+                    "overall_score": result.overall_score,
+                    "items_checked": result.items_checked,
+                    "items_total": result.items_total,
+                    "critical_issues": result.critical_issues,
+                    "high_issues": result.high_issues,
+                    "medium_issues": result.medium_issues,
+                    "low_issues": result.low_issues,
+                    "recommendations": result.recommendations,
+                }
+            )
+
+        avg_score = sum(r["overall_score"] for r in results) / len(results) if results else 0.0
+
+        return {
+            "success": True,
+            "stories_reviewed": len(results),
+            "average_score": avg_score,
+            "review_results": results,
+        }
+
+    async def _calibrate_estimates(self, estimated_points: int, complexity: str) -> dict[str, Any]:
+        """Get calibrated estimates based on historical accuracy."""
+        from ...core.estimation_tracker import EstimationTracker
+
+        tracker = EstimationTracker()
+        tracker.load()
+
+        calibrated = tracker.get_calibrated_estimate(estimated_points, complexity)
+
+        return {
+            "success": True,
+            **calibrated,
+        }
 
     async def close(self):
         """Clean up resources"""

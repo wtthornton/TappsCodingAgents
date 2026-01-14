@@ -88,8 +88,90 @@ class OrchestratorAgent(BaseAgent):
             return await self._make_gate_decision(condition, scoring_data)
         elif command == "*help":
             return self._help()
+        elif command == "*validate-workflow-artifacts":
+            requirements = kwargs.get("requirements", None)
+            stories = kwargs.get("stories", None)
+            architecture = kwargs.get("architecture", None)
+            api_design = kwargs.get("api_design", None)
+            implementation_files = kwargs.get("implementation_files", None)
+
+            # Load from files if paths provided
+            if isinstance(requirements, str):
+                req_path = Path(requirements)
+                if req_path.exists():
+                    import json
+                    requirements = json.loads(req_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Requirements file not found: {requirements}"}
+
+            if isinstance(stories, str):
+                story_path = Path(stories)
+                if story_path.exists():
+                    import json
+                    stories = json.loads(story_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Stories file not found: {stories}"}
+
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            if isinstance(api_design, str):
+                api_path = Path(api_design)
+                if api_path.exists():
+                    import json
+                    api_design = json.loads(api_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"API design file not found: {api_design}"}
+
+            return await self._validate_workflow_artifacts(
+                requirements, stories, architecture, api_design, implementation_files
+            )
         else:
             return {"error": f"Unknown command: {command}"}
+
+    async def _validate_workflow_artifacts(
+        self,
+        requirements: dict[str, Any] | None = None,
+        stories: list[dict[str, Any]] | None = None,
+        architecture: dict[str, Any] | None = None,
+        api_design: dict[str, Any] | None = None,
+        implementation_files: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """Validate consistency across workflow artifacts."""
+        from ...core.workflow_validator import WorkflowValidator
+
+        validator = WorkflowValidator()
+        result = validator.validate_workflow_artifacts(
+            requirements=requirements,
+            stories=stories,
+            architecture=architecture,
+            api_design=api_design,
+            implementation_files=implementation_files,
+        )
+
+        return {
+            "success": True,
+            "is_consistent": result.is_consistent,
+            "consistency_score": result.consistency_score,
+            "issues": [
+                {
+                    "artifact_type": issue.artifact_type,
+                    "artifact_id": issue.artifact_id,
+                    "issue_type": issue.issue_type,
+                    "description": issue.description,
+                    "severity": issue.severity,
+                    "related_artifacts": issue.related_artifacts,
+                }
+                for issue in result.issues
+            ],
+            "gaps": result.gaps,
+            "recommendations": result.recommendations,
+        }
 
     def _find_all_workflow_files(self, workflows_dir: Path) -> list[Path]:
         """

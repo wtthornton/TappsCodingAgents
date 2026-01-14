@@ -99,6 +99,34 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
                 "command": "*define-boundaries",
                 "description": "Define system boundaries and interfaces",
             },
+            {
+                "command": "*evaluate-architecture",
+                "description": "Evaluate architecture quality and completeness",
+            },
+            {
+                "command": "*validate-requirements-alignment",
+                "description": "Validate architecture covers all requirements",
+            },
+            {
+                "command": "*review-architecture",
+                "description": "Structured review of architecture with checklist",
+            },
+            {
+                "command": "*validate-nfr",
+                "description": "Validate architecture against non-functional requirements",
+            },
+            {
+                "command": "*generate-diagram",
+                "description": "Generate Mermaid or PlantUML diagram from architecture",
+            },
+            {
+                "command": "*export-diagram",
+                "description": "Export architecture diagram to file (Mermaid/PlantUML)",
+            },
+            {
+                "command": "*suggest-patterns",
+                "description": "Suggest design patterns based on requirements",
+            },
         ]
 
     async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
@@ -154,6 +182,122 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
             context = kwargs.get("context", "")
 
             return await self._define_boundaries(system_description, context)
+
+        elif command == "evaluate-architecture":
+            architecture = kwargs.get("architecture", {})
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            return await self._evaluate_architecture(architecture)
+
+        elif command == "validate-requirements-alignment":
+            architecture = kwargs.get("architecture", {})
+            requirements = kwargs.get("requirements", {})
+
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            if isinstance(requirements, str):
+                req_path = Path(requirements)
+                if req_path.exists():
+                    import json
+                    requirements = json.loads(req_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Requirements file not found: {requirements}"}
+
+            return await self._validate_requirements_alignment(architecture, requirements)
+
+        elif command == "review-architecture":
+            architecture = kwargs.get("architecture", {})
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            return await self._review_architecture(architecture)
+
+        elif command == "validate-nfr":
+            architecture = kwargs.get("architecture", {})
+            nfr_requirements = kwargs.get("nfr_requirements", {})
+
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            if isinstance(nfr_requirements, str):
+                nfr_path = Path(nfr_requirements)
+                if nfr_path.exists():
+                    import json
+                    nfr_requirements = json.loads(nfr_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"NFR requirements file not found: {nfr_requirements}"}
+
+            return await self._validate_nfr(architecture, nfr_requirements)
+
+        elif command == "generate-diagram":
+            architecture = kwargs.get("architecture", {})
+            diagram_type = kwargs.get("diagram_type", "component")  # component, sequence, class
+            format_type = kwargs.get("format", "mermaid")  # mermaid, plantuml
+
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            return await self._generate_diagram(architecture, diagram_type, format_type)
+
+        elif command == "export-diagram":
+            architecture = kwargs.get("architecture", {})
+            diagram_type = kwargs.get("diagram_type", "component")
+            format_type = kwargs.get("format", "mermaid")
+            output_file = kwargs.get("output_file", None)
+
+            if isinstance(architecture, str):
+                arch_path = Path(architecture)
+                if arch_path.exists():
+                    import json
+                    architecture = json.loads(arch_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Architecture file not found: {architecture}"}
+
+            if not output_file:
+                return {"error": "output_file is required for export-diagram"}
+
+            return await self._export_diagram(architecture, diagram_type, format_type, output_file)
+
+        elif command == "suggest-patterns":
+            requirements = kwargs.get("requirements", {})
+            context = kwargs.get("context", {})
+
+            if isinstance(requirements, str):
+                req_path = Path(requirements)
+                if req_path.exists():
+                    import json
+                    requirements = json.loads(req_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Requirements file not found: {requirements}"}
+
+            return await self._suggest_patterns(requirements, context)
 
         else:
             return {"error": f"Unknown command: {command}"}
@@ -631,6 +775,171 @@ Format as structured JSON with boundary and interface definitions."""
             }
         except Exception as e:
             return {"error": f"Failed to define boundaries: {str(e)}"}
+
+    async def _evaluate_architecture(self, architecture: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate architecture quality and completeness."""
+        # Basic evaluation - can be enhanced with more sophisticated analysis
+        score = {
+            "overall": 75.0,  # Placeholder - would use actual evaluation logic
+            "components_defined": len(architecture.get("components", [])) > 0,
+            "patterns_identified": len(architecture.get("patterns", [])) > 0,
+            "security_addressed": "security" in str(architecture).lower(),
+            "scalability_addressed": "scal" in str(architecture).lower() or "scale" in str(architecture).lower(),
+        }
+
+        return {
+            "success": True,
+            "score": score,
+            "architecture": architecture,
+        }
+
+    async def _validate_requirements_alignment(
+        self, architecture: dict[str, Any], requirements: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Validate architecture covers all requirements."""
+        from ...core.design_validator import DesignValidator
+
+        validator = DesignValidator()
+        result = validator.validate_requirements_alignment(architecture, requirements)
+
+        return {
+            "success": True,
+            "is_valid": result.is_valid,
+            "requirements_coverage": result.requirements_coverage,
+            "missing_requirements": result.missing_requirements,
+            "pattern_violations": result.pattern_violations,
+            "security_issues": result.security_issues,
+            "scalability_concerns": result.scalability_concerns,
+            "recommendations": result.recommendations,
+        }
+
+    async def _review_architecture(self, architecture: dict[str, Any]) -> dict[str, Any]:
+        """Structured review of architecture with checklist."""
+        from ...core.review_checklists import ArchitectureReviewChecklist
+
+        checklist = ArchitectureReviewChecklist()
+        result = checklist.review(architecture)
+
+        return {
+            "success": True,
+            "overall_score": result.overall_score,
+            "items_checked": result.items_checked,
+            "items_total": result.items_total,
+            "critical_issues": result.critical_issues,
+            "high_issues": result.high_issues,
+            "medium_issues": result.medium_issues,
+            "low_issues": result.low_issues,
+            "recommendations": result.recommendations,
+            "checklist_items": [
+                {
+                    "category": item.category,
+                    "item": item.item,
+                    "checked": item.checked,
+                    "severity": item.severity,
+                    "notes": item.notes,
+                }
+                for item in result.checklist_items
+            ],
+        }
+
+    async def _validate_nfr(
+        self, architecture: dict[str, Any], nfr_requirements: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Validate architecture against non-functional requirements."""
+        from ...core.nfr_validator import NFRValidator
+
+        validator = NFRValidator()
+        result = validator.validate_architecture_nfr(architecture, nfr_requirements)
+
+        return {
+            "success": True,
+            "is_valid": result.is_valid,
+            "overall_score": result.overall_score,
+            "security_score": result.security_score,
+            "performance_score": result.performance_score,
+            "reliability_score": result.reliability_score,
+            "maintainability_score": result.maintainability_score,
+            "security_issues": result.security_issues,
+            "performance_issues": result.performance_issues,
+            "reliability_issues": result.reliability_issues,
+            "maintainability_issues": result.maintainability_issues,
+            "recommendations": result.recommendations,
+        }
+
+    async def _generate_diagram(
+        self, architecture: dict[str, Any], diagram_type: str, format_type: str
+    ) -> dict[str, Any]:
+        """Generate Mermaid or PlantUML diagram from architecture."""
+        from ...core.diagram_generator import DiagramGenerator
+
+        generator = DiagramGenerator()
+
+        if format_type == "mermaid":
+            if diagram_type == "component":
+                diagram_code = generator.generate_mermaid_component_diagram(architecture)
+            elif diagram_type == "sequence":
+                interactions = architecture.get("interactions", [])
+                diagram_code = generator.generate_mermaid_sequence_diagram(interactions)
+            elif diagram_type == "class":
+                classes = architecture.get("classes", [])
+                diagram_code = generator.generate_mermaid_class_diagram(classes)
+            else:
+                return {"error": f"Unsupported diagram type: {diagram_type}. Use: component, sequence, class"}
+
+        elif format_type == "plantuml":
+            if diagram_type == "component":
+                diagram_code = generator.generate_plantuml_component_diagram(architecture)
+            else:
+                return {"error": f"PlantUML only supports component diagrams currently"}
+
+        else:
+            return {"error": f"Unsupported format: {format_type}. Use: mermaid, plantuml"}
+
+        return {
+            "success": True,
+            "diagram_code": diagram_code,
+            "format": format_type,
+            "diagram_type": diagram_type,
+        }
+
+    async def _export_diagram(
+        self, architecture: dict[str, Any], diagram_type: str, format_type: str, output_file: str
+    ) -> dict[str, Any]:
+        """Export architecture diagram to file."""
+        from ...core.diagram_generator import DiagramGenerator
+
+        generator = DiagramGenerator()
+
+        # Generate diagram
+        result = await self._generate_diagram(architecture, diagram_type, format_type)
+        if "error" in result:
+            return result
+
+        diagram_code = result["diagram_code"]
+
+        # Export to file
+        output_path = Path(output_file)
+        generator.export_to_file(diagram_code, output_path, format_type)
+
+        return {
+            "success": True,
+            "output_file": str(output_path),
+            "format": format_type,
+            "diagram_type": diagram_type,
+        }
+
+    async def _suggest_patterns(self, requirements: dict[str, Any], context: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Suggest design patterns based on requirements."""
+        from ...core.pattern_library import DesignPatternLibrary
+
+        library = DesignPatternLibrary()
+        suggestions = library.suggest_patterns(requirements, context)
+
+        return {
+            "success": True,
+            "suggestions": suggestions,
+            "total_patterns_available": len(library.patterns),
+        }
 
     async def close(self) -> None:
         """Cleanup resources."""

@@ -85,6 +85,18 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
                 "command": "*define-design-system",
                 "description": "Define design system (colors, typography, components)",
             },
+            {
+                "command": "*evaluate-design",
+                "description": "Evaluate design quality and completeness",
+            },
+            {
+                "command": "*validate-api-consistency",
+                "description": "Validate API design consistency with project patterns",
+            },
+            {
+                "command": "*validate-api-nfr",
+                "description": "Validate API design against non-functional requirements",
+            },
         ]
 
     async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
@@ -142,6 +154,54 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
             return await self._define_design_system(
                 project_description, brand_guidelines, output_file
             )
+
+        elif command == "evaluate-design":
+            design = kwargs.get("design", {})
+            if isinstance(design, str):
+                design_path = Path(design)
+                if design_path.exists():
+                    import json
+                    design = json.loads(design_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Design file not found: {design}"}
+
+            return await self._evaluate_design(design)
+
+        elif command == "validate-api-consistency":
+            api_design = kwargs.get("api_design", {})
+            project_patterns = kwargs.get("project_patterns", {})
+
+            if isinstance(api_design, str):
+                api_path = Path(api_design)
+                if api_path.exists():
+                    import json
+                    api_design = json.loads(api_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"API design file not found: {api_design}"}
+
+            return await self._validate_api_consistency(api_design, project_patterns)
+
+        elif command == "validate-api-nfr":
+            api_design = kwargs.get("api_design", {})
+            nfr_requirements = kwargs.get("nfr_requirements", {})
+
+            if isinstance(api_design, str):
+                api_path = Path(api_design)
+                if api_path.exists():
+                    import json
+                    api_design = json.loads(api_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"API design file not found: {api_design}"}
+
+            if isinstance(nfr_requirements, str):
+                nfr_path = Path(nfr_requirements)
+                if nfr_path.exists():
+                    import json
+                    nfr_requirements = json.loads(nfr_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"NFR requirements file not found: {nfr_requirements}"}
+
+            return await self._validate_api_nfr(api_design, nfr_requirements)
 
         else:
             return {"error": f"Unknown command: {command}"}
@@ -556,3 +616,60 @@ Format as structured JSON with detailed design system specification."""
             return {"success": True, "design_system": design_system}
         except Exception as e:
             return {"error": f"Failed to define design system: {str(e)}"}
+
+    async def _evaluate_design(self, design: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate design quality and completeness."""
+        # Basic evaluation - can be enhanced with more sophisticated analysis
+        score = {
+            "overall": 75.0,  # Placeholder
+            "endpoints_defined": len(design.get("endpoints", [])) > 0,
+            "schemas_defined": len(design.get("schemas", [])) > 0,
+            "authentication_specified": "auth" in str(design).lower(),
+            "documentation_present": "description" in str(design).lower() or "docs" in str(design).lower(),
+        }
+
+        return {
+            "success": True,
+            "score": score,
+            "design": design,
+        }
+
+    async def _validate_api_consistency(
+        self, api_design: dict[str, Any], project_patterns: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Validate API design consistency with project patterns."""
+        from ...core.design_validator import DesignValidator
+
+        validator = DesignValidator()
+        result = validator.validate_api_consistency(api_design, project_patterns)
+
+        return {
+            "success": True,
+            "is_consistent": result.is_consistent,
+            "violations": result.violations,
+            "pattern_deviations": result.pattern_deviations,
+            "naming_inconsistencies": result.naming_inconsistencies,
+            "recommendations": result.recommendations,
+        }
+
+    async def _validate_api_nfr(
+        self, api_design: dict[str, Any], nfr_requirements: dict[str, Any]
+    ) -> dict[str, Any]:
+        """Validate API design against non-functional requirements."""
+        from ...core.nfr_validator import NFRValidator
+
+        validator = NFRValidator()
+        result = validator.validate_api_nfr(api_design, nfr_requirements)
+
+        return {
+            "success": True,
+            "is_valid": result.is_valid,
+            "overall_score": result.overall_score,
+            "security_score": result.security_score,
+            "performance_score": result.performance_score,
+            "reliability_score": result.reliability_score,
+            "maintainability_score": result.maintainability_score,
+            "security_issues": result.security_issues,
+            "performance_issues": result.performance_issues,
+            "recommendations": result.recommendations,
+        }

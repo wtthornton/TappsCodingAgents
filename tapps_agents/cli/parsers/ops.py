@@ -50,6 +50,7 @@ Example:
         default="all",
         help="Type of security scan to perform: 'all' for comprehensive scan (default), 'sql_injection' for SQL injection vulnerabilities, 'xss' for cross-site scripting, 'secrets' for exposed credentials, or other specific vulnerability types",
     )
+    security_scan_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
     security_scan_parser.add_argument(
         "--verbose-output",
         action="store_true",
@@ -77,6 +78,7 @@ Example:
         default="general",
         help="Compliance standard to check: 'general' for general security best practices (default), 'GDPR' for General Data Protection Regulation, 'HIPAA' for Health Insurance Portability, 'SOC2' for Service Organization Control, 'all' for comprehensive compliance check",
     )
+    compliance_check_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
     compliance_check_parser.add_argument(
         "--verbose-output",
         action="store_true",
@@ -104,6 +106,7 @@ Use this to automate deployment processes. Ensure deployment configurations are 
         help="Deployment target environment: 'local' for local development (default), 'staging' for staging environment, 'production' for production deployment",
     )
     deploy_parser.add_argument("--environment", help="Name of a specific environment configuration to use. Overrides --target if a matching configuration exists.")
+    deploy_parser.add_argument("--format", choices=["json", "text", "markdown"], default="json", help="Output format: 'json' for structured data (default), 'text' for human-readable, 'markdown' for markdown format")
 
     infrastructure_setup_parser = ops_subparsers.add_parser(
         "infrastructure-setup",

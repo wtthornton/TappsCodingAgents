@@ -683,6 +683,13 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 return {"error": f"Test path not found: {path}"}
         else:
             path = self.tests_dir
+            # Check if tests directory exists
+            if not path.exists():
+                return {
+                    "error": f"Tests directory not found: {path}. Please create tests or specify a test path.",
+                    "type": "test_execution",
+                    "test_path": str(path),
+                }
 
         # Run tests
         run_result = await self._run_pytest(path, coverage=coverage)
@@ -921,6 +928,22 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             cmd: list[str] = ["pytest", "-v"]
         else:
             cmd = [sys.executable, "-m", "pytest", "-v"]
+        
+        # Determine root directory to limit test discovery scope
+        # This prevents pytest from discovering tests in parent directories
+        rootdir = None
+        if hasattr(self, "project_root") and self.project_root:
+            rootdir = self.project_root
+        elif test_path:
+            # Use test_path's parent as rootdir to limit discovery
+            rootdir = test_path.resolve().parent
+        else:
+            # Use current working directory
+            rootdir = Path.cwd()
+        
+        # Add rootdir to limit pytest's search scope
+        if rootdir and rootdir.exists():
+            cmd.extend(["--rootdir", str(rootdir)])
         
         # Use parallel execution and unit test marker when running all tests
         # (not when a specific test_path is provided, as it might be integration/e2e)

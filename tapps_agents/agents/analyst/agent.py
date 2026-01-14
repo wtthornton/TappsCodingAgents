@@ -75,6 +75,26 @@ class AnalystAgent(BaseAgent):
                 "command": "*analyze-prompt",
                 "description": "Analyze prompt for intent, scope, domains, and workflow type",
             },
+            {
+                "command": "*evaluate-requirements",
+                "description": "Evaluate requirements quality and completeness",
+            },
+            {
+                "command": "*validate-requirements",
+                "description": "Validate requirements for completeness and quality",
+            },
+            {
+                "command": "*trace-requirements",
+                "description": "Create traceability matrix linking requirements to stories/tests",
+            },
+            {
+                "command": "*review-requirements",
+                "description": "Structured review of requirements with checklist",
+            },
+            {
+                "command": "*analyze-change-impact",
+                "description": "Analyze impact of requirement changes on stories/designs/implementation",
+            },
         ]
 
     async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
@@ -139,6 +159,74 @@ class AnalystAgent(BaseAgent):
             context = kwargs.get("context", "")
 
             return await self._analyze_prompt(description, context)
+
+        elif command == "evaluate-requirements":
+            requirements = kwargs.get("requirements", {})
+            if isinstance(requirements, str):
+                # Try to load from file
+                req_path = Path(requirements)
+                if req_path.exists():
+                    import json
+                    requirements = json.loads(req_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Requirements file not found: {requirements}"}
+
+            return await self._evaluate_requirements(requirements)
+
+        elif command == "validate-requirements":
+            requirements = kwargs.get("requirements", {})
+            if isinstance(requirements, str):
+                # Try to load from file
+                req_path = Path(requirements)
+                if req_path.exists():
+                    import json
+                    requirements = json.loads(req_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Requirements file not found: {requirements}"}
+
+            return await self._validate_requirements(requirements)
+
+        elif command == "trace-requirements":
+            requirements = kwargs.get("requirements", {})
+            stories = kwargs.get("stories", [])
+            output_file = kwargs.get("output_file", None)
+
+            return await self._trace_requirements(requirements, stories, output_file)
+
+        elif command == "review-requirements":
+            requirements = kwargs.get("requirements", {})
+            if isinstance(requirements, str):
+                req_path = Path(requirements)
+                if req_path.exists():
+                    import json
+                    requirements = json.loads(req_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Requirements file not found: {requirements}"}
+
+            return await self._review_requirements(requirements)
+
+        elif command == "analyze-change-impact":
+            old_requirements = kwargs.get("old_requirements", {})
+            new_requirements = kwargs.get("new_requirements", {})
+
+            if isinstance(old_requirements, str):
+                old_path = Path(old_requirements)
+                if old_path.exists():
+                    import json
+                    old_requirements = json.loads(old_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"Old requirements file not found: {old_requirements}"}
+
+            if isinstance(new_requirements, str):
+                new_path = Path(new_requirements)
+                if new_path.exists():
+                    import json
+                    new_requirements = json.loads(new_path.read_text(encoding="utf-8"))
+                else:
+                    return {"error": f"New requirements file not found: {new_requirements}"}
+
+            traceability_file = kwargs.get("traceability_file", None)
+            return await self._analyze_change_impact(old_requirements, new_requirements, traceability_file)
 
         else:
             return {"error": f"Unknown command: {command}"}
@@ -443,6 +531,178 @@ Be specific and accurate. If uncertain about a field, use reasonable defaults ba
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "analysis": prompt,  # Include the analysis prompt for reference
+        }
+
+    async def _evaluate_requirements(self, requirements: dict[str, Any]) -> dict[str, Any]:
+        """Evaluate requirements quality and completeness."""
+        from ...core.requirements_evaluator import RequirementsEvaluator
+
+        evaluator = RequirementsEvaluator()
+        score = evaluator.evaluate(requirements)
+
+        return {
+            "success": True,
+            "score": {
+                "overall": score.overall,
+                "completeness": score.completeness,
+                "clarity": score.clarity,
+                "testability": score.testability,
+                "traceability": score.traceability,
+                "feasibility": score.feasibility,
+            },
+            "issues": score.issues,
+            "strengths": score.strengths,
+            "recommendations": score.recommendations,
+        }
+
+    async def _validate_requirements(self, requirements: dict[str, Any]) -> dict[str, Any]:
+        """Validate requirements for completeness and quality."""
+        from ...core.requirements_evaluator import RequirementsEvaluator
+
+        evaluator = RequirementsEvaluator()
+        result = evaluator.validate(requirements)
+
+        return {
+            "success": True,
+            "is_valid": result.is_valid,
+            "score": {
+                "overall": result.score.overall,
+                "completeness": result.score.completeness,
+                "clarity": result.score.clarity,
+                "testability": result.score.testability,
+                "traceability": result.score.traceability,
+                "feasibility": result.score.feasibility,
+            },
+            "missing_elements": result.missing_elements,
+            "ambiguous_requirements": result.ambiguous_requirements,
+            "untestable_requirements": result.untestable_requirements,
+            "issues": result.score.issues,
+            "recommendations": result.score.recommendations,
+        }
+
+    async def _trace_requirements(
+        self, requirements: dict[str, Any], stories: list[dict[str, Any]], output_file: str | None = None
+    ) -> dict[str, Any]:
+        """Create traceability matrix linking requirements to stories/tests."""
+        from ...core.traceability import TraceabilityManager
+
+        manager = TraceabilityManager()
+        matrix = manager.get_matrix()
+
+        # Add requirements to matrix
+        func_reqs = requirements.get("functional_requirements", [])
+        for i, req in enumerate(func_reqs):
+            req_id = f"req-{i+1}"
+            if isinstance(req, dict):
+                req_id = req.get("id", req_id)
+            matrix.add_requirement(req_id, req if isinstance(req, dict) else {"description": str(req)})
+
+        # Add stories and link to requirements
+        for i, story in enumerate(stories):
+            story_id = story.get("id", f"story-{i+1}")
+            matrix.add_story(story_id, story)
+
+            # Try to link story to requirements (simple keyword matching)
+            story_text = str(story).lower()
+            for req_id, req_data in matrix.requirements.items():
+                req_text = str(req_data).lower()
+                # Simple keyword overlap check
+                req_words = set(req_text.split())
+                story_words = set(story_text.split())
+                overlap = len(req_words & story_words)
+                if overlap > 3:  # Threshold for linking
+                    confidence = min(1.0, overlap / 10.0)
+                    matrix.link("requirement", req_id, "story", story_id, "implements", confidence)
+
+        # Save matrix
+        manager.save_matrix()
+
+        # Generate report
+        report = matrix.generate_report()
+
+        # Save to file if specified
+        if output_file:
+            output_path = Path(output_file)
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            import yaml
+            with open(output_path, "w", encoding="utf-8") as f:
+                yaml.dump(report, f, default_flow_style=False)
+
+        return {
+            "success": True,
+            "traceability_report": report,
+            "matrix_file": str(manager.matrix_file),
+            "output_file": str(output_path) if output_file else None,
+        }
+
+    async def _review_requirements(self, requirements: dict[str, Any]) -> dict[str, Any]:
+        """Structured review of requirements with checklist."""
+        from ...core.review_checklists import RequirementsReviewChecklist
+
+        checklist = RequirementsReviewChecklist()
+        result = checklist.review(requirements)
+
+        return {
+            "success": True,
+            "overall_score": result.overall_score,
+            "items_checked": result.items_checked,
+            "items_total": result.items_total,
+            "critical_issues": result.critical_issues,
+            "high_issues": result.high_issues,
+            "medium_issues": result.medium_issues,
+            "low_issues": result.low_issues,
+            "recommendations": result.recommendations,
+            "checklist_items": [
+                {
+                    "category": item.category,
+                    "item": item.item,
+                    "checked": item.checked,
+                    "severity": item.severity,
+                    "notes": item.notes,
+                }
+                for item in result.checklist_items
+            ],
+        }
+
+    async def _analyze_change_impact(
+        self, old_requirements: dict[str, Any], new_requirements: dict[str, Any], traceability_file: str | None = None
+    ) -> dict[str, Any]:
+        """Analyze impact of requirement changes."""
+        from ...core.change_impact_analyzer import ChangeImpactAnalyzer
+        from ...core.traceability import TraceabilityManager
+
+        analyzer = ChangeImpactAnalyzer()
+
+        # Load traceability matrix if provided
+        traceability_matrix = None
+        if traceability_file:
+            manager = TraceabilityManager()
+            manager.matrix_file = Path(traceability_file)
+            if manager.matrix_file.exists():
+                traceability_matrix = manager.get_matrix()
+
+        report = analyzer.analyze_change_impact(old_requirements, new_requirements, traceability_matrix)
+
+        return {
+            "success": True,
+            "changes_count": len(report.changes),
+            "total_affected_stories": report.total_affected_stories,
+            "total_affected_designs": report.total_affected_designs,
+            "total_affected_implementations": report.total_affected_implementations,
+            "critical_changes": report.critical_changes,
+            "recommendations": report.recommendations,
+            "changes": [
+                {
+                    "requirement_id": change.requirement_id,
+                    "change_type": change.change_type,
+                    "severity": change.severity,
+                    "affected_stories": change.affected_stories,
+                    "affected_designs": change.affected_designs,
+                    "affected_implementations": change.affected_implementations,
+                    "impact_description": change.impact_description,
+                }
+                for change in report.changes
+            ],
         }
 
     async def close(self) -> None:
