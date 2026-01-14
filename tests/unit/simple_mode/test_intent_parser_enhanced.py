@@ -118,3 +118,75 @@ class TestEnhancedParse:
         for variation in variations:
             intent = self.parser.parse(variation)
             assert intent.parameters.get("force_simple_mode") is True, f"Failed for: {variation}"
+
+
+class TestRequirementsIntentDetection:
+    """Test requirements intent detection functionality."""
+
+    def setup_method(self):
+        """Set up test fixtures."""
+        self.parser = IntentParser()
+
+    def test_parse_requirements_keyword(self):
+        """Test parse() detects requirements intent."""
+        intent = self.parser.parse("gather requirements for user authentication")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_parse_extract_requirements(self):
+        """Test parse() detects extract requirements intent."""
+        intent = self.parser.parse("extract requirements from stakeholder description")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_parse_document_requirements(self):
+        """Test parse() detects document requirements intent."""
+        intent = self.parser.parse("document requirements for new feature")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_parse_analyze_requirements(self):
+        """Test parse() detects analyze requirements intent."""
+        intent = self.parser.parse("analyze requirements for payment system")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_parse_requirements_document(self):
+        """Test parse() detects requirements document intent."""
+        intent = self.parser.parse("create requirements document")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_parse_requirements_gathering(self):
+        """Test parse() detects requirements gathering intent."""
+        intent = self.parser.parse("requirements gathering for epic")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_parse_requirements_analysis(self):
+        """Test parse() detects requirements analysis intent."""
+        intent = self.parser.parse("requirements analysis for project")
+        assert intent.type == IntentType.REQUIREMENTS
+
+    def test_requirements_intent_agent_sequence(self):
+        """Test requirements intent returns correct agent sequence."""
+        intent = self.parser.parse("gather requirements")
+        sequence = intent.get_agent_sequence()
+        assert "analyst" in sequence
+        assert "planner" in sequence
+        assert "documenter" in sequence
+
+    def test_requirements_intent_not_build(self):
+        """Test requirements intent is distinct from build intent."""
+        requirements_intent = self.parser.parse("gather requirements")
+        build_intent = self.parser.parse("build feature")
+        
+        assert requirements_intent.type == IntentType.REQUIREMENTS
+        assert build_intent.type == IntentType.BUILD
+        assert requirements_intent.type != build_intent.type
+
+    def test_requirements_keywords_case_insensitive(self):
+        """Test requirements keywords are case insensitive."""
+        variations = [
+            "GATHER REQUIREMENTS",
+            "Gather Requirements",
+            "gather requirements",
+            "Requirements Gathering",
+        ]
+        for variation in variations:
+            intent = self.parser.parse(variation)
+            assert intent.type == IntentType.REQUIREMENTS, f"Failed for: {variation}"

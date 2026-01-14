@@ -168,3 +168,120 @@ Just regular markdown content.
         metadata = planner_agent._read_story_metadata(story_file)
 
         assert metadata == {}
+
+    @pytest.mark.asyncio
+    async def test_generate_user_stories_standard_format(self, planner_agent):
+        """Test _generate_user_stories generates stories in standard format."""
+        from unittest.mock import AsyncMock, patch
+        
+        functional_reqs = ["User can login", "User can logout"]
+        
+        mock_mal = AsyncMock()
+        mock_mal.generate = AsyncMock(return_value='[{"story": "As a user, I want to login, so that I can access my account", "user": "user", "goal": "to login", "benefit": "I can access my account", "acceptance_criteria": ["Login form works", "Authentication succeeds"], "story_points": 3}]')
+        
+        with patch("tapps_agents.agents.planner.agent.MAL", return_value=mock_mal):
+            stories = await planner_agent._generate_user_stories(
+                "Add user authentication",
+                functional_reqs,
+            )
+        
+        assert len(stories) > 0
+        story = stories[0]
+        assert "story" in story
+        assert "As a" in story["story"]
+        assert "I want" in story["story"]
+        assert "so that" in story["story"]
+        assert "user" in story
+        assert "goal" in story
+        assert "benefit" in story
+        assert "acceptance_criteria" in story
+        assert "story_points" in story
+
+    @pytest.mark.asyncio
+    async def test_generate_user_stories_fallback(self, planner_agent):
+        """Test _generate_user_stories fallback when LLM fails."""
+        from unittest.mock import AsyncMock, patch
+        
+        with patch("tapps_agents.agents.planner.agent.MAL") as mock_mal_class:
+            mock_mal = AsyncMock()
+            mock_mal.generate = AsyncMock(side_effect=Exception("LLM error"))
+            mock_mal_class.return_value = mock_mal
+            
+            stories = await planner_agent._generate_user_stories(
+                "Add feature",
+                [],
+            )
+        
+        # Should return fallback story
+        assert len(stories) == 1
+        assert "story" in stories[0]
+        assert "As a" in stories[0]["story"]
+
+    def test_format_plan_markdown(self, planner_agent):
+        """Test _format_plan_markdown generates proper markdown."""
+        functional_reqs = ["User can login", "User can logout"]
+        non_functional_reqs = ["Secure", "Fast"]
+        user_stories = [
+            {
+                "story": "As a user, I want to login, so that I can access my account",
+                "user": "user",
+                "goal": "to login",
+                "benefit": "I can access my account",
+                "acceptance_criteria": ["Login form works", "Authentication succeeds"],
+                "story_points": 3,
+            },
+            {
+                "story": "As a user, I want to logout, so that I can secure my session",
+                "user": "user",
+                "goal": "to logout",
+                "benefit": "I can secure my session",
+                "acceptance_criteria": ["Logout button works", "Session is cleared"],
+                "story_points": 2,
+            },
+        ]
+        
+        requirements_result = {
+            "summary": {
+                "overview": "User authentication system",
+            },
+        }
+        
+        markdown = planner_agent._format_plan_markdown(
+            description="Add user authentication",
+            requirements_result=requirements_result,
+            functional_reqs=functional_reqs,
+            non_functional_reqs=non_functional_reqs,
+            user_stories=user_stories,
+        )
+        
+        assert "# Plan: Add user authentication" in markdown
+        assert "## Overview" in markdown
+        assert "User authentication system" in markdown
+        assert "## Requirements" in markdown
+        assert "### Functional Requirements" in markdown
+        assert "- User can login" in markdown
+        assert "- User can logout" in markdown
+        assert "### Non-Functional Requirements" in markdown
+        assert "- Secure" in markdown
+        assert "- Fast" in markdown
+        assert "## User Stories" in markdown
+        assert "### Story 1:" in markdown
+        assert "As a user, I want to login" in markdown
+        assert "**Story Points:** 3" in markdown
+        assert "**Acceptance Criteria:**" in markdown
+        assert "- [ ] Login form works" in markdown
+        assert "### Story 2:" in markdown
+        assert "As a user, I want to logout" in markdown
+
+    def test_format_plan_markdown_empty_stories(self, planner_agent):
+        """Test _format_plan_markdown with empty user stories."""
+        markdown = planner_agent._format_plan_markdown(
+            description="Test",
+            requirements_result={},
+            functional_reqs=[],
+            non_functional_reqs=[],
+            user_stories=[],
+        )
+        
+        assert "# Plan: Test" in markdown
+        assert "(User stories to be generated)" in markdown

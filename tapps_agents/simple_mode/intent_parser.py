@@ -23,6 +23,7 @@ class IntentType(Enum):
     REFACTOR = "refactor"
     PLAN_ANALYSIS = "plan-analysis"
     PR = "pr"
+    REQUIREMENTS = "requirements"
     UNKNOWN = "unknown"
 
 
@@ -55,6 +56,8 @@ class Intent:
             return ["analyst", "architect", "reviewer"]
         elif self.type == IntentType.PR:
             return ["reviewer", "documenter"]
+        elif self.type == IntentType.REQUIREMENTS:
+            return ["analyst", "planner", "documenter"]
         else:
             return []
 
@@ -176,6 +179,18 @@ class IntentParser:
             "mr",
         ]
 
+        # Requirements intent keywords
+        self.requirements_keywords = [
+            "requirements",
+            "gather requirements",
+            "extract requirements",
+            "document requirements",
+            "analyze requirements",
+            "requirements document",
+            "requirements gathering",
+            "requirements analysis",
+        ]
+
         # Simple Mode intent keywords
         self.simple_mode_keywords = [
             "@simple-mode",
@@ -284,6 +299,7 @@ class IntentParser:
             IntentType.REFACTOR: self._score_intent(input_lower, self.refactor_keywords),
             IntentType.PLAN_ANALYSIS: self._score_intent(input_lower, self.plan_analysis_keywords),
             IntentType.PR: self._score_intent(input_lower, self.pr_keywords),
+            IntentType.REQUIREMENTS: self._score_intent(input_lower, self.requirements_keywords),
         }
 
         # Find best match

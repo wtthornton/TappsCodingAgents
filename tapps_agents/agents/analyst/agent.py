@@ -264,22 +264,177 @@ Format as structured JSON with sections."""
         )
 
         try:
-            requirements = {
-                "description": description,
-                "instruction": instruction.to_dict(),
-                "skill_command": instruction.to_skill_command(),
-            }
-
+            # For CLI mode, use LLM to generate requirements
+            # For Cursor mode, return instruction for skill execution
+            from ...core.runtime_mode import is_cursor_mode
+            
+            if is_cursor_mode():
+                # Cursor mode: return instruction
+                requirements = {
+                    "description": description,
+                    "instruction": instruction.to_dict(),
+                    "skill_command": instruction.to_skill_command(),
+                }
+            else:
+                # CLI mode: generate requirements using LLM
+                from ...core.mal import MAL
+                mal = MAL()
+                await self.activate()
+                
+                response = await mal.generate(
+                    prompt=prompt,
+                    system_prompt="You are a requirements analyst. Extract and structure requirements from descriptions.",
+                )
+                
+                # Parse JSON response
+                try:
+                    import json as json_lib
+                    requirements_data = json_lib.loads(response)
+                except (json_lib.JSONDecodeError, ValueError):
+                    # If not JSON, structure it manually
+                    requirements_data = {
+                        "functional_requirements": [],
+                        "non_functional_requirements": [],
+                        "technical_constraints": [],
+                        "assumptions": [],
+                        "open_questions": [],
+                    }
+                
+                # Generate markdown document
+                markdown_content = self._format_requirements_markdown(
+                    description=description,
+                    context=context,
+                    requirements_data=requirements_data,
+                )
+                
+                requirements = {
+                    "description": description,
+                    "context": context,
+                    "functional_requirements": requirements_data.get("functional_requirements", []),
+                    "non_functional_requirements": requirements_data.get("non_functional_requirements", []),
+                    "technical_constraints": requirements_data.get("technical_constraints", []),
+                    "assumptions": requirements_data.get("assumptions", []),
+                    "open_questions": requirements_data.get("open_questions", []),
+                    "markdown": markdown_content,
+                }
+            
             # Save to file if specified
             if output_file:
                 output_path = Path(output_file)
                 output_path.parent.mkdir(parents=True, exist_ok=True)
-                output_path.write_text(json.dumps(requirements, indent=2))
+                
+                # Save markdown if available, otherwise save JSON
+                if "markdown" in requirements:
+                    output_path.write_text(requirements["markdown"], encoding="utf-8")
+                else:
+                    output_path.write_text(json.dumps(requirements, indent=2), encoding="utf-8")
+                
                 requirements["output_file"] = str(output_path)
 
             return {"success": True, "requirements": requirements}
         except Exception as e:
             return {"error": f"Failed to gather requirements: {str(e)}"}
+    
+    def _format_requirements_markdown(
+        self,
+        description: str,
+        context: str,
+        requirements_data: dict[str, Any],
+    ) -> str:
+        """Format requirements as markdown document."""
+        lines = [
+            f"# Requirements: {description}",
+            "",
+            "## Overview",
+            "",
+            description,
+            "",
+        ]
+        
+        if context:
+            lines.extend([
+                "## Context",
+                "",
+                context,
+                "",
+            ])
+        
+        # Functional Requirements
+        func_reqs = requirements_data.get("functional_requirements", [])
+        if func_reqs:
+            lines.extend([
+                "## Functional Requirements",
+                "",
+            ])
+            for i, req in enumerate(func_reqs, 1):
+                if isinstance(req, dict):
+                    req_text = req.get("requirement", req.get("description", str(req)))
+                else:
+                    req_text = str(req)
+                lines.append(f"{i}. {req_text}")
+            lines.append("")
+        
+        # Non-Functional Requirements
+        nfr_reqs = requirements_data.get("non_functional_requirements", [])
+        if nfr_reqs:
+            lines.extend([
+                "## Non-Functional Requirements",
+                "",
+            ])
+            for i, req in enumerate(nfr_reqs, 1):
+                if isinstance(req, dict):
+                    req_text = req.get("requirement", req.get("description", str(req)))
+                else:
+                    req_text = str(req)
+                lines.append(f"{i}. {req_text}")
+            lines.append("")
+        
+        # Technical Constraints
+        constraints = requirements_data.get("technical_constraints", [])
+        if constraints:
+            lines.extend([
+                "## Technical Constraints",
+                "",
+            ])
+            for i, constraint in enumerate(constraints, 1):
+                if isinstance(constraint, dict):
+                    constraint_text = constraint.get("constraint", constraint.get("description", str(constraint)))
+                else:
+                    constraint_text = str(constraint)
+                lines.append(f"{i}. {constraint_text}")
+            lines.append("")
+        
+        # Assumptions
+        assumptions = requirements_data.get("assumptions", [])
+        if assumptions:
+            lines.extend([
+                "## Assumptions",
+                "",
+            ])
+            for i, assumption in enumerate(assumptions, 1):
+                if isinstance(assumption, dict):
+                    assumption_text = assumption.get("assumption", assumption.get("description", str(assumption)))
+                else:
+                    assumption_text = str(assumption)
+                lines.append(f"{i}. {assumption_text}")
+            lines.append("")
+        
+        # Open Questions
+        questions = requirements_data.get("open_questions", [])
+        if questions:
+            lines.extend([
+                "## Open Questions",
+                "",
+            ])
+            for i, question in enumerate(questions, 1):
+                if isinstance(question, dict):
+                    question_text = question.get("question", question.get("description", str(question)))
+                else:
+                    question_text = str(question)
+                lines.append(f"{i}. {question_text}")
+            lines.append("")
+        
+        return "\n".join(lines)
 
     async def _analyze_stakeholders(
         self, description: str, stakeholders: list[str] | None = None

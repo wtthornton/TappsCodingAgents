@@ -253,43 +253,25 @@ Format your response as structured text."""
                 functional_reqs = []
                 non_functional_reqs = []
             
-            # Build plan structure
-            plan_text = f"""# Plan: {description}
-
-## Overview
-
-{requirements_result.get('summary', {}).get('overview', 'Feature implementation plan') if isinstance(requirements_result.get('summary'), dict) else 'Feature implementation plan'}
-
-## Requirements
-
-### Functional Requirements
-{chr(10).join(f"- {req}" for req in functional_reqs) if functional_reqs else "- Requirements analysis in progress"}
-
-### Non-Functional Requirements
-{chr(10).join(f"- {req}" for req in non_functional_reqs) if non_functional_reqs else "- Requirements analysis in progress"}
-
-## User Stories
-
-(To be generated based on requirements)
-
-## Estimated Complexity
-
-(To be estimated per story)
-
-## Dependencies
-
-(To be identified)
-
-## Priority Order
-
-(To be determined)
-"""
+            # Generate user stories in standard format
+            user_stories = await self._generate_user_stories(description, functional_reqs)
+            
+            # Build plan structure with user stories
+            plan_text = self._format_plan_markdown(
+                description=description,
+                requirements_result=requirements_result,
+                functional_reqs=functional_reqs,
+                non_functional_reqs=non_functional_reqs,
+                user_stories=user_stories,
+            )
             
             return {
                 "type": "plan",
                 "description": description,
                 "plan": plan_text,
                 "requirements": requirements,
+                "user_stories": user_stories,
+                "markdown": plan_text,
                 "created_at": datetime.now().isoformat(),
             }
         except (ConnectionError, TimeoutError, OSError) as e:
@@ -663,6 +645,162 @@ created_by: {metadata['created_by']}
                 pass
 
         return {}
+    
+    async def _generate_user_stories(
+        self, description: str, functional_requirements: list[str]
+    ) -> list[dict[str, Any]]:
+        """Generate user stories in standard format from requirements."""
+        from ...core.mal import MAL
+        mal = MAL()
+        
+        # Build prompt for user story generation
+        reqs_text = "\n".join(f"- {req}" for req in functional_requirements) if functional_requirements else description
+        
+        prompt = f"""Generate user stories in the standard format "As a {{user}}, I want {{goal}}, so that {{benefit}}" from the following requirements:
+
+Description: {description}
+
+Functional Requirements:
+{reqs_text}
+
+For each user story, provide:
+1. The story in standard format: "As a [user type], I want [goal], so that [benefit]"
+2. Acceptance criteria (3-5 items)
+3. Story points estimate (Fibonacci: 1, 2, 3, 5, 8, 13)
+
+Format as JSON array with:
+- story: The story text in standard format
+- user: User type
+- goal: What they want to do
+- benefit: Why they want it
+- acceptance_criteria: List of criteria
+- story_points: Number (1-13)
+"""
+        
+        try:
+            response = await mal.generate(
+                prompt=prompt,
+                system_prompt="You are a product planner. Generate user stories in standard format from requirements.",
+            )
+            
+            # Parse JSON response
+            import json as json_lib
+            try:
+                stories_data = json_lib.loads(response)
+                if not isinstance(stories_data, list):
+                    stories_data = [stories_data]
+            except (json_lib.JSONDecodeError, ValueError):
+                # Fallback: create basic story from description
+                stories_data = [{
+                    "story": f"As a user, I want {description.lower()}, so that I can accomplish my goal",
+                    "user": "user",
+                    "goal": description.lower(),
+                    "benefit": "accomplish my goal",
+                    "acceptance_criteria": ["Feature works as described", "Tests pass", "Documentation updated"],
+                    "story_points": 3,
+                }]
+            
+            return stories_data
+        except Exception as e:
+            logger.warning(f"Error generating user stories: {e}")
+            # Fallback: create basic story
+            return [{
+                "story": f"As a user, I want {description.lower()}, so that I can accomplish my goal",
+                "user": "user",
+                "goal": description.lower(),
+                "benefit": "accomplish my goal",
+                "acceptance_criteria": ["Feature works as described"],
+                "story_points": 3,
+            }]
+    
+    def _format_plan_markdown(
+        self,
+        description: str,
+        requirements_result: dict[str, Any],
+        functional_reqs: list[str],
+        non_functional_reqs: list[str],
+        user_stories: list[dict[str, Any]],
+    ) -> str:
+        """Format plan as markdown document with user stories."""
+        lines = [
+            f"# Plan: {description}",
+            "",
+            "## Overview",
+            "",
+            requirements_result.get('summary', {}).get('overview', 'Feature implementation plan') if isinstance(requirements_result.get('summary'), dict) else 'Feature implementation plan',
+            "",
+            "## Requirements",
+            "",
+            "### Functional Requirements",
+            "",
+        ]
+        
+        if functional_reqs:
+            for req in functional_reqs:
+                lines.append(f"- {req}")
+        else:
+            lines.append("- Requirements analysis in progress")
+        
+        lines.extend([
+            "",
+            "### Non-Functional Requirements",
+            "",
+        ])
+        
+        if non_functional_reqs:
+            for req in non_functional_reqs:
+                lines.append(f"- {req}")
+        else:
+            lines.append("- Requirements analysis in progress")
+        
+        lines.extend([
+            "",
+            "## User Stories",
+            "",
+        ])
+        
+        if user_stories:
+            for i, story in enumerate(user_stories, 1):
+                story_text = story.get("story", f"Story {i}")
+                user = story.get("user", "user")
+                goal = story.get("goal", "")
+                benefit = story.get("benefit", "")
+                acceptance_criteria = story.get("acceptance_criteria", [])
+                story_points = story.get("story_points", 0)
+                
+                lines.extend([
+                    f"### Story {i}: {story_text}",
+                    "",
+                    f"**Story Points:** {story_points}",
+                    "",
+                    "**Acceptance Criteria:**",
+                    "",
+                ])
+                
+                for ac in acceptance_criteria:
+                    lines.append(f"- [ ] {ac}")
+                
+                lines.append("")
+        else:
+            lines.append("(User stories to be generated)")
+            lines.append("")
+        
+        lines.extend([
+            "## Estimated Complexity",
+            "",
+            "(To be estimated per story)",
+            "",
+            "## Dependencies",
+            "",
+            "(To be identified)",
+            "",
+            "## Priority Order",
+            "",
+            "(To be determined)",
+            "",
+        ])
+        
+        return "\n".join(lines)
 
     def _help(self) -> dict[str, Any]:
         """
