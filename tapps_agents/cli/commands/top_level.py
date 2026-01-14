@@ -916,6 +916,8 @@ def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
+    from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
+    from ...core.unicode_safe import safe_print
     import os
 
     feedback = get_feedback()
@@ -955,6 +957,34 @@ def handle_workflow_command(args: object) -> None:
     if preset_name == "cleanup-branches":
         handle_workflow_cleanup_branches_command(args)
         return
+
+    # ROOT CAUSE FIX: Prevent CLI workflow commands in Cursor mode
+    # This prevents failed attempts and provides clear guidance to use @simple-mode commands
+    runtime_mode = detect_runtime_mode()
+    cli_mode_override = getattr(args, "cli_mode", False)
+    
+    # If in Cursor mode and not explicitly overridden, prevent CLI workflow execution
+    # State management, resume, recommend, and cleanup-branches subcommands are allowed
+    if is_cursor_mode() and not cli_mode_override and preset_name and preset_name not in ["list", None]:
+        safe_print("\n" + "=" * 60)
+        safe_print("⚠️  CLI Workflow Commands Not Recommended in Cursor Mode")
+        safe_print("=" * 60)
+        safe_print("")
+        safe_print("You're running in Cursor mode, but attempting to use CLI workflow commands.")
+        safe_print("CLI workflow commands may fail due to dependency issues in Cursor mode.")
+        safe_print("")
+        safe_print("✅ Instead, use @simple-mode commands in Cursor chat:")
+        safe_print("")
+        safe_print("   @simple-mode *build 'description'")
+        safe_print("   @simple-mode *review <file>")
+        safe_print("   @simple-mode *fix <file> 'description'")
+        safe_print("   @simple-mode *test <file>")
+        safe_print("   @simple-mode *full 'description'")
+        safe_print("")
+        safe_print("💡 To force CLI execution (not recommended), use: --cli-mode")
+        safe_print("")
+        safe_print("=" * 60)
+        sys.exit(1)
 
     loader = PresetLoader()
 
