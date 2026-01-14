@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.7] - 2026-01-16
+
+### Added
+- **Full SDLC Workflow Investigation Documentation** - Comprehensive investigation results
+  - Added `docs/FULL_SDLC_WORKFLOW_ISSUE_INVESTIGATION.md` - Investigation framework for Full SDLC workflow issues
+  - Added `docs/FULL_SDLC_INVESTIGATION_RESULTS.md` - Investigation findings confirming Full SDLC workflow is working correctly
+  - Clarified use case differences between `*full` and `*build` workflows
+
+- **Workflow File Structure Documentation** - Documentation for workflow file structure requirements
+  - Added `docs/WORKFLOW_FILE_STRUCTURE_ANALYSIS.md` - Analysis of Full SDLC workflow file structure expectations
+  - Added `docs/SIMPLE_MODE_BUILD_QUICK_START.md` - Quick start guide for Simple Mode `*build` workflow
+  - Added `docs/RECOMMENDATIONS_EXECUTION_GUIDE.md` - Practical guide for executing workflow recommendations
+
+### Fixed
+- **Continuous Bug Fix** - Fixed error handling and pytest collection error
+  - Improved error handling in continuous bug fix workflow
+  - Fixed pytest collection error handling
+
+- **Background Agents Configuration** - Optimized background agents configuration
+  - Improved configuration based on recommendations
+  - Better performance and reliability
+
+- **Documentation Accuracy** - Updated documentation for accuracy
+  - Updated Cursor Skills count to 15 (14 agent skills + simple-mode)
+  - Verified `init` and `init --reset` command documentation accuracy
+
 ## [3.5.6] - 2026-01-16
 
 ### Added
