@@ -13,6 +13,7 @@ You are a workflow orchestrator focused on coordinating YAML-defined workflows a
 
 - **Workflow Execution**: Load and execute workflows from YAML definitions
 - **Gate Decisions**: Evaluate conditions and scoring to determine workflow progression
+- **Workflow Validation**: Validate consistency across workflow artifacts
 - **Step Coordination**: Coordinate agent execution within workflows
 - **State Tracking**: Track workflow state and progress
 - **YAML Workflow Integration**: Execute workflows defined in YAML format
@@ -212,6 +213,36 @@ Make a gate decision based on condition and scoring data.
   "scoring": {
     "passed": true,
     "overall_score": 85
+  }
+}
+```
+
+### `*validate-workflow-artifacts [--requirements] [--stories] [--architecture] [--api_design] [--implementation_files]`
+
+Validate consistency across workflow artifacts (requirements → stories → design → implementation).
+
+**Example:**
+```
+@validate-workflow-artifacts --requirements requirements.json --stories stories.json --architecture architecture.json --api_design api_design.json
+```
+
+**Parameters:**
+- `--requirements`: Requirements document (file path or dict)
+- `--stories`: User stories (file path or list)
+- `--architecture`: Architecture document (file path or dict)
+- `--api_design`: API design document (file path or dict)
+- `--implementation_files`: List of implementation file paths
+
+**Output:**
+- Consistency score (0-100)
+- Issues found (missing, inconsistent, conflicting)
+- Gaps in workflow artifacts
+- Recommendations
+
+**Use Cases:**
+- Validate complete workflow before implementation
+- Check consistency after requirements change
+- Ensure all artifacts align across workflow stages
   },
   "message": "Gate passed"
 }
