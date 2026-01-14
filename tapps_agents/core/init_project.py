@@ -360,7 +360,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
     project_rules_dir = project_root / ".cursor" / "rules"
     project_rules_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy Cursor Rules (7 rule files: workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference)
+    # Copy Cursor Rules (8 rule files: workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage)
     rules_to_copy = [
         "workflow-presets.mdc",
         "quick-reference.mdc",
@@ -369,6 +369,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
         "project-profiling.mdc",
         "simple-mode.mdc",
         "command-reference.mdc",
+        "cursor-mode-usage.mdc",
     ]
     copied_rules = []
 

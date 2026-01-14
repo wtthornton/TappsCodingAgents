@@ -1881,6 +1881,25 @@ simple_mode:
   natural_language: true
 ```
 
+## ⚠️ CRITICAL: CLI Workflow Commands in Cursor Mode
+
+**If you see this warning when running CLI workflow commands in Cursor IDE:**
+
+```
+⚠️  CLI Workflow Commands Not Recommended in Cursor Mode
+```
+
+**Solution:** Use `@simple-mode` commands in Cursor chat instead of CLI workflow commands.
+
+**Quick Reference:**
+- ❌ **Don't use:** `tapps-agents workflow fix --file <file> --auto` (in Cursor IDE)
+- ✅ **Use instead:** `@simple-mode *fix <file> "description"` (in Cursor chat)
+- ✅ **CLI commands work in:** Terminal/CI (outside Cursor IDE)
+
+**See:** `.cursor/rules/cursor-mode-usage.mdc` for complete guidance.
+
+---
+
 ## Guide for Cursor: When and Why to Use tapps-agents
 
 This section helps Cursor AI understand when to suggest or use tapps-agents commands during development.

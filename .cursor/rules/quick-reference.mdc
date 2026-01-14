@@ -22,6 +22,18 @@ alwaysApply: false
 
 ---
 
+## ⚠️ IMPORTANT: CLI Workflow Commands Not Recommended in Cursor Mode
+
+**If you see a warning about CLI workflow commands in Cursor mode:**
+
+- ✅ **Use `@simple-mode` commands in Cursor chat instead**
+- ✅ **Use CLI commands in terminal/CI (outside Cursor IDE)**
+- ✅ **Run `tapps-agents init` if Simple Mode isn't working**
+
+See `.cursor/rules/cursor-mode-usage.mdc` for complete guidance.
+
+---
+
 ## Where to Run Commands: Cursor Chat vs Terminal/CI
 
 ### Use Cursor Chat (Recommended for Interactive Development)
