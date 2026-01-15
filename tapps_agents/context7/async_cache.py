@@ -657,7 +657,10 @@ def init_async_cache(
     global _async_cache
     
     if persist_dir is None:
-        persist_dir = Path.cwd() / ".tapps-agents" / "kb" / "async-cache"
+        # Use project root detection instead of current working directory
+        from ...core.path_validator import PathValidator
+        validator = PathValidator()
+        persist_dir = validator.project_root / ".tapps-agents" / "kb" / "async-cache"
     
     _async_cache = AsyncCacheManager(
         max_size=max_size,

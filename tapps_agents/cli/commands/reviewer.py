@@ -106,11 +106,80 @@ def _format_text_review_result(result: dict[str, Any]) -> str:
                 lines.append(f"  ... and {len(type_issues) - 10} more")
 
     feedback = result.get("feedback") or {}
-    summary = feedback.get("summary")
-    if summary:
+    
+    # Handle feedback structure: could be instruction object or parsed feedback
+    feedback_text = None
+    feedback_summary = None
+    
+    # Check if feedback is an instruction object (Cursor Skills format)
+    if isinstance(feedback, dict):
+        if "instruction" in feedback:
+            # Extract prompt from instruction as fallback
+            instruction = feedback.get("instruction", {})
+            feedback_text = instruction.get("prompt", "")
+            # Try to get actual feedback if it was executed
+            if "summary" in feedback:
+                feedback_summary = feedback.get("summary")
+            elif "feedback_text" in feedback:
+                feedback_text = feedback.get("feedback_text")
+        elif "summary" in feedback:
+            feedback_summary = feedback.get("summary")
+        elif "feedback_text" in feedback:
+            feedback_text = feedback.get("feedback_text")
+    
+    # Parse feedback text if available
+    if feedback_text and not feedback_summary:
+        from ...agents.reviewer.feedback_generator import FeedbackGenerator
+        parsed = FeedbackGenerator.parse_feedback_text(feedback_text)
+        feedback_summary = parsed.get("summary") or feedback_text[:500]
+        
+        # Display structured feedback with priorities
+        if parsed.get("security_concerns") or parsed.get("critical_issues") or parsed.get("improvements"):
+            lines.append("")
+            lines.append("Feedback:")
+            if feedback_summary:
+                lines.append(feedback_summary)
+                lines.append("")
+            
+            # Security concerns (highest priority)
+            if parsed.get("security_concerns"):
+                lines.append("🔒 Security Concerns:")
+                for concern in parsed["security_concerns"][:5]:  # Top 5
+                    lines.append(f"  • {concern}")
+                lines.append("")
+            
+            # Critical issues
+            if parsed.get("critical_issues"):
+                lines.append("⚠️ Critical Issues:")
+                for issue in parsed["critical_issues"][:5]:  # Top 5
+                    lines.append(f"  • {issue}")
+                lines.append("")
+            
+            # Improvements
+            if parsed.get("improvements"):
+                lines.append("💡 Improvements:")
+                for improvement in parsed["improvements"][:5]:  # Top 5
+                    lines.append(f"  • {improvement}")
+                lines.append("")
+            
+            # Style suggestions (only if no other feedback)
+            if not (parsed.get("security_concerns") or parsed.get("critical_issues") or parsed.get("improvements")):
+                if parsed.get("style_suggestions"):
+                    lines.append("📝 Style Suggestions:")
+                    for suggestion in parsed["style_suggestions"][:5]:
+                        lines.append(f"  • {suggestion}")
+                    lines.append("")
+        else:
+            # Fallback: just show summary
+            if feedback_summary:
+                lines.append("")
+                lines.append("Feedback:")
+                lines.append(feedback_summary)
+    elif feedback_summary:
+        # Direct summary available
         lines.append("")
         lines.append("Feedback:")
-        lines.append(str(summary))
+        lines.append(str(feedback_summary))
 
     # Surface quality gate signals if present
     if result.get("quality_gate_blocked"):
@@ -651,6 +720,13 @@ async def _process_file_batch(
     cache_hits = 0
     cache_misses = 0
     
+    # Progress tracking for long operations
+    total_files = len(files)
+    processed_count = 0
+    start_time = asyncio.get_event_loop().time()
+    last_progress_update = start_time
+    PROGRESS_UPDATE_INTERVAL = 5.0  # Update progress every 5 seconds for long operations
+    
     # Initialize circuit breaker
     circuit_breaker = CircuitBreaker(failure_threshold=5, reset_timeout=60.0)
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
@@ -796,10 +872,40 @@ async def _process_file_batch(
         if total_batches > 1:
             feedback.info(f"Processing batch {batch_idx + 1}/{total_batches} ({len(batch_files)} files)...")
         
-        # Process files in batch with limited concurrency
+        # Process files in batch with limited concurrency and progress updates
         # Create tasks for the batch, but semaphore limits concurrent execution
         batch_tasks = [process_single_file(f) for f in batch_files]
-        batch_results = await asyncio.gather(*batch_tasks, return_exceptions=True)
+        
+        # Add progress tracking for long operations
+        async def process_with_progress():
+            """Process batch with periodic progress updates."""
+            nonlocal processed_count, last_progress_update
+            
+            # Create a wrapper that updates progress
+            async def process_and_track(task):
+                result = await task
+                processed_count += 1
+                
+                # Update progress every 5 seconds for operations >10 seconds
+                current_time = asyncio.get_event_loop().time()
+                elapsed = current_time - start_time
+                
+                if elapsed > 10.0:  # Only show progress for operations >10 seconds
+                    if current_time - last_progress_update >= PROGRESS_UPDATE_INTERVAL:
+                        percent = (processed_count / total_files * 100) if total_files > 0 else 0
+                        feedback.info(
+                            f"Reviewing files: {processed_count}/{total_files} ({percent:.1f}%) "
+                            f"- {elapsed:.1f}s elapsed"
+                        )
+                        last_progress_update = current_time
+                
+                return result
+            
+            # Process all tasks with progress tracking
+            tracked_tasks = [process_and_track(task) for task in batch_tasks]
+            return await asyncio.gather(*tracked_tasks, return_exceptions=True)
+        
+        batch_results = await process_with_progress()
         all_results.extend(batch_results)
         
         # Delay between batches to avoid overwhelming connections

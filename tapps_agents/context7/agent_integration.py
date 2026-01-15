@@ -45,39 +45,35 @@ class Context7AgentHelper:
             project_root = Path.cwd()
 
         # #region agent log
-        import json
-        from datetime import datetime
-        log_path = Path.cwd() / ".cursor" / "debug.log"
-        try:
-            # Extract values before JSON serialization to handle MagicMock objects in tests
-            config_exists = config is not None
-            context7_config_exists = False
-            context7_enabled = False
-            if config and hasattr(config, 'context7'):
-                try:
-                    context7_config = config.context7
-                    context7_config_exists = context7_config is not None
-                    if context7_config_exists and hasattr(context7_config, 'enabled'):
-                        context7_enabled = bool(context7_config.enabled)
-                except (AttributeError, TypeError):
-                    pass
-            
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "C",
-                    "location": "context7/agent_integration.py:__init__:entry",
-                    "message": "Context7AgentHelper __init__ called",
-                    "data": {
-                        "config_exists": config_exists,
-                        "context7_config_exists": context7_config_exists,
-                        "context7_enabled": context7_enabled
-                    },
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        from ...core.debug_logger import write_debug_log
+        # Extract values before JSON serialization to handle MagicMock objects in tests
+        config_exists = config is not None
+        context7_config_exists = False
+        context7_enabled = False
+        if config and hasattr(config, 'context7'):
+            try:
+                context7_config = config.context7
+                context7_config_exists = context7_config is not None
+                if context7_config_exists and hasattr(context7_config, 'enabled'):
+                    context7_enabled = bool(context7_config.enabled)
+            except (AttributeError, TypeError):
+                pass
+        
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C",
+                "message": "Context7AgentHelper __init__ called",
+                "data": {
+                    "config_exists": config_exists,
+                    "context7_config_exists": context7_config_exists,
+                    "context7_enabled": context7_enabled
+                },
+            },
+            project_root=project_root,
+            location="context7/agent_integration.py:__init__:entry",
+        )
         # #endregion
         
         # Check if Context7 is enabled
@@ -270,23 +266,18 @@ class Context7AgentHelper:
             Dictionary with documentation content, or None if not found
         """
         # #region agent log
-        import json
-        from datetime import datetime
-        from pathlib import Path
-        log_path = Path.cwd() / ".cursor" / "debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "E",
-                    "location": "context7/agent_integration.py:get_documentation:entry",
-                    "message": "get_documentation called",
-                    "data": {"library": library, "topic": topic, "enabled": self.enabled},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        from ...core.debug_logger import write_debug_log
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E",
+                "message": "get_documentation called",
+                "data": {"library": library, "topic": topic, "enabled": self.enabled},
+            },
+            project_root=self.project_root if hasattr(self, 'project_root') else None,
+            location="context7/agent_integration.py:get_documentation:entry",
+        )
         # #endregion
         if not self.enabled or self.kb_lookup is None:
             return None

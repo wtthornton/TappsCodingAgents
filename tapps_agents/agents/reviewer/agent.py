@@ -727,60 +727,47 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
     ) -> dict[str, Any]:
         """Internal review implementation without timeout wrapper."""
         # #region agent log
-        import json
-        from datetime import datetime
-        from pathlib import Path as PathType
-        log_path = PathType.cwd() / ".cursor" / "debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "G",
-                    "location": "reviewer/agent.py:_review_file_internal:entry",
-                    "message": "_review_file_internal called",
-                    "data": {"file": str(file_path), "include_scoring": include_scoring},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except Exception as e:
-            # Log to stderr if file write fails
-            import sys
-            print(f"DEBUG LOG WRITE FAILED: {e}", file=sys.stderr)
+        from ...core.debug_logger import write_debug_log
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "G",
+                "message": "_review_file_internal called",
+                "data": {"file": str(file_path), "include_scoring": include_scoring},
+            },
+            project_root=self._project_root,
+            location="reviewer/agent.py:_review_file_internal:entry",
+        )
         # #endregion
         # Use centralized path validation from BaseAgent
         # _validate_path handles existence, size, and path traversal checks
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "G",
-                    "location": "reviewer/agent.py:_review_file_internal:before_validate",
-                    "message": "About to validate path",
-                    "data": {"file": str(file_path)},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except Exception:
-            # Silently ignore debug log write failures (non-critical)
-            pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "G",
+                "message": "About to validate path",
+                "data": {"file": str(file_path)},
+            },
+            project_root=self._project_root,
+            location="reviewer/agent.py:_review_file_internal:before_validate",
+        )
         # #endregion
         self._validate_path(file_path, max_file_size=max_file_size)
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "G",
-                    "location": "reviewer/agent.py:_review_file_internal:after_validate",
-                    "message": "Path validation completed",
-                    "data": {"file": str(file_path)},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except Exception:
-            # Silently ignore debug log write failures (non-critical)
-            pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "G",
+                "message": "Path validation completed",
+                "data": {"file": str(file_path)},
+            },
+            project_root=self._project_root,
+            location="reviewer/agent.py:_review_file_internal:after_validate",
+        )
         # #endregion
 
         # Read code
@@ -822,22 +809,22 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         
         context7_helper = None
         # #region agent log
-        import json
-        from datetime import datetime
-        log_path = Path.cwd() / ".cursor" / "debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "C",
-                    "location": "reviewer/agent.py:review_file:before_helper_creation",
-                    "message": "About to create Context7 helper",
-                    "data": {"config_exists": self.config is not None, "project_root": str(self._project_root) if self._project_root else None, "mcp_gateway": self.mcp_gateway is not None},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        from ...core.debug_logger import write_debug_log
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "C",
+                "message": "About to create Context7 helper",
+                "data": {
+                    "config_exists": self.config is not None,
+                    "project_root": str(self._project_root) if self._project_root else None,
+                    "mcp_gateway": self.mcp_gateway is not None,
+                },
+            },
+            project_root=self._project_root,
+            location="reviewer/agent.py:review_file:before_helper_creation",
+        )
         # #endregion
         try:
             from ...context7.agent_integration import get_context7_helper
@@ -1613,6 +1600,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Generate LLM feedback on code using language-aware prompts.
         
         Phase 1.3: LLM Feedback Generation Fix
+        
+        Note: Retry logic should be applied at the Cursor Skills execution layer,
+        not here (this just prepares the instruction). See retry_handler.py for
+        retry decorator usage.
         """
         from .feedback_generator import FeedbackGenerator
 

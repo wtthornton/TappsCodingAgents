@@ -45,7 +45,10 @@ def write_artifact(
     elif worktree_path:
         output_dir = Path(worktree_path) / ".tapps-agents" / "artifacts"
     else:
-        output_dir = Path.cwd() / ".tapps-agents" / "artifacts"
+        # Use project root detection instead of current working directory
+        from ..core.path_validator import PathValidator
+        validator = PathValidator()
+        output_dir = validator.project_root / ".tapps-agents" / "artifacts"
 
     output_dir.mkdir(parents=True, exist_ok=True)
 

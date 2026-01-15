@@ -58,23 +58,17 @@ def _ensure_context7_api_key() -> str | None:
         API key string if available, None otherwise
     """
     # #region agent log
-    import json
-    from datetime import datetime
-    from pathlib import Path
-    log_path = Path.cwd() / ".cursor" / "debug.log"
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "A",
-                "location": "backup_client.py:_ensure_context7_api_key:entry",
-                "message": "_ensure_context7_api_key called",
-                "data": {"env_key_exists": os.getenv("CONTEXT7_API_KEY") is not None},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    from ..core.debug_logger import write_debug_log
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "A",
+            "message": "_ensure_context7_api_key called",
+            "data": {"env_key_exists": os.getenv("CONTEXT7_API_KEY") is not None},
+        },
+        location="backup_client.py:_ensure_context7_api_key:entry",
+    )
     # #endregion
     
     # First check environment variable
@@ -236,23 +230,17 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
         Tuple of (resolve_library_client, get_docs_client) or (None, None) if API key not available
     """
     # #region agent log
-    import json
-    from datetime import datetime
-    from pathlib import Path
-    log_path = Path.cwd() / ".cursor" / "debug.log"
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "B",
-                "location": "backup_client.py:65",
-                "message": "create_fallback_http_client called",
-                "data": {"api_key_at_creation": os.getenv("CONTEXT7_API_KEY") is not None},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    from ..core.debug_logger import write_debug_log
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "B",
+            "message": "create_fallback_http_client called",
+            "data": {"api_key_at_creation": os.getenv("CONTEXT7_API_KEY") is not None},
+        },
+        location="backup_client.py:create_fallback_http_client:entry",
+    )
     # #endregion
     api_key = _ensure_context7_api_key()
     # #region agent log
@@ -323,22 +311,17 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                 "result": {"matches": []},
             }
         # #region agent log
-        import json
-        from datetime import datetime
-        from pathlib import Path
-        log_path = Path.cwd() / ".cursor" / "debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "F",
-                    "location": "backup_client.py:resolve_library_client",
-                    "message": "BEFORE API call",
-                    "data": {"library": library_name, "api_key_set": api_key is not None},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except: pass
+        from ..core.debug_logger import write_debug_log
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "F",
+                "message": "BEFORE API call",
+                "data": {"library": library_name, "api_key_set": api_key is not None},
+            },
+            location="backup_client.py:resolve_library_client",
+        )
         # #endregion
         try:
             with httpx.Client(timeout=10.0) as client:
@@ -704,23 +687,17 @@ def get_context7_client_with_fallback(
     # Only the AI assistant (via Cursor chat) can use MCP tools directly
     from ..core.runtime_mode import is_cursor_mode
     # #region agent log
-    import json
-    from datetime import datetime
-    from pathlib import Path
-    log_path = Path.cwd() / ".cursor" / "debug.log"
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run2",
-                "hypothesisId": "F",
-                "location": "backup_client.py:get_context7_client_with_fallback:before_fix",
-                "message": "Before MCP fix check",
-                "data": {"mcp_available": mcp_available, "mcp_source": mcp_source, "is_cursor_mode": is_cursor_mode()},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    from ..core.debug_logger import write_debug_log
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run2",
+            "hypothesisId": "F",
+            "message": "Before MCP fix check",
+            "data": {"mcp_available": mcp_available, "mcp_source": mcp_source, "is_cursor_mode": is_cursor_mode()},
+        },
+        location="backup_client.py:get_context7_client_with_fallback:before_fix",
+    )
     # #endregion
     if mcp_available and mcp_source == "cursor_mcp":
         # In Cursor mode, MCP tools are available to AI assistant but NOT to Python code
@@ -824,23 +801,17 @@ async def call_context7_resolve_with_fallback(
     """
     gateway, use_mcp, mcp_source, resolve_client, _ = get_context7_client_with_fallback(mcp_gateway)
     # #region agent log
-    import json
-    from datetime import datetime
-    from pathlib import Path
-    log_path = Path.cwd() / ".cursor" / "debug.log"
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "D",
-                "location": "backup_client.py:290",
-                "message": "call_context7_resolve_with_fallback got clients",
-                "data": {"use_mcp": use_mcp, "resolve_client": resolve_client is not None, "library": library_name},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    from ..core.debug_logger import write_debug_log
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "D",
+            "message": "call_context7_resolve_with_fallback got clients",
+            "data": {"use_mcp": use_mcp, "resolve_client": resolve_client is not None, "library": library_name},
+        },
+        location="backup_client.py:call_context7_resolve_with_fallback",
+    )
     # #endregion
     if use_mcp:
         # R1: Handle Cursor MCP vs local gateway differently

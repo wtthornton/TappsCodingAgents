@@ -68,7 +68,10 @@ class ReviewerResultCache:
             enabled: Whether caching is enabled (default: True)
         """
         if cache_dir is None:
-            cache_dir = Path.cwd() / ".tapps-agents" / "cache" / "reviewer"
+            # Use project root detection instead of current working directory
+            from ...core.path_validator import PathValidator
+            validator = PathValidator()
+            cache_dir = validator.project_root / ".tapps-agents" / "cache" / "reviewer"
         
         self.cache_dir = cache_dir
         self.ttl_seconds = ttl_seconds

@@ -265,23 +265,18 @@ class KBLookup:
             LookupResult with documentation content
         """
         # #region agent log
-        import json
-        from datetime import datetime
-        from pathlib import Path
-        log_path = Path.cwd() / ".cursor" / "debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "E",
-                    "location": "context7/lookup.py:lookup:entry",
-                    "message": "KBLookup.lookup called",
-                    "data": {"library": library, "topic": topic},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        from ...core.debug_logger import write_debug_log
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E",
+                "message": "KBLookup.lookup called",
+                "data": {"library": library, "topic": topic},
+            },
+            project_root=self.project_root if hasattr(self, 'project_root') else None,
+            location="context7/lookup.py:lookup:entry",
+        )
         # #endregion
         start_time = datetime.now(UTC)
 

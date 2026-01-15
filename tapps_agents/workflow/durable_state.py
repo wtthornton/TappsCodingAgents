@@ -312,7 +312,10 @@ class DurableWorkflowState:
         
         if store is None:
             if store_dir is None:
-                store_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+                # Use project root detection instead of current working directory
+                from ...core.path_validator import PathValidator
+                validator = PathValidator()
+                store_dir = validator.project_root / ".tapps-agents" / "workflow-state"
             self.store = EventStore(store_dir)
         else:
             self.store = store
@@ -581,7 +584,10 @@ class DurableWorkflowState:
             DurableWorkflowState instance or None if not found
         """
         if store_dir is None:
-            store_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+            # Use project root detection instead of current working directory
+            from ...core.path_validator import PathValidator
+            validator = PathValidator()
+            store_dir = validator.project_root / ".tapps-agents" / "workflow-state"
         
         store = EventStore(store_dir)
         checkpoint = store.get_checkpoint(workflow_id)
@@ -647,7 +653,10 @@ def get_resumable_workflows(store_dir: Path | None = None) -> list[dict[str, Any
         List of workflow info dictionaries
     """
     if store_dir is None:
-        store_dir = Path.cwd() / ".tapps-agents" / "workflow-state"
+        # Use project root detection instead of current working directory
+        from ...core.path_validator import PathValidator
+        validator = PathValidator()
+        store_dir = validator.project_root / ".tapps-agents" / "workflow-state"
     
     store = EventStore(store_dir)
     workflows = []

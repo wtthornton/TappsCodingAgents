@@ -117,6 +117,19 @@ class FeedbackGenerator:
         feedback_requirements = FeedbackGenerator._get_feedback_requirements(language)
         prompt_parts.extend(["", "Provide detailed feedback:", ""])
         prompt_parts.extend(feedback_requirements)
+        
+        # Add structured output guidance for better parsing
+        prompt_parts.extend([
+            "",
+            "Format your feedback as follows:",
+            "1. Start with a brief summary (1-2 sentences)",
+            "2. List security concerns first (if any) with 'Security:' prefix",
+            "3. List critical issues/bugs with 'Critical:' prefix",
+            "4. List improvements with 'Improvement:' prefix",
+            "5. List style suggestions last with 'Style:' prefix",
+            "",
+            "Use bullet points (-) or numbered lists for clarity.",
+        ])
 
         return "\n".join(prompt_parts)
 
@@ -308,6 +321,121 @@ class FeedbackGenerator:
                 unique_suggestions.append(suggestion)
 
         return unique_suggestions[:10]  # Limit to top 10
+
+    @staticmethod
+    def parse_feedback_text(feedback_text: str) -> dict[str, Any]:
+        """
+        Parse feedback text into structured format with prioritization.
+        
+        Extracts:
+        - Summary (first paragraph or section)
+        - Security concerns (high priority)
+        - Critical issues (bugs, errors)
+        - Improvements (medium priority)
+        - Style suggestions (low priority)
+        
+        Returns:
+            Structured feedback dictionary
+        """
+        import re
+        
+        result = {
+            "summary": "",
+            "security_concerns": [],
+            "critical_issues": [],
+            "improvements": [],
+            "style_suggestions": [],
+            "all_suggestions": [],
+        }
+        
+        if not feedback_text or not feedback_text.strip():
+            return result
+        
+        # Extract summary (first paragraph or first 200 chars)
+        lines = feedback_text.strip().split("\n")
+        summary_lines = []
+        for line in lines[:5]:  # First 5 lines or until blank line
+            if line.strip():
+                summary_lines.append(line.strip())
+            elif summary_lines:
+                break
+        result["summary"] = " ".join(summary_lines)[:500]  # Limit to 500 chars
+        
+        # Extract all suggestions first
+        all_suggestions = FeedbackGenerator._extract_suggestions(feedback_text)
+        result["all_suggestions"] = all_suggestions
+        
+        # Extract structured sections (Security:, Critical:, Improvement:, Style:)
+        security_section = re.search(r"Security:?\s*\n((?:[-*•]\s+[^\n]+\n?)+)", feedback_text, re.IGNORECASE | re.MULTILINE)
+        critical_section = re.search(r"Critical:?\s*\n((?:[-*•]\s+[^\n]+\n?)+)", feedback_text, re.IGNORECASE | re.MULTILINE)
+        improvement_section = re.search(r"Improvement:?\s*\n((?:[-*•]\s+[^\n]+\n?)+)", feedback_text, re.IGNORECASE | re.MULTILINE)
+        style_section = re.search(r"Style:?\s*\n((?:[-*•]\s+[^\n]+\n?)+)", feedback_text, re.IGNORECASE | re.MULTILINE)
+        
+        if security_section:
+            security_items = re.findall(r"[-*•]\s+([^\n]+)", security_section.group(1))
+            result["security_concerns"].extend([item.strip() for item in security_items])
+        
+        if critical_section:
+            critical_items = re.findall(r"[-*•]\s+([^\n]+)", critical_section.group(1))
+            result["critical_issues"].extend([item.strip() for item in critical_items])
+        
+        if improvement_section:
+            improvement_items = re.findall(r"[-*•]\s+([^\n]+)", improvement_section.group(1))
+            result["improvements"].extend([item.strip() for item in improvement_items])
+        
+        if style_section:
+            style_items = re.findall(r"[-*•]\s+([^\n]+)", style_section.group(1))
+            result["style_suggestions"].extend([item.strip() for item in style_items])
+        
+        # Categorize remaining suggestions by priority (if not already categorized)
+        security_keywords = [
+            "security", "vulnerability", "vulnerable", "exploit", "injection",
+            "xss", "csrf", "sql injection", "authentication", "authorization",
+            "secret", "password", "token", "credential", "exposed", "leak"
+        ]
+        
+        critical_keywords = [
+            "bug", "error", "exception", "crash", "fail", "broken", "incorrect",
+            "wrong", "invalid", "null pointer", "undefined", "missing", "required"
+        ]
+        
+        improvement_keywords = [
+            "improve", "optimize", "performance", "efficiency", "refactor",
+            "better", "consider", "recommend", "suggest", "enhance"
+        ]
+        
+        # Only categorize suggestions that weren't already in structured sections
+        categorized_suggestions = set(result["security_concerns"] + result["critical_issues"] + 
+                                      result["improvements"] + result["style_suggestions"])
+        
+        for suggestion in all_suggestions:
+            if suggestion in categorized_suggestions:
+                continue  # Already categorized from structured sections
+                
+            suggestion_lower = suggestion.lower()
+            
+            # Check for security concerns (highest priority)
+            if any(keyword in suggestion_lower for keyword in security_keywords):
+                result["security_concerns"].append(suggestion)
+            # Check for critical issues
+            elif any(keyword in suggestion_lower for keyword in critical_keywords):
+                result["critical_issues"].append(suggestion)
+            # Check for improvements
+            elif any(keyword in suggestion_lower for keyword in improvement_keywords):
+                result["improvements"].append(suggestion)
+            # Everything else is style/suggestions
+            else:
+                result["style_suggestions"].append(suggestion)
+        
+        # Also extract security concerns from full text (not just suggestions)
+        security_pattern = r"(?:security|vulnerability|vulnerable|exploit).*?[.:]"
+        security_matches = re.findall(security_pattern, feedback_text, re.IGNORECASE)
+        for match in security_matches[:3]:  # Limit to 3
+            match_clean = match.strip()
+            if match_clean and match_clean not in result["security_concerns"]:
+                result["security_concerns"].append(match_clean)
+        
+        return result
 
     @staticmethod
     def _calculate_confidence(feedback_text: str) -> float:

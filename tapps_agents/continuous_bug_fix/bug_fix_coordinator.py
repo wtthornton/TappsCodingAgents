@@ -54,22 +54,18 @@ class BugFixCoordinator:
                 - error: str | None (if failed)
         """
         # #region agent log
-        import json
-        from datetime import datetime
-        log_path = Path.cwd() / ".cursor" / "debug.log"
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "A",
-                    "location": "bug_fix_coordinator.py:fix_bug:entry",
-                    "message": "fix_bug called",
-                    "data": {"file_path": str(bug.file_path), "error_message": bug.error_message[:100]},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except Exception:
-            pass
+        from ...core.debug_logger import write_debug_log
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "message": "fix_bug called",
+                "data": {"file_path": str(bug.file_path), "error_message": bug.error_message[:100]},
+            },
+            project_root=self.project_root,
+            location="bug_fix_coordinator.py:fix_bug:entry",
+        )
         # #endregion
         try:
             # Create intent from bug description
