@@ -1,513 +1,618 @@
-# Step 4: API Design - TypeScript Enhancement Suite
+# Step 4: Component Design - Brownfield System Review Feature
 
-**Workflow**: Simple Mode *full  
-**Date**: 2025-01-16
+## API Specifications
 
----
+### 1. BrownfieldAnalyzer API
 
-## 1. API Overview
-
-### 1.1 Enhanced Methods Summary
-
-| Component | Method | Type | Description |
-|-----------|--------|------|-------------|
-| TypeScriptScorer | `_calculate_security_score()` | New | Calculate security score |
-| TypeScriptScorer | `_detect_dangerous_patterns()` | New | Detect dangerous patterns |
-| TypeScriptScorer | `get_security_issues()` | New | Get detailed security issues |
-| TypeScriptScorer | `_generate_explanations()` | New | Generate score explanations |
-| ReviewerAgent | `_extract_eslint_findings()` | New | Extract ESLint findings |
-| ReviewerAgent | `_extract_typescript_findings()` | New | Extract TypeScript findings |
-| ReviewerAgent | `_extract_ts_security_findings()` | New | Extract security findings |
-| ImproverAgent | `_create_backup()` | New | Create file backup |
-| ImproverAgent | `_apply_improvements()` | New | Apply code changes |
-| ImproverAgent | `_generate_diff()` | New | Generate unified diff |
-| ImproverAgent | `_verify_changes()` | New | Verify applied changes |
-
----
-
-## 2. TypeScriptScorer API
-
-### 2.1 `_calculate_security_score()`
+**Module:** `tapps_agents.core.brownfield_analyzer`
 
 ```python
-def _calculate_security_score(self, code: str, file_path: Path) -> float:
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from ..experts.domain_detector import DomainStackDetector, DomainMapping
+
+@dataclass
+class BrownfieldAnalysisResult:
+    """Result of brownfield codebase analysis."""
+    project_root: Path
+    languages: list[str]
+    frameworks: list[str]
+    dependencies: list[str]
+    domains: list[DomainMapping]
+    detected_at: datetime
+    analysis_metadata: dict[str, Any]
+
+class BrownfieldAnalyzer:
     """
-    Calculate security score based on dangerous patterns.
+    Analyzes brownfield codebase to detect technologies and domains.
     
-    Args:
-        code: Source code content
-        file_path: Path to the file (for React detection)
-        
-    Returns:
-        Security score from 0.0 to 10.0 (higher is better)
-        
-    Score Calculation:
-        - Base score: 10.0
-        - HIGH severity issues: -2.0 each
-        - MEDIUM severity issues: -1.0 each
-        - LOW severity issues: -0.5 each
-        - Minimum score: 0.0
+    Usage:
+        detector = DomainStackDetector(project_root)
+        analyzer = BrownfieldAnalyzer(project_root, detector)
+        result = await analyzer.analyze()
     """
-```
-
-### 2.2 `_detect_dangerous_patterns()`
-
-```python
-def _detect_dangerous_patterns(self, code: str) -> list[dict[str, Any]]:
-    """
-    Detect dangerous JavaScript/TypeScript patterns.
     
-    Args:
-        code: Source code to analyze
+    def __init__(
+        self,
+        project_root: Path,
+        domain_detector: DomainStackDetector
+    ) -> None:
+        """
+        Initialize analyzer.
         
-    Returns:
-        List of detected issues:
-        [
-            {
-                "pattern": "eval",
-                "severity": "HIGH",
-                "line": 42,
-                "column": 10,
-                "message": "eval() can execute arbitrary code",
-                "recommendation": "Use JSON.parse() for JSON",
-                "cwe_id": "CWE-95"
-            }
-        ]
-        
-    Detected Patterns:
-        - eval()
-        - innerHTML assignment
-        - document.write()
-        - new Function()
-        - setTimeout with string
-        - dangerouslySetInnerHTML (React)
-        - javascript: URLs
-    """
-```
-
-### 2.3 `get_security_issues()`
-
-```python
-def get_security_issues(self, code: str, file_path: Path) -> dict[str, Any]:
-    """
-    Get detailed security issues for external access.
+        Args:
+            project_root: Root directory of project to analyze
+            domain_detector: DomainStackDetector instance for domain detection
+        """
     
-    Args:
-        code: Source code content
-        file_path: Path to the file
+    async def analyze(self) -> BrownfieldAnalysisResult:
+        """
+        Perform complete brownfield analysis.
         
-    Returns:
-        {
-            "available": True,
-            "issues": [...],
-            "issue_count": 5,
-            "high_count": 2,
-            "medium_count": 2,
-            "low_count": 1,
-            "score": 6.0
-        }
-    """
-```
-
-### 2.4 `_generate_explanations()`
-
-```python
-def _generate_explanations(
-    self, 
-    scores: dict[str, Any],
-    security_issues: list[dict],
-    eslint_available: bool,
-    tsc_available: bool
-) -> dict[str, dict[str, Any]]:
-    """
-    Generate explanations for each score.
+        Returns:
+            BrownfieldAnalysisResult with detected languages, frameworks, 
+            dependencies, and domains
+        """
     
-    Args:
-        scores: Calculated scores dictionary
-        security_issues: List of security issues found
-        eslint_available: Whether ESLint is available
-        tsc_available: Whether TypeScript compiler is available
+    def detect_languages(self) -> list[str]:
+        """
+        Detect programming languages from file extensions and content.
         
-    Returns:
-        {
-            "security_score": {
-                "score": 6.0,
-                "reason": "2 security issues detected",
-                "issues": ["eval() at line 42", "innerHTML at line 55"],
-                "recommendations": ["Use JSON.parse()", "Use textContent"],
-                "tool_status": "pattern_based"
-            },
-            "linting_score": {
-                "score": 8.5,
-                "reason": "3 warnings found",
-                "issues": ["unused variable", "missing semicolon"],
-                "recommendations": ["Fix ESLint warnings"],
-                "tool_status": "available"
-            }
-        }
-    """
+        Returns:
+            List of detected language names (e.g., ["python", "typescript"])
+        """
+    
+    def detect_frameworks(self) -> list[str]:
+        """
+        Detect frameworks from dependency files and code patterns.
+        
+        Returns:
+            List of detected framework names (e.g., ["fastapi", "react"])
+        """
+    
+    def detect_dependencies(self) -> list[str]:
+        """
+        Extract dependencies from package files.
+        
+        Supports:
+        - Python: requirements.txt, pyproject.toml, setup.py
+        - Node.js: package.json
+        - Go: go.mod
+        - Java: pom.xml, build.gradle
+        
+        Returns:
+            List of dependency names (e.g., ["fastapi", "pytest", "react"])
+        """
+    
+    async def detect_domains(self) -> list[DomainMapping]:
+        """
+        Use DomainStackDetector to identify domains.
+        
+        Returns:
+            List of DomainMapping objects with confidence scores
+        """
 ```
 
 ---
 
-## 3. ReviewerAgent API
+### 2. ExpertConfigGenerator API
 
-### 3.1 `_extract_eslint_findings()`
-
-```python
-def _extract_eslint_findings(
-    self,
-    file_path: Path,
-    task_number: int,
-    max_findings: int = 10
-) -> list[ReviewFinding]:
-    """
-    Extract ESLint issues as ReviewFindings.
-    
-    Args:
-        file_path: Path to the TypeScript/JavaScript file
-        task_number: Task number for finding IDs
-        max_findings: Maximum number of findings to return
-        
-    Returns:
-        List of ReviewFinding objects:
-        [
-            ReviewFinding(
-                id="TASK-001-ESLINT-001",
-                severity=Severity.MEDIUM,
-                category="standards",
-                file="src/app.tsx",
-                line=42,
-                finding="[@typescript-eslint/no-unused-vars] 'foo' is declared but never used",
-                impact="Unused code increases maintenance burden",
-                suggested_fix="Remove unused variable or use it"
-            )
-        ]
-    """
-```
-
-### 3.2 `_extract_typescript_findings()`
+**Module:** `tapps_agents.core.expert_config_generator`
 
 ```python
-def _extract_typescript_findings(
-    self,
-    file_path: Path,
-    task_number: int,
-    max_findings: int = 10
-) -> list[ReviewFinding]:
-    """
-    Extract TypeScript compiler errors as ReviewFindings.
-    
-    Args:
-        file_path: Path to the TypeScript file
-        task_number: Task number for finding IDs
-        max_findings: Maximum number of findings to return
-        
-    Returns:
-        List of ReviewFinding objects:
-        [
-            ReviewFinding(
-                id="TASK-001-TSC-001",
-                severity=Severity.HIGH,
-                category="standards",
-                file="src/app.tsx",
-                line=55,
-                finding="[TS2345] Argument of type 'string' is not assignable to type 'number'",
-                impact="Type error may cause runtime issues",
-                suggested_fix="Fix type mismatch"
-            )
-        ]
-    """
-```
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
-### 3.3 `_extract_ts_security_findings()`
+from ..experts.domain_detector import DomainMapping
+from ..experts.expert_registry import ExpertRegistry
 
-```python
-def _extract_ts_security_findings(
-    self,
-    file_path: Path,
-    code: str,
-    task_number: int,
-    max_findings: int = 10
-) -> list[ReviewFinding]:
+@dataclass
+class ExpertConfig:
+    """Expert configuration to be written to YAML."""
+    expert_id: str
+    expert_name: str
+    primary_domain: str
+    rag_enabled: bool = True
+    knowledge_base_dir: Path | None = None
+    confidence_matrix: dict[str, float] | None = None
+    metadata: dict[str, Any] | None = None
+
+class ExpertConfigGenerator:
     """
-    Extract TypeScript security issues as ReviewFindings.
+    Generates expert YAML configurations based on detected domains.
     
-    Args:
-        file_path: Path to the file
-        code: Source code content
-        task_number: Task number for finding IDs
-        max_findings: Maximum number of findings to return
-        
-    Returns:
-        List of ReviewFinding objects:
-        [
-            ReviewFinding(
-                id="TASK-001-SEC-001",
-                severity=Severity.HIGH,
-                category="security",
-                file="src/app.tsx",
-                line=42,
-                finding="eval() can execute arbitrary code (CWE-95)",
-                impact="Potential code injection vulnerability",
-                suggested_fix="Use JSON.parse() instead of eval()"
-            )
-        ]
+    Usage:
+        registry = ExpertRegistry.from_domains_file(domains_file)
+        generator = ExpertConfigGenerator(project_root, registry)
+        configs = generator.generate_expert_configs(domains)
+        generator.write_expert_configs(configs, merge=True)
     """
+    
+    def __init__(
+        self,
+        project_root: Path,
+        expert_registry: ExpertRegistry | None = None
+    ) -> None:
+        """
+        Initialize generator.
+        
+        Args:
+            project_root: Root directory of project
+            expert_registry: Optional ExpertRegistry for validation
+        """
+    
+    def generate_expert_configs(
+        self,
+        domains: list[DomainMapping]
+    ) -> list[ExpertConfig]:
+        """
+        Generate expert configurations for detected domains.
+        
+        Args:
+            domains: List of DomainMapping objects from domain detection
+            
+        Returns:
+            List of ExpertConfig objects ready to be written
+        """
+    
+    def write_expert_configs(
+        self,
+        configs: list[ExpertConfig],
+        merge: bool = True
+    ) -> None:
+        """
+        Write expert configurations to experts.yaml.
+        
+        Args:
+            configs: List of ExpertConfig objects to write
+            merge: If True, merge with existing configs; if False, overwrite
+        """
+    
+    def validate_config(self, config: ExpertConfig) -> bool:
+        """
+        Validate expert configuration.
+        
+        Args:
+            config: ExpertConfig to validate
+            
+        Returns:
+            True if valid, False otherwise
+        """
+    
+    def _load_existing_configs(self) -> dict[str, Any]:
+        """Load existing expert configurations from YAML."""
+    
+    def _merge_configs(
+        self,
+        existing: dict[str, Any],
+        new: list[ExpertConfig]
+    ) -> dict[str, Any]:
+        """Merge new configs with existing ones."""
 ```
 
 ---
 
-## 4. ImproverAgent API
+### 3. BrownfieldReviewOrchestrator API
 
-### 4.1 `_create_backup()`
-
-```python
-def _create_backup(self, file_path: str | Path) -> Path:
-    """
-    Create backup of file before modifications.
-    
-    Args:
-        file_path: Path to file to backup
-        
-    Returns:
-        Path to backup file
-        
-    Backup Location:
-        .tapps-agents/backups/<filename>.<timestamp>.backup
-        
-    Example:
-        Input: src/app.tsx
-        Output: .tapps-agents/backups/app.tsx.20250116-143022.backup
-        
-    Raises:
-        FileNotFoundError: If file doesn't exist
-        PermissionError: If cannot write to backup directory
-    """
-```
-
-### 4.2 `_apply_improvements()`
+**Module:** `tapps_agents.core.brownfield_review`
 
 ```python
-def _apply_improvements(
-    self, 
-    file_path: str | Path, 
-    improved_code: str
-) -> None:
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+from ..context7.agent_integration import Context7AgentHelper
+from ..experts.knowledge_ingestion import IngestionResult
+from .brownfield_analyzer import BrownfieldAnalysisResult
+from .expert_config_generator import ExpertConfig
+
+@dataclass
+class BrownfieldReviewResult:
+    """Result of complete brownfield review."""
+    analysis: BrownfieldAnalysisResult
+    experts_created: list[ExpertConfig]
+    rag_results: dict[str, IngestionResult]  # expert_id -> ingestion result
+    errors: list[str]
+    warnings: list[str]
+    execution_time: float
+    dry_run: bool
+    report: str  # Human-readable summary report
+
+class BrownfieldReviewOrchestrator:
     """
-    Apply improved code to file.
+    Orchestrates complete brownfield review workflow.
     
-    Args:
-        file_path: Path to file to modify
-        improved_code: Improved code content
-        
-    Raises:
-        FileNotFoundError: If file doesn't exist
-        PermissionError: If cannot write to file
-        ValueError: If improved_code is empty
+    Usage:
+        orchestrator = BrownfieldReviewOrchestrator(
+            project_root=Path.cwd(),
+            context7_helper=context7_helper,
+            dry_run=False
+        )
+        result = await orchestrator.review(auto=True, include_context7=True)
+        print(result.report)
     """
-```
-
-### 4.3 `_generate_diff()`
-
-```python
-def _generate_diff(
-    self, 
-    original: str, 
-    improved: str,
-    file_path: str = "file"
-) -> dict[str, Any]:
-    """
-    Generate unified diff between original and improved code.
     
-    Args:
-        original: Original code content
-        improved: Improved code content
-        file_path: File path for diff header
+    def __init__(
+        self,
+        project_root: Path,
+        context7_helper: Context7AgentHelper | None = None,
+        dry_run: bool = False
+    ) -> None:
+        """
+        Initialize orchestrator.
         
-    Returns:
-        {
-            "unified_diff": "--- original\n+++ improved\n@@ ... @@\n-old\n+new",
-            "lines_added": 5,
-            "lines_removed": 3,
-            "has_changes": True
-        }
-    """
-```
-
-### 4.4 `_verify_changes()`
-
-```python
-async def _verify_changes(self, file_path: str) -> dict[str, Any]:
-    """
-    Run verification review after applying changes.
+        Args:
+            project_root: Root directory of project to review
+            context7_helper: Optional Context7 helper for library docs
+            dry_run: If True, preview changes without applying
+        """
     
-    Args:
-        file_path: Path to modified file
+    async def review(
+        self,
+        auto: bool = False,
+        include_context7: bool = True
+    ) -> BrownfieldReviewResult:
+        """
+        Perform complete brownfield review.
         
-    Returns:
-        {
-            "verified": True,
-            "new_score": 78.5,
-            "score_change": +2.5,
-            "issues_resolved": 3,
-            "new_issues": 0
-        }
-    """
+        Args:
+            auto: If True, skip all prompts and use defaults
+            include_context7: If True, fetch library docs from Context7
+            
+        Returns:
+            BrownfieldReviewResult with complete analysis and results
+        """
+    
+    async def _analyze_codebase(self) -> BrownfieldAnalysisResult:
+        """Step 1: Analyze codebase structure and detect domains."""
+    
+    async def _create_experts(
+        self,
+        domains: list[DomainMapping]
+    ) -> list[ExpertConfig]:
+        """Step 2: Create expert configurations."""
+    
+    async def _populate_rag(
+        self,
+        experts: list[ExpertConfig],
+        include_context7: bool = True
+    ) -> dict[str, IngestionResult]:
+        """Step 3: Populate RAG knowledge bases for each expert."""
+    
+    def _generate_report(self, result: BrownfieldReviewResult) -> str:
+        """Generate human-readable summary report."""
 ```
 
 ---
 
-## 5. CLI Parameter Updates
+### 4. Enhanced KnowledgeIngestionPipeline API
 
-### 5.1 Reviewer CLI
+**Module:** `tapps_agents.experts.knowledge_ingestion` (enhance existing)
 
+**New Methods:**
+
+```python
+class KnowledgeIngestionPipeline:
+    # ... existing methods ...
+    
+    async def ingest_for_expert(
+        self,
+        expert_id: str,
+        expert_domain: str,
+        include_context7: bool = True
+    ) -> IngestionResult:
+        """
+        Ingest knowledge for a specific expert.
+        
+        Args:
+            expert_id: ID of expert (e.g., "expert-python")
+            expert_domain: Primary domain of expert (e.g., "python")
+            include_context7: If True, fetch Context7 library docs
+            
+        Returns:
+            IngestionResult with statistics
+        """
+    
+    def _create_expert_kb(
+        self,
+        expert_id: str,
+        expert_domain: str
+    ) -> VectorKnowledgeBase | SimpleKnowledgeBase:
+        """
+        Create knowledge base for expert.
+        
+        Args:
+            expert_id: ID of expert
+            expert_domain: Primary domain of expert
+            
+        Returns:
+            Initialized knowledge base instance
+        """
+```
+
+---
+
+## CLI Command Specification
+
+### Command: `brownfield review`
+
+**Full Command:**
 ```bash
-# Existing
-tapps-agents reviewer score <file>
-
-# Enhanced with --explain
-tapps-agents reviewer score <file> --explain
-
-# Output with --explain:
-{
-  "scores": {...},
-  "explanations": {
-    "security_score": {
-      "score": 6.0,
-      "reason": "...",
-      "recommendations": [...]
-    }
-  }
-}
+tapps-agents brownfield review [--auto] [--dry-run] [--output-dir <dir>] [--no-context7]
 ```
 
-### 5.2 Improver CLI
+**Options:**
+- `--auto`: Fully automated execution (skip prompts)
+- `--dry-run`: Preview changes without applying
+- `--output-dir <dir>`: Specify output directory for reports (default: `.tapps-agents/brownfield-review/`)
+- `--no-context7`: Skip Context7 library documentation fetching
 
+**Examples:**
 ```bash
-# Existing
-tapps-agents improver improve-quality <file> "<instruction>"
+# Full automated review
+tapps-agents brownfield review --auto
 
-# Enhanced with --auto-apply
-tapps-agents improver improve-quality <file> "<instruction>" --auto-apply
+# Preview changes
+tapps-agents brownfield review --dry-run
 
-# Enhanced with --preview
-tapps-agents improver improve-quality <file> "<instruction>" --preview
+# Skip Context7
+tapps-agents brownfield review --auto --no-context7
 
-# Output with --auto-apply:
-{
-  "applied": true,
-  "backup": ".tapps-agents/backups/...",
-  "diff": "--- original\n+++ improved\n...",
-  "verification": {
-    "verified": true,
-    "new_score": 78.5
-  }
-}
+# Custom output directory
+tapps-agents brownfield review --auto --output-dir reports/brownfield/
+```
+
+**Output:**
+- Progress indicators during execution
+- Summary report at completion
+- Expert configurations written to `.tapps-agents/experts.yaml`
+- Knowledge bases created in `.tapps-agents/kb/{expert-id}/`
+
+---
+
+## Simple Mode Command Specification
+
+### Command: `*brownfield-review`
+
+**Cursor Chat Usage:**
+```cursor
+@simple-mode *brownfield-review
+@simple-mode Review brownfield system and create experts
+@simple-mode Analyze project and populate RAG
+```
+
+**Natural Language Patterns:**
+- "Review brownfield system"
+- "Analyze project and create experts"
+- "Create experts from codebase analysis"
+- "Populate RAG for brownfield project"
+
+**Parameters:**
+- `auto`: Boolean, fully automated (default: true)
+- `dry_run`: Boolean, preview mode (default: false)
+- `include_context7`: Boolean, fetch library docs (default: true)
+
+**Output:**
+- Progress updates in chat
+- Summary report in markdown format
+- Links to created expert configurations
+- Statistics on knowledge base population
+
+---
+
+## Data Models
+
+### BrownfieldAnalysisResult
+```python
+@dataclass
+class BrownfieldAnalysisResult:
+    project_root: Path
+    languages: list[str]  # ["python", "typescript"]
+    frameworks: list[str]  # ["fastapi", "react"]
+    dependencies: list[str]  # ["fastapi", "pytest", "react"]
+    domains: list[DomainMapping]  # From DomainStackDetector
+    detected_at: datetime
+    analysis_metadata: dict[str, Any]  # Additional metadata
+```
+
+### ExpertConfig
+```python
+@dataclass
+class ExpertConfig:
+    expert_id: str  # "expert-python"
+    expert_name: str  # "Python Expert"
+    primary_domain: str  # "python"
+    rag_enabled: bool  # True
+    knowledge_base_dir: Path  # .tapps-agents/kb/expert-python/
+    confidence_matrix: dict[str, float] | None  # Domain confidence scores
+    metadata: dict[str, Any] | None  # Additional metadata
+```
+
+### BrownfieldReviewResult
+```python
+@dataclass
+class BrownfieldReviewResult:
+    analysis: BrownfieldAnalysisResult
+    experts_created: list[ExpertConfig]
+    rag_results: dict[str, IngestionResult]  # expert_id -> result
+    errors: list[str]
+    warnings: list[str]
+    execution_time: float  # Seconds
+    dry_run: bool
+    report: str  # Human-readable markdown report
 ```
 
 ---
 
-## 6. Data Transfer Objects
+## Component Interactions
 
-### 6.1 SecurityIssueDTO
+### Sequence Diagram
+
+```
+User → CLI/SimpleMode → BrownfieldReviewOrchestrator
+                          │
+                          ├─→ BrownfieldAnalyzer
+                          │     │
+                          │     └─→ DomainStackDetector
+                          │
+                          ├─→ ExpertConfigGenerator
+                          │     │
+                          │     └─→ ExpertRegistry
+                          │
+                          └─→ KnowledgeIngestionPipeline
+                                │
+                                ├─→ Project Sources
+                                │
+                                └─→ Context7AgentHelper
+                                      │
+                                      └─→ Context7 API
+```
+
+### Data Flow
+
+1. **Analysis Phase**
+   - `BrownfieldAnalyzer.analyze()` → `BrownfieldAnalysisResult`
+   - Uses `DomainStackDetector.detect_stack()` for domain detection
+
+2. **Expert Creation Phase**
+   - `ExpertConfigGenerator.generate_expert_configs(domains)` → `list[ExpertConfig]`
+   - `ExpertConfigGenerator.write_expert_configs(configs)` → writes to YAML
+
+3. **RAG Population Phase**
+   - For each expert:
+     - `KnowledgeIngestionPipeline.ingest_for_expert(expert_id, domain)` → `IngestionResult`
+     - Creates knowledge base in `.tapps-agents/kb/{expert-id}/`
+     - Populates from project sources and Context7
+
+4. **Report Generation**
+   - `BrownfieldReviewOrchestrator._generate_report(result)` → markdown report
+
+---
+
+## Error Handling
+
+### Error Categories
+
+1. **Analysis Errors**
+   - Domain detection failures → Log, continue with other domains
+   - File read errors → Log, skip file
+
+2. **Expert Creation Errors**
+   - Invalid domain → Log, skip expert
+   - YAML write errors → Log, return error list
+
+3. **RAG Population Errors**
+   - Context7 unavailable → Log warning, continue with project sources
+   - Knowledge base creation failures → Log, skip expert
+   - Ingestion failures → Log, continue with other sources
+
+### Error Response Format
 
 ```python
 @dataclass
-class SecurityIssueDTO:
-    """Security issue data transfer object."""
-    pattern: str
-    severity: str  # "HIGH", "MEDIUM", "LOW"
-    line: int
-    column: int | None
-    message: str
-    recommendation: str
-    cwe_id: str | None
-    
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-```
-
-### 6.2 ScoreExplanationDTO
-
-```python
-@dataclass
-class ScoreExplanationDTO:
-    """Score explanation data transfer object."""
-    score: float
-    reason: str
-    issues: list[str]
-    recommendations: list[str]
-    tool_status: str
-    
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
-```
-
-### 6.3 DiffResultDTO
-
-```python
-@dataclass
-class DiffResultDTO:
-    """Diff result data transfer object."""
-    unified_diff: str
-    lines_added: int
-    lines_removed: int
-    has_changes: bool
-    
-    def to_dict(self) -> dict[str, Any]:
-        return asdict(self)
+class BrownfieldReviewResult:
+    # ... other fields ...
+    errors: list[str]  # ["Failed to detect domain X", "Context7 unavailable"]
+    warnings: list[str]  # ["Skipped expert Y due to invalid config"]
 ```
 
 ---
 
-## 7. Error Responses
+## Configuration Files
 
-### 7.1 Standard Error Format
+### experts.yaml Structure
 
-```python
-{
-    "error": True,
-    "error_type": "ToolNotAvailable",
-    "message": "ESLint is not available",
-    "details": {
-        "tool": "eslint",
-        "install_command": "npm install -g eslint"
-    },
-    "fallback_used": True,
-    "fallback_score": 5.0
-}
+```yaml
+experts:
+  - expert_id: expert-python
+    expert_name: Python Expert
+    primary_domain: python
+    rag_enabled: true
+    knowledge_base_dir: .tapps-agents/kb/expert-python/
+    confidence_matrix:
+      python: 0.9
+      testing: 0.8
+      api-design-integration: 0.7
+    metadata:
+      created_by: brownfield-review
+      created_at: "2026-01-16T10:00:00Z"
+      detected_domains: ["python", "testing"]
+  
+  - expert_id: expert-fastapi
+    expert_name: FastAPI Expert
+    primary_domain: fastapi
+    rag_enabled: true
+    knowledge_base_dir: .tapps-agents/kb/expert-fastapi/
+    # ... similar structure
 ```
 
-### 7.2 Error Types
+---
 
-| Error Type | HTTP Status | Description |
-|------------|-------------|-------------|
-| ToolNotAvailable | 200 (graceful) | Tool not installed |
-| FileNotFound | 404 | File doesn't exist |
-| PermissionDenied | 403 | Cannot read/write file |
-| Timeout | 408 | Operation timed out |
-| InvalidInput | 400 | Invalid input parameters |
+## Testing Specifications
+
+### Unit Tests
+
+1. **BrownfieldAnalyzer Tests**
+   - `test_detect_languages()` - Language detection from files
+   - `test_detect_frameworks()` - Framework detection from dependencies
+   - `test_detect_dependencies()` - Dependency extraction
+   - `test_analyze()` - Complete analysis workflow
+
+2. **ExpertConfigGenerator Tests**
+   - `test_generate_expert_configs()` - Config generation
+   - `test_write_expert_configs()` - YAML writing
+   - `test_validate_config()` - Configuration validation
+   - `test_merge_configs()` - Config merging
+
+3. **BrownfieldReviewOrchestrator Tests**
+   - `test_review()` - Complete workflow
+   - `test_dry_run()` - Dry-run mode
+   - `test_error_handling()` - Error recovery
+
+### Integration Tests
+
+1. **End-to-End Workflow**
+   - Test complete workflow with sample project
+   - Verify expert creation
+   - Verify RAG population
+
+2. **CLI Integration**
+   - Test command parsing
+   - Test command execution
+   - Test output formatting
+
+3. **Simple Mode Integration**
+   - Test command recognition
+   - Test workflow execution
+   - Test output formatting
 
 ---
 
-## 8. Backward Compatibility
+## Implementation Notes
 
-### 8.1 Existing API Preservation
+1. **Reuse Existing Components**
+   - Leverage `DomainStackDetector` for domain detection
+   - Use `KnowledgeIngestionPipeline` for RAG population
+   - Integrate with `ExpertRegistry` for expert management
+   - Use `Context7AgentHelper` for library docs
 
-All existing APIs remain unchanged:
-- `score_file()` returns same structure (with optional new fields)
-- `review_file()` returns same structure (with optional new fields)
-- `_handle_improve_quality()` returns same structure (with optional new fields)
+2. **Incremental Development**
+   - Start with analysis phase
+   - Add expert creation
+   - Add RAG population
+   - Add CLI/Simple Mode integration
 
-### 8.2 New Fields Are Optional
+3. **Error Recovery**
+   - Continue processing on individual failures
+   - Log all errors with context
+   - Provide comprehensive error reports
 
-New fields are added as optional:
-- `explanations` - Only present if `--explain` flag used
-- `tool_status` - Always present (new default)
-- `preview_diff` - Only present if `--preview` flag used
-
----
-
-**API Design Status**: APPROVED  
-**Next Step**: Step 5 - Implementation
+4. **Performance**
+   - Parallel processing where possible
+   - Caching of analysis results
+   - Incremental RAG updates

@@ -24,6 +24,7 @@ class IntentType(Enum):
     PLAN_ANALYSIS = "plan-analysis"
     PR = "pr"
     REQUIREMENTS = "requirements"
+    BROWNFIELD = "brownfield"
     UNKNOWN = "unknown"
 
 
@@ -58,6 +59,8 @@ class Intent:
             return ["reviewer", "documenter"]
         elif self.type == IntentType.REQUIREMENTS:
             return ["analyst", "planner", "documenter"]
+        elif self.type == IntentType.BROWNFIELD:
+            return ["brownfield-review"]
         else:
             return []
 
@@ -191,6 +194,22 @@ class IntentParser:
             "requirements analysis",
         ]
 
+        # Brownfield intent keywords
+        self.brownfield_keywords = [
+            "brownfield",
+            "brownfield review",
+            "review brownfield",
+            "analyze brownfield",
+            "brownfield system",
+            "review system",
+            "analyze project",
+            "create experts",
+            "auto experts",
+            "expert creation",
+            "populate rag",
+            "fill rag",
+        ]
+
         # Simple Mode intent keywords
         self.simple_mode_keywords = [
             "@simple-mode",
@@ -288,6 +307,14 @@ class IntentParser:
                 original_input=input_text,
             )
 
+        if input_text.strip().startswith("*brownfield") or input_text.strip().startswith("*brownfield-review") or input_text.strip().startswith("@simple-mode *brownfield"):
+            return Intent(
+                type=IntentType.BROWNFIELD,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
         # Score each intent type
         scores = {
             IntentType.BUILD: self._score_intent(input_lower, self.build_keywords),
@@ -300,6 +327,7 @@ class IntentParser:
             IntentType.PLAN_ANALYSIS: self._score_intent(input_lower, self.plan_analysis_keywords),
             IntentType.PR: self._score_intent(input_lower, self.pr_keywords),
             IntentType.REQUIREMENTS: self._score_intent(input_lower, self.requirements_keywords),
+            IntentType.BROWNFIELD: self._score_intent(input_lower, self.brownfield_keywords),
         }
 
         # Find best match

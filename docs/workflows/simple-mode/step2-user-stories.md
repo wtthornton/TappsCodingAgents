@@ -1,366 +1,190 @@
-# Step 2: User Stories - TypeScript Enhancement Suite
+# Step 2: User Stories - Brownfield System Review Feature
 
-**Workflow**: Simple Mode *full  
-**Date**: 2025-01-16  
-**Sprint**: TypeScript Enhancement Sprint
+## Epic: Automated Brownfield System Review with Expert Creation and RAG Population
 
----
+### Story 1: Brownfield System Analysis
+**As a** developer working on a brownfield project  
+**I want** TappsCodingAgents to automatically analyze my codebase structure, detect technologies, and identify domains  
+**So that** I can understand what domains and technologies my project uses without manual analysis
 
-## Epic: TypeScript Quality Analysis Enhancement
+**Acceptance Criteria:**
+- [ ] Analyzes project structure (file types, directory patterns)
+- [ ] Detects programming languages from file extensions and content
+- [ ] Identifies frameworks and libraries from dependency files (requirements.txt, package.json, etc.)
+- [ ] Uses DomainStackDetector to map technologies to domains
+- [ ] Generates analysis report with detected domains and technologies
+- [ ] Handles polyglot projects (multiple languages/frameworks)
 
-**Epic ID**: EPIC-TS-001  
-**Priority**: Critical  
-**Total Story Points**: 34
-
----
-
-## Story 1: Enhanced TypeScript Review Feedback
-
-**Story ID**: TS-001  
-**Priority**: Critical  
-**Story Points**: 8  
-**Assignee**: TappsCodingAgents
-
-### User Story
-As a **TypeScript developer**, I want **detailed review feedback with line numbers and specific issues**, so that I can **quickly identify and fix problems in my code**.
-
-### Acceptance Criteria
-
-```gherkin
-Feature: Enhanced TypeScript Review Feedback
-
-  Scenario: Review TypeScript file with ESLint issues
-    Given I have a TypeScript file with linting issues
-    When I run "reviewer review <file.ts>"
-    Then I should see each ESLint issue with:
-      | Field      | Example                          |
-      | file       | src/app.ts                       |
-      | line       | 42                               |
-      | column     | 15                               |
-      | rule_id    | @typescript-eslint/no-unused-vars|
-      | message    | 'foo' is declared but never used |
-      | severity   | warning                          |
-
-  Scenario: Review TypeScript file with type errors
-    Given I have a TypeScript file with type errors
-    When I run "reviewer review <file.ts>"
-    Then I should see each type error with:
-      | Field      | Example                          |
-      | file       | src/app.ts                       |
-      | line       | 55                               |
-      | column     | 10                               |
-      | code       | TS2345                           |
-      | message    | Argument of type 'string' is not assignable |
-
-  Scenario: Review JavaScript file with ESLint issues
-    Given I have a JavaScript file with linting issues
-    When I run "reviewer review <file.js>"
-    Then I should see ESLint issues with line numbers
-    And type checking should show "not applicable" for JS files
-
-  Scenario: No tools available
-    Given ESLint is not installed
-    When I run "reviewer review <file.ts>"
-    Then I should see a neutral score (5.0)
-    And I should see a message "ESLint not available - install via npm"
-```
-
-### Technical Tasks
-- [ ] Update `_extract_detailed_findings()` to process TypeScript errors
-- [ ] Parse ESLint JSON output for detailed issue extraction
-- [ ] Parse TypeScript compiler output for error extraction
-- [ ] Add TypeScript-specific finding types to ReviewFinding
-- [ ] Limit findings to top 10 per category
+**Story Points:** 5  
+**Priority:** P0 (Critical)
 
 ---
 
-## Story 2: TypeScript Security Analysis
+### Story 2: Automatic Expert Configuration Generation
+**As a** developer  
+**I want** TappsCodingAgents to automatically create expert configurations based on detected domains  
+**So that** I don't have to manually configure experts for each domain in my project
 
-**Story ID**: TS-002  
-**Priority**: Critical  
-**Story Points**: 8  
-**Assignee**: TappsCodingAgents
+**Acceptance Criteria:**
+- [ ] Generates expert YAML configurations for each detected domain
+- [ ] Creates expert entries in `.tapps-agents/experts.yaml`
+- [ ] Sets appropriate expert IDs (e.g., `expert-{domain}`)
+- [ ] Configures knowledge base directories for each expert
+- [ ] Sets default expert weights and confidence matrices
+- [ ] Validates generated configurations
+- [ ] Preserves existing expert configurations (merge, don't overwrite)
 
-### User Story
-As a **security-conscious developer**, I want **real security analysis for my TypeScript code**, so that I can **identify and fix vulnerabilities before deployment**.
-
-### Acceptance Criteria
-
-```gherkin
-Feature: TypeScript Security Analysis
-
-  Scenario: Detect dangerous patterns
-    Given I have a TypeScript file with dangerous patterns
-      """
-      const result = eval(userInput);
-      element.innerHTML = userData;
-      """
-    When I run "reviewer security-scan <file.ts>"
-    Then I should see security issues:
-      | pattern      | severity | line |
-      | eval()       | HIGH     | 1    |
-      | innerHTML    | MEDIUM   | 2    |
-
-  Scenario: React dangerouslySetInnerHTML detection
-    Given I have a React component with dangerouslySetInnerHTML
-    When I run "reviewer security-scan <file.tsx>"
-    Then I should see a HIGH severity issue for dangerouslySetInnerHTML
-
-  Scenario: Security score calculation
-    Given I have a TypeScript file with 2 security issues
-    When I run "reviewer score <file.ts>"
-    Then security_score should be less than 10.0
-    And security_score should reflect actual issues (not default 5.0)
-
-  Scenario: No security issues
-    Given I have a clean TypeScript file
-    When I run "reviewer score <file.ts>"
-    Then security_score should be 10.0
-    And I should see "No security issues detected"
-```
-
-### Technical Tasks
-- [ ] Implement `_calculate_security_score()` in TypeScriptScorer
-- [ ] Add dangerous pattern detection (eval, innerHTML, etc.)
-- [ ] Add React-specific security patterns
-- [ ] Integrate npm audit for dependency vulnerabilities (optional)
-- [ ] Update security score calculation formula
+**Story Points:** 8  
+**Priority:** P0 (Critical)
 
 ---
 
-## Story 3: Improver Auto-Apply Option
+### Story 3: Project Documentation Ingestion
+**As a** developer  
+**I want** TappsCodingAgents to automatically ingest project documentation into expert knowledge bases  
+**So that** experts have access to project-specific knowledge
 
-**Story ID**: TS-003  
-**Priority**: High  
-**Story Points**: 5  
-**Assignee**: TappsCodingAgents
+**Acceptance Criteria:**
+- [ ] Ingests requirements documents (requirements*.md, PRD.md, etc.)
+- [ ] Ingests architecture documentation (architecture*.md, ARCHITECTURE.md)
+- [ ] Ingests ADRs (Architecture Decision Records)
+- [ ] Ingests runbooks and operational docs
+- [ ] Ingests SDLC reports and lessons learned
+- [ ] Maps documents to appropriate expert domains
+- [ ] Stores documents in expert-specific knowledge base directories
+- [ ] Supports both SimpleKnowledgeBase and VectorKnowledgeBase
 
-### User Story
-As a **developer**, I want **to automatically apply suggested improvements**, so that I can **save time and avoid manual copy-paste errors**.
-
-### Acceptance Criteria
-
-```gherkin
-Feature: Improver Auto-Apply
-
-  Scenario: Auto-apply improvements
-    Given I have a file with quality issues
-    When I run "improver improve-quality <file> 'Fix issues' --auto-apply"
-    Then the file should be modified with improvements
-    And a backup should be created at <file>.backup
-    And I should see a diff of changes made
-    And a verification review should run
-
-  Scenario: Preview before apply
-    Given I have a file with quality issues
-    When I run "improver improve-quality <file> 'Fix issues' --preview"
-    Then I should see a diff of proposed changes
-    And the file should NOT be modified
-    And I should see "Use --auto-apply to apply these changes"
-
-  Scenario: Rollback on failure
-    Given I have applied changes that broke the code
-    When verification fails
-    Then I should see option to rollback
-    And backup file should be preserved
-
-  Scenario: No backup directory
-    Given backup directory doesn't exist
-    When I run with --auto-apply
-    Then backup directory should be created
-    And backup should be saved
-```
-
-### Technical Tasks
-- [ ] Add `--auto-apply` flag to improve commands
-- [ ] Implement `_create_backup()` method
-- [ ] Implement `_apply_improvements()` method
-- [ ] Implement `_generate_diff()` method
-- [ ] Add verification review after apply
-- [ ] Handle rollback scenarios
+**Story Points:** 5  
+**Priority:** P0 (Critical)
 
 ---
 
-## Story 4: Score Explanation Mode
+### Story 4: Context7 Library Documentation Integration
+**As a** developer  
+**I want** TappsCodingAgents to automatically fetch library documentation from Context7 and populate expert knowledge bases  
+**So that** experts have access to up-to-date library documentation
 
-**Story ID**: TS-004  
-**Priority**: High  
-**Story Points**: 5  
-**Assignee**: TappsCodingAgents
+**Acceptance Criteria:**
+- [ ] Detects project dependencies (from requirements.txt, package.json, etc.)
+- [ ] Fetches library documentation from Context7 for each dependency
+- [ ] Maps library docs to appropriate expert domains
+- [ ] Stores library docs in expert knowledge bases
+- [ ] Handles Context7 unavailability gracefully (skip, don't fail)
+- [ ] Caches fetched documentation locally
+- [ ] Updates documentation when dependencies change
 
-### User Story
-As a **developer**, I want **explanations for my code quality scores**, so that I can **understand why scores are low and how to improve them**.
-
-### Acceptance Criteria
-
-```gherkin
-Feature: Score Explanations
-
-  Scenario: Low security score explanation
-    Given I have a TypeScript file with security issues
-    When I run "reviewer score <file.ts> --explain"
-    Then I should see security_score with explanation:
-      | Field          | Example                              |
-      | score          | 6.5                                  |
-      | reason         | 2 security issues detected           |
-      | issues         | eval() usage, innerHTML assignment   |
-      | recommendations| Replace eval with JSON.parse, use textContent |
-
-  Scenario: Tool unavailable explanation
-    Given ESLint is not installed
-    When I run "reviewer score <file.ts> --explain"
-    Then I should see:
-      | Field          | Value                                |
-      | linting_score  | 5.0                                  |
-      | reason         | ESLint not available                 |
-      | recommendations| Install ESLint: npm install -g eslint|
-
-  Scenario: All scores explained
-    Given I run "reviewer score <file.ts> --explain"
-    Then each score should have:
-      - score (number)
-      - reason (string)
-      - recommendations (list)
-      - tool_status (available/unavailable/error)
-```
-
-### Technical Tasks
-- [ ] Add `--explain` flag to score command
-- [ ] Add `_explanations` field to score output
-- [ ] Generate explanations for each metric
-- [ ] Include tool availability status
-- [ ] Add recommendations for improvement
+**Story Points:** 8  
+**Priority:** P1 (High)
 
 ---
 
-## Story 5: Before/After Code Diffs
+### Story 5: RAG Knowledge Base Population
+**As a** developer  
+**I want** TappsCodingAgents to automatically populate RAG knowledge bases for each expert  
+**So that** experts can retrieve relevant knowledge during consultations
 
-**Story ID**: TS-005  
-**Priority**: High  
-**Story Points**: 3  
-**Assignee**: TappsCodingAgents
+**Acceptance Criteria:**
+- [ ] Creates knowledge base instances for each expert
+- [ ] Populates from project documentation sources
+- [ ] Populates from Context7 library documentation
+- [ ] Builds vector indexes for VectorKnowledgeBase
+- [ ] Creates chunk indexes for SimpleKnowledgeBase
+- [ ] Supports incremental updates (resume capability)
+- [ ] Reports ingestion statistics (entries ingested, failed, etc.)
 
-### User Story
-As a **developer**, I want **to see a diff of proposed changes**, so that I can **review improvements before applying them**.
-
-### Acceptance Criteria
-
-```gherkin
-Feature: Code Diffs
-
-  Scenario: Generate unified diff
-    Given I request improvements to a file
-    When the improver generates changes
-    Then I should see a unified diff:
-      """
-      --- original/app.ts
-      +++ improved/app.ts
-      @@ -10,3 +10,5 @@
-      -const x = eval(input);
-      +const x = JSON.parse(input);
-      """
-
-  Scenario: Diff statistics
-    Given improvements are generated
-    Then I should see statistics:
-      | Metric         | Value |
-      | lines_added    | 5     |
-      | lines_removed  | 3     |
-      | files_changed  | 1     |
-
-  Scenario: No changes needed
-    Given file is already optimal
-    When I request improvements
-    Then I should see "No changes recommended"
-    And diff should be empty
-```
-
-### Technical Tasks
-- [ ] Implement `_generate_unified_diff()` method
-- [ ] Add diff statistics calculation
-- [ ] Include diff in improver output
-- [ ] Handle no-change scenarios
+**Story Points:** 8  
+**Priority:** P0 (Critical)
 
 ---
 
-## Story 6: Language Support Documentation
+### Story 6: CLI Command Implementation
+**As a** developer  
+**I want** a CLI command to run brownfield system review  
+**So that** I can easily analyze projects from the command line
 
-**Story ID**: TS-006  
-**Priority**: Medium  
-**Story Points**: 5  
-**Assignee**: TappsCodingAgents
+**Acceptance Criteria:**
+- [ ] Command: `tapps-agents brownfield review [options]`
+- [ ] Supports `--auto` flag for fully automated execution
+- [ ] Supports `--output-dir` to specify output directory
+- [ ] Supports `--dry-run` to preview changes without applying
+- [ ] Shows progress indicators during execution
+- [ ] Generates summary report after completion
+- [ ] Handles errors gracefully with clear messages
 
-### User Story
-As a **developer**, I want **clear documentation of supported languages and capabilities**, so that I can **understand what the tools can and cannot do**.
+**Story Points:** 5  
+**Priority:** P0 (Critical)
 
-### Acceptance Criteria
+---
 
-```gherkin
-Feature: Language Documentation
+### Story 7: Simple Mode Integration
+**As a** developer using Cursor IDE  
+**I want** to use Simple Mode to run brownfield system review  
+**So that** I can analyze projects using natural language commands
 
-  Scenario: TypeScript support guide
-    Given I access the documentation
-    Then I should find TYPESCRIPT_SUPPORT.md with:
-      - Supported file extensions (.ts, .tsx, .js, .jsx)
-      - Available analysis types (linting, type-checking, security)
-      - Required tools (ESLint, TypeScript)
-      - Known limitations
+**Acceptance Criteria:**
+- [ ] Simple Mode command: `@simple-mode *brownfield-review`
+- [ ] Natural language support: "Review brownfield system", "Analyze project and create experts"
+- [ ] Automatic workflow orchestration
+- [ ] Progress reporting in Cursor chat
+- [ ] Summary output in chat
 
-  Scenario: CLI help includes language info
-    Given I run "tapps-agents reviewer review --help"
-    Then I should see supported languages listed
-    And I should see tool requirements
+**Story Points:** 5  
+**Priority:** P1 (High)
 
-  Scenario: Review output includes tool status
-    Given I review a TypeScript file
-    Then output should include tool_status:
-      | Tool    | Status    |
-      | eslint  | available |
-      | tsc     | available |
-      | security| basic     |
-```
+---
 
-### Technical Tasks
-- [ ] Create docs/TYPESCRIPT_SUPPORT.md
-- [ ] Update CLI help text with language info
-- [ ] Add tool_status to review output
-- [ ] Update README with language matrix
-- [ ] Document known limitations
+### Story 8: Error Handling and Recovery
+**As a** developer  
+**I want** brownfield review to handle errors gracefully and provide recovery options  
+**So that** partial failures don't prevent successful operations from completing
+
+**Acceptance Criteria:**
+- [ ] Continues processing if individual domain detection fails
+- [ ] Continues processing if Context7 is unavailable
+- [ ] Continues processing if individual document ingestion fails
+- [ ] Logs all errors with context
+- [ ] Provides error summary in final report
+- [ ] Supports resume from last successful step
+
+**Story Points:** 3  
+**Priority:** P1 (High)
+
+---
+
+### Story 9: Testing and Validation
+**As a** developer  
+**I want** comprehensive tests for brownfield review feature  
+**So that** I can trust the feature works correctly
+
+**Acceptance Criteria:**
+- [ ] Unit tests for BrownfieldAnalyzer
+- [ ] Unit tests for ExpertConfigGenerator
+- [ ] Integration tests for domain detection
+- [ ] Integration tests for expert creation
+- [ ] Integration tests for RAG population
+- [ ] CLI command tests
+- [ ] Simple Mode integration tests
+- [ ] Test coverage > 80%
+
+**Story Points:** 8  
+**Priority:** P1 (High)
 
 ---
 
 ## Story Dependencies
 
 ```
-TS-001 (Review Feedback)
-    |
-    v
-TS-002 (Security Analysis) --> TS-004 (Score Explanations)
-    |
-    v
-TS-003 (Auto-Apply) --> TS-005 (Code Diffs)
-    |
-    v
-TS-006 (Documentation)
+Story 1 (Analysis) → Story 2 (Expert Config) → Story 3 (Project Docs) → Story 5 (RAG Population)
+Story 1 (Analysis) → Story 4 (Context7) → Story 5 (RAG Population)
+Story 2 (Expert Config) → Story 5 (RAG Population)
+Story 5 (RAG Population) → Story 6 (CLI) → Story 7 (Simple Mode)
+Story 8 (Error Handling) → All stories
+Story 9 (Testing) → All stories
 ```
 
----
+## Total Story Points: 55
+## Estimated Effort: 2-3 weeks (assuming 1 story point = 4 hours)
 
-## Sprint Summary
-
-| Story ID | Title | Points | Priority | Status |
-|----------|-------|--------|----------|--------|
-| TS-001 | Enhanced TypeScript Review Feedback | 8 | Critical | Ready |
-| TS-002 | TypeScript Security Analysis | 8 | Critical | Ready |
-| TS-003 | Improver Auto-Apply Option | 5 | High | Ready |
-| TS-004 | Score Explanation Mode | 5 | High | Ready |
-| TS-005 | Before/After Code Diffs | 3 | High | Ready |
-| TS-006 | Language Support Documentation | 5 | Medium | Ready |
-
-**Total Story Points**: 34  
-**Estimated Duration**: 5-7 days
-
----
-
-**Stories Status**: APPROVED  
-**Next Step**: Step 3 - Architecture Design
+## Priority Summary
+- **P0 (Critical):** Stories 1, 2, 3, 5, 6 (34 points)
+- **P1 (High):** Stories 4, 7, 8, 9 (21 points)

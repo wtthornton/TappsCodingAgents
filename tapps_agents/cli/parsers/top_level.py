@@ -454,6 +454,67 @@ In interactive mode, asks clarifying questions for ambiguous cases. Use --non-in
         help="Automatically start the recommended workflow after displaying the recommendation. Prompts for confirmation unless --non-interactive is also set.",
     )
 
+    # Brownfield system review command
+    brownfield_parser = subparsers.add_parser(
+        "brownfield",
+        help="Brownfield system analysis and expert creation",
+        description="""Analyze existing brownfield systems and automatically create experts with RAG knowledge bases.
+        
+This command performs:
+  • Codebase analysis (languages, frameworks, dependencies)
+  • Domain detection using DomainStackDetector
+  • Automatic expert configuration generation
+  • RAG knowledge base population from project docs and Context7
+
+Examples:
+  tapps-agents brownfield review --auto
+  tapps-agents brownfield review --dry-run
+  tapps-agents brownfield review --no-context7
+""",
+    )
+    brownfield_subparsers = brownfield_parser.add_subparsers(
+        dest="brownfield_command",
+        help="Brownfield command",
+        required=True,
+    )
+
+    review_parser = brownfield_subparsers.add_parser(
+        "review",
+        help="Review brownfield system and create experts",
+        description="""Perform complete brownfield review: analyze codebase, detect domains, 
+create expert configurations, and populate RAG knowledge bases.""",
+    )
+    review_parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Fully automated execution (skip prompts)",
+    )
+    review_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without applying",
+    )
+    review_parser.add_argument(
+        "--output-dir",
+        type=Path,
+        help="Output directory for reports (default: .tapps-agents/brownfield-review/)",
+    )
+    review_parser.add_argument(
+        "--no-context7",
+        action="store_true",
+        help="Skip Context7 library documentation fetching",
+    )
+    review_parser.add_argument(
+        "--resume",
+        action="store_true",
+        help="Resume from last saved state",
+    )
+    review_parser.add_argument(
+        "--resume-from",
+        choices=["analyze", "create_experts", "populate_rag"],
+        help="Resume from specific step",
+    )
+
     # Short command for primary use case: create new project from prompt
     create_parser = subparsers.add_parser(
         "create",

@@ -11,6 +11,7 @@ from typing import Any
 from tapps_agents.core.config import ProjectConfig, load_config
 from .intent_parser import Intent, IntentParser, IntentType
 from .orchestrators import (
+    BrownfieldOrchestrator,
     BuildOrchestrator,
     EpicOrchestrator,
     ExploreOrchestrator,
@@ -70,6 +71,9 @@ class SimpleModeHandler:
                 project_root=self.project_root, config=self.config
             ),
             IntentType.PR: PROrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.BROWNFIELD: BrownfieldOrchestrator(
                 project_root=self.project_root, config=self.config
             ),
         }

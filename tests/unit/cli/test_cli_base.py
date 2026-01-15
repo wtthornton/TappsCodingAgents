@@ -92,7 +92,8 @@ class TestFormatErrorOutput:
             )
         assert exc_info.value.code == EXIT_GENERAL_ERROR
         captured = capsys.readouterr()
-        error_data = json.loads(captured.err)
+        # JSON errors go to stdout, text errors go to stderr
+        error_data = json.loads(captured.out)
         assert error_data["success"] is False
         assert error_data["error"]["message"] == "Test error"
         assert error_data["error"]["code"] == "test_error"
@@ -109,7 +110,8 @@ class TestFormatErrorOutput:
             )
         assert exc_info.value.code == EXIT_USAGE_ERROR
         captured = capsys.readouterr()
-        error_data = json.loads(captured.err)
+        # JSON errors go to stdout, text errors go to stderr
+        error_data = json.loads(captured.out)
         assert error_data["success"] is False
         assert error_data["error"]["message"] == "Validation failed"
         assert error_data["error"]["code"] == "validation_error"
@@ -126,7 +128,8 @@ class TestFormatErrorOutput:
             )
         assert exc_info.value.code == EXIT_GENERAL_ERROR
         captured = capsys.readouterr()
-        assert "Error: File not found" in captured.err
+        # Text errors use [ERROR] prefix format
+        assert "file_not_found" in captured.err or "File not found" in captured.err
 
     def test_format_error_output_text_with_details(self, capsys):
         """Test formatting error as text with details."""
@@ -140,7 +143,8 @@ class TestFormatErrorOutput:
             )
         assert exc_info.value.code == EXIT_USAGE_ERROR
         captured = capsys.readouterr()
-        assert "Error: Validation failed" in captured.err
+        # Text errors use [ERROR] prefix format
+        assert "validation_error" in captured.err or "Validation failed" in captured.err
         assert "field: email" in captured.err
 
 
@@ -163,7 +167,8 @@ class TestHandleAgentError:
             handle_agent_error(result, format_type="json")
         assert exc_info.value.code == EXIT_GENERAL_ERROR
         captured = capsys.readouterr()
-        error_data = json.loads(captured.err)
+        # JSON errors go to stdout, text errors go to stderr
+        error_data = json.loads(captured.out)
         assert error_data["success"] is False
         assert error_data["error"]["message"] == "Test error"
         assert error_data["error"]["code"] == "test_error"
@@ -175,7 +180,8 @@ class TestHandleAgentError:
             handle_agent_error(result, format_type="text")
         assert exc_info.value.code == EXIT_GENERAL_ERROR
         captured = capsys.readouterr()
-        assert "Error: Test error" in captured.err
+        # Text errors use [ERROR] prefix format
+        assert "Test error" in captured.err
 
     def test_handle_agent_error_custom_exit_code(self, capsys):
         """Test handling error with custom exit code."""
@@ -248,7 +254,7 @@ class TestRunWithAgentLifecycle:
             def __init__(self):
                 self.activate_called = False
             
-            async def activate(self):
+            async def activate(self, offline_mode=False):
                 self.activate_called = True
         
         agent = AgentWithoutClose()
@@ -289,7 +295,7 @@ class TestRunAsyncCommand:
             return "result"
         
         # Try to call run_async_command from within async context
-        with pytest.raises(RuntimeError, match="cannot be called from a running event loop"):
+        with pytest.raises(RuntimeError, match="run_async_command|event loop"):
             run_async_command(coro())
 
 

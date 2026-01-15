@@ -360,6 +360,7 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "cursor": top_level.handle_cursor_command,
         "continuous-bug-fix": top_level.handle_continuous_bug_fix_command,
         "bug-fix-continuous": top_level.handle_continuous_bug_fix_command,
+        "brownfield": top_level.handle_brownfield_command,
     }
 
 

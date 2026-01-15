@@ -413,7 +413,7 @@ def collect_doctor_report(
                 )
             )
         
-        # Check Playwright MCP
+        # Check Playwright MCP and capabilities
         playwright_detected = any(
             s.get("id") == "Playwright" and s.get("status") == "installed"
             for s in mcp_status.get("detected_servers", [])
@@ -423,7 +423,13 @@ def collect_doctor_report(
                 DoctorFinding(
                     severity="ok",
                     code="MCP_PLAYWRIGHT",
-                    message="Playwright MCP: Configured",
+                    message=(
+                        "Playwright MCP: Configured\n"
+                        "  ✓ Browser automation available\n"
+                        "  ✓ Accessibility testing (WCAG 2.2) available\n"
+                        "  ✓ Performance monitoring (Core Web Vitals) available\n"
+                        "  ✓ Network request analysis available"
+                    ),
                 )
             )
         else:

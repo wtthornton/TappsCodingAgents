@@ -1,212 +1,296 @@
-# Step 7: Testing - TypeScript Enhancement Suite
+# Step 7: Testing Plan - Brownfield System Review Feature
 
-**Workflow**: Simple Mode *full  
-**Date**: 2025-01-16
+## Test Strategy
 
----
+### Test Coverage Goals
+- **Unit Tests:** > 80% coverage for core components
+- **Integration Tests:** End-to-end workflow validation
+- **CLI Tests:** Command parsing and execution
+- **Error Handling Tests:** Graceful failure scenarios
 
-## 1. Test Summary
+## Test Plan
 
-| Test Suite | Tests | Passed | Failed | Coverage |
-|------------|-------|--------|--------|----------|
-| test_typescript_security.py | 26 | 26 | 0 | ~85% |
-| test_auto_apply.py | 18 | 18 | 0 | ~80% |
-| **Total** | **44** | **44** | **0** | ~82% |
+### 1. Unit Tests
 
----
+#### 1.1 BrownfieldAnalyzer Tests
 
-## 2. Test Suites Created
+**File:** `tests/unit/core/test_brownfield_analyzer.py`
 
-### 2.1 TypeScript Security Tests (`tests/agents/reviewer/test_typescript_security.py`)
+**Test Cases:**
+- `test_detect_languages()` - Detect Python, TypeScript, JavaScript from files
+- `test_detect_languages_from_config()` - Detect from package.json, requirements.txt
+- `test_detect_frameworks()` - Detect FastAPI, React, Django from dependencies
+- `test_detect_frameworks_from_files()` - Detect from config files (next.config.js)
+- `test_detect_dependencies_python()` - Extract from requirements.txt
+- `test_detect_dependencies_python_pyproject()` - Extract from pyproject.toml
+- `test_detect_dependencies_nodejs()` - Extract from package.json
+- `test_detect_dependencies_go()` - Extract from go.mod
+- `test_analyze_complete()` - Complete analysis workflow
+- `test_analyze_empty_project()` - Handle empty project gracefully
+- `test_analyze_polyglot_project()` - Handle multiple languages
 
-**Purpose**: Test TypeScript security analysis enhancements (Phase 7.1)
+**Mock Requirements:**
+- Mock file system operations
+- Mock DomainStackDetector
+- Sample project structures
 
-| Test Class | Tests | Description |
-|------------|-------|-------------|
-| `TestSecurityPatterns` | 3 | Pattern definitions |
-| `TestSecurityIssueDataclass` | 2 | SecurityIssue dataclass |
-| `TestScoreExplanationDataclass` | 2 | ScoreExplanation dataclass |
-| `TestTypeScriptScorerSecurity` | 11 | Security detection methods |
-| `TestScoreExplanations` | 5 | Explanation generation |
-| `TestToolStatus` | 2 | Tool status reporting |
+#### 1.2 ExpertConfigGenerator Tests
 
-**Key Tests**:
-- ✅ `test_detect_eval` - Detects `eval()` usage
-- ✅ `test_detect_innerhtml` - Detects `innerHTML` assignments
-- ✅ `test_detect_react_dangerous_set_inner_html` - Detects React XSS patterns
-- ✅ `test_calculate_security_score_*` - Score calculation tests
-- ✅ `test_generate_*_explanation` - Explanation generation tests
+**File:** `tests/unit/core/test_expert_config_generator.py`
 
-### 2.2 Improver Auto-Apply Tests (`tests/agents/improver/test_auto_apply.py`)
+**Test Cases:**
+- `test_generate_expert_configs()` - Generate configs from domains
+- `test_generate_expert_configs_low_confidence()` - Skip low confidence domains
+- `test_generate_expert_configs_existing()` - Skip existing experts
+- `test_write_expert_configs_new()` - Write new configs
+- `test_write_expert_configs_merge()` - Merge with existing configs
+- `test_write_expert_configs_overwrite()` - Overwrite mode
+- `test_validate_config_valid()` - Validate correct config
+- `test_validate_config_missing_fields()` - Validate missing fields
+- `test_validate_config_invalid_id()` - Validate invalid expert ID
+- `test_generate_expert_name()` - Generate human-readable names
 
-**Purpose**: Test auto-apply, preview, and diff generation enhancements (Phase 7.1)
+**Mock Requirements:**
+- Mock file system operations
+- Mock YAML file reading/writing
+- Sample expert configurations
 
-| Test Class | Tests | Description |
-|------------|-------|-------------|
-| `TestDiffResultDataclass` | 2 | DiffResult dataclass |
-| `TestGenerateDiff` | 4 | Diff generation |
-| `TestCreateBackup` | 3 | Backup creation |
-| `TestApplyImprovements` | 3 | Code application |
-| `TestImproveQualityModes` | 4 | Command modes |
-| `TestVerifyChanges` | 2 | Change verification |
+#### 1.3 BrownfieldReviewOrchestrator Tests
 
-**Key Tests**:
-- ✅ `test_generate_diff_with_changes` - Unified diff generation
-- ✅ `test_create_backup_success` - Backup file creation
-- ✅ `test_apply_improvements_success` - Code modification
-- ✅ `test_improve_quality_default_mode` - Default instruction mode
-- ✅ `test_verify_changes_*` - Verification workflow
+**File:** `tests/unit/core/test_brownfield_review.py`
 
----
+**Test Cases:**
+- `test_review_complete()` - Complete review workflow
+- `test_review_dry_run()` - Dry-run mode
+- `test_review_without_context7()` - Without Context7 helper
+- `test_review_error_handling()` - Error recovery
+- `test_analyze_codebase()` - Analysis step
+- `test_create_experts()` - Expert creation step
+- `test_populate_rag()` - RAG population step
+- `test_generate_report()` - Report generation
+- `test_review_partial_failure()` - Continue on partial failures
 
-## 3. Test Execution Results
+**Mock Requirements:**
+- Mock all components (Analyzer, ConfigGenerator, IngestionPipeline)
+- Mock Context7 helper
+- Mock file system operations
 
-### 3.1 TypeScript Security Tests
+### 2. Integration Tests
 
-```bash
-$ python -m pytest tests/agents/reviewer/test_typescript_security.py -v
+#### 2.1 End-to-End Workflow Tests
 
-============================= test session starts =============================
-platform win32 -- Python 3.13.3, pytest-9.0.2
-collected 26 items
+**File:** `tests/integration/test_brownfield_review_workflow.py`
 
-tests/agents/reviewer/test_typescript_security.py::TestSecurityPatterns::test_dangerous_patterns_defined PASSED
-tests/agents/reviewer/test_typescript_security.py::TestSecurityPatterns::test_react_security_patterns_defined PASSED
-tests/agents/reviewer/test_typescript_security.py::TestSecurityPatterns::test_patterns_have_required_fields PASSED
-tests/agents/reviewer/test_typescript_security.py::TestSecurityIssueDataclass::test_create_security_issue PASSED
-tests/agents/reviewer/test_typescript_security.py::TestSecurityIssueDataclass::test_to_dict PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanationDataclass::test_create_score_explanation PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanationDataclass::test_to_dict PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_detect_eval PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_detect_innerhtml PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_detect_document_write PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_detect_function_constructor PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_detect_settimeout_string PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_detect_react_dangerous_set_inner_html PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_skip_comments PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_no_issues_clean_code PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_calculate_security_score_no_issues PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_calculate_security_score_high_issues PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_calculate_security_score_mixed_issues PASSED
-tests/agents/reviewer/test_typescript_security.py::TestTypeScriptScorerSecurity::test_get_security_issues PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanations::test_generate_security_explanation_with_issues PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanations::test_generate_security_explanation_no_issues PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanations::test_generate_linting_explanation_unavailable PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanations::test_generate_type_checking_explanation_unavailable PASSED
-tests/agents/reviewer/test_typescript_security.py::TestScoreExplanations::test_generate_complexity_explanation_high PASSED
-tests/agents/reviewer/test_typescript_security.py::TestToolStatus::test_tool_status_in_score_file PASSED
-tests/agents/reviewer/test_typescript_security.py::TestToolStatus::test_tool_status_unavailable PASSED
+**Test Cases:**
+- `test_brownfield_review_python_project()` - Complete review for Python project
+- `test_brownfield_review_nodejs_project()` - Complete review for Node.js project
+- `test_brownfield_review_polyglot_project()` - Review polyglot project
+- `test_brownfield_review_with_context7()` - With Context7 integration
+- `test_brownfield_review_without_context7()` - Without Context7 (graceful degradation)
+- `test_brownfield_review_existing_experts()` - Merge with existing experts
+- `test_brownfield_review_rag_population()` - Verify RAG population
 
-============================= 26 passed in 11.25s =============================
+**Test Fixtures:**
+- Sample Python project (FastAPI)
+- Sample Node.js project (React)
+- Sample polyglot project (Python + TypeScript)
+
+#### 2.2 Component Integration Tests
+
+**File:** `tests/integration/test_brownfield_components.py`
+
+**Test Cases:**
+- `test_analyzer_with_domain_detector()` - Analyzer + DomainStackDetector
+- `test_config_generator_with_registry()` - ConfigGenerator + ExpertRegistry
+- `test_orchestrator_with_ingestion()` - Orchestrator + KnowledgeIngestionPipeline
+- `test_orchestrator_with_context7()` - Orchestrator + Context7AgentHelper
+
+### 3. CLI Tests
+
+#### 3.1 Command Parsing Tests
+
+**File:** `tests/unit/cli/test_brownfield_cli_parser.py`
+
+**Test Cases:**
+- `test_brownfield_review_parser()` - Parse review command
+- `test_brownfield_review_with_auto()` - Parse with --auto flag
+- `test_brownfield_review_with_dry_run()` - Parse with --dry-run flag
+- `test_brownfield_review_with_output_dir()` - Parse with --output-dir
+- `test_brownfield_review_with_no_context7()` - Parse with --no-context7
+
+#### 3.2 Command Execution Tests
+
+**File:** `tests/integration/cli/test_brownfield_cli_command.py`
+
+**Test Cases:**
+- `test_brownfield_review_command_success()` - Successful execution
+- `test_brownfield_review_command_dry_run()` - Dry-run execution
+- `test_brownfield_review_command_error()` - Error handling
+- `test_brownfield_review_command_output()` - Output formatting (text)
+- `test_brownfield_review_command_output_json()` - Output formatting (JSON)
+
+### 4. Error Handling Tests
+
+#### 4.1 Error Scenarios
+
+**File:** `tests/unit/core/test_brownfield_errors.py`
+
+**Test Cases:**
+- `test_analyzer_file_read_error()` - Handle file read errors
+- `test_config_generator_yaml_error()` - Handle YAML errors
+- `test_orchestrator_context7_unavailable()` - Handle Context7 unavailability
+- `test_orchestrator_domain_detection_failure()` - Handle domain detection failures
+- `test_orchestrator_expert_creation_failure()` - Handle expert creation failures
+- `test_orchestrator_rag_population_failure()` - Handle RAG population failures
+- `test_orchestrator_partial_success()` - Continue on partial failures
+
+## Test Implementation
+
+### Test Structure
+
+```
+tests/
+├── unit/
+│   ├── core/
+│   │   ├── test_brownfield_analyzer.py
+│   │   ├── test_expert_config_generator.py
+│   │   └── test_brownfield_review.py
+│   └── cli/
+│       └── test_brownfield_cli_parser.py
+├── integration/
+│   ├── test_brownfield_review_workflow.py
+│   ├── test_brownfield_components.py
+│   └── cli/
+│       └── test_brownfield_cli_command.py
+└── fixtures/
+    ├── sample_python_project/
+    ├── sample_nodejs_project/
+    └── sample_polyglot_project/
 ```
 
-### 3.2 Improver Auto-Apply Tests
+### Test Fixtures
 
-```bash
-$ python -m pytest tests/agents/improver/test_auto_apply.py -v
-
-============================= test session starts =============================
-platform win32 -- Python 3.13.3, pytest-9.0.2
-collected 18 items
-
-tests/agents/improver/test_auto_apply.py::TestDiffResultDataclass::test_create_diff_result PASSED
-tests/agents/improver/test_auto_apply.py::TestDiffResultDataclass::test_to_dict PASSED
-tests/agents/improver/test_auto_apply.py::TestGenerateDiff::test_generate_diff_with_changes PASSED
-tests/agents/improver/test_auto_apply.py::TestGenerateDiff::test_generate_diff_no_changes PASSED
-tests/agents/improver/test_auto_apply.py::TestGenerateDiff::test_generate_diff_empty_original PASSED
-tests/agents/improver/test_auto_apply.py::TestGenerateDiff::test_generate_diff_empty_improved PASSED
-tests/agents/improver/test_auto_apply.py::TestCreateBackup::test_create_backup_success PASSED
-tests/agents/improver/test_auto_apply.py::TestCreateBackup::test_create_backup_nonexistent_file PASSED
-tests/agents/improver/test_auto_apply.py::TestCreateBackup::test_create_backup_creates_directory PASSED
-tests/agents/improver/test_auto_apply.py::TestApplyImprovements::test_apply_improvements_success PASSED
-tests/agents/improver/test_auto_apply.py::TestApplyImprovements::test_apply_improvements_empty_code PASSED
-tests/agents/improver/test_auto_apply.py::TestApplyImprovements::test_apply_improvements_whitespace_only PASSED
-tests/agents/improver/test_auto_apply.py::TestImproveQualityModes::test_improve_quality_default_mode PASSED
-tests/agents/improver/test_auto_apply.py::TestImproveQualityModes::test_improve_quality_with_focus PASSED
-tests/agents/improver/test_auto_apply.py::TestImproveQualityModes::test_improve_quality_file_not_found PASSED
-tests/agents/improver/test_auto_apply.py::TestImproveQualityModes::test_improve_quality_no_file_path PASSED
-tests/agents/improver/test_auto_apply.py::TestVerifyChanges::test_verify_changes_success PASSED
-tests/agents/improver/test_auto_apply.py::TestVerifyChanges::test_verify_changes_error PASSED
-
-============================= 18 passed in 8.77s ==============================
+**Sample Python Project:**
+```
+sample_python_project/
+├── requirements.txt (fastapi, pytest, pydantic)
+├── pyproject.toml
+├── src/
+│   └── app.py
+└── tests/
+    └── test_app.py
 ```
 
----
+**Sample Node.js Project:**
+```
+sample_nodejs_project/
+├── package.json (react, typescript, jest)
+├── tsconfig.json
+├── src/
+│   └── App.tsx
+└── tests/
+    └── App.test.tsx
+```
 
-## 4. Coverage Analysis
+## Test Execution
 
-### 4.1 TypeScriptScorer Coverage
+### Running Tests
 
-| Method | Tested | Coverage |
-|--------|--------|----------|
-| `_calculate_security_score()` | ✅ | 100% |
-| `_detect_dangerous_patterns()` | ✅ | 95% |
-| `get_security_issues()` | ✅ | 100% |
-| `_generate_explanations()` | ✅ | 90% |
-| Pattern detection (8 JS patterns) | ✅ | 75% |
-| Pattern detection (3 React patterns) | ✅ | 33% |
+```bash
+# Run all brownfield tests
+pytest tests/unit/core/test_brownfield*.py tests/integration/test_brownfield*.py -v
 
-### 4.2 ImproverAgent Coverage
+# Run with coverage
+pytest tests/unit/core/test_brownfield*.py --cov=tapps_agents.core.brownfield --cov-report=html
 
-| Method | Tested | Coverage |
-|--------|--------|----------|
-| `_create_backup()` | ✅ | 95% |
-| `_apply_improvements()` | ✅ | 90% |
-| `_generate_diff()` | ✅ | 100% |
-| `_verify_changes()` | ✅ | 80% |
-| `_handle_improve_quality()` | ✅ | 70% |
+# Run specific test file
+pytest tests/unit/core/test_brownfield_analyzer.py -v
 
----
+# Run CLI tests
+pytest tests/unit/cli/test_brownfield_cli*.py tests/integration/cli/test_brownfield_cli*.py -v
+```
 
-## 5. Test Quality Metrics
+### Coverage Goals
 
-| Metric | Target | Actual | Status |
-|--------|--------|--------|--------|
-| Pass Rate | 100% | 100% | ✅ |
-| Code Coverage | 80% | ~82% | ✅ |
-| Test Execution Time | <30s | ~20s | ✅ |
-| Flaky Tests | 0 | 0 | ✅ |
+- **BrownfieldAnalyzer:** > 85%
+- **ExpertConfigGenerator:** > 85%
+- **BrownfieldReviewOrchestrator:** > 80%
+- **CLI Command Handler:** > 80%
+- **Overall:** > 80%
 
----
+## Test Data
 
-## 6. Edge Cases Tested
+### Mock Data
 
-### Security Detection
-- ✅ Pattern in comments (should be skipped)
-- ✅ Clean code (no issues)
-- ✅ Multiple issues (mixed severity)
-- ✅ React-specific patterns (.tsx files)
+1. **Domain Mappings:**
+   - Python domain (confidence: 0.9)
+   - FastAPI domain (confidence: 0.8)
+   - Testing domain (confidence: 0.7)
 
-### Diff Generation
-- ✅ Code with changes
-- ✅ Identical code (no changes)
-- ✅ Empty original
-- ✅ Empty improved
+2. **Expert Configs:**
+   - expert-python
+   - expert-fastapi
+   - expert-testing
 
-### Backup/Apply
-- ✅ Successful backup creation
-- ✅ Non-existent file
-- ✅ Directory creation
-- ✅ Empty code rejection
+3. **Ingestion Results:**
+   - Project sources: 10 entries ingested
+   - Context7 sources: 5 entries ingested
 
----
+## Test Validation Criteria
 
-## 7. Known Test Limitations
+### Success Criteria
 
-1. **Path Validation**: Tests must use files within project root due to security validation
-2. **Mock Patching**: `_verify_changes` test uses mocks due to ReviewerAgent dependency
-3. **Tool Availability**: TypeScript/ESLint tests mock tool availability
+1. ✅ All unit tests pass
+2. ✅ All integration tests pass
+3. ✅ CLI tests pass
+4. ✅ Error handling tests pass
+5. ✅ Coverage > 80%
+6. ✅ No linting errors
+7. ✅ No type errors
 
----
+### Performance Criteria
 
-## 8. Future Test Improvements
+1. ✅ Analysis completes in < 30s for sample projects
+2. ✅ Expert creation completes in < 5s
+3. ✅ RAG population completes in < 60s (with Context7)
 
-1. **Integration Tests**: Full workflow testing with real files
-2. **Performance Tests**: Large file handling
-3. **Error Scenario Tests**: More edge cases for error handling
-4. **CLI Tests**: Command-line interface testing
+## Future Test Enhancements
 
----
+1. **Performance Tests**
+   - Large codebase handling (10k+ files)
+   - Concurrent expert processing
+   - Memory usage tests
 
-**Testing Status**: ✅ PASS  
-**Next Step**: Step 8 - Security Scan
+2. **Security Tests**
+   - Path traversal prevention
+   - YAML injection prevention
+   - Expert ID validation
+
+3. **Simple Mode Integration Tests**
+   - Command recognition
+   - Workflow execution
+   - Output formatting
+
+## Test Maintenance
+
+### Test Updates Required When:
+
+1. **Component Changes**
+   - Update tests when Analyzer, ConfigGenerator, or Orchestrator change
+   - Update mocks when dependencies change
+
+2. **CLI Changes**
+   - Update parser tests when arguments change
+   - Update command tests when behavior changes
+
+3. **Integration Changes**
+   - Update integration tests when external components change
+   - Update fixtures when project structures change
+
+## Conclusion
+
+This test plan provides comprehensive coverage for the brownfield system review feature. Tests should be implemented incrementally, starting with unit tests, then integration tests, and finally CLI tests.
+
+**Priority:** High - Tests are critical for ensuring feature reliability and maintainability.
+
+**Estimated Effort:** 2-3 days for complete test implementation.

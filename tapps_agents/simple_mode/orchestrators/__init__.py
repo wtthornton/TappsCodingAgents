@@ -3,6 +3,7 @@ Simple Mode Orchestrators - Coordinate multiple agents for common tasks.
 """
 
 from .base import SimpleModeOrchestrator
+from .brownfield_orchestrator import BrownfieldOrchestrator
 from .build_orchestrator import BuildOrchestrator
 from .epic_orchestrator import EpicOrchestrator
 from .explore_orchestrator import ExploreOrchestrator
@@ -24,5 +25,6 @@ __all__ = [
     "RefactorOrchestrator",
     "PlanAnalysisOrchestrator",
     "PROrchestrator",
+    "BrownfieldOrchestrator",
 ]
 

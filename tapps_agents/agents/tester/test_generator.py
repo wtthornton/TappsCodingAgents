@@ -547,24 +547,46 @@ class TestGenerator:
                 "- Test user workflows and interactions",
                 "- Include browser automation (navigation, clicks, form fills)",
                 "- Test across different browsers if configured",
-            ] + (["- Note: Playwright MCP server is available for browser automation via Cursor tools"] if playwright_mcp_available else []),
+                "- Include accessibility testing: Use page.snapshot() to get accessibility tree and verify WCAG 2.2 compliance",
+                "- Include performance testing: Collect Core Web Vitals (LCP, FID, CLS) and verify thresholds",
+                "- Use browser_network_requests to analyze network performance",
+                "- Use browser_console_messages to check for errors and warnings",
+                "- Network Mocking: Use page.route() to intercept and mock API requests for reliable offline testing",
+                "- Trace Generation: Enable context.tracing.start() before test, context.tracing.stop() on failure with path",
+                "- Error Reporting: Include trace viewer command (npx playwright show-trace <path>) in failure messages",
+                "- Visual Regression: Capture screenshots and compare with baselines using visual regression testing",
+                "- Multi-Tab: Test scenarios requiring multiple tabs (OAuth flows, popups) using browser_tabs or context.newPage()",
+                "- Device Emulation: Test responsive designs using context.emulate() with device profiles (iPhone, iPad, Desktop)",
+            ] + (["- Note: Playwright MCP server is available - use browser_snapshot, browser_network_requests, browser_console_messages tools"] if playwright_mcp_available else []),
             "pytest-playwright": [
                 "- Use pytest fixtures for setup/teardown",
                 "- Use Playwright's async API",
                 "- Test user workflows end-to-end",
                 "- Include proper async/await patterns",
-            ] + (["- Note: Playwright MCP server is available for browser automation via Cursor tools"] if playwright_mcp_available else []),
+                "- Include accessibility testing: Use page.snapshot() to get accessibility tree and verify WCAG 2.2 compliance",
+                "- Include performance testing: Collect Core Web Vitals (LCP, FID, CLS) and verify thresholds",
+                "- Use page.request.response() to analyze network performance",
+                "- Use page.on('console') to check for errors and warnings",
+                "- Network Mocking: Use page.route() to intercept and mock API requests in async context",
+                "- Trace Generation: Use context.tracing.start() in fixture, context.tracing.stop() in teardown or on failure",
+                "- Error Reporting: Include trace viewer command in pytest failure output",
+                "- Visual Regression: Use pytest fixtures for screenshot comparison and baseline management",
+                "- Multi-Tab: Test multi-tab scenarios in async context using await context.newPage()",
+                "- Device Emulation: Use pytest fixtures with device profiles for responsive design testing",
+            ] + (["- Note: Playwright MCP server is available - use browser_snapshot, browser_network_requests, browser_console_messages tools"] if playwright_mcp_available else []),
             "selenium": [
                 "- Use Selenium WebDriver patterns",
                 "- Test user interactions and workflows",
                 "- Include proper wait strategies",
                 "- Test across different browsers",
+                "- Include basic accessibility checks where possible",
             ],
             "cypress": [
                 "- Use Cypress commands and patterns",
                 "- Test user journeys end-to-end",
                 "- Include proper assertions",
                 "- Use Cypress best practices",
+                "- Include accessibility testing using cypress-axe if available",
             ],
         }
 
@@ -577,10 +599,27 @@ class TestGenerator:
             ],
         )
 
+        # Add accessibility and performance requirements for Playwright-based tests
+        additional_requirements = []
+        if e2e_framework in ("playwright", "pytest-playwright"):
+            additional_requirements.extend([
+                "- Accessibility: Verify WCAG 2.2 Level AA compliance (alt text, heading structure, form labels, keyboard navigation)",
+                "- Performance: Assert Core Web Vitals meet thresholds (LCP < 2.5s, FID < 100ms, CLS < 0.1)",
+                "- Network: Verify no failed requests, check request count and response times",
+                "- Console: Check for JavaScript errors and warnings",
+                "- Network Mocking: Use page.route() to mock API calls for offline testing and faster execution",
+                "- Trace Generation: Enable tracing with context.tracing.start() and save trace on failure for debugging",
+                "- Error Handling: On test failure, save trace file and include trace viewer command in error message",
+                "- Visual Regression: Use screenshot comparison to detect UI changes (create baselines, compare on test runs)",
+                "- Multi-Tab Testing: Test multi-tab scenarios using page.context().newPage() or browser_tabs MCP tool",
+                "- Device Emulation: Test responsive designs using device profiles (mobile, tablet, desktop)",
+            ])
+
         prompt_parts.extend(
             [
                 "Requirements:",
                 *requirements,
+                *additional_requirements,
                 "- Test critical user journeys",
                 "- Include error scenarios",
                 "- Use descriptive test names",

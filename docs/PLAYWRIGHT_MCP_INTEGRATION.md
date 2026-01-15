@@ -142,16 +142,89 @@ To verify the implementation:
    - Generate E2E tests for a project with Playwright
    - Verify that Playwright MCP awareness is included in prompts
 
+## New Capabilities (2026)
+
+### Accessibility Testing
+- **WCAG 2.2 Compliance**: Automatic accessibility auditing using `browser_snapshot`
+- **Accessibility Auditor**: `tapps_agents/agents/tester/accessibility_auditor.py`
+- **Test Generation**: E2E tests automatically include accessibility assertions
+- **Compliance Levels**: Reports A, AA, AAA compliance status
+
+### Performance Monitoring
+- **Core Web Vitals**: Automatic collection of LCP, FID, CLS, FCP metrics
+- **Performance Monitor**: `tapps_agents/agents/tester/performance_monitor.py`
+- **Network Analysis**: Automatic network request analysis
+- **Test Assertions**: Performance thresholds automatically enforced in tests
+
+### Direct MCP Tool Integration
+- **PlaywrightMCPController**: `tapps_agents/core/playwright_mcp_controller.py`
+- **Unified Interface**: Works in both Cursor IDE (MCP tools) and CLI (Python Playwright fallback)
+- **Full Tool Support**: All MCP Playwright tools available (navigation, interaction, monitoring, debugging)
+
+## Usage Examples
+
+### Accessibility Testing in E2E Tests
+
+When generating E2E tests with Playwright, accessibility checks are automatically included:
+
+```python
+# Generated test includes:
+def test_login_accessibility(page):
+    page.goto("/login")
+    snapshot = page.snapshot()  # Get accessibility tree
+    assert accessibility_score(snapshot) >= 90
+    assert has_alt_text_for_images(snapshot)
+    assert keyboard_navigable(snapshot)
+```
+
+### Performance Monitoring in E2E Tests
+
+Performance metrics are automatically collected:
+
+```python
+# Generated test includes:
+def test_dashboard_performance(page):
+    page.goto("/dashboard")
+    metrics = page.metrics()
+    assert metrics["LCP"] < 2.5  # Largest Contentful Paint
+    assert metrics["FID"] < 100   # First Input Delay
+    assert metrics["CLS"] < 0.1   # Cumulative Layout Shift
+```
+
+### Using PlaywrightMCPController Directly
+
+```python
+from tapps_agents.core.playwright_mcp_controller import PlaywrightMCPController
+
+# Initialize controller (automatically detects MCP or falls back to Python Playwright)
+controller = PlaywrightMCPController(mcp_tool_handler=your_mcp_handler)
+
+# Navigate
+controller.navigate("https://example.com")
+
+# Get accessibility snapshot
+snapshot = controller.snapshot()
+
+# Take screenshot
+controller.take_screenshot("screenshot.png", full_page=True)
+
+# Get network requests
+requests = controller.get_network_requests()
+
+# Get console messages
+messages = controller.get_console_messages(level="error")
+```
+
 ## Future Enhancements
 
 Potential future improvements:
 
-1. **Agent Context Updates**: Add MCP server status to agent activation context
-2. **Background Context**: Include MCP server status in background context for agents
-3. **MCP Servers Guide**: Create comprehensive `docs/MCP_SERVERS.md` guide
-4. **Browser Automation Guide**: Create `docs/BROWSER_AUTOMATION.md` with detailed usage
-5. **Skill Documentation**: Update Cursor Skills to mention Playwright MCP availability
-6. **Init Output**: Show MCP server detection results in init command output
+1. **Network Mocking**: Record and replay API interactions
+2. **Trace Viewer Integration**: Automatic trace files for test failures
+3. **Multi-Tab Testing**: Support for multi-tab scenarios
+4. **Visual Regression Testing**: Screenshot comparison
+5. **AI-Powered Test Generation**: Self-healing tests, natural language to test code
+6. **Mobile Device Testing**: Device emulation and mobile-specific tests
 
 ## Related Documentation
 

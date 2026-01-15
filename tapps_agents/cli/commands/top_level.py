@@ -3347,6 +3347,127 @@ def handle_continuous_bug_fix_command(args: object) -> None:
         feedback.error(f"Error: {e}", exit_code=1)
 
 
+def handle_brownfield_command(args: object) -> None:
+    """Handle brownfield review command."""
+    import logging
+
+    from ...core.brownfield_review import BrownfieldReviewOrchestrator
+    from ...context7.agent_integration import get_context7_helper
+    from ...core.config import load_config
+
+    logger = logging.getLogger(__name__)
+    feedback = get_feedback()
+    feedback.format_type = getattr(args, "format", "text")
+
+    brownfield_command = getattr(args, "brownfield_command", None)
+    if brownfield_command != "review":
+        feedback.error(
+            f"Unknown brownfield command: {brownfield_command}",
+            exit_code=1,
+        )
+        return
+
+    # Get arguments
+    auto = getattr(args, "auto", False)
+    dry_run = getattr(args, "dry_run", False)
+    include_context7 = not getattr(args, "no_context7", False)
+    output_dir = getattr(args, "output_dir", None)
+    resume = getattr(args, "resume", False)
+    resume_from = getattr(args, "resume_from", None)
+
+    project_root = Path.cwd()
+    if output_dir:
+        output_dir = Path(output_dir)
+    else:
+        output_dir = project_root / ".tapps-agents" / "brownfield-review"
+
+    # Initialize Context7 helper if available
+    config = load_config()
+    context7_helper = None
+    if include_context7:
+        try:
+            context7_helper = get_context7_helper(None, config, project_root)
+        except Exception as e:
+            logger.warning(f"Context7 helper not available: {e}")
+
+    # Initialize orchestrator
+    orchestrator = BrownfieldReviewOrchestrator(
+        project_root=project_root,
+        context7_helper=context7_helper,
+        dry_run=dry_run,
+    )
+
+    feedback.start_operation(
+        "Brownfield Review",
+        "Analyzing codebase and creating experts...",
+    )
+
+    try:
+        # Run review
+        result = asyncio.run(
+            orchestrator.review(
+                auto=auto,
+                include_context7=include_context7,
+                resume=resume,
+                resume_from=resume_from,
+            )
+        )
+
+        feedback.clear_progress()
+
+        # Save report
+        output_dir.mkdir(parents=True, exist_ok=True)
+        report_file = output_dir / "review-report.md"
+        report_file.write_text(result.report, encoding="utf-8")
+
+        # Output result
+        if feedback.format_type == "json":
+            import json
+
+            result_dict = {
+                "analysis": {
+                    "languages": result.analysis.languages,
+                    "frameworks": result.analysis.frameworks,
+                    "dependencies": result.analysis.dependencies,
+                    "domains": [
+                        {
+                            "domain": d.domain,
+                            "confidence": d.confidence,
+                        }
+                        for d in result.analysis.domains
+                    ],
+                },
+                "experts_created": len(result.experts_created),
+                "rag_results": {
+                    k: {
+                        "entries_ingested": v.entries_ingested,
+                        "entries_failed": v.entries_failed,
+                    }
+                    for k, v in result.rag_results.items()
+                },
+                "errors": result.errors,
+                "warnings": result.warnings,
+                "execution_time": result.execution_time,
+                "dry_run": result.dry_run,
+                "report_file": str(report_file),
+            }
+            feedback.output_result(result_dict)
+        else:
+            print("\n" + "=" * 80)
+            print("Brownfield Review Complete")
+            print("=" * 80)
+            print()
+            print(result.report)
+            print()
+            print(f"📄 Full report saved to: {report_file}")
+
+    except KeyboardInterrupt:
+        feedback.info("\nInterrupted by user")
+        sys.exit(130)
+    except Exception as e:
+        feedback.error(f"Brownfield review failed: {e}", exit_code=1)
+
+
 def _format_continuous_bug_fix_text_output(result: dict[str, Any], feedback: Any) -> None:
     """Format continuous bug fix results as text"""
     print("\n" + "=" * 80)

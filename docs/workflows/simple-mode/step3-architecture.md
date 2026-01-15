@@ -1,522 +1,476 @@
-# Step 3: Architecture Design - TypeScript Enhancement Suite
+# Step 3: Architecture Design - Brownfield System Review Feature
 
-**Workflow**: Simple Mode *full  
-**Date**: 2025-01-16
+## System Overview
 
----
+The Brownfield System Review feature automates the analysis of existing codebases, creates expert configurations, and populates RAG knowledge bases. It integrates with existing TappsCodingAgents components to provide a seamless workflow.
 
-## 1. System Architecture Overview
-
-### 1.1 Current Architecture
+## Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     TappsCodingAgents Framework                 │
-├─────────────────────────────────────────────────────────────────┤
-│  CLI Layer                                                       │
-│  ├── tapps-agents reviewer review <file>                        │
-│  ├── tapps-agents reviewer score <file>                         │
-│  └── tapps-agents improver improve-quality <file>               │
-├─────────────────────────────────────────────────────────────────┤
-│  Agent Layer                                                     │
-│  ├── ReviewerAgent (reviewer/agent.py)                          │
-│  │   ├── review_file()                                          │
-│  │   ├── score_file()                                           │
-│  │   └── _extract_detailed_findings() [ENHANCEMENT POINT]       │
-│  ├── ImproverAgent (improver/agent.py)                          │
-│  │   └── _handle_improve_quality() [ENHANCEMENT POINT]          │
-│  └── Other Agents...                                            │
-├─────────────────────────────────────────────────────────────────┤
-│  Scorer Layer                                                    │
-│  ├── ScorerRegistry - Routes files to appropriate scorer        │
-│  ├── CodeScorer - Python scoring (ruff, mypy, bandit)           │
-│  └── TypeScriptScorer - TS/JS scoring [ENHANCEMENT POINT]       │
-│      ├── _calculate_linting_score() - ESLint                    │
-│      ├── _calculate_type_checking_score() - tsc                 │
-│      ├── _calculate_security_score() [NEW]                      │
-│      ├── get_eslint_issues() - Detailed ESLint output           │
-│      └── get_type_errors() - Detailed TypeScript output         │
-├─────────────────────────────────────────────────────────────────┤
-│  External Tools                                                  │
-│  ├── ESLint (via npx)                                           │
-│  ├── TypeScript Compiler (via npx tsc)                          │
-│  └── npm audit (via npx) [NEW]                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### 1.2 Enhanced Architecture
-
-```
+│                    Brownfield Review Orchestrator               │
+│  (Coordinates all components, manages workflow state)           │
+└──────────────┬──────────────────────────────────────────────────┘
+               │
+               ├──────────────────────────────────────────────┐
+               │                                              │
+               ▼                                              ▼
+┌──────────────────────────┐              ┌──────────────────────────┐
+│   BrownfieldAnalyzer     │              │  ExpertConfigGenerator    │
+│                          │              │                          │
+│  - Analyze codebase      │              │  - Generate YAML configs  │
+│  - Detect technologies   │              │  - Create expert entries  │
+│  - Identify patterns     │              │  - Set weights/matrices   │
+│                          │              │  - Validate configs       │
+└──────────┬───────────────┘              └──────────┬───────────────┘
+           │                                          │
+           │ Uses                                     │ Uses
+           ▼                                          ▼
+┌──────────────────────────┐              ┌──────────────────────────┐
+│   DomainStackDetector    │              │    ExpertRegistry         │
+│  (Existing Component)    │              │  (Existing Component)    │
+│                          │              │                          │
+│  - Detect domains        │              │  - Load expert configs   │
+│  - Map tech to domains   │              │  - Register experts      │
+│  - Prioritize domains    │              │  - Manage expert lifecycle│
+└──────────────────────────┘              └──────────────────────────┘
+           │
+           │
+           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Enhanced Components                          │
-├─────────────────────────────────────────────────────────────────┤
-│  ReviewerAgent Enhancements                                      │
-│  ├── _extract_detailed_findings()                               │
-│  │   ├── _extract_eslint_findings() [NEW]                       │
-│  │   ├── _extract_typescript_findings() [NEW]                   │
-│  │   └── _extract_security_findings() [ENHANCED]                │
-│  └── Output Format                                              │
-│      ├── scores (existing)                                      │
-│      ├── findings (enhanced with TypeScript)                    │
-│      ├── explanations [NEW]                                     │
-│      └── tool_status [NEW]                                      │
-├─────────────────────────────────────────────────────────────────┤
-│  ImproverAgent Enhancements                                      │
-│  ├── _handle_improve_quality()                                  │
-│  │   ├── Preview mode (existing)                                │
-│  │   ├── Auto-apply mode [NEW]                                  │
-│  │   └── Diff generation [NEW]                                  │
-│  └── Support Methods                                            │
-│      ├── _create_backup() [NEW]                                 │
-│      ├── _apply_improvements() [NEW]                            │
-│      ├── _generate_diff() [NEW]                                 │
-│      └── _verify_changes() [NEW]                                │
-├─────────────────────────────────────────────────────────────────┤
-│  TypeScriptScorer Enhancements                                   │
-│  ├── _calculate_security_score() [NEW]                          │
-│  │   ├── _detect_dangerous_patterns() [NEW]                     │
-│  │   ├── _check_react_security() [NEW]                          │
-│  │   └── _run_npm_audit() [NEW - optional]                      │
-│  └── _generate_score_explanations() [NEW]                       │
-├─────────────────────────────────────────────────────────────────┤
-│  New Components                                                  │
-│  ├── SecurityPatternDetector [NEW]                              │
-│  │   └── Dangerous pattern matching for TS/JS                   │
-│  ├── DiffGenerator [NEW]                                        │
-│  │   └── Unified diff generation                                │
-│  └── ScoreExplainer [NEW]                                       │
-│      └── Generate score explanations                            │
+│              Knowledge Ingestion Pipeline                       │
+│  (Existing Component - Enhanced for Expert-Specific KBs)       │
+│                                                                 │
+│  ┌──────────────────┐  ┌──────────────────┐                   │
+│  │ Project Sources  │  │ Context7 Sources │                   │
+│  │ - Requirements   │  │ - Library Docs    │                   │
+│  │ - Architecture   │  │ - API References  │                   │
+│  │ - ADRs          │  │ - Best Practices │                   │
+│  │ - Runbooks      │  └──────────────────┘                   │
+│  └──────────────────┘                                          │
+│           │              │                                      │
+│           └──────┬───────┘                                      │
+│                  ▼                                              │
+│         ┌──────────────────┐                                   │
+│         │ Expert Knowledge  │                                   │
+│         │ Base Population   │                                   │
+│         └──────────────────┘                                   │
+└─────────────────────────────────────────────────────────────────┘
+           │
+           │ Creates/Populates
+           ▼
+┌─────────────────────────────────────────────────────────────────┐
+│              Expert Knowledge Bases                             │
+│                                                                 │
+│  .tapps-agents/kb/                                              │
+│  ├── expert-python/          (VectorKnowledgeBase)              │
+│  ├── expert-fastapi/         (VectorKnowledgeBase)              │
+│  ├── expert-frontend/        (SimpleKnowledgeBase)              │
+│  └── expert-{domain}/        (Auto-created per domain)           │
 └─────────────────────────────────────────────────────────────────┘
 ```
 
----
+## Component Design
 
-## 2. Component Design
+### 1. BrownfieldAnalyzer
 
-### 2.1 TypeScriptScorer Enhancements
+**Purpose:** Analyze brownfield codebase and detect domains/technologies
 
-**File**: `tapps_agents/agents/reviewer/typescript_scorer.py`
+**Location:** `tapps_agents/core/brownfield_analyzer.py`
 
+**Responsibilities:**
+- Analyze project structure (files, directories, patterns)
+- Detect programming languages and frameworks
+- Identify dependencies from package files
+- Integrate with DomainStackDetector
+- Generate analysis report
+
+**Key Methods:**
 ```python
-class TypeScriptScorer(BaseScorer):
-    """Enhanced TypeScript scorer with security analysis."""
+class BrownfieldAnalyzer:
+    def __init__(self, project_root: Path, domain_detector: DomainStackDetector):
+        """Initialize analyzer with project root and domain detector."""
     
-    # Existing methods
-    def score_file(self, file_path: Path, code: str) -> dict[str, Any]: ...
-    def _calculate_complexity(self, code: str) -> float: ...
-    def _calculate_linting_score(self, file_path: Path) -> float: ...
-    def _calculate_type_checking_score(self, file_path: Path) -> float: ...
-    def get_eslint_issues(self, file_path: Path) -> dict[str, Any]: ...
-    def get_type_errors(self, file_path: Path) -> dict[str, Any]: ...
+    async def analyze(self) -> BrownfieldAnalysisResult:
+        """Perform complete brownfield analysis."""
     
-    # NEW methods
-    def _calculate_security_score(self, code: str, file_path: Path) -> float:
-        """Calculate security score based on dangerous patterns."""
-        
-    def _detect_dangerous_patterns(self, code: str) -> list[SecurityIssue]:
-        """Detect dangerous patterns like eval(), innerHTML, etc."""
-        
-    def _check_react_security(self, code: str) -> list[SecurityIssue]:
-        """Check React-specific security patterns."""
-        
-    def get_security_issues(self, code: str, file_path: Path) -> dict[str, Any]:
-        """Get detailed security issues for external access."""
-        
-    def _generate_explanations(self, scores: dict) -> dict[str, Explanation]:
-        """Generate explanations for each score."""
+    def detect_languages(self) -> list[str]:
+        """Detect programming languages from file extensions."""
+    
+    def detect_frameworks(self) -> list[str]:
+        """Detect frameworks from dependency files and code patterns."""
+    
+    def detect_dependencies(self) -> list[str]:
+        """Extract dependencies from package files."""
+    
+    async def detect_domains(self) -> list[DomainMatch]:
+        """Use DomainStackDetector to identify domains."""
 ```
 
-### 2.2 ReviewerAgent Enhancements
+**Dependencies:**
+- `DomainStackDetector` (existing)
+- `ProjectProfile` (existing)
 
-**File**: `tapps_agents/agents/reviewer/agent.py`
+---
 
+### 2. ExpertConfigGenerator
+
+**Purpose:** Generate expert YAML configurations based on detected domains
+
+**Location:** `tapps_agents/core/expert_config_generator.py`
+
+**Responsibilities:**
+- Generate expert configurations for detected domains
+- Create/update `.tapps-agents/experts.yaml`
+- Set default expert weights and confidence matrices
+- Validate generated configurations
+- Preserve existing expert configurations
+
+**Key Methods:**
 ```python
-class ReviewerAgent(BaseAgent, ExpertSupportMixin):
+class ExpertConfigGenerator:
+    def __init__(self, project_root: Path, expert_registry: ExpertRegistry):
+        """Initialize generator with project root and expert registry."""
     
-    # Enhanced methods
-    async def _extract_detailed_findings(
+    def generate_expert_configs(
+        self, 
+        domains: list[DomainMatch]
+    ) -> list[ExpertConfig]:
+        """Generate expert configurations for detected domains."""
+    
+    def write_expert_configs(
+        self, 
+        configs: list[ExpertConfig],
+        merge: bool = True
+    ) -> None:
+        """Write expert configurations to experts.yaml."""
+    
+    def validate_config(self, config: ExpertConfig) -> bool:
+        """Validate expert configuration."""
+```
+
+**Dependencies:**
+- `ExpertRegistry` (existing)
+- YAML file handling
+
+---
+
+### 3. BrownfieldReviewOrchestrator
+
+**Purpose:** Orchestrate the complete brownfield review workflow
+
+**Location:** `tapps_agents/core/brownfield_review.py`
+
+**Responsibilities:**
+- Coordinate all components
+- Manage workflow state
+- Handle errors and recovery
+- Generate progress reports
+- Support dry-run mode
+
+**Key Methods:**
+```python
+class BrownfieldReviewOrchestrator:
+    def __init__(
         self,
-        file_path: Path,
-        scores: dict[str, Any],
-        task_number: int,
-    ) -> list[ReviewFinding]:
-        """Extract detailed findings including TypeScript issues."""
-        findings = []
-        
-        # Existing: Python findings (ruff, mypy, bandit)
-        findings.extend(self._extract_python_findings(...))
-        
-        # NEW: TypeScript findings
-        if file_ext in [".ts", ".tsx", ".js", ".jsx"]:
-            findings.extend(self._extract_eslint_findings(file_path, task_number))
-            findings.extend(self._extract_typescript_findings(file_path, task_number))
-            findings.extend(self._extract_security_findings(file_path, code, task_number))
-        
-        return findings
+        project_root: Path,
+        context7_helper: Context7AgentHelper | None = None,
+        dry_run: bool = False
+    ):
+        """Initialize orchestrator."""
     
-    # NEW helper methods
-    def _extract_eslint_findings(
-        self, file_path: Path, task_number: int
-    ) -> list[ReviewFinding]:
-        """Extract ESLint issues as ReviewFindings."""
-        
-    def _extract_typescript_findings(
-        self, file_path: Path, task_number: int
-    ) -> list[ReviewFinding]:
-        """Extract TypeScript compiler errors as ReviewFindings."""
-        
-    def _extract_security_findings(
-        self, file_path: Path, code: str, task_number: int
-    ) -> list[ReviewFinding]:
-        """Extract security issues as ReviewFindings."""
-```
-
-### 2.3 ImproverAgent Enhancements
-
-**File**: `tapps_agents/agents/improver/agent.py`
-
-```python
-class ImproverAgent(BaseAgent):
-    
-    async def _handle_improve_quality(
+    async def review(
         self,
-        file_path: str,
-        instruction: str,
-        auto_apply: bool = False,  # NEW parameter
-        preview: bool = False,
-        **kwargs: Any,
-    ) -> dict[str, Any]:
-        """Improve code quality with optional auto-apply."""
-        
-        # Generate improvements
-        improved_code = await self._generate_improvements(file_path, instruction)
-        
-        # Generate diff
-        diff = self._generate_diff(original_code, improved_code)
-        
-        if auto_apply:
-            # Create backup
-            backup_path = self._create_backup(file_path)
-            
-            # Apply changes
-            self._apply_improvements(file_path, improved_code)
-            
-            # Verify
-            verification = await self._verify_changes(file_path)
-            
-            return {
-                "applied": True,
-                "backup": str(backup_path),
-                "diff": diff,
-                "verification": verification,
-            }
-        else:
-            return {
-                "applied": False,
-                "preview_diff": diff,
-                "instruction": instruction.to_dict(),
-                "note": "Use --auto-apply to apply changes",
-            }
+        auto: bool = False,
+        include_context7: bool = True
+    ) -> BrownfieldReviewResult:
+        """Perform complete brownfield review."""
     
-    # NEW helper methods
-    def _create_backup(self, file_path: str) -> Path:
-        """Create backup of file before modifications."""
-        
-    def _apply_improvements(self, file_path: str, improved_code: str) -> None:
-        """Apply improved code to file."""
-        
-    def _generate_diff(self, original: str, improved: str) -> str:
-        """Generate unified diff between original and improved code."""
-        
-    async def _verify_changes(self, file_path: str) -> dict[str, Any]:
-        """Run verification review after applying changes."""
+    async def _analyze_codebase(self) -> BrownfieldAnalysisResult:
+        """Step 1: Analyze codebase."""
+    
+    async def _create_experts(self, domains: list[DomainMatch]) -> list[ExpertConfig]:
+        """Step 2: Create expert configurations."""
+    
+    async def _populate_rag(
+        self,
+        experts: list[ExpertConfig],
+        include_context7: bool = True
+    ) -> dict[str, IngestionResult]:
+        """Step 3: Populate RAG knowledge bases."""
+    
+    def _generate_report(self, result: BrownfieldReviewResult) -> str:
+        """Generate human-readable report."""
+```
+
+**Dependencies:**
+- `BrownfieldAnalyzer`
+- `ExpertConfigGenerator`
+- `KnowledgeIngestionPipeline` (existing)
+- `Context7AgentHelper` (existing)
+
+---
+
+### 4. Enhanced KnowledgeIngestionPipeline
+
+**Purpose:** Extend existing pipeline to support expert-specific knowledge bases
+
+**Location:** `tapps_agents/experts/knowledge_ingestion.py` (enhance existing)
+
+**Enhancements:**
+- Support expert-specific knowledge base directories
+- Map ingested content to appropriate experts
+- Create knowledge bases per expert
+- Populate from both project sources and Context7
+
+**New Methods:**
+```python
+class KnowledgeIngestionPipeline:
+    async def ingest_for_expert(
+        self,
+        expert_id: str,
+        expert_domain: str,
+        include_context7: bool = True
+    ) -> IngestionResult:
+        """Ingest knowledge for a specific expert."""
+    
+    def _create_expert_kb(
+        self,
+        expert_id: str,
+        expert_domain: str
+    ) -> VectorKnowledgeBase | SimpleKnowledgeBase:
+        """Create knowledge base for expert."""
 ```
 
 ---
 
-## 3. Data Models
+## Data Models
 
-### 3.1 SecurityIssue Model
-
+### BrownfieldAnalysisResult
 ```python
 @dataclass
-class SecurityIssue:
-    """Represents a security issue found in code."""
-    pattern: str           # e.g., "eval", "innerHTML"
-    severity: Severity     # HIGH, MEDIUM, LOW
-    line: int
-    column: int | None
-    message: str
-    recommendation: str
-    cwe_id: str | None    # Common Weakness Enumeration ID
+class BrownfieldAnalysisResult:
+    project_root: Path
+    languages: list[str]
+    frameworks: list[str]
+    dependencies: list[str]
+    domains: list[DomainMatch]
+    detected_at: datetime
+    analysis_metadata: dict[str, Any]
 ```
 
-### 3.2 ScoreExplanation Model
-
+### ExpertConfig
 ```python
 @dataclass
-class ScoreExplanation:
-    """Explanation for a code quality score."""
-    score: float
-    reason: str
-    issues: list[str]
-    recommendations: list[str]
-    tool_status: str      # available, unavailable, error
-    tool_name: str | None
+class ExpertConfig:
+    expert_id: str
+    expert_name: str
+    primary_domain: str
+    rag_enabled: bool
+    knowledge_base_dir: Path
+    confidence_matrix: dict[str, float]
+    metadata: dict[str, Any]
 ```
 
-### 3.3 DiffResult Model
-
+### BrownfieldReviewResult
 ```python
 @dataclass
-class DiffResult:
-    """Result of code diff generation."""
-    unified_diff: str
-    lines_added: int
-    lines_removed: int
-    files_changed: int
-    has_changes: bool
+class BrownfieldReviewResult:
+    analysis: BrownfieldAnalysisResult
+    experts_created: list[ExpertConfig]
+    rag_results: dict[str, IngestionResult]
+    errors: list[str]
+    warnings: list[str]
+    execution_time: float
+    dry_run: bool
 ```
 
 ---
 
-## 4. Security Patterns
+## Integration Points
 
-### 4.1 JavaScript/TypeScript Dangerous Patterns
+### 1. CLI Integration
 
+**File:** `tapps_agents/cli/commands/top_level.py`
+
+**New Command Handler:**
 ```python
-DANGEROUS_PATTERNS = {
-    "eval": {
-        "pattern": r"\beval\s*\(",
-        "severity": "HIGH",
-        "message": "eval() can execute arbitrary code",
-        "recommendation": "Use JSON.parse() for JSON, or safer alternatives",
-        "cwe_id": "CWE-95"
-    },
-    "innerHTML": {
-        "pattern": r"\.innerHTML\s*=",
-        "severity": "MEDIUM",
-        "message": "innerHTML can lead to XSS vulnerabilities",
-        "recommendation": "Use textContent or sanitize input",
-        "cwe_id": "CWE-79"
-    },
-    "document.write": {
-        "pattern": r"\bdocument\.write\s*\(",
-        "severity": "MEDIUM",
-        "message": "document.write can be exploited for XSS",
-        "recommendation": "Use DOM manipulation methods instead",
-        "cwe_id": "CWE-79"
-    },
-    "Function constructor": {
-        "pattern": r"\bnew\s+Function\s*\(",
-        "severity": "HIGH",
-        "message": "Function constructor can execute arbitrary code",
-        "recommendation": "Use arrow functions or regular function declarations",
-        "cwe_id": "CWE-95"
-    },
-    "setTimeout string": {
-        "pattern": r"\bsetTimeout\s*\(\s*['\"]",
-        "severity": "MEDIUM",
-        "message": "setTimeout with string can execute arbitrary code",
-        "recommendation": "Use function reference instead of string",
-        "cwe_id": "CWE-95"
-    },
-}
-
-# React-specific patterns
-REACT_SECURITY_PATTERNS = {
-    "dangerouslySetInnerHTML": {
-        "pattern": r"dangerouslySetInnerHTML",
-        "severity": "HIGH",
-        "message": "dangerouslySetInnerHTML can lead to XSS",
-        "recommendation": "Sanitize content or use safe rendering",
-        "cwe_id": "CWE-79"
-    },
-    "javascript: URL": {
-        "pattern": r"href\s*=\s*['\"]javascript:",
-        "severity": "HIGH",
-        "message": "javascript: URLs can execute arbitrary code",
-        "recommendation": "Use onClick handlers instead",
-        "cwe_id": "CWE-79"
-    },
-}
+def handle_brownfield_review(args: object) -> None:
+    """Handle brownfield review command."""
+    orchestrator = BrownfieldReviewOrchestrator(
+        project_root=Path.cwd(),
+        context7_helper=get_context7_helper(),
+        dry_run=args.dry_run
+    )
+    result = asyncio.run(orchestrator.review(auto=args.auto))
+    print(result.report)
 ```
 
----
+**File:** `tapps_agents/cli/parsers/top_level.py`
 
-## 5. Integration Points
-
-### 5.1 CLI Integration
-
-**File**: `tapps_agents/cli/commands/reviewer.py`
-
+**New Parser:**
 ```python
-@reviewer.command()
-@click.option("--explain", is_flag=True, help="Include score explanations")
-async def score(file_path: str, explain: bool = False):
-    """Score a file with optional explanations."""
+brownfield_parser = subparsers.add_parser(
+    "brownfield",
+    help="Brownfield system analysis and expert creation"
+)
+brownfield_subparsers = brownfield_parser.add_subparsers(dest="brownfield_command")
+
+review_parser = brownfield_subparsers.add_parser(
+    "review",
+    help="Review brownfield system and create experts"
+)
+review_parser.add_argument("--auto", action="store_true", help="Fully automated")
+review_parser.add_argument("--dry-run", action="store_true", help="Preview changes")
+review_parser.add_argument("--output-dir", type=Path, help="Output directory")
 ```
 
-**File**: `tapps_agents/cli/commands/improver.py`
+### 2. Simple Mode Integration
 
+**File:** `tapps_agents/simple_mode/orchestrators/brownfield_orchestrator.py` (new)
+
+**Orchestrator:**
 ```python
-@improver.command()
-@click.option("--auto-apply", is_flag=True, help="Auto-apply improvements")
-@click.option("--preview", is_flag=True, help="Preview changes without applying")
-async def improve_quality(file_path: str, instruction: str, auto_apply: bool, preview: bool):
-    """Improve code quality with optional auto-apply."""
+class BrownfieldOrchestrator(SimpleModeOrchestrator):
+    """Orchestrator for brownfield system review."""
+    
+    async def execute(self, intent: Intent, parameters: dict[str, Any]) -> AgentOutput:
+        """Execute brownfield review workflow."""
+        orchestrator = BrownfieldReviewOrchestrator(
+            project_root=self.project_root,
+            context7_helper=self.context7_helper,
+            dry_run=parameters.get("dry_run", False)
+        )
+        result = await orchestrator.review(auto=parameters.get("auto", False))
+        return self._format_result(result)
 ```
 
-### 5.2 Output Format Integration
+**File:** `tapps_agents/simple_mode/command_parser.py` (enhance)
 
-Review output with enhancements:
-
-```json
-{
-  "file": "src/app.tsx",
-  "file_type": "typescript",
-  "scoring": {
-    "complexity_score": 7.5,
-    "security_score": 6.0,
-    "maintainability_score": 8.0,
-    "test_coverage_score": 5.0,
-    "performance_score": 7.0,
-    "linting_score": 8.5,
-    "type_checking_score": 9.0,
-    "overall_score": 72.5
-  },
-  "explanations": {
-    "security_score": {
-      "score": 6.0,
-      "reason": "2 security issues detected",
-      "issues": ["innerHTML assignment at line 42", "eval() usage at line 55"],
-      "recommendations": ["Use textContent instead of innerHTML", "Use JSON.parse() instead of eval()"],
-      "tool_status": "available"
-    }
-  },
-  "tool_status": {
-    "eslint": "available",
-    "tsc": "available",
-    "security_scanner": "pattern_based"
-  },
-  "findings": [
-    {
-      "id": "TASK-001-ESLINT-001",
-      "severity": "MEDIUM",
-      "category": "standards",
-      "file": "src/app.tsx",
-      "line": 42,
-      "column": 15,
-      "finding": "[@typescript-eslint/no-unused-vars] 'foo' is declared but never used",
-      "impact": "Unused code increases maintenance burden",
-      "suggested_fix": "Remove unused variable or use it"
-    },
-    {
-      "id": "TASK-001-SEC-001",
-      "severity": "HIGH",
-      "category": "security",
-      "file": "src/app.tsx",
-      "line": 55,
-      "finding": "eval() can execute arbitrary code (CWE-95)",
-      "impact": "Potential code injection vulnerability",
-      "suggested_fix": "Use JSON.parse() for JSON parsing"
-    }
-  ]
-}
-```
-
----
-
-## 6. Error Handling
-
-### 6.1 Graceful Degradation
-
+**Add Command:**
 ```python
-class TypeScriptScorer:
-    def score_file(self, file_path: Path, code: str) -> dict[str, Any]:
-        scores = {}
-        
-        # Linting - graceful degradation
-        if self.has_eslint:
-            scores["linting_score"] = self._calculate_linting_score(file_path)
-        else:
-            scores["linting_score"] = 5.0
-            scores["_linting_note"] = "ESLint not available"
-        
-        # Type checking - graceful degradation
-        if self.has_tsc and file_path.suffix in [".ts", ".tsx"]:
-            scores["type_checking_score"] = self._calculate_type_checking_score(file_path)
-        else:
-            scores["type_checking_score"] = 5.0
-            scores["_type_checking_note"] = "TypeScript compiler not available"
-        
-        # Security - always available (pattern-based)
-        scores["security_score"] = self._calculate_security_score(code, file_path)
-        
-        return scores
-```
-
-### 6.2 Error Messages
-
-| Scenario | Error Message | User Action |
-|----------|--------------|-------------|
-| ESLint not installed | "ESLint not available. Install via: npm install -g eslint" | Install ESLint |
-| TypeScript not installed | "TypeScript compiler not available. Install via: npm install -g typescript" | Install TypeScript |
-| File too large | "File exceeds maximum size (1MB). Consider splitting into smaller files." | Split file |
-| Timeout | "Analysis timed out after 30s. File may be too complex." | Simplify file |
-
----
-
-## 7. Configuration
-
-### 7.1 Config Schema Updates
-
-**File**: `.tapps-agents/config.yaml`
-
-```yaml
-quality_tools:
-  # Existing
-  ruff_enabled: true
-  mypy_enabled: true
-  
-  # NEW: TypeScript settings
-  eslint_enabled: true
-  tsc_enabled: true
-  typescript_security_enabled: true
-  npm_audit_enabled: false  # Optional, requires npm
-  
-  # NEW: Auto-apply settings
-  auto_apply_backup_dir: ".tapps-agents/backups"
-  auto_apply_verify: true
-  
-  # NEW: Explanation settings
-  explain_low_scores: true
-  low_score_threshold: 7.0
+BROWNFIELD_COMMANDS = [
+    "brownfield-review",
+    "review-brownfield",
+    "analyze-project",
+    "create-experts"
+]
 ```
 
 ---
 
-## 8. Testing Strategy
+## Data Flow
 
-### 8.1 Unit Tests
+### Complete Workflow
 
-| Component | Test File | Coverage Target |
-|-----------|-----------|-----------------|
-| TypeScriptScorer._calculate_security_score | test_typescript_scorer.py | 90% |
-| TypeScriptScorer._detect_dangerous_patterns | test_typescript_scorer.py | 95% |
-| ReviewerAgent._extract_eslint_findings | test_reviewer_typescript.py | 90% |
-| ImproverAgent._create_backup | test_improver_auto_apply.py | 95% |
-| ImproverAgent._generate_diff | test_improver_auto_apply.py | 90% |
-
-### 8.2 Integration Tests
-
-| Scenario | Test File |
-|----------|-----------|
-| Full TypeScript review with ESLint | test_typescript_integration.py |
-| Auto-apply with verification | test_improver_integration.py |
-| Score explanations end-to-end | test_explanations_integration.py |
+1. **User invokes command** (CLI or Simple Mode)
+2. **BrownfieldReviewOrchestrator initializes**
+   - Loads project root
+   - Initializes DomainStackDetector
+   - Initializes Context7AgentHelper (if available)
+3. **Analysis Phase**
+   - BrownfieldAnalyzer analyzes codebase
+   - DomainStackDetector identifies domains
+   - Generates BrownfieldAnalysisResult
+4. **Expert Creation Phase**
+   - ExpertConfigGenerator creates configs for each domain
+   - Writes to `.tapps-agents/experts.yaml`
+   - Validates configurations
+5. **RAG Population Phase**
+   - For each expert:
+     - Creates knowledge base directory
+     - Ingests project documentation
+     - Fetches Context7 library docs (if enabled)
+     - Builds vector indexes
+   - Reports ingestion statistics
+6. **Report Generation**
+   - Generates summary report
+   - Returns BrownfieldReviewResult
 
 ---
 
-**Architecture Status**: APPROVED  
-**Next Step**: Step 4 - API Design
+## Error Handling Strategy
+
+1. **Domain Detection Failures**
+   - Log error, continue with other domains
+   - Include in final report
+
+2. **Expert Creation Failures**
+   - Log error, skip failed expert
+   - Continue with other experts
+
+3. **Context7 Unavailability**
+   - Skip Context7 ingestion
+   - Continue with project sources only
+   - Log warning
+
+4. **RAG Population Failures**
+   - Log error per expert
+   - Continue with other experts
+   - Report failures in summary
+
+5. **Resume Capability**
+   - Store state in `.tapps-agents/brownfield-review-state.json`
+   - Support resume from last successful step
+
+---
+
+## Performance Considerations
+
+1. **Parallel Processing**
+   - Process multiple experts in parallel
+   - Parallel Context7 API calls (with rate limiting)
+
+2. **Caching**
+   - Cache domain detection results
+   - Cache Context7 documentation
+   - Cache analysis results
+
+3. **Incremental Updates**
+   - Only process changed files
+   - Support incremental RAG updates
+
+4. **Resource Management**
+   - Limit concurrent operations
+   - Monitor memory usage for large codebases
+
+---
+
+## Security Considerations
+
+1. **Path Validation**
+   - Validate all file paths
+   - Prevent directory traversal
+
+2. **Expert ID Sanitization**
+   - Sanitize expert IDs and domain names
+   - Prevent injection attacks
+
+3. **Context7 API Key**
+   - Secure API key handling
+   - Never log API keys
+
+---
+
+## Testing Strategy
+
+1. **Unit Tests**
+   - BrownfieldAnalyzer methods
+   - ExpertConfigGenerator methods
+   - Configuration validation
+
+2. **Integration Tests**
+   - End-to-end workflow
+   - Domain detection integration
+   - Expert creation integration
+   - RAG population integration
+
+3. **CLI Tests**
+   - Command parsing
+   - Error handling
+   - Output formatting
+
+4. **Simple Mode Tests**
+   - Command recognition
+   - Workflow execution
+   - Output formatting
