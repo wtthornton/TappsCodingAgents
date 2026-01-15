@@ -1352,6 +1352,46 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     explanations = self._generate_python_explanations(scores)
                 
                 result["score_explanations"] = explanations
+
+                # Phase 2 (P0): Add maintainability issues to output
+                if include_scoring and self.scorer:
+                    try:
+                        maintainability_issues = self.scorer.get_maintainability_issues(code, file_path)
+                        if maintainability_issues:
+                            result["maintainability_issues"] = maintainability_issues
+                            result["maintainability_issues_summary"] = {
+                                "total": len(maintainability_issues),
+                                "by_severity": {
+                                    "high": sum(1 for issue in maintainability_issues if issue.get("severity") == "high"),
+                                    "medium": sum(1 for issue in maintainability_issues if issue.get("severity") == "medium"),
+                                    "low": sum(1 for issue in maintainability_issues if issue.get("severity") == "low"),
+                                },
+                                "by_type": {}
+                            }
+                            # Count by issue type
+                            for issue in maintainability_issues:
+                                issue_type = issue.get("issue_type", "unknown")
+                                result["maintainability_issues_summary"]["by_type"][issue_type] = \
+                                    result["maintainability_issues_summary"]["by_type"].get(issue_type, 0) + 1
+                    except Exception as e:
+                        logger.warning(f"Failed to get maintainability issues: {e}", exc_info=True)
+
+                # Phase 4 (P1): Add performance issues to output
+                if include_scoring and self.scorer:
+                    try:
+                        performance_issues = self.scorer.get_performance_issues(code, file_path)
+                        if performance_issues:
+                            result["performance_issues"] = performance_issues
+                            result["performance_issues_summary"] = {
+                                "total": len(performance_issues),
+                                "by_severity": {
+                                    "high": sum(1 for issue in performance_issues if issue.get("severity") == "high"),
+                                    "medium": sum(1 for issue in performance_issues if issue.get("severity") == "medium"),
+                                    "low": sum(1 for issue in performance_issues if issue.get("severity") == "low"),
+                                },
+                            }
+                    except Exception as e:
+                        logger.warning(f"Failed to get performance issues: {e}", exc_info=True)
         
         # NEW: Library detection and Context7 integration (Priority 1 & 2)
         library_recommendations = {}
@@ -1503,27 +1543,71 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             result["feedback"] = feedback
 
         # Quality gate evaluation (Phase 2.2: Quality Gates Integration)
+        # Phase 6 (P1): Context-aware quality gates based on file status
         # Note: Quality gate checks use tool operations (coverage analysis) which are Cursor-first compatible.
         # LLM feedback generation already uses GenericInstruction with to_skill_command() for Cursor Skills.
         quality_gate_result = None
         if include_scoring and self.config:
             from ...quality.quality_gates import QualityGate, QualityThresholds
+            from .context_detector import FileContextDetector
 
             scoring_config = self.config.scoring
             quality_gates_config = scoring_config.quality_gates if scoring_config else None
 
             # Check if quality gates are enabled
             if quality_gates_config and quality_gates_config.enabled:
-                # Create quality gate with thresholds from config
-                thresholds = QualityThresholds(
-                    overall_min=8.0,  # Default, can be overridden from config
-                    security_min=8.5,  # Default, can be overridden from config
-                    test_coverage_min=(
-                        quality_gates_config.test_coverage.threshold * 100.0
-                        if quality_gates_config.test_coverage.enabled
-                        else 80.0
-                    ),
-                )
+                # Phase 6 (P1): Detect file context for context-aware thresholds
+                context_detector = FileContextDetector(project_root=project_root)
+                file_context = context_detector.detect_context(file_path)
+
+                # Phase 6 (P1): Apply context-aware thresholds
+                if file_context.is_new():
+                    # New files: More lenient thresholds (warnings, not failures)
+                    thresholds = QualityThresholds(
+                        overall_min=5.0,  # Lower threshold for new files (warnings only)
+                        security_min=6.0,  # Lower security threshold (critical issues only)
+                        test_coverage_min=0.0,  # No coverage requirement for new files
+                    )
+                    result["file_context"] = {
+                        "status": "new",
+                        "age_days": file_context.age_days,
+                        "confidence": file_context.confidence,
+                        "thresholds_applied": "new_file",
+                    }
+                elif file_context.is_modified():
+                    # Modified files: Standard thresholds
+                    thresholds = QualityThresholds(
+                        overall_min=8.0,  # Standard threshold
+                        security_min=8.5,  # Standard security threshold
+                        test_coverage_min=(
+                            quality_gates_config.test_coverage.threshold * 100.0
+                            if quality_gates_config.test_coverage.enabled
+                            else 70.0  # Slightly lower for modified files
+                        ),
+                    )
+                    result["file_context"] = {
+                        "status": "modified",
+                        "git_status": file_context.git_status,
+                        "confidence": file_context.confidence,
+                        "thresholds_applied": "modified_file",
+                    }
+                else:
+                    # Existing files: Strict thresholds (enforce all quality gates)
+                    thresholds = QualityThresholds(
+                        overall_min=8.0,  # Standard threshold
+                        security_min=8.5,  # Standard security threshold
+                        test_coverage_min=(
+                            quality_gates_config.test_coverage.threshold * 100.0
+                            if quality_gates_config.test_coverage.enabled
+                            else 80.0  # Strict threshold for existing files
+                        ),
+                    )
+                    result["file_context"] = {
+                        "status": "existing",
+                        "age_days": file_context.age_days,
+                        "confidence": file_context.confidence,
+                        "thresholds_applied": "existing_file",
+                    }
 
                 quality_gate = QualityGate(thresholds=thresholds)
                 quality_gate_result = quality_gate.evaluate(scores)
@@ -1600,12 +1684,14 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Generate LLM feedback on code using language-aware prompts.
         
         Phase 1.3: LLM Feedback Generation Fix
+        Phase 3 (P0): Enhanced to provide structured feedback fallback when LLM execution unavailable.
         
         Note: Retry logic should be applied at the Cursor Skills execution layer,
         not here (this just prepares the instruction). See retry_handler.py for
         retry decorator usage.
         """
         from .feedback_generator import FeedbackGenerator
+        from ...core.runtime_mode import detect_runtime_mode, RuntimeMode
 
         # Generate language-aware prompt using FeedbackGenerator
         prompt = FeedbackGenerator.generate_prompt(
@@ -1624,10 +1710,150 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             parameters={"model": model},
         )
 
-        return {
+        # Phase 3 (P0): Generate structured feedback fallback based on scores
+        # This provides actionable feedback even when LLM execution isn't available
+        structured_feedback = self._generate_structured_feedback_fallback(
+            code, language, scores, expert_guidance
+        )
+
+        result = {
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
+            "structured_feedback": structured_feedback,  # Phase 3: Always include structured feedback
+            "execution_mode": detect_runtime_mode().value,
         }
+
+        # Phase 3: In Cursor mode, note that instruction needs execution
+        if detect_runtime_mode() == RuntimeMode.CURSOR:
+            result["note"] = (
+                "LLM feedback instruction prepared for Cursor Skills execution. "
+                "Structured feedback is provided as fallback below."
+            )
+        else:
+            result["note"] = (
+                "LLM feedback instruction prepared. "
+                "Structured feedback provided below (LLM execution requires Cursor Skills)."
+            )
+
+        return result
+
+    def _generate_structured_feedback_fallback(
+        self,
+        code: str,
+        language: Language,
+        scores: dict[str, Any] | None,
+        expert_guidance: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Generate structured feedback based on scores and issues (Phase 3 - P0).
+        
+        Provides actionable feedback even when LLM execution isn't available.
+        This addresses the feedback issue where prompts exist but aren't executed.
+        
+        Returns:
+            Dictionary with structured feedback sections
+        """
+        feedback: dict[str, Any] = {
+            "summary": "",
+            "strengths": [],
+            "issues": [],
+            "recommendations": [],
+            "priority": "medium",  # low, medium, high
+        }
+
+        if not scores:
+            feedback["summary"] = "No scoring data available. Review code manually."
+            return feedback
+
+        # Extract scores
+        overall = scores.get("overall_score", 0.0)
+        complexity = scores.get("complexity_score", 5.0)
+        security = scores.get("security_score", 5.0)
+        maintainability = scores.get("maintainability_score", 5.0)
+        test_coverage = scores.get("test_coverage_score", 0.0)
+        performance = scores.get("performance_score", 5.0)
+
+        # Generate summary
+        if overall >= 80:
+            feedback["summary"] = f"Code quality is excellent (score: {overall:.1f}/100). Minor improvements possible."
+            feedback["priority"] = "low"
+        elif overall >= 70:
+            feedback["summary"] = f"Code quality is good (score: {overall:.1f}/100). Some areas need attention."
+            feedback["priority"] = "medium"
+        elif overall >= 60:
+            feedback["summary"] = f"Code quality needs improvement (score: {overall:.1f}/100). Several issues to address."
+            feedback["priority"] = "high"
+        else:
+            feedback["summary"] = f"Code quality is poor (score: {overall:.1f}/100). Significant refactoring needed."
+            feedback["priority"] = "high"
+
+        # Identify strengths
+        if security >= 8.0:
+            feedback["strengths"].append(f"Strong security practices (score: {security:.1f}/10)")
+        if maintainability >= 7.0:
+            feedback["strengths"].append(f"Good maintainability (score: {maintainability:.1f}/10)")
+        if complexity <= 5.0:
+            feedback["strengths"].append(f"Low complexity (score: {complexity:.1f}/10)")
+        if test_coverage >= 7.0:
+            feedback["strengths"].append(f"Good test coverage (score: {test_coverage:.1f}/10)")
+
+        # Identify issues and recommendations
+        if security < 7.0:
+            feedback["issues"].append({
+                "category": "security",
+                "severity": "high" if security < 6.0 else "medium",
+                "message": f"Security score is {security:.1f}/10 (threshold: 7.0)",
+                "recommendation": "Review security patterns, validate inputs, check for vulnerabilities"
+            })
+            feedback["recommendations"].append("Run security scan and address vulnerabilities")
+
+        if maintainability < 7.0:
+            feedback["issues"].append({
+                "category": "maintainability",
+                "severity": "high" if maintainability < 5.0 else "medium",
+                "message": f"Maintainability score is {maintainability:.1f}/10 (threshold: 7.0)",
+                "recommendation": "Add docstrings, reduce complexity, improve code organization"
+            })
+            feedback["recommendations"].append("Review maintainability issues for specific improvements")
+
+        if test_coverage < 5.0:
+            feedback["issues"].append({
+                "category": "test_coverage",
+                "severity": "high" if test_coverage == 0.0 else "medium",
+                "message": f"Test coverage is {test_coverage:.1f}/10 (threshold: 5.0)",
+                "recommendation": "Add unit tests for critical functions and edge cases"
+            })
+            feedback["recommendations"].append("Generate tests using @tester *test command")
+
+        if complexity > 7.0:
+            feedback["issues"].append({
+                "category": "complexity",
+                "severity": "high" if complexity > 8.0 else "medium",
+                "message": f"Complexity score is {complexity:.1f}/10 (threshold: 7.0)",
+                "recommendation": "Refactor complex functions, extract helper methods, reduce nesting"
+            })
+            feedback["recommendations"].append("Break down complex functions into smaller, focused functions")
+
+        if performance < 6.0:
+            feedback["issues"].append({
+                "category": "performance",
+                "severity": "medium",
+                "message": f"Performance score is {performance:.1f}/10 (threshold: 6.0)",
+                "recommendation": "Review performance bottlenecks, optimize loops, cache expensive operations"
+            })
+            feedback["recommendations"].append("Review performance issues for specific bottlenecks")
+
+        # Add expert guidance if available
+        if expert_guidance:
+            if "security" in expert_guidance:
+                feedback["expert_guidance"] = {
+                    "security": expert_guidance["security"][:500] + "..." if len(expert_guidance["security"]) > 500 else expert_guidance["security"]
+                }
+            if "performance" in expert_guidance:
+                feedback["expert_guidance"] = feedback.get("expert_guidance", {})
+                feedback["expert_guidance"]["performance"] = expert_guidance["performance"][:300] + "..." if len(expert_guidance["performance"]) > 300 else expert_guidance["performance"]
+
+        return feedback
 
     async def lint_file(self, file_path: Path, isolated: bool = False) -> dict[str, Any]:
         """

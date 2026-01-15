@@ -362,6 +362,7 @@ class CodeScorer(BaseScorer):
         Calculate maintainability index (0-10 scale, higher is better).
         
         Phase 3.1: Enhanced with context-aware scoring using MaintainabilityScorer.
+        Phase 2 (P0): Maintainability issues are captured separately via get_maintainability_issues().
         """
         from .maintainability_scorer import MaintainabilityScorer
         from ...core.language_detector import Language
@@ -369,6 +370,27 @@ class CodeScorer(BaseScorer):
         # Use context-aware maintainability scorer
         scorer = MaintainabilityScorer()
         return scorer.calculate(code, Language.PYTHON, file_path=None, context=None)
+
+    def get_maintainability_issues(
+        self, code: str, file_path: Path | None = None
+    ) -> list[dict[str, Any]]:
+        """
+        Get specific maintainability issues (Phase 2 - P0).
+        
+        Returns list of issues with details like missing docstrings, long functions, etc.
+        
+        Args:
+            code: Source code content
+            file_path: Optional path to the file
+            
+        Returns:
+            List of maintainability issues with details
+        """
+        from .maintainability_scorer import MaintainabilityScorer
+        from ...core.language_detector import Language
+
+        scorer = MaintainabilityScorer()
+        return scorer.get_issues(code, Language.PYTHON, file_path=file_path, context=None)
 
     def _calculate_test_coverage(self, file_path: Path) -> float:
         """
@@ -480,36 +502,58 @@ class CodeScorer(BaseScorer):
         """
         Heuristic-based coverage estimate.
 
+        Phase 1 (P0): Fixed to return 0.0 when no test files exist.
+        
         Checks for:
-        - Test file existence
+        - Test file existence (actual test files, not just directories)
         - Test directory structure
         - Test naming patterns
+
+        Returns:
+        - 0.0 if no test files exist (no tests written yet)
+        - 5.0 if test files exist but no coverage data (tests exist but not run)
+        - 10.0 if both test files and coverage data exist (not used here, handled by caller)
         """
         project_root = self._find_project_root(file_path)
         if project_root is None:
-            return 5.0  # Neutral if can't determine
+            return 0.0  # No project root = assume no tests (Phase 1 fix)
 
-        # Look for test files
-        test_dirs = ["tests", "test", "tests/unit", "tests/integration"]
+        # Look for test files with comprehensive patterns
+        test_dirs = ["tests", "test", "tests/unit", "tests/integration", "tests/test", "test/test"]
         test_patterns = [
             f"test_{file_path.stem}.py",
             f"{file_path.stem}_test.py",
             f"test_{file_path.name}",
+            # Also check for module-style test files
+            f"test_{file_path.stem.replace('_', '')}.py",
+            f"test_{file_path.stem.replace('-', '_')}.py",
         ]
+        
+        # Also check if the file itself is a test file
+        if file_path.name.startswith("test_") or file_path.name.endswith("_test.py"):
+            # File is a test file, assume it has coverage if it exists
+            return 5.0  # Tests exist but no coverage data available
 
-        score = 5.0  # Start neutral
-
+        # Check if any test files actually exist
+        test_file_found = False
         for test_dir in test_dirs:
             test_dir_path = project_root / test_dir
-            if test_dir_path.exists():
-                score += 1.0  # Bonus for having test directory
+            if test_dir_path.exists() and test_dir_path.is_dir():
                 for pattern in test_patterns:
                     test_file = test_dir_path / pattern
-                    if test_file.exists():
-                        score += 2.0  # Bonus for having test file
+                    if test_file.exists() and test_file.is_file():
+                        test_file_found = True
                         break
+                if test_file_found:
+                    break
 
-        return min(score, 10.0)
+        # Phase 1 fix: Return 0.0 if no test files exist (no tests written yet)
+        if not test_file_found:
+            return 0.0
+
+        # Test files exist but no coverage data available
+        # Return neutral score (tests exist but not run yet)
+        return 5.0
 
     def _find_project_root(self, file_path: Path) -> Path | None:
         """Find project root by looking for common markers"""
@@ -533,6 +577,102 @@ class CodeScorer(BaseScorer):
             current = current.parent
 
         return None
+
+    def get_performance_issues(
+        self, code: str, file_path: Path | None = None
+    ) -> list[dict[str, Any]]:
+        """
+        Get specific performance issues with line numbers (Phase 4 - P1).
+        
+        Returns list of performance bottlenecks with details like nested loops, expensive operations, etc.
+        
+        Args:
+            code: Source code content
+            file_path: Optional path to the file
+            
+        Returns:
+            List of performance issues with line numbers
+        """
+        from .issue_tracking import PerformanceIssue
+        import ast
+
+        issues: list[PerformanceIssue] = []
+        code_lines = code.splitlines()
+
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return [PerformanceIssue(
+                issue_type="syntax_error",
+                message="File contains syntax errors - cannot analyze performance",
+                severity="high"
+            ).__dict__]
+
+        # Analyze functions for performance issues
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Check for nested loops
+                for child in ast.walk(node):
+                    if isinstance(child, ast.For):
+                        # Check if this loop contains another loop
+                        for nested_child in ast.walk(child):
+                            if isinstance(nested_child, ast.For) and nested_child != child:
+                                # Found nested loop
+                                issues.append(PerformanceIssue(
+                                    issue_type="nested_loops",
+                                    message=f"Nested for loops detected in function '{node.name}' - potential O(n²) complexity",
+                                    line_number=child.lineno,
+                                    severity="high",
+                                    operation_type="loop",
+                                    context=f"Nested in function '{node.name}'",
+                                    suggestion="Consider using itertools.product() or list comprehensions to flatten nested loops"
+                                ))
+
+                    # Check for expensive operations in loops
+                    if isinstance(child, ast.For):
+                        for loop_child in ast.walk(child):
+                            if isinstance(loop_child, ast.Call):
+                                # Check for expensive function calls in loops
+                                if isinstance(loop_child.func, ast.Name):
+                                    func_name = loop_child.func.id
+                                    expensive_operations = ["time.fromisoformat", "datetime.fromisoformat", "re.compile", "json.loads"]
+                                    if any(exp_op in func_name for exp_op in expensive_operations):
+                                        issues.append(PerformanceIssue(
+                                            issue_type="expensive_operation_in_loop",
+                                            message=f"Expensive operation '{func_name}' called in loop at line {loop_child.lineno} - parse once before loop",
+                                            line_number=loop_child.lineno,
+                                            severity="medium",
+                                            operation_type=func_name,
+                                            context=f"In loop at line {child.lineno}",
+                                            suggestion=f"Move '{func_name}' call outside the loop and cache the result"
+                                        ))
+
+            # Check for list comprehensions with function calls
+            if isinstance(node, ast.ListComp):
+                func_calls_in_comp = sum(1 for n in ast.walk(node) if isinstance(n, ast.Call))
+                if func_calls_in_comp > 5:
+                    issues.append(PerformanceIssue(
+                        issue_type="expensive_comprehension",
+                        message=f"List comprehension at line {node.lineno} contains {func_calls_in_comp} function calls - consider using generator or loop",
+                        line_number=node.lineno,
+                        severity="medium",
+                        operation_type="comprehension",
+                        suggestion="Consider using a generator expression or a loop for better performance"
+                    ))
+
+        # Convert to dict format
+        return [
+            {
+                "issue_type": issue.issue_type,
+                "message": issue.message,
+                "line_number": issue.line_number,
+                "severity": issue.severity,
+                "suggestion": issue.suggestion,
+                "operation_type": issue.operation_type,
+                "context": issue.context,
+            }
+            for issue in issues
+        ]
 
     def _calculate_performance(self, code: str) -> float:
         """
@@ -773,11 +913,13 @@ class CodeScorer(BaseScorer):
         Calculate type checking score using mypy (0-10 scale, higher is better).
 
         Phase 6.2: Modern Quality Analysis - mypy Integration
+        Phase 5 (P1): Fixed to actually run mypy and return real scores (not static 5.0).
 
         Returns:
             Type checking score (0-10), where 10 = no issues, 0 = many issues
         """
         if not self.has_mypy:
+            logger.debug("mypy not available - returning neutral score")
             return 5.0  # Neutral score if mypy not available
 
         # Only check Python files
@@ -785,7 +927,8 @@ class CodeScorer(BaseScorer):
             return 10.0  # Perfect score for non-Python files (can't type check)
 
         try:
-            # Run mypy with JSON output and error codes
+            # Phase 5 fix: Actually run mypy and parse errors
+            # Run mypy with show-error-codes for better error parsing
             result = subprocess.run(  # nosec B603
                 [
                     sys.executable,
@@ -793,6 +936,7 @@ class CodeScorer(BaseScorer):
                     "mypy",
                     "--show-error-codes",
                     "--no-error-summary",
+                    "--no-color-output",
                     str(file_path),
                 ],
                 capture_output=True,
@@ -803,38 +947,52 @@ class CodeScorer(BaseScorer):
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
 
-            # Parse mypy output
+            # Phase 5 fix: Parse mypy output correctly
             if result.returncode == 0:
-                # No type errors found
+                # No type errors found - return perfect score
+                logger.debug(f"mypy found no errors for {file_path}")
                 return 10.0
 
             # mypy returns non-zero exit code when errors found
-            # Count errors from stdout (mypy outputs errors to stdout)
-            if not result.stdout.strip():
-                # No output = no errors (unlikely but possible)
+            # mypy outputs errors to stdout (not stderr)
+            output = result.stdout.strip()
+            if not output:
+                # No output but non-zero return code - assume success
+                logger.debug(f"mypy returned non-zero but no output for {file_path}")
                 return 10.0
 
             # Parse mypy error output
             # Format: filename:line: error: message [error-code]
+            # Or: filename:line:column: error: message [error-code]
             error_lines = [
                 line
-                for line in result.stdout.strip().split("\n")
-                if "error:" in line.lower()
+                for line in output.split("\n")
+                if "error:" in line.lower() and file_path.name in line
             ]
             error_count = len(error_lines)
 
-            # Calculate score: Start at 10, deduct 0.5 points per error
-            # Formula: 10 - (errors * 0.5)
+            if error_count == 0:
+                # No errors found despite non-zero return code (e.g., config issues)
+                logger.debug(f"mypy returned non-zero but no parseable errors for {file_path}")
+                return 10.0
+
+            # Phase 5 fix: Calculate score based on actual error count
+            # Formula: 10 - (errors * 0.5), but cap at 0.0
             score = 10.0 - (error_count * 0.5)
+            logger.debug(f"mypy found {error_count} errors for {file_path}, score: {score:.1f}/10")
             return max(0.0, min(10.0, score))
 
         except subprocess.TimeoutExpired:
+            logger.warning(f"mypy timed out for {file_path}")
             return 5.0  # Neutral on timeout
         except FileNotFoundError:
             # mypy not found in PATH
+            logger.debug(f"mypy not found in PATH for {file_path}")
+            self.has_mypy = False  # Update availability flag
             return 5.0
-        except Exception:
+        except Exception as e:
             # Any other error
+            logger.warning(f"mypy failed for {file_path}: {e}", exc_info=True)
             return 5.0
 
     def get_mypy_errors(self, file_path: Path) -> list[dict[str, Any]]:

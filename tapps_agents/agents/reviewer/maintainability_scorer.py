@@ -80,6 +80,156 @@ class PythonMaintainabilityStrategy(MaintainabilityStrategy):
         except Exception:
             return BASE_SCORE  # Neutral on error
 
+    def get_issues(
+        self, code: str, file_path: Path | None = None, context: dict[str, Any] | None = None
+    ) -> list[dict[str, Any]]:
+        """
+        Get specific maintainability issues (Phase 2 - P0).
+        
+        Returns list of issues with details like missing docstrings, long functions, etc.
+        """
+        from .issue_tracking import MaintainabilityIssue
+
+        issues: list[MaintainabilityIssue] = []
+        code_lines = code.splitlines()
+
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return [MaintainabilityIssue(
+                issue_type="syntax_error",
+                message="File contains syntax errors",
+                severity="high"
+            ).__dict__]
+
+        # Check for missing docstrings in functions and classes
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Check if function has docstring
+                if not ast.get_docstring(node):
+                    issues.append(MaintainabilityIssue(
+                        issue_type="missing_docstring",
+                        message=f"Function '{node.name}' is missing a docstring",
+                        line_number=node.lineno,
+                        function_name=node.name,
+                        severity="medium",
+                        suggestion="Add a docstring explaining the function's purpose, parameters, and return value"
+                    ))
+
+                # Check function length
+                if hasattr(node, "end_lineno") and node.end_lineno:
+                    func_length = node.end_lineno - node.lineno
+                else:
+                    # Estimate function length
+                    func_length = len(code_lines[node.lineno - 1:node.lineno + 50]) if node.lineno <= len(code_lines) else 0
+
+                if func_length > MAX_AVG_FUNCTION_LENGTH:
+                    severity = "high" if func_length > 100 else "medium"
+                    issues.append(MaintainabilityIssue(
+                        issue_type="long_function",
+                        message=f"Function '{node.name}' is {func_length} lines long (threshold: {MAX_AVG_FUNCTION_LENGTH})",
+                        line_number=node.lineno,
+                        function_name=node.name,
+                        metric_value=float(func_length),
+                        threshold=float(MAX_AVG_FUNCTION_LENGTH),
+                        severity=severity,
+                        suggestion=f"Extract helper methods or break into smaller functions (target: <{MAX_AVG_FUNCTION_LENGTH} lines)"
+                    ))
+
+                # Check nesting depth
+                max_nesting = self._get_max_nesting_depth(node)
+                if max_nesting > MAX_NESTING_DEPTH_THRESHOLD:
+                    severity = "high" if max_nesting > 6 else "medium"
+                    issues.append(MaintainabilityIssue(
+                        issue_type="deep_nesting",
+                        message=f"Function '{node.name}' has {max_nesting} levels of nesting (threshold: {MAX_NESTING_DEPTH_THRESHOLD})",
+                        line_number=node.lineno,
+                        function_name=node.name,
+                        metric_value=float(max_nesting),
+                        threshold=float(MAX_NESTING_DEPTH_THRESHOLD),
+                        severity=severity,
+                        suggestion="Extract nested logic into separate functions to reduce complexity"
+                    ))
+
+            elif isinstance(node, ast.ClassDef):
+                # Check if class has docstring
+                if not ast.get_docstring(node):
+                    issues.append(MaintainabilityIssue(
+                        issue_type="missing_docstring",
+                        message=f"Class '{node.name}' is missing a docstring",
+                        line_number=node.lineno,
+                        class_name=node.name,
+                        severity="medium",
+                        suggestion="Add a docstring explaining the class's purpose and usage"
+                    ))
+
+        # Check for long lines
+        for i, line in enumerate(code_lines, 1):
+            if len(line) > MAX_LINE_LENGTH:
+                issues.append(MaintainabilityIssue(
+                    issue_type="long_line",
+                    message=f"Line {i} is {len(line)} characters long (threshold: {MAX_LINE_LENGTH})",
+                    line_number=i,
+                    metric_value=float(len(line)),
+                    threshold=float(MAX_LINE_LENGTH),
+                    severity="low",
+                    suggestion=f"Break long line into multiple lines or extract to variable"
+                ))
+
+        # Check for missing type hints in function signatures
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef):
+                # Check if return type annotation is missing
+                if node.returns is None:
+                    issues.append(MaintainabilityIssue(
+                        issue_type="missing_type_hint",
+                        message=f"Function '{node.name}' is missing return type annotation",
+                        line_number=node.lineno,
+                        function_name=node.name,
+                        severity="low",
+                        suggestion="Add return type annotation (e.g., -> str, -> int, -> None)"
+                    ))
+
+                # Check if all parameters have type hints
+                params_without_hints = [arg.arg for arg in node.args.args if arg.annotation is None]
+                if params_without_hints:
+                    issues.append(MaintainabilityIssue(
+                        issue_type="missing_type_hints",
+                        message=f"Function '{node.name}' parameters missing type hints: {', '.join(params_without_hints)}",
+                        line_number=node.lineno,
+                        function_name=node.name,
+                        severity="low",
+                        suggestion="Add type annotations to all function parameters"
+                    ))
+
+        # Convert to dict format
+        return [
+            {
+                "issue_type": issue.issue_type,
+                "message": issue.message,
+                "line_number": issue.line_number,
+                "severity": issue.severity,
+                "suggestion": issue.suggestion,
+                "function_name": issue.function_name,
+                "class_name": issue.class_name,
+                "metric_value": issue.metric_value,
+                "threshold": issue.threshold,
+            }
+            for issue in issues
+        ]
+
+    def _get_max_nesting_depth(self, node: ast.AST, current_depth: int = 0) -> int:
+        """Calculate maximum nesting depth in an AST node."""
+        max_depth = current_depth
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.If, ast.For, ast.While, ast.Try, ast.With)):
+                child_depth = self._get_max_nesting_depth(child, current_depth + 1)
+                max_depth = max(max_depth, child_depth)
+            else:
+                child_depth = self._get_max_nesting_depth(child, current_depth)
+                max_depth = max(max_depth, child_depth)
+        return max_depth
+
     def _heuristic_score(self, code: str) -> float:
         """Heuristic-based scoring when radon is not available."""
         lines = code.split("\n")
@@ -408,4 +558,36 @@ class MaintainabilityScorer:
 
         # Fallback to Python strategy for unknown languages
         return PythonMaintainabilityStrategy().calculate(code, file_path, context)
+
+    def get_issues(
+        self,
+        code: str,
+        language: Language,
+        file_path: Path | None = None,
+        context: dict[str, Any] | None = None,
+    ) -> list[dict[str, Any]]:
+        """
+        Get specific maintainability issues (Phase 2 - P0).
+        
+        Returns list of issues with details like missing docstrings, long functions, etc.
+        
+        Args:
+            code: Source code content
+            language: Detected language
+            file_path: Optional path to the file
+            context: Optional context
+            
+        Returns:
+            List of maintainability issues with details
+        """
+        strategy = self.strategies.get(language)
+        if strategy and hasattr(strategy, "get_issues"):
+            return strategy.get_issues(code, file_path, context)
+
+        # Fallback to Python strategy for unknown languages
+        if hasattr(PythonMaintainabilityStrategy(), "get_issues"):
+            return PythonMaintainabilityStrategy().get_issues(code, file_path, context)
+
+        # Return empty list if strategy doesn't support get_issues
+        return []
 
