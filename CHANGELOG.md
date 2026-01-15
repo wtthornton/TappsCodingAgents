@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.13] - 2026-01-16
+
+### Fixed
+- Fixed missing `Path` import in `tapps_agents/cli/parsers/top_level.py` that caused `NameError: name 'Path' is not defined` when using CLI commands
+
 ## [3.5.12] - 2026-01-16
 
 ### Changed

@@ -2,6 +2,7 @@
 Top-level command parser definitions
 """
 import argparse
+from pathlib import Path
 
 # Constants for skill-template command
 AGENT_TYPES = [
