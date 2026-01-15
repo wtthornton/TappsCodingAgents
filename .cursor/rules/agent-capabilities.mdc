@@ -290,7 +290,7 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 
 ### Reviewer Agent
 
-**Purpose**: Code review, quality analysis, and scoring.
+**Purpose**: Code review, quality analysis, and scoring with actionable feedback.
 
 **When to Use**:
 - Code quality checks
@@ -298,10 +298,19 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 - Quality scoring
 - Linting and type checking
 - Security analysis
+- Performance analysis
+- Maintainability assessment
 
 **Capabilities**:
 - Code scoring (5 metrics: complexity, security, maintainability, test coverage, performance)
-- LLM-based code review
+- **Actionable feedback** with specific issues, line numbers, and suggestions
+- **Structured feedback** always provided (summary, strengths, issues, recommendations)
+- **Maintainability issues** tracking (missing docstrings, long functions, deep nesting, missing type hints)
+- **Performance issues** tracking (nested loops, expensive operations, bottlenecks)
+- **Accurate test coverage** detection (returns 0.0% when no tests exist)
+- **Accurate type checking** scores (reflects actual mypy errors)
+- **Context-aware quality gates** (adapts thresholds for new/modified/existing files)
+- LLM-based code review (via Cursor Skills)
 - Linting (Ruff)
 - Type checking (mypy)
 - Quality reports (JSON, Markdown, HTML)
@@ -311,24 +320,42 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 # Quick score (fast, no LLM)
 python -m tapps_agents.cli reviewer score file.py
 
-# Full review (with LLM feedback)
+# Full review (with LLM feedback and all improvements)
 python -m tapps_agents.cli reviewer review file.py
 
 # Quality tools
 python -m tapps_agents.cli reviewer lint file.py
 python -m tapps_agents.cli reviewer type-check file.py
 python -m tapps_agents.cli reviewer report . json markdown html
+
+# Batch operations
+python -m tapps_agents.cli reviewer review file1.py file2.py --max-workers 4
+python -m tapps_agents.cli reviewer review --pattern "src/**/*.py"
 ```
 
 **Scoring Metrics**:
 - **Complexity Score** (0-10): Cyclomatic complexity
 - **Security Score** (0-10): Vulnerability detection
-- **Maintainability Score** (0-10): Code quality metrics
-- **Test Coverage** (0-10): Test coverage analysis
-- **Performance Score** (0-10): Performance patterns
+- **Maintainability Score** (0-10): Code quality metrics (with specific issues)
+- **Test Coverage** (0-10): Test coverage analysis (accurate: 0.0 when no tests exist)
+- **Performance Score** (0-10): Performance patterns (with specific bottlenecks)
 - **Overall Score** (0-100): Weighted combination
 
+**Review Output Includes** (2026-01-16):
+- **maintainability_issues**: List of specific maintainability issues with line numbers, severity, and suggestions
+- **performance_issues**: List of performance bottlenecks with line numbers, operation type, and context
+- **structured_feedback**: Always provided (summary, strengths, issues, recommendations, priority)
+- **file_context**: File status (new/modified/existing) for context-aware quality gates
+- **quality_gate**: Quality gate results with context-adapted thresholds
+
+**Context-Aware Quality Gates**:
+- **New files**: Lenient thresholds (overall: 5.0, security: 6.0, coverage: 0%)
+- **Modified files**: Standard thresholds (overall: 8.0, security: 8.5, coverage: 70%)
+- **Existing files**: Strict thresholds (overall: 8.0, security: 8.5, coverage: 80%)
+
 **Expert Integration**: Consults security, code quality, and performance experts.
+
+**See Also**: `docs/REVIEWER_FEEDBACK_IMPROVEMENTS_SUMMARY.md` for complete feature documentation.
 
 ---
 

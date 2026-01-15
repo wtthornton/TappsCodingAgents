@@ -7,6 +7,49 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.15] - 2026-01-16
+
+### Added
+- **Reviewer Agent Feedback Improvements** - Comprehensive enhancements based on user feedback (all 6 phases complete)
+  - **Phase 1: Test Coverage Detection Fix** - Returns 0.0% when no tests exist (previously 5.0-6.0)
+  - **Phase 2: Maintainability Issues** - Specific issues with line numbers, severity, and actionable suggestions
+  - **Phase 3: Structured Feedback** - Always provides actionable feedback (summary, strengths, issues, recommendations, priority)
+  - **Phase 4: Performance Issues** - Performance bottlenecks with line numbers, operation type, and context
+  - **Phase 5: Type Checking Scores** - Reflects actual mypy errors (not static 5.0)
+  - **Phase 6: Context-Aware Quality Gates** - Adapts thresholds based on file status (new/modified/existing)
+    - New files: Lenient thresholds (overall: 5.0, security: 6.0, coverage: 0%)
+    - Modified files: Standard thresholds (overall: 8.0, security: 8.5, coverage: 70%)
+    - Existing files: Strict thresholds (overall: 8.0, security: 8.5, coverage: 80%)
+  - Created `tapps_agents/agents/reviewer/issue_tracking.py` - Issue tracking dataclasses
+  - Created `tapps_agents/agents/reviewer/context_detector.py` - File context detection
+  - Created `tests/unit/agents/test_reviewer_feedback_improvements.py` - Comprehensive test coverage (8 new tests)
+
+### Fixed
+- **E2E Test Fixes** - Fixed critical bugs found during e2e test execution
+  - Fixed `log_path` NameError: Replaced all direct `log_path` file writes with `write_debug_log()` calls
+  - Fixed `project_root` UnboundLocalError: Changed to `self._project_root` in quality gates section
+  - Fixed maintainability/performance issues not included: Moved code outside `include_explanations` block
+- **Test Coverage Detection** - Fixed heuristic to return 0.0 when no test files exist
+- **Type Checking Score** - Fixed mypy execution to properly parse error output and calculate scores
+- **Maintainability/Performance Issues** - Fixed issue where problems weren't included in review output
+
+### Changed
+- **Reviewer Agent Output** - Enhanced review output structure:
+  - Added `maintainability_issues` field with specific issues and line numbers
+  - Added `performance_issues` field with bottlenecks and line numbers
+  - Added `structured_feedback` field always provided (summary, strengths, issues, recommendations)
+  - Added `file_context` field for context-aware quality gates
+- **Quality Gates** - Now context-aware (adapts thresholds based on file status)
+
+### Documentation
+- Added `docs/REVIEWER_FEEDBACK_IMPROVEMENTS_SUMMARY.md` - Complete feature documentation
+- Updated `docs/IMPLEMENTATION_PROGRESS.md` - Added E2E test fixes section
+- Updated `docs/REVIEWER_FEEDBACK_IMPLEMENTATION_PLAN.md` - Marked all phases complete with test results
+- Updated `docs/CONFIGURATION.md` - Documented new reviewer agent features
+- Updated `docs/API.md` - Added comprehensive reviewer agent features section
+- Updated `README.md` - Added reviewer agent enhancements to overview
+- Updated `.cursor/rules/agent-capabilities.mdc` - Documented new reviewer features
+
 ## [3.5.14] - 2026-01-16
 
 ### Changed

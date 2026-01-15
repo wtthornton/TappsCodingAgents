@@ -51,6 +51,8 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md)** - Playwright MCP detection and integration guide
 
 ### Quality Improvements (Completed)
+- **[Reviewer Agent Feedback Improvements](REVIEWER_FEEDBACK_IMPROVEMENTS_SUMMARY.md)** - ✅ All 6 phases complete (2026-01-16): Test coverage detection fix, maintainability issues, structured feedback, performance issues, type checking scores, context-aware quality gates
+- **[Reviewer Agent Feedback Implementation Plan](REVIEWER_FEEDBACK_IMPLEMENTATION_PLAN.md)** - Detailed implementation plan and progress tracking
 - **[Quality Improvements - Epic 19](QUALITY_IMPROVEMENTS_EPIC_19.md)** - Maintainability improvements summary
 - **[Complexity Reduction - Epic 20](COMPLEXITY_REDUCTION_EPIC_20.md)** - Complexity reduction achievements and refactoring details
 

@@ -90,6 +90,17 @@ agents:
     min_confidence_threshold: 0.8       # Minimum expert confidence (0.0-1.0)
 ```
 
+**Reviewer Agent Features (2026-01-16):**
+- ✅ **Test Coverage Detection:** Returns 0.0% when no tests exist (previously 5.0-6.0)
+- ✅ **Maintainability Issues:** Provides specific issues with line numbers, severity, and suggestions
+- ✅ **Structured Feedback:** Always provides actionable feedback (summary, strengths, issues, recommendations)
+- ✅ **Performance Issues:** Tracks performance bottlenecks with line numbers and context
+- ✅ **Type Checking Scores:** Reflects actual mypy errors (not static 5.0)
+- ✅ **Context-Aware Quality Gates:** Adapts thresholds based on file status (new/modified/existing):
+  - **New files:** Lenient thresholds (overall: 5.0, security: 6.0, coverage: 0%)
+  - **Modified files:** Standard thresholds (overall: 8.0, security: 8.5, coverage: 70%)
+  - **Existing files:** Strict thresholds (overall: 8.0, security: 8.5, coverage: 80%)
+
 ### Agent Configuration: All Agents
 
 All agents support `min_confidence_threshold`. Note: `model` configuration has been removed as all LLM operations are handled by Cursor Skills.

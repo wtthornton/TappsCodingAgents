@@ -501,7 +501,7 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 - **Testing**: 
   - **tester** ✅ - Test generation (unit, integration), test execution, coverage analysis
 - **Quality**: 
-  - **reviewer** ✅ - Code review with 5-metric scoring (complexity, security, maintainability, test coverage, performance), linting (Ruff), type checking (mypy), duplication detection, security scanning, project analysis, service analysis
+  - **reviewer** ✅ - Code review with 5-metric scoring (complexity, security, maintainability, test coverage, performance), actionable feedback with specific issues and line numbers, structured feedback always provided, context-aware quality gates, linting (Ruff), type checking (mypy), duplication detection, security scanning, project analysis, service analysis
   - **improver** ✅ - Code refactoring, performance optimization, quality improvement suggestions
 - **Operations**: 
   - **ops** ✅ - Security auditing, compliance checking (GDPR, HIPAA, PCI-DSS), dependency auditing, deployment planning
@@ -514,7 +514,17 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 
 ### Code Scoring System
 
-The Reviewer Agent includes a comprehensive code scoring system with 5 objective metrics:
+The Reviewer Agent includes a comprehensive code scoring system with 5 objective metrics and actionable feedback (2026-01-16):
+
+**Enhanced Features:**
+- ✅ **Accurate Test Coverage:** Returns 0.0% when no tests exist (not 5.0-6.0)
+- ✅ **Maintainability Issues:** Specific issues with line numbers, severity, and suggestions
+- ✅ **Structured Feedback:** Always provides actionable feedback (summary, strengths, issues, recommendations, priority)
+- ✅ **Performance Issues:** Performance bottlenecks with line numbers and context
+- ✅ **Accurate Type Checking:** Reflects actual mypy errors (not static 5.0)
+- ✅ **Context-Aware Quality Gates:** Adapts thresholds for new/modified/existing files
+
+The Reviewer Agent scoring system includes:
 
 1. **Complexity Score** (0-10): Cyclomatic complexity analysis using Radon
 2. **Security Score** (0-10): Vulnerability detection using Bandit + heuristics
@@ -574,7 +584,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `ops` - Security scanning, compliance checks, dependency auditing, deployment planning
 - `orchestrator` - Workflow management, step coordination, gate decisions
 - `planner` - Create plans, user stories, task breakdowns
-- `reviewer` - Code review, scoring, linting, type checking, reports, duplication detection, security scanning, project/service analysis
+- `reviewer` - Code review, scoring, actionable feedback with specific issues, structured feedback, context-aware quality gates, linting, type checking, reports, duplication detection, security scanning, project/service analysis
 - `tester` - Generate and run tests, test coverage
 
 **Workflow State Management:**

@@ -556,6 +556,160 @@ Planner Agent - Story/epic planning and task breakdown.
 
 Reviewer Agent - Code review with Code Scoring.
 
+### Reviewer Agent Features (2026-01-16)
+
+The reviewer agent has been enhanced with comprehensive feedback improvements:
+
+#### Test Coverage Detection
+- **Accurate Coverage:** Returns 0.0% when no test files exist (previously 5.0-6.0)
+- **Neutral Score:** Returns 5.0 when test files exist but no coverage data available
+- **Actual Coverage:** Uses real coverage data when available
+
+#### Maintainability Issues
+- **Specific Issues:** Provides detailed maintainability issues with:
+  - Line numbers
+  - Issue type (missing docstrings, long functions, deep nesting, missing type hints)
+  - Severity (high, medium, low)
+  - Actionable suggestions
+- **Summary Statistics:** Includes total count, breakdown by severity and type
+
+#### Structured Feedback
+- **Always Provided:** Structured feedback always returned (even when LLM unavailable):
+  - Summary with overall assessment
+  - Strengths list (what's good)
+  - Issues list with severity and recommendations
+  - Actionable recommendations
+  - Priority level (low/medium/high)
+- **Backward Compatible:** Works in both Cursor and CLI modes
+
+#### Performance Issues
+- **Line Numbers:** Performance bottlenecks include specific line numbers
+- **Operation Types:** Identifies nested loops, expensive operations, bottlenecks
+- **Context:** Provides context about where issues occur
+- **Suggestions:** Actionable suggestions for improvement
+
+#### Type Checking Scores
+- **Actual Errors:** Scores reflect actual mypy errors (not static 5.0)
+- **Error Details:** Includes error codes, expected vs actual types
+- **Accurate Scoring:** Files with type errors show score < 10.0
+
+#### Context-Aware Quality Gates
+- **File Context Detection:** Automatically detects if file is new, modified, or existing
+- **Adaptive Thresholds:**
+  - **New files:** Lenient thresholds (overall: 5.0, security: 6.0, coverage: 0%)
+  - **Modified files:** Standard thresholds (overall: 8.0, security: 8.5, coverage: 70%)
+  - **Existing files:** Strict thresholds (overall: 8.0, security: 8.5, coverage: 80%)
+- **Context Information:** Includes file context in review output
+
+### Example Usage
+
+```python
+from tapps_agents.agents.reviewer.agent import ReviewerAgent
+
+agent = ReviewerAgent()
+await agent.activate()
+
+# Review a file (includes all improvements)
+result = await agent.review_file(
+    "src/file.py",
+    include_scoring=True,
+    include_llm_feedback=True
+)
+
+# Access test coverage (accurate for files with no tests)
+coverage = result["scoring"]["test_coverage_score"]  # 0.0 when no tests exist
+
+# Access maintainability issues
+if "maintainability_issues" in result:
+    for issue in result["maintainability_issues"]:
+        print(f"Line {issue['line_number']}: {issue['message']}")
+        print(f"  Severity: {issue['severity']}")
+        print(f"  Suggestion: {issue['suggestion']}")
+
+# Access performance issues
+if "performance_issues" in result:
+    for issue in result["performance_issues"]:
+        print(f"Line {issue['line_number']}: {issue['message']}")
+
+# Access structured feedback
+if "feedback" in result and "structured_feedback" in result["feedback"]:
+    structured = result["feedback"]["structured_feedback"]
+    print(f"Summary: {structured['summary']}")
+    print(f"Priority: {structured['priority']}")
+
+# Access file context (for quality gates)
+if "file_context" in result:
+    context = result["file_context"]
+    print(f"File status: {context['status']}")  # 'new', 'modified', or 'existing'
+    print(f"Thresholds applied: {context['thresholds_applied']}")
+```
+
+### Review Output Structure
+
+```python
+{
+    "file": "src/file.py",
+    "scoring": {
+        "overall_score": 75.0,
+        "test_coverage_score": 0.0,  # Accurate: 0.0 when no tests exist
+        "maintainability_score": 7.5,
+        "performance_score": 8.0,
+        "type_checking_score": 8.5,  # Reflects actual mypy errors
+        # ... other scores
+    },
+    "maintainability_issues": [  # NEW: Specific issues
+        {
+            "issue_type": "missing_docstring",
+            "message": "Function 'calculate_sum' missing docstring",
+            "line_number": 5,
+            "severity": "medium",
+            "suggestion": "Add docstring describing function purpose and parameters",
+            "function_name": "calculate_sum"
+        },
+        # ... more issues
+    ],
+    "performance_issues": [  # NEW: Performance bottlenecks
+        {
+            "issue_type": "nested_loops",
+            "message": "Nested for loops detected in function 'process_data'",
+            "line_number": 15,
+            "severity": "high",
+            "suggestion": "Consider using itertools.product() or list comprehensions",
+            "operation_type": "loop",
+            "context": "Nested in function 'process_data'"
+        },
+        # ... more issues
+    ],
+    "feedback": {
+        "structured_feedback": {  # NEW: Always provided
+            "summary": "Code quality is good with some areas for improvement",
+            "strengths": ["Well-structured code", "Good security practices"],
+            "issues": [
+                {"category": "maintainability", "priority": "medium", ...},
+                {"category": "performance", "priority": "high", ...}
+            ],
+            "recommendations": ["Add docstrings", "Optimize nested loops"],
+            "priority": "medium"
+        }
+    },
+    "file_context": {  # NEW: Context-aware quality gates
+        "status": "new",  # 'new', 'modified', or 'existing'
+        "age_days": 0.5,
+        "confidence": 0.9,
+        "thresholds_applied": "new_file"
+    },
+    "quality_gate": {
+        "passed": True,
+        "thresholds": {
+            "overall_min": 5.0,  # Lower for new files
+            "security_min": 6.0,
+            "test_coverage_min": 0.0
+        },
+        # ... quality gate results
+    }
+}
+```
+
 
 ## Tester Agent
 
