@@ -362,24 +362,54 @@ Quality gates are enforced automatically based on configured thresholds:
    - **jscpd**: Warn if duplication >= 3%, block if >= 10%
    - **pip-audit**: Block if CRITICAL vulnerabilities found
 
-**Gate Enforcement Logic:**
+**Gate Enforcement Logic (Context-Aware - 2026-01-16):**
+
+Quality gates now adapt based on file context (new/modified/existing):
 
 ```python
-# Pseudo-code for quality gate enforcement
-def enforce_quality_gates(scores, tool_results):
+# Pseudo-code for context-aware quality gate enforcement
+def enforce_quality_gates(scores, tool_results, file_context):
+    # Determine thresholds based on file context
+    if file_context["status"] == "new":
+        thresholds = {
+            "overall_min": 5.0,
+            "security_min": 6.0,
+            "coverage_min": 0.0
+        }
+    elif file_context["status"] == "modified":
+        thresholds = {
+            "overall_min": 8.0,
+            "security_min": 8.5,
+            "coverage_min": 70.0
+        }
+    else:  # existing
+        thresholds = {
+            "overall_min": 8.0,
+            "security_min": 8.5,
+            "coverage_min": 80.0
+        }
+    
     gates_passed = True
     blocking_issues = []
     warnings = []
     
-    # Overall score gate
-    if scores["overall_score"] < threshold:
+    # Overall score gate (context-aware)
+    if scores["overall_score"] < thresholds["overall_min"]:
         gates_passed = False
-        blocking_issues.append("Overall score below threshold")
+        blocking_issues.append(f"Overall score {scores['overall_score']} below threshold {thresholds['overall_min']} for {file_context['status']} files")
     
-    # Security gate (always blocking)
-    if scores["security_score"] < 7.0:
+    # Security gate (context-aware, but still strict)
+    if scores["security_score"] < thresholds["security_min"]:
         gates_passed = False
-        blocking_issues.append("Security score below required threshold")
+        blocking_issues.append(f"Security score {scores['security_score']} below threshold {thresholds['security_min']} for {file_context['status']} files")
+    
+    # Test coverage gate (context-aware)
+    if scores["test_coverage_score"] < thresholds["coverage_min"]:
+        if file_context["status"] == "new":
+            warnings.append(f"Test coverage {scores['test_coverage_score']}% (expected for new files)")
+        else:
+            gates_passed = False
+            blocking_issues.append(f"Test coverage {scores['test_coverage_score']}% below threshold {thresholds['coverage_min']}%")
     
     # Tool-specific gates
     if tool_results["ruff"]["score"] < 5.0:
@@ -389,7 +419,8 @@ def enforce_quality_gates(scores, tool_results):
     return {
         "passed": gates_passed,
         "blocking_issues": blocking_issues,
-        "warnings": warnings
+        "warnings": warnings,
+        "thresholds_applied": thresholds
     }
 ```
 
