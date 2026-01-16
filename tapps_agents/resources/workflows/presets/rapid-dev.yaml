@@ -70,6 +70,7 @@ workflow:
         - src/
       creates:
         - tests/
+      condition: mandatory
       next: complete
       
     - id: complete

@@ -265,7 +265,7 @@ class KBLookup:
             LookupResult with documentation content
         """
         # #region agent log
-        from ...core.debug_logger import write_debug_log
+        from ..core.debug_logger import write_debug_log
         write_debug_log(
             {
                 "sessionId": "debug-session",

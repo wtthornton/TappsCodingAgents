@@ -45,7 +45,7 @@ class Context7AgentHelper:
             project_root = Path.cwd()
 
         # #region agent log
-        from ...core.debug_logger import write_debug_log
+        from ..core.debug_logger import write_debug_log
         # Extract values before JSON serialization to handle MagicMock objects in tests
         config_exists = config is not None
         context7_config_exists = False
@@ -266,7 +266,7 @@ class Context7AgentHelper:
             Dictionary with documentation content, or None if not found
         """
         # #region agent log
-        from ...core.debug_logger import write_debug_log
+        from ..core.debug_logger import write_debug_log
         write_debug_log(
             {
                 "sessionId": "debug-session",

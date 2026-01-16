@@ -355,6 +355,8 @@ Based on comprehensive reviewer agent evaluation feedback, we've identified 6 cr
 
 Based on comprehensive user feedback from HomeIQ project usage, we've identified a critical gap: **Users (and AI assistants) are bypassing Simple Mode workflows and doing manual code edits instead of using structured workflows.**
 
+**See Also:** `docs/HYBRID_FLOW_EVALUATION_RECOMMENDATIONS.md` - High-impact recommendations from HomeIQ Hybrid Flow evaluation with specific actionable items and quick wins.
+
 **Key Findings:**
 - Codebase search and file reading tools: ⭐⭐⭐⭐⭐ (5/5) - Excellent
 - Simple Mode workflow usage: ⭐⭐ (2/5) - **Not Used**

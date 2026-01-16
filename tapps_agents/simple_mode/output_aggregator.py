@@ -164,31 +164,135 @@ class SimpleModeOutputAggregator:
             return str(aggregated)
 
     def _format_markdown_summary(self, aggregated: dict[str, Any]) -> str:
-        """Format summary as Markdown."""
+        """Format summary as Markdown with comprehensive artifact summary."""
         lines = [
-            f"# Workflow Summary: {aggregated['workflow_type'].title()}",
+            f"# ✅ Workflow Summary: {aggregated['workflow_type'].title()}",
             "",
             f"**Workflow ID:** `{aggregated['workflow_id']}`",
             "",
-            "## Execution Summary",
+            "## 📊 Execution Summary",
             "",
             f"- **Total Steps:** {aggregated['summary']['total_steps']}",
             f"- **Successful Steps:** {aggregated['summary']['successful_steps']}",
             f"- **Failed Steps:** {aggregated['summary']['failed_steps']}",
             f"- **Success Rate:** {aggregated['summary']['success_rate']:.1f}%",
             "",
-            "## Step Details",
-            "",
         ]
+
+        # Collect all artifacts and metrics
+        all_artifacts = []
+        test_coverage = None
+        quality_score = None
+        test_files = []
+        doc_files = []
+        code_files = []
+
+        for step in aggregated["steps"]:
+            # Collect artifacts
+            if "artifacts" in step and step["artifacts"]:
+                all_artifacts.extend(step["artifacts"])
+            
+            if "file_paths" in step and step["file_paths"]:
+                for file_path in step["file_paths"]:
+                    if "test" in str(file_path).lower():
+                        test_files.append(file_path)
+                    elif any(doc_ext in str(file_path).lower() for doc_ext in [".md", ".mdx", ".txt", "docs/"]):
+                        doc_files.append(file_path)
+                    else:
+                        code_files.append(file_path)
+            
+            # Extract test coverage from tester agent output
+            if step["agent"] == "tester" and step["success"]:
+                step_output = next(
+                    (s["output"] for s in aggregated["raw_outputs"] if s["step_number"] == step["step_number"]),
+                    {}
+                )
+                if isinstance(step_output, dict):
+                    if "coverage" in step_output:
+                        test_coverage = step_output["coverage"]
+                    elif "test_coverage" in step_output:
+                        test_coverage = step_output["test_coverage"]
+            
+            # Extract quality score from reviewer agent output
+            if step["agent"] == "reviewer" and step["success"]:
+                step_output = next(
+                    (s["output"] for s in aggregated["raw_outputs"] if s["step_number"] == step["step_number"]),
+                    {}
+                )
+                if isinstance(step_output, dict):
+                    if "overall_score" in step_output:
+                        quality_score = step_output["overall_score"]
+                    elif "quality_score" in step_output:
+                        quality_score = step_output["quality_score"]
+                    elif "scores" in step_output and isinstance(step_output["scores"], dict):
+                        quality_score = step_output["scores"].get("overall")
+
+        # Add comprehensive artifact summary
+        if all_artifacts or test_files or doc_files or code_files:
+            lines.append("## 📦 Artifacts Created")
+            lines.append("")
+            
+            if doc_files:
+                lines.append(f"### 📝 Documentation ({len(doc_files)} files)")
+                for doc_file in doc_files[:10]:  # Limit to first 10
+                    lines.append(f"- `{doc_file}`")
+                if len(doc_files) > 10:
+                    lines.append(f"- ... and {len(doc_files) - 10} more")
+                lines.append("")
+            
+            if code_files:
+                lines.append(f"### 💻 Code Files ({len(code_files)} files)")
+                for code_file in code_files[:10]:  # Limit to first 10
+                    lines.append(f"- `{code_file}`")
+                if len(code_files) > 10:
+                    lines.append(f"- ... and {len(code_files) - 10} more")
+                lines.append("")
+            
+            if test_files:
+                lines.append(f"### 🧪 Test Files ({len(test_files)} files)")
+                for test_file in test_files[:10]:  # Limit to first 10
+                    lines.append(f"- `{test_file}`")
+                if len(test_files) > 10:
+                    lines.append(f"- ... and {len(test_files) - 10} more")
+                lines.append("")
+
+        # Add metrics summary
+        if quality_score is not None or test_coverage is not None:
+            lines.append("## 📊 Quality Metrics")
+            lines.append("")
+            if quality_score is not None:
+                score_icon = "✅" if quality_score >= 75 else "⚠️" if quality_score >= 60 else "❌"
+                lines.append(f"- **Quality Score:** {score_icon} {quality_score}/100")
+            if test_coverage is not None:
+                coverage_icon = "✅" if test_coverage >= 80 else "⚠️" if test_coverage >= 60 else "❌"
+                lines.append(f"- **Test Coverage:** {coverage_icon} {test_coverage:.1f}%")
+            lines.append("")
+
+        # Add step details
+        lines.append("## Step Details")
+        lines.append("")
 
         for step in aggregated["steps"]:
             status_icon = "✅" if step["success"] else "❌"
             lines.append(f"### {status_icon} Step {step['step_number']}: {step['step_name']}")
             lines.append(f"- **Agent:** {step['agent']}")
-            if "artifacts" in step:
+            
+            if "artifacts" in step and step["artifacts"]:
                 lines.append(f"- **Artifacts:** {len(step['artifacts'])} created")
-            if "file_paths" in step:
+                # Show first 3 artifact paths
+                for artifact in step["artifacts"][:3]:
+                    lines.append(f"  - `{artifact}`")
+                if len(step["artifacts"]) > 3:
+                    lines.append(f"  - ... and {len(step['artifacts']) - 3} more")
+            
+            if "file_paths" in step and step["file_paths"]:
                 lines.append(f"- **Files:** {len(step['file_paths'])} created")
+                # Show first 3 file paths
+                for file_path in step["file_paths"][:3]:
+                    lines.append(f"  - `{file_path}`")
+                if len(step["file_paths"]) > 3:
+                    lines.append(f"  - ... and {len(step['file_paths']) - 3} more")
+            
             if "instruction" in step and step.get("auto_executable"):
                 lines.append(f"- **Auto-Executable:** Yes")
                 if "skill_command" in step["instruction"]:
