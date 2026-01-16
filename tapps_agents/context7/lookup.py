@@ -286,35 +286,31 @@ class KBLookup:
 
         # Step 1: Check KB cache (exact match)
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "E",
-                    "location": "context7/lookup.py:lookup:before_cache_check",
-                    "message": "About to check KB cache",
-                    "data": {"library": library, "topic": topic},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E",
+                "message": "About to check KB cache",
+                "data": {"library": library, "topic": topic},
+            },
+            project_root=self.project_root if hasattr(self, 'project_root') else None,
+            location="context7/lookup.py:lookup:before_cache_check",
+        )
         # #endregion
         cached_entry = self.kb_cache.get(library, topic)
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "E",
-                    "location": "context7/lookup.py:lookup:after_cache_check",
-                    "message": "Cache check completed",
-                    "data": {"library": library, "cached": cached_entry is not None},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E",
+                "message": "Cache check completed",
+                "data": {"library": library, "cached": cached_entry is not None},
+            },
+            project_root=self.project_root if hasattr(self, 'project_root') else None,
+            location="context7/lookup.py:lookup:after_cache_check",
+        )
         # #endregion
         if cached_entry:
             response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000
@@ -457,19 +453,17 @@ class KBLookup:
         from .backup_client import call_context7_resolve_with_fallback
 
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "E",
-                    "location": "context7/lookup.py:lookup:before_resolve",
-                    "message": "About to resolve library ID",
-                    "data": {"library": library, "topic": topic, "has_mcp_gateway": self.mcp_gateway is not None},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-            pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "E",
+                "message": "About to resolve library ID",
+                "data": {"library": library, "topic": topic, "has_mcp_gateway": self.mcp_gateway is not None},
+            },
+            project_root=self.project_root if hasattr(self, 'project_root') else None,
+            location="context7/lookup.py:lookup:before_resolve",
+        )
         # #endregion
         
         # CRITICAL FIX: Check quota BEFORE making API calls
@@ -496,35 +490,33 @@ class KBLookup:
         
         try:
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "E",
-                        "location": "context7/lookup.py:lookup:before_await_resolve",
-                        "message": "About to await call_context7_resolve_with_fallback",
-                        "data": {"library": library},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "message": "About to await call_context7_resolve_with_fallback",
+                    "data": {"library": library},
+                },
+                project_root=self.project_root if hasattr(self, 'project_root') else None,
+                location="context7/lookup.py:lookup:before_await_resolve",
+            )
             # #endregion
             resolve_result = await call_context7_resolve_with_fallback(
                 library, self.mcp_gateway
             )
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "E",
-                        "location": "context7/lookup.py:lookup:after_resolve",
-                        "message": "call_context7_resolve_with_fallback returned",
-                        "data": {"library": library, "success": resolve_result.get("success") if isinstance(resolve_result, dict) else None},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "message": "call_context7_resolve_with_fallback returned",
+                    "data": {"library": library, "success": resolve_result.get("success") if isinstance(resolve_result, dict) else None},
+                },
+                project_root=self.project_root if hasattr(self, 'project_root') else None,
+                location="context7/lookup.py:lookup:after_resolve",
+            )
             # #endregion
             if resolve_result.get("success"):
                 matches = resolve_result.get("result", {}).get("matches", [])

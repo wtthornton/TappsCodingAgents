@@ -81,18 +81,17 @@ class Context7AgentHelper:
         if not context7_config or not context7_config.enabled:
             self.enabled = False
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "C",
-                        "location": "context7/agent_integration.py:__init__:disabled",
-                        "message": "Context7 disabled in config",
-                        "data": {"context7_config": context7_config is not None, "enabled": context7_config.enabled if context7_config else False},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "message": "Context7 disabled in config",
+                    "data": {"context7_config": context7_config is not None, "enabled": context7_config.enabled if context7_config else False},
+                },
+                project_root=project_root,
+                location="context7/agent_integration.py:__init__:disabled",
+            )
             # #endregion
             return
 
@@ -102,34 +101,32 @@ class Context7AgentHelper:
             from .backup_client import _ensure_context7_api_key
             api_key_result = _ensure_context7_api_key()
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "A",
-                        "location": "context7/agent_integration.py:__init__:api_key_ensured",
-                        "message": "API key ensured",
-                        "data": {"api_key_available": api_key_result is not None, "key_length": len(api_key_result) if api_key_result else 0},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "message": "API key ensured",
+                    "data": {"api_key_available": api_key_result is not None, "key_length": len(api_key_result) if api_key_result else 0},
+                },
+                project_root=project_root,
+                location="context7/agent_integration.py:__init__:api_key_ensured",
+            )
             # #endregion
         except Exception as e:
             logger.debug(f"Could not ensure Context7 API key availability: {e}")
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "A",
-                        "location": "context7/agent_integration.py:__init__:api_key_error",
-                        "message": "API key ensure failed",
-                        "data": {"error": str(e)},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "message": "API key ensure failed",
+                    "data": {"error": str(e)},
+                },
+                project_root=project_root,
+                location="context7/agent_integration.py:__init__:api_key_error",
+            )
             # #endregion
 
         # Validate credentials (non-blocking, only warn if Context7 is actually needed)
@@ -162,18 +159,17 @@ class Context7AgentHelper:
             self.config = context7_config
             self.project_root = project_root
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "C",
-                        "location": "context7/agent_integration.py:__init__:enabled",
-                        "message": "Context7AgentHelper enabled=True",
-                        "data": {"enabled": True},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "message": "Context7AgentHelper enabled=True",
+                    "data": {"enabled": True},
+                },
+                project_root=project_root,
+                location="context7/agent_integration.py:__init__:enabled",
+            )
             # #endregion
 
             # Initialize cache structure
@@ -203,18 +199,17 @@ class Context7AgentHelper:
             )
             
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "C",
-                        "location": "context7/agent_integration.py:__init__:library_detector_init",
-                        "message": "Library detector initialized",
-                        "data": {"library_detector_created": self.library_detector is not None},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "message": "Library detector initialized",
+                    "data": {"library_detector_created": self.library_detector is not None},
+                },
+                project_root=project_root,
+                location="context7/agent_integration.py:__init__:library_detector_init",
+            )
             # #endregion
         except Exception as e:
             # If Context7 initialization fails, disable it gracefully
@@ -237,18 +232,17 @@ class Context7AgentHelper:
             self.library_detector = None
             self.doc_manager = None  # Phase 7.1: Doc manager disabled on init failure
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "C",
-                        "location": "context7/agent_integration.py:__init__:init_failed",
-                        "message": "Context7 initialization failed, disabled",
-                        "data": {"error": str(e), "enabled": False},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "C",
+                    "message": "Context7 initialization failed, disabled",
+                    "data": {"error": str(e), "enabled": False},
+                },
+                project_root=project_root,
+                location="context7/agent_integration.py:__init__:init_failed",
+            )
             # #endregion
 
     async def get_documentation(
@@ -284,18 +278,17 @@ class Context7AgentHelper:
 
         try:
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "E",
-                        "location": "context7/agent_integration.py:get_documentation:before_lookup",
-                        "message": "About to call kb_lookup.lookup",
-                        "data": {"library": library, "topic": topic},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "message": "About to call kb_lookup.lookup",
+                    "data": {"library": library, "topic": topic},
+                },
+                project_root=self.project_root if hasattr(self, 'project_root') else None,
+                location="context7/agent_integration.py:get_documentation:before_lookup",
+            )
             # #endregion
             
             # Check if we have saved documentation first (offline access)
@@ -328,18 +321,17 @@ class Context7AgentHelper:
                     logger.debug(f"Failed to auto-save documentation: {e}")
             
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "E",
-                        "location": "context7/agent_integration.py:get_documentation:after_lookup",
-                        "message": "kb_lookup.lookup returned",
-                        "data": {"library": library, "success": result.success if hasattr(result, 'success') else None},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "E",
+                    "message": "kb_lookup.lookup returned",
+                    "data": {"library": library, "success": result.success if hasattr(result, 'success') else None},
+                },
+                project_root=self.project_root if hasattr(self, 'project_root') else None,
+                location="context7/agent_integration.py:get_documentation:after_lookup",
+            )
             # #endregion
 
             if result.success:

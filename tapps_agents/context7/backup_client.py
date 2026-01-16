@@ -17,6 +17,7 @@ from typing import Any, Callable
 
 import httpx
 
+from ..core.debug_logger import write_debug_log
 from ..mcp.gateway import MCPGateway
 
 logger = logging.getLogger(__name__)
@@ -74,19 +75,16 @@ def _ensure_context7_api_key() -> str | None:
     # First check environment variable
     api_key = os.getenv("CONTEXT7_API_KEY")
     # #region agent log
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "A",
-                "location": "backup_client.py:_ensure_context7_api_key:env_check",
-                "message": "Checked environment variable",
-                "data": {"api_key_from_env": api_key is not None, "key_length": len(api_key) if api_key else 0},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "A",
+            "message": "Checked environment variable",
+            "data": {"api_key_from_env": api_key is not None, "key_length": len(api_key) if api_key else 0},
+        },
+        location="backup_client.py:_ensure_context7_api_key:env_check",
+    )
     # #endregion
     if api_key:
         return api_key
@@ -98,18 +96,16 @@ def _ensure_context7_api_key() -> str | None:
         key_manager = APIKeyManager()
         api_key = key_manager.load_api_key("context7")
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "A",
-                    "location": "backup_client.py:_ensure_context7_api_key:storage_load",
-                    "message": "Loaded from encrypted storage",
-                    "data": {"api_key_loaded": api_key is not None, "key_length": len(api_key) if api_key else 0},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except: pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "A",
+                "message": "Loaded from encrypted storage",
+                "data": {"api_key_loaded": api_key is not None, "key_length": len(api_key) if api_key else 0},
+            },
+            location="backup_client.py:_ensure_context7_api_key:storage_load",
+        )
         # #endregion
         
         if api_key:
@@ -117,51 +113,44 @@ def _ensure_context7_api_key() -> str | None:
             os.environ["CONTEXT7_API_KEY"] = api_key
             logger.debug("Loaded Context7 API key from encrypted storage")
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "A",
-                        "location": "backup_client.py:_ensure_context7_api_key:env_set",
-                        "message": "API key set in environment",
-                        "data": {"env_set_success": True},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "A",
+                    "message": "API key set in environment",
+                    "data": {"env_set_success": True},
+                },
+                location="backup_client.py:_ensure_context7_api_key:env_set",
+            )
             # #endregion
             return api_key
     except Exception as e:
         logger.debug(f"Could not load API key from encrypted storage: {e}")
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "A",
-                    "location": "backup_client.py:_ensure_context7_api_key:error",
-                    "message": "Failed to load from storage",
-                    "data": {"error": str(e)},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except: pass
-        # #endregion
-    
-    # #region agent log
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
+        write_debug_log(
+            {
                 "sessionId": "debug-session",
                 "runId": "run1",
                 "hypothesisId": "A",
-                "location": "backup_client.py:_ensure_context7_api_key:return_none",
-                "message": "Returning None - no API key available",
-                "data": {},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+                "message": "Failed to load from storage",
+                "data": {"error": str(e)},
+            },
+            location="backup_client.py:_ensure_context7_api_key:error",
+        )
+        # #endregion
+    
+    # #region agent log
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "A",
+            "message": "Returning None - no API key available",
+            "data": {},
+        },
+        location="backup_client.py:_ensure_context7_api_key:return_none",
+    )
     # #endregion
     return None
 
@@ -244,34 +233,29 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
     # #endregion
     api_key = _ensure_context7_api_key()
     # #region agent log
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "B",
-                "location": "backup_client.py:create_fallback_http_client:api_key_check",
-                "message": "API key check after _ensure_context7_api_key",
-                "data": {"api_key_available": api_key is not None, "key_length": len(api_key) if api_key else 0, "env_key_after": os.getenv("CONTEXT7_API_KEY") is not None},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run1",
+            "hypothesisId": "B",
+            "message": "API key check after _ensure_context7_api_key",
+            "data": {"api_key_available": api_key is not None, "key_length": len(api_key) if api_key else 0, "env_key_after": os.getenv("CONTEXT7_API_KEY") is not None},
+        },
+        location="backup_client.py:create_fallback_http_client:api_key_check",
+    )
     # #endregion
     if not api_key:
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "B",
-                    "location": "backup_client.py:67",
-                    "message": "RETURNING None, None (no API key)",
-                    "data": {},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except: pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run1",
+                "hypothesisId": "B",
+                "message": "RETURNING None, None (no API key)",
+                "data": {},
+            },
+            location="backup_client.py:67",
+        )
         # #endregion
         return None, None
     
@@ -334,18 +318,16 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                     params={"query": library_name},
                 )
                 # #region agent log
-                try:
-                    with open(log_path, "a", encoding="utf-8") as f:
-                        f.write(json.dumps({
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "F",
-                            "location": "backup_client.py:resolve_library_client",
-                            "message": "AFTER API call",
-                            "data": {"status_code": response.status_code, "library": library_name},
-                            "timestamp": int(datetime.now().timestamp() * 1000)
-                        }) + "\n")
-                except: pass
+                write_debug_log(
+                    {
+                        "sessionId": "debug-session",
+                        "runId": "run1",
+                        "hypothesisId": "F",
+                        "message": "AFTER API call",
+                        "data": {"status_code": response.status_code, "library": library_name},
+                    },
+                    location="backup_client.py:resolve_library_client",
+                )
                 # #endregion
                 
                 if response.status_code == 200:
@@ -362,18 +344,16 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                             "benchmarkScore": result.get("benchmarkScore"),
                         })
                     # #region agent log
-                    try:
-                        with open(log_path, "a", encoding="utf-8") as f:
-                            f.write(json.dumps({
-                                "sessionId": "debug-session",
-                                "runId": "run1",
-                                "hypothesisId": "F",
-                                "location": "backup_client.py:resolve_library_client",
-                                "message": "API SUCCESS",
-                                "data": {"library": library_name, "matches_count": len(matches)},
-                                "timestamp": int(datetime.now().timestamp() * 1000)
-                            }) + "\n")
-                    except: pass
+                    write_debug_log(
+                        {
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "F",
+                            "message": "API SUCCESS",
+                            "data": {"library": library_name, "matches_count": len(matches)},
+                        },
+                        location="backup_client.py:resolve_library_client",
+                    )
                     # #endregion
                     return {
                         "success": True,
@@ -410,18 +390,16 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                         logger.debug(f"Could not open circuit breaker on quota error: {cb_error}")
                     
                     # #region agent log
-                    try:
-                        with open(log_path, "a", encoding="utf-8") as f:
-                            f.write(json.dumps({
-                                "sessionId": "debug-session",
-                                "runId": "run1",
-                                "hypothesisId": "F",
-                                "location": "backup_client.py:resolve_library_client",
-                                "message": "API QUOTA EXCEEDED",
-                                "data": {"status_code": 429, "library": library_name, "message": quota_message},
-                                "timestamp": int(datetime.now().timestamp() * 1000)
-                            }) + "\n")
-                    except: pass
+                    write_debug_log(
+                        {
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "F",
+                            "message": "API QUOTA EXCEEDED",
+                            "data": {"status_code": 429, "library": library_name, "message": quota_message},
+                        },
+                        location="backup_client.py:resolve_library_client",
+                    )
                     # #endregion
                     return {
                         "success": False,
@@ -432,18 +410,16 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                     }
                 else:
                     # #region agent log
-                    try:
-                        with open(log_path, "a", encoding="utf-8") as f:
-                            f.write(json.dumps({
-                                "sessionId": "debug-session",
-                                "runId": "run1",
-                                "hypothesisId": "F",
-                                "location": "backup_client.py:resolve_library_client",
-                                "message": "API ERROR",
-                                "data": {"status_code": response.status_code, "library": library_name, "response_text": response.text[:200]},
-                                "timestamp": int(datetime.now().timestamp() * 1000)
-                            }) + "\n")
-                    except: pass
+                    write_debug_log(
+                        {
+                            "sessionId": "debug-session",
+                            "runId": "run1",
+                            "hypothesisId": "F",
+                            "message": "API ERROR",
+                            "data": {"status_code": response.status_code, "library": library_name, "response_text": response.text[:200]},
+                        },
+                        location="backup_client.py:resolve_library_client",
+                    )
                     # #endregion
                     return {
                         "success": False,
@@ -454,18 +430,16 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                     }
         except httpx.ConnectError as e:
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "F",
-                        "location": "backup_client.py:resolve_library_client",
-                        "message": "CONNECTION ERROR",
-                        "data": {"library": library_name, "error": str(e)},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "F",
+                    "message": "CONNECTION ERROR",
+                    "data": {"library": library_name, "error": str(e)},
+                },
+                location="backup_client.py:resolve_library_client",
+            )
             # #endregion
             
             # Record connection failure for offline mode detection
@@ -490,18 +464,16 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
             }
         except Exception as e:
             # #region agent log
-            try:
-                with open(log_path, "a", encoding="utf-8") as f:
-                    f.write(json.dumps({
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "F",
-                        "location": "backup_client.py:resolve_library_client",
-                        "message": "EXCEPTION",
-                        "data": {"library": library_name, "error": str(e)},
-                        "timestamp": int(datetime.now().timestamp() * 1000)
-                    }) + "\n")
-            except: pass
+            write_debug_log(
+                {
+                    "sessionId": "debug-session",
+                    "runId": "run1",
+                    "hypothesisId": "F",
+                    "message": "EXCEPTION",
+                    "data": {"library": library_name, "error": str(e)},
+                },
+                location="backup_client.py:resolve_library_client",
+            )
             # #endregion
             return {
                 "success": False,
@@ -707,18 +679,16 @@ def get_context7_client_with_fallback(
             "Using HTTP fallback with API key."
         )
         # #region agent log
-        try:
-            with open(log_path, "a", encoding="utf-8") as f:
-                f.write(json.dumps({
-                    "sessionId": "debug-session",
-                    "runId": "run2",
-                    "hypothesisId": "F",
-                    "location": "backup_client.py:get_context7_client_with_fallback:fix_applied",
-                    "message": "FIX APPLIED: Forcing HTTP fallback for Cursor MCP",
-                    "data": {"mcp_available_before": True, "mcp_available_after": False},
-                    "timestamp": int(datetime.now().timestamp() * 1000)
-                }) + "\n")
-        except: pass
+        write_debug_log(
+            {
+                "sessionId": "debug-session",
+                "runId": "run2",
+                "hypothesisId": "F",
+                "message": "FIX APPLIED: Forcing HTTP fallback for Cursor MCP",
+                "data": {"mcp_available_before": True, "mcp_available_after": False},
+            },
+            location="backup_client.py:get_context7_client_with_fallback:fix_applied",
+        )
         # #endregion
         mcp_available = False  # Force HTTP fallback
     
@@ -730,19 +700,16 @@ def get_context7_client_with_fallback(
     # Fallback to direct HTTP - requires API key
     api_available = check_context7_api_available()
     # #region agent log
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run2",
-                "hypothesisId": "F",
-                "location": "backup_client.py:get_context7_client_with_fallback:http_fallback",
-                "message": "Using HTTP fallback path",
-                "data": {"mcp_available": mcp_available, "api_available": api_available},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run2",
+            "hypothesisId": "F",
+            "message": "Using HTTP fallback path",
+            "data": {"mcp_available": mcp_available, "api_available": api_available},
+        },
+        location="backup_client.py:get_context7_client_with_fallback:http_fallback",
+    )
     # #endregion
     if not api_available:
         # R2/R3: Neither MCP nor API key available - provide clear error message
@@ -766,19 +733,16 @@ def get_context7_client_with_fallback(
     
     resolve_client, get_docs_client = create_fallback_http_client()
     # #region agent log
-    try:
-        with open(log_path, "a", encoding="utf-8") as f:
-            f.write(json.dumps({
-                "sessionId": "debug-session",
-                "runId": "run2",
-                "hypothesisId": "F",
-                "location": "backup_client.py:get_context7_client_with_fallback:return_http",
-                "message": "Returning HTTP fallback clients",
-                "data": {"use_mcp": False, "resolve_client_created": resolve_client is not None, "get_docs_client_created": get_docs_client is not None},
-                "timestamp": int(datetime.now().timestamp() * 1000)
-            }) + "\n")
-    except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
-        pass
+    write_debug_log(
+        {
+            "sessionId": "debug-session",
+            "runId": "run2",
+            "hypothesisId": "F",
+            "message": "Returning HTTP fallback clients",
+            "data": {"use_mcp": False, "resolve_client_created": resolve_client is not None, "get_docs_client_created": get_docs_client is not None},
+        },
+        location="backup_client.py:get_context7_client_with_fallback:return_http",
+    )
     # #endregion
     return mcp_gateway, False, "none", resolve_client, get_docs_client
 
