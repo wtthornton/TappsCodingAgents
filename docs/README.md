@@ -33,7 +33,9 @@ Welcome to the documentation for TappsCodingAgents.
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Skills + Claude Desktop Commands setup
 - **[Claude Desktop Commands Guide](CLAUDE_DESKTOP_COMMANDS.md)** - Using commands in Claude Desktop
-- **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users
+- **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users (includes workflow enforcement and suggestions)
+- **[Workflow Enforcement Guide](WORKFLOW_ENFORCEMENT_GUIDE.md)** - Guide for AI assistants on when to suggest workflows
+- **[Workflow Quick Reference](WORKFLOW_QUICK_REFERENCE.md)** - Quick reference for all Simple Mode workflows
 - **[Custom Skills Guide](CUSTOM_SKILLS_GUIDE.md)** - Creating, validating, and managing custom Skills
 - **[Cursor Rules Setup Guide](CURSOR_RULES_SETUP.md)** - Cursor Rules setup (auto-generated from YAML workflows - Epic 8)
 - **[Multi-Agent Orchestration Guide](MULTI_AGENT_ORCHESTRATION_GUIDE.md)**
@@ -55,6 +57,9 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Reviewer Agent Feedback Implementation Plan](REVIEWER_FEEDBACK_IMPLEMENTATION_PLAN.md)** - Detailed implementation plan and progress tracking
 - **[Quality Improvements - Epic 19](QUALITY_IMPROVEMENTS_EPIC_19.md)** - Maintainability improvements summary
 - **[Complexity Reduction - Epic 20](COMPLEXITY_REDUCTION_EPIC_20.md)** - Complexity reduction achievements and refactoring details
+- **[Workflow Enforcement & Suggestions](WORKFLOW_ENFORCEMENT_GUIDE.md)** - ✅ Complete (2026-01-16): Proactive workflow suggestions, mandatory test generation (80%+ coverage), test coverage gates (70% minimum), enhanced output visibility
+- **[Workflow Quick Reference](WORKFLOW_QUICK_REFERENCE.md)** - Quick reference guide for all Simple Mode workflows
+- **[Hybrid Flow Evaluation Recommendations](HYBRID_FLOW_EVALUATION_RECOMMENDATIONS.md)** - High-impact recommendations from HomeIQ evaluation with actionable items and quick wins
 
 ### SDLC & Quality Engine (Planned)
 - **[SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md)** - Comprehensive analysis of SDLC improvements and Dynamic Expert Engine

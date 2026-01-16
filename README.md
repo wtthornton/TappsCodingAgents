@@ -88,7 +88,7 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
   - 5 built-in role templates with sensible defaults
   - Fully customizable and extensible
 - **Simple Mode** ✅: Streamlined natural language interface with 10 orchestrators
-  - **Build Orchestrator**: Complete feature development (enhancer → planner → architect → designer → implementer → reviewer → tester)
+  - **Build Orchestrator**: Complete feature development (enhancer → planner → architect → designer → implementer → reviewer → tester) with mandatory test generation (80%+ coverage)
   - **Review Orchestrator**: Code quality review with improvement suggestions
   - **Fix Orchestrator**: Systematic bug fixing with debugging and verification
   - **Test Orchestrator**: Test generation and execution
@@ -98,6 +98,11 @@ See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for
   - **PR Orchestrator**: Pull request creation with quality scores (reviewer → documenter → PR creation)
   - **Epic Orchestrator**: Execute Epic documents with story dependency resolution
   - **Resume Orchestrator**: Resume interrupted workflows
+  - **Workflow Enforcement** ✅: Proactive workflow suggestions to increase adoption (40% → 80%+ target)
+    - Automatic workflow suggestions based on user intent
+    - Test coverage gates (70% minimum, loops back if not met)
+    - Enhanced output visibility with artifact summaries and metrics
+    - See `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` for complete guide
 - **Workflow Presets** (11): Predefined YAML workflows (rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues)
 - **YAML-First Architecture** ✅: YAML as single source of truth with strict schema enforcement
   - **Auto-Generated Artifacts**: Task manifests, Cursor Rules docs

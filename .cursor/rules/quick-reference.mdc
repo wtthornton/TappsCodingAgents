@@ -9,11 +9,13 @@ alwaysApply: false
 
 **For ALL development tasks, you should DEFAULT to using `@simple-mode` commands.**
 
+**New Feature:** Simple Mode now proactively suggests workflows when you request feature implementation, bug fixes, or code reviews. These suggestions help ensure you get automatic test generation, quality gates, and comprehensive documentation.
+
 ### Quick Decision Guide
 
 | User Wants To... | Use This Command |
 |------------------|------------------|
-| Build a new feature | `@simple-mode *build "description"` |
+| Build a new feature | `@simple-mode *build "description"` (includes mandatory tests, 80%+ coverage) |
 | Fix a bug/error | `@simple-mode *fix <file> "description"` |
 | Review code quality | `@simple-mode *review <file>` |
 | Add tests | `@simple-mode *test <file>` |

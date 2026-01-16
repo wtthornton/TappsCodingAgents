@@ -451,10 +451,43 @@ If user explicitly mentions "Simple Mode workflow", "follow the workflow", "use 
 4. **Report progress** step-by-step
 5. **Do NOT shortcut** - complete workflow provides value
 
+## Workflow Suggestion System
+
+**New Feature:** Workflow suggester automatically detects when workflows would be beneficial.
+
+**How It Works:**
+- Analyzes user input to detect intent (build, fix, review, test, refactor)
+- Suggests appropriate `@simple-mode` workflow with benefits
+- Only suggests when confidence is high (≥60%)
+
+**Example:**
+```
+User: "Add user authentication"
+
+🤖 Workflow Suggestion:
+"For new feature implementation, consider using:
+@simple-mode *build 'Add user authentication'
+
+Benefits:
+✅ Automatic test generation (80%+ coverage)
+✅ Quality gate enforcement (75+ score required)
+✅ Comprehensive documentation
+✅ Early bug detection
+✅ Full traceability
+
+Would you like me to proceed with the workflow?"
+```
+
+**Implementation:**
+- `tapps_agents/simple_mode/workflow_suggester.py` - Suggestion engine
+- Integrated into `SimpleModeHandler` for automatic suggestions
+- See `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` for complete guide
+
 ## Related Documentation
 
 - See `docs/SIMPLE_MODE_USER_GUIDE.md` for user guide with invocation options
 - See `.claude/skills/simple-mode/SKILL.md` for full skill definition
 - See `docs/SIMPLE_MODE_GUIDE.md` for complete documentation
 - See `docs/SIMPLE_MODE_WORKFLOW_COMPARISON.md` for workflow vs direct comparison
+- See `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` for workflow enforcement guide
 - See `.cursor/rules/agent-capabilities.mdc` for all agent capabilities

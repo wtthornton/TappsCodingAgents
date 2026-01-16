@@ -7,6 +7,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Workflow Enforcement & Suggestions** - Proactive workflow suggestions to increase adoption
+  - Created `WorkflowSuggester` class for automatic workflow recommendations
+  - Integrated suggester into `SimpleModeHandler` for proactive suggestions
+  - Added workflow suggestion system to Cursor rules
+  - Created `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` - Complete guide for AI assistants
+  - Created `docs/WORKFLOW_QUICK_REFERENCE.md` - Quick reference for all workflows
+- **Test Coverage Enforcement** - Mandatory test generation with coverage gates
+  - Made testing step mandatory in workflow presets (`simple-new-feature.yaml`, `rapid-dev.yaml`)
+  - Added test coverage gates (70% minimum, loops back if not met)
+  - Enhanced output aggregator with coverage statistics display
+- **Workflow Output Visibility** - Enhanced artifact summaries and metrics
+  - Comprehensive artifact listing in workflow summaries
+  - Quality score and test coverage metrics displayed prominently
+  - File paths and artifact counts shown for each step
+
+### Changed
+- **Workflow Presets** - Testing step now mandatory with coverage gates
+  - `simple-new-feature.yaml`: Testing step mandatory, coverage gate (70% minimum)
+  - `rapid-dev.yaml`: Testing step mandatory, coverage gate (70% minimum)
+- **Simple Mode Rules** - Added workflow interceptor patterns
+  - Enhanced `.cursor/rules/simple-mode.mdc` with mandatory workflow suggestions
+  - Added pre-edit checklist for AI assistants
+  - Documented workflow suggestion system
+
+### Documentation
+- Added `docs/HYBRID_FLOW_EVALUATION_RECOMMENDATIONS.md` - Recommendations from HomeIQ evaluation
+- Added `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` - Complete enforcement guide
+- Added `docs/WORKFLOW_QUICK_REFERENCE.md` - Quick reference guide
+- Updated `docs/IMPLEMENTATION_PROGRESS.md` - Documented all workflow enforcement changes
+- Updated `.cursor/rules/simple-mode.mdc` - Added workflow suggestion system documentation
+- Updated `.claude/skills/simple-mode/SKILL.md` - Documented workflow enforcement features
+
 ## [3.5.17] - 2026-01-16
 
 ### Changed

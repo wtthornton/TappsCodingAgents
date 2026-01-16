@@ -23,6 +23,7 @@ from .orchestrators import (
     TestOrchestrator,
 )
 from .variations import normalize_command
+from .workflow_suggester import WorkflowSuggester
 
 
 class SimpleModeHandler:
@@ -43,6 +44,7 @@ class SimpleModeHandler:
         self.project_root = project_root or Path.cwd()
         self.config = config or load_config()
         self.intent_parser = IntentParser()
+        self.workflow_suggester = WorkflowSuggester()
 
         # Initialize orchestrators
         self.orchestrators = {
@@ -78,14 +80,16 @@ class SimpleModeHandler:
             ),
         }
 
-    async def handle(self, command: str) -> dict[str, Any]:
+    async def handle(self, command: str, suggest_workflow: bool = True) -> dict[str, Any]:
         """
         Handle a natural language command.
 
         Enhanced to detect and force Simple Mode when requested.
+        Optionally suggests workflows before execution.
 
         Args:
             command: User's natural language command
+            suggest_workflow: Whether to suggest workflow if not already using Simple Mode
 
         Returns:
             Dictionary with execution results
@@ -105,6 +109,24 @@ class SimpleModeHandler:
 
         # Parse intent
         intent = self.intent_parser.parse(normalized)
+        
+        # Suggest workflow if enabled and not already using Simple Mode
+        if suggest_workflow and not self.intent_parser.detect_simple_mode_intent(command):
+            suggestion = self.workflow_suggester.suggest_workflow(command)
+            if suggestion and self.workflow_suggester.should_suggest(command):
+                return {
+                    "success": False,
+                    "suggestion": True,
+                    "workflow_suggestion": {
+                        "command": suggestion.workflow_command,
+                        "type": suggestion.workflow_type,
+                        "benefits": suggestion.benefits,
+                        "reason": suggestion.reason,
+                        "confidence": suggestion.confidence,
+                        "formatted": self.workflow_suggester.format_suggestion(suggestion),
+                    },
+                    "message": "Workflow suggestion available",
+                }
 
         # Check if Simple Mode is enabled (or forced)
         force_simple_mode = intent.parameters.get("force_simple_mode", False)

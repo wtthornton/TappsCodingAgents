@@ -75,6 +75,39 @@ Detect intent from keywords:
 2. Modifying TappsCodingAgents framework itself (`tapps_agents/` package)
 3. User explicitly requests "full SDLC" or "complete lifecycle"
 
+## Workflow Suggestion System
+
+**New Feature:** Workflow suggester automatically detects when workflows would be beneficial and suggests appropriate Simple Mode workflows before direct edits.
+
+**How It Works:**
+- Analyzes user input to detect intent (build, fix, review, test, refactor)
+- Suggests appropriate `@simple-mode` workflow with benefits
+- Only suggests when confidence is high (≥60%)
+- Integrated into `SimpleModeHandler` for automatic suggestions
+
+**Example:**
+```
+User: "Add user authentication"
+
+🤖 Workflow Suggestion:
+"For new feature implementation, consider using:
+@simple-mode *build 'Add user authentication'
+
+Benefits:
+✅ Automatic test generation (80%+ coverage)
+✅ Quality gate enforcement (75+ score required)
+✅ Comprehensive documentation
+✅ Early bug detection
+✅ Full traceability
+
+Would you like me to proceed with the workflow?"
+```
+
+**Implementation:**
+- `tapps_agents/simple_mode/workflow_suggester.py` - Suggestion engine
+- Integrated into `SimpleModeHandler.handle()` for automatic suggestions
+- See `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` for complete guide
+
 ## Skill Orchestration Workflows
 
 ### Build Intent
@@ -111,10 +144,12 @@ When user wants to **build** something new:
 @reviewer *review {target_file}
 ```
 
-**Step 7: Generate tests**
+**Step 7: Generate tests (MANDATORY - 70%+ coverage required)**
 ```
 @tester *test {target_file}
 ```
+
+**Note:** Testing step is mandatory in build workflows. If test coverage is below 70%, the workflow loops back to testing step.
 
 ### Review Intent
 

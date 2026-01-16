@@ -147,6 +147,48 @@ Simple Mode understands many ways to express the same intent:
 - **Test synonyms**: test, verify, validate, coverage, testing, tests
 - **Epic synonyms**: epic, execute epic, run epic, implement epic, epic workflow
 
+## Workflow Enforcement & Suggestions (New!)
+
+Simple Mode now proactively suggests workflows to increase adoption and ensure quality:
+
+### Automatic Workflow Suggestions
+
+When you request feature implementation, bug fixes, or code reviews, Simple Mode will automatically suggest the appropriate workflow:
+
+```
+User: "Add user authentication to my app"
+
+🤖 Workflow Suggestion:
+"For new feature implementation, consider using:
+@simple-mode *build 'Add user authentication'
+
+This workflow will:
+✅ Generate comprehensive tests automatically (80%+ coverage)
+✅ Enforce quality gates (75+ score required)
+✅ Create documentation artifacts
+✅ Catch bugs early with systematic review
+✅ Provide full traceability
+
+Would you like me to proceed with the workflow?"
+```
+
+### Test Coverage Enforcement
+
+Build workflows now **mandatory require test generation** with coverage gates:
+- **Minimum Coverage:** 70% (loops back to testing if not met)
+- **Target Coverage:** 80%+ for production-ready code
+- **Quality Gates:** Overall score ≥ 75, Security ≥ 6.5
+
+### Enhanced Output Visibility
+
+Workflow summaries now show comprehensive artifact listings:
+- Documentation files created
+- Code files implemented
+- Test files generated
+- Quality scores and test coverage metrics
+
+See `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` for complete enforcement guide and `docs/WORKFLOW_QUICK_REFERENCE.md` for quick command reference.
+
 ## Phase 2 Features (New!)
 
 Simple Mode now includes enhanced user experience features:
