@@ -346,6 +346,56 @@ Based on comprehensive reviewer agent evaluation feedback, we've identified 6 cr
 - ⏳ Code Generation Guide
 - ⏳ Output Passing Guide
 
+## New: Workflow Usage Feedback Improvements (2026-01-20) 📋
+
+### Workflow Adoption Feedback Analysis and Implementation Plan
+
+**Status:** 📋 Planning Complete - Ready for Implementation  
+**Priority:** High - Addresses critical workflow adoption gaps
+
+Based on comprehensive user feedback from HomeIQ project usage, we've identified a critical gap: **Users (and AI assistants) are bypassing Simple Mode workflows and doing manual code edits instead of using structured workflows.**
+
+**Key Findings:**
+- Codebase search and file reading tools: ⭐⭐⭐⭐⭐ (5/5) - Excellent
+- Simple Mode workflow usage: ⭐⭐ (2/5) - **Not Used**
+- Code review agent usage: ⭐⭐ (2/5) - **Not Used**
+- Test generation usage: ⭐ (1/5) - **Not Used**
+- Debugger agent usage: ⭐⭐⭐ (3/5) - **Partially Used**
+
+**Root Causes:**
+1. Lack of awareness - Users don't know workflows exist
+2. Habit/convenience - Direct edits feel faster
+3. AI assistant behavior - Defaults to direct edits
+4. Discoverability issues - Workflows not suggested when appropriate
+
+**See:** `docs/WORKFLOW_USAGE_FEEDBACK_IMPLEMENTATION_PLAN.md` for complete implementation plan
+
+**Implementation Phases:**
+- 📋 **Phase 1:** Workflow Enforcement & Prompts (P0 - Critical) - **PLANNED**
+  - 1.1: AI Assistant Workflow Interceptor
+  - 1.2: Workflow Usage Prompts
+  - 1.3: Workflow Comparison Dashboard
+- 📋 **Phase 2:** Enhanced Documentation & Discovery (P1 - High Priority) - **PLANNED**
+  - 2.1: Interactive Workflow Guide
+  - 2.2: Workflow Quick Reference Cards
+  - 2.3: Workflow Examples Library
+- 📋 **Phase 3:** Workflow Analytics & Feedback (P1 - High Priority) - **PLANNED**
+  - 3.1: Workflow Usage Analytics
+  - 3.2: Workflow Success Stories
+- 📋 **Phase 4:** Workflow Improvements (P2 - Medium Priority) - **PLANNED**
+  - 4.1: Faster Workflow Execution
+  - 4.2: Workflow Customization
+
+**Progress:** 0 of 4 phases complete (0%) 📋
+
+**Estimated Effort:** 60-90 hours total (8-12 weeks)
+
+**Success Metrics:**
+- Workflow Adoption Rate: Target 70%+ (currently ~30%)
+- Direct Edit Reduction: Target 50% reduction
+- Quality Score Improvement: Target 10%+ with workflows
+- Test Coverage Improvement: Target 20%+ with workflows
+
 ## Implementation Statistics
 
 - **Modules Created:** 11 new core modules (instructions enhanced, output_formatter, command_registry, error_handler, document_generator, code_generator, output_contracts, output_passing, workflow_chain, output_aggregator, test_generator, context7 doc_manager)
