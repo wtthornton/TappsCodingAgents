@@ -16,6 +16,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from .config import ProjectConfig, load_config
 from .subprocess_utils import wrap_windows_cmd_shim
 
@@ -98,6 +100,84 @@ def _get_python_module_name(tool_name: str) -> str:
         "pipdeptree": "pipdeptree",
     }
     return module_map.get(tool_name, tool_name.replace("-", "_"))
+
+
+def _validate_background_agents_yaml(project_root: Path) -> DoctorFinding | None:
+    """
+    Validate background-agents.yaml file if it exists.
+    
+    Note: Background Agents were removed from the framework, but users may
+    still have manual configurations. This function provides optional validation
+    for those files without requiring framework support.
+    
+    Args:
+        project_root: Project root directory
+        
+    Returns:
+        DoctorFinding with validation status, or None if file doesn't exist
+    """
+    bg_agents_file = project_root / ".cursor" / "background-agents.yaml"
+    
+    if not bg_agents_file.exists():
+        # File doesn't exist - this is fine, Background Agents are optional
+        return None
+    
+    # File exists - validate YAML syntax
+    try:
+        content = bg_agents_file.read_text(encoding="utf-8")
+        data = yaml.safe_load(content)
+        
+        # Basic structure validation
+        if not isinstance(data, dict):
+            return DoctorFinding(
+                severity="warn",
+                code="BACKGROUND_AGENTS",
+                message="Background Agents: Config file exists but has invalid structure",
+                remediation=(
+                    "The .cursor/background-agents.yaml file exists but is not a valid YAML dictionary.\n"
+                    "Background Agents are optional and not part of the framework.\n"
+                    "If you're not using Background Agents, you can safely ignore this warning."
+                ),
+            )
+        
+        # Count agents if present
+        agents = data.get("agents", [])
+        if isinstance(agents, list):
+            agents_count = len(agents)
+            return DoctorFinding(
+                severity="ok",
+                code="BACKGROUND_AGENTS",
+                message=f"Background Agents: Config file found with {agents_count} agent(s) (optional, not framework-managed)",
+            )
+        else:
+            return DoctorFinding(
+                severity="ok",
+                code="BACKGROUND_AGENTS",
+                message="Background Agents: Config file found (optional, not framework-managed)",
+            )
+            
+    except yaml.YAMLError as e:
+        return DoctorFinding(
+            severity="warn",
+            code="BACKGROUND_AGENTS",
+            message=f"Background Agents: Config file has invalid YAML syntax",
+            remediation=(
+                f"YAML parsing error: {e}\n"
+                "Background Agents are optional and not part of the framework.\n"
+                "If you're not using Background Agents, you can safely ignore this warning."
+            ),
+        )
+    except Exception as e:
+        return DoctorFinding(
+            severity="warn",
+            code="BACKGROUND_AGENTS",
+            message=f"Background Agents: Error reading config file",
+            remediation=(
+                f"Error: {e}\n"
+                "Background Agents are optional and not part of the framework.\n"
+                "If you're not using Background Agents, you can safely ignore this warning."
+            ),
+        )
 
 
 def _check_context7_cache_status(
@@ -561,29 +641,12 @@ def collect_doctor_report(
                 )
             )
         
-        # Check Background Agents
-        bg_agents_result = verification_results.get("components", {}).get("background_agents", {})
-        if bg_agents_result.get("valid"):
-            agents_count = bg_agents_result.get("agents_count", 0)
-            findings.append(
-                DoctorFinding(
-                    severity="ok",
-                    code="BACKGROUND_AGENTS",
-                    message=f"Background Agents: {agents_count} agents configured",
-                )
-            )
-        else:
-            findings.append(
-                DoctorFinding(
-                    severity="warn",
-                    code="BACKGROUND_AGENTS",
-                    message="Background Agents: Config not found or invalid",
-                    remediation=(
-                        "Run 'tapps-agents init' to install Background Agents configuration.\n"
-                        "Background Agents enable automatic workflow execution in Cursor."
-                    ),
-                )
-            )
+        # Check Background Agents (optional - not framework-managed)
+        # Note: Background Agents were removed from the framework, but users may
+        # still have manual configurations. We validate the YAML file if it exists.
+        bg_agents_finding = _validate_background_agents_yaml(root)
+        if bg_agents_finding:
+            findings.append(bg_agents_finding)
         
         # Check .cursorignore
         cursorignore_result = verification_results.get("components", {}).get("cursorignore", {})
