@@ -272,11 +272,18 @@ def collect_doctor_report(
     # --- External tool checks (soft degrade by default) ---
     # These are CLI tools used by reviewers/quality workflows; missing ones should warn.
     tool_cmds: dict[str, list[str]] = {
+        # Code quality tools
         "ruff": ["ruff", "--version"],
         "mypy": ["mypy", "--version"],
         "pytest": ["pytest", "--version"],
+        "black": ["black", "--version"],
+        # Security & dependency tools
         "pip-audit": ["pip-audit", "--version"],
         "pipdeptree": ["pipdeptree", "--version"],
+        # Version control (required for workflows, releases, git operations)
+        "git": ["git", "--version"],
+        # GitHub CLI (optional, used for releases)
+        "gh": ["gh", "--version"],
         # Node ecosystem (optional, but enabled by default via QualityToolsConfig.typescript_enabled)
         "node": ["node", "--version"],
         "npm": ["npm", "--version"],
@@ -284,7 +291,7 @@ def collect_doctor_report(
     }
     
     # Python tools that can be checked via 'python -m' as fallback
-    python_tools = {"ruff", "mypy", "pytest", "pip-audit", "pipdeptree"}
+    python_tools = {"ruff", "mypy", "pytest", "pip-audit", "pipdeptree", "black", "coverage", "build"}
 
     typescript_enabled = bool(
         config.quality_tools and config.quality_tools.typescript_enabled
@@ -684,6 +691,158 @@ def collect_doctor_report(
     cache_status_finding = _check_context7_cache_status(config, root)
     if cache_status_finding:
         findings.append(cache_status_finding)
+
+    # --- Build tool check (via python -m) ---
+    build_available, build_version = _check_tool_via_python_m("build")
+    if build_available:
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="BUILD_TOOL",
+                message=f"Build tool: {build_version or 'available'} (via python -m build)",
+            )
+        )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="BUILD_TOOL",
+                message="Build tool: Not available (optional, used for package building)",
+                remediation=(
+                    "Install build tool: pip install build\n"
+                    "Required for creating distribution packages (sdist, wheel)."
+                ),
+            )
+        )
+
+    # --- Python package importability checks (core dependencies) ---
+    # Check if critical Python packages can be imported
+    critical_packages = [
+        ("pydantic", "Core framework dependency"),
+        ("httpx", "HTTP client for API calls"),
+        ("yaml", "YAML parsing (PyYAML)"),
+        ("rich", "CLI progress bars and formatting"),
+    ]
+    
+    for package_name, description in critical_packages:
+        try:
+            __import__(package_name)
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="PYTHON_PACKAGE",
+                    message=f"Python package: {package_name} (importable)",
+                )
+            )
+        except ImportError:
+            findings.append(
+                DoctorFinding(
+                    severity="error" if not soft_degrade else "warn",
+                    code="PYTHON_PACKAGE_MISSING",
+                    message=f"Python package not importable: {package_name} ({description})",
+                    remediation=(
+                        f"Install missing package: pip install {package_name}\n"
+                        f"Or reinstall tapps-agents: pip install --upgrade tapps-agents"
+                    ),
+                )
+            )
+    
+    # --- Optional Python packages (used by reviewer agent) ---
+    optional_packages = [
+        ("radon", "Code complexity analysis (used by reviewer agent)"),
+        ("bandit", "Security scanning (used by reviewer agent)"),
+        ("coverage", "Test coverage analysis (used by reviewer agent)"),
+    ]
+    
+    for package_name, description in optional_packages:
+        try:
+            __import__(package_name)
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="PYTHON_PACKAGE_OPTIONAL",
+                    message=f"Optional package: {package_name} (available)",
+                )
+            )
+        except ImportError:
+            # These are optional - reviewer agent has fallbacks
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="PYTHON_PACKAGE_OPTIONAL_MISSING",
+                    message=f"Optional package not available: {package_name} ({description})",
+                    remediation=(
+                        f"Install for enhanced features: pip install {package_name}\n"
+                        f"Reviewer agent will use fallback methods if not available."
+                    ),
+                )
+            )
+    
+    # --- Git repository check ---
+    try:
+        git_root = subprocess.run(  # nosec B603
+            ["git", "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+        if git_root.returncode == 0:
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="GIT_REPOSITORY",
+                    message=f"Git repository: {git_root.stdout.strip()}",
+                )
+            )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="GIT_REPOSITORY",
+                    message="Not in a Git repository (optional but recommended)",
+                    remediation=(
+                        "Initialize Git repository: git init\n"
+                        "Git is used for workflow state management, releases, and version control."
+                    ),
+                )
+            )
+    except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+        # Git not available or error - already reported in tool checks above
+        pass
+    
+    # --- Write permissions check ---
+    try:
+        test_file = root / ".tapps-agents" / ".doctor_write_test"
+        test_file.parent.mkdir(parents=True, exist_ok=True)
+        test_file.write_text("test", encoding="utf-8")
+        test_file.unlink()
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="WRITE_PERMISSIONS",
+                message="Project directory: Writable",
+            )
+        )
+    except (PermissionError, OSError) as e:
+        findings.append(
+            DoctorFinding(
+                severity="error" if not soft_degrade else "warn",
+                code="WRITE_PERMISSIONS",
+                message=f"Project directory: Not writable ({e})",
+                remediation=(
+                    "Fix write permissions on project directory.\n"
+                    "TappsCodingAgents needs write access for:\n"
+                    "  - Workflow state files\n"
+                    "  - Cache directories\n"
+                    "  - Generated documentation\n"
+                    "  - Configuration files"
+                ),
+            )
+        )
+    except Exception:
+        # Other errors (e.g., directory doesn't exist yet) - not critical
+        pass
 
     return {
         "policy": {

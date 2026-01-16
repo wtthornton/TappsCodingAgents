@@ -1914,6 +1914,16 @@ async def pre_populate_context7_cache(
                         fail_count += 1
                         error_msg = result.get('error') or result.get('message') or 'Unknown error'
                         errors.append(f"{library}/{topic}: {error_msg}")
+                except ImportError as e:
+                    # Handle import errors from Context7 MCP server (known issue with library resolution)
+                    fail_count += 1
+                    if "attempted relative import" in str(e).lower():
+                        # This is a Context7 MCP server issue, not our code - provide clear message
+                        errors.append(
+                            f"{library}/{topic}: Context7 MCP server import error (non-critical)"
+                        )
+                    else:
+                        errors.append(f"{library}/{topic}: ImportError - {str(e)}")
                 except Exception as e:
                     fail_count += 1
                     errors.append(f"{library}/{topic}: Exception - {str(e)}")
@@ -1933,9 +1943,22 @@ async def pre_populate_context7_cache(
                 except Exception:
                     pass
             
+            # Check for import errors (Context7 MCP server issue)
+            import_errors = [
+                e for e in errors 
+                if "import error" in e.lower() or "attempted relative import" in e.lower()
+            ]
+            if import_errors:
+                error_msg = (
+                    f"Context7 cache pre-population failed due to MCP server import issue (non-critical).\n"
+                    f"All {fail_count} library lookups failed with: {errors[0]}\n"
+                    f"This is a known issue with Context7 MCP server library resolution.\n"
+                    f"Context7 will continue to work normally via on-demand lookups.\n"
+                    f"To skip pre-population in future runs, use: --no-cache"
+                )
             # Check for quota exceeded errors
-            quota_errors = [e for e in errors if "quota exceeded" in e.lower() or "429" in e]
-            if quota_errors:
+            elif any("quota exceeded" in e.lower() or "429" in e for e in errors):
+                quota_errors = [e for e in errors if "quota exceeded" in e.lower() or "429" in e]
                 error_msg = f"Context7 API quota exceeded. {quota_errors[0]}. Cache pre-population requires available API quota. Consider upgrading your plan or running pre-population later."
             elif all("No documentation found in cache or API unavailable" in e for e in errors[:5]):
                 if not api_key_available:

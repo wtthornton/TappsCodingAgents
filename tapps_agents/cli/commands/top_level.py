@@ -1977,20 +1977,48 @@ def _print_cache_results(results: dict[str, Any]) -> None:
         cache_error = results.get("cache_error")
         
         if cache_error:
-            print("  Status: [FAILED] Failed")
-            print(f"  Error: {cache_error}")
-            print("  Note: Exception occurred during cache pre-population.")
-            print("        Cache pre-population works best when run from within Cursor where MCP servers are available.")
+            # Check if this is an import error (non-critical Context7 MCP server issue)
+            is_import_error = (
+                "import error" in cache_error.lower() or 
+                "attempted relative import" in cache_error.lower()
+            )
+            
+            if is_import_error:
+                print("  Status: [WARN] Pre-population failed (non-critical)")
+                print(f"  Error: {cache_error}")
+                print("  Note: This is a known issue with Context7 MCP server library resolution.")
+                print("        Context7 will continue to work normally via on-demand lookups.")
+                print("        To skip pre-population in future runs, use: --no-cache")
+            else:
+                print("  Status: [FAILED] Failed")
+                print(f"  Error: {cache_error}")
+                print("  Note: Exception occurred during cache pre-population.")
+                print("        Cache pre-population works best when run from within Cursor where MCP servers are available.")
         elif cache_result:
             error_msg = cache_result.get("error") or cache_result.get("message") or "Unknown error"
-            print("  Status: [FAILED] Failed")
-            print(f"  Error: {error_msg}")
-            if cache_result.get("note"):
-                print(f"  Note: {cache_result.get('note')}")
-            if cache_result.get("cached") == 0 and cache_result.get("total") == 0:
-                if not cache_result.get("note"):
-                    print("  Note: Context7 may not be enabled in configuration")
-                    print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
+            
+            # Check if this is an import error (non-critical Context7 MCP server issue)
+            is_import_error = (
+                "import error" in error_msg.lower() or 
+                "attempted relative import" in error_msg.lower() or
+                "MCP server import issue" in error_msg
+            )
+            
+            if is_import_error:
+                print("  Status: [WARN] Pre-population failed (non-critical)")
+                print(f"  Error: {error_msg}")
+                print("  Note: This is a known issue with Context7 MCP server library resolution.")
+                print("        Context7 will continue to work normally via on-demand lookups.")
+                print("        To skip pre-population in future runs, use: --no-cache")
+            else:
+                print("  Status: [FAILED] Failed")
+                print(f"  Error: {error_msg}")
+                if cache_result.get("note"):
+                    print(f"  Note: {cache_result.get('note')}")
+                if cache_result.get("cached") == 0 and cache_result.get("total") == 0:
+                    if not cache_result.get("note"):
+                        print("  Note: Context7 may not be enabled in configuration")
+                        print("        Check .tapps-agents/config.yaml and ensure context7.enabled: true")
         else:
             print("  Status: [SKIPPED] Skipped")
             print("  Note: Cache pre-population was not attempted")
