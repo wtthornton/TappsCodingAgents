@@ -24,8 +24,8 @@ Example:
     ```
 """
 
-__version__: str = "3.5.18"
+__version__: str = "3.5.19"
 
 # Also expose as _version_ for compatibility with some import mechanisms
 # This helps with editable installs where __version__ might not be importable
-_version_: str = "3.5.18"
+_version_: str = "3.5.19"
