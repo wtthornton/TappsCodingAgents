@@ -134,6 +134,17 @@ class BaseExpert(BaseAgent):
         if knowledge_dirs:
             primary_dir = knowledge_dirs[0]
 
+            # Initialize freshness tracking for knowledge files
+            try:
+                from .knowledge_freshness import get_freshness_tracker
+
+                freshness_tracker = get_freshness_tracker()
+                # Scan and update metadata for knowledge files
+                freshness_tracker.scan_and_update(primary_dir)
+            except Exception:
+                # Silently fail if freshness tracking fails (non-critical)
+                pass
+
             # Try to use VectorKnowledgeBase (FAISS-based)
             try:
                 from ..core.config import get_expert_config
@@ -142,10 +153,10 @@ class BaseExpert(BaseAgent):
                 self.knowledge_base = VectorKnowledgeBase(
                     knowledge_dir=primary_dir,
                     domain=self.primary_domain,
-                    chunk_size=512,
-                    overlap=50,
+                    chunk_size=768,  # Increased for better context retention
+                    overlap=100,  # Better continuity between chunks
                     embedding_model="all-MiniLM-L6-v2",
-                    similarity_threshold=0.7,
+                    similarity_threshold=0.65,  # Lowered for better recall
                 )
                 self.rag_interface = self.knowledge_base
 
@@ -325,14 +336,52 @@ class BaseExpert(BaseAgent):
         Build domain-specific context for a query.
 
         Uses simple file-based RAG if enabled, otherwise returns empty context.
+        Tracks metrics for performance monitoring.
         """
         if self.rag_enabled and self.knowledge_base:
             from ..core.config import get_expert_config
+            from .rag_metrics import get_rag_metrics_tracker, RAGQueryTimer
 
             expert_config = get_expert_config()
-            return self.knowledge_base.get_context(
-                query, max_length=expert_config.rag_max_length
-            )
+            
+            # Track RAG query metrics
+            try:
+                tracker = get_rag_metrics_tracker()
+                backend_type = "simple"
+                if hasattr(self.knowledge_base, "get_backend_type"):
+                    backend_type = self.knowledge_base.get_backend_type() or "simple"
+                
+                with RAGQueryTimer(tracker) as timer:
+                    # Perform search to get metrics
+                    chunks = self.knowledge_base.search(query, max_results=expert_config.rag_max_results)
+                    
+                    # Calculate similarity metrics
+                    max_similarity = max((c.score for c in chunks), default=0.0) if chunks else 0.0
+                    avg_similarity = sum(c.score for c in chunks) / len(chunks) if chunks else 0.0
+                    
+                    # Record metrics
+                    timer.set_params(
+                        query=query,
+                        expert_id=self.expert_id,
+                        domain=domain,
+                        num_results=len(chunks),
+                        max_similarity=max_similarity,
+                        avg_similarity=avg_similarity,
+                        backend_type=backend_type,
+                        cache_hit=False,  # TODO: Add cache hit detection
+                    )
+                    
+                    # Get context
+                    context = self.knowledge_base.get_context(
+                        query, max_length=expert_config.rag_max_length
+                    )
+            except Exception:
+                # If metrics tracking fails, continue without it (non-critical)
+                context = self.knowledge_base.get_context(
+                    query, max_length=expert_config.rag_max_length
+                )
+            
+            return context
         return f"Domain: {domain}. No additional context available."
 
     async def _get_sources(self, query: str, domain: str) -> list[str]:

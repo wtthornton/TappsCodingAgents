@@ -61,6 +61,19 @@ from .rag_safety import RAGSafetyHandler, create_safety_handler
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
 from .weight_distributor import ExpertWeightMatrix, WeightDistributor
+from .knowledge_validator import KnowledgeBaseValidator, ValidationResult, ValidationIssue
+from .rag_metrics import (
+    RAGMetricsTracker,
+    RAGQueryMetrics,
+    RAGPerformanceMetrics,
+    get_rag_metrics_tracker,
+    RAGQueryTimer,
+)
+from .knowledge_freshness import (
+    KnowledgeFreshnessTracker,
+    KnowledgeFileMetadata,
+    get_freshness_tracker,
+)
 
 __all__ = [
     "BaseExpert",
@@ -117,4 +130,15 @@ __all__ = [
     "RAGMetrics",
     "WeakArea",
     "KBImprovementProposal",
+    "KnowledgeBaseValidator",
+    "ValidationResult",
+    "ValidationIssue",
+    "RAGMetricsTracker",
+    "RAGQueryMetrics",
+    "RAGPerformanceMetrics",
+    "get_rag_metrics_tracker",
+    "RAGQueryTimer",
+    "KnowledgeFreshnessTracker",
+    "KnowledgeFileMetadata",
+    "get_freshness_tracker",
 ]

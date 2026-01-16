@@ -630,7 +630,7 @@ class ExpertConfig(BaseModel):
         description="Maximum length for RAG context retrieval (characters)",
     )
     rag_max_results: int = Field(
-        default=5, ge=1, le=20, description="Maximum number of RAG results to retrieve"
+        default=8, ge=1, le=20, description="Maximum number of RAG results to retrieve"
     )
     rag_default_quality: float = Field(
         default=0.8,

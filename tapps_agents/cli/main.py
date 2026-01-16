@@ -476,6 +476,7 @@ def route_command(args: argparse.Namespace) -> None:
         "hardware": _handle_hardware_profile_command,
         "simple-mode": simple_mode.handle_simple_mode_command,
         "learning": learning.handle_learning_command,
+        "knowledge": top_level.handle_knowledge_command,
     }
     
     if agent in special_handlers:

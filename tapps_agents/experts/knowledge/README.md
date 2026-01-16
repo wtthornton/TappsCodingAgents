@@ -113,6 +113,23 @@ knowledge/
 │   ├── microservices-patterns.md
 │   ├── service-communication.md
 │   └── docker-compose-patterns.md
+├── code-quality-analysis/         # Code Quality & Analysis Expert
+│   ├── static-analysis-patterns.md
+│   ├── code-metrics.md
+│   ├── complexity-analysis.md
+│   ├── technical-debt-patterns.md
+│   └── quality-gates.md
+├── development-workflow/          # Development Workflow Expert (DevOps)
+│   ├── ci-cd-patterns.md
+│   ├── git-workflows.md
+│   ├── build-strategies.md
+│   ├── deployment-patterns.md
+│   └── automation-best-practices.md
+├── documentation-knowledge-management/ # Documentation & Knowledge Management Expert
+│   ├── documentation-standards.md
+│   ├── api-documentation-patterns.md
+│   ├── knowledge-management.md
+│   └── technical-writing-guide.md
 ├── agent-learning/                # Agent Learning Best Practices
 │   ├── best-practices.md
 │   ├── pattern-extraction.md

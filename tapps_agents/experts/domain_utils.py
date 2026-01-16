@@ -6,12 +6,24 @@ import re
 from urllib.parse import urlparse
 
 
+# Known domain-to-directory name mappings for built-in experts
+# Maps expert domain names to their actual knowledge base directory names
+# This handles cases where domain names don't match directory names
+DOMAIN_TO_DIRECTORY_MAP = {
+    "performance-optimization": "performance",
+    "ai-agent-framework": "ai-frameworks",
+    "testing-strategies": "testing",
+}
+
+
 def sanitize_domain_for_path(domain: str) -> str:
     """
     Sanitize a domain name or URL for use as a directory path.
 
     Handles URLs by extracting the hostname and path, then sanitizing
     invalid filename characters. This ensures cross-platform compatibility.
+    
+    Also handles known domain-to-directory name mappings for built-in experts.
 
     Args:
         domain: Domain name or URL (e.g., "home-automation" or "https://www.home-assistant.io/docs/")
@@ -26,9 +38,15 @@ def sanitize_domain_for_path(domain: str) -> str:
         'home-assistant.io-docs'
         >>> sanitize_domain_for_path("https://example.com/api/v1")
         'example.com-api-v1'
+        >>> sanitize_domain_for_path("performance-optimization")
+        'performance'
     """
     if not domain:
         return "unknown"
+
+    # Check for known domain-to-directory mappings first (built-in experts)
+    if domain in DOMAIN_TO_DIRECTORY_MAP:
+        return DOMAIN_TO_DIRECTORY_MAP[domain]
 
     # Try to parse as URL
     try:
@@ -47,8 +65,8 @@ def sanitize_domain_for_path(domain: str) -> str:
 
     # Replace invalid filename characters with hyphens
     # Windows invalid chars: < > : " / \ | ? *
-    # Also replace spaces and other problematic chars
-    sanitized = re.sub(r'[<>:"/\\|?*\s]+', '-', domain)
+    # Also replace spaces, ampersands, and other problematic chars
+    sanitized = re.sub(r'[<>:"/\\|?*\s&]+', '-', domain)
 
     # Remove leading/trailing dots and hyphens (Windows doesn't allow these)
     sanitized = sanitized.strip('.-')

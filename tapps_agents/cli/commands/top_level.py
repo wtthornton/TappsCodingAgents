@@ -3505,6 +3505,116 @@ def _format_continuous_bug_fix_text_output(result: dict[str, Any], feedback: Any
         print()
 
     if result.get("success"):
-        print("✅ Continuous bug fix completed successfully")
+        print("[OK] Continuous bug fix completed successfully")
     else:
-        print("⚠️  Continuous bug fix completed with some failures")
+        print("[WARN] Continuous bug fix completed with some failures")
+
+
+def handle_knowledge_command(args: object) -> None:
+    """Handle knowledge base management commands."""
+    from .knowledge import KnowledgeCommand
+    from ..feedback import get_feedback
+    
+    feedback = get_feedback()
+    command = getattr(args, "knowledge_command", None)
+    output_format = getattr(args, "format", "text")
+    feedback.format_type = output_format
+    
+    knowledge_cmd = KnowledgeCommand()
+    
+    if command == "validate":
+        knowledge_dir = getattr(args, "knowledge_dir", None)
+        result = knowledge_cmd.validate(knowledge_dir=knowledge_dir)
+        
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            summary = result["summary"]
+            print("\n" + "=" * 70)
+            print("Knowledge Base Validation Results")
+            print("=" * 70)
+            print(f"\nTotal Files: {summary['total_files']}")
+            print(f"Valid Files: {summary['valid_files']}")
+            print(f"Invalid Files: {summary['invalid_files']}")
+            print(f"Total Issues: {summary['total_issues']}")
+            print(f"\nIssues by Severity:")
+            for severity, count in summary["issues_by_severity"].items():
+                print(f"  {severity.capitalize()}: {count}")
+            
+            # Show files with issues
+            files_with_issues = [r for r in result["results"] if r["issues"]]
+            if files_with_issues:
+                print(f"\nFiles with Issues ({len(files_with_issues)}):")
+                for file_result in files_with_issues[:10]:  # Limit to 10
+                    print(f"\n  {file_result['file']}:")
+                    for issue in file_result["issues"][:5]:  # Limit to 5 issues per file
+                        line_info = f" (line {issue['line']})" if issue["line"] else ""
+                        print(f"    [{issue['severity'].upper()}] {issue['message']}{line_info}")
+    
+    elif command == "metrics":
+        result = knowledge_cmd.metrics()
+        
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            metrics = result["metrics"]
+            print("\n" + "=" * 70)
+            print("RAG Performance Metrics")
+            print("=" * 70)
+            print(f"\nTotal Queries: {metrics['total_queries']}")
+            print(f"Average Latency: {metrics['avg_latency_ms']} ms")
+            print(f"Cache Hit Rate: {metrics['cache_hit_rate']:.1%}")
+            print(f"Average Results: {metrics['avg_results']:.1f}")
+            print(f"Average Similarity: {metrics['avg_similarity']:.3f}")
+            print(f"\nBackend Usage:")
+            for backend, count in metrics["backend_usage"].items():
+                print(f"  {backend}: {count}")
+            print(f"\nSimilarity Distribution:")
+            for level, count in metrics["similarity_distribution"].items():
+                print(f"  {level}: {count}")
+            
+            if result["recent_queries"]:
+                print(f"\nRecent Queries (last {len(result['recent_queries'])}):")
+                for q in result["recent_queries"][:5]:
+                    print(f"  [{q['timestamp']}] {q['expert_id']}: {q['query'][:50]}...")
+    
+    elif command == "freshness":
+        knowledge_dir = getattr(args, "knowledge_dir", None)
+        scan = getattr(args, "scan", False)
+        result = knowledge_cmd.freshness(knowledge_dir=knowledge_dir, scan=scan)
+        
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            summary = result["summary"]
+            print("\n" + "=" * 70)
+            print("Knowledge Base Freshness")
+            print("=" * 70)
+            print(f"\nTotal Files: {summary['total_files']}")
+            print(f"Tracked Files: {summary['tracked_files']}")
+            print(f"Coverage: {summary['coverage']:.1f}%")
+            print(f"Deprecated Files: {summary['deprecated_files']}")
+            print(f"Stale Files (>365 days): {summary['stale_files']}")
+            
+            if result.get("scan_results"):
+                scan_res = result["scan_results"]
+                print(f"\nScan Results:")
+                print(f"  Scanned: {scan_res['scanned']}")
+                print(f"  Updated: {scan_res['updated']}")
+                print(f"  New Files: {scan_res['new_files']}")
+            
+            if result.get("stale_files"):
+                print(f"\nStale Files (showing first 10):")
+                for stale in result["stale_files"]:
+                    print(f"  {stale['file']}: last updated {stale['last_updated']}")
+            
+            if result.get("deprecated_files"):
+                print(f"\nDeprecated Files:")
+                for dep in result["deprecated_files"]:
+                    print(f"  {dep['file']}: deprecated {dep['deprecation_date']}")
+                    if dep.get("replacement"):
+                        print(f"    -> Replacement: {dep['replacement']}")
+    
+    else:
+        print(f"Unknown knowledge command: {command}", file=sys.stderr)
+        sys.exit(1)
