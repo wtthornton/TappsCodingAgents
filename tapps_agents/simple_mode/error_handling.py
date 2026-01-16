@@ -51,6 +51,16 @@ class SimpleModeErrorHandler:
             "suggestion": "Run 'tapps-agents simple-mode configure' to fix settings",
             "recovery": "run_config_wizard",
         },
+        "path_validation_error": {
+            "message": "Path validation failed - Windows absolute path detected",
+            "suggestion": "Use relative paths or run from project root",
+            "recovery": "normalize_path",
+        },
+        "windows_path_error": {
+            "message": "Windows absolute path detected",
+            "suggestion": "Convert to relative path or use Cursor Skills",
+            "recovery": "suggest_cursor_skills",
+        },
     }
 
     def __init__(self, project_root: Path | None = None):
@@ -151,6 +161,22 @@ class SimpleModeErrorHandler:
             safe_print("\n💡 Run the configuration wizard:")
             safe_print("   tapps-agents simple-mode configure")
 
+        elif recovery_strategy == "normalize_path":
+            safe_print("\n💡 Path normalization suggestions:")
+            safe_print("   • Use relative paths: 'src/file.py' instead of 'c:/project/src/file.py'")
+            safe_print("   • Run commands from project root directory")
+            safe_print("   • Paths are automatically normalized - try again")
+            if context and "received_path" in context:
+                safe_print(f"\n   Received: {context['received_path']}")
+            if context and "project_root" in context:
+                safe_print(f"   Project root: {context['project_root']}")
+
+        elif recovery_strategy == "suggest_cursor_skills":
+            safe_print("\n💡 Alternative execution methods:")
+            safe_print("   • Use Cursor Skills directly: @simple-mode *build 'description'")
+            safe_print("   • Use relative paths in CLI commands")
+            safe_print("   • Path normalization is automatic - the error should be resolved")
+
     def format_friendly_error(
         self, error: Exception, context: dict[str, Any] | None = None
     ) -> str:
@@ -216,6 +242,16 @@ class SimpleModeErrorHandler:
                 "Check workflow logs for details",
                 "Verify all required agents are available",
                 "Try a simpler command first",
+            ],
+            "path_validation_error": [
+                "Use relative paths instead of absolute paths",
+                "Run commands from project root directory",
+                "Paths are automatically normalized - try again",
+            ],
+            "windows_path_error": [
+                "Use Cursor Skills: @simple-mode *build 'description'",
+                "Use relative paths in CLI commands",
+                "Path normalization handles this automatically",
             ],
         }
 

@@ -328,12 +328,21 @@ def handle_simple_mode_build(args: object) -> None:
     
     # Load config
     from ...core.config import load_config
+    from ...core.path_normalizer import normalize_for_cli, normalize_project_root
     from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
     from ...simple_mode.intent_parser import Intent, IntentParser, IntentType
     from ...simple_mode.orchestrators.build_orchestrator import BuildOrchestrator
     
     config = load_config()
-    project_root = Path.cwd()
+    project_root = normalize_project_root(Path.cwd())
+    
+    # Normalize target file path if provided
+    if target_file:
+        try:
+            target_file = normalize_for_cli(target_file, project_root)
+        except Exception as e:
+            feedback.warning(f"Path normalization warning: {e}. Using path as-is.")
+            # Continue with original path - let workflow executor handle it
     
     # Create intent
     parser = IntentParser()

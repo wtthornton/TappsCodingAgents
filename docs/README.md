@@ -46,6 +46,7 @@ Welcome to the documentation for TappsCodingAgents.
 ### Operations
 - **[Deployment Guide](DEPLOYMENT.md)**
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Includes Playwright MCP troubleshooting
+- **[Path Normalization Guide](PATH_NORMALIZATION_GUIDE.md)** - Cross-platform path handling, Windows absolute path conversion
 - **[Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
 - **[Simple Mode Timeout Analysis](SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md)** - 2025 performance enhancements and timeout fixes
 - **[Test Suite Documentation](../tests/README.md)** - Complete test suite overview

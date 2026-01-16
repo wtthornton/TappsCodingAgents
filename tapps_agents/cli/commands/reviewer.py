@@ -263,6 +263,9 @@ async def review_command(
     if file_path and not files and not pattern:
         files = [file_path]
     
+    # Normalize file paths before processing (fixes Windows absolute path issues)
+    files = _normalize_file_paths(files)
+    
     # Resolve file list
     try:
         resolved_files = _resolve_file_list(files, pattern)
@@ -409,6 +412,35 @@ async def review_command(
                 sys.exit(1)
     finally:
         await reviewer.close()
+
+
+def _normalize_file_paths(files: list[str] | None) -> list[str]:
+    """
+    Normalize file paths to handle Windows absolute paths.
+    
+    Args:
+        files: List of file paths (can be None or empty)
+        
+    Returns:
+        List of normalized file paths
+    """
+    if not files:
+        return []
+    
+    from ...core.path_normalizer import normalize_for_cli, normalize_project_root
+    project_root = normalize_project_root(Path.cwd())
+    normalized_files = []
+    
+    for f in files:
+        try:
+            # Normalize Windows absolute paths to relative paths
+            normalized = normalize_for_cli(f, project_root)
+            normalized_files.append(normalized)
+        except Exception:
+            # If normalization fails, use original path
+            normalized_files.append(f)
+    
+    return normalized_files
 
 
 def _resolve_file_list(files: list[str] | None, pattern: str | None) -> list[Path]:
@@ -1003,6 +1035,9 @@ async def score_command(
     if file_path and not files and not pattern:
         files = [file_path]
     
+    # Normalize file paths before processing (fixes Windows absolute path issues)
+    files = _normalize_file_paths(files)
+    
     # Resolve file list
     try:
         resolved_files = _resolve_file_list(files, pattern)
@@ -1152,6 +1187,9 @@ async def lint_command(
 
     if file_path and not files and not pattern:
         files = [file_path]
+
+    # Normalize file paths before processing (fixes Windows absolute path issues)
+    files = _normalize_file_paths(files)
 
     try:
         resolved_files = _resolve_file_list(files, pattern)
@@ -1308,6 +1346,9 @@ async def type_check_command(
 
     if file_path and not files and not pattern:
         files = [file_path]
+
+    # Normalize file paths before processing (fixes Windows absolute path issues)
+    files = _normalize_file_paths(files)
 
     try:
         resolved_files = _resolve_file_list(files, pattern)

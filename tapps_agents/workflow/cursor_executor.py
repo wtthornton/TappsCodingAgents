@@ -1663,7 +1663,33 @@ class CursorWorkflowExecutor:
         
         # Add target file if provided
         if target_path:
-            params["target_file"] = str(target_path.relative_to(self.project_root))
+            try:
+                # Try relative path first (most common case)
+                resolved_target = Path(target_path).resolve()
+                resolved_root = self.project_root.resolve()
+                
+                # Use is_relative_to if available (Python 3.9+)
+                try:
+                    if resolved_target.is_relative_to(resolved_root):
+                        params["target_file"] = str(resolved_target.relative_to(resolved_root))
+                    else:
+                        # Path is outside project root - use path normalizer
+                        from ...core.path_normalizer import normalize_for_cli
+                        params["target_file"] = normalize_for_cli(target_path, self.project_root)
+                except AttributeError:
+                    # Python < 3.9 - use try/except
+                    try:
+                        params["target_file"] = str(resolved_target.relative_to(resolved_root))
+                    except ValueError:
+                        # Path is outside project root - use path normalizer
+                        from ...core.path_normalizer import normalize_for_cli
+                        params["target_file"] = normalize_for_cli(target_path, self.project_root)
+            except Exception as e:
+                # Fallback: use path normalizer for any error
+                from ...core.path_normalizer import normalize_for_cli
+                if self.logger:
+                    self.logger.warning(f"Path conversion error: {e}. Using path normalizer.")
+                params["target_file"] = normalize_for_cli(target_path, self.project_root)
         
         # Add step metadata
         if step.metadata:

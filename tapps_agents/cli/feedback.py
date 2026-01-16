@@ -494,14 +494,50 @@ class FeedbackManager:
         # Stop heartbeat on error
         self._stop_heartbeat()
         
+        # Enhanced diagnostics for path-related errors
+        is_path_error = (
+            "path" in error_code.lower() or
+            "path.relative()" in message or
+            "relative path" in message.lower() or
+            "absolute path" in message.lower()
+        )
+        
         # Errors always go to stderr as plain text for visibility
         # In JSON mode, also output structured error to stdout for parsing
         print(f"[ERROR] {error_code}: {message}", file=sys.stderr)
+        
+        # Enhanced context display for path errors
         if context:
-            for key, value in context.items():
-                print(f"  {key}: {value}", file=sys.stderr)
+            if is_path_error:
+                print("\nPath Error Details:", file=sys.stderr)
+                # Show received path if available
+                if "received_path" in context or "path" in context:
+                    received = context.get("received_path") or context.get("path", "unknown")
+                    print(f"  Received: {received}", file=sys.stderr)
+                # Show project root if available
+                if "project_root" in context:
+                    print(f"  Project root: {context['project_root']}", file=sys.stderr)
+                # Show expected format
+                if "expected_format" in context:
+                    print(f"  Expected: {context['expected_format']}", file=sys.stderr)
+                # Show other context
+                for key, value in context.items():
+                    if key not in ("received_path", "path", "project_root", "expected_format"):
+                        print(f"  {key}: {value}", file=sys.stderr)
+            else:
+                # Standard context display
+                for key, value in context.items():
+                    print(f"  {key}: {value}", file=sys.stderr)
+        
         if remediation:
             print(f"  Suggestion: {remediation}", file=sys.stderr)
+        
+        # Additional path error guidance
+        if is_path_error and not remediation:
+            print("\nPath Error Guidance:", file=sys.stderr)
+            print("  • Use relative paths: 'src/file.py' instead of absolute paths", file=sys.stderr)
+            print("  • Run commands from project root directory", file=sys.stderr)
+            print("  • Paths are automatically normalized - try again", file=sys.stderr)
         
         if self.format_type == "json":
             output = {
