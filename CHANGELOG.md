@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.5.18] - 2026-01-16
+
 ### Added
 - **Workflow Enforcement & Suggestions** - Proactive workflow suggestions to increase adoption
   - Created `WorkflowSuggester` class for automatic workflow recommendations
