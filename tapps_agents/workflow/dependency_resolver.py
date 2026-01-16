@@ -5,6 +5,21 @@ Builds dependency graphs from workflow steps and resolves execution order.
 Epic 5 / Story 5.2: Dependency Graph Resolver
 """
 
+# @ai-prime-directive: This file implements the dependency graph resolver for workflow step execution ordering.
+# The resolver builds dependency graphs from workflow steps and determines which steps can execute in parallel,
+# enabling dependency-based parallelism per ADR-004. This is critical for workflow performance optimization.
+
+# @ai-constraints:
+# - Must detect circular dependencies and raise errors before execution
+# - Topological sort must be deterministic (stable ordering for same dependencies)
+# - get_ready_steps() must return steps in stable topological order for parallel execution
+# - Dependency resolution must handle both explicit (depends_on) and implicit (artifact-based) dependencies
+# - Performance: Graph building and resolution should complete in <10ms for typical workflows
+
+# @note[2025-03-15]: Dependency-based parallelism per ADR-004.
+# The resolver enables automatic parallel execution of independent workflow steps.
+# See docs/architecture/decisions/ADR-004-yaml-first-workflows.md
+
 from collections import defaultdict, deque
 from dataclasses import dataclass
 

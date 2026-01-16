@@ -4,6 +4,21 @@ Expert Registry
 Manages expert instances and provides consultation services with weighted decision-making.
 """
 
+# @ai-prime-directive: This file implements the Expert Registry system for weighted expert consultation.
+# The registry manages both built-in framework experts and project-defined industry experts, providing
+# weighted decision aggregation and confidence calculation. This is a core component of the expert system design.
+
+# @ai-constraints:
+# - Must maintain separation between built-in experts (framework-controlled) and customer experts (project-defined)
+# - Weight distribution must follow 51% primary authority model for technical domains
+# - Confidence calculation must consider agreement level, expert weights, and domain expertise
+# - Built-in experts have primary authority in TECHNICAL_DOMAINS (see BuiltinExpertRegistry)
+# - Performance: Consultation should complete in <5s for typical queries
+
+# @note[2025-01-15]: Expert system design per ADR-003.
+# The registry implements weighted consultation with built-in and project-defined experts.
+# See docs/architecture/decisions/ADR-003-expert-system-design.md
+
 from __future__ import annotations
 
 from dataclasses import dataclass

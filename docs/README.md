@@ -1,6 +1,31 @@
+---
+title: TappsCodingAgents Documentation Index
+version: 3.3.0
+status: active
+last_updated: 2026-01-20
+tags: [documentation, index, navigation]
+---
+
 # TappsCodingAgents Documentation
 
 Welcome to the documentation for TappsCodingAgents.
+
+## 🚀 Quick Start Paths
+
+**New to TappsCodingAgents?**
+1. **[Quick Start Guide](guides/QUICK_START.md)** - Get up and running in 5 minutes
+2. **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - Start with natural language commands
+3. **[Current Defaults](CURRENT_DEFAULTS.md)** - Understand what happens by default
+
+**Setting up in a project?**
+1. Run `tapps-agents init` to set up Cursor integration
+2. See **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)**
+3. Try `@simple-mode *build "description"` in Cursor chat
+
+**Framework developer?**
+1. Read **[Project Context](PROJECT_CONTEXT.md)** - Understand dual nature
+2. See **[Architecture Overview](ARCHITECTURE.md)** - System architecture
+3. Review **[Architecture Decisions](architecture/decisions/)** - ADRs for major decisions
 
 ## 📚 Documentation Structure
 
@@ -49,6 +74,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Path Normalization Guide](PATH_NORMALIZATION_GUIDE.md)** - Cross-platform path handling, Windows absolute path conversion
 - **[Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
 - **[Simple Mode Timeout Analysis](SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md)** - 2025 performance enhancements and timeout fixes
+- **[Test Stack Documentation](test-stack.md)** - Comprehensive testing strategy, infrastructure, and quality gates
 - **[Test Suite Documentation](../tests/README.md)** - Complete test suite overview
 - **[E2E Test Suite](../tests/e2e/README.md)** - End-to-end test documentation
 - **[Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md)** - Playwright MCP detection and integration guide
@@ -70,11 +96,117 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Features & Capabilities
 - **[Context7 Integration](CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
+- **[Context7 Integration Patterns](CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
 - **[MCP Gateway](PLAYWRIGHT_MCP_INTEGRATION.md)** - Unified Model Context Protocol interface (Context7, Playwright, Filesystem, Git, Analysis)
+- **[MCP Standards Compliance](MCP_STANDARDS.md)** - JSON-RPC 2.0 and JSON Schema 2020-12 compliance
 - **[Analytics Dashboard](../tapps_agents/core/analytics_dashboard.py)** - Performance metrics, trends, agent/workflow statistics
 - **[Health Monitoring](../tapps_agents/health/)** - System health checks, resource usage tracking
 - **[State Management](CHECKPOINT_RESUME_GUIDE.md)** - Workflow state persistence, resume, cleanup
 - **[Governance & Safety](../tapps_agents/experts/governance.py)** - Secrets/PII filtering, approval workflows
+
+### Standards & Guidelines
+- **[AI Comment Guidelines](AI_COMMENT_GUIDELINES.md)** - AI comment tag conventions and usage
+- **[Documentation Metadata Standards](DOCUMENTATION_METADATA_STANDARDS.md)** - Metadata standards for documentation files
+- **[Test Stack Documentation](test-stack.md)** - Comprehensive testing strategy and infrastructure
+- **[Architecture Shards](architecture/)** - Lean architecture documentation (tech-stack, source-tree, coding-standards, performance-guide, testing-strategy)
+- **[Architecture Decisions](architecture/decisions/)** - ADR system and decision records
+- **[MCP Standards Compliance](MCP_STANDARDS.md)** - MCP standards compliance (JSON-RPC 2.0, JSON Schema 2020-12)
+- **[Context7 Integration Patterns](CONTEXT7_PATTERNS.md)** - Best practices for Context7 integration
+
+### Requirements
+- **[Requirements Index](../requirements/README.md)** - Requirements documentation index
+- **[Project Requirements](../requirements/PROJECT_REQUIREMENTS.md)** - Complete project requirements document
+- **[Agent API Specification](../requirements/agent_api.md)** - Agent API specification
+- **[Tech Stack Requirements](../requirements/TECH_STACK.md)** - Technology stack requirements
+
+## Common Tasks Quick Reference
+
+**I want to...**
+
+- **Set up TappsCodingAgents in my project** → [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)
+- **Build a new feature** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *build "description"`
+- **Fix a bug** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *fix <file> "description"`
+- **Review code quality** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *review <file>`
+- **Generate tests** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *test <file>`
+- **Configure agents** → [Configuration Guide](CONFIGURATION.md)
+- **Add custom experts** → [Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)
+- **Understand the architecture** → [Architecture Overview](ARCHITECTURE.md)
+- **Troubleshoot issues** → [Troubleshooting Guide](TROUBLESHOOTING.md)
+- **Deploy to production** → [Deployment Guide](DEPLOYMENT.md)
+- **Check coding standards** → [Coding Standards](architecture/coding-standards.md)
+- **View API reference** → [API Reference](API.md)
+
+## Topic-Based Navigation
+
+### By Role
+
+**Developer:**
+- [Quick Start Guide](guides/QUICK_START.md)
+- [Simple Mode Guide](SIMPLE_MODE_GUIDE.md)
+- [Configuration Guide](CONFIGURATION.md)
+- [API Reference](API.md)
+
+**Framework Developer:**
+- [Project Context](PROJECT_CONTEXT.md)
+- [Architecture Overview](ARCHITECTURE.md)
+- [Architecture Decisions](architecture/decisions/)
+- [Coding Standards](architecture/coding-standards.md)
+
+**DevOps/QA:**
+- [Test Stack Documentation](test-stack.md)
+- [Deployment Guide](DEPLOYMENT.md)
+- [Troubleshooting Guide](TROUBLESHOOTING.md)
+
+### By Topic
+
+**Testing:**
+- [Test Stack Documentation](test-stack.md)
+- [Test Suite Documentation](../tests/README.md)
+- [E2E Test Suite](../tests/e2e/README.md)
+
+**Architecture:**
+- [Architecture Overview](ARCHITECTURE.md)
+- [Architecture Shards](architecture/)
+- [Architecture Decisions](architecture/decisions/)
+
+**Integration:**
+- [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)
+- [MCP Standards Compliance](MCP_STANDARDS.md)
+- [Context7 Integration Patterns](CONTEXT7_PATTERNS.md)
+
+**Standards:**
+- [AI Comment Guidelines](AI_COMMENT_GUIDELINES.md)
+- [Documentation Metadata Standards](DOCUMENTATION_METADATA_STANDARDS.md)
+- [Coding Standards](architecture/coding-standards.md)
+
+**Workflows:**
+- [Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md)
+- [Workflow Quick Reference](WORKFLOW_QUICK_REFERENCE.md)
+- [Epic Workflow Guide](EPIC_WORKFLOW_GUIDE.md)
+- [YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)
+
+**Performance:**
+- [Quick Start: 2025 Optimizations](QUICK_START_OPTIMIZATIONS.md)
+- [Parallel Execution Optimization 2025](PARALLEL_EXECUTION_OPTIMIZATION_2025.md)
+- [Simple Mode Timeout Analysis](SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md)
+- [Performance Guide](architecture/performance-guide.md)
+
+## Search by Keyword
+
+Looking for something specific? Try these keywords:
+
+- **"setup"** → [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md), [Configuration Guide](CONFIGURATION.md)
+- **"workflow"** → [Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md), [Workflow Quick Reference](WORKFLOW_QUICK_REFERENCE.md)
+- **"test"** → [Test Stack Documentation](test-stack.md), [Test Suite Documentation](../tests/README.md)
+- **"expert"** → [Expert Setup Wizard](EXPERT_SETUP_WIZARD.md), [Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md)
+- **"architecture"** → [Architecture Overview](ARCHITECTURE.md), [Architecture Shards](architecture/)
+- **"api"** → [API Reference](API.md), [Agent API Specification](../requirements/agent_api.md)
+- **"mcp"** → [MCP Standards Compliance](MCP_STANDARDS.md), [Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md)
+- **"context7"** → [Context7 Integration Patterns](CONTEXT7_PATTERNS.md), [Context7 Cache Optimization](CONTEXT7_CACHE_OPTIMIZATION.md)
+- **"cursor"** → [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md), [Cursor Rules Setup Guide](CURSOR_RULES_SETUP.md)
+- **"deployment"** → [Deployment Guide](DEPLOYMENT.md)
+- **"troubleshooting"** → [Troubleshooting Guide](TROUBLESHOOTING.md)
+- **"standards"** → [AI Comment Guidelines](AI_COMMENT_GUIDELINES.md), [Documentation Metadata Standards](DOCUMENTATION_METADATA_STANDARDS.md), [Coding Standards](architecture/coding-standards.md)
 
 ---
 

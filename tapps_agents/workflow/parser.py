@@ -2,6 +2,21 @@
 Workflow Parser - Parse YAML workflow definitions.
 """
 
+# @ai-prime-directive: This file implements the YAML workflow parser with strict schema validation.
+# The parser supports both wrapped ({workflow: {...}}) and legacy ({id: ..., steps: [...]}) formats
+# and enforces schema compliance per ADR-004. This is critical infrastructure for the YAML-first workflow architecture.
+
+# @ai-constraints:
+# - Must support both wrapped and legacy workflow formats for backward compatibility
+# - Schema validation must occur before workflow object construction
+# - Step validation must check required fields (id, agent, instruction) before schema validation
+# - Error messages must include file path and step ID for debugging
+# - Performance: Parsing should complete in <100ms for typical workflows
+
+# @note[2025-03-15]: YAML-first workflow architecture per ADR-004.
+# The parser enforces strict schema compliance while maintaining backward compatibility.
+# See docs/architecture/decisions/ADR-004-yaml-first-workflows.md
+
 import re
 from pathlib import Path
 from typing import Any

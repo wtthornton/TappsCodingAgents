@@ -142,6 +142,10 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ## Coding Standards
 
+**For comprehensive coding standards, see [Coding Standards Documentation](docs/architecture/coding-standards.md).**
+
+**For AI comment tag guidelines, see [AI Comment Guidelines](docs/AI_COMMENT_GUIDELINES.md).**
+
 ### Python Style
 
 - Follow **PEP 8** style guide
@@ -208,6 +212,8 @@ except AgentActivationError as e:
 ```
 
 ## Testing Guidelines
+
+**For comprehensive testing strategy and infrastructure documentation, see [Test Stack Documentation](docs/test-stack.md).**
 
 ### Writing Tests
 

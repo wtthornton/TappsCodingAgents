@@ -11,6 +11,19 @@ All instruction classes support:
 - Human-readable descriptions (get_description)
 """
 
+# @ai-prime-directive: This file defines the instruction models for the instruction-based architecture.
+# These models are the contract between agents and Cursor Skills execution. Do not modify
+# the instruction structure without updating all agents and Cursor Skills implementations.
+
+# @ai-constraints:
+# - Must maintain backward compatibility with existing instruction consumers
+# - Do not change instruction model structure without migration plan
+# - All instruction types must support to_skill_command() and to_cli_command()
+
+# @note[2025-01-15]: Instruction-based architecture per ADR-001.
+# All agents prepare instruction objects defined here for Cursor Skills execution.
+# See docs/architecture/decisions/ADR-001-instruction-based-architecture.md
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any

@@ -84,6 +84,10 @@ class StepExecutionResult:
     attempts: int = 1
 
 
+# @note[2025-03-15]: Parallel execution uses dependency-based parallelism per ADR-004.
+# Steps are automatically parallelized based on dependencies - no manual parallel_tasks
+# configuration needed. See docs/architecture/decisions/ADR-004-yaml-first-workflows.md
+
 class ParallelStepExecutor:
     """
     Executes independent workflow steps in parallel with bounded concurrency.

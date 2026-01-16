@@ -1,5 +1,20 @@
 # TappsCodingAgents Cursor Rules
 
+⚠️ **DEPRECATED: This file is deprecated. All content has been migrated to `.cursor/rules/*.mdc` files.**
+
+**Please use `.cursor/rules/` instead:**
+- `.cursor/rules/simple-mode.mdc` - Simple Mode orchestration
+- `.cursor/rules/command-reference.mdc` - Complete command reference
+- `.cursor/rules/quick-reference.mdc` - Quick command reference
+- `.cursor/rules/agent-capabilities.mdc` - Agent capabilities
+- `.cursor/rules/project-context.mdc` - Project context
+- `.cursor/rules/workflow-presets.mdc` - Workflow presets
+
+This file is kept for backward compatibility but will be removed in a future version.
+See `docs/CURSOR_RULES_SETUP.md` for migration details.
+
+---
+
 This project uses Cursor Skills and Rules for AI assistance.
 
 ## ⚠️ IMPORTANT: Default to @simple-mode

@@ -5,6 +5,21 @@ Intercepts natural language commands, parses them, and routes to appropriate orc
 Works both in CLI mode and Cursor Skills mode.
 """
 
+# @ai-prime-directive: This file implements the Simple Mode natural language handler.
+# Simple Mode is the primary user interface for TappsCodingAgents, providing natural language
+# orchestration of multiple specialized skills. Do not modify the intent parsing or orchestrator
+# routing without updating Simple Mode documentation and tests.
+
+# @ai-constraints:
+# - Must maintain backward compatibility with existing Simple Mode commands
+# - Intent detection must support both explicit commands (*build) and natural language
+# - Workflow enforcement is mandatory - do not bypass workflow steps
+# - Performance: Intent parsing must complete in <50ms
+
+# @note[2025-02-01]: Simple Mode provides natural language orchestration with automatic
+# workflow enforcement. All development tasks should default to Simple Mode workflows.
+# See docs/SIMPLE_MODE_GUIDE.md and .cursor/rules/simple-mode.mdc
+
 from pathlib import Path
 from typing import Any
 

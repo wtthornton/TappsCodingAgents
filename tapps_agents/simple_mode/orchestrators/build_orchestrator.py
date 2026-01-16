@@ -10,6 +10,22 @@ Coordinates: Enhancer → Planner → Architect → Designer → Implementer
 - Step dependency management with failure cascades
 """
 
+# @ai-prime-directive: This file implements the Build Orchestrator for Simple Mode feature development.
+# The Build Orchestrator coordinates the complete 7-step workflow: enhance → plan → architect → design
+# → implement → review → test. This is the primary workflow for new feature development in TappsCodingAgents.
+# Do not modify the workflow sequence or step dependencies without updating Simple Mode documentation.
+
+# @ai-constraints:
+# - Must maintain the exact 7-step workflow sequence (enhance, plan, architect, design, implement, review, test)
+# - Step dependencies must be enforced - earlier steps must complete before later steps
+# - Workflow documentation must be generated for each step
+# - Quality gates must be enforced (reviewer score ≥ 70, test coverage ≥ 75%)
+# - Performance: Complete workflow execution should complete in <30 minutes for typical features
+
+# @note[2025-02-01]: Build Orchestrator is the primary Simple Mode workflow for feature development.
+# All new features should use this orchestrator via @simple-mode *build command.
+# See docs/SIMPLE_MODE_GUIDE.md and .cursor/rules/simple-mode.mdc
+
 import logging
 import re
 from pathlib import Path

@@ -2,6 +2,22 @@
 Enhancer Agent - Prompt enhancement utility that runs prompts through all TappsCodingAgents capabilities.
 """
 
+# @ai-prime-directive: This file implements the Enhancer Agent with a 7-stage prompt enhancement pipeline.
+# The enhancer transforms simple user prompts into comprehensive, context-aware specifications by analyzing
+# intent, gathering requirements, consulting experts, and synthesizing enhanced prompts. This is a critical
+# component of the Simple Mode build workflow.
+
+# @ai-constraints:
+# - Must maintain 7-stage pipeline order: Analysis → Requirements → Architecture → Codebase Context → Quality → Strategy → Synthesis
+# - Each stage must produce valid output even if sub-components fail (graceful degradation)
+# - Expert consultation is optional but recommended for domain-specific prompts
+# - Codebase context extraction must respect MAX_FILE_SIZE_KB and MAX_RELATED_FILES limits
+# - Performance: Full enhancement should complete in <30s for typical prompts
+
+# @note[2025-01-15]: Enhancer is part of the instruction-based architecture per ADR-001.
+# The 7-stage pipeline ensures comprehensive prompt enhancement while maintaining performance.
+# See docs/architecture/decisions/ADR-001-instruction-based-architecture.md
+
 import asyncio
 import hashlib
 import json

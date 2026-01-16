@@ -39,6 +39,78 @@ jobs:
       - name: Validate dependency consistency
         run: python scripts/validate_dependencies.py
 
+  docs-validation:
+    name: Documentation Validation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Install PyYAML (for metadata validation)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyyaml
+
+      - name: Verify documentation links
+        id: verify_docs
+        run: |
+          python scripts/verify_docs.py
+        continue-on-error: false
+
+      - name: Test code examples in documentation
+        id: doc_tests
+        run: |
+          python scripts/run_doc_tests.py
+        continue-on-error: false
+
+      - name: Check documentation synchronization
+        id: doc_sync
+        run: |
+          python scripts/check_doc_sync.py --format text
+        continue-on-error: true  # Non-blocking: many false positives from examples
+
+      - name: Documentation Validation Summary
+        if: always()
+        run: |
+          echo "## Documentation Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ steps.verify_docs.outcome }}" == "success" ] && [ "${{ steps.doc_tests.outcome }}" == "success" ]; then
+            echo "✅ All documentation checks passed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Checks Performed:" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Internal link validation" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ File reference validation" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ Frontmatter metadata validation (for files with frontmatter)" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ steps.doc_tests.outcome }}" == "success" ]; then
+              echo "- ✅ Code example syntax validation" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ❌ Code example syntax validation (failed)" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ "${{ steps.doc_sync.outcome }}" == "success" ]; then
+              echo "- ✅ Documentation synchronization check" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- ⚠️ Documentation synchronization check (warnings found, non-blocking)" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ **Documentation validation failed**" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Issues Found:" >> $GITHUB_STEP_SUMMARY
+            echo "Broken links, file references, or metadata issues were detected. Review the workflow logs for details." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### How to Fix:" >> $GITHUB_STEP_SUMMARY
+            echo "1. Run \`python scripts/verify_docs.py\` locally to see all errors" >> $GITHUB_STEP_SUMMARY
+            echo "2. Run \`python scripts/run_doc_tests.py\` to test code examples" >> $GITHUB_STEP_SUMMARY
+            echo "3. Fix broken links or update file references" >> $GITHUB_STEP_SUMMARY
+            echo "4. Fix syntax errors in code examples" >> $GITHUB_STEP_SUMMARY
+            echo "5. For metadata issues, see [Documentation Metadata Standards](docs/DOCUMENTATION_METADATA_STANDARDS.md)" >> $GITHUB_STEP_SUMMARY
+            echo "6. Some references may be false positives (external URLs, code examples) - review carefully" >> $GITHUB_STEP_SUMMARY
+          fi
+
   lint:
     name: Lint and Format Check
     runs-on: ubuntu-latest

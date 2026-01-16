@@ -5,6 +5,22 @@ This module provides a Cursor-native execution model that uses Cursor Skills
 and direct execution for LLM operations.
 """
 
+# @ai-prime-directive: This file implements the Cursor-native workflow executor for Cursor Skills integration.
+# This executor is used when running in Cursor mode (TAPPS_AGENTS_MODE=cursor) and invokes Cursor Skills
+# for LLM operations instead of direct API calls. Do not modify the Skill invocation pattern without
+# updating Cursor Skills integration and tests.
+
+# @ai-constraints:
+# - Must only execute in Cursor mode (is_cursor_mode() must return True)
+# - Must use SkillInvoker for all LLM operations - do not make direct API calls
+# - Workflow state must be compatible with WorkflowExecutor for cross-mode compatibility
+# - Performance: Skill invocation should complete in <5s for typical operations
+# - Must maintain backward compatibility with WorkflowExecutor workflow definitions
+
+# @note[2025-01-15]: Cursor-first runtime policy per ADR-002.
+# The framework operates in "tools-only" mode under Cursor, leveraging Cursor's LLM capabilities.
+# See docs/architecture/decisions/ADR-002-cursor-first-runtime.md
+
 from __future__ import annotations
 
 import asyncio

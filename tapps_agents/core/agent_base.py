@@ -2,6 +2,21 @@
 Base Agent Class - Common functionality for all agents
 """
 
+# @ai-prime-directive: This file implements the core agent base class for all workflow agents.
+# All agents must inherit from BaseAgent and follow the instruction-based architecture.
+# See ADR-001 for architectural rationale. Do not modify the activation or instruction
+# preparation patterns without updating all agent implementations.
+
+# @ai-constraints:
+# - Must maintain backward compatibility with existing agent implementations
+# - Do not modify the instruction execution model without updating all agents
+# - Performance: Agent activation must complete in <500ms
+# - All agents must implement the instruction preparation pattern per ADR-001
+
+# @note[2025-01-15]: Instruction-based architecture per ADR-001.
+# Agents prepare instruction objects instead of calling LLMs directly.
+# See docs/architecture/decisions/ADR-001-instruction-based-architecture.md
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

@@ -2,6 +2,20 @@
 Workflow Executor - Execute YAML workflow definitions.
 """
 
+# @ai-prime-directive: This file implements the workflow execution engine for YAML-first workflows.
+# Workflows are defined in YAML with strict schema enforcement and executed with dependency-based
+# parallelism. Do not modify the execution model without updating workflow definitions and tests.
+
+# @ai-constraints:
+# - Must support YAML-first architecture per ADR-004
+# - Dependency-based parallelism is automatic - do not add manual parallel_tasks configuration
+# - Workflow state persistence must maintain backward compatibility
+# - Performance: Workflow parsing must complete in <100ms for typical workflows
+
+# @note[2025-03-15]: YAML-first workflow architecture per ADR-004.
+# YAML is the single source of truth with strict schema enforcement.
+# See docs/architecture/decisions/ADR-004-yaml-first-workflows.md
+
 import json
 import os
 import subprocess  # nosec B404 - fixed args, no shell
@@ -1051,6 +1065,9 @@ class WorkflowExecutor:
         action = self._normalize_action(step.action)
         agent_name = (step.agent or "").strip().lower()
 
+        # @note: Dynamic agent import pattern - allows parallel execution to load agents
+        # on-demand without circular dependencies. This pattern is required for parallel
+        # step execution where agents are instantiated in isolated contexts.
         # ---- Helper: dynamic agent import + run ----
         async def run_agent(agent: str, command: str, **kwargs: Any) -> dict[str, Any]:
             module = __import__(f"tapps_agents.agents.{agent}.agent", fromlist=["*"])
@@ -1083,6 +1100,11 @@ class WorkflowExecutor:
                 # Execute handler to get artifacts
                 created_artifacts = await handler.execute(step, action, target_path)
                 
+                # @note: Special handling for reviewer gate evaluation in parallel execution.
+                # Gate evaluation is handled by ReviewerHandler, but we need to store gate
+                # result in state for parallel execution context. This is required because
+                # parallel execution doesn't update state directly - state updates are
+                # handled by ParallelStepExecutor after all parallel steps complete.
                 # Special handling for reviewer gate evaluation (parallel execution)
                 # Gate evaluation doesn't mark step complete here - that's handled by ParallelStepExecutor
                 if agent_name == "reviewer" and step.gate:

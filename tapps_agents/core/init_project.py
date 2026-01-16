@@ -676,6 +676,13 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
     return created, str(dest_file)
 
 
+# @note[2025-01-20]: Windows encoding workaround - handles UTF-8 BOM that Windows
+# editors may add. This is required for cross-platform compatibility. See
+# docs/architecture/coding-standards.md for Windows encoding requirements.
+# @ai-dont-touch: This Windows encoding workaround is critical for cross-platform
+# compatibility. Modifying this will break file reading on Windows systems that add
+# UTF-8 BOM. See docs/architecture/coding-standards.md for complete Windows compatibility guidelines.
+
 def normalize_config_encoding(file_path: Path) -> tuple[bool, str | None]:
     """
     Normalize encoding of a config file by removing UTF-8 BOM if present.

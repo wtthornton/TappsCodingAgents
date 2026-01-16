@@ -1,0 +1,262 @@
+---
+title: Claude Code Master Rules
+version: 1.0.0
+status: active
+last_updated: 2026-01-20
+tags: [claude, rules, ai-assistance]
+---
+
+# Claude Code Master Rules
+
+This file serves as the master rule file for Claude Code and other AI coding tools. It references detailed rules in `.cursor/rules/` to avoid duplication while providing Claude Code-specific context.
+
+## Project Overview
+
+**TappsCodingAgents** is a software development framework that provides:
+- 14 workflow agents covering the complete software development lifecycle
+- Expert system with built-in technical domains and optional project-defined business experts
+- Cursor Skills integration (model-agnostic)
+- Code quality analysis tools
+- Workflow orchestration with CLI and Python API
+
+## Quick Start
+
+**For AI assistants working on this project:**
+
+1. **Default to @simple-mode** for all development tasks
+2. **Understand dual nature**: Framework development vs. self-hosting
+3. **Follow workflow enforcement**: Use workflows for feature development, bug fixes, reviews
+4. **Respect quality gates**: Tests, reviews, and documentation are mandatory
+
+## Detailed Rules
+
+This file references detailed rules in `.cursor/rules/` to keep the master file lean while providing comprehensive guidance.
+
+### Core Rules
+
+**`.cursor/rules/simple-mode.mdc`** - **CRITICAL: READ FIRST**
+- Default to @simple-mode for ALL development tasks
+- Workflow interceptor pattern (suggest workflows before direct edits)
+- Complete workflow execution (all steps, documentation artifacts)
+- Natural language intent detection
+
+**`.cursor/rules/project-context.mdc`**
+- Dual nature of project (framework development + self-hosting)
+- Framework changes MUST use Full SDLC workflow
+- Context awareness guidelines
+- Self-hosting configuration
+
+**`.cursor/rules/agent-capabilities.mdc`**
+- Complete guide to all 14 workflow agents
+- When to use each agent
+- Common usage patterns
+- Command reference
+
+**`.cursor/rules/command-reference.mdc`**
+- Complete command reference for all agents
+- CLI and Cursor Skills syntax
+- Parameter guides
+- Examples and use cases
+
+### Quick References
+
+**`.cursor/rules/quick-reference.mdc`**
+- Quick command reference
+- Common workflows
+- Default behaviors
+
+**`.cursor/rules/workflow-presets.mdc`**
+- Workflow preset documentation
+- Available presets (full, rapid, fix, quality, etc.)
+- When to use each preset
+
+**`.cursor/rules/cursor-mode-usage.mdc`**
+- Cursor mode vs CLI mode
+- When to use Cursor Skills vs CLI commands
+- Command mapping
+
+**`.cursor/rules/project-profiling.mdc`**
+- Automatic project profiling system
+- Context-aware recommendations
+- Tech stack detection
+
+## Claude Code-Specific Context
+
+### File Organization
+
+**Rules Location:** `.cursor/rules/*.mdc`
+- Markdown files with YAML frontmatter
+- Tool-agnostic format (works with Cursor, Claude Code, and other tools)
+- Organized by topic for easy navigation
+
+**Skills Location:** `.claude/skills/`
+- Cursor Skills definitions (YAML + markdown)
+- 14 agent skills + simple-mode skill
+- Model-agnostic (uses Cursor's configured LLM)
+
+### Cross-Tool Compatibility
+
+**This project is designed to work with:**
+- **Cursor IDE** (primary): Uses Cursor Skills and Rules
+- **Claude Desktop**: Can use this `CLAUDE.md` file
+- **Other AI tools**: Rules in `.cursor/rules/` are tool-agnostic
+
+**Key Principle:** Rules are stored in `.cursor/rules/` as markdown files. This `CLAUDE.md` file provides a master index and Claude Code-specific context without duplicating content.
+
+### Version and Status
+
+**Version:** 3.3.0  
+**Status:** Active  
+**Last Updated:** 2026-01-20
+
+**Related Files:**
+- `AGENTS.md` - Agent identity and project-specific rules
+- `docs/test-stack.md` - Testing strategy and infrastructure
+- `docs/ARCHITECTURE.md` - System architecture overview
+
+## Essential Guidelines
+
+### 1. Default to @simple-mode
+
+**For ALL development tasks, DEFAULT to using `@simple-mode` unless the user explicitly requests a specific agent.**
+
+**Why?** Simple Mode provides:
+- Automatic orchestration of multiple specialized skills
+- Quality gates with automatic loopbacks
+- Comprehensive test generation (80%+ coverage)
+- Full documentation artifacts
+- Better outcomes than direct implementation
+
+**Example:**
+```
+User: "Add user authentication to my app"
+
+✅ CORRECT: @simple-mode *build 'Add user authentication with login, logout, and session management'
+❌ WRONG: Directly implement without workflow
+```
+
+### 2. Framework Development Rules
+
+**When modifying the TappsCodingAgents framework itself (`tapps_agents/` package), you MUST use Full SDLC workflow:**
+
+```bash
+# CLI
+tapps-agents simple-mode full --prompt "Implement [enhancement description]" --auto
+
+# Or in Cursor chat
+@simple-mode *full "Implement [enhancement description]"
+```
+
+**Why?** Framework changes require:
+- Requirements analysis before implementation
+- Architecture design for integration patterns
+- Quality gates (≥75 score) with automatic loopbacks
+- Test generation and execution
+- Security validation
+- Complete documentation
+- Full traceability
+
+### 3. Workflow Enforcement
+
+**BEFORE making any code edits for feature implementation, bug fixes, or new functionality, you MUST:**
+
+1. **Suggest Simple Mode workflow FIRST** - Do not proceed with direct edits
+2. **Explain workflow benefits** - Tests, quality gates, documentation
+3. **Only proceed with direct edits if user explicitly overrides** - Get confirmation first
+
+**Pre-Edit Checklist:**
+- [ ] Is this a new feature/component? → Use `@simple-mode *build`
+- [ ] Is this a bug fix? → Use `@simple-mode *fix`
+- [ ] Is this code review? → Use `@simple-mode *review`
+- [ ] Is this test generation? → Use `@simple-mode *test`
+- [ ] **Only skip if:** Simple one-off operation OR user explicitly requests direct edit
+
+### 4. Quality Gates
+
+**All code changes must meet quality thresholds:**
+- **Overall Score:** ≥ 70 (fail if below)
+- **Security Score:** ≥ 6.5 (warn if below)
+- **Maintainability Score:** ≥ 7.0 (warn if below)
+- **Test Coverage:** ≥ 75% (enforced in pytest.ini)
+
+**Framework Development Quality Gates:**
+- **Overall Score:** ≥ 75 (higher threshold for framework code)
+- **Security Score:** ≥ 8.5 (critical for framework security)
+- **Test Coverage:** ≥ 80% for core modules
+
+## Common Commands
+
+### Simple Mode (Primary Interface)
+
+```cursor
+@simple-mode *build "description"     # 7-step feature workflow
+@simple-mode *review <file>           # Code quality review
+@simple-mode *fix <file> "error"     # Bug fixing workflow
+@simple-mode *test <file>            # Test generation
+@simple-mode *refactor <file>       # Refactoring workflow
+@simple-mode *full "description"      # Full 9-step SDLC (framework development)
+```
+
+### Individual Agents (Advanced)
+
+```cursor
+@reviewer *review <file>              # Comprehensive code review
+@reviewer *score <file>               # Quick quality scoring
+@implementer *implement "desc" <file> # Code generation
+@tester *test <file>                  # Test generation
+@debugger *debug "error" --file <file> # Error analysis
+```
+
+**For complete command reference, see:** `.cursor/rules/command-reference.mdc`
+
+## Documentation
+
+**Key Documentation Files:**
+- `AGENTS.md` - Agent identity and project-specific rules
+- `docs/test-stack.md` - Testing strategy and infrastructure
+- `docs/ARCHITECTURE.md` - System architecture overview
+- `docs/README.md` - Documentation index
+- `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md` - Skills setup guide
+
+**For complete documentation, see:** `docs/README.md`
+
+## Configuration
+
+**Skills:** `.claude/skills/` (14 agent skills + simple-mode)  
+**Rules:** `.cursor/rules/` (8 rule files)  
+**Background Agents:** `.cursor/background-agents.yaml`  
+**Indexing:** `.cursorignore` (performance optimization)
+
+## Getting Started
+
+1. **Read this file** for essential guidelines
+2. **Review `.cursor/rules/simple-mode.mdc`** for workflow enforcement
+3. **Review `.cursor/rules/project-context.mdc`** for dual nature context
+4. **Try commands:** `@simple-mode *build "description"` or `@reviewer *help`
+
+**For full setup instructions, see:** `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md`
+
+## Version Management
+
+**Always use the automated version update script** when changing versions:
+
+```powershell
+.\scripts\update_version.ps1 -Version 3.0.4
+```
+
+This script updates version numbers in:
+- Core files: `pyproject.toml`, `tapps_agents/__init__.py`
+- Documentation: `README.md`, `docs/README.md`, `docs/API.md`, `docs/ARCHITECTURE.md`
+- Metadata: `implementation/IMPROVEMENT_PLAN.json`
+
+**After updating version:**
+1. Update `CHANGELOG.md` with release notes
+2. Commit changes
+3. Create and push git tag
+4. See `docs/RELEASE_GUIDE.md` for complete process
+
+---
+
+**Last Updated:** 2026-01-20  
+**Maintained By:** TappsCodingAgents Team  
+**Compatible With:** Claude Code, Cursor IDE, and other AI coding tools

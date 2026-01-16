@@ -4,6 +4,22 @@ Agent Learning System
 Enables agents to learn from past tasks and improve over time.
 """
 
+# @ai-prime-directive: This file implements the Agent Learning System for pattern extraction, prompt optimization,
+# and feedback analysis. The system enables agents to learn from past tasks and improve over time through
+# meta-learning, pattern recognition, and adaptive learning strategies.
+
+# @ai-constraints:
+# - Learning intensity must adapt to hardware profile (NUC, Desktop, Server)
+# - Pattern extraction must include security scanning before pattern acceptance
+# - Anti-pattern extraction must learn from negative feedback and failures
+# - Prompt optimization must respect hardware constraints and token budgets
+# - Meta-learning must track learning effectiveness and adjust strategies accordingly
+# - Performance: Learning operations should not significantly impact agent response times
+
+# @note[2025-01-15]: Agent learning is an advanced feature that improves agent performance over time.
+# The system uses meta-learning to adapt learning strategies based on effectiveness tracking.
+# See docs/architecture/decisions/ for related architectural decisions.
+
 import logging
 import re
 from dataclasses import dataclass, field

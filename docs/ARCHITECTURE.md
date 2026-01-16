@@ -14,14 +14,13 @@ BMAD expects an architecture document at `docs/architecture.md`.
 
 BMAD is configured (via `.bmad-core/core-config.yaml`) to always load lean architecture shards from:
 
-- `docs/architecture/tech-stack.md`
-- `docs/architecture/source-tree.md`
-- `docs/architecture/coding-standards.md`
-- `docs/architecture/performance-guide.md`
-- `docs/architecture/performance-checklist.md`
-- `docs/architecture/testing-strategy.md`
+- **[Technology Stack](architecture/tech-stack.md)** - Technology stack overview, dependencies, and platform support
+- **[Source Tree](architecture/source-tree.md)** - Source code organization and module structure
+- **[Coding Standards](architecture/coding-standards.md)** - Coding conventions, style guide, and best practices
+- **[Performance Guide](architecture/performance-guide.md)** - Performance optimization strategies and metrics
+- **[Testing Strategy](architecture/testing-strategy.md)** - Testing approach and coverage requirements
 
-These shard files exist to keep agent context small while remaining accurate.
+These shard files exist to keep agent context small while remaining accurate. For comprehensive testing infrastructure documentation, see [Test Stack Documentation](test-stack.md).
 
 # Architecture Overview
 
@@ -270,6 +269,17 @@ An always-on orchestrator that automatically detects project domains, creates an
 - **Observability & Quality Improvement**: Metrics tracking (expert confidence, RAG quality, Context7 KB hit rate) with scheduled KB maintenance jobs
 
 **Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
+## Architecture Decisions
+
+Major architectural decisions are documented as ADRs (Architecture Decision Records):
+
+- **[ADR-001: Instruction-Based Architecture](architecture/decisions/ADR-001-instruction-based-architecture.md)** - Agents prepare instruction objects for Cursor Skills execution
+- **[ADR-002: Cursor-First Runtime Policy](architecture/decisions/ADR-002-cursor-first-runtime.md)** - Framework runs tools-only, Cursor handles LLM operations
+- **[ADR-003: Expert System Design](architecture/decisions/ADR-003-expert-system-design.md)** - Two-layer expert system (built-in + industry experts)
+- **[ADR-004: YAML-First Workflow Architecture](architecture/decisions/ADR-004-yaml-first-workflows.md)** - YAML as single source of truth with strict schema enforcement
+
+**For all ADRs, see:** [Architecture Decisions Directory](architecture/decisions/)
 
 ## Related Documentation
 
