@@ -1,7 +1,12 @@
-# API Reference
+---
+title: API Reference
+version: 3.3.0
+status: active
+last_updated: 2026-01-20
+tags: [api, reference, python, cli, agents, workflow]
+---
 
-**Version**: 3.3.0  
-**Last Updated**: January 2026
+# API Reference
 
 ## Overview
 

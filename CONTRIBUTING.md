@@ -1,3 +1,11 @@
+---
+title: Contributing Guide
+version: 3.3.0
+status: active
+last_updated: 2026-01-20
+tags: [contributing, guidelines, development, standards]
+---
+
 # Contributing to TappsCodingAgents
 
 Thank you for your interest in contributing to TappsCodingAgents! This document provides guidelines and instructions for contributing.

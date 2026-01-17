@@ -1,3 +1,11 @@
+---
+title: Configuration Guide
+version: 3.3.0
+status: active
+last_updated: 2026-01-20
+tags: [configuration, setup, yaml, pydantic, settings]
+---
+
 # TappsCodingAgents - Configuration Guide
 
 This document describes the configuration system for TappsCodingAgents.

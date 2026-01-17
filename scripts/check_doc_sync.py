@@ -34,10 +34,18 @@ class CodeAnalyzer:
     
     def extract_public_apis(self, file_path: Path) -> List[Dict[str, Any]]:
         """Extract public functions and classes from a Python file."""
+        # Safety: Limit file size to prevent memory issues (10MB max)
+        max_file_size = 10 * 1024 * 1024  # 10MB
+        
         try:
+            file_size = file_path.stat().st_size
+            if file_size > max_file_size:
+                print(f"Warning: Skipping large file {file_path} ({file_size} bytes)", file=sys.stderr)
+                return []
+                
             content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content)
-        except (SyntaxError, UnicodeDecodeError) as e:
+        except (SyntaxError, UnicodeDecodeError, OSError) as e:
             return []
         
         apis = []
@@ -94,17 +102,28 @@ class CodeAnalyzer:
             include_patterns = ["tapps_agents/**/*.py"]
         
         apis_by_module = {}
+        max_files = 500  # Safety limit to prevent memory issues
         
         for pattern in include_patterns:
+            file_count = 0
             for py_file in self.repo_root.glob(pattern):
+                if file_count >= max_files:
+                    print(f"Warning: Reached file limit ({max_files}) for pattern {pattern}", file=sys.stderr)
+                    break
+                    
                 # Skip test files and private modules
                 if "test" in str(py_file) or "__pycache__" in str(py_file):
                     continue
                 
-                module_apis = self.extract_public_apis(py_file)
-                if module_apis:
-                    module_name = str(py_file.relative_to(self.repo_root))
-                    apis_by_module[module_name] = module_apis
+                try:
+                    module_apis = self.extract_public_apis(py_file)
+                    if module_apis:
+                        module_name = str(py_file.relative_to(self.repo_root))
+                        apis_by_module[module_name] = module_apis
+                    file_count += 1
+                except Exception as e:
+                    print(f"Warning: Failed to analyze {py_file}: {e}", file=sys.stderr)
+                    continue
         
         self.public_apis = apis_by_module
         return apis_by_module
@@ -151,6 +170,56 @@ class DocAnalyzer:
         
         return references
     
+    def is_false_positive(self, file_ref: str, context: str = "") -> bool:
+        """
+        Check if a file reference is likely a false positive (example, placeholder, etc.).
+        
+        Args:
+            file_ref: The file reference to check
+            context: Optional surrounding context for better detection
+        
+        Returns:
+            True if likely a false positive, False otherwise
+        """
+        # Common false positive patterns
+        false_positive_patterns = [
+            r'^path/to/',  # Example paths
+            r'^example',  # Example files
+            r'^test\.py$',  # Generic test.py
+            r'^file\.py$',  # Generic file.py
+            r'^config\.yaml$',  # Generic config.yaml (if in example context)
+            r'service-name',  # Placeholder service names
+            r'\.\./\.\./',  # Too many parent dirs (likely example)
+            r'^[a-z]+/[a-z]+/',  # Simple two-level paths (path/to, src/file, etc.)
+        ]
+        
+        # Check patterns
+        for pattern in false_positive_patterns:
+            if re.search(pattern, file_ref, re.IGNORECASE):
+                return True
+        
+        # Check if in code example context
+        # Look for common example indicators in surrounding context
+        if context:
+            example_indicators = [
+                'example:', 'usage:', 'example usage', 'for example',
+                '```python', '```bash', '```yaml', '```json',
+                'example code', 'sample', 'demonstration'
+            ]
+            context_lower = context.lower()
+            if any(indicator in context_lower for indicator in example_indicators):
+                # If it's a simple/generic filename, likely an example
+                if file_ref.count('/') <= 1 and len(file_ref.split('/')[-1].split('.')[0]) < 10:
+                    return True
+        
+        # Skip very generic filenames that are likely examples
+        generic_names = ['test.py', 'file.py', 'config.yaml', 'example.py', 
+                       'main.py', 'app.py', 'script.py', 'utils.py']
+        if file_ref.split('/')[-1].lower() in generic_names and file_ref.count('/') <= 1:
+            return True
+        
+        return False
+    
     def extract_file_references(self, content: str) -> Set[str]:
         """Extract file path references from documentation."""
         file_refs = set()
@@ -158,12 +227,26 @@ class DocAnalyzer:
         # Pattern: Relative paths like `path/to/file.py` or `docs/file.md`
         path_pattern = r'`([\w/\\-]+\.(?:py|md|yaml|yml|json|txt))`'
         for match in re.finditer(path_pattern, content):
-            file_refs.add(match.group(1))
+            file_ref = match.group(1)
+            # Get context (50 chars before and after)
+            start = max(0, match.start() - 50)
+            end = min(len(content), match.end() + 50)
+            context = content[start:end]
+            
+            if not self.is_false_positive(file_ref, context):
+                file_refs.add(file_ref)
         
         # Pattern: Links like [text](path/to/file.md)
         link_pattern = r'\[([^\]]+)\]\(([\w/\\-]+\.(?:py|md|yaml|yml|json|txt))\)'
         for match in re.finditer(link_pattern, content):
-            file_refs.add(match.group(2))
+            file_ref = match.group(2)
+            # Get context
+            start = max(0, match.start() - 50)
+            end = min(len(content), match.end() + 50)
+            context = content[start:end]
+            
+            if not self.is_false_positive(file_ref, context):
+                file_refs.add(file_ref)
         
         return file_refs
     
@@ -171,9 +254,16 @@ class DocAnalyzer:
         """Analyze documentation files for API and file references."""
         all_api_refs = set()
         all_file_refs = set()
+        max_file_size = 5 * 1024 * 1024  # 5MB max per doc file
         
         for doc_file in doc_files:
             try:
+                # Safety: Check file size before reading
+                file_size = doc_file.stat().st_size
+                if file_size > max_file_size:
+                    print(f"Warning: Skipping large file {doc_file} ({file_size} bytes)", file=sys.stderr)
+                    continue
+                
                 content = doc_file.read_text(encoding="utf-8")
                 
                 # Extract frontmatter if present
@@ -188,8 +278,12 @@ class DocAnalyzer:
                 all_api_refs.update(api_refs)
                 all_file_refs.update(file_refs)
                 
-            except Exception as e:
+            except (OSError, UnicodeDecodeError) as e:
                 print(f"Warning: Failed to analyze {doc_file}: {e}", file=sys.stderr)
+                continue
+            except Exception as e:
+                print(f"Warning: Unexpected error analyzing {doc_file}: {e}", file=sys.stderr)
+                continue
         
         self.api_references = all_api_refs
         self.file_references = all_file_refs
@@ -211,15 +305,33 @@ class SyncChecker:
     def find_documentation_files(self) -> List[Path]:
         """Find all documentation files."""
         doc_files = []
-        for pattern in ["docs/**/*.md", "*.md"]:
+        max_files = 1000  # Safety limit to prevent memory issues
+        
+        # More specific patterns to avoid matching too many files
+        patterns = [
+            "docs/**/*.md",  # Docs directory
+            "README.md",     # Root README only
+            "CHANGELOG.md",  # Changelog only
+            "CONTRIBUTING.md",  # Contributing guide only
+        ]
+        
+        for pattern in patterns:
+            if len(doc_files) >= max_files:
+                print(f"Warning: Reached file limit ({max_files}), stopping search", file=sys.stderr)
+                break
+                
             for doc_file in self.repo_root.glob(pattern):
+                if len(doc_files) >= max_files:
+                    break
+                    
                 # Skip workflow output files
                 if "docs/workflows/" in str(doc_file):
                     continue
                 # Skip node_modules and other excluded dirs
-                if any(exclude in str(doc_file) for exclude in [".git", "node_modules", ".venv"]):
+                if any(exclude in str(doc_file) for exclude in [".git", "node_modules", ".venv", "__pycache__", ".tapps-agents"]):
                     continue
                 doc_files.append(doc_file)
+        
         return sorted(set(doc_files))
     
     def check_file_references(self, strict: bool = False) -> List[Dict[str, Any]]:
@@ -378,10 +490,23 @@ def main():
     
     args = parser.parse_args()
     
-    repo_root = Path(args.repo_root) if args.repo_root else Path(__file__).parent.parent
-    
-    checker = SyncChecker(repo_root)
-    results = checker.check_sync(strict=args.strict)
+    try:
+        repo_root = Path(args.repo_root) if args.repo_root else Path(__file__).parent.parent
+        
+        if not repo_root.exists():
+            print(f"Error: Repository root does not exist: {repo_root}", file=sys.stderr)
+            sys.exit(1)
+        
+        checker = SyncChecker(repo_root)
+        results = checker.check_sync(strict=args.strict)
+    except KeyboardInterrupt:
+        print("\nInterrupted by user", file=sys.stderr)
+        sys.exit(130)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
     
     if args.baseline:
         # Save baseline to file

@@ -1,5 +1,9 @@
 ---
 title: Architecture Index (BMAD Standard Path)
+version: 3.3.0
+status: active
+last_updated: 2026-01-20
+tags: [architecture, index, bmad, system-design, components]
 ---
 
 # Architecture (BMAD Standard Path)
