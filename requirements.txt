@@ -4,34 +4,37 @@
 # See docs/DEPENDENCY_POLICY.md for the dependency management policy.
 
 # Core Framework
-pydantic>=2.12.0
-httpx>=0.28.0
+pydantic>=2.12.5
+httpx>=0.28.1
 pyyaml>=6.0.3
-aiohttp>=3.13.2
-psutil>=7.1.0
+aiohttp>=3.13.3
+psutil>=7.2.1
 
 # Code Analysis (for scoring)
 radon>=6.0.1
 bandit>=1.9.2
-coverage>=7.13.0
+coverage>=7.13.1
 
 # Reporting
 jinja2>=3.1.6
-plotly>=6.5.0
+plotly>=6.5.2
 
 # CLI UX (progress spinners/bars, live updates)
-rich>=13.9.4
+rich>=14.2.0
 
 # Dependency conflict resolution
 # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
 # langchain-core 0.2.43 requires packaging>=23.2,<26
 packaging>=23.2,<25
 
+# Async I/O (async file operations for performance - optional with fallback)
+aiofiles>=25.1.0
+
 # Development Tools (from dev extra)
-black>=25.12.0
-ruff>=0.14.10,<1.0
+black>=26.1.0
+ruff>=0.14.13,<1.0
 mypy>=1.19.1,<2.0
-types-PyYAML>=6.0.12
+types-PyYAML>=6.0.12.20250915
 
 # Testing
 pytest>=9.1.0

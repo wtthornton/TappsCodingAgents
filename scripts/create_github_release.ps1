@@ -113,7 +113,7 @@ if (-not $SkipVersionUpdate) {
     
     # Extract version from __init__.py
     $initVersion = ""
-    if ($initContent -match '__version__\s*=\s*"(.*?)"') {
+    if ($initContent -match '__version__\s*(?::\s*str)?\s*=\s*"(.*?)"') {
         $initVersion = $matches[1]
     }
     
@@ -269,7 +269,7 @@ Write-Host "  Current HEAD: $currentCommit" -ForegroundColor Gray
 
 # Verify version in current HEAD matches target version
 $headPyprojectVersion = git show HEAD:pyproject.toml | Select-String -Pattern '^\s*version\s*=\s*"(.*?)"\s*$' -Context 2,0
-$headInitVersion = git show HEAD:tapps_agents/__init__.py | Select-String -Pattern '__version__\s*=\s*"(.*?)"' | ForEach-Object { if ($_ -match '__version__\s*=\s*"(.*?)"') { $matches[1] } }
+$headInitVersion = git show HEAD:tapps_agents/__init__.py | Select-String -Pattern '__version__\s*(?::\s*str)?\s*=\s*"(.*?)"' | ForEach-Object { if ($_ -match '__version__\s*(?::\s*str)?\s*=\s*"(.*?)"') { $matches[1] } }
 
 # Extract version from pyproject.toml [project] section
 $headPyprojectVersionExtracted = ""
@@ -387,10 +387,10 @@ if ($Prerelease) {
 
 # Add files to attach
 foreach ($file in $distFiles) {
-    $ghArgs += ("dist/{0}" -f $file.Name)
+    $ghArgs += ('dist/{0}' -f $file.Name)
 }
 
-Write-Host "Command: gh $($ghArgs -join ' ')" -ForegroundColor Gray
+Write-Host ('Command: gh ' + ($ghArgs -join ' ')) -ForegroundColor Gray
 Write-Host ""
 
 # Execute
@@ -398,23 +398,23 @@ try {
     & gh @ghArgs
     if ($LASTEXITCODE -eq 0) {
         Write-Host ""
-        Write-Host "=== Release Created Successfully! ===" -ForegroundColor Green
+        Write-Host '=== Release Created Successfully! ===' -ForegroundColor Green
         Write-Host ""
-        Write-Host "View release at:" -ForegroundColor Cyan
-        Write-Host "  https://github.com/$Repo/releases/tag/$Tag" -ForegroundColor White
+        Write-Host 'View release at:' -ForegroundColor Cyan
+        Write-Host ('  https://github.com/{0}/releases/tag/{1}' -f $Repo, $Tag) -ForegroundColor White
         Write-Host ""
-        Write-Host "Next steps:" -ForegroundColor Cyan
-        Write-Host "  1. Verify the release on GitHub" -ForegroundColor White
-        Write-Host "  2. Test installation: pip install tapps-agents==$Version" -ForegroundColor White
-        Write-Host "  3. Update CHANGELOG.md if not already done" -ForegroundColor White
+        Write-Host 'Next steps:' -ForegroundColor Cyan
+        Write-Host '  1. Verify the release on GitHub' -ForegroundColor White
+        Write-Host ('  2. Test installation: pip install tapps-agents=={0}' -f $Version) -ForegroundColor White
+        Write-Host '  3. Update CHANGELOG.md if not already done' -ForegroundColor White
     } else {
         Write-Host ""
-        Write-Host "=== Release Creation Failed ===" -ForegroundColor Red
+        Write-Host '=== Release Creation Failed ===' -ForegroundColor Red
         exit $LASTEXITCODE
     }
 } catch {
     Write-Host ""
-    Write-Host "ERROR: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host ('ERROR: ' + $_.Exception.Message) -ForegroundColor Red
     exit 1
 }
 

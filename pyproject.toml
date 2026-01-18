@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapps-agents"
-version = "3.5.20"
+version = "3.5.21"
 description = "A specification framework for defining, configuring, and orchestrating coding agents"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -25,36 +25,36 @@ classifiers = [
 ]
 dependencies = [
     # Core Framework
-    "pydantic>=2.12.0",
-    "httpx>=0.28.0",
+    "pydantic>=2.12.5",
+    "httpx>=0.28.1",
     "pyyaml>=6.0.3",
-    "aiohttp>=3.13.2",
-    "psutil>=7.1.0",
+    "aiohttp>=3.13.3",
+    "psutil>=7.2.1",
     # Code Analysis (used by reviewer agent at runtime)
     "radon>=6.0.1",
     "bandit>=1.9.2",
-    "coverage>=7.13.0",
+    "coverage>=7.13.1",
     # Reporting (used by report generator)
     "jinja2>=3.1.6",
-    "plotly>=6.5.0",
+    "plotly>=6.5.2",
     # Dependency conflict resolution
     # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
     # langchain-core 0.2.43 requires packaging>=23.2,<26
     "packaging>=23.2,<25",
     # CLI UX (progress spinners/bars, live updates)
-    "rich>=14.1.0",
+    "rich>=14.2.0",
     # Async I/O (async file operations for performance - optional with fallback)
-    "aiofiles>=24.1.0",
+    "aiofiles>=25.1.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     # Code Formatting
-    "black>=25.12.0",
-    "ruff>=0.14.10,<1.0",
+    "black>=26.1.0",
+    "ruff>=0.14.13,<1.0",
     # Type Checking
     "mypy>=1.19.1,<2.0",
-    "types-PyYAML>=6.0.12",
+    "types-PyYAML>=6.0.12.20250915",
     # Testing
     "pytest>=9.0.2",
     "pytest-asyncio>=1.3.0",

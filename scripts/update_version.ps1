@@ -79,9 +79,9 @@ foreach ($line in $pyprojectLines) {
     }
 }
 
-# Extract current version from __init__.py
+# Extract current version from __init__.py (supports __version__: str = "x.y.z" or __version__ = "x.y.z")
 $currentVersionInit = ""
-$versionPattern2 = '__version__\s*=\s*"(.*?)"'
+$versionPattern2 = '__version__\s*(?::\s*str)?\s*=\s*"(.*?)"'
 if ($initContent -match $versionPattern2) {
     $currentVersionInit = $matches[1]
 }
@@ -136,12 +136,11 @@ try {
     exit 1
 }
 
-# Update __init__.py
+# Update __init__.py (preserves optional ": str" type annotation; updates both __version__ and _version_)
 try {
     Write-Host "Updating tapps_agents/__init__.py..." -ForegroundColor Cyan
-    $replacePattern2 = '__version__\s*=\s*".*?"'
-    $replaceValue2 = "__version__ = `"$Version`""
-    $initContent = $initContent -replace $replacePattern2, $replaceValue2
+    $initContent = $initContent -replace '(__version__\s*(?::\s*str)?\s*=\s*)".*?"', "`$1`"$Version`""
+    $initContent = $initContent -replace '(_version_\s*(?::\s*str)?\s*=\s*)".*?"', "`$1`"$Version`""
     Set-Content -Path $initFile -Value $initContent -NoNewline -ErrorAction Stop
 } catch {
     Write-Error -Message "Failed to update __init__.py: $_" `
@@ -361,7 +360,7 @@ foreach ($line in $verifyLines) {
 }
 
 $verifyVersionInit = ""
-$verifyInitPattern = '__version__\s*=\s*"(.*?)"'
+$verifyInitPattern = '__version__\s*(?::\s*str)?\s*=\s*"(.*?)"'
 if ($verifyInit -match $verifyInitPattern) {
     $verifyVersionInit = $matches[1]
 }
