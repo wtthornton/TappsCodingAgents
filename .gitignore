@@ -83,6 +83,41 @@ testrun*/
 *-execution-report.md
 workflow-*-summary.md
 
+# Documentation execution artifacts
+docs/*_SUMMARY.md
+docs/*_REPORT.md
+docs/*_EXECUTION*.md
+docs/*_VALIDATION*.md
+docs/*_FIX_SUMMARY.md
+docs/*_IMPLEMENTATION_SUMMARY.md
+docs/*_ANALYSIS.md
+docs/*_REVIEW.md
+docs/*_EVALUATION.md
+docs/*_COMPARISON.md
+docs/*_PLAN*.md
+docs/*_PROGRESS.md
+docs/*_COMPLETE.md
+docs/*_VERIFICATION.md
+docs/*_CHANGELOG.md
+docs/*_TEST_RESULTS.md
+docs/*_RECOMMENDATIONS.md
+docs/*_STATUS.md
+docs/*_ISSUES_FIXED*.md
+docs/*_BETA*.md
+docs/*_OVERNIGHT*.md
+docs/workflows/**/workflow-summary.md
+docs/workflows/**/implementation-summary.md
+docs/workflows/**/COMPLETION_SUMMARY.md
+docs/workflows/**/IMPLEMENTATION_SUMMARY.md
+docs/workflows/**/step5-implementation-summary.md
+docs/workflows/**/PHASE*.md
+docs/workflows/**/*-202*-*/
+
+# Keep essential documentation (exceptions)
+!docs/REVIEWER_FEEDBACK_IMPROVEMENTS_SUMMARY.md
+!docs/SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md
+!docs/WORKFLOW_EXECUTION_SUMMARY.md
+
 # Runtime artifacts
 .tapps-agents/events/
 .tapps-agents/benchmarks/
