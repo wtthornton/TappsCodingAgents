@@ -68,6 +68,50 @@ fixed-code/
 
 # Test artifacts
 MagicMock/
+billstest/
+demo_output/
+testrun*/
+
+# Backup files (any extension)
+*.backup_*
+*.backup
+
+# Execution artifacts
+*_EXECUTION_SUMMARY.md
+*_EXECUTION_REPORT.md
+*-execution-summary.md
+*-execution-report.md
+workflow-*-summary.md
+
+# Runtime artifacts
+.tapps-agents/events/
+.tapps-agents/benchmarks/
+.tapps-agents/capabilities/
+
+# JSON artifact files (keep schemas and configs)
+*-output.json
+*-report.json
+*-review.json
+*-results.json
+coverage.json
+jscpd-report.json
+review_output.json
+workflow_tests_review.json
+complexity_analysis.json
+
+# Text output files
+*_test_results.txt
+*_test_output.txt
+*_test_failures*.txt
+e2e_test_results.txt
+unit_test_output.txt
+unit_test_results.txt
+test_failures*.txt
+
+# Temporary HTML files (demo/test files)
+index.html
+index*.html
+*.backup_*.html
 
 # OS
 .DS_Store
