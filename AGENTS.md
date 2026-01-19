@@ -210,6 +210,12 @@ Use these only for targeted, single-purpose operations:
 
 **For complete command reference, see:** `.cursor/rules/command-reference.mdc`
 
+### Beads (bd) – Task Tracking
+
+Use **bd** for dependency-aware task tracking and agent memory. On this project the binary is at `tools\bd\bd.exe` (Windows); add `tools\bd` to PATH to run `bd` directly.
+
+**Essential commands:** `bd ready` (tasks with no open blockers), `bd create "Title" -p 0`, `bd dep add <child> <parent>`, `bd show <id>`. Run `bd quickstart` for an intro. This repo uses stealth mode (`.beads/` is local only).
+
 ## Detailed Rules
 
 **For detailed project rules and guidelines, see:**
