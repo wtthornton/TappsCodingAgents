@@ -1469,6 +1469,18 @@ Reports any missing components, configuration errors, or issues that would preve
         help="Output format: 'text' for human-readable verification report, 'json' for structured validation data (default: text)",
     )
 
+    # Beads (bd) passthrough
+    beads_parser = subparsers.add_parser(
+        "beads",
+        help="Forward to Beads (bd) for task tracking. Requires bd in tools/bd or on PATH.",
+        description="Run bd (Beads) for dependency-aware task tracking. See docs/BEADS_INTEGRATION.md.",
+    )
+    beads_parser.add_argument(
+        "bd_args",
+        nargs=argparse.REMAINDER,
+        help='Arguments passed to bd (e.g. ready, create "Title" -p 0)',
+    )
+
     # Simple Mode commands
     simple_mode_parser = subparsers.add_parser(
         "simple-mode",

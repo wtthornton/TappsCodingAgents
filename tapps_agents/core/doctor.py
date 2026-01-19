@@ -755,6 +755,35 @@ def collect_doctor_report(
     if cache_status_finding:
         findings.append(cache_status_finding)
 
+    # --- Beads (bd) status check (optional task tracking) ---
+    try:
+        from ..beads import is_available
+
+        if is_available(root):
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="BEADS",
+                    message="Beads (bd): Available (tools/bd or PATH). Optional: enable in config and run `bd init`. See docs/BEADS_INTEGRATION.md.",
+                )
+            )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="BEADS",
+                    message="Beads (bd): Not found (optional). See docs/BEADS_INTEGRATION.md.",
+                )
+            )
+    except Exception:
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="BEADS",
+                message="Beads (bd): Not checked (optional). See docs/BEADS_INTEGRATION.md.",
+            )
+        )
+
     # --- Build tool check (via python -m) ---
     build_available, build_version = _check_tool_via_python_m("build")
     if build_available:

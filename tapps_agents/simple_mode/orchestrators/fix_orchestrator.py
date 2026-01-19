@@ -105,6 +105,17 @@ class FixOrchestrator(SimpleModeOrchestrator):
         target_file = files[0] if files else None
         bug_description = error_message or intent.original_input
 
+        from ..beads_hooks import create_fix_issue, close_issue
+
+        beads_issue_id: str | None = None
+        if self.config:
+            beads_issue_id = create_fix_issue(
+                self.project_root,
+                self.config,
+                str(target_file) if target_file else "",
+                bug_description,
+            )
+
         # Step 1: Execute debugger
         debug_tasks = [
             {
@@ -187,6 +198,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
             except Exception:
                 pass
             # #endregion
+            close_issue(self.project_root, beads_issue_id)
             return {
                 "type": "fix",
                 "success": False,
@@ -227,6 +239,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
             pass
         # #endregion
         if not fix_suggestion:
+            close_issue(self.project_root, beads_issue_id)
             return {
                 "type": "fix",
                 "success": False,
@@ -396,7 +409,8 @@ class FixOrchestrator(SimpleModeOrchestrator):
                     "final_quality_scores": review_results[-1]["result"].get("scores", {}) if review_results else {},
                 })
                 logger.info(f"Metrics: {metrics}")
-            
+
+            close_issue(self.project_root, beads_issue_id)
             return {
                 "type": "fix",
                 "success": False,
@@ -604,6 +618,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
             })
             logger.info(f"Execution metrics: {metrics}")
 
+        close_issue(self.project_root, beads_issue_id)
         return {
             "type": "fix",
             "success": True,

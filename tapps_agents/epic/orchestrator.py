@@ -10,9 +10,11 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..beads import is_available, run_bd
 from ..core.config import ProjectConfig, load_config
 from ..workflow.executor import WorkflowExecutor
 from ..workflow.parser import WorkflowParser
+from .beads_sync import sync_epic_to_beads
 from .models import EpicDocument, Story, StoryStatus
 from .parser import EpicParser
 
@@ -61,6 +63,7 @@ class EpicOrchestrator:
         self.execution_order: list[Story] = []
         self.execution_results: dict[str, dict[str, Any]] = {}
         self.workflow_executor: WorkflowExecutor | None = None
+        self._story_to_bd: dict[str, str] = {}
 
     def load_epic(self, epic_path: Path | str) -> EpicDocument:
         """
@@ -78,6 +81,27 @@ class EpicOrchestrator:
             f"Loaded Epic {self.epic.epic_number}: {self.epic.title} "
             f"({len(self.epic.stories)} stories)"
         )
+
+        # Optional: sync epic to Beads when enabled
+        if (
+            self.config.beads.enabled
+            and self.config.beads.sync_epic
+            and is_available(self.project_root)
+        ):
+            try:
+
+                def _run_bd(args: list[str], cwd: Path | None = None) -> Any:
+                    return run_bd(self.project_root, args, cwd=cwd)
+
+                self._story_to_bd = sync_epic_to_beads(
+                    self.epic, self.project_root, _run_bd
+                )
+            except Exception as e:
+                logger.warning("beads epic sync failed: %s", e)
+                self._story_to_bd = {}
+        else:
+            self._story_to_bd = {}
+
         return self.epic
 
     async def execute_epic(
@@ -231,6 +255,15 @@ class EpicOrchestrator:
             story.status = StoryStatus.FAILED
             result["status"] = "failed"
             result["error"] = str(e)
+
+        # Optional: close bd issue when beads enabled and we have a mapping (DONE or FAILED)
+        if self.config.beads.enabled and self._story_to_bd:
+            bd_id = self._story_to_bd.get(story.story_id)
+            if bd_id:
+                try:
+                    run_bd(self.project_root, ["close", bd_id])
+                except Exception as e:
+                    logger.warning("beads close %s failed: %s", bd_id, e)
 
         self.execution_results[story.story_id] = result
         return result

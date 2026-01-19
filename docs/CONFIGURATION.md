@@ -81,7 +81,7 @@ quality_tools:
 
 ### Tooling (`doctor`) configuration
 
-The `doctor` command reads `.tapps-agents/config.yaml` and reports mismatches (Python version targets, missing tools like ruff/mypy/pytest).
+The `doctor` command reads `.tapps-agents/config.yaml` and reports mismatches (Python version targets, missing tools like ruff/mypy/pytest). It also reports **Beads (bd) status** (optional: available, not found, or not checked). See [Beads Integration](BEADS_INTEGRATION.md).
 
 - `tooling.targets.python`: the “pinned” Python version you expect for this repo/project.
 - `tooling.targets.python_requires`: the PEP 440 requires-python constraint (should match your packaging config).
@@ -332,3 +332,4 @@ config = load_config()  # searches for .tapps-agents/config.yaml upward, else de
 - **Config models**: `tapps_agents/core/config.py`
 - **Expert setup**: `docs/EXPERT_SETUP_WIZARD.md`
 - **Project profiling**: `docs/PROJECT_PROFILING_GUIDE.md`
+- **Beads (bd) integration**: [BEADS_INTEGRATION.md](BEADS_INTEGRATION.md) (optional `beads` config: `enabled`, `sync_epic`, `hooks_simple_mode`; doctor reports status; init hints `bd init` when detected)

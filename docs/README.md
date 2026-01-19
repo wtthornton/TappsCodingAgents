@@ -95,6 +95,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Epic Summary: SDLC Improvements](prd/EPIC_SUMMARY_SDLC_IMPROVEMENTS.md)** - High-level overview of all planned improvements
 
 ### Features & Capabilities
+- **[Beads Integration](BEADS_INTEGRATION.md)** - Optional task tracking (bd); epic sync, *build/*fix hooks; `tapps-agents beads`; doctor reports status; init hints `bd init`
 - **[Context7 Integration](CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
 - **[Context7 Integration Patterns](CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
 - **[MCP Gateway](PLAYWRIGHT_MCP_INTEGRATION.md)** - Unified Model Context Protocol interface (Context7, Playwright, Filesystem, Git, Analysis)
@@ -195,6 +196,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 Looking for something specific? Try these keywords:
 
+- **"beads" / "bd" / "task tracking"** → [Beads Integration](BEADS_INTEGRATION.md)
 - **"setup"** → [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md), [Configuration Guide](CONFIGURATION.md)
 - **"workflow"** → [Workflow Selection Guide](WORKFLOW_SELECTION_GUIDE.md), [Workflow Quick Reference](WORKFLOW_QUICK_REFERENCE.md)
 - **"test"** → [Test Stack Documentation](test-stack.md), [Test Suite Documentation](../tests/README.md)

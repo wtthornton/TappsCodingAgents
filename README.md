@@ -246,6 +246,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **MCP Gateway**: Unified Model Context Protocol interface for tool access
   - **Context7 MCP Server**: Library documentation lookup (required, auto-configured)
   - **Playwright MCP Server**: Browser automation for E2E testing (optional, auto-detected)
+  - **Beads (bd)** (optional): Task tracking; `tapps-agents beads`; doctor reports bd status; init hints `bd init` when detected. [Beads Integration](docs/BEADS_INTEGRATION.md)
 - **YAML Workflow Definitions**: Declarative, version-controlled orchestration with strict schema enforcement
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
 - **YAML-First Architecture** ✅ (Epics 6-10 Complete):
@@ -413,7 +414,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **MCP Gateway** ✅ (Unified tool access with 5 servers: Context7, Playwright, Filesystem, Git, Analysis)
   - **MCP Server Detection**: Automatic detection of Context7 and Playwright MCP servers
   - **Setup Instructions**: Auto-generated setup instructions when MCP servers are missing
-  - **Status Reporting**: `tapps-agents doctor` reports MCP server configuration status
+  - **Status Reporting**: `tapps-agents doctor` reports MCP server configuration status and Beads (bd) status (optional)
 - **YAML Workflow Definitions** ✅ (Parser, executor, artifact tracking, conditional steps, gates)
   - **YAML-First Architecture** ✅ (Epics 6-10): YAML as single source of truth with strict schema enforcement
   - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs

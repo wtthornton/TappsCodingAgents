@@ -230,6 +230,14 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         original_description = parameters.get("description") or intent.original_input
 
+        from ..beads_hooks import create_build_issue, close_issue
+
+        beads_issue_id: str | None = None
+        if self.config:
+            beads_issue_id = create_build_issue(
+                self.project_root, self.config, original_description
+            )
+
         # Generate workflow ID and initialize documentation manager
         workflow_id = WorkflowDocumentationManager.generate_workflow_id("build")
         doc_manager: WorkflowDocumentationManager | None = None
@@ -882,7 +890,8 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         # Aggregate all outputs (Simple Mode Enhancement)
         aggregated_output = output_aggregator.aggregate()
         executable_instructions = output_aggregator.get_executable_instructions()
-        
+
+        close_issue(self.project_root, beads_issue_id)
         return {
             "type": "build",
             "success": overall_success,

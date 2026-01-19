@@ -981,6 +981,23 @@ class ContinuousBugFixConfig(BaseModel):
     )
 
 
+class BeadsConfig(BaseModel):
+    """Configuration for Beads (bd) task-tracking integration."""
+
+    enabled: bool = Field(
+        default=False,
+        description="Enable Beads (bd) integration. When false, all beads features are no-ops.",
+    )
+    sync_epic: bool = Field(
+        default=True,
+        description="When beads.enabled is true, sync epic to bd (create issues + deps) before *epic run.",
+    )
+    hooks_simple_mode: bool = Field(
+        default=False,
+        description="When beads.enabled is true, create/close bd issues at start/end of *build and *fix.",
+    )
+
+
 class SimpleModeConfig(BaseModel):
     """Configuration for Simple Mode."""
 
@@ -1214,6 +1231,10 @@ class ProjectConfig(BaseModel):
     simple_mode: SimpleModeConfig = Field(
         default_factory=SimpleModeConfig,
         description="Simple Mode configuration (intent-based orchestration)",
+    )
+    beads: BeadsConfig = Field(
+        default_factory=BeadsConfig,
+        description="Beads (bd) task-tracking integration. See docs/BEADS_INTEGRATION.md.",
     )
     bug_fix_agent: BugFixAgentConfig = Field(
         default_factory=BugFixAgentConfig,

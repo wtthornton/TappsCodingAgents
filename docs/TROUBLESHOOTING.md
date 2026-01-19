@@ -114,7 +114,7 @@ Some browser-related functionality can run in a mocked mode if the **Python Play
 
 **If you're using Cursor:**
 - If **Playwright MCP is configured**, you can ignore this message: browser automation should be done via Cursor Skills using Playwright MCP tools.
-- To check if Playwright MCP is configured, run: `tapps-agents doctor` and look for "Playwright MCP" status.
+- To check if Playwright MCP is configured, run: `tapps-agents doctor` and look for "Playwright MCP" status. Doctor also reports Beads (bd) status (optional task tracking); see [Beads Integration](BEADS_INTEGRATION.md).
 - To configure Playwright MCP, add it to `.cursor/mcp.json`:
   ```json
   {

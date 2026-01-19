@@ -2123,8 +2123,8 @@ def _print_reset_results(results: dict[str, Any]) -> None:
         print("\n⚠️  No backup created (--no-backup was used)")
 
 
-def _print_next_steps() -> None:
-    """Print next steps instructions."""
+def _print_next_steps(project_root: Path | None = None) -> None:
+    """Print next steps instructions. project_root is used for optional Beads (bd) hint."""
     print("\n" + "=" * 60)
     print("Next Steps - START HERE")
     print("=" * 60)
@@ -2173,6 +2173,14 @@ def _print_next_steps() -> None:
     print("    tapps-agents reviewer review src/")
     print("    tapps-agents score src/main.py")
     print()
+    if project_root is not None:
+        try:
+            from ...beads import is_available
+            if is_available(project_root):
+                print("Beads (bd) detected. Optional: run `bd init` or `bd init --stealth` for task tracking. See docs/BEADS_INTEGRATION.md.")
+                print()
+        except Exception:
+            pass
 
     print("Setup & Configuration:")
     print("  • Verify setup: tapps-agents cursor verify")
@@ -2403,7 +2411,7 @@ def handle_init_command(args: object) -> None:
     # Run environment diagnostics
     _run_environment_check(results["project_root"])
 
-    _print_next_steps()
+    _print_next_steps(Path(results["project_root"]))
 
 
 def _update_cursorignore_patterns(project_root: Path | str) -> dict[str, Any]:
@@ -3303,6 +3311,25 @@ def handle_cursor_command(args: object) -> None:
     else:
         print(f"Unknown cursor command: {cursor_command}", file=sys.stderr)
         sys.exit(1)
+
+
+def handle_beads_command(args: object) -> None:
+    """Forward to Beads (bd). Exits with bd's return code or 1 if bd not found."""
+    from ...beads import is_available, run_bd
+
+    project_root = Path.cwd()
+    if not is_available(project_root):
+        print(
+            "bd not found. Install to tools/bd or add bd to PATH. See docs/BEADS_INTEGRATION.md.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+    bd_args = list(getattr(args, "bd_args", []) or [])
+    # Drop "--" and any leading "beads" argparse might include
+    while bd_args and bd_args[0] in ("--", "beads"):
+        bd_args.pop(0)
+    r = run_bd(project_root, bd_args, capture_output=False)
+    sys.exit(r.returncode if r.returncode is not None else 0)
 
 
 def handle_continuous_bug_fix_command(args: object) -> None:

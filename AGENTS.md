@@ -216,6 +216,10 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 
 **Essential commands:** `bd ready` (tasks with no open blockers), `bd create "Title" -p 0`, `bd dep add <child> <parent>`, `bd show <id>`. Run `bd quickstart` for an intro. This repo uses stealth mode (`.beads/` is local only).
 
+**Conventions:** Run `bd ready` at session start when doing long-horizon or multi-session work. After completing a *build, *fix, or an epic story, create or close a bd issue (e.g. `bd create "Done: …"` or `bd close <id>`). See [docs/BEADS_INTEGRATION.md](docs/BEADS_INTEGRATION.md).
+
+**Init and doctor:** `tapps-agents init` prints an optional hint to run `bd init` when `bd` is detected. `tapps-agents doctor` reports Beads (bd) status (available, not found, or not checked).
+
 ## Detailed Rules
 
 **For detailed project rules and guidelines, see:**
