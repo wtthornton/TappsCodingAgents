@@ -25,7 +25,7 @@ rich>=14.2.0
 # Dependency conflict resolution
 # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
 # langchain-core 0.2.43 requires packaging>=23.2,<26
-packaging>=23.2,<25
+packaging>=23.2,<26
 
 # Async I/O (async file operations for performance - optional with fallback)
 aiofiles>=25.1.0
