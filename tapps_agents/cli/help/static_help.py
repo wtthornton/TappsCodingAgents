@@ -11,7 +11,6 @@ Enhancer Agent Commands:
   enhance <prompt>                    - Full prompt enhancement (7-stage pipeline)
   enhance-quick <prompt>               - Quick enhancement (stages 1-3)
   enhance-stage <stage> [--prompt <p>] [--session-id <id>] - Run specific stage
-  enhance-resume <session-id>          - Resume interrupted enhancement session
   help                                 - Show this help message
 
 Options:

@@ -1077,6 +1077,8 @@ tapps-agents enhancer enhance "<prompt>" [--format json|markdown|yaml]
 
 **Note**: The enhancer includes a fallback analysis mechanism that ensures all analysis fields are populated even when the analyst/LLM is unavailable, preventing "unknown" values.
 
+**Workflow:** Enhance steps in full-sdlc, rapid-dev, and Epic run via EnhancerHandler. **CLI auto-enhancement:** `auto_enhancement`, `PROMPT_ARGUMENT_MAP` (docs/CONFIGURATION.md).
+
 #### `*enhance-quick` / `enhance-quick` (Dual-Mode)
 **Purpose:** Quick prompt enhancement (stages 1-3)
 
@@ -1099,14 +1101,6 @@ tapps-agents enhancer enhance-stage <stage> "<prompt>" [--format json|markdown|y
 ```
 
 **Stages:** `analysis`, `requirements`, `architecture`, `codebase`, `quality`, `strategy`, `synthesis`
-
-#### `*enhance-resume` / `enhance-resume` (CLI-First)
-**Purpose:** Resume interrupted enhancement session
-
-**CLI Syntax:**
-```bash
-tapps-agents enhancer enhance-resume <session-id> [--format json|markdown|yaml]
-```
 
 ### Debugger Agent (`@debugger`)
 

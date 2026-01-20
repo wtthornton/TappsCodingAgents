@@ -193,10 +193,6 @@ class EnhancerAgent(BaseAgent):
                 "command": "*enhance-stage",
                 "description": "Run specific enhancement stage",
             },
-            {
-                "command": "*enhance-resume",
-                "description": "Resume interrupted enhancement session",
-            },
         ]
 
     async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
@@ -207,7 +203,6 @@ class EnhancerAgent(BaseAgent):
         - *enhance: Full enhancement pipeline
         - *enhance-quick: Quick enhancement (analysis, requirements, architecture)
         - *enhance-stage: Run specific stage
-        - *enhance-resume: Resume session
         - *help: Show help
         """
         command = command.lstrip("*")
@@ -238,11 +233,6 @@ class EnhancerAgent(BaseAgent):
             session_id = kwargs.get("session_id", None)
 
             return await self._enhance_stage(stage, prompt, session_id)
-
-        elif command == "enhance-resume":
-            session_id = kwargs.get("session_id", "")
-
-            return await self._resume_session(session_id)
 
         else:
             return {"error": f"Unknown command: {command}"}
@@ -662,21 +652,6 @@ class EnhancerAgent(BaseAgent):
                 "error": f"Stage {stage} failed: {error_msg}",
                 "session_id": session_id,
             }
-
-    async def _resume_session(self, session_id: str) -> dict[str, Any]:
-        """Resume an interrupted enhancement session."""
-        session = self._load_session(session_id)
-        if not session:
-            return {"error": f"Session not found: {session_id}"}
-
-        self.current_session = session
-        prompt = session["metadata"]["original_prompt"]
-
-        # Continue from where we left off
-        # This is a simplified version - in production, would track which stages completed
-        return await self._enhance_full(
-            prompt, output_format="markdown", config_path=None
-        )
 
     # Stage implementations
 

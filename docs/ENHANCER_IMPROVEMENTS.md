@@ -156,6 +156,11 @@ This document summarizes all improvements made to the Enhancer Agent to fix blan
 - `docs/ENHANCER_FIX_SUMMARY.md` - Implementation summary
 - `docs/ENHANCER_IMPROVEMENTS.md` - This file
 
+## Workflow and CLI Integration
+
+- **EnhancerHandler** (`tapps_agents/workflow/agent_handlers/enhancer_handler.py`): Workflow executor runs enhance steps for full-sdlc (optional), rapid-dev, and Epic. Epic wires `story.title`/`story.description` into state; AnalystHandler and PlannerHandler consume `enhanced_prompt`/`description`.
+- **CLI auto-enhancement**: `auto_enhancement` and `PROMPT_ARGUMENT_MAP` in [CONFIGURATION.md](CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement).
+
 ## Related Issues
 
 - Fixes blank/unknown values in analysis section

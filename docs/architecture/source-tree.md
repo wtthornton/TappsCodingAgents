@@ -80,7 +80,7 @@ agents/
 - `cursor_executor.py`: Cursor-native execution
 - `manifest.py`: Task manifest generation
 - `rules_generator.py`: Cursor Rules documentation generation
-- `agent_handlers/`: Agent-specific execution handlers (Strategy Pattern)
+- `agent_handlers/`: Agent-specific execution handlers (Strategy Pattern), including EnhancerHandler for enhance steps (full-sdlc, rapid-dev, Epic)
 
 ### Simple Mode (`tapps_agents/simple_mode/`)
 

@@ -209,9 +209,16 @@ class EpicOrchestrator:
 
                 # Execute workflow step
                 if not self.workflow_executor.state:
-                    self.workflow_executor.start(
-                        workflow=workflow,
-                        user_prompt=f"Implement {story.title}: {story.description}",
+                    self.workflow_executor.user_prompt = (
+                        f"{story.title}: {story.description}"
+                    )
+                    self.workflow_executor.start(workflow=workflow)
+                    # Wire story into state so EnhancerHandler (and downstream) get it
+                    self.workflow_executor.state.variables["description"] = (
+                        f"{story.title}: {story.description}"
+                    )
+                    self.workflow_executor.state.variables["story_description"] = (
+                        story.description or ""
                     )
 
                 workflow_state = await self.workflow_executor.execute(

@@ -312,6 +312,38 @@ tapps-agents continuous-bug-fix --no-commit
 - Uses git operations from `core.git_operations` for commits
 - Respects bug-fix-agent quality thresholds and configuration
 
+### Automatic Prompt Enhancement (auto_enhancement)
+
+When **auto_enhancement** is enabled, the CLI middleware can enhance short or low-quality prompts before they reach an agent (implementer, planner, analyst, etc.). Workflows (e.g. full-sdlc, rapid-dev, Epic) can also run enhancement via the EnhancerHandler when an `enhancer` step is present.
+
+```yaml
+auto_enhancement:
+  enabled: true
+  quality_threshold: 50.0       # Enhance when score < this (0-100)
+  min_prompt_length: 20
+  commands:
+    implementer:
+      enabled: true
+      synthesis_mode: full      # full | quick
+    planner:
+      enabled: true
+      synthesis_mode: quick
+    analyst:
+      enabled: true
+      synthesis_mode: quick
+    architect:
+      enabled: false            # Off by default to avoid over-use
+    designer:
+      enabled: false            # Off by default to avoid over-use
+```
+
+- **enabled**: Turn auto-enhancement on or off globally.
+- **quality_threshold**: Prompts with `assess_prompt_quality` score below this are enhanced. Higher values mean more prompts are enhanced.
+- **min_prompt_length**: Prompts shorter than this get score 0 and are enhanced (when enabled for that command).
+- **commands**: Per-agent settings. `synthesis_mode`: `full` (7-stage) or `quick` (3-stage). `architect` and `designer` default to `enabled: false`.
+
+**Prompt argument map:** `PROMPT_ARGUMENT_MAP` in `tapps_agents/cli/utils/prompt_enhancer.py` defines which `(agent, command)` pairs are eligible and which CLI argument holds the prompt (e.g. `specification`, `description`, `requirements`). Commands with value `None` are never enhanced (e.g. `(debugger, debug)`, `(implementer, refactor)`). To support auto-enhancement for a new agent/command, add an entry there and in `auto_enhancement.commands` if you want non-default behavior.
+
 ## Default Values
 
 If no configuration file is provided, defaults are loaded from the Pydantic models in `tapps_agents/core/config.py`.

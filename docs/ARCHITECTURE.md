@@ -127,9 +127,10 @@ Key pieces:
 - **Workflow recommendations**: `tapps_agents/workflow/recommender.py`
 - **Agent handlers**: `tapps_agents/workflow/agent_handlers/` (Epic 20)
   - Strategy Pattern implementation for agent-specific execution logic
-  - 11 handler classes (one per agent type)
+  - 12 handler classes (one per agent type), including **EnhancerHandler** for enhance steps (full-sdlc optional, rapid-dev, Epic)
   - `AgentHandlerRegistry` for handler management
   - Reduces complexity and eliminates code duplication
+  - CLI prompt enhancement: `auto_enhancement`, `PROMPT_ARGUMENT_MAP` (see [CONFIGURATION.md](CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement))
 
 #### Workflow State Persistence
 

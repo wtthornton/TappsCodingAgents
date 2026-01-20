@@ -232,7 +232,8 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 **Skills:** `.claude/skills/` (14 agent skills + simple-mode)  
 **Rules:** `.cursor/rules/` (8 rule files)  
 **Background Agents:** `.cursor/background-agents.yaml`  
-**Indexing:** `.cursorignore` (performance optimization)
+**Indexing:** `.cursorignore` (performance optimization)  
+**auto_enhancement and PROMPT_ARGUMENT_MAP:** [docs/CONFIGURATION.md](docs/CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement) — CLI prompt enhancement; workflow EnhancerHandler for full-sdlc (optional enhance), rapid-dev, Epic.
 
 ## Getting Started
 

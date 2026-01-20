@@ -41,8 +41,13 @@ class AnalystHandler(AgentExecutionHandler):
         Returns:
             List of created artifacts
         """
-        # Get user prompt or use default
-        user_prompt = self.state.variables.get("user_prompt", "")
+        # Prefer enhanced text from enhancer when present (e.g. full-sdlc enhance step), else user_prompt
+        user_prompt = (
+            self.state.variables.get("enhanced_prompt")
+            or self.state.variables.get("description")
+            or self.state.variables.get("user_prompt")
+            or ""
+        )
         if not user_prompt:
             # Check if executor has auto_mode attribute
             auto_mode = getattr(self.executor, "auto_mode", False) if self.executor else False

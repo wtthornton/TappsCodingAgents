@@ -1128,8 +1128,9 @@ class AutoEnhancementConfig(BaseModel):
         default_factory=lambda: {
             "implementer": {"enabled": True, "synthesis_mode": "full"},
             "planner": {"enabled": True, "synthesis_mode": "quick"},
-            "architect": {"enabled": False},
-            "designer": {"enabled": False},
+            "analyst": {"enabled": True, "synthesis_mode": "quick"},
+            "architect": {"enabled": False},  # Off by default to avoid over-use
+            "designer": {"enabled": False},  # Off by default to avoid over-use
         },
         description="Per-command enhancement settings",
     )

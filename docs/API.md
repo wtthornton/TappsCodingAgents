@@ -297,6 +297,8 @@ python -m tapps_agents.cli reviewer type-check --pattern "src/**/*.py" --output 
 
 ## Enhancer Improvements
 
+**Workflow integration:** full-sdlc (optional enhance before requirements), rapid-dev, and Epic run enhance steps via **EnhancerHandler** (`tapps_agents/workflow/agent_handlers/enhancer_handler.py`). **CLI auto-enhancement:** `auto_enhancement` and `PROMPT_ARGUMENT_MAP` in [CONFIGURATION.md](CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement).
+
 The enhancer agent now provides complete output with all stage data:
 
 ### Enhanced Output

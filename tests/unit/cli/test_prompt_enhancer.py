@@ -2,12 +2,16 @@
 Unit tests for prompt enhancement middleware.
 """
 
+import asyncio
+from unittest.mock import AsyncMock, patch
+
 import pytest
 from argparse import Namespace
 
 from tapps_agents.cli.utils.prompt_enhancer import (
     assess_prompt_quality,
     detect_prompt_argument,
+    enhance_prompt,
     should_enhance_prompt,
 )
 from tapps_agents.core.config import AutoEnhancementConfig
@@ -117,6 +121,25 @@ class TestAssessPromptQuality:
         score2 = assess_prompt_quality(prompt2, config)
         assert score2 > score1
 
+    def test_already_spec_like_gets_high_score(self):
+        """Prompts with acceptance criteria, user story, shall/must, bullets score high."""
+        config = AutoEnhancementConfig(min_prompt_length=10)
+        spec_like = """User story: As a user I want to log in so that I access my account.
+Acceptance criteria:
+- The system shall validate credentials.
+- The system must support password reset.
+- Session should expire after 24h."""
+        score = assess_prompt_quality(spec_like, config)
+        assert score >= 50.0, "spec-like prompts should not be enhanced (score >= threshold)"
+
+    def test_short_vague_prompt_gets_low_score(self):
+        """Short vague prompts (above min length) without spec structure get modest score."""
+        config = AutoEnhancementConfig(min_prompt_length=10)
+        vague = "create a simple rest api for users"  # above min length, no spec structure
+        score = assess_prompt_quality(vague, config)
+        # Should be below a high bar so enhancement is still considered when threshold is 50
+        assert score < 70.0
+
 
 class TestShouldEnhancePrompt:
     """Tests for enhancement decision logic."""
@@ -175,4 +198,76 @@ class TestShouldEnhancePrompt:
         )
         # This may vary based on exact scoring, but should be consistent
         assert isinstance(result, bool)
+
+    def test_spec_like_prompt_not_enhanced(self):
+        """Clearly spec-like prompt (acceptance criteria, shall) should not be enhanced."""
+        config = AutoEnhancementConfig(quality_threshold=50.0, min_prompt_length=10)
+        spec = """As a user I want to login. Acceptance criteria: the system shall validate.
+        - Use JWT. - Session must expire."""
+        result = should_enhance_prompt(spec, "planner", "plan", config)
+        assert result is False
+
+    def test_short_vague_prompt_still_enhanced(self):
+        """Short vague prompt below min_prompt_length gets score 0 and is enhanced."""
+        config = AutoEnhancementConfig(quality_threshold=50.0, min_prompt_length=30)
+        vague = "make a api for users"  # 21 chars, below min 30 -> score 0 -> enhanced
+        result = should_enhance_prompt(vague, "implementer", "implement", config)
+        assert result is True
+
+
+class TestEnhancePrompt:
+    """Tests for enhance_prompt (synthesis_mode when enhance_mode is None)."""
+
+    @pytest.mark.asyncio
+    async def test_synthesis_mode_from_config_when_enhance_mode_none(self):
+        """When enhance_mode is None, synthesis_mode comes from config per agent."""
+        config = AutoEnhancementConfig(
+            commands={
+                "implementer": {"enabled": True, "synthesis_mode": "full"},
+                "analyst": {"enabled": True, "synthesis_mode": "quick"},
+            }
+        )
+        with patch(
+            "tapps_agents.cli.utils.prompt_enhancer.EnhancerAgent",
+            spec=True,
+        ) as mock_cls:
+            mock_instance = AsyncMock()
+            mock_cls.return_value = mock_instance
+            mock_instance.activate = AsyncMock()
+            mock_instance.close = AsyncMock()
+            mock_instance.run = AsyncMock(
+                return_value={"success": True, "enhanced_prompt": "Enhanced."}
+            )
+
+            await enhance_prompt("x" * 25, "implementer", "implement", config, enhance_mode=None)
+            mock_instance.run.assert_called_once()
+            assert mock_instance.run.call_args[0][0] == "enhance"
+
+            mock_instance.run.reset_mock()
+            await enhance_prompt("x" * 25, "analyst", "gather-requirements", config, enhance_mode=None)
+            mock_instance.run.assert_called_once()
+            assert mock_instance.run.call_args[0][0] == "enhance-quick"
+
+    @pytest.mark.asyncio
+    async def test_enhance_mode_override_ignores_config(self):
+        """When enhance_mode is set, it overrides config synthesis_mode."""
+        config = AutoEnhancementConfig(
+            commands={"implementer": {"enabled": True, "synthesis_mode": "full"}}
+        )
+        with patch(
+            "tapps_agents.cli.utils.prompt_enhancer.EnhancerAgent",
+            spec=True,
+        ) as mock_cls:
+            mock_instance = AsyncMock()
+            mock_cls.return_value = mock_instance
+            mock_instance.activate = AsyncMock()
+            mock_instance.close = AsyncMock()
+            mock_instance.run = AsyncMock(
+                return_value={"success": True, "enhanced_prompt": "Done."}
+            )
+            await enhance_prompt(
+                "x" * 25, "implementer", "implement", config, enhance_mode="quick"
+            )
+            mock_instance.run.assert_called_once()
+            assert mock_instance.run.call_args[0][0] == "enhance-quick"
 

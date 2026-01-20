@@ -138,6 +138,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **Review code quality** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *review <file>`
 - **Generate tests** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *test <file>`
 - **Configure agents** → [Configuration Guide](CONFIGURATION.md)
+- **Configure prompt enhancement (CLI auto_enhancement, workflow EnhancerHandler)** → [CONFIGURATION.md: auto_enhancement](CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement)
 - **Add custom experts** → [Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)
 - **Understand the architecture** → [Architecture Overview](ARCHITECTURE.md)
 - **Troubleshoot issues** → [Troubleshooting Guide](TROUBLESHOOTING.md)

@@ -208,7 +208,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **YAML-First Architecture** ✅ (Epics 6-10): YAML as single source of truth with strict schema enforcement
   - **Auto-Generated Artifacts** ✅: Task manifests, Cursor Rules docs
   - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies (no `parallel_tasks`)
-  - **11 Workflow Presets**: rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues
+  - **11 Workflow Presets**: rapid-dev (enhance step), full-sdlc (optional enhance before requirements), maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues
 - **Industry Experts Framework** ✅ (Weighted decision-making, domain configuration, expert registry)
   - **16 Built-in Experts**: Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning
   - **100+ Knowledge Files**: Across 13 knowledge domains
@@ -227,6 +227,8 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Multiple Usage Modes** - Full enhancement, quick enhancement, stage-by-stage execution
 - **Session Management** - Resume interrupted enhancements
 - **Multiple Output Formats** - Markdown, JSON, YAML
+- **Workflow integration** - full-sdlc (optional enhance step before requirements), rapid-dev, and Epic story workflows run the enhancer when an `enhance` step is present (EnhancerHandler). AnalystHandler and PlannerHandler consume `enhanced_prompt`/`description` from state.
+- **CLI auto-enhancement** - `auto_enhancement` in config enhances low-quality prompts for implementer, planner, analyst (see [Configuration](docs/CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement)). `PROMPT_ARGUMENT_MAP` and `commands` control which agent/command pairs are eligible.
 - See [Enhancer Agent Guide](docs/ENHANCER_AGENT.md) for details
 
 🎉 **All Core Framework Features Complete!**

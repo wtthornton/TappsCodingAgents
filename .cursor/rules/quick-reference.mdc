@@ -297,7 +297,7 @@ python -m tapps_agents.cli debugger analyze-error "ValueError: invalid literal" 
 ```
 
 ### Enhancer Agent
-**Best for:** Prompt enhancement with expert consultation
+**Best for:** Prompt enhancement with expert consultation. Workflow: full-sdlc (optional), rapid-dev, Epic (EnhancerHandler). CLI: `auto_enhancement` (CONFIGURATION.md).
 ```bash
 # Full enhancement
 python -m tapps_agents.cli enhancer enhance "Add user authentication"

@@ -311,6 +311,7 @@ Step 7: @tester *test {target_file}
 
 ### Full SDLC Workflow
 ```
+0. @enhancer *enhance (optional; full-sdlc preset includes an enhance step before requirements, run via EnhancerHandler)
 1. @analyst *gather-requirements "{description}"  → Requirements
 2. @planner *plan "{requirements}"         → Stories
 3. @architect *design "{specification}"    → Architecture

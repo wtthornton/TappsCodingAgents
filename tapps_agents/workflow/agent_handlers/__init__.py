@@ -13,6 +13,7 @@ from .base import AgentExecutionHandler
 from .debugger_handler import DebuggerHandler
 from .designer_handler import DesignerHandler
 from .documenter_handler import DocumenterHandler
+from .enhancer_handler import EnhancerHandler
 from .implementer_handler import ImplementerHandler
 from .ops_handler import OpsHandler
 from .orchestrator_handler import OrchestratorHandler
@@ -29,6 +30,7 @@ __all__ = [
     "DebuggerHandler",
     "DesignerHandler",
     "DocumenterHandler",
+    "EnhancerHandler",
     "ImplementerHandler",
     "OpsHandler",
     "OrchestratorHandler",

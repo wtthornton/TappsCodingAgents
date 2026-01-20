@@ -7,9 +7,9 @@ quality assessment, and integration with Cursor IDE.
 
 Main Components:
     - Core: Base agent classes, context management, caching, and learning systems
-    - Agents: Specialized workflow agents (reviewer, implementer, tester, etc.)
-    - Workflow: Workflow execution engine, orchestration, and state management
-    - CLI: Command-line interface for agent operations
+    - Agents: Specialized workflow agents (reviewer, implementer, tester, enhancer, etc.)
+    - Workflow: Workflow execution engine, orchestration, state management, EnhancerHandler for enhance steps (full-sdlc, rapid-dev, Epic)
+    - CLI: Command-line interface and prompt enhancement middleware (auto_enhancement, PROMPT_ARGUMENT_MAP)
 
 Example:
     ```python

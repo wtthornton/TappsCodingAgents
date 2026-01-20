@@ -971,6 +971,8 @@ tapps-agents enhancer enhance "<prompt>" [--format json|markdown|yaml]
 
 **Note:** The enhancer is designed for **code generation prompts**, not requirements gathering. If you need to extract requirements from stakeholder descriptions, use `@analyst *gather-requirements` instead.
 
+**Workflow:** Enhance steps in full-sdlc, rapid-dev, and Epic run via EnhancerHandler. **CLI auto-enhancement:** `auto_enhancement`, `PROMPT_ARGUMENT_MAP` (docs/CONFIGURATION.md).
+
 #### `*enhance-quick` / `enhance-quick` (Dual-Mode)
 **Purpose:** Quick prompt enhancement (stages 1-3)
 

@@ -158,7 +158,7 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 - **orchestrator**: YAML workflow coordination
 
 ### Enhancement Agent
-- **enhancer**: Prompt enhancement (7-stage pipeline)
+- **enhancer**: Prompt enhancement (7-stage pipeline). Workflow integration: full-sdlc (optional enhance before requirements), rapid-dev, and Epic story workflows run enhancer steps via **EnhancerHandler** when an `enhance` step is present. CLI auto-enhancement for implementer, planner, analyst: `auto_enhancement` in [CONFIGURATION.md](docs/CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement); `PROMPT_ARGUMENT_MAP` and `commands` control eligibility.
 
 **For detailed agent capabilities, see:** `.cursor/rules/agent-capabilities.mdc`
 

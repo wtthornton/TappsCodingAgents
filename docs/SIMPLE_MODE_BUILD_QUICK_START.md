@@ -36,7 +36,7 @@ Use Simple Mode's `*build` workflow for React component updates instead of Full 
 
 The `*build` workflow will execute these 7 steps:
 
-1. **@enhancer *enhance** - Enhances your prompt with requirements analysis
+1. **@enhancer *enhance** - Enhances your prompt with requirements analysis (full-sdlc, rapid-dev, and *epic also run enhance via EnhancerHandler when the preset includes it)
    - Creates: `docs/workflows/simple-mode/{workflow-id}/step1-enhanced-prompt.md`
 
 2. **@planner *plan** - Creates user stories (if needed)

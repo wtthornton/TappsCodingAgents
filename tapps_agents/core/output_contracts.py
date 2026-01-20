@@ -131,19 +131,22 @@ class OutputContractRegistry:
             )
         )
 
-        # Enhancer -> Planner
-        self.register(
-            AgentOutputContract(
-                agent_name="enhancer",
-                command="enhance",
-                required_fields=["enhanced_prompt"],
-                optional_fields=["analysis", "requirements", "architecture"],
-                transformations={
-                    "enhanced_prompt": "planner.description",
-                    "requirements": "planner.requirements",
-                },
+        # Enhancer -> Planner (and analyst when that handler prefers it)
+        for cmd in ("enhance", "enhance_prompt", "enhance_quick"):
+            self.register(
+                AgentOutputContract(
+                    agent_name="enhancer",
+                    command=cmd,
+                    required_fields=["enhanced_prompt"],
+                    optional_fields=["analysis", "requirements", "architecture", "description", "enhancer_description"],
+                    transformations={
+                        "enhanced_prompt": "planner.description",
+                        "requirements": "planner.requirements",
+                        "description": "planner.description",
+                        "enhancer_description": "planner.description",
+                    },
+                )
             )
-        )
 
         # Architect -> Designer
         self.register(

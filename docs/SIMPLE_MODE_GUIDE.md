@@ -77,6 +77,8 @@ The Enhancer performs comprehensive prompt enhancement through all 7 stages:
 6. **Implementation Strategy** - Task breakdown, dependencies
 7. **Synthesis** - Combined enhanced prompt
 
+Enhance steps also run in *full (full-sdlc optional), rapid-dev, and *epic via EnhancerHandler. CLI auto-enhancement: `auto_enhancement` in [CONFIGURATION.md](CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement).
+
 ### 2. Review
 
 Review code quality and security.

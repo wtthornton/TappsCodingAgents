@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Workflow EnhancerHandler** - Workflow executor now runs `enhancer` steps (no longer skipped)
+  - `EnhancerHandler` supports `enhance`, `enhance_prompt`, `enhance_quick`; reads prompt from `description`, `story_description`, or `user_prompt`; stores `enhanced_prompt` and `description` for downstream steps
+  - Output contracts for `enhancer` with `enhance`, `enhance_prompt`, `enhance_quick` (planner, analyst)
+- **full-sdlc optional enhance step** - Optional `enhance` step before `requirements`; AnalystHandler prefers `enhanced_prompt` or `description` when present
+- **Epic story wiring for enhance** - Epic sets `user_prompt`, `description`, and `story_description` on workflow state so EnhancerHandler receives story title/description
+- **PROMPT_ARGUMENT_MAP** - `(designer, design-system)` and `(designer, define-design-system)` → `project_description`
+- **AutoEnhancementConfig** - `analyst` with `enabled: True`, `synthesis_mode: "quick"`
+- **assess_prompt_quality "already a spec"** - Bullets, "acceptance criteria", "user story"/"As a … I want …", "shall"/"must"/"should" raise score to avoid over-enhancing structured prompts
+- **Tests** - `test_already_spec_like_gets_high_score`, `test_short_vague_prompt_gets_low_score`, `test_spec_like_prompt_not_enhanced`, `test_short_vague_prompt_still_enhanced`; `TestEnhancePrompt` for `synthesis_mode` when `enhance_mode` is `None` and override
+
+### Changed
+- **prompt_enhancer** - Cursor path: when result has `synthesis_data`, use `instruction` or `enhanced_prompt` if non-empty instead of always returning original
+- **Exclusions documented** - `(debugger, debug)`, `(implementer, refactor)` remain excluded; `architect` and `designer` stay `enabled: false` by default in `auto_enhancement.commands`
+
+### Documentation
+- **CONFIGURATION.md** - New "Automatic Prompt Enhancement (auto_enhancement)" section: `enabled`, `quality_threshold`, `min_prompt_length`, `commands` (including analyst; architect/designer off by default), and `PROMPT_ARGUMENT_MAP` note
+
 ## [3.5.23] - 2026-01-21
 
 ### Changed

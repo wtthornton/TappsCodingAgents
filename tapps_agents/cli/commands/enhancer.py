@@ -81,10 +81,6 @@ def handle_enhancer_command(args: object) -> None:
                     session_id=getattr(args, "session_id", None),
                 )
             )
-        elif command == "enhance-resume":
-            result = asyncio.run(
-                enhancer.run("enhance-resume", session_id=args.session_id)
-            )
         else:
             # Invalid command - show help without activation
             help_text = get_static_help("enhancer")

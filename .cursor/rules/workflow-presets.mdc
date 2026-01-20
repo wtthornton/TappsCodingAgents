@@ -2,7 +2,7 @@
 
 ## Overview
 
-TappsCodingAgents provides preset workflows that can be executed with simple one-word commands. These workflows automatically orchestrate multiple agents to complete common SDLC tasks.
+TappsCodingAgents provides preset workflows that can be executed with simple one-word commands. These workflows automatically orchestrate multiple agents to complete common SDLC tasks. Presets that include an enhance step (full-sdlc optional, rapid-dev, Epic) run it via EnhancerHandler. CLI auto-enhancement: `auto_enhancement` in docs/CONFIGURATION.md.
 
 ## Available Workflow Presets
 
@@ -13,6 +13,7 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 **Best for:** Complete software development lifecycle with all quality gates
 
 **Agent Sequence:**
+0. Enhancer - Enhance Prompt (optional, before requirements)
 1. Analyst - Gather Requirements
 2. Planner - Create Stories
 3. Architect - Design System

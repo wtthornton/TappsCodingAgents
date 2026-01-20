@@ -15,7 +15,6 @@ The Enhancer Agent transforms simple prompts into comprehensive specifications:
   • Full enhancement pipeline (all stages)
   • Quick enhancement (stages 1-3)
   • Stage-specific enhancement
-  • Resume from saved sessions
 
 Use this agent to convert vague requirements into detailed, actionable
 specifications for other agents to implement.
@@ -107,21 +106,6 @@ Use this to run specific stages or continue from a saved session. Provide either
     )
     enhance_stage_parser.add_argument("--prompt", help="Prompt to enhance (required if --session-id is not provided). Used as input for the specified stage.")
     enhance_stage_parser.add_argument("--session-id", help="Session ID from a previous enhancement session to continue. Allows resuming or re-running a specific stage with existing context.")
-
-    enhance_resume_parser = enhancer_subparsers.add_parser(
-        "enhance-resume",
-        aliases=["*enhance-resume"],
-        help="Resume enhancement pipeline from a saved session",
-        description="""Resume the enhancement pipeline from a previously saved session.
-        
-Loads session state and continues from where it left off. Useful for:
-  • Resuming interrupted enhancements
-  • Continuing after manual review
-  • Re-running stages with modifications
-
-The session ID is provided when you start an enhancement session.""",
-    )
-    enhance_resume_parser.add_argument("session_id", help="Session ID from a previous enhancement session. Obtain this from the session metadata when you start an enhancement.")
 
     enhancer_subparsers.add_parser(
         "help", aliases=["*help"], help="Show enhancer commands"

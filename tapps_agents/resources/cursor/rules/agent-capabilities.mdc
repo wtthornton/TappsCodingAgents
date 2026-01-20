@@ -508,6 +508,8 @@ python -m tapps_agents.cli enhancer enhance-resume <session-id>
 
 **Output Formats**: Markdown (default), JSON, YAML
 
+**Workflow integration:** full-sdlc (optional enhance before requirements), rapid-dev, and Epic run enhance steps via EnhancerHandler. **CLI auto-enhancement:** `auto_enhancement` and `PROMPT_ARGUMENT_MAP` in docs/CONFIGURATION.md.
+
 ---
 
 ## Agent Selection Guide

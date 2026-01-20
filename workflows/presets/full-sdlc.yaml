@@ -16,6 +16,16 @@ workflow:
     context_tier_default: 2
   
   steps:
+    - id: enhance
+      agent: enhancer
+      action: enhance
+      context_tier: 1
+      requires: []
+      creates:
+        - enhanced-requirements.md
+      condition: optional
+      next: requirements
+
     - id: requirements
       agent: analyst
       action: gather_requirements

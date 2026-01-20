@@ -13,7 +13,10 @@ from ...agents.enhancer.agent import EnhancerAgent
 from ...core.config import AutoEnhancementConfig, load_config
 
 
-# Mapping of agent.command -> prompt argument name
+# Mapping of agent.command -> prompt argument name. Value None means do not enhance.
+# Intentional exclusions: (debugger, debug) — error text must stay exact;
+# (implementer, refactor) — instructions are usually narrow; improver improve — not added.
+# architect and designer default to enabled: False in AutoEnhancementConfig.commands.
 PROMPT_ARGUMENT_MAP: dict[tuple[str, str], str] = {
     ("implementer", "implement"): "specification",
     ("implementer", "generate-code"): "specification",
@@ -22,10 +25,12 @@ PROMPT_ARGUMENT_MAP: dict[tuple[str, str], str] = {
     ("architect", "design-system"): "requirements",
     ("designer", "design-api"): "requirements",
     ("designer", "design-data-model"): "requirements",
+    ("designer", "design-system"): "project_description",
+    ("designer", "define-design-system"): "project_description",
     ("analyst", "gather-requirements"): "description",
-    # Skip enhancement for these commands
-    ("debugger", "debug"): None,  # error_message - skip enhancement
-    ("implementer", "refactor"): None,  # instruction - skip enhancement
+    # Skip enhancement: error text and narrow refactor instructions
+    ("debugger", "debug"): None,
+    ("implementer", "refactor"): None,
 }
 
 
@@ -122,6 +127,22 @@ def assess_prompt_quality(prompt: str, config: AutoEnhancementConfig) -> float:
     tech_factor = min(tech_count / 3, 1.0) * 5  # Up to 5 points
     score += tech_factor
 
+    # "Already a spec" heuristics: structured prompts often need no enhancement
+    pl = prompt.lower()
+    spec_indicators = 0
+    if any(c in prompt for c in ("- ", "* ", "• ")) or (
+        len([s for s in prompt.split() if s and s[0].isdigit() and "." in s[:3]]) >= 2
+    ):
+        spec_indicators += 2  # bullets or numbered list
+    if "acceptance criteria" in pl or "acceptance criterion" in pl:
+        spec_indicators += 2
+    if "user story" in pl or "as a " in pl and " i want " in pl:
+        spec_indicators += 2
+    if any(w in pl for w in (" shall ", " must ", " should ")):
+        spec_indicators += 2
+    spec_factor = min(spec_indicators / 4, 1.0) * 20  # Up to 20 points
+    score += spec_factor
+
     return min(score, 100.0)
 
 
@@ -203,11 +224,13 @@ async def enhance_prompt(
             
             # Check if this is Cursor mode (structured data with instruction)
             if isinstance(enhanced_prompt, dict):
-                # Check if synthesis stage has instruction (Cursor mode)
                 synthesis_data = enhanced_prompt.get("synthesis_data")
-                if synthesis_data:
-                    # In Cursor mode, synthesis happens via Cursor Skills
-                    # Return original prompt - enhancement will be handled by Cursor
+                if synthesis_data and isinstance(synthesis_data, dict):
+                    # Use instruction when present (Cursor/structured path)
+                    instruction = synthesis_data.get("instruction") or synthesis_data.get("enhanced_prompt")
+                    if isinstance(instruction, str) and instruction.strip():
+                        return instruction.strip()
+                    # No usable instruction: enhancement handled by Cursor; return original
                     return prompt
                 # Otherwise, try to extract enhanced_prompt from dict
                 if "enhanced_prompt" in enhanced_prompt:
