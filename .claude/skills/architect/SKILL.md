@@ -253,6 +253,22 @@ Export architecture diagram to file.
 **Output:**
 - Diagram file (.mmd for Mermaid, .puml for PlantUML)
 
+### `*detect-patterns [--path {path}]`
+
+Detect architecture patterns from project layout (Layered, MVC, Clean/Hexagonal, CQRS, Microservices, Event Sourcing, etc.). Heuristics over directory structure; outputs pattern name, confidence, and evidence.
+
+**Example:**
+```
+@detect-patterns
+@detect-patterns --path .
+```
+
+**Parameters:**
+- `--path` (optional): Project root to scan. Defaults to current project.
+
+**Output:**
+- List of `{ pattern, confidence, evidence }`
+
 ### `*docs {library}`
 
 Lookup library documentation from Context7 KB cache.

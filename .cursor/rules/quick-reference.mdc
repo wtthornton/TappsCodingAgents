@@ -20,6 +20,9 @@ alwaysApply: false
 | Review code quality | `@simple-mode *review <file>` |
 | Add tests | `@simple-mode *test <file>` |
 | Refactor code | `@simple-mode *refactor <file>` |
+| Enhance a prompt | `@simple-mode *enhance "prompt"` |
+| Break down into tasks | `@simple-mode *breakdown "prompt"` |
+| Todo / Beads | `@simple-mode *todo ready` or `*todo create "Title"` |
 | Quick score only | `@reviewer *score <file>` (exception) |
 
 ---
@@ -53,6 +56,9 @@ See `.cursor/rules/cursor-mode-usage.mdc` for complete guidance.
 @simple-mode *fix src/buggy.py "Fix the error"
 @simple-mode *test src/service.py
 @simple-mode *refactor src/legacy.py
+@simple-mode *enhance "Add OAuth2"
+@simple-mode *breakdown "Migrate to microservices"
+@simple-mode *todo ready
 
 # Individual agents (use only for targeted operations)
 @reviewer *score src/main.py

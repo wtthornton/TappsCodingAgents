@@ -402,9 +402,21 @@ Orchestrate a full SDLC workflow.
 2. Loop back if quality scores don't meet thresholds
 3. Report final results
 
+### `*enhance "prompt"`
+
+Prompt enhancement via EnhancerAgent. Use `@simple-mode *enhance "short prompt"` or `tapps-agents simple-mode enhance --prompt "..." [--quick]`.
+
+### `*breakdown "prompt"`
+
+Task breakdown via PlannerAgent. Use `@simple-mode *breakdown "goal"` or `tapps-agents simple-mode breakdown --prompt "..."`. Output: ordered task list.
+
+### `*todo {bd args}`
+
+Beads-backed todo; forwards to `bd` when available. Examples: `@simple-mode *todo ready`, `*todo create "Title"`. CLI: `tapps-agents simple-mode todo ready` or `todo create "Title"`.
+
 ### `*help`
 
-Show Simple Mode help. Commands: *build, *review, *fix, *test, *explore, *refactor, *plan-analysis, *pr, *full, *epic, *status, *resume. See .cursor/rules/command-reference.mdc for *test-coverage, *fix-tests, *microservice, *docker-fix, *integrate-service.
+Show Simple Mode help. Commands: *build, *review, *fix, *test, *explore, *refactor, *plan-analysis, *pr, *enhance, *breakdown, *todo, *full, *epic, *status, *resume. See .cursor/rules/command-reference.mdc for *test-coverage, *fix-tests, *microservice, *docker-fix, *integrate-service.
 
 ### `*resume` [workflow_id]
 
@@ -521,7 +533,7 @@ Improvements Suggested: 5
 | `@improver` | Code improvement | `*improve`, `*refactor` |
 | `@analyst` | Requirements | `*gather-requirements`, `*estimate-effort` |
 | `@documenter` | Documentation | `*document`, `*document-api`, `*update-readme` |
-| `@ops` | Security/ops | `*security-scan`, `*compliance-check`, `*audit-dependencies` |
+| `@ops` | Security/ops | `*security-scan`, `*compliance-check`, `*audit-dependencies`, `*audit-bundle` |
 | `@orchestrator` | Workflow coord | `*workflow`, `*workflow-start`, `*workflow-status` |
 
 ## Configuration

@@ -135,7 +135,7 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 - **planner**: User story creation, development planning
 
 ### Design Agents
-- **architect**: System architecture design
+- **architect**: System architecture design, architecture pattern detection (*detect-patterns)
 - **designer**: API and data model design
 
 ### Development Agents
@@ -147,7 +147,7 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 - **tester**: Test generation and execution
 
 ### Quality Agents
-- **reviewer**: Code quality review with 5-metric scoring
+- **reviewer**: Code quality review with 7-category scoring (complexity, security, maintainability, test_coverage, performance, structure, devex)
 - **improver**: Code improvement suggestions
 - **evaluator**: Framework effectiveness evaluation
 
@@ -176,6 +176,9 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 @simple-mode *refactor <file>          # Refactoring workflow
 @simple-mode *full "description"       # Full 9-step SDLC (for framework development)
 @simple-mode *epic <epic-doc.md>       # Execute Epic documents
+@simple-mode *enhance "prompt"         # Prompt enhancement (EnhancerAgent)
+@simple-mode *breakdown "prompt"       # Task breakdown (PlannerAgent)
+@simple-mode *todo <bd args>           # Beads-backed todo (e.g. *todo ready, *todo create "Title")
 ```
 
 **Human oversight (plan 2.3):** For `*build` and `*full`, when `human_oversight.branch_for_agent_changes` is true (default), work runs on a branch `tapps-agents/build-{workflow_id}`; merge to main only after human review. Optional step checkpoints (`checkpoints_before_steps`, e.g. `["implementer","designer"]`) prompt before running those steps unless `--auto`.

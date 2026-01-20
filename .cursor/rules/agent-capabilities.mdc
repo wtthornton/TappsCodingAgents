@@ -101,11 +101,13 @@ python -m tapps_agents.cli planner list-stories --epic auth
 - Component design
 - Integration planning
 - Architecture documentation
+- Architecture pattern detection (Layered, MVC, Clean/Hexagonal, CQRS, Microservices, etc.)
 
 **Common Commands**:
 ```bash
 python -m tapps_agents.cli architect design "Microservices architecture for e-commerce"
 python -m tapps_agents.cli architect patterns "REST API design patterns"
+python -m tapps_agents.cli architect detect-patterns [--path .]
 ```
 
 **Expert Integration**: Consults security, performance, and cloud infrastructure experts.
@@ -302,7 +304,7 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 - Maintainability assessment
 
 **Capabilities**:
-- Code scoring (5 metrics: complexity, security, maintainability, test coverage, performance)
+- Code scoring (7 categories: complexity, security, maintainability, test coverage, performance, structure, devex)
 - **Actionable feedback** with specific issues, line numbers, and suggestions
 - **Structured feedback** always provided (summary, strengths, issues, recommendations)
 - **Maintainability issues** tracking (missing docstrings, long functions, deep nesting, missing type hints)
@@ -437,6 +439,7 @@ python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
 - Compliance checking (HIPAA, GDPR, PCI DSS)
 - Deployment strategies
 - Dependency vulnerability scanning
+- Bundle analysis (Node/React/Vue; opt-in, best-effort)
 - Infrastructure planning
 
 **Common Commands**:
@@ -444,6 +447,7 @@ python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
 python -m tapps_agents.cli ops audit-security .
 python -m tapps_agents.cli ops check-compliance --standard GDPR
 python -m tapps_agents.cli ops audit-dependencies
+python -m tapps_agents.cli ops audit-bundle
 python -m tapps_agents.cli ops plan-deployment "Kubernetes deployment"
 ```
 

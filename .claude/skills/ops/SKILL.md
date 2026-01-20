@@ -171,6 +171,18 @@ Audits project dependencies for known security vulnerabilities.
 - Security issues found with severity levels
 - Remediation recommendations
 
+### `*audit-bundle`
+
+Opt-in bundle size analysis for Node/React/Vue projects. Measures dist/build/out; best-effort, does not block on build failure.
+
+**Example:**
+```
+@audit-bundle
+```
+
+**Output:**
+- Bundle size (total bytes, top files), `build_failed` if build was attempted and failed
+
 ### `*docs {library}`
 
 Lookup library documentation from Context7 KB cache.

@@ -157,6 +157,9 @@ Use explicit commands for guaranteed workflow execution:
 @simple-mode *review src/api/auth.py
 @simple-mode *fix src/buggy.py "Fix the error"
 @simple-mode *test src/api/auth.py
+@simple-mode *enhance "Add OAuth2 login"
+@simple-mode *breakdown "Migrate to microservices"
+@simple-mode *todo ready
 @simple-mode *full "Build a complete REST API"
 ```
 
@@ -185,6 +188,9 @@ Use explicit commands for guaranteed workflow execution:
 | `*pr {title}` | Create pull request | @reviewer → @documenter |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
 | `*epic {epic-doc.md}` | Execute Epic document | Stories in dependency order |
+| `*enhance "prompt"` | Prompt enhancement | @enhancer |
+| `*breakdown "prompt"` | Task breakdown | @planner |
+| `*todo {bd args}` | Beads-backed todo (e.g. ready, create "Title") | beads (bd) |
 | `*help` | Show help | - |
 | `*resume` [workflow_id] | Resume failed/paused workflow | ResumeOrchestrator |
 | `*status` | Check status | - |
@@ -202,6 +208,9 @@ Simple Mode detects intent from keywords:
 - **Plan**: plan, planning, analyze, analysis, design, proposal, strategy, roadmap
 - **PR**: pr, pull request, create pr, open pr, merge request, mr
 - **Full**: full, complete, sdlc, lifecycle, everything
+- **Enhance**: enhance, improve prompt, expand prompt
+- **Breakdown**: breakdown, breakdown into tasks, task list
+- **Todo**: todo, beads, bd, task tracking
 
 ## ⚠️ CRITICAL: Explicit Command Precedence
 

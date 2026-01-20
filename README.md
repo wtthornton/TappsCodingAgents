@@ -35,7 +35,7 @@ TappsCodingAgents helps teams build and orchestrate AI coding agents with **qual
 - **Simple Mode** — `@simple-mode *build "feature"`, `*review`, `*fix`, `*test`, and more in Cursor
 - **Cursor Skills + Claude Desktop** — All agents as `@agent *command`; 15 Claude Desktop commands
 - **11 YAML workflow presets** — rapid-dev, full-sdlc, maintenance, quality, quick-fix, and others
-- **Experts & quality** — 16 built-in experts, 5-metric code scoring, MCP gateway (Context7, Playwright, Git, …)
+- **Experts & quality** — 16 built-in experts, 7-category code scoring, MCP gateway (Context7, Playwright, Git, …)
 
 For the full list, see [Key Features](#key-features) and [Documentation](docs/README.md).
 
@@ -143,6 +143,9 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
    @simple-mode Refactor legacy code in utils.py
    @simple-mode Plan analysis for OAuth2 migration
    @simple-mode PR "Add user authentication feature"
+   @simple-mode *enhance "Add OAuth2 login"
+   @simple-mode *breakdown "Migrate to microservices"
+   @simple-mode *todo ready
    @simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
    ```
    
@@ -193,7 +196,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 ✅ **Core Framework Complete:**
 - **All 14 Workflow Agents** ✅ (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer, evaluator)
-- **Complete Code Scoring System** ✅ (5/5 metrics: complexity, security, maintainability, test_coverage, performance)
+- **Complete Code Scoring System** ✅ (7 categories: complexity, security, maintainability, test_coverage, performance, structure, devex)
 - **Instruction-Based Architecture** ✅ - Agents prepare structured instructions for Cursor Skills execution
 - **Tiered Context System** ✅ (90%+ token savings, 3 tiers with caching)
 - **Unified Cache Architecture** ✅ (Single interface for all caching systems with hardware auto-detection)
@@ -284,7 +287,7 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
   - **analyst** ✅ - Requirements gathering, stakeholder analysis, tech research, effort estimation, risk assessment, competitive analysis
   - **planner** ✅ - User story creation, task breakdown, story point estimation, acceptance criteria
 - **Design**: 
-  - **architect** ✅ - System architecture design, design patterns, tech selection, security architecture, boundary definition, architecture diagrams
+  - **architect** ✅ - System architecture design, design patterns, tech selection, security architecture, boundary definition, architecture diagrams, pattern detection (*detect-patterns)
   - **designer** ✅ - API design, data model design, UI/UX design, wireframes, design systems
 - **Development**: 
   - **implementer** ✅ - Code generation, refactoring, file writing with backup support
@@ -293,7 +296,7 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 - **Testing**: 
   - **tester** ✅ - Test generation (unit, integration), test execution, coverage analysis
 - **Quality**: 
-  - **reviewer** ✅ - Code review with 5-metric scoring (complexity, security, maintainability, test coverage, performance), actionable feedback with specific issues and line numbers, structured feedback always provided, context-aware quality gates, linting (Ruff), type checking (mypy), duplication detection, security scanning, project analysis, service analysis
+  - **reviewer** ✅ - Code review with 7-category scoring (complexity, security, maintainability, test coverage, performance, structure, devex), actionable feedback with specific issues and line numbers, structured feedback always provided, context-aware quality gates, linting (Ruff), type checking (mypy), duplication detection, security scanning, project analysis, service analysis
   - **improver** ✅ - Code refactoring, performance optimization, quality improvement suggestions
 - **Operations**: 
   - **ops** ✅ - Security auditing, compliance checking (GDPR, HIPAA, PCI-DSS), dependency auditing, deployment planning
@@ -319,10 +322,12 @@ The Reviewer Agent includes a comprehensive code scoring system with 5 objective
 The Reviewer Agent scoring system includes:
 
 1. **Complexity Score** (0-10): Cyclomatic complexity analysis using Radon
-2. **Security Score** (0-10): Vulnerability detection using Bandit + heuristics
+2. **Security Score** (0-10): Vulnerability detection using Bandit + heuristics; npm audit for JS/TS
 3. **Maintainability Score** (0-10): Maintainability Index using Radon MI
-4. **Test Coverage Score** (0-10): Coverage data parsing + heuristic analysis
+4. **Test Coverage Score** (0-10): Coverage data parsing + heuristic; Vitest/Jest/lcov for JS/TS
 5. **Performance Score** (0-10): Static analysis (function size, nesting depth, pattern detection)
+6. **Structure Score** (0-10): Project layout, key files (README, config, tests), conventions
+7. **DevEx Score** (0-10): Docs (AGENTS.md, CLAUDE.md), config, tooling
 
 All metrics are configurable with weighted scoring and quality thresholds.
 
@@ -351,7 +356,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `score <file>` - Quick code quality scoring (shortcut for `reviewer score`)
 - `doctor` - Environment diagnostics and validation
 - `cursor verify` - Verify Cursor AI integration components
-- `simple-mode <command>` - Simple Mode management (on, off, status, init, configure, progress, full, build, resume)
+- `simple-mode <command>` - Simple Mode management (on, off, status, init, configure, progress, full, build, resume, enhance, breakdown, todo)
 - `analytics <command>` - Analytics dashboard (dashboard, agents, workflows, trends, system)
 - `health <command>` - Health monitoring (check, dashboard, metrics, trends)
 - `governance <command>` - Governance controls (approval list, show, approve, reject)
@@ -373,7 +378,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `evaluator` - Framework effectiveness evaluation, workflow evaluation
 - `implementer` - Code generation, refactoring
 - `improver` - Code refactoring, performance optimization
-- `ops` - Security scanning, compliance checks, dependency auditing, deployment planning
+- `ops` - Security scanning, compliance checks, dependency auditing, deployment planning, bundle analysis (audit-bundle)
 - `orchestrator` - Workflow management, step coordination, gate decisions
 - `planner` - Create plans, user stories, task breakdowns
 - `reviewer` - Code review, scoring, actionable feedback with specific issues, structured feedback, context-aware quality gates, linting, type checking, reports, duplication detection, security scanning, project/service analysis
@@ -395,6 +400,9 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `*refactor <file>` - Systematic code modernization with safety checks
 - `*plan-analysis <description>` - Safe read-only code analysis and planning
 - `*pr <title>` - Pull request creation with quality scores
+- `*enhance "prompt"` - Prompt enhancement (EnhancerAgent)
+- `*breakdown "prompt"` - Task breakdown (PlannerAgent)
+- `*todo <bd args>` - Beads-backed todo (e.g. ready, create "Title")
 - `*epic <epic-doc.md>` - Execute Epic documents with dependency resolution
 - `*full <description>` - Full SDLC workflow (9 steps)
 

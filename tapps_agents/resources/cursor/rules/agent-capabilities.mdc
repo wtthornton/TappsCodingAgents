@@ -302,7 +302,7 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 - Security analysis
 
 **Capabilities**:
-- Code scoring (5 metrics: complexity, security, maintainability, test coverage, performance)
+- Code scoring (7 categories: complexity, security, maintainability, test coverage, performance, structure, devex)
 - LLM-based code review
 - Linting (Ruff)
 - Type checking (mypy)
@@ -412,6 +412,7 @@ python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
 - Compliance checking (HIPAA, GDPR, PCI DSS)
 - Deployment strategies
 - Dependency vulnerability scanning
+- Bundle analysis (Node/React/Vue; opt-in, best-effort)
 - Infrastructure planning
 
 **Common Commands**:
@@ -419,6 +420,7 @@ python -m tapps_agents.cli evaluator evaluate-workflow workflow-123
 python -m tapps_agents.cli ops audit-security .
 python -m tapps_agents.cli ops check-compliance --standard GDPR
 python -m tapps_agents.cli ops audit-dependencies
+python -m tapps_agents.cli ops audit-bundle
 python -m tapps_agents.cli ops plan-deployment "Kubernetes deployment"
 ```
 

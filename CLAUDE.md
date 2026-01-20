@@ -198,6 +198,9 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 @simple-mode *fix <file> "error"     # Bug fixing workflow
 @simple-mode *test <file>            # Test generation
 @simple-mode *refactor <file>       # Refactoring workflow
+@simple-mode *enhance "prompt"       # Prompt enhancement
+@simple-mode *breakdown "prompt"     # Task breakdown
+@simple-mode *todo <bd args>         # Beads todo (e.g. ready, create "Title")
 @simple-mode *full "description"      # Full 9-step SDLC (framework development)
 ```
 

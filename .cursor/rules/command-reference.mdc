@@ -666,6 +666,9 @@ tapps-agents simple-mode <command> [options]
 @simple-mode *review src/api/auth.py
 @simple-mode *fix src/buggy.py "Fix the error"
 @simple-mode *test src/api/auth.py
+@simple-mode *enhance "Add OAuth2 login"
+@simple-mode *breakdown "Migrate to microservices"
+@simple-mode *todo ready
 @simple-mode *epic docs/prd/epic-51-yaml-automation-quality-enhancement.md
 @simple-mode *full "Build a complete REST API"
 ```
@@ -1008,6 +1011,19 @@ tapps-agents architect design "<description>" [--format json|text]
 tapps-agents architect patterns "<description>" [--format json|text]
 ```
 
+#### `*detect-patterns` / `detect-patterns` (Dual-Mode)
+**Purpose:** Detect architecture patterns from project layout (Layered, MVC, Clean/Hexagonal, CQRS, Microservices, etc.)
+
+**CLI Syntax:**
+```bash
+tapps-agents architect detect-patterns [--path <path>]
+```
+
+**Cursor Syntax:**
+```cursor
+@architect *detect-patterns [--path <path>]
+```
+
 ### Designer Agent (`@designer`)
 
 **Available Commands:**
@@ -1239,6 +1255,19 @@ tapps-agents ops audit-dependencies [--format json|text]
 **CLI Syntax:**
 ```bash
 tapps-agents ops plan-deployment "<description>" [--format json|text]
+```
+
+#### `*audit-bundle` / `audit-bundle` (Dual-Mode)
+**Purpose:** Opt-in bundle size analysis for Node/React/Vue (dist/build/out). Best-effort; does not block on build failure.
+
+**CLI Syntax:**
+```bash
+tapps-agents ops audit-bundle
+```
+
+**Cursor Syntax:**
+```cursor
+@ops *audit-bundle
 ```
 
 ### Analyst Agent (`@analyst`)
@@ -1509,7 +1538,7 @@ Simple Mode provides natural language orchestration with structured workflows. U
    - Output: Implemented code following design system and architecture
 6. **@reviewer *review** - Code quality review (with scores)
    - Creates: `docs/workflows/simple-mode/step6-review.md`
-   - Output: Quality scores (5 metrics), issues found, recommendations
+   - Output: Quality scores (7 categories: complexity, security, maintainability, test coverage, performance, structure, devex), issues found, recommendations
 7. **@tester *test** - Testing plan and validation
    - Creates: `docs/workflows/simple-mode/step7-testing.md`
    - Output: Test plan, test cases, validation criteria
@@ -1547,7 +1576,7 @@ Simple Mode provides natural language orchestration with structured workflows. U
 2. **@improver *improve** - Improvement suggestions (if issues found or score < threshold)
 
 **Output:**
-- Quality scores for all 5 metrics
+- Quality scores for all 7 categories
 - Detailed feedback on issues
 - Improvement suggestions (if needed)
 
