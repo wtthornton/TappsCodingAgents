@@ -274,7 +274,7 @@ if (-not $SkipDocs) {
     # Update JSON metadata files
     $jsonFiles = @(
         @{
-            Path = "implementation/IMPROVEMENT_PLAN.json"
+            Path = "docs/implementation/IMPROVEMENT_PLAN.json"
             Pattern = '"version"\s*:\s*"([\d\.]+)"'
             Replacement = '"version": "' + $Version + '"'
         }

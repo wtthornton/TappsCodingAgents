@@ -167,7 +167,7 @@ async def main():
     print(json.dumps(plan, indent=2))
 
     # Save plan to file
-    plan_file = Path("implementation/IMPROVEMENT_PLAN.json")
+    plan_file = Path("docs/implementation/IMPROVEMENT_PLAN.json")
     plan_file.parent.mkdir(exist_ok=True)
     with open(plan_file, "w") as f:
         json.dump(plan, f, indent=2)

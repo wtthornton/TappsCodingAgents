@@ -25,13 +25,15 @@ ALLOWED_ROOT_FILES = {
     ".github",  # Directory
 }
 
-# Patterns that should NOT be in root
+# Patterns that should NOT be in root (move to docs/archive or docs/releases)
 FORBIDDEN_PATTERNS = [
     "test_*.py",  # Test files
     "*-report.md",  # Report files
     "*-summary.md",  # Summary files
     "*-analysis.md",  # Analysis files
     "debug-*.md",  # Debug files
+    "*CLEANUP*.md",  # Cleanup summaries -> docs/archive/
+    "RELEASE_NOTES*.md",  # Release notes -> docs/releases/
 ]
 
 

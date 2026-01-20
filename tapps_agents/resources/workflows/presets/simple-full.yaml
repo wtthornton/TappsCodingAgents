@@ -1,0 +1,252 @@
+# Simple Full Lifecycle Workflow
+# Best for: Complete development lifecycle with automatic quality loopbacks
+# Runs full SDLC with testing and development loopbacks if scores aren't good enough
+
+workflow:
+  id: simple-full
+  name: "Simple Full Lifecycle"
+  description: "Complete development lifecycle with testing and automatic quality loopbacks"
+  version: "1.0.0"
+  
+  type: greenfield
+  auto_detect: true
+  
+  settings:
+    quality_gates: true
+    code_scoring: true
+    context_tier_default: 2
+  
+  steps:
+    - id: requirements
+      agent: analyst
+      action: gather_requirements
+      context_tier: 1
+      creates:
+        - requirements.md
+      requires: []
+      condition: required
+      next: planning
+      
+    - id: planning
+      agent: planner
+      action: create_stories
+      context_tier: 1
+      requires:
+        - requirements.md
+      creates:
+        - stories/
+      next: design
+      
+    - id: design
+      agent: architect
+      action: design_system
+      context_tier: 2
+      requires:
+        - requirements.md
+        - stories/
+      creates:
+        - architecture.md
+      next: api_design
+      
+    - id: api_design
+      agent: designer
+      action: api_design
+      context_tier: 2
+      requires:
+        - architecture.md
+      creates:
+        - api-specs/
+      next: implementation
+      
+    - id: implementation
+      agent: implementer
+      action: write_code
+      context_tier: 3
+      requires:
+        - architecture.md
+        - api-specs/
+        - stories/
+      creates:
+        - src/
+      next: review
+      
+    - id: review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - src/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 75
+          security_min: 7.5
+          maintainability_min: 7.5
+          test_coverage_min: 70
+      gate:
+        condition: "scoring.passed == true"
+        on_pass: testing
+        on_fail: improve_code
+      next: testing
+      
+    - id: improve_code
+      agent: improver
+      action: refactor
+      context_tier: 3
+      requires:
+        - src/
+      creates:
+        - improved-code/
+      next: re_review
+      
+    - id: re_review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - improved-code/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 75
+          security_min: 7.5
+          maintainability_min: 7.5
+          test_coverage_min: 70
+      gate:
+        condition: "scoring.passed == true"
+        on_pass: testing
+        on_fail: implementation
+      next: testing
+      
+    - id: testing
+      agent: tester
+      action: write_tests
+      context_tier: 2
+      requires:
+        - src/
+      creates:
+        - tests/
+      next: run_tests
+      
+    - id: run_tests
+      agent: tester
+      action: run_tests
+      context_tier: 2
+      requires:
+        - src/
+        - tests/
+      gate:
+        condition: "test_results.passed == true"
+        on_pass: security
+        on_fail: fix_tests
+      next: security
+      
+    - id: fix_tests
+      agent: debugger
+      action: analyze_error
+      context_tier: 2
+      requires:
+        - tests/
+      creates:
+        - test-fixes/
+      next: fix_implementation
+      
+    - id: fix_implementation
+      agent: implementer
+      action: write_code
+      context_tier: 3
+      requires:
+        - test-fixes/
+        - src/
+      creates:
+        - fixed-code/
+      next: re_test
+      
+    - id: re_test
+      agent: tester
+      action: run_tests
+      context_tier: 2
+      requires:
+        - fixed-code/
+        - tests/
+      gate:
+        condition: "test_results.passed == true"
+        on_pass: security
+        on_fail: implementation
+      next: security
+      
+    - id: security
+      agent: ops
+      action: security_scan
+      context_tier: 1
+      requires:
+        - src/
+      gate:
+        condition: "security_scan.passed == true"
+        on_pass: documentation
+        on_fail: fix_security
+      next: documentation
+      
+    - id: fix_security
+      agent: improver
+      action: refactor
+      context_tier: 2
+      requires:
+        - src/
+      creates:
+        - secure-code/
+      next: re_security
+      
+    - id: re_security
+      agent: ops
+      action: security_scan
+      context_tier: 1
+      requires:
+        - secure-code/
+      gate:
+        condition: "security_scan.passed == true"
+        on_pass: documentation
+        on_fail: implementation
+      next: documentation
+      
+    - id: documentation
+      agent: documenter
+      action: generate_docs
+      context_tier: 1
+      requires:
+        - src/
+      creates:
+        - docs/
+      next: final_review
+      
+    - id: final_review
+      agent: reviewer
+      action: review_code
+      context_tier: 2
+      requires:
+        - src/
+        - tests/
+        - docs/
+      scoring:
+        enabled: true
+        thresholds:
+          overall_min: 80
+          security_min: 8.0
+          maintainability_min: 8.0
+          test_coverage_min: 75
+      gate:
+        condition: "scoring.passed == true"
+        on_pass: complete
+        on_fail: improve_code
+      next: complete
+      
+    - id: complete
+      agent: orchestrator
+      action: finalize
+      context_tier: 1
+
+metadata:
+  loopback:
+    max_attempts: 3
+    retry_backoff: 1.0
+

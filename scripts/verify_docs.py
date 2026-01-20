@@ -38,7 +38,7 @@ def find_markdown_files(root: Path, exclude_patterns: List[str] = None) -> List[
         if any(exclude in path_str for exclude in exclude_patterns):
             continue
         # Only include files in docs/, root, or implementation/ directories
-        if any(part in path_str for part in ["/docs/", "\\docs\\", "/implementation/", "\\implementation\\"]) or md_file.parent == root:
+        if any(part in path_str for part in ["/docs/", "\\docs\\", "/docs/implementation/", "\\docs\\implementation\\"]) or md_file.parent == root:
             markdown_files.append(md_file)
     
     return sorted(markdown_files)

@@ -7,9 +7,16 @@ task inputs, and task results.
 
 from __future__ import annotations
 
-from typing import Any, TypedDict
+import sys
+from typing import Any
 
 from pydantic import BaseModel, Field
+
+# Pydantic requires typing_extensions.TypedDict on Python < 3.12
+if sys.version_info >= (3, 12):
+    from typing import TypedDict
+else:
+    from typing_extensions import TypedDict
 
 
 class ArtifactMetadata(TypedDict, total=False):

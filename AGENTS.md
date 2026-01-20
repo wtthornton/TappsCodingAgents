@@ -269,13 +269,13 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 This script updates version numbers in:
 - Core files: `pyproject.toml`, `tapps_agents/__init__.py`
 - Documentation: `README.md`, `docs/README.md`, `docs/API.md`, `docs/ARCHITECTURE.md`
-- Metadata: `implementation/IMPROVEMENT_PLAN.json`
+- Metadata: `docs/implementation/IMPROVEMENT_PLAN.json`
 
 **After updating version:**
 1. Update `CHANGELOG.md` with release notes
 2. Commit changes
 3. Create and push git tag
-4. See `docs/RELEASE_GUIDE.md` for complete process
+4. See `docs/operations/RELEASE_GUIDE.md` for complete process
 
 ---
 

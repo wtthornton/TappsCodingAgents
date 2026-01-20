@@ -4,8 +4,9 @@ Unit tests for Context7 agent integration.
 
 import shutil
 import tempfile
+from contextlib import contextmanager
 from pathlib import Path
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
@@ -85,9 +86,15 @@ class TestContext7AgentHelper:
         assert result is None
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeout - needs mock for file locking")
-    async def test_get_documentation_cache_hit(self, helper):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    async def test_get_documentation_cache_hit(self, mock_cache_lock, helper):
         """Test get_documentation with cache hit."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         # Store entry in cache
         helper.kb_cache.store(
             library="react",
@@ -105,9 +112,15 @@ class TestContext7AgentHelper:
         assert result["source"] == "cache"
 
     @pytest.mark.asyncio
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeout - needs mock for file locking")
-    async def test_get_documentation_with_fuzzy_match(self, helper):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    async def test_get_documentation_with_fuzzy_match(self, mock_cache_lock, helper):
         """Test get_documentation with fuzzy matching."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         # Store entry
         helper.kb_cache.store(
             library="react",
@@ -163,9 +176,15 @@ class TestContext7AgentHelper:
 
         assert result is False
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeout - needs mock for file locking")
-    def test_is_library_cached_true(self, helper):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_is_library_cached_true(self, mock_cache_lock, helper):
         """Test is_library_cached when entry exists."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         helper.kb_cache.store(
             library="react",
             topic="hooks",
@@ -189,9 +208,15 @@ class TestContext7AgentHelper:
 
         assert result["enabled"] is False
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeout - needs mock for file locking")
-    def test_get_cache_statistics_enabled(self, helper):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_get_cache_statistics_enabled(self, mock_cache_lock, helper):
         """Test get_cache_statistics with Context7 enabled."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         helper.kb_cache.store(
             library="react",
             topic="hooks",

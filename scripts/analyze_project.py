@@ -139,7 +139,7 @@ async def main():
     results = {"analysis": analysis, "plan": plan}
 
     # Save results
-    output_file = Path("implementation/PROJECT_ANALYSIS.json")
+    output_file = Path("docs/implementation/PROJECT_ANALYSIS.json")
     output_file.parent.mkdir(exist_ok=True)
     with open(output_file, "w") as f:
         json.dump(results, f, indent=2)

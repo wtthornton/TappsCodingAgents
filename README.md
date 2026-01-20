@@ -280,7 +280,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Enhanced Agent Support** ✅ (Updated expert consultation for Architect, Implementer, Designer, Ops, Reviewer, Tester agents)
 - **Total Built-in Experts: 16** (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
 - **Total Knowledge Files: 100** (across 13 knowledge domains: security, performance, testing, data-privacy-compliance, accessibility, user-experience, observability-monitoring, api-design-integration, cloud-infrastructure, database-data-management, agent-learning, ai-frameworks, software-architecture)
-- See [Built-in Experts Guide](docs/BUILTIN_EXPERTS_GUIDE.md) and [Phase 5 Implementation Plan](implementation/PHASE5_EXPERT_IMPLEMENTATION_PLAN.md)
+- See [Built-in Experts Guide](docs/BUILTIN_EXPERTS_GUIDE.md) and [Phase 5 Implementation Plan](docs/implementation/PHASE5_EXPERT_IMPLEMENTATION_PLAN.md)
 
 🎉 **ALL 7 PHASES COMPLETE - Cursor AI Integration Plan 2025** 🎉
 
@@ -360,21 +360,21 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Resource Monitoring** ✅ (CPU, memory, disk usage tracking with alerts)
 - **Performance Benchmarks** ✅ (Before/after optimization comparisons)
 - **NUC Configuration** ✅ (Optimized settings for low-power hardware)
-- See [NUC Setup Guide](docs/NUC_SETUP_GUIDE.md) and [Phase 7 Summary](implementation/PHASE7_NUC_OPTIMIZATION_COMPLETE.md)
+- See [NUC Setup Guide](docs/NUC_SETUP_GUIDE.md) and [Phase 7 Summary](docs/implementation/PHASE7_NUC_OPTIMIZATION_COMPLETE.md)
 
 ✅ **Phase 6 Complete - Context7 Optimization + Security**
 - **Security Audit Tools** ✅ (SecurityAuditor, APIKeyManager for SOC 2 compliance)
 - **KB Usage Analytics** ✅ (Tracking, dashboard, performance metrics)
 - **Cross-Reference Resolution** ✅ (Automatic linking of related documentation)
 - **Cache Pre-population** ✅ (Dependency-based warming)
-- See [Context7 Security & Privacy](docs/CONTEXT7_SECURITY_PRIVACY.md) and [Phase 6 Summary](implementation/PHASE6_CONTEXT7_OPTIMIZATION_SECURITY_COMPLETE.md)
+- See [Context7 Security & Privacy](docs/context7/CONTEXT7_SECURITY_PRIVACY.md) and [Phase 6 Summary](docs/implementation/PHASE6_CONTEXT7_OPTIMIZATION_SECURITY_COMPLETE.md)
 
 ✅ **Phase 5 Complete - Multi-Agent Orchestration**
 - **Parallel Agent Execution** ✅ (Multi-agent workflows with conflict resolution)
 - **Git Worktree Management** ✅ (Isolated agent changes, no conflicts)
 - **Result Aggregation** ✅ (Collecting and summarizing multi-agent outputs)
 - **Performance Monitoring** ✅ (Speedup tracking, efficiency metrics)
-- See [Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md) and [Phase 5 Summary](implementation/PHASE5_MULTI_AGENT_ORCHESTRATION_COMPLETE.md)
+- See [Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md) and [Phase 5 Summary](docs/implementation/PHASE5_MULTI_AGENT_ORCHESTRATION_COMPLETE.md)
 
 
 ✅ **Phase 3 Complete - Remaining Agents + Advanced Features**
@@ -387,7 +387,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **MCP Gateway** ✅ (Unified tool access)
   - **Context7 MCP**: Library documentation (required)
   - **Playwright MCP**: Browser automation (optional, auto-detected)
-- See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 3 Summary](implementation/PHASE3_REMAINING_AGENTS_COMPLETE.md)
+- See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 3 Summary](docs/implementation/PHASE3_REMAINING_AGENTS_COMPLETE.md)
 
 ✅ **Phase 2 Complete - Quality Tools Integration**
 - **Ruff Integration** ✅ (10-100x faster Python linting, 2025 standard)
@@ -397,13 +397,13 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Multi-Service Analysis** ✅ (Batch analysis with service-level aggregation)
 - **Dependency Security Auditing** ✅ (pip-audit, pipdeptree integration)
 - **Code Duplication Detection** ✅ (jscpd for Python and TypeScript)
-- See [Quality Tools Usage Examples](docs/QUALITY_TOOLS_USAGE_EXAMPLES.md) and [Phase 2 Summary](implementation/PHASE2_QUALITY_TOOLS_COMPLETE.md)
+- See [Quality Tools Usage Examples](docs/QUALITY_TOOLS_USAGE_EXAMPLES.md) and [Phase 2 Summary](docs/implementation/PHASE2_QUALITY_TOOLS_COMPLETE.md)
 
 ✅ **Phase 1 Complete - Core Agents to Skills**
 - **4 Core Cursor Skills** ✅ (Reviewer, Implementer, Tester, Debugger)
 - **Context7 Integration** ✅ (KB-first caching)
 - **Cache Pre-population** ✅ (Common libraries pre-loaded)
-- See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 1 Summary](implementation/PHASE1_CURSOR_SKILLS_COMPLETE.md)
+- See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 1 Summary](docs/implementation/PHASE1_CURSOR_SKILLS_COMPLETE.md)
 
 ✅ **Core Framework Complete:**
 - **All 14 Workflow Agents** ✅ (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer, evaluator)
@@ -616,7 +616,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
 
 ```
 TappsCodingAgents/
-├── requirements/                  # Specification documents
+├── requirements/                  # Specification documents (see requirements/README.md)
 │   ├── PROJECT_REQUIREMENTS.md    # Main requirements document
 │   ├── agent_api.md               # Agent API specification
 │   ├── agents.md                  # Agent types specification
@@ -634,11 +634,18 @@ TappsCodingAgents/
 │   ├── experts/                  # Industry experts framework
 │   ├── workflow/                 # Workflow engine
 │   └── mcp/                      # MCP Gateway
-├── agents/                        # Cursor Skills (legacy location)
-├── workflows/                     # YAML workflow definitions
+│
+├── .claude/                       # Cursor Skills (canonical; init copies from tapps_agents/resources/claude)
+├── workflows/                     # YAML workflow definitions and presets
 ├── examples/                      # Example configurations
-├── docs/                          # Comprehensive documentation
-├── requirements/                 # Project specifications
+├── docs/                          # Documentation
+│   ├── implementation/           # EPIC/PHASE plans, IMPROVEMENT_PLAN.json
+│   ├── archive/                  # Archived summaries; stories in archive/stories/
+│   ├── releases/                 # Release notes
+│   ├── context7/                 # Context7 integration
+│   └── operations/               # Deployment, release, package distribution
+├── scripts/                       # Utilities (see scripts/README.md)
+├── templates/                     # Agent roles, project types, tech stacks, cursor-rules-template
 └── tests/                         # Test suite
     ├── unit/                      # Unit tests (fast, isolated)
     ├── integration/               # Integration tests (with real services)
@@ -677,15 +684,15 @@ TappsCodingAgents/
 - **[Cursor Rules Setup Guide](docs/CURSOR_RULES_SETUP.md)** - Cursor Rules setup (auto-generated from YAML workflows)
 - **[Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md)** - Parallel agent execution
 - **[YAML Workflow Architecture Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts
-- **[Unified Cache Architecture](implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Single interface for all caching systems
-- **[Unified Cache Integration Guide](implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
+- **[Unified Cache Architecture](docs/implementation/UNIFIED_CACHE_ARCHITECTURE_PLAN.md)** - Single interface for all caching systems
+- **[Unified Cache Integration Guide](docs/implementation/UNIFIED_CACHE_INTEGRATION_GUIDE.md)** - Using unified cache in agents
 - **[Context7 Cache Optimization](docs/CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates
-- **[Context7 Security & Privacy](docs/CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices
+- **[Context7 Security & Privacy](docs/context7/CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices
 - **[Playwright MCP Integration](docs/PLAYWRIGHT_MCP_INTEGRATION.md)** - Browser automation with Playwright MCP server
 - **[NUC Setup Guide](docs/NUC_SETUP_GUIDE.md)** - Optimize for low-power hardware
 
 ### Operations
-- **[Deployment Guide](docs/DEPLOYMENT.md)** - Production deployment instructions
+- **[Deployment Guide](docs/operations/DEPLOYMENT.md)** - Production deployment instructions
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions
 - **[Checkpoint & Resume Guide](docs/CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
 - **[Test Suite Documentation](tests/README.md)** - Complete test suite overview and E2E test guide
@@ -717,7 +724,7 @@ When updating the version number, use the automated script to ensure all files a
 - ✅ `docs/README.md` - Documentation version
 - ✅ `docs/API.md` - API version
 - ✅ `docs/ARCHITECTURE.md` - Architecture version
-- ✅ `implementation/IMPROVEMENT_PLAN.json` - Metadata version
+- ✅ `docs/implementation/IMPROVEMENT_PLAN.json` - Metadata version
 - ✅ Other documentation files with version references
 
 **After running the script:**
@@ -726,7 +733,7 @@ When updating the version number, use the automated script to ensure all files a
 3. Commit and push changes
 4. Create git tag: `git tag v3.0.4 && git push origin v3.0.4`
 
-See [Release Guide](docs/RELEASE_GUIDE.md) for complete release process.
+See [Release Guide](docs/operations/RELEASE_GUIDE.md) for complete release process.
 
 ### Reference
 - **[Project Requirements](requirements/PROJECT_REQUIREMENTS.md)** - Complete specification
@@ -760,7 +767,7 @@ This project uses its own framework for development:
 - **NUC Optimization** enabled for resource-constrained environments
 - Configuration in `.tapps-agents/` directory
 
-See [Self-Hosting Setup](implementation/SELF_HOSTING_SETUP_COMPLETE.md) for details.
+See [Self-Hosting Setup](docs/implementation/SELF_HOSTING_SETUP_COMPLETE.md) for details.
 
 ## Windows Compatibility & Encoding
 

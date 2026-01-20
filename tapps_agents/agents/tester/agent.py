@@ -386,6 +386,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
             "test_directory": str(test_path.parent),
+            "source_file": str(file_path),  # Traceability: source under test
             "file_written": file_written,
             "run_result": run_result,
             "expert_advice": expert_advice,  # Include expert recommendations
@@ -398,7 +399,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             # D2 Enhancement: Quality validation info
             "quality_validation": quality_validation,
         }
-        
+
         if test_code and file_written:
             result["test_code_preview"] = test_code[:500]  # Preview of generated code
         
@@ -597,6 +598,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             "instruction": instruction.to_dict(),
             "skill_command": instruction.to_skill_command(),
             "test_file": str(test_path),
+            "source_file": str(file_path),  # Traceability: source under test
             "file_written": file_written,
             # D1 Enhancement
             "context7_framework_docs": {
@@ -607,10 +609,10 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             # D2 Enhancement
             "quality_validation": quality_validation,
         }
-        
+
         if test_code and file_written:
             result["test_code_preview"] = test_code[:500]  # Preview of generated code
-        
+
         return result
 
     async def generate_e2e_tests_command(

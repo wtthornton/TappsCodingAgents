@@ -414,14 +414,38 @@ class EpicOrchestrator:
 
         Args:
             story: Story that failed quality gates
-            quality_result: Quality gate result with issues
+            quality_result: Quality gate result (may include "file", "target_file", "issues")
         """
-        logger.info(f"Triggering improvement loopback for story {story.story_id}")
+        logger.info("Triggering improvement loopback for story %s", story.story_id)
 
-        # TODO: Invoke @improver agent with specific issues
-        # For now, just log the issues
         issues = quality_result.get("issues", [])
-        logger.info(f"Quality issues to address: {issues}")
+        target = quality_result.get("file") or quality_result.get("target_file")
+        if target:
+            target_path = Path(target) if isinstance(target, str) else target
+            if not target_path.is_absolute():
+                target_path = self.project_root / target_path
+            if target_path.exists():
+                try:
+                    from ..agents.improver.agent import ImproverAgent
+
+                    agent = ImproverAgent(config=self.config)
+                    await agent.activate(
+                        project_root=self.project_root, offline_mode=True
+                    )
+                    focus = "; ".join(issues[:15]) if issues else "Address quality gate failures"
+                    await agent.run(
+                        "improve-quality",
+                        file_path=str(target_path),
+                        focus=focus,
+                        auto_apply=False,
+                        preview=False,
+                    )
+                except Exception as e:
+                    logger.warning("Improver invocation failed for story %s: %s", story.story_id, e)
+            else:
+                logger.warning("Target file does not exist: %s", target_path)
+        else:
+            logger.info("Quality issues to address (no target file): %s", issues[:5])
 
     def _generate_completion_report(self) -> dict[str, Any]:
         """

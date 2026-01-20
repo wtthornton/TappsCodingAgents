@@ -98,7 +98,7 @@ class TaskCompleteMessage(BaseMessage):
     results: TaskResults = Field(default_factory=TaskResults)
 
 
-type Message = TaskAssignmentMessage | StatusUpdateMessage | TaskCompleteMessage
+Message = TaskAssignmentMessage | StatusUpdateMessage | TaskCompleteMessage
 
 
 def parse_message(data: dict[str, Any]) -> Message:

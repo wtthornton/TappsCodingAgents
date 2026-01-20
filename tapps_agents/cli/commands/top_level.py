@@ -3012,22 +3012,37 @@ def handle_workflow_state_cleanup_command(args: object) -> None:
     dry_run = getattr(args, "dry_run", False)
     
     if dry_run:
+        result = manager.cleanup_old_states(
+            retention_days=retention_days,
+            max_states_per_workflow=max_states,
+            remove_completed=remove_completed,
+            dry_run=True,
+        )
         print("DRY RUN: Would clean up states with the following settings:")
         print(f"  Retention: {retention_days} days")
         print(f"  Max states per workflow: {max_states}")
         print(f"  Remove completed: {remove_completed}")
         print()
-        # TODO: Implement dry-run preview
-        print("Dry-run preview not yet implemented. Use without --dry-run to perform cleanup.")
+        would_remove = result.get("would_remove", [])
+        if would_remove:
+            print(f"Would remove {result['removed_count']} state(s) ({result['removed_size_mb']} MB) from {result['workflows_cleaned']} workflow(s):")
+            for item in would_remove[:20]:
+                print(f"  - {item.get('state_file', '?')} (workflow: {item.get('workflow_id', '?')}, {item.get('size_bytes', 0) / 1024:.1f} KB, reason: {item.get('reason', '?')})")
+            if len(would_remove) > 20:
+                print(f"  ... and {len(would_remove) - 20} more")
+        else:
+            print("No states would be removed with these settings.")
+        print()
+        print("Run without --dry-run to perform cleanup.")
         return
-    
+
     try:
         result = manager.cleanup_old_states(
             retention_days=retention_days,
             max_states_per_workflow=max_states,
             remove_completed=remove_completed,
         )
-        
+
         print(f"\n{'='*80}")
         print("State Cleanup Complete")
         print(f"{'='*80}\n")

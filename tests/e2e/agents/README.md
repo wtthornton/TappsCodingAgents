@@ -208,6 +208,6 @@ Tests validate that:
 ## Related Documentation
 
 - [E2E Test Review](../E2E_TEST_REVIEW.md) - Original review that identified gaps
-- [Epic 15 Documentation](../../../implementation/cursor/EPIC_15_E2E_Agent_Behavior_Testing.md) - Epic definition
+- [Epic 15 Documentation](../../../docs/implementation/cursor/EPIC_15_E2E_Agent_Behavior_Testing.md) - Epic definition
 - [E2E README](../README.md) - General E2E test documentation
 

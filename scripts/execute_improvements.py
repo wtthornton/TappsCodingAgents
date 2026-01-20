@@ -149,7 +149,7 @@ async def main():
     log("=" * 70, "START")
 
     # Load analysis results
-    analysis_file = Path("implementation/PROJECT_ANALYSIS.json")
+    analysis_file = Path("docs/implementation/PROJECT_ANALYSIS.json")
     if not analysis_file.exists():
         log("Analysis file not found. Run analyze_project.py first.", "ERROR")
         return
@@ -242,7 +242,7 @@ async def main():
             )
 
     # Save results
-    results_file = Path("implementation/IMPROVEMENT_RESULTS.json")
+    results_file = Path("docs/implementation/IMPROVEMENT_RESULTS.json")
     results_file.parent.mkdir(exist_ok=True)
     log(f"Saving results to {results_file}...", "SAVE")
     with open(results_file, "w") as f:

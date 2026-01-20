@@ -5,6 +5,7 @@ Tests the unified cache API (get, put, invalidate, get_stats) across all cache t
 using real cache implementations to validate actual cache behavior.
 """
 
+from contextlib import contextmanager
 from unittest.mock import Mock, patch
 
 import pytest
@@ -140,13 +141,20 @@ class TestUnifiedCacheInterface:
         """Alias for unified_cache_mock for backward compatibility."""
         return unified_cache_mock
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
-    def test_get_tiered_context_real(self, unified_cache_real, real_context_manager, tmp_path):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_get_tiered_context_real(self, mock_cache_lock, unified_cache_real, real_context_manager, tmp_path):
         """Test getting tiered context from cache using real ContextManager."""
+        # Avoid file-lock timeouts in CI: no-op context manager for cache_lock
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         # Create a test file to get context for
         test_file = tmp_path / "test_file.py"
         test_file.write_text("def hello():\n    pass\n")
-        
+
         response = unified_cache_real.get(
             cache_type=CacheType.TIERED_CONTEXT, 
             key=str(test_file), 
@@ -219,13 +227,19 @@ class TestUnifiedCacheInterface:
         assert response is None
         assert unified_cache._stats["misses"] == 1
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
-    def test_put_tiered_context_real(self, unified_cache_real, tmp_path):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_put_tiered_context_real(self, mock_cache_lock, unified_cache_real, tmp_path):
         """Test storing tiered context in cache using real ContextManager."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         # Create a test file
         test_file = tmp_path / "test_file.py"
         test_file.write_text("def hello():\n    pass\n")
-        
+
         response = unified_cache_real.put(
             cache_type=CacheType.TIERED_CONTEXT,
             key=str(test_file),
@@ -244,9 +258,15 @@ class TestUnifiedCacheInterface:
         # May or may not be cached depending on implementation
         # but the put should have succeeded
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
-    def test_put_context7_kb_real(self, unified_cache_real, real_kb_cache):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_put_context7_kb_real(self, mock_cache_lock, unified_cache_real, real_kb_cache):
         """Test storing Context7 KB entry in cache using real KBCache."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         response = unified_cache_real.put(
             cache_type=CacheType.CONTEXT7_KB,
             key="test-key",
@@ -316,9 +336,15 @@ class TestUnifiedCacheInterface:
         assert "adaptive" in profile
         assert profile["tiered_context"]["max_in_memory_entries"] == 100
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
-    def test_hit_miss_statistics_real(self, unified_cache_real, tmp_path):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_hit_miss_statistics_real(self, mock_cache_lock, unified_cache_real, tmp_path):
         """Test that hit/miss statistics are tracked correctly with real cache."""
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         # Initial state
         stats = unified_cache_real.get_stats()
         initial_hits = stats.total_hits

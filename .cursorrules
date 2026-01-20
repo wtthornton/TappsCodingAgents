@@ -170,7 +170,7 @@ For full setup instructions, see `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md`.
 This script updates version numbers in:
 - Core files: `pyproject.toml`, `tapps_agents/__init__.py`
 - Documentation: `README.md`, `docs/README.md`, `docs/API.md`, `docs/ARCHITECTURE.md`
-- Metadata: `implementation/IMPROVEMENT_PLAN.json`
+- Metadata: `docs/implementation/IMPROVEMENT_PLAN.json`
 
 **After updating version:**
 1. Update `CHANGELOG.md` with release notes

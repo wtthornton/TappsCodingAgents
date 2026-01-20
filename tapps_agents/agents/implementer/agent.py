@@ -465,11 +465,11 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             logger = logging.getLogger(__name__)
             logger.warning(f"Failed to create backup for {file_path}: {e}")
 
-        # Note: Actual refactored code generation would happen here
-        # For now, return instruction structure - actual code writing
-        # would be handled by Cursor Skills or needs to be implemented
-        # with actual code generation
-        
+        # Refactored code: in Cursor mode, the skill_command is executed by Cursor Skills
+        # (user's model), which performs the edit. In headless/CLI mode, code generation
+        # would require MAL/LLM; when available, we would set refactored_code and write.
+        refactored_code: str | None = None  # Set when MAL/LLM generates in headless mode
+
         result = {
             "type": "refactor",
             "file": str(path),
@@ -479,12 +479,11 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             "backup": str(backup_path) if backup_path else None,
             "preview": preview,
             "approved": True,  # Would be set based on review/approval
+            "refactored_code": refactored_code,
         }
-        
-        # TODO: Generate actual refactored code and write to file
-        # This requires implementing actual code generation in code_generator
-        # For now, the instruction is returned for Cursor Skills to execute
-        
+
+        # When not preview and MAL/LLM is available, we would generate refactored_code
+        # and write to path. For now, writing is delegated to Cursor Skills via skill_command.
         return result
 
     async def _review_code(self, code: str, file_path: Path) -> dict[str, Any] | None:

@@ -28,6 +28,11 @@ This directory contains all requirement specifications for TappsCodingAgents.
 - **[Persona Template](template/persona.md)** - Agent persona template
 - **[Schema Templates](template/)** - Input/output/error schema templates
 
+## Directory vs requirements.txt
+
+- **`requirements/`** (this directory): Product and agent specifications, API specs, model profiles, and configuration templates.
+- **`requirements.txt`** (project root): Python pip dependencies for installing the package.
+
 ## Quick Reference
 
 **For implementation status and completed features, see [Project Requirements Document](PROJECT_REQUIREMENTS.md).**

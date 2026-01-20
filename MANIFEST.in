@@ -19,7 +19,6 @@ recursive-exclude scripts *
 recursive-exclude workflows *
 recursive-exclude requirements *
 recursive-exclude templates *
-recursive-exclude implementation *
 recursive-exclude reports *
 recursive-exclude htmlcov *
 recursive-exclude .pytest_cache *

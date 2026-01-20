@@ -16,16 +16,15 @@ This document describes the organization of the TappsCodingAgents source code.
 TappsCodingAgents/
 ├── tapps_agents/          # Main package
 ├── tests/                  # Test suite
-├── docs/                   # Documentation
-├── scripts/                # Utility scripts
-├── workflows/              # Workflow presets (YAML)
-├── templates/              # Templates (user roles, etc.)
-├── requirements/           # Requirements documentation
+├── docs/                   # Documentation (implementation/, archive/, releases/, context7/, operations/)
+├── scripts/                # Utility scripts (see scripts/README.md)
+├── workflows/              # Workflow presets (YAML); source for tapps_agents/resources/workflows/presets
+├── templates/              # Templates (agent_roles, project_types, tech_stacks, user_roles, cursor-rules-template)
+├── requirements/           # Requirements and specs (see requirements/README.md); distinct from requirements.txt
 ├── schemas/                # JSON schemas
 ├── .tapps-agents/         # Project configuration (runtime)
-├── .cursor/                # Cursor IDE integration
-├── .claude/                # Claude Skills
-└── .bmad-core/             # BMAD framework integration
+├── .cursor/                # Cursor IDE integration (rules, background-agents, mcp.json)
+└── .claude/                # Cursor Skills (canonical; agents/ removed as legacy)
 ```
 
 ## Main Package: `tapps_agents/`
@@ -236,10 +235,15 @@ tests/
 **Structure:**
 ```
 docs/
-├── architecture/     # Architecture shards (this directory)
+├── architecture/     # Architecture shards (this directory), ADRs in decisions/
+├── implementation/   # EPIC/PHASE plans, implementation notes (from former root implementation/)
+├── archive/          # Archived summaries, cleanup/analysis docs; stories in archive/stories/
+├── releases/         # Release notes (RELEASE_NOTES_*.md, RELEASE_*_INSTRUCTIONS)
+├── context7/         # Context7 integration docs
+├── operations/       # Deployment, release process, package distribution
 ├── guides/           # User guides
 ├── prd/              # Product requirements documents
-└── ...               # Other documentation
+└── workflows/        # Workflow documentation
 ```
 
 ## Key Design Principles

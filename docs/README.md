@@ -69,7 +69,10 @@ Welcome to the documentation for TappsCodingAgents.
 - **[YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts (Epics 6-10)
 
 ### Operations
-- **[Deployment Guide](DEPLOYMENT.md)**
+- **[Deployment Guide](operations/DEPLOYMENT.md)**
+- **[Release Guide](operations/RELEASE_GUIDE.md)** - Version and release process
+- **[Release Quick Reference](operations/RELEASE_QUICK_REFERENCE.md)** | **[Release Version Tag Warning](operations/RELEASE_VERSION_TAG_WARNING.md)**
+- **[Package Distribution Guide](operations/PACKAGE_DISTRIBUTION_GUIDE.md)** - PyPI and distribution
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Includes Playwright MCP troubleshooting
 - **[Path Normalization Guide](PATH_NORMALIZATION_GUIDE.md)** - Cross-platform path handling, Windows absolute path conversion
 - **[Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
@@ -96,8 +99,8 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Features & Capabilities
 - **[Beads Integration](BEADS_INTEGRATION.md)** - Optional task tracking (bd); epic sync, *build/*fix hooks; `tapps-agents beads`; doctor reports status; init hints `bd init`
-- **[Context7 Integration](CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
-- **[Context7 Integration Patterns](CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
+- **[Context7 Integration](context7/CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
+- **[Context7 Integration Patterns](context7/CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
 - **[MCP Gateway](PLAYWRIGHT_MCP_INTEGRATION.md)** - Unified Model Context Protocol interface (Context7, Playwright, Filesystem, Git, Analysis)
 - **[MCP Standards Compliance](MCP_STANDARDS.md)** - JSON-RPC 2.0 and JSON Schema 2020-12 compliance
 - **[Analytics Dashboard](../tapps_agents/core/analytics_dashboard.py)** - Performance metrics, trends, agent/workflow statistics
@@ -133,7 +136,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **Add custom experts** → [Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)
 - **Understand the architecture** → [Architecture Overview](ARCHITECTURE.md)
 - **Troubleshoot issues** → [Troubleshooting Guide](TROUBLESHOOTING.md)
-- **Deploy to production** → [Deployment Guide](DEPLOYMENT.md)
+- **Deploy to production** → [Deployment Guide](operations/DEPLOYMENT.md)
 - **Check coding standards** → [Coding Standards](architecture/coding-standards.md)
 - **View API reference** → [API Reference](API.md)
 
@@ -155,7 +158,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 **DevOps/QA:**
 - [Test Stack Documentation](test-stack.md)
-- [Deployment Guide](DEPLOYMENT.md)
+- [Deployment Guide](operations/DEPLOYMENT.md)
 - [Troubleshooting Guide](TROUBLESHOOTING.md)
 
 ### By Topic
@@ -204,9 +207,9 @@ Looking for something specific? Try these keywords:
 - **"architecture"** → [Architecture Overview](ARCHITECTURE.md), [Architecture Shards](architecture/)
 - **"api"** → [API Reference](API.md), [Agent API Specification](../requirements/agent_api.md)
 - **"mcp"** → [MCP Standards Compliance](MCP_STANDARDS.md), [Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md)
-- **"context7"** → [Context7 Integration Patterns](CONTEXT7_PATTERNS.md), [Context7 Cache Optimization](CONTEXT7_CACHE_OPTIMIZATION.md)
+- **"context7"** → [Context7 Integration Patterns](context7/CONTEXT7_PATTERNS.md), [Context7 Cache Optimization](context7/CONTEXT7_CACHE_OPTIMIZATION.md)
 - **"cursor"** → [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md), [Cursor Rules Setup Guide](CURSOR_RULES_SETUP.md)
-- **"deployment"** → [Deployment Guide](DEPLOYMENT.md)
+- **"deployment"** → [Deployment Guide](operations/DEPLOYMENT.md)
 - **"troubleshooting"** → [Troubleshooting Guide](TROUBLESHOOTING.md)
 - **"standards"** → [AI Comment Guidelines](AI_COMMENT_GUIDELINES.md), [Documentation Metadata Standards](DOCUMENTATION_METADATA_STANDARDS.md), [Coding Standards](architecture/coding-standards.md)
 

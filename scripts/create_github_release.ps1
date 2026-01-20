@@ -128,13 +128,13 @@ if (-not $SkipVersionUpdate) {
     Write-Host "  ✓ Version verified: $Version" -ForegroundColor Green
     
     # Check if version changes need to be committed
-    $gitStatus = git status --porcelain pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json 2>&1
+    $gitStatus = git status --porcelain pyproject.toml tapps_agents/__init__.py CHANGELOG.md docs/implementation/IMPROVEMENT_PLAN.json 2>&1
     if ($gitStatus) {
         Write-Host "" -ForegroundColor Yellow
         Write-Host "WARNING: Version files have uncommitted changes!" -ForegroundColor Yellow
         Write-Host "  The release tag MUST point to a commit with the version bump." -ForegroundColor Yellow
         Write-Host "  Please commit the version changes before creating the release:" -ForegroundColor Yellow
-        Write-Host "    git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json" -ForegroundColor White
+        Write-Host "    git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md docs/implementation/IMPROVEMENT_PLAN.json" -ForegroundColor White
         Write-Host "    git commit -m `"Bump version to $Version`"" -ForegroundColor White
         Write-Host "    git push origin main" -ForegroundColor White
         Write-Host "" -ForegroundColor Yellow
@@ -297,7 +297,7 @@ if ($headPyprojectVersionExtracted -ne $Version -or $headInitVersion -ne $Versio
     Write-Host "" -ForegroundColor Red
     Write-Host "CRITICAL: The release tag MUST point to a commit with the version bump." -ForegroundColor Yellow
     Write-Host "  If you updated the version, you must commit those changes first:" -ForegroundColor Yellow
-    Write-Host "    git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md implementation/IMPROVEMENT_PLAN.json" -ForegroundColor White
+    Write-Host "    git add pyproject.toml tapps_agents/__init__.py CHANGELOG.md docs/implementation/IMPROVEMENT_PLAN.json" -ForegroundColor White
     Write-Host "    git commit -m `"Bump version to $Version`"" -ForegroundColor White
     Write-Host "    git push origin main" -ForegroundColor White
     Write-Host "" -ForegroundColor Yellow

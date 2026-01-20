@@ -207,7 +207,7 @@ Before deploying code:
 ## Related Documentation
 
 - **Architecture Overview**: `docs/ARCHITECTURE.md`
-- **Context7 Integration**: `docs/CONTEXT7_CACHE_OPTIMIZATION.md`
+- **Context7 Integration**: `docs/context7/CONTEXT7_CACHE_OPTIMIZATION.md`
 - **Tech Stack**: `docs/architecture/tech-stack.md`
 
 ---

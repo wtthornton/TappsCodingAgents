@@ -87,7 +87,6 @@ try {
         "workflows\*",
         "requirements\*",
         "templates\*",
-        "implementation\*",
         ".claude\*",
         ".cursor\*",
         ".bmad-core\*",
@@ -151,7 +150,7 @@ try {
     
     # Also check for common excluded directory names
     $excludedDirs = @("tests", "docs", "examples", "scripts", "workflows", "requirements", 
-                      "templates", "implementation", ".claude", ".cursor", ".bmad-core", 
+                      "templates", ".claude", ".cursor", ".bmad-core", 
                       ".git", ".github", ".tapps-agents", "billstest", "reports", "htmlcov", 
                       ".pytest_cache", ".mypy_cache", ".ruff_cache", "build", "dist")
     

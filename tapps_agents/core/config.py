@@ -1222,6 +1222,12 @@ class ProjectConfig(BaseModel):
     project_name: str | None = Field(default=None, description="Project name")
     version: str | None = Field(default=None, description="Project version")
 
+    # CLI / runtime
+    offline_mode: bool = Field(
+        default=False,
+        description="Use offline mode (no network) when possible for CLI and agents",
+    )
+
     # Core configuration
     tooling: ToolingConfig = Field(
         default_factory=ToolingConfig,

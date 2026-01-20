@@ -24,7 +24,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    # Core Framework
+    # Core Framework (required at runtime: config, workflow artifacts, agent contracts)
     "pydantic>=2.12.5",
     "httpx>=0.28.1",
     "pyyaml>=6.0.3",

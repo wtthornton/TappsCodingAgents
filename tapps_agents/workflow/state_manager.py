@@ -418,6 +418,7 @@ class AdvancedStateManager:
         retention_days: int = 30,
         max_states_per_workflow: int = 10,
         remove_completed: bool = True,
+        dry_run: bool = False,
     ) -> dict[str, Any]:
         """
         Clean up old workflow states.
@@ -428,9 +429,10 @@ class AdvancedStateManager:
             retention_days: Keep states newer than this many days
             max_states_per_workflow: Maximum states to keep per workflow
             remove_completed: Whether to remove states for completed workflows
+            dry_run: If True, only report what would be removed (no files deleted)
 
         Returns:
-            Dictionary with cleanup statistics
+            Dictionary with cleanup statistics; if dry_run, includes would_remove list
         """
         from datetime import timedelta
 
@@ -438,6 +440,7 @@ class AdvancedStateManager:
         removed_count = 0
         removed_size = 0
         workflows_cleaned = set()
+        would_remove: list[dict[str, Any]] = []
 
         # Group states by workflow_id
         workflow_states: dict[str, list[dict[str, Any]]] = {}
@@ -511,19 +514,28 @@ class AdvancedStateManager:
                     try:
                         # Get file size before removal
                         file_size = state_path.stat().st_size
-                        state_path.unlink()
-                        removed_size += file_size
-                        removed_count += 1
-                        workflows_cleaned.add(workflow_id)
-
-                        # Also remove from history if exists
-                        history_path = self.history_dir / state_file
-                        if history_path.exists():
-                            history_path.unlink()
-
-                        logger.debug(
-                            f"Removed state {state_file} (reason: {reason})"
-                        )
+                        if dry_run:
+                            would_remove.append({
+                                "state_file": state_file,
+                                "workflow_id": workflow_id,
+                                "size_bytes": file_size,
+                                "reason": reason,
+                            })
+                            removed_size += file_size
+                            removed_count += 1
+                            workflows_cleaned.add(workflow_id)
+                        else:
+                            state_path.unlink()
+                            removed_size += file_size
+                            removed_count += 1
+                            workflows_cleaned.add(workflow_id)
+                            # Also remove from history if exists
+                            history_path = self.history_dir / state_file
+                            if history_path.exists():
+                                history_path.unlink()
+                            logger.debug(
+                                f"Removed state {state_file} (reason: {reason})"
+                            )
                     except Exception as e:
                         logger.warning(f"Failed to remove state {state_file}: {e}")
 
@@ -532,6 +544,9 @@ class AdvancedStateManager:
             "removed_size_mb": round(removed_size / (1024 * 1024), 2),
             "workflows_cleaned": len(workflows_cleaned),
         }
+        if dry_run:
+            result["dry_run"] = True
+            result["would_remove"] = would_remove
 
         logger.info(
             f"State cleanup completed: removed {removed_count} states "

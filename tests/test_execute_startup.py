@@ -21,7 +21,7 @@ async def test_startup():
     log("=" * 70, "TEST")
 
     # Load analysis results
-    analysis_file = Path("implementation/PROJECT_ANALYSIS.json")
+    analysis_file = Path("docs/implementation/PROJECT_ANALYSIS.json")
     if not analysis_file.exists():
         log("Analysis file not found. Run analyze_project.py first.", "ERROR")
         return

@@ -10,7 +10,9 @@ This module tests:
 """
 
 import asyncio
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 
@@ -402,11 +404,17 @@ class TestThreadSafety:
             assert isinstance(result, dict)
             assert "overall_score" in result
 
-    @pytest.mark.skip(reason="TODO: Fix cache lock timeouts - all tests in this class need mock for file locking")
-    def test_cache_thread_safety(self, unified_cache, tmp_path: Path):
+    @patch("tapps_agents.context7.kb_cache.cache_lock")
+    def test_cache_thread_safety(self, mock_cache_lock, unified_cache, tmp_path: Path):
         """Test that cache operations are thread-safe."""
         import threading
-        
+
+        @contextmanager
+        def _noop_lock(*a, **k):
+            yield
+
+        mock_cache_lock.side_effect = _noop_lock
+
         test_file = tmp_path / "test.py"
         test_file.write_text("def test(): pass\n")
         

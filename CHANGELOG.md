@@ -918,7 +918,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - docs/README.md (documentation version)
   - docs/API.md (API version)
   - docs/ARCHITECTURE.md (architecture version)
-  - implementation/IMPROVEMENT_PLAN.json (metadata version)
+  - docs/implementation/IMPROVEMENT_PLAN.json (metadata version)
 
 ### Fixed
 - Improved test coverage for orchestrator agent
