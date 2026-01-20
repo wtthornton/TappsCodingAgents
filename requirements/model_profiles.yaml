@@ -1,4 +1,14 @@
+# Model profiles: map profile names (from skills' model_profile) to primary/fallback models.
+# When a profile is missing, Cursor uses the project or user default model.
+# Add entries here to override; e.g. reviewer_profile, ops_profile, security_review_profile.
 model_profiles:
   implementer_default:
     primary: local:qwen2.5-coder-14b
     fallback: cursor:gpt-5.1
+  # Optional overrides (uncomment and set primary/fallback as needed):
+  # reviewer_profile:
+  #   primary: cursor:gpt-5.1
+  # ops_profile:
+  #   primary: cursor:gpt-5.1
+  # security_review_profile:
+  #   primary: cursor:gpt-5.1

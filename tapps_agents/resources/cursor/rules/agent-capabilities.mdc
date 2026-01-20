@@ -20,6 +20,8 @@ TappsCodingAgents provides **14 specialized workflow agents** covering the compl
 - **Orchestration**: orchestrator
 - **Enhancement**: enhancer
 
+**Model selection:** Each skill specifies a `model_profile` (e.g. `reviewer_profile`). Override in `requirements/model_profiles.yaml` or project config; when a profile is missing, Cursor uses the project/user default. See `docs/MODEL_SELECTION.md` for resolution and overrides. Prefer higher-accuracy models for reviewer and security-review; lighter models for lint/score.
+
 ---
 
 ## Planning Agents

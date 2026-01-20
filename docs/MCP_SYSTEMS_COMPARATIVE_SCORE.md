@@ -4,7 +4,7 @@
 
 | Document | Version | Last Updated |
 |----------|---------|--------------|
-| MCP_SYSTEMS_COMPARATIVE_SCORE.md | 1.1.0 | 2026-01-20 |
+| MCP_SYSTEMS_COMPARATIVE_SCORE.md | 1.2.0 | 2026-01-20 |
 
 ---
 
@@ -200,9 +200,24 @@ Aligned with TappsCodingAgents concepts:
 
 ---
 
-## 8. References
+## 8. Improvement Recommendations
+
+To make TappsCodingAgents **decisively better** than the other systems, see **[MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md](MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md)**. It turns gaps and strengths of LocalMCP, codefortify, and agentforge-mcp into **7 actionable recommendations** (plus 2 deferred, 1 removed):
+
+- **P0:** 7-category scoring (Structure, DevEx)
+- **P1:** npm audit, `*enhance` / `*breakdown` in Simple Mode, `*todo` (Beads-backed), JS/TS coverage (Vitest, Jest, c8/nyc)
+- **P2:** Architecture pattern detection (8–10 patterns), bundle analysis (opt-in)
+
+**Deferred:** Tapps MCP Server, Docker. **Removed:** SQLite+LRU for Context7 cache (no proven impact).
+
+Implementing P0 and P1 is estimated to raise TappsCodingAgents’ overall score to **~85–86** (vs 84 today).
+
+---
+
+## 9. References
 
 - [LocalMCP (PromptMCP)](https://github.com/wtthornton/LocalMCP)  
 - [codefortify](https://github.com/wtthornton/codefortify)  
 - [agentforge-mcp](https://github.com/wtthornton/agentforge-mcp)  
+- [MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md](MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md) – Improvement ideas from competing systems  
 - **TappsCodingAgents** (this project): `ReviewArtifact`, `ScoringWeightsConfig`, `QualityGate`, `reviewer_handler`, `MCPGateway`, `context7.lookup`, `KBCache`

@@ -72,9 +72,10 @@ def _verify_skills(skills_dir: Path) -> dict:
         "warnings": [],
         "skills_found": [],
         "expected_skills": [
-            "analyst", "architect", "debugger", "designer", "documenter",
-            "enhancer", "evaluator", "implementer", "improver", "ops", "orchestrator",
-            "planner", "reviewer", "simple-mode", "tester"
+            "analyst", "architect", "backend-patterns", "coding-standards", "debugger",
+            "designer", "documenter", "enhancer", "evaluator", "frontend-patterns",
+            "implementer", "improver", "ops", "orchestrator", "planner", "reviewer",
+            "security-review", "simple-mode", "tester"
         ]
     }
     
@@ -131,7 +132,12 @@ def _verify_rules(rules_dir: Path) -> dict:
             "project-profiling.mdc",
             "simple-mode.mdc",
             "command-reference.mdc",
-            "cursor-mode-usage.mdc"
+            "cursor-mode-usage.mdc",
+            "security.mdc",
+            "coding-style.mdc",
+            "testing.mdc",
+            "git-workflow.mdc",
+            "performance.mdc"
         ]
     }
     

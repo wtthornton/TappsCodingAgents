@@ -57,22 +57,31 @@ FRAMEWORK_CURSOR_RULES = {
     "simple-mode.mdc",
     "command-reference.mdc",
     "cursor-mode-usage.mdc",
+    "security.mdc",
+    "coding-style.mdc",
+    "testing.mdc",
+    "git-workflow.mdc",
+    "performance.mdc",
 }
 
 FRAMEWORK_SKILLS = {
     "analyst",
     "architect",
+    "backend-patterns",
+    "coding-standards",
     "debugger",
     "designer",
     "documenter",
     "enhancer",
     "evaluator",  # Added: Quality evaluation skill
+    "frontend-patterns",
     "implementer",
     "improver",
     "ops",
     "orchestrator",
     "planner",
     "reviewer",
+    "security-review",
     "simple-mode",
     "tester",
 }
@@ -360,7 +369,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
     project_rules_dir = project_root / ".cursor" / "rules"
     project_rules_dir.mkdir(parents=True, exist_ok=True)
 
-    # Copy Cursor Rules (8 rule files: workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage)
+    # Copy Cursor Rules (workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage, security, coding-style, testing, git-workflow, performance)
     rules_to_copy = [
         "workflow-presets.mdc",
         "quick-reference.mdc",
@@ -370,6 +379,11 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
         "simple-mode.mdc",
         "command-reference.mdc",
         "cursor-mode-usage.mdc",
+        "security.mdc",
+        "coding-style.mdc",
+        "testing.mdc",
+        "git-workflow.mdc",
+        "performance.mdc",
     ]
     copied_rules = []
 

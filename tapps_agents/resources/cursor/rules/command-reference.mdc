@@ -96,12 +96,20 @@ When you run `tapps-agents init` on any project (new or existing), it:
        - `@simple-mode *fix` - Bug fixing workflow with debugging
        - `@simple-mode *test` - Test generation workflow
        - `@simple-mode *epic` - Epic execution workflow (all stories in dependency order)
+       - `@simple-mode *tdd` - TDD workflow (Red-Green-Refactor, coverage ≥80%)
+       - `@simple-mode *e2e` - E2E test generation and run (Playwright MCP if available)
+       - `@simple-mode *build-fix` - Fix build/compile errors (distinct from *fix, *fix-tests)
+       - `@simple-mode *refactor-clean` - Dead code cleanup (unused imports, duplication)
+       - `@simple-mode *update-docs` - Sync documentation with code
+       - `@simple-mode *update-codemaps` - Refresh Context7 or codemap index
        - `@simple-mode *test-coverage` - Coverage-driven test generation
+       - `@simple-mode *security-review` - Security audit (reviewer + ops + OWASP-style)
        - `@simple-mode *fix-tests` - Auto-fix test failures
        - `@simple-mode *microservice` - Generate complete microservice structure
        - `@simple-mode *docker-fix` - Debug container errors
        - `@simple-mode *integrate-service` - Service-to-service integration
        - `@simple-mode *full` - Full SDLC workflow (9 steps)
+       - Domain skills: `@coding-standards`, `@backend-patterns`, `@frontend-patterns`, `@security-review`
        - Natural language commands (e.g., `@simple-mode Build a feature`)
      - **Simple Mode is enabled by default** in config after `init`
 
@@ -1501,6 +1509,84 @@ Simple Mode provides natural language orchestration with structured workflows. U
 3. Prioritize gaps (critical paths, error handling, public APIs)
 4. Generate targeted tests for uncovered code
 5. Verify coverage improvement
+
+### TDD Workflow (`*tdd`)
+
+**Purpose:** Test-driven development: Red-Green-Refactor with coverage ≥80%
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *tdd {file}
+@simple-mode *tdd "<description>"
+```
+
+**Workflow Steps:** Define interfaces → failing tests (RED) → minimal code (GREEN) → refactor (IMPROVE) → @tester *test for coverage.
+
+### E2E Workflow (`*e2e`)
+
+**Purpose:** Generate and run E2E tests; Playwright MCP for execution when available
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *e2e [path]
+```
+
+**Workflow Steps:** @tester *generate-e2e-tests → run via Playwright MCP if available → report.
+
+### Build Fix Workflow (`*build-fix`)
+
+**Purpose:** Fix build/compile errors (Python, npm, tsc, cargo). Distinct from *fix (runtime) and *fix-tests.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *build-fix "<build-output or description>"
+```
+
+**Workflow Steps:** Parse errors → @debugger *debug → @implementer *refactor → re-run build to verify.
+
+### Refactor Clean Workflow (`*refactor-clean`)
+
+**Purpose:** Mechanical cleanup: unused imports, dead code, duplication. Use *refactor for design changes.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *refactor-clean {file}
+```
+
+**Workflow Steps:** @reviewer *duplication and/or Ruff → @implementer *refactor for cleanup.
+
+### Update Docs Workflow (`*update-docs`)
+
+**Purpose:** Sync documentation with code
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *update-docs [path]
+```
+
+**Workflow Steps:** @documenter *document or *document-api → sync README or docs/ if project scripts exist.
+
+### Update Codemaps Workflow (`*update-codemaps`)
+
+**Purpose:** Refresh codemap/context index (e.g. Context7 cache)
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *update-codemaps
+```
+
+**Workflow Steps:** Refresh project index; if Context7: @reviewer *docs-refresh or project cache refresh.
+
+### Security Review Workflow (`*security-review`)
+
+**Purpose:** Structured security check: reviewer + ops + OWASP-style checklist
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *security-review [path]
+```
+
+**Workflow Steps:** @reviewer *review (security, bandit) → @ops *audit-security → OWASP-style checklist; summarize and remediation hints.
 
 ### Fix Tests Workflow (`*fix-tests`)
 

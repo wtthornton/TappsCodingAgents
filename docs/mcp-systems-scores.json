@@ -76,5 +76,18 @@
       "full_agent_platform": "agentforge-mcp"
     },
     "tapps_position": "Orchestration layer; use with codefortify (JS/TS scoring) and LocalMCP (prompt/todo) as complements"
+  },
+  "improvement_recommendations_doc": "docs/MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md",
+  "improvement_priority_summary": {
+    "P0": ["7-category scoring (Structure, DevEx)"],
+    "P1": ["npm audit integration", "*enhance and *breakdown in Simple Mode", "*todo (Beads-backed)", "JS/TS coverage (Vitest, Jest, c8/nyc)"],
+    "P2": ["Architecture pattern detection (8-10 patterns)", "Bundle analysis (opt-in)"]
+  },
+  "improvement_deferred": {
+    "Tapps MCP Server": "Overkill for Cursor+Skills; revisit if supporting non-Cursor MCP clients.",
+    "Docker image": "Overkill for pip+Cursor; revisit for no-Python or corporate-image niches."
+  },
+  "improvement_removed": {
+    "SQLite+LRU for Context7 cache": "No proven impact; file-based KBCache sufficient. Revisit if cache scale/concurrency issues."
   }
 }

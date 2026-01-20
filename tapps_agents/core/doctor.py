@@ -8,6 +8,7 @@ or mismatched. Per project policy, the default behavior is soft-degrade (warn/sk
 
 from __future__ import annotations
 
+import json
 import platform
 import shutil
 import subprocess  # nosec B404
@@ -599,6 +600,29 @@ def collect_doctor_report(
                     ) if not playwright_python_available else None,
                 )
             )
+
+        # Optional: MCP count / context guidance (>10 enabled may reduce context)
+        mcp_path = root / ".cursor" / "mcp.json"
+        if mcp_path.exists():
+            try:
+                with open(mcp_path, encoding="utf-8-sig") as f:
+                    mcp_cfg = json.load(f)
+                servers = mcp_cfg.get("mcpServers") or {}
+                n = len(servers) if isinstance(servers, dict) else 0
+                if n > 10:
+                    findings.append(
+                        DoctorFinding(
+                            severity="warn",
+                            code="MCP_CONTEXT_GUIDANCE",
+                            message=f"MCP/context: {n} MCP servers configured (>{10} may reduce effective context)",
+                            remediation=(
+                                "Consider enabling <10 MCPs per project and using disabledMcpServers or "
+                                "project MCP config to disable unused ones. See .cursor/rules/performance.mdc."
+                            ),
+                        )
+                    )
+            except Exception:
+                pass
     except Exception:
         # If MCP detection fails, don't fail the entire doctor report
         findings.append(

@@ -35,6 +35,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Epic Workflow Guide](EPIC_WORKFLOW_GUIDE.md)** - Execute Epic documents with story dependency resolution
 - **[Current Defaults](CURRENT_DEFAULTS.md)** - What happens by default (no surprises)
 - **[Configuration Guide](CONFIGURATION.md)** - Complete configuration reference
+- **[Model Selection](MODEL_SELECTION.md)** - model_profile resolution and overrides
 - **[API Reference](API.md)** - Python API + CLI overview
 
 ### Core Concepts
@@ -54,6 +55,7 @@ Welcome to the documentation for TappsCodingAgents.
 ### Customization
 - **[User Role Templates Guide](USER_ROLE_TEMPLATES_GUIDE.md)** - Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
 - **[Customization Guide](CUSTOMIZATION_GUIDE.md)** - Project-specific agent customizations
+- **[Plugins and Extensions](PLUGINS_AND_EXTENSIONS.md)** - Custom skills, commands, rules, and MCPs
 
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Skills + Claude Desktop Commands setup
@@ -104,6 +106,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Context7 Integration Patterns](context7/CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
 - **[MCP Gateway](PLAYWRIGHT_MCP_INTEGRATION.md)** - Unified Model Context Protocol interface (Context7, Playwright, Filesystem, Git, Analysis)
 - **[MCP Systems Comparative Score](MCP_SYSTEMS_COMPARATIVE_SCORE.md)** - TappsCodingAgents-style scoring of LocalMCP, codefortify, agentforge-mcp
+- **[MCP Systems Improvement Recommendations](MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md)** - Actions from competing systems to make TappsCodingAgents far ahead (MCP server, 7-category scoring, npm audit, *enhance/*breakdown, etc.)
 - **[MCP Standards Compliance](MCP_STANDARDS.md)** - JSON-RPC 2.0 and JSON Schema 2020-12 compliance
 - **[Analytics Dashboard](../tapps_agents/core/analytics_dashboard.py)** - Performance metrics, trends, agent/workflow statistics
 - **[Health Monitoring](../tapps_agents/health/)** - System health checks, resource usage tracking
@@ -208,7 +211,7 @@ Looking for something specific? Try these keywords:
 - **"expert"** → [Expert Setup Wizard](EXPERT_SETUP_WIZARD.md), [Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md)
 - **"architecture"** → [Architecture Overview](ARCHITECTURE.md), [Architecture Shards](architecture/)
 - **"api"** → [API Reference](API.md), [Agent API Specification](../requirements/agent_api.md)
-- **"mcp"** → [MCP Standards Compliance](MCP_STANDARDS.md), [Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md), [MCP Systems Comparative Score](MCP_SYSTEMS_COMPARATIVE_SCORE.md)
+- **"mcp"** → [MCP Standards Compliance](MCP_STANDARDS.md), [Playwright MCP Integration](PLAYWRIGHT_MCP_INTEGRATION.md), [MCP Systems Comparative Score](MCP_SYSTEMS_COMPARATIVE_SCORE.md), [MCP Systems Improvement Recommendations](MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md)
 - **"context7"** → [Context7 Integration Patterns](context7/CONTEXT7_PATTERNS.md), [Context7 Cache Optimization](context7/CONTEXT7_CACHE_OPTIMIZATION.md)
 - **"cursor"** → [Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md), [Cursor Rules Setup Guide](CURSOR_RULES_SETUP.md)
 - **"deployment"** → [Deployment Guide](operations/DEPLOYMENT.md)
