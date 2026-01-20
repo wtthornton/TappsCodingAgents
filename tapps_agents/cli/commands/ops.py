@@ -120,6 +120,8 @@ def handle_ops_command(args: object) -> None:
                     asyncio.run(
                         cache.save_result(dep_files, "audit-dependencies", OPS_CACHE_VERSION, result)
                     )
+        elif command == "audit-bundle":
+            result = asyncio.run(ops.run("audit-bundle"))
         else:
             # Invalid command - show help without activation
             help_text = get_static_help("ops")

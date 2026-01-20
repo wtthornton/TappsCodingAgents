@@ -92,6 +92,10 @@ def handle_architect_command(args: object) -> None:
                     context=getattr(args, "context", ""),
                 )
             )
+        elif command == "detect-patterns":
+            from pathlib import Path
+            path = Path(getattr(args, "path", ".") or ".").resolve()
+            result = asyncio.run(architect.run("detect-patterns", path=path))
         else:
             # Invalid command - show help without activation
             help_text = get_static_help("architect")

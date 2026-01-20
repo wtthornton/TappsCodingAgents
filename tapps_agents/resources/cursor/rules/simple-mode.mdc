@@ -182,7 +182,9 @@ Use explicit commands for guaranteed workflow execution:
 | `*plan-analysis {description}` | Safe planning (read-only) | @analyst → @architect → @reviewer |
 | `*pr {title}` | Create pull request | @reviewer → @documenter |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
+| `*epic {epic-doc.md}` | Execute Epic document | Stories in dependency order |
 | `*help` | Show help | - |
+| `*resume` [workflow_id] | Resume failed/paused workflow | ResumeOrchestrator |
 | `*status` | Check status | - |
 
 ## Intent Detection

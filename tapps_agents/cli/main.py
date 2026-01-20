@@ -177,8 +177,10 @@ For detailed documentation, visit: https://github.com/your-repo/docs""",
   score <file>             Score a code file (shortcut for 'reviewer score')
   init                     Initialize project (Cursor Rules + workflow presets)
   workflow <preset>         Run preset workflows (rapid, full, fix, quality, hotfix)
-  doctor                    Validate local environment and tools
+  doctor                   Validate local environment and tools
   setup-experts            Interactive expert setup wizard
+
+ALSO: simple-mode status | cleanup workflow-docs | health check | beads ready | cursor verify
 
 WORKFLOW PRESETS:
   rapid / feature          Rapid development for sprint work and features

@@ -1669,6 +1669,33 @@ The workflow will resume from the last successfully completed step.""",
         help="Validate state before resuming",
     )
 
+    # Simple Mode: enhance (§3.4)
+    simple_mode_enhance_parser = simple_mode_subparsers.add_parser(
+        "enhance",
+        help="Enhance a prompt (EnhancerAgent); §3.4",
+    )
+    simple_mode_enhance_parser.add_argument("--prompt", "-p", required=True, help="Prompt to enhance")
+    simple_mode_enhance_parser.add_argument("--quick", action="store_true", help="Use enhance-quick (stages 1-3)")
+
+    # Simple Mode: breakdown (§3.4)
+    simple_mode_breakdown_parser = simple_mode_subparsers.add_parser(
+        "breakdown",
+        help="Break down into tasks (PlannerAgent); §3.4",
+    )
+    simple_mode_breakdown_parser.add_argument("--prompt", "-p", required=True, help="Goal to break down")
+
+    # Simple Mode: todo (§3.5) – forwards to bd
+    simple_mode_todo_parser = simple_mode_subparsers.add_parser(
+        "todo",
+        help="Task/todo via Beads (bd): create, list, close, dep add; §3.5",
+    )
+    simple_mode_todo_parser.add_argument(
+        "args",
+        nargs=argparse.REMAINDER,
+        default=[],
+        help="bd arguments: create 'Title', ready, close ID, dep add C P",
+    )
+
     # Learning export commands
     learning_parser = subparsers.add_parser(
         "learning",
@@ -1688,6 +1715,7 @@ All exports are automatically anonymized to protect privacy.""",
         help="Learning command",
         required=True,
     )
+    learning_subparsers.add_parser("help", aliases=["*help"], help="Show learning commands")
 
     # Learning: export
     learning_export_parser = learning_subparsers.add_parser(

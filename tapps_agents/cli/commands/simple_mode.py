@@ -38,10 +38,15 @@ def handle_simple_mode_command(args: object) -> None:
         handle_simple_mode_build(args)
     elif command == "resume":
         handle_simple_mode_resume(args)
+    elif command == "enhance":
+        handle_simple_mode_enhance(args)
+    elif command == "breakdown":
+        handle_simple_mode_breakdown(args)
+    elif command == "todo":
+        handle_simple_mode_todo(args)
     else:
         feedback = get_feedback()
-        # Provide a more helpful error message with all available commands
-        available_commands = ["on", "off", "status", "init", "configure", "progress", "full", "build", "resume"]
+        available_commands = ["on", "off", "status", "init", "configure", "progress", "full", "build", "resume", "enhance", "breakdown", "todo"]
         command_list = ", ".join(available_commands)
         feedback.error(
             f"Invalid simple-mode command: {command or '(none provided)'}",
@@ -199,6 +204,79 @@ def handle_simple_mode_progress() -> None:
     """Show Simple Mode learning progression."""
     tracker = LearningProgressionTracker()
     tracker.show_progression_indicator()
+
+
+def handle_simple_mode_todo(args: object) -> None:
+    """Handle simple-mode todo - forwards to bd. §3.5."""
+    from ...beads import is_available, run_bd
+
+    root = Path.cwd()
+    if not is_available(root):
+        get_feedback().error(
+            "bd not found. Install to tools/bd or add bd to PATH. See docs/BEADS_INTEGRATION.md.",
+            error_code="bd_not_found",
+            exit_code=1,
+        )
+        return
+    bd_args = list(getattr(args, "args", None) or [])
+    r = run_bd(root, bd_args, capture_output=False)
+    sys.exit(r.returncode if r.returncode is not None else 0)
+
+
+def handle_simple_mode_enhance(args: object) -> None:
+    """Handle simple-mode enhance - @simple-mode *enhance. §3.4."""
+    feedback = get_feedback()
+    prompt = getattr(args, "prompt", None) or ""
+    if not str(prompt).strip():
+        feedback.error("Prompt required", error_code="prompt_required", remediation='Use: tapps-agents simple-mode enhance --prompt "your prompt"', exit_code=2)
+        return
+    feedback.start_operation("Enhance prompt")
+    from ...simple_mode.intent_parser import Intent, IntentType
+    from ...simple_mode.orchestrators.enhance_orchestrator import EnhanceOrchestrator
+    from ...core.config import load_config
+    import asyncio
+
+    config = load_config()
+    intent = Intent(type=IntentType.ENHANCE, confidence=1.0, parameters={"prompt": str(prompt).strip(), "quick": getattr(args, "quick", False)}, original_input=prompt)
+    orch = EnhanceOrchestrator(project_root=Path.cwd(), config=config)
+    try:
+        r = asyncio.run(orch.execute(intent, intent.parameters))
+        feedback.clear_progress()
+        if r.get("success"):
+            feedback.success("Enhancement complete")
+            print(r.get("enhanced_prompt", str(r)))
+        else:
+            feedback.error(r.get("error", "Unknown error"), error_code="enhance_failed", exit_code=1)
+    except Exception as e:
+        feedback.error(str(e), error_code="enhance_error", exit_code=1)
+
+
+def handle_simple_mode_breakdown(args: object) -> None:
+    """Handle simple-mode breakdown - @simple-mode *breakdown. §3.4."""
+    feedback = get_feedback()
+    prompt = getattr(args, "prompt", None) or ""
+    if not str(prompt).strip():
+        feedback.error("Prompt required", error_code="prompt_required", remediation='Use: tapps-agents simple-mode breakdown --prompt "your goal"', exit_code=2)
+        return
+    feedback.start_operation("Breakdown tasks")
+    from ...simple_mode.intent_parser import Intent, IntentType
+    from ...simple_mode.orchestrators.breakdown_orchestrator import BreakdownOrchestrator
+    from ...core.config import load_config
+    import asyncio
+
+    config = load_config()
+    intent = Intent(type=IntentType.BREAKDOWN, confidence=1.0, parameters={"prompt": str(prompt).strip()}, original_input=prompt)
+    orch = BreakdownOrchestrator(project_root=Path.cwd(), config=config)
+    try:
+        r = asyncio.run(orch.execute(intent, intent.parameters))
+        feedback.clear_progress()
+        if r.get("success"):
+            feedback.success("Breakdown complete")
+            print(r.get("plan", r))
+        else:
+            feedback.error(r.get("error", "Unknown error"), error_code="breakdown_failed", exit_code=1)
+    except Exception as e:
+        feedback.error(str(e), error_code="breakdown_error", exit_code=1)
 
 
 def handle_simple_mode_resume(args: object) -> None:

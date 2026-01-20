@@ -33,6 +33,7 @@ class DependencyAnalyzer:
         # Check for tool availability
         self.has_pipdeptree = shutil.which("pipdeptree") is not None
         self.has_pip_audit = shutil.which("pip-audit") is not None
+        self.has_npm = shutil.which("npm") is not None
 
     def analyze_dependencies(self) -> dict[str, Any]:
         """
@@ -53,6 +54,7 @@ class DependencyAnalyzer:
             "tools_available": {
                 "pipdeptree": self.has_pipdeptree,
                 "pip-audit": self.has_pip_audit,
+                "npm": self.has_npm,
             },
         }
 
@@ -62,10 +64,20 @@ class DependencyAnalyzer:
             result["dependency_tree"] = tree_result.get("tree")
             result["total_packages"] = tree_result.get("package_count", 0)
 
-        # Run security audit
+        # Run security audit (pip-audit)
         audit_result = self.run_security_audit()
         if audit_result:
             result["vulnerabilities"] = audit_result.get("vulnerabilities", [])
+
+        # npm audit for JS/TS (§3.3)
+        npm_audit = self.run_npm_audit()
+        if npm_audit and npm_audit.get("vulnerability_count", 0) > 0:
+            result["npm_vulnerabilities"] = npm_audit.get("vulnerabilities", [])
+            result["npm_vulnerability_count"] = npm_audit.get("vulnerability_count", 0)
+            result["npm_severity_breakdown"] = npm_audit.get("severity_breakdown", {})
+            result["vulnerabilities"] = list(result.get("vulnerabilities") or [])
+            for v in (npm_audit.get("vulnerabilities") or [])[:20]:
+                result["vulnerabilities"].append({**v, "ecosystem": "npm"})
 
         # Check for outdated packages
         outdated_result = self.check_outdated()
@@ -419,6 +431,148 @@ class DependencyAnalyzer:
         threshold_level = severity_levels.get(threshold.lower(), 0)
         severity_level = severity_levels.get(severity.lower(), 0)
         return severity_level >= threshold_level
+
+    def run_npm_audit(self, project_root: Path | None = None) -> dict[str, Any] | None:
+        """
+        Run npm audit --json for JS/TS projects. MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.3.
+
+        Returns:
+            { "vulnerability_count", "severity_breakdown": { "critical", "high", "medium", "low" }, "vulnerabilities": [...] }
+            or None if not a JS project / npm missing / audit fails.
+        """
+        root = (project_root or self.project_root).resolve()
+        if not (root / "package.json").exists() or not self.has_npm:
+            return None
+        try:
+            result = subprocess.run(  # nosec B603
+                ["npm", "audit", "--json"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=90,
+                cwd=str(root),
+            )
+            out = result.stdout.strip()
+            if not out:
+                return {"vulnerability_count": 0, "severity_breakdown": {"critical": 0, "high": 0, "medium": 0, "low": 0}, "vulnerabilities": []}
+            data = json.loads(out)
+        except (json.JSONDecodeError, subprocess.TimeoutExpired, FileNotFoundError, Exception):
+            return None
+        severity_breakdown: dict[str, int] = {"critical": 0, "high": 0, "medium": 0, "low": 0}
+        vuln_list: list[dict[str, Any]] = []
+        meta = (data.get("metadata") or {}).get("vulnerabilities", {}) if isinstance(data.get("metadata"), dict) else {}
+        from_meta = bool(meta and isinstance(meta, dict))
+        if from_meta:
+            severity_breakdown["critical"] = int(meta.get("critical", 0) or 0)
+            severity_breakdown["high"] = int(meta.get("high", 0) or 0)
+            severity_breakdown["medium"] = int(meta.get("moderate", 0) or 0)
+            severity_breakdown["low"] = int(meta.get("low", 0) or 0)
+        for pkg_name, pkg_data in (data.get("vulnerabilities") or {}).items():
+            if not isinstance(pkg_data, dict):
+                continue
+            sev = (pkg_data.get("severity") or "unknown").lower()
+            if sev == "moderate":
+                sev = "medium"
+            if not from_meta and sev in severity_breakdown:
+                severity_breakdown[sev] += 1
+            vuln_list.append({"package": str(pkg_name), "severity": sev})
+        total = sum(severity_breakdown.values())
+        return {
+            "vulnerability_count": total,
+            "severity_breakdown": severity_breakdown,
+            "vulnerabilities": vuln_list[:50],
+        }
+
+    def run_audit_bundle(self, project_root: Path | None = None) -> dict[str, Any]:
+        """
+        Opt-in bundle analysis for Node/React/Vue. §3.8. Best-effort; never fails.
+
+        Prefers existing dist/build/out; runs `npm run build` only if output missing.
+        On build failure, returns build_failed and does not block.
+        """
+        root = (project_root or self.project_root).resolve()
+        pkg = root / "package.json"
+        if not pkg.exists():
+            return {"available": False, "message": "No package.json"}
+
+        try:
+            data = json.loads(pkg.read_text(encoding="utf-8", errors="replace"))
+        except Exception:
+            return {"available": False, "message": "Invalid package.json"}
+
+        scripts = data.get("scripts") or {}
+        dev = data.get("devDependencies") or {}
+        has_build = "build" in scripts
+        bundler = "unknown"
+        if "vite" in dev or "vite" in (data.get("dependencies") or {}):
+            bundler = "vite"
+        elif "webpack" in dev or "webpack" in (data.get("dependencies") or {}):
+            bundler = "webpack"
+        elif "parcel" in dev:
+            bundler = "parcel"
+
+        # Common output dirs
+        for out_name in ("dist", "build", "out", ".next"):
+            out_dir = root / out_name
+            if out_dir.is_dir():
+                total = 0
+                files: list[dict[str, Any]] = []
+                try:
+                    for f in out_dir.rglob("*"):
+                        if f.is_file():
+                            s = f.stat().st_size
+                            total += s
+                            if len(files) < 20:
+                                files.append({"name": str(f.relative_to(out_dir)), "bytes": s})
+                except OSError:
+                    pass
+                return {
+                    "available": True,
+                    "total_bytes": total,
+                    "output_dir": out_name,
+                    "files": sorted(files, key=lambda x: -x["bytes"])[:15],
+                    "bundler": bundler,
+                    "build_failed": False,
+                }
+
+        if has_build and self.has_npm:
+            try:
+                r = subprocess.run(  # nosec B603
+                    ["npm", "run", "build"],
+                    capture_output=True,
+                    text=True,
+                    encoding="utf-8",
+                    errors="replace",
+                    timeout=180,
+                    cwd=str(root),
+                )
+                if r.returncode != 0:
+                    return {
+                        "available": True,
+                        "build_failed": True,
+                        "message": "Build failed; bundle not analyzed.",
+                        "stderr": (r.stderr or "")[:500],
+                    }
+            except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
+                return {"available": True, "build_failed": True, "message": "Build error; bundle not analyzed."}
+            # Recheck output dir after build
+            for out_name in ("dist", "build", "out", ".next"):
+                out_dir = root / out_name
+                if out_dir.is_dir():
+                    total, files = 0, []
+                    try:
+                        for f in out_dir.rglob("*"):
+                            if f.is_file():
+                                s = f.stat().st_size
+                                total += s
+                                if len(files) < 15:
+                                    files.append({"name": str(f.relative_to(out_dir)), "bytes": s})
+                    except OSError:
+                        pass
+                    return {"available": True, "total_bytes": total, "output_dir": out_name, "files": sorted(files, key=lambda x: -x["bytes"])[:10], "bundler": bundler, "build_failed": False}
+
+        return {"available": True, "message": "No build output (dist/build/out) found; run `npm run build` first.", "build_failed": False}
 
     def _parse_text_audit_output(
         self, text: str, threshold: str

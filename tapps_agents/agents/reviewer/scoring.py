@@ -99,22 +99,77 @@ except ImportError:
 class BaseScorer:
     """
     Base class for all scorers.
-    
-    Defines the interface that all language-specific scorers must implement.
+    Defines the interface and shared helpers: _find_project_root, _calculate_structure_score, _calculate_devex_score (7-category §3.2).
     """
-    
+
     def score_file(self, file_path: Path, code: str) -> dict[str, Any]:
-        """
-        Score a file and return quality metrics.
-        
-        Args:
-            file_path: Path to the file
-            code: File content
-            
-        Returns:
-            Dictionary with scores and metrics
-        """
+        """Score a file and return quality metrics. Subclasses must implement."""
         raise NotImplementedError("Subclasses must implement score_file")
+
+    @staticmethod
+    def _find_project_root(file_path: Path) -> Path | None:
+        """Find project root by common markers (.git, pyproject.toml, package.json, .tapps-agents, etc.)."""
+        current = file_path.resolve().parent
+        markers = [".git", "pyproject.toml", "setup.py", "requirements.txt", ".tapps-agents", "package.json"]
+        for _ in range(10):
+            for m in markers:
+                if (current / m).exists():
+                    return current
+            if current.parent == current:
+                break
+            current = current.parent
+        return None
+
+    @classmethod
+    def _calculate_structure_score(cls, file_path: Path) -> float:
+        """Structure score (0-10). Project layout, key files. 7-category §3.2."""
+        root = BaseScorer._find_project_root(file_path)
+        if root is None:
+            return 5.0
+        pts = 0.0
+        if (root / "pyproject.toml").exists() or (root / "package.json").exists():
+            pts += 2.5
+        if (root / "README").exists() or (root / "README.md").exists() or (root / "README.rst").exists():
+            pts += 2.0
+        if (root / "tests").exists() or (root / "test").exists():
+            pts += 2.0
+        if (root / ".tapps-agents").exists() or (root / ".git").exists():
+            pts += 1.0
+        if (root / "setup.py").exists() or (root / "requirements.txt").exists() or (root / "package-lock.json").exists():
+            pts += 1.5
+        return min(10.0, pts * 2.0)
+
+    @classmethod
+    def _calculate_devex_score(cls, file_path: Path) -> float:
+        """DevEx score (0-10). Docs, config, tooling. 7-category §3.2."""
+        root = BaseScorer._find_project_root(file_path)
+        if root is None:
+            return 5.0
+        pts = 0.0
+        if (root / "AGENTS.md").exists() or (root / "CLAUDE.md").exists():
+            pts += 3.0
+        if (root / "docs").exists() and (root / "docs").is_dir():
+            pts += 2.0
+        if (root / ".tapps-agents").exists() or (root / ".cursor").exists():
+            pts += 2.0
+        pyproject, pkg = root / "pyproject.toml", root / "package.json"
+        if pyproject.exists():
+            try:
+                t = pyproject.read_text(encoding="utf-8", errors="replace")
+                if "[tool.ruff]" in t or "[tool.mypy]" in t or "pytest" in t:
+                    pts += 1.5
+            except Exception:
+                pass
+        if pkg.exists():
+            try:
+                import json as _j
+                d = _j.loads(pkg.read_text(encoding="utf-8", errors="replace"))
+                dev = (d.get("devDependencies") or {}) if isinstance(d, dict) else {}
+                if any(k in dev for k in ("eslint", "jest", "vitest", "mypy")):
+                    pts += 1.5
+            except Exception:
+                pass
+        return min(10.0, pts * 2.0)
 
 
 class CodeScorer(BaseScorer):
@@ -159,6 +214,8 @@ class CodeScorer(BaseScorer):
             "maintainability_score": 0.0,
             "test_coverage_score": 0.0,
             "performance_score": 0.0,
+            "structure_score": 0.0,  # 7-category: project layout, key files (MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.2)
+            "devex_score": 0.0,  # 7-category: docs, config, tooling (MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.2)
             "linting_score": 0.0,  # Phase 6.1: Ruff linting score
             "type_checking_score": 0.0,  # Phase 6.2: mypy type checking score
             "duplication_score": 0.0,  # Phase 6.4: jscpd duplication score
@@ -214,35 +271,46 @@ class CodeScorer(BaseScorer):
         scores["duplication_score"] = self._calculate_duplication_score(file_path)
         metrics["duplication"] = float(scores["duplication_score"])
 
+        # Structure Score (0-10, higher is better) - 7-category §3.2
+        scores["structure_score"] = self._calculate_structure_score(file_path)
+        metrics["structure"] = float(scores["structure_score"])
+
+        # DevEx Score (0-10, higher is better) - 7-category §3.2
+        scores["devex_score"] = self._calculate_devex_score(file_path)
+        metrics["devex"] = float(scores["devex_score"])
+
         class _Weights(Protocol):
             complexity: float
             security: float
             maintainability: float
             test_coverage: float
             performance: float
+            structure: float
+            devex: float
 
-        # Overall Score (weighted average)
-        # Use configured weights or defaults
+        # Overall Score (weighted average, 7-category)
         if self.weights is not None:
             w: _Weights = self.weights
         else:
-            # Default weights
             class DefaultWeights:
-                complexity = 0.20
-                security = 0.30
-                maintainability = 0.25
-                test_coverage = 0.15
-                performance = 0.10
+                complexity = 0.18
+                security = 0.27
+                maintainability = 0.24
+                test_coverage = 0.13
+                performance = 0.08
+                structure = 0.05
+                devex = 0.05
 
             w = DefaultWeights()
 
         scores["overall_score"] = (
-            (10 - scores["complexity_score"])
-            * w.complexity  # Invert complexity (lower is better)
+            (10 - scores["complexity_score"]) * w.complexity
             + scores["security_score"] * w.security
             + scores["maintainability_score"] * w.maintainability
             + scores["test_coverage_score"] * w.test_coverage
             + scores["performance_score"] * w.performance
+            + scores["structure_score"] * w.structure
+            + scores["devex_score"] * w.devex
         ) * 10  # Scale from 0-10 weighted sum to 0-100
 
         # Phase 3.3: Validate all scores before returning
@@ -272,7 +340,9 @@ class CodeScorer(BaseScorer):
         if score_explanations:
             validated_scores["_explanations"] = score_explanations
 
-        return validated_scores if validated_scores else scores
+        # Merge: keep all scores (incl. structure_score, devex_score), overlay validated
+        merged = {**scores, **validated_scores}
+        return merged
 
     def _calculate_complexity(self, code: str) -> float:
         """Calculate cyclomatic complexity (0-10 scale)"""
@@ -551,32 +621,12 @@ class CodeScorer(BaseScorer):
         if not test_file_found:
             return 0.0
 
-        # Test files exist but no coverage data available
-        # Return neutral score (tests exist but not run yet)
+        # Test files exist but not run yet
         return 5.0
 
     def _find_project_root(self, file_path: Path) -> Path | None:
-        """Find project root by looking for common markers"""
-        current = file_path.resolve().parent
-
-        # Look for project markers
-        markers = [
-            ".git",
-            "pyproject.toml",
-            "setup.py",
-            "requirements.txt",
-            ".tapps-agents",
-        ]
-
-        for _ in range(10):  # Max 10 levels up
-            for marker in markers:
-                if (current / marker).exists():
-                    return current
-            if current.parent == current:
-                break
-            current = current.parent
-
-        return None
+        """Delegate to BaseScorer. Override for CodeScorer-specific markers if needed."""
+        return BaseScorer._find_project_root(file_path)
 
     def get_performance_issues(
         self, code: str, file_path: Path | None = None

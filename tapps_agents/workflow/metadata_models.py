@@ -37,6 +37,8 @@ class ArtifactMetadata(TypedDict, total=False):
     execution_mode: str
     # Provenance: skill_name, command, step_id, workflow_id, timestamp (plan 1.1)
     provenance: dict[str, Any]
+    # §3.7: architecture pattern detection (list of {pattern, confidence, evidence})
+    architecture_patterns: list[dict[str, Any]]
 
 
 class PlanDetails(BaseModel):

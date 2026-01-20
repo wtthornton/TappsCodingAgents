@@ -12,22 +12,28 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class ScoringWeightsConfig(BaseModel):
-    """Configuration for code scoring weights (must sum to 1.0)"""
+    """Configuration for code scoring weights (must sum to 1.0). 7-category: Structure, DevEx added (MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.2)."""
 
     complexity: float = Field(
-        default=0.20, ge=0.0, le=1.0, description="Weight for complexity score"
+        default=0.18, ge=0.0, le=1.0, description="Weight for complexity score"
     )
     security: float = Field(
-        default=0.30, ge=0.0, le=1.0, description="Weight for security score"
+        default=0.27, ge=0.0, le=1.0, description="Weight for security score"
     )
     maintainability: float = Field(
-        default=0.25, ge=0.0, le=1.0, description="Weight for maintainability score"
+        default=0.24, ge=0.0, le=1.0, description="Weight for maintainability score"
     )
     test_coverage: float = Field(
-        default=0.15, ge=0.0, le=1.0, description="Weight for test coverage score"
+        default=0.13, ge=0.0, le=1.0, description="Weight for test coverage score"
     )
     performance: float = Field(
-        default=0.10, ge=0.0, le=1.0, description="Weight for performance score"
+        default=0.08, ge=0.0, le=1.0, description="Weight for performance score"
+    )
+    structure: float = Field(
+        default=0.05, ge=0.0, le=1.0, description="Weight for structure score (project layout, key files)"
+    )
+    devex: float = Field(
+        default=0.05, ge=0.0, le=1.0, description="Weight for developer experience score (docs, config, tooling)"
     )
 
     @model_validator(mode="after")
@@ -39,6 +45,8 @@ class ScoringWeightsConfig(BaseModel):
             + self.maintainability
             + self.test_coverage
             + self.performance
+            + self.structure
+            + self.devex
         )
         if abs(total - 1.0) > 0.01:  # Allow small floating point errors
             raise ValueError(f"Scoring weights must sum to 1.0, got {total}")

@@ -25,6 +25,9 @@ class IntentType(Enum):
     PR = "pr"
     REQUIREMENTS = "requirements"
     BROWNFIELD = "brownfield"
+    ENHANCE = "enhance"  # §3.4: first-class *enhance
+    BREAKDOWN = "breakdown"  # §3.4: first-class *breakdown
+    TODO = "todo"  # §3.5: *todo (Beads-backed)
     UNKNOWN = "unknown"
 
 
@@ -61,6 +64,12 @@ class Intent:
             return ["analyst", "planner", "documenter"]
         elif self.type == IntentType.BROWNFIELD:
             return ["brownfield-review"]
+        elif self.type == IntentType.ENHANCE:
+            return ["enhancer"]
+        elif self.type == IntentType.BREAKDOWN:
+            return ["planner"]
+        elif self.type == IntentType.TODO:
+            return ["beads"]
         else:
             return []
 
@@ -314,6 +323,22 @@ class IntentParser:
                 parameters=parameters,
                 original_input=input_text,
             )
+
+        # *enhance and *breakdown (§3.4)
+        if input_text.strip().startswith("*enhance") or input_text.strip().startswith("@simple-mode *enhance"):
+            prompt = (parameters.get("description") or re.sub(r"^(@simple-mode\s*)?\*enhance\s*", "", input_text, flags=re.I).strip() or input_text)
+            parameters["prompt"] = prompt
+            return Intent(type=IntentType.ENHANCE, confidence=1.0, parameters=parameters, original_input=input_text)
+        if input_text.strip().startswith("*breakdown") or input_text.strip().startswith("@simple-mode *breakdown"):
+            prompt = (parameters.get("description") or re.sub(r"^(@simple-mode\s*)?\*breakdown\s*", "", input_text, flags=re.I).strip() or input_text)
+            parameters["prompt"] = prompt
+            return Intent(type=IntentType.BREAKDOWN, confidence=1.0, parameters=parameters, original_input=input_text)
+
+        # *todo (§3.5) – remainder forwarded to bd
+        if input_text.strip().startswith("*todo") or input_text.strip().startswith("@simple-mode *todo"):
+            rest = re.sub(r"^(@simple-mode\s*)?\*todo\s*", "", input_text.strip(), flags=re.I).strip()
+            parameters["todo_rest"] = rest
+            return Intent(type=IntentType.TODO, confidence=1.0, parameters=parameters, original_input=input_text)
 
         # Score each intent type
         scores = {

@@ -563,6 +563,13 @@ Return Dockerfile content and docker-compose.yml content."""
             severity_threshold=severity_threshold, **kwargs
         )
 
+    async def _handle_audit_bundle(self, **kwargs: Any) -> dict[str, Any]:
+        """
+        Opt-in bundle analysis for Node/React/Vue. §3.8. Best-effort; never fails.
+        """
+        out = self.dependency_analyzer.run_audit_bundle(project_root=self.project_root) or {}
+        return {"message": "Bundle analysis completed (best-effort)", **out}
+
     def _handle_help(self) -> dict[str, Any]:
         """
         Return help information for Ops Agent.
@@ -587,6 +594,7 @@ Return Dockerfile content and docker-compose.yml content."""
             "*audit-dependencies [severity_threshold]": "Audit dependencies for security vulnerabilities (Phase 6.4.3)",
             "*dependency-tree": "Visualize dependency tree using pipdeptree (Phase 6.4.3)",
             "*check-vulnerabilities [severity_threshold]": "Check for dependency vulnerabilities (Phase 6.4.3)",
+            "*audit-bundle": "Opt-in bundle analysis for Node/React/Vue (§3.8); best-effort, does not block",
             "*help": "Show this help message",
         }
         

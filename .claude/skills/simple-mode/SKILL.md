@@ -404,7 +404,11 @@ Orchestrate a full SDLC workflow.
 
 ### `*help`
 
-Show Simple Mode help.
+Show Simple Mode help. Commands: *build, *review, *fix, *test, *explore, *refactor, *plan-analysis, *pr, *full, *epic, *status, *resume. See .cursor/rules/command-reference.mdc for *test-coverage, *fix-tests, *microservice, *docker-fix, *integrate-service.
+
+### `*resume` [workflow_id]
+
+Resume a failed or paused workflow. Use `@simple-mode *resume --list` to list resumable workflows.
 
 ### `*status`
 
@@ -508,17 +512,17 @@ Improvements Suggested: 5
 |-------|---------|--------------|
 | `@enhancer` | Prompt enhancement | `*enhance`, `*enhance-quick` |
 | `@planner` | User stories | `*plan`, `*create-story` |
-| `@architect` | System design | `*design` |
+| `@architect` | System design | `*design`, `*design-system` |
 | `@designer` | API/data design | `*design-api`, `*design-model` |
 | `@implementer` | Code generation | `*implement`, `*refactor` |
 | `@reviewer` | Code review | `*review`, `*score`, `*lint` |
 | `@tester` | Test generation | `*test`, `*generate-tests` |
 | `@debugger` | Error analysis | `*debug`, `*analyze-error` |
 | `@improver` | Code improvement | `*improve`, `*refactor` |
-| `@analyst` | Requirements | `*analyze`, `*requirements` |
-| `@documenter` | Documentation | `*document-api`, `*generate-readme` |
-| `@ops` | Security/ops | `*security-scan`, `*audit-deps` |
-| `@orchestrator` | Workflow coord | `*workflow-start`, `*workflow-status` |
+| `@analyst` | Requirements | `*gather-requirements`, `*estimate-effort` |
+| `@documenter` | Documentation | `*document`, `*document-api`, `*update-readme` |
+| `@ops` | Security/ops | `*security-scan`, `*compliance-check`, `*audit-dependencies` |
+| `@orchestrator` | Workflow coord | `*workflow`, `*workflow-start`, `*workflow-status` |
 
 ## Configuration
 

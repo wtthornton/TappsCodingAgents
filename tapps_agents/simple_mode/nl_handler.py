@@ -26,8 +26,10 @@ from typing import Any
 from tapps_agents.core.config import ProjectConfig, load_config
 from .intent_parser import Intent, IntentParser, IntentType
 from .orchestrators import (
+    BreakdownOrchestrator,
     BrownfieldOrchestrator,
     BuildOrchestrator,
+    EnhanceOrchestrator,
     EpicOrchestrator,
     ExploreOrchestrator,
     FixOrchestrator,
@@ -36,6 +38,7 @@ from .orchestrators import (
     RefactorOrchestrator,
     ReviewOrchestrator,
     TestOrchestrator,
+    TodoOrchestrator,
 )
 from .variations import normalize_command
 from .workflow_suggester import WorkflowSuggester
@@ -91,6 +94,15 @@ class SimpleModeHandler:
                 project_root=self.project_root, config=self.config
             ),
             IntentType.BROWNFIELD: BrownfieldOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.ENHANCE: EnhanceOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.BREAKDOWN: BreakdownOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.TODO: TodoOrchestrator(
                 project_root=self.project_root, config=self.config
             ),
         }

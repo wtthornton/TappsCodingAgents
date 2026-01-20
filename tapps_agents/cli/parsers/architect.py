@@ -154,6 +154,13 @@ Use this to establish clear system boundaries and integration contracts, especia
     boundaries_parser.add_argument("system_description", help="Description of the system for which to define boundaries. Include system purpose, known external systems, and integration requirements.")
     boundaries_parser.add_argument("--context", help="Additional context such as existing systems, organizational boundaries, or architectural constraints that should influence boundary definition")
 
+    detect_patterns_parser = architect_subparsers.add_parser(
+        "detect-patterns",
+        aliases=["*detect-patterns"],
+        help="Detect architecture patterns from project layout (§3.7)",
+    )
+    detect_patterns_parser.add_argument("--path", default=".", help="Project root to analyze (default: current directory)")
+
     architect_subparsers.add_parser(
         "help", aliases=["*help"], help="Show architect commands"
     )

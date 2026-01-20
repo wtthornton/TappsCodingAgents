@@ -127,6 +127,10 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
                 "command": "*suggest-patterns",
                 "description": "Suggest design patterns based on requirements",
             },
+            {
+                "command": "*detect-patterns",
+                "description": "Detect architecture patterns from project layout (§3.7)",
+            },
         ]
 
     async def run(self, command: str, **kwargs: Any) -> dict[str, Any]:
@@ -371,6 +375,14 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
                     return {"error": f"Requirements file not found: {requirements}"}
 
             return await self._suggest_patterns(requirements, context)
+
+        elif command == "detect-patterns":
+            from .pattern_detector import detect_architecture_patterns
+
+            root = kwargs.get("path") or getattr(self, "_project_root", None) or Path.cwd()
+            root = Path(root).resolve()
+            patterns = detect_architecture_patterns(root)
+            return {"patterns": patterns, "project_root": str(root)}
 
         else:
             return {"error": f"Unknown command: {command}"}

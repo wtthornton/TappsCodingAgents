@@ -18,6 +18,78 @@ from ...core.subprocess_utils import wrap_windows_cmd_shim
 from .scoring import BaseScorer
 
 
+def _js_coverage_from_reports(project_root: Path, file_path: Path) -> float | None:
+    """Parse coverage from lcov or coverage-summary.json. §3.6. Returns 0-10 or None."""
+    import json as _json
+
+    root = Path(project_root)
+    try:
+        rel = str(file_path.resolve().relative_to(root.resolve())).replace("\\", "/")
+    except ValueError:
+        rel = file_path.name
+    for cov_path in (root / "coverage" / "coverage-summary.json",):
+        if not cov_path.exists():
+            continue
+        try:
+            data = _json.loads(cov_path.read_text(encoding="utf-8", errors="replace"))
+            if isinstance(data, dict) and "total" in data and isinstance(data["total"], dict):
+                pct = (data["total"].get("lines") or {}).get("pct")
+                if pct is not None:
+                    return min(10.0, max(0.0, float(pct) / 10.0))
+            for k, v in (data if isinstance(data, dict) else {}).items():
+                if k != "total" and isinstance(v, dict) and (rel in k or file_path.name in k):
+                    pct = (v.get("lines") or {}).get("pct")
+                    if pct is not None:
+                        return min(10.0, max(0.0, float(pct) / 10.0))
+        except Exception:
+            pass
+    for lcov in (root / "coverage" / "lcov.info", root / "lcov.info"):
+        if not lcov.exists():
+            continue
+        try:
+            text = lcov.read_text(encoding="utf-8", errors="replace")
+            cur_lh = cur_lf = 0
+            in_file = False
+            for line in text.splitlines():
+                if line.startswith("SF:"):
+                    p = line[3:].replace("\\", "/")
+                    in_file = rel in p or file_path.name in p
+                    cur_lh = cur_lf = 0
+                elif in_file and line.startswith("LF:"):
+                    cur_lf = int(line[3:].strip())
+                elif in_file and line.startswith("LH:"):
+                    cur_lh = int(line[3:].strip())
+                elif in_file and line == "end_of_record" and cur_lf > 0:
+                    return min(10.0, 10.0 * cur_lh / cur_lf)
+        except Exception:
+            pass
+    return None
+
+
+def _apply_npm_audit_to_security(scores: dict[str, Any], file_path: Path) -> None:
+    """Fold npm audit into security_score. MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.3."""
+    root = BaseScorer._find_project_root(file_path)
+    if not root or not (root / "package.json").exists():
+        return
+    try:
+        from ...agents.ops.dependency_analyzer import DependencyAnalyzer
+
+        da = DependencyAnalyzer(project_root=root)
+        audit = da.run_npm_audit(project_root=root)
+        if not audit or audit.get("vulnerability_count", 0) <= 0:
+            return
+        sb = audit.get("severity_breakdown") or {}
+        penalty = (
+            sb.get("critical", 0) * 3.0
+            + sb.get("high", 0) * 2.0
+            + sb.get("medium", 0) * 1.0
+            + sb.get("low", 0) * 0.5
+        )
+        scores["security_score"] = max(0.0, float(scores.get("security_score", 10.0)) - penalty)
+    except Exception:
+        pass
+
+
 # Security patterns for JavaScript/TypeScript code analysis
 # Phase 7.1: Comprehensive security pattern detection
 DANGEROUS_PATTERNS: dict[str, dict[str, Any]] = {
@@ -229,10 +301,12 @@ class TypeScriptScorer(BaseScorer):
         metrics: dict[str, float] = {}
         scores: dict[str, Any] = {
             "complexity_score": 0.0,
-            "security_score": 0.0,  # Will be calculated by _calculate_security_score
+            "security_score": 0.0,
             "maintainability_score": 0.0,
             "test_coverage_score": 0.0,
-            "performance_score": 5.0,  # Default, will be overridden by PerformanceScorer
+            "performance_score": 5.0,
+            "structure_score": 0.0,  # 7-category §3.2
+            "devex_score": 0.0,  # 7-category §3.2
             "linting_score": 0.0,
             "type_checking_score": 0.0,
             "metrics": metrics,
@@ -246,10 +320,12 @@ class TypeScriptScorer(BaseScorer):
         scores["linting_score"] = self._calculate_linting_score(file_path)
         metrics["linting"] = float(scores["linting_score"])
         
-        # Security Score (0-10, higher is better) - Phase 7.1 Enhancement
+        # Security Score (0-10, higher is better) - Phase 7.1 + npm audit §3.3
         security_result = self._calculate_security_score(code, file_path)
         scores["security_score"] = security_result["score"]
         scores["_security_issues"] = security_result.get("issues", [])
+        # npm audit: fold into security (MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.3)
+        _apply_npm_audit_to_security(scores, file_path)
         metrics["security"] = float(scores["security_score"])
 
         # Type Checking Score (0-10, higher is better) - TypeScript compiler
@@ -289,17 +365,24 @@ class TypeScriptScorer(BaseScorer):
         scores["test_coverage_score"] = self._calculate_test_coverage(file_path)
         metrics["test_coverage"] = float(scores["test_coverage_score"])
 
-        # Overall Score (weighted average)
-        # Weights: complexity 20%, security 15%, maintainability 25%,
-        #          test_coverage 15%, performance 10%, linting 10%, type_checking 5%
+        # Structure and DevEx (0-10, higher is better) - 7-category §3.2
+        scores["structure_score"] = self._calculate_structure_score(file_path)
+        scores["devex_score"] = self._calculate_devex_score(file_path)
+        metrics["structure"] = float(scores["structure_score"])
+        metrics["devex"] = float(scores["devex_score"])
+
+        # Overall Score (weighted average, 7-category)
+        # complexity 18%, security 13%, maintainability 23%, test 13%, perf 8%, lint 8%, type 5%, structure 6%, devex 6%
         scores["overall_score"] = (
-            (10 - scores["complexity_score"]) * 0.20  # Invert complexity
-            + scores["security_score"] * 0.15
-            + scores["maintainability_score"] * 0.25
-            + scores["test_coverage_score"] * 0.15
-            + scores["performance_score"] * 0.10
-            + scores["linting_score"] * 0.10
+            (10 - scores["complexity_score"]) * 0.18
+            + scores["security_score"] * 0.13
+            + scores["maintainability_score"] * 0.23
+            + scores["test_coverage_score"] * 0.13
+            + scores["performance_score"] * 0.08
+            + scores["linting_score"] * 0.08
             + scores["type_checking_score"] * 0.05
+            + scores["structure_score"] * 0.06
+            + scores["devex_score"] * 0.06
         ) * 10  # Scale to 0-100
 
         # Phase 3.3: Validate all scores before returning
@@ -668,38 +751,31 @@ class TypeScriptScorer(BaseScorer):
 
     def _calculate_test_coverage(self, file_path: Path) -> float:
         """
-        Calculate test coverage score.
-
-        Checks for test files and basic test coverage indicators.
+        Test coverage for JS/TS. §3.6: reuse coverage from Vitest/Jest/c8/nyc (lcov, coverage-summary.json).
+        Fallback: heuristic from test file presence.
         """
+        root = BaseScorer._find_project_root(file_path)
+        if root:
+            v = _js_coverage_from_reports(root, file_path)
+            if v is not None:
+                return float(v)
         try:
-            # Look for test files
             test_patterns = [
                 file_path.stem + ".test" + file_path.suffix,
                 file_path.stem + ".spec" + file_path.suffix,
                 file_path.name.replace(".ts", ".test.ts").replace(".js", ".test.js"),
             ]
-
             parent_dir = file_path.parent
             test_files_found = 0
-
             for pattern in test_patterns:
-                test_file = parent_dir / pattern
-                if test_file.exists():
+                if (parent_dir / pattern).exists():
                     test_files_found += 1
                     break
-
-            # Also check for test directory
-            test_dir = parent_dir / "__tests__"
-            if test_dir.exists():
+            if (parent_dir / "__tests__").exists():
                 test_files_found += 1
-
-            # Score: 5.0 base, +2.5 per test file found, max 10.0
-            score = 5.0 + (test_files_found * 2.5)
-            return min(10.0, score)
-
+            return min(10.0, 5.0 + test_files_found * 2.5)
         except Exception:
-            return 5.0  # Neutral on error
+            return 5.0
 
     def get_eslint_issues(self, file_path: Path) -> dict[str, Any]:
         """

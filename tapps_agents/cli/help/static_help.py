@@ -10,7 +10,7 @@ Enhancer Agent Commands:
 
   enhance <prompt>                    - Full prompt enhancement (7-stage pipeline)
   enhance-quick <prompt>               - Quick enhancement (stages 1-3)
-  enhance-stage <stage> <prompt>      - Run specific enhancement stage
+  enhance-stage <stage> [--prompt <p>] [--session-id <id>] - Run specific stage
   enhance-resume <session-id>          - Resume interrupted enhancement session
   help                                 - Show this help message
 
@@ -140,9 +140,9 @@ DOCUMENTER_HELP = """
 Documenter Agent Commands:
 
   document <file>                      - Generate documentation for a file
-  generate-docs <file>                  - Generate API documentation
-  update-readme                         - Generate or update README.md
-  document-api <file>                   - Document API endpoints
+  generate-docs <file>                 - Generate API documentation (alias: document-api)
+  update-readme                        - Generate or update README.md
+  update-docstrings <file>             - Update or add docstrings to functions/classes
   help                                 - Show this help message
 
 Options:
@@ -150,13 +150,14 @@ Options:
   --output <file>                      - Save output to file
   --project-root <path>                - Project root directory
   --context <context>                  - Additional context
-  --docstring-format <format>         - Docstring format: google, numpy, sphinx
-  --write-file                          - Write docstrings to file
+  --docstring-format <format>          - Docstring format: google, numpy, sphinx (update-docstrings)
+  --write-file                         - Write docstrings to file (update-docstrings)
 
 Examples:
   python -m tapps_agents.cli documenter document src/utils.py
   python -m tapps_agents.cli documenter generate-docs src/api/routes.py --output-format openapi
   python -m tapps_agents.cli documenter update-readme
+  python -m tapps_agents.cli documenter update-docstrings src/utils.py --write-file
 
 For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
 """
@@ -208,23 +209,26 @@ For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
 OPS_HELP = """
 Ops Agent Commands:
 
-  security-scan [target]               - Security vulnerability scanning
-  compliance-check [type]              - Compliance checking (GDPR, HIPAA, PCI-DSS)
+  security-scan [--target <path>]      - Security vulnerability scanning
+  compliance-check [--type <std>]      - Compliance checking (GDPR, HIPAA, SOC2)
+  deploy [--target local|staging|production] - Deploy application to environment
+  infrastructure-setup [--type docker|kubernetes|terraform] - Set up infra config
   audit-dependencies                   - Dependency vulnerability scanning
-  plan-deployment <description>        - Deployment planning
   help                                 - Show this help message
 
 Options:
-  --format <json|text|markdown>       - Output format (default: json)
-  --target <path>                      - Target path (for security-scan)
-  --type <type>                        - Scan type or compliance standard
-  --severity-threshold <level>        - Severity threshold: low, medium, high, critical
+  --format <json|text|markdown>        - Output format (default: json)
+  --target <path>                      - Target path (security-scan) or env (deploy)
+  --type <type>                        - Scan type, compliance standard, or infra type
+  --severity-threshold <level>         - low, medium, high, critical (audit-dependencies)
   --output <file>                      - Save output to file
 
 Examples:
-  python -m tapps_agents.cli ops security-scan
-  python -m tapps_agents.cli ops compliance-check --type GDPR
-  python -m tapps_agents.cli ops audit-dependencies --severity-threshold high
+  tapps-agents ops security-scan
+  tapps-agents ops compliance-check --type GDPR
+  tapps-agents ops deploy --target staging
+  tapps-agents ops infrastructure-setup --type docker
+  tapps-agents ops audit-dependencies --severity-threshold high
 
 For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
 """
@@ -293,13 +297,15 @@ Reviewer Agent Commands:
   help                                 - Show this help message
 
 Options:
-  --format <json|text|markdown|html>  - Output format (default: json)
+  --format <json|text|markdown|html>   - Output format (default: json)
   --pattern <glob>                     - Glob pattern for batch processing
   --max-workers <n>                    - Concurrent operations (default: 4)
   --output <file>                      - Save output to file
-  --fail-under <score>                 - Exit with code 1 if overall score is below this threshold (review/score)
-  --fail-on-issues                     - Exit with code 1 if issues/errors are found (lint/type-check)
-  --output-dir <dir>                   - Output directory (for report)
+  --fail-under <score>                 - Exit 1 if score below threshold (review/score)
+  --fail-on-issues                     - Exit 1 if issues found (lint/type-check)
+  --output-dir <dir>                   - Output directory (report)
+  --explain                            - Score: include explanations, issues, recommendations
+  --isolated                           - Lint: ignore project pyproject.toml/ruff.toml
 
 Examples:
   python -m tapps_agents.cli reviewer review src/main.py
@@ -338,38 +344,55 @@ Evaluator Agent Commands:
 
   evaluate [--workflow-id <id>]        - Evaluate framework effectiveness
   evaluate-workflow <workflow-id>      - Evaluate specific workflow
+  submit-feedback [--rating ...] [--file <json>] - Submit external feedback
+  get-feedback <feedback_id>           - Retrieve feedback by UUID
+  list-feedback [--workflow-id ...]    - List feedback with optional filters
   help                                 - Show this help message
 
 Options:
-  --format <json|text|markdown>       - Output format (default: markdown)
-  --workflow-id <id>                   - Workflow ID to evaluate (for evaluate command)
-  --output <file>                      - Output file path (default: .tapps-agents/evaluations/evaluation-{timestamp}.md)
-
-Description:
-  The Evaluator Agent analyzes TappsCodingAgents framework effectiveness by:
-  - Analyzing command usage patterns (CLI vs Cursor Skills vs Simple Mode)
-  - Measuring workflow adherence (did users follow intended workflows?)
-  - Assessing code quality metrics
-  - Generating actionable recommendations for continuous improvement
+  --format <json|text|markdown>        - Output format (default: markdown)
+  --workflow-id <id>                   - Workflow ID (evaluate, list-feedback)
+  --output <file>                      - Output path (default: .tapps-agents/evaluations/)
+  --rating <metric>=<value>            - submit-feedback: e.g. overall=8.5 (repeatable)
+  --suggestion <text>                  - submit-feedback (repeatable)
+  --file <path>                        - submit-feedback: JSON file with feedback data
 
 Examples:
   tapps-agents evaluator evaluate
-  tapps-agents evaluator evaluate --workflow-id workflow-123
-  tapps-agents evaluator evaluate-workflow workflow-123 --format markdown
-  tapps-agents evaluator evaluate --output my-evaluation.md
-
-Output:
-  Reports are saved to .tapps-agents/evaluations/ with:
-  - Executive summary (TL;DR)
-  - Usage statistics
-  - Workflow adherence analysis
-  - Quality metrics
-  - Prioritized recommendations (Priority 1, 2, 3)
+  tapps-agents evaluator evaluate-workflow workflow-123
+  tapps-agents evaluator submit-feedback --rating overall=8.5 --suggestion "Improve UX"
+  tapps-agents evaluator list-feedback --workflow-id workflow-123
 
 For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
 """
 
-# Map agent names to their help text
+LEARNING_HELP = """
+Learning System Commands:
+
+  export [--output <path>]             - Export learning data (anonymized)
+  dashboard [--capability <id>]        - View learning dashboard with metrics
+  submit [--export-file <path>]        - Submit to framework (not yet implemented)
+  help                                 - Show this help message
+
+Options:
+  --output <path>                      - Export path (default: .tapps-agents/exports/)
+  --no-anonymize                       - Disable anonymization (not recommended)
+  --compress                           - Compress export with gzip
+  --format <json|yaml>                 - Export format (default: json)
+  --yes, -y                            - Skip confirmation (export)
+  --capability <id>                    - Filter dashboard by capability
+  --include-trends                     - Include trend data (dashboard)
+  --include-failures                   - Include failure analysis (dashboard)
+
+Examples:
+  tapps-agents learning export
+  tapps-agents learning export --format yaml --compress
+  tapps-agents learning dashboard --include-trends
+
+For more information, see: docs/TAPPS_AGENTS_COMMAND_REFERENCE.md
+"""
+
+# Map agent names (and learning) to their help text
 AGENT_HELP_MAP = {
     "enhancer": ENHANCER_HELP,
     "analyst": ANALYST_HELP,
@@ -385,6 +408,7 @@ AGENT_HELP_MAP = {
     "reviewer": REVIEWER_HELP,
     "tester": TESTER_HELP,
     "evaluator": EVALUATOR_HELP,
+    "learning": LEARNING_HELP,
 }
 
 

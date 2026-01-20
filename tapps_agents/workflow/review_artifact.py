@@ -48,6 +48,8 @@ class ReviewArtifact(BaseModel):
     maintainability_score: float | None = None
     test_coverage_score: float | None = None
     performance_score: float | None = None
+    structure_score: float | None = None  # 7-category: project layout, key files (MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.2)
+    devex_score: float | None = None  # 7-category: docs, config, tooling (MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS §3.2)
     linting_score: float | None = None
     type_checking_score: float | None = None
     duplication_score: float | None = None

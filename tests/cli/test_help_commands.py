@@ -25,7 +25,7 @@ class TestStaticHelp:
         agents = [
             "enhancer", "analyst", "architect", "debugger", "designer",
             "documenter", "implementer", "improver", "ops", "orchestrator",
-            "planner", "reviewer", "tester"
+            "planner", "reviewer", "tester", "evaluator"
         ]
         for agent in agents:
             help_text = get_static_help(agent)
@@ -133,7 +133,7 @@ class TestHelpCommandOffline:
     @pytest.mark.parametrize("agent_name", [
         "enhancer", "analyst", "architect", "debugger", "designer",
         "documenter", "implementer", "improver", "ops", "orchestrator",
-        "planner", "reviewer", "tester"
+        "planner", "reviewer", "tester", "evaluator"
     ])
     def test_static_help_available_offline(self, agent_name):
         """Test static help is available for all agents offline."""
