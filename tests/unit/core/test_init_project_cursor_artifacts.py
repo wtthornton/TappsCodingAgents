@@ -35,6 +35,7 @@ class TestInitProjectCursorArtifacts:
         assert (rules_dir / "workflow-presets.mdc").exists()
         assert (rules_dir / "quick-reference.mdc").exists()
         assert (rules_dir / "agent-capabilities.mdc").exists()
+        assert (rules_dir / "when-to-use.mdc").exists()
         assert (rules_dir / "project-context.mdc").exists()
 
         # Skills

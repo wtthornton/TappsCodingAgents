@@ -71,10 +71,11 @@ When you run `tapps-agents init` on any project (new or existing), it:
 
 **What it installs:**
 
-1. **Cursor Rules** (`.cursor/rules/`) - 8 rule files:
+1. **Cursor Rules** (`.cursor/rules/`) - rule files including:
    - `workflow-presets.mdc` - Workflow preset documentation (auto-generated from YAML)
    - `quick-reference.mdc` - Quick command reference
    - `agent-capabilities.mdc` - Agent capability descriptions
+   - `when-to-use.mdc` - Importance and when to use each capability (workflows, agents, commands)
    - `project-context.mdc` - Project context template
    - `project-profiling.mdc` - Project profiling guide
    - `simple-mode.mdc` - Simple Mode guide (natural language orchestration)
@@ -467,8 +468,8 @@ tapps-agents cursor check [--format json|text]  # alias
   - Checks directory structure
   - Verifies YAML frontmatter in SKILL.md files
   - Reports missing skills
-- **Cursor Rules** (`.cursor/rules/`) - Validates all 8 rule files are present
-  - Checks for required rule files (workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage)
+- **Cursor Rules** (`.cursor/rules/`) - Validates required rule files are present
+  - Checks for rule files including: workflow-presets, quick-reference, agent-capabilities, when-to-use, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage (and others)
   - Verifies file format (.mdc extension)
   - Checks YAML syntax validity
   - Verifies agents are configured
@@ -2056,6 +2057,7 @@ python scripts/your_script.py
 
 ## Related Documentation
 
+- **When to Use**: `.cursor/rules/when-to-use.mdc` — Importance and when to use each capability (workflows, agents, commands)
 - **Quick Reference**: `.cursor/rules/quick-reference.mdc`
 - **Agent Capabilities**: `.cursor/rules/agent-capabilities.mdc`
 - **Simple Mode Guide**: `.cursor/rules/simple-mode.mdc`

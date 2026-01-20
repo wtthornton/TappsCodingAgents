@@ -675,6 +675,7 @@ agents:
 
 ## Related Documentation
 
+- [When to Use](when-to-use.mdc) - ⭐ **Importance and when to use** each capability (workflows, agents, commands)
 - [Command Reference](command-reference.mdc) - ⭐ **Complete command reference** - All commands and parameters
 - [Simple Mode](simple-mode.mdc) - ⭐ **Recommended orchestration method** - Complete workflow execution
 - [Quick Reference](quick-reference.mdc) - Quick command reference

@@ -25,6 +25,8 @@ alwaysApply: false
 | Todo / Beads | `@simple-mode *todo ready` or `*todo create "Title"` |
 | Quick score only | `@reviewer *score <file>` (exception) |
 
+**Importance and when to use:** See `when-to-use.mdc` for which capabilities matter most (Tier 1–2 first) and when to use each workflow, agent, and command.
+
 ---
 
 ## ⚠️ IMPORTANT: CLI Workflow Commands Not Recommended in Cursor Mode

@@ -71,10 +71,11 @@ When you run `tapps-agents init` on any project (new or existing), it:
 
 **What it installs:**
 
-1. **Cursor Rules** (`.cursor/rules/`) - 8 rule files:
+1. **Cursor Rules** (`.cursor/rules/`) - rule files including:
    - `workflow-presets.mdc` - Workflow preset documentation (auto-generated from YAML)
    - `quick-reference.mdc` - Quick command reference
    - `agent-capabilities.mdc` - Agent capability descriptions
+   - `when-to-use.mdc` - Importance and when to use each capability (workflows, agents, commands)
    - `project-context.mdc` - Project context template
    - `project-profiling.mdc` - Project profiling guide
    - `simple-mode.mdc` - Simple Mode guide (natural language orchestration)

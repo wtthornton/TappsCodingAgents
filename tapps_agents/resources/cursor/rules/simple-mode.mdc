@@ -490,6 +490,7 @@ Would you like me to proceed with the workflow?"
 
 ## Related Documentation
 
+- See `.cursor/rules/when-to-use.mdc` for importance and when to use each capability (Tier 1–2 first)
 - See `docs/SIMPLE_MODE_USER_GUIDE.md` for user guide with invocation options
 - See `.claude/skills/simple-mode/SKILL.md` for full skill definition
 - See `docs/SIMPLE_MODE_GUIDE.md` for complete documentation

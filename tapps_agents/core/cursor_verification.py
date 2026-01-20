@@ -128,6 +128,7 @@ def _verify_rules(rules_dir: Path) -> dict:
             "workflow-presets.mdc",
             "quick-reference.mdc",
             "agent-capabilities.mdc",
+            "when-to-use.mdc",
             "project-context.mdc",
             "project-profiling.mdc",
             "simple-mode.mdc",
