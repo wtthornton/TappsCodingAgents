@@ -26,7 +26,7 @@ Tests for all 13 agents with representative parameter combinations:
 - `@planner` - plan, create-story, list-stories
 - `@architect` - design, patterns
 - `@designer` - design-api, design-model
-- `@enhancer` - enhance, enhance-quick, enhance-stage, enhance-resume
+- `@enhancer` - enhance, enhance-quick, enhance-stage
 - `@debugger` - debug, analyze-error, trace
 - `@documenter` - document, generate-docs, update-readme, document-api
 - `@improver` - improve, optimize, refactor

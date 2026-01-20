@@ -78,7 +78,7 @@ January 2025
 
 **Tests Added:**
 - ✅ Designer: `ui-ux-design`, `wireframes`, `design-system` (3 tests)
-- ✅ Enhancer: `enhance-stage`, `enhance-resume` (2 tests)
+- ✅ Enhancer: `enhance-stage` (1 test)
 - ✅ Debugger: `trace` (1 test)
 - ✅ Documenter: `document-api` (1 test)
 - ✅ Analyst: `competitive-analysis` (2 tests - with/without competitors)

@@ -501,7 +501,7 @@ python -m tapps_agents.cli enhancer enhance-quick "Add user authentication"
 
 # Stage-by-stage
 python -m tapps_agents.cli enhancer enhance-stage analysis "Create payment system"
-python -m tapps_agents.cli enhancer enhance-resume <session-id>
+python -m tapps_agents.cli enhancer enhance-stage requirements --session-id <session-id>
 ```
 
 **Expert Integration**: Automatically detects domains and consults relevant Industry Experts with weighted decision-making (Primary 51%, Others 49%).

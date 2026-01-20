@@ -66,14 +66,6 @@ Run a specific enhancement stage.
 - `implementation`: Implementation strategy
 - `synthesis`: Final prompt synthesis
 
-### *enhance-resume
-Resume an interrupted enhancement session.
-
-**Usage:**
-```
-*enhance-resume abc123
-```
-
 ## Integration with Other Agents
 
 The Enhancer Agent coordinates with:

@@ -51,15 +51,6 @@ class TestMissingEnhancerCommands(CLICommandTestBase):
         )
         assert result.exit_code in [0, 1]
 
-    def test_enhancer_enhance_resume_command(self):
-        """Test enhancer enhance-resume command."""
-        # Use a non-existent session ID - should handle gracefully
-        result = self.run_command(
-            ["python", "-m", "tapps_agents.cli", "enhancer", "enhance-resume", "non-existent-session", "--format", "json"],
-            expect_success=False,
-        )
-        assert result.exit_code in [0, 1, 2]
-
 
 @pytest.mark.e2e_cli
 class TestMissingDebuggerCommands(CLICommandTestBase):

@@ -487,8 +487,7 @@ The enhanced prompt is now ready to be used by other Cursor Skills:
 All commands work in Cursor IDE using @enhancer:
   - @enhancer *enhance "Your prompt" --format yaml
   - @enhancer *enhance-quick "Your prompt"
-  - @enhancer *enhance-stage analysis "Your prompt"
-  - @enhancer *enhance-resume <session-id>
+  - @enhancer *enhance-stage analysis "Your prompt" [--session-id <id>]
 
 === YAML INTEGRATION ===
 

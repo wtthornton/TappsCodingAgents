@@ -40,7 +40,7 @@ Successfully implemented **118 new E2E tests** covering all HIGH and MEDIUM prio
 
 4. **`test_missing_agent_commands.py`** (13 tests)
    - Designer: ui-ux-design, wireframes, design-system
-   - Enhancer: enhance-stage, enhance-resume
+   - Enhancer: enhance-stage
    - Debugger: trace
    - Documenter: document-api
    - Analyst: competitive-analysis

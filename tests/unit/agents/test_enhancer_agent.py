@@ -80,7 +80,7 @@ class TestEnhancerAgentInitialization:
         command_names = [cmd["command"] for cmd in commands]
         assert "*enhance" in command_names
         assert "*enhance-quick" in command_names
-        assert "*enhance-resume" in command_names
+        assert "*enhance-stage" in command_names
 
 
 class TestEnhancerAgentEnhanceCommand:
@@ -293,39 +293,6 @@ class TestEnhancerAgentEnhanceStageCommand:
         await agent.activate(tmp_path)
         
         result = await agent.run("enhance-stage", stage="invalid", prompt="Test")
-        
-        assert "error" in result
-
-
-class TestEnhancerAgentEnhanceResumeCommand:
-    """Tests for enhance-resume command."""
-
-    @pytest.mark.asyncio
-    async def test_enhance_resume_command_success(self, tmp_path):
-        """Test enhance-resume command with existing session."""
-        agent = EnhancerAgent()
-        await agent.activate(tmp_path)
-        
-        # Create and save a session
-        session_id = agent._create_session("Test prompt", {})
-        agent.current_session["stages"]["analysis"] = {"intent": "test"}
-        agent._save_session(session_id, agent.current_session)
-        
-        # Mock the full enhancement to avoid actual execution
-        with patch.object(agent, '_enhance_full', new_callable=AsyncMock) as mock_enhance:
-            mock_enhance.return_value = {"session_id": session_id, "enhanced_prompt": "test"}
-            
-            result = await agent.run("enhance-resume", session_id=session_id)
-            
-            assert "session_id" in result or "error" not in result
-
-    @pytest.mark.asyncio
-    async def test_enhance_resume_command_missing_session(self):
-        """Test enhance-resume command with non-existent session."""
-        agent = EnhancerAgent()
-        await agent.activate()
-        
-        result = await agent.run("enhance-resume", session_id="nonexistent")
         
         assert "error" in result
 

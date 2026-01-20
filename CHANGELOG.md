@@ -1589,7 +1589,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Session management with save/resume capability
   - Industry Expert integration with weighted consultation
   - Multiple output formats (Markdown, JSON, YAML)
-  - CLI commands: `enhance`, `enhance-quick`, `enhance-stage`, `enhance-resume`
+  - CLI commands: `enhance`, `enhance-quick`, `enhance-stage`
   - Configuration system via `.tapps-agents/enhancement-config.yaml`
   - Workflow definition: `workflows/prompt-enhancement.yaml`
   - Comprehensive documentation and examples

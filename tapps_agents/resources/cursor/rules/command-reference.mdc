@@ -996,14 +996,6 @@ tapps-agents enhancer enhance-stage <stage> "<prompt>" [--format json|markdown|y
 
 **Stages:** `analysis`, `requirements`, `architecture`, `codebase`, `quality`, `strategy`, `synthesis`
 
-#### `*enhance-resume` / `enhance-resume` (CLI-First)
-**Purpose:** Resume interrupted enhancement session
-
-**CLI Syntax:**
-```bash
-tapps-agents enhancer enhance-resume <session-id> [--format json|markdown|yaml]
-```
-
 ### Debugger Agent (`@debugger`)
 
 **Available Commands:**
