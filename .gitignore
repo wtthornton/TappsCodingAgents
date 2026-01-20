@@ -140,6 +140,7 @@ complexity_analysis.json
 
 # Text output files
 *_test_results.txt
+test_results.txt
 *_test_output.txt
 *_test_failures*.txt
 e2e_test_results.txt
