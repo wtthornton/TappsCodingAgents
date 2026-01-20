@@ -160,5 +160,6 @@ Thumbs.db
 .pypirc
 *.env
 .env
+
 # BMAD Method (not used by TappsCodingAgents)
 .bmad-core/
