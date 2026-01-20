@@ -73,7 +73,7 @@ def _verify_skills(skills_dir: Path) -> dict:
         "skills_found": [],
         "expected_skills": [
             "analyst", "architect", "debugger", "designer", "documenter",
-            "enhancer", "implementer", "improver", "ops", "orchestrator",
+            "enhancer", "evaluator", "implementer", "improver", "ops", "orchestrator",
             "planner", "reviewer", "simple-mode", "tester"
         ]
     }
@@ -130,7 +130,8 @@ def _verify_rules(rules_dir: Path) -> dict:
             "project-context.mdc",
             "project-profiling.mdc",
             "simple-mode.mdc",
-            "command-reference.mdc"
+            "command-reference.mdc",
+            "cursor-mode-usage.mdc"
         ]
     }
     

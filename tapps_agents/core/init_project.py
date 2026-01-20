@@ -57,6 +57,7 @@ FRAMEWORK_CURSOR_RULES = {
     "project-profiling.mdc",
     "simple-mode.mdc",
     "command-reference.mdc",
+    "cursor-mode-usage.mdc",
 }
 
 FRAMEWORK_SKILLS = {

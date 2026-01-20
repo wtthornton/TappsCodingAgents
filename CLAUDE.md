@@ -105,8 +105,8 @@ This file references detailed rules in `.cursor/rules/` to keep the master file 
 
 ### Version and Status
 
-**Version:** 3.3.0  
-**Status:** Active  
+**Version:** 3.5.21  
+**Status:** Active 
 **Last Updated:** 2026-01-20
 
 **Related Files:**

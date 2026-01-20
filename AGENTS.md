@@ -245,7 +245,7 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 ## Configuration
 
 **Skills:** `.claude/skills/` (14 agent skills + simple-mode)  
-**Rules:** `.cursor/rules/` (7 rule files)  
+**Rules:** `.cursor/rules/` (8 rule files)  
 **Background Agents:** `.cursor/background-agents.yaml`  
 **Indexing:** `.cursorignore` (performance optimization)
 

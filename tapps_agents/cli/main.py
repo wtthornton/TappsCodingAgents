@@ -161,11 +161,11 @@ def create_root_parser() -> argparse.ArgumentParser:
         description="""TappsCodingAgents CLI - AI Coding Agents Framework
 
 A comprehensive framework for defining, configuring, and orchestrating AI coding agents
-with 13 workflow agents, industry experts, and full Cursor AI integration.
+with 14 workflow agents, industry experts, and full Cursor AI integration.
 
 Key Features:
-  • 13 Workflow Agents: Analyst, Architect, Debugger, Designer, Documenter, Enhancer,
-    Implementer, Improver, Ops, Orchestrator, Planner, Reviewer, Tester
+  • 14 Workflow Agents: Analyst, Architect, Debugger, Designer, Documenter, Enhancer,
+    Evaluator, Implementer, Improver, Ops, Orchestrator, Planner, Reviewer, Tester
   • Industry Experts: Domain-specific knowledge with weighted decision-making
   • Workflow Presets: Rapid development, full SDLC, bug fixes, quality improvement
   • Code Quality Tools: Scoring, linting, type checking, duplication detection

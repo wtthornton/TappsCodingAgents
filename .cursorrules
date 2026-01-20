@@ -145,8 +145,8 @@ See `.cursor/rules/project-context.mdc` for full context.
 
 ## Configuration
 
-- **Skills**: `.claude/skills/` (13 agent skills + simple-mode)
-- **Rules**: `.cursor/rules/` (6 rule files: workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference)
+- **Skills**: `.claude/skills/` (14 agent skills + simple-mode)
+- **Rules**: `.cursor/rules/` (8 rule files: workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage)
 - **Background Agents**: `.cursor/background-agents.yaml`
 - **Indexing**: `.cursorignore` (performance optimization)
 

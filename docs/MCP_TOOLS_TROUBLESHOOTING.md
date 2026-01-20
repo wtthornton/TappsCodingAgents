@@ -205,6 +205,34 @@ MCP config files are checked in this order (first found wins):
    ```
    (Not required, as `npx -y` installs on-demand)
 
+### Issue 5: Duplicate MCP Servers (context7/Context7, playwright/Playwright)
+
+**Symptoms:**
+- In Cursor Settings > Tools & MCP you see two Context7 entries (e.g. `context7` and `Context7`) and/or two Playwright entries (`playwright` and `Playwright`)
+- One Context7 may show "Error - Show Output" while the other works
+
+**Cause:**
+
+Cursor loads **both** your **user-level** and **project-level** MCP configs and merges them. Server names are case-sensitive, so you get duplicates when:
+
+- **User-level** `~/.cursor/mcp.json` (Windows: `%USERPROFILE%\.cursor\mcp.json`) defines `context7` and `playwright` (lowercase)
+- **Project-level** `.cursor/mcp.json` defines `Context7` and `Playwright` (uppercase), e.g. from `tapps-agents init`
+
+The `Context7` (uppercase) entry often errors because it uses `@context7/mcp-server` with `CONTEXT7_API_KEY` from the environment. If that env var is not set when Cursor starts the project MCP, that instance fails. Your user-level `context7` may use a different package or inline API key and work correctly.
+
+**Fix: Use a single source for each server**
+
+1. **Option A – Prefer user-level (simplest if it already works)**  
+   Remove `Context7` and `Playwright` from the **project** `.cursor/mcp.json` so only your user-level `context7` and `playwright` are used:
+   - Edit `c:\cursor\TappsCodingAgents\.cursor\mcp.json` and delete the `"Context7"` and `"Playwright"` entries, or set `"mcpServers": {}` if you have no other project-specific servers.
+
+2. **Option B – Prefer project-level**  
+   Remove `context7` and `playwright` from **user-level** `~/.cursor/mcp.json`. Keep only `Context7` and `Playwright` in the project `.cursor/mcp.json`. Ensure `CONTEXT7_API_KEY` is set (and that `Context7` uses `@context7/mcp-server` with that env, or an equivalent working config).
+
+3. **Restart Cursor** after edits.
+
+**Best practice:** Avoid defining the same logical MCP server in both user and project configs. Use project-level for repo-specific setup, user-level for tools you want in all projects.
+
 ## MCP Tools Available
 
 ### Context7

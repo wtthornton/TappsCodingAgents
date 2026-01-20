@@ -19,7 +19,7 @@ TappsCodingAgents provides **two unified interfaces** for accessing specialized 
 - **Context7 Integration**: KB-first library documentation caching (90%+ cache hit rate)
 
 ### Claude Desktop Commands (Claude Desktop)
-- **16 Claude Desktop Commands** (`.claude/commands/`) - Use `@command` syntax in Claude Desktop
+- **15 Claude Desktop Commands** (`.claude/commands/`) - Use `@command` syntax in Claude Desktop
 - **Same Functionality**: All commands provide the same features as Cursor Skills
 - **Unified Experience**: Choose your preferred interface - both work seamlessly
 
@@ -29,7 +29,7 @@ TappsCodingAgents provides **two unified interfaces** for accessing specialized 
 
 1. **Cursor AI IDE** (latest version with Skills support)
 2. **Python 3.13+** installed (recommended: latest stable Python)
-3. **TappsCodingAgents** installed (see [QUICK_START.md](../QUICK_START.md))
+3. **TappsCodingAgents** installed (see [Quick Start Guide](guides/QUICK_START.md))
 4. **Context7 API Key** (optional, for library documentation)
 
 ---
@@ -59,7 +59,7 @@ tapps-agents init
 This installs (by copying from packaged templates in `tapps_agents/resources/*`):
 - **Cursor Skills**: `.claude/skills/` (14 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
 - **Claude Desktop Commands**: `.claude/commands/` (16 commands from `tapps_agents/resources/claude/commands/`)
-- **Cursor Rules**: `.cursor/rules/*.mdc` (7 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc` and `command-reference.mdc`)
+- **Cursor Rules**: `.cursor/rules/*.mdc` (8 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc`, `command-reference.mdc`, and `cursor-mode-usage.mdc`)
 - **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
 - **USER Scope Directory**: `~/.tapps-agents/skills/` (created automatically for personal skills)

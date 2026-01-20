@@ -3,116 +3,41 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-3.3.0-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.5.21-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
-## ⚠️ Critical Accuracy Requirement
+TappsCodingAgents helps teams build and orchestrate AI coding agents with **quality gates**, **Cursor IDE integration**, and **full SDLC workflows**—so you get consistent, traceable results instead of one-off AI edits.
 
-**ALL AGENTS AND SKILLS MUST ADHERE TO 100% ACCURACY:**
+**Highlights:** 14 workflow agents (review, implement, test, fix, plan, …) · **Simple Mode** for natural language (`@simple-mode *build "feature"`) · Cursor Skills + Claude Desktop · 11 YAML workflow presets · Code scoring, experts, and MCP gateway.
 
-- **NEVER make up, invent, or fabricate information** - Only report verified facts
-- **ALWAYS verify claims** - Check actual results, not just test pass/fail status
-- **Verify API calls succeed** - Don't assume success from error handling
-- **Check actual data** - Inspect return values, response codes, and error messages
-- **Admit uncertainty** - If you don't know or can't verify, say so explicitly
-- **Distinguish between code paths and actual results** - Tests passing ≠ functionality working
+**Prerequisites:** Python 3.13+, [Cursor IDE](https://cursor.com) or [Claude Desktop](https://claude.ai). Optional: [Context7](https://context7.com) API key for library docs.
 
-**When reporting results:**
-- ✅ **DO**: "Test passed, but API call failed with connection error"
-- ❌ **DON'T**: "All tests passed - API key verified and working"
+---
 
-**When making claims:**
-- ✅ **DO**: Verify the actual outcome, inspect response data, check error messages
-- ❌ **DON'T**: Assume success from test framework output or error handling
+## Table of Contents
 
-Accuracy and honesty are non-negotiable. When in doubt, verify before claiming.
+- [Quick Start (5 min)](#-cursor-quick-start-5-minutes)
+- [Simple Mode (New Users)](#-simple-mode-new-users)
+- [Key Features](#key-features)
+- [Documentation](#documentation)
+- [Contributing](#contributing)
+- [For Framework Developers](#for-framework-developers--contributors)
+
+---
 
 ## Overview
 
-TappsCodingAgents provides a standardized framework for building AI coding agents with:
+> **Note:** This project both **develops** the framework and **uses** it for its own development (self-hosting). See [Project Context](docs/PROJECT_CONTEXT.md).
 
-> **Note**: This project both **develops** the TappsCodingAgents framework AND **uses** it for its own development (self-hosting). See [Project Context](docs/PROJECT_CONTEXT.md) for details.
+**In the box:**
+- **14 workflow agents** — Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, Evaluator
+- **Simple Mode** — `@simple-mode *build "feature"`, `*review`, `*fix`, `*test`, and more in Cursor
+- **Cursor Skills + Claude Desktop** — All agents as `@agent *command`; 15 Claude Desktop commands
+- **11 YAML workflow presets** — rapid-dev, full-sdlc, maintenance, quality, quick-fix, and others
+- **Experts & quality** — 16 built-in experts, 5-metric code scoring, MCP gateway (Context7, Playwright, Git, …)
 
-### ⚠️ Framework Development Guidelines
-
-**When modifying the TappsCodingAgents framework itself**, you **MUST** use Simple Mode Full SDLC workflow:
-
-```bash
-# CLI
-tapps-agents simple-mode full --prompt "Implement [enhancement description]" --auto
-
-# Or in Cursor chat
-@simple-mode *full "Implement [enhancement description]"
-```
-
-**Why?** The full SDLC workflow ensures:
-- ✅ Requirements analysis (analyst)
-- ✅ Architecture design (architect) 
-- ✅ Quality gates with automatic loopbacks (≥75 score)
-- ✅ Test generation and execution (tester)
-- ✅ Security validation (ops)
-- ✅ Complete documentation (documenter)
-- ✅ Full traceability (requirements → stories → architecture → implementation)
-
-**DO NOT:**
-- ❌ Directly implement code without using the workflow
-- ❌ Skip planning, design, or architecture phases
-- ❌ Validate only afterward (use quality gates during development)
-
-See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md) for complete guidelines.
-
-- **Workflow Agents** (14): Complete SDLC task execution including Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer, and Evaluator
-- **Industry Experts** (N): Business domain knowledge with weighted decision-making and RAG integration
-- **Built-in Experts** (16): Framework-controlled technical domain experts (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
-- **Expert Integration** (6 agents): Architect, Implementer, Reviewer, Tester, Designer, and Ops agents consult relevant experts for enhanced decision-making
-- **Project Profiling System**: Automatic detection of project characteristics (deployment type, tenancy, user scale, compliance, security) for context-aware expert guidance
-- **Confidence System**: Weighted confidence calculation with agent-specific thresholds and metrics tracking, including project context relevance
-- **Cursor Skills Integration**: All 14 agents available as Cursor Skills with instruction-based execution
-- **RAG Integration**: Retrieval-augmented generation for domain knowledge with simple file-based and vector-based RAG support
-- **Fine-Tuning Support**: LoRA adapters for domain specialization (planned)
-- **Cursor AI Integration** ✅: Complete integration with Cursor AI (all 7 phases complete)
-  - **14 Cursor Skills** ✅ (All agents available as Cursor Skills: analyst, architect, debugger, designer, documenter, enhancer, evaluator, implementer, improver, ops, orchestrator, planner, reviewer, tester)
-  - **Simple Mode Skill** ✅ (Natural language orchestration with 10 workflows: build, review, fix, test, explore, refactor, plan-analysis, pr, epic, full)
-  - **Claude Desktop Commands** ✅ (15 commands available in Claude Desktop - same functionality as Skills)
-  - **Unified Experience** ✅ (Commands and Skills work together - choose your interface)
-  - **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills with template generation)
-  - **Multi-Agent Orchestration** ✅ (Parallel execution with structured concurrency via TaskGroup, conflict resolution, result aggregation)
-  - **Context7 Integration** ✅ (KB-first caching, analytics dashboard, cross-reference resolution, cache warming, staleness policies)
-  - **MCP Gateway** ✅ (Unified Model Context Protocol interface with 5 servers: Context7, Playwright, Filesystem, Git, Analysis)
-  - **NUC Optimization** ✅ (Resource monitoring, fallback strategy, hardware profiling)
-  - **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow, knowledge ingestion safety)
-  - **2025 Optimizations** ✅ (TaskGroup migration, context managers, adaptive polling - 30-50% performance improvements)
-- **User Role Templates** ✅: Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
-  - Customize agent behavior based on user role
-  - 5 built-in role templates with sensible defaults
-  - Fully customizable and extensible
-- **Simple Mode** ✅: Streamlined natural language interface with 10 orchestrators
-  - **Build Orchestrator**: Complete feature development (enhancer → planner → architect → designer → implementer → reviewer → tester) with mandatory test generation (80%+ coverage)
-  - **Review Orchestrator**: Code quality review with improvement suggestions
-  - **Fix Orchestrator**: Systematic bug fixing with debugging and verification
-  - **Test Orchestrator**: Test generation and execution
-  - **Explore Orchestrator**: Codebase exploration and navigation (analyst → reviewer → code discovery)
-  - **Refactor Orchestrator**: Systematic code modernization (reviewer → architect → implementer → tester → reviewer)
-  - **Plan Analysis Orchestrator**: Safe read-only code analysis and planning (analyst → architect → reviewer)
-  - **PR Orchestrator**: Pull request creation with quality scores (reviewer → documenter → PR creation)
-  - **Epic Orchestrator**: Execute Epic documents with story dependency resolution
-  - **Resume Orchestrator**: Resume interrupted workflows
-  - **Workflow Enforcement** ✅: Proactive workflow suggestions to increase adoption (40% → 80%+ target)
-    - Automatic workflow suggestions based on user intent
-    - Test coverage gates (70% minimum, loops back if not met)
-    - Enhanced output visibility with artifact summaries and metrics
-    - See `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` for complete guide
-- **Workflow Presets** (11): Predefined YAML workflows (rapid-dev, full-sdlc, maintenance, quality, quick-fix, feature-implementation, brownfield-analysis, simple-new-feature, simple-full, simple-improve-quality, simple-fix-issues)
-- **YAML-First Architecture** ✅: YAML as single source of truth with strict schema enforcement
-  - **Auto-Generated Artifacts**: Task manifests, Cursor Rules docs
-  - **Dependency-Based Parallelism**: Automatic parallel execution based on step dependencies
-  - **State Persistence**: Advanced workflow state management with checkpointing, migration, versioning
-- **Prompt Enhancement Utility** ✅: 7-stage enhancement pipeline (analysis, requirements, architecture, codebase, quality, strategy, synthesis)
-- **Project Profiling**: Automatic detection of project characteristics for context-aware expert advice
-- **Analytics Dashboard** ✅: Performance metrics, historical trends, agent/workflow statistics, system status
-- **Health Monitoring** ✅: System health checks, resource usage tracking, health trends
-- **State Management** ✅: Workflow state persistence, resume, cleanup, branch management
+For the full list, see [Key Features](#key-features) and [Documentation](docs/README.md).
 
 ### How it works (no confusion version)
 
@@ -255,155 +180,16 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **Automated Documentation** (Epic 8): Cursor Rules auto-generated from workflow YAML
   - **Documentation Alignment** (Epic 10): All documentation aligned with YAML-first architecture
 - **Cursor AI Integration**: Complete 7-phase integration with Cursor AI
-  - Cursor Skills for all 13 agents
+  - Cursor Skills for all 14 agents
   - Multi-agent orchestration
   - Context7 KB-first caching
   - NUC optimization for low-power hardware
 
-## Current Status (January 2026)
+## Current Status
 
-🎉 **YAML-FIRST ARCHITECTURE COMPLETE** 🎉 (Epics 6-10)
+**Version** 3.5.21 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
 
-✅ **YAML Schema Enforcement & Generated Artifacts** (Epics 6-10, January 2025)
-- **Epic 6: YAML Schema Enforcement** ✅ - Strict schema validation, removed `parallel_tasks`, eliminated "YAML theater"
-- **Epic 7: Task Manifest Generation** ✅ - Auto-generated task checklists from workflow YAML + state
-- **Epic 8: Automated Documentation Generation** ✅ - Cursor Rules auto-generated from workflow YAML
-- **Epic 10: Documentation Cleanup & Alignment** ✅ - All documentation aligned with YAML-first architecture
-- **YAML is now the single source of truth** - All derived artifacts (manifests, docs, configs) are auto-generated
-- See [YAML Workflow Architecture Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md) for details
-
-🎉 **PHASE 5 EXPERT FRAMEWORK ENHANCEMENT COMPLETE** 🎉
-
-✅ **Phase 5: Expert Framework Enhancement - High Priority Experts**
-- **4 New Built-in Experts** ✅ (Observability, API Design, Cloud Infrastructure, Database)
-- **32 New Knowledge Files** ✅ (~120,000+ words of expert knowledge)
-- **Enhanced Agent Support** ✅ (Updated expert consultation for Architect, Implementer, Designer, Ops, Reviewer, Tester agents)
-- **Total Built-in Experts: 16** (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning)
-- **Total Knowledge Files: 100** (across 13 knowledge domains: security, performance, testing, data-privacy-compliance, accessibility, user-experience, observability-monitoring, api-design-integration, cloud-infrastructure, database-data-management, agent-learning, ai-frameworks, software-architecture)
-- See [Built-in Experts Guide](docs/BUILTIN_EXPERTS_GUIDE.md) and [Phase 5 Implementation Plan](docs/implementation/PHASE5_EXPERT_IMPLEMENTATION_PLAN.md)
-
-🎉 **ALL 7 PHASES COMPLETE - Cursor AI Integration Plan 2025** 🎉
-
-🎉 **JANUARY 2026 ENHANCEMENTS COMPLETE** 🎉
-
-✅ **2025 Performance & Resilience Enhancements** (January 2026)
-- **Non-Blocking Cache Architecture** ✅ (`tapps_agents/context7/async_cache.py`)
-  - Lock-free in-memory LRU cache with O(1) reads/writes
-  - Background write queue for non-blocking disk persistence
-  - Atomic file rename pattern (no file locking needed)
-  - **Result**: Eliminated 150+ second cache lock timeouts
-- **Streaming Workflow Responses** ✅ (`tapps_agents/workflow/streaming.py`)
-  - Progressive streaming with per-step timeouts (30s default)
-  - Automatic checkpointing for resume capability
-  - SSE and Markdown formatting for Cursor integration
-  - **Result**: Workflows survive Cursor response timeouts
-- **Circuit Breaker Pattern** ✅ (`tapps_agents/context7/circuit_breaker.py`)
-  - CLOSED → OPEN → HALF_OPEN state machine
-  - Bounded parallelism with fail-fast semantics
-  - Auto-recovery after configurable timeout
-  - **Result**: Prevents cascading failures in parallel operations
-- **Intelligent Cache Pre-warming** ✅ (`tapps_agents/context7/cache_prewarm.py`)
-  - Automatic dependency detection (requirements.txt, pyproject.toml, package.json)
-  - Priority-based library ordering (fastapi, pytest, etc.)
-  - Background pre-warming during `tapps-agents init`
-  - **Result**: Zero cold-cache delays during workflow execution
-- **Durable Workflow State Machine** ✅ (`tapps_agents/workflow/durable_state.py`)
-  - Event-sourced state with append-only event log
-  - Checkpoint-based resume from any failure point
-  - Complete audit trail for workflow execution
-  - **Result**: Workflows can resume after any interruption
-- **Lock Timeout Optimization** ✅ (`tapps_agents/context7/cache_locking.py`)
-  - Reduced timeout from 30s → 5s (3s for cache store)
-  - Graceful degradation on lock failures
-  - **Result**: Planner command completes in 559ms (was 150+ seconds)
-- See [Simple Mode Timeout Analysis](docs/SIMPLE_MODE_TIMEOUT_ANALYSIS_AND_ENHANCEMENTS.md) for complete details
-
-✅ **v3.3.0 - Simple Mode Workflow Quality Improvements** (January 2026)
-- **Agent Contract Validation** ✅ (`tapps_agents/simple_mode/agent_contracts.py`)
-  - Pydantic v2 contracts for type-safe agent task validation
-  - Pre-execution parameter validation prevents "Unknown command" errors
-  - 7 agent contracts covering all build workflow steps
-- **Target File Inference** ✅ (`tapps_agents/simple_mode/file_inference.py`)
-  - Intelligent file path inference from natural language descriptions
-  - Pattern-based routing (API, model, service, test, util paths)
-  - Context-aware inference from previous workflow steps
-- **Result Formatters** ✅ (`tapps_agents/simple_mode/result_formatters.py`)
-  - Decorator-based formatter registry pattern
-  - Converts raw agent output to formatted markdown documentation
-  - Per-agent formatters for all build workflow steps
-- **Step Dependency Management** ✅ (`tapps_agents/simple_mode/step_dependencies.py`)
-  - DAG-based step dependency graph
-  - Failure cascade handling with skip logic
-  - Parallel execution support with `asyncio.TaskGroup`
-- **Structured Step Results** ✅ (`tapps_agents/simple_mode/step_results.py`)
-  - Pydantic v2 models for type-safe step results
-  - Status tracking (SUCCESS, FAILED, SKIPPED, RUNNING)
-  - Result parser with error handling
-- **Step 8 Verification Fix** ✅ - Correctly detects and reports agent failures
-- **97 New Unit Tests** ✅ - Comprehensive test coverage for all new modules
-
-✅ **P2 Medium Priority Enhancements - All Complete**
-- **Project Profiling System** ✅ (Auto-detection of project characteristics for context-aware expert guidance)
-- **Modernize Project Configuration** ✅ (Migrated to pyproject.toml with build system)
-- **Advanced Workflow State Persistence** ✅ (State validation, migration, versioning, enhanced recovery)
-- **State Persistence Configuration** ✅ (Configurable checkpoint frequency, cleanup policies, runtime reload)
-- **Advanced Analytics Dashboard** ✅ (Performance metrics, historical trends, CLI commands)
-- **Custom Skills Support** ✅ (Create, validate, and integrate custom Skills)
-- **Governance & Safety Layer** ✅ (Secrets/PII filtering, prompt injection handling, approval workflow)
-
-✅ **P3 Low Priority Enhancements - Critical Items Complete**
-- **Error Handling Improvements** ✅ (Custom exception types, improved error messages)
-- **Configuration Management Improvements** ✅ (All expert thresholds moved to configuration)
-- **Documentation Alignment** ✅ (Updated version numbers, marked historical docs)
-
-✅ **Phase 7 Complete - NUC Optimization**
-- **Resource Monitoring** ✅ (CPU, memory, disk usage tracking with alerts)
-- **Performance Benchmarks** ✅ (Before/after optimization comparisons)
-- **NUC Configuration** ✅ (Optimized settings for low-power hardware)
-- See [NUC Setup Guide](docs/NUC_SETUP_GUIDE.md) and [Phase 7 Summary](docs/implementation/PHASE7_NUC_OPTIMIZATION_COMPLETE.md)
-
-✅ **Phase 6 Complete - Context7 Optimization + Security**
-- **Security Audit Tools** ✅ (SecurityAuditor, APIKeyManager for SOC 2 compliance)
-- **KB Usage Analytics** ✅ (Tracking, dashboard, performance metrics)
-- **Cross-Reference Resolution** ✅ (Automatic linking of related documentation)
-- **Cache Pre-population** ✅ (Dependency-based warming)
-- See [Context7 Security & Privacy](docs/context7/CONTEXT7_SECURITY_PRIVACY.md) and [Phase 6 Summary](docs/implementation/PHASE6_CONTEXT7_OPTIMIZATION_SECURITY_COMPLETE.md)
-
-✅ **Phase 5 Complete - Multi-Agent Orchestration**
-- **Parallel Agent Execution** ✅ (Multi-agent workflows with conflict resolution)
-- **Git Worktree Management** ✅ (Isolated agent changes, no conflicts)
-- **Result Aggregation** ✅ (Collecting and summarizing multi-agent outputs)
-- **Performance Monitoring** ✅ (Speedup tracking, efficiency metrics)
-- See [Multi-Agent Orchestration Guide](docs/MULTI_AGENT_ORCHESTRATION_GUIDE.md) and [Phase 5 Summary](docs/implementation/PHASE5_MULTI_AGENT_ORCHESTRATION_COMPLETE.md)
-
-
-✅ **Phase 3 Complete - Remaining Agents + Advanced Features**
-- **All 13 Cursor Skills** ✅ (Analyst, Planner, Architect, Designer, Implementer, Tester, Debugger, Documenter, Reviewer, Improver, Ops, Orchestrator, Enhancer)
-- **Context7 Integration** ✅ (KB-first caching for library documentation)
-- **Playwright MCP Integration** ✅ (Browser automation detection and awareness for E2E testing)
-- **Industry Experts** ✅ (Domain expert consultation framework)
-- **YAML Workflows** ✅ (Declarative multi-step task definitions)
-- **Tiered Context System** ✅ (90%+ token savings)
-- **MCP Gateway** ✅ (Unified tool access)
-  - **Context7 MCP**: Library documentation (required)
-  - **Playwright MCP**: Browser automation (optional, auto-detected)
-- See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 3 Summary](docs/implementation/PHASE3_REMAINING_AGENTS_COMPLETE.md)
-
-✅ **Phase 2 Complete - Quality Tools Integration**
-- **Ruff Integration** ✅ (10-100x faster Python linting, 2025 standard)
-- **mypy Type Checking** ✅ (Static type analysis, 2025 standard)
-- **Comprehensive Reporting** ✅ (JSON, Markdown, HTML with historical tracking)
-- **TypeScript & JavaScript Support** ✅ (ESLint, TypeScript compiler integration)
-- **Multi-Service Analysis** ✅ (Batch analysis with service-level aggregation)
-- **Dependency Security Auditing** ✅ (pip-audit, pipdeptree integration)
-- **Code Duplication Detection** ✅ (jscpd for Python and TypeScript)
-- See [Quality Tools Usage Examples](docs/QUALITY_TOOLS_USAGE_EXAMPLES.md) and [Phase 2 Summary](docs/implementation/PHASE2_QUALITY_TOOLS_COMPLETE.md)
-
-✅ **Phase 1 Complete - Core Agents to Skills**
-- **4 Core Cursor Skills** ✅ (Reviewer, Implementer, Tester, Debugger)
-- **Context7 Integration** ✅ (KB-first caching)
-- **Cache Pre-population** ✅ (Common libraries pre-loaded)
-- See [Cursor Skills Installation Guide](docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md) and [Phase 1 Summary](docs/implementation/PHASE1_CURSOR_SKILLS_COMPLETE.md)
+📋 [Changelog](CHANGELOG.md) · [Cursor AI Integration Plan](docs/CURSOR_AI_INTEGRATION_PLAN_2025.md) · [YAML Workflow Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)
 
 ✅ **Core Framework Complete:**
 - **All 14 Workflow Agents** ✅ (analyst, planner, architect, designer, implementer, tester, debugger, documenter, reviewer, improver, ops, orchestrator, enhancer, evaluator)
@@ -425,7 +211,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **100+ Knowledge Files**: Across 13 knowledge domains
   - **Configuration-Only Experts**: YAML-based expert definition, no code classes required
   - **RAG Integration**: Simple file-based and vector-based RAG for knowledge retrieval
-- **Simple Mode** ✅ (6 orchestrators: build, review, fix, test, epic, resume)
+- **Simple Mode** ✅ (10 orchestrators: build, review, fix, test, explore, refactor, plan-analysis, pr, epic, full; plus resume)
 - **Scale-Adaptive Workflow Selection** ✅ (Project type auto-detection, workflow recommendation)
 - **State Management** ✅ (Advanced workflow state persistence with checkpointing, migration, versioning, resume)
 - **Analytics & Health** ✅ (Performance metrics, trends, system health monitoring, resource usage tracking)
@@ -628,7 +414,7 @@ TappsCodingAgents/
 │   │   ├── reviewer/             # Code review & scoring
 │   │   ├── implementer/          # Code generation
 │   │   ├── tester/               # Test generation
-│   │   └── ...                   # 10 more agents
+│   │   └── ...                   # 11 more agents (14 total)
 │   ├── core/                     # Core framework components
 │   ├── context7/                 # Context7 KB integration
 │   ├── experts/                  # Industry experts framework
@@ -702,8 +488,11 @@ TappsCodingAgents/
 - **[Security Policy](SECURITY.md)** - Security guidelines
 
 ### Contributing
-- **[Contributing Guidelines](CONTRIBUTING.md)** - How to contribute
-- **[Changelog](CHANGELOG.md)** - Version history and changes
+
+**Get help:** [CONTRIBUTING](CONTRIBUTING.md) · [Documentation](docs/README.md)
+
+- **[Contributing Guidelines](CONTRIBUTING.md)** — How to contribute
+- **[Changelog](CHANGELOG.md)** — Version history and changes
 
 ### Version Management
 
@@ -742,7 +531,7 @@ See [Release Guide](docs/operations/RELEASE_GUIDE.md) for complete release proce
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 3.3.0  
+**Version**: 3.5.21  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)
@@ -763,133 +552,21 @@ This project uses its own framework for development:
 - **5 Industry Experts** configured (AI frameworks, code quality, architecture, DevOps, documentation)
 - **Enhancer Agent** actively used (23+ enhancement sessions)
 - **Context7 Integration** with KB cache
-- **14 Cursor Skills** available in `.claude/skills/` (13 agent skills + simple-mode)
+- **14 Cursor Skills** available in `.claude/skills/` (14 agent skills + simple-mode)
 - **NUC Optimization** enabled for resource-constrained environments
 - Configuration in `.tapps-agents/` directory
 
 See [Self-Hosting Setup](docs/implementation/SELF_HOSTING_SETUP_COMPLETE.md) for details.
 
-## Windows Compatibility & Encoding
+## Platform & repository
 
-**⚠️ CRITICAL: All scripts and code must work correctly on Windows**
+- **Windows:** Supported (Windows, Linux, macOS). Use UTF-8 for scripts and file I/O. See [Troubleshooting](docs/TROUBLESHOOTING.md) and [CONTRIBUTING](CONTRIBUTING.md) for encoding guidelines.
+- **Repository:** Dependabot, CODEOWNERS, issue/PR templates, GitHub Actions, SECURITY.md. See [CONTRIBUTING](CONTRIBUTING.md) and [.github/](.github/).
 
-This project is developed and tested on **Windows** (in addition to Linux/macOS). All scripts, tools, and code must handle Windows-specific encoding issues correctly.
+## For Framework Developers & Contributors
 
-### Windows Encoding Requirements
-
-**All Python scripts MUST:**
-
-1. **Set UTF-8 encoding for console output** (Windows uses CP1252 by default):
-   ```python
-   import sys
-   import os
-   
-   # Set UTF-8 encoding for Windows console
-   if sys.platform == "win32":
-       os.environ["PYTHONIOENCODING"] = "utf-8"
-       try:
-           sys.stdout.reconfigure(encoding="utf-8")
-           sys.stderr.reconfigure(encoding="utf-8")
-       except AttributeError:
-           # Python < 3.7 - use environment variable only
-           pass
-   ```
-
-2. **Use ASCII-safe fallbacks for Unicode characters**:
-   ```python
-   # Use ASCII-safe symbols instead of Unicode emojis
-   SUCCESS_SYMBOL = "[OK]"
-   ERROR_SYMBOL = "[FAIL]"
-   WARNING_SYMBOL = "[WARN]"
-   
-   # Or handle UnicodeEncodeError gracefully
-   try:
-       print(f"{GREEN}✅ {text}{RESET}")
-   except UnicodeEncodeError:
-       print(f"[OK] {text}")
-   ```
-
-3. **Always specify encoding when opening files**:
-   ```python
-   # ✅ CORRECT - Always specify encoding
-   with open("file.txt", "r", encoding="utf-8") as f:
-       content = f.read()
-   
-   # ❌ WRONG - Relies on system default (CP1252 on Windows)
-   with open("file.txt", "r") as f:
-       content = f.read()
-   ```
-
-4. **Test on Windows before committing**:
-   - Run all scripts on Windows to verify encoding works
-   - Use PowerShell or Command Prompt (not just WSL)
-   - Verify Unicode characters display correctly
-
-### Why This Matters
-
-- **Windows default encoding is CP1252**, not UTF-8
-- **Unicode emojis (✅, ❌, ⚠️) fail on Windows** without proper encoding setup
-- **File I/O without explicit encoding** can cause `UnicodeDecodeError` on Windows
-- **GitHub Actions runs on Linux**, but developers use Windows - both must work
-
-### Testing on Windows
-
-Before committing code that prints to console or reads files:
-
-```bash
-# Test script on Windows PowerShell
-python scripts/your_script.py
-
-# Verify no encoding errors
-# Check that Unicode characters display correctly
-# Or use ASCII-safe alternatives
-```
-
-**Reference**: See [Python 3.10 Documentation - Windows Encoding](https://docs.python.org/3.10/library/sys.html) for official guidance.
-
-## GitHub Best Practices (2025)
-
-This project follows 2025 GitHub best practices for open-source development:
-
-### ✅ Automated Dependency Management
-- **Dependabot** configured for automated dependency updates (weekly for pip, monthly for GitHub Actions)
-- Dependency grouping to reduce PR noise
-- Automatic security vulnerability scanning
-
-### ✅ Code Review & Ownership
-- **CODEOWNERS** file for automatic code review assignments
-- Clear ownership structure for different parts of the codebase
-
-### ✅ Issue & Pull Request Templates
-- Structured **bug report** template for consistent issue reporting
-- **Feature request** template for enhancement proposals
-- **Pull request** template with checklist and guidelines
-- Issue templates guide users to appropriate channels (Discussions, Security Advisories)
-
-### ✅ Continuous Integration
-- **GitHub Actions** workflows with:
-  - Separate jobs for linting, type checking, and testing
-  - Concurrency control to cancel in-progress runs
-  - Caching for faster builds
-  - Coverage reporting with Codecov integration
-  - Latest action versions (actions/checkout@v4, actions/setup-python@v5, codecov/codecov-action@v4)
-
-### ✅ Security
-- **SECURITY.md** with vulnerability reporting guidelines
-- Security best practices documentation
-- Automated dependency vulnerability scanning
-
-### ✅ Documentation
-- Comprehensive **README.md** with clear project overview
-- **CONTRIBUTING.md** with contribution guidelines
-- **CHANGELOG.md** following Keep a Changelog format
-- Extensive documentation in `docs/` directory
-
-### ✅ Project Health
-- Clear license (MIT) in LICENSE file
-- Community guidelines in CONTRIBUTING.md
-- Security policy in SECURITY.md
-- Issue templates for better issue management
+- **Accuracy:** Agents and skills must report only verified facts. Do not assume success from tests or error handling. See project rules in `.cursor/rules/` and [CONTRIBUTING](CONTRIBUTING.md).
+- **Framework changes:** When modifying `tapps_agents/`, use the Full SDLC workflow: `@simple-mode *full "Implement [description]"` or `tapps-agents simple-mode full --prompt "..." --auto`. See [Framework Development Workflow](docs/FRAMEWORK_DEVELOPMENT_WORKFLOW.md).
 
 ## License
 
