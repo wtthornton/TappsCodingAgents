@@ -620,6 +620,16 @@ class Context7AgentHelper:
         if not self.enabled:
             return {lib: None for lib in libraries}
 
+        # Plan 3.2: apply max_chunks_per_step to limit Context7 injection
+        max_chunks = 50
+        try:
+            cb = getattr(self.config, "context_budget", None)
+            if cb is not None:
+                max_chunks = max(1, getattr(cb, "max_chunks_per_step", 50) or 50)
+        except Exception:  # pylint: disable=broad-except
+            pass
+        libraries = list(libraries)[:max_chunks]
+
         # CRITICAL FIX: Check quota BEFORE starting parallel execution
         # This prevents making multiple API calls when quota is already exceeded
         try:

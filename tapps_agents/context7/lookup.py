@@ -361,9 +361,13 @@ class KBLookup:
                         logger.debug("No running event loop, refresh queued for later processing")
                     
                     # Return stale entry immediately (non-blocking)
+                    # Plan 3.2: append cached_at for agent visibility
+                    content = cached_entry.content or ""
+                    if cached_entry.cached_at:
+                        content += f"\n\nContext7 cache for {library}: cached at {cached_entry.cached_at}; consider refreshing if docs changed."
                     return LookupResult(
                         success=True,
-                        content=cached_entry.content,
+                        content=content,
                         source="cache_stale",  # Indicate stale source
                         library=library,
                         topic=topic,
@@ -371,11 +375,14 @@ class KBLookup:
                         cached_entry=cached_entry,
                         response_time_ms=response_time,
                     )
-            
-            # Entry is fresh - return it
+
+            # Entry is fresh - return it. Plan 3.2: append cached_at for agent visibility.
+            content = cached_entry.content or ""
+            if cached_entry.cached_at:
+                content += f"\n\nContext7 cache for {library}: cached at {cached_entry.cached_at}; consider refreshing if docs changed."
             return LookupResult(
                 success=True,
-                content=cached_entry.content,
+                content=content,
                 source="cache",
                 library=library,
                 topic=topic,

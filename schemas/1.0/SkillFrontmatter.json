@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tapps-coding-agents.com/schemas/1.0/SkillFrontmatter.json",
+  "title": "SkillFrontmatter",
+  "description": "JSON Schema for SKILL.md YAML frontmatter. Used for docs and optional runtime validation in init or doctor. Plan Phase 1.3.",
+  "version": "1.0",
+  "type": "object",
+  "required": ["name", "description", "allowed-tools", "model_profile"],
+  "properties": {
+    "name": { "type": "string", "description": "Skill name (lowercase, hyphens)." },
+    "description": { "type": "string", "description": "Short description of the skill." },
+    "allowed-tools": {
+      "description": "Tools the skill may use (Cursor/IDE policy).",
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } }
+      ]
+    },
+    "model_profile": { "type": "string", "minLength": 1, "description": "Model profile name." },
+    "version": { "type": "string", "description": "Optional version." },
+    "capabilities": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Optional capability tags, e.g. read-only, writes-files, calls-llm, uses-bash, orchestrator."
+    }
+  },
+  "additionalProperties": true
+}

@@ -866,9 +866,32 @@ class WorkflowArtifactConfig(BaseModel):
         return str(base / self.base_dir / self.simple_mode_subdir)
 
 
+class WorkflowFailureConfig(BaseModel):
+    """On-step-failure behavior: retry, skip, escalate, or fail (plan 3.1)."""
+
+    on_step_fail: str = Field(
+        default="fail",
+        description="Behavior on step failure: 'fail' | 'retry' | 'skip' | 'escalate'.",
+    )
+    retry_count: int = Field(
+        default=1,
+        ge=0,
+        le=10,
+        description="Max retries when on_step_fail=='retry'.",
+    )
+    escalate_to_pause: bool = Field(
+        default=True,
+        description="When on_step_fail is 'escalate' or 'fail', set status to 'paused' (True) or 'failed' (False).",
+    )
+
+
 class WorkflowConfig(BaseModel):
     """Configuration for workflow execution"""
 
+    failure: WorkflowFailureConfig = Field(
+        default_factory=WorkflowFailureConfig,
+        description="On-step-failure behavior: retry, skip, escalate (plan 3.1).",
+    )
     polling_interval: float = Field(
         default=5.0,
         ge=1.0,
@@ -898,6 +921,26 @@ class WorkflowConfig(BaseModel):
     pre_flight_validation: bool = Field(
         default=True,
         description="Run pre-flight validation before workflow execution",
+    )
+
+
+class ContextBudgetConfig(BaseModel):
+    """Context budget when assembling Context7 and expert chunks (plan 3.2)."""
+
+    max_tokens_per_step: int = Field(
+        default=0,
+        ge=0,
+        description="Max tokens per step (0=no hard limit).",
+    )
+    max_chunks_per_step: int = Field(
+        default=50,
+        ge=1,
+        le=500,
+        description="Max chunks when injecting Context7 or expert docs.",
+    )
+    priority: list[str] = Field(
+        default_factory=lambda: ["current_task", "open_files", "recent_changes", "context7", "experts"],
+        description="Priority order when assembling context (for future use).",
     )
 
 
@@ -1215,6 +1258,36 @@ class ContextIntelligenceConfig(BaseModel):
     )
 
 
+class GuardrailConfig(BaseModel):
+    """Security guardrails for subprocess and file writes (plan 2.2)."""
+
+    sandbox_subprocess: bool = Field(
+        default=True,
+        description="When True, never use shell for subprocess; use cwd=project_root.",
+    )
+    allowed_paths_write: list[str] = Field(
+        default_factory=list,
+        description="When non-empty, writes must be under project_root and under one of these prefixes (e.g. src, tests, docs, .tapps-agents). When empty, only under project_root.",
+    )
+
+
+class HumanOversightConfig(BaseModel):
+    """Human-in-the-loop oversight for *build and *full (plan 2.3)."""
+
+    checkpoints_before_steps: list[str] = Field(
+        default_factory=list,
+        description="Step/agent names before which to prompt: e.g. implementer, designer. If --auto, skipped.",
+    )
+    require_diff_review_implementer: bool = Field(
+        default=False,
+        description="Reserved: when implementer supports preview/diff, require review before apply. Not implemented.",
+    )
+    branch_for_agent_changes: bool = Field(
+        default=True,
+        description="For *build and *full: create branch tapps-agents/build-{workflow_id}; merge to main only after human review.",
+    )
+
+
 class ProjectConfig(BaseModel):
     """Root configuration model for TappsCodingAgents project"""
 
@@ -1242,6 +1315,10 @@ class ProjectConfig(BaseModel):
     context7: Context7Config | None = Field(
         default_factory=Context7Config, description="Context7 integration configuration"
     )
+    context_budget: ContextBudgetConfig = Field(
+        default_factory=ContextBudgetConfig,
+        description="Context budget: max_chunks for Context7/expert injection; surface cached_at (plan 3.2).",
+    )
     quality_tools: QualityToolsConfig | None = Field(
         default_factory=QualityToolsConfig,
         description="Quality analysis tools configuration (Phase 6)",
@@ -1249,6 +1326,14 @@ class ProjectConfig(BaseModel):
     workflow: WorkflowConfig = Field(
         default_factory=WorkflowConfig,
         description="Workflow execution configuration",
+    )
+    guardrails: GuardrailConfig = Field(
+        default_factory=GuardrailConfig,
+        description="Security guardrails: subprocess sandbox, path allowlist for writes (plan 2.2).",
+    )
+    human_oversight: HumanOversightConfig = Field(
+        default_factory=HumanOversightConfig,
+        description="Human oversight: step checkpoints, branch-for-agent-changes (plan 2.3). require_diff_review_implementer reserved.",
     )
     simple_mode: SimpleModeConfig = Field(
         default_factory=SimpleModeConfig,

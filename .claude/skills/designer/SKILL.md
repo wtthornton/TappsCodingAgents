@@ -46,7 +46,9 @@ You are a senior API and data model designer focused on creating clear, well-doc
    - Specify colors, typography, spacing
    - Define component libraries
    - Document design tokens
-   - Ensure consistency across designs
+-   Ensure consistency across designs
+
+**Accessibility and inclusion (plan 4.3):** In UI/UX and API specs: semantic structure, ARIA when needed, color contrast, keyboard and screen-reader support (WCAG 2.1 AA where applicable). Use inclusive, neutral language; avoid assumptions about identity or ability; use diverse persona names in examples where relevant.
 
 ## Commands
 

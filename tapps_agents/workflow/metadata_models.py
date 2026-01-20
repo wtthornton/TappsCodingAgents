@@ -35,6 +35,8 @@ class ArtifactMetadata(TypedDict, total=False):
     step_id: str
     agent_id: str
     execution_mode: str
+    # Provenance: skill_name, command, step_id, workflow_id, timestamp (plan 1.1)
+    provenance: dict[str, Any]
 
 
 class PlanDetails(BaseModel):

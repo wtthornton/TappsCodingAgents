@@ -26,6 +26,39 @@ from .base import SimpleModeOrchestrator
 logger = logging.getLogger(__name__)
 
 
+def _write_fix_handoff(
+    project_root: Path,
+    workflow_id: str,
+    success: bool,
+    iterations: int = 0,
+    error: str | None = None,
+    target_file: str | None = None,
+) -> None:
+    """Write session handoff for fix workflow (plan 2.1)."""
+    try:
+        from tapps_agents.workflow.session_handoff import SessionHandoff, write_handoff
+
+        status = "completed" if success else "failed"
+        summary = f"Fix workflow {status}. Iterations: {iterations}."
+        if error:
+            summary += f" Error: {error[:100]}."
+        if target_file:
+            summary += f" Target: {target_file}."
+        handoff = SessionHandoff(
+            workflow_id=workflow_id,
+            session_ended_at=datetime.now(UTC).isoformat(),
+            summary=summary,
+            done=[f"iteration {i + 1}" for i in range(iterations)] if iterations else ["debugger"],
+            decisions=[],
+            next_steps=["Resume with tapps-agents workflow resume", "Run `bd ready`"],
+            artifact_paths=[],
+            bd_ready_hint="Run `bd ready`",
+        )
+        write_handoff(project_root, handoff)
+    except Exception as e:  # pylint: disable=broad-except
+        logger.debug("Could not write session handoff: %s", e)
+
+
 class FixOrchestrator(SimpleModeOrchestrator):
     """Orchestrator for fixing bugs and errors with review loopback and auto-commit."""
 
@@ -55,7 +88,8 @@ class FixOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         files = parameters.get("files", [])
         error_message = parameters.get("error_message", "")
-        
+        workflow_id = f"fix-{int(time.time() * 1000)}"
+
         # Load configuration
         config = self.config or load_config()
         bug_fix_config = config.bug_fix_agent
@@ -199,6 +233,12 @@ class FixOrchestrator(SimpleModeOrchestrator):
                 pass
             # #endregion
             close_issue(self.project_root, beads_issue_id)
+            _write_fix_handoff(
+                self.project_root, workflow_id,
+                success=False, iterations=0,
+                error="Debugger failed to analyze the bug",
+                target_file=files[0] if files else None,
+            )
             return {
                 "type": "fix",
                 "success": False,
@@ -240,6 +280,12 @@ class FixOrchestrator(SimpleModeOrchestrator):
         # #endregion
         if not fix_suggestion:
             close_issue(self.project_root, beads_issue_id)
+            _write_fix_handoff(
+                self.project_root, workflow_id,
+                success=False, iterations=0,
+                error="Debugger did not provide a fix suggestion",
+                target_file=files[0] if files else None,
+            )
             return {
                 "type": "fix",
                 "success": False,
@@ -278,6 +324,12 @@ class FixOrchestrator(SimpleModeOrchestrator):
 
             if not implementer_result.get("success"):
                 close_issue(self.project_root, beads_issue_id)
+                _write_fix_handoff(
+                    self.project_root, workflow_id,
+                    success=False, iterations=iteration,
+                    error=f"Implementer failed on iteration {iteration}",
+                    target_file=target_file,
+                )
                 return {
                     "type": "fix",
                     "success": False,
@@ -472,6 +524,12 @@ class FixOrchestrator(SimpleModeOrchestrator):
                     "security_scan_blocked": True,
                 })
             close_issue(self.project_root, beads_issue_id)
+            _write_fix_handoff(
+                self.project_root, workflow_id,
+                success=False, iterations=iteration,
+                error="Pre-commit security scan failed: CRITICAL/HIGH vulnerabilities detected",
+                target_file=target_file,
+            )
             return {
                 "type": "fix",
                 "success": False,
@@ -621,6 +679,11 @@ class FixOrchestrator(SimpleModeOrchestrator):
             logger.info(f"Execution metrics: {metrics}")
 
         close_issue(self.project_root, beads_issue_id)
+        _write_fix_handoff(
+            self.project_root, workflow_id,
+            success=True, iterations=iteration,
+            target_file=target_file,
+        )
         return {
             "type": "fix",
             "success": True,

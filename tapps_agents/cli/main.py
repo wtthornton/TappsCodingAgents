@@ -352,6 +352,7 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "install-dev": top_level.handle_install_dev_command,
         "analytics": top_level.handle_analytics_command,
         "customize": top_level.handle_customize_command,
+        "commands": top_level.handle_commands_command,
         "skill": top_level.handle_skill_command,
         "skill-template": top_level.handle_skill_template_command,
         "governance": top_level.handle_governance_command,

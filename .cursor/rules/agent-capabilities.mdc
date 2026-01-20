@@ -698,6 +698,10 @@ agents:
 
 ---
 
+## Ethics and Inclusion
+
+Implementer, designer, reviewer, and ops follow a11y and inclusion guidance (WCAG 2.1 AA where applicable, inclusive language, diverse examples). Details are in each agent's SKILL.md.
+
 ## Related Documentation
 
 - [Command Reference](command-reference.mdc) - ⭐ **Complete command reference** - All commands and parameters

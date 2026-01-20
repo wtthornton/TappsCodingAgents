@@ -1010,18 +1010,49 @@ class CursorWorkflowExecutor:
                     )
                 return False
         
-        # Fallback: mark as failed and stop workflow (if auto-progression disabled)
-        # Use user-friendly error message if available
+        # Fallback: WorkflowFailureConfig when auto-progression disabled (plan 3.1)
         error_message = user_friendly_error if user_friendly_error else str(result.error)
-        self.state.status = "failed"
+        try:
+            from ..core.config import load_config
+
+            cfg = load_config()
+            wf = getattr(cfg, "workflow", None)
+            fail_cfg = getattr(wf, "failure", None) if wf else None
+        except Exception:  # pylint: disable=broad-except
+            fail_cfg = None
+        on_fail = getattr(fail_cfg, "on_step_fail", "fail") or "fail"
+        retry_count = getattr(fail_cfg, "retry_count", 1) or 0
+        escalate_pause = getattr(fail_cfg, "escalate_to_pause", True)
+
+        raw = self.state.variables.get("_step_retries")
+        retries_var = raw if isinstance(raw, dict) else {}
+        self.state.variables["_step_retries"] = retries_var
+        retries_used = retries_var.get(result.step.id, 0)
+
+        if on_fail == "retry" and retries_used < retry_count:
+            retries_var[result.step.id] = retries_used + 1
+            completed_step_ids.discard(result.step.id)
+            running_step_ids.discard(result.step.id)
+            if step_logger:
+                step_logger.info(f"Retrying step {result.step.id} (attempt {retries_used + 1}/{retry_count})")
+            return False
+
+        if on_fail == "skip":
+            completed_step_ids.add(result.step.id)
+            running_step_ids.discard(result.step.id)
+            if result.step.id not in self.state.skipped_steps:
+                self.state.skipped_steps.append(result.step.id)
+            if step_logger:
+                step_logger.warning(f"Skipping step {result.step.id}: {error_message}")
+            return False
+
+        # fail or escalate: stop workflow
+        self.state.status = "paused" if (on_fail == "escalate" and escalate_pause) else "failed"
         self.state.error = f"Step {result.step.id} failed: {error_message}"
-        if step_logger:
-            step_logger.error(
-                "Step execution failed",
-                error=error_message,
-                action=result.step.action,
-            )
-        
+        suggest = None
+        if on_fail == "escalate" and recovery_result and recovery_result.get("suggestions"):
+            suggest = [getattr(s, "action", str(s)) for s in recovery_result["suggestions"][:3]]
+
         # Publish workflow failed event (Phase 2)
         await self.event_bus.publish(
             WorkflowEvent(
@@ -1031,19 +1062,19 @@ class CursorWorkflowExecutor:
                 data={
                     "error": error_message,
                     "step_id": result.step.id,
+                    "behavior": on_fail,
+                    "suggestions": suggest,
                 },
                 timestamp=datetime.now(),
                 correlation_id=f"{self.state.workflow_id}:{result.step.id}",
             )
         )
-        
+
         self.save_state()
-        
+
         # Send failure update
         if self.progress_manager:
-            await self.progress_manager.send_workflow_failed(
-                error_message
-            )
+            await self.progress_manager.send_workflow_failed(error_message)
             await self.progress_manager.stop()
         return True
 

@@ -170,6 +170,41 @@ class AuditLogger:
             details={"old_status": old_status, "new_status": new_status},
         )
 
+    def log_decision(
+        self,
+        workflow_id: str,
+        step_id: str,
+        skill_name: str,
+        command: str,
+        input_summary: str,
+        rationale: str | None,
+        outcome: str,
+    ) -> None:
+        """
+        Log a decision (e.g. quality gate, implementer write) for explainability.
+
+        Args:
+            workflow_id: Workflow identifier
+            step_id: Step identifier
+            skill_name: Skill or agent name
+            command: Command or action
+            input_summary: Brief summary of inputs
+            rationale: Optional rationale for the decision
+            outcome: Outcome (e.g. "pass", "fail", "approved")
+        """
+        self.log_event(
+            event_type="decision",
+            workflow_id=workflow_id,
+            step_id=step_id,
+            command=command,
+            status=outcome,
+            details={
+                "skill_name": skill_name,
+                "input_summary": input_summary,
+                "rationale": rationale,
+            },
+        )
+
     def query_events(
         self,
         workflow_id: str | None = None,

@@ -87,7 +87,12 @@ class SkillValidator:
     REQUIRED_FIELDS = ["name", "description", "allowed-tools", "model_profile"]
 
     # Optional YAML frontmatter fields
-    OPTIONAL_FIELDS = ["version"]
+    OPTIONAL_FIELDS = ["version", "capabilities"]
+
+    # Optional capability tags for guardrails and docs (plan 1.3)
+    VALID_CAPABILITIES = frozenset({
+        "read-only", "writes-files", "calls-llm", "uses-bash", "orchestrator",
+    })
 
     # Valid tool names (from Claude Code Skills format)
     VALID_TOOLS = {
@@ -415,6 +420,20 @@ class SkillValidator:
                     suggestion="Set 'model_profile' to a valid profile name",
                 )
             )
+
+        # Validate capabilities (optional; subset of known set)
+        caps = metadata.get("capabilities")
+        if isinstance(caps, list):
+            for c in caps:
+                if isinstance(c, str) and c.strip() and c not in self.VALID_CAPABILITIES:
+                    errors.append(
+                        ValidationError(
+                            severity=ValidationSeverity.WARNING,
+                            field="capabilities",
+                            message=f"Unknown capability: '{c}'",
+                            suggestion=f"Use one of: {', '.join(sorted(self.VALID_CAPABILITIES))}",
+                        )
+                    )
 
         # Validate name format (should be lowercase with hyphens)
         name = metadata.get("name")

@@ -16,6 +16,52 @@ class PathValidationError(ValueError):
     pass
 
 
+def assert_write_allowed(
+    path: str | Path,
+    project_root: str | Path,
+    allowed_paths_write: list[str] | None = None,
+) -> None:
+    """
+    Assert that a write to `path` is allowed by the path allowlist (plan 2.2).
+
+    When allowed_paths_write is empty or None: path must be under project_root.
+    When non-empty: path must be under project_root and the first component
+    of the relative path must be one of the allowed prefixes
+    (e.g. src, tests, docs, .tapps-agents).
+
+    Call from implementer agent and artifact writers before writing.
+
+    Args:
+        path: File or dir path to write to
+        project_root: Project root directory
+        allowed_paths_write: Allowed prefix dirs, or None/[] for “only under project_root”
+
+    Raises:
+        PathValidationError: If the path is not allowed
+    """
+    path = Path(path).resolve()
+    project_root = Path(project_root).resolve()
+    try:
+        rel = path.relative_to(project_root)
+    except ValueError:
+        raise PathValidationError(
+            f"Write path {path} is not under project root {project_root}"
+        ) from None
+    # Under project root is enough when no allowlist
+    if not allowed_paths_write:
+        return
+    parts = rel.parts
+    if not parts:
+        return  # writing project root itself
+    first = parts[0]
+    if first in allowed_paths_write:
+        return
+    raise PathValidationError(
+        f"Write path {path} is not under an allowed prefix. "
+        f"Allowed: {allowed_paths_write}. First component: {first}"
+    )
+
+
 class PathValidator:
     """
     Validates file paths against allowed roots.

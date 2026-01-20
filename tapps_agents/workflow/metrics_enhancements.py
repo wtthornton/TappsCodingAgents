@@ -31,7 +31,7 @@ VALID_STATUSES = {"success", "failed", "timeout", "cancelled", "running"}
 
 @dataclass
 class ExecutionMetric:
-    """Single execution metric record with validation."""
+    """Single execution metric record with validation. Plan 4.2: skill, gate_pass."""
 
     execution_id: str
     workflow_id: str
@@ -44,6 +44,8 @@ class ExecutionMetric:
     completed_at: str | None = None  # ISO timestamp
     error_message: str | None = None
     metadata: dict[str, Any] = field(default_factory=dict)
+    skill: str | None = None  # skill/agent name (plan 4.2)
+    gate_pass: bool | None = None  # quality gate passed, when applicable (plan 4.2)
 
     def __post_init__(self):
         """Validate metric data after initialization."""
@@ -60,14 +62,13 @@ class ExecutionMetric:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ExecutionMetric:
-        """Create from dictionary with validation."""
-        # Validate required fields
-        required_fields = ["execution_id", "workflow_id", "step_id", "command", "status", "duration_ms", "started_at"]
-        missing = [field for field in required_fields if field not in data]
+        """Create from dictionary with validation. Filters to known fields for backward compatibility."""
+        required = {"execution_id", "workflow_id", "step_id", "command", "status", "duration_ms", "started_at"}
+        missing = [f for f in required if f not in data]
         if missing:
             raise ValueError(f"Missing required fields: {missing}")
-        
-        return cls(**data)
+        known = required | {"retry_count", "completed_at", "error_message", "metadata", "skill", "gate_pass"}
+        return cls(**{k: v for k, v in data.items() if k in known})
 
     def validate(self) -> list[str]:
         """
@@ -171,6 +172,9 @@ class EnhancedExecutionMetricsCollector:
         completed_at: datetime | None = None,
         error_message: str | None = None,
         metadata: dict[str, Any] | None = None,
+        *,
+        skill: str | None = None,
+        gate_pass: bool | None = None,
     ) -> ExecutionMetric:
         """
         Record an execution metric with validation and thread safety.
@@ -210,6 +214,8 @@ class EnhancedExecutionMetricsCollector:
                 completed_at=completed_at.isoformat() if completed_at else None,
                 error_message=error_message,
                 metadata=metadata or {},
+                skill=skill,
+                gate_pass=gate_pass,
             )
 
             # Validate if enabled
@@ -574,6 +580,49 @@ class EnhancedExecutionMetricsCollector:
             },
             "stats": self._stats.copy(),
         }
+
+    def get_summary_by_skill(
+        self,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 10000,
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Get metrics summary grouped by skill (plan 4.2).
+
+        Returns:
+            Dict mapping skill name (or "unknown") to {
+                total, success_count, success_rate, average_duration_ms,
+                gate_pass_count, gate_pass_rate (only when gate_pass is recorded)
+            }
+        """
+        all_metrics = self.get_metrics(
+            start_date=start_date,
+            end_date=end_date,
+            limit=limit,
+        )
+        by_skill: dict[str, list[ExecutionMetric]] = {}
+        for m in all_metrics:
+            k = m.skill if m.skill else "unknown"
+            by_skill.setdefault(k, []).append(m)
+        out: dict[str, dict[str, Any]] = {}
+        for skill_name, ms in by_skill.items():
+            total = len(ms)
+            ok = sum(1 for x in ms if x.status == "success")
+            dur = sum(x.duration_ms for x in ms)
+            with_gate = [x for x in ms if x.gate_pass is not None]
+            gate_ok = sum(1 for x in with_gate if x.gate_pass is True)
+            rec: dict[str, Any] = {
+                "total": total,
+                "success_count": ok,
+                "success_rate": ok / total if total else 0.0,
+                "average_duration_ms": dur / total if total else 0.0,
+            }
+            if with_gate:
+                rec["gate_pass_count"] = gate_ok
+                rec["gate_pass_rate"] = gate_ok / len(with_gate) if with_gate else 0.0
+            out[skill_name] = rec
+        return out
 
     def cleanup_old_metrics(self, days_to_keep: int | None = None) -> int:
         """

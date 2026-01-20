@@ -833,6 +833,16 @@ Example: tapps-agents doctor""",
         help="Run both doctor checks and health checks for comprehensive diagnostics",
     )
 
+    # Commands index (plan 4.1): list (command, skill, execution_path) from SkillAgentRegistry
+    commands_parser = subparsers.add_parser(
+        "commands",
+        help="List or export command index from SkillAgentRegistry",
+    )
+    commands_sub = commands_parser.add_subparsers(dest="command", help="Subcommand")
+    commands_list_parser = commands_sub.add_parser("list", help="List (command, skill, execution_path)")
+    commands_list_parser.add_argument("--format", choices=["json", "text"], default="text")
+    commands_list_parser.add_argument("--output", help="Write to file (e.g. docs/COMMAND_INDEX.md); format=text writes Markdown")
+
     # Health check command
     health_parser = subparsers.add_parser(
         "health",

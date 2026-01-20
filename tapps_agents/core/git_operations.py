@@ -128,7 +128,36 @@ def create_and_checkout_branch(branch_name: str, path: Path | None = None) -> di
     except subprocess.CalledProcessError as e:
         error_msg = e.stderr or str(e) if e.stderr else str(e)
         logger.error(f"Failed to create branch: {error_msg}")
+        # If branch already exists, try to checkout (plan 2.3 branch-for-agent-changes)
+        if "already exists" in error_msg.lower():
+            try:
+                _run_git_command(["checkout", branch_name], cwd=path, check=True)
+                logger.info(f"Checked out existing branch: {branch_name}")
+                return {"success": True, "branch": branch_name, "error": None}
+            except subprocess.CalledProcessError:
+                pass
         return {"success": False, "branch": branch_name, "error": error_msg}
+
+
+def checkout_branch(branch_name: str, path: Path | None = None) -> dict[str, Any]:
+    """
+    Check out an existing branch.
+
+    Args:
+        branch_name: Name of the branch
+        path: Path to git repository (default: current directory)
+
+    Returns:
+        Dictionary with success status and branch name
+    """
+    path = path or Path.cwd()
+    if not check_git_available() or not is_git_repository(path):
+        return {"success": False, "branch": branch_name, "error": "Git not available or not a repository"}
+    try:
+        _run_git_command(["checkout", branch_name], cwd=path, check=True)
+        return {"success": True, "branch": branch_name, "error": None}
+    except subprocess.CalledProcessError as e:
+        return {"success": False, "branch": branch_name, "error": e.stderr or str(e)}
 
 
 def commit_changes(
@@ -263,6 +292,21 @@ def push_changes(
     # Safety check: never force push to main
     if force and branch == "main":
         raise ValueError("Cannot force push to main branch")
+
+    # Plan 3.3: no_direct_push_main from policies.yaml
+    if branch == "main":
+        try:
+            from .policy_loader import load_policies
+            p = load_policies(path)
+            if p and p.branch_protection and getattr(p.branch_protection, "no_direct_push_main", True):
+                raise ValueError(
+                    "Direct push to main is disallowed by .tapps-agents/policies.yaml (branch_protection.no_direct_push_main). "
+                    "Create a branch and merge via PR, or adjust policies."
+                )
+        except ValueError:
+            raise
+        except Exception:  # pylint: disable=broad-except
+            pass  # if policy load fails, allow push
 
     # Validate git availability
     if not check_git_available():

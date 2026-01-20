@@ -32,6 +32,14 @@ class WorkflowEvent:
     error: str | None = None
     artifacts: dict[str, Any] | None = None
     metadata: dict[str, Any] | None = None
+    # Decision logging and trace fields (plan 1.1, 1.4)
+    rationale: str | None = None
+    input_summary: str | None = None
+    criteria: dict[str, Any] | None = None
+    skill_name: str | None = None
+    model_profile: str | None = None
+    artifact_paths: list[str] | None = None
+    tool_call_summary: dict[str, Any] | None = None  # e.g. command, success, duration_ms
 
     def to_dict(self) -> dict[str, Any]:
         """Convert event to dictionary for JSON serialization."""
@@ -48,7 +56,14 @@ class WorkflowEvent:
             if timestamp_str.endswith("Z"):
                 timestamp_str = timestamp_str[:-1]
             data["timestamp"] = datetime.fromisoformat(timestamp_str)
-        return cls(**data)
+        # Only pass known fields (backward compat with old event format)
+        known = {
+            "event_type", "workflow_id", "seq", "timestamp", "step_id", "agent",
+            "action", "status", "error", "artifacts", "metadata",
+            "rationale", "input_summary", "criteria", "skill_name", "model_profile",
+            "artifact_paths", "tool_call_summary",
+        }
+        return cls(**{k: v for k, v in data.items() if k in known})
 
 
 @dataclass
@@ -258,6 +273,14 @@ class WorkflowEventLog:
         error: str | None = None,
         artifacts: dict[str, Any] | None = None,
         metadata: dict[str, Any] | None = None,
+        *,
+        rationale: str | None = None,
+        input_summary: str | None = None,
+        criteria: dict[str, Any] | None = None,
+        skill_name: str | None = None,
+        model_profile: str | None = None,
+        artifact_paths: list[str] | None = None,
+        tool_call_summary: dict[str, Any] | None = None,
     ) -> WorkflowEvent:
         """
         Emit a workflow event (append-only write).
@@ -272,6 +295,13 @@ class WorkflowEventLog:
             error: Error message (if applicable)
             artifacts: Artifact summaries (if applicable)
             metadata: Additional metadata
+            rationale: Optional decision rationale (decision logging)
+            input_summary: Optional input summary (decision logging)
+            criteria: Optional criteria dict (decision logging)
+            skill_name: Optional skill name (trace)
+            model_profile: Optional model profile (trace)
+            artifact_paths: Optional list of artifact paths produced (trace)
+            tool_call_summary: Optional dict with command, success, duration_ms (trace)
 
         Returns:
             Created WorkflowEvent
@@ -289,6 +319,13 @@ class WorkflowEventLog:
             error=error,
             artifacts=artifacts,
             metadata=metadata,
+            rationale=rationale,
+            input_summary=input_summary,
+            criteria=criteria,
+            skill_name=skill_name,
+            model_profile=model_profile,
+            artifact_paths=artifact_paths,
+            tool_call_summary=tool_call_summary,
         )
 
         # Append to event log file (best-effort, non-blocking)
@@ -451,6 +488,74 @@ class WorkflowEventLog:
                 }
                 for e in events
             ],
+        }
+
+    def get_execution_trace(self, workflow_id: str) -> dict[str, Any]:
+        """
+        Derive a structured execution trace from events for metrics/AgentOps.
+
+        Args:
+            workflow_id: Workflow ID
+
+        Returns:
+            Dict with workflow_id, started_at, ended_at, steps (list of
+            step_id, agent, skill_name, action, started_at, ended_at,
+            duration_ms, status, tool_calls, artifact_paths, error).
+        """
+        events = self.read_events(workflow_id)
+        if not events:
+            return {"workflow_id": workflow_id, "steps": []}
+
+        workflow_start = next((e for e in events if e.event_type == "workflow_start"), None)
+        workflow_end = next((e for e in events if e.event_type == "workflow_end"), None)
+        step_evts = [
+            e for e in events
+            if e.event_type in ("step_start", "step_finish", "step_fail", "step_skip")
+        ]
+
+        # Build steps: group by step_id, pair start with finish/fail/skip
+        steps_d: dict[str, dict[str, Any]] = {}
+        for e in step_evts:
+            if not e.step_id:
+                continue
+            if e.step_id not in steps_d:
+                steps_d[e.step_id] = {
+                    "step_id": e.step_id,
+                    "agent": e.agent,
+                    "skill_name": e.skill_name,
+                    "action": e.action,
+                    "started_at": None,
+                    "ended_at": None,
+                    "duration_ms": None,
+                    "status": e.status or "unknown",
+                    "tool_call_summary": e.tool_call_summary,
+                    "artifact_paths": e.artifact_paths or [],
+                    "error": e.error,
+                }
+            s = steps_d[e.step_id]
+            if e.event_type == "step_start":
+                s["started_at"] = e.timestamp.isoformat() + "Z"
+            else:
+                s["ended_at"] = e.timestamp.isoformat() + "Z"
+                s["status"] = e.status or s["status"]
+                s["tool_call_summary"] = e.tool_call_summary or s["tool_call_summary"]
+                s["artifact_paths"] = e.artifact_paths or s["artifact_paths"]
+                s["error"] = e.error or s["error"]
+
+        for s in steps_d.values():
+            if s["started_at"] and s["ended_at"]:
+                try:
+                    start = datetime.fromisoformat(s["started_at"].replace("Z", "+00:00"))
+                    end = datetime.fromisoformat(s["ended_at"].replace("Z", "+00:00"))
+                    s["duration_ms"] = (end - start).total_seconds() * 1000
+                except Exception:
+                    pass
+
+        return {
+            "workflow_id": workflow_id,
+            "started_at": workflow_start.timestamp.isoformat() + "Z" if workflow_start else None,
+            "ended_at": workflow_end.timestamp.isoformat() + "Z" if workflow_end else None,
+            "steps": list(steps_d.values()),
         }
 
     def subscribe(

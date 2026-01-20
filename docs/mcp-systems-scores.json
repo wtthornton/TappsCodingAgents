@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "updated": "2026-01-20",
+  "framework": "TappsCodingAgents-aligned",
+  "categories": {
+    "mcp_protocol": {"weight": 0.20, "description": "MCP server quality, tools, resources, transports"},
+    "context7_docs": {"weight": 0.20, "description": "Context7, library docs, RAG, framework detection"},
+    "code_quality_scoring": {"weight": 0.20, "description": "Built-in scoring, npm audit, ESLint, coverage, gates"},
+    "testing_reliability": {"weight": 0.15, "description": "Unit, integration, E2E, coverage, CI"},
+    "developer_experience": {"weight": 0.15, "description": "Setup, Docker, CLI, config, examples"},
+    "features_scope": {"weight": 0.10, "description": "Breadth of tools and use cases"}
+  },
+  "scores": {
+    "TappsCodingAgents": {
+      "url": "(this project)",
+      "note": "SDLC orchestration: 14+ agents, Simple Mode, epic, quality gates, Context7, MCP config",
+      "categories": {
+        "mcp_protocol": 7.0,
+        "context7_docs": 8.5,
+        "code_quality_scoring": 9.0,
+        "testing_reliability": 8.5,
+        "developer_experience": 8.5,
+        "features_scope": 9.5
+      },
+      "overall": 84.0,
+      "best_for": ["SDLC orchestration", "*build/*fix/*review/*epic", "quality gates", "workflow presets", "epic execution"]
+    },
+    "codefortify": {
+      "url": "https://github.com/wtthornton/codefortify",
+      "categories": {
+        "mcp_protocol": 8.0,
+        "context7_docs": 8.5,
+        "code_quality_scoring": 9.5,
+        "testing_reliability": 7.5,
+        "developer_experience": 8.5,
+        "features_scope": 8.0
+      },
+      "overall": 84.0,
+      "best_for": ["project quality scoring", "validation", "init", "multi-framework"]
+    },
+    "LocalMCP": {
+      "url": "https://github.com/wtthornton/LocalMCP",
+      "note": "PromptMCP: enhance, todo, breakdown, health",
+      "categories": {
+        "mcp_protocol": 8.5,
+        "context7_docs": 9.0,
+        "code_quality_scoring": 5.0,
+        "testing_reliability": 8.0,
+        "developer_experience": 8.5,
+        "features_scope": 8.5
+      },
+      "overall": 78.8,
+      "best_for": ["prompt enhancement", "Context7/RAG", "todo", "task breakdown"]
+    },
+    "agentforge-mcp": {
+      "url": "https://github.com/wtthornton/agentforge-mcp",
+      "categories": {
+        "mcp_protocol": 7.0,
+        "context7_docs": 6.0,
+        "code_quality_scoring": 5.0,
+        "testing_reliability": 6.0,
+        "developer_experience": 7.0,
+        "features_scope": 7.5
+      },
+      "overall": 63.8,
+      "best_for": ["full agent platform", "MCP + backend + frontend"]
+    }
+  },
+  "not_found": ["wtthornton/Agent-Forge"],
+  "recommendation": {
+    "highest_overall": ["TappsCodingAgents", "codefortify"],
+    "by_use_case": {
+      "sdlc_orchestration_build_fix_review_epic": "TappsCodingAgents",
+      "code_project_scoring": "codefortify",
+      "prompt_enhancement_context7": "LocalMCP",
+      "full_agent_platform": "agentforge-mcp"
+    },
+    "tapps_position": "Orchestration layer; use with codefortify (JS/TS scoring) and LocalMCP (prompt/todo) as complements"
+  }
+}

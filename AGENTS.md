@@ -178,6 +178,8 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 @simple-mode *epic <epic-doc.md>       # Execute Epic documents
 ```
 
+**Human oversight (plan 2.3):** For `*build` and `*full`, when `human_oversight.branch_for_agent_changes` is true (default), work runs on a branch `tapps-agents/build-{workflow_id}`; merge to main only after human review. Optional step checkpoints (`checkpoints_before_steps`, e.g. `["implementer","designer"]`) prompt before running those steps unless `--auto`.
+
 **For complete Simple Mode documentation, see:** `.cursor/rules/simple-mode.mdc`
 
 ## Individual Agent Commands (Advanced)

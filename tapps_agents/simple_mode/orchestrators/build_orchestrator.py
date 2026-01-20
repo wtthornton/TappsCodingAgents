@@ -41,6 +41,7 @@ from tapps_agents.simple_mode.documentation_manager import (
 from tapps_agents.simple_mode.documentation_reader import (
     WorkflowDocumentationReader,
 )
+from tapps_agents.workflow.confirmation_handler import ConfirmationHandler
 from tapps_agents.workflow.models import Artifact
 from tapps_agents.workflow.step_checkpoint import StepCheckpointManager
 from ..intent_parser import Intent
@@ -248,6 +249,23 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 (wf_dir / ".beads_issue_id").write_text(beads_issue_id, encoding="utf-8")
             except OSError as e:
                 logger.debug("beads: could not persist beads_issue_id for resume: %s", e)
+
+        # Plan 2.3: branch for agent changes
+        ho = getattr(self.config, "human_oversight", None) if self.config else None
+        if ho and getattr(ho, "branch_for_agent_changes", True):
+            try:
+                from tapps_agents.core.git_operations import (
+                    create_and_checkout_branch,
+                    is_git_repository,
+                )
+
+                if is_git_repository(self.project_root):
+                    safe = workflow_id.replace("/", "-").replace(":", "-").replace("\\", "-")[:50]
+                    branch_name = f"tapps-agents/build-{safe}"
+                    create_and_checkout_branch(branch_name, self.project_root)
+                    logger.info(f"Created/using branch for agent changes: {branch_name}")
+            except Exception as e:  # pylint: disable=broad-except
+                logger.debug("Could not create branch for agent changes: %s", e)
 
         doc_manager: WorkflowDocumentationManager | None = None
         checkpoint_manager: StepCheckpointManager | None = None
@@ -521,6 +539,34 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 "step_name": step_5_name,
             })
 
+            # Plan 2.3: step-level checkpoints before executing agent tasks
+            auto = parameters.get("auto", False)
+            checkpoints = (
+                getattr(getattr(self.config, "human_oversight", None), "checkpoints_before_steps", None) or []
+            )
+            if checkpoints:
+                to_confirm = [
+                    t["agent"]
+                    for t in agent_tasks
+                    if t["agent"].lower() in [c.lower() for c in checkpoints]
+                    or any(c.lower() in t["agent"].lower() for c in checkpoints)
+                ]
+                if to_confirm:
+                    conf = ConfirmationHandler(auto_mode=auto)
+                    if not conf.confirm_proceed(
+                        ", ".join(to_confirm),
+                        f"Proceed with step(s): {', '.join(to_confirm)}? [y/N]: ",
+                        auto=auto,
+                    ):
+                        return {
+                            "type": "build",
+                            "success": False,
+                            "error": f"User aborted at checkpoint before: {', '.join(to_confirm)}",
+                            "workflow_id": workflow_id,
+                            "steps_executed": list(steps_executed),
+                            "fast_mode": fast_mode,
+                        }
+
             # Execute agent tasks
             workflow_errors = []  # Track errors for final reporting
             result = {"success": True, "results": {}}  # Default result
@@ -731,6 +777,32 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                 # Note: These would need actual file paths from implementation results
                 # For now, we'll skip if no files were created
                 if result.get("results"):
+                    # Plan 2.3: checkpoint before review/test
+                    checkpoints_67 = (
+                        getattr(getattr(self.config, "human_oversight", None), "checkpoints_before_steps", None) or []
+                    )
+                    to_confirm_67 = [
+                        t["agent"]
+                        for t in review_test_tasks
+                        if t["agent"].lower() in [c.lower() for c in checkpoints_67]
+                        or any(c.lower() in t["agent"].lower() for c in checkpoints_67)
+                    ]
+                    if to_confirm_67:
+                        conf_67 = ConfirmationHandler(auto_mode=auto)
+                        if not conf_67.confirm_proceed(
+                            ", ".join(to_confirm_67),
+                            f"Proceed with step(s): {', '.join(to_confirm_67)}? [y/N]: ",
+                            auto=auto,
+                        ):
+                            # Abort: return current state
+                            return {
+                                "type": "build",
+                                "success": False,
+                                "error": f"User aborted at checkpoint before: {', '.join(to_confirm_67)}",
+                                "workflow_id": workflow_id,
+                                "steps_executed": list(steps_executed),
+                                "fast_mode": fast_mode,
+                            }
                     # Execute review and test if we have implementation results
                     try:
                         review_test_result = await orchestrator.execute_parallel(review_test_tasks)
@@ -900,6 +972,26 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             # Aggregate all outputs (Simple Mode Enhancement)
             aggregated_output = output_aggregator.aggregate()
             executable_instructions = output_aggregator.get_executable_instructions()
+
+            # Session handoff on run end (plan 2.1)
+            try:
+                from tapps_agents.workflow.session_handoff import SessionHandoff, write_handoff
+                from datetime import datetime, timezone
+
+                status = "completed" if overall_success else "failed"
+                handoff = SessionHandoff(
+                    workflow_id=workflow_id,
+                    session_ended_at=datetime.now(timezone.utc).isoformat(),
+                    summary=f"Build workflow {status}. Steps: {len(steps_executed or [])}.",
+                    done=[f"step {s}" for s in (steps_executed or [])],
+                    decisions=[],
+                    next_steps=["Resume with tapps-agents workflow resume", "Run `bd ready`"],
+                    artifact_paths=[],
+                    bd_ready_hint="Run `bd ready`",
+                )
+                write_handoff(self.project_root, handoff)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.debug("Could not write session handoff: %s", e)
 
             return {
                 "type": "build",

@@ -27,6 +27,8 @@ def write_artifact(
     ),
     worktree_path: Path | None = None,
     artifact_dir: Path | None = None,
+    *,
+    provenance: dict | None = None,
 ) -> Path:
     """
     Write an artifact to disk in a deterministic location.
@@ -35,6 +37,7 @@ def write_artifact(
         artifact: The artifact to write
         worktree_path: Optional worktree path (for background agents)
         artifact_dir: Optional custom artifact directory
+        provenance: Optional dict with skill_name, command, step_id, workflow_id, timestamp
 
     Returns:
         Path to the written artifact file
@@ -60,12 +63,26 @@ def write_artifact(
 
     artifact_path = output_dir / filename
 
+    # Plan 2.2: path allowlist for writes
+    try:
+        from ..core.config import load_config
+        from ..core.path_validator import PathValidator, assert_write_allowed
+
+        proot = PathValidator().project_root
+        cfg = load_config()
+        aw = getattr(getattr(cfg, "guardrails", None), "allowed_paths_write", None) or []
+        assert_write_allowed(artifact_path, proot, aw)
+    except Exception:  # pylint: disable=broad-except
+        pass  # backward compat: if guardrails not configured, allow
+
     # Write JSON artifact
     # Use model_dump for Pydantic models, fall back to to_dict for backward compatibility
     if hasattr(artifact, "model_dump"):
         artifact_dict = artifact.model_dump(mode="json", exclude_none=False)
     else:
         artifact_dict = artifact.to_dict()
+    if provenance:
+        artifact_dict.setdefault("metadata", {})["provenance"] = provenance
     with open(artifact_path, "w", encoding="utf-8") as f:
         json.dump(artifact_dict, f, indent=2)
 

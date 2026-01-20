@@ -2585,6 +2585,42 @@ def handle_generate_rules_command(args: object) -> None:
         sys.exit(1)
 
 
+def handle_commands_command(args: object) -> None:
+    """Handle commands index (plan 4.1). Dispatches to list subcommand."""
+    sub = getattr(args, "command", None)
+    if sub == "list":
+        _handle_commands_list(args)
+    else:
+        print("Use: tapps-agents commands list [--format json|text] [--output path]", file=sys.stderr)
+        sys.exit(1)
+
+
+def _handle_commands_list(args: object) -> None:
+    """List (command, skill, execution_path) from SkillAgentRegistry. Optionally write COMMAND_INDEX.md."""
+    from pathlib import Path
+    from ...core.skill_agent_registry import get_registry
+    root = Path.cwd()
+    reg = get_registry(root)
+    cmds = reg.list_commands()
+    out_fmt = getattr(args, "format", "text")
+    out_path = getattr(args, "output", None)
+    if out_fmt == "json":
+        import json
+        data = [{"command": c, "skill": s, "execution_path": e} for c, s, e in cmds]
+        text = json.dumps(data, indent=2)
+    else:
+        lines = ["| command | skill | execution_path |", "| --- | --- | --- |"]
+        for c, s, e in cmds:
+            lines.append(f"| {c} | {s} | {e} |")
+        text = "# Command index (SkillAgentRegistry)\n\n" + "\n".join(lines)
+    if out_path:
+        Path(out_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(out_path).write_text(text, encoding="utf-8")
+        print(f"Wrote {out_path}")
+    else:
+        print(text)
+
+
 def handle_doctor_command(args: object) -> None:
     """Handle doctor command"""
     from ...core.doctor import collect_doctor_report

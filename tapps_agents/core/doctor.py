@@ -476,6 +476,49 @@ def collect_doctor_report(
         )
     )
 
+    # --- Skills & Agents (plan 1.2) ---
+    try:
+        from .skill_agent_registry import get_registry
+
+        reg = get_registry(root)
+        skills = reg.list_skills()
+        n = len(skills)
+        k = sum(1 for e in skills if e.has_workflow_handler)
+        L = sum(1 for e in skills if e.is_orchestrator)
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="SKILLS_AGENTS",
+                message=f"Skills & Agents: {n} skills ({k} with workflow handlers, {L} orchestrators)",
+            )
+        )
+        no_path = reg.skills_with_no_execution_path()
+        if no_path:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="SKILLS_AGENTS",
+                    message=f"Skills with no execution path: {', '.join(no_path)} (may be invoked via orchestrators or external tools)",
+                )
+            )
+        # Plan 2.2: tool scoping documentation
+        if any(e.allowed_tools for e in skills):
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="SKILLS_AGENTS",
+                    message="Skills declare allowed-tools; ensure Cursor/IDE is configured to respect tool scoping.",
+                )
+            )
+    except Exception as e:  # pylint: disable=broad-except
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="SKILLS_AGENTS",
+                message=f"Skills & Agents: Could not load registry: {e}",
+            )
+        )
+
     # --- MCP Server checks ---
     from .init_project import detect_mcp_servers
     try:

@@ -21,7 +21,7 @@ import os
 import subprocess  # nosec B404 - fixed args, no shell
 import sys
 from dataclasses import asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -655,6 +655,7 @@ class WorkflowExecutor:
                 agent=step.agent,
                 action=step.action,
                 status="running",
+                skill_name=step.agent,
             )
             self._notify_observers(event)
 
@@ -750,26 +751,126 @@ class WorkflowExecutor:
                     )
                 return False
         
-        # Fallback: emit event and mark as failed (if auto-progression disabled)
+        # Fallback: WorkflowFailureConfig when auto-progression disabled (plan 3.1)
+        try:
+            from ..core.config import load_config
+
+            cfg = load_config()
+            wf = getattr(cfg, "workflow", None)
+            fail_cfg = getattr(wf, "failure", None) if wf else None
+        except Exception:  # pylint: disable=broad-except
+            fail_cfg = None
+        on_fail = getattr(fail_cfg, "on_step_fail", "fail") or "fail"
+        retry_count = getattr(fail_cfg, "retry_count", 1) or 0
+        escalate_pause = getattr(fail_cfg, "escalate_to_pause", True)
+
+        raw = self.state.variables.get("_step_retries")
+        retries_var = raw if isinstance(raw, dict) else {}
+        self.state.variables["_step_retries"] = retries_var
+        retries_used = retries_var.get(result.step.id, 0)
+
+        if on_fail == "retry" and retries_used < retry_count:
+            retries_var[result.step.id] = retries_used + 1
+            completed_step_ids.discard(result.step.id)
+            running_step_ids.discard(result.step.id)
+            self.event_log.emit_event(
+                event_type="step_fail",
+                workflow_id=self.state.workflow_id,
+                step_id=result.step.id,
+                agent=result.step.agent,
+                action=result.step.action,
+                status="retry",
+                error=str(result.error),
+                metadata={"behavior": "retry", "attempt": retries_used + 1, "max": retry_count},
+            )
+            try:
+                from .audit_logger import AuditLogger
+
+                AuditLogger(project_root=self.project_root).log_event(
+                    "step_fail_behavior",
+                    workflow_id=self.state.workflow_id,
+                    step_id=result.step.id,
+                    status="retry",
+                    details={"attempt": retries_used + 1, "max": retry_count, "error": str(result.error)[:200]},
+                )
+            except Exception:  # pylint: disable=broad-except
+                pass
+            if step_logger:
+                step_logger.info(f"Retrying step {result.step.id} (attempt {retries_used + 1}/{retry_count})")
+            return False
+
+        if on_fail == "skip":
+            completed_step_ids.add(result.step.id)
+            running_step_ids.discard(result.step.id)
+            if result.step.id not in self.state.skipped_steps:
+                self.state.skipped_steps.append(result.step.id)
+            self.event_log.emit_event(
+                event_type="step_skip",
+                workflow_id=self.state.workflow_id,
+                step_id=result.step.id,
+                agent=result.step.agent,
+                action=result.step.action,
+                status="skipped",
+                error=str(result.error),
+                metadata={"behavior": "skip"},
+            )
+            try:
+                from .audit_logger import AuditLogger
+
+                AuditLogger(project_root=self.project_root).log_event(
+                    "step_fail_behavior",
+                    workflow_id=self.state.workflow_id,
+                    step_id=result.step.id,
+                    status="skip",
+                    details={"error": str(result.error)[:200]},
+                )
+            except Exception:  # pylint: disable=broad-except
+                pass
+            if step_logger:
+                step_logger.warning(f"Skipping step {result.step.id}: {result.error}")
+            return False
+
+        # fail or escalate: stop workflow
+        self.state.status = "paused" if (on_fail == "escalate" and escalate_pause) else "failed"
+        self.state.error = f"Step {result.step.id} failed: {result.error}"
+        suggest = None
+        if on_fail == "escalate":
+            try:
+                from .error_recovery import ErrorRecoveryManager
+
+                erm = ErrorRecoveryManager()
+                out = erm.handle_error(str(result.error), context=None, attempt=1)
+                sugs = out.get("suggestions") or []
+                suggest = [getattr(s, "action", str(s)) for s in sugs[:3]]
+            except Exception:  # pylint: disable=broad-except
+                pass
         event = self.event_log.emit_event(
             event_type="step_fail",
             workflow_id=self.state.workflow_id,
             step_id=result.step.id,
             agent=result.step.agent,
             action=result.step.action,
-            status="failed",
+            status=self.state.status,
             error=str(result.error),
+            skill_name=result.step.agent,
+            tool_call_summary={"success": False, "error": str(result.error)},
+            metadata={"behavior": on_fail, "suggestions": suggest[:3] if suggest else None},
         )
         self._notify_observers(event)
-        # Mark as failed and stop workflow
-        self.state.status = "failed"
-        self.state.error = f"Step {result.step.id} failed: {result.error}"
-        if step_logger:
-            step_logger.error(
-                "Step execution failed",
-                error=str(result.error),
-                action=result.step.action,
+        try:
+            from .audit_logger import AuditLogger
+
+            AuditLogger(project_root=self.project_root).log_event(
+                "step_fail_behavior",
+                workflow_id=self.state.workflow_id,
+                step_id=result.step.id,
+                status=on_fail,
+                details={"error": str(result.error)[:200], "suggestions": suggest[:2] if suggest else None},
             )
+        except Exception:  # pylint: disable=broad-except
+            pass
+        if step_logger:
+            step_logger.error("Step execution failed", error=str(result.error), action=result.step.action)
         self.save_state()
         return True
 
@@ -785,18 +886,27 @@ class WorkflowExecutor:
         completed_step_ids.add(result.step.id)
         running_step_ids.discard(result.step.id)
         
-        # Prepare artifact summaries for event
+        # Prepare artifact summaries for event and provenance for metadata
         artifact_summaries = {}
+        provenance = {
+            "skill_name": result.step.agent,
+            "command": result.step.action,
+            "step_id": result.step.id,
+            "workflow_id": self.state.workflow_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
         if result.artifacts and isinstance(result.artifacts, dict):
             for art_name, art_data in result.artifacts.items():
                 if isinstance(art_data, dict):
+                    meta = dict(art_data.get("metadata") or {})
+                    meta["provenance"] = provenance
                     artifact = Artifact(
                         name=art_data.get("name", art_name),
                         path=art_data.get("path", ""),
                         status="complete",
                         created_by=result.step.id,
                         created_at=datetime.now(),
-                        metadata=art_data.get("metadata", {}),
+                        metadata=meta,
                     )
                     self.state.artifacts[artifact.name] = artifact
                     artifact_summaries[artifact.name] = {
@@ -808,6 +918,12 @@ class WorkflowExecutor:
         if self.print_paths and artifact_summaries:
             self._print_step_artifacts(result.step, artifact_summaries, result.step_execution)
         
+        # Build trace fields for step_finish
+        artifact_paths = [s.get("path") for s in artifact_summaries.values() if isinstance(s, dict) and s.get("path")]
+        step_exec = result.step_execution
+        duration_ms = (step_exec.duration_seconds * 1000) if step_exec and step_exec.duration_seconds is not None else None
+        tool_call_summary = {"success": True, "duration_ms": duration_ms, "command": f"{result.step.agent} {result.step.action}"}
+
         # Emit step_finish event
         event = self.event_log.emit_event(
             event_type="step_finish",
@@ -817,6 +933,9 @@ class WorkflowExecutor:
             action=result.step.action,
             status="completed",
             artifacts=artifact_summaries,
+            skill_name=result.step.agent,
+            artifact_paths=artifact_paths if artifact_paths else None,
+            tool_call_summary=tool_call_summary,
         )
         self._notify_observers(event)
         
@@ -1169,7 +1288,8 @@ class WorkflowExecutor:
                         scoring_config = step.metadata.get("scoring", {}) if step.metadata else {}
                         thresholds_config = scoring_config.get("thresholds", {})  # scoring_config is always a dict
                         thresholds = QualityThresholds.from_dict(thresholds_config)
-                        
+                        from ..core.policy_loader import apply_quality_policy
+                        thresholds = apply_quality_policy(thresholds, self.project_root)
                         quality_gate = QualityGate(thresholds=thresholds)
                         gate_result = quality_gate.evaluate_from_review_result(review_result, thresholds)
                         

@@ -92,10 +92,13 @@ class MetricsCollectorAdapter:
         completed_at: datetime | None = None,
         error_message: str | None = None,
         metadata: dict[str, Any] | None = None,
+        *,
+        skill: str | None = None,
+        gate_pass: bool | None = None,
     ):
         """
-        Record execution metric (backward compatible).
-        
+        Record execution metric (backward compatible). Plan 4.2: skill, gate_pass.
+
         Returns:
             ExecutionMetric instance
         """
@@ -111,6 +114,8 @@ class MetricsCollectorAdapter:
                 completed_at=completed_at,
                 error_message=error_message,
                 metadata=metadata,
+                skill=skill,
+                gate_pass=gate_pass,
             )
         else:
             return self.collector.record_execution(
@@ -123,6 +128,8 @@ class MetricsCollectorAdapter:
                 started_at=started_at,
                 completed_at=completed_at,
                 error_message=error_message,
+                skill=skill,
+                gate_pass=gate_pass,
             )
 
     def get_metrics(
@@ -167,7 +174,7 @@ class MetricsCollectorAdapter:
     ) -> dict[str, Any]:
         """
         Get metrics summary with optional date range (backward compatible).
-        
+
         Returns:
             Summary dictionary
         """
@@ -178,6 +185,23 @@ class MetricsCollectorAdapter:
             )
         else:
             return self.collector.get_summary()
+
+    def get_summary_by_skill(
+        self,
+        start_date: datetime | None = None,
+        end_date: datetime | None = None,
+        limit: int = 10000,
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Get metrics summary grouped by skill (plan 4.2). Delegates to collector.
+        """
+        if self.use_enhanced and isinstance(self.collector, EnhancedExecutionMetricsCollector):
+            return self.collector.get_summary_by_skill(
+                start_date=start_date,
+                end_date=end_date,
+                limit=limit,
+            )
+        return self.collector.get_summary_by_skill(limit=limit)
 
     def flush(self) -> None:
         """Flush write buffer (enhanced only)."""

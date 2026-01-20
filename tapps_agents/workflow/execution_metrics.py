@@ -19,7 +19,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class ExecutionMetric:
-    """Single execution metric record."""
+    """Single execution metric record. Plan 4.2: skill, gate_pass."""
 
     execution_id: str
     workflow_id: str
@@ -31,6 +31,8 @@ class ExecutionMetric:
     retry_count: int = 0
     completed_at: str | None = None  # ISO timestamp
     error_message: str | None = None
+    skill: str | None = None  # skill/agent name (plan 4.2)
+    gate_pass: bool | None = None  # quality gate passed, when applicable (plan 4.2)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
@@ -38,8 +40,13 @@ class ExecutionMetric:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ExecutionMetric:
-        """Create from dictionary."""
-        return cls(**data)
+        """Create from dictionary. Filters to known fields for backward compatibility."""
+        known = {
+            "execution_id", "workflow_id", "step_id", "command", "status",
+            "duration_ms", "started_at", "retry_count", "completed_at", "error_message",
+            "skill", "gate_pass",
+        }
+        return cls(**{k: v for k, v in data.items() if k in known})
 
 
 class ExecutionMetricsCollector:
@@ -72,6 +79,9 @@ class ExecutionMetricsCollector:
         started_at: datetime | None = None,
         completed_at: datetime | None = None,
         error_message: str | None = None,
+        *,
+        skill: str | None = None,
+        gate_pass: bool | None = None,
     ) -> ExecutionMetric:
         """
         Record an execution metric.
@@ -105,6 +115,8 @@ class ExecutionMetricsCollector:
             started_at=started_at.isoformat(),
             completed_at=completed_at.isoformat() if completed_at else None,
             error_message=error_message,
+            skill=skill,
+            gate_pass=gate_pass,
         )
 
         # Store to file
@@ -272,4 +284,41 @@ class ExecutionMetricsCollector:
                 for status in ["success", "failed", "timeout", "cancelled"]
             },
         }
+
+    def get_summary_by_skill(
+        self,
+        limit: int = 1000,
+    ) -> dict[str, dict[str, Any]]:
+        """
+        Get metrics summary grouped by skill (plan 4.2).
+
+        Returns:
+            Dict mapping skill name (or "unknown") to {
+                total, success_count, success_rate, average_duration_ms,
+                gate_pass_count, gate_pass_rate (only when gate_pass is recorded)
+            }
+        """
+        all_metrics = self.get_metrics(limit=limit)
+        by_skill: dict[str, list[ExecutionMetric]] = {}
+        for m in all_metrics:
+            k = m.skill if m.skill else "unknown"
+            by_skill.setdefault(k, []).append(m)
+        out: dict[str, dict[str, Any]] = {}
+        for skill_name, ms in by_skill.items():
+            total = len(ms)
+            ok = sum(1 for x in ms if x.status == "success")
+            dur = sum(x.duration_ms for x in ms)
+            with_gate = [x for x in ms if x.gate_pass is not None]
+            gate_ok = sum(1 for x in with_gate if x.gate_pass is True)
+            rec: dict[str, Any] = {
+                "total": total,
+                "success_count": ok,
+                "success_rate": ok / total if total else 0.0,
+                "average_duration_ms": dur / total if total else 0.0,
+            }
+            if with_gate:
+                rec["gate_pass_count"] = gate_ok
+                rec["gate_pass_rate"] = gate_ok / len(with_gate) if with_gate else 0.0
+            out[skill_name] = rec
+        return out
 

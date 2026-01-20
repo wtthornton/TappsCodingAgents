@@ -264,6 +264,35 @@ class AdvancedStateManager:
         from .file_utils import atomic_write_json
         atomic_write_json(last_path, last_data, indent=2)
 
+        # Session handoff when workflow ends (plan 2.1)
+        if state.status in ("completed", "failed", "paused"):
+            try:
+                from .session_handoff import SessionHandoff, write_handoff
+
+                project_root = self.state_dir.parent.parent
+                done = list(state.completed_steps or [])
+                artifact_paths = [
+                    a.path for a in (state.artifacts or {}).values()
+                    if getattr(a, "path", None)
+                ]
+                next_steps = [
+                    "Resume with: tapps-agents workflow resume",
+                    "Run `bd ready` to see unblocked tasks (if using Beads).",
+                ]
+                handoff = SessionHandoff(
+                    workflow_id=state.workflow_id,
+                    session_ended_at=datetime.now(timezone.utc).isoformat(),
+                    summary=f"Workflow {state.status}. Completed steps: {len(done)}.",
+                    done=done,
+                    decisions=[],
+                    next_steps=next_steps,
+                    artifact_paths=artifact_paths,
+                    bd_ready_hint="Run `bd ready`" if done else None,
+                )
+                write_handoff(project_root, handoff)
+            except Exception as e:  # pylint: disable=broad-except
+                logger.debug("Could not write session handoff: %s", e)
+
         logger.info(f"Saved workflow state: {state.workflow_id} to {state_path}")
         return state_path
 

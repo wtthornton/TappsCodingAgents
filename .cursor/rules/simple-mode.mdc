@@ -25,6 +25,8 @@ alwaysApply: true
 - [ ] Is this test generation? → Use `@simple-mode *test`
 - [ ] **Only skip if:** Simple one-off operation OR user explicitly requests direct edit
 
+**Session start:** If resuming or starting a new session, load `.tapps-agents/workflow-state/*/SESSION_HANDOFF.md` or the latest SESSION_HANDOFF when relevant to avoid repeating context.
+
 **Example Interceptor Pattern:**
 ```
 User: "Add user authentication to my app"

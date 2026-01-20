@@ -94,3 +94,37 @@ class ConfirmationHandler:
 
         return False
 
+    def format_step_confirmation(self, step_id: str, description: str) -> str:
+        """
+        Format step-level confirmation message (plan 2.3).
+
+        Args:
+            step_id: Step or agent name (e.g. implementer, design)
+            description: Short description of the step
+
+        Returns:
+            Formatted prompt string
+        """
+        return f"Proceed with step {step_id} ({description})? [y/N]: "
+
+    def confirm_proceed(self, step_id: str, message: str | None = None, *, auto: bool | None = None) -> bool:
+        """
+        Prompt for step-level confirmation; if auto, skip (return True). Plan 2.3.
+
+        Args:
+            step_id: Step or agent name
+            message: Override message; if None, uses format_step_confirmation(step_id, step_id)
+            auto: If True, skip prompt and return True. If None, uses self.auto_mode.
+
+        Returns:
+            True to proceed, False to abort
+        """
+        if auto if auto is not None else self.auto_mode:
+            return True
+        msg = message or self.format_step_confirmation(step_id, step_id)
+        try:
+            response = input(msg)
+            return self.parse_confirmation(response)
+        except (EOFError, KeyboardInterrupt):
+            return False
+

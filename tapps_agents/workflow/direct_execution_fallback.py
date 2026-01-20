@@ -4,6 +4,10 @@ Direct Execution Fallback - Execute commands directly when Background Agent API 
 This module provides a simpler fallback mechanism that executes commands directly
 via subprocess instead of relying on file-based triggers. This eliminates the
 need for watch_paths configuration and provides more reliable execution.
+
+Plan 2.2: When GuardrailConfig.sandbox_subprocess is True, never use shell
+(create_subprocess_shell); use create_subprocess_exec only. Prefer exec for
+python -m tapps_agents.cli (already the case when not is_raw_cli).
 """
 
 import asyncio
@@ -13,6 +17,19 @@ from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+
+def _get_guardrail_config() -> Any:
+    """Load GuardrailConfig from project config; return defaults on failure."""
+    try:
+        from ..core.config import GuardrailConfig, load_config
+
+        cfg = load_config()
+        return getattr(cfg, "guardrails", None) or GuardrailConfig()
+    except Exception:  # pylint: disable=broad-except
+        from ..core.config import GuardrailConfig
+
+        return GuardrailConfig()
 
 
 class DirectExecutionFallback:
@@ -27,6 +44,7 @@ class DirectExecutionFallback:
         self,
         project_root: Path | None = None,
         timeout_seconds: float = 3600.0,
+        guardrail_config: Any = None,
     ):
         """
         Initialize direct execution fallback.
@@ -34,9 +52,11 @@ class DirectExecutionFallback:
         Args:
             project_root: Project root directory
             timeout_seconds: Maximum execution time in seconds
+            guardrail_config: Optional GuardrailConfig; if None, loaded from project config
         """
-        self.project_root = project_root or Path.cwd()
+        self.project_root = Path(project_root or Path.cwd())
         self.timeout_seconds = timeout_seconds
+        self._guardrail = guardrail_config if guardrail_config is not None else _get_guardrail_config()
 
     async def execute_command(
         self,
@@ -109,30 +129,37 @@ class DirectExecutionFallback:
             import platform
             is_windows = platform.system() == "Windows"
             
-            if is_windows and is_raw_cli:
-                # On Windows, for raw CLI commands, use shell=True for built-in commands
-                # Check if command looks like a shell builtin (echo, type, etc.)
+            # Plan 2.2: when sandbox_subprocess, never use shell
+            sandbox = getattr(self._guardrail, "sandbox_subprocess", True)
+            if sandbox:
+                use_shell = False
+            elif is_windows and is_raw_cli:
+                # On Windows, for raw CLI commands, use shell=True only for a fixed
+                # whitelist of builtins; do not interpolate user input into the shell string
                 first_word = cli_command.split()[0] if cli_command.split() else ""
                 shell_builtins = {"echo", "type", "dir", "cd", "set"}
                 use_shell = first_word.lower() in shell_builtins
             else:
                 use_shell = False
-            
+
+            # Plan 2.2: when sandbox_subprocess, use cwd=project_root
+            cwd = self.project_root if sandbox else execution_path
+
             if use_shell:
-                # Use shell=True for Windows built-in commands
+                # Use shell=True for Windows built-in commands only when not sandboxed
                 process = await asyncio.create_subprocess_shell(
                     cli_command,
-                    cwd=execution_path,
+                    cwd=cwd,
                     env=env,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
                 )
             else:
-                # Use exec for regular commands
+                # Use exec for regular commands (and always when sandboxed)
                 command_parts = shlex.split(cli_command, posix=not is_windows)
                 process = await asyncio.create_subprocess_exec(
                     *command_parts,
-                    cwd=execution_path,
+                    cwd=cwd,
                     env=env,
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE,
