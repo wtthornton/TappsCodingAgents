@@ -1,3 +1,12 @@
+"""
+Integration tests for WorktreeManager.
+
+These tests use real git commands (subprocess) and a real filesystem to validate
+WorktreeManager behavior. They belong in integration/ rather than unit/ because:
+- They invoke real `git` via subprocess
+- They test the full interaction: WorktreeManager + git + filesystem
+"""
+
 from __future__ import annotations
 
 import json
@@ -8,7 +17,7 @@ import pytest
 
 from tapps_agents.workflow.worktree_manager import WorktreeManager
 
-pytestmark = pytest.mark.unit
+pytestmark = [pytest.mark.integration, pytest.mark.asyncio]
 
 
 def _git(cwd: Path, *args: str) -> subprocess.CompletedProcess[str]:
@@ -33,7 +42,6 @@ def _init_git_repo(tmp_path: Path) -> Path:
     return repo
 
 
-@pytest.mark.asyncio
 async def test_create_worktree_branch_already_exists(tmp_path: Path) -> None:
     repo = _init_git_repo(tmp_path)
     manager = WorktreeManager(project_root=repo)
@@ -49,7 +57,6 @@ async def test_create_worktree_branch_already_exists(tmp_path: Path) -> None:
     assert wt2.exists()
 
 
-@pytest.mark.asyncio
 async def test_create_worktree_fallback_copies_repo_content(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -77,7 +84,6 @@ async def test_create_worktree_fallback_copies_repo_content(
     assert (wt / "pyproject.toml").exists()
 
 
-@pytest.mark.asyncio
 async def test_cleanup_all_removes_only_worktrees_dir(tmp_path: Path) -> None:
     repo = _init_git_repo(tmp_path)
     manager = WorktreeManager(project_root=repo)
@@ -93,7 +99,6 @@ async def test_cleanup_all_removes_only_worktrees_dir(tmp_path: Path) -> None:
     assert sentinel.exists()
 
 
-@pytest.mark.asyncio
 async def test_merge_worktree_clean_merge(tmp_path: Path) -> None:
     """Test clean merge case - no conflicts."""
     repo = _init_git_repo(tmp_path)
@@ -130,7 +135,6 @@ async def test_merge_worktree_clean_merge(tmp_path: Path) -> None:
     assert (repo / "worktree.txt").read_text(encoding="utf-8") == "worktree content\n"
 
 
-@pytest.mark.asyncio
 async def test_merge_worktree_with_conflicts(tmp_path: Path) -> None:
     """Test merge with conflicts - verify conflict detection and report generation."""
     repo = _init_git_repo(tmp_path)
@@ -192,7 +196,6 @@ async def test_merge_worktree_with_conflicts(tmp_path: Path) -> None:
     assert (repo / "conflict.txt").read_text(encoding="utf-8") == "main modified\n"
 
 
-@pytest.mark.asyncio
 async def test_merge_worktree_requires_clean_working_tree(tmp_path: Path) -> None:
     """Test that merge fails if working tree is not clean."""
     repo = _init_git_repo(tmp_path)
@@ -218,7 +221,6 @@ async def test_merge_worktree_requires_clean_working_tree(tmp_path: Path) -> Non
         await manager.merge_worktree("test-dirty")
 
 
-@pytest.mark.asyncio
 async def test_merge_worktree_nonexistent_worktree(tmp_path: Path) -> None:
     """Test that merge fails for nonexistent worktree."""
     repo = _init_git_repo(tmp_path)
@@ -228,7 +230,6 @@ async def test_merge_worktree_nonexistent_worktree(tmp_path: Path) -> None:
         await manager.merge_worktree("nonexistent")
 
 
-@pytest.mark.asyncio
 async def test_abort_merge_no_merge_in_progress(tmp_path: Path) -> None:
     """Test that abort returns False when no merge is in progress."""
     repo = _init_git_repo(tmp_path)
@@ -238,7 +239,6 @@ async def test_abort_merge_no_merge_in_progress(tmp_path: Path) -> None:
     assert result is False
 
 
-@pytest.mark.asyncio
 async def test_merge_worktree_specific_target_branch(tmp_path: Path) -> None:
     """Test merging into a specific target branch."""
     repo = _init_git_repo(tmp_path)

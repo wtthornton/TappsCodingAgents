@@ -113,8 +113,12 @@ class TestCorrelationIDs:
         assert step_exec.error == error_msg
         assert step_exec.status == "failed"
 
-    def test_workflow_state_step_executions_populated(self, tmp_path: Path):
-        """Test that WorkflowState.step_executions is populated during execution."""
+    def test_workflow_state_step_executions_initialized_after_start(self, tmp_path: Path):
+        """Test that WorkflowState.step_executions is initialized as a list after start().
+
+        start() only creates initial state; it does not execute steps. step_executions
+        is initialized via default_factory=list and remains empty until steps run.
+        """
         workflow = Workflow(
             id="test-workflow",
             name="Test Workflow",
@@ -135,11 +139,11 @@ class TestCorrelationIDs:
         executor = WorkflowExecutor(project_root=tmp_path, auto_mode=True)
         executor.workflow = workflow
         state = executor.start(workflow=workflow)
-        
-        # After execution, step_executions should be populated
-        # (Note: This test may need to be adjusted based on actual execution behavior)
+
         assert state.step_executions is not None
         assert isinstance(state.step_executions, list)
+        # start() does not run steps, so step_executions is empty
+        assert len(state.step_executions) == 0
 
 
 @pytest.mark.unit

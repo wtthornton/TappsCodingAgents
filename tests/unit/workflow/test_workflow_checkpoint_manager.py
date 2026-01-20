@@ -4,8 +4,8 @@ Unit tests for Workflow Checkpoint Manager.
 Epic 12: State Persistence and Resume - Story 12.7
 """
 
-import time
-from datetime import datetime
+from datetime import datetime, timedelta
+from unittest.mock import patch
 
 import pytest
 
@@ -146,27 +146,35 @@ class TestWorkflowCheckpointManager:
         assert manager.should_checkpoint(sample_step, sample_state) is True
 
     def test_should_checkpoint_time_based(self, sample_step, sample_state):
-        """Test should_checkpoint for TIME_BASED frequency."""
+        """Test should_checkpoint for TIME_BASED frequency (mocked time, no sleep)."""
         config = CheckpointConfig(
             frequency=CheckpointFrequency.TIME_BASED,
             interval=1,  # 1 second
         )
         manager = WorkflowCheckpointManager(config=config)
 
-        # First checkpoint should be allowed
-        assert manager.should_checkpoint(sample_step, sample_state) is True
+        base = datetime(2025, 1, 1, 12, 0, 0)
+        # record_checkpoint uses datetime.now() once; each should_checkpoint uses it once
+        with patch(
+            "tapps_agents.workflow.checkpoint_manager.datetime"
+        ) as m_datetime:
+            m_datetime.now.side_effect = [
+                base,  # record_checkpoint
+                base,  # immediate second check: elapsed=0 < 1 -> False
+                base + timedelta(seconds=1.1),  # after interval: elapsed>=1 -> True
+            ]
 
-        # Record checkpoint
-        manager.record_checkpoint("step-1")
+            # First checkpoint should be allowed (last_checkpoint_time is None)
+            assert manager.should_checkpoint(sample_step, sample_state) is True
 
-        # Immediate second check should not checkpoint
-        assert manager.should_checkpoint(sample_step, sample_state) is False
+            # Record checkpoint (uses first now() -> base)
+            manager.record_checkpoint("step-1")
 
-        # Wait for interval
-        time.sleep(1.1)
+            # Immediate second check should not checkpoint (elapsed 0)
+            assert manager.should_checkpoint(sample_step, sample_state) is False
 
-        # Should checkpoint after interval
-        assert manager.should_checkpoint(sample_step, sample_state) is True
+            # Should checkpoint after interval (elapsed 1.1 >= 1)
+            assert manager.should_checkpoint(sample_step, sample_state) is True
 
     def test_record_checkpoint(self):
         """Test recording checkpoint."""

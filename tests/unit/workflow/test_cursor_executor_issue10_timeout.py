@@ -116,39 +116,31 @@ async def test_workflow_timeout_uses_config_value(
     cursor_mode_env,
     simple_workflow: Workflow,
 ):
-    """Test that workflow timeout uses config value correctly."""
+    """Test that run() passes 2x config timeout_seconds to asyncio.wait_for."""
     executor = CursorWorkflowExecutor(
         project_root=temp_project_root,
         auto_mode=True,
     )
 
-    # Mock config with specific timeout
-    with patch("tapps_agents.core.config.load_config") as mock_config:
-        mock_config_instance = MagicMock()
-        mock_config_instance.workflow.timeout_seconds = 5.0
-        mock_config.return_value = mock_config_instance
+    mock_state = MagicMock()
+    mock_state.status = "completed"
+    mock_state.workflow_id = "test-workflow-123"
 
-        # Workflow timeout should be 2x step timeout = 10 seconds
-        # Mock _initialize_run
-        executor._initialize_run = AsyncMock(return_value=None)
+    with patch("tapps_agents.core.config.load_config") as mock_load_config:
+        mock_cfg = MagicMock()
+        mock_cfg.workflow.timeout_seconds = 5.0
+        mock_load_config.return_value = mock_cfg
 
-        # Create a function that hangs for 12 seconds (longer than 10s timeout)
-        async def hanging_inner():
-            await asyncio.sleep(12)
-            return MagicMock()
+        with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait_for:
+            mock_wait_for.return_value = mock_state
 
-        executor._finalize_run = AsyncMock(return_value=MagicMock())
-
-        await executor.start(workflow=simple_workflow, user_prompt="Test")
-
-        # Should timeout after ~10 seconds (2x config timeout)
-        start_time = asyncio.get_event_loop().time()
-        with pytest.raises(TimeoutError):
+            await executor.start(workflow=simple_workflow, user_prompt="Test")
             await executor.run(workflow=simple_workflow)
-        elapsed = asyncio.get_event_loop().time() - start_time
 
-        # Should timeout around 10 seconds (allow some margin)
-        assert 9.0 <= elapsed <= 12.0, f"Timeout should be ~10s, got {elapsed}s"
+            mock_wait_for.assert_called_once()
+            call_kwargs = mock_wait_for.call_args[1]
+            # run() uses 2x config timeout_seconds: 5.0 * 2 = 10.0
+            assert call_kwargs["timeout"] == 10.0
 
 
 @pytest.mark.unit
