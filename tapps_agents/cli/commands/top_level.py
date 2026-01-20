@@ -1754,22 +1754,27 @@ def _print_init_results(results: dict[str, Any]) -> None:
     if results.get("config"):
         print("  Project Config: Created")
         print("    - .tapps-agents/config.yaml")
-        # Show template application info if available
-        if results.get("template_applied"):
-            template_name = results.get("template_name")
-            template_reason = results.get("template_reason", "")
-            if template_name:
-                print(f"    - Template applied: {template_name}")
-                if template_reason:
-                    print(f"      ({template_reason})")
-        elif results.get("template_name") is not None:
-            # Template was selected but not applied (e.g., file not found)
-            template_name = results.get("template_name")
-            template_reason = results.get("template_reason", "")
-            if template_name:
-                print(f"    - Template selected: {template_name} (not applied)")
-                if template_reason:
-                    print(f"      ({template_reason})")
+        # Show template application info from combined_info (project-type + tech-stack)
+        combined = results.get("template_combined_info") or {}
+        pt = (combined.get("project_type_template") or {}) if isinstance(combined.get("project_type_template"), dict) else {}
+        ts = (combined.get("tech_stack_template") or {}) if isinstance(combined.get("tech_stack_template"), dict) else {}
+        if pt.get("applied") and pt.get("project_type"):
+            print(f"    - Project type applied: {pt.get('project_type')}")
+            if pt.get("reason"):
+                print(f"      ({pt['reason']})")
+        if ts.get("applied") and ts.get("template_name"):
+            print(f"    - Tech stack applied: {ts.get('template_name')}")
+            if ts.get("reason"):
+                print(f"      ({ts['reason']})")
+        # Fallback: no combined_info but legacy fields present
+        if not combined and results.get("template_applied") and results.get("template_name"):
+            print(f"    - Template applied: {results.get('template_name')}")
+            if results.get("template_reason"):
+                print(f"      ({results['template_reason']})")
+        elif not combined and results.get("template_name") and not results.get("template_applied"):
+            print(f"    - Template selected: {results.get('template_name')} (not applied)")
+            if results.get("template_reason"):
+                print(f"      ({results['template_reason']})")
     else:
         print("  Project Config: Skipped or already exists")
 
@@ -2123,6 +2128,45 @@ def _print_reset_results(results: dict[str, Any]) -> None:
         print("\n⚠️  No backup created (--no-backup was used)")
 
 
+def _print_init_complete_summary(results: dict[str, Any]) -> None:
+    """Print a brief Init complete status (success / with warnings / with errors) and 1–3 next actions."""
+    from ...core.unicode_safe import safe_print
+
+    validation = results.get("validation") or {}
+    mcp = results.get("mcp_config") or {}
+    mcp_val = mcp.get("validation") or {}
+
+    has_errors = (
+        (validation.get("overall_valid") is False and validation.get("errors"))
+        or (mcp_val.get("valid") is False and mcp_val.get("issues"))
+    )
+    has_warnings = bool(
+        validation.get("warnings")
+        or mcp_val.get("warnings")
+        or (mcp.get("npx_available") is False)
+        or (results.get("cache_requested") and results.get("cache_prepopulated") is False)
+    )
+
+    print()
+    if has_errors:
+        safe_print("[X] Init complete (with errors). Please fix the issues above.")
+    elif has_warnings:
+        safe_print("[OK] Init complete (with warnings). Review warnings above.")
+    else:
+        safe_print("[OK] Init complete.")
+
+    # 1–3 next actions
+    next_actions = []
+    if has_errors or has_warnings:
+        next_actions.append("tapps-agents doctor")
+    next_actions.append('@simple-mode *build "your feature"')
+    if mcp_val.get("valid") is False and mcp_val.get("issues"):
+        next_actions.append("Set CONTEXT7_API_KEY if using Context7")
+    for i, act in enumerate(next_actions[:3], 1):
+        print(f"  {i}. {act}")
+    print()
+
+
 def _print_next_steps(project_root: Path | None = None) -> None:
     """Print next steps instructions. project_root is used for optional Beads (bd) hint."""
     print("\n" + "=" * 60)
@@ -2395,6 +2439,20 @@ def handle_init_command(args: object) -> None:
     if results.get("tech_stack"):
         _print_tech_stack(results["tech_stack"])
 
+    # Run deferred cache pre-population (after core init so user sees success first)
+    if results.get("cache_requested"):
+        import asyncio
+        from ...core.init_project import pre_populate_context7_cache
+        try:
+            proot = Path(results["project_root"])
+            libs = results.get("cache_libraries") or []
+            cache_result = asyncio.run(pre_populate_context7_cache(proot, libs))
+            results["cache_prepopulated"] = cache_result.get("success", False)
+            results["cache_result"] = cache_result
+        except Exception as e:
+            results["cache_prepopulated"] = False
+            results["cache_error"] = str(e)
+
     # Show cache pre-population results
     if results.get("cache_prepopulated") is not None:
         _print_cache_results(results)
@@ -2414,6 +2472,7 @@ def handle_init_command(args: object) -> None:
     # Run environment diagnostics
     _run_environment_check(results["project_root"])
 
+    _print_init_complete_summary(results)
     _print_next_steps(Path(results["project_root"]))
 
 

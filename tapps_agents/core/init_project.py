@@ -5,7 +5,6 @@ Helps initialize a new project with TappsCodingAgents configuration,
 Cursor Rules, and workflow presets.
 """
 
-import asyncio
 import json
 import logging
 import os
@@ -2470,6 +2469,11 @@ def init_project(
     version_after = get_framework_version()
     results["version_after"] = version_after
 
+    # --- Step order (dependencies): tech_stack -> config -> MCP -> rules -> presets
+    # -> skills -> customizations -> cursorignore -> tech_stack_config -> experts
+    # -> cache (best-effort, non-blocking) -> validation
+    # MCP runs early so validation and npx/API-key checks surface before long steps.
+
     # Detect tech stack early (needed for template application)
     tech_stack = detect_tech_stack(project_root)
     results["tech_stack"] = tech_stack
@@ -2483,9 +2487,48 @@ def init_project(
         if config_path:
             results["files_created"].append(config_path)
         if template_info:
-            results["template_applied"] = template_info.get("applied", False)
-            results["template_name"] = template_info.get("template_name")
-            results["template_reason"] = template_info.get("reason")
+            # template_info is combined_info: {tech_stack_template, project_type_template}
+            ts = template_info.get("tech_stack_template") or {}
+            pt = template_info.get("project_type_template") or {}
+            results["template_combined_info"] = template_info
+            results["template_applied"] = bool(ts.get("applied") or pt.get("applied"))
+            # Prefer tech-stack name; fallback to project-type
+            results["template_name"] = ts.get("template_name") or (str(pt.get("project_type")) if pt.get("project_type") else None)
+            results["template_reason"] = ts.get("reason") or pt.get("reason")
+
+    # Initialize MCP config (project-local) — early so MCP validation surfaces before rules/presets/skills
+    mcp_created, mcp_path, mcp_validation = init_cursor_mcp_config(
+        project_root,
+        overwrite=reset_mcp,
+        merge=True
+    )
+    npx_available, npx_error = check_npx_available()
+    results["mcp_config"] = {
+        "created": mcp_created,
+        "path": mcp_path,
+        "validation": mcp_validation,
+        "npx_available": npx_available,
+        "npx_error": npx_error,
+    }
+    if mcp_path:
+        results["files_created"].append(mcp_path)
+    mcp_config_file = project_root / ".cursor" / "mcp.json"
+    if mcp_config_file.exists():
+        normalized, normalize_msg = normalize_config_encoding(mcp_config_file)
+        if normalized:
+            results["mcp_encoding_normalized"] = normalize_msg
+            logger.info(normalize_msg)
+    project_config_file = project_root / ".tapps-agents" / "config.yaml"
+    if project_config_file.exists():
+        normalized, normalize_msg = normalize_config_encoding(project_config_file)
+        if normalized:
+            results["config_encoding_normalized"] = normalize_msg
+            logger.info(normalize_msg)
+    mcp_status = detect_mcp_servers(project_root)
+    results["mcp_servers"] = mcp_status
+    if mcp_created and mcp_path:
+        mcp_status["project_local_config"] = mcp_path
+        mcp_status["note"] = "Project-local `.cursor/mcp.json` was created. Context7 MCP server configured."
 
     # Initialize Cursor Rules
     if include_cursor_rules:
@@ -2551,69 +2594,17 @@ def init_project(
     if tech_stack_path:
         results["files_created"].append(tech_stack_path)
 
-    # Initialize MCP config (project-local)
-    mcp_created, mcp_path, mcp_validation = init_cursor_mcp_config(
-        project_root, 
-        overwrite=reset_mcp,
-        merge=True
-    )
-    
-    # Check npx availability
-    npx_available, npx_error = check_npx_available()
-    
-    results["mcp_config"] = {
-        "created": mcp_created,
-        "path": mcp_path,
-        "validation": mcp_validation,
-        "npx_available": npx_available,
-        "npx_error": npx_error,
-    }
-    if mcp_path:
-        results["files_created"].append(mcp_path)
-    
-    # Normalize MCP config encoding (fix UTF-8 BOM issues on Windows)
-    mcp_config_file = project_root / ".cursor" / "mcp.json"
-    if mcp_config_file.exists():
-        normalized, normalize_msg = normalize_config_encoding(mcp_config_file)
-        if normalized:
-            results["mcp_encoding_normalized"] = normalize_msg
-            logger.info(normalize_msg)
-    
-    # Normalize project config encoding (fix UTF-8 BOM issues on Windows)
-    # User-editable config files may have BOM if edited with certain Windows editors
-    project_config_file = project_root / ".tapps-agents" / "config.yaml"
-    if project_config_file.exists():
-        normalized, normalize_msg = normalize_config_encoding(project_config_file)
-        if normalized:
-            results["config_encoding_normalized"] = normalize_msg
-            logger.info(normalize_msg)
-    
-    # Detect MCP servers
-    mcp_status = detect_mcp_servers(project_root)
-    results["mcp_servers"] = mcp_status
-    # Update MCP status with project-local config info
-    if mcp_created and mcp_path:
-        mcp_status["project_local_config"] = mcp_path
-        mcp_status["note"] = f"Project-local `.cursor/mcp.json` was created. Context7 MCP server configured."
-    
     # Scaffold experts and RAG files
     experts_scaffold = init_experts_scaffold(project_root)
     results["experts_scaffold"] = experts_scaffold
     if experts_scaffold.get("created"):
         results["files_created"].extend(experts_scaffold["created"])
 
-    # Pre-populate cache with expert libraries even if no project libraries detected
-    # Expert libraries should always be cached for built-in experts
+    # Defer cache pre-population to CLI so core init completes first and cache runs
+    # after "Init complete" (non-blocking from the user's view of core success).
     if pre_populate_cache:
-        try:
-            cache_result = asyncio.run(
-                pre_populate_context7_cache(project_root, tech_stack["libraries"])
-            )
-            results["cache_prepopulated"] = cache_result.get("success", False)
-            results["cache_result"] = cache_result
-        except Exception as e:
-            results["cache_prepopulated"] = False
-            results["cache_error"] = str(e)
+        results["cache_requested"] = True
+        results["cache_libraries"] = tech_stack.get("libraries", [])
 
     # Validate setup using comprehensive verification
     try:

@@ -93,54 +93,29 @@ class TestInitProjectCursorArtifacts:
         assert tech_stack["package_managers"] == []
         assert tech_stack["detected_files"] == []
 
-    def test_init_project_cache_prepopulation_with_empty_project_libraries(
-        self, tmp_path: Path, monkeypatch
+    def test_init_project_cache_deferred_when_pre_populate_cache_true(
+        self, tmp_path: Path
     ):
         """
-        Test that cache prepopulation attempts even when project libraries are empty.
-        
-        This test verifies the fix for the bug where expert libraries weren't cached
-        when project libraries were empty.
+        Test that with pre_populate_cache=True, init_project defers cache to CLI
+        by setting cache_requested and cache_libraries (does not run cache itself).
+        Cache runs later in the CLI after core init output.
         """
-        # Mock the cache prepopulation to avoid actual Context7 calls
-        cache_prepop_called = False
-        cache_prepop_libraries = None
-
-        async def mock_pre_populate_context7_cache(project_root, libraries):
-            nonlocal cache_prepop_called, cache_prepop_libraries
-            cache_prepop_called = True
-            cache_prepop_libraries = libraries
-            # Return a mock result indicating expert libraries would be cached
-            return {
-                "success": True,
-                "cached": 50,
-                "failed": 0,
-                "total": 50,
-                "project_libraries": 0,
-                "expert_libraries": 50,
-            }
-
-        # Patch the function
-        monkeypatch.setattr(
-            "tapps_agents.core.init_project.pre_populate_context7_cache",
-            mock_pre_populate_context7_cache,
-        )
-
         results = init_project(
             project_root=tmp_path,
             include_cursor_rules=False,
             include_workflow_presets=False,
             include_config=True,
             include_skills=False,
-            include_background_agents=False,
             pre_populate_cache=True,
         )
 
-        # Verify cache prepopulation was attempted even with empty project libraries
-        assert cache_prepop_called, "Cache prepopulation should be called even with empty project"
-        assert cache_prepop_libraries == [], "Should pass empty list for project libraries"
-        assert results["cache_prepopulated"] is True
-        assert results["cache_result"]["expert_libraries"] == 50
+        # Deferred: init_project does not run cache, only requests it
+        assert results.get("cache_requested") is True
+        assert results.get("cache_libraries") == []
+        assert "cache_result" not in results or results.get("cache_result") is None
+        # cache_prepopulated remains default until CLI runs cache
+        assert results.get("cache_prepopulated") is False
 
     def test_init_project_with_requirements_txt_detects_tech_stack(self, tmp_path: Path):
         """Test that init_project detects tech stack from requirements.txt."""
