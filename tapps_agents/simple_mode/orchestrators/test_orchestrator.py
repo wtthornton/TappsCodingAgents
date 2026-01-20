@@ -36,36 +36,47 @@ class TestOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         files = parameters.get("files", [])
 
-        # Create multi-agent orchestrator
-        orchestrator = MultiAgentOrchestrator(
-            project_root=self.project_root,
-            config=self.config,
-            max_parallel=1,
-        )
+        from ..beads_hooks import create_test_issue, close_issue
 
-        # Prepare tester task
-        target_file = files[0] if files else None
-        tester_args = {}
-        if target_file:
-            tester_args["file"] = target_file
+        beads_issue_id: str | None = None
+        if self.config:
+            beads_issue_id = create_test_issue(
+                self.project_root, self.config, files[0] if files else ""
+            )
 
-        agent_tasks = [
-            {
-                "agent_id": "tester-1",
-                "agent": "tester",
-                "command": "test",
-                "args": tester_args,
-            },
-        ]
+        try:
+            # Create multi-agent orchestrator
+            orchestrator = MultiAgentOrchestrator(
+                project_root=self.project_root,
+                config=self.config,
+                max_parallel=1,
+            )
 
-        # Execute tester
-        result = await orchestrator.execute_parallel(agent_tasks)
+            # Prepare tester task
+            target_file = files[0] if files else None
+            tester_args = {}
+            if target_file:
+                tester_args["file"] = target_file
 
-        return {
-            "type": "test",
-            "success": result.get("success", False),
-            "agents_executed": result.get("total_agents", 0),
-            "results": result.get("results", {}),
-            "summary": result.get("summary", {}),
-        }
+            agent_tasks = [
+                {
+                    "agent_id": "tester-1",
+                    "agent": "tester",
+                    "command": "test",
+                    "args": tester_args,
+                },
+            ]
+
+            # Execute tester
+            result = await orchestrator.execute_parallel(agent_tasks)
+
+            return {
+                "type": "test",
+                "success": result.get("success", False),
+                "agents_executed": result.get("total_agents", 0),
+                "results": result.get("results", {}),
+                "summary": result.get("summary", {}),
+            }
+        finally:
+            close_issue(self.project_root, beads_issue_id)
 

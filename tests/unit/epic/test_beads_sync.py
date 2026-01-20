@@ -63,11 +63,12 @@ class TestSyncEpicToBeads:
             return r
 
         epic = _make_epic()
-        out = sync_epic_to_beads(epic, tmp_path, run_bd)
+        story_to_bd, epic_parent_id = sync_epic_to_beads(epic, tmp_path, run_bd, create_parent=False)
 
-        assert out["8.1"] == "Proj-a1b2"
-        assert out["8.2"] == "Proj-c3d4"
-        assert out["8.3"] == "Proj-e5f6"
+        assert story_to_bd["8.1"] == "Proj-a1b2"
+        assert story_to_bd["8.2"] == "Proj-c3d4"
+        assert story_to_bd["8.3"] == "Proj-e5f6"
+        assert epic_parent_id is None
 
     def test_dep_add_called_for_dependencies(self, tmp_path: Path) -> None:
         """sync_epic_to_beads calls run_bd with dep add child parent for dependencies."""
@@ -87,7 +88,7 @@ class TestSyncEpicToBeads:
             return r
 
         epic = _make_epic()
-        sync_epic_to_beads(epic, tmp_path, run_bd)
+        sync_epic_to_beads(epic, tmp_path, run_bd, create_parent=False)
 
         # 8.2 depends on 8.1 -> dep add 8.2_bd 8.1_bd (child, parent)
         assert ("Proj-c3d4", "Proj-a1b2") in dep_add_calls or any(
@@ -113,16 +114,16 @@ class TestSyncEpicToBeads:
             description="D",
             stories=[_story(1, 1, "S1"), _story(1, 2, "S2")],
         )
-        out = sync_epic_to_beads(epic, tmp_path, run_bd)
-        assert "1.1" in out and out["1.1"] in ids
-        assert "1.2" in out and out["1.2"] in ids
+        story_to_bd, _ = sync_epic_to_beads(epic, tmp_path, run_bd, create_parent=False)
+        assert "1.1" in story_to_bd and story_to_bd["1.1"] in ids
+        assert "1.2" in story_to_bd and story_to_bd["1.2"] in ids
 
     def test_partial_mapping_on_create_failure(self, tmp_path: Path) -> None:
         """When one create fails (returncode!=0), that story is omitted; partial mapping returned."""
         call_count = [0]
 
         def run_bd(args: list[str], cwd: Path | None = None) -> Any:
-            r = Mock(returncode=0, stdout="Created issue: X-y1", stderr="")
+            r = Mock(returncode=0, stdout="Created issue: Proj-xyz1", stderr="")
             if args[0] == "create":
                 call_count[0] += 1
                 if call_count[0] == 2:
@@ -137,7 +138,32 @@ class TestSyncEpicToBeads:
             description="D",
             stories=[_story(1, 1, "S1"), _story(1, 2, "S2"), _story(1, 3, "S3")],
         )
-        out = sync_epic_to_beads(epic, tmp_path, run_bd)
-        assert "1.1" in out
-        assert "1.2" not in out
-        assert "1.3" in out
+        story_to_bd, _ = sync_epic_to_beads(epic, tmp_path, run_bd, create_parent=False)
+        assert "1.1" in story_to_bd
+        assert "1.2" not in story_to_bd
+        assert "1.3" in story_to_bd
+
+    def test_create_parent_returns_epic_parent_id(self, tmp_path: Path) -> None:
+        """When create_parent=True, first create is Epic parent; epic_parent_id is parsed and returned."""
+        call_order: list[str] = []
+        ids = ["EpicParent-a1b2", "Proj-c3d4", "Proj-e5f6"]
+
+        def run_bd(args: list[str], cwd: Path | None = None) -> Any:
+            r = Mock(returncode=0, stdout="", stderr="")
+            if args[0] == "create":
+                # First create = parent ("Epic 8:"), then stories
+                if "Epic 8:" in (args[1] if len(args) > 1 else ""):
+                    r.stdout = f"Created issue: {ids[0]}"
+                    call_order.append("parent")
+                else:
+                    i = len(call_order) - 1
+                    r.stdout = f"Created issue: {ids[1 + (i % 2)]}"
+                    call_order.append("story")
+            return r
+
+        epic = _make_epic()
+        story_to_bd, epic_parent_id = sync_epic_to_beads(epic, tmp_path, run_bd, create_parent=True)
+
+        assert epic_parent_id == "EpicParent-a1b2"
+        assert "8.1" in story_to_bd and "8.2" in story_to_bd and "8.3" in story_to_bd
+        assert call_order[0] == "parent"

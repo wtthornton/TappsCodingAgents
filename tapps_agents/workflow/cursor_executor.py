@@ -276,6 +276,23 @@ class CursorWorkflowExecutor:
             },
         )
 
+        # Beads: create workflow issue when enabled (store for close in run finally)
+        try:
+            from ..core.config import load_config
+            from ..simple_mode.beads_hooks import create_workflow_issue
+            config = load_config(self.project_root / ".tapps-agents" / "config.yaml")
+            if "_beads_issue_id" not in (self.state.variables or {}):
+                bid = create_workflow_issue(
+                    self.project_root,
+                    config,
+                    workflow.name,
+                    user_prompt or (self.state.variables or {}).get("target_file", "") or "",
+                )
+                if bid:
+                    self.state.variables["_beads_issue_id"] = bid
+        except Exception:
+            pass  # log-and-continue: do not fail start
+
         # Generate and save execution plan (Epic 6 - Story 6.7)
         try:
             from .execution_plan import generate_execution_plan, save_execution_plan
@@ -625,6 +642,10 @@ class CursorWorkflowExecutor:
                 f"Workflow execution exceeded {workflow_timeout}s timeout. "
                 f"Increase timeout in config (workflow.timeout_seconds) or check for blocking operations."
             ) from None
+        finally:
+            beads_issue_id = ((self.state or {}).get("variables") or {}).get("_beads_issue_id")
+            from ..simple_mode.beads_hooks import close_issue
+            close_issue(self.project_root, beads_issue_id)
 
     async def _initialize_run(
         self,

@@ -36,9 +36,13 @@ def sync_epic_to_beads(
     epic: EpicDocument,
     project_root: Path,
     run_bd: Callable[[list[str], Path | None], Any],
-) -> dict[str, str]:
+    *,
+    create_parent: bool = True,
+) -> tuple[dict[str, str], str | None]:
     """
     Create a bd issue for each story and bd dep add for each dependency.
+
+    Optionally create a parent Epic issue (for grouping only; no story->parent deps).
 
     run_bd(args, cwd) runs bd and returns a CompletedProcess-like object with
     .returncode, .stdout, .stderr. It is typically beads.client.run_bd partially
@@ -51,12 +55,30 @@ def sync_epic_to_beads(
         epic: Parsed Epic document.
         project_root: Project root (used as cwd when run_bd does not override).
         run_bd: (args, cwd=None) -> result with .returncode, .stdout, .stderr.
+        create_parent: If True, create a parent bd issue for the Epic (grouping only).
 
     Returns:
-        Mapping from story_id (e.g. "8.1") to bd issue id (e.g. "TappsCodingAgents-a3f2").
+        (story_id -> bd_id mapping, epic_parent_id or None).
     """
     story_to_bd: dict[str, str] = {}
+    epic_parent_id: str | None = None
     cwd = project_root
+
+    # Optional: create parent Epic issue (grouping only; no story->parent deps)
+    if create_parent:
+        title = f"Epic {epic.epic_number}: {epic.title}"[:200].strip()
+        desc = (epic.description or epic.goal or "")[:500].replace("\n", " ").strip()
+        args = ["create", title]
+        if desc:
+            args.extend(["-d", desc])
+        try:
+            r = run_bd(args, cwd)
+            if r.returncode == 0:
+                epic_parent_id = _parse_bd_id_from_stdout(r.stdout)
+            else:
+                logger.warning("beads_sync: bd create parent failed: %s", r.stderr)
+        except Exception as e:
+            logger.warning("beads_sync: bd create parent failed: %s", e)
 
     # Create one bd issue per story
     for story in epic.stories:
@@ -106,4 +128,4 @@ def sync_epic_to_beads(
                     "beads_sync: bd dep add %s %s failed: %s", s_bd, dep_bd, e
                 )
 
-    return story_to_bd
+    return (story_to_bd, epic_parent_id)

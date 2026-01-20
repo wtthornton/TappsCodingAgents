@@ -173,7 +173,13 @@ class Context7AgentHelper:
             # #endregion
 
             # Initialize cache structure
-            cache_root = project_root / context7_config.knowledge_base.location
+            # Defensive: if knowledge_base.location is not a string (e.g. MagicMock in tests),
+            # use default to avoid creating directories with mock reprs (e.g. "MagicMock/").
+            kb = getattr(context7_config, "knowledge_base", None)
+            loc = getattr(kb, "location", None) if kb is not None else None
+            if not isinstance(loc, str):
+                loc = ".tapps-agents/kb/context7-cache"
+            cache_root = project_root / loc
             self.cache_structure = CacheStructure(cache_root)
             self.cache_structure.initialize()
 

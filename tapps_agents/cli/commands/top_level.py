@@ -2175,9 +2175,12 @@ def _print_next_steps(project_root: Path | None = None) -> None:
     print()
     if project_root is not None:
         try:
-            from ...beads import is_available
+            from ...beads import is_available, is_ready
             if is_available(project_root):
-                print("Beads (bd) detected. Optional: run `bd init` or `bd init --stealth` for task tracking. See docs/BEADS_INTEGRATION.md.")
+                if is_ready(project_root):
+                    print("Beads is ready. Use `bd ready` to see unblocked tasks.")
+                else:
+                    print("Run `bd init` or `bd init --stealth` to enable Beads for this project. See docs/BEADS_INTEGRATION.md.")
                 print()
         except Exception:
             pass

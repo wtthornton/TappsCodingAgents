@@ -32,10 +32,16 @@ class Context7CacheHealthCheck(HealthCheck):
         self.config = load_config()
 
         # Determine cache root
+        # Defensive: if knowledge_base.location is not a string (e.g. MagicMock in tests),
+        # use default to avoid creating directories with mock reprs (e.g. "MagicMock/").
         if cache_root:
             self.cache_root = Path(cache_root)
         elif self.config.context7 and self.config.context7.knowledge_base:
-            self.cache_root = self.project_root / self.config.context7.knowledge_base.location
+            loc = getattr(self.config.context7.knowledge_base, "location", None)
+            if isinstance(loc, str):
+                self.cache_root = self.project_root / loc
+            else:
+                self.cache_root = self.project_root / ".tapps-agents" / "kb" / "context7-cache"
         else:
             self.cache_root = self.project_root / ".tapps-agents" / "kb" / "context7-cache"
 

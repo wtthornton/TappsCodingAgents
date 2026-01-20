@@ -248,6 +248,7 @@ This agent integrates with:
 - **Debugger Agent**: Bug analysis
 - **Implementer Agent**: Code fixes
 - **Tester Agent**: Test generation and execution
+- **Beads (bd)**: When the fix workflow runs via FixOrchestrator, Beads create/close applies when `beads.enabled` and `beads.hooks_simple_mode` are true. See docs/BEADS_INTEGRATION.md.
 
 ## Configuration
 

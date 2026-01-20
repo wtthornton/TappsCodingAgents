@@ -328,6 +328,23 @@ class WorkflowExecutor:
         )
         self._notify_observers(event)
 
+        # Beads: create workflow issue when enabled (store for close in execute finally)
+        try:
+            from ..core.config import load_config
+            from ..simple_mode.beads_hooks import create_workflow_issue
+            config = load_config(self.project_root / ".tapps-agents" / "config.yaml")
+            if "_beads_issue_id" not in (self.state.variables or {}):
+                bid = create_workflow_issue(
+                    self.project_root,
+                    config,
+                    self.workflow.name,
+                    self.user_prompt or (self.state.variables or {}).get("target_file", "") or "",
+                )
+                if bid:
+                    self.state.variables["_beads_issue_id"] = bid
+        except Exception:
+            pass  # log-and-continue: do not fail start
+
         self.save_state()
 
         # Generate task manifest (Epic 7)
@@ -401,68 +418,73 @@ class WorkflowExecutor:
         
         # Initialize execution
         target_path = self._initialize_execution(workflow, target_file)
-        
-        # Use parallel execution for independent steps
-        steps_executed = 0
-        completed_step_ids = set(self.state.completed_steps)
-        running_step_ids: set[str] = set()
 
-        while (
-            self.state
-            and self.workflow
-            and self.state.status == "running"
-        ):
-            # Check max steps
-            if self._check_max_steps(steps_executed, max_steps):
-                break
+        try:
+            # Use parallel execution for independent steps
+            steps_executed = 0
+            completed_step_ids = set(self.state.completed_steps)
+            running_step_ids: set[str] = set()
 
-            # Find steps ready to execute
-            ready_steps = self._find_ready_steps(completed_step_ids, running_step_ids)
-            
-            # Handle case when no steps are ready
-            if not ready_steps:
-                if self._handle_no_ready_steps(completed_step_ids):
-                    break
-                continue
-
-            # Execute ready steps in parallel
-            running_step_ids.update(step.id for step in ready_steps)
-            self._emit_step_start_events(ready_steps)
-            
-            # Print progress before execution
-            self._print_execution_progress(ready_steps, completed_step_ids)
-
-            try:
-                results = await self._execute_steps_parallel(
-                    ready_steps, target_path
-                )
-
-                # Process results and update state
-                should_break = await self._process_parallel_results(
-                    results, completed_step_ids, running_step_ids
-                )
-                if should_break:
+            while (
+                self.state
+                and self.workflow
+                and self.state.status == "running"
+            ):
+                # Check max steps
+                if self._check_max_steps(steps_executed, max_steps):
                     break
 
-                steps_executed += len(ready_steps)
+                # Find steps ready to execute
+                ready_steps = self._find_ready_steps(completed_step_ids, running_step_ids)
                 
-                # Print completion status
-                self._print_completion_status(completed_step_ids)
+                # Handle case when no steps are ready
+                if not ready_steps:
+                    if self._handle_no_ready_steps(completed_step_ids):
+                        break
+                    continue
+
+                # Execute ready steps in parallel
+                running_step_ids.update(step.id for step in ready_steps)
+                self._emit_step_start_events(ready_steps)
                 
-                # Always save state at end of iteration (fallback)
-                self.save_state()
+                # Print progress before execution
+                self._print_execution_progress(ready_steps, completed_step_ids)
 
-            except Exception as e:
-                self._handle_execution_exception(e)
-                break
+                try:
+                    results = await self._execute_steps_parallel(
+                        ready_steps, target_path
+                    )
 
-        if not self.state:
-            raise RuntimeError("Workflow state lost during execution")
-        
-        # Generate timeline if workflow completed
-        self._generate_timeline_if_complete(completed_step_ids)
-        
-        return self.state
+                    # Process results and update state
+                    should_break = await self._process_parallel_results(
+                        results, completed_step_ids, running_step_ids
+                    )
+                    if should_break:
+                        break
+
+                    steps_executed += len(ready_steps)
+                    
+                    # Print completion status
+                    self._print_completion_status(completed_step_ids)
+                    
+                    # Always save state at end of iteration (fallback)
+                    self.save_state()
+
+                except Exception as e:
+                    self._handle_execution_exception(e)
+                    break
+
+            if not self.state:
+                raise RuntimeError("Workflow state lost during execution")
+            
+            # Generate timeline if workflow completed
+            self._generate_timeline_if_complete(completed_step_ids)
+            
+            return self.state
+        finally:
+            beads_issue_id = ((self.state or {}).get("variables") or {}).get("_beads_issue_id")
+            from ..simple_mode.beads_hooks import close_issue
+            close_issue(self.project_root, beads_issue_id)
 
     async def _route_to_cursor_executor(
         self,

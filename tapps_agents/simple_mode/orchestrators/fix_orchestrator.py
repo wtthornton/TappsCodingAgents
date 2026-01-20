@@ -277,6 +277,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
             )
 
             if not implementer_result.get("success"):
+                close_issue(self.project_root, beads_issue_id)
                 return {
                     "type": "fix",
                     "success": False,
@@ -470,6 +471,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
                     "execution_time": execution_time,
                     "security_scan_blocked": True,
                 })
+            close_issue(self.project_root, beads_issue_id)
             return {
                 "type": "fix",
                 "success": False,

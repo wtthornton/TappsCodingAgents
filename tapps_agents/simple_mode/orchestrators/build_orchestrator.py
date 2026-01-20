@@ -232,693 +232,704 @@ class BuildOrchestrator(SimpleModeOrchestrator):
 
         from ..beads_hooks import create_build_issue, close_issue
 
-        beads_issue_id: str | None = None
-        if self.config:
+        # Resolve workflow_id: reuse when resuming, otherwise generate
+        workflow_id = parameters.get("workflow_id") or WorkflowDocumentationManager.generate_workflow_id("build")
+        beads_issue_id: str | None = parameters.get("beads_issue_id")
+        if beads_issue_id is None and self.config:
             beads_issue_id = create_build_issue(
                 self.project_root, self.config, original_description
             )
+        # Persist beads_issue_id for resume (avoid duplicate bd issues)
+        if beads_issue_id and "beads_issue_id" not in (parameters or {}):
+            try:
+                state_dir = self.project_root / ".tapps-agents" / "workflow-state"
+                wf_dir = state_dir / workflow_id
+                wf_dir.mkdir(parents=True, exist_ok=True)
+                (wf_dir / ".beads_issue_id").write_text(beads_issue_id, encoding="utf-8")
+            except OSError as e:
+                logger.debug("beads: could not persist beads_issue_id for resume: %s", e)
 
-        # Generate workflow ID and initialize documentation manager
-        workflow_id = WorkflowDocumentationManager.generate_workflow_id("build")
         doc_manager: WorkflowDocumentationManager | None = None
         checkpoint_manager: StepCheckpointManager | None = None
-        
-        # Initialize output aggregator for Simple Mode enhancements
-        output_aggregator = SimpleModeOutputAggregator(
-            workflow_id=workflow_id,
-            workflow_type="build",
-        )
 
-        # Initialize documentation manager if organized documentation is enabled
-        if self.config and self.config.simple_mode.documentation_organized:
-            base_dir = self.project_root / "docs" / "workflows" / "simple-mode"
-            doc_manager = WorkflowDocumentationManager(
-                base_dir=base_dir,
-                workflow_id=workflow_id,
-                create_symlink=self.config.simple_mode.create_latest_symlink,
-            )
-            doc_manager.create_directory()
-            logger.info(f"Created documentation directory for workflow: {workflow_id}")
-
-        # Initialize checkpoint manager if state persistence is enabled
-        if self.config and self.config.simple_mode.state_persistence_enabled:
-            state_dir = self.project_root / ".tapps-agents" / "workflow-state"
-            checkpoint_manager = StepCheckpointManager(
-                state_dir=state_dir,
-                workflow_id=workflow_id,
-            )
-            logger.info(f"Initialized checkpoint manager for workflow: {workflow_id}")
-
-        # Enhancement 3: Auto-detect libraries and fetch Context7 documentation
-        context7_docs = {}
-        context7_info = {}
         try:
-            from tapps_agents.context7.agent_integration import get_context7_helper
-            
-            context7_helper = get_context7_helper(None, self.config, self.project_root)
-            if context7_helper and context7_helper.enabled:
-                # Detect libraries from the description
-                # Detect libraries, but filter to only relevant ones
-                # (Same filtering logic as enhancer agent - only fetch docs for libraries
-                # that are in project deps, explicitly mentioned, or well-known)
-                all_detected = context7_helper.detect_libraries(
-                    prompt=original_description,
-                    language="python"  # Default, can be enhanced to detect from project
-                )
-                
-                # Filter to only relevant libraries
-                project_libs = set(context7_helper.detect_libraries(
-                    code=None, prompt=None, error_message=None
-                ))
-                
-                filtered_libraries = []
-                desc_lower = original_description.lower()
-                for lib in all_detected:
-                    if (lib in project_libs or
-                        context7_helper.is_well_known_library(lib) or
-                        any(keyword in desc_lower for keyword in [
-                            f"{lib} library", f"{lib} framework", f"using {lib}"
-                        ])):
-                        filtered_libraries.append(lib)
-                
-                if filtered_libraries:
-                    # Fetch documentation for filtered libraries only
-                    context7_docs = await context7_helper.get_documentation_for_libraries(
-                        libraries=filtered_libraries,
-                        topic=None,
-                        use_fuzzy_match=True,
-                    )
-                    detected_libraries = filtered_libraries  # For context7_info below
-                    context7_info = {
-                        "libraries_detected": detected_libraries,
-                        "docs_available": len([d for d in context7_docs.values() if d is not None]),
-                        "total_libraries": len(detected_libraries),
-                    }
-                    # Enhance description with Context7 guidance note
-                    if context7_docs:
-                        context7_note = f"\n\n[Context7: Detected {len(detected_libraries)} libraries. Documentation available for {context7_info['docs_available']} libraries.]"
-                        original_description = original_description + context7_note
-        except Exception as e:
-            # Context7 is optional - continue without it
-            logger.debug(f"Context7 auto-detection failed in build workflow: {e}")
-
-        # Step 1: Enhance the prompt using the enhancer agent (skip in fast mode)
-        enhanced_prompt = original_description
-        enhancement_result = None
-        steps_executed = []
-
-        if not fast_mode:
-            # Step 1: Enhancement
-            step_num = 1
-            step_name = "Enhance prompt (requirements analysis)"
-            if on_step_start:
-                on_step_start(step_num, step_name)
-            try:
-                enhancer = EnhancerAgent(config=self.config)
-                await enhancer.activate(self.project_root)
-                
-                # Use full enhancement (all 7 stages: analysis, requirements, architecture, 
-                # codebase context, quality standards, implementation strategy, synthesis)
-                enhancement_result = await enhancer.run(
-                    "enhance",
-                    prompt=original_description,
-                    output_format="markdown"
-                )
-                
-                # Extract enhanced prompt from result
-                if enhancement_result.get("success"):
-                    result_value = enhancement_result.get("enhanced_prompt")
-                    if isinstance(result_value, str):
-                        enhanced_prompt = result_value
-                    elif isinstance(result_value, dict):
-                        enhanced_prompt = result_value.get("enhanced_prompt", original_description)
-                    elif result_value is None:
-                        if "instruction" in enhancement_result:
-                            enhanced_prompt = enhancement_result["instruction"]
-                        elif "result" in enhancement_result and isinstance(enhancement_result["result"], str):
-                            enhanced_prompt = enhancement_result["result"]
-                
-                await enhancer.close()
-                steps_executed.append("enhance")
-                
-                # Notify step completion
-                if on_step_complete:
-                    on_step_complete(step_num, step_name, "success")
-                
-                # Save checkpoint and documentation
-                if checkpoint_manager:
-                    checkpoint_manager.save_checkpoint(
-                        step_id="enhance",
-                        step_number=1,
-                        step_output={"enhanced_prompt": enhanced_prompt},
-                        artifacts={},
-                        step_name="enhanced-prompt",
-                    )
-                if doc_manager and isinstance(enhanced_prompt, str):
-                    doc_manager.save_step_documentation(
-                        step_number=1,
-                        content=enhanced_prompt,
-                        step_name="enhanced-prompt",
-                    )
-            except Exception as e:
-                # If enhancement fails, continue with original prompt
-                enhanced_prompt = original_description
-                enhancement_result = {"error": str(e), "fallback": True}
-                logger.warning(f"Enhancement failed, continuing with original prompt: {e}")
-                if on_step_error:
-                    on_step_error(step_num, step_name, e)
-                elif on_step_complete:
-                    on_step_complete(step_num, step_name, "failed")
-        else:
-            logger.info("Fast mode: Skipping enhancement step")
-
-        # Initialize checklist and tracer for verification (after Step 1)
-        checklist = DeliverableChecklist(requirements={"enhanced_prompt": enhanced_prompt})
-        tracer = RequirementsTracer(requirements={})
-        workflow_state = {
-            "checklist": checklist,
-            "tracer": tracer,
-            "loopback_count": 0,
-        }
-        
-        # Track documentation files created
-        if doc_manager:
-            checklist.add_deliverable(
-                "documentation",
-                "Step 1: Enhanced prompt",
-                doc_manager.get_step_file_path(1, "enhanced-prompt") if doc_manager else Path(),
-                status="complete",
-                metadata={"step_number": 1},
+            # Initialize output aggregator for Simple Mode enhancements
+            output_aggregator = SimpleModeOutputAggregator(
+                workflow_id=workflow_id,
+                workflow_type="build",
             )
 
-        # Step 2-4: Planning, Architecture, Design (skip in fast mode)
-        # Create multi-agent orchestrator
-        orchestrator = MultiAgentOrchestrator(
-            project_root=self.project_root,
-            config=self.config,
-            max_parallel=2,  # Allow some parallelization
-        )
-
-        # Prepare agent tasks - skip steps 2-4 in fast mode
-        agent_tasks = []
-        if not fast_mode:
-            # Steps 2-4: Plan, Architect, Design
-            step_names = {
-                "planner": (2, "Create user stories"),
-                "architect": (3, "Design architecture"),
-                "designer": (4, "Design API/data models"),
-            }
-            # FIXED: Use correct command names and parameters per agent contracts
-            # - Architect: "design-system" with "requirements" (not "design" with "specification")
-            # - Designer: "design-api" with "requirements" (not "specification")
-            agent_tasks = [
-                {
-                    "agent_id": "planner-1",
-                    "agent": "planner",
-                    "command": "create-story",
-                    "args": {"description": enhanced_prompt},
-                    "step_num": 2,
-                    "step_name": "Create user stories",
-                },
-                {
-                    "agent_id": "architect-1",
-                    "agent": "architect",
-                    "command": "design-system",  # FIXED: was "design"
-                    "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
-                    "step_num": 3,
-                    "step_name": "Design architecture",
-                },
-                {
-                    "agent_id": "designer-1",
-                    "agent": "designer",
-                    "command": "design-api",
-                    "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
-                    "step_num": 4,
-                    "step_name": "Design API/data models",
-                },
-            ]
-            
-            # Validate agent tasks before execution (pre-execution contract validation)
-            validator = AgentContractValidator()
-            validation_result = validator.validate_tasks(agent_tasks)
-            if not validation_result.valid:
-                logger.error(f"Agent task validation failed: {validation_result.errors}")
-                # Log errors but continue - let agents report their own errors
-                for error in validation_result.errors:
-                    logger.warning(f"Contract validation error: {error}")
-            if validation_result.warnings:
-                for warning in validation_result.warnings:
-                    logger.debug(f"Contract validation warning: {warning}")
-            
-            # Notify step starts for steps 2-4
-            for task in agent_tasks:
-                if on_step_start:
-                    on_step_start(task["step_num"], task["step_name"])
-        
-        # Step 5: Implementation (always execute)
-        # Enrich context with previous step documentation if available
-        implementer_args = self._enrich_implementer_context(
-            workflow_id=workflow_id,
-            doc_manager=doc_manager,
-            enhanced_prompt=enhanced_prompt if not fast_mode else original_description,
-        )
-        
-        # FIXED: Implementer requires file_path parameter
-        # Use TargetFileInferencer to infer target file from description
-        if "file_path" not in implementer_args or not implementer_args.get("file_path"):
-            file_inferencer = TargetFileInferencer(self.project_root)
-            inferred_path = file_inferencer.infer_target_file(
-                description=original_description,
-                context={
-                    "architecture": implementer_args.get("architecture"),
-                    "api_design": implementer_args.get("api_design"),
-                },
-            )
-            implementer_args["file_path"] = inferred_path
-            logger.info(f"Inferred target file path: {inferred_path}")
-        
-        step_5_num = 5 if not fast_mode else 1
-        step_5_name = "Implement code"
-        if on_step_start:
-            on_step_start(step_5_num, step_5_name)
-        
-        agent_tasks.append({
-            "agent_id": "implementer-1",
-            "agent": "implementer",
-            "command": "implement",
-            "args": implementer_args,
-            "step_num": step_5_num,
-            "step_name": step_5_name,
-        })
-
-        # Execute agent tasks
-        workflow_errors = []  # Track errors for final reporting
-        result = {"success": True, "results": {}}  # Default result
-        if agent_tasks:
-            try:
-                result = await orchestrator.execute_parallel(agent_tasks)
-                
-                # Track executed steps and save checkpoints
-                step_number = 2 if not fast_mode else 1
-                for task in agent_tasks:
-                    agent_name = task["agent"]
-                    task_step_num = task.get("step_num", step_number)
-                    task_step_name = task.get("step_name", agent_name)
-                    
-                    # Check if task succeeded
-                    task_result = result.get("results", {}).get(task["agent_id"], {})
-                    task_success = result.get("success", True) and task_result.get("success", True)
-                    
-                    # Collect error information if task failed
-                    if not task_success:
-                        error_msg = self._extract_error_message(task_result)
-                        workflow_errors.append({
-                            "step": task_step_num,
-                            "agent": agent_name,
-                            "agent_id": task.get("agent_id"),
-                            "error": error_msg,
-                        })
-                        logger.error(f"Step {task_step_num} ({agent_name}) failed: {error_msg}")
-                    
-                    if agent_name in ["planner", "architect", "designer", "implementer"]:
-                        steps_executed.append(agent_name)
-                        
-                        # Add output to aggregator (Simple Mode Enhancement)
-                        output_aggregator.add_step_output(
-                            step_number=task_step_num,
-                            step_name=task_step_name,
-                            agent_name=agent_name,
-                            output=task_result,
-                            success=task_success,
-                            metadata={
-                                "artifacts": task_result.get("artifacts", []),
-                                "file_paths": task_result.get("file_paths", []),
-                            },
-                        )
-                        
-                        # Notify step completion
-                        if on_step_complete:
-                            status = "success" if task_success else "failed"
-                            on_step_complete(task_step_num, task_step_name, status)
-                        
-                        # Track documentation in checklist
-                        if doc_manager:
-                            doc_file_path = doc_manager.get_step_file_path(task_step_num, f"{agent_name}-result")
-                            checklist.add_deliverable(
-                                "documentation",
-                                f"Step {task_step_num}: {agent_name.title()} Result",
-                                doc_file_path,
-                                status="complete",
-                                metadata={"step_number": task_step_num},
-                            )
-                        
-                        # Extract requirement IDs from user stories (Step 2)
-                        if agent_name == "planner" and task_success:
-                            try:
-                                # Try to extract user stories from result
-                                user_stories_data = task_result.get("result") or task_result.get("output") or str(task_result)
-                                # Try to parse as JSON if possible, otherwise extract IDs from text
-                                import json
-                                try:
-                                    if isinstance(user_stories_data, str):
-                                        user_stories_parsed = json.loads(user_stories_data)
-                                    else:
-                                        user_stories_parsed = user_stories_data
-                                    
-                                    if isinstance(user_stories_parsed, list):
-                                        req_ids = tracer.extract_requirement_ids(user_stories_parsed)
-                                        # Build requirements dict from user stories
-                                        requirements_dict = {}
-                                        for story in user_stories_parsed:
-                                            req_id = story.get("id") or story.get("requirement_id")
-                                            if req_id:
-                                                requirements_dict[req_id] = story
-                                        if requirements_dict:
-                                            tracer.requirements = requirements_dict
-                                            logger.info(f"Extracted {len(requirements_dict)} requirement IDs from user stories")
-                                except (json.JSONDecodeError, AttributeError, TypeError):
-                                    # Fallback: extract IDs from text
-                                    req_ids = tracer.extract_requirement_ids([{"id": None, "text": str(user_stories_data)}])
-                                    logger.debug(f"Extracted {len(req_ids)} requirement IDs from user stories text")
-                            except Exception as e:
-                                logger.debug(f"Failed to extract requirement IDs from planner result: {e}")
-                        
-                        # Track implemented files (Step 5)
-                        if agent_name == "implementer" and task_success:
-                            implemented_files_list = self._extract_implemented_files(task_result)
-                            for file_path in implemented_files_list:
-                                checklist.add_deliverable(
-                                    "core_code",
-                                    f"Implementation: {file_path.name}",
-                                    file_path,
-                                    status="complete",
-                                    metadata={"step_number": 5},
-                                )
-                                # Link to requirements (if we have any)
-                                for req_id in tracer.requirements.keys():
-                                    tracer.add_trace(req_id, "code", file_path)
-                        
-                        # Save checkpoint and documentation for each step
-                        if checkpoint_manager:
-                            checkpoint_manager.save_checkpoint(
-                                step_id=agent_name,
-                                step_number=task_step_num,
-                                step_output=task_result,
-                                artifacts={},
-                                step_name=f"{agent_name}-result",
-                            )
-                        if doc_manager:
-                            # FIXED: Use structured result parser and formatters
-                            # instead of raw JSON dumps
-                            parsed_result = StepResultParser.parse(
-                                agent_name=agent_name,
-                                raw=task_result,
-                                step_number=task_step_num,
-                            )
-                            
-                            # FIXED: Save appropriate documentation based on success/failure
-                            if task_success:
-                                doc_content = format_step_result(parsed_result)
-                            else:
-                                # Extract error message for placeholder documentation
-                                error_msg = self._extract_error_message(task_result)
-                                doc_content = format_failed_step(
-                                    step_number=task_step_num,
-                                    agent_name=agent_name,
-                                    error_message=error_msg,
-                                )
-                            
-                            doc_manager.save_step_documentation(
-                                step_number=task_step_num,
-                                content=doc_content,
-                                step_name=f"{agent_name}-result",
-                            )
-                        step_number += 1
-            except Exception as e:
-                # Handle execution errors - capture exception as workflow error
-                error_str = str(e)
-                workflow_errors.append({
-                    "step": 0,  # Unknown step
-                    "agent": "orchestrator",
-                    "agent_id": "orchestrator",
-                    "error": f"Workflow execution exception: {error_str}",
-                })
-                logger.error(f"Workflow execution failed: {e}", exc_info=True)
-                
-                # Notify step errors
-                for task in agent_tasks:
-                    task_step_num = task.get("step_num", 0)
-                    task_step_name = task.get("step_name", task["agent"])
-                    if on_step_error:
-                        on_step_error(task_step_num, task_step_name, e)
-                    elif on_step_complete:
-                        on_step_complete(task_step_num, task_step_name, "failed")
-                
-                # Set result to indicate failure
-                result = {
-                    "success": False,
-                    "error": error_str,
-                    "results": {},
-                }
-        else:
-            # Fast mode: Only implementation
-            result = await orchestrator.execute_parallel(agent_tasks)
-        
-        steps_executed.append("implement")
-
-        # Step 6-7: Review and Test (if not in fast_mode)
-        implemented_files_list = []
-        if not fast_mode:
-            # Extract implemented files from result
-            implemented_files_list = self._extract_implemented_files(result)
-            
-            # Add reviewer and tester steps
-            step_6_name = "Review code quality"
-            step_7_name = "Generate tests"
-            
-            if on_step_start:
-                on_step_start(6, step_6_name)
-                on_step_start(7, step_7_name)
-            
-            review_test_tasks = [
-                {
-                    "agent_id": "reviewer-1",
-                    "agent": "reviewer",
-                    "command": "score",  # Quick score for workflow
-                    "args": {},
-                    "step_num": 6,
-                    "step_name": step_6_name,
-                },
-                {
-                    "agent_id": "tester-1",
-                    "agent": "tester",
-                    "command": "generate-tests",  # Generate tests
-                    "args": {},
-                    "step_num": 7,
-                    "step_name": step_7_name,
-                },
-            ]
-            # Note: These would need actual file paths from implementation results
-            # For now, we'll skip if no files were created
-            if result.get("results"):
-                # Execute review and test if we have implementation results
-                try:
-                    review_test_result = await orchestrator.execute_parallel(review_test_tasks)
-                    steps_executed.extend(["review", "test"])
-                    
-                    # Track test files from tester result (Step 7 enhancement)
-                    tester_result = review_test_result.get("results", {}).get("tester-1", {})
-                    if tester_result:
-                        test_files_list = self._extract_test_files(tester_result)
-                        for test_file in test_files_list:
-                            checklist.add_deliverable(
-                                "tests",
-                                f"Test: {test_file.name}",
-                                test_file,
-                                status="complete",
-                                metadata={"step_number": 7},
-                            )
-                            # Link tests to requirements
-                            for req_id in tracer.requirements.keys():
-                                tracer.add_trace(req_id, "tests", test_file)
-                    
-                    # Add review/test outputs to aggregator
-                    reviewer_result = review_test_result.get("results", {}).get("reviewer-1", {})
-                    if reviewer_result:
-                        output_aggregator.add_step_output(
-                            step_number=6,
-                            step_name=step_6_name,
-                            agent_name="reviewer",
-                            output=reviewer_result,
-                            success=reviewer_result.get("success", True),
-                        )
-                    if tester_result:
-                        output_aggregator.add_step_output(
-                            step_number=7,
-                            step_name=step_7_name,
-                            agent_name="tester",
-                            output=tester_result,
-                            success=tester_result.get("success", True),
-                            metadata={"test_files": test_files_list if tester_result else []},
-                        )
-                    
-                    # Notify step completions
-                    if on_step_complete:
-                        on_step_complete(6, step_6_name, "success")
-                        on_step_complete(7, step_7_name, "success")
-                except Exception as e:
-                    logger.warning(f"Review/test steps failed: {e}")
-                    if on_step_error:
-                        on_step_error(6, step_6_name, e)
-                        on_step_error(7, step_7_name, e)
-                    elif on_step_complete:
-                        on_step_complete(6, step_6_name, "failed")
-                        on_step_complete(7, step_7_name, "failed")
-
-        # Step 8: Comprehensive Verification (NEW)
-        verification_result = None
-        if not fast_mode:
-            step_8_name = "Comprehensive verification"
-            if on_step_start:
-                on_step_start(8, step_8_name)
-            try:
-                # Prepare requirements dict from tracer
-                requirements_dict = tracer.requirements or {}
-                
-                # FIXED: Pass agent results to enable failure detection
-                verification_result = await self._step_8_verification(
+            # Initialize documentation manager if organized documentation is enabled
+            if self.config and self.config.simple_mode.documentation_organized:
+                base_dir = self.project_root / "docs" / "workflows" / "simple-mode"
+                doc_manager = WorkflowDocumentationManager(
+                    base_dir=base_dir,
                     workflow_id=workflow_id,
-                    requirements=requirements_dict,
-                    checklist=checklist,
-                    tracer=tracer,
-                    implemented_files=implemented_files_list,
-                    doc_manager=doc_manager,
-                    agent_results=result.get("results", {}),
+                    create_symlink=self.config.simple_mode.create_latest_symlink,
                 )
+                doc_manager.create_directory()
+                logger.info(f"Created documentation directory for workflow: {workflow_id}")
+
+            # Initialize checkpoint manager if state persistence is enabled
+            if self.config and self.config.simple_mode.state_persistence_enabled:
+                state_dir = self.project_root / ".tapps-agents" / "workflow-state"
+                checkpoint_manager = StepCheckpointManager(
+                    state_dir=state_dir,
+                    workflow_id=workflow_id,
+                )
+                logger.info(f"Initialized checkpoint manager for workflow: {workflow_id}")
+
+            # Enhancement 3: Auto-detect libraries and fetch Context7 documentation
+            context7_docs = {}
+            context7_info = {}
+            try:
+                from tapps_agents.context7.agent_integration import get_context7_helper
+            
+                context7_helper = get_context7_helper(None, self.config, self.project_root)
+                if context7_helper and context7_helper.enabled:
+                    # Detect libraries from the description
+                    # Detect libraries, but filter to only relevant ones
+                    # (Same filtering logic as enhancer agent - only fetch docs for libraries
+                    # that are in project deps, explicitly mentioned, or well-known)
+                    all_detected = context7_helper.detect_libraries(
+                        prompt=original_description,
+                        language="python"  # Default, can be enhanced to detect from project
+                    )
                 
-                steps_executed.append("verification")
+                    # Filter to only relevant libraries
+                    project_libs = set(context7_helper.detect_libraries(
+                        code=None, prompt=None, error_message=None
+                    ))
                 
-                # Handle gaps with loopback if needed
-                if not verification_result.get("complete") and verification_result.get("loopback_step"):
-                    loopback_result = await self._handle_verification_gaps(
-                        gaps=verification_result.get("gaps", []),
-                        current_step=8,
+                    filtered_libraries = []
+                    desc_lower = original_description.lower()
+                    for lib in all_detected:
+                        if (lib in project_libs or
+                            context7_helper.is_well_known_library(lib) or
+                            any(keyword in desc_lower for keyword in [
+                                f"{lib} library", f"{lib} framework", f"using {lib}"
+                            ])):
+                            filtered_libraries.append(lib)
+                
+                    if filtered_libraries:
+                        # Fetch documentation for filtered libraries only
+                        context7_docs = await context7_helper.get_documentation_for_libraries(
+                            libraries=filtered_libraries,
+                            topic=None,
+                            use_fuzzy_match=True,
+                        )
+                        detected_libraries = filtered_libraries  # For context7_info below
+                        context7_info = {
+                            "libraries_detected": detected_libraries,
+                            "docs_available": len([d for d in context7_docs.values() if d is not None]),
+                            "total_libraries": len(detected_libraries),
+                        }
+                        # Enhance description with Context7 guidance note
+                        if context7_docs:
+                            context7_note = f"\n\n[Context7: Detected {len(detected_libraries)} libraries. Documentation available for {context7_info['docs_available']} libraries.]"
+                            original_description = original_description + context7_note
+            except Exception as e:
+                # Context7 is optional - continue without it
+                logger.debug(f"Context7 auto-detection failed in build workflow: {e}")
+
+            # Step 1: Enhance the prompt using the enhancer agent (skip in fast mode)
+            enhanced_prompt = original_description
+            enhancement_result = None
+            steps_executed = []
+
+            if not fast_mode:
+                # Step 1: Enhancement
+                step_num = 1
+                step_name = "Enhance prompt (requirements analysis)"
+                if on_step_start:
+                    on_step_start(step_num, step_name)
+                try:
+                    enhancer = EnhancerAgent(config=self.config)
+                    await enhancer.activate(self.project_root)
+                
+                    # Use full enhancement (all 7 stages: analysis, requirements, architecture, 
+                    # codebase context, quality standards, implementation strategy, synthesis)
+                    enhancement_result = await enhancer.run(
+                        "enhance",
+                        prompt=original_description,
+                        output_format="markdown"
+                    )
+                
+                    # Extract enhanced prompt from result
+                    if enhancement_result.get("success"):
+                        result_value = enhancement_result.get("enhanced_prompt")
+                        if isinstance(result_value, str):
+                            enhanced_prompt = result_value
+                        elif isinstance(result_value, dict):
+                            enhanced_prompt = result_value.get("enhanced_prompt", original_description)
+                        elif result_value is None:
+                            if "instruction" in enhancement_result:
+                                enhanced_prompt = enhancement_result["instruction"]
+                            elif "result" in enhancement_result and isinstance(enhancement_result["result"], str):
+                                enhanced_prompt = enhancement_result["result"]
+                
+                    await enhancer.close()
+                    steps_executed.append("enhance")
+                
+                    # Notify step completion
+                    if on_step_complete:
+                        on_step_complete(step_num, step_name, "success")
+                
+                    # Save checkpoint and documentation
+                    if checkpoint_manager:
+                        checkpoint_manager.save_checkpoint(
+                            step_id="enhance",
+                            step_number=1,
+                            step_output={"enhanced_prompt": enhanced_prompt},
+                            artifacts={},
+                            step_name="enhanced-prompt",
+                        )
+                    if doc_manager and isinstance(enhanced_prompt, str):
+                        doc_manager.save_step_documentation(
+                            step_number=1,
+                            content=enhanced_prompt,
+                            step_name="enhanced-prompt",
+                        )
+                except Exception as e:
+                    # If enhancement fails, continue with original prompt
+                    enhanced_prompt = original_description
+                    enhancement_result = {"error": str(e), "fallback": True}
+                    logger.warning(f"Enhancement failed, continuing with original prompt: {e}")
+                    if on_step_error:
+                        on_step_error(step_num, step_name, e)
+                    elif on_step_complete:
+                        on_step_complete(step_num, step_name, "failed")
+            else:
+                logger.info("Fast mode: Skipping enhancement step")
+
+            # Initialize checklist and tracer for verification (after Step 1)
+            checklist = DeliverableChecklist(requirements={"enhanced_prompt": enhanced_prompt})
+            tracer = RequirementsTracer(requirements={})
+            workflow_state = {
+                "checklist": checklist,
+                "tracer": tracer,
+                "loopback_count": 0,
+            }
+        
+            # Track documentation files created
+            if doc_manager:
+                checklist.add_deliverable(
+                    "documentation",
+                    "Step 1: Enhanced prompt",
+                    doc_manager.get_step_file_path(1, "enhanced-prompt") if doc_manager else Path(),
+                    status="complete",
+                    metadata={"step_number": 1},
+                )
+
+            # Step 2-4: Planning, Architecture, Design (skip in fast mode)
+            # Create multi-agent orchestrator
+            orchestrator = MultiAgentOrchestrator(
+                project_root=self.project_root,
+                config=self.config,
+                max_parallel=2,  # Allow some parallelization
+            )
+
+            # Prepare agent tasks - skip steps 2-4 in fast mode
+            agent_tasks = []
+            if not fast_mode:
+                # Steps 2-4: Plan, Architect, Design
+                step_names = {
+                    "planner": (2, "Create user stories"),
+                    "architect": (3, "Design architecture"),
+                    "designer": (4, "Design API/data models"),
+                }
+                # FIXED: Use correct command names and parameters per agent contracts
+                # - Architect: "design-system" with "requirements" (not "design" with "specification")
+                # - Designer: "design-api" with "requirements" (not "specification")
+                agent_tasks = [
+                    {
+                        "agent_id": "planner-1",
+                        "agent": "planner",
+                        "command": "create-story",
+                        "args": {"description": enhanced_prompt},
+                        "step_num": 2,
+                        "step_name": "Create user stories",
+                    },
+                    {
+                        "agent_id": "architect-1",
+                        "agent": "architect",
+                        "command": "design-system",  # FIXED: was "design"
+                        "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
+                        "step_num": 3,
+                        "step_name": "Design architecture",
+                    },
+                    {
+                        "agent_id": "designer-1",
+                        "agent": "designer",
+                        "command": "design-api",
+                        "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
+                        "step_num": 4,
+                        "step_name": "Design API/data models",
+                    },
+                ]
+            
+                # Validate agent tasks before execution (pre-execution contract validation)
+                validator = AgentContractValidator()
+                validation_result = validator.validate_tasks(agent_tasks)
+                if not validation_result.valid:
+                    logger.error(f"Agent task validation failed: {validation_result.errors}")
+                    # Log errors but continue - let agents report their own errors
+                    for error in validation_result.errors:
+                        logger.warning(f"Contract validation error: {error}")
+                if validation_result.warnings:
+                    for warning in validation_result.warnings:
+                        logger.debug(f"Contract validation warning: {warning}")
+            
+                # Notify step starts for steps 2-4
+                for task in agent_tasks:
+                    if on_step_start:
+                        on_step_start(task["step_num"], task["step_name"])
+        
+            # Step 5: Implementation (always execute)
+            # Enrich context with previous step documentation if available
+            implementer_args = self._enrich_implementer_context(
+                workflow_id=workflow_id,
+                doc_manager=doc_manager,
+                enhanced_prompt=enhanced_prompt if not fast_mode else original_description,
+            )
+        
+            # FIXED: Implementer requires file_path parameter
+            # Use TargetFileInferencer to infer target file from description
+            if "file_path" not in implementer_args or not implementer_args.get("file_path"):
+                file_inferencer = TargetFileInferencer(self.project_root)
+                inferred_path = file_inferencer.infer_target_file(
+                    description=original_description,
+                    context={
+                        "architecture": implementer_args.get("architecture"),
+                        "api_design": implementer_args.get("api_design"),
+                    },
+                )
+                implementer_args["file_path"] = inferred_path
+                logger.info(f"Inferred target file path: {inferred_path}")
+        
+            step_5_num = 5 if not fast_mode else 1
+            step_5_name = "Implement code"
+            if on_step_start:
+                on_step_start(step_5_num, step_5_name)
+        
+            agent_tasks.append({
+                "agent_id": "implementer-1",
+                "agent": "implementer",
+                "command": "implement",
+                "args": implementer_args,
+                "step_num": step_5_num,
+                "step_name": step_5_name,
+            })
+
+            # Execute agent tasks
+            workflow_errors = []  # Track errors for final reporting
+            result = {"success": True, "results": {}}  # Default result
+            if agent_tasks:
+                try:
+                    result = await orchestrator.execute_parallel(agent_tasks)
+                
+                    # Track executed steps and save checkpoints
+                    step_number = 2 if not fast_mode else 1
+                    for task in agent_tasks:
+                        agent_name = task["agent"]
+                        task_step_num = task.get("step_num", step_number)
+                        task_step_name = task.get("step_name", agent_name)
+                    
+                        # Check if task succeeded
+                        task_result = result.get("results", {}).get(task["agent_id"], {})
+                        task_success = result.get("success", True) and task_result.get("success", True)
+                    
+                        # Collect error information if task failed
+                        if not task_success:
+                            error_msg = self._extract_error_message(task_result)
+                            workflow_errors.append({
+                                "step": task_step_num,
+                                "agent": agent_name,
+                                "agent_id": task.get("agent_id"),
+                                "error": error_msg,
+                            })
+                            logger.error(f"Step {task_step_num} ({agent_name}) failed: {error_msg}")
+                    
+                        if agent_name in ["planner", "architect", "designer", "implementer"]:
+                            steps_executed.append(agent_name)
+                        
+                            # Add output to aggregator (Simple Mode Enhancement)
+                            output_aggregator.add_step_output(
+                                step_number=task_step_num,
+                                step_name=task_step_name,
+                                agent_name=agent_name,
+                                output=task_result,
+                                success=task_success,
+                                metadata={
+                                    "artifacts": task_result.get("artifacts", []),
+                                    "file_paths": task_result.get("file_paths", []),
+                                },
+                            )
+                        
+                            # Notify step completion
+                            if on_step_complete:
+                                status = "success" if task_success else "failed"
+                                on_step_complete(task_step_num, task_step_name, status)
+                        
+                            # Track documentation in checklist
+                            if doc_manager:
+                                doc_file_path = doc_manager.get_step_file_path(task_step_num, f"{agent_name}-result")
+                                checklist.add_deliverable(
+                                    "documentation",
+                                    f"Step {task_step_num}: {agent_name.title()} Result",
+                                    doc_file_path,
+                                    status="complete",
+                                    metadata={"step_number": task_step_num},
+                                )
+                        
+                            # Extract requirement IDs from user stories (Step 2)
+                            if agent_name == "planner" and task_success:
+                                try:
+                                    # Try to extract user stories from result
+                                    user_stories_data = task_result.get("result") or task_result.get("output") or str(task_result)
+                                    # Try to parse as JSON if possible, otherwise extract IDs from text
+                                    import json
+                                    try:
+                                        if isinstance(user_stories_data, str):
+                                            user_stories_parsed = json.loads(user_stories_data)
+                                        else:
+                                            user_stories_parsed = user_stories_data
+                                    
+                                        if isinstance(user_stories_parsed, list):
+                                            req_ids = tracer.extract_requirement_ids(user_stories_parsed)
+                                            # Build requirements dict from user stories
+                                            requirements_dict = {}
+                                            for story in user_stories_parsed:
+                                                req_id = story.get("id") or story.get("requirement_id")
+                                                if req_id:
+                                                    requirements_dict[req_id] = story
+                                            if requirements_dict:
+                                                tracer.requirements = requirements_dict
+                                                logger.info(f"Extracted {len(requirements_dict)} requirement IDs from user stories")
+                                    except (json.JSONDecodeError, AttributeError, TypeError):
+                                        # Fallback: extract IDs from text
+                                        req_ids = tracer.extract_requirement_ids([{"id": None, "text": str(user_stories_data)}])
+                                        logger.debug(f"Extracted {len(req_ids)} requirement IDs from user stories text")
+                                except Exception as e:
+                                    logger.debug(f"Failed to extract requirement IDs from planner result: {e}")
+                        
+                            # Track implemented files (Step 5)
+                            if agent_name == "implementer" and task_success:
+                                implemented_files_list = self._extract_implemented_files(task_result)
+                                for file_path in implemented_files_list:
+                                    checklist.add_deliverable(
+                                        "core_code",
+                                        f"Implementation: {file_path.name}",
+                                        file_path,
+                                        status="complete",
+                                        metadata={"step_number": 5},
+                                    )
+                                    # Link to requirements (if we have any)
+                                    for req_id in tracer.requirements.keys():
+                                        tracer.add_trace(req_id, "code", file_path)
+                        
+                            # Save checkpoint and documentation for each step
+                            if checkpoint_manager:
+                                checkpoint_manager.save_checkpoint(
+                                    step_id=agent_name,
+                                    step_number=task_step_num,
+                                    step_output=task_result,
+                                    artifacts={},
+                                    step_name=f"{agent_name}-result",
+                                )
+                            if doc_manager:
+                                # FIXED: Use structured result parser and formatters
+                                # instead of raw JSON dumps
+                                parsed_result = StepResultParser.parse(
+                                    agent_name=agent_name,
+                                    raw=task_result,
+                                    step_number=task_step_num,
+                                )
+                            
+                                # FIXED: Save appropriate documentation based on success/failure
+                                if task_success:
+                                    doc_content = format_step_result(parsed_result)
+                                else:
+                                    # Extract error message for placeholder documentation
+                                    error_msg = self._extract_error_message(task_result)
+                                    doc_content = format_failed_step(
+                                        step_number=task_step_num,
+                                        agent_name=agent_name,
+                                        error_message=error_msg,
+                                    )
+                            
+                                doc_manager.save_step_documentation(
+                                    step_number=task_step_num,
+                                    content=doc_content,
+                                    step_name=f"{agent_name}-result",
+                                )
+                            step_number += 1
+                except Exception as e:
+                    # Handle execution errors - capture exception as workflow error
+                    error_str = str(e)
+                    workflow_errors.append({
+                        "step": 0,  # Unknown step
+                        "agent": "orchestrator",
+                        "agent_id": "orchestrator",
+                        "error": f"Workflow execution exception: {error_str}",
+                    })
+                    logger.error(f"Workflow execution failed: {e}", exc_info=True)
+                
+                    # Notify step errors
+                    for task in agent_tasks:
+                        task_step_num = task.get("step_num", 0)
+                        task_step_name = task.get("step_name", task["agent"])
+                        if on_step_error:
+                            on_step_error(task_step_num, task_step_name, e)
+                        elif on_step_complete:
+                            on_step_complete(task_step_num, task_step_name, "failed")
+                
+                    # Set result to indicate failure
+                    result = {
+                        "success": False,
+                        "error": error_str,
+                        "results": {},
+                    }
+            else:
+                # Fast mode: Only implementation
+                result = await orchestrator.execute_parallel(agent_tasks)
+        
+            steps_executed.append("implement")
+
+            # Step 6-7: Review and Test (if not in fast_mode)
+            implemented_files_list = []
+            if not fast_mode:
+                # Extract implemented files from result
+                implemented_files_list = self._extract_implemented_files(result)
+            
+                # Add reviewer and tester steps
+                step_6_name = "Review code quality"
+                step_7_name = "Generate tests"
+            
+                if on_step_start:
+                    on_step_start(6, step_6_name)
+                    on_step_start(7, step_7_name)
+            
+                review_test_tasks = [
+                    {
+                        "agent_id": "reviewer-1",
+                        "agent": "reviewer",
+                        "command": "score",  # Quick score for workflow
+                        "args": {},
+                        "step_num": 6,
+                        "step_name": step_6_name,
+                    },
+                    {
+                        "agent_id": "tester-1",
+                        "agent": "tester",
+                        "command": "generate-tests",  # Generate tests
+                        "args": {},
+                        "step_num": 7,
+                        "step_name": step_7_name,
+                    },
+                ]
+                # Note: These would need actual file paths from implementation results
+                # For now, we'll skip if no files were created
+                if result.get("results"):
+                    # Execute review and test if we have implementation results
+                    try:
+                        review_test_result = await orchestrator.execute_parallel(review_test_tasks)
+                        steps_executed.extend(["review", "test"])
+                    
+                        # Track test files from tester result (Step 7 enhancement)
+                        tester_result = review_test_result.get("results", {}).get("tester-1", {})
+                        if tester_result:
+                            test_files_list = self._extract_test_files(tester_result)
+                            for test_file in test_files_list:
+                                checklist.add_deliverable(
+                                    "tests",
+                                    f"Test: {test_file.name}",
+                                    test_file,
+                                    status="complete",
+                                    metadata={"step_number": 7},
+                                )
+                                # Link tests to requirements
+                                for req_id in tracer.requirements.keys():
+                                    tracer.add_trace(req_id, "tests", test_file)
+                    
+                        # Add review/test outputs to aggregator
+                        reviewer_result = review_test_result.get("results", {}).get("reviewer-1", {})
+                        if reviewer_result:
+                            output_aggregator.add_step_output(
+                                step_number=6,
+                                step_name=step_6_name,
+                                agent_name="reviewer",
+                                output=reviewer_result,
+                                success=reviewer_result.get("success", True),
+                            )
+                        if tester_result:
+                            output_aggregator.add_step_output(
+                                step_number=7,
+                                step_name=step_7_name,
+                                agent_name="tester",
+                                output=tester_result,
+                                success=tester_result.get("success", True),
+                                metadata={"test_files": test_files_list if tester_result else []},
+                            )
+                    
+                        # Notify step completions
+                        if on_step_complete:
+                            on_step_complete(6, step_6_name, "success")
+                            on_step_complete(7, step_7_name, "success")
+                    except Exception as e:
+                        logger.warning(f"Review/test steps failed: {e}")
+                        if on_step_error:
+                            on_step_error(6, step_6_name, e)
+                            on_step_error(7, step_7_name, e)
+                        elif on_step_complete:
+                            on_step_complete(6, step_6_name, "failed")
+                            on_step_complete(7, step_7_name, "failed")
+
+            # Step 8: Comprehensive Verification (NEW)
+            verification_result = None
+            if not fast_mode:
+                step_8_name = "Comprehensive verification"
+                if on_step_start:
+                    on_step_start(8, step_8_name)
+                try:
+                    # Prepare requirements dict from tracer
+                    requirements_dict = tracer.requirements or {}
+                
+                    # FIXED: Pass agent results to enable failure detection
+                    verification_result = await self._step_8_verification(
+                        workflow_id=workflow_id,
+                        requirements=requirements_dict,
                         checklist=checklist,
                         tracer=tracer,
-                        workflow_state=workflow_state,
+                        implemented_files=implemented_files_list,
+                        doc_manager=doc_manager,
+                        agent_results=result.get("results", {}),
                     )
-                    
-                    if loopback_result.get("loopback"):
-                        logger.warning(
-                            f"Workflow verification incomplete. "
-                            f"Loopback recommended to Step {loopback_result.get('loopback_step')}. "
-                            f"Gaps: {len(verification_result.get('gaps', []))} items"
-                        )
                 
-                if on_step_complete:
-                    status = "success" if verification_result.get("complete") else "warning"
-                    on_step_complete(8, step_8_name, status)
-            except Exception as e:
-                logger.warning(f"Step 8 verification failed: {e}")
-                if on_step_error:
-                    on_step_error(8, step_8_name, e)
-                elif on_step_complete:
-                    on_step_complete(8, step_8_name, "failed")
+                    steps_executed.append("verification")
+                
+                    # Handle gaps with loopback if needed
+                    if not verification_result.get("complete") and verification_result.get("loopback_step"):
+                        loopback_result = await self._handle_verification_gaps(
+                            gaps=verification_result.get("gaps", []),
+                            current_step=8,
+                            checklist=checklist,
+                            tracer=tracer,
+                            workflow_state=workflow_state,
+                        )
+                    
+                        if loopback_result.get("loopback"):
+                            logger.warning(
+                                f"Workflow verification incomplete. "
+                                f"Loopback recommended to Step {loopback_result.get('loopback_step')}. "
+                                f"Gaps: {len(verification_result.get('gaps', []))} items"
+                            )
+                
+                    if on_step_complete:
+                        status = "success" if verification_result.get("complete") else "warning"
+                        on_step_complete(8, step_8_name, status)
+                except Exception as e:
+                    logger.warning(f"Step 8 verification failed: {e}")
+                    if on_step_error:
+                        on_step_error(8, step_8_name, e)
+                    elif on_step_complete:
+                        on_step_complete(8, step_8_name, "failed")
 
-        # Step 8: Framework change detection and documentation update
-        doc_update_result = None
-        try:
-            doc_update_result = await self._execute_documenter_step(
-                workflow_id=workflow_id,
-                project_root=self.project_root,
-                implementation_result=result,
-            )
-            if doc_update_result and doc_update_result.get("framework_changes_detected"):
-                steps_executed.append("documenter")
-                logger.info(
-                    f"Documentation updated for {len(doc_update_result.get('new_agents', []))} new agent(s)"
+            # Step 8: Framework change detection and documentation update
+            doc_update_result = None
+            try:
+                doc_update_result = await self._execute_documenter_step(
+                    workflow_id=workflow_id,
+                    project_root=self.project_root,
+                    implementation_result=result,
                 )
-        except Exception as e:
-            # Documentation updates are optional - log but don't fail workflow
-            logger.warning(f"Documentation update step failed: {e}")
-
-        # Optional: Run evaluator at end if enabled
-        evaluation_result = None
-        if (self.config and 
-            hasattr(self.config, 'agents') and 
-            hasattr(self.config.agents, 'evaluator') and 
-            getattr(self.config.agents.evaluator, 'auto_run', False)):
-            try:
-                from tapps_agents.agents.evaluator.agent import EvaluatorAgent
-                evaluator = EvaluatorAgent(config=self.config)
-                await evaluator.activate(self.project_root, offline_mode=True)
-                # Use workflow_id from result if available, or generate one
-                import time
-                workflow_id = result.get("workflow_id") or f"build-{int(time.time())}"
-                evaluation_result = await evaluator.run("evaluate", workflow_id=workflow_id)
-                await evaluator.close()
+                if doc_update_result and doc_update_result.get("framework_changes_detected"):
+                    steps_executed.append("documenter")
+                    logger.info(
+                        f"Documentation updated for {len(doc_update_result.get('new_agents', []))} new agent(s)"
+                    )
             except Exception as e:
-                # Evaluator is optional - log but don't fail workflow
-                logger.debug(f"Evaluator auto-run failed: {e}")
+                # Documentation updates are optional - log but don't fail workflow
+                logger.warning(f"Documentation update step failed: {e}")
 
-        # Create latest symlink if enabled
-        if doc_manager:
-            doc_manager.create_latest_symlink()
-            # Create workflow summary
-            try:
-                doc_manager.create_workflow_summary()
-            except Exception as e:
-                logger.warning(f"Failed to create workflow summary: {e}")
+            # Optional: Run evaluator at end if enabled
+            evaluation_result = None
+            if (self.config and 
+                hasattr(self.config, 'agents') and 
+                hasattr(self.config.agents, 'evaluator') and 
+                getattr(self.config.agents.evaluator, 'auto_run', False)):
+                try:
+                    from tapps_agents.agents.evaluator.agent import EvaluatorAgent
+                    evaluator = EvaluatorAgent(config=self.config)
+                    await evaluator.activate(self.project_root, offline_mode=True)
+                    # Use workflow_id from result if available, or generate one
+                    import time
+                    workflow_id = result.get("workflow_id") or f"build-{int(time.time())}"
+                    evaluation_result = await evaluator.run("evaluate", workflow_id=workflow_id)
+                    await evaluator.close()
+                except Exception as e:
+                    # Evaluator is optional - log but don't fail workflow
+                    logger.debug(f"Evaluator auto-run failed: {e}")
 
-        # Determine overall success and collect error message
-        overall_success = result.get("success", False) if agent_tasks else True
-        error_message = None
+            # Create latest symlink if enabled
+            if doc_manager:
+                doc_manager.create_latest_symlink()
+                # Create workflow summary
+                try:
+                    doc_manager.create_workflow_summary()
+                except Exception as e:
+                    logger.warning(f"Failed to create workflow summary: {e}")
+
+            # Determine overall success and collect error message
+            overall_success = result.get("success", False) if agent_tasks else True
+            error_message = None
         
-        if workflow_errors:
-            # Build error message from collected errors
-            error_parts = []
-            for err in workflow_errors:
-                error_parts.append(f"Step {err['step']} ({err['agent']}): {err['error']}")
-            error_message = "; ".join(error_parts)
-        elif not overall_success:
-            # Fallback: extract error from result
-            if "error" in result:
-                error_message = str(result["error"])
-            else:
-                error_message = "Workflow execution failed (see results for details)"
+            if workflow_errors:
+                # Build error message from collected errors
+                error_parts = []
+                for err in workflow_errors:
+                    error_parts.append(f"Step {err['step']} ({err['agent']}): {err['error']}")
+                error_message = "; ".join(error_parts)
+            elif not overall_success:
+                # Fallback: extract error from result
+                if "error" in result:
+                    error_message = str(result["error"])
+                else:
+                    error_message = "Workflow execution failed (see results for details)"
         
-        # Aggregate all outputs (Simple Mode Enhancement)
-        aggregated_output = output_aggregator.aggregate()
-        executable_instructions = output_aggregator.get_executable_instructions()
+            # Aggregate all outputs (Simple Mode Enhancement)
+            aggregated_output = output_aggregator.aggregate()
+            executable_instructions = output_aggregator.get_executable_instructions()
 
-        close_issue(self.project_root, beads_issue_id)
-        return {
-            "type": "build",
-            "success": overall_success,
-            "error": error_message,  # Include error message for reporting
-            "errors": workflow_errors,  # Include detailed error list
-            "fast_mode": fast_mode,
-            "workflow_id": workflow_id,
-            "steps_executed": steps_executed,
-            "agents_executed": result.get("total_agents", 0) if agent_tasks else 0,
-            "results": result.get("results", {}) if agent_tasks else {},
-            "summary": result.get("summary", {}) if agent_tasks else {},
-            "enhancement": {
-                "original_prompt": original_description,
-                "enhanced_prompt": enhanced_prompt,
-                "enhancement_result": enhancement_result,
-            },
-            "context7": context7_info,  # Enhancement 3: Include Context7 detection info
-            "evaluation": evaluation_result,  # Optional evaluation result
-            "documentation": doc_update_result,  # Documentation update result
-            "verification": verification_result,  # Step 8 verification result
-            "checklist": checklist.to_dict() if not fast_mode else None,  # Deliverable checklist
-            "tracer": tracer.to_dict() if not fast_mode else None,  # Requirements tracer
-            # Simple Mode Enhancements (Phase 6.1)
-            "aggregated_output": aggregated_output,
-            "executable_instructions": executable_instructions,
-            "output_summary": output_aggregator.format_summary(),
-        }
+            return {
+                "type": "build",
+                "success": overall_success,
+                "error": error_message,  # Include error message for reporting
+                "errors": workflow_errors,  # Include detailed error list
+                "fast_mode": fast_mode,
+                "workflow_id": workflow_id,
+                "steps_executed": steps_executed,
+                "agents_executed": result.get("total_agents", 0) if agent_tasks else 0,
+                "results": result.get("results", {}) if agent_tasks else {},
+                "summary": result.get("summary", {}) if agent_tasks else {},
+                "enhancement": {
+                    "original_prompt": original_description,
+                    "enhanced_prompt": enhanced_prompt,
+                    "enhancement_result": enhancement_result,
+                },
+                "context7": context7_info,  # Enhancement 3: Include Context7 detection info
+                "evaluation": evaluation_result,  # Optional evaluation result
+                "documentation": doc_update_result,  # Documentation update result
+                "verification": verification_result,  # Step 8 verification result
+                "checklist": checklist.to_dict() if not fast_mode else None,  # Deliverable checklist
+                "tracer": tracer.to_dict() if not fast_mode else None,  # Requirements tracer
+                # Simple Mode Enhancements (Phase 6.1)
+                "aggregated_output": aggregated_output,
+                "executable_instructions": executable_instructions,
+                "output_summary": output_aggregator.format_summary(),
+            }
+        finally:
+            close_issue(self.project_root, beads_issue_id)
 
     def _enrich_implementer_context(
         self,
@@ -1095,12 +1106,22 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             parameters={},
         )
 
-        # Execute from next step
-        # For now, we'll re-execute the full workflow but with restored context
-        # In the future, we could implement _execute_from_step for more granular resume
+        # Load beads_issue_id from persistence so we reuse the same bd issue (no duplicate)
+        beads_issue_id = None
+        state_dir = self.project_root / ".tapps-agents" / "workflow-state"
+        beads_file = state_dir / workflow_id / ".beads_issue_id"
+        if beads_file.exists():
+            try:
+                beads_issue_id = beads_file.read_text(encoding="utf-8").strip() or None
+            except OSError:
+                pass
+
+        # Execute from next step (pass workflow_id and beads_issue_id to avoid duplicate bd issues)
         parameters = {
             "description": enhanced_prompt,
             "resume_from_step": from_step + 1,
+            "workflow_id": workflow_id,
+            "beads_issue_id": beads_issue_id,
         }
 
         # Execute workflow (will use restored context)

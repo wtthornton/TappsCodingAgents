@@ -104,11 +104,15 @@ class TestBeadsConfig:
     """Test BeadsConfig model."""
 
     def test_default_values(self):
-        """BeadsConfig defaults: enabled=False, sync_epic=True, hooks_simple_mode=False."""
+        """BeadsConfig defaults: enabled=True, hooks_simple_mode=True, hooks_workflow=True; hooks_review/test/refactor=False."""
         c = BeadsConfig()
-        assert c.enabled is False
+        assert c.enabled is True
         assert c.sync_epic is True
-        assert c.hooks_simple_mode is False
+        assert c.hooks_simple_mode is True
+        assert c.hooks_workflow is True
+        assert c.hooks_review is False
+        assert c.hooks_test is False
+        assert c.hooks_refactor is False
 
 
 @pytest.mark.unit
@@ -123,7 +127,7 @@ class TestProjectConfig:
         assert isinstance(config.agents.reviewer, ReviewerAgentConfig)
         assert isinstance(config.scoring.weights, ScoringWeightsConfig)
         assert isinstance(config.beads, BeadsConfig)
-        assert config.beads.enabled is False
+        assert config.beads.enabled is True
 
     def test_custom_config(self):
         """Test creating config with custom values"""

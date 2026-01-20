@@ -9,7 +9,6 @@ global-exclude __pycache__
 global-exclude *.pyo
 global-exclude *.pyd
 recursive-exclude tests *
-recursive-exclude .bmad-core *
 recursive-exclude .claude *
 recursive-exclude .cursor *
 recursive-exclude .ruff_cache *

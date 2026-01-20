@@ -8,7 +8,7 @@ from unittest.mock import patch
 
 import pytest
 
-from tapps_agents.beads.client import is_available, resolve_bd_path, run_bd
+from tapps_agents.beads.client import is_available, is_ready, resolve_bd_path, run_bd
 
 
 @pytest.mark.unit
@@ -58,6 +58,34 @@ class TestIsAvailable:
         """is_available is False when resolve_bd_path returns None."""
         with patch("tapps_agents.beads.client.shutil.which", return_value=None):
             assert is_available(tmp_path) is False
+
+
+@pytest.mark.unit
+class TestIsReady:
+    """Tests for is_ready (available and .beads exists)."""
+
+    def test_true_when_available_and_beads_dir_exists(self, tmp_path: Path) -> None:
+        """is_ready True when bd available and (project_root / ".beads").exists()."""
+        (tmp_path / "tools" / "bd").mkdir(parents=True)
+        (tmp_path / "tools" / "bd" / ("bd.exe" if sys.platform == "win32" else "bd")).write_text(
+            "", encoding="utf-8"
+        )
+        (tmp_path / ".beads").mkdir()
+        assert is_ready(tmp_path) is True
+
+    def test_false_when_beads_dir_missing(self, tmp_path: Path) -> None:
+        """is_ready False when bd available but .beads does not exist."""
+        (tmp_path / "tools" / "bd").mkdir(parents=True)
+        (tmp_path / "tools" / "bd" / ("bd.exe" if sys.platform == "win32" else "bd")).write_text(
+            "", encoding="utf-8"
+        )
+        assert is_ready(tmp_path) is False
+
+    def test_false_when_not_available(self, tmp_path: Path) -> None:
+        """is_ready False when is_available is False (even if .beads exists)."""
+        (tmp_path / ".beads").mkdir()
+        with patch("tapps_agents.beads.client.shutil.which", return_value=None):
+            assert is_ready(tmp_path) is False
 
 
 @pytest.mark.unit

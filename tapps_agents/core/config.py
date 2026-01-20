@@ -985,7 +985,7 @@ class BeadsConfig(BaseModel):
     """Configuration for Beads (bd) task-tracking integration."""
 
     enabled: bool = Field(
-        default=False,
+        default=True,
         description="Enable Beads (bd) integration. When false, all beads features are no-ops.",
     )
     sync_epic: bool = Field(
@@ -993,8 +993,24 @@ class BeadsConfig(BaseModel):
         description="When beads.enabled is true, sync epic to bd (create issues + deps) before *epic run.",
     )
     hooks_simple_mode: bool = Field(
-        default=False,
+        default=True,
         description="When beads.enabled is true, create/close bd issues at start/end of *build and *fix.",
+    )
+    hooks_workflow: bool = Field(
+        default=True,
+        description="When beads.enabled is true, create/close a bd issue at start/end of CLI workflow runs.",
+    )
+    hooks_review: bool = Field(
+        default=False,
+        description="When beads.enabled is true, create/close for *review.",
+    )
+    hooks_test: bool = Field(
+        default=False,
+        description="When beads.enabled is true, create/close for *test.",
+    )
+    hooks_refactor: bool = Field(
+        default=False,
+        description="When beads.enabled is true, create/close for *refactor.",
     )
 
 

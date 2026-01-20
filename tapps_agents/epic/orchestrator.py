@@ -64,6 +64,7 @@ class EpicOrchestrator:
         self.execution_results: dict[str, dict[str, Any]] = {}
         self.workflow_executor: WorkflowExecutor | None = None
         self._story_to_bd: dict[str, str] = {}
+        self._epic_parent_bd_id: str | None = None
 
     def load_epic(self, epic_path: Path | str) -> EpicDocument:
         """
@@ -93,14 +94,16 @@ class EpicOrchestrator:
                 def _run_bd(args: list[str], cwd: Path | None = None) -> Any:
                     return run_bd(self.project_root, args, cwd=cwd)
 
-                self._story_to_bd = sync_epic_to_beads(
-                    self.epic, self.project_root, _run_bd
+                self._story_to_bd, self._epic_parent_bd_id = sync_epic_to_beads(
+                    self.epic, self.project_root, _run_bd, create_parent=True
                 )
             except Exception as e:
                 logger.warning("beads epic sync failed: %s", e)
                 self._story_to_bd = {}
+                self._epic_parent_bd_id = None
         else:
             self._story_to_bd = {}
+            self._epic_parent_bd_id = None
 
         return self.epic
 
@@ -140,6 +143,13 @@ class EpicOrchestrator:
         # Execute each story in order
         for story in self.execution_order:
             await self._execute_story(story, max_iterations=max_iterations)
+
+        # Close Epic parent bd issue when sync created one
+        if self._epic_parent_bd_id:
+            try:
+                run_bd(self.project_root, ["close", self._epic_parent_bd_id])
+            except Exception as e:
+                logger.warning("beads close epic parent %s: %s", self._epic_parent_bd_id, e)
 
         # Generate completion report
         report = self._generate_completion_report()

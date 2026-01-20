@@ -216,9 +216,11 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 
 **Essential commands:** `bd ready` (tasks with no open blockers), `bd create "Title" -p 0`, `bd dep add <child> <parent>`, `bd show <id>`. Run `bd quickstart` for an intro. This repo uses stealth mode (`.beads/` is local only).
 
-**Conventions:** Run `bd ready` at session start when doing long-horizon or multi-session work. After completing a *build, *fix, or an epic story, create or close a bd issue (e.g. `bd create "Done: …"` or `bd close <id>`). See [docs/BEADS_INTEGRATION.md](docs/BEADS_INTEGRATION.md).
+**Create/close bd issues:** When the relevant `beads.*` flags are on, the following create and close bd issues automatically: *build, *fix (via `hooks_simple_mode`); *epic (`sync_epic` + per-story close + optional Epic parent); *review, *test, *refactor (when `hooks_review`, `hooks_test`, `hooks_refactor` are enabled); continuous-bug-fix and @bug-fix-agent \*fix-bug (they use FixOrchestrator); and CLI `workflow` (when `hooks_workflow` is true). See [docs/BEADS_INTEGRATION.md](docs/BEADS_INTEGRATION.md).
 
-**Init and doctor:** `tapps-agents init` prints an optional hint to run `bd init` when `bd` is detected. `tapps-agents doctor` reports Beads (bd) status (available, not found, or not checked).
+**Conventions:** Run `bd ready` at session start when doing long-horizon or multi-session work. After completing a *build, *fix, or an epic story, create or close a bd issue when hooks are enabled, or manually (e.g. `bd create "Done: …"` or `bd close <id>`).
+
+**Init and doctor:** `tapps-agents init` prints a hint to run `bd init` or `bd init --stealth` when bd is available and `.beads` is missing, or "Beads is ready. Use `bd ready` to see unblocked tasks." when `.beads` exists. `tapps-agents doctor` reports Beads (bd) status and config (enabled, sync_epic, hooks_*).
 
 ## Detailed Rules
 

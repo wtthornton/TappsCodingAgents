@@ -45,6 +45,18 @@ def is_available(project_root: Path) -> bool:
     return resolve_bd_path(project_root) is not None
 
 
+def is_ready(project_root: Path) -> bool:
+    """
+    Return True if bd is available and the project has been initialized with bd.
+
+    (project_root / ".beads").exists() indicates bd init has been run.
+
+    Args:
+        project_root: Project root directory.
+    """
+    return is_available(project_root) and (project_root / ".beads").exists()
+
+
 def run_bd(
     project_root: Path,
     args: list[str],

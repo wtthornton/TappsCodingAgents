@@ -35,8 +35,9 @@ class TestReviewerAgentInitialization:
         mock_config.quality_tools.typescript_enabled = True
         mock_config.quality_tools.eslint_config = None
         mock_config.quality_tools.tsconfig_path = None
+        mock_config.context7 = None  # avoid Context7 init; would need real kb location in tests
         mock_load_config.return_value = mock_config
-        
+
         agent = ReviewerAgent()
         assert agent.agent_id == "reviewer"
         assert agent.agent_name == "Reviewer Agent"

@@ -218,8 +218,15 @@ def _check_context7_cache_status(
         return None
     
     # Determine cache root
+    # Defensive: if knowledge_base.location is not a string (e.g. MagicMock in tests),
+    # use default to avoid creating directories with mock reprs (e.g. "MagicMock/").
     if config.context7.knowledge_base:
-        cache_root = project_root / config.context7.knowledge_base.location
+        loc = getattr(config.context7.knowledge_base, "location", None)
+        cache_root = (
+            project_root / loc
+            if isinstance(loc, str)
+            else project_root / ".tapps-agents" / "kb" / "context7-cache"
+        )
     else:
         cache_root = project_root / ".tapps-agents" / "kb" / "context7-cache"
     
@@ -759,22 +766,40 @@ def collect_doctor_report(
     try:
         from ..beads import is_available
 
+        b = config.beads
+        cfg = "enabled={}, sync_epic={}, hooks_simple_mode={}, hooks_workflow={}, hooks_review={}, hooks_test={}, hooks_refactor={}".format(
+            getattr(b, "enabled", False),
+            getattr(b, "sync_epic", False),
+            getattr(b, "hooks_simple_mode", False),
+            getattr(b, "hooks_workflow", False),
+            getattr(b, "hooks_review", False),
+            getattr(b, "hooks_test", False),
+            getattr(b, "hooks_refactor", False),
+        )
         if is_available(root):
-            findings.append(
-                DoctorFinding(
-                    severity="ok",
-                    code="BEADS",
-                    message="Beads (bd): Available (tools/bd or PATH). Optional: enable in config and run `bd init`. See docs/BEADS_INTEGRATION.md.",
-                )
-            )
+            msg = f"Beads (bd): Available. {cfg}"
+            rem = None
+            if not getattr(b, "enabled", False):
+                rem = "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
+            findings.append(DoctorFinding(severity="ok", code="BEADS", message=msg, remediation=rem))
         else:
-            findings.append(
-                DoctorFinding(
-                    severity="ok",
-                    code="BEADS",
-                    message="Beads (bd): Not found (optional). See docs/BEADS_INTEGRATION.md.",
+            if getattr(b, "enabled", False):
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="BEADS",
+                        message="Beads (bd): Not found",
+                        remediation="beads.enabled is true but bd was not found. Install bd to tools/bd or PATH, or set beads.enabled: false. See docs/BEADS_INTEGRATION.md.",
+                    )
                 )
-            )
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="BEADS",
+                        message="Beads (bd): Not found (optional). See docs/BEADS_INTEGRATION.md.",
+                    )
+                )
     except Exception:
         findings.append(
             DoctorFinding(
