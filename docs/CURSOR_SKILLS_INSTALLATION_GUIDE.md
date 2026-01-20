@@ -59,6 +59,7 @@ tapps-agents init
 This installs (by copying from packaged templates in `tapps_agents/resources/*`):
 - **Cursor Skills**: `.claude/skills/` (14 agent skills + Simple Mode skill from `tapps_agents/resources/claude/skills/`)
 - **Claude Desktop Commands**: `.claude/commands/` (16 commands from `tapps_agents/resources/claude/commands/`)
+- **Cursor slash commands**: `.cursor/commands/` (build, fix, review, test from `tapps_agents/resources/cursor/commands/`) — use `/build`, `/fix`, `/review`, `/test` in Cursor chat
 - **Cursor Rules**: `.cursor/rules/*.mdc` (8 rule files from `tapps_agents/resources/cursor/rules/`, including `simple-mode.mdc`, `command-reference.mdc`, and `cursor-mode-usage.mdc`)
 - **Workflow presets**: `workflows/presets/*.yaml` (8 presets from `tapps_agents/resources/workflows/presets/`, including 3 Simple Mode workflows)
 - **Optional config**: `.tapps-agents/config.yaml`
@@ -160,18 +161,33 @@ ls .claude/skills/
 # Verify Commands are in place
 ls .claude/commands/
 # Should show: review.md, implement.md, test.md, build.md, etc.
+
+# Verify Cursor slash commands (if init included skills)
+ls .cursor/commands/
+# Should show: build.md, fix.md, review.md, test.md
 ```
 
-**4.2 Test in Cursor AI**
+**4.2 Rules and Commands toggles (Cursor)**
+
+In Cursor **Settings → Rules and Commands**, enable all four toggles for best results with TappsCodingAgents:
+
+- **Import Agent Skills** — loads `.claude/skills/` (and optionally `.codex/skills/` in the future)
+- **Include CLAUDE.md in context** — loads `CLAUDE.md` and `CLAUDE.local.md` (optional local overrides; copy from `CLAUDE.local.example.md`)
+- **Import Claude Commands** — loads `.claude/commands/` and `.cursor/commands/` (slash commands: `/build`, `/fix`, `/review`, `/test`)
+- **Import Claude Plugins** — loads `.claude-plugin/` (TappsCodingAgents may support this later)
+
+See [Rules and Commands Toggles](RULES_AND_COMMANDS_TOGGLES.md) for details.
+
+**4.3 Test in Cursor AI**
 
 1. Open Cursor AI IDE
 2. Open a chat window
 3. Type `@reviewer` to activate the Reviewer agent
 4. Try a command: `*help`
 
-You should see the Reviewer agent respond with available commands.
+You should see the Reviewer agent respond with available commands. You can also try `/build`, `/fix`, `/review`, or `/test` for Simple Mode workflows.
 
-**4.3 Test in Claude Desktop**
+**4.4 Test in Claude Desktop**
 
 1. Open Claude Desktop
 2. Open a conversation

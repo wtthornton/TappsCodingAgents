@@ -66,6 +66,9 @@ tools/bd/*.zip
 .cursor/debug.log
 .cursor/*.log
 
+# Local AI rule overrides (loaded when "Include CLAUDE.md in context" is on)
+CLAUDE.local.md
+
 # Local dev artifacts
 debug-report.md
 fixed-code/

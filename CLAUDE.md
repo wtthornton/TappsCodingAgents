@@ -103,6 +103,10 @@ This file references detailed rules in `.cursor/rules/` to keep the master file 
 
 **Key Principle:** Rules are stored in `.cursor/rules/` as markdown files. This `CLAUDE.md` file provides a master index and Claude Code-specific context without duplicating content.
 
+### Local overrides
+
+You can add `CLAUDE.local.md` for machine- or project-specific rules. It is loaded together with this file when **"Include CLAUDE.md in context"** is enabled. Copy from `CLAUDE.local.example.md`; `CLAUDE.local.md` is in `.gitignore`.
+
 ### Version and Status
 
 **Version:** 3.5.21  

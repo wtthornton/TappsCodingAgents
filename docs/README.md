@@ -57,6 +57,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Skills + Claude Desktop Commands setup
+- **[Rules and Commands Toggles](RULES_AND_COMMANDS_TOGGLES.md)** - Cursor toggles (Import Agent Skills, Include CLAUDE.md, Import Claude Commands, Import Claude Plugins) and TappsCodingAgents
 - **[Claude Desktop Commands Guide](CLAUDE_DESKTOP_COMMANDS.md)** - Using commands in Claude Desktop
 - **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users (includes workflow enforcement and suggestions)
 - **[Workflow Enforcement Guide](WORKFLOW_ENFORCEMENT_GUIDE.md)** - Guide for AI assistants on when to suggest workflows

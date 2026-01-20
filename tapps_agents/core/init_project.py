@@ -590,6 +590,55 @@ def init_claude_commands(project_root: Path | None = None, source_dir: Path | No
     return len(copied) > 0, copied
 
 
+def init_cursor_commands(project_root: Path | None = None, source_dir: Path | None = None):
+    """
+    Initialize Cursor slash commands directory for a project.
+
+    Copies framework-provided commands from `tapps_agents/resources/cursor/commands/`
+    into the project's `.cursor/commands/`. The "Import Claude Commands" toggle loads
+    both `.claude/commands/` and `.cursor/commands/`; these provide /build, /fix, /review,
+    /test in Cursor chat.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    if source_dir is None:
+        packaged = _resource_at("cursor", "commands")
+        if packaged is not None and packaged.is_dir():
+            packaged_commands = packaged
+        else:
+            packaged_commands = None
+            current_file = Path(__file__)
+            package_root = current_file.parent.parent
+            source_dir = package_root / "resources" / "cursor" / "commands"
+    else:
+        packaged_commands = None
+
+    project_commands_dir = project_root / ".cursor" / "commands"
+    project_commands_dir.mkdir(parents=True, exist_ok=True)
+
+    copied: list[str] = []
+    if packaged_commands is not None:
+        for cmd_file in packaged_commands.iterdir():
+            if cmd_file.is_dir() or not cmd_file.name.endswith(".md"):
+                continue
+            dest_file = project_commands_dir / cmd_file.name
+            if dest_file.exists():
+                continue
+            dest_file.write_bytes(cmd_file.read_bytes())
+            copied.append(str(dest_file))
+    else:
+        src = source_dir if isinstance(source_dir, Path) else Path(source_dir) if source_dir else None
+        if src is not None and src.exists():
+            for cmd_file in src.glob("*.md"):
+                dest_file = project_commands_dir / cmd_file.name
+                if not dest_file.exists():
+                    shutil.copy2(cmd_file, dest_file)
+                    copied.append(str(dest_file))
+
+    return len(copied) > 0, copied
+
+
 # Background Agents removed - function no longer needed
 
 
@@ -2571,7 +2620,11 @@ def init_project(
         results["claude_commands"] = success
         if copied_commands:
             results["files_created"].extend(copied_commands)
-
+        # Initialize Cursor slash commands (Import Claude Commands also loads .cursor/commands)
+        success, copied = init_cursor_commands(project_root)
+        results["cursor_commands"] = success
+        if copied:
+            results["files_created"].extend(copied)
 
     # Initialize customizations directory
     success, customizations_path = init_customizations_directory(project_root)
