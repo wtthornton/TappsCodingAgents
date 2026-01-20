@@ -4,6 +4,7 @@ Tests for correlation IDs and structured logging.
 Epic 1 / Story 1.6: Correlation IDs & Baseline Observability
 """
 
+import asyncio
 from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
@@ -44,9 +45,10 @@ class TestCorrelationIDs:
         assert state.workflow_id.startswith("test-workflow-")
         assert len(state.workflow_id) > len("test-workflow-")
         
-        # Test CursorWorkflowExecutor
-        cursor_executor = CursorWorkflowExecutor(project_root=tmp_path)
-        cursor_state = cursor_executor.start(workflow=workflow)
+        # Test CursorWorkflowExecutor (patch so it can run in headless CI)
+        with patch("tapps_agents.workflow.cursor_executor.is_cursor_mode", return_value=True):
+            cursor_executor = CursorWorkflowExecutor(project_root=tmp_path)
+            cursor_state = asyncio.run(cursor_executor.start(workflow=workflow))
         
         # Should use same format
         assert cursor_state.workflow_id.startswith("test-workflow-")

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -18,10 +18,13 @@ from tapps_agents.workflow.models import StepExecution, Workflow, WorkflowStep, 
 
 @pytest.fixture
 def cursor_mode_env(monkeypatch):
-    """Set up Cursor mode environment for tests."""
+    """Set up Cursor mode environment for tests. Also patch is_cursor_mode so
+    CursorWorkflowExecutor can be instantiated in headless CI (GitHub Actions).
+    """
     monkeypatch.setenv("TAPPS_AGENTS_MODE", "cursor")
     monkeypatch.setenv("CURSOR_IDE", "1")
-    yield
+    with patch("tapps_agents.workflow.cursor_executor.is_cursor_mode", return_value=True):
+        yield
 
 
 @pytest.fixture

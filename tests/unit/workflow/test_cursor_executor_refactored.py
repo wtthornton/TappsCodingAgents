@@ -18,6 +18,10 @@ from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowState
 
 pytestmark = pytest.mark.unit
 
+# Patch so CursorWorkflowExecutor can be instantiated in headless CI (GitHub Actions).
+# The is_cursor_mode() check is a runtime guard; unit tests validate behavior, not mode detection.
+_CURSOR_MODE_PATCH = "tapps_agents.workflow.cursor_executor.is_cursor_mode"
+
 
 @pytest.fixture
 def mock_workflow() -> Workflow:
@@ -46,11 +50,11 @@ def mock_workflow() -> Workflow:
 @pytest.fixture
 def mock_executor(tmp_path: Path) -> CursorWorkflowExecutor:
     """Create a CursorWorkflowExecutor instance for testing."""
-    executor = CursorWorkflowExecutor(
-        project_root=tmp_path,
-        auto_mode=True,
-    )
-    return executor
+    with patch(_CURSOR_MODE_PATCH, return_value=True):
+        return CursorWorkflowExecutor(
+            project_root=tmp_path,
+            auto_mode=True,
+        )
 
 
 class TestCursorExecutorInitialization:
@@ -58,13 +62,15 @@ class TestCursorExecutorInitialization:
 
     def test_executor_initializes(self, tmp_path: Path):
         """Test that executor initializes correctly."""
-        executor = CursorWorkflowExecutor(project_root=tmp_path)
+        with patch(_CURSOR_MODE_PATCH, return_value=True):
+            executor = CursorWorkflowExecutor(project_root=tmp_path)
         assert executor.project_root == tmp_path
         assert executor.auto_mode is False
 
     def test_executor_with_auto_mode(self, tmp_path: Path):
         """Test executor with auto_mode enabled."""
-        executor = CursorWorkflowExecutor(project_root=tmp_path, auto_mode=True)
+        with patch(_CURSOR_MODE_PATCH, return_value=True):
+            executor = CursorWorkflowExecutor(project_root=tmp_path, auto_mode=True)
         assert executor.auto_mode is True
 
 
@@ -84,8 +90,8 @@ class TestCursorExecutorRun:
         )
         mock_executor.workflow = mock_workflow
         
-        # Mock config and timeout to avoid actual execution
-        with patch("tapps_agents.workflow.cursor_executor.load_config") as mock_config:
+        # Mock config and timeout to avoid actual execution (load_config is imported inside run())
+        with patch("tapps_agents.core.config.load_config") as mock_config:
             mock_config_instance = MagicMock()
             mock_config_instance.workflow.timeout_seconds = 3600.0
             mock_config.return_value = mock_config_instance
@@ -113,8 +119,8 @@ class TestCursorExecutorRun:
         mock_executor.workflow = mock_workflow
         mock_executor.state = mock_state
         
-        # Mock config and timeout
-        with patch("tapps_agents.workflow.cursor_executor.load_config") as mock_config:
+        # Mock config and timeout (load_config is imported inside run())
+        with patch("tapps_agents.core.config.load_config") as mock_config:
             mock_config_instance = MagicMock()
             mock_config_workflow = MagicMock()
             mock_config_workflow.timeout_seconds = 3600.0
@@ -164,14 +170,17 @@ class TestCursorExecutorStepExecution:
         mock_executor.marker_writer = MagicMock()
         mock_executor.marker_writer.write_done_marker = MagicMock(return_value=Path("/tmp/marker"))
         
-        # Mock the worktree context manager as an async context manager
+        # Mock the worktree context: _worktree_context(step) must return an async context manager
         from contextlib import asynccontextmanager
-        
+
         @asynccontextmanager
-        async def mock_worktree_context():
+        async def _fake_cm():
             yield Path("/tmp/worktree")
-        
-        with patch.object(mock_executor, "_worktree_context", new=mock_worktree_context()):
+
+        def fake_worktree_context(step):
+            return _fake_cm()
+
+        with patch.object(mock_executor, "_worktree_context", fake_worktree_context):
             result = await mock_executor._execute_step_for_parallel(step=step, target_path=None)
             
             mock_executor.skill_invoker.invoke_skill.assert_called_once()

@@ -7,6 +7,7 @@ Tests the 2025 optimization: context managers for guaranteed resource cleanup.
 from __future__ import annotations
 
 import asyncio
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -17,21 +18,26 @@ from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowState, 
 
 pytestmark = pytest.mark.unit
 
+# Patch so CursorWorkflowExecutor can be instantiated in headless CI (GitHub Actions).
+_CURSOR_MODE_PATCH = "tapps_agents.workflow.cursor_executor.is_cursor_mode"
+
 
 @pytest.fixture
 def mock_executor(tmp_path: Path):
     """Create a CursorWorkflowExecutor with mocked dependencies."""
-    executor = CursorWorkflowExecutor(project_root=tmp_path)
+    with patch(_CURSOR_MODE_PATCH, return_value=True):
+        executor = CursorWorkflowExecutor(project_root=tmp_path)
     
     # Mock worktree manager
     executor.worktree_manager = MagicMock()
     executor.worktree_manager.create_worktree = AsyncMock(return_value=tmp_path / "worktree")
     executor.worktree_manager.copy_artifacts = AsyncMock()
     executor.worktree_manager.remove_worktree = AsyncMock()
-    
+
     # Mock state
     executor.state = WorkflowState(
         workflow_id="test-workflow",
+        started_at=datetime.now(),
         status="running",
         artifacts={},
     )
