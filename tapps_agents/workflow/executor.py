@@ -332,16 +332,36 @@ class WorkflowExecutor:
         try:
             from ..core.config import load_config
             from ..simple_mode.beads_hooks import create_workflow_issue
+
             config = load_config(self.project_root / ".tapps-agents" / "config.yaml")
-            if "_beads_issue_id" not in (self.state.variables or {}):
+            state_vars = self.state.variables or {}
+            # On resume: reuse id from .beads_issue_id file (same layout as *build)
+            state_dir = self._state_dir()
+            wf_dir = state_dir / workflow_id
+            beads_file = wf_dir / ".beads_issue_id"
+            if beads_file.exists():
+                try:
+                    bid = beads_file.read_text(encoding="utf-8").strip() or None
+                    if bid:
+                        state_vars["_beads_issue_id"] = bid
+                        self.state.variables = state_vars
+                except OSError:
+                    pass
+            if "_beads_issue_id" not in state_vars:
                 bid = create_workflow_issue(
                     self.project_root,
                     config,
                     self.workflow.name,
-                    self.user_prompt or (self.state.variables or {}).get("target_file", "") or "",
+                    self.user_prompt or state_vars.get("target_file", "") or "",
                 )
                 if bid:
-                    self.state.variables["_beads_issue_id"] = bid
+                    state_vars["_beads_issue_id"] = bid
+                    self.state.variables = state_vars
+                    try:
+                        wf_dir.mkdir(parents=True, exist_ok=True)
+                        beads_file.write_text(bid, encoding="utf-8")
+                    except OSError:
+                        pass
         except Exception:
             pass  # log-and-continue: do not fail start
 
@@ -482,7 +502,19 @@ class WorkflowExecutor:
             
             return self.state
         finally:
-            beads_issue_id = ((self.state or {}).get("variables") or {}).get("_beads_issue_id")
+            _vars = getattr(self.state, "variables", None) if self.state else None
+            beads_issue_id = (_vars or {}).get("_beads_issue_id")
+            if beads_issue_id is None and self.state:
+                wf_id = getattr(self.state, "workflow_id", None)
+                if wf_id:
+                    beads_file = self._state_dir() / wf_id / ".beads_issue_id"
+                    if beads_file.exists():
+                        try:
+                            beads_issue_id = beads_file.read_text(
+                                encoding="utf-8"
+                            ).strip() or None
+                        except OSError:
+                            pass
             from ..simple_mode.beads_hooks import close_issue
             close_issue(self.project_root, beads_issue_id)
 

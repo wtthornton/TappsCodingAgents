@@ -266,12 +266,24 @@ class EpicOrchestrator:
             result["status"] = "failed"
             result["error"] = str(e)
 
-        # Optional: close bd issue when beads enabled and we have a mapping (DONE or FAILED)
+        # Optional: close or cancel bd issue when beads enabled and we have a mapping
         if self.config.beads.enabled and self._story_to_bd:
             bd_id = self._story_to_bd.get(story.story_id)
             if bd_id:
                 try:
-                    run_bd(self.project_root, ["close", bd_id])
+                    if story.status == StoryStatus.FAILED:
+                        try:
+                            r = run_bd(
+                                self.project_root,
+                                ["update", bd_id, "--status", "cancelled"],
+                                capture_output=True,
+                            )
+                            if r.returncode != 0:
+                                run_bd(self.project_root, ["close", bd_id])
+                        except Exception:
+                            run_bd(self.project_root, ["close", bd_id])
+                    else:
+                        run_bd(self.project_root, ["close", bd_id])
                 except Exception as e:
                     logger.warning("beads close %s failed: %s", bd_id, e)
 

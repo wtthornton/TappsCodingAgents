@@ -764,7 +764,7 @@ def collect_doctor_report(
 
     # --- Beads (bd) status check (optional task tracking) ---
     try:
-        from ..beads import is_available
+        from ..beads import is_available, is_ready, run_bd
 
         b = config.beads
         cfg = "enabled={}, sync_epic={}, hooks_simple_mode={}, hooks_workflow={}, hooks_review={}, hooks_test={}, hooks_refactor={}".format(
@@ -777,11 +777,29 @@ def collect_doctor_report(
             getattr(b, "hooks_refactor", False),
         )
         if is_available(root):
-            msg = f"Beads (bd): Available. {cfg}"
-            rem = None
-            if not getattr(b, "enabled", False):
-                rem = "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
-            findings.append(DoctorFinding(severity="ok", code="BEADS", message=msg, remediation=rem))
+            runnable = False
+            try:
+                for args in (["--version"], ["--help"], []):
+                    r = run_bd(root, args, capture_output=True)
+                    if r.returncode == 0:
+                        runnable = True
+                        break
+            except Exception:
+                pass
+            ready = is_ready(root)
+            if runnable:
+                if ready:
+                    msg = f"Beads (bd): Available (ready). {cfg}"
+                else:
+                    msg = f"Beads (bd): Available (run `bd init` or `bd init --stealth`). {cfg}"
+                rem = None
+                if not getattr(b, "enabled", False):
+                    rem = "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
+                findings.append(DoctorFinding(severity="ok", code="BEADS", message=msg, remediation=rem))
+            else:
+                msg = f"Beads (bd): Available but bd did not run. {cfg}"
+                rem = "The bd binary was found but bd --version/--help failed. Reinstall bd or check dependencies. See docs/BEADS_INTEGRATION.md."
+                findings.append(DoctorFinding(severity="warn", code="BEADS", message=msg, remediation=rem))
         else:
             if getattr(b, "enabled", False):
                 findings.append(

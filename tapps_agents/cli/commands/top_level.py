@@ -2226,6 +2226,9 @@ def _print_next_steps(project_root: Path | None = None) -> None:
                 else:
                     print("Run `bd init` or `bd init --stealth` to enable Beads for this project. See docs/BEADS_INTEGRATION.md.")
                 print()
+            else:
+                print("Optional: Beads (bd) for task tracking – see docs/BEADS_INTEGRATION.md.")
+                print()
         except Exception:
             pass
 

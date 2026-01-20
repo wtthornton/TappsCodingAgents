@@ -6,28 +6,15 @@ and bd is available. On failures we log and continue (no raise).
 """
 
 import logging
-import re
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..beads import is_available, run_bd
+from ..beads import is_available, parse_bd_id_from_stdout, run_bd
 
 if TYPE_CHECKING:
     from ..core.config import ProjectConfig
 
 logger = logging.getLogger(__name__)
-
-_BD_ID_PATTERN = re.compile(r"([A-Za-z0-9]+-[a-zA-Z0-9]{4,})")
-
-
-def _parse_bd_id(stdout: str) -> str | None:
-    for line in (stdout or "").splitlines():
-        if "reated" in line and "issue" in line.lower():
-            m = _BD_ID_PATTERN.search(line)
-            if m:
-                return m.group(1)
-    m = _BD_ID_PATTERN.search(stdout or "")
-    return m.group(1) if m else None
 
 
 def create_build_issue(
@@ -43,7 +30,7 @@ def create_build_issue(
         r = run_bd(project_root, ["create", title, "-p", "0"])
         if r.returncode != 0:
             return None
-        return _parse_bd_id(r.stdout)
+        return parse_bd_id_from_stdout(r.stdout)
     except Exception as e:
         logger.debug("beads create_build_issue: %s", e)
         return None
@@ -62,7 +49,7 @@ def create_fix_issue(
         r = run_bd(project_root, ["create", title, "-p", "0"])
         if r.returncode != 0:
             return None
-        return _parse_bd_id(r.stdout)
+        return parse_bd_id_from_stdout(r.stdout)
     except Exception as e:
         logger.debug("beads create_fix_issue: %s", e)
         return None
@@ -81,7 +68,7 @@ def create_review_issue(
         r = run_bd(project_root, ["create", title, "-p", "0"])
         if r.returncode != 0:
             return None
-        return _parse_bd_id(r.stdout)
+        return parse_bd_id_from_stdout(r.stdout)
     except Exception as e:
         logger.debug("beads create_review_issue: %s", e)
         return None
@@ -100,7 +87,7 @@ def create_test_issue(
         r = run_bd(project_root, ["create", title, "-p", "0"])
         if r.returncode != 0:
             return None
-        return _parse_bd_id(r.stdout)
+        return parse_bd_id_from_stdout(r.stdout)
     except Exception as e:
         logger.debug("beads create_test_issue: %s", e)
         return None
@@ -124,7 +111,7 @@ def create_refactor_issue(
         r = run_bd(project_root, ["create", title, "-p", "0"])
         if r.returncode != 0:
             return None
-        return _parse_bd_id(r.stdout)
+        return parse_bd_id_from_stdout(r.stdout)
     except Exception as e:
         logger.debug("beads create_refactor_issue: %s", e)
         return None
@@ -148,7 +135,7 @@ def create_workflow_issue(
         r = run_bd(project_root, ["create", title, "-p", "0"])
         if r.returncode != 0:
             return None
-        return _parse_bd_id(r.stdout)
+        return parse_bd_id_from_stdout(r.stdout)
     except Exception as e:
         logger.debug("beads create_workflow_issue: %s", e)
         return None

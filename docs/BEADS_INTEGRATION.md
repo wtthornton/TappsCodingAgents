@@ -112,6 +112,21 @@ If `bd` is not found, the command prints a short message and exits 1.
 
 ---
 
+## bd invocations used by TappsCodingAgents
+
+Exact commands and flags we run (for reproduction and debugging):
+
+| Use | Invocation |
+|-----|------------|
+| **Create (Epic sync)** | `bd create "<title>"` and, if description non‑empty, `-d "<description>"`. Title and description are truncated (title 200 chars, description 500). |
+| **Create (hooks)** | `bd create "<title>" -p 0`. Title formats: `Build: <desc>`, `Fix: <file> – <desc>`, `Review: <path>`, `Test: <path>`, `Refactor: <path> – <desc>`, `Workflow: <name> – <prompt>`. Truncation varies (e.g. build 150, fix 100, others 200). |
+| **Close** | `bd close <bd_id>`. On Epic story failure we first try `bd update <bd_id> --status cancelled` and fall back to `bd close <bd_id>` if unsupported. |
+| **Dependencies (Epic)** | `bd dep add <child_bd_id> <parent_bd_id>` so the parent blocks the child. |
+
+We parse the new issue id from `bd create` stdout (e.g. `Created issue: <id>`) with a `prefix-hash` pattern. All invocations use `cwd=project_root` (or equivalent).
+
+---
+
 ## Simple Mode hooks
 
 When `beads.enabled` and `beads.hooks_simple_mode` are true:

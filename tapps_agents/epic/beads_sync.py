@@ -6,30 +6,14 @@ so the Epic run can continue.
 """
 
 import logging
-import re
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from ..beads import parse_bd_id_from_stdout
 from .models import EpicDocument, Story
 
 logger = logging.getLogger(__name__)
-
-# Match bd ids like "TappsCodingAgents-a3f2" or "bd-abc1" in create output (suffix 3+ chars)
-_BD_ID_PATTERN = re.compile(r"([A-Za-z0-9]+-[a-zA-Z0-9]{3,})")
-
-
-def _parse_bd_id_from_stdout(stdout: str) -> str | None:
-    """Extract a bd issue id from bd create stdout."""
-    # Prefer "Created issue: ID" or "✓ Created issue: ID"
-    for line in (stdout or "").splitlines():
-        if "reated" in line and "issue" in line.lower():
-            m = _BD_ID_PATTERN.search(line)
-            if m:
-                return m.group(1)
-    # Fallback: any line that looks like prefix-hash
-    m = _BD_ID_PATTERN.search(stdout or "")
-    return m.group(1) if m else None
 
 
 def sync_epic_to_beads(
@@ -74,7 +58,7 @@ def sync_epic_to_beads(
         try:
             r = run_bd(args, cwd)
             if r.returncode == 0:
-                epic_parent_id = _parse_bd_id_from_stdout(r.stdout)
+                epic_parent_id = parse_bd_id_from_stdout(r.stdout)
             else:
                 logger.warning("beads_sync: bd create parent failed: %s", r.stderr)
         except Exception as e:
@@ -94,7 +78,7 @@ def sync_epic_to_beads(
                     "beads_sync: bd create failed for %s: %s", story.story_id, r.stderr
                 )
                 continue
-            bd_id = _parse_bd_id_from_stdout(r.stdout)
+            bd_id = parse_bd_id_from_stdout(r.stdout)
             if bd_id:
                 story_to_bd[story.story_id] = bd_id
             else:
