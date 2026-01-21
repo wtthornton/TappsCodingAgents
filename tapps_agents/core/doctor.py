@@ -499,7 +499,11 @@ def collect_doctor_report(
                 DoctorFinding(
                     severity="warn",
                     code="SKILLS_AGENTS",
-                    message=f"Skills with no execution path: {', '.join(no_path)} (may be invoked via orchestrators or external tools)",
+                    message=(
+                        f"Some skills have no direct execution path: {', '.join(no_path)}. "
+                        "They are invoked via @simple-mode, orchestrators, or external tools—this is expected."
+                    ),
+                    remediation="Use @simple-mode *build, *fix, *review, etc., or see .cursor/rules/agent-capabilities.mdc.",
                 )
             )
         # Plan 2.2: tool scoping documentation
@@ -831,7 +835,7 @@ def collect_doctor_report(
 
     # --- Beads (bd) status check (optional task tracking) ---
     try:
-        from ..beads import is_available, is_ready, run_bd
+        from ..beads import is_available, is_ready, resolve_bd_path, run_bd
 
         b = config.beads
         cfg = "enabled={}, sync_epic={}, hooks_simple_mode={}, hooks_workflow={}, hooks_review={}, hooks_test={}, hooks_refactor={}".format(
@@ -859,9 +863,36 @@ def collect_doctor_report(
                     msg = f"Beads (bd): Available (ready). {cfg}"
                 else:
                     msg = f"Beads (bd): Available (run `bd init` or `bd init --stealth`). {cfg}"
-                rem = None
+                rem_parts: list[str] = []
                 if not getattr(b, "enabled", False):
-                    rem = "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
+                    rem_parts.append(
+                        "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
+                    )
+                if ready:
+                    rem_parts.append(
+                        "Run bd doctor for Beads-specific checks; bd doctor --fix to fix."
+                    )
+                # If bd is from tools/bd and not on PATH, suggest set_bd_path or PATH
+                resolved = resolve_bd_path(root)
+                from_tools_bd = False
+                if resolved:
+                    try:
+                        from_tools_bd = (root / "tools" / "bd").resolve() == Path(
+                            resolved
+                        ).resolve().parent
+                    except Exception:
+                        from_tools_bd = "tools" in resolved and "bd" in resolved
+                if from_tools_bd and not shutil.which("bd"):
+                    set_bd = root / "scripts" / "set_bd_path.ps1"
+                    if set_bd.exists():
+                        rem_parts.append(
+                            "To run bd in terminal: . .\\scripts\\set_bd_path.ps1 (Windows) or . ./scripts/set_bd_path.ps1 (Unix). Or .\\scripts\\set_bd_path.ps1 -Persist to add to User PATH."
+                        )
+                    else:
+                        rem_parts.append(
+                            "Add tools/bd to PATH to run bd in terminal. See tools/README.md and docs/BEADS_INTEGRATION.md."
+                        )
+                rem = "\n".join(rem_parts) if rem_parts else None
                 findings.append(DoctorFinding(severity="ok", code="BEADS", message=msg, remediation=rem))
             else:
                 msg = f"Beads (bd): Available but bd did not run. {cfg}"

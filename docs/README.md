@@ -102,6 +102,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Features & Capabilities
 - **[Beads Integration](BEADS_INTEGRATION.md)** - Optional task tracking (bd); epic sync, *build/*fix hooks; `tapps-agents beads`; doctor reports status; init hints `bd init`
+- **[Setup, Init, and Doctor Recommendations](SETUP_INIT_DOCTOR_RECOMMENDATIONS.md)** - Issues and improvement recommendations for tapps-agents init, doctor, and Beads setup
 - **[Context7 Integration](context7/CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
 - **[Context7 Integration Patterns](context7/CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
 - **[MCP Gateway](PLAYWRIGHT_MCP_INTEGRATION.md)** - Unified Model Context Protocol interface (Context7, Playwright, Filesystem, Git, Analysis)

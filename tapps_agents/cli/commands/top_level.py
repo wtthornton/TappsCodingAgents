@@ -1889,8 +1889,13 @@ def _print_next_steps(project_root: Path | None = None) -> None:
             if is_available(project_root):
                 if is_ready(project_root):
                     print("Beads is ready. Use `bd ready` to see unblocked tasks.")
+                    set_bd = project_root / "scripts" / "set_bd_path.ps1"
+                    if set_bd.exists():
+                        print("To use bd in terminal: run . .\\scripts\\set_bd_path.ps1 (Windows) or . ./scripts/set_bd_path.ps1 (Unix), or add tools/bd to PATH.")
+                    else:
+                        print("Add tools/bd to PATH to run bd in terminal. See tools/README.md.")
                 else:
-                    print("Run `bd init` or `bd init --stealth` to enable Beads for this project. See docs/BEADS_INTEGRATION.md.")
+                    print("Run `bd init` or `bd init --stealth` to enable Beads for this project. Then run `bd doctor --fix` to install hooks and fix common issues. See docs/BEADS_INTEGRATION.md.")
                 print()
             else:
                 print("Optional: Beads (bd) for task tracking – see docs/BEADS_INTEGRATION.md.")
@@ -2294,6 +2299,7 @@ def handle_doctor_command(args: object) -> None:
     
     config_path = getattr(args, "config_path", None)
     full_mode = getattr(args, "full", False)
+    suggest_fixes = getattr(args, "suggest_fixes", False)
     output_format = getattr(args, "format", "text")
     
     feedback = get_feedback()
@@ -2382,6 +2388,27 @@ def handle_doctor_command(args: object) -> None:
             print("💡 Quick Fix: Install all missing development tools with:")
             print("   python -m tapps_agents.cli install-dev")
             print("-" * 60)
+
+        # --suggest-fixes: print suggested fix commands for warn/error
+        if suggest_fixes:
+            critical = [
+                f
+                for f in report.get("findings", [])
+                if f.get("severity") in ("warn", "error")
+            ]
+            if critical:
+                print("\n" + "-" * 60)
+                print("Suggested fixes (run manually):")
+                for f in critical:
+                    code = f.get("code") or ""
+                    msg = f.get("message") or ""
+                    rem = f.get("remediation")
+                    if not rem and code == "BEADS" and "run `bd init`" in msg:
+                        rem = "bd init --stealth  # or bd init. Then: bd doctor --fix"
+                    if rem:
+                        for i, line in enumerate(rem.splitlines()):
+                            print(f"  [{code}]: {line}" if i == 0 else f"           {line}")
+                print("-" * 60)
         
         # Show health check results if --full
         if full_mode and health_results:

@@ -21,7 +21,7 @@ Use `*epic` and `*build` as today; Beads is an optional layer on top.
 ## Installing bd
 
 - **Upstream:** [Beads – Installation](https://github.com/steveyegge/beads#-installation) (Homebrew, npm, Go, Windows install.ps1).
-- **This repo:** If the project includes `tools/bd/` (e.g. `tools/bd/bd.exe` on Windows), use that. Add `tools/bd` to PATH to run `bd` directly. Run `bd init` or `bd init --stealth` once at project root (see [tools/README.md](../tools/README.md)).
+- **This repo:** If the project includes `tools/bd/` (e.g. `tools/bd/bd.exe` on Windows), use that. Add `tools/bd` to PATH to run `bd` directly, or use `scripts/set_bd_path.ps1` if present (`. .\scripts\set_bd_path.ps1` or `.\scripts\set_bd_path.ps1 -Persist`). Run `bd init` or `bd init --stealth` once at project root (see [tools/README.md](../tools/README.md)). `tapps-agents init` may create `scripts/set_bd_path.ps1` when `tools/bd` exists.
 
 ---
 
@@ -156,8 +156,23 @@ When `beads.enabled` and `beads.hooks_simple_mode` are true:
 
 ## Doctor and Init
 
-- **`tapps-agents doctor`** reports Beads (bd) status and config: available (tools/bd or PATH), not found, or not checked; and `beads.enabled`, `sync_epic`, `hooks_simple_mode`, `hooks_workflow`, `hooks_review`, `hooks_test`, `hooks_refactor`. Remediations: when `beads.enabled` is false but bd is available; when `beads.enabled` is true but bd is not found. See docs/BEADS_INTEGRATION.md.
-- **`tapps-agents init`** when bd is available: if `.beads` does not exist, prints "Run `bd init` or `bd init --stealth` to enable Beads for this project."; if `.beads` exists, prints "Beads is ready. Use `bd ready` to see unblocked tasks."
+- **`tapps-agents doctor`** reports Beads (bd) status and config: available (tools/bd or PATH), not found, or not checked; and `beads.enabled`, `sync_epic`, `hooks_simple_mode`, `hooks_workflow`, `hooks_review`, `hooks_test`, `hooks_refactor`. When Beads is ready, run `bd doctor` for Beads-specific checks; `bd doctor --fix` to fix. If `bd` is only under `tools/bd`, add `tools/bd` to PATH or use `scripts/set_bd_path.ps1`. Remediations: when `beads.enabled` is false but bd is available; when `beads.enabled` is true but bd is not found.
+- **`tapps-agents init`** when bd is available: if `.beads` does not exist, prints "Run `bd init` or `bd init --stealth` to enable Beads for this project. Then run `bd doctor --fix` to install hooks and fix common issues."; if `.beads` exists, prints "Beads is ready. Use `bd ready` to see unblocked tasks" and, if `scripts/set_bd_path.ps1` exists, how to run `bd` in terminal. Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists.
+
+---
+
+## Stealth mode and bd doctor
+
+When using **`bd init --stealth`**, `.beads/` is not committed to git (it is in `.gitignore` or `.git/info/exclude`). In that setup:
+
+- **"Issues Tracking: issues.jsonl is ignored by git (bd sync will fail)"** in `bd doctor` is **expected**. You are not using `bd sync` to push `.beads/` to a branch; the warning can be ignored.
+- **"Sync Branch Config: sync-branch not configured"** can also be ignored when using stealth.
+
+---
+
+## bd doctor: Claude Integration
+
+When using **Cursor** (not Claude Code), the `bd doctor` warning **"Claude Integration: Not configured"** does not apply. TappsCodingAgents and `@simple-mode` provide the integration in Cursor; `bd setup claude` is for Claude Code. You can ignore that suggestion when on Cursor.
 
 ---
 

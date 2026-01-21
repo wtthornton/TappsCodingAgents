@@ -225,7 +225,7 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 
 **Conventions:** Run `bd ready` at session start when doing long-horizon or multi-session work. After completing a *build, *fix, or an epic story, create or close a bd issue when hooks are enabled, or manually (e.g. `bd create "Done: …"` or `bd close <id>`).
 
-**Init and doctor:** `tapps-agents init` prints a hint to run `bd init` or `bd init --stealth` when bd is available and `.beads` is missing, or "Beads is ready. Use `bd ready` to see unblocked tasks." when `.beads` exists. `tapps-agents doctor` reports Beads (bd) status and config (enabled, sync_epic, hooks_*).
+**Init and doctor:** `tapps-agents init` prints a hint to run `bd init` or `bd init --stealth`, then `bd doctor --fix`, when bd is available and `.beads` is missing; when `.beads` exists, "Beads is ready. Use `bd ready`" and how to run `bd` in terminal (e.g. `scripts/set_bd_path.ps1` or PATH). Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists. `tapps-agents doctor` reports Beads (bd) status and config (enabled, sync_epic, hooks_*); when Beads is ready, run `bd doctor` and `bd doctor --fix` for Beads-specific checks.
 
 ## Detailed Rules
 

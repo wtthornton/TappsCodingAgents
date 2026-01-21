@@ -223,7 +223,7 @@ After `tapps-agents init`, Simple Mode is automatically set up and ready:
 - ✅ Simple Mode enabled by default in config
 - ✅ Ready to use immediately in Cursor chat
 
-**Beads (bd) hint:** When `bd` is detected (tools/bd or PATH), init prints an optional hint to run `bd init` or `bd init --stealth`. See docs/BEADS_INTEGRATION.md.
+**Beads (bd) hint:** When `bd` is detected (tools/bd or PATH), init prints an optional hint to run `bd init` or `bd init --stealth`, then `bd doctor --fix`; when `.beads` exists, how to use `bd` in terminal (e.g. `scripts/set_bd_path.ps1` or PATH). Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists. See docs/BEADS_INTEGRATION.md.
 
 **Verify Simple Mode Setup:**
 ```bash
@@ -486,13 +486,14 @@ tapps-agents score <file> [--format json|text]
 
 **CLI Syntax:**
 ```bash
-tapps-agents doctor [--format json|text] [--config-path <path>] [--full]
+tapps-agents doctor [--format json|text] [--config-path <path>] [--full] [--suggest-fixes]
 ```
 
 **Parameters:**
 - `--format json|text`: Output format (default: `text`)
 - `--config-path <path>`: Explicit path to config file if not in default location
 - `--full`: Run both doctor checks and health checks for comprehensive diagnostics
+- `--suggest-fixes`: Print suggested fix commands for warnings and errors (does not apply fixes)
 
 **What It Checks:**
 - Python version compatibility
@@ -502,7 +503,7 @@ tapps-agents doctor [--format json|text] [--config-path <path>] [--full]
 - Workflow presets
 - Project configuration
 - **Context7 cache status** (enabled/disabled, directory accessible, entry count)
-- **Beads (bd) status** (optional: available, not found, or not checked). See docs/BEADS_INTEGRATION.md
+- **Beads (bd) status** (optional: available, not found, or not checked). When Beads is ready, run `bd doctor` for Beads-specific checks; `bd doctor --fix` to fix. See docs/BEADS_INTEGRATION.md
 
 **When to Use:**
 - **Initial setup verification**: After `tapps-agents init` to verify installation
@@ -604,7 +605,7 @@ tapps-agents beads [bd args...]
 
 **When to Use:**
 - Run `bd` commands (e.g. `ready`, `create`, `dep add`, `show`) via `tapps-agents`
-- `tapps-agents doctor` reports Beads (bd) status; `tapps-agents init` hints `bd init` when `bd` is detected
+- `tapps-agents doctor` reports Beads (bd) status (and suggests `bd doctor`/`bd doctor --fix` when ready); `tapps-agents init` hints `bd init` and `bd doctor --fix`, and may create `scripts/set_bd_path.ps1` when `tools/bd` exists
 
 **Examples:**
 ```bash

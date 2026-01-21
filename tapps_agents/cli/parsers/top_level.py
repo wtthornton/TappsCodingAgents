@@ -831,6 +831,11 @@ Example: tapps-agents doctor""",
         action="store_true",
         help="Run both doctor checks and health checks for comprehensive diagnostics",
     )
+    doctor_parser.add_argument(
+        "--suggest-fixes",
+        action="store_true",
+        help="Print suggested fix commands for warnings and errors (does not apply fixes)",
+    )
 
     # Commands index (plan 4.1): list (command, skill, execution_path) from SkillAgentRegistry
     commands_parser = subparsers.add_parser(

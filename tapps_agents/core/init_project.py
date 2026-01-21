@@ -738,6 +738,32 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
     return created, str(dest_file)
 
 
+def _ensure_set_bd_path_script(project_root: Path) -> tuple[bool, str | None]:
+    """
+    If tools/bd exists, ensure scripts/set_bd_path.ps1 exists (copy from resources if missing).
+
+    Does not overwrite an existing file. Returns (installed, path).
+    """
+    tools_bd = project_root / "tools" / "bd"
+    if not tools_bd.is_dir():
+        return False, None
+    if not (tools_bd / "bd.exe").exists() and not (tools_bd / "bd").exists():
+        return False, None
+    packaged = _resource_at("scripts", "set_bd_path.ps1")
+    if packaged is None:
+        return False, None
+    dest = project_root / "scripts" / "set_bd_path.ps1"
+    if dest.exists():
+        return False, None
+    try:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(packaged.read_bytes())
+        return True, str(dest)
+    except Exception as e:
+        logger.debug("Could not install set_bd_path.ps1: %s", e)
+        return False, None
+
+
 # @note[2025-01-20]: Windows encoding workaround - handles UTF-8 BOM that Windows
 # editors may add. This is required for cross-platform compatibility. See
 # docs/architecture/coding-standards.md for Windows encoding requirements.
@@ -2651,6 +2677,16 @@ def init_project(
         results["cursorignore"] = success
         if ignore_path:
             results["files_created"].append(ignore_path)
+
+    # If tools/bd exists, ensure scripts/set_bd_path.ps1 (do not overwrite)
+    set_bd_installed, set_bd_path = _ensure_set_bd_path_script(project_root)
+    results["set_bd_path_installed"] = set_bd_installed
+    if set_bd_path:
+        try:
+            rel = str(Path(set_bd_path).relative_to(project_root))
+        except ValueError:
+            rel = set_bd_path
+        results["files_created"].append(rel)
 
     # Tech stack already detected above, use it for tech stack config
 
