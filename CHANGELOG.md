@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+(none)
+
+### Changed
+(none)
+
+### Documentation
+(none)
+
+## [3.5.25] - 2026-01-22
+
+### Added
 - **Workflow EnhancerHandler** - Workflow executor now runs `enhancer` steps (no longer skipped)
   - `EnhancerHandler` supports `enhance`, `enhance_prompt`, `enhance_quick`; reads prompt from `description`, `story_description`, or `user_prompt`; stores `enhanced_prompt` and `description` for downstream steps
   - Output contracts for `enhancer` with `enhance`, `enhance_prompt`, `enhance_quick` (planner, analyst)
