@@ -57,8 +57,8 @@ async def test_feature_implementation_scenario(
     assert (project_path / "src" / "calculator.py").exists()
     assert (project_path / "tests" / "test_calculator.py").exists()
 
-    # Validate and load workflow - fail immediately if missing
-    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "feature-implementation.yaml"
+    # Validate and load workflow - fail immediately if missing (rapid-dev: feature implementation)
+    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "rapid-dev.yaml"
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=True)
@@ -121,8 +121,8 @@ async def test_feature_implementation_scenario_real_llm(
     # Set up scenario template
     project_path = create_small_scenario_template(e2e_project, "feature")
 
-    # Validate and load workflow - fail immediately if missing
-    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "feature-implementation.yaml"
+    # Validate and load workflow - fail immediately if missing (rapid-dev: feature implementation)
+    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "rapid-dev.yaml"
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=False)

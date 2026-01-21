@@ -58,8 +58,8 @@ async def test_refactor_scenario(
     legacy_code = (project_path / "src" / "mypackage" / "legacy.py").read_text()
     assert "LegacyProcessor" in legacy_code, "Legacy code should be present"
 
-    # Validate and load workflow - fail immediately if missing (no fallback)
-    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "multi-agent-refactor.yaml"
+    # Validate and load workflow - quality preset has linear review->refactor->test (multi-agent-refactor has no next: blocked)
+    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "quality.yaml"
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=True)
@@ -120,8 +120,8 @@ async def test_refactor_scenario_real_llm(
     # Set up scenario template
     project_path = create_medium_scenario_template(e2e_project, "refactor")
 
-    # Validate and load workflow - fail immediately if missing (no fallback)
-    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "multi-agent-refactor.yaml"
+    # Validate and load workflow - quality preset has linear review->refactor->test (multi-agent-refactor has no next: blocked)
+    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "quality.yaml"
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=False)

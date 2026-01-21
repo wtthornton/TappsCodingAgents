@@ -240,7 +240,7 @@ class WorkflowActivityMonitor(BaseWorkflowObserver):
         Returns:
             ActivitySnapshot with current state
         """
-        if not self.executor.state or not self.executor.workflow:
+        if not self.executor or not self.executor.state or not self.executor.workflow:
             return ActivitySnapshot(
                 timestamp=datetime.now(),
                 step_id=None,

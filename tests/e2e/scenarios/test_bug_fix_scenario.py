@@ -57,8 +57,8 @@ async def test_bug_fix_scenario(
     calculator_code = (project_path / "src" / "calculator.py").read_text()
     assert "abs(a / b)" in calculator_code, "Bug should be present in initial state"
 
-    # Validate and load workflow - fail immediately if missing
-    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "quick-fix.yaml"
+    # Validate and load workflow - fail immediately if missing (fix preset replaces quick-fix)
+    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "fix.yaml"
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=True)
@@ -123,8 +123,8 @@ async def test_bug_fix_scenario_real_llm(
     # Set up scenario template
     project_path = create_small_scenario_template(e2e_project, "bug_fix")
 
-    # Validate and load workflow - fail immediately if missing
-    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "quick-fix.yaml"
+    # Validate and load workflow - fail immediately if missing (fix preset replaces quick-fix)
+    workflow_path = Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "fix.yaml"
     validate_workflow_file(workflow_path)
 
     runner = WorkflowRunner(project_path, use_mocks=False)

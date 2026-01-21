@@ -51,16 +51,16 @@ class TestWorkflowParsing:
     def test_validate_workflow_schema(self, e2e_project, project_root_path):
         """Test workflow schema validation."""
         workflows_dir = project_root_path / "workflows"
-        workflow_file = workflows_dir / "presets" / "feature-implementation.yaml"
+        workflow_file = workflows_dir / "presets" / "rapid-dev.yaml"
         
         # Validate workflow file exists - fail immediately if missing
         validate_workflow_file(workflow_file)
         
         workflow = WorkflowParser.parse_file(workflow_file)
         
-        # Validate workflow structure
-        assert workflow.id == "feature-implementation"
-        assert workflow.name == "Feature Implementation"
+        # Validate workflow structure (rapid-dev: feature development preset)
+        assert workflow.id == "rapid-dev"
+        assert workflow.name == "Rapid Development"
         assert workflow.version is not None
         # schema_version is stored in metadata, not as direct attribute
         # Check metadata if needed, but don't require it as direct attribute
@@ -93,7 +93,7 @@ workflow:
     def test_workflow_cross_references(self, e2e_project, project_root_path):
         """Test workflow step cross-references (requires/creates)."""
         workflows_dir = project_root_path / "workflows"
-        workflow_file = workflows_dir / "presets" / "feature-implementation.yaml"
+        workflow_file = workflows_dir / "presets" / "rapid-dev.yaml"
         
         # Validate workflow file exists - fail immediately if missing
         validate_workflow_file(workflow_file)

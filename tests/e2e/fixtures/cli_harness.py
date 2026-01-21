@@ -179,6 +179,13 @@ class CLIHarness:
         if env:
             merged_env.update(env)
 
+        # Add project root to PYTHONPATH so `python -m tapps_agents.cli` works
+        # when the package is not installed (e.g. in CI or editable from other env)
+        if any("tapps_agents" in str(p) for p in command):
+            project_root = Path(__file__).resolve().parents[3]
+            existing = merged_env.get("PYTHONPATH", "")
+            merged_env["PYTHONPATH"] = str(project_root) + (os.pathsep + existing if existing else "")
+
         # Ensure command uses proper Python executable
         if command[0] in ("python", "python3"):
             command = [sys.executable] + command[1:]

@@ -28,7 +28,9 @@ class TestAgentResponseGeneration:
     @pytest.mark.parametrize(
         "agent_type,command,expected_fields",
         [
-            ("planner", "*plan", ["type", "plan"]),
+            # planner *plan: returns type+description in Cursor mode or on analyst/LLM errors;
+            # returns type+plan in CLI when analyst succeeds
+            ("planner", "*plan", ["type", "description"]),
             ("planner", "*help", ["type", "content"]),
             ("reviewer", "*help", ["type", "content"]),
             ("implementer", "*help", ["type", "content"]),
