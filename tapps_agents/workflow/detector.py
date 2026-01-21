@@ -536,7 +536,7 @@ class ProjectDetector:
         scope_description: str | None = None,
     ) -> ProjectCharacteristics:
         """
-        Detect project type from user context (for quick-fix detection).
+        Detect project type from user context (for fix-workflow selection).
 
         Args:
             user_query: User's query or request
@@ -681,25 +681,21 @@ class ProjectDetector:
         self, characteristics: ProjectCharacteristics
     ) -> str | None:
         """
-        Get recommended workflow file name based on characteristics.
+        Get recommended workflow preset name based on characteristics.
 
-        Args:
-            characteristics: Detected project characteristics
-
-        Returns:
-            Recommended workflow file name (without extension) or None
+        Returns canonical preset IDs: full-sdlc, rapid-dev, fix, quality, brownfield-analysis.
         """
         if characteristics.workflow_track == WorkflowTrack.QUICK_FLOW:
-            return "quick-fix"
+            return "fix"
         elif characteristics.workflow_track == WorkflowTrack.ENTERPRISE:
-            return "enterprise-development"
+            return "full-sdlc"
         else:  # BMAD_METHOD
             if characteristics.project_type == ProjectType.GREENFIELD:
-                return "greenfield-development"
+                return "rapid-dev"
             elif characteristics.project_type == ProjectType.BROWNFIELD:
-                return "brownfield-development"
+                return "brownfield-analysis"
             else:
-                return "feature-development"  # Default
+                return "rapid-dev"  # Default (was feature-development)
 
     def detect_command_suggestions(self, context: dict[str, Any]) -> list[dict[str, Any]]:
         """

@@ -4,7 +4,6 @@ Tests for Governance & Safety Layer.
 
 from pathlib import Path
 import tempfile
-import json
 
 from tapps_agents.experts.governance import (
     GovernanceLayer,
@@ -104,62 +103,6 @@ def test_validate_knowledge_entry():
     assert reason is not None
 
 
-def test_requires_approval():
-    """Test approval requirement checking."""
-    policy = GovernancePolicy(require_approval=True)
-    layer = GovernanceLayer(policy=policy)
-
-    # Entry that requires approval
-    entry = KnowledgeEntry(
-        title="New Expert",
-        content="Expert content",
-        domain="expert-new-domain",
-        source="context7://library/expert",
-        source_type="context7",
-    )
-    assert layer.requires_approval(entry) is True
-
-    # Entry that doesn't require approval
-    normal_entry = KnowledgeEntry(
-        title="Normal Entry",
-        content="Normal content",
-        domain="python",
-        source="test.md",
-        source_type="project",
-    )
-    assert layer.requires_approval(normal_entry) is False
-
-
-def test_queue_for_approval():
-    """Test approval queue functionality."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        approval_dir = Path(tmpdir) / "approval_queue"
-        policy = GovernancePolicy(
-            require_approval=True,
-            approval_queue_path=approval_dir,
-        )
-        layer = GovernanceLayer(policy=policy)
-        
-        entry = KnowledgeEntry(
-            title="Test Entry",
-            content="Test content",
-            domain="expert-new-domain",
-            source="context7://library/expert",
-            source_type="context7",
-        )
-        
-        approval_file = layer.queue_for_approval(entry)
-        
-        assert approval_file.exists()
-        assert approval_file.suffix == ".json"
-        
-        # Verify approval file content
-        data = json.loads(approval_file.read_text(encoding="utf-8"))
-        assert data["status"] == "pending"
-        assert data["entry"]["title"] == "Test Entry"
-        assert "queued_at" in data
-
-
 def test_governance_integration_with_pipeline():
     """Test governance layer integration with knowledge ingestion pipeline."""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -172,10 +115,7 @@ def test_governance_integration_with_pipeline():
         test_file.write_text('api_key = "sk-1234567890abcdefghijklmnopqrstuvwxyz"')
         
         # Create pipeline with governance enabled
-        policy = GovernancePolicy(
-            filter_secrets=True,
-            require_approval=False,  # Don't require approval for this test
-        )
+        policy = GovernancePolicy(filter_secrets=True)
         pipeline = KnowledgeIngestionPipeline(
             project_root=project_root,
             governance_policy=policy,
@@ -187,36 +127,4 @@ def test_governance_integration_with_pipeline():
         # Entry should be filtered out (not ingested)
         # Since it contains secrets, it should fail validation
         assert result.entries_ingested == 0 or result.entries_failed > 0
-
-
-def test_approval_workflow():
-    """Test complete approval workflow."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        approval_dir = Path(tmpdir) / "approval_queue"
-        policy = GovernancePolicy(
-            require_approval=True,
-            approval_queue_path=approval_dir,
-        )
-        layer = GovernanceLayer(policy=policy)
-        
-        # Entry that requires approval
-        entry = KnowledgeEntry(
-            title="New Expert Entry",
-            content="Expert content",
-            domain="expert-new-domain",
-            source="context7://library/expert",
-            source_type="context7",
-        )
-        
-        # Should require approval
-        assert layer.requires_approval(entry) is True
-        
-        # Queue for approval
-        approval_file = layer.queue_for_approval(entry)
-        assert approval_file.exists()
-        
-        # Verify file content
-        data = json.loads(approval_file.read_text(encoding="utf-8"))
-        assert data["status"] == "pending"
-        assert data["entry"]["title"] == "New Expert Entry"
 

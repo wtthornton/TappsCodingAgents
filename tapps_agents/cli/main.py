@@ -352,13 +352,10 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "status": top_level.handle_status_command,
         "doctor": top_level.handle_doctor_command,
         "install-dev": top_level.handle_install_dev_command,
-        "analytics": top_level.handle_analytics_command,
         "customize": top_level.handle_customize_command,
         "commands": top_level.handle_commands_command,
         "skill": top_level.handle_skill_command,
         "skill-template": top_level.handle_skill_template_command,
-        "governance": top_level.handle_governance_command,
-        "approval": top_level.handle_governance_command,
         "setup-experts": top_level.handle_setup_experts_command,
         "cursor": top_level.handle_cursor_command,
         "beads": top_level.handle_beads_command,
@@ -409,20 +406,12 @@ def _handle_health_command(args: argparse.Namespace) -> None:
             days=getattr(args, "days", 7),
             output_format=getattr(args, "format", "text"),
         ),
+        "usage": lambda: health.handle_health_usage_command(args),
     }
     
     handler = health_handlers.get(args.command)
     if handler:
         handler()
-
-
-def _handle_hardware_profile_command(args: argparse.Namespace) -> None:
-    """Handle hardware profile command."""
-    top_level.hardware_profile_command(
-        set_profile=getattr(args, "set", None),
-        output_format=getattr(args, "format", "text"),
-        show_metrics=not getattr(args, "no_metrics", False),
-    )
 
 
 def route_command(args: argparse.Namespace) -> None:
@@ -435,7 +424,7 @@ def route_command(args: argparse.Namespace) -> None:
     Supported routes:
     - Agent commands: reviewer, planner, implementer, tester, debugger, etc.
     - Top-level commands: create, init, workflow, score, doctor, etc.
-    - Special commands: hardware-profile, analytics, customize, skill, etc.
+    - Special commands: customize, skill, etc.
     
     Args:
         args: Parsed command-line arguments with 'agent' attribute indicating the command.
@@ -476,8 +465,6 @@ def route_command(args: argparse.Namespace) -> None:
     special_handlers = {
         "cleanup": _handle_cleanup_command,
         "health": _handle_health_command,
-        "hardware-profile": _handle_hardware_profile_command,
-        "hardware": _handle_hardware_profile_command,
         "simple-mode": simple_mode.handle_simple_mode_command,
         "learning": learning.handle_learning_command,
         "knowledge": top_level.handle_knowledge_command,

@@ -87,7 +87,7 @@ Use when the task clearly matches, or when a Tier 1–2 workflow doesn’t fit.
 | **`@reviewer *security-scan`** | When you need **focused security scanning** without a full ops audit. |
 | **`tapps-agents doctor`** | **Environment and integration checks.** Use after setup, when something breaks, or in CI to validate tooling. |
 | **`tapps-agents cursor verify`** | **Check that Cursor Rules and Skills** are installed and valid. Use after init or when @-commands don’t work. |
-| **`tapps-agents workflow fix`**, **`quality`**, **`hotfix`** | **CLI: maintenance, quality sprints, or urgent fixes** when not using Cursor chat. |
+| **`tapps-agents workflow fix`**, **`quality`** | **CLI: bug fixes, maintenance, quality sprints, or hotfixes** when not using Cursor chat. (`hotfix` is an alias for `fix`.) |
 
 ---
 
@@ -131,7 +131,7 @@ Use when the task clearly matches, or when a Tier 1–2 workflow doesn’t fit.
 | **`@simple-mode *microservice`**, **`*docker-fix`**, **`*integrate-service`** | **Microservice scaffolding, Docker debugging, or service-to-service integration** when those are the explicit goals. |
 | **`@simple-mode *explore`**, **`*plan-analysis`**, **`*pr`** | **Codebase exploration, safe planning (read-only), or PR creation** when you need only that. |
 | **`@planner *create-story`**, **`*list-stories`** | **Story management** when you’re not using *build/*full. |
-| **`workflow brownfield-analysis`**, **simple-new-feature**, **simple-improve-quality**, **simple-fix-issues** | **Specialized CLI presets** for brownfield analysis or simple workflows when not in Cursor. |
+| **`workflow brownfield-analysis`** | **CLI: brownfield/legacy analysis** when not in Cursor. (simple-new-feature→rapid-dev, simple-improve-quality→quality, simple-fix-issues→fix.) |
 
 ---
 

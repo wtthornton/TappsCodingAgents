@@ -80,9 +80,8 @@ class FallbackStrategy:
         self.config = config
         self.resource_monitor = resource_monitor
         self.force_background = force_background
-
-        # Load NUC config if available
-        self.nuc_config = self._load_nuc_config()
+        # NUC-specific config removed; empty dict for API compatibility.
+        self.nuc_config: dict[str, Any] = {}
 
         # Initialize duration estimator
         threshold = (
@@ -94,19 +93,6 @@ class FallbackStrategy:
         self.duration_estimator = TaskDurationEstimator(
             project_root=project_root, default_threshold=threshold
         )
-
-    def _load_nuc_config(self) -> dict[str, Any]:
-        """Load NUC configuration."""
-        nuc_config_file = Path(".tapps-agents/nuc-config.yaml")
-        if nuc_config_file.exists():
-            try:
-                import yaml
-
-                with open(nuc_config_file) as f:
-                    return yaml.safe_load(f) or {}
-            except Exception:
-                return {}
-        return {}
 
     def classify_task(self, task_name: str) -> TaskType:
         """
@@ -293,9 +279,6 @@ class FallbackStrategy:
 
         if not self.resource_monitor:
             recommendations.append("Enable resource monitoring for automatic fallback")
-
-        if not self.nuc_config:
-            recommendations.append("Create NUC configuration file for optimization")
 
         # Check current resources
         if self.resource_monitor:

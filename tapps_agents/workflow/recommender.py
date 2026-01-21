@@ -67,7 +67,7 @@ class WorkflowRecommender:
         Recommend a workflow based on project characteristics.
 
         Args:
-            user_query: User's query or request (for quick-fix detection)
+            user_query: User's query or request (for fix-workflow detection)
             file_count: Estimated number of files to change
             scope_description: Description of the change scope
             auto_load: Whether to automatically load the recommended workflow

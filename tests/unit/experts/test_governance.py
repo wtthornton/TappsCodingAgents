@@ -1,8 +1,7 @@
 """
 Unit tests for Governance & Safety Layer.
 
-Tests content filtering, secret detection, PII detection, knowledge entry validation,
-and approval workflows.
+Tests content filtering, secret detection, PII detection, and knowledge entry validation.
 """
 
 from pathlib import Path
@@ -33,19 +32,16 @@ class TestGovernancePolicy:
         assert policy.treat_as_untrusted is True
         assert policy.label_sources is True
         assert policy.project_local_only is True
-        assert policy.require_approval is False
 
     def test_governance_policy_custom(self):
         """Test GovernancePolicy with custom values."""
         policy = GovernancePolicy(
             filter_secrets=False,
             filter_pii=False,
-            require_approval=True
         )
         
         assert policy.filter_secrets is False
         assert policy.filter_pii is False
-        assert policy.require_approval is True
 
 
 class TestGovernanceLayerFilterContent:
@@ -239,114 +235,6 @@ class TestGovernanceLayerValidateKnowledgeEntry:
         assert is_valid is True
         assert mock_entry.metadata.get("source_label") == "untrusted"
         assert mock_entry.metadata.get("source_verified") is False
-
-
-class TestGovernanceLayerRequiresApproval:
-    """Tests for requires_approval method."""
-
-    def test_requires_approval_disabled(self, tmp_path):
-        """Test requires_approval when approval is disabled."""
-        policy = GovernancePolicy(require_approval=False)
-        layer = GovernanceLayer(policy=policy)
-        
-        mock_entry = MagicMock()
-        mock_entry.content = "Any content"
-        mock_entry.source = str(tmp_path / "file.py")
-        mock_entry.source_type = "context7"
-        mock_entry.domain = "test"
-        
-        requires = layer.requires_approval(mock_entry)
-        
-        assert requires is False
-
-    def test_requires_approval_enabled_safe_content(self, tmp_path):
-        """Test requires_approval with safe content when enabled."""
-        policy = GovernancePolicy(require_approval=True)
-        layer = GovernanceLayer(policy=policy)
-        
-        mock_entry = MagicMock()
-        mock_entry.content = "Safe content"
-        mock_entry.source = str(tmp_path / "file.py")
-        mock_entry.source_type = "context7"
-        mock_entry.domain = "test"
-        
-        requires = layer.requires_approval(mock_entry)
-        
-        assert requires is False
-
-    def test_requires_approval_enabled_expert_entry(self, tmp_path):
-        """Test requires_approval for expert entries."""
-        policy = GovernancePolicy(require_approval=True)
-        layer = GovernanceLayer(policy=policy)
-        
-        mock_entry = MagicMock()
-        mock_entry.content = "Expert content"
-        mock_entry.source = str(tmp_path / "file.py")
-        mock_entry.source_type = "context7"
-        mock_entry.domain = "expert"
-        
-        requires = layer.requires_approval(mock_entry)
-        
-        assert requires is True
-
-    def test_requires_approval_enabled_with_issues(self, tmp_path):
-        """Test requires_approval when content has security issues."""
-        policy = GovernancePolicy(require_approval=True)
-        layer = GovernanceLayer(policy=policy)
-        
-        mock_entry = MagicMock()
-        mock_entry.content = "api_key: sk-1234567890abcdef"
-        mock_entry.source = str(tmp_path / "file.py")
-        mock_entry.source_type = "context7"
-        mock_entry.domain = "test"
-        
-        requires = layer.requires_approval(mock_entry)
-        
-        assert requires is True
-
-
-class TestGovernanceLayerQueueForApproval:
-    """Tests for queue_for_approval method."""
-
-    def test_queue_for_approval_success(self, tmp_path):
-        """Test queue_for_approval creates approval file."""
-        approval_dir = tmp_path / "approvals"
-        policy = GovernancePolicy(
-            require_approval=True,
-            approval_queue_path=approval_dir
-        )
-        layer = GovernanceLayer(policy=policy)
-        
-        mock_entry = MagicMock()
-        mock_entry.title = "Test Entry"
-        mock_entry.domain = "test"
-        mock_entry.source = str(tmp_path / "file.py")
-        mock_entry.source_type = "context7"
-        mock_entry.metadata = {}
-        mock_entry.content = "Test content"
-        
-        approval_file = layer.queue_for_approval(mock_entry)
-        
-        assert approval_file.exists()
-        assert approval_file.parent == approval_dir
-        assert approval_file.suffix == ".json"
-        
-        # Verify file content
-        import json
-        content = json.loads(approval_file.read_text())
-        assert content["status"] == "pending"
-        assert "entry" in content
-
-    def test_queue_for_approval_no_path_configured(self, tmp_path):
-        """Test queue_for_approval raises error when path not configured."""
-        policy = GovernancePolicy(require_approval=True)
-        layer = GovernanceLayer(policy=policy)
-        
-        mock_entry = MagicMock()
-        mock_entry.title = "Test Entry"
-        
-        with pytest.raises(ValueError, match="Approval queue path not configured"):
-            layer.queue_for_approval(mock_entry)
 
 
 class TestFilterResult:

@@ -168,7 +168,7 @@ class ErrorHandler:
         return ParseError(
             error_type=ParseErrorType.INVALID_INPUT,
             message="Invalid input format. Please try again with a clearer request.",
-            suggestions=["run rapid development", "execute full SDLC", "start maintenance workflow"],
+            suggestions=["run rapid development", "execute full SDLC", "start fix workflow"],
         )
 
     def _handle_parsing_error(self) -> ParseError:

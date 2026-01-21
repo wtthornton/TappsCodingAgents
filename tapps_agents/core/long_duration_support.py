@@ -228,25 +228,13 @@ class DurabilityGuarantee:
         self.checkpoint_count = 0
 
     def _get_checkpoint_interval(self) -> float:
-        """Get checkpoint interval in seconds based on durability level and hardware."""
-        # Base intervals by durability level
+        """Checkpoint interval by durability level (workstation-like; hardware taxonomy removed)."""
         base_intervals = {
             DurabilityLevel.BASIC: 600.0,  # 10 minutes
             DurabilityLevel.STANDARD: 300.0,  # 5 minutes
             DurabilityLevel.HIGH: 120.0,  # 2 minutes
         }
-
-        base_interval = base_intervals[self.durability_level]
-
-        # Adjust for hardware profile
-        if self.hardware_profile == HardwareProfile.NUC:
-            # NUC: More frequent checkpoints due to resource constraints
-            return base_interval * 0.8
-        elif self.hardware_profile == HardwareProfile.WORKSTATION:
-            # Workstation: Can handle less frequent checkpoints
-            return base_interval * 1.2
-
-        return base_interval
+        return base_intervals[self.durability_level] * 1.2  # Workstation-like
 
     def should_checkpoint(self) -> bool:
         """Check if a checkpoint should be created."""

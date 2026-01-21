@@ -116,7 +116,7 @@ class ContextAwareSuggestionEngine:
             "Set up testing framework",
         ],
         "bug_fix": [
-            "Run quick-fix workflow",
+            "Run fix workflow",
             "Create test case for bug",
             "Review related code",
         ],

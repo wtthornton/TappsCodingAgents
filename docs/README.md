@@ -108,10 +108,10 @@ Welcome to the documentation for TappsCodingAgents.
 - **[MCP Systems Comparative Score](MCP_SYSTEMS_COMPARATIVE_SCORE.md)** - TappsCodingAgents-style scoring of LocalMCP, codefortify, agentforge-mcp
 - **[MCP Systems Improvement Recommendations](MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md)** - Actions from competing systems to make TappsCodingAgents far ahead (MCP server, 7-category scoring, npm audit, *enhance/*breakdown, etc.)
 - **[MCP Standards Compliance](MCP_STANDARDS.md)** - JSON-RPC 2.0 and JSON Schema 2020-12 compliance
-- **[Analytics Dashboard](../tapps_agents/core/analytics_dashboard.py)** - Performance metrics, trends, agent/workflow statistics
+- **[Analytics Dashboard](../tapps_agents/core/analytics_dashboard.py)** - Performance metrics, trends, agent/workflow statistics (CLI: `health usage dashboard|agents|workflows|system|trends`)
 - **[Health Monitoring](../tapps_agents/health/)** - System health checks, resource usage tracking
 - **[State Management](CHECKPOINT_RESUME_GUIDE.md)** - Workflow state persistence, resume, cleanup
-- **[Governance & Safety](../tapps_agents/experts/governance.py)** - Secrets/PII filtering, approval workflows
+- **[Governance & Safety](../tapps_agents/experts/governance.py)** - Secrets/PII filtering, knowledge ingestion safety
 
 ### Standards & Guidelines
 - **[AI Comment Guidelines](AI_COMMENT_GUIDELINES.md)** - AI comment tag conventions and usage

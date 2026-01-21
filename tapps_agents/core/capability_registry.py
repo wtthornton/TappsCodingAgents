@@ -194,10 +194,8 @@ class CapabilityRegistry:
             hardware_profile = profiler.detect_profile()
 
         self.hardware_profile = hardware_profile
-        self.compression_enabled = hardware_profile == HardwareProfile.NUC
+        self.compression_enabled = False  # Hardware taxonomy removed
         self.metrics_file = self.storage_dir / "capabilities.json"
-        if self.compression_enabled:
-            self.metrics_file = self.storage_dir / "capabilities.json.gz"
 
         # In-memory registry
         self.metrics: dict[str, CapabilityMetric] = {}
@@ -358,18 +356,8 @@ class CapabilityRegistry:
         self._save_metrics()
 
     def get_learning_intensity(self) -> LearningIntensity:
-        """
-        Get learning intensity based on hardware profile.
-
-        Returns:
-            LearningIntensity level
-        """
-        if self.hardware_profile == HardwareProfile.NUC:
-            return LearningIntensity.LOW
-        elif self.hardware_profile == HardwareProfile.DEVELOPMENT:
-            return LearningIntensity.MEDIUM
-        else:
-            return LearningIntensity.HIGH
+        """Learning intensity. Workstation-like default (hardware taxonomy removed)."""
+        return LearningIntensity.HIGH
 
     def get_top_capabilities(
         self,

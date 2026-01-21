@@ -261,23 +261,7 @@ class ResourceAwareExecutor:
         self._lock = threading.Lock()
 
     def _apply_hardware_profile(self):
-        """Apply hardware profile-specific adjustments."""
-        profile = self.config.hardware_profile
-
-        if profile == HardwareProfile.NUC:
-            # NUC: More aggressive thresholds, frequent monitoring
-            self.config.monitor_interval = 20.0
-            self.config.pause_cpu_threshold = 85.0
-            self.config.pause_memory_threshold = 90.0
-            self.config.degrade_cpu_threshold = 60.0
-            self.config.degrade_memory_threshold = 70.0
-        elif profile == HardwareProfile.WORKSTATION:
-            # Workstation: Less aggressive, can handle more
-            self.config.monitor_interval = 60.0
-            self.config.pause_cpu_threshold = 95.0
-            self.config.pause_memory_threshold = 98.0
-            self.config.degrade_cpu_threshold = 80.0
-            self.config.degrade_memory_threshold = 85.0
+        """No-op: hardware taxonomy removed; use ExecutionConfig defaults."""
 
     def start_monitoring(self):
         """Start continuous resource monitoring."""

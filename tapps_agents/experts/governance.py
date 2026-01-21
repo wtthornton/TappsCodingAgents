@@ -34,10 +34,6 @@ class GovernancePolicy:
     project_local_only: bool = True
     avoid_committing_runtime_state: bool = True
 
-    # Human approval
-    require_approval: bool = False
-    approval_queue_path: Path | None = None
-
 
 @dataclass
 class FilterResult:
@@ -198,70 +194,4 @@ class GovernanceLayer:
                 entry.metadata["source_verified"] = False
 
         return True, None
-
-    def requires_approval(self, entry: KnowledgeEntry) -> bool:
-        """
-        Check if entry requires human approval.
-
-        Args:
-            entry: Knowledge entry to check
-
-        Returns:
-            True if approval is required
-        """
-        if not self.policy.require_approval:
-            return False
-
-        # Check if entry is new expert or significant KB addition
-        if entry.source_type == "context7" and "expert" in entry.domain:
-            return True
-
-        # Check if entry has high-risk content
-        filter_result = self.filter_content(entry.content, entry.source)
-        if filter_result.detected_issues:
-            return True
-
-        return False
-
-    def queue_for_approval(self, entry: KnowledgeEntry) -> Path:
-        """
-        Queue entry for human approval.
-
-        Args:
-            entry: Knowledge entry to queue
-
-        Returns:
-            Path to approval queue file
-        """
-        if not self.policy.approval_queue_path:
-            raise ValueError("Approval queue path not configured")
-
-        approval_dir = self.policy.approval_queue_path
-        approval_dir.mkdir(parents=True, exist_ok=True)
-
-        # Create approval request file
-        import json
-        from datetime import datetime
-
-        approval_data = {
-            "entry": {
-                "title": entry.title,
-                "domain": entry.domain,
-                "source": entry.source,
-                "source_type": entry.source_type,
-                "metadata": entry.metadata,
-            },
-            "content_preview": entry.content[:500],  # First 500 chars
-            "queued_at": datetime.now().isoformat(),
-            "status": "pending",
-        }
-
-        # Generate unique filename
-        safe_title = re.sub(r"[^\w\s-]", "", entry.title).strip().replace(" ", "_")
-        filename = f"{safe_title}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        approval_file = approval_dir / filename
-
-        approval_file.write_text(json.dumps(approval_data, indent=2), encoding="utf-8")
-
-        return approval_file
 

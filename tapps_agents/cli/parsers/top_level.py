@@ -563,7 +563,6 @@ Example:
 Available cleanup operations:
   • workflow-docs: Clean up old workflow documentation directories
   • worktrees: Clean up old Git worktrees
-  • analytics: Clean up old analytics history
   • cache: Clean up old cache entries
   • all: Clean up all artifacts (default)
 """,
@@ -854,7 +853,7 @@ Checks:
   • Execution reliability (workflow success rates, performance)
   • Context7 cache effectiveness (hit rate, response time)
   • Knowledge base population (RAG/KB status)
-  • Governance safety (approval queue, filtering)
+  • Governance safety (filtering)
   • Outcome trends (quality scores, improvements)
 
 Use this to ensure tapps-agents is working at 100% capacity.
@@ -863,7 +862,7 @@ Health metrics are stored persistently for trend analysis.
 Example: tapps-agents health check""",
     )
     health_subparsers = health_parser.add_subparsers(
-        dest="command", help="Health subcommand (check, dashboard, metrics, trends)", required=True
+        dest="command", help="Health subcommand (check, dashboard, metrics, trends, usage)", required=True
     )
 
     health_check_parser = health_subparsers.add_parser(
@@ -873,7 +872,7 @@ Example: tapps-agents health check""",
     )
     health_check_parser.add_argument(
         "--check",
-        choices=["environment", "automation", "execution", "context7_cache", "knowledge_base", "governance", "outcomes"],
+        choices=["environment", "automation", "execution", "context7_cache", "knowledge_base", "outcomes"],
         help="Run a specific health check (default: all checks)",
     )
     health_check_parser.add_argument(
@@ -958,6 +957,51 @@ Example: tapps-agents health check""",
         help="Output format: 'text' for human-readable trends, 'json' for structured data (default: text)",
     )
 
+    # Usage/analytics (formerly top-level analytics)
+    usage_parser = health_subparsers.add_parser(
+        "usage",
+        help="Usage and analytics (agent/workflow metrics, trends, system status)",
+        description="View usage and performance metrics for agents and workflows. Formerly available as 'tapps-agents analytics'. Use 'health usage dashboard' for a full overview.",
+    )
+    usage_subparsers = usage_parser.add_subparsers(
+        dest="usage_subcommand",
+        help="Usage subcommand (dashboard, agents, workflows, system, trends)",
+        required=True,
+    )
+    usage_dashboard_p = usage_subparsers.add_parser(
+        "dashboard",
+        aliases=["show"],
+        help="Display usage/analytics dashboard",
+    )
+    usage_dashboard_p.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format (default: text)",
+    )
+    usage_agents_p = usage_subparsers.add_parser("agents", help="Agent performance metrics")
+    usage_agents_p.add_argument("--agent-id", help="Filter to a specific agent")
+    usage_agents_p.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format (default: text)",
+    )
+    usage_workflows_p = usage_subparsers.add_parser("workflows", help="Workflow performance metrics")
+    usage_workflows_p.add_argument("--workflow-id", help="Filter to a specific workflow")
+    usage_workflows_p.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format (default: text)",
+    )
+    usage_trends_p = usage_subparsers.add_parser("trends", help="Historical trends")
+    usage_trends_p.add_argument(
+        "--metric-type",
+        choices=["agent_duration", "workflow_duration", "agent_success_rate", "workflow_success_rate"],
+        default="agent_duration",
+        help="Metric to analyze (default: agent_duration)",
+    )
+    usage_trends_p.add_argument("--days", type=int, default=30, help="Days to look back (default: 30)")
+    usage_trends_p.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format (default: text)",
+    )
+    usage_system_p = usage_subparsers.add_parser("system", help="System status and resource usage")
+    usage_system_p.add_argument(
+        "--format", choices=["json", "text"], default="text", help="Output format (default: text)",
+    )
+
     # Install dev tools command
     install_dev_parser = subparsers.add_parser(
         "install-dev",
@@ -975,36 +1019,6 @@ Automatically detects if you're in a development context (has pyproject.toml) or
         "--dry-run",
         action="store_true",
         help="Preview what packages would be installed without actually installing them. Useful for checking compatibility or reviewing dependencies before installation.",
-    )
-
-    # Hardware profile command
-    hardware_parser = subparsers.add_parser(
-        "hardware-profile",
-        aliases=["hardware"],
-        help="Check and configure hardware profile for performance optimization",
-        description="""Display current hardware metrics and detected profile for performance optimization.
-        
-Hardware profiles help TappsCodingAgents optimize resource usage:
-  • NUC - Low-power devices (Intel NUC, small form factor)
-  • Development - Standard development machines
-  • Workstation - High-performance development workstations
-  • Server - Production server environments
-  • Auto - Automatically detect based on system resources
-
-Profiles affect model selection, parallel processing, and resource allocation. Use --set to override auto-detection.""",
-    )
-    hardware_parser.add_argument(
-        "--set",
-        choices=["auto", "nuc", "development", "workstation", "server"],
-        help="Set a specific hardware profile to override auto-detection. Use 'auto' to re-enable automatic detection based on system resources.",
-    )
-    hardware_parser.add_argument(
-        "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable, 'json' for programmatic use (default: text)"
-    )
-    hardware_parser.add_argument(
-        "--no-metrics",
-        action="store_true",
-        help="Hide detailed resource usage metrics (CPU, memory, disk). Shows only profile information.",
     )
 
     # Quick shortcuts for common commands
@@ -1104,151 +1118,8 @@ Experts are configured in .tapps-agents/experts.yaml and can be referenced by ag
     setup_experts_subparsers.add_parser("remove", help="Remove an expert from the project configuration", description="Remove an Industry Expert from .tapps-agents/experts.yaml. The expert will no longer be consulted by agents.")
     setup_experts_subparsers.add_parser("list", help="List all currently configured experts", description="Display all Industry Experts currently configured in the project, including their domains, weights, and knowledge base locations.")
 
-    # Analytics dashboard commands
-    analytics_parser = subparsers.add_parser(
-        "analytics", 
-        help="Analytics dashboard and performance metrics",
-        description="""Access analytics and performance metrics for agents and workflows.
-        
-Provides insights into:
-  • Agent performance (execution time, success rates)
-  • Workflow metrics (completion rates, duration)
-  • Historical trends and patterns
-  • System resource usage
-
-Use analytics to optimize agent selection, identify bottlenecks, and track improvement over time.""",
-    )
-    analytics_subparsers = analytics_parser.add_subparsers(
-        dest="command", help="Analytics subcommand (dashboard, agents, workflows, trends, system)"
-    )
-
-    dashboard_parser = analytics_subparsers.add_parser(
-        "dashboard", aliases=["show"], help="Display comprehensive analytics dashboard", description="Show a full analytics dashboard with all key metrics including agent performance, workflow statistics, system status, and recent trends. Provides a complete overview of TappsCodingAgents usage and performance."
-    )
-    dashboard_parser.add_argument(
-        "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable dashboard, 'json' for structured data (default: text)"
-    )
-
-    agents_parser = analytics_subparsers.add_parser(
-        "agents", help="Display agent performance metrics and statistics", description="Show detailed performance metrics for all agents or a specific agent. Includes execution times, success rates, error counts, and average response quality. Use --agent-id to filter to a specific agent."
-    )
-    agents_parser.add_argument("--agent-id", help="Filter metrics to show only data for a specific agent (e.g., 'reviewer', 'implementer', 'tester')")
-    agents_parser.add_argument(
-        "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable, 'json' for programmatic use (default: text)"
-    )
-
-    workflows_parser = analytics_subparsers.add_parser(
-        "workflows", help="Display workflow performance metrics and statistics", description="Show detailed performance metrics for all workflows or a specific workflow. Includes completion rates, average duration, success rates, and step-by-step timing. Use --workflow-id to filter to a specific workflow."
-    )
-    workflows_parser.add_argument(
-        "--workflow-id", help="Filter metrics to show only data for a specific workflow ID"
-    )
-    workflows_parser.add_argument(
-        "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable, 'json' for programmatic use (default: text)"
-    )
-
-    trends_parser = analytics_subparsers.add_parser(
-        "trends", help="Display historical trends and patterns", description="Show historical trends for selected metrics over time. Helps identify patterns, improvements, or regressions in agent and workflow performance. Use --days to control the time window and --metric-type to select the metric to analyze."
-    )
-    trends_parser.add_argument(
-        "--metric-type",
-        choices=[
-            "agent_duration",
-            "workflow_duration",
-            "agent_success_rate",
-            "workflow_success_rate",
-        ],
-        default="agent_duration",
-        help="Type of metric to analyze: 'agent_duration' for agent execution times, 'workflow_duration' for workflow completion times, 'agent_success_rate' for agent success percentages, 'workflow_success_rate' for workflow completion rates (default: agent_duration)",
-    )
-    trends_parser.add_argument(
-        "--days", type=int, default=30, help="Number of days to look back in history (default: 30 days). Increase for longer-term trends, decrease for recent patterns."
-    )
-    trends_parser.add_argument(
-        "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable trends, 'json' for structured time-series data (default: text)"
-    )
-
-    system_parser = analytics_subparsers.add_parser("system", help="Display system status and resource usage", description="Show current system status including resource usage (CPU, memory, disk), active agents/workflows, configuration status, and health checks. Useful for monitoring and troubleshooting.")
-    system_parser.add_argument(
-        "--format", choices=["json", "text"], default="text", help="Output format: 'text' for human-readable status, 'json' for structured system data (default: text)"
-    )
-
     # Background Agent configuration commands removed - Background Agents no longer used
     # All parser code for background-agent-config command has been removed
-
-    # Governance & Approval Queue command (Story 28.5)
-    governance_parser = subparsers.add_parser(
-        "governance",
-        aliases=["approval"],
-        help="Manage governance approval queue for knowledge base entries",
-        description="""Manage the approval queue for knowledge entries that require human review before being added to the Knowledge Base.
-        
-When agents generate knowledge entries (patterns, best practices, solutions), they can be queued for approval to ensure quality and correctness. This command allows you to:
-  • List pending approval requests
-  • Review detailed information about entries
-  • Approve entries for automatic ingestion
-  • Reject entries with optional reasons
-
-Use this for quality control and ensuring only validated knowledge enters your project's knowledge base.""",
-    )
-    governance_subparsers = governance_parser.add_subparsers(
-        dest="command", help="Governance subcommand (list, show, approve, reject)"
-    )
-    
-    approval_list_parser = governance_subparsers.add_parser(
-        "list",
-        aliases=["ls"],
-        help="List all pending knowledge entry approval requests",
-        description="Display all knowledge entries waiting for approval, including their IDs, types, sources, and submission timestamps. Use this to see what needs review.",
-    )
-    approval_list_parser.add_argument(
-        "--format",
-        choices=["json", "text"],
-        default="text",
-        help="Output format: 'text' for human-readable list, 'json' for structured data (default: text)",
-    )
-    
-    approval_show_parser = governance_subparsers.add_parser(
-        "show",
-        help="Display detailed information about a specific approval request",
-        description="Show complete details of a knowledge entry approval request including content, metadata, source agent, and context. Use this to review entries before approving or rejecting.",
-    )
-    approval_show_parser.add_argument(
-        "request_id",
-        help="The approval request ID to inspect (obtain from 'governance list'). Can be a filename or full path to the request file.",
-    )
-    
-    approval_approve_parser = governance_subparsers.add_parser(
-        "approve",
-        aliases=["accept"],
-        help="Approve a knowledge entry request for ingestion into the KB",
-        description="Approve a knowledge entry and optionally automatically ingest it into the Knowledge Base. Approved entries become available to all agents for future reference.",
-    )
-    approval_approve_parser.add_argument(
-        "request_id",
-        help="The approval request ID to approve (obtain from 'governance list'). Can be a filename or full path to the request file.",
-    )
-    approval_approve_parser.add_argument(
-        "--auto-ingest",
-        action="store_true",
-        help="Automatically ingest the approved entry into the Knowledge Base immediately after approval. Without this flag, the entry is marked as approved but not automatically ingested.",
-    )
-    
-    approval_reject_parser = governance_subparsers.add_parser(
-        "reject",
-        aliases=["deny"],
-        help="Reject a knowledge entry request",
-        description="Reject a knowledge entry request with an optional reason. Rejected entries are removed from the approval queue and will not be added to the Knowledge Base. Use --reason to document why the entry was rejected.",
-    )
-    approval_reject_parser.add_argument(
-        "request_id",
-        help="The approval request ID to reject (obtain from 'governance list'). Can be a filename or full path to the request file.",
-    )
-    approval_reject_parser.add_argument(
-        "--reason",
-        help="Reason for rejection (e.g., 'Incorrect information', 'Outdated pattern', 'Not applicable to our project'). Stored for audit purposes.",
-    )
-
 
     # Customization template generator command
     customize_parser = subparsers.add_parser(

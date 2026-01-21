@@ -164,33 +164,31 @@ This document provides a comprehensive analysis of E2E test coverage, identifyin
 
 ---
 
-### 1.8 Analytics Commands (Not Covered)
+### 1.8 Analytics / Health Usage (Merged)
 
-**Missing Tests:**
-- ❌ `analytics dashboard`
-- ❌ `analytics agents`
-- ❌ `analytics workflows`
-- ❌ `analytics trends`
-- ❌ `analytics system`
-- ❌ Verify analytics data collection
+**Status:** The top-level `tapps-agents analytics` was removed. Use `tapps-agents health usage dashboard|agents|workflows|trends|system` instead.
+
+**Missing Tests (use `health usage`):**
+- ❌ `health usage dashboard`
+- ❌ `health usage agents`
+- ❌ `health usage workflows`
+- ❌ `health usage trends`
+- ❌ `health usage system`
+- ❌ Verify analytics data collection via `health usage`
 - ❌ Verify dashboard generation
 - ❌ Verify trend analysis
 
-**Priority: LOW** - Analytics is optional feature
+**Priority: LOW** - Usage/analytics is optional; reachable via `health usage`
 
 ---
 
-### 1.9 Governance Commands (Not Covered)
+### 1.9 Governance Approval (Removed)
 
-**Missing Tests:**
-- ❌ `governance approval list`
-- ❌ `governance approval show <id>`
-- ❌ `governance approval approve <id>`
-- ❌ `governance approval reject <id>`
-- ❌ Verify approval workflow
-- ❌ Verify approval state management
+**Status:** The human-in-the-loop approval path (`governance list/show/approve/reject`, approval queue) was removed in the complexity-reduction cut. Governance filtering and `validate_knowledge_entry` remain; no approval CLI or `approval_queue` health.
 
-**Priority: LOW** - Governance is enterprise feature
+**N/A (removed):** `governance approval list|show|approve|reject`, approval workflow, approval state.
+
+**Priority: N/A**
 
 ---
 
@@ -261,11 +259,11 @@ This document provides a comprehensive analysis of E2E test coverage, identifyin
 **Missing Tests:**
 - ❌ `generate-rules`
 - ❌ `install-dev`
-- ❌ `hardware-profile` / `hardware`
 - ❌ `status`
 - ❌ Verify rule generation
 - ❌ Verify dev installation
-- ❌ Verify hardware profiling
+
+**Removed:** `hardware-profile` / `hardware` (hardware taxonomy removed)
 
 **Priority: LOW** - Utility commands
 

@@ -137,7 +137,6 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically enrich
 - Do-not-index filters: secrets, tokens, credentials, PII
 - Prompt-injection handling: retrieved text treated as untrusted, labeled with sources
 - Retention & scope: project-local KB remains local
-- Optional human approval mode for new experts/KB entries
 
 **Observability & Quality Improvement:**
 - Metrics: expert consultation confidence, RAG quality, Context7 KB hit rate

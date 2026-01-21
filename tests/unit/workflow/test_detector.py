@@ -232,7 +232,7 @@ class TestProjectDetector:
         )
         
         workflow = detector.get_recommended_workflow(characteristics)
-        assert workflow == "quick-fix"
+        assert workflow == "fix"
 
     def test_get_recommended_workflow_enterprise(self, tmp_path):
         """Test getting recommended workflow for enterprise."""
@@ -243,7 +243,7 @@ class TestProjectDetector:
         characteristics = detector.detect()
         
         workflow = detector.get_recommended_workflow(characteristics)
-        assert workflow == "enterprise-development"
+        assert workflow == "full-sdlc"
 
     def test_get_recommended_workflow_greenfield(self, tmp_path):
         """Test getting recommended workflow for greenfield."""
@@ -252,7 +252,7 @@ class TestProjectDetector:
         
         if characteristics.project_type == ProjectType.GREENFIELD:
             workflow = detector.get_recommended_workflow(characteristics)
-            assert workflow == "greenfield-development"
+            assert workflow == "rapid-dev"
 
     def test_get_recommended_workflow_brownfield(self, tmp_path):
         """Test getting recommended workflow for brownfield."""
@@ -268,7 +268,7 @@ class TestProjectDetector:
         
         if characteristics.project_type == ProjectType.BROWNFIELD:
             workflow = detector.get_recommended_workflow(characteristics)
-            assert workflow == "brownfield-development"
+            assert workflow == "brownfield-analysis"
 
 
 class TestProjectDetectorDeploymentType:

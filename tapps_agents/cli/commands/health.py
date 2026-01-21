@@ -13,7 +13,6 @@ from ...health.checks.environment import EnvironmentHealthCheck
 from ...health.checks.execution import ExecutionHealthCheck
 from ...health.checks.context7_cache import Context7CacheHealthCheck
 from ...health.checks.knowledge_base import KnowledgeBaseHealthCheck
-from ...health.checks.governance import GovernanceHealthCheck
 from ...health.checks.outcomes import OutcomeHealthCheck
 from ...health.collector import HealthMetricsCollector
 from ...health.dashboard import HealthDashboard
@@ -47,7 +46,6 @@ def handle_health_check_command(
     registry.register(ExecutionHealthCheck(project_root=project_root))
     registry.register(Context7CacheHealthCheck(project_root=project_root))
     registry.register(KnowledgeBaseHealthCheck(project_root=project_root))
-    registry.register(GovernanceHealthCheck(project_root=project_root))
     registry.register(OutcomeHealthCheck(project_root=project_root))
 
     # Initialize orchestrator
@@ -137,7 +135,6 @@ def handle_health_check_command(
                     "success_rate",
                     "hit_rate",
                     "total_files",
-                    "approval_queue_size",
                     "average_score",
                 ]:
                     if key in result.details:
@@ -184,7 +181,6 @@ def handle_health_dashboard_command(
     registry.register(ExecutionHealthCheck(project_root=project_root))
     registry.register(Context7CacheHealthCheck(project_root=project_root))
     registry.register(KnowledgeBaseHealthCheck(project_root=project_root))
-    registry.register(GovernanceHealthCheck(project_root=project_root))
     registry.register(OutcomeHealthCheck(project_root=project_root))
 
     # Initialize dashboard
@@ -327,4 +323,80 @@ def handle_health_trends_command(
             for status, change in trends["status_changes"].items():
                 if change != 0:
                     print(f"  {status}: {change:+d}")
+
+
+def handle_health_usage_command(args: object) -> None:
+    """
+    Handle health usage subcommand (formerly analytics).
+    Dispatches to dashboard, agents, workflows, trends, or system using AnalyticsDashboard.
+    """
+    from ...core.analytics_dashboard import AnalyticsDashboard
+
+    dashboard = AnalyticsDashboard()
+    sub = getattr(args, "usage_subcommand", "dashboard")
+    if sub == "show":
+        sub = "dashboard"
+    fmt = getattr(args, "format", "text")
+
+    if sub == "dashboard":
+        data = dashboard.get_dashboard_data()
+        if fmt == "json":
+            format_json_output(data)
+        else:
+            print("\n" + "=" * 60)
+            print("Usage / Analytics Dashboard")
+            print("=" * 60)
+            print(f"\nSystem Status (as of {data['timestamp']}):")
+            sys_data = data["system"]
+            print(f"  Total Agents: {sys_data['total_agents']}")
+            print(f"  Active Workflows: {sys_data['active_workflows']}")
+            print(f"  Completed Today: {sys_data['completed_workflows_today']}")
+            print(f"  Failed Today: {sys_data['failed_workflows_today']}")
+            print(f"  Avg Workflow Duration: {sys_data['average_workflow_duration']:.2f}s")
+            print(f"  CPU Usage: {sys_data['cpu_usage']:.1f}%")
+            print(f"  Memory Usage: {sys_data['memory_usage']:.1f}%")
+            print(f"  Disk Usage: {sys_data['disk_usage']:.1f}%")
+            print("\nAgent Performance (Top 10):")
+            for agent in sorted(data["agents"], key=lambda x: x["total_executions"], reverse=True)[:10]:
+                print(f"  {agent['agent_name']}: {agent['total_executions']} executions, "
+                      f"{agent['success_rate']*100:.1f}% success, {agent['average_duration']:.2f}s avg")
+            print("\nWorkflow Performance:")
+            for wf in sorted(data["workflows"], key=lambda x: x["total_executions"], reverse=True)[:10]:
+                print(f"  {wf['workflow_name']}: {wf['total_executions']} executions, "
+                      f"{wf['success_rate']*100:.1f}% success")
+    elif sub == "agents":
+        metrics = dashboard.get_agent_performance(agent_id=getattr(args, "agent_id", None))
+        if fmt == "json":
+            format_json_output(metrics)
+        else:
+            for agent in metrics:
+                print(f"{agent['agent_name']}: {agent['total_executions']} executions, "
+                      f"{agent['success_rate']*100:.1f}% success")
+    elif sub == "workflows":
+        metrics = dashboard.get_workflow_performance(workflow_id=getattr(args, "workflow_id", None))
+        if fmt == "json":
+            format_json_output(metrics)
+        else:
+            for wf in metrics:
+                print(f"{wf['workflow_name']}: {wf['total_executions']} executions, "
+                      f"{wf['success_rate']*100:.1f}% success")
+    elif sub == "trends":
+        metric_type = getattr(args, "metric_type", "agent_duration")
+        days = getattr(args, "days", 30)
+        trends = dashboard.get_trends(metric_type, days=days)
+        if fmt == "json":
+            format_json_output(trends)
+        else:
+            for t in trends:
+                print(f"{t['metric_name']}: {len(t['values'])} data points")
+    elif sub == "system":
+        status = dashboard.get_system_status()
+        if fmt == "json":
+            format_json_output(status)
+        else:
+            print(f"System Status (as of {status['timestamp']}):")
+            print(f"  Total Agents: {status['total_agents']}")
+            print(f"  Active Workflows: {status['active_workflows']}")
+            print(f"  Completed Today: {status['completed_workflows_today']}")
+            print(f"  Failed Today: {status['failed_workflows_today']}")
 

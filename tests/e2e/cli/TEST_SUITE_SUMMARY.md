@@ -45,7 +45,7 @@ Tests for non-agent commands:
 - `create` - Project creation
 - `simple-mode` - Simple Mode management
 - `health` - Health checks
-- `analytics` - Analytics commands
+- `health usage` - Usage/analytics (dashboard, agents, workflows, system, trends; formerly `analytics`)
 
 #### Global Flags (`test_global_flags.py`)
 Tests for global flags across commands:

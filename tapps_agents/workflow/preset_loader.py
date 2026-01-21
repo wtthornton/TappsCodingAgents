@@ -21,31 +21,34 @@ try:
 except ImportError:
     _resource_at = None
 
-# Preset name mappings
+# Preset name mappings (5 presets; old names alias to the consolidated set)
 PRESET_ALIASES: dict[str, str] = {
-    # Short commands
+    # full-sdlc
     "full": "full-sdlc",
-    "rapid": "rapid-dev",
-    "fix": "maintenance",
-    "quality": "quality",
-    "hotfix": "quick-fix",
-    # Voice-friendly aliases
     "enterprise": "full-sdlc",
-    "feature": "rapid-dev",
-    "refactor": "maintenance",
-    "improve": "quality",
-    "urgent": "quick-fix",
-    # Simple Mode workflows
-    "new-feature": "simple-new-feature",
-    "simple-new-feature": "simple-new-feature",
-    "simple-fix-issues": "simple-fix-issues",
-    "simple-improve-quality": "simple-improve-quality",
-    "simple-full": "simple-full",
-    # Full names
+    "simple-full": "full-sdlc",
     "full-sdlc": "full-sdlc",
+    # rapid-dev (absorbed feature-implementation, simple-new-feature)
+    "rapid": "rapid-dev",
+    "feature": "rapid-dev",
+    "new-feature": "rapid-dev",
+    "simple-new-feature": "rapid-dev",
     "rapid-dev": "rapid-dev",
-    "maintenance": "maintenance",
-    "quick-fix": "quick-fix",
+    # fix (replaces maintenance, quick-fix, simple-fix-issues)
+    "fix": "fix",
+    "maintenance": "fix",
+    "hotfix": "fix",
+    "urgent": "fix",
+    "simple-fix-issues": "fix",
+    "refactor": "fix",
+    "quick-fix": "fix",
+    # quality (absorbed simple-improve-quality)
+    "quality": "quality",
+    "improve": "quality",
+    "simple-improve-quality": "quality",
+    # brownfield-analysis
+    "brownfield": "brownfield-analysis",
+    "brownfield-analysis": "brownfield-analysis",
 }
 
 
@@ -256,20 +259,16 @@ class PresetLoader:
         """
         intent_lower = intent.lower()
 
-        # Keywords for each preset
+        # Keywords for each preset (5 presets: full-sdlc, rapid-dev, fix, quality, brownfield-analysis)
         keywords = {
             "full-sdlc": ["full", "enterprise", "complete", "sdlc", "lifecycle", "all"],
-            "rapid-dev": ["rapid", "quick", "fast", "feature", "sprint", "dev"],
-            "maintenance": ["maintenance", "fix", "refactor", "improve", "bug", "debt"],
-            "quality": ["quality", "improve", "review", "refactor", "clean"],
-            "quick-fix": [
-                "hotfix",
-                "urgent",
-                "quick fix",
-                "emergency",
-                "patch",
-                "critical",
+            "rapid-dev": ["rapid", "quick", "fast", "feature", "sprint", "dev", "new feature"],
+            "fix": [
+                "fix", "maintenance", "refactor", "bug", "debt", "hotfix", "urgent",
+                "quick fix", "emergency", "patch", "critical", "simple fix",
             ],
+            "quality": ["quality", "improve", "review", "clean", "simple improve"],
+            "brownfield-analysis": ["brownfield", "analysis", "existing", "legacy"],
         }
 
         # Score each preset based on keyword matches

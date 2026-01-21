@@ -60,13 +60,20 @@ WORKFLOW_SYNONYMS: dict[str, list[str]] = {
         "feature development",
         "sprint workflow",
     ],
-    "maintenance": [
+    "fix": [
+        "fix workflow",
         "maintenance workflow",
         "bug fix",
         "bug fixing",
         "refactoring",
         "technical debt",
         "code improvement",
+        "quick fix",
+        "hotfix",
+        "urgent fix",
+        "emergency fix",
+        "critical fix",
+        "patch",
     ],
     "quality": [
         "quality improvement",
@@ -75,13 +82,11 @@ WORKFLOW_SYNONYMS: dict[str, list[str]] = {
         "code review",
         "quality check",
     ],
-    "quick-fix": [
-        "quick fix",
-        "hotfix",
-        "urgent fix",
-        "emergency fix",
-        "critical fix",
-        "patch",
+    "brownfield-analysis": [
+        "brownfield",
+        "brownfield analysis",
+        "existing codebase",
+        "legacy analysis",
     ],
 }
 

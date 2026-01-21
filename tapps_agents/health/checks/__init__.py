@@ -9,7 +9,6 @@ from .environment import EnvironmentHealthCheck
 from .execution import ExecutionHealthCheck
 from .context7_cache import Context7CacheHealthCheck
 from .knowledge_base import KnowledgeBaseHealthCheck
-from .governance import GovernanceHealthCheck
 from .outcomes import OutcomeHealthCheck
 
 __all__ = [
@@ -18,7 +17,6 @@ __all__ = [
     "ExecutionHealthCheck",
     "Context7CacheHealthCheck",
     "KnowledgeBaseHealthCheck",
-    "GovernanceHealthCheck",
     "OutcomeHealthCheck",
 ]
 

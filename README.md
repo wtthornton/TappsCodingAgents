@@ -186,7 +186,6 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - Cursor Skills for all 14 agents
   - Multi-agent orchestration
   - Context7 KB-first caching
-  - NUC optimization for low-power hardware
 
 ## Current Status
 
@@ -218,7 +217,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **Scale-Adaptive Workflow Selection** ✅ (Project type auto-detection, workflow recommendation)
 - **State Management** ✅ (Advanced workflow state persistence with checkpointing, migration, versioning, resume)
 - **Analytics & Health** ✅ (Performance metrics, trends, system health monitoring, resource usage tracking)
-- **Governance & Safety** ✅ (Secrets/PII filtering, approval workflows, knowledge ingestion safety)
+- **Governance & Safety** ✅ (Secrets/PII filtering, knowledge ingestion safety)
 - **Comprehensive test suite** ✅ (1200+ unit tests, integration tests, and E2E tests with parallel execution support - see `tests/`)
 
 ✅ **Enhancer Agent - Prompt Enhancement Utility (v1.6.0)**
@@ -269,7 +268,7 @@ An always-on **Dynamic Knowledge/Expert Orchestrator** that automatically detect
 - **Automatic Expert Creation**: Framework-controlled technical experts + project-controlled business/domain experts generated from repo signals
 - **Knowledge Ingestion Pipeline**: Auto-fills RAG from project sources (requirements, architecture docs, ADRs), dependency sources (Context7 KB), and operational sources (CI failures, runtime exceptions)
 - **Expert Engine Runtime**: Continuously detects what domain knowledge is needed, proactively consults the right experts, and populates knowledge stores as agents learn
-- **Governance & Safety**: Do-not-index filters for secrets/PII, prompt-injection handling, retention & scope controls, optional human approval mode
+- **Governance & Safety**: Do-not-index filters for secrets/PII, prompt-injection handling, retention & scope controls
 - **Observability & Quality Improvement**: Metrics tracking (expert confidence, RAG quality, Context7 KB hit rate) with scheduled KB maintenance jobs
 
 **Status**: Design phase - See [SDLC Improvements Analysis](SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](docs/prd/epic-2-dynamic-expert-rag-engine.md)
@@ -346,7 +345,7 @@ All metrics are configurable with weighted scoring and quality thresholds.
   - 100+ knowledge files across 13 knowledge domains
   - Automatic domain detection and expert consultation
   - Project profiling for context-aware guidance
-- **Expert Governance**: Secrets/PII filtering, prompt injection handling, approval workflows, knowledge ingestion safety
+- **Expert Governance**: Secrets/PII filtering, prompt injection handling, knowledge ingestion safety
 
 ### CLI Commands
 
@@ -359,12 +358,9 @@ All metrics are configurable with weighted scoring and quality thresholds.
 - `doctor` - Environment diagnostics and validation
 - `cursor verify` - Verify Cursor AI integration components
 - `simple-mode <command>` - Simple Mode management (on, off, status, init, configure, progress, full, build, resume, enhance, breakdown, todo)
-- `analytics <command>` - Analytics dashboard (dashboard, agents, workflows, trends, system)
-- `health <command>` - Health monitoring (check, dashboard, metrics, trends)
-- `governance <command>` - Governance controls (approval list, show, approve, reject)
+- `health <command>` - Health monitoring (check, dashboard, metrics, trends, usage). Use `health usage dashboard|agents|workflows|system|trends` for analytics (formerly `analytics`).
 - `customize <command>` - Agent customization (init)
 - `skill <command>` - Custom Skills management (validate, template)
-- `hardware-profile` - Hardware profile configuration (nuc, development, workstation, server, auto)
 - `install-dev` - Install development tools (ruff, mypy, pytest, pip-audit, pipdeptree)
 - `setup-experts` - Expert setup wizard (init, add, remove, list)
 - `status` - Unified status (active worktrees, progress)
@@ -485,8 +481,6 @@ TappsCodingAgents/
 - **[Context7 Cache Optimization](docs/CONTEXT7_CACHE_OPTIMIZATION.md)** - Optimize cache hit rates
 - **[Context7 Security & Privacy](docs/context7/CONTEXT7_SECURITY_PRIVACY.md)** - Security best practices
 - **[Playwright MCP Integration](docs/PLAYWRIGHT_MCP_INTEGRATION.md)** - Browser automation with Playwright MCP server
-- **[NUC Setup Guide](docs/NUC_SETUP_GUIDE.md)** - Optimize for low-power hardware
-
 ### Operations
 - **[Deployment Guide](docs/operations/DEPLOYMENT.md)** - Production deployment instructions
 - **[Troubleshooting Guide](docs/TROUBLESHOOTING.md)** - Common issues and solutions

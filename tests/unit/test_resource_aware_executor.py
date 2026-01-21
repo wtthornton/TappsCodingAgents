@@ -226,34 +226,18 @@ class TestResourceAwareExecutor:
         assert executor.session_manager is session_manager
 
     @patch("tapps_agents.core.resource_aware_executor.HardwareProfiler")
-    def test_hardware_profile_adjustments_nuc(self, mock_profiler_class):
-        """Test hardware profile adjustments for NUC."""
-        mock_profiler = Mock()
-        mock_profiler.detect_profile.return_value = HardwareProfile.NUC
-        mock_profiler_class.return_value = mock_profiler
-
-        config = ExecutionConfig(hardware_profile=HardwareProfile.NUC)
-        executor = ResourceAwareExecutor(config=config)
-
-        # NUC should have more aggressive thresholds
-        assert executor.config.monitor_interval == 20.0
-        assert executor.config.pause_cpu_threshold == 85.0
-        assert executor.config.pause_memory_threshold == 90.0
-
-    @patch("tapps_agents.core.resource_aware_executor.HardwareProfiler")
-    def test_hardware_profile_adjustments_workstation(self, mock_profiler_class):
-        """Test hardware profile adjustments for workstation."""
+    def test_hardware_profile_no_op(self, mock_profiler_class):
+        """_apply_hardware_profile is a no-op; ExecutionConfig defaults are preserved."""
         mock_profiler = Mock()
         mock_profiler.detect_profile.return_value = HardwareProfile.WORKSTATION
         mock_profiler_class.return_value = mock_profiler
 
-        config = ExecutionConfig(hardware_profile=HardwareProfile.WORKSTATION)
+        config = ExecutionConfig(monitor_interval=10.0, cpu_threshold=70.0)
         executor = ResourceAwareExecutor(config=config)
 
-        # Workstation should have less aggressive thresholds
-        assert executor.config.monitor_interval == 60.0
-        assert executor.config.pause_cpu_threshold == 95.0
-        assert executor.config.pause_memory_threshold == 98.0
+        # User config preserved (hardware taxonomy removed)
+        assert executor.config.monitor_interval == 10.0
+        assert executor.config.cpu_threshold == 70.0
 
     def test_execute_task_success(self):
         """Test successful task execution."""

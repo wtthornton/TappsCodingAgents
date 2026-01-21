@@ -122,13 +122,8 @@ class VisualFeedbackCollector:
         self.feedback_history: list[VisualFeedback] = []
 
     def _get_rendering_mode(self) -> RenderingMode:
-        """Select rendering mode based on hardware."""
-        if self.hardware_profile == HardwareProfile.NUC:
-            return RenderingMode.LIGHTWEIGHT
-        elif self.hardware_profile == HardwareProfile.WORKSTATION:
-            return RenderingMode.FULL
-        else:
-            return RenderingMode.STANDARD
+        """Rendering mode. Workstation-like default (hardware taxonomy removed)."""
+        return RenderingMode.FULL
 
     def collect_feedback(
         self,
@@ -196,13 +191,8 @@ class VisualAnalyzer:
         self.rendering_mode = self._get_rendering_mode()
 
     def _get_rendering_mode(self) -> RenderingMode:
-        """Select rendering mode based on hardware."""
-        if self.hardware_profile == HardwareProfile.NUC:
-            return RenderingMode.LIGHTWEIGHT
-        elif self.hardware_profile == HardwareProfile.WORKSTATION:
-            return RenderingMode.FULL
-        else:
-            return RenderingMode.STANDARD
+        """Rendering mode. Workstation-like default (hardware taxonomy removed)."""
+        return RenderingMode.FULL
 
     def analyze_layout(
         self,

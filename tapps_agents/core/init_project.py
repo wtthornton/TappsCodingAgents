@@ -90,12 +90,9 @@ FRAMEWORK_SKILLS = {
 FRAMEWORK_WORKFLOW_PRESETS = {
     "full-sdlc.yaml",
     "rapid-dev.yaml",
-    "maintenance.yaml",
+    "fix.yaml",
     "quality.yaml",
-    "quick-fix.yaml",
-    "simple-fix-issues.yaml",
-    "simple-improve-quality.yaml",
-    "simple-new-feature.yaml",
+    "brownfield-analysis.yaml",
 }
 
 try:

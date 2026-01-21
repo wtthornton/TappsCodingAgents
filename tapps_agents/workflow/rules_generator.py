@@ -95,9 +95,9 @@ class CursorRulesGenerator:
         alias_map: dict[str, list[str]] = {
             "full-sdlc": ["full", "enterprise"],
             "rapid-dev": ["rapid", "feature"],
-            "maintenance": ["fix", "refactor"],
+            "fix": ["fix", "maintenance", "hotfix", "urgent", "refactor", "quick-fix"],
             "quality": ["quality", "improve"],
-            "quick-fix": ["hotfix", "urgent"],
+            "brownfield-analysis": ["brownfield"],
         }
         return alias_map.get(workflow_id, [])
 
@@ -165,8 +165,8 @@ class CursorRulesGenerator:
             logger.error(error_message)
             raise ValueError(error_message)
 
-        # Sort workflows by a consistent order
-        workflow_order = ["full-sdlc", "rapid-dev", "maintenance", "quality", "quick-fix"]
+        # Sort workflows by a consistent order (5 presets)
+        workflow_order = ["full-sdlc", "rapid-dev", "fix", "quality", "brownfield-analysis"]
         workflows.sort(key=lambda w: (
             workflow_order.index(w.id) if w.id in workflow_order else 999,
             w.id

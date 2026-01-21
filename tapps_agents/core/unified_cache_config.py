@@ -10,7 +10,7 @@ from typing import Any
 
 import yaml
 
-from .hardware_profiler import HardwareProfile, HardwareProfiler
+from .hardware_profiler import HardwareProfile
 
 
 @dataclass
@@ -19,11 +19,6 @@ class UnifiedCacheConfig:
 
     enabled: bool = True
     storage_root: str = ".tapps-agents/kb/unified-cache"
-
-    # Hardware settings
-    hardware_auto_detect: bool = True
-    hardware_profile: str = "auto"  # auto, nuc, development, workstation, server
-    detected_profile: str | None = None
 
     # Adaptive settings
     adaptive_enabled: bool = True
@@ -90,15 +85,6 @@ class UnifiedCacheConfigManager:
                         storage_root=config_data.get(
                             "storage_root", ".tapps-agents/kb/unified-cache"
                         ),
-                        hardware_auto_detect=config_data.get("hardware", {}).get(
-                            "auto_detect", True
-                        ),
-                        hardware_profile=config_data.get("hardware", {}).get(
-                            "profile", "auto"
-                        ),
-                        detected_profile=config_data.get("hardware", {}).get(
-                            "detected_profile"
-                        ),
                         adaptive_enabled=config_data.get("adaptive", {}).get(
                             "enabled", True
                         ),
@@ -131,12 +117,6 @@ class UnifiedCacheConfigManager:
         else:
             config = UnifiedCacheConfig()
 
-        # Auto-detect hardware profile if enabled
-        if config.hardware_auto_detect and not config.detected_profile:
-            profiler = HardwareProfiler()
-            detected = profiler.detect_profile()
-            config.detected_profile = detected.value
-
         self._config = config
         return config
 
@@ -158,11 +138,6 @@ class UnifiedCacheConfigManager:
             "unified_cache": {
                 "enabled": config.enabled,
                 "storage_root": config.storage_root,
-                "hardware": {
-                    "auto_detect": config.hardware_auto_detect,
-                    "profile": config.hardware_profile,
-                    "detected_profile": config.detected_profile,
-                },
                 "adaptive": {
                     "enabled": config.adaptive_enabled,
                     "check_interval": config.adaptive_check_interval,
@@ -187,24 +162,9 @@ class UnifiedCacheConfigManager:
 
         self._config = config
 
-    def get_hardware_profile(self) -> HardwareProfile | None:
+    def get_hardware_profile(self) -> HardwareProfile:
         """
-        Get hardware profile from configuration.
-
-        Returns:
-            HardwareProfile or None if auto-detect
+        Return hardware profile. Always WORKSTATION (taxonomy removed).
+        Kept for API compatibility.
         """
-        config = self.load()
-
-        if config.hardware_profile == "auto":
-            if config.detected_profile:
-                try:
-                    return HardwareProfile(config.detected_profile)
-                except ValueError:
-                    pass
-            return None
-
-        try:
-            return HardwareProfile(config.hardware_profile)
-        except ValueError:
-            return None
+        return HardwareProfile.WORKSTATION

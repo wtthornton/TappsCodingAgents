@@ -109,11 +109,8 @@ class BrowserController:
         self.interaction_history: list[InteractionEvent] = []
 
     def _get_rendering_mode(self) -> RenderingMode:
-        """Select rendering mode based on hardware."""
-        if self.hardware_profile == HardwareProfile.NUC:
-            return RenderingMode.CLOUD  # Use cloud fallback for NUC
-        else:
-            return RenderingMode.LOCAL
+        """Rendering mode. Workstation-like (hardware taxonomy removed)."""
+        return RenderingMode.LOCAL
 
     def start(self) -> bool:
         """

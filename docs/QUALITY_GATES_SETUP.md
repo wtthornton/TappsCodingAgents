@@ -141,10 +141,10 @@ tapps-agents reviewer analyze-project --format json > quality-metrics.json
 
 ### Track Metrics
 
-Use the analytics dashboard:
+Use the usage/analytics dashboard (via health usage):
 ```bash
-tapps-agents analytics dashboard
-tapps-agents analytics trends --days 30
+tapps-agents health usage dashboard
+tapps-agents health usage trends --days 30
 ```
 
 ## Best Practices

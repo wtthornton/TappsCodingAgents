@@ -233,7 +233,7 @@ Report generation is implemented in `tapps_agents/agents/reviewer/report_generat
 
 ### 9) Analytics Dashboard
 
-Analytics lives in `tapps_agents/core/analytics_dashboard.py` and is exposed via the CLI `analytics` commands.
+Analytics lives in `tapps_agents/core/analytics_dashboard.py` and is exposed via the CLI `health usage` commands (e.g. `health usage dashboard`, `health usage agents`).
 
 By default it stores history in:
 
@@ -270,7 +270,7 @@ An always-on orchestrator that automatically detects project domains, creates an
   - Dependency sources: Context7 KB (library/framework docs, patterns, pitfalls)
   - Operational sources: CI failures, runtime exceptions, monitoring alerts → "known issues" KB entries
 - **Expert Engine Runtime**: Continuously detects needed domain knowledge, proactively consults experts, populates knowledge stores
-- **Governance Layer**: Do-not-index filters (secrets, tokens, credentials, PII), prompt-injection handling, retention & scope controls, optional human approval mode
+- **Governance Layer**: Do-not-index filters (secrets, tokens, credentials, PII), prompt-injection handling, retention & scope controls
 - **Observability & Quality Improvement**: Metrics tracking (expert confidence, RAG quality, Context7 KB hit rate) with scheduled KB maintenance jobs
 
 **Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)

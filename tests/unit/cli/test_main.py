@@ -15,7 +15,6 @@ from tapps_agents.cli.main import (
     _get_top_level_command_handlers,
     _handle_cleanup_command,
     _handle_health_command,
-    _handle_hardware_profile_command,
     route_command,
 )
 
@@ -171,20 +170,6 @@ class TestRouteCommand:
                 route_command(args)
                 mock_handler.assert_called_once()
 
-    def test_route_command_with_hardware_profile_command(self):
-        """Test routing to hardware-profile command."""
-        args = MagicMock()
-        args.agent = "hardware-profile"
-        args.set = None
-        args.format = "text"
-        args.no_metrics = False
-
-        with patch("tapps_agents.cli.main.top_level.hardware_profile_command") as mock_handler:
-            with patch("tapps_agents.core.config.load_config") as mock_config:
-                mock_config.return_value.auto_enhancement.enabled = False
-                route_command(args)
-                mock_handler.assert_called_once()
-
     def test_route_command_with_simple_mode_command(self):
         """Test routing to simple-mode command."""
         args = MagicMock()
@@ -283,17 +268,3 @@ class TestSpecialCommandHandlers:
             _handle_health_command(args)
             mock_handler.assert_called_once()
 
-    def test_handle_hardware_profile_command(self):
-        """Test hardware profile command handler."""
-        args = MagicMock()
-        args.set = None
-        args.format = "text"
-        args.no_metrics = False
-
-        with patch("tapps_agents.cli.main.top_level.hardware_profile_command") as mock_handler:
-            _handle_hardware_profile_command(args)
-            mock_handler.assert_called_once_with(
-                set_profile=None,
-                output_format="text",
-                show_metrics=True,
-            )

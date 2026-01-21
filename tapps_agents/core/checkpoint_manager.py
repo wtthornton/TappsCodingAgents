@@ -100,9 +100,8 @@ class CheckpointStorage:
         self.compression_enabled = self._should_compress()
 
     def _should_compress(self) -> bool:
-        """Determine if compression should be enabled based on hardware profile."""
-        # NUC devices benefit from compression due to limited storage
-        return self.hardware_profile == HardwareProfile.NUC
+        """Compression disabled (hardware taxonomy removed)."""
+        return False
 
     def save(self, checkpoint: TaskCheckpoint) -> Path:
         """
@@ -267,14 +266,8 @@ class CheckpointManager:
         self.last_checkpoint_time: dict[str, float] = {}  # task_id -> timestamp
 
     def _get_default_interval(self) -> int:
-        """Get default checkpoint interval based on hardware profile."""
-        intervals = {
-            HardwareProfile.NUC: 30,  # 30 seconds for NUC
-            HardwareProfile.DEVELOPMENT: 60,  # 1 minute for development
-            HardwareProfile.WORKSTATION: 120,  # 2 minutes for workstation
-            HardwareProfile.SERVER: 60,  # 1 minute default for server
-        }
-        return intervals.get(self.hardware_profile, 60)
+        """Default checkpoint interval (workstation-like, taxonomy removed)."""
+        return 120
 
     def should_checkpoint(self, task_id: str) -> bool:
         """

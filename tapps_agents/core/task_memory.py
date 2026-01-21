@@ -231,16 +231,8 @@ class MemoryCompressor:
 
     @staticmethod
     def should_compress(hardware_profile: HardwareProfile) -> bool:
-        """
-        Determine if compression should be used.
-
-        Args:
-            hardware_profile: Hardware profile
-
-        Returns:
-            True if compression should be used
-        """
-        return hardware_profile == HardwareProfile.NUC
+        """Compression disabled (hardware taxonomy removed)."""
+        return False
 
 
 class MemoryStorage:

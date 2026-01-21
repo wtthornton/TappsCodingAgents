@@ -804,19 +804,8 @@ class PromptOptimizer:
         Returns:
             Optimized prompt
         """
-        if self.hardware_profile == HardwareProfile.NUC:
-            # Shorter prompts for NUC
-            # Remove verbose instructions, keep essentials
-            lines = prompt.split("\n")
-            essential_lines = [
-                line
-                for line in lines
-                if not line.strip().startswith("#") or "TODO" in line
-            ]
-            return "\n".join(essential_lines[:50])  # Limit to 50 lines
-        else:
-            # Full prompts for workstation
-            return prompt
+        # Workstation-like: return full prompt (hardware taxonomy removed)
+        return prompt
 
 
 class NegativeFeedbackHandler:

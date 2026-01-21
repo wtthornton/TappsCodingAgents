@@ -334,7 +334,8 @@ class TestUnifiedCacheInterface:
         assert "context7_kb" in profile
         assert "rag_knowledge" in profile
         assert "adaptive" in profile
-        assert profile["tiered_context"]["max_in_memory_entries"] == 100
+        # Workstation-like default (hardware taxonomy removed)
+        assert profile["tiered_context"]["max_in_memory_entries"] == 200
 
     @patch("tapps_agents.context7.kb_cache.cache_lock")
     def test_hit_miss_statistics_real(self, mock_cache_lock, unified_cache_real, tmp_path):

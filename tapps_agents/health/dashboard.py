@@ -75,7 +75,7 @@ class HealthDashboard:
             if result.details:
                 # Show key details
                 key_details = []
-                for key in ["total_executions", "success_rate", "hit_rate", "total_files", "approval_queue_size"]:
+                for key in ["total_executions", "success_rate", "hit_rate", "total_files"]:
                     if key in result.details:
                         value = result.details[key]
                         if isinstance(value, float):

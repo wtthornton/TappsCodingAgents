@@ -86,11 +86,7 @@ class KnowledgeIngestionPipeline:
         
         # Initialize governance layer (Story 28.5)
         if governance_policy is None:
-            # Default policy: enable all filters, approval queue in config dir
-            approval_queue_path = self.config_dir / "approval_queue"
-            governance_policy = GovernancePolicy(
-                approval_queue_path=approval_queue_path
-            )
+            governance_policy = GovernancePolicy()
         self.governance = GovernanceLayer(policy=governance_policy)
 
     async def ingest_all_sources(
@@ -413,14 +409,7 @@ class KnowledgeIngestionPipeline:
                     print(f"Governance validation failed for {entry.title}: {reason}")
                     continue
                 
-                # 4. Check if approval is required
-                if self.governance.requires_approval(entry):
-                    # Queue for approval instead of storing directly
-                    approval_file = self.governance.queue_for_approval(entry)
-                    print(f"Entry '{entry.title}' queued for approval: {approval_file}")
-                    continue
-                
-                # 5. Entry passed all checks - store it
+                # 4. Entry passed all checks - store it
                 _chunk = KnowledgeChunk(
                     content=entry.content,
                     metadata={
