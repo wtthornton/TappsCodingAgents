@@ -915,6 +915,7 @@ async def _process_file_batch(
             
             # Create a wrapper that updates progress
             async def process_and_track(task):
+                nonlocal processed_count, last_progress_update
                 result = await task
                 processed_count += 1
                 
