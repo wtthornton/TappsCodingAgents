@@ -23,38 +23,39 @@ class TestScoringWeightsConfig:
     """Test ScoringWeightsConfig model"""
 
     def test_default_weights(self):
-        """Test that default weights are valid"""
+        """Test that default weights are valid (7 categories, must sum to 1.0)."""
         weights = ScoringWeightsConfig()
-        assert weights.complexity == 0.20
-        assert weights.security == 0.30
-        assert weights.maintainability == 0.25
-        assert weights.test_coverage == 0.15
-        assert weights.performance == 0.10
+        assert weights.complexity == 0.18
+        assert weights.security == 0.27
+        assert weights.maintainability == 0.24
+        assert weights.test_coverage == 0.13
+        assert weights.performance == 0.08
+        assert weights.structure == 0.05
+        assert weights.devex == 0.05
 
     def test_weights_sum_validation(self):
-        """Test that weights must sum to 1.0"""
-        # Valid: sums to 1.0
+        """Test that weights must sum to 1.0 (all 7 categories)."""
+        # Valid: all 7 sum to 1.0
         weights = ScoringWeightsConfig(
-            complexity=0.25,
-            security=0.25,
-            maintainability=0.25,
+            complexity=0.20,
+            security=0.20,
+            maintainability=0.20,
             test_coverage=0.15,
             performance=0.10,
+            structure=0.08,
+            devex=0.07,
         )
         assert (
-            sum(
-                [
-                    weights.complexity,
-                    weights.security,
-                    weights.maintainability,
-                    weights.test_coverage,
-                    weights.performance,
-                ]
-            )
-            == 1.0
-        )
+            weights.complexity
+            + weights.security
+            + weights.maintainability
+            + weights.test_coverage
+            + weights.performance
+            + weights.structure
+            + weights.devex
+        ) == 1.0
 
-        # Invalid: doesn't sum to 1.0
+        # Invalid: doesn't sum to 1.0 (passing 5 leaves structure/devex at 0.05 each -> 1.6)
         with pytest.raises(ValueError, match="must sum to 1.0"):
             ScoringWeightsConfig(
                 complexity=0.3,
@@ -264,11 +265,13 @@ class TestConfigIntegration:
             },
             "scoring": {
                 "weights": {
-                    "complexity": 0.15,
-                    "security": 0.35,
-                    "maintainability": 0.25,
-                    "test_coverage": 0.15,
-                    "performance": 0.10,
+                    "complexity": 0.14,
+                    "security": 0.32,
+                    "maintainability": 0.22,
+                    "test_coverage": 0.14,
+                    "performance": 0.08,
+                    "structure": 0.05,
+                    "devex": 0.05,
                 },
                 "quality_threshold": 75.0,
             },
@@ -283,7 +286,7 @@ class TestConfigIntegration:
         assert config.version == "1.0.0"
         assert config.agents.reviewer.quality_threshold == 75.0
         assert config.agents.reviewer.max_file_size == 2097152
-        assert config.scoring.weights.security == 0.35
+        assert config.scoring.weights.security == 0.32
         assert config.scoring.quality_threshold == 75.0
 
     def test_config_merging_partial_config(self, tmp_path: Path):
@@ -320,13 +323,13 @@ class TestConfigIntegration:
         assert config.agents.reviewer.max_file_size == 1024 * 1024, \
             "max_file_size should use default value when not specified"
         
-        # Verify scoring weights use defaults
-        assert config.scoring.weights.complexity == 0.20, \
-            "scoring.weights.complexity should use default value"
-        assert config.scoring.weights.security == 0.30, \
-            "scoring.weights.security should use default value"
-        assert config.scoring.weights.maintainability == 0.25, \
-            "scoring.weights.maintainability should use default value"
+        # Verify scoring weights use defaults (7-weight model)
+        assert config.scoring.weights.complexity == 0.18, \
+            "scoring.weights.complexity should use default value when not specified"
+        assert config.scoring.weights.security == 0.27, \
+            "scoring.weights.security should use default value when not specified"
+        assert config.scoring.weights.maintainability == 0.24, \
+            "scoring.weights.maintainability should use default value when not specified"
 
     def test_config_default_values_application(self, tmp_path: Path):
         """Test that default values are correctly applied when fields are missing (Story 18.3)."""
@@ -346,21 +349,25 @@ class TestConfigIntegration:
         assert config.agents.reviewer.max_file_size == 1024 * 1024, \
             "Reviewer max_file_size should use default"
         
-        # Verify scoring defaults
-        assert config.scoring.weights.complexity == 0.20
-        assert config.scoring.weights.security == 0.30
-        assert config.scoring.weights.maintainability == 0.25
-        assert config.scoring.weights.test_coverage == 0.15
-        assert config.scoring.weights.performance == 0.10
+        # Verify scoring defaults (7-weight model)
+        assert config.scoring.weights.complexity == 0.18
+        assert config.scoring.weights.security == 0.27
+        assert config.scoring.weights.maintainability == 0.24
+        assert config.scoring.weights.test_coverage == 0.13
+        assert config.scoring.weights.performance == 0.08
+        assert config.scoring.weights.structure == 0.05
+        assert config.scoring.weights.devex == 0.05
         assert config.scoring.quality_threshold == 70.0
         
-        # Verify weights sum to 1.0
+        # Verify all 7 weights sum to 1.0
         weights_sum = (
-            config.scoring.weights.complexity +
-            config.scoring.weights.security +
-            config.scoring.weights.maintainability +
-            config.scoring.weights.test_coverage +
-            config.scoring.weights.performance
+            config.scoring.weights.complexity
+            + config.scoring.weights.security
+            + config.scoring.weights.maintainability
+            + config.scoring.weights.test_coverage
+            + config.scoring.weights.performance
+            + config.scoring.weights.structure
+            + config.scoring.weights.devex
         )
         assert abs(weights_sum - 1.0) < 0.01, \
             f"Default weights should sum to 1.0, got {weights_sum}"
@@ -397,20 +404,24 @@ class TestConfigIntegration:
         assert config.agents.reviewer.max_file_size == 1024 * 1024, \
             "max_file_size should use default when not specified"
         
-        # Verify default weights are applied
-        assert config.scoring.weights.complexity == 0.20
-        assert config.scoring.weights.security == 0.30
-        assert config.scoring.weights.maintainability == 0.25
-        assert config.scoring.weights.test_coverage == 0.15
-        assert config.scoring.weights.performance == 0.10
+        # Verify default weights are applied (7-weight model)
+        assert config.scoring.weights.complexity == 0.18
+        assert config.scoring.weights.security == 0.27
+        assert config.scoring.weights.maintainability == 0.24
+        assert config.scoring.weights.test_coverage == 0.13
+        assert config.scoring.weights.performance == 0.08
+        assert config.scoring.weights.structure == 0.05
+        assert config.scoring.weights.devex == 0.05
         
-        # Verify weights sum to 1.0
+        # Verify all 7 weights sum to 1.0
         weights_sum = (
-            config.scoring.weights.complexity +
-            config.scoring.weights.security +
-            config.scoring.weights.maintainability +
-            config.scoring.weights.test_coverage +
-            config.scoring.weights.performance
+            config.scoring.weights.complexity
+            + config.scoring.weights.security
+            + config.scoring.weights.maintainability
+            + config.scoring.weights.test_coverage
+            + config.scoring.weights.performance
+            + config.scoring.weights.structure
+            + config.scoring.weights.devex
         )
         assert abs(weights_sum - 1.0) < 0.01, \
             f"Default weights should sum to 1.0, got {weights_sum}"

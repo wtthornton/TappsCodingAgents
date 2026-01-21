@@ -73,48 +73,56 @@ class ZeroConfigMode:
 
         # Project-type specific defaults
         if project_type == "api-service":
-            # API services: focus on security and documentation
+            # API services: focus on security and documentation (all 7 weights must sum to 1.0)
             config.agents.reviewer.include_scoring = True
             config.agents.reviewer.quality_threshold = 75.0
             config.scoring.quality_threshold = 75.0
-            config.scoring.weights.security = 0.35  # Higher security weight
-            config.scoring.weights.maintainability = 0.25
-            config.scoring.weights.test_coverage = 0.20
-            config.scoring.weights.complexity = 0.15
-            config.scoring.weights.performance = 0.05
+            config.scoring.weights.security = 0.32
+            config.scoring.weights.maintainability = 0.22
+            config.scoring.weights.test_coverage = 0.18
+            config.scoring.weights.complexity = 0.14
+            config.scoring.weights.performance = 0.04
+            config.scoring.weights.structure = 0.05
+            config.scoring.weights.devex = 0.05
 
         elif project_type == "web-app":
-            # Web apps: balance performance and maintainability
+            # Web apps: balance performance and maintainability (all 7 weights must sum to 1.0)
             config.agents.reviewer.include_scoring = True
             config.agents.reviewer.quality_threshold = 70.0
             config.scoring.quality_threshold = 70.0
-            config.scoring.weights.maintainability = 0.30
-            config.scoring.weights.performance = 0.25
-            config.scoring.weights.security = 0.20
-            config.scoring.weights.test_coverage = 0.15
-            config.scoring.weights.complexity = 0.10
+            config.scoring.weights.maintainability = 0.27
+            config.scoring.weights.performance = 0.23
+            config.scoring.weights.security = 0.18
+            config.scoring.weights.test_coverage = 0.14
+            config.scoring.weights.complexity = 0.08
+            config.scoring.weights.structure = 0.05
+            config.scoring.weights.devex = 0.05
 
         elif project_type == "cli-tool":
-            # CLI tools: focus on usability and error handling
+            # CLI tools: focus on usability and error handling (all 7 weights must sum to 1.0)
             config.agents.reviewer.include_scoring = True
             config.agents.reviewer.quality_threshold = 70.0
             config.scoring.quality_threshold = 70.0
-            config.scoring.weights.maintainability = 0.30
-            config.scoring.weights.complexity = 0.25
-            config.scoring.weights.test_coverage = 0.25
-            config.scoring.weights.security = 0.15
+            config.scoring.weights.maintainability = 0.27
+            config.scoring.weights.complexity = 0.23
+            config.scoring.weights.test_coverage = 0.22
+            config.scoring.weights.security = 0.13
             config.scoring.weights.performance = 0.05
+            config.scoring.weights.structure = 0.05
+            config.scoring.weights.devex = 0.05
 
         elif project_type == "library":
-            # Libraries: focus on API design and test coverage
+            # Libraries: focus on API design and test coverage (all 7 weights must sum to 1.0)
             config.agents.reviewer.include_scoring = True
             config.agents.reviewer.quality_threshold = 75.0
             config.scoring.quality_threshold = 75.0
-            config.scoring.weights.test_coverage = 0.30
-            config.scoring.weights.maintainability = 0.25
-            config.scoring.weights.complexity = 0.20
-            config.scoring.weights.security = 0.15
-            config.scoring.weights.performance = 0.10
+            config.scoring.weights.test_coverage = 0.27
+            config.scoring.weights.maintainability = 0.23
+            config.scoring.weights.complexity = 0.18
+            config.scoring.weights.security = 0.14
+            config.scoring.weights.performance = 0.08
+            config.scoring.weights.structure = 0.05
+            config.scoring.weights.devex = 0.05
 
         else:
             # Generic defaults for unknown project types

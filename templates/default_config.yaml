@@ -63,11 +63,13 @@ agents:
 # Code scoring configuration
 scoring:
   weights:
-    complexity: 0.20                     # Weight for complexity score (must sum to 1.0)
-    security: 0.30                       # Weight for security score
-    maintainability: 0.25                # Weight for maintainability score
-    test_coverage: 0.15                  # Weight for test coverage score
-    performance: 0.10                    # Weight for performance score
+    complexity: 0.18                     # Weight for complexity score (all 7 must sum to 1.0)
+    security: 0.27                       # Weight for security score
+    maintainability: 0.24                # Weight for maintainability score
+    test_coverage: 0.13                  # Weight for test coverage score
+    performance: 0.08                    # Weight for performance score
+    structure: 0.05                      # Weight for structure score (project layout, key files)
+    devex: 0.05                          # Weight for developer experience (docs, config, tooling)
   quality_threshold: 70.0                # Minimum overall score (0-100) to pass
 
 # Expert consultation system configuration
