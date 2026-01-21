@@ -238,7 +238,62 @@ See `docs/CONFIGURATION.md`.
 
 ### Scoring weights validation error
 
-If you see an error about weights not summing to 1.0, ensure `scoring.weights.*` totals ~1.0.
+**Problem:** During `init --reset` or any CLI command you get:
+```
+ValidationError: 1 validation error for ProjectConfig
+scoring.weights
+  Value error, Scoring weights must sum to 1.0, got 1.1
+```
+
+**Cause:** The framework requires **7** scoring weights that must sum to **1.0**. After an upgrade, an existing `scoring.weights` section may have 5 categories, wrong totals, or custom values that no longer sum to 1.0.
+
+**Fix (choose one):**
+
+1. **Replace with framework defaults** (recommended if you have no custom weights)
+
+   In `.tapps-agents/config.yaml`, set `scoring.weights` to:
+
+   ```yaml
+   scoring:
+     weights:
+       complexity: 0.18
+       security: 0.27
+       maintainability: 0.24
+       test_coverage: 0.13
+       performance: 0.08
+       structure: 0.05
+       devex: 0.05
+   ```
+   These sum to 1.0.
+
+2. **Keep custom weights but rebalance**
+
+   If you use custom weights, ensure all **7** keys exist and the sum is 1.0. If your current sum is 1.1, divide each value by 1.1 (or scale down one or more values by 0.1 total). The 7 keys are: `complexity`, `security`, `maintainability`, `test_coverage`, `performance`, `structure`, `devex`.
+
+3. **Workaround to run init when config is broken**
+
+   Temporarily rename the config so init can run with defaults, then fix and restore:
+
+   ```powershell
+   # In the project that fails (e.g. HomeIQ)
+   Rename-Item .tapps-agents\config.yaml .tapps-agents\config.yaml.bak
+   python -m tapps_agents.cli init --reset --yes
+   # Edit .tapps-agents\config.yaml.bak: fix scoring.weights, then replace config.yaml
+   ```
+
+### `tapps-agents` command not found (Windows / other project)
+
+**Problem:** In a project that uses TappsCodingAgents (e.g. HomeIQ), `tapps-agents` is not recognized as a cmdlet or program.
+
+**Cause:** The `tapps-agents` entry point is in the Python environment’s `Scripts` (or `bin`) directory. That path may not be on `PATH` when using a different project’s venv or terminal.
+
+**Fix:** Run the CLI via the module. Ensure you are in the project root and using the environment where `tapps-agents` is installed:
+
+```powershell
+python -m tapps_agents.cli init --reset --yes
+```
+
+To have `tapps-agents` on `PATH`, add the `Scripts` directory of that environment to `PATH`, or use the venv’s `python` explicitly.
 
 ## LLM Operations
 
