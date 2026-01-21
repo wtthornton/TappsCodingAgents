@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 - **CONFIGURATION.md** - New "Automatic Prompt Enhancement (auto_enhancement)" section: `enabled`, `quality_threshold`, `min_prompt_length`, `commands` (including analyst; architect/designer off by default), and `PROMPT_ARGUMENT_MAP` note
 
+## [3.5.24] - 2026-01-22
+
+### Changed
+- Version bump to 3.5.24
+
 ## [3.5.23] - 2026-01-21
 
 ### Changed
