@@ -44,6 +44,7 @@ from .commands import (
     implementer,
     improver,
     learning,
+    observability,
     ops,
     orchestrator,
     planner,
@@ -377,6 +378,41 @@ def _handle_cleanup_command(args: argparse.Namespace) -> None:
         sys.exit(1)
 
 
+def _handle_observability_command(args: argparse.Namespace) -> None:
+    """Handle observability command with sub-commands."""
+    from pathlib import Path
+    
+    project_root = Path.cwd()
+    command = getattr(args, "observability_command", None)
+    
+    observability_handlers = {
+        "dashboard": lambda: observability.handle_observability_dashboard_command(
+            workflow_id=getattr(args, "workflow_id", None),
+            output_format=getattr(args, "format", "text"),
+            output_file=getattr(args, "output", None),
+            project_root=project_root,
+        ),
+        "graph": lambda: observability.handle_observability_graph_command(
+            workflow_id=args.workflow_id,
+            output_format=getattr(args, "format", "dot"),
+            output_file=getattr(args, "output", None),
+            project_root=project_root,
+        ),
+        "otel": lambda: observability.handle_observability_otel_command(
+            workflow_id=args.workflow_id,
+            output_file=getattr(args, "output", None),
+            project_root=project_root,
+        ),
+    }
+    
+    handler = observability_handlers.get(command)
+    if handler:
+        handler()
+    else:
+        print(f"Unknown observability subcommand: {command}")
+        sys.exit(1)
+
+
 def _handle_health_command(args: argparse.Namespace) -> None:
     """Handle health command with sub-commands."""
     from .commands import health
@@ -466,6 +502,7 @@ def route_command(args: argparse.Namespace) -> None:
     special_handlers = {
         "cleanup": _handle_cleanup_command,
         "health": _handle_health_command,
+        "observability": _handle_observability_command,
         "simple-mode": simple_mode.handle_simple_mode_command,
         "learning": learning.handle_learning_command,
         "knowledge": top_level.handle_knowledge_command,

@@ -9,6 +9,7 @@ Phase 2.2: Enhanced with coverage analysis integration
 - Integrate scores into Review Agent decisions
 - Create quality reports
 - Async coverage measurement using CoverageAnalyzer
+- Pluggable gate system integration
 """
 
 from __future__ import annotations
@@ -16,6 +17,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+from .gates.registry import GateRegistry, get_gate_registry
 
 
 @dataclass
@@ -87,16 +90,24 @@ class QualityGate:
     Evaluate quality gates against scoring thresholds.
 
     Story 6.4: Quality Gates & Review Integration
+    
+    Now supports pluggable gates integration for composite gate evaluation.
     """
 
-    def __init__(self, thresholds: QualityThresholds | None = None):
+    def __init__(
+        self,
+        thresholds: QualityThresholds | None = None,
+        gate_registry: GateRegistry | None = None,
+    ):
         """
         Initialize quality gate.
 
         Args:
             thresholds: Quality thresholds (default: standard thresholds)
+            gate_registry: Optional gate registry for pluggable gates
         """
         self.thresholds = thresholds or QualityThresholds()
+        self.gate_registry = gate_registry or get_gate_registry()
 
     def evaluate(
         self,
@@ -308,3 +319,51 @@ class QualityGate:
         )
 
         return result
+
+    def evaluate_composite(
+        self,
+        scores: dict[str, float] | None = None,
+        context: dict[str, Any] | None = None,
+        pluggable_gates: list[str] | None = None,
+    ) -> dict[str, Any]:
+        """
+        Evaluate composite gates (quality + pluggable gates).
+
+        Args:
+            scores: Quality scores dictionary
+            context: Additional context for pluggable gates
+            pluggable_gates: List of pluggable gate names to evaluate
+
+        Returns:
+            Composite gate evaluation result
+        """
+        results: dict[str, Any] = {
+            "quality_gate": None,
+            "pluggable_gates": {},
+            "all_passed": True,
+            "failures": [],
+            "warnings": [],
+        }
+
+        # Evaluate quality gate if scores provided
+        if scores:
+            quality_result = self.evaluate(scores)
+            results["quality_gate"] = quality_result.to_dict()
+            if not quality_result.passed:
+                results["all_passed"] = False
+                results["failures"].append({
+                    "gate": "quality",
+                    "message": quality_result.failures[0] if quality_result.failures else "Quality gate failed",
+                })
+
+        # Evaluate pluggable gates if specified
+        if pluggable_gates and context:
+            pluggable_results = self.gate_registry.evaluate_gates(pluggable_gates, context)
+            results["pluggable_gates"] = pluggable_results
+            
+            if not pluggable_results.get("all_passed", True):
+                results["all_passed"] = False
+                results["failures"].extend(pluggable_results.get("failures", []))
+                results["warnings"].extend(pluggable_results.get("warnings", []))
+
+        return results

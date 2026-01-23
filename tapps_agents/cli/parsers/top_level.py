@@ -1022,6 +1022,86 @@ Example: tapps-agents health check""",
         "--format", choices=["json", "text"], default="text", help="Output format (default: text)",
     )
 
+    # Observability command
+    observability_parser = subparsers.add_parser(
+        "observability",
+        help="Workflow observability: execution graphs, metrics, traces, and logs",
+        description="""Comprehensive observability for workflow execution.
+        
+Provides:
+  • Execution graphs (DOT, Mermaid, HTML)
+  • Metrics, traces, and logs correlation
+  • OpenTelemetry export
+  • Performance bottleneck identification
+
+Examples:
+  tapps-agents observability dashboard --workflow-id workflow-123
+  tapps-agents observability graph workflow-123 --format mermaid
+  tapps-agents observability otel workflow-123""",
+    )
+    observability_subparsers = observability_parser.add_subparsers(
+        dest="observability_command",
+        help="Observability subcommand (dashboard, graph, otel)",
+        required=True,
+    )
+
+    observability_dashboard_parser = observability_subparsers.add_parser(
+        "dashboard",
+        help="Generate observability dashboard",
+        description="Generate comprehensive dashboard correlating metrics, traces, and logs.",
+    )
+    observability_dashboard_parser.add_argument(
+        "--workflow-id",
+        help="Workflow ID (if not provided, shows overview of all workflows)",
+    )
+    observability_dashboard_parser.add_argument(
+        "--format",
+        choices=["json", "text", "html"],
+        default="text",
+        help="Output format (default: text)",
+    )
+    observability_dashboard_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output file path (default: stdout for text/json, .tapps-agents/observability/ for html)",
+    )
+
+    observability_graph_parser = observability_subparsers.add_parser(
+        "graph",
+        help="Generate execution graph",
+        description="Generate execution graph for a workflow in various formats.",
+    )
+    observability_graph_parser.add_argument(
+        "workflow_id",
+        help="Workflow ID (required)",
+    )
+    observability_graph_parser.add_argument(
+        "--format",
+        choices=["dot", "mermaid", "html", "summary"],
+        default="dot",
+        help="Output format (default: dot)",
+    )
+    observability_graph_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output file path (default: .tapps-agents/observability/graphs/)",
+    )
+
+    observability_otel_parser = observability_subparsers.add_parser(
+        "otel",
+        help="Export OpenTelemetry trace",
+        description="Export workflow execution trace to OpenTelemetry format for external tools.",
+    )
+    observability_otel_parser.add_argument(
+        "workflow_id",
+        help="Workflow ID (required)",
+    )
+    observability_otel_parser.add_argument(
+        "--output",
+        type=Path,
+        help="Output file path (default: .tapps-agents/observability/otel/)",
+    )
+
     # Install dev tools command
     install_dev_parser = subparsers.add_parser(
         "install-dev",

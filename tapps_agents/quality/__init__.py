@@ -20,6 +20,18 @@ from .secret_scanner import (
     SecretScanResult,
 )
 
+# Pluggable gates system
+from .gates import (
+    ApprovalGate,
+    BaseGate,
+    GateRegistry,
+    GateResult,
+    GateSeverity,
+    PolicyGate,
+    SecurityGate,
+    get_gate_registry,
+)
+
 __all__ = [
     "CoverageAnalyzer",
     "CoverageMetrics",
@@ -30,4 +42,13 @@ __all__ = [
     "SecretFinding",
     "SecretScanResult",
     "SecretScanner",
+    # Pluggable gates
+    "BaseGate",
+    "GateResult",
+    "GateSeverity",
+    "SecurityGate",
+    "PolicyGate",
+    "ApprovalGate",
+    "GateRegistry",
+    "get_gate_registry",
 ]

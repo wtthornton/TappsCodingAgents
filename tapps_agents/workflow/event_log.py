@@ -595,3 +595,18 @@ class WorkflowEventLog:
             # Fallback to reading from file
             return list(reversed(self.read_events(workflow_id, limit=limit)))
         return self._stream.get_latest_events(workflow_id, limit)
+
+    def generate_execution_graph(self, workflow_id: str) -> "ExecutionGraph":
+        """
+        Generate execution graph from event log.
+
+        Args:
+            workflow_id: Workflow ID
+
+        Returns:
+            ExecutionGraph instance
+        """
+        from .execution_graph import ExecutionGraphGenerator
+
+        generator = ExecutionGraphGenerator(event_log=self)
+        return generator.generate_graph(workflow_id)

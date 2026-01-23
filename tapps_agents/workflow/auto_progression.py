@@ -169,6 +169,36 @@ class AutoProgressionManager:
         gate = step.gate
         gate_result: dict[str, Any] = {}
 
+        # Check for pluggable gates first
+        from .gate_integration import GateIntegration
+        
+        gate_integration = GateIntegration()
+        pluggable_results = gate_integration.evaluate_step_gates(
+            step, state, context={"review_result": review_result}
+        )
+        
+        # If pluggable gates exist and failed, use those results
+        if pluggable_results.get("gate_results") and not pluggable_results.get("all_passed", True):
+            failures = pluggable_results.get("failures", [])
+            if failures:
+                # Block on critical/error failures
+                blocking_failures = [
+                    f for f in failures
+                    if f.get("severity") in ("error", "critical")
+                ]
+                if blocking_failures:
+                    on_fail = gate.get("on_fail") or gate.get("on-fail")
+                    return ProgressionDecision(
+                        action=ProgressionAction.CONTINUE,
+                        next_step_id=on_fail if on_fail else None,
+                        reason=f"Pluggable gate failed: {blocking_failures[0]['message']}",
+                        gate_passed=False,
+                        metadata={"gate_result": pluggable_results},
+                    )
+            
+            # Store pluggable gate results in state
+            state.variables["pluggable_gates_last"] = pluggable_results
+
         # Evaluate quality gate if reviewer step
         if step.agent == "reviewer" and review_result:
             # Extract scoring thresholds from step configuration

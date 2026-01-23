@@ -1219,6 +1219,55 @@ class WorkflowExecutor:
                 print(f"\nTimeline saved to: {timeline_path}")
             except Exception as e:
                 print(f"Warning: Failed to generate timeline: {e}", file=sys.stderr)
+            
+            # Generate execution graph
+            try:
+                self._generate_execution_graph()
+            except Exception as e:
+                if self.logger:
+                    self.logger.warning(f"Failed to generate execution graph: {e}")
+                print(f"Warning: Failed to generate execution graph: {e}", file=sys.stderr)
+
+    def _generate_execution_graph(self) -> None:
+        """Generate execution graph after workflow completion."""
+        if not self.state or not self.event_log:
+            return
+        
+        try:
+            from .execution_graph import ExecutionGraphGenerator
+            from .graph_visualizer import GraphVisualizer
+            
+            workflow_id = self.state.workflow_id
+            generator = ExecutionGraphGenerator(event_log=self.event_log)
+            graph = generator.generate_graph(workflow_id)
+            
+            # Save graph to observability directory
+            observability_dir = self.project_root / ".tapps-agents" / "observability" / "graphs"
+            observability_dir.mkdir(parents=True, exist_ok=True)
+            
+            # Save DOT format
+            dot_path = observability_dir / f"{workflow_id}.dot"
+            generator.save_dot(graph, dot_path)
+            
+            # Save Mermaid format
+            mermaid_path = observability_dir / f"{workflow_id}.mmd"
+            generator.save_mermaid(graph, mermaid_path)
+            
+            # Save HTML view
+            html_path = observability_dir / f"{workflow_id}.html"
+            GraphVisualizer.generate_html_view(graph, html_path)
+            
+            # Save summary
+            summary_path = observability_dir / f"{workflow_id}_summary.txt"
+            GraphVisualizer.save_summary(graph, summary_path)
+            
+            if self.print_paths:
+                print(f"\nExecution graph saved to: {dot_path}")
+                print(f"HTML view: {html_path}")
+        except Exception as e:
+            # Log but don't fail workflow
+            if self.logger:
+                self.logger.warning(f"Failed to generate execution graph: {e}", exc_info=True)
 
     async def _execute_step_for_parallel(
         self, step: WorkflowStep, target_path: Path | None

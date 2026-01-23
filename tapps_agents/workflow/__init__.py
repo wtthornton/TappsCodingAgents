@@ -39,7 +39,18 @@ from .durable_state import (
 )
 from .enhancement_artifact import EnhancementArtifact, EnhancementStage
 from .event_log import WorkflowEvent, WorkflowEventLog
+from .exceptions import (
+    DashboardGenerationError,
+    EmptyWorkflowError,
+    GraphGenerationError,
+    InvalidTraceError,
+    ObservabilityError,
+    OpenTelemetryExportError,
+)
+from .execution_graph import ExecutionGraph, ExecutionGraphGenerator
 from .executor import WorkflowExecutor
+from .graph_visualizer import GraphVisualizer
+from .observability_dashboard import ObservabilityDashboard
 from .logging_helper import WorkflowLogger
 from .messaging import (
     FileMessageBus,
@@ -138,6 +149,17 @@ __all__ = [
     "WorkflowEvent",
     "WorkflowProgressMonitor",
     "ProgressMetrics",
+    "ExecutionGraph",
+    "ExecutionGraphGenerator",
+    "GraphVisualizer",
+    "ObservabilityDashboard",
+    # Observability exceptions
+    "ObservabilityError",
+    "GraphGenerationError",
+    "EmptyWorkflowError",
+    "InvalidTraceError",
+    "DashboardGenerationError",
+    "OpenTelemetryExportError",
     # 2025: Durable Workflow State Machine
     "DurableWorkflowState",
     "DurableWorkflowEvent",
