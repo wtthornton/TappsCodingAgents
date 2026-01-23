@@ -98,7 +98,7 @@ if (-not $SkipVersionUpdate) {
     
     # Extract version from pyproject.toml [project] section
     $pyprojectVersion = ""
-    $pyprojectLines = $pyprojectContent -split "`r?`n"
+    $pyprojectLines = $pyprojectContent -split '\r?\n'
     $inProjectSection = $false
     foreach ($line in $pyprojectLines) {
         if ($line -match '^\s*\[project\]\s*$') {
@@ -274,7 +274,7 @@ $headInitVersion = git show HEAD:tapps_agents/__init__.py | Select-String -Patte
 # Extract version from pyproject.toml [project] section
 $headPyprojectVersionExtracted = ""
 if ($headPyprojectVersion) {
-    $headPyprojectVersionLines = $headPyprojectVersion.ToString() -split "`r?`n"
+    $headPyprojectVersionLines = $headPyprojectVersion.ToString() -split '\r?\n'
     $inProjectSection = $false
     foreach ($line in $headPyprojectVersionLines) {
         if ($line -match '^\s*\[project\]\s*$') {
@@ -355,34 +355,34 @@ if ($existingTag) {
         Write-Host "    # Then re-run this script" -ForegroundColor White
         exit 1
     } else {
-        Write-Host "  ✓ Tag points to current HEAD (correct)" -ForegroundColor Green
+        Write-Host '  [OK] Tag points to current HEAD (correct)' -ForegroundColor Green
     }
     Write-Host ""
 }
 
 # Build gh release create command (avoid Invoke-Expression so multiline notes don't break PowerShell parsing)
-$ghArgs = @("release", "create", $Tag, "--title", $Title)
+$ghArgs = @('release', 'create', $Tag, '--title', $Title)
 
 # Prefer notes-file when we have a known release notes path (safer for multiline Markdown)
-$releaseNotesFile = Join-Path $projectRoot ("RELEASE_NOTES_v{0}.md" -f $Version)
+$releaseNotesFile = Join-Path $projectRoot ('RELEASE_NOTES_v{0}.md' -f $Version)
 if (Test-Path $releaseNotesFile) {
-    $ghArgs += @("--notes-file", $releaseNotesFile)
+    $ghArgs += @('--notes-file', $releaseNotesFile)
 } else {
     # Fall back to --notes (single argument). If it's multiline, write a temp file instead.
-    if ($ReleaseNotes -match "`r?`n") {
-        $tmpNotes = Join-Path $env:TEMP ("tapps-agents-release-notes-{0}.md" -f $Version)
+    if ($ReleaseNotes -match '[\r\n]') {
+        $tmpNotes = Join-Path $env:TEMP ('tapps-agents-release-notes-{0}.md' -f $Version)
         Set-Content -Path $tmpNotes -Value $ReleaseNotes -Encoding UTF8
-        $ghArgs += @("--notes-file", $tmpNotes)
+        $ghArgs += @('--notes-file', $tmpNotes)
     } else {
-        $ghArgs += @("--notes", $ReleaseNotes)
+        $ghArgs += @('--notes', $ReleaseNotes)
     }
 }
 
 if ($Draft) {
-    $ghArgs += "--draft"
+    $ghArgs += '--draft'
 }
 if ($Prerelease) {
-    $ghArgs += "--prerelease"
+    $ghArgs += '--prerelease'
 }
 
 # Add files to attach

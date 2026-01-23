@@ -6,12 +6,14 @@ This script helps update the Context7 API key in encrypted storage.
 
 Usage:
     python scripts/update_context7_key.py --key "your-api-key"
-    python scripts/update_context7_key.py --verify  # Verify current key
-    python scripts/update_context7_key.py --test    # Test API connection
+    python scripts/update_context7_key.py --verify       # Verify current key
+    python scripts/update_context7_key.py --test         # Test API connection
+    python scripts/update_context7_key.py --set-user-env # Set CONTEXT7_API_KEY at User from storage (for Cursor MCP)
 """
 
 import argparse
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -141,37 +143,43 @@ def test_api_key(api_key: str | None = None):
         return False
 
 
-def update_api_key(new_key: str):
+def update_api_key(new_key: str, *, skip_prompts: bool = False):
     """Update the API key in encrypted storage."""
     print("=" * 60)
     print("Context7 API Key Update")
     print("=" * 60)
     print()
-    
+
     # Validate key format
     if not new_key.startswith("ctx7sk-"):
-        print("[WARN] Key doesn't start with 'ctx7sk-' - this may not be a valid Context7 key")
-        response = input("Continue anyway? [y/N]: ")
-        if response.lower() != "y":
-            print("Aborted")
-            return False
-    
+        if not skip_prompts:
+            print("[WARN] Key doesn't start with 'ctx7sk-' - this may not be a valid Context7 key")
+            response = input("Continue anyway? [y/N]: ")
+            if response.lower() != "y":
+                print("Aborted")
+                return False
+        else:
+            print("[WARN] Key doesn't start with 'ctx7sk-' - storing anyway (--yes)")
+
     print(f"New key: {new_key[:15]}...{new_key[-5:]}")
     print()
-    
+
     # Test the new key first
     print("Testing new key...")
     print("-" * 40)
     if not test_api_key(new_key):
-        print()
-        print("[WARN] Key test failed, but this might be due to:")
-        print("       - Rate limiting")
-        print("       - Temporary API issues")
-        print()
-        response = input("Store the key anyway? [y/N]: ")
-        if response.lower() != "y":
-            print("Aborted")
-            return False
+        if not skip_prompts:
+            print()
+            print("[WARN] Key test failed, but this might be due to:")
+            print("       - Rate limiting")
+            print("       - Temporary API issues")
+            print()
+            response = input("Store the key anyway? [y/N]: ")
+            if response.lower() != "y":
+                print("Aborted")
+                return False
+        else:
+            print("[WARN] Key test failed - storing anyway (--yes)")
     print()
     
     # Store the key
@@ -190,6 +198,52 @@ def update_api_key(new_key: str):
     return True
 
 
+def set_user_env_from_storage() -> bool:
+    """
+    Load the Context7 key from encrypted storage and set CONTEXT7_API_KEY
+    at User level so Cursor's MCP server can use it. The key is passed to
+    PowerShell via the subprocess environment (not argv) to avoid logging.
+    """
+    key_manager = APIKeyManager()
+    api_key = key_manager.load_api_key("context7")
+    if not api_key:
+        print("[ERROR] No API key found in encrypted storage.")
+        print("        Run: python scripts/update_context7_key.py --key 'your-api-key'")
+        return False
+
+    if sys.platform == "win32":
+        ps = (
+            "$k = [System.Environment]::GetEnvironmentVariable('CTX7_FROM_SCRIPT','Process');"
+            "[System.Environment]::SetEnvironmentVariable('CONTEXT7_API_KEY', $k, 'User');"
+            "Write-Host '[OK] CONTEXT7_API_KEY set at User level from encrypted storage.'"
+        )
+        env = {**os.environ, "CTX7_FROM_SCRIPT": api_key}
+        try:
+            r = subprocess.run(
+                ["powershell", "-NoProfile", "-Command", ps],
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+            if r.returncode == 0:
+                print(r.stdout or "[OK] CONTEXT7_API_KEY set at User level from encrypted storage.")
+                print()
+                print("Next: fully quit Cursor (File > Exit) and reopen so it picks up the variable.")
+                return True
+            print(f"[ERROR] PowerShell: {r.stderr or r.stdout or 'unknown'}")
+            return False
+        except Exception as e:
+            print(f"[ERROR] {e}")
+            return False
+    else:
+        print("[OK] Key found in encrypted storage.")
+        print("      Set for your shell:  export CONTEXT7_API_KEY='<your-key>'")
+        print("      For persistence add that to ~/.bashrc or ~/.zshrc")
+        print("      (Key not printed here; use --verify to confirm it exists.)")
+        return False
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Update Context7 API Key",
@@ -204,21 +258,29 @@ Examples:
     
     # Test API connection
     python scripts/update_context7_key.py --test
+
+    # Set CONTEXT7_API_KEY at User level from encrypted storage (for Cursor MCP)
+    python scripts/update_context7_key.py --set-user-env
 """
     )
     
     parser.add_argument("--key", "-k", help="New API key to store")
+    parser.add_argument("-y", "--yes", action="store_true", help="Skip prompts when storing (store even if test fails)")
     parser.add_argument("--verify", "-v", action="store_true", help="Verify current key")
     parser.add_argument("--test", "-t", action="store_true", help="Test API connection")
+    parser.add_argument("--set-user-env", action="store_true",
+                        help="Set CONTEXT7_API_KEY at User level from encrypted storage (for Cursor MCP)")
     
     args = parser.parse_args()
     
+    if args.set_user_env:
+        sys.exit(0 if set_user_env_from_storage() else 1)
     if args.verify:
         verify_current_key()
     elif args.test:
         test_api_key()
     elif args.key:
-        update_api_key(args.key)
+        update_api_key(args.key, skip_prompts=args.yes)
     else:
         # Default: verify and test
         if verify_current_key():

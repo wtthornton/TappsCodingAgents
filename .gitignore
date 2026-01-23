@@ -65,6 +65,8 @@ tools/bd/*.zip
 # Cursor IDE
 .cursor/debug.log
 .cursor/*.log
+# mcp.json may contain CONTEXT7_API_KEY; do not commit if it has secrets
+.cursor/mcp.json
 
 # Local AI rule overrides (loaded when "Include CLAUDE.md in context" is on)
 CLAUDE.local.md
