@@ -83,6 +83,7 @@ class TestTopLevelCommandHandlers:
             "workflow",
             "score",
             "doctor",
+            "setup-experts",
         ]
         for cmd in expected_commands:
             assert cmd in handlers, f"Command {cmd} not found in handlers"

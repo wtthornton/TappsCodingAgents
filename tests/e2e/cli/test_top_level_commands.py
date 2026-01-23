@@ -75,3 +75,61 @@ class TestTopLevelCommands(CLICommandTestBase):
         assert_success_exit(result)
         assert "TappsCodingAgents" in result.stdout or "tapps-agents" in result.stdout.lower()
 
+    def test_setup_experts_list_command(self):
+        """Test setup-experts list command."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "setup-experts", "list"],
+            expect_success=True,
+        )
+        assert_success_exit(result)
+        # Should list experts (even if empty)
+        assert "expert" in result.stdout.lower() or "no experts" in result.stdout.lower()
+
+    def test_setup_experts_init_command(self):
+        """Test setup-experts init command in non-interactive mode."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "setup-experts", "--yes", "--non-interactive", "init"],
+            expect_success=True,
+        )
+        assert_success_exit(result)
+        # Should create .tapps-agents directory structure
+        assert (self.test_project / ".tapps-agents").exists()
+        # Should create domains.md template
+        assert (self.test_project / ".tapps-agents" / "domains.md").exists()
+
+    def test_setup_experts_init_creates_structure(self):
+        """Test that setup-experts init creates required directory structure."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "setup-experts", "--yes", "--non-interactive", "init"],
+            expect_success=True,
+        )
+        assert_success_exit(result)
+        
+        # Verify directory structure
+        config_dir = self.test_project / ".tapps-agents"
+        assert config_dir.exists()
+        assert (config_dir / "domains.md").exists()
+        
+        # In non-interactive mode, experts.yaml should not exist (expert creation skipped)
+        # But knowledge directory should be created
+        assert (config_dir / "knowledge").exists()
+
+    def test_setup_experts_add_non_interactive_fails(self):
+        """Test that setup-experts add fails gracefully in non-interactive mode without input."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "setup-experts", "--non-interactive", "add"],
+            expect_success=False,
+        )
+        # Should exit with code 2 (NonInteractiveInputRequired)
+        assert result.exit_code == 2
+        assert "Non-interactive mode requires additional input" in result.stderr
+
+    def test_setup_experts_help(self):
+        """Test setup-experts --help."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "setup-experts", "--help"],
+            expect_success=True,
+        )
+        assert_success_exit(result)
+        assert "setup-experts" in result.stdout.lower() or "expert" in result.stdout.lower()
+

@@ -897,6 +897,142 @@ class TestTopLevelCommands:
             top_level.handle_doctor_command(MagicMock(format="json"))
             mock_collect.assert_called_once()
 
+    def test_setup_experts_command_init(self, tmp_path, capsys):
+        """Test setup-experts init command."""
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command="init",
+                yes=False,
+                non_interactive=False,
+            )
+            top_level.handle_setup_experts_command(args)
+            
+            mock_wizard_class.assert_called_once_with(
+                assume_yes=False,
+                non_interactive=False,
+            )
+            mock_wizard.init_project.assert_called_once()
+
+    def test_setup_experts_command_add(self, tmp_path, capsys):
+        """Test setup-experts add command."""
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command="add",
+                yes=False,
+                non_interactive=False,
+            )
+            top_level.handle_setup_experts_command(args)
+            
+            mock_wizard_class.assert_called_once_with(
+                assume_yes=False,
+                non_interactive=False,
+            )
+            mock_wizard.add_expert.assert_called_once()
+
+    def test_setup_experts_command_list(self, tmp_path, capsys):
+        """Test setup-experts list command."""
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command="list",
+                yes=False,
+                non_interactive=False,
+            )
+            top_level.handle_setup_experts_command(args)
+            
+            mock_wizard_class.assert_called_once_with(
+                assume_yes=False,
+                non_interactive=False,
+            )
+            mock_wizard.list_experts.assert_called_once()
+
+    def test_setup_experts_command_remove(self, tmp_path, capsys):
+        """Test setup-experts remove command."""
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command="remove",
+                yes=False,
+                non_interactive=False,
+            )
+            top_level.handle_setup_experts_command(args)
+            
+            mock_wizard_class.assert_called_once_with(
+                assume_yes=False,
+                non_interactive=False,
+            )
+            mock_wizard.remove_expert.assert_called_once()
+
+    def test_setup_experts_command_no_subcommand(self, tmp_path, capsys):
+        """Test setup-experts without subcommand (runs wizard)."""
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command=None,
+                yes=False,
+                non_interactive=False,
+            )
+            top_level.handle_setup_experts_command(args)
+            
+            mock_wizard_class.assert_called_once_with(
+                assume_yes=False,
+                non_interactive=False,
+            )
+            mock_wizard.run_wizard.assert_called_once()
+
+    def test_setup_experts_command_with_flags(self, tmp_path, capsys):
+        """Test setup-experts command with --yes and --non-interactive flags."""
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command="init",
+                yes=True,
+                non_interactive=True,
+            )
+            top_level.handle_setup_experts_command(args)
+            
+            mock_wizard_class.assert_called_once_with(
+                assume_yes=True,
+                non_interactive=True,
+            )
+            mock_wizard.init_project.assert_called_once()
+
+    def test_setup_experts_command_non_interactive_error(self, tmp_path, capsys):
+        """Test setup-experts command handles NonInteractiveInputRequired error."""
+        from tapps_agents.experts.setup_wizard import NonInteractiveInputRequired
+        
+        with patch("tapps_agents.experts.setup_wizard.ExpertSetupWizard") as mock_wizard_class:
+            mock_wizard = MagicMock()
+            mock_wizard.add_expert.side_effect = NonInteractiveInputRequired("Expert name?")
+            mock_wizard_class.return_value = mock_wizard
+            
+            args = MagicMock(
+                command="add",
+                yes=False,
+                non_interactive=True,
+            )
+            
+            with pytest.raises(SystemExit) as exc_info:
+                top_level.handle_setup_experts_command(args)
+            
+            assert exc_info.value.code == 2
+            captured = capsys.readouterr()
+            assert "Non-interactive mode requires additional input" in captured.err
+
 
 class TestMainCLI:
     """Tests for main CLI entry point."""
