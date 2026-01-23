@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapps-agents"
-version = "3.5.27"
+version = "3.5.28"
 description = "A specification framework for defining, configuring, and orchestrating coding agents"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -100,8 +100,7 @@ include = ["tapps_agents*"]
 exclude = ["tests*", "examples*"]
 
 [tool.setuptools.package-data]
-"*" = ["*.yaml", "*.yml", "*.md", "*.mdc", "*.j2"]
-"tapps_agents" = ["resources/**/*"]
+"tapps_agents" = ["resources/**/*", "experts/**/*"]
 "tapps_agents.resources" = ["**/*"]
 
 [tool.setuptools.exclude-package-data]

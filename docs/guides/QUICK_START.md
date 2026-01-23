@@ -12,20 +12,47 @@ Get up and running with TappsCodingAgents in about 5–10 minutes.
 
 ## 1. Install
 
+Requires **Python 3.13+** (`python --version`).
+
 ```bash
-pip install -e .
+# Linux/macOS:
+python3.13 -m pip install -e .
+# or: pip install -e .
+
+# Windows (if 3.13 is not default):
+py -3.13 -m pip install -e .
 ```
 
 Or from PyPI: `pip install tapps-agents`
 
-## 2. Initialize Cursor Integration
+Optionally: `python scripts/check_prerequisites.py` before installing.
+
+After installing: `tapps-agents doctor` or `python -m tapps_agents.cli doctor` to verify.
+
+### Windows
+
+```powershell
+py -3.13 --version
+py -3.13 -m pip install -e .
+py -3.13 -m tapps_agents.cli init
+```
+
+### Linux/macOS
 
 ```bash
-# If 'tapps-agents' is not on PATH:
-python -m tapps_agents.cli init
+python3.13 --version
+python3.13 -m pip install -e .
+python3.13 -m tapps_agents.cli init
+```
 
-# Or:
+## 2. Initialize Cursor Integration
+
+Run `init` from your **project root**, not from the TappsCodingAgents framework directory.
+
+```bash
+# From your project (tapps-agents or python -m tapps_agents.cli if command not found):
 tapps-agents init
+# Or: python -m tapps_agents.cli init
 ```
 
 This sets up:

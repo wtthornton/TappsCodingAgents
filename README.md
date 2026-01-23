@@ -55,18 +55,36 @@ See:
 If you're using **Cursor IDE**, get started quickly:
 
 1. **Install the framework:**
+
+   Ensure Python 3.13+ (`python --version`). On Windows with multiple versions use `py -3.13`.
+
    ```bash
-   pip install -e .
+   # Linux/macOS:
+   python3.13 -m pip install -e .
+   # or: pip install -e .
+
+   # Windows (if 3.13 is not default):
+   py -3.13 -m pip install -e .
    ```
 
+   Optionally run `python scripts/check_prerequisites.py` before installing.
+
+   After installing, run `tapps-agents doctor` (or `python -m tapps_agents.cli doctor`) to verify the setup.
+
 2. **Initialize Cursor integration:**
+
+   Run `init` from your **project root**, not from the TappsCodingAgents framework directory.
+
    ```bash
-   # If 'tapps-agents' command not found, use module invocation:
-   python -m tapps_agents.cli init
-   
-   # OR if entry point is working:
+   # Correct: from your project
+   cd /path/to/your-project
    tapps-agents init
+   # If 'tapps-agents' not found: python -m tapps_agents.cli init
+
+   # Wrong: from the framework directory (creates config in the wrong place)
+   # cd /path/to/TappsCodingAgents && tapps-agents init
    ```
+
    This installs:
    - ✅ **Cursor Skills** (`.claude/skills/`) - Use `@agent *command` in Cursor IDE
    - ✅ **Claude Desktop Commands** (`.claude/commands/`) - Use `@command` in Claude Desktop

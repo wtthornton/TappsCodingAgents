@@ -700,6 +700,9 @@ Sets up all integration components for Cursor AI:
 This command is safe to run multiple times - it won't overwrite existing files
 unless you use --overwrite flags. Use --no-<component> to skip specific setups.
 
+Important: Run init from your project root, not from the TappsCodingAgents framework
+directory. Correct: cd /path/to/your-project && tapps-agents init. Wrong: cd .../TappsCodingAgents && tapps-agents init (creates config in the wrong place).
+
 Upgrade/Reset Mode:
   Use --reset or --upgrade to reset framework-managed files to the latest version
   while preserving user data and customizations. Creates a backup by default.
@@ -835,6 +838,18 @@ Example: tapps-agents doctor""",
         "--suggest-fixes",
         action="store_true",
         help="Print suggested fix commands for warnings and errors (does not apply fixes)",
+    )
+
+    # Docs: print URL and optionally open in browser
+    docs_parser = subparsers.add_parser(
+        "docs",
+        help="Show documentation URL and optionally open in browser",
+        description="Print the TappsCodingAgents documentation URL. Use --open to open in the default browser.",
+    )
+    docs_parser.add_argument(
+        "--open",
+        action="store_true",
+        help="Open documentation in the default browser",
     )
 
     # Commands index (plan 4.1): list (command, skill, execution_path) from SkillAgentRegistry

@@ -1582,9 +1582,10 @@ def _print_mcp_status(results: dict[str, Any]) -> None:
     mcp_validation = mcp_config.get("validation")
     if mcp_validation:
         if not mcp_validation.get("valid", True):
-            safe_print("\n  [ERROR] MCP Configuration Issues:")
+            safe_print("\n  [WARN] MCP optional features not configured:")
             for issue in mcp_validation.get("issues", []):
                 print(f"    - {issue}")
+            print("    - MCP (Context7, Playwright, etc.) is optional; the framework works without it.")
         if mcp_validation.get("warnings"):
             safe_print("\n  [WARN] Warnings:")
             for warning in mcp_validation.get("warnings", []):
@@ -1600,8 +1601,8 @@ def _print_mcp_status(results: dict[str, Any]) -> None:
     if not npx_available:
         safe_print("\n  [WARN] npx not available:")
         print(f"    - {npx_error}")
-        print("    - Install Node.js: https://nodejs.org/")
-        print("    - MCP servers that use npx will not work without Node.js")
+        print("    - MCP servers (Context7, Playwright, etc.) are optional; the framework works without them.")
+        print("    - Install Node.js from https://nodejs.org/ to enable MCP.")
     
     # Show overall status
     if mcp_validation and mcp_validation.get("valid", True) and npx_available:
@@ -1799,13 +1800,12 @@ def _print_init_complete_summary(results: dict[str, Any]) -> None:
     mcp = results.get("mcp_config") or {}
     mcp_val = mcp.get("validation") or {}
 
-    has_errors = (
-        (validation.get("overall_valid") is False and validation.get("errors"))
-        or (mcp_val.get("valid") is False and mcp_val.get("issues"))
-    )
+    # Core vs optional: MCP (Context7, npx) and cache are optional
+    has_errors = bool(validation.get("overall_valid") is False and validation.get("errors"))
     has_warnings = bool(
         validation.get("warnings")
         or mcp_val.get("warnings")
+        or (mcp_val.get("valid") is False and mcp_val.get("issues"))
         or (mcp.get("npx_available") is False)
         or (results.get("cache_requested") and results.get("cache_prepopulated") is False)
     )
@@ -1814,7 +1814,7 @@ def _print_init_complete_summary(results: dict[str, Any]) -> None:
     if has_errors:
         safe_print("[X] Init complete (with errors). Please fix the issues above.")
     elif has_warnings:
-        safe_print("[OK] Init complete (with warnings). Review warnings above.")
+        safe_print("[OK] Core setup complete. Optional: Context7, Node.js, dev extras. Run 'tapps-agents doctor' for details.")
     else:
         safe_print("[OK] Init complete.")
 
@@ -1903,6 +1903,11 @@ def _print_next_steps(project_root: Path | None = None) -> None:
         except Exception:
             pass
 
+    print("Optional enhancements:")
+    print("  • CONTEXT7_API_KEY (library docs for agents)")
+    print("  • pip install -e \".[dev]\" (dev tools: ruff, mypy, pytest, pip-audit, etc.; optional, not required for using the framework)")
+    print("  • Node.js from https://nodejs.org/ (MCP servers)")
+    print()
     print("Setup & Configuration:")
     print("  • Verify setup: tapps-agents cursor verify")
     print("  • Environment check: tapps-agents doctor")
@@ -1938,8 +1943,10 @@ def handle_init_command(args: object) -> None:
     from pathlib import Path
     from ...core.init_project import (
         detect_existing_installation,
+        detect_project_root,
         identify_framework_files,
         init_project,
+        is_framework_directory,
         rollback_init_reset,
     )
 
@@ -1977,8 +1984,36 @@ def handle_init_command(args: object) -> None:
         
         return
     
-    # Check for existing installation
     project_root = Path.cwd()
+    dry_run = getattr(args, "dry_run", False)
+    auto_yes = getattr(args, "yes", False)
+
+    # Working directory check: if running from framework dir, warn and offer project root
+    if not dry_run and is_framework_directory(project_root):
+        detected = detect_project_root(project_root)
+        if detected:
+            try:
+                print("\n" + "=" * 60)
+                print("Warning: Running init from framework directory")
+                print("=" * 60)
+                print(f"\nYou are in: {project_root}")
+                print("This appears to be the TappsCodingAgents framework directory.")
+                print("\nConfiguration should be in your project root, not the framework.")
+                print(f"Detected project root: {detected}")
+                print("\n  1. Initialize in detected project root (recommended)")
+                print("  2. Continue in current directory (not recommended)")
+                print("")
+                resp = input("Initialize in project root instead? [Y/n]: ").strip().lower() if not auto_yes else "y"
+                if resp not in ("n", "no"):
+                    project_root = detected
+                    print(f"\nUsing project root: {project_root}\n")
+                else:
+                    print("\nContinuing in current directory.\n")
+            except (EOFError, KeyboardInterrupt):
+                print("\nInit cancelled.")
+                return
+    
+    # Check for existing installation
     detection = detect_existing_installation(project_root)
     reset_mode = getattr(args, "reset", False) or getattr(args, "upgrade", False)
     dry_run = getattr(args, "dry_run", False)
@@ -2075,6 +2110,7 @@ def handle_init_command(args: object) -> None:
     _print_init_header()
 
     results = init_project(
+        project_root=project_root,
         include_cursor_rules=not getattr(args, "no_rules", False),
         include_workflow_presets=not getattr(args, "no_presets", False),
         include_config=not getattr(args, "no_config", False),
@@ -2290,6 +2326,18 @@ def _handle_commands_list(args: object) -> None:
         print(f"Wrote {out_path}")
     else:
         print(text)
+
+
+def handle_docs_command(args: object) -> None:
+    """Handle docs command: print documentation URL and optionally open in browser."""
+    url = "https://github.com/wtthornton/TappsCodingAgents/tree/main/docs"
+    print(f"Documentation: {url}")
+    if getattr(args, "open", False):
+        try:
+            import webbrowser
+            webbrowser.open(url)
+        except Exception:
+            pass
 
 
 def handle_doctor_command(args: object) -> None:

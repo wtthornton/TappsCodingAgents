@@ -351,6 +351,7 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "score": top_level.handle_score_command,
         "status": top_level.handle_status_command,
         "doctor": top_level.handle_doctor_command,
+        "docs": top_level.handle_docs_command,
         "install-dev": top_level.handle_install_dev_command,
         "customize": top_level.handle_customize_command,
         "commands": top_level.handle_commands_command,

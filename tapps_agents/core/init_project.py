@@ -104,6 +104,56 @@ except Exception:  # pragma: no cover - extremely defensive
     Traversable = object  # type: ignore[misc,assignment]
 
 
+def _read_pyproject_name(path: Path) -> str | None:
+    """Read [project] name from pyproject.toml if present."""
+    pf = path / "pyproject.toml"
+    if not pf.exists():
+        return None
+    try:
+        import tomllib
+        with open(pf, "rb") as f:
+            data = tomllib.load(f)
+        return (data.get("project") or {}).get("name")
+    except Exception:
+        return None
+
+
+def is_framework_directory(path: Path) -> bool:
+    """
+    Return True if path is the TappsCodingAgents framework directory.
+
+    Used to detect when init is run from the framework checkout (e.g. a
+    TappsCodingAgents/ subdirectory) instead of the user's project root.
+    """
+    path = path.resolve()
+    if path.name == "TappsCodingAgents":
+        return True
+    if not (path / "tapps_agents").exists() or not (path / "pyproject.toml").exists():
+        return False
+    name = _read_pyproject_name(path)
+    return name == "tapps-agents"
+
+
+def detect_project_root(start_path: Path) -> Path | None:
+    """
+    Walk up from the parent of start_path to find a likely project root.
+
+    Looks for .git, src/, or app/ and excludes the framework directory.
+    Returns None if not found.
+    """
+    current = start_path.resolve().parent
+    while current != current.parent:
+        if is_framework_directory(current):
+            current = current.parent
+            continue
+        if (current / ".git").exists():
+            return current
+        if (current / "src").exists() or (current / "app").exists():
+            return current
+        current = current.parent
+    return None
+
+
 def _resource_at(*parts: str) -> "Traversable | None":
     """
     Return a Traversable pointing at packaged resources under `tapps_agents.resources`.
@@ -898,6 +948,33 @@ def validate_mcp_config(mcp_config_path: Path) -> dict[str, Any]:
                     f"Set {var_name} environment variable or update MCP config with direct value"
                 )
     
+    # Check for GitHub MCP server
+    if "GitHub" in mcp_servers:
+        github_config = mcp_servers["GitHub"]
+        env_vars = github_config.get("env", {})
+        github_token = env_vars.get("GITHUB_PERSONAL_ACCESS_TOKEN", "")
+        
+        # Check if token is set (either direct value or env var reference)
+        if not github_token:
+            result["warnings"].append(
+                "GitHub MCP server configured but GITHUB_PERSONAL_ACCESS_TOKEN not set. "
+                "GitHub MCP server will not work without a token."
+            )
+            result["recommendations"].append(
+                "Set GITHUB_PERSONAL_ACCESS_TOKEN in GitHub MCP server env configuration"
+            )
+        elif isinstance(github_token, str) and github_token.startswith("${") and github_token.endswith("}"):
+            # Using environment variable reference
+            var_name = github_token[2:-1]  # Remove ${ and }
+            if not os.getenv(var_name):
+                result["warnings"].append(
+                    f"GitHub MCP server uses {var_name} environment variable reference, but variable is not set. "
+                    "GitHub MCP server will not work without this."
+                )
+                result["recommendations"].append(
+                    f"Set {var_name} environment variable or update MCP config with direct token value"
+                )
+    
     # Check npx availability
     npx_available, npx_error = check_npx_available()
     if not npx_available:
@@ -1552,6 +1629,13 @@ def detect_mcp_servers(project_root: Path) -> dict[str, Any]:
             "packages": ["@playwright/mcp", "@playwright/mcp-server"],
             "command": "npx",
             "description": "Browser automation (optional, Cursor may provide this)",
+            "required": False,
+        },
+        "GitHub": {
+            "name": "GitHub MCP Server",
+            "package": "@modelcontextprotocol/server-github",
+            "command": "npx",
+            "description": "GitHub repository operations (issues, PRs, code, etc.)",
             "required": False,
         }
     }

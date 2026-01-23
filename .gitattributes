@@ -1,0 +1,15 @@
+# Export-ignore: exclude from git archive (only; MANIFEST.in controls sdist)
+/docs export-ignore
+/tests export-ignore
+/examples export-ignore
+/demo export-ignore
+/scripts export-ignore
+/requirements export-ignore
+/tools export-ignore
+AGENTS.md export-ignore
+CHANGELOG.md export-ignore
+CLAUDE.md export-ignore
+CLAUDE.local.example.md export-ignore
+CONTRIBUTING.md export-ignore
+SECURITY.md export-ignore
+pytest.ini export-ignore

@@ -1,22 +1,24 @@
-﻿{
+{
   "mcpServers": {
     "Context7": {
-      "command": "npx",
-      "args": ["-y", "@upstash/context7-mcp"],
+      "command": "C:\\Program Files\\nodejs\\npx.CMD",
+      "args": [
+        "-y",
+        "@context7/mcp-server"
+      ],
       "env": {
-        "CONTEXT7_API_KEY": "${env:CONTEXT7_API_KEY}"
+        "CONTEXT7_API_KEY": "ctx7sk-bc3b5048-b6b8-4b12-8330-8c445842786e"
       }
     },
-    "Playwright": {
-      "command": "npx",
-      "args": ["-y", "@playwright/mcp@latest"]
-    },
-    "FileSystem": {
-      "command": "npx",
-      "args": ["-y", "@modelcontextprotocol/server-tilesystem", "C:\\cursor\\TappsCodingAgents"]
+    "GitHub": {
+      "command": "C:\\Program Files\\nodejs\\npx.CMD",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-github"
+      ],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
     }
   }
 }
-
-
-

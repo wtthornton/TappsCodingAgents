@@ -39,3 +39,10 @@ global-exclude .cursorrules
 global-exclude .env
 global-exclude .env.*
 global-exclude .gitignore
+# Root-level docs and meta (not needed in sdist)
+global-exclude AGENTS.md
+global-exclude CHANGELOG.md
+global-exclude CLAUDE.md
+global-exclude CLAUDE.local.example.md
+global-exclude CONTRIBUTING.md
+global-exclude SECURITY.md
