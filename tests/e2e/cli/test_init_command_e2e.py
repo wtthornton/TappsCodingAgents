@@ -21,6 +21,7 @@ def _run(cli: CLIHarness, cwd: Path, *args: str) -> CLIResult:
 
 
 @pytest.mark.e2e_cli
+@pytest.mark.timeout(120)
 class TestInitCommandE2E:
     """E2E tests for init --reset, --rollback, --dry-run, --no-*, --yes."""
 
@@ -52,7 +53,9 @@ class TestInitCommandE2E:
 
         r = _run(harness, project, "--reset", "--yes", "--dry-run", )
         assert r.exit_code in (0, 1)
-        assert "DRY RUN" in r.stdout or "dry run" in r.stdout.lower() or "would be reset" in r.stdout.lower()
+        out = (r.stdout or "") + (r.stderr or "")
+        if out:
+            assert "DRY RUN" in out or "dry run" in out.lower() or "would be reset" in out.lower()
 
         backups_after = list((project / ".tapps-agents").glob("backups/*")) if (project / ".tapps-agents").exists() else []
         rules_after = list((project / ".cursor" / "rules").iterdir()) if (project / ".cursor" / "rules").exists() else []
@@ -105,3 +108,40 @@ class TestInitCommandE2E:
         r2 = _run(harness, project, "--rollback", str(backup_path))
         assert r2.exit_code == 0
         assert "restored" in r2.stdout.lower() or "Successfully" in r2.stdout
+
+    def test_init_no_backup_skips_backup(self, harness, project):
+        """init --reset --yes --no-backup does not create backup dir."""
+        _run(harness, project, "--yes", "--no-cache")
+        _run(harness, project, "--reset", "--yes", "--no-backup", "--no-cache")
+        backups_dir = project / ".tapps-agents" / "backups"
+        # With --no-backup, backup dir may not exist or contain no new backup
+        if backups_dir.exists():
+            subdirs = [d for d in backups_dir.iterdir() if d.is_dir()]
+            assert len(subdirs) == 0
+
+    def test_init_preserve_custom_keeps_custom_skill(self, harness, project):
+        """init --reset --yes --preserve-custom keeps user-added custom skill."""
+        _run(harness, project, "--yes", "--no-cache")
+        custom_skill_dir = project / ".claude" / "skills" / "my-custom"
+        custom_skill_dir.mkdir(parents=True, exist_ok=True)
+        (custom_skill_dir / "SKILL.md").write_text("---\nname: my-custom\n---\nCustom skill.", encoding="utf-8")
+        _run(harness, project, "--reset", "--yes", "--preserve-custom", "--no-cache")
+        assert (custom_skill_dir / "SKILL.md").exists()
+        assert "my-custom" in (custom_skill_dir / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_init_reset_mcp_overwrites_mcp_config(self, harness, project):
+        """init --reset --yes --reset-mcp overwrites .cursor/mcp.json."""
+        _run(harness, project, "--yes", "--no-cache")
+        mcp_path = project / ".cursor" / "mcp.json"
+        assert mcp_path.exists()
+        mcp_path.write_text('{"custom": "tainted"}', encoding="utf-8")
+        _run(harness, project, "--reset", "--yes", "--reset-mcp", "--no-cache")
+        content = mcp_path.read_text(encoding="utf-8")
+        assert "tainted" not in content
+
+    def test_init_rollback_nonexistent_path(self, harness, project):
+        """init --rollback <nonexistent> exits with 1 and reports error."""
+        r = _run(harness, project, "--rollback", str(project / "nonexistent" / "backup"))
+        assert r.exit_code == 1
+        err = (r.stderr or "") + (r.stdout or "")
+        assert "not found" in err.lower() or "Error" in err

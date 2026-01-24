@@ -39,6 +39,7 @@ class Intent:
     confidence: float
     parameters: dict[str, Any]
     original_input: str
+    compare_to_codebase: bool = False  # Flag for "compare to codebase" intent
 
     def get_agent_sequence(self) -> list[str]:
         """Get the sequence of agents for this intent."""
@@ -105,6 +106,11 @@ class IntentParser:
             "audit",
             "assess",
             "evaluate",
+            "compare",
+            "compare to",
+            "match",
+            "align with",
+            "follow patterns",
         ]
 
         # Fix intent keywords
@@ -364,11 +370,27 @@ class IntentParser:
             intent_type = IntentType.UNKNOWN
             confidence = 0.0
 
+        # Detect "compare to codebase" intent
+        compare_to_codebase = False
+        compare_phrases = [
+            "compare to",
+            "compare with",
+            "match our",
+            "align with",
+            "follow patterns",
+            "match patterns",
+            "compare to codebase",
+            "compare to our",
+        ]
+        if any(phrase in input_lower for phrase in compare_phrases):
+            compare_to_codebase = True
+
         return Intent(
             type=intent_type,
             confidence=confidence,
             parameters=parameters,
             original_input=input_text,
+            compare_to_codebase=compare_to_codebase,
         )
 
     def _score_intent(self, text: str, keywords: list[str]) -> float:

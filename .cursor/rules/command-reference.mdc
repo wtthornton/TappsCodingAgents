@@ -97,12 +97,20 @@ When you run `tapps-agents init` on any project (new or existing), it:
        - `@simple-mode *fix` - Bug fixing workflow with debugging
        - `@simple-mode *test` - Test generation workflow
        - `@simple-mode *epic` - Epic execution workflow (all stories in dependency order)
+       - `@simple-mode *tdd` - TDD workflow (Red-Green-Refactor, coverage ≥80%)
+       - `@simple-mode *e2e` - E2E test generation and run (Playwright MCP if available)
+       - `@simple-mode *build-fix` - Fix build/compile errors (distinct from *fix, *fix-tests)
+       - `@simple-mode *refactor-clean` - Dead code cleanup (unused imports, duplication)
+       - `@simple-mode *update-docs` - Sync documentation with code
+       - `@simple-mode *update-codemaps` - Refresh Context7 or codemap index
        - `@simple-mode *test-coverage` - Coverage-driven test generation
+       - `@simple-mode *security-review` - Security audit (reviewer + ops + OWASP-style)
        - `@simple-mode *fix-tests` - Auto-fix test failures
        - `@simple-mode *microservice` - Generate complete microservice structure
        - `@simple-mode *docker-fix` - Debug container errors
        - `@simple-mode *integrate-service` - Service-to-service integration
        - `@simple-mode *full` - Full SDLC workflow (9 steps)
+       - Domain skills: `@coding-standards`, `@backend-patterns`, `@frontend-patterns`, `@security-review`
        - Natural language commands (e.g., `@simple-mode Build a feature`)
      - **Simple Mode is enabled by default** in config after `init`
 
@@ -112,9 +120,7 @@ When you run `tapps-agents init` on any project (new or existing), it:
    - Quality thresholds and automation settings
 
 5. **Workflow Presets** (`workflows/presets/`):
-   - 5 workflow preset YAML files (all framework-managed)
-   - full-sdlc, rapid-dev, fix, quality, brownfield-analysis
-   - All files are copied during init; framework-managed files are reset during `--reset`
+   - 5 workflow preset YAML files: full-sdlc, rapid-dev, fix, quality, brownfield-analysis
    - Can be customized per project
 
 6. **MCP Config** (`.cursor/mcp.json`):
@@ -222,8 +228,6 @@ After `tapps-agents init`, Simple Mode is automatically set up and ready:
 - ✅ Simple Mode rule installed (`.cursor/rules/simple-mode.mdc`)
 - ✅ Simple Mode enabled by default in config
 - ✅ Ready to use immediately in Cursor chat
-
-**Beads (bd) hint:** When `bd` is detected (tools/bd or PATH), init prints an optional hint to run `bd init` or `bd init --stealth`, then `bd doctor --fix`; when `.beads` exists, how to use `bd` in terminal (e.g. `scripts/set_bd_path.ps1` or PATH). Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists. See docs/BEADS_INTEGRATION.md.
 
 **Verify Simple Mode Setup:**
 ```bash
@@ -396,77 +400,16 @@ tapps-agents health metrics [--check-name <name>] [--status <status>] [--days <n
 tapps-agents health trends [--check-name <name>] [--days <n>]
 ```
 
-**Usage subcommands (analytics):** `health usage dashboard` (or `show`), `agents` (`--agent-id`), `workflows` (`--workflow-id`), `system`, `trends` (`--metric-type`, `--days`). Use `health usage dashboard` instead of the removed `tapps-agents analytics`.
-
-### `continuous-bug-fix` - Continuous Bug Finding and Fixing
-**Purpose:** Continuously run tests, detect bugs, fix them using bug-fix-agent, and commit fixes automatically. Stops when no bugs are found or max iterations reached.
-
-**CLI Syntax:**
-```bash
-tapps-agents continuous-bug-fix [--test-path <path>] [--max-iterations <n>] [--commit-strategy <strategy>] [--no-commit] [--format <format>]
-tapps-agents bug-fix-continuous [options]  # alias
-```
-
-**Parameters:**
-- `--test-path <path>`: Test directory or file to run (default: `tests/`)
-- `--max-iterations <n>`: Maximum loop iterations (default: `10`)
-- `--commit-strategy <strategy>`: Commit strategy - `one-per-bug` (default) or `batch`
-- `--no-commit`: Skip commits (dry-run mode)
-- `--format <format>`: Output format - `json` or `text` (default: `text`)
+**Usage subcommands (analytics):**
+- `health usage dashboard` (or `show`) - Usage/analytics overview
+- `health usage agents` - Agent performance; `--agent-id` to filter
+- `health usage workflows` - Workflow performance; `--workflow-id` to filter
+- `health usage system` - System status and resources
+- `health usage trends` - Historical trends; `--metric-type`, `--days`
 
 **When to Use:**
-- Automatically fixing all bugs in a test suite
-- Continuous integration scenarios
-- Pre-commit hook for test failures
-- Automated bug fixing with quality gates
-
-**How It Works:**
-1. Runs pytest to detect test failures
-2. Parses failures to extract bug information (file path, error message)
-3. Calls bug-fix-agent (FixOrchestrator) to fix each bug
-4. Commits fixes automatically (if enabled)
-5. Repeats until no bugs remain or max iterations reached
-
-**Examples:**
-```bash
-# Basic usage
-tapps-agents continuous-bug-fix
-
-# Custom test path and max iterations
-tapps-agents continuous-bug-fix --test-path tests/unit/ --max-iterations 5
-
-# Batch commit strategy
-tapps-agents continuous-bug-fix --commit-strategy batch
-
-# Dry run (no commits)
-tapps-agents continuous-bug-fix --no-commit
-
-# JSON output for automation
-tapps-agents continuous-bug-fix --format json
-```
-
-**Configuration:**
-Behavior can be configured in `.tapps-agents/config.yaml`:
-```yaml
-continuous_bug_fix:
-  max_iterations: 10
-  commit_strategy: "one-per-bug"  # or "batch"
-  auto_commit: true
-  test_path: "tests/"
-  skip_patterns: []  # Optional: patterns for bugs to skip
-```
-
-**Output:**
-Returns execution results with:
-- Total bugs found
-- Bugs fixed
-- Bugs failed
-- Bugs skipped
-- Iterations run
-- Summary statistics (fix rate, etc.)
-- Detailed iteration results
-
-**Note:** This command integrates with the bug-fix-agent (FixOrchestrator) for fixing bugs. Each fix goes through quality gates before being committed.
+- `health check`: Validate environment and run health checks
+- `health usage dashboard`: View agent/workflow metrics (replaces `tapps-agents analytics`)
 
 ### `score` - Quick Code Scoring
 **Purpose:** Fast code quality scoring (shortcut for `reviewer score`)
@@ -486,14 +429,13 @@ tapps-agents score <file> [--format json|text]
 
 **CLI Syntax:**
 ```bash
-tapps-agents doctor [--format json|text] [--config-path <path>] [--full] [--suggest-fixes]
+tapps-agents doctor [--format json|text] [--config-path <path>] [--full]
 ```
 
 **Parameters:**
 - `--format json|text`: Output format (default: `text`)
 - `--config-path <path>`: Explicit path to config file if not in default location
 - `--full`: Run both doctor checks and health checks for comprehensive diagnostics
-- `--suggest-fixes`: Print suggested fix commands for warnings and errors (does not apply fixes)
 
 **What It Checks:**
 - Python version compatibility
@@ -503,7 +445,6 @@ tapps-agents doctor [--format json|text] [--config-path <path>] [--full] [--sugg
 - Workflow presets
 - Project configuration
 - **Context7 cache status** (enabled/disabled, directory accessible, entry count)
-- **Beads (bd) status** (optional: available, not found, or not checked). When Beads is ready, run `bd doctor` for Beads-specific checks; `bd doctor --fix` to fix. See docs/BEADS_INTEGRATION.md
 
 **When to Use:**
 - **Initial setup verification**: After `tapps-agents init` to verify installation
@@ -549,8 +490,8 @@ tapps-agents cursor check [--format json|text]  # alias
   - Checks directory structure
   - Verifies YAML frontmatter in SKILL.md files
   - Reports missing skills
-- **Cursor Rules** (`.cursor/rules/`) - Validates all 8 rule files are present
-  - Checks for required rule files (workflow-presets, quick-reference, agent-capabilities, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage)
+- **Cursor Rules** (`.cursor/rules/`) - Validates required rule files are present
+  - Checks for rule files including: workflow-presets, quick-reference, agent-capabilities, when-to-use, project-context, project-profiling, simple-mode, command-reference, cursor-mode-usage (and others)
   - Verifies file format (.mdc extension)
   - Checks YAML syntax validity
   - Verifies agents are configured
@@ -594,28 +535,6 @@ tapps-agents cursor verify --format json || exit 1
 - Run `tapps-agents init` to install/repair missing components
 - See `.cursor/rules/quick-reference.mdc` for quick command reference
 - See `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md` for detailed setup guide
-
-### `beads` - Beads (bd) passthrough
-**Purpose:** Forward arguments to Beads (bd) for optional dependency-aware task tracking. Requires `bd` in `tools/bd` or on PATH.
-
-**CLI Syntax:**
-```bash
-tapps-agents beads [bd args...]
-```
-
-**When to Use:**
-- Run `bd` commands (e.g. `ready`, `create`, `dep add`, `show`) via `tapps-agents`
-- `tapps-agents doctor` reports Beads (bd) status (and suggests `bd doctor`/`bd doctor --fix` when ready); `tapps-agents init` hints `bd init` and `bd doctor --fix`, and may create `scripts/set_bd_path.ps1` when `tools/bd` exists
-
-**Examples:**
-```bash
-tapps-agents beads ready
-tapps-agents beads create "Task title" -p 0
-tapps-agents beads dep add <child> <parent>
-tapps-agents beads show <id>
-```
-
-**Related:** [docs/BEADS_INTEGRATION.md](docs/BEADS_INTEGRATION.md)
 
 ### `simple-mode` - Simple Mode Management
 **Purpose:** Manage Simple Mode - simplified natural language interface. Simple Mode is the **primary user interface** for TappsCodingAgents in Cursor, providing natural language commands that automatically orchestrate multiple specialized skills.
@@ -836,19 +755,6 @@ tapps-agents reviewer report <target> <formats>... [--output-dir <dir>]
 tapps-agents reviewer duplication <target> [--format json|text]
 ```
 
-#### `*security-scan` / `security-scan` (Dual-Mode)
-**Purpose:** Security vulnerability scanning
-
-**CLI Syntax:**
-```bash
-tapps-agents reviewer security-scan [<files>...] [--format json|text]
-```
-
-**Cursor Syntax:**
-```cursor
-@reviewer *security-scan <file>
-```
-
 #### `*docs` / `docs` (Dual-Mode)
 **Purpose:** Get library documentation from Context7
 
@@ -1025,19 +931,6 @@ tapps-agents architect design "<description>" [--format json|text]
 tapps-agents architect patterns "<description>" [--format json|text]
 ```
 
-#### `*detect-patterns` / `detect-patterns` (Dual-Mode)
-**Purpose:** Detect architecture patterns from project layout (Layered, MVC, Clean/Hexagonal, CQRS, Microservices, etc.)
-
-**CLI Syntax:**
-```bash
-tapps-agents architect detect-patterns [--path <path>]
-```
-
-**Cursor Syntax:**
-```cursor
-@architect *detect-patterns [--path <path>]
-```
-
 ### Designer Agent (`@designer`)
 
 **Available Commands:**
@@ -1073,7 +966,7 @@ tapps-agents designer design-model "<description>" [--format json|text]
 **Available Commands:**
 
 #### `*enhance` / `enhance` (Dual-Mode)
-**Purpose:** Full prompt enhancement (7-stage pipeline). Analysis stage now reliably populates all fields (intent, scope, workflow type, complexity, domains, technologies) with fallback mechanism.
+**Purpose:** Full prompt enhancement (7-stage pipeline) for code generation prompts
 
 **CLI Syntax:**
 ```bash
@@ -1085,10 +978,20 @@ tapps-agents enhancer enhance "<prompt>" [--format json|markdown|yaml]
 @enhancer *enhance "<prompt>"
 ```
 
+**When to Use:**
+- ✅ **Enhancing prompts for code generation** - Transform simple prompts into detailed implementation specifications
+- ✅ **Preparing prompts for @implementer** - Create comprehensive specs before code generation
+- ✅ **Code generation workflows** - Part of Simple Mode build workflow
+
+**When NOT to Use:**
+- ❌ **Requirements gathering** → Use `@analyst *gather-requirements` instead
+- ❌ **Creating requirements documents** → Use `@analyst *gather-requirements` instead
+- ❌ **User story creation** → Use `@planner *plan` instead
+
 **Parameters:**
 - `--format`: Output format (default: `markdown`)
 
-**Note**: The enhancer includes a fallback analysis mechanism that ensures all analysis fields are populated even when the analyst/LLM is unavailable, preventing "unknown" values.
+**Note:** The enhancer is designed for **code generation prompts**, not requirements gathering. If you need to extract requirements from stakeholder descriptions, use `@analyst *gather-requirements` instead.
 
 **Workflow:** Enhance steps in full-sdlc, rapid-dev, and Epic run via EnhancerHandler. **CLI auto-enhancement:** `auto_enhancement`, `PROMPT_ARGUMENT_MAP` (docs/CONFIGURATION.md).
 
@@ -1266,17 +1169,8 @@ tapps-agents ops plan-deployment "<description>" [--format json|text]
 ```
 
 #### `*audit-bundle` / `audit-bundle` (Dual-Mode)
-**Purpose:** Opt-in bundle size analysis for Node/React/Vue (dist/build/out). Best-effort; does not block on build failure.
-
-**CLI Syntax:**
-```bash
-tapps-agents ops audit-bundle
-```
-
-**Cursor Syntax:**
-```cursor
-@ops *audit-bundle
-```
+**Purpose:** Opt-in bundle size analysis for Node/React/Vue (dist/build/out). Best-effort; does not block on build failure.  
+**CLI:** `tapps-agents ops audit-bundle` | **Cursor:** `@ops *audit-bundle`
 
 ### Analyst Agent (`@analyst`)
 
@@ -1293,6 +1187,31 @@ tapps-agents analyst gather-requirements "<description>" [--context "<context>"]
 **Cursor Syntax:**
 ```cursor
 @analyst *gather-requirements "<description>"
+```
+
+**When to Use:**
+- ✅ **Extracting requirements** from stakeholder descriptions or user stories
+- ✅ **Creating requirements documents** (functional, non-functional, constraints)
+- ✅ **Requirements analysis and documentation** for project planning
+- ✅ **Requirements gathering** before implementation planning
+
+**When NOT to Use:**
+- ❌ **Enhancing prompts for code generation** → Use `@enhancer *enhance` instead
+- ❌ **Creating implementation plans** → Use `@planner *plan` instead
+- ❌ **Generating code** → Use `@implementer *implement` instead
+
+**Output:**
+- Generates structured markdown requirements document
+- Includes functional requirements, non-functional requirements, constraints, assumptions, and open questions
+- Saves to specified output file (default: `requirements.md`)
+
+**Examples:**
+```bash
+# Gather requirements from description
+tapps-agents analyst gather-requirements "Enhance service details popup with health status" --output requirements.md
+
+# With context
+tapps-agents analyst gather-requirements "Add user authentication" --context "Existing FastAPI application" --output docs/requirements.md
 ```
 
 #### `*analyze-stakeholders` / `stakeholder-analysis` (Dual-Mode)
@@ -1426,89 +1345,6 @@ tapps-agents evaluator evaluate-workflow <workflow_id> [--format json|text]
 - To identify gaps between intended and actual usage
 - For continuous improvement analysis
 
-### Bug Fix Agent (`@bug-fix-agent`)
-
-**Available Commands:**
-
-#### `*fix-bug` / `fix-bug` (Cursor Skill)
-**Purpose:** Automated bug fixing with review loopback and auto-commit to main branch. Fixes bugs, tests them, reviews quality, and automatically commits when quality gates pass.
-
-**Cursor Syntax:**
-```cursor
-@bug-fix-agent *fix-bug <file> "<bug_description>"
-```
-
-**When to Use:**
-- Automated bug fixing with quality gates
-- Bugs that need systematic debugging, fixing, testing, and review
-- When you want automatic commit to main branch after quality passes
-- Production bugs that need quick fixes with quality assurance
-
-**Workflow Steps:**
-1. **@debugger *debug** - Analyze bug and identify root cause
-2. **Loop (max 3 iterations):**
-   - **@implementer *refactor** - Apply fix
-   - **@tester *test** - Verify fix with tests
-   - **@reviewer *review** - Review code quality
-   - **Quality Gate Evaluation** - Check if scores meet thresholds:
-     - Overall score ≥ 7.0/10 (70/100)
-     - Security score ≥ 6.5/10
-     - Maintainability score ≥ 7.0/10
-   - **Decision**: If pass, exit loop; if fail and iterations < 3, continue with improvements
-3. **Git Commit** - Commit changes to main branch (if quality passed and auto_commit enabled)
-
-**Quality Thresholds:**
-- Overall Score: ≥ 7.0/10 (70/100)
-- Security Score: ≥ 6.5/10
-- Maintainability Score: ≥ 7.0/10
-
-**Note:** These thresholds are lower than full SDLC workflows (which use 8.0+ overall, 8.5+ security) to allow faster bug fixes while still ensuring minimum quality.
-
-**Parameters:**
-- `file` (required): Path to the file with the bug
-- `bug_description` (required): Description of the bug or error message
-- `--max-iterations <n>`: Maximum iterations for fix loop (default: 3)
-- `--no-commit`: Skip automatic commit (default: commit enabled)
-- `--commit-message "<message>"`: Custom commit message (auto-generated if not provided)
-
-**Examples:**
-```cursor
-@bug-fix-agent *fix-bug src/api/auth.py "KeyError: 'user_id' when processing authentication requests"
-
-@bug-fix-agent *fix-bug src/utils/validator.py "Null pointer exception in validate_email function" --max-iterations 5
-
-@bug-fix-agent *fix-bug src/service.py "Fix memory leak in process_data" --no-commit
-```
-
-**Safety Features:**
-- Maximum iteration limit (default: 3) prevents infinite loops
-- Only commits if quality gates pass
-- Never force pushes to main branch
-- Validates git repository before committing
-- Logs quality scores at each iteration
-
-**Configuration:**
-Quality thresholds and behavior can be configured in `.tapps-agents/config.yaml`:
-```yaml
-bug_fix_agent:
-  max_iterations: 3
-  auto_commit: true
-  quality_thresholds:
-    overall_min: 7.0
-    security_min: 6.5
-    maintainability_min: 7.0
-```
-
-**Output:**
-Returns structured result with:
-- Success status
-- Iteration count
-- Quality scores for each iteration
-- Commit information (hash, branch, message)
-- Review results
-
-**Warning:** This agent commits directly to the main branch. Always review commits before merging, and consider using `--no-commit` for testing.
-
 ## Simple Mode Workflows
 
 Simple Mode provides natural language orchestration with structured workflows. Use `@simple-mode` in Cursor chat. **Simple Mode is installed by `tapps-agents init`** - the skill and rule files are automatically set up.
@@ -1580,7 +1416,7 @@ Simple Mode provides natural language orchestration with structured workflows. U
 - Learning best practices
 
 **Workflow Steps:**
-1. **@reviewer *review** - Quality scores (5 metrics: complexity, security, maintainability, test coverage, performance)
+1. **@reviewer *review** - Quality scores (7 categories: complexity, security, maintainability, test coverage, performance, structure, devex)
 2. **@improver *improve** - Improvement suggestions (if issues found or score < threshold)
 
 **Output:**
@@ -1697,6 +1533,84 @@ Simple Mode provides natural language orchestration with structured workflows. U
 3. Prioritize gaps (critical paths, error handling, public APIs)
 4. Generate targeted tests for uncovered code
 5. Verify coverage improvement
+
+### TDD Workflow (`*tdd`)
+
+**Purpose:** Test-driven development: Red-Green-Refactor with coverage ≥80%
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *tdd {file}
+@simple-mode *tdd "<description>"
+```
+
+**Workflow Steps:** Define interfaces → failing tests (RED) → minimal code (GREEN) → refactor (IMPROVE) → @tester *test for coverage.
+
+### E2E Workflow (`*e2e`)
+
+**Purpose:** Generate and run E2E tests; Playwright MCP for execution when available
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *e2e [path]
+```
+
+**Workflow Steps:** @tester *generate-e2e-tests → run via Playwright MCP if available → report.
+
+### Build Fix Workflow (`*build-fix`)
+
+**Purpose:** Fix build/compile errors (Python, npm, tsc, cargo). Distinct from *fix (runtime) and *fix-tests.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *build-fix "<build-output or description>"
+```
+
+**Workflow Steps:** Parse errors → @debugger *debug → @implementer *refactor → re-run build to verify.
+
+### Refactor Clean Workflow (`*refactor-clean`)
+
+**Purpose:** Mechanical cleanup: unused imports, dead code, duplication. Use *refactor for design changes.
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *refactor-clean {file}
+```
+
+**Workflow Steps:** @reviewer *duplication and/or Ruff → @implementer *refactor for cleanup.
+
+### Update Docs Workflow (`*update-docs`)
+
+**Purpose:** Sync documentation with code
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *update-docs [path]
+```
+
+**Workflow Steps:** @documenter *document or *document-api → sync README or docs/ if project scripts exist.
+
+### Update Codemaps Workflow (`*update-codemaps`)
+
+**Purpose:** Refresh codemap/context index (e.g. Context7 cache)
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *update-codemaps
+```
+
+**Workflow Steps:** Refresh project index; if Context7: @reviewer *docs-refresh or project cache refresh.
+
+### Security Review Workflow (`*security-review`)
+
+**Purpose:** Structured security check: reviewer + ops + OWASP-style checklist
+
+**Cursor Syntax:**
+```cursor
+@simple-mode *security-review [path]
+```
+
+**Workflow Steps:** @reviewer *review (security, bandit) → @ops *audit-security → OWASP-style checklist; summarize and remediation hints.
 
 ### Fix Tests Workflow (`*fix-tests`)
 
@@ -1944,25 +1858,6 @@ simple_mode:
   natural_language: true
 ```
 
-## ⚠️ CRITICAL: CLI Workflow Commands in Cursor Mode
-
-**If you see this warning when running CLI workflow commands in Cursor IDE:**
-
-```
-⚠️  CLI Workflow Commands Not Recommended in Cursor Mode
-```
-
-**Solution:** Use `@simple-mode` commands in Cursor chat instead of CLI workflow commands.
-
-**Quick Reference:**
-- ❌ **Don't use:** `tapps-agents workflow fix --file <file> --auto` (in Cursor IDE)
-- ✅ **Use instead:** `@simple-mode *fix <file> "description"` (in Cursor chat)
-- ✅ **CLI commands work in:** Terminal/CI (outside Cursor IDE)
-
-**See:** `.cursor/rules/cursor-mode-usage.mdc` for complete guidance.
-
----
-
 ## Guide for Cursor: When and Why to Use tapps-agents
 
 This section helps Cursor AI understand when to suggest or use tapps-agents commands during development.
@@ -2178,6 +2073,7 @@ python scripts/your_script.py
 
 ## Related Documentation
 
+- **When to Use**: `.cursor/rules/when-to-use.mdc` — Importance and when to use each capability (workflows, agents, commands)
 - **Quick Reference**: `.cursor/rules/quick-reference.mdc`
 - **Agent Capabilities**: `.cursor/rules/agent-capabilities.mdc`
 - **Simple Mode Guide**: `.cursor/rules/simple-mode.mdc`

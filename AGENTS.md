@@ -19,6 +19,7 @@ This document defines the agent identity and project-specific rules for AI assis
 **You are an AI assistant helping develop TappsCodingAgents**, a framework that provides:
 - 14 workflow agents covering the complete software development lifecycle
 - Expert system with built-in technical domains and optional project-defined business experts
+- **Adaptive Learning System** that auto-generates experts, adjusts scoring weights, and improves expert voting for first-pass code correctness
 - Cursor Skills integration (model-agnostic)
 - Code quality analysis tools
 - Workflow orchestration with CLI and Python API
@@ -147,7 +148,7 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 - **tester**: Test generation and execution
 
 ### Quality Agents
-- **reviewer**: Code quality review with 7-category scoring (complexity, security, maintainability, test_coverage, performance, structure, devex)
+- **reviewer**: Code quality review with 7-category scoring (complexity, security, maintainability, test_coverage, performance, structure, devex). **Adaptive scoring** adjusts weights based on outcome analysis to maximize first-pass success.
 - **improver**: Code improvement suggestions
 - **evaluator**: Framework effectiveness evaluation
 
@@ -158,7 +159,7 @@ TappsCodingAgents provides **14 specialized workflow agents**:
 - **orchestrator**: YAML workflow coordination
 
 ### Enhancement Agent
-- **enhancer**: Prompt enhancement (7-stage pipeline). Workflow integration: full-sdlc (optional enhance before requirements), rapid-dev, and Epic story workflows run enhancer steps via **EnhancerHandler** when an `enhance` step is present. CLI auto-enhancement for implementer, planner, analyst: `auto_enhancement` in [CONFIGURATION.md](docs/CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement); `PROMPT_ARGUMENT_MAP` and `commands` control eligibility.
+- **enhancer**: Prompt enhancement (7-stage pipeline + expert suggestions). Workflow integration: full-sdlc (optional enhance before requirements), rapid-dev, and Epic story workflows run enhancer steps via **EnhancerHandler** when an `enhance` step is present. CLI auto-enhancement for implementer, planner, analyst: `auto_enhancement` in [CONFIGURATION.md](docs/CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement); `PROMPT_ARGUMENT_MAP` and `commands` control eligibility. **Adaptive learning**: Detects domains and suggests experts automatically during prompt enhancement.
 
 **For detailed agent capabilities, see:** `.cursor/rules/agent-capabilities.mdc`
 

@@ -20,6 +20,8 @@ TappsCodingAgents provides **14 specialized workflow agents** covering the compl
 - **Orchestration**: orchestrator
 - **Enhancement**: enhancer
 
+**Model selection:** Each skill specifies a `model_profile` (e.g. `reviewer_profile`). Override in `requirements/model_profiles.yaml` or project config; when a profile is missing, Cursor uses the project/user default. See `docs/MODEL_SELECTION.md` for resolution and overrides. Prefer higher-accuracy models for reviewer and security-review; lighter models for lint/score.
+
 ---
 
 ## Planning Agents
@@ -101,13 +103,11 @@ python -m tapps_agents.cli planner list-stories --epic auth
 - Component design
 - Integration planning
 - Architecture documentation
-- Architecture pattern detection (Layered, MVC, Clean/Hexagonal, CQRS, Microservices, etc.)
 
 **Common Commands**:
 ```bash
 python -m tapps_agents.cli architect design "Microservices architecture for e-commerce"
 python -m tapps_agents.cli architect patterns "REST API design patterns"
-python -m tapps_agents.cli architect detect-patterns [--path .]
 ```
 
 **Expert Integration**: Consults security, performance, and cloud infrastructure experts.
@@ -292,7 +292,7 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 
 ### Reviewer Agent
 
-**Purpose**: Code review, quality analysis, and scoring with actionable feedback.
+**Purpose**: Code review, quality analysis, and scoring.
 
 **When to Use**:
 - Code quality checks
@@ -300,19 +300,10 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 - Quality scoring
 - Linting and type checking
 - Security analysis
-- Performance analysis
-- Maintainability assessment
 
 **Capabilities**:
 - Code scoring (7 categories: complexity, security, maintainability, test coverage, performance, structure, devex)
-- **Actionable feedback** with specific issues, line numbers, and suggestions
-- **Structured feedback** always provided (summary, strengths, issues, recommendations)
-- **Maintainability issues** tracking (missing docstrings, long functions, deep nesting, missing type hints)
-- **Performance issues** tracking (nested loops, expensive operations, bottlenecks)
-- **Accurate test coverage** detection (returns 0.0% when no tests exist)
-- **Accurate type checking** scores (reflects actual mypy errors)
-- **Context-aware quality gates** (adapts thresholds for new/modified/existing files)
-- LLM-based code review (via Cursor Skills)
+- LLM-based code review
 - Linting (Ruff)
 - Type checking (mypy)
 - Quality reports (JSON, Markdown, HTML)
@@ -322,42 +313,24 @@ python -m tapps_agents.cli tester generate-tests-batch src/clients/*.py --output
 # Quick score (fast, no LLM)
 python -m tapps_agents.cli reviewer score file.py
 
-# Full review (with LLM feedback and all improvements)
+# Full review (with LLM feedback)
 python -m tapps_agents.cli reviewer review file.py
 
 # Quality tools
 python -m tapps_agents.cli reviewer lint file.py
 python -m tapps_agents.cli reviewer type-check file.py
 python -m tapps_agents.cli reviewer report . json markdown html
-
-# Batch operations
-python -m tapps_agents.cli reviewer review file1.py file2.py --max-workers 4
-python -m tapps_agents.cli reviewer review --pattern "src/**/*.py"
 ```
 
 **Scoring Metrics**:
 - **Complexity Score** (0-10): Cyclomatic complexity
 - **Security Score** (0-10): Vulnerability detection
-- **Maintainability Score** (0-10): Code quality metrics (with specific issues)
-- **Test Coverage** (0-10): Test coverage analysis (accurate: 0.0 when no tests exist)
-- **Performance Score** (0-10): Performance patterns (with specific bottlenecks)
+- **Maintainability Score** (0-10): Code quality metrics
+- **Test Coverage** (0-10): Test coverage analysis
+- **Performance Score** (0-10): Performance patterns
 - **Overall Score** (0-100): Weighted combination
 
-**Review Output Includes** (2026-01-16):
-- **maintainability_issues**: List of specific maintainability issues with line numbers, severity, and suggestions
-- **performance_issues**: List of performance bottlenecks with line numbers, operation type, and context
-- **structured_feedback**: Always provided (summary, strengths, issues, recommendations, priority)
-- **file_context**: File status (new/modified/existing) for context-aware quality gates
-- **quality_gate**: Quality gate results with context-adapted thresholds
-
-**Context-Aware Quality Gates**:
-- **New files**: Lenient thresholds (overall: 5.0, security: 6.0, coverage: 0%)
-- **Modified files**: Standard thresholds (overall: 8.0, security: 8.5, coverage: 70%)
-- **Existing files**: Strict thresholds (overall: 8.0, security: 8.5, coverage: 80%)
-
 **Expert Integration**: Consults security, code quality, and performance experts.
-
-**See Also**: `docs/REVIEWER_FEEDBACK_IMPROVEMENTS_SUMMARY.md` for complete feature documentation.
 
 ---
 
@@ -507,7 +480,7 @@ python -m tapps_agents.cli orchestrator integrate-service "service1" --with "ser
 
 **Capabilities**:
 - **Full Enhancement Pipeline** (7 stages):
-  1. Analysis: Intent, scope, workflow type, complexity, domains, and technologies detection (with fallback for reliability)
+  1. Analysis: Intent and scope detection
   2. Requirements: Functional/non-functional requirements
   3. Architecture: System design guidance
   4. Codebase Context: Relevant code patterns
@@ -528,11 +501,10 @@ python -m tapps_agents.cli enhancer enhance-quick "Add user authentication"
 
 # Stage-by-stage
 python -m tapps_agents.cli enhancer enhance-stage analysis "Create payment system"
+python -m tapps_agents.cli enhancer enhance-stage requirements --session-id <session-id>
 ```
 
 **Expert Integration**: Automatically detects domains and consults relevant Industry Experts with weighted decision-making (Primary 51%, Others 49%).
-
-**Reliability**: Includes fallback analysis mechanism - if analyst/LLM unavailable, uses keyword-based analysis to ensure all fields are populated (no "unknown" values).
 
 **Output Formats**: Markdown (default), JSON, YAML
 
@@ -703,12 +675,9 @@ agents:
 
 ---
 
-## Ethics and Inclusion
-
-Implementer, designer, reviewer, and ops follow a11y and inclusion guidance (WCAG 2.1 AA where applicable, inclusive language, diverse examples). Details are in each agent's SKILL.md.
-
 ## Related Documentation
 
+- [When to Use](when-to-use.mdc) - ⭐ **Importance and when to use** each capability (workflows, agents, commands)
 - [Command Reference](command-reference.mdc) - ⭐ **Complete command reference** - All commands and parameters
 - [Simple Mode](simple-mode.mdc) - ⭐ **Recommended orchestration method** - Complete workflow execution
 - [Quick Reference](quick-reference.mdc) - Quick command reference

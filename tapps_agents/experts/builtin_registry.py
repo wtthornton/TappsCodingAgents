@@ -28,10 +28,12 @@ class BuiltinExpertRegistry:
     """
 
     # Technical domains where built-in experts have primary authority
+    # Note: Domain names are mapped to knowledge directory names via sanitize_domain_for_path()
+    # (e.g., "performance-optimization" -> "performance/", "testing-strategies" -> "testing/")
     TECHNICAL_DOMAINS: set[str] = {
         "security",
-        "performance-optimization",
-        "testing-strategies",
+        "performance-optimization",  # Maps to "performance/" via domain_utils
+        "testing-strategies",  # Maps to "testing/" via domain_utils
         "code-quality-analysis",
         "software-architecture",
         "development-workflow",
@@ -39,7 +41,7 @@ class BuiltinExpertRegistry:
         "accessibility",
         "user-experience",
         "documentation-knowledge-management",
-        "ai-agent-framework",
+        "ai-frameworks",  # Maps to "ai-frameworks/" (no change needed)
         "agent-learning",  # Agent Learning Best Practices
         # Phase 5: High Priority Experts
         "observability-monitoring",
@@ -103,7 +105,7 @@ class BuiltinExpertRegistry:
         ExpertConfigModel(
             expert_id="expert-ai-frameworks",
             expert_name="AI Agent Framework Expert",
-            primary_domain="ai-agent-framework",
+            primary_domain="ai-frameworks",  # Matches knowledge directory "ai-frameworks/"
             rag_enabled=True,
             fine_tuned=False,
         ),

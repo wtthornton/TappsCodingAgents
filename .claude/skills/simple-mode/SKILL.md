@@ -13,6 +13,8 @@ You are Simple Mode - a **Cursor-native orchestrator** that coordinates multiple
 
 **You are NOT a CLI wrapper.** You are a Cursor skill that orchestrates other Cursor skills directly.
 
+**Adaptive Learning**: TappsCodingAgents continuously learns and improves. Experts are auto-generated as new domains are detected, scoring weights adapt to maximize first-pass success, and expert voting improves based on performance. The system gets better with each use, optimizing for fast and correct code generation on the first attempt.
+
 ## Critical Instructions
 
 When a user invokes `@simple-mode` with a command:
@@ -69,6 +71,14 @@ Detect intent from keywords:
 | Pull requests | `*pr` | PR creation with quality scores |
 | Framework development | `*full` | Requires requirements → security → documentation (9 steps) |
 | Enterprise/critical features | `*full` | When user explicitly requests full SDLC with security scanning |
+| TDD | `*tdd` | Red-Green-Refactor with coverage ≥80% |
+| E2E tests | `*e2e` | Generate and run E2E tests; Playwright MCP if available |
+| Build/compile errors | `*build-fix` | Fix build failures; distinct from *fix and *fix-tests |
+| Dead code cleanup | `*refactor-clean` | Unused imports, dead code; use *refactor for design changes |
+| Documentation sync | `*update-docs` | Sync docs with code |
+| Codemap/context refresh | `*update-codemaps` | Refresh Context7 or project index |
+| Coverage gaps | `*test-coverage` | Coverage-driven test generation |
+| Security audit | `*security-review` | Reviewer + ops + OWASP-style checklist |
 
 **Key Rule:** If the user says `*build`, use BUILD workflow. Only use `*full` if:
 1. User explicitly says `*full`
@@ -266,6 +276,8 @@ Orchestrate a review workflow.
 2. If issues found, invoke `@improver *improve {file}`
 3. Report results
 
+**Note:** Reviewer automatically consults API-design experts when API client patterns are detected (OAuth2, HTTP clients, external APIs). "Compare to codebase" is best-effort via review feedback until dedicated feature exists.
+
 ### `*fix {file} [description]`
 
 Orchestrate a fix workflow.
@@ -281,6 +293,20 @@ Orchestrate a fix workflow.
 3. Invoke `@tester *test {file}`
 4. Report results
 
+**Note:** `*fix` requires a **file path**. If user pastes code in chat, they should save it to a file first, or use `*build` for new features.
+
+### Hybrid Requests: Review + Compare + Fix
+
+When user says **"review this and compare to our patterns and fix it"**:
+
+**Recommended Approach:**
+1. First: `@simple-mode *review <file>` - Get comprehensive quality analysis
+2. Then: `@simple-mode *fix <file> "Apply improvements from review: [specific issues]"` - Apply targeted fixes
+
+**Workflow suggester** automatically detects hybrid "review + fix" requests and suggests the two-step workflow.
+
+**Note:** "Compare to codebase" is best-effort via review feedback. Reviewer provides API-design guidance when API client patterns are detected, but systematic "compare to project patterns" feature is not yet available.
+
 ### `*test {file}`
 
 Orchestrate a test workflow.
@@ -293,6 +319,125 @@ Orchestrate a test workflow.
 **Execution:**
 1. Invoke `@tester *test {file}`
 2. Report results
+
+### `*tdd {file} [description]`
+
+Orchestrate a TDD (test-driven development) workflow. Red-Green-Refactor with coverage target.
+
+**Example:**
+```
+@simple-mode *tdd src/calculator.py
+@simple-mode *tdd "Add tax calculation to checkout"
+```
+
+**Execution:**
+1. Define interfaces/contracts for the feature
+2. Invoke `@tester *generate-tests` or write failing tests (RED)
+3. Invoke `@implementer *implement` minimal code to pass (GREEN)
+4. Invoke `@implementer *refactor` to improve (IMPROVE)
+5. Invoke `@tester *test {file}` and ensure coverage ≥80%
+
+### `*e2e [file]`
+
+Orchestrate E2E test generation and, when available, run via Playwright MCP.
+
+**Example:**
+```
+@simple-mode *e2e
+@simple-mode *e2e tests/e2e/
+```
+
+**Execution:**
+1. Invoke `@tester *generate-e2e-tests` (or equivalent)
+2. If Playwright MCP is available, use it to run/validate tests
+3. Report results. See `tapps_agents/agents/tester/agent.py` generate_e2e_tests and doctor.py for Playwright detection.
+
+### `*build-fix [build-output or description]`
+
+Fix build/compile errors (e.g. Python, npm, tsc, cargo). Distinct from `*fix` (runtime) and `*fix-tests`.
+
+**Example:**
+```
+@simple-mode *build-fix "SyntaxError in src/auth.py line 42"
+@simple-mode *build-fix
+```
+(Paste or describe build output when prompted.)
+
+**Execution:**
+1. Parse build/compile errors (from `python -m py_compile`, `npm run build`, `tsc`, `cargo build`, etc.)
+2. Invoke `@debugger *debug "{error}" --file {file}` with error and file/line
+3. Invoke `@implementer *refactor {file} "{fix}"` to apply fix
+4. Re-run build to verify
+
+### `*refactor-clean {file}`
+
+Mechanical cleanup: unused imports, dead code, duplication. No heavy design; use `*refactor` for larger changes.
+
+**Example:**
+```
+@simple-mode *refactor-clean src/utils/helpers.py
+```
+
+**Execution:**
+1. Invoke `@reviewer *duplication {file}` and/or run Ruff for unused-import/dead-code
+2. Invoke `@implementer *refactor {file} "Remove unused imports and dead code"`
+3. Report changes
+
+### `*update-docs [path]`
+
+Sync documentation with code.
+
+**Example:**
+```
+@simple-mode *update-docs
+@simple-mode *update-docs src/api/
+```
+
+**Execution:**
+1. Invoke `@documenter *document` or `*document-api` for the target
+2. Sync README or `docs/` if project scripts exist
+
+### `*update-codemaps`
+
+Refresh codemap/context index (e.g. Context7 cache).
+
+**Example:**
+```
+@simple-mode *update-codemaps
+```
+
+**Execution:**
+1. Refresh project codemap or context index
+2. If Context7: use `@reviewer *docs-refresh` or the project's cache refresh flow
+
+### `*test-coverage {file} [--target N]`
+
+Coverage-driven test generation. Find gaps and generate tests for uncovered paths.
+
+**Example:**
+```
+@simple-mode *test-coverage src/api/auth.py --target 80
+```
+
+**Execution:**
+1. Use coverage data (`coverage.xml` / `coverage.json`) if available
+2. Find low or uncovered modules/paths
+3. Invoke `@tester *test` for those paths to improve coverage
+
+### `*security-review [path]`
+
+Structured security check: reviewer security score, ops audit, OWASP-style checklist.
+
+**Example:**
+```
+@simple-mode *security-review
+@simple-mode *security-review src/api/
+```
+
+**Execution:**
+1. Invoke `@reviewer *review {path}` (security score, bandit)
+2. Invoke `@ops *audit-security {target}`
+3. Apply OWASP-style checklist from `experts/knowledge/security/` and `data-privacy-compliance`; summarize and give remediation hints
 
 ### `*explore {query}`
 
@@ -404,15 +549,15 @@ Orchestrate a full SDLC workflow.
 
 ### `*enhance "prompt"`
 
-Prompt enhancement via EnhancerAgent. Use `@simple-mode *enhance "short prompt"` or `tapps-agents simple-mode enhance --prompt "..." [--quick]`.
+Prompt enhancement via EnhancerAgent. `@simple-mode *enhance "short prompt"` or `tapps-agents simple-mode enhance --prompt "..." [--quick]`.
 
 ### `*breakdown "prompt"`
 
-Task breakdown via PlannerAgent. Use `@simple-mode *breakdown "goal"` or `tapps-agents simple-mode breakdown --prompt "..."`. Output: ordered task list.
+Task breakdown via PlannerAgent. `@simple-mode *breakdown "goal"` or `tapps-agents simple-mode breakdown --prompt "..."`.
 
 ### `*todo {bd args}`
 
-Beads-backed todo; forwards to `bd` when available. Examples: `@simple-mode *todo ready`, `*todo create "Title"`. CLI: `tapps-agents simple-mode todo ready` or `todo create "Title"`.
+Beads-backed todo; forwards to `bd` when available. Examples: `@simple-mode *todo ready`, `*todo create "Title"`.
 
 ### `*help`
 
@@ -535,6 +680,10 @@ Improvements Suggested: 5
 | `@documenter` | Documentation | `*document`, `*document-api`, `*update-readme` |
 | `@ops` | Security/ops | `*security-scan`, `*compliance-check`, `*audit-dependencies`, `*audit-bundle` |
 | `@orchestrator` | Workflow coord | `*workflow`, `*workflow-start`, `*workflow-status` |
+| `@coding-standards` | Coding standards | Use with @reviewer; code-quality-analysis experts |
+| `@backend-patterns` | API/DB/cloud | Use with @architect, @designer; api-design, database, cloud experts |
+| `@frontend-patterns` | UI and a11y | Use with @designer, @reviewer; accessibility, user-experience experts |
+| `@security-review` | Security audit | Use with @reviewer, @ops; security, data-privacy-compliance experts |
 
 ## Configuration
 

@@ -23,9 +23,11 @@ TappsCodingAgents adds the most value when you use **orchestrated workflows** (m
 | **Fix a bug or error** | `@simple-mode *fix <file> "description"` | Tier 1 |
 | **Run full SDLC** (framework work or enterprise) | `@simple-mode *full "description"` | Tier 1 |
 | **Review code quality** | `@simple-mode *review <file>` or `@reviewer *review <file>` | Tier 1–2 |
+| **Review + compare + fix** | `@simple-mode *review <file>` then `@simple-mode *fix <file> "issues"` | Tier 1 |
 | **Get a quick quality score** | `@reviewer *score <file>` | Tier 1 |
 | **Set up the project** (first time) | `tapps-agents init` | Tier 1 |
 | **Add or improve tests** | `@simple-mode *test <file>` or `@tester *test <file>` | Tier 2 |
+| **Build external API client** | `@simple-mode *build "Create [API] client with OAuth2..."` | Tier 1 |
 | **Refactor code** | `@simple-mode *refactor <file>` | Tier 3 |
 | **Debug an error** | `@debugger *debug "error" --file <file>` | Tier 2 |
 | **Improve a prompt before building** | `@enhancer *enhance "prompt"` or `@simple-mode *enhance "prompt"` | Tier 2 |
@@ -58,7 +60,8 @@ These power the Tier 1 workflows or are the main way to do a specific job well.
 
 | Capability | When to use |
 |------------|-------------|
-| **`@simple-mode *review <file>`** | When you want **review plus improvement suggestions** in one go. Uses @reviewer then @improver if issues are found. |
+| **`@simple-mode *review <file>`** | When you want **review plus improvement suggestions** in one go. Uses @reviewer then @improver if issues are found. **Note:** Reviewer now automatically consults API-design experts when API client patterns are detected. |
+| **Review + compare + fix** | When user says "review this and compare to our patterns and fix it": Use **two-step workflow**: `@simple-mode *review <file>` first, then `@simple-mode *fix <file> "issues from review"`. Workflow suggester automatically detects hybrid requests. **Note:** "Compare to codebase" is best-effort via review feedback until dedicated feature exists. |
 | **`@simple-mode *test <file>`** | **After implementing or when asked to "add tests."** Structured test generation. Prefer over ad-hoc test writing when you want coverage and consistency. |
 | **`@tester *test <file>`** / **`generate-tests`** | When you need **only tests** (no full *build/*fix). Use in workflows or when tests are the single goal. |
 | **`@implementer *implement "spec" <file>`** / **`*refactor <file> "instructions"`** | When you need **code generation or refactoring alone** (e.g. inside a custom flow, or after you already have a spec). Usually better to use *build or *fix so review and tests are included. |

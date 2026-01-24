@@ -261,6 +261,7 @@ class EnhancerAgent(BaseAgent):
         total_stages = sum(
             [
                 enhancement_config.get("stages", {}).get("analysis", True),
+                enhancement_config.get("stages", {}).get("expert_suggestions", True),
                 enhancement_config.get("stages", {}).get("requirements", True),
                 enhancement_config.get("stages", {}).get("architecture", True),
                 enhancement_config.get("stages", {}).get("codebase_context", True),
@@ -285,6 +286,23 @@ class EnhancerAgent(BaseAgent):
                 session["stages"]["analysis"] = await self._stage_analysis(prompt)
                 self._print_progress(
                     current_stage, total_stages, "Analysis", "[OK] Analysis complete"
+                )
+
+            # Stage 1.5: Expert Suggestions (Adaptive Learning)
+            if enhancement_config.get("stages", {}).get("expert_suggestions", True):
+                current_stage += 1
+                self._print_progress(
+                    current_stage,
+                    total_stages,
+                    "Expert Suggestions",
+                    "Detecting domains and suggesting experts...",
+                )
+                await asyncio.sleep(0.01)
+                session["stages"]["expert_suggestions"] = await self._stage_expert_suggestion(
+                    prompt, session["stages"].get("analysis", {})
+                )
+                self._print_progress(
+                    current_stage, total_stages, "Expert Suggestions", "[OK] Suggestions complete"
                 )
 
             # Stage 2: Requirements
@@ -598,6 +616,7 @@ class EnhancerAgent(BaseAgent):
         # Run stage
         stage_handlers: dict[str, Any] = {
             "analysis": self._stage_analysis,
+            "expert_suggestions": self._stage_expert_suggestion,
             "requirements": self._stage_requirements,
             "architecture": self._stage_architecture,
             "codebase_context": self._stage_codebase_context,
@@ -613,7 +632,9 @@ class EnhancerAgent(BaseAgent):
 
         try:
             handler: Any = stage_handlers[stage]
-            if stage == "requirements":
+            if stage == "expert_suggestions":
+                result = await handler(prompt, session["stages"].get("analysis", {}))
+            elif stage == "requirements":
                 result = await handler(prompt, session["stages"].get("analysis", {}))
             elif stage == "architecture":
                 result = await handler(
@@ -810,6 +831,81 @@ Provide structured JSON response with the following format:
             "detected_libraries": detected_libraries,
             "context7_docs": {k: v is not None for k, v in context7_docs.items()},  # Store availability only
         }
+
+    async def _stage_expert_suggestion(
+        self, prompt: str, analysis_stage: dict[str, Any]
+    ) -> dict[str, Any]:
+        """
+        Stage 1.5: Suggest experts based on prompt analysis.
+        
+        Detects domains and suggests expert consultations for adaptive learning.
+        """
+        try:
+            from ...experts.adaptive_domain_detector import AdaptiveDomainDetector
+            from ...experts.expert_suggester import ExpertSuggester
+            from ...core.llm_communicator import LLMCommunicator
+
+            # Initialize components
+            project_root = self._project_root or Path.cwd()
+            domain_detector = AdaptiveDomainDetector(project_root=project_root)
+            expert_suggester = ExpertSuggester(project_root=project_root)
+            llm_communicator = LLMCommunicator()
+
+            # Detect domains from prompt
+            domain_suggestions = await domain_detector.detect_domains(
+                prompt=prompt,
+                code_context=None,
+                consultation_history=None,
+            )
+
+            # Generate expert suggestions
+            expert_suggestions = []
+            llm_hints = []
+
+            for domain_suggestion in domain_suggestions[:5]:  # Limit to top 5
+                expert_suggestion = await expert_suggester.suggest_from_domain_detection(
+                    domain_suggestion
+                )
+                if expert_suggestion:
+                    expert_suggestions.append(expert_suggestion)
+                    # Generate LLM hint
+                    hint = llm_communicator.generate_expert_suggestion_hint(
+                        expert_suggestion
+                    )
+                    llm_hints.append(hint)
+
+            return {
+                "domain_suggestions": [
+                    {
+                        "domain": ds.domain,
+                        "confidence": ds.confidence,
+                        "source": ds.source,
+                        "priority": ds.priority,
+                    }
+                    for ds in domain_suggestions
+                ],
+                "expert_suggestions": [
+                    {
+                        "expert_id": es.expert_id,
+                        "expert_name": es.expert_name,
+                        "domain": es.primary_domain,
+                        "confidence": es.confidence,
+                        "priority": es.priority,
+                        "reasoning": es.reasoning,
+                    }
+                    for es in expert_suggestions
+                ],
+                "llm_hints": [hint.message for hint in llm_hints],
+                "suggested_experts": [es.expert_id for es in expert_suggestions],
+            }
+        except Exception as e:
+            logger.warning(f"Expert suggestion stage failed: {e}")
+            return {
+                "domain_suggestions": [],
+                "expert_suggestions": [],
+                "llm_hints": [],
+                "error": str(e),
+            }
 
     async def _stage_requirements(
         self, prompt: str, analysis: dict[str, Any]
@@ -1533,6 +1629,9 @@ Provide structured JSON response with the following format:
     ) -> str:
         """Build synthesis prompt from stages with explicit emphasis on expert information."""
         # Extract expert information for emphasis
+        expert_suggestions_stage = stages.get('expert_suggestions', {})
+        expert_suggestions = expert_suggestions_stage.get('expert_suggestions', [])
+        llm_hints = expert_suggestions_stage.get('llm_hints', [])
         requirements = stages.get('requirements', {})
         expert_consultations = requirements.get('expert_consultations', {})
         library_best_practices = requirements.get('library_best_practices', {})
@@ -1541,6 +1640,12 @@ Provide structured JSON response with the following format:
         
         # Build expert information summary
         expert_summary = []
+        if expert_suggestions:
+            expert_summary.append(f"\n💡 Adaptive Learning: Expert Suggestions ({len(expert_suggestions)} experts)")
+            for es in expert_suggestions[:3]:  # Top 3
+                expert_summary.append(f"  - {es.get('expert_name', 'Unknown')}: {es.get('domain', 'unknown')} domain (confidence: {es.get('confidence', 0):.0%})")
+            if llm_hints:
+                expert_summary.append(f"\n  LLM Hints: {len(llm_hints)} suggestions for expert consultations")
         if expert_consultations:
             expert_summary.append(f"\n⚠️ CRITICAL: Expert Consultations Available ({len(expert_consultations)} domains)")
             for domain, consultation in expert_consultations.items():
@@ -1575,6 +1680,7 @@ Original Prompt: {prompt}
 5. **MUST synthesize expert knowledge into actionable requirements** - Don't just list, integrate expert insights into the prompt
 
 Analysis: {self._safe_json_dumps(stages.get('analysis', {}), indent=2)}
+Expert Suggestions: {self._safe_json_dumps(stages.get('expert_suggestions', {}), indent=2)}
 Requirements: {self._safe_json_dumps(stages.get('requirements', {}), indent=2)}
 Architecture: {self._safe_json_dumps(stages.get('architecture', {}), indent=2)}
 Quality: {self._safe_json_dumps(stages.get('quality', {}), indent=2)}

@@ -1,0 +1,12 @@
+{
+  "library": "__future__",
+  "topic": "common-mistakes",
+  "documentation": {
+    "content": "## R Package Dependency Check: MOODE Pipe Operator Usage\n\n```R\n  Missing dependency on R >= 4.1.0 because package code uses the pipe\n  |> or function shorthand \\(...\\) syntax added in R 4.1.0.\n  File(s) using such syntax:\n    \u2018Search.R\u2019 \u2018mood.R\u2019\n```\n\n## R Package Dependency Check for tglkmeans\n\n```R\nNamespace in Imports field not imported from: \u2018doRNG\u2019\n  All declared Imports should be used.\n```\n\n## Temporarily Registering doFuture Adapter with `with()`\n\n```R\nwith(registerDoFuture(), {\n  # Your foreach code here\n})\n\n# Or temporarily within a function:\nmy_function <- function() {\n  with(registerDoFuture(), local = TRUE, {\n    # Your foreach code here\n  })\n}\n```\n\n## Integrating doFuture with Foreach %dopar% using registerDoFuture()\n\n```R\nlibrary(doFuture)\nregisterDoFuture()\nplan(multisession)\n\ny <- foreach(x = 1:4, y = 1:10) %dopar% {\n  z <- x + y\n  slow_sqrt(z)\n}\n```\n\n## Parallelizing R Foreach Loops with %dofuture% Operator\n\n```R\nlibrary(doFuture)\nplan(multisession)\n\ny <- foreach(x = 1:4, y = 1:10) %dofuture% {\n  z <- x + y\n  slow_sqrt(z)\n}\n```\n\n## Ensuring Consistent Random Number Generation with `withDoRNG()`\n\n```R\nwithDoRNG({\n  # Your foreach %dopar% expression here\n  # e.g., foreach(i = 1:10) %dopar% { rnorm(1) }\n})\n```\n\n## Using the %dofuture% Operator for Parallel Execution\n\n```R\ny <- foreach(x = 1:3) %dofuture% { slow_fcn(x) }\n```\n\n## R Package simtrial Dependency Note\n\n```Shell\nNamespace in Imports field not imported from: \u2018gsDesign2\u2019\n  All declared Imports should be used.\n```\n\n## Configuring %dopar% to Behave as %dofuture% with `flavor`\n\n```R\nregisterDoFuture(flavor = \"%dofuture%\")\n```\n\n## R Dependency Check Note for baskexact\n\n```R\nNamespace in Imports field not imported from: \u2018ggplot2\u2019\n  All declared Imports should be used.\n```",
+    "library": "__future__",
+    "topic": "usage",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-23T13:38:58.765679"
+}

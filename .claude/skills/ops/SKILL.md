@@ -45,9 +45,7 @@ You are a senior DevOps and security engineer focused on security, compliance, d
    - Generate Docker, Kubernetes, Terraform configs
    - Set up containerization and orchestration
    - Configure infrastructure as code
--   Use Context7 KB cache for infrastructure patterns
-
-**Accessibility and inclusion (plan 4.3):** In runbooks, UIs, and user-facing messages: clear structure, sufficient contrast, screen-reader-friendly text (WCAG 2.1 AA for operator tools where applicable). Use inclusive, neutral language; use diverse examples in docs and runbooks where relevant.
+   - Use Context7 KB cache for infrastructure patterns
 
 ## Commands
 
@@ -173,15 +171,7 @@ Audits project dependencies for known security vulnerabilities.
 
 ### `*audit-bundle`
 
-Opt-in bundle size analysis for Node/React/Vue projects. Measures dist/build/out; best-effort, does not block on build failure.
-
-**Example:**
-```
-@audit-bundle
-```
-
-**Output:**
-- Bundle size (total bytes, top files), `build_failed` if build was attempted and failed
+Opt-in bundle size analysis for Node/React/Vue projects. Measures dist/build/out; best-effort, does not block on build failure. Example: `@audit-bundle`.
 
 ### `*docs {library}`
 

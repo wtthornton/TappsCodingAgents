@@ -225,6 +225,219 @@ class ExternalAPIManager:
         return results
 ```
 
+## OAuth2-Based External APIs
+
+Many SaaS APIs (Zoho, Okta, Salesforce, Site24x7) use OAuth2 refresh-token flows for long-lived API access without user re-authentication.
+
+### Pattern: OAuth2 Refresh-Token Client
+
+```python
+import os
+import time
+from typing import Any
+
+import requests
+
+
+class OAuth2ExternalAPIClient:
+    """
+    OAuth2-based external API client using refresh-token flow.
+    
+    This pattern is used by many SaaS APIs that require long-term access
+    without user re-authentication. See api-security-patterns.md for detailed
+    OAuth2 refresh-token implementation patterns.
+    """
+    
+    def __init__(
+        self,
+        client_id: str,
+        client_secret: str,
+        refresh_token: str,
+        api_base_url: str,
+        token_url: str,
+        timeout_s: int = 30,
+    ):
+        self.client_id = client_id
+        self.client_secret = client_secret
+        self.refresh_token = refresh_token
+        self.api_base_url = api_base_url.rstrip("/")
+        self.token_url = token_url
+        self.timeout_s = timeout_s
+        
+        self._access_token: str | None = None
+        self._access_token_expiry_epoch: float = 0.0
+    
+    def _refresh_access_token(self) -> str:
+        """Exchange refresh_token for access_token."""
+        resp = requests.post(
+            self.token_url,
+            data={
+                "refresh_token": self.refresh_token,
+                "client_id": self.client_id,
+                "client_secret": self.client_secret,
+                "grant_type": "refresh_token",
+            },
+            timeout=self.timeout_s,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        
+        if "access_token" not in payload:
+            raise RuntimeError("Token response missing access_token")
+        
+        access_token = payload["access_token"]
+        expires_in = payload.get("expires_in_sec", payload.get("expires_in", 3600))
+        
+        # Refresh proactively (60 seconds before expiry)
+        self._access_token_expiry_epoch = time.time() + int(expires_in) - 60
+        self._access_token = access_token
+        return access_token
+    
+    def _get_access_token(self) -> str:
+        """Get valid access token, refreshing if necessary."""
+        if self._access_token and time.time() < self._access_token_expiry_epoch:
+            return self._access_token
+        return self._refresh_access_token()
+    
+    def _headers(self) -> dict[str, str]:
+        """Get HTTP headers for authenticated requests."""
+        token = self._get_access_token()
+        # Note: Some APIs use custom headers (e.g. Zoho uses "Zoho-oauthtoken")
+        # See api-security-patterns.md for custom header patterns
+        return {
+            "Authorization": f"Bearer {token}",  # Standard OAuth2
+            "Accept": "application/json",
+        }
+    
+    def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+        """Make authenticated GET request."""
+        url = f"{self.api_base_url}/{path.lstrip('/')}"
+        resp = requests.get(
+            url,
+            headers=self._headers(),
+            params=params,
+            timeout=self.timeout_s,
+        )
+        resp.raise_for_status()
+        return resp.json()
+    
+    def post(
+        self, path: str, data: dict[str, Any] | None = None, json: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        """Make authenticated POST request."""
+        url = f"{self.api_base_url}/{path.lstrip('/')}"
+        resp = requests.post(
+            url,
+            headers=self._headers(),
+            data=data,
+            json=json,
+            timeout=self.timeout_s,
+        )
+        resp.raise_for_status()
+        return resp.json()
+```
+
+### Examples
+
+#### Zoho/Site24x7
+```python
+client = OAuth2ExternalAPIClient(
+    client_id=os.environ["SITE24X7_CLIENT_ID"],
+    client_secret=os.environ["SITE24X7_CLIENT_SECRET"],
+    refresh_token=os.environ["SITE24X7_REFRESH_TOKEN"],
+    api_base_url="https://www.site24x7.com/api",
+    token_url="https://accounts.zoho.com/oauth/v2/token",
+)
+
+# Note: Zoho uses custom header "Zoho-oauthtoken" instead of "Bearer"
+# Override _headers() method for custom header format:
+def _headers(self) -> dict[str, str]:
+    token = self._get_access_token()
+    return {
+        "Authorization": f"Zoho-oauthtoken {token}",  # Custom header
+        "Accept": "application/json",
+    }
+
+status = client.get("/current_status")
+```
+
+#### Okta
+```python
+client = OAuth2ExternalAPIClient(
+    client_id=os.environ["OKTA_CLIENT_ID"],
+    client_secret=os.environ["OKTA_CLIENT_SECRET"],
+    refresh_token=os.environ["OKTA_REFRESH_TOKEN"],
+    api_base_url=f"https://{org}.okta.com/api/v1",
+    token_url=f"https://{org}.okta.com/oauth2/v1/token",
+)
+
+users = client.get("/users")
+```
+
+#### Salesforce
+```python
+client = OAuth2ExternalAPIClient(
+    client_id=os.environ["SALESFORCE_CLIENT_ID"],
+    client_secret=os.environ["SALESFORCE_CLIENT_SECRET"],
+    refresh_token=os.environ["SALESFORCE_REFRESH_TOKEN"],
+    api_base_url="https://yourinstance.salesforce.com/services/data/v58.0",
+    token_url="https://login.salesforce.com/services/oauth2/token",
+)
+
+accounts = client.get("/sobjects/Account")
+```
+
+### Best Practices for OAuth2 External APIs
+
+1. **Token Refresh Strategies:**
+   - **Proactive refresh:** Refresh 60 seconds before expiry to avoid race conditions
+   - **Reactive refresh:** Refresh only when token expires (simpler but may cause request failures)
+   - **Recommendation:** Use proactive refresh for production systems
+
+2. **Error Handling for Token Expiry:**
+   ```python
+   def get(self, path: str, params: dict[str, Any] | None = None) -> dict[str, Any]:
+       """Make request with automatic token refresh on 401."""
+       try:
+           return self._make_request("GET", path, params=params)
+       except requests.HTTPError as e:
+           if e.response.status_code == 401:
+               # Token expired, refresh and retry once
+               self._access_token = None  # Force refresh
+               return self._make_request("GET", path, params=params)
+           raise
+   ```
+
+3. **Multi-Region Support:**
+   ```python
+   # Some providers have different endpoints for different regions
+   REGIONS = {
+       "us": {
+           "api_base_url": "https://www.site24x7.com/api",
+           "token_url": "https://accounts.zoho.com/oauth/v2/token",
+       },
+       "eu": {
+           "api_base_url": "https://www.site24x7.eu/api",
+           "token_url": "https://accounts.zoho.eu/oauth/v2/token",
+       },
+   }
+   
+   client = OAuth2ExternalAPIClient(
+       ...,
+       **REGIONS["eu"],  # Use EU endpoints
+   )
+   ```
+
+4. **Custom Header Formats:**
+   - Some APIs (Zoho, GitHub) use non-standard auth headers
+   - Make header format configurable or override `_headers()` method
+   - See `api-security-patterns.md` section "Custom Authentication Headers" for details
+
+5. **Secure Storage:**
+   - Never hardcode credentials
+   - Use environment variables or secret managers
+   - Rotate refresh tokens regularly
+
 ## Error Handling
 
 ### Pattern 1: API Error Handling

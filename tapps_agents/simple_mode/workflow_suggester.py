@@ -57,6 +57,31 @@ class WorkflowSuggester:
         if intent.type == IntentType.UNKNOWN:
             return None
         
+        # Detect hybrid "review + fix" intent
+        user_input_lower = user_input.lower()
+        has_review = (
+            intent.type == IntentType.REVIEW
+            or "review" in user_input_lower
+            or intent.compare_to_codebase
+        )
+        has_fix = intent.type == IntentType.FIX or "fix" in user_input_lower
+        
+        if has_review and has_fix:
+            return WorkflowSuggestion(
+                workflow_command=(
+                    '@simple-mode *review <file>  # Then: @simple-mode *fix <file> "issues from review"'
+                ),
+                workflow_type="review-then-fix",
+                benefits=[
+                    "Comprehensive quality analysis first",
+                    "Targeted fixes based on review feedback",
+                    "Quality gates after fixes",
+                    "Full traceability from review to fix",
+                ],
+                confidence=0.85,
+                reason="Review + fix hybrid request detected",
+            )
+        
         # Map intent to workflow command
         workflow_mapping = {
             IntentType.BUILD: {

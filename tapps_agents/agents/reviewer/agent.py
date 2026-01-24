@@ -195,6 +195,10 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         from .output_enhancer import ReviewOutputEnhancer
         self.output_enhancer = ReviewOutputEnhancer()
 
+        # Adaptive scoring integration (will be initialized in activate)
+        self.adaptive_scorer = None
+        self.adaptive_scoring_enabled = True  # Enabled by default
+
     async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """Activate the reviewer agent with expert support."""
         # Validate that expert_registry attribute exists (safety check)
@@ -246,6 +250,18 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             )
         else:
             self.context7_enhancer = None
+
+        # Initialize adaptive scorer if enabled
+        if self.adaptive_scoring_enabled:
+            try:
+                from .adaptive_scorer import AdaptiveScorerWrapper
+                self.adaptive_scorer = AdaptiveScorerWrapper(enabled=True)
+                # Pre-load adaptive weights asynchronously
+                import asyncio
+                asyncio.create_task(self.adaptive_scorer.get_adaptive_weights())
+            except Exception as e:
+                logger.warning(f"Failed to initialize adaptive scorer: {e}")
+                self.adaptive_scorer = None
 
     def get_commands(self) -> list[dict[str, str]]:
         """Return available commands for reviewer agent"""
@@ -1237,6 +1253,20 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             reviewer_config = self.config.agents.reviewer if self.config else None
             tool_timeout = reviewer_config.tool_timeout if reviewer_config else 30.0
             
+            # Apply adaptive weights if available
+            if self.adaptive_scorer and self.adaptive_scoring_enabled:
+                try:
+                    adaptive_weights = await self.adaptive_scorer.get_adaptive_weights()
+                    if adaptive_weights:
+                        # Update scorer with adaptive weights
+                        from ...core.config import ScoringWeightsConfig
+                        adaptive_weights_config = self.adaptive_scorer.get_weights_config()
+                        # Update scorer weights (if scorer supports it)
+                        if hasattr(self.scorer, 'weights'):
+                            self.scorer.weights = adaptive_weights_config
+                except Exception as e:
+                    logger.debug(f"Failed to apply adaptive weights: {e}")
+            
             try:
                 if language == Language.YAML:
                     scores = await asyncio.wait_for(
@@ -1246,6 +1276,13 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 else:
                     # Use ScorerFactory to get appropriate scorer for the language
                     scorer = ScorerFactory.get_scorer(language, self.config)
+                    # Apply adaptive weights to scorer if available
+                    if self.adaptive_scorer and self.adaptive_scoring_enabled and hasattr(scorer, 'weights'):
+                        try:
+                            adaptive_weights_config = self.adaptive_scorer.get_weights_config()
+                            scorer.weights = adaptive_weights_config
+                        except Exception as e:
+                            logger.debug(f"Failed to apply adaptive weights to scorer: {e}")
                     # Run scoring in thread with timeout
                     scores = await asyncio.wait_for(
                         asyncio.to_thread(scorer.score_file, file_path, code),
@@ -1304,6 +1341,38 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     # Continue without dependency security penalty
 
             result["scoring"] = scores
+            
+            # Track outcome for adaptive learning (if enabled)
+            if self.adaptive_scorer and self.adaptive_scoring_enabled and include_scoring:
+                try:
+                    # Extract expert IDs from consultations
+                    expert_consultations = []
+                    if expert_guidance:
+                        # Extract expert IDs from consultation results
+                        # Note: This is a simplified extraction - actual expert IDs would come from consultation results
+                        if "security" in expert_guidance:
+                            expert_consultations.append("expert-security")
+                        if "performance" in expert_guidance:
+                            expert_consultations.append("expert-performance-optimization")
+                        if "code_quality" in expert_guidance:
+                            expert_consultations.append("expert-code-quality-analysis")
+                        if "api_design" in expert_guidance:
+                            expert_consultations.append("expert-api-design-integration")
+                    
+                    # Generate workflow ID from file path
+                    import hashlib
+                    workflow_id = f"review-{hashlib.sha256(str(file_path).encode()).hexdigest()[:16]}"
+                    
+                    # Track initial scores
+                    await self.adaptive_scorer.track_outcome(
+                        workflow_id=workflow_id,
+                        file_path=file_path,
+                        scores=scores,
+                        expert_consultations=expert_consultations if expert_consultations else None,
+                        agent_id="reviewer",
+                    )
+                except Exception as e:
+                    logger.debug(f"Failed to track outcome: {e}")
             
             # Add score explanations if requested (especially useful for TypeScript)
             if include_explanations:
@@ -1521,6 +1590,35 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 expert_guidance["code_quality"] = quality_consultation.weighted_answer
             except Exception:
                 logger.debug("Code quality expert consultation failed", exc_info=True)
+
+            # Consult API Design expert if code appears to be an HTTP/API client
+            if await self._detect_api_client_pattern(code_preview):
+                try:
+                    api_consultation = await expert_registry.consult(
+                        query=f"Review this API client code for best practices:\n\n{code_preview}",
+                        domain="api-design-integration",
+                        include_all=True,
+                        prioritize_builtin=True,
+                        agent_id="reviewer",
+                    )
+                    expert_guidance["api_design"] = api_consultation.weighted_answer
+                    expert_guidance["api_design_confidence"] = api_consultation.confidence
+                except Exception:
+                    logger.debug("API design expert consultation failed", exc_info=True)
+                
+                # Also consult external-api-integration if code mentions external/third-party APIs
+                if "external" in code_preview.lower() or "third-party" in code_preview.lower():
+                    try:
+                        external_consultation = await expert_registry.consult(
+                            query=f"Review this external API integration code:\n\n{code_preview}",
+                            domain="api-design-integration",  # external-api is a subdomain
+                            include_all=True,
+                            prioritize_builtin=True,
+                            agent_id="reviewer",
+                        )
+                        expert_guidance["external_api"] = external_consultation.weighted_answer
+                    except Exception:
+                        logger.debug("External API expert consultation failed", exc_info=True)
 
         # Generate LLM feedback
         if include_llm_feedback:
@@ -1845,6 +1943,12 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             if "performance" in expert_guidance:
                 feedback["expert_guidance"] = feedback.get("expert_guidance", {})
                 feedback["expert_guidance"]["performance"] = expert_guidance["performance"][:300] + "..." if len(expert_guidance["performance"]) > 300 else expert_guidance["performance"]
+            if "api_design" in expert_guidance:
+                feedback["expert_guidance"] = feedback.get("expert_guidance", {})
+                feedback["expert_guidance"]["api_design"] = expert_guidance["api_design"][:500] + "..." if len(expert_guidance["api_design"]) > 500 else expert_guidance["api_design"]
+            if "external_api" in expert_guidance:
+                feedback["expert_guidance"] = feedback.get("expert_guidance", {})
+                feedback["expert_guidance"]["external_api"] = expert_guidance["external_api"][:300] + "..." if len(expert_guidance["external_api"]) > 300 else expert_guidance["external_api"]
 
         return feedback
 
@@ -3106,6 +3210,83 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             ".dockerfile": "dockerfile",
         }
         return extension_map.get(file_path.suffix.lower(), "unknown")
+
+    async def _detect_api_client_pattern(self, code: str) -> bool:
+        """
+        Detect if code appears to be an HTTP/API client.
+        
+        Checks for common patterns that indicate API client code:
+        - HTTP client libraries (requests, httpx)
+        - Authentication headers (Authorization, Bearer, Zoho-oauthtoken, X-API-Key)
+        - Token management (refresh_token, access_token, token_url)
+        - API client structure (class Client, get/post methods, api_base_url)
+        
+        Args:
+            code: Code content to analyze
+            
+        Returns:
+            True if code appears to be an API client, False otherwise
+        """
+        if not code:
+            return False
+        
+        code_lower = code.lower()
+        
+        # HTTP client library indicators
+        http_client_indicators = [
+            "requests.get",
+            "requests.post",
+            "requests.put",
+            "requests.delete",
+            "httpx.client",
+            "httpx.asynccclient",
+            "httpx.get",
+            "httpx.post",
+            "urllib.request",
+            "urllib3",
+        ]
+        
+        # Authentication indicators
+        auth_indicators = [
+            "authorization:",
+            "bearer",
+            "zoho-oauthtoken",
+            "x-api-key",
+            "api_key",
+            "api-key",
+            "access_token",
+            "refresh_token",
+            "token_url",
+            "client_id",
+            "client_secret",
+        ]
+        
+        # API client structure indicators
+        structure_indicators = [
+            "api_base_url",
+            "base_url",
+            "api_url",
+            "class.*client",
+            "def get(",
+            "def post(",
+            "def put(",
+            "def delete(",
+            "def _headers",
+            "def _get_access_token",
+            "def _refresh",
+        ]
+        
+        # Check for HTTP client usage
+        has_http_client = any(indicator in code_lower for indicator in http_client_indicators)
+        
+        # Check for authentication patterns
+        has_auth = any(indicator in code_lower for indicator in auth_indicators)
+        
+        # Check for API client structure
+        has_structure = any(indicator in code_lower for indicator in structure_indicators)
+        
+        # Code is likely an API client if it has HTTP client usage AND (auth OR structure)
+        return has_http_client and (has_auth or has_structure)
 
     def _score_yaml_file(self, file_path: Path, code: str) -> dict[str, Any]:
         """

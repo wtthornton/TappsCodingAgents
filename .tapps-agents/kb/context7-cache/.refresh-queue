@@ -1,13 +1,90 @@
 {
   "version": "1.0",
-  "last_updated": "2026-01-21T02:29:19.967066+00:00Z",
+  "last_updated": "2026-01-24T20:29:59.320217+00:00Z",
   "tasks": [
     {
       "library": "pyjwt",
       "topic": "overview",
-      "priority": 7,
+      "priority": 9,
       "reason": "staleness",
       "added_at": "2026-01-14T16:32:14.283909+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest",
+      "topic": "fixtures",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-23T21:38:50.475550+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest",
+      "topic": "async",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-23T21:38:50.475988+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest-asyncio",
+      "topic": "parametrize",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-23T21:38:50.476488+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest-cov",
+      "topic": "markers",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-23T21:38:50.477085+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest-html",
+      "topic": "overview",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-24T20:20:48.792937+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest-mock",
+      "topic": "best-practices",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-24T20:20:48.793894+00:00Z",
+      "scheduled_for": null,
+      "attempts": 0,
+      "last_attempt": null,
+      "error": null
+    },
+    {
+      "library": "pytest-rich",
+      "topic": "architecture",
+      "priority": 7,
+      "reason": "staleness",
+      "added_at": "2026-01-24T20:20:48.794846+00:00Z",
       "scheduled_for": null,
       "attempts": 0,
       "last_attempt": null,

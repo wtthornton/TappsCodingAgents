@@ -37,6 +37,10 @@ from .domain_config import DomainConfig, DomainConfigParser
 from .expert_config import load_expert_configs
 from .weight_distributor import ExpertWeightMatrix
 
+import logging
+
+logger = logging.getLogger(__name__)
+
 # Technical domains where built-in experts have primary authority
 # These domains are framework-controlled and built-in experts should be prioritized
 TECHNICAL_DOMAINS = BuiltinExpertRegistry.TECHNICAL_DOMAINS
@@ -373,15 +377,30 @@ class ExpertRegistry:
                     project_profile=project_profile,
                 )
                 if "error" not in response:
+                    confidence = response.get("confidence", 0.0)
                     responses.append(
                         {
                             "expert_id": expert_id,
                             "expert_name": expert.agent_name,
                             "answer": response.get("answer", ""),
-                            "confidence": response.get("confidence", 0.0),
+                            "confidence": confidence,
                             "sources": response.get("sources", []),
                         }
                     )
+                    
+                    # Track expert consultation for adaptive learning
+                    try:
+                        from ..experts.performance_tracker import ExpertPerformanceTracker
+                        perf_tracker = ExpertPerformanceTracker(project_root=self.project_root)
+                        perf_tracker.track_consultation(
+                            expert_id=expert_id,
+                            domain=domain,
+                            confidence=confidence,
+                            query=query,
+                        )
+                    except Exception as e:
+                        # Don't fail consultation if tracking fails
+                        logger.debug(f"Failed to track expert consultation: {e}")
             except Exception as e:
                 # Log error but continue with other experts
                 responses.append({"expert_id": expert_id, "error": str(e)})

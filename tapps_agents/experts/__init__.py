@@ -62,6 +62,12 @@ from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
 from .weight_distributor import ExpertWeightMatrix, WeightDistributor
 from .knowledge_validator import KnowledgeBaseValidator, ValidationResult, ValidationIssue
+from .adaptive_domain_detector import AdaptiveDomainDetector, DomainSuggestion
+from .expert_suggester import ExpertSuggester, ExpertSuggestion
+from .auto_generator import AutoExpertGenerator, GeneratedExpert
+from .performance_tracker import ExpertPerformance, ExpertPerformanceTracker
+from .adaptive_voting import AdaptiveVotingEngine
+from .knowledge_enhancer import KnowledgeEnhancer, KnowledgeGap, KnowledgeUpdate
 from .rag_metrics import (
     RAGMetricsTracker,
     RAGQueryMetrics,
@@ -141,4 +147,17 @@ __all__ = [
     "KnowledgeFreshnessTracker",
     "KnowledgeFileMetadata",
     "get_freshness_tracker",
+    # Adaptive Learning Components
+    "AdaptiveDomainDetector",
+    "DomainSuggestion",
+    "ExpertSuggester",
+    "ExpertSuggestion",
+    "AutoExpertGenerator",
+    "GeneratedExpert",
+    "ExpertPerformanceTracker",
+    "ExpertPerformance",
+    "AdaptiveVotingEngine",
+    "KnowledgeEnhancer",
+    "KnowledgeGap",
+    "KnowledgeUpdate",
 ]

@@ -238,6 +238,20 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             except Exception:
                 logger.debug("Performance expert consultation failed", exc_info=True)
 
+            # Consult API Design expert if implementing/refactoring an API client
+            if await self._detect_api_client_pattern(specification, context):
+                try:
+                    api_consultation = await self.expert_registry.consult(
+                        query=f"Provide implementation guidance for this API client:\n\n{specification}",
+                        domain="api-design-integration",
+                        include_all=True,
+                        prioritize_builtin=True,
+                        agent_id="implementer",
+                    )
+                    expert_guidance["api_design"] = api_consultation.weighted_answer
+                except Exception:
+                    logger.debug("API design expert consultation failed", exc_info=True)
+
         # R7: Get Context7 documentation for libraries mentioned in specification
         context7_docs = {}
         if self.context7 and self.context7.enabled:
@@ -356,6 +370,20 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 expert_guidance["performance"] = perf_consultation.weighted_answer
             except Exception:
                 logger.debug("Performance expert consultation failed", exc_info=True)
+
+            # Consult API Design expert if implementing/refactoring an API client
+            if await self._detect_api_client_pattern(specification, context):
+                try:
+                    api_consultation = await self.expert_registry.consult(
+                        query=f"Provide implementation guidance for this API client:\n\n{specification}",
+                        domain="api-design-integration",
+                        include_all=True,
+                        prioritize_builtin=True,
+                        agent_id="implementer",
+                    )
+                    expert_guidance["api_design"] = api_consultation.weighted_answer
+                except Exception:
+                    logger.debug("API design expert consultation failed", exc_info=True)
 
         try:
             instruction = self.code_generator.prepare_code_generation(
@@ -593,6 +621,83 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             ".yml": "yaml",
         }
         return extension_map.get(path.suffix.lower(), "python")
+
+    async def _detect_api_client_pattern(self, specification: str, context: str | None = None) -> bool:
+        """
+        Detect if specification/context indicates an HTTP/API client implementation.
+        
+        Checks for common patterns that indicate API client code:
+        - Keywords: "API client", "OAuth2", "refresh token", "external API", "HTTP client"
+        - Authentication patterns: "Bearer", "Zoho", "token", "authentication"
+        - API patterns: "REST API", "API integration", "third-party API"
+        
+        Args:
+            specification: Code specification/description
+            context: Optional context code
+            
+        Returns:
+            True if specification appears to be for an API client, False otherwise
+        """
+        if not specification:
+            return False
+        
+        # Combine specification and context for analysis
+        text_to_analyze = specification.lower()
+        if context:
+            text_to_analyze += " " + context.lower()
+        
+        # API client keywords
+        api_client_keywords = [
+            "api client",
+            "http client",
+            "rest client",
+            "oauth2",
+            "oauth 2",
+            "refresh token",
+            "access token",
+            "external api",
+            "third-party api",
+            "api integration",
+            "rest api",
+            "api wrapper",
+        ]
+        
+        # Authentication keywords
+        auth_keywords = [
+            "bearer",
+            "zoho",
+            "site24x7",
+            "okta",
+            "salesforce",
+            "authentication",
+            "authorization",
+            "api key",
+            "client_id",
+            "client_secret",
+            "token_url",
+            "api_base_url",
+        ]
+        
+        # Structure keywords
+        structure_keywords = [
+            "class.*client",
+            "get method",
+            "post method",
+            "api endpoint",
+            "make request",
+        ]
+        
+        # Check for API client keywords
+        has_api_keywords = any(keyword in text_to_analyze for keyword in api_client_keywords)
+        
+        # Check for authentication patterns
+        has_auth = any(keyword in text_to_analyze for keyword in auth_keywords)
+        
+        # Check for structure patterns
+        has_structure = any(keyword in text_to_analyze for keyword in structure_keywords)
+        
+        # Specification is likely for an API client if it has API keywords AND (auth OR structure)
+        return has_api_keywords and (has_auth or has_structure)
 
     def _help(self) -> dict[str, Any]:
         """

@@ -227,3 +227,48 @@ class TestPermissionErrors(CLICommandTestBase):
                 os.chmod(test_file, 0o644)
             except (OSError, AttributeError):
                 pass
+
+
+@pytest.mark.e2e_cli
+class TestWorkflowStateErrors(CLICommandTestBase):
+    """Tests for workflow state and resume error handling."""
+
+    def test_workflow_state_list_no_states(self):
+        """workflow state list in project with no state prints no states, exit 0."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "workflow", "state", "list"],
+            expect_success=True,
+        )
+        assert result.exit_code == 0
+        assert "no workflow states" in result.stdout.lower() or "no states" in result.stdout.lower()
+
+    def test_workflow_state_show_invalid_id(self):
+        """workflow state show <invalid-id> exits with error."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "workflow", "state", "show", "nonexistent-wf-123"],
+            expect_success=False,
+        )
+        assert result.exit_code == 1
+        err = (result.stderr or "") + (result.stdout or "")
+        assert "error" in err.lower() or "not found" in err.lower() or "no state" in err.lower()
+
+    def test_workflow_resume_invalid_id(self):
+        """workflow resume --workflow-id <invalid> exits with error."""
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "workflow", "resume", "--workflow-id", "nonexistent-wf-456"],
+            expect_success=False,
+        )
+        assert result.exit_code == 1
+
+    def test_workflow_state_corrupted_meta_handled(self):
+        """workflow state list with corrupted .meta.json does not crash."""
+        state_dir = self.test_project / ".tapps-agents" / "workflow-state"
+        state_dir.mkdir(parents=True, exist_ok=True)
+        (state_dir / "history").mkdir(exist_ok=True)
+        invalid_meta = state_dir / "bad-wf.meta.json"
+        invalid_meta.write_text("not valid json {", encoding="utf-8")
+        result = self.run_command(
+            ["python", "-m", "tapps_agents.cli", "workflow", "state", "list"],
+            expect_success=True,
+        )
+        assert result.exit_code == 0

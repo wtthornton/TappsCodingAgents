@@ -1,13 +1,8 @@
----
-description: Documentation of TappsCodingAgents workflow presets and how to use them in Cursor AI
-alwaysApply: false
----
-
 # Workflow Presets - Quick Commands
 
 ## Overview
 
-TappsCodingAgents provides 5 preset workflows that can be executed with simple one-word commands. These workflows automatically orchestrate multiple agents to complete common SDLC tasks. Presets that include an enhance step (full-sdlc optional, rapid-dev, Epic) run it via EnhancerHandler. CLI auto-enhancement: `auto_enhancement` in docs/CONFIGURATION.md.
+TappsCodingAgents provides preset workflows that can be executed with simple one-word commands. These workflows automatically orchestrate multiple agents to complete common SDLC tasks.
 
 ## Available Workflow Presets
 
@@ -15,115 +10,81 @@ TappsCodingAgents provides 5 preset workflows that can be executed with simple o
 
 **Command:** `python -m tapps_agents.cli workflow full`
 
-**Best for:** Enterprise projects, new applications, compliance-heavy systems
+**Best for:** Complete software development lifecycle with all quality gates
 
 **Agent Sequence:**
-0. Enhancer - Enhance Prompt (optional, before requirements)
-1. Analyst - Requirements gathering
-2. Planner - Story creation
-3. Architect - System design
-4. Designer - API contracts
-5. Implementer - Code generation
-6. Reviewer - Code review with quality gates
-7. Tester - Test generation
-8. Ops - Security scan
-9. Documenter - Documentation
+1. Analyst - Gather Requirements
+2. Planner - Create Stories
+3. Architect - Design System
+4. Designer - Api Design
+5. Implementer - Write Code
+6. Reviewer - Review Code
+7. Tester - Write Tests
+8. Ops - Security Scan
+9. Documenter - Generate Docs
+10. Orchestrator - Finalize
 
 **Quality Gates:**
 - Overall score: ≥70
 - Security: ≥7.0
 - Maintainability: ≥7.0
 
-### 2. Rapid Development (`rapid` / `feature`)
-
-**Command:** `python -m tapps_agents.cli workflow rapid`
-
-**Best for:** Feature development, sprint work, iterative development
-
-**Agent Sequence:**
-1. Enhancer - Prompt enhancement
-2. Planner - Story breakdown
-3. Implementer - Code generation
-4. Reviewer - Quick review
-5. Tester - Test generation
-
-**Quality Gates:**
-- Overall score: ≥65
-- Security: ≥6.5
-
-### 3. Fix (`fix` / `maintenance` / `hotfix` / `urgent` / `refactor` / `quick-fix`)
+### 2. Fix (`fix` / `maintenance` / `hotfix` / `urgent` / `refactor` / `quick-fix`)
 
 **Command:** `python -m tapps_agents.cli workflow fix`
 
-**Best for:** Bug fixes, hotfixes, maintenance, refactoring. Replaces legacy maintenance, quick-fix, simple-fix-issues.
+**Best for:** Debug, fix, and verify issues in existing code
 
 **Agent Sequence:**
-1. Enhancer - Enhance Prompt (optional)
-2. Debugger - Error analysis
-3. Implementer - Fix implementation
-4. Reviewer - Code review with quality gate
-5. Tester - Test generation
+1. Enhancer - Enhance Prompt
+2. Debugger - Analyze Error
+3. Implementer - Write Code
+4. Reviewer - Review Code
+5. Tester - Write Tests
 6. Orchestrator - Finalize
 
 **Quality Gates:**
 - Overall score: ≥65
 - Security: ≥6.5
 
-### 4. Quality Improvement (`quality` / `improve`)
+### 3. Quality Improvement (`quality` / `improve`)
 
 **Command:** `python -m tapps_agents.cli workflow quality`
 
-**Best for:** Code quality initiatives, refactoring sprints, quality gates
+**Best for:** Comprehensive code review and improvement cycle
 
 **Agent Sequence:**
-1. Reviewer - Initial analysis
-2. Improver - Refactoring
-3. Reviewer - Re-review validation
-4. Tester - Test verification
-5. Ops - Security audit
+1. Reviewer - Review Code
+2. Improver - Refactor
+3. Reviewer - Review Code
+4. Tester - Write Tests
+5. Ops - Security Scan
+6. Orchestrator - Finalize
 
 **Quality Gates:**
 - Overall score: ≥75
-- Maintainability: ≥8.0
 - Security: ≥7.5
+- Maintainability: ≥8.0
 
-### 5. Brownfield Analysis (`brownfield`)
+### 4. Brownfield Project Analysis (`brownfield`)
 
 **Command:** `python -m tapps_agents.cli workflow brownfield`
 
-**Best for:** Analyzing existing codebases, legacy systems, understanding before changes
+**Best for:** Comprehensive analysis workflow for existing codebases that provides:
+- Project discovery and profiling
+- Code quality assessment
+- Architecture pattern analysis
+- Codebase structure evaluation
+- Technical debt categorization and prioritization
+- Dependency and integration mapping
+- Test and documentation coverage analysis
+- Modernization roadmap generation
 
-**Agent Sequence:** Analyst (discovery, architecture, structure, tests/docs, technical debt, modernization, report), Reviewer (quality), Ops (dependencies). See `brownfield-analysis.yaml`.
+This workflow orchestrates multiple agents to provide a complete picture
+of a brownfield project's current state and recommended improvements.
 
-## Workflow Execution Flags
 
-All workflow commands support these flags for better control:
-
-```bash
-# Pre-flight validation (check before running)
-tapps-agents workflow rapid --dry-run --prompt "Add feature"
-
-# Explicit mode control
-tapps-agents workflow rapid --cli-mode --prompt "Add feature"   # Force CLI/headless
-tapps-agents workflow rapid --cursor-mode --prompt "Add feature" # Force Cursor Skills
-
-# Resume/partial execution
-tapps-agents workflow rapid --continue-from implementation --prompt "Add feature"
-tapps-agents workflow rapid --skip-steps "enhance,plan" --prompt "Add feature"
-
-# Output control
-tapps-agents workflow rapid --print-paths --prompt "Add feature"  # Show artifact paths (default)
-tapps-agents workflow rapid --no-print-paths --prompt "Add feature"
-```
-
-**Flag Reference:**
-- `--dry-run`: Validate workflow without executing (pre-flight check)
-- `--cli-mode`: Force CLI/headless mode (direct LLM calls)
-- `--cursor-mode`: Force Cursor mode (uses Cursor Skills)
-- `--continue-from <step>`: Resume from a specific step
-- `--skip-steps <steps>`: Skip comma-separated list of steps
-- `--print-paths`: Print artifact file paths after each step (default: on)
-- `--no-print-paths`: Disable artifact path printing
+**Agent Sequence:**
 
 ## Usage in Cursor AI
 
@@ -146,11 +107,21 @@ When working in Cursor AI, you can:
 
 ## When to Use Each Workflow
 
-- **New Enterprise Project** → `workflow enterprise`
-- **New Feature** → `workflow rapid` or `workflow feature`
-- **Bug Fix** → `workflow hotfix` or `workflow urgent`
-- **Refactoring** → `workflow fix` or `workflow refactor`
-- **Quality Sprint** → `workflow quality` or `workflow improve`
+- **Complete software development lifecycle with all quality gates** → `workflow full`
+- **Debug, fix, and verify issues in existing code** → `workflow fix`
+- **Comprehensive code review and improvement cycle** → `workflow quality`
+- **Comprehensive analysis workflow for existing codebases that provides:
+- Project discovery and profiling
+- Code quality assessment
+- Architecture pattern analysis
+- Codebase structure evaluation
+- Technical debt categorization and prioritization
+- Dependency and integration mapping
+- Test and documentation coverage analysis
+- Modernization roadmap generation
+
+This workflow orchestrates multiple agents to provide a complete picture
+of a brownfield project's current state and recommended improvements** → `workflow brownfield`
 
 ## Integration
 
@@ -171,7 +142,6 @@ python -m tapps_agents.cli workflow list
 
 Workflow presets are defined in `workflows/presets/`:
 - `full-sdlc.yaml`
-- `rapid-dev.yaml`
 - `fix.yaml`
 - `quality.yaml`
 - `brownfield-analysis.yaml`

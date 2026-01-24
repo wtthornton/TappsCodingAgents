@@ -9,7 +9,7 @@
 
 TappsCodingAgents helps teams build and orchestrate AI coding agents with **quality gates**, **Cursor IDE integration**, and **full SDLC workflows**—so you get consistent, traceable results instead of one-off AI edits.
 
-**Highlights:** 14 workflow agents (review, implement, test, fix, plan, …) · **Simple Mode** for natural language (`@simple-mode *build "feature"`) · Cursor Skills + Claude Desktop · 11 YAML workflow presets · Code scoring, experts, and MCP gateway.
+**Highlights:** 14 workflow agents (review, implement, test, fix, plan, …) · **Simple Mode** for natural language (`@simple-mode *build "feature"`) · Cursor Skills + Claude Desktop · 11 YAML workflow presets · Code scoring, experts, and MCP gateway · **Adaptive Learning** system that auto-generates experts and improves scoring for first-pass code correctness.
 
 **Prerequisites:** Python 3.13+, [Cursor IDE](https://cursor.com) or [Claude Desktop](https://claude.ai). Optional: [Context7](https://context7.com) API key for library docs.
 
@@ -36,6 +36,7 @@ TappsCodingAgents helps teams build and orchestrate AI coding agents with **qual
 - **Cursor Skills + Claude Desktop** — All agents as `@agent *command`; 15 Claude Desktop commands
 - **11 YAML workflow presets** — rapid-dev, full-sdlc, maintenance, quality, quick-fix, and others
 - **Experts & quality** — 16 built-in experts, 7-category code scoring, MCP gateway (Context7, Playwright, Git, …)
+- **Adaptive Learning** — Auto-generates experts from usage patterns, adaptively adjusts scoring weights, improves expert voting, and optimizes for first-pass code correctness
 
 For the full list, see [Key Features](#key-features) and [Documentation](docs/README.md).
 
@@ -58,16 +59,22 @@ If you're using **Cursor IDE**, get started quickly:
 
    Ensure Python 3.13+ (`python --version`). On Windows with multiple versions use `py -3.13`.
 
+   **For consuming projects (recommended):**
    ```bash
-   # Linux/macOS:
-   python3.13 -m pip install -e .
-   # or: pip install -e .
-
-   # Windows (if 3.13 is not default):
-   py -3.13 -m pip install -e .
+   # Install from PyPI (clean install, framework code only)
+   pip install tapps-agents
+   # or specific version:
+   pip install tapps-agents==3.5.29
    ```
 
-   Optionally run `python scripts/check_prerequisites.py` before installing.
+   **For framework development (contributors):**
+   ```bash
+   # Clone repository and install in editable mode
+   git clone https://github.com/wtthornton/TappsCodingAgents.git
+   cd TappsCodingAgents
+   python3.13 -m pip install -e .
+   # Windows: py -3.13 -m pip install -e .
+   ```
 
    After installing, run `tapps-agents doctor` (or `python -m tapps_agents.cli doctor`) to verify the setup.
 

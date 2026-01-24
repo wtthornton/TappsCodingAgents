@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-01-14T20:28:34.292791+00:00Z
-total_entries: 114
+last_updated: 2026-01-23T21:39:02.482306+00:00Z
+total_entries: 116
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -503,3 +503,10 @@ libraries:
     topics:
       examples:
         cached_at: 2026-01-14T20:28:34.292783+00:00Z
+  event_log:
+    context7_id: /websites/eventcatalog_dev
+    topics:
+      overview:
+        cached_at: 2026-01-23T21:38:57.547888+00:00Z
+      usage:
+        cached_at: 2026-01-23T21:39:02.482294+00:00Z

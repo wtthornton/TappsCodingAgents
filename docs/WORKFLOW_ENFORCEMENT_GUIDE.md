@@ -42,6 +42,30 @@ This guide helps AI assistants (like Cursor AI) understand when to suggest Simpl
    - Suggest: `@simple-mode *refactor <file>`
    - Why: Pattern detection and quality validation
 
+6. **Hybrid Requests (Review + Fix)**
+   - User says: "Review this and fix it", "Check and fix", "Review and compare to our patterns"
+   - Suggest: `@simple-mode *review <file>` then `@simple-mode *fix <file> "issues from review"`
+   - Why: Two-step workflow ensures quality analysis before fixes, with quality gates after fixes
+   - Note: Workflow suggester automatically detects hybrid "review + fix" requests
+
+### Handling External API Clients
+
+When users request work on external API clients (OAuth2, refresh tokens, third-party APIs):
+
+1. **Review API Client Code:**
+   - Suggest: `@simple-mode *review <file>`
+   - Reviewer now consults API-design experts automatically when API client patterns are detected
+   - Provides API client-specific guidance (OAuth2 refresh-token flows, custom headers, etc.)
+
+2. **Build New API Client:**
+   - Suggest: `@simple-mode *build "Create [API] client with OAuth2 refresh-token authentication"`
+   - Full workflow includes API-design expert consultation via implementer
+
+3. **Review + Compare + Fix:**
+   - User says: "Review this and compare it to what we have and fix it"
+   - Suggest: Two-step workflow: `@simple-mode *review <file>` then `@simple-mode *fix <file> "issues from review"`
+   - Note: "Compare to codebase" is best-effort via review feedback until dedicated feature exists
+
 ### ❌ Skip Workflow Suggestions For:
 
 1. **Simple One-Off Operations**

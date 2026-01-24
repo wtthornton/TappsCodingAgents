@@ -15,6 +15,7 @@ This file serves as the master rule file for Claude Code and other AI coding too
 **TappsCodingAgents** is a software development framework that provides:
 - 14 workflow agents covering the complete software development lifecycle
 - Expert system with built-in technical domains and optional project-defined business experts
+- **Adaptive Learning System** that auto-generates experts, adjusts scoring weights, and improves expert voting for first-pass code correctness
 - Cursor Skills integration (model-agnostic)
 - Code quality analysis tools
 - Workflow orchestration with CLI and Python API
@@ -130,6 +131,18 @@ You can add `CLAUDE.local.md` for machine- or project-specific rules. It is load
 - Comprehensive test generation (80%+ coverage)
 - Full documentation artifacts
 - Better outcomes than direct implementation
+- **Adaptive learning** that improves with each use (auto-generates experts, adjusts scoring)
+
+### 1.5 Adaptive Learning System
+
+**TappsCodingAgents continuously learns and improves from usage:**
+- **Auto-Generates Experts**: New experts are automatically created when domains are detected in prompts or code
+- **Adaptive Scoring**: Scoring weights adjust based on outcome analysis to maximize first-pass code correctness
+- **Expert Voting Improvement**: Expert voting weights adapt based on performance tracking
+- **First-Pass Optimization**: System predicts and optimizes for code correctness on the first attempt
+- **Knowledge Enhancement**: Expert knowledge bases are automatically enhanced based on usage patterns
+
+**Goal**: Write code fast and correct the first time, beating other LLMs (Cursor, Claude, etc.) through continuous learning.
 
 **Example:**
 ```

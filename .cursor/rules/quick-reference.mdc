@@ -20,9 +20,17 @@ alwaysApply: false
 | Review code quality | `@simple-mode *review <file>` |
 | Add tests | `@simple-mode *test <file>` |
 | Refactor code | `@simple-mode *refactor <file>` |
-| Enhance a prompt | `@simple-mode *enhance "prompt"` |
-| Break down into tasks | `@simple-mode *breakdown "prompt"` |
-| Todo / Beads | `@simple-mode *todo ready` or `*todo create "Title"` |
+| TDD (Red-Green-Refactor) | `@simple-mode *tdd <file>` or `*tdd "description"` |
+| E2E tests | `@simple-mode *e2e` or `@tester *generate-e2e-tests` |
+| Fix build/compile errors | `@simple-mode *build-fix "output or description"` |
+| Dead code cleanup | `@simple-mode *refactor-clean <file>` |
+| Sync documentation | `@simple-mode *update-docs [path]` |
+| Refresh codemap/Context7 | `@simple-mode *update-codemaps` |
+| Coverage-driven tests | `@simple-mode *test-coverage <file> --target 80` |
+| Security audit | `@simple-mode *security-review [path]` or `@security-review` |
+| Coding standards | `@coding-standards` or `@simple-mode *review` |
+| Backend patterns | `@backend-patterns` |
+| Frontend/a11y patterns | `@frontend-patterns` |
 | Quick score only | `@reviewer *score <file>` (exception) |
 
 **Importance and when to use:** See `when-to-use.mdc` for which capabilities matter most (Tier 1–2 first) and when to use each workflow, agent, and command.
@@ -58,9 +66,6 @@ See `.cursor/rules/cursor-mode-usage.mdc` for complete guidance.
 @simple-mode *fix src/buggy.py "Fix the error"
 @simple-mode *test src/service.py
 @simple-mode *refactor src/legacy.py
-@simple-mode *enhance "Add OAuth2"
-@simple-mode *breakdown "Migrate to microservices"
-@simple-mode *todo ready
 
 # Individual agents (use only for targeted operations)
 @reviewer *score src/main.py

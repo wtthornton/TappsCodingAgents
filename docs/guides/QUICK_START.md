@@ -14,18 +14,22 @@ Get up and running with TappsCodingAgents in about 5–10 minutes.
 
 Requires **Python 3.13+** (`python --version`).
 
+**For consuming projects (recommended):**
 ```bash
-# Linux/macOS:
-python3.13 -m pip install -e .
-# or: pip install -e .
-
-# Windows (if 3.13 is not default):
-py -3.13 -m pip install -e .
+# Install from PyPI (clean install, framework code only)
+pip install tapps-agents
+# or specific version:
+pip install tapps-agents==3.5.29
 ```
 
-Or from PyPI: `pip install tapps-agents`
-
-Optionally: `python scripts/check_prerequisites.py` before installing.
+**For framework development (contributors):**
+```bash
+# Clone repository and install in editable mode
+git clone https://github.com/wtthornton/TappsCodingAgents.git
+cd TappsCodingAgents
+python3.13 -m pip install -e .
+# Windows: py -3.13 -m pip install -e .
+```
 
 After installing: `tapps-agents doctor` or `python -m tapps_agents.cli doctor` to verify.
 
@@ -33,7 +37,12 @@ After installing: `tapps-agents doctor` or `python -m tapps_agents.cli doctor` t
 
 ```powershell
 py -3.13 --version
-py -3.13 -m pip install -e .
+# For consuming projects:
+pip install tapps-agents
+# For development:
+# git clone https://github.com/wtthornton/TappsCodingAgents.git
+# cd TappsCodingAgents
+# py -3.13 -m pip install -e .
 py -3.13 -m tapps_agents.cli init
 ```
 
@@ -41,7 +50,12 @@ py -3.13 -m tapps_agents.cli init
 
 ```bash
 python3.13 --version
-python3.13 -m pip install -e .
+# For consuming projects:
+pip install tapps-agents
+# For development:
+# git clone https://github.com/wtthornton/TappsCodingAgents.git
+# cd TappsCodingAgents
+# python3.13 -m pip install -e .
 python3.13 -m tapps_agents.cli init
 ```
 

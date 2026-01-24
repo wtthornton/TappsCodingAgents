@@ -97,6 +97,14 @@ class FeedbackGenerator:
                 prompt_parts.append(
                     f"\nCode Quality Expert:\n{expert_guidance['code_quality'][:300]}..."
                 )
+            if "api_design" in expert_guidance:
+                prompt_parts.append(
+                    f"\nAPI Design Expert:\n{expert_guidance['api_design'][:500]}..."
+                )
+            if "external_api" in expert_guidance:
+                prompt_parts.append(
+                    f"\nExternal API Expert:\n{expert_guidance['external_api'][:300]}..."
+                )
             prompt_parts.append("")
 
         if scores:

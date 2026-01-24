@@ -10,6 +10,8 @@ alwaysApply: true
 
 **When a user asks you to implement features, fix bugs, review code, or write tests, you MUST DEFAULT to using `@simple-mode` commands.**
 
+**Adaptive Learning**: TappsCodingAgents continuously learns and improves. Experts are auto-generated as new domains are detected, scoring weights adapt to maximize first-pass success, and expert voting improves based on performance. The system gets better with each use, optimizing for fast and correct code generation on the first attempt.
+
 ### ⚠️ MANDATORY: Workflow Interceptor Pattern
 
 **BEFORE making any code edits for feature implementation, bug fixes, or new functionality, you MUST:**
@@ -24,8 +26,6 @@ alwaysApply: true
 - [ ] Is this code review? → Use `@simple-mode *review`
 - [ ] Is this test generation? → Use `@simple-mode *test`
 - [ ] **Only skip if:** Simple one-off operation OR user explicitly requests direct edit
-
-**Session start:** If resuming or starting a new session, load `.tapps-agents/workflow-state/*/SESSION_HANDOFF.md` or the latest SESSION_HANDOFF when relevant to avoid repeating context.
 
 **Example Interceptor Pattern:**
 ```
@@ -157,9 +157,6 @@ Use explicit commands for guaranteed workflow execution:
 @simple-mode *review src/api/auth.py
 @simple-mode *fix src/buggy.py "Fix the error"
 @simple-mode *test src/api/auth.py
-@simple-mode *enhance "Add OAuth2 login"
-@simple-mode *breakdown "Migrate to microservices"
-@simple-mode *todo ready
 @simple-mode *full "Build a complete REST API"
 ```
 
@@ -188,9 +185,6 @@ Use explicit commands for guaranteed workflow execution:
 | `*pr {title}` | Create pull request | @reviewer → @documenter |
 | `*full {description}` | Full SDLC workflow | All skills in sequence |
 | `*epic {epic-doc.md}` | Execute Epic document | Stories in dependency order |
-| `*enhance "prompt"` | Prompt enhancement | @enhancer |
-| `*breakdown "prompt"` | Task breakdown | @planner |
-| `*todo {bd args}` | Beads-backed todo (e.g. ready, create "Title") | beads (bd) |
 | `*help` | Show help | - |
 | `*resume` [workflow_id] | Resume failed/paused workflow | ResumeOrchestrator |
 | `*status` | Check status | - |
@@ -272,7 +266,7 @@ Step 5: @implementer *implement "{specification}" {target_file}
 
 Step 6: @reviewer *review {target_file}
   → Create: docs/workflows/simple-mode/step6-review.md
-  → Quality scores (5 metrics), issues found, recommendations
+  → Quality scores (7 categories), issues found, recommendations
 
 Step 7: @tester *test {target_file}
   → Create: docs/workflows/simple-mode/step7-testing.md
@@ -357,7 +351,7 @@ AI: [MUST use] @simple-mode *full "Add Context7 integration to all SDLC agents"
 | `@architect` | System architecture design |
 | `@designer` | API and data model design |
 | `@implementer` | Code generation and refactoring |
-| `@reviewer` | Code review with 5-metric scoring |
+| `@reviewer` | Code review with 7-category scoring |
 | `@tester` | Test generation and execution |
 | `@debugger` | Error analysis and debugging |
 | `@improver` | Code improvement suggestions |
@@ -499,6 +493,7 @@ Would you like me to proceed with the workflow?"
 
 ## Related Documentation
 
+- See `.cursor/rules/when-to-use.mdc` for importance and when to use each capability (Tier 1–2 first)
 - See `docs/SIMPLE_MODE_USER_GUIDE.md` for user guide with invocation options
 - See `.claude/skills/simple-mode/SKILL.md` for full skill definition
 - See `docs/SIMPLE_MODE_GUIDE.md` for complete documentation

@@ -1,14 +1,13 @@
 {
   "mcpServers": {
-    "Context7": {
+    "context7": {
       "command": "C:\\Program Files\\nodejs\\npx.CMD",
       "args": [
         "-y",
-        "@context7/mcp-server"
-      ],
-      "env": {
-        "CONTEXT7_API_KEY": "ctx7sk-bc3b5048-b6b8-4b12-8330-8c445842786e"
-      }
+        "@upstash/context7-mcp",
+        "--api-key",
+        "ctx7sk-534b7c8b-6e58-4019-8206-a084b4939e1e"
+      ]
     },
     "GitHub": {
       "command": "C:\\Program Files\\nodejs\\npx.CMD",
@@ -18,6 +17,16 @@
       ],
       "env": {
         "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "Context7": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@context7/mcp-server"
+      ],
+      "env": {
+        "CONTEXT7_API_KEY": "${CONTEXT7_API_KEY}"
       }
     }
   }

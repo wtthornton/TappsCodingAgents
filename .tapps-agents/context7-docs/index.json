@@ -1,0 +1,445 @@
+{
+  "entries": {
+    "__future__:best-practices": {
+      "library": "__future__",
+      "topic": "best-practices",
+      "file_path": "__future___best-practices.json",
+      "saved_at": "2026-01-23T13:38:58.658260",
+      "source": "fuzzy_match"
+    },
+    "__future__:common-mistakes": {
+      "library": "__future__",
+      "topic": "common-mistakes",
+      "file_path": "__future___common-mistakes.json",
+      "saved_at": "2026-01-23T13:38:58.766099",
+      "source": "fuzzy_match"
+    },
+    "__future__:usage": {
+      "library": "__future__",
+      "topic": "usage",
+      "file_path": "__future___usage.json",
+      "saved_at": "2026-01-23T13:38:58.820925",
+      "source": "cache"
+    },
+    "__future__:examples": {
+      "library": "__future__",
+      "topic": "examples",
+      "file_path": "__future___examples.json",
+      "saved_at": "2026-01-23T13:38:58.897520",
+      "source": "fuzzy_match"
+    },
+    "event_log:best-practices": {
+      "library": "event_log",
+      "topic": "best-practices",
+      "file_path": "event_log_best-practices.json",
+      "saved_at": "2026-01-23T13:38:58.977026",
+      "source": "fuzzy_match"
+    },
+    "event_log:common-mistakes": {
+      "library": "event_log",
+      "topic": "common-mistakes",
+      "file_path": "event_log_common-mistakes.json",
+      "saved_at": "2026-01-23T13:38:59.056532",
+      "source": "fuzzy_match"
+    },
+    "event_log:usage": {
+      "library": "event_log",
+      "topic": "usage",
+      "file_path": "event_log_usage.json",
+      "saved_at": "2026-01-23T13:39:02.508340",
+      "source": "api"
+    },
+    "event_log:examples": {
+      "library": "event_log",
+      "topic": "examples",
+      "file_path": "event_log_examples.json",
+      "saved_at": "2026-01-23T13:39:02.625803",
+      "source": "fuzzy_match"
+    },
+    "packaging": {
+      "library": "packaging",
+      "topic": null,
+      "file_path": "packaging.json",
+      "saved_at": "2026-01-24T12:14:38.530400",
+      "source": "cache"
+    },
+    "aiohttp": {
+      "library": "aiohttp",
+      "topic": null,
+      "file_path": "aiohttp.json",
+      "saved_at": "2026-01-24T12:14:38.724714",
+      "source": "cache"
+    },
+    "pyyaml": {
+      "library": "pyyaml",
+      "topic": null,
+      "file_path": "pyyaml.json",
+      "saved_at": "2026-01-24T12:14:38.886579",
+      "source": "cache"
+    },
+    "pytest-xdist": {
+      "library": "pytest-xdist",
+      "topic": null,
+      "file_path": "pytest-xdist.json",
+      "saved_at": "2026-01-24T12:14:39.186160",
+      "source": "fuzzy_match"
+    },
+    "jinja2": {
+      "library": "jinja2",
+      "topic": null,
+      "file_path": "jinja2.json",
+      "saved_at": "2026-01-24T12:14:39.412755",
+      "source": "cache"
+    },
+    "pytest-cov": {
+      "library": "pytest-cov",
+      "topic": null,
+      "file_path": "pytest-cov.json",
+      "saved_at": "2026-01-24T12:14:39.610066",
+      "source": "fuzzy_match"
+    },
+    "coverage": {
+      "library": "coverage",
+      "topic": null,
+      "file_path": "coverage.json",
+      "saved_at": "2026-01-24T12:14:39.748045",
+      "source": "cache"
+    },
+    "pytest-rich": {
+      "library": "pytest-rich",
+      "topic": null,
+      "file_path": "pytest-rich.json",
+      "saved_at": "2026-01-24T12:14:39.957468",
+      "source": "fuzzy_match"
+    },
+    "pytest-html": {
+      "library": "pytest-html",
+      "topic": null,
+      "file_path": "pytest-html.json",
+      "saved_at": "2026-01-24T12:14:40.078096",
+      "source": "cache"
+    },
+    "plotly": {
+      "library": "plotly",
+      "topic": null,
+      "file_path": "plotly.json",
+      "saved_at": "2026-01-24T12:14:40.217755",
+      "source": "cache"
+    },
+    "radon": {
+      "library": "radon",
+      "topic": null,
+      "file_path": "radon.json",
+      "saved_at": "2026-01-24T12:14:40.343595",
+      "source": "cache"
+    },
+    "pip-audit": {
+      "library": "pip-audit",
+      "topic": null,
+      "file_path": "pip-audit.json",
+      "saved_at": "2026-01-24T12:14:40.555323",
+      "source": "fuzzy_match"
+    },
+    "bandit": {
+      "library": "bandit",
+      "topic": null,
+      "file_path": "bandit.json",
+      "saved_at": "2026-01-24T12:14:40.692771",
+      "source": "cache"
+    },
+    "pylint": {
+      "library": "pylint",
+      "topic": null,
+      "file_path": "pylint.json",
+      "saved_at": "2026-01-24T12:14:40.915838",
+      "source": "fuzzy_match"
+    },
+    "pydantic": {
+      "library": "pydantic",
+      "topic": null,
+      "file_path": "pydantic.json",
+      "saved_at": "2026-01-24T12:14:41.126896",
+      "source": "fuzzy_match"
+    },
+    "aiofiles": {
+      "library": "aiofiles",
+      "topic": null,
+      "file_path": "aiofiles.json",
+      "saved_at": "2026-01-24T12:14:41.333848",
+      "source": "fuzzy_match"
+    },
+    "mypy": {
+      "library": "mypy",
+      "topic": null,
+      "file_path": "mypy.json",
+      "saved_at": "2026-01-24T12:14:41.484028",
+      "source": "cache"
+    },
+    "psutil": {
+      "library": "psutil",
+      "topic": null,
+      "file_path": "psutil.json",
+      "saved_at": "2026-01-24T12:14:41.709124",
+      "source": "fuzzy_match"
+    },
+    "pytest-asyncio": {
+      "library": "pytest-asyncio",
+      "topic": null,
+      "file_path": "pytest-asyncio.json",
+      "saved_at": "2026-01-24T12:14:41.955103",
+      "source": "fuzzy_match"
+    },
+    "pytest-mock": {
+      "library": "pytest-mock",
+      "topic": null,
+      "file_path": "pytest-mock.json",
+      "saved_at": "2026-01-24T12:14:42.153092",
+      "source": "fuzzy_match"
+    },
+    "ruff": {
+      "library": "ruff",
+      "topic": null,
+      "file_path": "ruff.json",
+      "saved_at": "2026-01-24T12:14:42.286493",
+      "source": "cache"
+    },
+    "pytest-sugar": {
+      "library": "pytest-sugar",
+      "topic": null,
+      "file_path": "pytest-sugar.json",
+      "saved_at": "2026-01-24T12:14:42.495098",
+      "source": "fuzzy_match"
+    },
+    "pip-tools": {
+      "library": "pip-tools",
+      "topic": null,
+      "file_path": "pip-tools.json",
+      "saved_at": "2026-01-24T12:14:42.720805",
+      "source": "fuzzy_match"
+    },
+    "types-pyyaml": {
+      "library": "types-pyyaml",
+      "topic": null,
+      "file_path": "types-pyyaml.json",
+      "saved_at": "2026-01-24T12:14:42.937005",
+      "source": "fuzzy_match"
+    },
+    "pytest-timeout": {
+      "library": "pytest-timeout",
+      "topic": null,
+      "file_path": "pytest-timeout.json",
+      "saved_at": "2026-01-24T12:14:43.203629",
+      "source": "fuzzy_match"
+    },
+    "httpx": {
+      "library": "httpx",
+      "topic": null,
+      "file_path": "httpx.json",
+      "saved_at": "2026-01-24T12:14:43.423246",
+      "source": "fuzzy_match"
+    },
+    "rich": {
+      "library": "rich",
+      "topic": null,
+      "file_path": "rich.json",
+      "saved_at": "2026-01-24T12:14:43.570483",
+      "source": "cache"
+    },
+    "pytest": {
+      "library": "pytest",
+      "topic": null,
+      "file_path": "pytest.json",
+      "saved_at": "2026-01-24T12:14:43.772730",
+      "source": "fuzzy_match"
+    },
+    "black": {
+      "library": "black",
+      "topic": null,
+      "file_path": "black.json",
+      "saved_at": "2026-01-24T12:14:43.921280",
+      "source": "cache"
+    },
+    "pytest:quality-standards": {
+      "library": "pytest",
+      "topic": "quality-standards",
+      "file_path": "pytest_quality-standards.json",
+      "saved_at": "2026-01-24T12:19:36.913770",
+      "source": "fuzzy_match"
+    },
+    "pytest:testing": {
+      "library": "pytest",
+      "topic": "testing",
+      "file_path": "pytest_testing.json",
+      "saved_at": "2026-01-24T12:20:20.618748",
+      "source": "fuzzy_match"
+    }
+  },
+  "comprehensive_index": {
+    "libraries": {
+      "__future__": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "event_log": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "packaging": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "aiohttp": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pyyaml": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-xdist": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "jinja2": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-cov": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "coverage": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-rich": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-html": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "plotly": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "radon": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pip-audit": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "bandit": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pylint": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pydantic": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "aiofiles": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "mypy": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "psutil": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-asyncio": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-mock": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "ruff": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-sugar": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pip-tools": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "types-pyyaml": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest-timeout": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "httpx": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "rich": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "pytest": {
+        "topics": [
+          "quality-standards",
+          "testing"
+        ],
+        "total_docs": 3
+      },
+      "black": {
+        "topics": [],
+        "total_docs": 1
+      }
+    },
+    "topics": {
+      "best-practices": [
+        "__future__",
+        "event_log"
+      ],
+      "common-mistakes": [
+        "__future__",
+        "event_log"
+      ],
+      "usage": [
+        "__future__",
+        "event_log"
+      ],
+      "examples": [
+        "__future__",
+        "event_log"
+      ],
+      "quality-standards": [
+        "pytest"
+      ],
+      "testing": [
+        "pytest"
+      ]
+    },
+    "total_entries": 39,
+    "last_updated": "2026-01-24T12:20:20.618774"
+  },
+  "last_updated": "2026-01-24T12:20:20.618856"
+}

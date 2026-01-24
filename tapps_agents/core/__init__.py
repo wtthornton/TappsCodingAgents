@@ -166,6 +166,12 @@ from .visual_feedback import (
 from .visual_feedback import (
     RenderingMode as VisualRenderingMode,
 )
+from .outcome_tracker import CodeOutcome, OutcomeTracker
+from .adaptive_scoring import AdaptiveScoringEngine
+from .llm_communicator import LLMCommunicator, LLMHint
+from .predictive_gates import FirstPassPrediction, PredictiveQualityGates
+from .prompt_quality import PromptQualityAnalyzer, PromptQualityScore
+from .iteration_reducer import IterationPattern, IterationReducer
 
 __all__ = [
     "BaseAgent",
@@ -277,4 +283,16 @@ __all__ = [
     "AnonymizationReport",
     "ExportSchema",
     "ValidationResult",
+    # Adaptive Learning Components
+    "OutcomeTracker",
+    "CodeOutcome",
+    "AdaptiveScoringEngine",
+    "LLMCommunicator",
+    "LLMHint",
+    "PredictiveQualityGates",
+    "FirstPassPrediction",
+    "PromptQualityAnalyzer",
+    "PromptQualityScore",
+    "IterationReducer",
+    "IterationPattern",
 ]

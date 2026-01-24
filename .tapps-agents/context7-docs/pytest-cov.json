@@ -1,0 +1,12 @@
+{
+  "library": "pytest-cov",
+  "topic": null,
+  "documentation": {
+    "content": "## Build Project Documentation (Tox)\n\n```bash\n$ tox -e docs\n```\n\n## Setup Hatch Environment and Pre-commit Hooks\n\n```bash\n$ hatch -e test run pre-commit install\n```\n\n## Install Pre-commit Hooks without Hatch\n\n```bash\n$ pip install pre-commit\n$ pre-commit install\n```\n\n## Install pytest-html from source\n\n```bash\n$ pip install -e .\n```\n\n## Alternative: Wrapping py.xml.html output in str()\n\n```python\nimport pytest\nfrom py.xml import html\n\n\ndef pytest_html_results_table_header(cells):\n    cells.insert(2, str(html.th(\"Description\")))\n    cells.insert(\n        1, str(html.th(\"Time\", class_=\"sortable time\", data_column_type=\"time\"))\n    )\n```\n\n## Install and Run Python Tests with Tox\n\n```bash\n$ pip install tox\n$ tox\n```\n\n## Build SASS/SCSS/CSS Assets (npm)\n\n```bash\n$ npm run build\n```\n\n## Generate Self-Contained Pytest HTML Report\n\n```bash\n$ pytest --html=report.html --self-contained-html\n```\n\n## Pytest HTML Extras Content Functions\n\n```APIDOC\npytest_html.extras.url(url: str, name: str = None)\npytest_html.extras.html(html_content: str)\npytest_html.extras.text(text_content: str, name: str = None)\n```\n\n## pytest-html Plugin Hooks API Reference\n\n```APIDOC\nHooks\n~~~~~\n\n.. automodule:: pytest_html.hooks\n   :members:\n```",
+    "library": "pytest-html",
+    "topic": "overview",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-24T12:14:39.609376"
+}

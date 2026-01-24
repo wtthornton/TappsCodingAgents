@@ -89,72 +89,6 @@ Evaluate a specific workflow execution.
 - Artifact verification
 - Deviation identification
 
-### `*submit-feedback [--file <path>] [--rating <metric>=<value>...] [--suggestion <text>...]`
-
-Submit external feedback about framework performance from external projects.
-
-**Example:**
-```
-@evaluator *submit-feedback --rating overall=8.5 --rating usability=7.0 --suggestion "Improve error messages"
-@evaluator *submit-feedback --file feedback.json
-```
-
-**Parameters:**
-- `--file <path>` (optional): JSON file containing feedback data
-- `--rating <metric>=<value>` (optional): Performance rating (e.g., `overall=8.5`, `usability=7.0`)
-- `--suggestion <text>` (optional): Improvement suggestion
-- `--workflow-id <id>` (optional): Associated workflow ID
-- `--agent-id <id>` (optional): Associated agent ID
-- `--task-type <type>` (optional): Task type (e.g., `build`, `fix`, `review`)
-- `--project-id <id>` (optional): Project identifier
-- `--metric <key>=<value>` (optional): Performance metric (e.g., `execution_time_seconds=45.2`)
-
-**Output:**
-- Feedback ID (UUID)
-- Timestamp
-- File path where feedback was saved
-- Success confirmation
-
-**Note:** At least one rating and one suggestion is required (unless using `--file`).
-
-### `*get-feedback <feedback-id>`
-
-Retrieve feedback by ID.
-
-**Example:**
-```
-@evaluator *get-feedback abc123-def456-ghi789
-```
-
-**Parameters:**
-- `feedback-id` (required): Feedback UUID to retrieve
-
-**Output:**
-- Complete feedback data including ratings, suggestions, context, and metrics
-- Timestamp and metadata
-
-### `*list-feedback [--workflow-id <id>] [--agent-id <id>] [--start-date <iso>] [--end-date <iso>] [--limit <n>]`
-
-List feedback entries with optional filtering.
-
-**Example:**
-```
-@evaluator *list-feedback --workflow-id workflow-123 --limit 10
-@evaluator *list-feedback --start-date 2025-01-01T00:00:00Z --end-date 2025-01-31T23:59:59Z
-```
-
-**Parameters:**
-- `--workflow-id <id>` (optional): Filter by workflow ID
-- `--agent-id <id>` (optional): Filter by agent ID
-- `--start-date <iso>` (optional): Filter by start date (ISO format)
-- `--end-date <iso>` (optional): Filter by end date (ISO format)
-- `--limit <n>` (optional): Maximum number of entries to return
-
-**Output:**
-- List of feedback entries matching filters
-- Entry count
-- Summary information for each entry
-
 ### `*help`
 
 Show available commands and usage.
@@ -204,11 +138,7 @@ Reports follow this structure:
 
 **Standalone Execution:**
 - `@evaluator *evaluate` - Run full evaluation
-- `@evaluator *submit-feedback` - Submit external feedback
-- `@evaluator *get-feedback <id>` - Retrieve feedback by ID
-- `@evaluator *list-feedback` - List feedback entries
 - `tapps-agents evaluator evaluate` - CLI command
-- `tapps-agents evaluator submit-feedback` - CLI command for feedback submission
 
 **Workflow Integration:**
 - Can be added as optional end step in *build, *full workflows
@@ -235,9 +165,8 @@ Reports are saved to:
 
 ## Constraints
 
-- **Read-only for evaluation** - evaluation commands do not modify code (only generates reports)
-- **Write access for feedback** - feedback commands (`*submit-feedback`, `*get-feedback`, `*list-feedback`) save/read feedback data to `.tapps-agents/feedback/`
-- **Offline operation** - no network required for evaluation or feedback storage
+- **Read-only agent** - does not modify code or files (only generates reports)
+- **Offline operation** - no network required for evaluation
 - **Data-driven** - analysis based on available workflow state and usage data
 - **Framework-focused** - evaluates TappsCodingAgents itself, not user code
 
