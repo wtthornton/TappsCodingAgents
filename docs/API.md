@@ -300,12 +300,17 @@ The enhancer agent now provides complete output with all stage data:
 The enhancer now displays:
 - **Analysis**: Intent, scope, workflow type, complexity, domains, technologies (all fields properly populated with fallback mechanism for reliability)
 - **Requirements**: Gathered requirements from analyst and experts
+  - **Expert Consultations**: Domain-specific knowledge from Industry Experts with confidence metrics
+  - **Library Best Practices**: Context7 documentation and best practices integrated
+  - **API Compatibility**: Status of library documentation availability
 - **Architecture Guidance**: Architecture recommendations and patterns
+  - **Library Patterns**: Library-specific architecture patterns from Context7
+  - **Integration Examples**: Specific integration examples for detected libraries
 - **Codebase Context**: Related files and detected patterns
 - **Quality Standards**: Quality thresholds and standards
 - **Implementation Strategy**: Step-by-step implementation plan
 
-### Example Output
+### Example Output (Enhanced with Expert Information)
 ```markdown
 # Enhanced Prompt: Create a user authentication feature
 
@@ -315,26 +320,112 @@ The enhancer now displays:
 - **Workflow Type**: greenfield
 - **Complexity**: medium
 - **Detected Domains**: security, user-management
+- **Detected Libraries**: FastAPI, JWT, bcrypt
 
 ## Requirements
-1. Requirement 1: User authentication
-2. Requirement 2: Password hashing
+
+### Functional Requirements
+1. User authentication with email/password
+2. Password hashing using bcrypt
+3. JWT token generation and validation
+4. Session management
+
+### Domain Context (from Industry Experts)
+
+#### Security Domain
+**Confidence**: 92.5%
+**Agreement**: 88.3%
+**Primary Expert**: security-expert
+**Total Experts Consulted**: 3
+
+**Weighted Consensus Answer**:
+For user authentication systems, implement:
+- Password hashing with bcrypt (cost factor 12+)
+- JWT tokens with short expiration (15 min access, 7 day refresh)
+- Rate limiting on login endpoints
+- Account lockout after 5 failed attempts
+- Multi-factor authentication for sensitive operations
+
+**Individual Expert Responses**:
+1. **security-expert** (confidence: 95.0%):
+   Use bcrypt with cost factor 12+, implement rate limiting, add MFA for admin accounts
+2. **authentication-expert** (confidence: 90.0%):
+   JWT with refresh tokens, implement token rotation, secure cookie storage
+3. **compliance-expert** (confidence: 88.0%):
+   Ensure GDPR compliance for user data, implement audit logging
+
+### Library Best Practices (from Context7)
+
+#### FastAPI
+**Source**: Context7 KB Cache
+**Best Practices Preview**:
+```python
+# Use dependency injection for authentication
+from fastapi import Depends, HTTPException
+from fastapi.security import HTTPBearer
+
+security = HTTPBearer()
+
+async def get_current_user(token: str = Depends(security)):
+    # Validate JWT token
+    ...
+```
+
+#### JWT
+**Source**: Context7 KB Cache
+**Best Practices Preview**:
+- Use HS256 or RS256 algorithms
+- Set appropriate expiration times
+- Include user ID and roles in payload
+- Validate token signature and expiration
+
+### API Compatibility Status
+- ✅ **FastAPI**: Docs=true, Best Practices=true
+- ✅ **JWT**: Docs=true, Best Practices=true
+- ✅ **bcrypt**: Docs=true, Best Practices=true
 
 ## Architecture Guidance
-Use FastAPI with JWT tokens
-Patterns: REST API, JWT
+
+### System Design
+- **Architecture Pattern**: REST API with JWT authentication
+- **Database**: PostgreSQL for user storage
+- **Caching**: Redis for session management
+
+### Library-Specific Architecture Patterns (from Context7)
+
+#### FastAPI
+**Recommended Patterns**:
+- **Dependency Injection Pattern**: Use FastAPI dependencies for authentication
+- **Router Organization**: Organize routes by domain (auth, users, etc.)
+- **Middleware Pattern**: Use middleware for request logging and error handling
+
+#### JWT
+**Recommended Patterns**:
+- **Token Refresh Pattern**: Separate access and refresh tokens
+- **Token Rotation**: Rotate refresh tokens on use
+- **Blacklist Pattern**: Maintain token blacklist for logout
+
+### Integration Examples (from Context7)
+
+#### FastAPI + JWT
+1. **JWT Authentication Middleware**: FastAPI dependency for JWT validation
+2. **Token Refresh Endpoint**: Endpoint to refresh expired access tokens
+3. **Protected Route Example**: Example of protecting routes with JWT
 
 ## Codebase Context
 Related Files: auth.py, models.py
-Patterns: MVC
+Patterns: MVC, Dependency Injection
 
 ## Quality Standards
 Standards: PEP 8, Type hints
-Thresholds: complexity < 5.0
+Thresholds: complexity < 5.0, security score ≥ 8.0
 
 ## Implementation Strategy
-Step 1: Create auth module
-Step 2: Add JWT handling
+Step 1: Create auth module with bcrypt password hashing
+Step 2: Implement JWT token generation and validation
+Step 3: Add FastAPI authentication dependencies
+Step 4: Create protected route examples
+Step 5: Add rate limiting and account lockout
 ```
 
 ## Evaluator Agent

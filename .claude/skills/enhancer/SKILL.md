@@ -65,9 +65,18 @@ Full enhancement pipeline through all stages.
 - Uses cached docs for accurate prompt enhancement
 
 **Industry Experts:**
-- Auto-consults relevant domain experts
+- Auto-consults relevant domain experts with comprehensive 7-area queries
 - Uses weighted decision (51% primary expert, 49% split)
-- Incorporates domain-specific knowledge
+- Tracks all experts consulted (not just primary)
+- Includes individual expert responses for full transparency
+- Incorporates domain-specific knowledge covering:
+  - Domain-specific requirements and business rules
+  - Best practices and patterns
+  - Common pitfalls and how to avoid them
+  - Technical constraints and considerations
+  - Integration patterns with other systems
+  - Security and compliance considerations
+  - Performance and scalability recommendations
 
 **Output Format:**
 ```markdown
@@ -86,11 +95,46 @@ Full enhancement pipeline through all stages.
 ### Non-Functional Requirements
 1. {requirement}
 
-## Domain Context (from experts)
-- {expert}: {insight}
+## Domain Context (from Industry Experts)
+### {domain} Domain
+**Confidence**: {confidence}%
+**Agreement**: {agreement}%
+**Primary Expert**: {primary_expert}
+**Total Experts Consulted**: {count}
+
+**Weighted Consensus Answer**:
+{weighted_answer}
+
+**Individual Expert Responses**:
+1. **{expert_name}** (confidence: {confidence}%):
+   {answer}
+2. **{expert_name}** (confidence: {confidence}%):
+   {answer}
+
+### Library Best Practices (from Context7)
+#### {library}
+**Source**: {source}
+**Best Practices Preview**:
+```
+{content_preview}
+```
+
+### API Compatibility Status
+- ✅ **{library}**: Docs={available}, Best Practices={available}
 
 ## Architecture Guidance
 - {guidance}
+
+### Library-Specific Architecture Patterns (from Context7)
+#### {library}
+**Recommended Patterns**:
+- **{pattern_name}**: {pattern_description}
+- **{pattern_name}**: {pattern_description}
+
+### Integration Examples (from Context7)
+#### {library}
+1. **{example_name}**: {example_description}
+2. **{example_name}**: {example_description}
 
 ## Quality Standards
 - Security: {security_requirements}

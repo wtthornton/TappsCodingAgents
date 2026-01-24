@@ -894,23 +894,51 @@ Provide structured JSON response with the following format:
         if self.expert_registry and domains:
             for domain in domains:
                 try:
+                    # Comprehensive query to get all relevant expert knowledge
+                    comprehensive_query = (
+                        f"Based on the following prompt, provide comprehensive domain-specific guidance:\n\n"
+                        f"Prompt: {prompt}\n\n"
+                        f"Please provide:\n"
+                        f"1. Domain-specific requirements and business rules\n"
+                        f"2. Best practices and patterns for this domain\n"
+                        f"3. Common pitfalls and how to avoid them\n"
+                        f"4. Technical constraints and considerations\n"
+                        f"5. Integration patterns with other systems\n"
+                        f"6. Security and compliance considerations\n"
+                        f"7. Performance and scalability recommendations\n\n"
+                        f"Context from analysis: {analysis.get('analysis', '')[:500]}"
+                    )
+                    
                     consultation = await self.expert_registry.consult(
-                        query=f"What are the domain-specific requirements, business rules, and best practices for: {prompt}",
+                        query=comprehensive_query,
                         domain=domain,
-                        include_all=True,
+                        include_all=True,  # Consult all experts in the domain
                     )
                     expert_consultations[domain] = {
                         "weighted_answer": consultation.weighted_answer,
                         "confidence": consultation.confidence,
                         "agreement_level": consultation.agreement_level,
                         "primary_expert": consultation.primary_expert,
+                        "all_experts_consulted": len(consultation.responses) if consultation.responses else 0,
                         "sources": [
                             r.get("sources", []) for r in consultation.responses
                         ],
+                        # Include individual expert responses for transparency
+                        "expert_responses": [
+                            {
+                                "expert": r.get("expert", "unknown"),
+                                "answer": r.get("answer", "")[:500] if r.get("answer") else "",
+                                "confidence": r.get("confidence", 0),
+                            }
+                            for r in consultation.responses[:3]  # Top 3 expert responses
+                        ] if consultation.responses else [],
                     }
-                except Exception:
                     logger.debug(
-                        "Expert consultation optional; continuing without it",
+                        f"Consulted {len(consultation.responses) if consultation.responses else 0} experts for domain {domain}"
+                    )
+                except Exception as e:
+                    logger.debug(
+                        f"Expert consultation failed for domain {domain}: {e}",
                         exc_info=True,
                     )
 
@@ -1503,10 +1531,48 @@ Provide structured JSON response with the following format:
     def _build_synthesis_prompt(
         self, prompt: str, stages: dict[str, Any]
     ) -> str:
-        """Build synthesis prompt from stages."""
+        """Build synthesis prompt from stages with explicit emphasis on expert information."""
+        # Extract expert information for emphasis
+        requirements = stages.get('requirements', {})
+        expert_consultations = requirements.get('expert_consultations', {})
+        library_best_practices = requirements.get('library_best_practices', {})
+        architecture = stages.get('architecture', {})
+        library_patterns = architecture.get('library_patterns', {})
+        
+        # Build expert information summary
+        expert_summary = []
+        if expert_consultations:
+            expert_summary.append(f"\n⚠️ CRITICAL: Expert Consultations Available ({len(expert_consultations)} domains)")
+            for domain, consultation in expert_consultations.items():
+                expert_summary.append(f"  - {domain}: {consultation.get('primary_expert', 'unknown')} (confidence: {consultation.get('confidence', 0):.2%})")
+                weighted_answer = consultation.get('weighted_answer', '')
+                if weighted_answer:
+                    expert_summary.append(f"    Key insight: {weighted_answer[:200]}...")
+        
+        if library_best_practices:
+            expert_summary.append(f"\n⚠️ CRITICAL: Library Best Practices Available ({len(library_best_practices)} libraries)")
+            for lib, practices in library_best_practices.items():
+                expert_summary.append(f"  - {lib}: {practices.get('source', 'unknown')}")
+        
+        if library_patterns:
+            expert_summary.append(f"\n⚠️ CRITICAL: Architecture Patterns Available ({len(library_patterns)} libraries)")
+            for lib, patterns in library_patterns.items():
+                expert_summary.append(f"  - {lib}: {len(patterns.get('patterns', []))} patterns")
+        
+        expert_info = "\n".join(expert_summary) if expert_summary else ""
+        
         return f"""Synthesize an enhanced prompt from the following analysis:
 
 Original Prompt: {prompt}
+
+{expert_info}
+
+⚠️ MANDATORY REQUIREMENTS FOR SYNTHESIS:
+1. **MUST prominently include ALL expert consultations** - Domain-specific knowledge from Industry Experts is critical
+2. **MUST include ALL library best practices** - Context7 documentation and best practices must be integrated
+3. **MUST include ALL architecture patterns** - Library-specific patterns and integration examples are essential
+4. **MUST preserve expert confidence and agreement metrics** - Include confidence levels and primary expert information
+5. **MUST synthesize expert knowledge into actionable requirements** - Don't just list, integrate expert insights into the prompt
 
 Analysis: {self._safe_json_dumps(stages.get('analysis', {}), indent=2)}
 Requirements: {self._safe_json_dumps(stages.get('requirements', {}), indent=2)}
@@ -1514,7 +1580,12 @@ Architecture: {self._safe_json_dumps(stages.get('architecture', {}), indent=2)}
 Quality: {self._safe_json_dumps(stages.get('quality', {}), indent=2)}
 Implementation: {self._safe_json_dumps(stages.get('implementation', {}), indent=2)}
 
-Create a comprehensive, context-aware enhanced prompt that includes all relevant information."""
+Create a comprehensive, context-aware enhanced prompt that:
+- **Prominently features expert consultations** in a dedicated "Domain Context from Experts" section
+- **Integrates library best practices** directly into requirements and architecture guidance
+- **Includes architecture patterns** with specific library integration examples
+- **Preserves all expert knowledge** including confidence levels, agreement metrics, and sources
+- **Makes expert insights actionable** by converting them into specific requirements and implementation guidance"""
 
     async def _stage_synthesis(
         self, prompt: str, stages: dict[str, Any], output_format: str
@@ -1990,11 +2061,58 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
                     lines.append(
                         f"**Primary Expert**: {consultation.get('primary_expert', 'unknown')}"
                     )
+                    all_experts_count = consultation.get('all_experts_consulted', 0)
+                    if all_experts_count > 0:
+                        lines.append(
+                            f"**Total Experts Consulted**: {all_experts_count}"
+                        )
                     lines.append("")
+                    
+                    # Weighted consensus answer (primary)
                     weighted_answer = consultation.get("weighted_answer", "")
                     if weighted_answer:
+                        lines.append("**Weighted Consensus Answer**:")
                         lines.append(weighted_answer)
+                        lines.append("")
+                    
+                    # Individual expert responses (for transparency)
+                    expert_responses = consultation.get("expert_responses", [])
+                    if expert_responses:
+                        lines.append("**Individual Expert Responses**:")
+                        for i, expert_response in enumerate(expert_responses, 1):
+                            expert_name = expert_response.get("expert", "unknown")
+                            expert_answer = expert_response.get("answer", "")
+                            expert_confidence = expert_response.get("confidence", 0)
+                            lines.append(f"{i}. **{expert_name}** (confidence: {expert_confidence:.2%}):")
+                            if expert_answer:
+                                lines.append(f"   {expert_answer}")
+                            lines.append("")
                     lines.append("")
+            
+            # Library Best Practices (from Context7)
+            if reqs.get("library_best_practices"):
+                lines.append("### Library Best Practices (from Context7)")
+                for lib, practices in reqs["library_best_practices"].items():
+                    lines.append(f"#### {lib}")
+                    source = practices.get("source", "unknown")
+                    lines.append(f"**Source**: {source}")
+                    content_preview = practices.get("content_preview", "")
+                    if content_preview:
+                        lines.append("**Best Practices Preview**:")
+                        lines.append("```")
+                        lines.append(content_preview)
+                        lines.append("```")
+                    lines.append("")
+            
+            # API Compatibility Information
+            if reqs.get("api_compatibility"):
+                lines.append("### API Compatibility Status")
+                for lib, compat_info in reqs["api_compatibility"].items():
+                    docs_available = compat_info.get("docs_available", False)
+                    best_practices_available = compat_info.get("best_practices_available", False)
+                    status = "✅" if (docs_available and best_practices_available) else "⚠️" if docs_available else "❌"
+                    lines.append(f"- {status} **{lib}**: Docs={docs_available}, Best Practices={best_practices_available}")
+                lines.append("")
 
         # Architecture section with all content
         if "architecture" in stages:
@@ -2035,6 +2153,37 @@ Create a comprehensive, context-aware enhanced prompt that includes all relevant
                 for tech in arch["technology_recommendations"]:
                     lines.append(f"- {tech}")
                 lines.append("")
+            
+            # Library Patterns (from Context7)
+            if arch.get("library_patterns"):
+                lines.append("### Library-Specific Architecture Patterns (from Context7)")
+                for lib, patterns_info in arch["library_patterns"].items():
+                    lines.append(f"#### {lib}")
+                    patterns = patterns_info.get("patterns", [])
+                    if patterns:
+                        lines.append("**Recommended Patterns**:")
+                        for pattern in patterns[:5]:  # Limit to top 5 patterns
+                            pattern_name = pattern.get("name", "Unknown Pattern")
+                            pattern_desc = pattern.get("description", "")
+                            lines.append(f"- **{pattern_name}**: {pattern_desc}")
+                    else:
+                        lines.append("*No specific patterns found for this library.*")
+                    lines.append("")
+            
+            # Integration Examples (from Context7)
+            if arch.get("integration_examples"):
+                lines.append("### Integration Examples (from Context7)")
+                for lib, examples_info in arch["integration_examples"].items():
+                    lines.append(f"#### {lib}")
+                    examples = examples_info.get("examples", [])
+                    if examples:
+                        for example in examples[:3]:  # Limit to top 3 examples
+                            example_name = example.get("name", "Unknown Example")
+                            example_desc = example.get("description", "")
+                            lines.append(f"- **{example_name}**: {example_desc}")
+                    else:
+                        lines.append("*No integration examples found for this library.*")
+                    lines.append("")
 
         # Codebase Context section
         if "codebase_context" in stages:
