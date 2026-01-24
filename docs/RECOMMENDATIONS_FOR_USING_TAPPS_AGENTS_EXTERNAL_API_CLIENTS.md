@@ -24,7 +24,7 @@ You want to: "Review this API client code, compare it to our existing patterns, 
    ```cursor
    @simple-mode *review <file>
    ```
-   - Save your code to a file first (e.g. `site24x7_client.py`)
+   - Save your code to a file first (e.g. `scripts/site24x7_client.py`)
    - This provides quality scores and feedback
 
 2. **Then, fix based on review:**
@@ -109,12 +109,12 @@ You pasted code in chat and want to review/fix it, but `*review` and `*fix` expe
 ### Solutions
 
 #### Option A: Save to File First (Recommended)
-1. Create a file: `site24x7_client.py`
+1. Create a file: `scripts/site24x7_client.py`
 2. Paste your code
 3. Then use workflows:
    ```cursor
-   @simple-mode *review site24x7_client.py
-   @simple-mode *fix site24x7_client.py "description"
+   @simple-mode *review scripts/site24x7_client.py
+   @simple-mode *fix scripts/site24x7_client.py "description"
    ```
 
 #### Option B: Use Build Workflow
@@ -125,7 +125,7 @@ If it's a new feature, use `*build` which can work with descriptions:
 
 #### Option C: Ask AI to Create File First
 ```cursor
-Create a file site24x7_client.py with this code: [paste]
+Create a file scripts/site24x7_client.py with this code: [paste]
 ```
 Then proceed with review/fix workflows.
 
@@ -184,12 +184,12 @@ For complex tasks, use multiple workflows:
 
 1. **Save code to file:**
    ```bash
-   # Create site24x7_client.py with your code
+   # Create scripts/site24x7_client.py with your code
    ```
 
 2. **Review for quality:**
    ```cursor
-   @simple-mode *review site24x7_client.py
+   @simple-mode *review scripts/site24x7_client.py
    ```
    - Get scores, linting, type checking
    - Note: Won't have Site24x7-specific knowledge, but will catch general issues
@@ -201,17 +201,17 @@ For complex tasks, use multiple workflows:
 
 4. **Apply improvements:**
    ```cursor
-   @implementer *refactor site24x7_client.py "Apply enhancements: add logging, use str | None, validate inputs, improve error messages"
+   @implementer *refactor scripts/site24x7_client.py "Apply enhancements: add logging, use str | None, validate inputs, improve error messages"
    ```
 
 5. **Generate tests:**
    ```cursor
-   @simple-mode *test site24x7_client.py
+   @simple-mode *test scripts/site24x7_client.py
    ```
 
 6. **Final review:**
    ```cursor
-   @simple-mode *review site24x7_client.py
+   @simple-mode *review scripts/site24x7_client.py
    ```
 
 ---

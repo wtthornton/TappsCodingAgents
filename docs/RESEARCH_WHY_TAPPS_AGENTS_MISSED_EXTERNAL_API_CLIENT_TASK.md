@@ -200,4 +200,4 @@ This can be done via:
 - Workflow enforcement: `docs/WORKFLOW_ENFORCEMENT_GUIDE.md`, `.cursor/rules/when-to-use.mdc`
 
 ### Example Output
-- Example improved client (from this task): `site24x7_client.py` in project root
+- Example improved client (from this task): `scripts/site24x7_client.py`

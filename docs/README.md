@@ -40,6 +40,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Core Concepts
 - **[Project Context](PROJECT_CONTEXT.md)** - Framework development vs. self-hosting
+- **[Project Structure](PROJECT_STRUCTURE.md)** - File organization and cleanup best practices
 - **[How It Works (Cursor-first)](HOW_IT_WORKS.md)** - The "brain vs hands" model, directories, and runtime policy
 - **[Architecture Overview](ARCHITECTURE.md)** - System architecture and key modules
 - **[YAML Workflow Architecture Design](YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)** - YAML-first architecture with generated artifacts (Epics 6-10 Complete)
