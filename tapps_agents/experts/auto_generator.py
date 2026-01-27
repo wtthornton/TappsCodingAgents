@@ -9,13 +9,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import yaml
 
-from .expert_config import ExpertConfigModel
 from .expert_suggester import ExpertSuggestion
-from .weight_distributor import ExpertWeightMatrix, WeightDistributor
+from .weight_distributor import WeightDistributor
 
 logger = logging.getLogger(__name__)
 

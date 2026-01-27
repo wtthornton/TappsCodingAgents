@@ -13,13 +13,15 @@ import re
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..context7.agent_integration import Context7AgentHelper
 from .domain_detector import DomainStackDetector
 from .governance import GovernanceLayer, GovernancePolicy
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
+
+if TYPE_CHECKING:
+    from ..context7.agent_integration import Context7AgentHelper
 
 
 @dataclass

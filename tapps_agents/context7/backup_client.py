@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 
 _CONTEXT7_QUOTA_EXCEEDED: bool = False
 _CONTEXT7_QUOTA_MESSAGE: str | None = None
+_CONTEXT7_NOT_AVAILABLE_WARNED: bool = False
 
 
 def is_context7_quota_exceeded() -> bool:
@@ -721,14 +722,17 @@ def get_context7_client_with_fallback(
                 "AI assistant should use MCP tools directly."
             )
         else:
-            # R3: Clear error message for headless mode
-            logger.warning(
-                "Context7 not available: MCP tools not found and CONTEXT7_API_KEY not set. "
-                "To enable Context7:\n"
-                "  1. Set CONTEXT7_API_KEY environment variable, OR\n"
-                "  2. Configure Context7 MCP server\n"
-                "Continuing without Context7 functionality."
-            )
+            # R3: Clear error message for headless mode (only warn once)
+            global _CONTEXT7_NOT_AVAILABLE_WARNED
+            if not _CONTEXT7_NOT_AVAILABLE_WARNED:
+                logger.warning(
+                    "Context7 not available: MCP tools not found and CONTEXT7_API_KEY not set. "
+                    "To enable Context7:\n"
+                    "  1. Set CONTEXT7_API_KEY environment variable, OR\n"
+                    "  2. Configure Context7 MCP server\n"
+                    "Continuing without Context7 functionality."
+                )
+                _CONTEXT7_NOT_AVAILABLE_WARNED = True
         return mcp_gateway, False, "none", None, None
     
     resolve_client, get_docs_client = create_fallback_http_client()
