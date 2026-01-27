@@ -118,46 +118,73 @@ class ClawdbotIntegration:
         Score a file using the TappsCodingAgents reviewer.
         
         Args:
-            file_path: Path to the file to score (relative to project_root)
+            file_path: Path to the file to score (relative or absolute)
             
         Returns:
             ScoreResult with metrics and pass/fail status
         """
         from ..agents.reviewer import ReviewerAgent
         
-        full_path = self.project_root / file_path
+        # Handle relative paths
+        file_path = Path(file_path)
+        if not file_path.is_absolute():
+            full_path = self.project_root / file_path
+        else:
+            full_path = file_path
+            
         if not full_path.exists():
             raise FileNotFoundError(f"File not found: {full_path}")
         
-        reviewer = ReviewerAgent(project_root=self.project_root)
+        # ReviewerAgent uses default config when none provided
+        reviewer = ReviewerAgent()
         
         try:
-            # Run the scoring
-            result = await reviewer.score_file(str(full_path))
+            # Run the review with scoring enabled
+            result = await reviewer.review_file(
+                full_path, 
+                include_scoring=True,
+                include_llm_feedback=False  # Skip LLM for speed
+            )
             
-            # Extract scores
-            scores = result.get("scores", {})
+            # Extract scores from result (scores are in 'scoring' dict)
+            scoring = result.get("scoring", {})
             threshold = result.get("threshold", 70.0)
-            overall = result.get("overall_score", 0.0)
+            overall = scoring.get("overall_score", 0.0)
             
-            # Collect issues
+            # Collect issues from scoring dict
             issues = []
-            for issue in result.get("linting_issues", []):
-                issues.append(f"[LINT] {issue}")
-            for issue in result.get("type_issues", []):
-                issues.append(f"[TYPE] {issue}")
-            for issue in result.get("security_issues", []):
-                issues.append(f"[SEC] {issue}")
+            for issue in scoring.get("linting_issues", []):
+                if isinstance(issue, dict):
+                    issues.append(f"[LINT] L{issue.get('line', '?')}: {issue.get('message', str(issue))}")
+                else:
+                    issues.append(f"[LINT] {issue}")
+            for issue in scoring.get("type_issues", []):
+                if isinstance(issue, dict):
+                    issues.append(f"[TYPE] L{issue.get('line', '?')}: {issue.get('message', str(issue))}")
+                else:
+                    issues.append(f"[TYPE] {issue}")
+            
+            # Also include maintainability and performance issues
+            for issue in result.get("maintainability_issues", []):
+                if isinstance(issue, dict):
+                    issues.append(f"[MAINT] {issue.get('message', str(issue))}")
+                else:
+                    issues.append(f"[MAINT] {issue}")
+            for issue in result.get("performance_issues", []):
+                if isinstance(issue, dict):
+                    issues.append(f"[PERF] {issue.get('message', str(issue))}")
+                else:
+                    issues.append(f"[PERF] {issue}")
             
             return ScoreResult(
                 file_path=str(file_path),
                 overall_score=overall,
-                complexity=scores.get("complexity_score", 0.0),
-                security=scores.get("security_score", 0.0),
-                maintainability=scores.get("maintainability_score", 0.0),
-                linting=scores.get("linting_score", 0.0),
-                type_checking=scores.get("type_checking_score", 0.0),
-                passed=overall >= threshold,
+                complexity=scoring.get("complexity_score", 0.0),
+                security=scoring.get("security_score", 0.0),
+                maintainability=scoring.get("maintainability_score", 0.0),
+                linting=scoring.get("linting_score", 0.0),
+                type_checking=scoring.get("type_checking_score", 0.0),
+                passed=result.get("passed", overall >= threshold),
                 threshold=threshold,
                 issues=issues[:20],  # Limit to first 20 issues
                 timestamp=datetime.now().isoformat()
