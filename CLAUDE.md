@@ -204,6 +204,106 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 - **Security Score:** ≥ 8.5 (critical for framework security)
 - **Test Coverage:** ≥ 80% for core modules
 
+## Workflow Presets - Choose the Right Level
+
+**TappsCodingAgents provides 4 workflow presets to match task complexity. Using the right preset saves time and tokens!**
+
+### ⚡ Minimal (2 steps, ~5 min, ~15K tokens)
+
+**Best for:** Simple fixes, typos, documentation updates
+
+```bash
+@simple-mode *fix "description" --preset minimal
+tapps-agents simple-mode fix --prompt "description" --preset minimal
+```
+
+**Steps:** Implement → Test
+**Use when:** Clear requirements, low risk, quick change
+
+**Examples:**
+- Fix typo in docstring
+- Add logging statement
+- Update configuration value
+- Simple bug fix with obvious solution
+
+---
+
+### ⚙️ Standard (4 steps, ~15 min, ~30K tokens) **[DEFAULT]**
+
+**Best for:** Regular features, bug fixes, refactoring
+
+```bash
+@simple-mode *build "description"  # Default preset
+tapps-agents simple-mode build --prompt "description"
+```
+
+**Steps:** Plan → Implement → Review → Test
+**Use when:** Most development tasks, typical features
+
+**Examples:**
+- Add new API endpoint
+- Implement validation logic
+- Refactor existing function
+- Add new feature with tests
+
+---
+
+### 🎯 Comprehensive (7 steps, ~45 min, ~60K tokens)
+
+**Best for:** Complex features, API changes, security-sensitive code
+
+```bash
+@simple-mode *build "description" --preset comprehensive
+tapps-agents simple-mode build --prompt "description" --preset comprehensive
+```
+
+**Steps:** Enhance → Analyze → Plan → Design → Implement → Review → Test
+**Use when:** High complexity, multiple stakeholders, critical functionality
+
+**Examples:**
+- New authentication system
+- Database schema changes
+- Public API design
+- Multi-component features
+
+---
+
+### 🏗️ Full SDLC (9 steps, ~2 hours, ~80K tokens)
+
+**Best for:** Framework development, major architectural changes
+
+```bash
+@simple-mode *full "description"
+tapps-agents simple-mode full --prompt "description" --auto
+```
+
+**Steps:** Full Comprehensive + Architecture + Security + Documentation
+**Use when:** Modifying `tapps_agents/` package, breaking changes, framework development
+
+**Examples:**
+- Add new agent to framework
+- Modify workflow engine
+- Security-critical framework changes
+- Major architectural refactoring
+
+---
+
+### Preset Selection Guide
+
+| Task Type | Estimated Complexity | Preset | Why |
+|-----------|---------------------|--------|-----|
+| Fix typo | Very Low | **minimal** | No planning needed |
+| Add logging | Low | **minimal** | Simple, low risk |
+| Add validation | Low-Medium | **standard** | Needs review & tests |
+| New API endpoint | Medium | **standard** | Standard feature |
+| Auth system | Medium-High | **comprehensive** | Security-sensitive, design needed |
+| Refactor auth | High | **comprehensive** | High impact, multiple components |
+| Framework changes | Very High | **full-sdlc** | **MANDATORY** for `tapps_agents/` |
+
+**💡 Tip:** Not sure which preset? Use **standard** (default) for most tasks. The system will warn if a different preset is more appropriate.
+
+---
+
 ## Common Commands
 
 ### Simple Mode (Primary Interface)
