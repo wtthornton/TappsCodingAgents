@@ -41,7 +41,7 @@ dependencies = [
     # Dependency conflict resolution
     # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
     # langchain-core 0.2.43 requires packaging>=23.2,<26
-    "packaging>=23.2,<25",
+    "packaging>=23.2,<27",
     # CLI UX (progress spinners/bars, live updates)
     "rich>=14.2.0",
     # Async I/O (async file operations for performance - optional with fallback)
