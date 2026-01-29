@@ -10,11 +10,6 @@ on:
         description: 'Version to release (e.g., 3.0.2)'
         required: true
         type: string
-      skip_pypi:
-        description: 'Skip PyPI upload'
-        required: false
-        default: false
-        type: boolean
 
 # Cancel in-progress runs for the same workflow
 concurrency:
@@ -338,39 +333,5 @@ jobs:
           echo "### Packages Attached:" >> $GITHUB_STEP_SUMMARY
           ls -lh dist/ | grep -E '\.(whl|tar\.gz)$' | awk '{print "- " $9 " (" $5 ")"}' >> $GITHUB_STEP_SUMMARY
 
-  # Publish to PyPI (optional)
-  pypi-publish:
-    name: Publish to PyPI
-    needs: [validate, build, github-release]
-    runs-on: ubuntu-latest
-    if: |
-      (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')) &&
-      !contains(github.ref, 'alpha') &&
-      !contains(github.ref, 'beta') &&
-      !contains(github.ref, 'rc') &&
-      !contains(github.ref, 'test') &&
-      (github.event_name != 'workflow_dispatch' || !github.event.inputs.skip_pypi)
-    environment:
-      name: pypi
-      url: https://pypi.org/project/tapps-agents/
-    steps:
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: dist-packages
-          path: dist/
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
-        with:
-          packages-dir: dist/
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          skip-existing: true
-
-      - name: PyPI Summary
-        run: |
-          echo "## Published to PyPI" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Package:** [tapps-agents](https://pypi.org/project/tapps-agents/)" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Install with: \`pip install tapps-agents\`" >> $GITHUB_STEP_SUMMARY
+  # PyPI publishing: handled by Publish to PyPI on Release workflow (release: published).
+  # That ensures we always publish to PyPI whenever a release is created (tag push or manual).

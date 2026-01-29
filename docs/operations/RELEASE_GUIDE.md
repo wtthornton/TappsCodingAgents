@@ -74,11 +74,11 @@ The release process has been optimized with:
    - ✅ Verifies package contents
    - ✅ Extracts release notes from CHANGELOG.md
    - ✅ Creates GitHub release with packages attached
-   - ✅ Optionally publishes to PyPI (if not pre-release)
+- **Publish to PyPI on Release** workflow runs on `release: published` and publishes to PyPI (stable releases only).
 
 **View Release:**
 - GitHub: https://github.com/wtthornton/TappsCodingAgents/releases/tag/v3.0.2
-- PyPI: https://pypi.org/project/tapps-agents/ (if published)
+- PyPI: https://pypi.org/project/tapps-agents/ (published automatically when release is created)
 
 ### Method 2: Manual Release Script (Windows)
 
@@ -231,12 +231,13 @@ The release process automatically verifies packages contain:
 
 ## PyPI Publishing
 
-### Automatic Publishing
+### Always Publish on Release
 
-PyPI publishing is **automatic** for:
-- ✅ Version tags (e.g., `v3.0.2`)
-- ✅ Not pre-releases (no `alpha`, `beta`, `rc` in version)
-- ✅ Push events (not workflow_dispatch with skip_pypi)
+PyPI publishing runs **whenever a release is published** (workflow: **Publish to PyPI on Release**):
+- ✅ Trigger: `release: published` (GitHub release created)
+- ✅ Applies to releases created by the Release workflow (tag push) or manually (e.g. `gh release create`)
+- ✅ Stable releases only (skips tags containing `alpha`, `beta`, `rc`, `test`)
+- ✅ Single source of truth: every published release is published to PyPI
 
 ### Manual Publishing
 

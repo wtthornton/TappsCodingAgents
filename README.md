@@ -64,8 +64,9 @@ If you're using **Cursor IDE**, get started quickly:
    # Install from PyPI (clean install, framework code only)
    pip install tapps-agents
    # or specific version:
-   pip install tapps-agents==3.5.30
+   pip install tapps-agents==3.5.31
    ```
+   **Windows:** If `tapps-agents` is not found after install (user Scripts often not on PATH), use a project venv or run `python -m tapps_agents.cli` instead. See [Troubleshooting CLI installation](docs/TROUBLESHOOTING_CLI_INSTALLATION.md).
 
    **For framework development (contributors):**
    ```bash
@@ -102,7 +103,7 @@ If you're using **Cursor IDE**, get started quickly:
    - ✅ **Framework version** (`.tapps-agents/.framework-version`) - Installed package version
    - ✅ **Beads (bd)** - When `tools/bd` exists, `scripts/set_bd_path.ps1` is added if missing; init hints `bd init` / `bd doctor --fix` when `.beads` is missing. See [Beads Integration](docs/BEADS_INTEGRATION.md).
 
-   **Note:** If you get "command not found" error, use `python -m tapps_agents.cli` instead of `tapps-agents`. See [Troubleshooting Guide](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
+   **Note:** If you get "command not found" (common on Windows with user pip installs), use `python -m tapps_agents.cli` instead of `tapps-agents`, or use a project venv. See [Troubleshooting CLI installation](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
 
 3. **Try it in Cursor IDE:**
    - Open Cursor chat

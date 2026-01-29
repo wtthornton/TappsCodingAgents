@@ -64,8 +64,7 @@ git push origin main
 1. Go to Actions → Release
 2. Click "Run workflow"
 3. Enter version: `3.0.2`
-4. Optionally check "Skip PyPI upload"
-5. Run workflow
+4. Run workflow (release creation triggers PyPI publish automatically)
 
 ## Common Commands
 

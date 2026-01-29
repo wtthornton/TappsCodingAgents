@@ -16,6 +16,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 (none)
 
+## [3.5.32] - 2026-01-29
+
+### Added
+- **TROUBLESHOOTING_CLI_INSTALLATION.md** - Dedicated guide for Windows PATH / user Scripts: why `tapps-agents` may not be found after `pip install`, and four options (module fallback, project venv, full path, add Scripts to PATH).
+
+### Changed
+- **README** - Windows note after PyPI install: if `tapps-agents` not found, use venv or `python -m tapps_agents.cli`; link to troubleshooting doc. Version example updated to 3.5.31.
+- **QUICK_START** - Windows section recommends project venv and documents `python -m tapps_agents.cli` fallback; link to TROUBLESHOOTING_CLI_INSTALLATION.md.
+
+### Documentation
+- New [Troubleshooting CLI installation](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for PyPI installs on Windows (user Scripts not on PATH).
+- Release process: PyPI is published automatically when a GitHub release is created (workflow Publish to PyPI on Release).
+
 ## [3.5.31] - 2026-01-29
 
 ### Changed

@@ -35,14 +35,18 @@ After installing: `tapps-agents doctor` or `python -m tapps_agents.cli doctor` t
 
 ### Windows
 
+On Windows, a user-level `pip install` often puts the `tapps-agents` script in a Scripts folder that is not on PATH. Use a project venv (recommended) or `python -m tapps_agents.cli`; see [Troubleshooting CLI installation](../TROUBLESHOOTING_CLI_INSTALLATION.md).
+
 ```powershell
 py -3.13 --version
-# For consuming projects:
+# Recommended: use a project venv so tapps-agents is on PATH
+py -3.13 -m venv .venv
+.venv\Scripts\activate
 pip install tapps-agents
-# For development:
-# git clone https://github.com/wtthornton/TappsCodingAgents.git
-# cd TappsCodingAgents
-# py -3.13 -m pip install -e .
+tapps-agents init
+
+# Or without venv (use module if command not found):
+# pip install tapps-agents
 py -3.13 -m tapps_agents.cli init
 ```
 
