@@ -1,6 +1,6 @@
 ---
 title: Project Context
-version: 3.5.21
+version: 3.5.30
 status: active
 last_updated: 2026-01-20
 tags: [project-context, dual-nature, framework, self-hosting]

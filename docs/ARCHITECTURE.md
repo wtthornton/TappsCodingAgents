@@ -1,6 +1,6 @@
 ---
 title: Architecture Index (BMAD Standard Path)
-version: 3.5.21
+version: 3.5.30
 status: active
 last_updated: 2026-01-20
 tags: [architecture, index, bmad, system-design, components]
@@ -28,7 +28,7 @@ These shard files exist to keep agent context small while remaining accurate. Fo
 
 # Architecture Overview
 
-**Version**: 3.5.21  
+**Version**: 3.5.30  
 **Last Updated**: January 2026
 
 ## System Architecture

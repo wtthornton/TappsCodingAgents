@@ -1,6 +1,6 @@
 ---
 title: Quick Start Guide
-version: 3.5.21
+version: 3.5.30
 status: active
 last_updated: 2026-01-20
 tags: [quick-start, getting-started, setup]
@@ -19,7 +19,7 @@ Requires **Python 3.13+** (`python --version`).
 # Install from PyPI (clean install, framework code only)
 pip install tapps-agents
 # or specific version:
-pip install tapps-agents==3.5.29
+pip install tapps-agents==3.5.30
 ```
 
 **For framework development (contributors):**

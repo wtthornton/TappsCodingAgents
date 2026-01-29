@@ -1473,6 +1473,13 @@ def _print_init_results(results: dict[str, Any]) -> None:
     elif experts_scaffold.get("domains_md"):
         print("  Experts Scaffold: Already exists")
 
+    # Framework version (written to .tapps-agents/.framework-version)
+    version_after = results.get("version_after")
+    if version_after:
+        print(f"  Framework version: {version_after} (stored in .tapps-agents/.framework-version)")
+    if results.get("set_bd_path_installed"):
+        print("  Beads (bd): scripts/set_bd_path.ps1 added (tools/bd present)")
+
 
 def _print_validation_results(validation: dict[str, Any]) -> None:
     """Print validation results."""

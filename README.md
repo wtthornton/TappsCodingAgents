@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-3.5.21-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.5.30-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -64,7 +64,7 @@ If you're using **Cursor IDE**, get started quickly:
    # Install from PyPI (clean install, framework code only)
    pip install tapps-agents
    # or specific version:
-   pip install tapps-agents==3.5.29
+   pip install tapps-agents==3.5.30
    ```
 
    **For framework development (contributors):**
@@ -96,7 +96,12 @@ If you're using **Cursor IDE**, get started quickly:
    - ✅ **Cursor Skills** (`.claude/skills/`) - Use `@agent *command` in Cursor IDE
    - ✅ **Claude Desktop Commands** (`.claude/commands/`) - Use `@command` in Claude Desktop
    - ✅ **Cursor Rules** (`.cursor/rules/`)
-   
+   - ✅ **Configuration** (`.tapps-agents/config.yaml`) - Tech stack detection, quality thresholds
+   - ✅ **Workflow Presets** (`workflows/presets/`) - full-sdlc, rapid-dev, fix, quality, brownfield-analysis
+   - ✅ **MCP Config** (`.cursor/mcp.json`) - Context7 for library docs (optional)
+   - ✅ **Framework version** (`.tapps-agents/.framework-version`) - Installed package version
+   - ✅ **Beads (bd)** - When `tools/bd` exists, `scripts/set_bd_path.ps1` is added if missing; init hints `bd init` / `bd doctor --fix` when `.beads` is missing. See [Beads Integration](docs/BEADS_INTEGRATION.md).
+
    **Note:** If you get "command not found" error, use `python -m tapps_agents.cli` instead of `tapps-agents`. See [Troubleshooting Guide](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
 
 3. **Try it in Cursor IDE:**
@@ -214,7 +219,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 ## Current Status
 
-**Version** 3.5.21 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
+**Version** 3.5.30 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
 
 📋 [Changelog](CHANGELOG.md) · [Cursor AI Integration Plan](docs/CURSOR_AI_INTEGRATION_PLAN_2025.md) · [YAML Workflow Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)
 
@@ -560,7 +565,7 @@ See [Release Guide](docs/operations/RELEASE_GUIDE.md) for complete release proce
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 3.5.21  
+**Version**: 3.5.30  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

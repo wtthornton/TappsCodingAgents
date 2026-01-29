@@ -138,6 +138,22 @@ When you run `tapps-agents init` on any project (new or existing), it:
    - Auto-updated with TappsCodingAgents patterns (backups, archives, artifacts)
    - Preserves existing user patterns
 
+9. **Framework version** (`.tapps-agents/.framework-version`):
+   - Stores installed package version; written on init and init --reset
+   - Used for upgrade detection and backup manifest (version_before / version_after)
+
+10. **Beads (bd) support**:
+   - When `tools/bd` exists (bd.exe or bd), init ensures `scripts/set_bd_path.ps1` exists (does not overwrite)
+   - After init, if `.beads` is missing, init prints a hint: run `bd init` or `bd init --stealth`, then `bd doctor --fix`
+   - Use `tapps-agents doctor` for Beads status (enabled, sync_epic, hooks_*); see docs/BEADS_INTEGRATION.md
+
+**init --reset behavior:**
+- Detects existing installation; identifies framework-managed files (rules, skills, presets, .cursorignore, MCP if Context7)
+- Creates backup under `.tapps-agents/backups/init-reset-<timestamp>` with manifest (framework_version_before, files)
+- Deletes framework files; preserves custom Skills, Rules, presets, and user data (config, experts, knowledge, worktrees)
+- Re-runs full init; updates backup manifest with framework_version_after; writes `.tapps-agents/.framework-version`
+- Rollback: `tapps-agents init --rollback .tapps-agents/backups/init-reset-<timestamp>`
+
 **Parameters:**
 
 - `--no-rules`: Skip creating `.cursor/rules/` directory

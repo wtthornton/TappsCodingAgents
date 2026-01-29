@@ -2,7 +2,7 @@
 title: Agent Identity and Project Rules
 version: 1.0.0
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-01-29
 tags: [agents, ai-assistance, cursor, claude]
 ---
 
