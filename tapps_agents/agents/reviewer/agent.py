@@ -2088,6 +2088,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 elif code_name.startswith("F"):
                     fatal_count += 1
 
+            # ENH-002 Story #18: Group issues by rule code for cleaner output
+            grouped = self.scorer._group_ruff_issues_by_code(issues)
+
             return {
                 "file": str(file_path),
                 "linting_score": linting_score,
@@ -2096,6 +2099,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 "error_count": error_count,
                 "warning_count": warning_count,
                 "fatal_count": fatal_count,
+                "grouped": grouped,  # Add grouped summary
                 "tool": "ruff",
             }
         else:

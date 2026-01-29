@@ -1173,8 +1173,88 @@ class CodeScorer(BaseScorer):
         
         # Sort by line number
         formatted.sort(key=lambda x: (x.get("line", 0), x.get("column", 0)))
-        
+
         return formatted
+
+    def _group_ruff_issues_by_code(self, issues: list[dict[str, Any]]) -> dict[str, Any]:
+        """
+        Group ruff issues by rule code for cleaner, more actionable reports.
+
+        ENH-002 Story #18: Ruff Output Grouping
+
+        Args:
+            issues: List of ruff diagnostic dictionaries
+
+        Returns:
+            Dictionary with grouped issues:
+            {
+                "total_count": int,
+                "groups": [
+                    {
+                        "code": "UP006",
+                        "count": 17,
+                        "description": "Use dict/list instead of Dict/List",
+                        "severity": "info",
+                        "issues": [...]
+                    },
+                    ...
+                ],
+                "summary": "UP006 (17), UP045 (10), UP007 (2), F401 (1)"
+            }
+        """
+        if not issues:
+            return {
+                "total_count": 0,
+                "groups": [],
+                "summary": "No issues found"
+            }
+
+        # Group issues by code
+        groups_dict: dict[str, list[dict[str, Any]]] = {}
+        for issue in issues:
+            code_info = issue.get("code", {})
+            if isinstance(code_info, dict):
+                code = code_info.get("name", "UNKNOWN")
+            else:
+                code = str(code_info) if code_info else "UNKNOWN"
+
+            if code not in groups_dict:
+                groups_dict[code] = []
+            groups_dict[code].append(issue)
+
+        # Create grouped structure with metadata
+        groups = []
+        for code, code_issues in groups_dict.items():
+            # Get first message as description (they're usually the same for same code)
+            description = code_issues[0].get("message", "") if code_issues else ""
+
+            # Determine severity from code
+            severity = "info"
+            if code.startswith("E") or code.startswith("F"):
+                severity = "error"
+            elif code.startswith("W"):
+                severity = "warning"
+
+            groups.append({
+                "code": code,
+                "count": len(code_issues),
+                "description": description,
+                "severity": severity,
+                "issues": code_issues
+            })
+
+        # Sort by count (descending) then by code
+        groups.sort(key=lambda x: (-x["count"], x["code"]))
+
+        # Create summary string: "UP006 (17), UP045 (10), ..."
+        summary_parts = [f"{g['code']} ({g['count']})" for g in groups]
+        summary = ", ".join(summary_parts)
+
+        return {
+            "total_count": len(issues),
+            "groups": groups,
+            "summary": summary
+        }
 
     def _calculate_duplication_score(self, file_path: Path) -> float:
         """

@@ -1026,3 +1026,184 @@ test.py:2: error: Incompatible return type (got "int", expected "None") [return-
         assert abs(complexity_focused_result["overall_score"] - complexity_expected) < 0.01, \
             f"Complexity-focused weighted average calculation incorrect. " \
             f"Expected {complexity_expected}, got {complexity_focused_result['overall_score']}"
+
+
+@pytest.mark.unit
+class TestRuffIssueGrouping:
+    """Test cases for ENH-002 Story #18: Ruff Output Grouping."""
+
+    def test_group_ruff_issues_by_code_empty(self):
+        """Test grouping with no issues."""
+        scorer = CodeScorer()
+        result = scorer._group_ruff_issues_by_code([])
+
+        assert result["total_count"] == 0
+        assert result["groups"] == []
+        assert result["summary"] == "No issues found"
+
+    def test_group_ruff_issues_by_code_single_code(self):
+        """Test grouping with single code type."""
+        scorer = CodeScorer()
+        issues = [
+            {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 1}},
+            {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 5}},
+            {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 10}},
+        ]
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        assert result["total_count"] == 3
+        assert len(result["groups"]) == 1
+        assert result["groups"][0]["code"] == "F401"
+        assert result["groups"][0]["count"] == 3
+        assert result["groups"][0]["severity"] == "error"
+        assert result["summary"] == "F401 (3)"
+
+    def test_group_ruff_issues_by_code_multiple_codes(self):
+        """Test grouping with multiple code types."""
+        scorer = CodeScorer()
+        issues = [
+            {"code": {"name": "UP006"}, "message": "Use dict instead of Dict", "location": {"row": 1}},
+            {"code": {"name": "UP006"}, "message": "Use list instead of List", "location": {"row": 2}},
+            {"code": {"name": "UP045"}, "message": "Use X | None instead of Optional[X]", "location": {"row": 3}},
+            {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 4}},
+            {"code": {"name": "UP006"}, "message": "Use dict instead of Dict", "location": {"row": 5}},
+        ]
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        assert result["total_count"] == 5
+        assert len(result["groups"]) == 3
+
+        # Groups should be sorted by count (descending), then by code (ascending)
+        assert result["groups"][0]["code"] == "UP006"
+        assert result["groups"][0]["count"] == 3
+
+        # For codes with same count, they're sorted alphabetically
+        # F401 comes before UP045 alphabetically
+        assert result["groups"][1]["code"] == "F401"
+        assert result["groups"][1]["count"] == 1
+        assert result["groups"][2]["code"] == "UP045"
+        assert result["groups"][2]["count"] == 1
+
+        # Summary should list all groups
+        assert "UP006 (3)" in result["summary"]
+        assert "UP045 (1)" in result["summary"]
+        assert "F401 (1)" in result["summary"]
+
+    def test_group_ruff_issues_by_code_severity_detection(self):
+        """Test that severity is correctly detected from code prefix."""
+        scorer = CodeScorer()
+        issues = [
+            {"code": {"name": "E501"}, "message": "Line too long", "location": {"row": 1}},
+            {"code": {"name": "W291"}, "message": "Trailing whitespace", "location": {"row": 2}},
+            {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 3}},
+            {"code": {"name": "UP006"}, "message": "Use dict instead of Dict", "location": {"row": 4}},
+        ]
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        # Find each group and check severity
+        groups_by_code = {g["code"]: g for g in result["groups"]}
+
+        assert groups_by_code["E501"]["severity"] == "error"  # E prefix = error
+        assert groups_by_code["W291"]["severity"] == "warning"  # W prefix = warning
+        assert groups_by_code["F401"]["severity"] == "error"  # F prefix = error
+        assert groups_by_code["UP006"]["severity"] == "info"  # UP prefix = info
+
+    def test_group_ruff_issues_by_code_string_code_format(self):
+        """Test grouping with string code format (not dict)."""
+        scorer = CodeScorer()
+        issues = [
+            {"code": "F401", "message": "Unused import", "location": {"row": 1}},
+            {"code": "F401", "message": "Unused import", "location": {"row": 2}},
+        ]
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        assert result["total_count"] == 2
+        assert len(result["groups"]) == 1
+        assert result["groups"][0]["code"] == "F401"
+        assert result["groups"][0]["count"] == 2
+
+    def test_group_ruff_issues_by_code_missing_code(self):
+        """Test grouping with missing code field."""
+        scorer = CodeScorer()
+        issues = [
+            {"message": "Some issue without code", "location": {"row": 1}},
+            {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 2}},
+        ]
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        assert result["total_count"] == 2
+        assert len(result["groups"]) == 2
+
+        # Should have UNKNOWN group for missing code
+        codes = [g["code"] for g in result["groups"]]
+        assert "UNKNOWN" in codes
+        assert "F401" in codes
+
+    def test_group_ruff_issues_preserves_original_issues(self):
+        """Test that grouping preserves all original issue data."""
+        scorer = CodeScorer()
+        issues = [
+            {
+                "code": {"name": "UP006"},
+                "message": "Use dict instead of Dict",
+                "location": {"row": 1, "column": 10},
+                "end_location": {"row": 1, "column": 14},
+                "fix": {"content": "dict", "location": {"row": 1, "column": 10}},
+            },
+            {
+                "code": {"name": "UP006"},
+                "message": "Use list instead of List",
+                "location": {"row": 2, "column": 5},
+            },
+        ]
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        # Check that all original issues are preserved in the group
+        up006_group = result["groups"][0]
+        assert up006_group["code"] == "UP006"
+        assert len(up006_group["issues"]) == 2
+
+        # First issue should have all fields preserved
+        assert up006_group["issues"][0]["location"]["row"] == 1
+        assert up006_group["issues"][0]["location"]["column"] == 10
+        assert "fix" in up006_group["issues"][0]
+
+        # Second issue should also be preserved
+        assert up006_group["issues"][1]["location"]["row"] == 2
+        assert up006_group["issues"][1]["location"]["column"] == 5
+
+    def test_group_ruff_issues_realistic_output(self):
+        """Test grouping with realistic ruff output (from feedback session)."""
+        scorer = CodeScorer()
+        # Simulate the 30 issues from the parallel execution feedback
+        issues = (
+            [{"code": {"name": "UP006"}, "message": "Use `dict` instead of `Dict`", "location": {"row": i}} for i in range(1, 18)] +
+            [{"code": {"name": "UP045"}, "message": "Use `X | None` instead of `Optional[X]`", "location": {"row": i}} for i in range(18, 28)] +
+            [{"code": {"name": "UP007"}, "message": "Use `X | Y` instead of `Union[X, Y]`", "location": {"row": i}} for i in range(28, 30)] +
+            [{"code": {"name": "F401"}, "message": "Unused import `field`", "location": {"row": 30}}]
+        )
+
+        result = scorer._group_ruff_issues_by_code(issues)
+
+        assert result["total_count"] == 30
+        assert len(result["groups"]) == 4
+
+        # Check sorted by count (descending)
+        assert result["groups"][0]["code"] == "UP006"
+        assert result["groups"][0]["count"] == 17
+        assert result["groups"][1]["code"] == "UP045"
+        assert result["groups"][1]["count"] == 10
+        assert result["groups"][2]["code"] == "UP007"
+        assert result["groups"][2]["count"] == 2
+        assert result["groups"][3]["code"] == "F401"
+        assert result["groups"][3]["count"] == 1
+
+        # Check summary format
+        expected_summary = "UP006 (17), UP045 (10), UP007 (2), F401 (1)"
+        assert result["summary"] == expected_summary
