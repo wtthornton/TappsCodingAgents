@@ -110,14 +110,17 @@ You can add `CLAUDE.local.md` for machine- or project-specific rules. It is load
 
 ### Version and Status
 
-**Version:** 3.5.21  
-**Status:** Active 
-**Last Updated:** 2026-01-20
+**Version:** 3.5.30
+**Status:** Active
+**Last Updated:** 2026-01-29
+
+**Important:** Beads integration is **MANDATORY** for TappsCodingAgents development. See `docs/BEADS_GITHUB_BEST_PRACTICES.md` for complete workflow guide.
 
 **Related Files:**
 - `AGENTS.md` - Agent identity and project-specific rules
 - `docs/test-stack.md` - Testing strategy and infrastructure
 - `docs/ARCHITECTURE.md` - System architecture overview
+- `docs/BEADS_GITHUB_BEST_PRACTICES.md` - **Mandatory** Beads + GitHub workflow guide
 
 ## Essential Guidelines
 
@@ -237,6 +240,14 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 - `docs/ARCHITECTURE.md` - System architecture overview
 - `docs/README.md` - Documentation index
 - `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md` - Skills setup guide
+
+**Expert System & Knowledge Base:**
+- `docs/expert-priority-guide.md` - Expert priority configuration guidelines
+- `docs/knowledge-base-guide.md` - Knowledge base organization for RAG optimization
+- `docs/CONFIGURATION.md` - Complete configuration reference
+
+**Tool Integration:**
+- `docs/tool-integrations.md` - Using TappsCodingAgents with Cursor, Claude Code CLI, VS Code, etc.
 
 **For complete documentation, see:** `docs/README.md`
 

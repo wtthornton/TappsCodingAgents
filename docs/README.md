@@ -52,6 +52,8 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)** - CLI wizard for experts and knowledge base
 - **[Expert Configuration Guide](EXPERT_CONFIG_GUIDE.md)** - Expert configuration details
 - **[Built-in Experts Guide](BUILTIN_EXPERTS_GUIDE.md)** - Built-in technical domains
+- **[Expert Priority Guidelines](expert-priority-guide.md)** - How to configure expert priorities effectively
+- **[Knowledge Base Organization Guide](knowledge-base-guide.md)** - Knowledge base structure for RAG optimization
 
 ### Customization
 - **[User Role Templates Guide](USER_ROLE_TEMPLATES_GUIDE.md)** - Role-specific agent customization (senior-dev, junior-dev, tech-lead, PM, QA)
@@ -60,6 +62,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Cursor AI Integration
 - **[Cursor Skills Installation Guide](CURSOR_SKILLS_INSTALLATION_GUIDE.md)** - Skills + Claude Desktop Commands setup
+- **[Multi-Tool Integration Guide](tool-integrations.md)** - Using TappsCodingAgents with Cursor, Claude Code CLI, VS Code + Continue, Codespaces, etc.
 - **[Rules and Commands Toggles](RULES_AND_COMMANDS_TOGGLES.md)** - Cursor toggles (Import Agent Skills, Include CLAUDE.md, Import Claude Commands, Import Claude Plugins) and TappsCodingAgents
 - **[Claude Desktop Commands Guide](CLAUDE_DESKTOP_COMMANDS.md)** - Using commands in Claude Desktop
 - **[Simple Mode Guide](SIMPLE_MODE_GUIDE.md)** - 🎯 Simple Mode for new users (includes workflow enforcement and suggestions)

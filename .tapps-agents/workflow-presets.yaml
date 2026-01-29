@@ -1,0 +1,304 @@
+# Workflow Presets for TappsCodingAgents Simple Mode
+#
+# Defines standardized workflow configurations for different complexity levels.
+# Use with: @simple-mode *build --preset <preset-name> "Description"
+#
+# Version: 1.0.0
+# Created: 2026-01-29
+
+presets:
+  # ============================================================================
+  # MINIMAL WORKFLOW - For simple, low-risk changes
+  # ============================================================================
+  minimal:
+    name: "Minimal Workflow"
+    description: "Quick implementation and testing only"
+
+    steps:
+      - implementer
+      - tester
+
+    quality_threshold: 70
+    security_threshold: 7.0
+    coverage_target: 75
+
+    use_cases:
+      - "Simple bug fixes"
+      - "Minor refactoring"
+      - "Configuration changes"
+      - "Documentation updates"
+      - "Typo fixes"
+      - "Adding comments"
+
+    estimated_time: "30-60 minutes"
+
+    benefits:
+      - "Fastest workflow"
+      - "Minimal overhead"
+      - "Still includes testing"
+      - "Quality gates enforced"
+
+    example: |
+      @simple-mode *build --preset minimal "Fix validation error message"
+
+  # ============================================================================
+  # STANDARD WORKFLOW - For typical feature development
+  # ============================================================================
+  standard:
+    name: "Standard Workflow"
+    description: "Plan, implement, review, test"
+
+    steps:
+      - planner
+      - implementer
+      - reviewer
+      - tester
+
+    quality_threshold: 75
+    security_threshold: 7.5
+    coverage_target: 80
+
+    use_cases:
+      - "New features"
+      - "API endpoints"
+      - "Data models"
+      - "Business logic"
+      - "Service classes"
+      - "Utility functions"
+
+    estimated_time: "1-2 hours"
+
+    benefits:
+      - "Balanced approach"
+      - "Good planning coverage"
+      - "Thorough review"
+      - "High quality output"
+
+    example: |
+      @simple-mode *build --preset standard "Add user profile endpoint"
+
+  # ============================================================================
+  # COMPREHENSIVE WORKFLOW - For complex features (default *build)
+  # ============================================================================
+  comprehensive:
+    name: "Comprehensive Workflow"
+    description: "Full build workflow with design phase"
+
+    steps:
+      - enhancer
+      - planner
+      - architect
+      - designer
+      - implementer
+      - reviewer
+      - tester
+
+    quality_threshold: 75
+    security_threshold: 8.0
+    coverage_target: 85
+
+    use_cases:
+      - "Complex features"
+      - "System integrations"
+      - "Framework changes"
+      - "Multi-component features"
+      - "New modules"
+      - "API design"
+
+    estimated_time: "2-4 hours"
+
+    benefits:
+      - "Complete design phase"
+      - "Architecture planning"
+      - "API design included"
+      - "Comprehensive documentation"
+      - "Maximum quality"
+
+    example: |
+      @simple-mode *build --preset comprehensive "Implement OAuth2 authentication"
+      @simple-mode *build "..." # Default uses comprehensive
+
+  # ============================================================================
+  # FULL-SDLC WORKFLOW - For critical/security-sensitive features
+  # ============================================================================
+  full-sdlc:
+    name: "Full SDLC Workflow"
+    description: "Complete lifecycle with requirements and security"
+
+    steps:
+      - analyst
+      - planner
+      - architect
+      - designer
+      - implementer
+      - reviewer
+      - tester
+      - ops
+      - documenter
+
+    quality_threshold: 80
+    security_threshold: 8.5
+    coverage_target: 90
+
+    use_cases:
+      - "Framework core development"
+      - "Critical features"
+      - "Security-sensitive code"
+      - "Authentication/authorization"
+      - "Payment processing"
+      - "Data privacy features"
+
+    estimated_time: "4-8 hours"
+
+    benefits:
+      - "Requirements analysis"
+      - "Security scanning"
+      - "Complete documentation"
+      - "Highest quality bar"
+      - "Full traceability"
+
+    example: |
+      @simple-mode *full "New authentication system"
+      @simple-mode *build --preset full-sdlc "Payment gateway integration"
+
+  # ============================================================================
+  # RAPID WORKFLOW - For prototyping and experiments
+  # ============================================================================
+  rapid:
+    name: "Rapid Workflow"
+    description: "Implementation only, no quality gates (use with caution)"
+
+    steps:
+      - implementer
+
+    quality_threshold: 0  # No enforcement
+    security_threshold: 0  # No enforcement
+    coverage_target: 0     # No enforcement
+
+    use_cases:
+      - "Prototyping"
+      - "Experiments"
+      - "Spike solutions"
+      - "Proof of concepts"
+      - "Quick demos"
+
+    estimated_time: "15-30 minutes"
+
+    warnings:
+      - "No quality gates enforced"
+      - "No tests generated"
+      - "Use only for throwaway code"
+      - "Not for production"
+
+    example: |
+      @simple-mode *build --preset rapid "Quick prototype for demo"
+
+  # ============================================================================
+  # REVIEW-HEAVY WORKFLOW - For refactoring and quality improvements
+  # ============================================================================
+  review-heavy:
+    name: "Review-Heavy Workflow"
+    description: "Extra review focus for refactoring"
+
+    steps:
+      - planner
+      - reviewer  # Pre-review existing code
+      - architect  # Design improvements
+      - implementer
+      - reviewer  # Post-review changes
+      - tester
+
+    quality_threshold: 80
+    security_threshold: 8.0
+    coverage_target: 85
+
+    use_cases:
+      - "Major refactoring"
+      - "Code quality improvements"
+      - "Technical debt reduction"
+      - "Legacy code modernization"
+      - "Performance optimization"
+
+    estimated_time: "2-4 hours"
+
+    benefits:
+      - "Pre and post review"
+      - "Architecture guidance"
+      - "Quality improvements guaranteed"
+      - "Pattern consistency"
+
+    example: |
+      @simple-mode *build --preset review-heavy "Refactor authentication module"
+
+# ============================================================================
+# CONFIGURATION
+# ============================================================================
+
+# Default preset when none specified
+default_preset: "comprehensive"
+
+# Allow custom presets in user config
+allow_custom_presets: true
+custom_presets_path: ".tapps-agents/custom-workflow-presets.yaml"
+
+# Quality gate behavior
+quality_gates:
+  enforce_thresholds: true
+  allow_override: false  # Require --force to bypass
+  loopback_on_failure: true
+  max_loopback_attempts: 3
+
+# Auto-commit settings (per preset)
+auto_commit:
+  enabled: false  # Must explicitly enable with --auto-commit flag
+  require_quality_pass: true
+  include_metrics: true
+  co_author: "Claude Sonnet 4.5 <noreply@anthropic.com>"
+
+# Beads integration (per preset)
+beads_integration:
+  auto_update_on_start: true
+  auto_update_on_complete: true
+  auto_update_on_fail: true
+
+# Time estimates (for planning)
+time_estimates:
+  minimal: 45        # minutes
+  standard: 90       # minutes
+  comprehensive: 180 # minutes
+  full-sdlc: 360     # minutes
+  rapid: 20          # minutes
+  review-heavy: 180  # minutes
+
+# Recommended presets by file type
+recommendations:
+  by_file_pattern:
+    "tests/**/*.py": "minimal"
+    "docs/**/*.md": "minimal"
+    "*.md": "minimal"
+    "tapps_agents/core/**/*.py": "comprehensive"
+    "tapps_agents/agents/**/*.py": "standard"
+    "*.yaml": "minimal"
+    "*.json": "minimal"
+
+  by_task_type:
+    bug_fix: "standard"
+    feature: "comprehensive"
+    refactor: "review-heavy"
+    docs: "minimal"
+    config: "minimal"
+    framework: "full-sdlc"
+    security: "full-sdlc"
+
+# Validation rules
+validation:
+  require_story_reference: true  # Must include story/issue reference
+  require_description: true
+  min_description_length: 10
+
+# Reporting
+reporting:
+  show_time_estimates: true
+  show_step_progress: true
+  show_quality_metrics: true
+  generate_summary: true

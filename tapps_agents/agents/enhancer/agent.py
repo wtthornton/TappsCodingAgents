@@ -1938,6 +1938,28 @@ Create a comprehensive, context-aware enhanced prompt that:
         session_file = sessions_dir / f"{session_id}.json"
         session_file.write_text(self._safe_json_dumps(session, indent=2), encoding="utf-8")
 
+        # Optional: prune old sessions so folder does not grow unbounded (configurable)
+        if self.config and getattr(self.config.cleanup.sessions, "auto_cleanup_on_enhance", False):
+            try:
+                from ...core.cleanup_tool import CleanupTool
+
+                cfg = self.config.cleanup.sessions
+                tool = CleanupTool(project_root=Path.cwd(), config=self.config)
+                tool.cleanup_sessions(
+                    keep_latest=cfg.keep_latest,
+                    max_age_days=cfg.max_age_days,
+                    dry_run=False,
+                )
+                # Also run SessionManager cleanup for long-running agent sessions
+                sessions_path = Path.cwd() / ".tapps-agents" / "sessions"
+                if sessions_path.exists():
+                    from ...core.session_manager import SessionManager
+
+                    manager = SessionManager(storage_dir=sessions_path)
+                    manager.cleanup_old_sessions(max_age_hours=cfg.max_age_days * 24.0)
+            except Exception as e:
+                logger.debug("Sessions auto-cleanup skipped: %s", e)
+
     def _load_session(self, session_id: str) -> dict[str, Any] | None:
         """Load session from disk."""
         session_file = Path.cwd() / ".tapps-agents" / "sessions" / f"{session_id}.json"

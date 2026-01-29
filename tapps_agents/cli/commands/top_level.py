@@ -2741,6 +2741,58 @@ def handle_cleanup_workflow_docs_command(args: object) -> None:
         sys.exit(1)
 
 
+def handle_cleanup_sessions_command(args: object) -> None:
+    """Handle 'cleanup sessions' command (enhancer + SessionManager)."""
+    from pathlib import Path
+
+    from ...core.cleanup_tool import CleanupTool
+    from ...core.session_manager import SessionManager
+
+    tool = CleanupTool()
+    config = tool.config.cleanup.sessions
+    keep_latest = getattr(args, "keep_latest", None) or config.keep_latest
+    max_age_days = getattr(args, "max_age_days", None) or config.max_age_days
+    dry_run = getattr(args, "dry_run", False)
+
+    if dry_run:
+        print("DRY RUN: Would clean up .tapps-agents/sessions with:")
+        print(f"  Keep latest: {keep_latest} enhancer session files")
+        print(f"  Max age: {max_age_days} days")
+        print()
+
+    try:
+        results = tool.cleanup_sessions(
+            keep_latest=keep_latest,
+            max_age_days=max_age_days,
+            dry_run=dry_run,
+        )
+        print(f"\n{'='*80}")
+        print("Sessions Cleanup Complete")
+        print(f"{'='*80}\n")
+        print(f"Removed: {results['removed']} files (zero-byte: {results['zero_byte_removed']}, enhancer: {results['enhancer_removed']})")
+        print(f"Size freed: {results['total_size'] / 1024:.2f} KB")
+        if results.get("errors"):
+            for err in results["errors"]:
+                print(f"  ⚠️  {err}")
+
+        # Run SessionManager cleanup for long-running agent sessions (same age policy)
+        if not dry_run:
+            sessions_dir = tool.project_root / ".tapps-agents" / "sessions"
+            if sessions_dir.exists():
+                manager = SessionManager(storage_dir=sessions_dir)
+                manager.cleanup_old_sessions(max_age_hours=max_age_days * 24.0)
+                print("SessionManager cleanup (completed/failed agent sessions) applied.")
+
+        if dry_run:
+            print("\n⚠️  This was a dry run. Run without --dry-run to perform actual cleanup.")
+        print()
+    except Exception as e:
+        print(f"Error during sessions cleanup: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(1)
+
+
 def handle_workflow_state_cleanup_command(args: object) -> None:
     """Handle 'workflow state cleanup' command (Epic 12)"""
     from pathlib import Path

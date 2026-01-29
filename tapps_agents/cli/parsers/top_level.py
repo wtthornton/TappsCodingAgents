@@ -562,6 +562,7 @@ Example:
         
 Available cleanup operations:
   • workflow-docs: Clean up old workflow documentation directories
+  • sessions: Clean up .tapps-agents/sessions (enhancer + long-running agent sessions)
   • worktrees: Clean up old Git worktrees
   • cache: Clean up old cache entries
   • all: Clean up all artifacts (default)
@@ -606,6 +607,34 @@ Archived workflows are moved to .tapps-agents/archives/workflows/ for reference.
         help="Disable archival (workflows will be kept visible)",
     )
     workflow_docs_cleanup_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without making them",
+    )
+
+    # Sessions cleanup (enhancer + SessionManager)
+    sessions_cleanup_parser = cleanup_subparsers.add_parser(
+        "sessions",
+        help="Clean up .tapps-agents/sessions (enhancer and long-running agent sessions)",
+        description="""Clean up session files in .tapps-agents/sessions/.
+
+Removes zero-byte files, then prunes enhancer session JSONs by age and count.
+Also runs SessionManager cleanup for long-running agent sessions (completed/failed older than max-age).
+""",
+    )
+    sessions_cleanup_parser.add_argument(
+        "--keep-latest",
+        type=int,
+        default=None,
+        help="Keep N most recent enhancer session files (default: from config, typically 50)",
+    )
+    sessions_cleanup_parser.add_argument(
+        "--max-age-days",
+        type=int,
+        default=None,
+        help="Remove sessions older than N days (default: from config, typically 30)",
+    )
+    sessions_cleanup_parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview changes without making them",

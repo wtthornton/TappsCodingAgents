@@ -344,6 +344,39 @@ auto_enhancement:
 
 **Prompt argument map:** `PROMPT_ARGUMENT_MAP` in `tapps_agents/cli/utils/prompt_enhancer.py` defines which `(agent, command)` pairs are eligible and which CLI argument holds the prompt (e.g. `specification`, `description`, `requirements`). Commands with value `None` are never enhanced (e.g. `(debugger, debug)`, `(implementer, refactor)`). To support auto-enhancement for a new agent/command, add an entry there and in `auto_enhancement.commands` if you want non-default behavior.
 
+### Cleanup configuration
+
+Cleanup settings control retention for workflow docs and session files.
+
+```yaml
+cleanup:
+  workflow_docs:
+    enabled: true
+    keep_latest: 5
+    retention_days: 30
+    archive_enabled: true
+    archive_dir: ".tapps-agents/archives/workflows/"
+  sessions:
+    keep_latest: 50    # Keep N most recent enhancer session files
+    max_age_days: 30   # Remove enhancer/agent sessions older than N days
+    auto_cleanup_on_enhance: false  # When true, prune after each enhancer save so folder does not grow unbounded
+```
+
+**Sessions cleanup** applies to `.tapps-agents/sessions/` (enhancer run artifacts and long-running agent sessions). Run it manually:
+
+```bash
+# Preview what would be removed
+tapps-agents cleanup sessions --dry-run
+
+# Run cleanup (zero-byte files + old enhancer sessions; also runs SessionManager cleanup)
+tapps-agents cleanup sessions
+
+# Override retention
+tapps-agents cleanup sessions --keep-latest 100 --max-age-days 7
+```
+
+See [SESSIONS_FOLDER_REVIEW.md](reviews/SESSIONS_FOLDER_REVIEW.md) for why the sessions folder can grow and what gets cleaned.
+
 ## Default Values
 
 If no configuration file is provided, defaults are loaded from the Pydantic models in `tapps_agents/core/config.py`.
@@ -363,5 +396,8 @@ config = load_config()  # searches for .tapps-agents/config.yaml upward, else de
 - **Default template**: `templates/default_config.yaml`
 - **Config models**: `tapps_agents/core/config.py`
 - **Expert setup**: `docs/EXPERT_SETUP_WIZARD.md`
+- **Expert priority guidelines**: `docs/expert-priority-guide.md` - How to configure expert priorities effectively
+- **Knowledge base organization**: `docs/knowledge-base-guide.md` - Knowledge base structure for RAG optimization
+- **Tool integrations**: `docs/tool-integrations.md` - Using TappsCodingAgents with different AI tools
 - **Project profiling**: `docs/PROJECT_PROFILING_GUIDE.md`
 - **Beads (bd) integration**: [BEADS_INTEGRATION.md](BEADS_INTEGRATION.md) (optional `beads` config: `enabled`, `sync_epic`, `hooks_simple_mode`; doctor reports status; init hints `bd init` when detected)

@@ -161,6 +161,7 @@ index*.html
 # OS
 .DS_Store
 Thumbs.db
+nul
 
 # PyPI Credentials
 .pypirc

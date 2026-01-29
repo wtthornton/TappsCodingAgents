@@ -350,43 +350,52 @@ tapps-agents workflow rapid --cli-mode --auto --prompt "Add user auth"
 **CLI Syntax:**
 ```bash
 tapps-agents cleanup workflow-docs [--keep-latest <n>] [--retention-days <n>] [--archive] [--no-archive] [--dry-run]
+tapps-agents cleanup sessions [--keep-latest <n>] [--max-age-days <n>] [--dry-run]
 ```
 
 **Subcommands:**
 - `workflow-docs` - Clean up old workflow documentation directories
+- `sessions` - Clean up `.tapps-agents/sessions/` (enhancer + long-running agent sessions)
 
-**Parameters:**
+**Parameters (workflow-docs):**
 - `--keep-latest <n>`: Keep N most recent workflows visible (default: from config, typically 5)
 - `--retention-days <n>`: Archive workflows older than N days (default: from config, typically 30)
 - `--archive`: Enable archival of old workflows (default: from config)
 - `--no-archive`: Disable archival (workflows will be kept visible)
 - `--dry-run`: Preview changes without making them
 
+**Parameters (sessions):**
+- `--keep-latest <n>`: Keep N most recent enhancer session files (default: from config, typically 50)
+- `--max-age-days <n>`: Remove sessions older than N days (default: from config, typically 30)
+- `--dry-run`: Preview changes without making them
+
 **When to Use:**
-- Reducing IDE clutter from accumulated workflow directories
-- Freeing disk space from old workflow documentation
-- Managing workflow artifact retention policies
+- **workflow-docs**: Reducing IDE clutter from accumulated workflow directories; freeing disk space from old workflow documentation
+- **sessions**: When `.tapps-agents/sessions/` is large (many enhancer runs); removes zero-byte files and prunes by age/count; also runs SessionManager cleanup for long-running agent sessions
 
 **Examples:**
 ```bash
 # Preview cleanup (dry-run)
 tapps-agents cleanup workflow-docs --dry-run
+tapps-agents cleanup sessions --dry-run
 
 # Cleanup with defaults from config
 tapps-agents cleanup workflow-docs
+tapps-agents cleanup sessions
 
-# Custom retention policy
+# Custom retention (workflow-docs)
 tapps-agents cleanup workflow-docs --keep-latest 10 --retention-days 60
+
+# Custom retention (sessions)
+tapps-agents cleanup sessions --keep-latest 100 --max-age-days 7
 
 # Cleanup without archiving (keep workflows visible)
 tapps-agents cleanup workflow-docs --no-archive
 ```
 
 **What It Does:**
-- Scans `docs/workflows/simple-mode/` for workflow directories
-- Keeps the N most recent workflows visible
-- Archives workflows older than retention period to `.tapps-agents/archives/workflows/`
-- Preserves workflow history while reducing IDE clutter
+- **workflow-docs**: Scans `docs/workflows/simple-mode/` for workflow directories; keeps the N most recent visible; archives older than retention to `.tapps-agents/archives/workflows/`
+- **sessions**: Removes zero-byte JSONs in `.tapps-agents/sessions/`; prunes enhancer session files by keep_latest and max_age_days; runs SessionManager.cleanup_old_sessions() for completed/failed agent sessions. See `docs/reviews/SESSIONS_FOLDER_REVIEW.md`.
 
 ### `health` - Health Checks and Usage (Analytics)
 **Purpose:** Health checks (environment, execution, cache, KB, outcomes) and usage/analytics (agent/workflow metrics). The former top-level `tapps-agents analytics` is replaced by `health usage`.

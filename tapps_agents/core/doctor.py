@@ -833,6 +833,43 @@ def collect_doctor_report(
     if cache_status_finding:
         findings.append(cache_status_finding)
 
+    # --- Sessions folder check (.tapps-agents/sessions) ---
+    sessions_dir = root / ".tapps-agents" / "sessions"
+    if sessions_dir.exists() and sessions_dir.is_dir():
+        try:
+            files = list(sessions_dir.glob("*.json"))
+            count = len(files)
+            total_bytes = sum(f.stat().st_size for f in files if f.is_file())
+            total_mb = total_bytes / (1024 * 1024)
+            # Suggest cleanup when > 100 files or > 1 MB
+            if count > 100 or total_mb > 1.0:
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="SESSIONS",
+                        message=f"Sessions folder: {count} files ({total_mb:.2f} MB). Consider pruning.",
+                        remediation="Run 'tapps-agents cleanup sessions' to remove old enhancer/agent sessions (use --dry-run to preview). See docs/reviews/SESSIONS_FOLDER_REVIEW.md.",
+                    )
+                )
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="SESSIONS",
+                        message=f"Sessions folder: {count} files ({total_mb:.2f} MB).",
+                        remediation=None,
+                    )
+                )
+        except OSError:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="SESSIONS",
+                    message="Sessions folder: could not read.",
+                    remediation="Check .tapps-agents/sessions permissions.",
+                )
+            )
+
     # --- Beads (bd) status check (optional task tracking) ---
     try:
         from ..beads import is_available, is_ready, resolve_bd_path, run_bd

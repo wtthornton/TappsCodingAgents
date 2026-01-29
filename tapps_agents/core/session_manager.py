@@ -152,8 +152,12 @@ class SessionStorage:
                 data = json.load(f)
 
             return AgentSession.from_dict(data)
+        except KeyError as e:
+            # Likely enhancer session JSON (no "state" key); skip quietly
+            logger.debug("Skipping non-AgentSession file %s: %s", session_file.name, e)
+            return None
         except Exception as e:
-            logger.error(f"Failed to load session {session_id}: {e}")
+            logger.error("Failed to load session %s: %s", session_id, e)
             return None
 
     def list_sessions(self, state: SessionState | None = None) -> list[str]:
@@ -175,8 +179,11 @@ class SessionStorage:
 
                 if state is None or SessionState(data["state"]) == state:
                     session_ids.append(data["session_id"])
+            except KeyError:
+                # Not AgentSession format (e.g. enhancer session JSON); skip quietly
+                logger.debug("Skipping non-AgentSession file %s", session_file.name)
             except Exception as e:
-                logger.warning(f"Failed to read session file {session_file}: {e}")
+                logger.warning("Failed to read session file %s: %s", session_file, e)
 
         return session_ids
 

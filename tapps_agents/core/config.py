@@ -834,12 +834,36 @@ class WorkflowDocsCleanupConfig(BaseModel):
     )
 
 
+class SessionsCleanupConfig(BaseModel):
+    """Configuration for .tapps-agents/sessions cleanup (enhancer + SessionManager)."""
+
+    keep_latest: int = Field(
+        default=50,
+        ge=1,
+        le=500,
+        description="Keep N most recent enhancer session files",
+    )
+    max_age_days: int = Field(
+        default=30,
+        ge=1,
+        description="Remove enhancer sessions older than N days; also used for SessionManager cleanup (hours = max_age_days * 24)",
+    )
+    auto_cleanup_on_enhance: bool = Field(
+        default=False,
+        description="When True, run sessions cleanup after each enhancer save so the folder does not grow unbounded",
+    )
+
+
 class CleanupConfig(BaseModel):
     """Configuration for cleanup operations"""
 
     workflow_docs: WorkflowDocsCleanupConfig = Field(
         default_factory=WorkflowDocsCleanupConfig,
         description="Workflow documentation cleanup configuration",
+    )
+    sessions: SessionsCleanupConfig = Field(
+        default_factory=SessionsCleanupConfig,
+        description="Sessions cleanup (enhancer + long-running agent sessions)",
     )
 
 

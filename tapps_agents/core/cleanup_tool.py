@@ -164,6 +164,107 @@ class CleanupTool:
             "dry_run": dry_run,
         }
 
+    def cleanup_sessions(
+        self,
+        keep_latest: int = 50,
+        max_age_days: int = 30,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Clean up .tapps-agents/sessions (enhancer session JSONs + zero-byte files).
+
+        Removes zero-byte JSONs, then for enhancer-format files (metadata + stages,
+        no state) keeps the keep_latest most recent and deletes any older than
+        max_age_days. Does not delete SessionManager-format files (those have
+        "state"); use SessionManager.cleanup_old_sessions() for those.
+
+        Args:
+            keep_latest: Keep this many most recent enhancer session files.
+            max_age_days: Delete enhancer sessions older than this many days.
+            dry_run: If True, only report what would be removed.
+
+        Returns:
+            Dict with removed, zero_byte_removed, total_size, dry_run, errors.
+        """
+        import json as _json
+
+        sessions_dir = self.tapps_agents_dir / "sessions"
+        if not sessions_dir.exists():
+            return {
+                "removed": 0,
+                "zero_byte_removed": 0,
+                "total_size": 0,
+                "dry_run": dry_run,
+                "errors": [],
+            }
+
+        cutoff = datetime.now() - timedelta(days=max_age_days)
+        zero_byte_removed = 0
+        enhancer_removed = 0
+        total_size = 0
+        errors: list[str] = []
+
+        # 1) Delete zero-byte JSON files
+        for f in sessions_dir.glob("*.json"):
+            if not f.is_file():
+                continue
+            try:
+                if f.stat().st_size == 0:
+                    total_size += 0
+                    if dry_run:
+                        print(f"Would remove (zero-byte): {f.name}")
+                    else:
+                        f.unlink()
+                        print(f"Removed (zero-byte): {f.name}")
+                    zero_byte_removed += 1
+            except Exception as e:
+                errors.append(f"Zero-byte {f.name}: {e}")
+
+        # 2) Collect enhancer-format session files (have metadata + stages, no state)
+        enhancer_files: list[tuple[Path, datetime]] = []
+        for f in sessions_dir.glob("*.json"):
+            if not f.is_file():
+                continue
+            try:
+                with open(f, encoding="utf-8") as fp:
+                    data = _json.load(fp)
+                # Enhancer format: metadata + stages, no "state"
+                if isinstance(data, dict) and "metadata" in data and "stages" in data and "state" not in data:
+                    mtime = datetime.fromtimestamp(f.stat().st_mtime)
+                    enhancer_files.append((f, mtime))
+            except Exception:
+                # Not JSON or wrong schema; skip (e.g. SessionManager files)
+                pass
+
+        # Sort by mtime descending (newest first)
+        enhancer_files.sort(key=lambda x: x[1], reverse=True)
+
+        # Keep keep_latest, then delete the rest that are older than max_age_days
+        to_remove = enhancer_files[keep_latest:]  # older by recency
+        for f, mtime in to_remove:
+            if mtime >= cutoff:
+                continue
+            try:
+                size = f.stat().st_size
+                total_size += size
+                if dry_run:
+                    print(f"Would remove (enhancer, {mtime.date()}): {f.name} ({size / 1024:.2f} KB)")
+                else:
+                    f.unlink()
+                    print(f"Removed (enhancer): {f.name}")
+                enhancer_removed += 1
+            except Exception as e:
+                errors.append(f"Enhancer {f.name}: {e}")
+
+        return {
+            "removed": zero_byte_removed + enhancer_removed,
+            "zero_byte_removed": zero_byte_removed,
+            "enhancer_removed": enhancer_removed,
+            "total_size": total_size,
+            "dry_run": dry_run,
+            "errors": errors,
+        }
+
     def cleanup_workflow_docs(
         self,
         keep_latest: int = 5,
