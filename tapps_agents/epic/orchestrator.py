@@ -84,6 +84,14 @@ class EpicOrchestrator:
         )
 
         # Optional: sync epic to Beads when enabled
+        if self.config.beads.enabled and self.config.beads.sync_epic:
+            from ..beads import require_beads
+
+            try:
+                require_beads(self.config, self.project_root)
+            except Exception as e:
+                logger.error("beads required check failed: %s", e)
+                raise
         if (
             self.config.beads.enabled
             and self.config.beads.sync_epic

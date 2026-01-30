@@ -1893,6 +1893,11 @@ def _print_next_steps(project_root: Path | None = None) -> None:
     if project_root is not None:
         try:
             from ...beads import is_available, is_ready
+            from ...core.config import load_config
+
+            config_path = project_root / ".tapps-agents" / "config.yaml"
+            config = load_config(config_path)
+            beads_required = getattr(getattr(config, "beads", None), "required", False)
             if is_available(project_root):
                 if is_ready(project_root):
                     print("Beads is ready. Use `bd ready` to see unblocked tasks.")
@@ -1902,10 +1907,16 @@ def _print_next_steps(project_root: Path | None = None) -> None:
                     else:
                         print("Add tools/bd to PATH to run bd in terminal. See tools/README.md.")
                 else:
-                    print("Run `bd init` or `bd init --stealth` to enable Beads for this project. Then run `bd doctor --fix` to install hooks and fix common issues. See docs/BEADS_INTEGRATION.md.")
+                    if beads_required:
+                        print("REQUIRED: Beads (bd) is configured as required. Run `bd init` or `bd init --stealth`, then `bd doctor --fix`. Workflows will fail until Beads is initialized. See docs/BEADS_INTEGRATION.md.")
+                    else:
+                        print("Run `bd init` or `bd init --stealth` to enable Beads for this project. Then run `bd doctor --fix` to install hooks and fix common issues. See docs/BEADS_INTEGRATION.md.")
                 print()
             else:
-                print("Optional: Beads (bd) for task tracking – see docs/BEADS_INTEGRATION.md.")
+                if beads_required:
+                    print("REQUIRED: Beads (bd) is configured as required but bd was not found. Install bd to tools/bd or add to PATH, then run `bd init`. Workflows will fail until Beads is available. Or set beads.required: false in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md.")
+                else:
+                    print("Optional: Beads (bd) for task tracking – see docs/BEADS_INTEGRATION.md.")
                 print()
         except Exception:
             pass

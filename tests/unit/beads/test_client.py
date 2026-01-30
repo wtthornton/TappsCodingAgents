@@ -8,7 +8,14 @@ from unittest.mock import patch
 
 import pytest
 
-from tapps_agents.beads.client import is_available, is_ready, resolve_bd_path, run_bd
+from tapps_agents.beads.client import (
+    BeadsRequiredError,
+    is_available,
+    is_ready,
+    require_beads,
+    resolve_bd_path,
+    run_bd,
+)
 
 
 @pytest.mark.unit
@@ -129,3 +136,46 @@ class TestRunBd:
                 m_run.return_value = type("R", (), {"returncode": 0, "stdout": "", "stderr": ""})()
                 run_bd(tmp_path, ["ready"], capture_output=False)
         assert m_run.call_args[1]["capture_output"] is False
+
+
+@pytest.mark.unit
+class TestRequireBeads:
+    """Tests for require_beads."""
+
+    def test_no_op_when_beads_disabled(self, tmp_path: Path) -> None:
+        """require_beads is a no-op when beads.enabled is False."""
+        config = type("C", (), {"beads": type("B", (), {"enabled": False, "required": True})()})()
+        require_beads(config, tmp_path)
+
+    def test_no_op_when_required_false(self, tmp_path: Path) -> None:
+        """require_beads is a no-op when beads.required is False."""
+        config = type("C", (), {"beads": type("B", (), {"enabled": True, "required": False})()})()
+        with patch("tapps_agents.beads.client.shutil.which", return_value=None):
+            require_beads(config, tmp_path)
+
+    def test_raises_when_required_and_bd_not_available(self, tmp_path: Path) -> None:
+        """require_beads raises BeadsRequiredError when required and bd not found."""
+        config = type("C", (), {"beads": type("B", (), {"enabled": True, "required": True})()})()
+        with patch("tapps_agents.beads.client.shutil.which", return_value=None):
+            with pytest.raises(BeadsRequiredError, match="bd was not found"):
+                require_beads(config, tmp_path)
+
+    def test_raises_when_required_and_beads_not_initialized(self, tmp_path: Path) -> None:
+        """require_beads raises when required, bd available, but .beads missing."""
+        (tmp_path / "tools" / "bd").mkdir(parents=True)
+        (tmp_path / "tools" / "bd" / ("bd.exe" if sys.platform == "win32" else "bd")).write_text(
+            "", encoding="utf-8"
+        )
+        config = type("C", (), {"beads": type("B", (), {"enabled": True, "required": True})()})()
+        with pytest.raises(BeadsRequiredError, match="not initialized"):
+            require_beads(config, tmp_path)
+
+    def test_passes_when_required_and_ready(self, tmp_path: Path) -> None:
+        """require_beads passes when required and bd is available and initialized."""
+        (tmp_path / "tools" / "bd").mkdir(parents=True)
+        (tmp_path / "tools" / "bd" / ("bd.exe" if sys.platform == "win32" else "bd")).write_text(
+            "", encoding="utf-8"
+        )
+        (tmp_path / ".beads").mkdir()
+        config = type("C", (), {"beads": type("B", (), {"enabled": True, "required": True})()})()
+        require_beads(config, tmp_path)

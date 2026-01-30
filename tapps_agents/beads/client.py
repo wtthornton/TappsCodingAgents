@@ -5,6 +5,8 @@ All callers must use is_available(project_root) before run_bd. run_bd raises
 FileNotFoundError when bd cannot be resolved.
 """
 
+from __future__ import annotations
+
 import shutil
 import subprocess
 import sys
@@ -55,6 +57,49 @@ def is_ready(project_root: Path) -> bool:
         project_root: Project root directory.
     """
     return is_available(project_root) and (project_root / ".beads").exists()
+
+
+BEADS_REQUIRED_REMEDIATION = (
+    "Install bd to tools/bd or add bd to PATH, run 'bd init' or 'bd init --stealth', "
+    "then 'bd doctor --fix'. Or set beads.required: false in .tapps-agents/config.yaml. "
+    "See docs/BEADS_INTEGRATION.md."
+)
+
+
+class BeadsRequiredError(Exception):
+    """Raised when beads.required is true but bd is unavailable or not initialized."""
+
+    def __init__(self, message: str, remediation: str = BEADS_REQUIRED_REMEDIATION) -> None:
+        super().__init__(f"{message}\n{remediation}")
+        self.remediation = remediation
+
+
+def require_beads(config: object, project_root: Path) -> None:
+    """
+    Ensure Beads is available when required. No-op when beads.enabled or beads.required is false.
+
+    Args:
+        config: ProjectConfig (or object with config.beads.enabled and config.beads.required).
+        project_root: Project root directory.
+
+    Raises:
+        BeadsRequiredError: When beads.enabled and beads.required but bd unavailable or .beads missing.
+    """
+    beads = getattr(config, "beads", None)
+    if beads is None:
+        return
+    if not getattr(beads, "enabled", False) or not getattr(beads, "required", False):
+        return
+    if not is_available(project_root):
+        raise BeadsRequiredError(
+            "Beads (bd) is required but bd was not found.",
+            remediation=BEADS_REQUIRED_REMEDIATION,
+        )
+    if not is_ready(project_root):
+        raise BeadsRequiredError(
+            "Beads (bd) is required but project is not initialized. Run 'bd init' or 'bd init --stealth'.",
+            remediation=BEADS_REQUIRED_REMEDIATION,
+        )
 
 
 def run_bd(

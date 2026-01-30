@@ -93,6 +93,22 @@ class FixOrchestrator(SimpleModeOrchestrator):
         # Load configuration
         config = self.config or load_config()
         bug_fix_config = config.bug_fix_agent
+
+        # Beads required: fail early if beads.required and bd unavailable
+        try:
+            from ..beads import require_beads
+
+            require_beads(config, self.project_root)
+        except Exception as e:
+            from tapps_agents.core.feedback import get_feedback
+
+            get_feedback().error(str(e), context={"beads_required": True})
+            return {
+                "type": "fix",
+                "success": False,
+                "error": str(e),
+                "workflow_id": workflow_id,
+            }
         
         max_iterations = parameters.get("max_iterations", bug_fix_config.max_iterations)
         auto_commit = parameters.get("auto_commit", bug_fix_config.auto_commit)

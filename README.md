@@ -101,7 +101,7 @@ If you're using **Cursor IDE**, get started quickly:
    - ✅ **Workflow Presets** (`workflows/presets/`) - full-sdlc, rapid-dev, fix, quality, brownfield-analysis
    - ✅ **MCP Config** (`.cursor/mcp.json`) - Context7 for library docs (optional)
    - ✅ **Framework version** (`.tapps-agents/.framework-version`) - Installed package version
-   - ✅ **Beads (bd)** - When `tools/bd` exists, `scripts/set_bd_path.ps1` is added if missing; init hints `bd init` / `bd doctor --fix` when `.beads` is missing. See [Beads Integration](docs/BEADS_INTEGRATION.md).
+   - ✅ **Beads (bd)** - When `tools/bd` exists, `scripts/set_bd_path.ps1` is added if missing; init hints `bd init` / `bd doctor --fix` when `.beads` is missing. Set `beads.required: true` to make Beads mandatory (workflows fail if bd unavailable). See [Beads Integration](docs/BEADS_INTEGRATION.md).
 
    **Note:** If you get "command not found" (common on Windows with user pip installs), use `python -m tapps_agents.cli` instead of `tapps-agents`, or use a project venv. See [Troubleshooting CLI installation](docs/TROUBLESHOOTING_CLI_INSTALLATION.md) for details.
 
@@ -205,7 +205,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 - **MCP Gateway**: Unified Model Context Protocol interface for tool access
   - **Context7 MCP Server**: Library documentation lookup (required, auto-configured)
   - **Playwright MCP Server**: Browser automation for E2E testing (optional, auto-detected)
-  - **Beads (bd)** (optional): Task tracking; `tapps-agents beads`; doctor reports bd status; init hints `bd init` when detected. [Beads Integration](docs/BEADS_INTEGRATION.md)
+  - **Beads (bd)** (optional or required): Task tracking; `tapps-agents beads`; doctor reports bd status; init hints or mandates `bd init` when detected. Set `beads.required: true` to make workflows fail when bd unavailable. [Beads Integration](docs/BEADS_INTEGRATION.md)
 - **YAML Workflow Definitions**: Declarative, version-controlled orchestration with strict schema enforcement
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
 - **YAML-First Architecture** ✅ (Epics 6-10 Complete):

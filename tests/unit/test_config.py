@@ -105,9 +105,10 @@ class TestBeadsConfig:
     """Test BeadsConfig model."""
 
     def test_default_values(self):
-        """BeadsConfig defaults: enabled=True, hooks_simple_mode=True, hooks_workflow=True; hooks_review/test/refactor=False."""
+        """BeadsConfig defaults: enabled=True, required=False, hooks_simple_mode=True, etc."""
         c = BeadsConfig()
         assert c.enabled is True
+        assert c.required is False
         assert c.sync_epic is True
         assert c.hooks_simple_mode is True
         assert c.hooks_workflow is True

@@ -32,6 +32,7 @@ In `.tapps-agents/config.yaml`:
 ```yaml
 beads:
   enabled: true           # Master switch. Set to false to disable all Beads use.
+  required: false         # When true, workflows fail if bd unavailable or .beads not initialized
   sync_epic: true         # Sync epic to bd (create issues + deps) before *epic
   hooks_simple_mode: true # Create/close bd issues at start/end of *build and *fix
   hooks_workflow: true    # Create/close for CLI `workflow` runs (WorkflowExecutor, CursorWorkflowExecutor)
@@ -42,6 +43,9 @@ beads:
 
 - **`beads.enabled`**  
   Must be `true` for any Beads behavior. Default `true` when bd is installed; set to `false` to opt out of all Beads use.
+
+- **`beads.required`**  
+  When `true`, workflows (*build, *fix, *epic, CLI workflow, *todo) fail if bd is unavailable or `.beads` is not initialized. Default `false` for backward compatibility.
 
 - **`beads.sync_epic`**  
   When `enabled` and `sync_epic` are true, `load_epic` syncs the Epic to bd: one issue per story, `bd dep add` from `Story.dependencies`, and optionally a parent Epic issue (see Epic sync). `bd ready` can then drive or verify execution order.
@@ -156,8 +160,10 @@ When `beads.enabled` and `beads.hooks_simple_mode` are true:
 
 ## Doctor and Init
 
-- **`tapps-agents doctor`** reports Beads (bd) status and config: available (tools/bd or PATH), not found, or not checked; and `beads.enabled`, `sync_epic`, `hooks_simple_mode`, `hooks_workflow`, `hooks_review`, `hooks_test`, `hooks_refactor`. When Beads is ready, run `bd doctor` for Beads-specific checks; `bd doctor --fix` to fix. If `bd` is only under `tools/bd`, add `tools/bd` to PATH or use `scripts/set_bd_path.ps1`. Remediations: when `beads.enabled` is false but bd is available; when `beads.enabled` is true but bd is not found.
-- **`tapps-agents init`** when bd is available: if `.beads` does not exist, prints "Run `bd init` or `bd init --stealth` to enable Beads for this project. Then run `bd doctor --fix` to install hooks and fix common issues."; if `.beads` exists, prints "Beads is ready. Use `bd ready` to see unblocked tasks" and, if `scripts/set_bd_path.ps1` exists, how to run `bd` in terminal. Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists.
+- **`tapps-agents doctor`** reports Beads (bd) status and config: available (tools/bd or PATH), not found, or not checked; and `beads.enabled`, `beads.required`, `sync_epic`, `hooks_simple_mode`, etc. When `beads.required` is true and bd is missing or not initialized, doctor reports a **fail**. When Beads is ready, run `bd doctor` for Beads-specific checks; `bd doctor --fix` to fix. If `bd` is only under `tools/bd`, add `tools/bd` to PATH or use `scripts/set_bd_path.ps1`. Remediations: when `beads.enabled` is false but bd is available; when `beads.enabled` is true but bd is not found; when `beads.required` is true but bd is missing or `.beads` not initialized.
+- **`tapps-agents init`** when bd is available: if `.beads` does not exist, prints a hint to run `bd init` (or a **REQUIRED** message when `beads.required` is true); if `.beads` exists, prints "Beads is ready. Use `bd ready` to see unblocked tasks" and, if `scripts/set_bd_path.ps1` exists, how to run `bd` in terminal. Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists. When `beads.required` is true and bd is not found, init prints a mandatory message; workflows will fail until Beads is installed and initialized.
+
+- **`tapps-agents init --reset`** preserves user data including `.tapps-agents/config.yaml` (and thus `beads.enabled`, `beads.required`, etc.). Only framework-managed files (rules, skills, presets) are reset. Your beads configuration is not changed by init --reset.
 
 ---
 

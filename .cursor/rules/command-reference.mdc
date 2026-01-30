@@ -144,8 +144,8 @@ When you run `tapps-agents init` on any project (new or existing), it:
 
 10. **Beads (bd) support**:
    - When `tools/bd` exists (bd.exe or bd), init ensures `scripts/set_bd_path.ps1` exists (does not overwrite)
-   - After init, if `.beads` is missing, init prints a hint: run `bd init` or `bd init --stealth`, then `bd doctor --fix`
-   - Use `tapps-agents doctor` for Beads status (enabled, sync_epic, hooks_*); see docs/BEADS_INTEGRATION.md
+   - After init, if `.beads` is missing, init prints a hint: run `bd init` or `bd init --stealth`, then `bd doctor --fix`. When `beads.required` is true, init prints a REQUIRED message; workflows will fail until Beads is initialized.
+   - Use `tapps-agents doctor` for Beads status (enabled, required, sync_epic, hooks_*); doctor fails when beads.required and bd missing or not initialized; see docs/BEADS_INTEGRATION.md
 
 **init --reset behavior:**
 - Detects existing installation; identifies framework-managed files (rules, skills, presets, .cursorignore, MCP if Context7)

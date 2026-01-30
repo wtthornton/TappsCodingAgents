@@ -279,9 +279,11 @@ class CursorWorkflowExecutor:
         # Beads: create workflow issue when enabled (store for close in run finally)
         try:
             from ..core.config import load_config
+            from ..beads import require_beads
             from ..simple_mode.beads_hooks import create_workflow_issue
 
             config = load_config(self.project_root / ".tapps-agents" / "config.yaml")
+            require_beads(config, self.project_root)
             state_vars = self.state.variables or {}
             # On resume: reuse id from .beads_issue_id file (same layout as *build)
             state_dir = self._state_dir()
@@ -310,8 +312,12 @@ class CursorWorkflowExecutor:
                         beads_file.write_text(bid, encoding="utf-8")
                     except OSError:
                         pass
-        except Exception:
-            pass  # log-and-continue: do not fail start
+        except Exception as e:
+            from ..beads import BeadsRequiredError
+
+            if isinstance(e, BeadsRequiredError):
+                raise
+            pass  # log-and-continue: do not fail start for other beads errors
 
         # Generate and save execution plan (Epic 6 - Story 6.7)
         try:

@@ -875,8 +875,10 @@ def collect_doctor_report(
         from ..beads import is_available, is_ready, resolve_bd_path, run_bd
 
         b = config.beads
-        cfg = "enabled={}, sync_epic={}, hooks_simple_mode={}, hooks_workflow={}, hooks_review={}, hooks_test={}, hooks_refactor={}".format(
+        beads_required = getattr(b, "required", False)
+        cfg = "enabled={}, required={}, sync_epic={}, hooks_simple_mode={}, hooks_workflow={}, hooks_review={}, hooks_test={}, hooks_refactor={}".format(
             getattr(b, "enabled", False),
+            beads_required,
             getattr(b, "sync_epic", False),
             getattr(b, "hooks_simple_mode", False),
             getattr(b, "hooks_workflow", False),
@@ -900,49 +902,59 @@ def collect_doctor_report(
                     msg = f"Beads (bd): Available (ready). {cfg}"
                 else:
                     msg = f"Beads (bd): Available (run `bd init` or `bd init --stealth`). {cfg}"
-                rem_parts: list[str] = []
-                if not getattr(b, "enabled", False):
-                    rem_parts.append(
-                        "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
-                    )
-                if ready:
+                    if beads_required:
+                        findings.append(
+                            DoctorFinding(
+                                severity="fail",
+                                code="BEADS",
+                                message="Beads (bd): Required but not initialized. " + msg,
+                                remediation="Run 'bd init' or 'bd init --stealth', then 'bd doctor --fix'. Or set beads.required: false. See docs/BEADS_INTEGRATION.md.",
+                            )
+                        )
+                if ready or (not beads_required and not ready):
+                    rem_parts = []
+                    if not getattr(b, "enabled", False):
+                        rem_parts.append(
+                            "To use Beads with tapps-agents, set beads.enabled: true in .tapps-agents/config.yaml. See docs/BEADS_INTEGRATION.md."
+                        )
                     rem_parts.append(
                         "Run bd doctor for Beads-specific checks; bd doctor --fix to fix."
                     )
-                # If bd is from tools/bd and not on PATH, suggest set_bd_path or PATH
-                resolved = resolve_bd_path(root)
-                from_tools_bd = False
-                if resolved:
-                    try:
-                        from_tools_bd = (root / "tools" / "bd").resolve() == Path(
-                            resolved
-                        ).resolve().parent
-                    except Exception:
-                        from_tools_bd = "tools" in resolved and "bd" in resolved
-                if from_tools_bd and not shutil.which("bd"):
-                    set_bd = root / "scripts" / "set_bd_path.ps1"
-                    if set_bd.exists():
-                        rem_parts.append(
-                            "To run bd in terminal: . .\\scripts\\set_bd_path.ps1 (Windows) or . ./scripts/set_bd_path.ps1 (Unix). Or .\\scripts\\set_bd_path.ps1 -Persist to add to User PATH."
-                        )
-                    else:
-                        rem_parts.append(
-                            "Add tools/bd to PATH to run bd in terminal. See tools/README.md and docs/BEADS_INTEGRATION.md."
-                        )
-                rem = "\n".join(rem_parts) if rem_parts else None
-                findings.append(DoctorFinding(severity="ok", code="BEADS", message=msg, remediation=rem))
+                    resolved = resolve_bd_path(root)
+                    from_tools_bd = False
+                    if resolved:
+                        try:
+                            from_tools_bd = (root / "tools" / "bd").resolve() == Path(resolved).resolve().parent
+                        except Exception:
+                            from_tools_bd = "tools" in resolved and "bd" in resolved
+                    if from_tools_bd and not shutil.which("bd"):
+                        set_bd = root / "scripts" / "set_bd_path.ps1"
+                        if set_bd.exists():
+                            rem_parts.append(
+                                "To run bd in terminal: . .\\scripts\\set_bd_path.ps1 (Windows) or . ./scripts/set_bd_path.ps1 (Unix). Or .\\scripts\\set_bd_path.ps1 -Persist to add to User PATH."
+                            )
+                        else:
+                            rem_parts.append(
+                                "Add tools/bd to PATH to run bd in terminal. See tools/README.md and docs/BEADS_INTEGRATION.md."
+                            )
+                    rem = "\n".join(rem_parts) if rem_parts else None
+                    findings.append(DoctorFinding(severity="ok", code="BEADS", message=msg, remediation=rem))
             else:
                 msg = f"Beads (bd): Available but bd did not run. {cfg}"
                 rem = "The bd binary was found but bd --version/--help failed. Reinstall bd or check dependencies. See docs/BEADS_INTEGRATION.md."
                 findings.append(DoctorFinding(severity="warn", code="BEADS", message=msg, remediation=rem))
         else:
             if getattr(b, "enabled", False):
+                is_required = getattr(b, "required", False)
                 findings.append(
                     DoctorFinding(
-                        severity="warn",
+                        severity="fail" if is_required else "warn",
                         code="BEADS",
-                        message="Beads (bd): Not found",
-                        remediation="beads.enabled is true but bd was not found. Install bd to tools/bd or PATH, or set beads.enabled: false. See docs/BEADS_INTEGRATION.md.",
+                        message="Beads (bd): Not found"
+                        + (" (required)" if is_required else ""),
+                        remediation="beads.enabled is true"
+                        + (" and beads.required is true" if is_required else "")
+                        + " but bd was not found. Install bd to tools/bd or PATH, run 'bd init', or set beads.required: false (or beads.enabled: false). See docs/BEADS_INTEGRATION.md.",
                     )
                 )
             else:

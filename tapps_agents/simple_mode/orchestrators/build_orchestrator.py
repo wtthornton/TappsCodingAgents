@@ -277,6 +277,23 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         original_description = parameters.get("description") or intent.original_input
 
+        # Beads required: fail early if beads.required and bd unavailable
+        if self.config:
+            try:
+                from ..beads import require_beads
+
+                require_beads(self.config, self.project_root)
+            except Exception as e:  # BeadsRequiredError
+                from tapps_agents.core.feedback import get_feedback
+
+                get_feedback().error(str(e), context={"beads_required": True})
+                return {
+                    "type": "build",
+                    "success": False,
+                    "error": str(e),
+                    "workflow_id": parameters.get("workflow_id", ""),
+                }
+
         from ..beads_hooks import create_build_issue, close_issue
 
         # Resolve workflow_id: reuse when resuming, otherwise generate

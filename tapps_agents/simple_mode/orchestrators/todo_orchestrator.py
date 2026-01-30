@@ -23,11 +23,22 @@ class TodoOrchestrator(SimpleModeOrchestrator):
     async def execute(
         self, intent: Intent, parameters: dict[str, Any] | None = None
     ) -> dict[str, Any]:
-        from ...beads import is_available, run_bd
+        from ...beads import is_available, require_beads, run_bd
+        from ...core.config import load_config
 
         parameters = parameters or {}
         rest = (parameters.get("todo_rest") or "").strip()
         bd_args = shlex.split(rest) if rest else ["ready"]
+
+        config = self.config or load_config()
+        try:
+            require_beads(config, self.project_root)
+        except Exception as e:
+            return {
+                "type": "todo",
+                "success": False,
+                "error": str(e),
+            }
 
         if not is_available(self.project_root):
             return {
