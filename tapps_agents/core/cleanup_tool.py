@@ -348,31 +348,31 @@ class CleanupTool:
                         # Calculate size
                         size = sum(
                             f.stat().st_size
-                            for f in workflow_dir[0].rglob("*")
+                            for f in workflow_dir.rglob("*")
                             if f.is_file()
                         )
                         total_size += size
 
                         if dry_run:
-                            print(f"Would archive: {workflow_dir[0].name} ({size / 1024 / 1024:.2f} MB)")
+                            print(f"Would archive: {workflow_dir.name} ({size / 1024 / 1024:.2f} MB)")
                         else:
                             # Archive workflow (Windows-compatible)
-                            dest_dir = archive_path / workflow_dir[0].name
+                            dest_dir = archive_path / workflow_dir.name
                             archive_path.mkdir(parents=True, exist_ok=True)
 
                             if sys.platform == "win32":
                                 # Windows: Copy then delete
-                                shutil.copytree(workflow_dir[0], dest_dir, dirs_exist_ok=True)
-                                shutil.rmtree(workflow_dir[0])
+                                shutil.copytree(workflow_dir, dest_dir, dirs_exist_ok=True)
+                                shutil.rmtree(workflow_dir)
                             else:
                                 # Unix: Move
-                                shutil.move(str(workflow_dir[0]), str(dest_dir))
+                                shutil.move(str(workflow_dir), str(dest_dir))
 
-                            print(f"Archived: {workflow_dir[0].name}")
+                            print(f"Archived: {workflow_dir.name}")
                         archived_count += 1
-                        archived_workflows.append(workflow_dir[0].name)
+                        archived_workflows.append(workflow_dir.name)
                     except Exception as e:
-                        error_msg = f"Failed to archive {workflow_dir[0].name}: {e}"
+                        error_msg = f"Failed to archive {workflow_dir.name}: {e}"
                         logger.error(error_msg)
                         errors.append(error_msg)
 
