@@ -921,7 +921,7 @@ Health metrics are stored persistently for trend analysis.
 Example: tapps-agents health check""",
     )
     health_subparsers = health_parser.add_subparsers(
-        dest="command", help="Health subcommand (check, dashboard, metrics, trends, usage)", required=True
+        dest="command", help="Health subcommand (check, dashboard, overview, metrics, trends, usage)", required=True
     )
 
     health_check_parser = health_subparsers.add_parser(
@@ -964,6 +964,19 @@ Example: tapps-agents health check""",
         choices=["json", "text"],
         default="text",
         help="Output format: 'text' for human-readable dashboard, 'json' for structured data (default: text)",
+    )
+
+    health_overview_parser = health_subparsers.add_parser(
+        "overview",
+        aliases=["summary"],
+        help="1000-foot view: health + usage for all subsystems (recommended)",
+        description="Single rolled-up report: overall health, each subsystem one line, then usage at a glance (system, top agents, top workflows). Easy to read, great for status at a glance.",
+    )
+    health_overview_parser.add_argument(
+        "--format",
+        choices=["json", "text"],
+        default="text",
+        help="Output format: 'text' for human-readable overview, 'json' for structured data (default: text)",
     )
 
     health_metrics_parser = health_subparsers.add_parser(

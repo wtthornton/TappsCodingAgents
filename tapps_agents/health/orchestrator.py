@@ -176,8 +176,29 @@ class HealthOrchestrator:
         overall_score = weighted_score / total_weight if total_weight > 0 else 0.0
 
         # Determine overall status
+        critical_checks = {"environment", "execution"}
+        non_critical_unhealthy_only = {"outcomes", "knowledge_base", "context7_cache"}
+        unhealthy_checks = [
+            name
+            for name, result in results.items()
+            if result and result.status == "unhealthy"
+        ]
+        critical_healthy = all(
+            (results.get(name) and results[name].status != "unhealthy")
+            for name in critical_checks
+            if name in results
+        )
+
         if status_counts["unhealthy"] > 0:
             overall_status = "unhealthy"
+            # If score is high (>=75) and only non-critical checks are unhealthy, show degraded
+            if (
+                overall_score >= 75.0
+                and critical_healthy
+                and unhealthy_checks
+                and all(c in non_critical_unhealthy_only for c in unhealthy_checks)
+            ):
+                overall_status = "degraded"
         elif status_counts["degraded"] > 0:
             overall_status = "degraded"
         else:

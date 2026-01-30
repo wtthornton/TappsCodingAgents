@@ -52,14 +52,16 @@ if (-not $ReleaseNotes) {
     if (Test-Path $ReleaseNotesFile) {
         $ReleaseNotes = Get-Content $ReleaseNotesFile -Raw
     } else {
-        # Try to extract from CHANGELOG.md
+        # Try to extract from CHANGELOG.md (use single-quoted regex to avoid [ ] parsing in double-quoted string)
         $changelogFile = Join-Path $projectRoot "CHANGELOG.md"
         if (Test-Path $changelogFile) {
             $changelogContent = Get-Content $changelogFile -Raw
-            if ($changelogContent -match "## \[$Version\][\s\S]*?## \[") {
-                $ReleaseNotes = $matches[0] -replace "## \[.*?\]", ""
-            } elseif ($changelogContent -match "## \[$Version\][\s\S]*$") {
-                $ReleaseNotes = $matches[0] -replace "## \[.*?\]", ""
+            $pattern1 = '## \[' + $Version + '\][\s\S]*?## \['
+            $pattern2 = '## \[' + $Version + '\][\s\S]*$'
+            if ($changelogContent -match $pattern1) {
+                $ReleaseNotes = $matches[0] -replace '## \[.*?\]', ''
+            } elseif ($changelogContent -match $pattern2) {
+                $ReleaseNotes = $matches[0] -replace '## \[.*?\]', ''
             }
         }
         if (-not $ReleaseNotes -or $ReleaseNotes.Trim() -eq "") {

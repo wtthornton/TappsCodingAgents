@@ -6,6 +6,8 @@ from __future__ import annotations
 
 import json
 import sys
+from collections import defaultdict
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from ...health.checks.automation import AutomationHealthCheck
@@ -20,6 +22,129 @@ from ...health.orchestrator import HealthOrchestrator
 from ...health.registry import HealthCheckRegistry
 from ..feedback import get_feedback, ProgressTracker
 from .common import format_json_output
+
+
+def _usage_data_from_execution_metrics(project_root: Path) -> dict | None:
+    """
+    Build usage-like data from execution metrics when analytics is empty.
+
+    Aggregates .tapps-agents/metrics/executions_*.jsonl by today (steps/workflows),
+    by skill (agents), and by workflow_id (workflows). Returns same shape as
+    AnalyticsDashboard.get_dashboard_data() for system/agents/workflows.
+    """
+    try:
+        from ...workflow.execution_metrics import ExecutionMetricsCollector
+
+        collector = ExecutionMetricsCollector(project_root=project_root)
+        metrics = collector.get_metrics(limit=5000)
+        if not metrics:
+            return None
+
+        now = datetime.now(UTC)
+        today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+        thirty_days_ago = now - timedelta(days=30)
+
+        # Filter to last 30 days
+        def parse_ts(ts: str) -> datetime:
+            return datetime.fromisoformat(ts.replace("Z", "+00:00"))
+
+        recent = [m for m in metrics if parse_ts(m.started_at) >= thirty_days_ago]
+        if not recent:
+            return None
+
+        today_metrics = [m for m in recent if parse_ts(m.started_at) >= today_start]
+        workflow_ids_today_success = {
+            m.workflow_id for m in today_metrics if m.status == "success"
+        }
+        workflow_ids_today_failed = {
+            m.workflow_id for m in today_metrics if m.status != "success"
+        }
+        completed_today = len(workflow_ids_today_success)
+        failed_today = len(workflow_ids_today_failed)
+        avg_duration = (
+            sum(m.duration_ms for m in recent) / len(recent) / 1000.0
+            if recent
+            else 0.0
+        )
+
+        # Agents: by skill or command
+        agent_counts: dict[str, list] = defaultdict(list)
+        for m in recent:
+            key = m.skill or m.command or "unknown"
+            agent_counts[key].append(m)
+
+        agents_list = []
+        for name, ms in agent_counts.items():
+            total = len(ms)
+            success = sum(1 for m in ms if m.status == "success")
+            agents_list.append(
+                {
+                    "agent_id": name,
+                    "agent_name": name,
+                    "total_executions": total,
+                    "successful_executions": success,
+                    "failed_executions": total - success,
+                    "success_rate": success / total if total else 0.0,
+                    "average_duration": sum(m.duration_ms for m in ms) / total / 1000.0
+                    if total
+                    else 0.0,
+                }
+            )
+
+        # Workflows: by workflow_id
+        wf_counts: dict[str, list] = defaultdict(list)
+        for m in recent:
+            wf_counts[m.workflow_id].append(m)
+
+        workflows_list = []
+        for wf_id, ms in wf_counts.items():
+            total = len(ms)
+            success = sum(1 for m in ms if m.status == "success")
+            workflows_list.append(
+                {
+                    "workflow_id": wf_id,
+                    "workflow_name": wf_id,
+                    "total_executions": total,
+                    "successful_executions": success,
+                    "failed_executions": total - success,
+                    "success_rate": success / total if total else 0.0,
+                    "average_duration": sum(m.duration_ms for m in ms) / total / 1000.0
+                    if total
+                    else 0.0,
+                }
+            )
+
+        # System: try cpu/mem/disk from ResourceMonitor
+        cpu_usage = memory_usage = disk_usage = 0.0
+        try:
+            from ...core.resource_monitor import ResourceMonitor
+
+            mon = ResourceMonitor()
+            res = mon.get_current_metrics()
+            cpu_usage = getattr(res, "cpu_percent", 0.0) or 0.0
+            memory_usage = getattr(res, "memory_percent", 0.0) or 0.0
+            disk_usage = getattr(res, "disk_percent", 0.0) or 0.0
+        except Exception:
+            pass
+
+        return {
+            "timestamp": now.isoformat(),
+            "system": {
+                "timestamp": now.isoformat(),
+                "total_agents": len(agents_list),
+                "active_workflows": 0,
+                "completed_workflows_today": completed_today,
+                "failed_workflows_today": failed_today,
+                "average_workflow_duration": avg_duration,
+                "cpu_usage": cpu_usage,
+                "memory_usage": memory_usage,
+                "disk_usage": disk_usage,
+            },
+            "agents": agents_list,
+            "workflows": workflows_list,
+        }
+    except Exception:
+        return None
 
 
 def handle_health_check_command(
@@ -399,4 +524,126 @@ def handle_health_usage_command(args: object) -> None:
             print(f"  Active Workflows: {status['active_workflows']}")
             print(f"  Completed Today: {status['completed_workflows_today']}")
             print(f"  Failed Today: {status['failed_workflows_today']}")
+
+
+def handle_health_overview_command(
+    output_format: str = "text",
+    project_root: Path | None = None,
+) -> None:
+    """
+    Single 1000-foot view: health checks + usage rolled up for all subsystems.
+
+    Renders one easy-to-read report: overall health, each health check one line,
+    then usage at a glance (system, top agents, top workflows).
+    """
+    from ...core.analytics_dashboard import AnalyticsDashboard
+
+    project_root = project_root or Path.cwd()
+
+    # 1. Health checks
+    registry = HealthCheckRegistry()
+    registry.register(EnvironmentHealthCheck(project_root=project_root))
+    registry.register(AutomationHealthCheck(project_root=project_root))
+    registry.register(ExecutionHealthCheck(project_root=project_root))
+    registry.register(Context7CacheHealthCheck(project_root=project_root))
+    registry.register(KnowledgeBaseHealthCheck(project_root=project_root))
+    registry.register(OutcomeHealthCheck(project_root=project_root))
+    metrics_collector = HealthMetricsCollector(project_root=project_root)
+    orchestrator = HealthOrchestrator(
+        registry=registry,
+        metrics_collector=metrics_collector,
+        project_root=project_root,
+    )
+    health_results = orchestrator.run_all_checks(save_metrics=True)
+    overall = orchestrator.get_overall_health(health_results)
+
+    # 2. Usage (best-effort; prefer analytics, fallback to execution metrics)
+    usage_data = None
+    try:
+        usage_dashboard = AnalyticsDashboard()
+        usage_data = usage_dashboard.get_dashboard_data()
+    except Exception:
+        pass
+    # If analytics has no agent/workflow data, derive from execution metrics
+    if usage_data:
+        agents = usage_data.get("agents") or []
+        workflows = usage_data.get("workflows") or []
+        total_runs = sum(a.get("total_executions", 0) for a in agents) + sum(
+            w.get("total_executions", 0) for w in workflows
+        )
+        if total_runs == 0:
+            usage_data = _usage_data_from_execution_metrics(project_root) or usage_data
+    else:
+        usage_data = _usage_data_from_execution_metrics(project_root) or usage_data
+
+    # 3. Build output
+    feedback = get_feedback()
+    feedback.format_type = output_format
+
+    if output_format == "json":
+        out = {
+            "overview": {
+                "overall_health": overall,
+                "health_checks": {
+                    name: {
+                        "status": r.status,
+                        "score": r.score,
+                        "message": r.message,
+                    }
+                    for name, r in health_results.items()
+                    if r
+                },
+            },
+            "usage": usage_data,
+        }
+        format_json_output(out)
+        return
+
+    # Text: 1000-foot, great-looking, easy to read
+    width = 72
+    lines = []
+    lines.append("")
+    lines.append("=" * width)
+    lines.append("  TAPPS-AGENTS  |  HEALTH + USAGE  |  1000-FOOT VIEW")
+    lines.append("=" * width)
+    lines.append("")
+
+    # Overall health
+    status_sym = {"healthy": "[OK] ", "degraded": "[WARN]", "unhealthy": "[FAIL]", "unknown": "[?]  "}
+    sym = status_sym.get(overall["status"], "[?]  ")
+    lines.append(f"  {sym}  Overall: {overall['status'].upper()}  ({overall['score']:.1f}/100)")
+    lines.append("")
+
+    # Subsystems (health checks) - one line each
+    lines.append("  SUBSYSTEMS (health)")
+    lines.append("  " + "-" * (width - 2))
+    for name, result in sorted(health_results.items()):
+        if not result:
+            continue
+        s = status_sym.get(result.status, "[?]  ")
+        label = name.replace("_", " ").upper()
+        lines.append(f"  {s}  {label}: {result.score:.1f}/100  |  {result.message[:50]}{'...' if len(result.message) > 50 else ''}")
+    lines.append("")
+
+    # Usage at a glance
+    lines.append("  USAGE (agents & workflows)")
+    lines.append("  " + "-" * (width - 2))
+    if usage_data:
+        sys_data = usage_data.get("system", {})
+        lines.append(f"  Today: completed {sys_data.get('completed_workflows_today', 0)} workflows, failed {sys_data.get('failed_workflows_today', 0)}  |  active: {sys_data.get('active_workflows', 0)}")
+        lines.append(f"  Avg workflow duration: {sys_data.get('average_workflow_duration', 0):.1f}s  |  CPU: {sys_data.get('cpu_usage', 0):.0f}%  Mem: {sys_data.get('memory_usage', 0):.0f}%  Disk: {sys_data.get('disk_usage', 0):.0f}%")
+        agents = sorted(usage_data.get("agents", []), key=lambda x: x.get("total_executions", 0), reverse=True)[:5]
+        if agents:
+            lines.append("  Top agents (30d): " + "  |  ".join(f"{a.get('agent_name', '')}: {a.get('total_executions', 0)} runs ({a.get('success_rate', 0)*100:.0f}% ok)" for a in agents))
+        workflows = sorted(usage_data.get("workflows", []), key=lambda x: x.get("total_executions", 0), reverse=True)[:5]
+        if workflows:
+            lines.append("  Top workflows (30d): " + "  |  ".join(f"{w.get('workflow_name', '')}: {w.get('total_executions', 0)} ({w.get('success_rate', 0)*100:.0f}% ok)" for w in workflows))
+    else:
+        lines.append("  (No usage data yet. Run agents/workflows to populate.)")
+    lines.append("")
+    lines.append("=" * width)
+    lines.append("")
+
+    feedback.clear_progress()
+    print("\n".join(lines))
 

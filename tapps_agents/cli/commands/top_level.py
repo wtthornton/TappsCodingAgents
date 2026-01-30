@@ -1513,6 +1513,9 @@ def _print_verification_commands(project_root: Path) -> None:
     print()
     print("  4. Alternative health check (if tapps-agents not in PATH):")
     print("     python -m tapps_agents.cli doctor")
+    print()
+    print("  5. When giving feedback on tapps-agents effectiveness, include health metrics:")
+    print("     tapps-agents health overview")
 
 
 def _print_validation_results(validation: dict[str, Any]) -> None:

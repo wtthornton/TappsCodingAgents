@@ -228,6 +228,14 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 
 **Init and doctor:** `tapps-agents init` prints a hint to run `bd init` or `bd init --stealth`, then `bd doctor --fix`, when bd is available and `.beads` is missing; when `.beads` exists, "Beads is ready. Use `bd ready`" and how to run `bd` in terminal (e.g. `scripts/set_bd_path.ps1` or PATH). Init may create `scripts/set_bd_path.ps1` when `tools/bd` exists. `tapps-agents doctor` reports Beads (bd) status and config (enabled, sync_epic, hooks_*); when Beads is ready, run `bd doctor` and `bd doctor --fix` for Beads-specific checks.
 
+### Feedback on TappsCodingAgents (include health metrics)
+
+**When the user asks for feedback on how well tapps-agents helps (e.g. "provide feedback on how well tapps-agents helps you as an LLM"), the feedback report or document MUST include health metrics.**
+
+- Run `tapps-agents health overview` (or `tapps-agents health usage dashboard`) and include the output or a summary in the feedback report.
+- This gives a 1000-foot view of subsystem health and usage so the feedback is actionable and comparable across sessions.
+- See `docs/feedback/README.md` for where to place feedback docs; see `.cursor/rules/project-context.mdc` for the same guideline in rules.
+
 ## Detailed Rules
 
 **For detailed project rules and guidelines, see:**

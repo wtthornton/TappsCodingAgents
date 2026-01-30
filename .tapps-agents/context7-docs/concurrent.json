@@ -1,0 +1,12 @@
+{
+  "library": "concurrent",
+  "topic": null,
+  "documentation": {
+    "content": "## Example package.json scripts for concurrently\n\n```jsonc\n{\n  // ...\n  \"scripts\": {\n    \"lint:js\": \"...\",\n    \"lint:ts\": \"...\",\n    \"lint:fix:js\": \"...\",\n    \"lint:fix:ts\": \"...\"\n    // ...\n  }\n  // ...\n}\n```\n\n## Running Tests with pnpm - Bash\n\n```bash\npnpm test\n```\n\n## Running a single script shortcut with concurrently (pnpm)\n\n```bash\n$ concurrently 'pnpm:lint:js'\n# Is equivalent to\n$ concurrently -n lint:js 'pnpm run lint:js'\n```\n\n## Enabling Input Handling with --handle-input\n\n```bash\n$ concurrently --handle-input 'nodemon' 'npm run watch-js'\nrs\n```\n\n## Targeting Input by Command Index\n\n```bash\n$ concurrently --handle-input 'npm run watch-js' 'nodemon'\n1:rs\n```\n\n## Running wildcard shortcut with exclusion pattern (yarn)\n\n```bash\n$ concurrently 'yarn:lint:*(!fix)'\n# is equivalent to\n$ concurrently -n js,ts 'yarn run lint:js' 'yarn run lint:ts'\n```\n\n## Using concurrently with multiple commands in JavaScript\n\n```JavaScript\nconst concurrently = require('concurrently');\nconst { result } = concurrently(\n  [\n    'npm:watch-*',\n    { command: 'nodemon', name: 'server' },\n    { command: 'deploy', name: 'deploy', env: { PUBLIC_KEY: '...' } },\n    {\n      command: 'watch',\n      name: 'watch',\n      cwd: path.resolve(__dirname, 'scripts/watchers'),\n    },\n  ],\n  {\n    prefix: 'name',\n    killOthers: ['failure', 'success'],\n    restartTries: 3,\n    cwd: path.resolve(__dirname, 'scripts'),\n  },\n);\nresult.then(success, failure);\n```\n\n## Default Input Handling Behavior in concurrently\n\n```bash\n$ concurrently 'nodemon' 'npm run watch-js'\nrs\n```\n\n## Targeting Input by Command Name\n\n```bash\n$ concurrently --handle-input --names js,server 'npm run watch-js' 'nodemon'\nserver:rs\n```\n\n## Initial concurrently build scripts (Problem Context)\n\n```json\n{\n  // ...\n  \"scripts\": {\n    \"build:client\": \"tsc -p client\",\n    \"build:server\": \"tsc -p server\",\n    \"build\": \"concurrently npm:build:client npm:build:server\"\n  }\n}\n```\n\nContext7 cache for concurrent: cached at 2026-01-30T22:28:35.103879+00:00Z; consider refreshing if docs changed.",
+    "library": "concurrent",
+    "topic": "overview",
+    "source": "cache"
+  },
+  "source": "cache",
+  "saved_at": "2026-01-30T14:28:35.177860"
+}

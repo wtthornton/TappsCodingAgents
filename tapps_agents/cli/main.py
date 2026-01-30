@@ -419,8 +419,10 @@ def _handle_observability_command(args: argparse.Namespace) -> None:
 
 def _handle_health_command(args: argparse.Namespace) -> None:
     """Handle health command with sub-commands."""
+    from pathlib import Path
+
     from .commands import health
-    
+
     if not hasattr(args, "command"):
         return
     
@@ -448,6 +450,14 @@ def _handle_health_command(args: argparse.Namespace) -> None:
             output_format=getattr(args, "format", "text"),
         ),
         "usage": lambda: health.handle_health_usage_command(args),
+        "overview": lambda: health.handle_health_overview_command(
+            output_format=getattr(args, "format", "text"),
+            project_root=Path.cwd(),
+        ),
+        "summary": lambda: health.handle_health_overview_command(
+            output_format=getattr(args, "format", "text"),
+            project_root=Path.cwd(),
+        ),
     }
     
     handler = health_handlers.get(args.command)

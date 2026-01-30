@@ -1735,6 +1735,118 @@
       "file_path": "parsers_examples.json",
       "saved_at": "2026-01-30T10:00:05.985526",
       "source": "fuzzy_match"
+    },
+    "collector:best-practices": {
+      "library": "collector",
+      "topic": "best-practices",
+      "file_path": "collector_best-practices.json",
+      "saved_at": "2026-01-30T14:25:16.459006",
+      "source": "fuzzy_match"
+    },
+    "collector:common-mistakes": {
+      "library": "collector",
+      "topic": "common-mistakes",
+      "file_path": "collector_common-mistakes.json",
+      "saved_at": "2026-01-30T14:25:16.596048",
+      "source": "fuzzy_match"
+    },
+    "collector:usage": {
+      "library": "collector",
+      "topic": "usage",
+      "file_path": "collector_usage.json",
+      "saved_at": "2026-01-30T14:25:19.937869",
+      "source": "api"
+    },
+    "collector:examples": {
+      "library": "collector",
+      "topic": "examples",
+      "file_path": "collector_examples.json",
+      "saved_at": "2026-01-30T14:25:20.133845",
+      "source": "fuzzy_match"
+    },
+    "concurrent:best-practices": {
+      "library": "concurrent",
+      "topic": "best-practices",
+      "file_path": "concurrent_best-practices.json",
+      "saved_at": "2026-01-30T14:25:20.277963",
+      "source": "fuzzy_match"
+    },
+    "concurrent:common-mistakes": {
+      "library": "concurrent",
+      "topic": "common-mistakes",
+      "file_path": "concurrent_common-mistakes.json",
+      "saved_at": "2026-01-30T14:25:20.449476",
+      "source": "fuzzy_match"
+    },
+    "concurrent:usage": {
+      "library": "concurrent",
+      "topic": "usage",
+      "file_path": "concurrent_usage.json",
+      "saved_at": "2026-01-30T14:25:23.799830",
+      "source": "api"
+    },
+    "concurrent:examples": {
+      "library": "concurrent",
+      "topic": "examples",
+      "file_path": "concurrent_examples.json",
+      "saved_at": "2026-01-30T14:25:23.978992",
+      "source": "fuzzy_match"
+    },
+    "registry:best-practices": {
+      "library": "registry",
+      "topic": "best-practices",
+      "file_path": "registry_best-practices.json",
+      "saved_at": "2026-01-30T14:25:24.099574",
+      "source": "cache"
+    },
+    "registry:common-mistakes": {
+      "library": "registry",
+      "topic": "common-mistakes",
+      "file_path": "registry_common-mistakes.json",
+      "saved_at": "2026-01-30T14:25:24.237741",
+      "source": "fuzzy_match"
+    },
+    "registry:usage": {
+      "library": "registry",
+      "topic": "usage",
+      "file_path": "registry_usage.json",
+      "saved_at": "2026-01-30T14:25:24.375543",
+      "source": "fuzzy_match"
+    },
+    "registry:examples": {
+      "library": "registry",
+      "topic": "examples",
+      "file_path": "registry_examples.json",
+      "saved_at": "2026-01-30T14:25:24.503528",
+      "source": "fuzzy_match"
+    },
+    "__future__": {
+      "library": "__future__",
+      "topic": null,
+      "file_path": "__future__.json",
+      "saved_at": "2026-01-30T14:28:33.380547",
+      "source": "cache"
+    },
+    "collector": {
+      "library": "collector",
+      "topic": null,
+      "file_path": "collector.json",
+      "saved_at": "2026-01-30T14:28:35.096284",
+      "source": "cache"
+    },
+    "concurrent": {
+      "library": "concurrent",
+      "topic": null,
+      "file_path": "concurrent.json",
+      "saved_at": "2026-01-30T14:28:35.178434",
+      "source": "cache"
+    },
+    "registry": {
+      "library": "registry",
+      "topic": null,
+      "file_path": "registry.json",
+      "saved_at": "2026-01-30T14:28:35.313633",
+      "source": "fuzzy_match"
     }
   },
   "comprehensive_index": {
@@ -1746,7 +1858,7 @@
           "usage",
           "examples"
         ],
-        "total_docs": 4
+        "total_docs": 5
       },
       "event_log": {
         "topics": [
@@ -2304,6 +2416,33 @@
           "examples"
         ],
         "total_docs": 4
+      },
+      "collector": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "concurrent": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "registry": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
       }
     },
     "topics": {
@@ -2377,7 +2516,10 @@
         "weighted decision making",
         "cli",
         "commands",
-        "parsers"
+        "parsers",
+        "collector",
+        "concurrent",
+        "registry"
       ],
       "common-mistakes": [
         "__future__",
@@ -2417,7 +2559,10 @@
         "status",
         "cli",
         "commands",
-        "parsers"
+        "parsers",
+        "collector",
+        "concurrent",
+        "registry"
       ],
       "usage": [
         "__future__",
@@ -2457,7 +2602,10 @@
         "status",
         "cli",
         "commands",
-        "parsers"
+        "parsers",
+        "collector",
+        "concurrent",
+        "registry"
       ],
       "examples": [
         "__future__",
@@ -2497,7 +2645,10 @@
         "status",
         "cli",
         "commands",
-        "parsers"
+        "parsers",
+        "collector",
+        "concurrent",
+        "registry"
       ],
       "quality-standards": [
         "pytest"
@@ -2538,8 +2689,8 @@
         "types-pyyaml"
       ]
     },
-    "total_entries": 248,
-    "last_updated": "2026-01-30T10:00:05.985540"
+    "total_entries": 264,
+    "last_updated": "2026-01-30T14:28:35.313645"
   },
-  "last_updated": "2026-01-30T10:00:05.985766"
+  "last_updated": "2026-01-30T14:28:35.314083"
 }

@@ -108,8 +108,55 @@ class OutcomeHealthCheck(HealthCheck):
             issues = []
             remediation = []
 
-            # Check if we have any data
+            # Check if we have any data; if not, try fallback to execution metrics (review steps)
             if not review_artifacts and not agents_data:
+                # Fallback: derive outcomes from execution metrics (review steps, gate_pass)
+                try:
+                    from ...workflow.execution_metrics import ExecutionMetricsCollector
+
+                    collector = ExecutionMetricsCollector(project_root=self.project_root)
+                    exec_metrics = collector.get_metrics(limit=2000)
+                    review_metrics = [
+                        m
+                        for m in exec_metrics
+                        if m.command == "review"
+                        or (m.skill and "review" in (m.skill or "").lower())
+                    ]
+                    if review_metrics:
+                        total = len(review_metrics)
+                        success = sum(1 for m in review_metrics if m.status == "success")
+                        gate_passed = sum(
+                            1 for m in review_metrics if getattr(m, "gate_pass", False)
+                        )
+                        gate_rate = (gate_passed / total * 100) if total else 0.0
+                        success_rate = (success / total * 100) if total else 0.0
+                        derived_score = 50.0 + min(25.0, success_rate / 4.0 + gate_rate / 4.0)
+                        return HealthCheckResult(
+                            name=self.name,
+                            status="degraded",
+                            score=min(75.0, derived_score),
+                            message=(
+                                f"Outcomes derived from execution metrics: {total} review steps, "
+                                f"{gate_rate:.0f}% passed gate"
+                            ),
+                            details={
+                                "average_score": 0.0,
+                                "score_trend": "unknown",
+                                "score_change": 0.0,
+                                "review_artifacts_count": 0,
+                                "improvement_cycles": 0,
+                                "reports_dir": str(self.reports_dir),
+                                "review_steps_from_execution_metrics": total,
+                                "gate_pass_rate": gate_rate,
+                                "success_rate": success_rate,
+                                "issues": [],
+                            },
+                            remediation=[
+                                "Run reviewer agent or quality workflows to generate metrics"
+                            ],
+                        )
+                except Exception:
+                    pass
                 score = 50.0
                 issues.append("No quality metrics available")
                 remediation.append("Run reviewer agent or quality workflows to generate metrics")

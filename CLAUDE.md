@@ -46,6 +46,7 @@ This file references detailed rules in `.cursor/rules/` to keep the master file 
 - Framework changes MUST use Full SDLC workflow
 - Context awareness guidelines
 - Self-hosting configuration
+- **Feedback on tapps-agents:** When asked for feedback on how well tapps-agents helps (e.g. as an LLM), include health metrics in the report: run `tapps-agents health overview` and include the output or summary.
 
 **`.cursor/rules/agent-capabilities.mdc`**
 - Complete guide to all 14 workflow agents

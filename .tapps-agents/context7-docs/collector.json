@@ -1,0 +1,12 @@
+{
+  "library": "collector",
+  "topic": null,
+  "documentation": {
+    "content": "{\"snippets\":[{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Unknown\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Component Status Reporting - OpenTelemetry Collector\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Unknown\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"OpenTelemetry Collector Experimental Profiling Support\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Component Status Reporting - OpenTelemetry Collector\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Unknown\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"OpenTelemetry Collector Experimental Profiling Support\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Unknown\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Unknown\",\"codeList\":[]},{\"codeTitle\":\"Untitled\",\"codeDescription\":\"No description\",\"codeLanguage\":\"Unknown\",\"codeTokens\":0,\"codeId\":\"\",\"pageTitle\":\"Unknown\",\"codeList\":[]}],\"totalTokens\":3897.333333333334,\"pagination\":{\"page\":1,\"limit\":10,\"totalPages\":10,\"hasNext\":true,\"hasPrev\":false}}\n\nContext7 cache for collector: cached at 2026-01-30T22:28:35.042654+00:00Z; consider refreshing if docs changed.",
+    "library": "collector",
+    "topic": "overview",
+    "source": "cache"
+  },
+  "source": "cache",
+  "saved_at": "2026-01-30T14:28:35.095681"
+}
