@@ -1,0 +1,12 @@
+{
+  "library": "parsers",
+  "topic": null,
+  "documentation": {
+    "content": "## Implement IntentBuilder in an Android Activity\n\n```java\n@IntentBuilder\nclass DetailActivity extends Activity {\n\t\n\t@Extra\n\tString id;\n\n\t@Extra @Nullable\n\tString title;\n\n\t@Override\n\tpublic void onCreate(Bundle savedInstanceState) {\n\t\tsuper.onCreate(savedInstanceState);\n\t\tDetailActivityIntentBuilder.inject(getIntent(), this);\n\t\t// TODO use id and title\n\t}\n\nstartActivity(new DetailActivityIntentBuilder(\"12345\")\n\t.title(\"MyTitle\")\n\t.build(context))\n}\n```\n\n## Implement IntentBuilder in an Android Service\n\n```java\n@IntentBuilder\nclass DownloadService extends IntentService {\n\n    @Extra\n    String downloadUrl;\n\t\n\t@Override\n    protected void onHandleIntent(Intent intent) {\n        MyServiceIntentBuilder.inject(intent, this);\n    }\n\n}\n\nstartService(new DownloadServiceIntentBuilder(\"http://google.com\").build(context))\n```\n\n## Configure IntentBuilder Installation with Gradle\n\n```groovy\nbuildscript {\n    repositories {\n        jcenter()\n    }\n    dependencies {\n        classpath 'com.neenbedankt.gradle.plugins:android-apt:1.4'\n    }\n}\n\napply plugin: 'com.neenbedankt.android-apt'\n\ndependencies {\n    compile 'se.emilsjolander:intentbuilder-api:0.14.0'\n    apt 'se.emilsjolander:intentbuilder-compiler:0.14.0'\n}\n```",
+    "library": "intent_parser",
+    "topic": "overview",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T10:00:02.758793"
+}

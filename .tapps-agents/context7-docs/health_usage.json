@@ -1,0 +1,12 @@
+{
+  "library": "health",
+  "topic": "usage",
+  "documentation": {
+    "content": "## Basic Variable Usage in Help Scout\n\n```Liquid\n{%customer.firstName%}\n```\n\n## Variable Usage with Fallback Attribute\n\n```Liquid\n{%customer.firstName,fallback=there%}\n```\n\n## Help Scout @tag Command Usage\n\n```text\n@tag urgent, follow-up, billing\n```\n\n## Help Scout @assign Command Usage\n\n```text\n@assign John Doe\n@assign john.doe@example.com\n@assign Support Team\n```\n\n## Help Scout @note Command Usage\n\n```text\n@note internal note content here\n```\n\n## Help Scout @cc and @bcc Command Usage\n\n```text\n@cc coworker@example.com, another@example.com\n@bcc hidden@example.com\n```\n\n## Help Scout Notification Commands Overview\n\n```text\nCommand | Values\n---|---\n<text> | text with no command is sent as a reply to the customer\n@note | notes are visible only to other Help Scout Users\n@assign | first/full name of another user, email address of another user, full name of a Team (requires the Teams feature)\n@me | no value required, assigns to yourself\n@status | active, pending, closed, spam\n@active, @pending, @closed, @spam | no value required, sets the status accordingly\n@tag | add one or more tags, each separated by a comma\n@cc | any valid email address, separate multiple with commas (note: should not be used alongside @note)\n@bcc | any valid email address, separate multiple with commas\n@subject | whatever you want the new subject to be\n@nocc | Help Scout is \"Reply All\" by default, but you can use this command to remove any Cc'd parties on the reply.\n@nobcc | If auto bcc is enabled in your user profile, use this command to prevent it from applying to a specific message.\n```\n\n## Help Scout @subject Command Usage\n\n```text\n@subject New Subject Line Here\n```\n\n## Troubleshooting DKIM Verification with MX Toolbox\n\n```text\nLookup `strong1._domainkey.yourdomain.com`\nExpected Canonical Name: `strong1._domainkey.helpscout.net`\n```\n\n## Using Identify Method with Customer Properties (JavaScript)\n\n```javascript\nBeacon('identify', {\n  customer_id: '123',\n  email: 'customer@example.com',\n  name: 'Jane Doe',\n  // Add any other relevant customer properties\n  company: 'Acme Corp',\n  plan_type: 'premium'\n});\n```",
+    "library": "help",
+    "topic": "usage",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T09:59:56.334719"
+}

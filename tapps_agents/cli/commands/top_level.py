@@ -1481,6 +1481,40 @@ def _print_init_results(results: dict[str, Any]) -> None:
         print("  Beads (bd): scripts/set_bd_path.ps1 added (tools/bd present)")
 
 
+def _print_verification_commands(project_root: Path) -> None:
+    """Print platform-specific verification commands."""
+    import platform
+
+    print("\n" + "=" * 60)
+    print("Verify Installation")
+    print("=" * 60)
+    print("\n  Run these commands to verify your installation:\n")
+
+    # Platform detection
+    is_windows = platform.system() == "Windows"
+
+    if is_windows:
+        print("  1. Check framework files (rules):")
+        print("     dir .cursor\\rules\\*.mdc")
+        print()
+        print("  2. Check Cursor Skills (if installed):")
+        print("     dir .claude\\skills")
+        print()
+    else:
+        print("  1. Check framework files (rules):")
+        print("     ls .cursor/rules/*.mdc")
+        print()
+        print("  2. Check Cursor Skills (if installed):")
+        print("     ls .claude/skills")
+        print()
+
+    print("  3. Run comprehensive health check:")
+    print("     tapps-agents doctor")
+    print()
+    print("  4. Alternative health check (if tapps-agents not in PATH):")
+    print("     python -m tapps_agents.cli doctor")
+
+
 def _print_validation_results(validation: dict[str, Any]) -> None:
     """Print validation results."""
     print("\n" + "=" * 60)
@@ -1506,22 +1540,40 @@ def _print_validation_results(validation: dict[str, Any]) -> None:
         for warning in warnings:
             print(f"    [!] {warning}")
     
-    # Show component summary
+    # Show component summary with clear distinction between Rules and Skills
     verification_results = validation.get("verification_results", {})
     components = verification_results.get("components", {})
-    
-    print("\n  Summary:")
-    if "skills" in components:
-        skills_info = components["skills"]
-        skills_found = len(skills_info.get("skills_found", []))
-        skills_expected = len(skills_info.get("expected_skills", []))
-        print(f"    Skills: {skills_found}/{skills_expected} found")
-    
+
+    print("\n  Components:")
+
+    # Framework Files (Cursor Rules) - Required
     if "rules" in components:
         rules_info = components["rules"]
         rules_found = len(rules_info.get("rules_found", []))
         rules_expected = len(rules_info.get("expected_rules", []))
-        print(f"    Rules: {rules_found}/{rules_expected} found")
+        status = "[OK]" if rules_found == rules_expected else "[!]"
+        print(f"    {status} Framework Files (Cursor Rules): {rules_found}/{rules_expected}")
+        print(f"        Location: .cursor/rules/*.mdc")
+        if rules_found < rules_expected:
+            print(f"        Note: {rules_expected - rules_found} rule file(s) missing")
+
+    # Cursor Skills - Optional
+    if "skills" in components:
+        skills_info = components["skills"]
+        skills_found = len(skills_info.get("skills_found", []))
+        skills_expected = len(skills_info.get("expected_skills", []))
+
+        if skills_found == 0:
+            print(f"    [!] Cursor Skills: {skills_found}/{skills_expected} (optional)")
+            print(f"        Location: .claude/skills/*/SKILL.md")
+            print(f"        To install: Run 'tapps-agents init' (without --reset)")
+        elif skills_found < skills_expected:
+            print(f"    [!] Cursor Skills: {skills_found}/{skills_expected} (optional)")
+            print(f"        Location: .claude/skills/*/SKILL.md")
+            print(f"        Note: {skills_expected - skills_found} skill(s) missing")
+        else:
+            print(f"    [OK] Cursor Skills: {skills_found}/{skills_expected}")
+            print(f"        Location: .claude/skills/*/SKILL.md")
     
 
 
@@ -2162,7 +2214,9 @@ def handle_init_command(args: object) -> None:
     # Show validation results
     if results.get("validation"):
         _print_validation_results(results["validation"])
-    
+        # Show verification commands after validation
+        _print_verification_commands(Path(results["project_root"]))
+
     # Show tech stack detection
     if results.get("tech_stack"):
         _print_tech_stack(results["tech_stack"])
@@ -2809,6 +2863,15 @@ def handle_cleanup_sessions_command(args: object) -> None:
         import traceback
         traceback.print_exc()
         sys.exit(1)
+
+
+def handle_cleanup_all_command(args: object) -> None:
+    """Handle 'cleanup all' command: run workflow-docs then sessions with config defaults."""
+    dry_run = getattr(args, "dry_run", False)
+    if dry_run:
+        print("DRY RUN: Running all cleanup operations (workflow-docs, then sessions)\n")
+    handle_cleanup_workflow_docs_command(args)
+    handle_cleanup_sessions_command(args)
 
 
 def handle_workflow_state_cleanup_command(args: object) -> None:

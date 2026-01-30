@@ -367,6 +367,7 @@ tapps-agents workflow rapid --cli-mode --auto --prompt "Add user auth"
 ```bash
 tapps-agents cleanup workflow-docs [--keep-latest <n>] [--retention-days <n>] [--archive] [--no-archive] [--dry-run]
 tapps-agents cleanup sessions [--keep-latest <n>] [--max-age-days <n>] [--dry-run]
+tapps-agents cleanup all [--dry-run]
 ```
 
 **Subcommands:**
@@ -394,10 +395,12 @@ tapps-agents cleanup sessions [--keep-latest <n>] [--max-age-days <n>] [--dry-ru
 # Preview cleanup (dry-run)
 tapps-agents cleanup workflow-docs --dry-run
 tapps-agents cleanup sessions --dry-run
+tapps-agents cleanup all --dry-run
 
 # Cleanup with defaults from config
 tapps-agents cleanup workflow-docs
 tapps-agents cleanup sessions
+tapps-agents cleanup all
 
 # Custom retention (workflow-docs)
 tapps-agents cleanup workflow-docs --keep-latest 10 --retention-days 60

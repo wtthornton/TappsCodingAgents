@@ -374,6 +374,8 @@ def _handle_cleanup_command(args: argparse.Namespace) -> None:
         top_level.handle_cleanup_workflow_docs_command(args)
     elif cleanup_type == "sessions":
         top_level.handle_cleanup_sessions_command(args)
+    elif cleanup_type == "all":
+        top_level.handle_cleanup_all_command(args)
     else:
         print(f"Unknown cleanup type: {cleanup_type}", file=sys.stderr)
         print("Use 'tapps-agents cleanup --help' for available cleanup operations", file=sys.stderr)

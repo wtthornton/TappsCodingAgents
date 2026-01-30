@@ -256,12 +256,20 @@ pip install --index-url https://test.pypi.org/simple/ tapps-agents
 
 ### PyPI Token Setup
 
-1. Create API token: https://pypi.org/manage/account/token/
-2. Set environment variable:
+**Best practice (keep token out of GitHub):** Store the token locally only.
+
+1. **Create API token:** https://pypi.org/manage/account/token/
+2. **Store in local `.env` (recommended):**
+   - Copy `.env.example` to `.env` in the project root.
+   - Add one line: `TWINE_PASSWORD=pypi-your-token-here` (or `PYPI_API_TOKEN=...`).
+   - `.env` is in `.gitignore` — it is never committed or stored in GitHub.
+   - `scripts/upload_to_pypi.ps1` automatically loads `TWINE_PASSWORD` or `PYPI_API_TOKEN` from `.env` when no token is passed.
+3. **Or set environment variable for the session:**
    ```powershell
    $env:TWINE_PASSWORD = "pypi-your-token-here"
+   .\scripts\upload_to_pypi.ps1 -Repository pypi
    ```
-3. Or use GitHub Secrets for CI/CD: `PYPI_API_TOKEN`
+4. **GitHub Actions:** Use repository or environment secret `PYPI_API_TOKEN` for CI/CD only; do not put production tokens in code or in repo.
 
 ## Troubleshooting
 
@@ -332,9 +340,31 @@ If release tag already exists:
 - Delete tag: `git tag -d v3.0.2 && git push origin :refs/tags/v3.0.2`
 - Recreate release
 
-### PyPI Upload Fails
+### PyPI Upload Fails / New Version Not on PyPI
 
-**Token issues:**
+**What changed (around 3.5.32):** PyPI publishing was moved from a **job inside** the Release workflow to a **separate** workflow, **Publish to PyPI on Release**, which runs when a release is **published** (`release: published`). It uses the same secret and environment as before, but runs as a different workflow.
+
+If "it used to work" and new versions (e.g. 3.5.33) are not appearing on PyPI:
+
+1. **Confirm the Release workflow completed**  
+   Actions → **Release** → run for the tag (e.g. `v3.5.33`). If it failed (e.g. validate/build), fix that first; no release means no PyPI run.
+
+2. **Confirm the release was created and published**  
+   [Releases](https://github.com/wtthornton/TappsCodingAgents/releases) — the version should exist and be **Published** (not Draft).
+
+3. **Check "Publish to PyPI on Release"**  
+   Actions → **Publish to PyPI on Release**.  
+   - **No run for that tag:** The `release: published` event may not have fired (e.g. release is draft). Publish the release or re-run the Release workflow.  
+   - **Run is "Waiting for approval":** The **pypi** environment has required reviewers. Approve the deployment in the run, or remove the protection in Settings → Environments → pypi.  
+   - **Run failed (e.g. "Invalid or non-existent authentication"):** The workflow uses `secrets.PYPI_API_TOKEN` and the **pypi** environment. Add or fix the token:  
+     - **Settings → Secrets and variables → Actions:** add **PYPI_API_TOKEN** (repository secret), **or**  
+     - **Settings → Environments → pypi → Environment secrets:** add **PYPI_API_TOKEN**.  
+     Ensure the token is a PyPI API token with upload scope (create at https://pypi.org/manage/account/token/).
+
+4. **Manual upload (one-off):** From repo root with token in `.env` or `$env:TWINE_PASSWORD`:  
+   `python -m build` then `.\scripts\upload_to_pypi.ps1 -Repository pypi -SkipExisting`
+
+**Token issues (general):**
 - Verify token is valid and has upload permissions
 - Check token format: should start with `pypi-`
 

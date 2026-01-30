@@ -563,9 +563,7 @@ Example:
 Available cleanup operations:
   • workflow-docs: Clean up old workflow documentation directories
   • sessions: Clean up .tapps-agents/sessions (enhancer + long-running agent sessions)
-  • worktrees: Clean up old Git worktrees
-  • cache: Clean up old cache entries
-  • all: Clean up all artifacts (default)
+  • all: Run workflow-docs then sessions (all available cleanups)
 """,
     )
     cleanup_subparsers = cleanup_parser.add_subparsers(
@@ -635,6 +633,18 @@ Also runs SessionManager cleanup for long-running agent sessions (completed/fail
         help="Remove sessions older than N days (default: from config, typically 30)",
     )
     sessions_cleanup_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without making them",
+    )
+
+    # All cleanup (workflow-docs + sessions)
+    all_cleanup_parser = cleanup_subparsers.add_parser(
+        "all",
+        help="Run all cleanup operations (workflow-docs, then sessions)",
+        description="Run workflow-docs cleanup then sessions cleanup with config defaults.\nEquivalent to: cleanup workflow-docs && cleanup sessions",
+    )
+    all_cleanup_parser.add_argument(
         "--dry-run",
         action="store_true",
         help="Preview changes without making them",

@@ -385,6 +385,53 @@ def init_project_config(
     return not file_existed, str(config_file), combined_info
 
 
+def _sync_directory_files(directory: Path, file_paths: list[str]) -> None:
+    """
+    Sync directory and files to ensure visibility before validation.
+
+    Best-effort operation - will not raise exceptions on failure.
+    Tries progressively more specific sync operations:
+    1. System-wide sync (Unix: os.sync)
+    2. Directory-level sync (Windows: fsync on directory)
+    3. File-level sync (fallback: fsync on individual files)
+
+    Args:
+        directory: Directory to sync
+        file_paths: List of file paths to sync if directory sync fails
+    """
+    import os
+
+    # Try system-wide sync first (Unix)
+    if hasattr(os, 'sync'):
+        try:
+            os.sync()
+            return  # Success, no need for file-level sync
+        except (OSError, AttributeError):
+            pass  # Fall through to directory/file sync
+
+    # Try directory-level sync (Windows)
+    if hasattr(os, 'fsync'):
+        try:
+            fd = os.open(str(directory), os.O_RDONLY)
+            try:
+                os.fsync(fd)
+                return  # Success
+            finally:
+                os.close(fd)
+        except (OSError, AttributeError):
+            pass  # Fall through to file-level sync
+
+    # Last resort: Sync individual files
+    for file_path_str in file_paths:
+        try:
+            file_path = Path(file_path_str)
+            if file_path.exists():
+                with open(file_path, 'r+b') as f:
+                    os.fsync(f.fileno())
+        except (OSError, IOError):
+            pass  # Best effort, continue with remaining files
+
+
 def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None = None):
     """
     Initialize Cursor Rules for the project.
@@ -468,6 +515,16 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
     except Exception as e:
         # Other errors should be logged but not fail init
         logger.warning(f"Could not generate workflow-presets.mdc: {e}")
+
+    # Explicit file sync to ensure all writes are visible before validation
+    # This prevents race conditions where validation runs before files are fully flushed to disk
+    # Especially important on Windows with antivirus/indexing or slow filesystems
+    if copied_rules:
+        try:
+            _sync_directory_files(project_rules_dir, copied_rules)
+        except Exception as e:
+            # File sync is best-effort, don't fail if it doesn't work
+            logger.debug(f"File sync after init_cursor_rules failed (non-critical): {e}")
 
     return True if copied_rules else False, copied_rules
 

@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-01-30T15:27:19.713483+00:00Z
-total_entries: 137
+last_updated: 2026-01-30T18:00:00.266437+00:00Z
+total_entries: 141
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -591,3 +591,20 @@ libraries:
     topics:
       examples:
         cached_at: 2026-01-30T15:27:19.713466+00:00Z
+  knowledge:
+    context7_id: /elizaos-plugins/plugin-knowledge
+    topics:
+      overview:
+        cached_at: 2026-01-30T17:59:43.853232+00:00Z
+      usage:
+        cached_at: 2026-01-30T18:00:00.266423+00:00Z
+  webbrowser:
+    context7_id: /jakobhoeg/browser-ai
+    topics:
+      overview:
+        cached_at: 2026-01-30T17:59:48.235571+00:00Z
+  config:
+    context7_id: /node-config/node-config
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-30T17:59:53.890646+00:00Z

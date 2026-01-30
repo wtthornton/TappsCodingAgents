@@ -1420,6 +1420,321 @@
       "file_path": "models.json",
       "saved_at": "2026-01-30T07:27:44.627791",
       "source": "cache"
+    },
+    "config:best-practices": {
+      "library": "config",
+      "topic": "best-practices",
+      "file_path": "config_best-practices.json",
+      "saved_at": "2026-01-30T09:59:50.494009",
+      "source": "fuzzy_match"
+    },
+    "config:common-mistakes": {
+      "library": "config",
+      "topic": "common-mistakes",
+      "file_path": "config_common-mistakes.json",
+      "saved_at": "2026-01-30T09:59:53.926436",
+      "source": "api"
+    },
+    "config:usage": {
+      "library": "config",
+      "topic": "usage",
+      "file_path": "config_usage.json",
+      "saved_at": "2026-01-30T09:59:54.103139",
+      "source": "fuzzy_match"
+    },
+    "config:examples": {
+      "library": "config",
+      "topic": "examples",
+      "file_path": "config_examples.json",
+      "saved_at": "2026-01-30T09:59:54.229150",
+      "source": "fuzzy_match"
+    },
+    "common:best-practices": {
+      "library": "common",
+      "topic": "best-practices",
+      "file_path": "common_best-practices.json",
+      "saved_at": "2026-01-30T09:59:54.778577",
+      "source": "cache"
+    },
+    "common:common-mistakes": {
+      "library": "common",
+      "topic": "common-mistakes",
+      "file_path": "common_common-mistakes.json",
+      "saved_at": "2026-01-30T09:59:54.902276",
+      "source": "fuzzy_match"
+    },
+    "common:usage": {
+      "library": "common",
+      "topic": "usage",
+      "file_path": "common_usage.json",
+      "saved_at": "2026-01-30T09:59:55.279903",
+      "source": "fuzzy_match"
+    },
+    "common:examples": {
+      "library": "common",
+      "topic": "examples",
+      "file_path": "common_examples.json",
+      "saved_at": "2026-01-30T09:59:55.400558",
+      "source": "fuzzy_match"
+    },
+    "continuous_bug_fix:best-practices": {
+      "library": "continuous_bug_fix",
+      "topic": "best-practices",
+      "file_path": "continuous_bug_fix_best-practices.json",
+      "saved_at": "2026-01-30T09:59:55.504142",
+      "source": "cache"
+    },
+    "continuous_bug_fix:common-mistakes": {
+      "library": "continuous_bug_fix",
+      "topic": "common-mistakes",
+      "file_path": "continuous_bug_fix_common-mistakes.json",
+      "saved_at": "2026-01-30T09:59:55.631384",
+      "source": "fuzzy_match"
+    },
+    "continuous_bug_fix:usage": {
+      "library": "continuous_bug_fix",
+      "topic": "usage",
+      "file_path": "continuous_bug_fix_usage.json",
+      "saved_at": "2026-01-30T09:59:55.768687",
+      "source": "fuzzy_match"
+    },
+    "continuous_bug_fix:examples": {
+      "library": "continuous_bug_fix",
+      "topic": "examples",
+      "file_path": "continuous_bug_fix_examples.json",
+      "saved_at": "2026-01-30T09:59:55.902919",
+      "source": "fuzzy_match"
+    },
+    "health:best-practices": {
+      "library": "health",
+      "topic": "best-practices",
+      "file_path": "health_best-practices.json",
+      "saved_at": "2026-01-30T09:59:56.052105",
+      "source": "cache"
+    },
+    "health:common-mistakes": {
+      "library": "health",
+      "topic": "common-mistakes",
+      "file_path": "health_common-mistakes.json",
+      "saved_at": "2026-01-30T09:59:56.181026",
+      "source": "fuzzy_match"
+    },
+    "health:usage": {
+      "library": "health",
+      "topic": "usage",
+      "file_path": "health_usage.json",
+      "saved_at": "2026-01-30T09:59:56.335540",
+      "source": "fuzzy_match"
+    },
+    "health:examples": {
+      "library": "health",
+      "topic": "examples",
+      "file_path": "health_examples.json",
+      "saved_at": "2026-01-30T09:59:56.459810",
+      "source": "fuzzy_match"
+    },
+    "knowledge:best-practices": {
+      "library": "knowledge",
+      "topic": "best-practices",
+      "file_path": "knowledge_best-practices.json",
+      "saved_at": "2026-01-30T09:59:56.591598",
+      "source": "fuzzy_match"
+    },
+    "knowledge:common-mistakes": {
+      "library": "knowledge",
+      "topic": "common-mistakes",
+      "file_path": "knowledge_common-mistakes.json",
+      "saved_at": "2026-01-30T09:59:56.720768",
+      "source": "fuzzy_match"
+    },
+    "knowledge:usage": {
+      "library": "knowledge",
+      "topic": "usage",
+      "file_path": "knowledge_usage.json",
+      "saved_at": "2026-01-30T10:00:00.304451",
+      "source": "api"
+    },
+    "knowledge:examples": {
+      "library": "knowledge",
+      "topic": "examples",
+      "file_path": "knowledge_examples.json",
+      "saved_at": "2026-01-30T10:00:00.469645",
+      "source": "fuzzy_match"
+    },
+    "progress_heartbeat:best-practices": {
+      "library": "progress_heartbeat",
+      "topic": "best-practices",
+      "file_path": "progress_heartbeat_best-practices.json",
+      "saved_at": "2026-01-30T10:00:00.605389",
+      "source": "fuzzy_match"
+    },
+    "progress_heartbeat:common-mistakes": {
+      "library": "progress_heartbeat",
+      "topic": "common-mistakes",
+      "file_path": "progress_heartbeat_common-mistakes.json",
+      "saved_at": "2026-01-30T10:00:00.750524",
+      "source": "fuzzy_match"
+    },
+    "progress_heartbeat:usage": {
+      "library": "progress_heartbeat",
+      "topic": "usage",
+      "file_path": "progress_heartbeat_usage.json",
+      "saved_at": "2026-01-30T10:00:00.835114",
+      "source": "cache"
+    },
+    "progress_heartbeat:examples": {
+      "library": "progress_heartbeat",
+      "topic": "examples",
+      "file_path": "progress_heartbeat_examples.json",
+      "saved_at": "2026-01-30T10:00:00.964278",
+      "source": "fuzzy_match"
+    },
+    "reviewer:best-practices": {
+      "library": "reviewer",
+      "topic": "best-practices",
+      "file_path": "reviewer_best-practices.json",
+      "saved_at": "2026-01-30T10:00:01.154878",
+      "source": "fuzzy_match"
+    },
+    "reviewer:common-mistakes": {
+      "library": "reviewer",
+      "topic": "common-mistakes",
+      "file_path": "reviewer_common-mistakes.json",
+      "saved_at": "2026-01-30T10:00:01.337346",
+      "source": "fuzzy_match"
+    },
+    "reviewer:usage": {
+      "library": "reviewer",
+      "topic": "usage",
+      "file_path": "reviewer_usage.json",
+      "saved_at": "2026-01-30T10:00:01.417367",
+      "source": "cache"
+    },
+    "reviewer:examples": {
+      "library": "reviewer",
+      "topic": "examples",
+      "file_path": "reviewer_examples.json",
+      "saved_at": "2026-01-30T10:00:01.535605",
+      "source": "fuzzy_match"
+    },
+    "status:best-practices": {
+      "library": "status",
+      "topic": "best-practices",
+      "file_path": "status_best-practices.json",
+      "saved_at": "2026-01-30T10:00:01.666232",
+      "source": "fuzzy_match"
+    },
+    "status:common-mistakes": {
+      "library": "status",
+      "topic": "common-mistakes",
+      "file_path": "status_common-mistakes.json",
+      "saved_at": "2026-01-30T10:00:01.739939",
+      "source": "cache"
+    },
+    "status:usage": {
+      "library": "status",
+      "topic": "usage",
+      "file_path": "status_usage.json",
+      "saved_at": "2026-01-30T10:00:01.867429",
+      "source": "fuzzy_match"
+    },
+    "status:examples": {
+      "library": "status",
+      "topic": "examples",
+      "file_path": "status_examples.json",
+      "saved_at": "2026-01-30T10:00:02.007810",
+      "source": "fuzzy_match"
+    },
+    "weighted decision making:best-practices": {
+      "library": "weighted decision making",
+      "topic": "best-practices",
+      "file_path": "weighted_decision_making_best-practices.json",
+      "saved_at": "2026-01-30T10:00:04.345677",
+      "source": "cache"
+    },
+    "cli:best-practices": {
+      "library": "cli",
+      "topic": "best-practices",
+      "file_path": "cli_best-practices.json",
+      "saved_at": "2026-01-30T10:00:04.566561",
+      "source": "cache"
+    },
+    "cli:common-mistakes": {
+      "library": "cli",
+      "topic": "common-mistakes",
+      "file_path": "cli_common-mistakes.json",
+      "saved_at": "2026-01-30T10:00:04.719355",
+      "source": "fuzzy_match"
+    },
+    "cli:usage": {
+      "library": "cli",
+      "topic": "usage",
+      "file_path": "cli_usage.json",
+      "saved_at": "2026-01-30T10:00:04.852060",
+      "source": "fuzzy_match"
+    },
+    "cli:examples": {
+      "library": "cli",
+      "topic": "examples",
+      "file_path": "cli_examples.json",
+      "saved_at": "2026-01-30T10:00:04.989448",
+      "source": "fuzzy_match"
+    },
+    "commands:best-practices": {
+      "library": "commands",
+      "topic": "best-practices",
+      "file_path": "commands_best-practices.json",
+      "saved_at": "2026-01-30T10:00:05.129552",
+      "source": "fuzzy_match"
+    },
+    "commands:common-mistakes": {
+      "library": "commands",
+      "topic": "common-mistakes",
+      "file_path": "commands_common-mistakes.json",
+      "saved_at": "2026-01-30T10:00:05.292003",
+      "source": "fuzzy_match"
+    },
+    "commands:usage": {
+      "library": "commands",
+      "topic": "usage",
+      "file_path": "commands_usage.json",
+      "saved_at": "2026-01-30T10:00:05.371502",
+      "source": "cache"
+    },
+    "commands:examples": {
+      "library": "commands",
+      "topic": "examples",
+      "file_path": "commands_examples.json",
+      "saved_at": "2026-01-30T10:00:05.492533",
+      "source": "fuzzy_match"
+    },
+    "parsers:best-practices": {
+      "library": "parsers",
+      "topic": "best-practices",
+      "file_path": "parsers_best-practices.json",
+      "saved_at": "2026-01-30T10:00:05.571226",
+      "source": "cache"
+    },
+    "parsers:common-mistakes": {
+      "library": "parsers",
+      "topic": "common-mistakes",
+      "file_path": "parsers_common-mistakes.json",
+      "saved_at": "2026-01-30T10:00:05.719925",
+      "source": "fuzzy_match"
+    },
+    "parsers:usage": {
+      "library": "parsers",
+      "topic": "usage",
+      "file_path": "parsers_usage.json",
+      "saved_at": "2026-01-30T10:00:05.868387",
+      "source": "fuzzy_match"
+    },
+    "parsers:examples": {
+      "library": "parsers",
+      "topic": "examples",
+      "file_path": "parsers_examples.json",
+      "saved_at": "2026-01-30T10:00:05.985526",
+      "source": "fuzzy_match"
     }
   },
   "comprehensive_index": {
@@ -1884,6 +2199,111 @@
           "examples"
         ],
         "total_docs": 4
+      },
+      "config": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "common": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "continuous_bug_fix": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "health": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "knowledge": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "progress_heartbeat": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "reviewer": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "status": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "weighted decision making": {
+        "topics": [
+          "best-practices"
+        ],
+        "total_docs": 1
+      },
+      "cli": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "commands": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "parsers": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
       }
     },
     "topics": {
@@ -1945,7 +2365,19 @@
         "utils",
         "validators",
         "models",
-        "prompt_analyzer"
+        "prompt_analyzer",
+        "config",
+        "common",
+        "continuous_bug_fix",
+        "health",
+        "knowledge",
+        "progress_heartbeat",
+        "reviewer",
+        "status",
+        "weighted decision making",
+        "cli",
+        "commands",
+        "parsers"
       ],
       "common-mistakes": [
         "__future__",
@@ -1974,7 +2406,18 @@
         "utils",
         "validators",
         "models",
-        "prompt_analyzer"
+        "prompt_analyzer",
+        "config",
+        "common",
+        "continuous_bug_fix",
+        "health",
+        "knowledge",
+        "progress_heartbeat",
+        "reviewer",
+        "status",
+        "cli",
+        "commands",
+        "parsers"
       ],
       "usage": [
         "__future__",
@@ -2003,7 +2446,18 @@
         "utils",
         "validators",
         "models",
-        "prompt_analyzer"
+        "prompt_analyzer",
+        "config",
+        "common",
+        "continuous_bug_fix",
+        "health",
+        "knowledge",
+        "progress_heartbeat",
+        "reviewer",
+        "status",
+        "cli",
+        "commands",
+        "parsers"
       ],
       "examples": [
         "__future__",
@@ -2032,7 +2486,18 @@
         "utils",
         "validators",
         "models",
-        "prompt_analyzer"
+        "prompt_analyzer",
+        "config",
+        "common",
+        "continuous_bug_fix",
+        "health",
+        "knowledge",
+        "progress_heartbeat",
+        "reviewer",
+        "status",
+        "cli",
+        "commands",
+        "parsers"
       ],
       "quality-standards": [
         "pytest"
@@ -2073,8 +2538,8 @@
         "types-pyyaml"
       ]
     },
-    "total_entries": 203,
-    "last_updated": "2026-01-30T07:27:44.627797"
+    "total_entries": 248,
+    "last_updated": "2026-01-30T10:00:05.985540"
   },
-  "last_updated": "2026-01-30T07:27:44.627956"
+  "last_updated": "2026-01-30T10:00:05.985766"
 }
