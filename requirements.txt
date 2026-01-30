@@ -15,9 +15,8 @@ radon>=6.0.1
 bandit>=1.9.2
 coverage>=7.13.1
 
-# Reporting
+# Reporting (plotly moved to [reporting] extra - pip install -e ".[reporting]")
 jinja2>=3.1.6
-plotly>=6.5.2
 
 # CLI UX (progress spinners/bars, live updates)
 rich>=14.2.0
@@ -31,7 +30,6 @@ packaging>=23.2,<27
 aiofiles>=25.1.0
 
 # Development Tools (from dev extra)
-black>=26.1.0
 ruff>=0.14.13,<1.0
 mypy>=1.19.1,<2.0
 types-PyYAML>=6.0.12.20250915
@@ -46,9 +44,6 @@ pytest-xdist>=3.8.0
 pytest-sugar>=1.1.1
 pytest-html>=4.1.1
 pytest-rich>=0.2.0
-
-# Code Quality (optional, for maintainability)
-pylint>=4.0.4
 
 # Security & Dependency Management
 pip-audit>=2.10.0

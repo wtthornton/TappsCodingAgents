@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tapps-agents"
-version = "3.5.33"
+version = "3.5.34"
 description = "A specification framework for defining, configuring, and orchestrating coding agents"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -37,7 +37,6 @@ dependencies = [
     "coverage>=7.13.1",
     # Reporting (used by report generator)
     "jinja2>=3.1.6",
-    "plotly>=6.5.2",
     # Dependency conflict resolution
     # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
     # langchain-core 0.2.43 requires packaging>=23.2,<26
@@ -50,8 +49,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    # Code Formatting
-    "black>=26.1.0",
+    # Code Formatting & Linting (Ruff replaces Black - single tool for lint + format)
     "ruff>=0.14.13,<1.0",
     # Type Checking
     "mypy>=1.19.1,<2.0",
@@ -66,14 +64,16 @@ dev = [
     "pytest-sugar>=1.1.1",
     "pytest-html>=4.1.1",
     "pytest-rich>=0.2.0",  # Modern rich output for pytest (alternative to custom plugin)
-    # Code Quality (optional, for maintainability scoring)
-    "pylint>=4.0.4",
     # Security & Dependency Management
     "pip-audit>=2.10.0",
     # Note: pipdeptree moved to [dependency-analysis] extra due to packaging>=25 requirement
     # which conflicts with our packaging<25 constraint (needed for langchain-core compatibility)
     # Lock File Generation
     "pip-tools>=7.5.2",
+]
+reporting = [
+    # Interactive charts for quality dashboards (optional - report generator uses Jinja2/ASCII by default)
+    "plotly>=6.5.2",
 ]
 dependency-analysis = [
     # Dependency analysis tools (optional - requires packaging>=25)
@@ -107,24 +107,6 @@ exclude = ["tests*", "examples*"]
 [tool.setuptools.exclude-package-data]
 "*" = ["*.pyc", "__pycache__/*", "**/__pycache__/*"]
 
-[tool.black]
-line-length = 88
-target-version = ["py313"]
-exclude = '''
-/(
-  \.git
-| \.mypy_cache
-| \.pytest_cache
-| \.ruff_cache
-| \.venv
-| build
-| dist
-| htmlcov
-| MagicMock
-| tapps_agents\.egg-info
-| reports
-)/'''
-
 [tool.ruff]
 line-length = 88
 target-version = "py313"
@@ -148,7 +130,7 @@ exclude = [
 # Start with a pragmatic, high-signal rule set; tighten over time during the marathon.
 select = ["E", "F", "I", "UP", "B"]
 ignore = [
-  # Let Black handle line-length; long strings/URLs are often intentional.
+  # Let Ruff format handle line-length; long strings/URLs are often intentional.
   "E501",
 ]
 

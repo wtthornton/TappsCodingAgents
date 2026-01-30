@@ -6,7 +6,6 @@ Phase 6.3: Comprehensive Reporting Infrastructure
 
 import json
 from datetime import datetime
-from importlib.util import find_spec
 from pathlib import Path
 from typing import Any
 
@@ -16,8 +15,6 @@ try:
     HAS_JINJA2 = True
 except ImportError:
     HAS_JINJA2 = False
-
-HAS_PLOTLY = find_spec("plotly") is not None
 
 
 class ReportGenerator:

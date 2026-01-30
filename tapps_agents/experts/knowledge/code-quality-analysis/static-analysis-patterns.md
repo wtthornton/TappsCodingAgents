@@ -37,11 +37,10 @@ Static analysis tools examine code without executing it, identifying potential b
 ## Popular Static Analysis Tools
 
 ### Python
-- **pylint**: Comprehensive code analysis
-- **flake8**: Style guide enforcement (PEP 8)
+- **Ruff**: Linting and formatting (recommended—single tool, 10–100x faster than alternatives)
 - **mypy**: Static type checking
 - **bandit**: Security vulnerability scanner
-- **black**: Code formatter
+- **radon**: Complexity and maintainability metrics
 
 ### JavaScript/TypeScript
 - **ESLint**: JavaScript/TypeScript linter
@@ -57,15 +56,20 @@ Static analysis tools examine code without executing it, identifying potential b
 ## Integration Strategies
 
 ### Pre-Commit Hooks
-```python
+```yaml
 # .pre-commit-config.yaml
 repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.4.0
     hooks:
-      - id: flake8
-      - id: mypy
-      - id: bandit
+      - id: check-yaml
+      - id: end-of-file-fixer
 ```
 
 ### CI/CD Integration
@@ -77,12 +81,15 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Run linting
-        run: |
-          flake8 .
-          mypy .
-          bandit -r .
+      - uses: actions/checkout@v4
+      - name: Ruff (lint)
+        run: ruff check .
+      - name: Ruff (format)
+        run: ruff format --check .
+      - name: Type check
+        run: mypy .
+      - name: Security scan
+        run: bandit -r .
 ```
 
 ## Best Practices

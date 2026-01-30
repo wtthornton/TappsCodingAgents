@@ -63,6 +63,7 @@ By participating in this project, you agree to maintain a respectful and inclusi
    - Update relevant documentation files
    - Add examples for new features
    - Update CHANGELOG.md
+   - **Where to put new docs:** User-facing and canonical docs (linked from [docs/README.md](docs/README.md)) go in `docs/` root or the appropriate subdir (e.g. `docs/architecture/`, `docs/operations/`). Session feedback, implementation-complete summaries, and superseded planning go in [docs/archive/](docs/archive/README.md) (`archive/feedback/`, `archive/completed-improvements/`, `archive/planning/`). Do not add new `*_IMPLEMENTED.md` or `*_COMPLETE.md` to `docs/` root; update the canonical doc or add to archive.
 
 5. **Run quality checks:**
    ```bash

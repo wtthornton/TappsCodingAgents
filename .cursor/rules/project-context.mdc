@@ -80,6 +80,7 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
    - User-facing docs should focus on "how to use the framework"
    - Developer docs should focus on "how to develop the framework"
    - Self-hosting docs should explain "how we use our own framework"
+   - **Documentation placement:** Put session feedback, implementation-complete summaries, and superseded planning in `docs/archive/` (see [docs/archive/README.md](docs/archive/README.md)). Update canonical docs (linked from docs/README.md) instead of adding new `*_IMPLEMENTED.md` or `*_COMPLETE.md` to docs root.
 
 ## Current Self-Hosting Configuration
 
@@ -132,9 +133,9 @@ TappsCodingAgents/
 │   ├── domains.md         # Our project's domains
 │   └── sessions/          # Enhancement sessions
 │
-├── docs/                  # User-facing documentation (how to use)
-├── requirements/          # Framework specifications (developing)
-└── docs/implementation/   # Implementation notes and EPIC/PHASE docs
+├── docs/                  # User-facing documentation (how to use); index: docs/README.md
+├── docs/archive/         # Historical docs (feedback, completed-improvements, planning, epics)
+├── requirements/         # Framework specifications (developing)
 ```
 
 ## Examples
@@ -153,7 +154,7 @@ TappsCodingAgents/
 
 ## References
 
-- **Self-Hosting Setup**: `docs/implementation/SELF_HOSTING_SETUP_COMPLETE.md`
-- **User Guide**: `QUICK_START.md`, `docs/DEVELOPER_GUIDE.md`
+- **Documentation index and placement**: `docs/README.md`, `docs/archive/README.md`
+- **User Guide**: `docs/guides/QUICK_START.md`, Simple Mode and workflow guides in `docs/`
 - **Framework Architecture**: `docs/ARCHITECTURE.md`
 - **Configuration**: `.tapps-agents/` directory

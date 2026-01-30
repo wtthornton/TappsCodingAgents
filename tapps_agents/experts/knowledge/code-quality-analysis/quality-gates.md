@@ -43,16 +43,13 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
-      
-  - repo: https://github.com/psf/black
-    rev: 23.3.0
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
     hooks:
-      - id: black
-      
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0
-    hooks:
-      - id: flake8
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
 ```
 
 ### CI/CD Integration
@@ -64,17 +61,20 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Lint
-        run: flake8 . --max-line-length=100
-        
+      - uses: actions/checkout@v4
+
+      - name: Ruff (lint)
+        run: ruff check .
+
+      - name: Ruff (format)
+        run: ruff format --check .
+
       - name: Type Check
         run: mypy .
-        
+
       - name: Test Coverage
         run: pytest --cov --cov-fail-under=80
-        
+
       - name: Security Scan
         run: bandit -r .
 ```

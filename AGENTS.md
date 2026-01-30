@@ -239,6 +239,8 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 - **`.cursor/rules/workflow-presets.mdc`** - Workflow preset documentation
 - **`.cursor/rules/quick-reference.mdc`** - Quick command reference
 
+**Documentation placement:** When adding docs, put user-facing content in `docs/` (linked from [docs/README.md](docs/README.md)); put session feedback and implementation-complete summaries in [docs/archive/](docs/archive/README.md) (`archive/feedback/`, `archive/completed-improvements/`). Do not add new `*_IMPLEMENTED.md` or `*_COMPLETE.md` to `docs/` root.
+
 ## Cross-Tool Compatibility
 
 **This document is compatible with:**

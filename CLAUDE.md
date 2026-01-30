@@ -338,7 +338,7 @@ tapps-agents simple-mode full --prompt "description" --auto
 - `AGENTS.md` - Agent identity and project-specific rules
 - `docs/test-stack.md` - Testing strategy and infrastructure
 - `docs/ARCHITECTURE.md` - System architecture overview
-- `docs/README.md` - Documentation index
+- `docs/README.md` - Documentation index (and where to place new docs: canonical vs [docs/archive/](docs/archive/README.md))
 - `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md` - Skills setup guide
 
 **Expert System & Knowledge Base:**

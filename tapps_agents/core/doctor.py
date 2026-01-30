@@ -359,12 +359,12 @@ def collect_doctor_report(
 
     # --- External tool checks (soft degrade by default) ---
     # These are CLI tools used by reviewers/quality workflows; missing ones should warn.
+    # Note: Ruff replaced Black for formatting (CI uses ruff format --check)
     tool_cmds: dict[str, list[str]] = {
-        # Code quality tools
+        # Code quality tools (Ruff handles both lint and format)
         "ruff": ["ruff", "--version"],
         "mypy": ["mypy", "--version"],
         "pytest": ["pytest", "--version"],
-        "black": ["black", "--version"],
         # Security & dependency tools
         "pip-audit": ["pip-audit", "--version"],
         "pipdeptree": ["pipdeptree", "--version"],
@@ -379,7 +379,7 @@ def collect_doctor_report(
     }
     
     # Python tools that can be checked via 'python -m' as fallback
-    python_tools = {"ruff", "mypy", "pytest", "pip-audit", "pipdeptree", "black", "coverage", "build"}
+    python_tools = {"ruff", "mypy", "pytest", "pip-audit", "pipdeptree", "coverage", "build"}
 
     typescript_enabled = bool(
         config.quality_tools and config.quality_tools.typescript_enabled

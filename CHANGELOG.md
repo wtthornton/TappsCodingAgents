@@ -16,6 +16,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 (none)
 
+## [3.5.34] - 2026-01-30
+
+### Changed
+- **Dependency cleanup** – Reduced footprint and simplified toolchain
+  - **Plotly** → Moved to optional `[reporting]` extra (was never used in report_generator)
+  - **Black** → Removed; Ruff handles both lint and format (CI already used Ruff)
+  - **pylint** → Removed; scoring uses Ruff and radon only
+- **Doctor** – Removed Black from tool checks (no longer reports "black not found")
+- **pyproject.toml** – Removed `[tool.black]` section; Ruff config unchanged
+- **report_generator.py** – Removed unused `HAS_PLOTLY` and `find_spec` import
+- **Expert knowledge (RAG)** – static-analysis-patterns, quality-gates, ci-cd-patterns now recommend Ruff; pre-commit/CI examples updated
+
+### Documentation
+- **DEPENDENCY_POLICY.md** – New policy document (pyproject.toml is source of truth)
+- **DEPENDENCY_CLEANUP_2026.md** – Implementation summary in archive/completed-improvements/
+- **TECH_STACK.md** – Updated development tools (removed Black; Ruff handles lint+format)
+- **Expert knowledge** – Updated static-analysis-patterns, quality-gates, ci-cd-patterns (Ruff replaces Black/pylint)
+
 ## [3.5.33] - 2026-01-30
 
 ### Added

@@ -127,11 +127,18 @@ Welcome to the documentation for TappsCodingAgents.
 - **[MCP Standards Compliance](MCP_STANDARDS.md)** - MCP standards compliance (JSON-RPC 2.0, JSON Schema 2020-12)
 - **[Context7 Integration Patterns](CONTEXT7_PATTERNS.md)** - Best practices for Context7 integration
 
-### Requirements
+### Requirements & Dependencies
+- **[Dependency Policy](DEPENDENCY_POLICY.md)** - pyproject.toml is source of truth; optional extras
+- **[Dependency Conflict (pipdeptree)](DEPENDENCY_CONFLICT_PIPDEPTREE.md)** - pipdeptree/packaging conflict and resolution
 - **[Requirements Index](../requirements/README.md)** - Requirements documentation index
 - **[Project Requirements](../requirements/PROJECT_REQUIREMENTS.md)** - Complete project requirements document
 - **[Agent API Specification](../requirements/agent_api.md)** - Agent API specification
 - **[Tech Stack Requirements](../requirements/TECH_STACK.md)** - Technology stack requirements
+
+### Archive
+- **[Documentation Archive](archive/README.md)** - Historical docs (completed improvements, session feedback, superseded planning, epic-specific). Current behavior is in the docs above.
+
+**For contributors and AI:** When adding documentation, put **user-facing content** in docs linked from this index. Put **session feedback**, **implementation-complete summaries**, and **superseded planning** in [archive/](archive/README.md) (`archive/feedback/`, `archive/completed-improvements/`, `archive/planning/`). Do not create new `*_IMPLEMENTED.md` or `*_COMPLETE.md` in `docs/` root—update the canonical doc (e.g. CONFIGURATION.md, ARCHITECTURE.md) or add to archive.
 
 ## Common Tasks Quick Reference
 

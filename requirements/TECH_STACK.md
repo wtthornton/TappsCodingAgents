@@ -473,8 +473,7 @@ model_profile: implementer_profile
 | **pytest** | Unit testing | 9.x |
 | **pytest-asyncio** | Async testing | 1.x |
 | **mypy** | Type checking | 1.19+ |
-| **ruff** | Linting, formatting | 0.14+ |
-| **black** | Formatting | 25.x |
+| **ruff** | Linting and formatting | 0.14+ |
 
 ### 8.3 Monitoring & Observability
 
