@@ -16,10 +16,12 @@ from .refactor_orchestrator import RefactorOrchestrator
 from .review_orchestrator import ReviewOrchestrator
 from .test_orchestrator import TestOrchestrator
 from .todo_orchestrator import TodoOrchestrator
+from .validate_orchestrator import ValidateOrchestrator
 
 __all__ = [
     "SimpleModeOrchestrator",
     "BuildOrchestrator",
+    "ValidateOrchestrator",
     "ReviewOrchestrator",
     "FixOrchestrator",
     "TestOrchestrator",

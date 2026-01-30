@@ -272,6 +272,1154 @@
       "file_path": "pytest_testing.json",
       "saved_at": "2026-01-24T12:20:20.618748",
       "source": "fuzzy_match"
+    },
+    "clean": {
+      "library": "clean",
+      "topic": null,
+      "file_path": "clean.json",
+      "saved_at": "2026-01-29T22:13:22.978153",
+      "source": "api"
+    },
+    "aiofiles:best-practices": {
+      "library": "aiofiles",
+      "topic": "best-practices",
+      "file_path": "aiofiles_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.149835",
+      "source": "cache"
+    },
+    "aiohttp:best-practices": {
+      "library": "aiohttp",
+      "topic": "best-practices",
+      "file_path": "aiohttp_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.315799",
+      "source": "fuzzy_match"
+    },
+    "bandit:best-practices": {
+      "library": "bandit",
+      "topic": "best-practices",
+      "file_path": "bandit_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.444215",
+      "source": "fuzzy_match"
+    },
+    "black:best-practices": {
+      "library": "black",
+      "topic": "best-practices",
+      "file_path": "black_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.577969",
+      "source": "fuzzy_match"
+    },
+    "clean:best-practices": {
+      "library": "clean",
+      "topic": "best-practices",
+      "file_path": "clean_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.732803",
+      "source": "fuzzy_match"
+    },
+    "coverage:best-practices": {
+      "library": "coverage",
+      "topic": "best-practices",
+      "file_path": "coverage_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.860537",
+      "source": "fuzzy_match"
+    },
+    "httpx:best-practices": {
+      "library": "httpx",
+      "topic": "best-practices",
+      "file_path": "httpx_best-practices.json",
+      "saved_at": "2026-01-29T22:13:23.934172",
+      "source": "cache"
+    },
+    "jinja2:best-practices": {
+      "library": "jinja2",
+      "topic": "best-practices",
+      "file_path": "jinja2_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.067326",
+      "source": "fuzzy_match"
+    },
+    "mypy:best-practices": {
+      "library": "mypy",
+      "topic": "best-practices",
+      "file_path": "mypy_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.198695",
+      "source": "fuzzy_match"
+    },
+    "packaging:best-practices": {
+      "library": "packaging",
+      "topic": "best-practices",
+      "file_path": "packaging_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.319997",
+      "source": "fuzzy_match"
+    },
+    "pip-audit:best-practices": {
+      "library": "pip-audit",
+      "topic": "best-practices",
+      "file_path": "pip-audit_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.397934",
+      "source": "cache"
+    },
+    "pip-tools:best-practices": {
+      "library": "pip-tools",
+      "topic": "best-practices",
+      "file_path": "pip-tools_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.518256",
+      "source": "fuzzy_match"
+    },
+    "plotly:best-practices": {
+      "library": "plotly",
+      "topic": "best-practices",
+      "file_path": "plotly_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.645167",
+      "source": "fuzzy_match"
+    },
+    "psutil:best-practices": {
+      "library": "psutil",
+      "topic": "best-practices",
+      "file_path": "psutil_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.731083",
+      "source": "cache"
+    },
+    "pydantic:best-practices": {
+      "library": "pydantic",
+      "topic": "best-practices",
+      "file_path": "pydantic_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.854379",
+      "source": "fuzzy_match"
+    },
+    "pylint:best-practices": {
+      "library": "pylint",
+      "topic": "best-practices",
+      "file_path": "pylint_best-practices.json",
+      "saved_at": "2026-01-29T22:13:24.933936",
+      "source": "cache"
+    },
+    "pytest:best-practices": {
+      "library": "pytest",
+      "topic": "best-practices",
+      "file_path": "pytest_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.059175",
+      "source": "fuzzy_match"
+    },
+    "pytest-asyncio:best-practices": {
+      "library": "pytest-asyncio",
+      "topic": "best-practices",
+      "file_path": "pytest-asyncio_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.184097",
+      "source": "fuzzy_match"
+    },
+    "pytest-cov:best-practices": {
+      "library": "pytest-cov",
+      "topic": "best-practices",
+      "file_path": "pytest-cov_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.317925",
+      "source": "fuzzy_match"
+    },
+    "pytest-html:best-practices": {
+      "library": "pytest-html",
+      "topic": "best-practices",
+      "file_path": "pytest-html_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.451543",
+      "source": "fuzzy_match"
+    },
+    "pytest-mock:best-practices": {
+      "library": "pytest-mock",
+      "topic": "best-practices",
+      "file_path": "pytest-mock_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.536334",
+      "source": "cache"
+    },
+    "pytest-rich:best-practices": {
+      "library": "pytest-rich",
+      "topic": "best-practices",
+      "file_path": "pytest-rich_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.669097",
+      "source": "fuzzy_match"
+    },
+    "pytest-sugar:best-practices": {
+      "library": "pytest-sugar",
+      "topic": "best-practices",
+      "file_path": "pytest-sugar_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.796970",
+      "source": "fuzzy_match"
+    },
+    "pytest-timeout:best-practices": {
+      "library": "pytest-timeout",
+      "topic": "best-practices",
+      "file_path": "pytest-timeout_best-practices.json",
+      "saved_at": "2026-01-29T22:13:25.924878",
+      "source": "fuzzy_match"
+    },
+    "pytest-xdist:best-practices": {
+      "library": "pytest-xdist",
+      "topic": "best-practices",
+      "file_path": "pytest-xdist_best-practices.json",
+      "saved_at": "2026-01-29T22:13:26.048932",
+      "source": "fuzzy_match"
+    },
+    "pyyaml:best-practices": {
+      "library": "pyyaml",
+      "topic": "best-practices",
+      "file_path": "pyyaml_best-practices.json",
+      "saved_at": "2026-01-29T22:13:26.195463",
+      "source": "fuzzy_match"
+    },
+    "radon:best-practices": {
+      "library": "radon",
+      "topic": "best-practices",
+      "file_path": "radon_best-practices.json",
+      "saved_at": "2026-01-29T22:13:26.340853",
+      "source": "fuzzy_match"
+    },
+    "rich:best-practices": {
+      "library": "rich",
+      "topic": "best-practices",
+      "file_path": "rich_best-practices.json",
+      "saved_at": "2026-01-29T22:13:26.519070",
+      "source": "fuzzy_match"
+    },
+    "ruff:best-practices": {
+      "library": "ruff",
+      "topic": "best-practices",
+      "file_path": "ruff_best-practices.json",
+      "saved_at": "2026-01-29T22:13:26.643570",
+      "source": "fuzzy_match"
+    },
+    "types-pyyaml:best-practices": {
+      "library": "types-pyyaml",
+      "topic": "best-practices",
+      "file_path": "types-pyyaml_best-practices.json",
+      "saved_at": "2026-01-29T22:13:26.722638",
+      "source": "cache"
+    },
+    "aiofiles:architecture": {
+      "library": "aiofiles",
+      "topic": "architecture",
+      "file_path": "aiofiles_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.007176",
+      "source": "fuzzy_match"
+    },
+    "aiohttp:architecture": {
+      "library": "aiohttp",
+      "topic": "architecture",
+      "file_path": "aiohttp_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.157582",
+      "source": "fuzzy_match"
+    },
+    "bandit:architecture": {
+      "library": "bandit",
+      "topic": "architecture",
+      "file_path": "bandit_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.293435",
+      "source": "fuzzy_match"
+    },
+    "black:architecture": {
+      "library": "black",
+      "topic": "architecture",
+      "file_path": "black_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.415452",
+      "source": "fuzzy_match"
+    },
+    "clean:architecture": {
+      "library": "clean",
+      "topic": "architecture",
+      "file_path": "clean_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.544976",
+      "source": "fuzzy_match"
+    },
+    "coverage:architecture": {
+      "library": "coverage",
+      "topic": "architecture",
+      "file_path": "coverage_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.677091",
+      "source": "fuzzy_match"
+    },
+    "httpx:architecture": {
+      "library": "httpx",
+      "topic": "architecture",
+      "file_path": "httpx_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.797810",
+      "source": "fuzzy_match"
+    },
+    "jinja2:architecture": {
+      "library": "jinja2",
+      "topic": "architecture",
+      "file_path": "jinja2_architecture.json",
+      "saved_at": "2026-01-29T22:13:27.918859",
+      "source": "fuzzy_match"
+    },
+    "mypy:architecture": {
+      "library": "mypy",
+      "topic": "architecture",
+      "file_path": "mypy_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.045780",
+      "source": "fuzzy_match"
+    },
+    "packaging:architecture": {
+      "library": "packaging",
+      "topic": "architecture",
+      "file_path": "packaging_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.176919",
+      "source": "fuzzy_match"
+    },
+    "pip-audit:architecture": {
+      "library": "pip-audit",
+      "topic": "architecture",
+      "file_path": "pip-audit_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.313905",
+      "source": "fuzzy_match"
+    },
+    "pip-tools:architecture": {
+      "library": "pip-tools",
+      "topic": "architecture",
+      "file_path": "pip-tools_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.399500",
+      "source": "cache"
+    },
+    "plotly:architecture": {
+      "library": "plotly",
+      "topic": "architecture",
+      "file_path": "plotly_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.544371",
+      "source": "fuzzy_match"
+    },
+    "psutil:architecture": {
+      "library": "psutil",
+      "topic": "architecture",
+      "file_path": "psutil_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.675106",
+      "source": "fuzzy_match"
+    },
+    "pydantic:architecture": {
+      "library": "pydantic",
+      "topic": "architecture",
+      "file_path": "pydantic_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.798839",
+      "source": "fuzzy_match"
+    },
+    "pylint:architecture": {
+      "library": "pylint",
+      "topic": "architecture",
+      "file_path": "pylint_architecture.json",
+      "saved_at": "2026-01-29T22:13:28.937933",
+      "source": "fuzzy_match"
+    },
+    "pytest:architecture": {
+      "library": "pytest",
+      "topic": "architecture",
+      "file_path": "pytest_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.075575",
+      "source": "fuzzy_match"
+    },
+    "pytest-asyncio:architecture": {
+      "library": "pytest-asyncio",
+      "topic": "architecture",
+      "file_path": "pytest-asyncio_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.199894",
+      "source": "fuzzy_match"
+    },
+    "pytest-cov:architecture": {
+      "library": "pytest-cov",
+      "topic": "architecture",
+      "file_path": "pytest-cov_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.331041",
+      "source": "fuzzy_match"
+    },
+    "pytest-html:architecture": {
+      "library": "pytest-html",
+      "topic": "architecture",
+      "file_path": "pytest-html_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.457502",
+      "source": "fuzzy_match"
+    },
+    "pytest-mock:architecture": {
+      "library": "pytest-mock",
+      "topic": "architecture",
+      "file_path": "pytest-mock_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.586643",
+      "source": "fuzzy_match"
+    },
+    "pytest-rich:architecture": {
+      "library": "pytest-rich",
+      "topic": "architecture",
+      "file_path": "pytest-rich_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.663635",
+      "source": "cache"
+    },
+    "pytest-sugar:architecture": {
+      "library": "pytest-sugar",
+      "topic": "architecture",
+      "file_path": "pytest-sugar_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.796368",
+      "source": "fuzzy_match"
+    },
+    "pytest-timeout:architecture": {
+      "library": "pytest-timeout",
+      "topic": "architecture",
+      "file_path": "pytest-timeout_architecture.json",
+      "saved_at": "2026-01-29T22:13:29.921558",
+      "source": "fuzzy_match"
+    },
+    "pytest-xdist:architecture": {
+      "library": "pytest-xdist",
+      "topic": "architecture",
+      "file_path": "pytest-xdist_architecture.json",
+      "saved_at": "2026-01-29T22:13:30.050312",
+      "source": "fuzzy_match"
+    },
+    "pyyaml:architecture": {
+      "library": "pyyaml",
+      "topic": "architecture",
+      "file_path": "pyyaml_architecture.json",
+      "saved_at": "2026-01-29T22:13:30.176919",
+      "source": "fuzzy_match"
+    },
+    "radon:architecture": {
+      "library": "radon",
+      "topic": "architecture",
+      "file_path": "radon_architecture.json",
+      "saved_at": "2026-01-29T22:13:30.299620",
+      "source": "fuzzy_match"
+    },
+    "rich:architecture": {
+      "library": "rich",
+      "topic": "architecture",
+      "file_path": "rich_architecture.json",
+      "saved_at": "2026-01-29T22:13:30.419568",
+      "source": "fuzzy_match"
+    },
+    "ruff:architecture": {
+      "library": "ruff",
+      "topic": "architecture",
+      "file_path": "ruff_architecture.json",
+      "saved_at": "2026-01-29T22:13:30.560667",
+      "source": "fuzzy_match"
+    },
+    "types-pyyaml:architecture": {
+      "library": "types-pyyaml",
+      "topic": "architecture",
+      "file_path": "types-pyyaml_architecture.json",
+      "saved_at": "2026-01-29T22:13:30.691739",
+      "source": "fuzzy_match"
+    },
+    "simple_mode:best-practices": {
+      "library": "simple_mode",
+      "topic": "best-practices",
+      "file_path": "simple_mode_best-practices.json",
+      "saved_at": "2026-01-29T22:14:09.265681",
+      "source": "fuzzy_match"
+    },
+    "simple_mode:common-mistakes": {
+      "library": "simple_mode",
+      "topic": "common-mistakes",
+      "file_path": "simple_mode_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:09.348605",
+      "source": "cache"
+    },
+    "simple_mode:usage": {
+      "library": "simple_mode",
+      "topic": "usage",
+      "file_path": "simple_mode_usage.json",
+      "saved_at": "2026-01-29T22:14:09.479876",
+      "source": "fuzzy_match"
+    },
+    "simple_mode:examples": {
+      "library": "simple_mode",
+      "topic": "examples",
+      "file_path": "simple_mode_examples.json",
+      "saved_at": "2026-01-29T22:14:09.601911",
+      "source": "fuzzy_match"
+    },
+    "agent_contracts:best-practices": {
+      "library": "agent_contracts",
+      "topic": "best-practices",
+      "file_path": "agent_contracts_best-practices.json",
+      "saved_at": "2026-01-29T22:14:09.957158",
+      "source": "fuzzy_match"
+    },
+    "agent_contracts:common-mistakes": {
+      "library": "agent_contracts",
+      "topic": "common-mistakes",
+      "file_path": "agent_contracts_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:10.076792",
+      "source": "fuzzy_match"
+    },
+    "agent_contracts:usage": {
+      "library": "agent_contracts",
+      "topic": "usage",
+      "file_path": "agent_contracts_usage.json",
+      "saved_at": "2026-01-29T22:14:13.660938",
+      "source": "api"
+    },
+    "agent_contracts:examples": {
+      "library": "agent_contracts",
+      "topic": "examples",
+      "file_path": "agent_contracts_examples.json",
+      "saved_at": "2026-01-29T22:14:13.828686",
+      "source": "fuzzy_match"
+    },
+    "base:best-practices": {
+      "library": "base",
+      "topic": "best-practices",
+      "file_path": "base_best-practices.json",
+      "saved_at": "2026-01-29T22:14:13.955196",
+      "source": "fuzzy_match"
+    },
+    "base:common-mistakes": {
+      "library": "base",
+      "topic": "common-mistakes",
+      "file_path": "base_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:14.099840",
+      "source": "fuzzy_match"
+    },
+    "base:usage": {
+      "library": "base",
+      "topic": "usage",
+      "file_path": "base_usage.json",
+      "saved_at": "2026-01-29T22:14:14.179760",
+      "source": "cache"
+    },
+    "base:examples": {
+      "library": "base",
+      "topic": "examples",
+      "file_path": "base_examples.json",
+      "saved_at": "2026-01-29T22:14:14.310052",
+      "source": "fuzzy_match"
+    },
+    "beads_hooks:best-practices": {
+      "library": "beads_hooks",
+      "topic": "best-practices",
+      "file_path": "beads_hooks_best-practices.json",
+      "saved_at": "2026-01-29T22:14:14.434582",
+      "source": "fuzzy_match"
+    },
+    "beads_hooks:common-mistakes": {
+      "library": "beads_hooks",
+      "topic": "common-mistakes",
+      "file_path": "beads_hooks_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:14.564464",
+      "source": "fuzzy_match"
+    },
+    "beads_hooks:usage": {
+      "library": "beads_hooks",
+      "topic": "usage",
+      "file_path": "beads_hooks_usage.json",
+      "saved_at": "2026-01-29T22:14:18.370037",
+      "source": "api"
+    },
+    "beads_hooks:examples": {
+      "library": "beads_hooks",
+      "topic": "examples",
+      "file_path": "beads_hooks_examples.json",
+      "saved_at": "2026-01-29T22:14:18.659764",
+      "source": "fuzzy_match"
+    },
+    "deliverable_checklist:best-practices": {
+      "library": "deliverable_checklist",
+      "topic": "best-practices",
+      "file_path": "deliverable_checklist_best-practices.json",
+      "saved_at": "2026-01-29T22:14:18.847031",
+      "source": "fuzzy_match"
+    },
+    "deliverable_checklist:common-mistakes": {
+      "library": "deliverable_checklist",
+      "topic": "common-mistakes",
+      "file_path": "deliverable_checklist_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:19.055481",
+      "source": "fuzzy_match"
+    },
+    "deliverable_checklist:usage": {
+      "library": "deliverable_checklist",
+      "topic": "usage",
+      "file_path": "deliverable_checklist_usage.json",
+      "saved_at": "2026-01-29T22:14:22.629212",
+      "source": "api"
+    },
+    "deliverable_checklist:examples": {
+      "library": "deliverable_checklist",
+      "topic": "examples",
+      "file_path": "deliverable_checklist_examples.json",
+      "saved_at": "2026-01-29T22:14:22.819918",
+      "source": "fuzzy_match"
+    },
+    "file_inference:best-practices": {
+      "library": "file_inference",
+      "topic": "best-practices",
+      "file_path": "file_inference_best-practices.json",
+      "saved_at": "2026-01-29T22:14:22.961296",
+      "source": "fuzzy_match"
+    },
+    "file_inference:common-mistakes": {
+      "library": "file_inference",
+      "topic": "common-mistakes",
+      "file_path": "file_inference_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:23.092199",
+      "source": "fuzzy_match"
+    },
+    "file_inference:usage": {
+      "library": "file_inference",
+      "topic": "usage",
+      "file_path": "file_inference_usage.json",
+      "saved_at": "2026-01-29T22:14:26.662860",
+      "source": "api"
+    },
+    "file_inference:examples": {
+      "library": "file_inference",
+      "topic": "examples",
+      "file_path": "file_inference_examples.json",
+      "saved_at": "2026-01-29T22:14:26.816855",
+      "source": "fuzzy_match"
+    },
+    "intent_parser:best-practices": {
+      "library": "intent_parser",
+      "topic": "best-practices",
+      "file_path": "intent_parser_best-practices.json",
+      "saved_at": "2026-01-29T22:14:26.941475",
+      "source": "fuzzy_match"
+    },
+    "intent_parser:common-mistakes": {
+      "library": "intent_parser",
+      "topic": "common-mistakes",
+      "file_path": "intent_parser_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:27.150108",
+      "source": "fuzzy_match"
+    },
+    "intent_parser:usage": {
+      "library": "intent_parser",
+      "topic": "usage",
+      "file_path": "intent_parser_usage.json",
+      "saved_at": "2026-01-29T22:14:30.680504",
+      "source": "api"
+    },
+    "intent_parser:examples": {
+      "library": "intent_parser",
+      "topic": "examples",
+      "file_path": "intent_parser_examples.json",
+      "saved_at": "2026-01-29T22:14:30.848806",
+      "source": "fuzzy_match"
+    },
+    "output_aggregator:best-practices": {
+      "library": "output_aggregator",
+      "topic": "best-practices",
+      "file_path": "output_aggregator_best-practices.json",
+      "saved_at": "2026-01-29T22:14:30.961630",
+      "source": "cache"
+    },
+    "output_aggregator:common-mistakes": {
+      "library": "output_aggregator",
+      "topic": "common-mistakes",
+      "file_path": "output_aggregator_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:31.098819",
+      "source": "fuzzy_match"
+    },
+    "output_aggregator:usage": {
+      "library": "output_aggregator",
+      "topic": "usage",
+      "file_path": "output_aggregator_usage.json",
+      "saved_at": "2026-01-29T22:14:31.228602",
+      "source": "fuzzy_match"
+    },
+    "output_aggregator:examples": {
+      "library": "output_aggregator",
+      "topic": "examples",
+      "file_path": "output_aggregator_examples.json",
+      "saved_at": "2026-01-29T22:14:31.366879",
+      "source": "fuzzy_match"
+    },
+    "requirements_tracer:best-practices": {
+      "library": "requirements_tracer",
+      "topic": "best-practices",
+      "file_path": "requirements_tracer_best-practices.json",
+      "saved_at": "2026-01-29T22:14:31.456600",
+      "source": "cache"
+    },
+    "requirements_tracer:common-mistakes": {
+      "library": "requirements_tracer",
+      "topic": "common-mistakes",
+      "file_path": "requirements_tracer_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:31.581562",
+      "source": "fuzzy_match"
+    },
+    "requirements_tracer:usage": {
+      "library": "requirements_tracer",
+      "topic": "usage",
+      "file_path": "requirements_tracer_usage.json",
+      "saved_at": "2026-01-29T22:14:31.714224",
+      "source": "fuzzy_match"
+    },
+    "requirements_tracer:examples": {
+      "library": "requirements_tracer",
+      "topic": "examples",
+      "file_path": "requirements_tracer_examples.json",
+      "saved_at": "2026-01-29T22:14:31.857904",
+      "source": "fuzzy_match"
+    },
+    "result_formatters:best-practices": {
+      "library": "result_formatters",
+      "topic": "best-practices",
+      "file_path": "result_formatters_best-practices.json",
+      "saved_at": "2026-01-29T22:14:31.989599",
+      "source": "fuzzy_match"
+    },
+    "result_formatters:common-mistakes": {
+      "library": "result_formatters",
+      "topic": "common-mistakes",
+      "file_path": "result_formatters_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:35.471553",
+      "source": "api"
+    },
+    "result_formatters:usage": {
+      "library": "result_formatters",
+      "topic": "usage",
+      "file_path": "result_formatters_usage.json",
+      "saved_at": "2026-01-29T22:14:35.612643",
+      "source": "fuzzy_match"
+    },
+    "result_formatters:examples": {
+      "library": "result_formatters",
+      "topic": "examples",
+      "file_path": "result_formatters_examples.json",
+      "saved_at": "2026-01-29T22:14:35.755858",
+      "source": "fuzzy_match"
+    },
+    "step_dependencies:best-practices": {
+      "library": "step_dependencies",
+      "topic": "best-practices",
+      "file_path": "step_dependencies_best-practices.json",
+      "saved_at": "2026-01-29T22:14:35.890476",
+      "source": "fuzzy_match"
+    },
+    "step_dependencies:common-mistakes": {
+      "library": "step_dependencies",
+      "topic": "common-mistakes",
+      "file_path": "step_dependencies_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:36.026710",
+      "source": "fuzzy_match"
+    },
+    "step_dependencies:usage": {
+      "library": "step_dependencies",
+      "topic": "usage",
+      "file_path": "step_dependencies_usage.json",
+      "saved_at": "2026-01-29T22:14:39.471749",
+      "source": "api"
+    },
+    "step_dependencies:examples": {
+      "library": "step_dependencies",
+      "topic": "examples",
+      "file_path": "step_dependencies_examples.json",
+      "saved_at": "2026-01-29T22:14:39.682674",
+      "source": "fuzzy_match"
+    },
+    "step_results:best-practices": {
+      "library": "step_results",
+      "topic": "best-practices",
+      "file_path": "step_results_best-practices.json",
+      "saved_at": "2026-01-29T22:14:39.809895",
+      "source": "fuzzy_match"
+    },
+    "step_results:common-mistakes": {
+      "library": "step_results",
+      "topic": "common-mistakes",
+      "file_path": "step_results_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:39.927730",
+      "source": "fuzzy_match"
+    },
+    "step_results:usage": {
+      "library": "step_results",
+      "topic": "usage",
+      "file_path": "step_results_usage.json",
+      "saved_at": "2026-01-29T22:14:40.075710",
+      "source": "fuzzy_match"
+    },
+    "step_results:examples": {
+      "library": "step_results",
+      "topic": "examples",
+      "file_path": "step_results_examples.json",
+      "saved_at": "2026-01-29T22:14:40.204953",
+      "source": "fuzzy_match"
+    },
+    "tapps_agents:best-practices": {
+      "library": "tapps_agents",
+      "topic": "best-practices",
+      "file_path": "tapps_agents_best-practices.json",
+      "saved_at": "2026-01-29T22:14:40.533136",
+      "source": "fuzzy_match"
+    },
+    "tapps_agents:common-mistakes": {
+      "library": "tapps_agents",
+      "topic": "common-mistakes",
+      "file_path": "tapps_agents_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:40.612498",
+      "source": "cache"
+    },
+    "tapps_agents:usage": {
+      "library": "tapps_agents",
+      "topic": "usage",
+      "file_path": "tapps_agents_usage.json",
+      "saved_at": "2026-01-29T22:14:40.747572",
+      "source": "fuzzy_match"
+    },
+    "tapps_agents:examples": {
+      "library": "tapps_agents",
+      "topic": "examples",
+      "file_path": "tapps_agents_examples.json",
+      "saved_at": "2026-01-29T22:14:40.863904",
+      "source": "fuzzy_match"
+    },
+    "multi-agent expert systems:best-practices": {
+      "library": "multi-agent expert systems",
+      "topic": "best-practices",
+      "file_path": "multi-agent_expert_systems_best-practices.json",
+      "saved_at": "2026-01-29T22:14:40.935755",
+      "source": "cache"
+    },
+    "agents:best-practices": {
+      "library": "agents",
+      "topic": "best-practices",
+      "file_path": "agents_best-practices.json",
+      "saved_at": "2026-01-29T22:14:43.251441",
+      "source": "cache"
+    },
+    "agents:common-mistakes": {
+      "library": "agents",
+      "topic": "common-mistakes",
+      "file_path": "agents_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:43.381888",
+      "source": "fuzzy_match"
+    },
+    "agents:usage": {
+      "library": "agents",
+      "topic": "usage",
+      "file_path": "agents_usage.json",
+      "saved_at": "2026-01-29T22:14:43.503867",
+      "source": "fuzzy_match"
+    },
+    "agents:examples": {
+      "library": "agents",
+      "topic": "examples",
+      "file_path": "agents_examples.json",
+      "saved_at": "2026-01-29T22:14:43.628091",
+      "source": "fuzzy_match"
+    },
+    "context7:best-practices": {
+      "library": "context7",
+      "topic": "best-practices",
+      "file_path": "context7_best-practices.json",
+      "saved_at": "2026-01-29T22:14:43.745028",
+      "source": "fuzzy_match"
+    },
+    "context7:common-mistakes": {
+      "library": "context7",
+      "topic": "common-mistakes",
+      "file_path": "context7_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:47.049309",
+      "source": "api"
+    },
+    "context7:usage": {
+      "library": "context7",
+      "topic": "usage",
+      "file_path": "context7_usage.json",
+      "saved_at": "2026-01-29T22:14:47.233509",
+      "source": "fuzzy_match"
+    },
+    "context7:examples": {
+      "library": "context7",
+      "topic": "examples",
+      "file_path": "context7_examples.json",
+      "saved_at": "2026-01-29T22:14:47.361845",
+      "source": "fuzzy_match"
+    },
+    "core:best-practices": {
+      "library": "core",
+      "topic": "best-practices",
+      "file_path": "core_best-practices.json",
+      "saved_at": "2026-01-29T22:14:47.443334",
+      "source": "cache"
+    },
+    "core:common-mistakes": {
+      "library": "core",
+      "topic": "common-mistakes",
+      "file_path": "core_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:47.577085",
+      "source": "fuzzy_match"
+    },
+    "core:usage": {
+      "library": "core",
+      "topic": "usage",
+      "file_path": "core_usage.json",
+      "saved_at": "2026-01-29T22:14:47.709111",
+      "source": "fuzzy_match"
+    },
+    "core:examples": {
+      "library": "core",
+      "topic": "examples",
+      "file_path": "core_examples.json",
+      "saved_at": "2026-01-29T22:14:47.843124",
+      "source": "fuzzy_match"
+    },
+    "experts:best-practices": {
+      "library": "experts",
+      "topic": "best-practices",
+      "file_path": "experts_best-practices.json",
+      "saved_at": "2026-01-29T22:14:47.971179",
+      "source": "fuzzy_match"
+    },
+    "experts:common-mistakes": {
+      "library": "experts",
+      "topic": "common-mistakes",
+      "file_path": "experts_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:48.049901",
+      "source": "cache"
+    },
+    "experts:usage": {
+      "library": "experts",
+      "topic": "usage",
+      "file_path": "experts_usage.json",
+      "saved_at": "2026-01-29T22:14:48.175468",
+      "source": "fuzzy_match"
+    },
+    "experts:examples": {
+      "library": "experts",
+      "topic": "examples",
+      "file_path": "experts_examples.json",
+      "saved_at": "2026-01-29T22:14:48.327125",
+      "source": "fuzzy_match"
+    },
+    "workflow:best-practices": {
+      "library": "workflow",
+      "topic": "best-practices",
+      "file_path": "workflow_best-practices.json",
+      "saved_at": "2026-01-29T22:14:48.410679",
+      "source": "cache"
+    },
+    "workflow:common-mistakes": {
+      "library": "workflow",
+      "topic": "common-mistakes",
+      "file_path": "workflow_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:48.554969",
+      "source": "fuzzy_match"
+    },
+    "workflow:usage": {
+      "library": "workflow",
+      "topic": "usage",
+      "file_path": "workflow_usage.json",
+      "saved_at": "2026-01-29T22:14:48.698606",
+      "source": "fuzzy_match"
+    },
+    "workflow:examples": {
+      "library": "workflow",
+      "topic": "examples",
+      "file_path": "workflow_examples.json",
+      "saved_at": "2026-01-29T22:14:48.830250",
+      "source": "fuzzy_match"
+    },
+    "yaml:best-practices": {
+      "library": "yaml",
+      "topic": "best-practices",
+      "file_path": "yaml_best-practices.json",
+      "saved_at": "2026-01-29T22:14:48.964770",
+      "source": "fuzzy_match"
+    },
+    "yaml:common-mistakes": {
+      "library": "yaml",
+      "topic": "common-mistakes",
+      "file_path": "yaml_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:49.049905",
+      "source": "cache"
+    },
+    "yaml:usage": {
+      "library": "yaml",
+      "topic": "usage",
+      "file_path": "yaml_usage.json",
+      "saved_at": "2026-01-29T22:14:49.177484",
+      "source": "fuzzy_match"
+    },
+    "yaml:examples": {
+      "library": "yaml",
+      "topic": "examples",
+      "file_path": "yaml_examples.json",
+      "saved_at": "2026-01-29T22:14:49.309277",
+      "source": "fuzzy_match"
+    },
+    "beads:best-practices": {
+      "library": "beads",
+      "topic": "best-practices",
+      "file_path": "beads_best-practices.json",
+      "saved_at": "2026-01-29T22:14:55.206800",
+      "source": "api"
+    },
+    "beads:common-mistakes": {
+      "library": "beads",
+      "topic": "common-mistakes",
+      "file_path": "beads_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:55.375786",
+      "source": "fuzzy_match"
+    },
+    "beads:usage": {
+      "library": "beads",
+      "topic": "usage",
+      "file_path": "beads_usage.json",
+      "saved_at": "2026-01-29T22:14:55.521474",
+      "source": "fuzzy_match"
+    },
+    "beads:examples": {
+      "library": "beads",
+      "topic": "examples",
+      "file_path": "beads_examples.json",
+      "saved_at": "2026-01-29T22:14:55.712046",
+      "source": "fuzzy_match"
+    },
+    "feedback:best-practices": {
+      "library": "feedback",
+      "topic": "best-practices",
+      "file_path": "feedback_best-practices.json",
+      "saved_at": "2026-01-29T22:14:55.797231",
+      "source": "cache"
+    },
+    "feedback:common-mistakes": {
+      "library": "feedback",
+      "topic": "common-mistakes",
+      "file_path": "feedback_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:55.931074",
+      "source": "fuzzy_match"
+    },
+    "feedback:usage": {
+      "library": "feedback",
+      "topic": "usage",
+      "file_path": "feedback_usage.json",
+      "saved_at": "2026-01-29T22:14:56.135368",
+      "source": "fuzzy_match"
+    },
+    "feedback:examples": {
+      "library": "feedback",
+      "topic": "examples",
+      "file_path": "feedback_examples.json",
+      "saved_at": "2026-01-29T22:14:56.282145",
+      "source": "fuzzy_match"
+    },
+    "utils:best-practices": {
+      "library": "utils",
+      "topic": "best-practices",
+      "file_path": "utils_best-practices.json",
+      "saved_at": "2026-01-29T22:14:56.422000",
+      "source": "fuzzy_match"
+    },
+    "utils:common-mistakes": {
+      "library": "utils",
+      "topic": "common-mistakes",
+      "file_path": "utils_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:56.557090",
+      "source": "fuzzy_match"
+    },
+    "utils:usage": {
+      "library": "utils",
+      "topic": "usage",
+      "file_path": "utils_usage.json",
+      "saved_at": "2026-01-29T22:14:56.642264",
+      "source": "cache"
+    },
+    "utils:examples": {
+      "library": "utils",
+      "topic": "examples",
+      "file_path": "utils_examples.json",
+      "saved_at": "2026-01-29T22:14:56.783556",
+      "source": "fuzzy_match"
+    },
+    "validators:best-practices": {
+      "library": "validators",
+      "topic": "best-practices",
+      "file_path": "validators_best-practices.json",
+      "saved_at": "2026-01-29T22:14:56.922018",
+      "source": "fuzzy_match"
+    },
+    "validators:common-mistakes": {
+      "library": "validators",
+      "topic": "common-mistakes",
+      "file_path": "validators_common-mistakes.json",
+      "saved_at": "2026-01-29T22:14:57.074519",
+      "source": "fuzzy_match"
+    },
+    "validators:usage": {
+      "library": "validators",
+      "topic": "usage",
+      "file_path": "validators_usage.json",
+      "saved_at": "2026-01-29T22:14:57.155495",
+      "source": "cache"
+    },
+    "validators:examples": {
+      "library": "validators",
+      "topic": "examples",
+      "file_path": "validators_examples.json",
+      "saved_at": "2026-01-29T22:14:57.284586",
+      "source": "fuzzy_match"
+    },
+    "models:best-practices": {
+      "library": "models",
+      "topic": "best-practices",
+      "file_path": "models_best-practices.json",
+      "saved_at": "2026-01-30T07:27:15.784597",
+      "source": "fuzzy_match"
+    },
+    "models:common-mistakes": {
+      "library": "models",
+      "topic": "common-mistakes",
+      "file_path": "models_common-mistakes.json",
+      "saved_at": "2026-01-30T07:27:15.931533",
+      "source": "fuzzy_match"
+    },
+    "models:usage": {
+      "library": "models",
+      "topic": "usage",
+      "file_path": "models_usage.json",
+      "saved_at": "2026-01-30T07:27:19.461646",
+      "source": "api"
+    },
+    "models:examples": {
+      "library": "models",
+      "topic": "examples",
+      "file_path": "models_examples.json",
+      "saved_at": "2026-01-30T07:27:19.616290",
+      "source": "fuzzy_match"
+    },
+    "prompt_analyzer:best-practices": {
+      "library": "prompt_analyzer",
+      "topic": "best-practices",
+      "file_path": "prompt_analyzer_best-practices.json",
+      "saved_at": "2026-01-30T07:27:20.046814",
+      "source": "fuzzy_match"
+    },
+    "prompt_analyzer:common-mistakes": {
+      "library": "prompt_analyzer",
+      "topic": "common-mistakes",
+      "file_path": "prompt_analyzer_common-mistakes.json",
+      "saved_at": "2026-01-30T07:27:20.217572",
+      "source": "fuzzy_match"
+    },
+    "prompt_analyzer:usage": {
+      "library": "prompt_analyzer",
+      "topic": "usage",
+      "file_path": "prompt_analyzer_usage.json",
+      "saved_at": "2026-01-30T07:27:20.334344",
+      "source": "fuzzy_match"
+    },
+    "prompt_analyzer:examples": {
+      "library": "prompt_analyzer",
+      "topic": "examples",
+      "file_path": "prompt_analyzer_examples.json",
+      "saved_at": "2026-01-30T07:27:20.438691",
+      "source": "cache"
+    },
+    "base": {
+      "library": "base",
+      "topic": null,
+      "file_path": "base.json",
+      "saved_at": "2026-01-30T07:27:44.548115",
+      "source": "cache"
+    },
+    "models": {
+      "library": "models",
+      "topic": null,
+      "file_path": "models.json",
+      "saved_at": "2026-01-30T07:27:44.627791",
+      "source": "cache"
     }
   },
   "comprehensive_index": {
@@ -295,151 +1443,638 @@
         "total_docs": 4
       },
       "packaging": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "aiohttp": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pyyaml": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-xdist": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "jinja2": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-cov": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "coverage": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-rich": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-html": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "plotly": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "radon": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pip-audit": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "bandit": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pylint": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pydantic": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "aiofiles": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "mypy": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "psutil": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-asyncio": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-mock": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "ruff": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-sugar": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pip-tools": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "types-pyyaml": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest-timeout": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "httpx": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "rich": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "pytest": {
         "topics": [
           "quality-standards",
-          "testing"
+          "testing",
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 5
+      },
+      "black": {
+        "topics": [
+          "best-practices",
+          "architecture"
         ],
         "total_docs": 3
       },
-      "black": {
-        "topics": [],
+      "clean": {
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
+      },
+      "simple_mode": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "agent_contracts": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "base": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "beads_hooks": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "deliverable_checklist": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "file_inference": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "intent_parser": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "output_aggregator": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "requirements_tracer": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "result_formatters": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "step_dependencies": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "step_results": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "tapps_agents": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "multi-agent expert systems": {
+        "topics": [
+          "best-practices"
+        ],
         "total_docs": 1
+      },
+      "agents": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "context7": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "core": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "experts": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "workflow": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "yaml": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "beads": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "feedback": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "utils": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "validators": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "models": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "prompt_analyzer": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
       }
     },
     "topics": {
       "best-practices": [
         "__future__",
-        "event_log"
+        "event_log",
+        "aiofiles",
+        "aiohttp",
+        "bandit",
+        "black",
+        "clean",
+        "coverage",
+        "httpx",
+        "jinja2",
+        "mypy",
+        "packaging",
+        "pip-audit",
+        "pip-tools",
+        "plotly",
+        "psutil",
+        "pydantic",
+        "pylint",
+        "pytest",
+        "pytest-asyncio",
+        "pytest-cov",
+        "pytest-html",
+        "pytest-mock",
+        "pytest-rich",
+        "pytest-sugar",
+        "pytest-timeout",
+        "pytest-xdist",
+        "pyyaml",
+        "radon",
+        "rich",
+        "ruff",
+        "types-pyyaml",
+        "simple_mode",
+        "agent_contracts",
+        "base",
+        "beads_hooks",
+        "deliverable_checklist",
+        "file_inference",
+        "intent_parser",
+        "output_aggregator",
+        "requirements_tracer",
+        "result_formatters",
+        "step_dependencies",
+        "step_results",
+        "tapps_agents",
+        "multi-agent expert systems",
+        "agents",
+        "context7",
+        "core",
+        "experts",
+        "workflow",
+        "yaml",
+        "beads",
+        "feedback",
+        "utils",
+        "validators",
+        "models",
+        "prompt_analyzer"
       ],
       "common-mistakes": [
         "__future__",
-        "event_log"
+        "event_log",
+        "simple_mode",
+        "agent_contracts",
+        "base",
+        "beads_hooks",
+        "deliverable_checklist",
+        "file_inference",
+        "intent_parser",
+        "output_aggregator",
+        "requirements_tracer",
+        "result_formatters",
+        "step_dependencies",
+        "step_results",
+        "tapps_agents",
+        "agents",
+        "context7",
+        "core",
+        "experts",
+        "workflow",
+        "yaml",
+        "beads",
+        "feedback",
+        "utils",
+        "validators",
+        "models",
+        "prompt_analyzer"
       ],
       "usage": [
         "__future__",
-        "event_log"
+        "event_log",
+        "simple_mode",
+        "agent_contracts",
+        "base",
+        "beads_hooks",
+        "deliverable_checklist",
+        "file_inference",
+        "intent_parser",
+        "output_aggregator",
+        "requirements_tracer",
+        "result_formatters",
+        "step_dependencies",
+        "step_results",
+        "tapps_agents",
+        "agents",
+        "context7",
+        "core",
+        "experts",
+        "workflow",
+        "yaml",
+        "beads",
+        "feedback",
+        "utils",
+        "validators",
+        "models",
+        "prompt_analyzer"
       ],
       "examples": [
         "__future__",
-        "event_log"
+        "event_log",
+        "simple_mode",
+        "agent_contracts",
+        "base",
+        "beads_hooks",
+        "deliverable_checklist",
+        "file_inference",
+        "intent_parser",
+        "output_aggregator",
+        "requirements_tracer",
+        "result_formatters",
+        "step_dependencies",
+        "step_results",
+        "tapps_agents",
+        "agents",
+        "context7",
+        "core",
+        "experts",
+        "workflow",
+        "yaml",
+        "beads",
+        "feedback",
+        "utils",
+        "validators",
+        "models",
+        "prompt_analyzer"
       ],
       "quality-standards": [
         "pytest"
       ],
       "testing": [
         "pytest"
+      ],
+      "architecture": [
+        "aiofiles",
+        "aiohttp",
+        "bandit",
+        "black",
+        "clean",
+        "coverage",
+        "httpx",
+        "jinja2",
+        "mypy",
+        "packaging",
+        "pip-audit",
+        "pip-tools",
+        "plotly",
+        "psutil",
+        "pydantic",
+        "pylint",
+        "pytest",
+        "pytest-asyncio",
+        "pytest-cov",
+        "pytest-html",
+        "pytest-mock",
+        "pytest-rich",
+        "pytest-sugar",
+        "pytest-timeout",
+        "pytest-xdist",
+        "pyyaml",
+        "radon",
+        "rich",
+        "ruff",
+        "types-pyyaml"
       ]
     },
-    "total_entries": 39,
-    "last_updated": "2026-01-24T12:20:20.618774"
+    "total_entries": 203,
+    "last_updated": "2026-01-30T07:27:44.627797"
   },
-  "last_updated": "2026-01-24T12:20:20.618856"
+  "last_updated": "2026-01-30T07:27:44.627956"
 }

@@ -966,7 +966,7 @@ tapps-agents designer design-model "<description>" [--format json|text]
 **Available Commands:**
 
 #### `*enhance` / `enhance` (Dual-Mode)
-**Purpose:** Full prompt enhancement (7-stage pipeline) for code generation prompts
+**Purpose:** Full prompt enhancement (7-stage pipeline) for code generation prompts. The 7-stage pipeline is defined by the Enhancer agent (analysis, requirements, architecture, codebase context, quality, implementation, synthesis). **Adaptive enhancement:** Build orchestrator and EnhancerHandler use PromptAnalyzer; when the prompt is detailed (>150 words), **quick** (stages 1–3) is used automatically to save time and tokens. In task/template copy, use "Run enhancement (full or quick per prompt analysis)" rather than "Run full 7-stage" so intent detectors and streamlining control the mode.
 
 **CLI Syntax:**
 ```bash

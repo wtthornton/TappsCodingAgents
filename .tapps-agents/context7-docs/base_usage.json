@@ -1,0 +1,12 @@
+{
+  "library": "base",
+  "topic": "usage",
+  "documentation": {
+    "content": "## Robots.txt Directives\n\n```robots.txt\nUser-agent: *\nDisallow: \n\n```\n\nContext7 cache for base: cached at 2026-01-30T06:14:14.107632+00:00Z; consider refreshing if docs changed.",
+    "library": "base",
+    "topic": "usage",
+    "source": "cache"
+  },
+  "source": "cache",
+  "saved_at": "2026-01-29T22:14:14.179203"
+}

@@ -28,13 +28,13 @@ Coordinates: Enhancer → Planner → Architect → Designer → Implementer
 
 import logging
 import re
+from collections.abc import Callable
+from datetime import UTC
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from tapps_agents.agents.enhancer.agent import EnhancerAgent
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
-from ..output_aggregator import SimpleModeOutputAggregator
 from tapps_agents.simple_mode.documentation_manager import (
     WorkflowDocumentationManager,
 )
@@ -42,28 +42,22 @@ from tapps_agents.simple_mode.documentation_reader import (
     WorkflowDocumentationReader,
 )
 from tapps_agents.workflow.confirmation_handler import ConfirmationHandler
-from tapps_agents.workflow.models import Artifact
 from tapps_agents.workflow.step_checkpoint import StepCheckpointManager
-from ..intent_parser import Intent
-from .base import SimpleModeOrchestrator
-from .deliverable_checklist import DeliverableChecklist
-from .requirements_tracer import RequirementsTracer
 
 # New 2025 modules for workflow documentation quality
 from ..agent_contracts import AgentContractValidator
 from ..file_inference import TargetFileInferencer
+from ..intent_parser import Intent
+from ..output_aggregator import SimpleModeOutputAggregator
+from ..prompt_analyzer import PromptAnalyzer
 from ..result_formatters import (
-    FormatterRegistry,
     format_failed_step,
-    format_skipped_step,
     format_step_result,
 )
-from ..step_dependencies import (
-    StepDependencyManager,
-    StepExecutionState,
-    WorkflowStep,
-)
-from ..step_results import StepResultParser, StepStatus
+from ..step_results import StepResultParser
+from .base import SimpleModeOrchestrator
+from .deliverable_checklist import DeliverableChecklist
+from .requirements_tracer import RequirementsTracer
 
 logger = logging.getLogger(__name__)
 
@@ -294,7 +288,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     "workflow_id": parameters.get("workflow_id", ""),
                 }
 
-        from ..beads_hooks import create_build_issue, close_issue
+        from ..beads_hooks import close_issue, create_build_issue
 
         # Resolve workflow_id: reuse when resuming, otherwise generate
         workflow_id = parameters.get("workflow_id") or WorkflowDocumentationManager.generate_workflow_id("build")
@@ -421,17 +415,36 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             if not fast_mode:
                 # Step 1: Enhancement
                 step_num = 1
-                step_name = "Enhance prompt (requirements analysis)"
+
+                # Check if prompt analysis recommends quick enhancement (from nl_handler or fallback for CLI/Epic)
+                prompt_analysis = parameters.get("prompt_analysis") if parameters else None
+                if prompt_analysis is None and original_description:
+                    prompt_analysis = PromptAnalyzer().analyze(
+                        original_description, command=None
+                    )
+                enhancement_mode = "enhance"  # Default to full
+                if prompt_analysis and hasattr(prompt_analysis, "recommended_enhancement"):
+                    if prompt_analysis.recommended_enhancement == "quick":
+                        enhancement_mode = "enhance-quick"
+                        step_name = "Enhance prompt (concise mode)"
+                        print(f"\n📝 Using concise enhancement (detailed prompt detected: {prompt_analysis.word_count} words)")
+                        print("   Token savings: ~70% compared to full enhancement\n")
+                    else:
+                        step_name = "Enhance prompt (requirements analysis)"
+                else:
+                    step_name = "Enhance prompt (requirements analysis)"
+
                 if on_step_start:
                     on_step_start(step_num, step_name)
                 try:
                     enhancer = EnhancerAgent(config=self.config)
                     await enhancer.activate(self.project_root)
-                
-                    # Use full enhancement (all 7 stages: analysis, requirements, architecture, 
-                    # codebase context, quality standards, implementation strategy, synthesis)
+
+                    # Use enhancement mode based on prompt analysis
+                    # Full: all 7 stages (analysis, requirements, architecture, codebase context, quality, implementation, synthesis)
+                    # Quick: 3 stages (analysis, requirements, architecture) - for detailed prompts
                     enhancement_result = await enhancer.run(
-                        "enhance",
+                        enhancement_mode,
                         prompt=original_description,
                         output_format="markdown"
                     )
@@ -1047,13 +1060,17 @@ class BuildOrchestrator(SimpleModeOrchestrator):
 
             # Session handoff on run end (plan 2.1)
             try:
-                from tapps_agents.workflow.session_handoff import SessionHandoff, write_handoff
-                from datetime import datetime, timezone
+                from datetime import datetime
+
+                from tapps_agents.workflow.session_handoff import (
+                    SessionHandoff,
+                    write_handoff,
+                )
 
                 status = "completed" if overall_success else "failed"
                 handoff = SessionHandoff(
                     workflow_id=workflow_id,
-                    session_ended_at=datetime.now(timezone.utc).isoformat(),
+                    session_ended_at=datetime.now(UTC).isoformat(),
                     summary=f"Build workflow {status}. Steps: {len(steps_executed or [])}.",
                     done=[f"step {s}" for s in (steps_executed or [])],
                     decisions=[],
@@ -1190,7 +1207,6 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         step_numbers = []
         for step_file in step_files:
             # Match: step{N}-{name}.md or step{N}.md
-            import re
             match = re.match(r"step(\d+)", step_file.stem)
             if match:
                 step_numbers.append(int(match.group(1)))
@@ -1239,7 +1255,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         logger.info(f"Resuming workflow {workflow_id} from step {from_step + 1}")
 
         # Load state from previous steps
-        doc_manager = WorkflowDocumentationManager(
+        WorkflowDocumentationManager(
             base_dir=base_dir,
             workflow_id=workflow_id,
         )
@@ -1311,13 +1327,13 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             Dictionary with documentation update results
         """
         try:
-            from tapps_agents.simple_mode.framework_change_detector import (
-                FrameworkChangeDetector,
-            )
+            from tapps_agents.agents.documenter.doc_validator import DocValidator
             from tapps_agents.agents.documenter.framework_doc_updater import (
                 FrameworkDocUpdater,
             )
-            from tapps_agents.agents.documenter.doc_validator import DocValidator
+            from tapps_agents.simple_mode.framework_change_detector import (
+                FrameworkChangeDetector,
+            )
 
             # 1. Detect framework changes
             detector = FrameworkChangeDetector(project_root)

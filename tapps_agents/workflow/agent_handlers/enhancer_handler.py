@@ -46,12 +46,22 @@ class EnhancerHandler(AgentExecutionHandler):
         )
         if not (prompt and str(prompt).strip()):
             prompt = "Enhance this project or feature description."
+        prompt_str = str(prompt).strip()
 
         # Map normalized action to EnhancerAgent command (enhance, enhance-quick)
+        # Use prompt analysis for adaptive enhancement (Epic/YAML workflows).
         if action == "enhance_quick":
             agent_command = "enhance-quick"
+        elif action in ("enhance", "enhance_prompt"):
+            from tapps_agents.simple_mode.prompt_analyzer import PromptAnalyzer
+
+            analysis = PromptAnalyzer().analyze(prompt_str, command=None)
+            agent_command = (
+                "enhance-quick"
+                if getattr(analysis, "recommended_enhancement", "full") == "quick"
+                else "enhance"
+            )
         else:
-            # enhance, enhance_prompt -> enhance
             agent_command = "enhance"
 
         # Optional output file when step creates enhanced-requirements.md
@@ -61,7 +71,7 @@ class EnhancerHandler(AgentExecutionHandler):
             output_file = str(self.project_root / "enhanced-requirements.md")
 
         kwargs: dict[str, Any] = {
-            "prompt": str(prompt).strip(),
+            "prompt": prompt_str,
             "output_format": "markdown",
         }
         if output_file:
@@ -84,7 +94,7 @@ class EnhancerHandler(AgentExecutionHandler):
             if not enhanced_prompt and isinstance(result.get("result"), dict):
                 enhanced_prompt = (result.get("result") or {}).get("enhanced_prompt") or ""
         if not enhanced_prompt:
-            enhanced_prompt = str(prompt).strip()
+            enhanced_prompt = prompt_str
 
         # Build stored result for output contracts and downstream handlers
         stored = dict(result) if isinstance(result, dict) else {"result": result}
@@ -100,7 +110,9 @@ class EnhancerHandler(AgentExecutionHandler):
         # Created artifacts
         created_artifacts: list[dict[str, Any]] = []
         out_path = self.project_root / "enhanced-requirements.md"
-        if out_path.exists() and ("enhanced-requirements.md" in creates or "enhanced_prompt" in creates):
+        if out_path.exists() and (
+            "enhanced-requirements.md" in creates or "enhanced_prompt" in creates
+        ):
             created_artifacts.append({"name": "enhanced-requirements.md", "path": str(out_path)})
 
         return created_artifacts

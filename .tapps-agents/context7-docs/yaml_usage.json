@@ -1,0 +1,12 @@
+{
+  "library": "yaml",
+  "topic": "usage",
+  "documentation": {
+    "content": "## YAML Invalid Tag Shorthands Example\n\n```yaml\n%TAG !e! tag:example,2000:app/\n---\n- !e! foo\n- !h!bar baz\n```\n\n## YAML Invalid Verbatim Tags Example\n\n```yaml\n- !<!> foo\n- !<$:?> bar\n```\n\n## YAML 1.2 Invalid Repeated YAML Directive\n\n```yaml\n%YAML 1.2\n%YAML 1.1\nfoo\n```\n\n## YAML 1.2 Invalid Repeated YAML Directive\n\n```error\nERROR:\nThe YAML directive must only be\ngiven at most once per document.\n```\n\n## YAML Invalid Use of Reserved Indicators Example\n\n```yaml\ncommercial-at: @text\ngrave-accent: `text\n```\n\n## YAML Invalid Use of Reserved Indicators Example\n\n```text\nERROR:\n Reserved indicators can't\n start a plain scalar.\n```\n\n## YAML 1.2 Invalid Repeated TAG Directive\n\n```yaml\n%TAG ! !foo\n%TAG ! !foo\nbar\n```\n\n## YAML 1.2 Invalid Repeated TAG Directive\n\n```text\nERROR:\nThe TAG directive must only\nbe given at most once per\nhandle in the same document.\n```\n\n## YAML Flow Folding Example\n\n```yaml\n\"\u2193\n\u00b7\u00b7foo\u00b7\u2193\n\u00b7\u2193\n\u00b7\u00b7\u2192\u00b7bar\u2193\n\u2193\n\u00b7\u00b7baz\u2193 \"\n\n```\n\n## YAML Flow Folding Example\n\n```yaml\n%YAML 1.2\n---\n!!str \" foo\\nbar\\nbaz \"\n\n```\n\n## YAML Complex Mapping Key Example\n\n```yaml\n? - Detroit Tigers\n  - Chicago cubs\n:\n  - 2001-07-23\n\n? [ New York Yankees,\n    Atlanta Braves ]\n: [ 2001-07-02, 2001-08-12,\n    2001-08-14 ]\n```\n\n## Single-Quoted Lines Example (YAML)\n\n```yaml\n'\u00b71st non-empty\u2193\n\u2193\n\u00b72nd non-empty\u00b7\n\u21923rd non-empty\u00b7'\n\n```\n\n## YAML Multi-Line Comments Example\n\n```yaml\nkey:\u00b7\u00b7\u00b7\u00b7# Comment\u2193\n\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7\u00b7# lines\u2193\n  value\u2193\n\u2193\n\n```\n\n## YAML Multi-Line Comments Example\n\n```yaml\n%YAML 1.2\n---\n!!map {\n  ? !!str \"key\"\n  : !!str \"value\",\n}\n\n```\n\n## Single-Quoted Style Example (YAML)\n\n```yaml\n'here''s to \"quotes\"'\n\n```",
+    "library": "yaml",
+    "topic": "common-mistakes",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-29T22:14:49.176764"
+}

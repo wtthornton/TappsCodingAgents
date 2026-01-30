@@ -1,0 +1,12 @@
+{
+  "library": "file_inference",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## Launching Wan2.1-i2v-14B-480p Model with xinference (Bash)\n\n```Bash\nxinference launch --model-name Wan2.1-i2v-14B-480p --model-type video\n```\n\n## Launching stable-diffusion-inpainting Model with Xinference\n\n```Shell\nxinference launch --model-name stable-diffusion-inpainting --model-type image\n```\n\n## Launching stable-diffusion-xl-inpainting Model with Xinference (Shell)\n\n```Shell\nxinference launch --model-name stable-diffusion-xl-inpainting --model-type image\n```\n\n## Launching Stable Diffusion XL Base 1.0 Model with Xorbits Inference\n\n```bash\nxinference launch --model-name stable-diffusion-xl-base-1.0 --model-type image\n```\n\n## Launching Stable Diffusion v1.5 Model with Xinference\n\n```Shell\nxinference launch --model-name stable-diffusion-v1.5 --model-type image\n```\n\n## Launching m3e-small Embedding Model via Xinference CLI\n\n```shell\nxinference launch --model-name m3e-small --model-type embedding\n```\n\n## Launching whisper-small.en Model with Xorbits Inference (Shell)\n\n```Shell\nxinference launch --model-name whisper-small.en --model-type audio\n```\n\n## Launching stable-diffusion-2-inpainting Model with Xinference (Bash)\n\n```Bash\nxinference launch --model-name stable-diffusion-2-inpainting --model-type image\n```\n\n## Evaluating LibriSpeech-PC Test Clean (Python)\n\n```python\npython src/f5_tts/eval/eval_librispeech_test_clean.py --gen_wav_dir <GEN_WAVE_DIR> --librispeech_test_clean_path <TEST_CLEAN_PATH>\n```\n\n## Launching the whisper-tiny-mlx Model using Xorbits Inference (Shell)\n\n```Shell\nxinference launch --model-name whisper-tiny-mlx --model-type audio\n```",
+    "library": "file_inference",
+    "topic": "overview",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-29T22:14:22.960800"
+}

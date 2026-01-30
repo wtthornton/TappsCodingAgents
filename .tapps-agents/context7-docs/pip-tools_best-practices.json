@@ -1,0 +1,12 @@
+{
+  "library": "pip-tools",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## Fast Local Build\n\n```bash\n.\\build.cmd Publish -s\n```\n\n## Fast Local Build\n\n```bash\n.\\build.cmd Pack -s\n```\n\n## Generate TMSL/BIM File\n\n```bash\npbi-tools.core generate-bim <folder> [transforms]\n```\n\n## Convert Power BI Artifacts Offline\n\n```bash\npbi-tools convert <source> [<outPath>] [<modelSerialization>] [<mashupSerialization>] [<settingsFile>] [<updateSettings>] [<modelOnly>] [<overwrite>]\n```\n\n## System Parameters Expansion in pbi-tools Manifest\n\n```json\n{\n  \"parameters\": {\n    \"[Version]\": \"1.1.0\",\n    \"[Environment]\": \"{{ENVIRONMENT}}\",\n    \"[PBITOOLS_VERSION]\": \"{{PBITOOLS_VERSION}}\",\n    \"[GH-Branch]\": \"%GITHUB_REF_NAME%\",\n    \"[GH-RunId]\": \"%GITHUB_RUN_ID%\",\n    \"[GH-SHA]\": \"%GITHUB_SHA%\",\n    \"[FilterDate]\": null\n  }\n}\n```\n\n## Embedded Report Deployment with pbi-tools\n\n```json\n{\n  \"options\": {\n    \"dataset\": {\n      \"deployEmbeddedReport\": true\n    }\n  }\n}\n```\n\n## Embedded Report Deployment with pbi-tools\n\n```json\n{\n  \"UAT\": {\n    \"workspace\": \"Datasets [PROD]\",\n    \"displayName\": \"{{PBIXPROJ_FOLDER}} [UAT]\",\n    \"refresh\": true,\n    \"report\": {\n      \"skip\": false,\n      \"workspace\": \"Name-or-ID\",\n      \"displayName\": \"Report Name.pbix\"\n    }\n  }\n}\n```\n\n## Build Project (Linux)\n\n```bash\n./build.sh\n```\n\n## List Build Targets\n\n```bash\ndotnet fake build --list\n```\n\n## Non-String Deployment Parameters in pbi-tools\n\n```json\n{\n    \"Number\": 1,\n    \"Number2\": 0.4,\n    \"Null\": null,\n    \"String\": \"foo\",\n    \"Bool\": true,\n    \"Date\": \"#date(2022, 6, 1)\",\n    \"Duration\": \"#duration(5, 0, 0, 0)\"\n}\n```\n\n## Deploy Power BI Artifacts to Service\n\n```bash\npbi-tools deploy <folder> <label> [<environment>] [<basePath>] [<whatIf>]\n```\n\n## Build Project (Windows)\n\n```bash\n.\\build.cmd\n```",
+    "library": "pip-tools",
+    "topic": "architecture",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-29T22:13:24.517295"
+}

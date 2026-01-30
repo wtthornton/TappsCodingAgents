@@ -15,6 +15,7 @@ class IntentType(Enum):
     """Types of user intents."""
 
     BUILD = "build"
+    VALIDATE = "validate"  # Validation workflow for comparing implementations
     REVIEW = "review"
     FIX = "fix"
     TEST = "test"
@@ -293,6 +294,14 @@ class IntentParser:
         if input_text.strip().startswith("*explore") or input_text.strip().startswith("@simple-mode *explore"):
             return Intent(
                 type=IntentType.EXPLORE,
+                confidence=1.0,
+                parameters=parameters,
+                original_input=input_text,
+            )
+
+        if input_text.strip().startswith("*validate") or input_text.strip().startswith("@simple-mode *validate"):
+            return Intent(
+                type=IntentType.VALIDATE,
                 confidence=1.0,
                 parameters=parameters,
                 original_input=input_text,

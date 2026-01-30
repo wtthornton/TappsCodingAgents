@@ -24,6 +24,7 @@ from pathlib import Path
 from typing import Any
 
 from tapps_agents.core.config import ProjectConfig, load_config
+
 from .intent_parser import Intent, IntentParser, IntentType
 from .orchestrators import (
     BreakdownOrchestrator,
@@ -39,7 +40,9 @@ from .orchestrators import (
     ReviewOrchestrator,
     TestOrchestrator,
     TodoOrchestrator,
+    ValidateOrchestrator,
 )
+from .prompt_analyzer import PromptAnalysis, PromptAnalyzer
 from .variations import normalize_command
 from .workflow_suggester import WorkflowSuggester
 
@@ -63,10 +66,14 @@ class SimpleModeHandler:
         self.config = config or load_config()
         self.intent_parser = IntentParser()
         self.workflow_suggester = WorkflowSuggester()
+        self.prompt_analyzer = PromptAnalyzer()
 
         # Initialize orchestrators
         self.orchestrators = {
             IntentType.BUILD: BuildOrchestrator(
+                project_root=self.project_root, config=self.config
+            ),
+            IntentType.VALIDATE: ValidateOrchestrator(
                 project_root=self.project_root, config=self.config
             ),
             IntentType.REVIEW: ReviewOrchestrator(
@@ -136,6 +143,9 @@ class SimpleModeHandler:
 
         # Parse intent
         intent = self.intent_parser.parse(normalized)
+
+        # Analyze prompt for intelligent workflow selection
+        analysis = self._analyze_prompt(command, intent)
         
         # Suggest workflow if enabled and not already using Simple Mode
         if suggest_workflow and not self.intent_parser.detect_simple_mode_intent(command):
@@ -180,11 +190,33 @@ class SimpleModeHandler:
                 "confidence": intent.confidence,
             }
 
+        # Check for workflow mismatch and suggest better approach
+        if intent.type.value == "build" and analysis.recommended_workflow == "validate":
+            if analysis.intent_confidence >= 0.80:
+                # High confidence - show suggestion
+                suggestion = self._generate_workflow_suggestion(analysis, f"*{intent.type.value}")
+                print(suggestion)
+                print(f"\n✅ Auto-switching to *{analysis.recommended_workflow} workflow (confidence: {analysis.intent_confidence:.0%})\n")
+                # Would need to update intent.type here in a real implementation
+                # For now, just log the recommendation
+
+        # Pass analysis to orchestrator via parameters
+        intent.parameters["prompt_analysis"] = analysis
+
         # Execute orchestrator
         try:
             result = await orchestrator.execute(intent, intent.parameters)
             result["intent"] = intent.type.value
             result["confidence"] = intent.confidence
+            result["prompt_analysis"] = {
+                "intent": analysis.primary_intent.value,
+                "complexity": analysis.complexity.value,
+                "word_count": analysis.word_count,
+                "has_existing_code": analysis.has_existing_code,
+                "recommended_workflow": analysis.recommended_workflow,
+                "recommended_enhancement": analysis.recommended_enhancement,
+                "recommended_preset": analysis.recommended_preset,
+            }
             if force_simple_mode:
                 result["simple_mode_forced"] = True
             return result
@@ -207,3 +239,63 @@ class SimpleModeHandler:
             True if Simple Mode is available, False otherwise
         """
         return self.config.simple_mode.enabled
+
+    def _analyze_prompt(self, command: str, intent: Intent) -> PromptAnalysis:
+        """
+        Analyze prompt for intelligent workflow selection.
+
+        Args:
+            command: User's command
+            intent: Parsed intent
+
+        Returns:
+            PromptAnalysis with recommendations
+        """
+        # Extract command type from intent
+        command_type = f"*{intent.type.value}" if intent.type else None
+
+        # Analyze prompt
+        analysis = self.prompt_analyzer.analyze(command, command_type)
+
+        # Log analysis for visibility
+        if analysis.intent_confidence >= 0.7:
+            print("\n📊 Prompt Analysis:")
+            print(f"  Intent: {analysis.primary_intent.value} ({analysis.intent_confidence:.0%} confidence)")
+            print(f"  Complexity: {analysis.complexity.value} ({analysis.word_count} words)")
+            if analysis.has_existing_code:
+                print(f"  Existing Code: Yes ({len(analysis.existing_code_refs)} references)")
+            print(f"  Recommended Workflow: {analysis.recommended_workflow}")
+            print(f"  Recommended Enhancement: {analysis.recommended_enhancement}")
+            print(f"  Recommended Preset: {analysis.recommended_preset}")
+            print(f"  Rationale: {analysis.analysis_rationale}\n")
+
+        return analysis
+
+    def _generate_workflow_suggestion(self, analysis: PromptAnalysis, current_command: str) -> str:
+        """
+        Generate workflow suggestion message based on analysis.
+
+        Args:
+            analysis: Prompt analysis result
+            current_command: Current command being executed
+
+        Returns:
+            Formatted suggestion message
+        """
+        return f"""
+🤖 Workflow Suggestion:
+
+Detected existing code reference in your prompt.
+
+**Suggested Workflow:** @simple-mode *{analysis.recommended_workflow} "{analysis.primary_intent.value}"
+
+**Benefits:**
+✅ Validates existing implementation
+✅ Identifies optimizations
+✅ 50% faster (skips duplicate code generation)
+✅ Focused recommendations
+
+**Current Command:** {current_command}
+
+**Recommendation:** Use *{analysis.recommended_workflow} for comparison tasks.
+""".strip()

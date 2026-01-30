@@ -1,0 +1,12 @@
+{
+  "library": "result_formatters",
+  "topic": "common-mistakes",
+  "documentation": {
+    "content": "## Handling Webpack Module Parse Errors\n\n```javascript\n// Example of class properties syntax that might cause issues\nexport default class ExpressionFormatter {\n  inline = false;\n}\n```\n\n## Example SQL Code for Formatting Tests\n\n```sql\nSELECT\n  supplier_name, city -- inline comment\n  ,(select count(*) from people where supplier_id = s.id) as sup_count\nFROM suppliers s left join addresses a on s.address_id=a.id\nWHERE s.value>500 and a.city = 'New York'\nORDER BY supplier_name asc,city desc;\n\n/* another comment in here */\nINSERT INTO articles\n(title, author, submission_date)\nVALUES ('Learn SQL', 'John Doe', now());\n\nUPDATE articles\nSET author = 'Peter', submission_date = '2022-01-01'\nWHERE title like '%by Peter';\n\nCREATE TABLE articles (\n  id int not null auto_increment,\n  title varchar(100) not null,\n  author varchar(40) not null,\n  submission_date date,\n  primary key ( id )\n);\n```\n\n## MariaDB CREATE TABLE Syntax Variations\n\n```sql\nCREATE [OR REPLACE] [TEMPORARY] TABLE [IF NOT EXISTS]\n```\n",
+    "library": "result_formatters",
+    "topic": "common-mistakes",
+    "source": "api"
+  },
+  "source": "api",
+  "saved_at": "2026-01-29T22:14:35.470219"
+}

@@ -1,0 +1,5 @@
+Feature: Project Cleanup Agent (or simple-mode *cleanup-project / *tidy).
+
+- Recommend moves for misplaced root-level files; identify outdated docs; flag complete/obsolete docs for archive or removal.
+- Leverage analyst, documenter, reviewer; configurable conventions; user confirmation for destructive changes; auto-clean only framework-owned artifacts.
+- See docs/feedback/github-issue-project-cleanup-agent.md for full spec (use for GitHub issue later if desired).
