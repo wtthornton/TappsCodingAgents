@@ -392,8 +392,27 @@ def handle_simple_mode_build(args: object) -> None:
     user_prompt = getattr(args, "prompt", None)
     target_file = getattr(args, "file", None)
     fast_mode = getattr(args, "fast", False)
+    preset_arg = getattr(args, "preset", None)
     auto_mode = getattr(args, "auto", False)
-    
+
+    # Auto-suggest preset from scope when neither --fast nor --preset set (SIMPLE_MODE_FEEDBACK_REVIEW)
+    if not fast_mode and preset_arg is None and user_prompt:
+        from ...simple_mode.workflow_suggester import WorkflowSuggester
+        suggester = WorkflowSuggester()
+        suggested = suggester.suggest_build_preset(user_prompt)
+        if suggested == "minimal":
+            fast_mode = True
+            preset_arg = "minimal"
+        else:
+            preset_arg = suggested
+        # Log without prompting user
+        if preset_arg:
+            feedback.info(f"Preset auto-selected from scope: {preset_arg}")
+
+    # Explicit --preset overrides: minimal => fast_mode
+    if preset_arg == "minimal" and not getattr(args, "fast", False):
+        fast_mode = True
+
     print(f"\n{'='*60}")
     print("Simple Mode Build Workflow")
     print(f"{'='*60}")

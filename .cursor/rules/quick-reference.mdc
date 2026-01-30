@@ -33,6 +33,8 @@ alwaysApply: false
 | Frontend/a11y patterns | `@frontend-patterns` |
 | Quick score only | `@reviewer *score <file>` (exception) |
 
+**Build presets (CLI):** `--preset minimal|standard|comprehensive` or omit to **auto-suggest from prompt scope** (minimal = fast path; standard = all 7 steps; comprehensive = full design). Use `@enhancer *enhance-quick "prompt"` or CLI `--quick` for **concise enhancement** (stages 1–3).
+
 **Importance and when to use:** See `when-to-use.mdc` for which capabilities matter most (Tier 1–2 first) and when to use each workflow, agent, and command.
 
 ---
@@ -195,14 +197,14 @@ tapps-agents workflow rapid --print-paths --prompt "Add feature"  # Show artifac
 tapps-agents workflow rapid --no-print-paths --prompt "Add feature"
 ```
 
-### Quick Project Creation (Cursor Native)
+### Quick Project Creation (Skills-Based)
 ```bash
 # Create a complete project from description (uses full SDLC workflow)
 python -m tapps_agents.cli create "Create a modern web application"
 
 # This is a shortcut for: workflow full --auto --prompt
-# Automatically runs in Cursor-native mode
-# Uses Cursor Skills
+# Automatically uses Skills-based execution mode (Cursor or Claude)
+# Leverages configured LLM via Skills
 ```
 
 ### Code Generation
@@ -611,18 +613,18 @@ python -c "import tapps_agents; print(tapps_agents.__version__)"
 - Multi-Service Analyzer
 
 
-### Cursor Native Execution Mode
+### Skills-Based Execution Mode
 
-When running in Cursor IDE, workflows automatically use **Cursor Native Execution**:
+When running in supported IDEs (Cursor IDE or Claude Code CLI), workflows automatically use **Skills-based execution**:
 - ✅ **No API Key Required** (file-based mode by default)
-- ✅ Uses Cursor Skills (`@agent-name` commands)
-- ✅ Leverages Cursor's configured LLM
+- ✅ Uses TappsCodingAgents Skills (`@agent-name` commands)
+- ✅ Leverages IDE's configured LLM (Cursor's LLM or Claude)
 - ✅ Project profiling automatically included
 - ✅ Worktree isolation per workflow step
 
 **Execution Modes:**
-1. **File-Based** (default): Creates command files, works immediately
-2. **API-Based** (optional): Programmatic execution with `CURSOR_API_KEY` set
+1. **File-Based** (default): Creates command files, works immediately in both Cursor and Claude
+2. **API-Based** (optional): Programmatic execution (Cursor: with `CURSOR_API_KEY`, Claude: native)
 
 **Project Profiling:**
 - Automatically detects project characteristics (deployment type, tenancy, scale, compliance)

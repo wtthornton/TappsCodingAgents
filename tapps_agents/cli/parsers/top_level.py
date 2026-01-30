@@ -1639,6 +1639,11 @@ Use --fast to skip documentation steps (1-4) for faster iteration.""",
         help="Skip documentation steps (1-4) for 50-70% faster execution",
     )
     simple_mode_build_parser.add_argument(
+        "--preset",
+        choices=["minimal", "standard", "comprehensive"],
+        help="Workflow depth: minimal (enhance->implement->test), standard (all 7 steps), comprehensive (full design). If omitted and --fast not set, preset is auto-suggested from prompt scope.",
+    )
+    simple_mode_build_parser.add_argument(
         "--auto",
         action="store_true",
         help="Enable fully automated execution mode",

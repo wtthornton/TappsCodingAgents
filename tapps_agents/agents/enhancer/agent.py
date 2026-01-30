@@ -2011,7 +2011,42 @@ Create a comprehensive, context-aware enhanced prompt that:
             if not enhanced:
                 # Fallback: create markdown from stages
                 enhanced = self._create_markdown_from_stages(session)
+            # SIMPLE_MODE_FEEDBACK_REVIEW: lead with Summary/TL;DR then full content
+            tldr = self._build_tldr_summary(session, enhanced)
+            if tldr:
+                return tldr + "\n\n---\n\n" + enhanced
             return enhanced
+
+    def _build_tldr_summary(self, session: dict[str, Any], enhanced: str) -> str:
+        """
+        Build a short Summary/TL;DR block for markdown output (SIMPLE_MODE_FEEDBACK_REVIEW).
+        Automation-only: no user prompt; helps readers get the gist without scanning full content.
+        """
+        lines = ["## Summary / TL;DR", ""]
+        meta = session.get("metadata", {})
+        prompt = meta.get("original_prompt", "")
+        if prompt:
+            # First line or first ~80 chars of prompt
+            what = prompt.strip().split("\n")[0][:120]
+            if len(prompt.strip().split("\n")[0]) > 120:
+                what += "..."
+            lines.append(f"- **What:** {what}")
+        # How: first substantive line of enhanced (skip headers)
+        enhanced_lines = [l.strip() for l in enhanced.split("\n") if l.strip() and not l.strip().startswith("#")]
+        how_snippet = ""
+        for line in enhanced_lines[:3]:
+            if len(line) > 20 and not line.startswith("- **"):
+                how_snippet = line[:100] + ("..." if len(line) > 100 else "")
+                break
+        if not how_snippet and enhanced_lines:
+            how_snippet = enhanced_lines[0][:100] + ("..." if len(enhanced_lines[0]) > 100 else "")
+        if how_snippet:
+            lines.append(f"- **How:** {how_snippet}")
+        # Time: from metadata or implementation stage if present
+        impl = session.get("stages", {}).get("implementation", {})
+        if isinstance(impl, dict) and impl.get("estimated_effort"):
+            lines.append(f"- **Estimated effort:** {impl['estimated_effort']}")
+        return "\n".join(lines)
 
     def _clean_dict(self, obj: Any, seen: set[int] | None = None) -> Any:
         """

@@ -210,3 +210,38 @@ class WorkflowSuggester:
         
         # Only suggest if confidence is high enough
         return suggestion.confidence >= 0.6
+
+    def suggest_build_preset(self, prompt: str) -> str:
+        """
+        Suggest build preset (minimal, standard, comprehensive) from prompt scope.
+        Automation-only: no user prompt; used to auto-select workflow depth.
+
+        Args:
+            prompt: Natural language feature description.
+
+        Returns:
+            "minimal" | "standard" | "comprehensive"
+        """
+        if not prompt or not isinstance(prompt, str):
+            return "standard"
+        pl = prompt.lower().strip()
+        words = len(pl.split())
+
+        # Minimal: very short, obvious small change
+        minimal_keywords = (
+            "fix typo", "typo", "add logging", "update config", "change value",
+            "rename", "small fix", "quick fix", "one line", "single line",
+        )
+        if words <= 8 and any(k in pl for k in minimal_keywords):
+            return "minimal"
+
+        # Comprehensive: security, auth, api design, large scope
+        comprehensive_keywords = (
+            "authentication", "auth system", "security", "oauth", "jwt",
+            "new api", "rest api", "graphql", "database schema", "migration",
+            "refactor", "architecture", "microservice", "full sdlc",
+        )
+        if words >= 30 or any(k in pl for k in comprehensive_keywords):
+            return "comprehensive"
+
+        return "standard"

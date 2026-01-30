@@ -16,6 +16,7 @@ alwaysApply: false
 - **`*build` and `*full`**: when `human_oversight.branch_for_agent_changes` is true, work runs on `tapps-agents/build-{workflow_id}`; merge to main only after human review
 - **`*fix`**: typically on a short-lived branch or main, depending on project policy
 - Use `checkpoints_before_steps` (e.g. before implementer, designer) to review before large changes
+- **Fully automated runs (no human prompts):** Leave `human_oversight.checkpoints_before_steps` empty and use `--auto` so no confirmation prompts appear
 
 ## PR Flow
 

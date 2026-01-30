@@ -139,6 +139,52 @@ class BuildOrchestrator(SimpleModeOrchestrator):
         
         return changes
 
+    def _steps_to_skip_from_scope(
+        self,
+        enhanced_prompt: str,
+        original_description: str,
+    ) -> tuple[bool, bool]:
+        """
+        Heuristics to skip architect and/or designer when redundant (no human prompt).
+        SIMPLE_MODE_FEEDBACK_REVIEW: auto-skip when architecture already defined or
+        implementing existing external API.
+
+        Returns:
+            (skip_architect, skip_designer)
+        """
+        combined = f"{original_description}\n{enhanced_prompt}".lower()
+        skip_architect = False
+        skip_designer = False
+
+        # Skip architect if enhancement already defines architecture / design pattern
+        arch_defined = (
+            "architecture already" in combined
+            or "design pattern" in combined
+            or "architecture:" in combined
+            or "architecture design" in combined
+            or "architecture is " in combined
+        )
+        if arch_defined:
+            skip_architect = True
+            logger.info("Skipping architect step (architecture already defined in enhancement)")
+
+        # Skip designer when implementing existing external API (oauth, existing api, etc.)
+        existing_api = (
+            "existing api" in combined
+            or "external api" in combined
+            or "implementing existing" in combined
+            or "oauth" in combined
+            or "client_credentials" in combined
+            or "existing oauth" in combined
+            or "site24x7" in combined
+            or "third-party api" in combined
+        )
+        if existing_api:
+            skip_designer = True
+            logger.info("Skipping designer step (implementing existing external API)")
+
+        return (skip_architect, skip_designer)
+
     async def _validate_documentation_completeness(
         self,
         agent_name: str | None = None,
@@ -450,16 +496,16 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             # Prepare agent tasks - skip steps 2-4 in fast mode
             agent_tasks = []
             if not fast_mode:
-                # Steps 2-4: Plan, Architect, Design
-                step_names = {
-                    "planner": (2, "Create user stories"),
-                    "architect": (3, "Design architecture"),
-                    "designer": (4, "Design API/data models"),
-                }
+                # Heuristics: skip architect/designer when redundant (SIMPLE_MODE_FEEDBACK_REVIEW)
+                skip_architect, skip_designer = self._steps_to_skip_from_scope(
+                    enhanced_prompt, original_description
+                )
+
+                # Steps 2-4: Plan, Architect, Design (architect/designer optional per heuristics)
                 # FIXED: Use correct command names and parameters per agent contracts
                 # - Architect: "design-system" with "requirements" (not "design" with "specification")
                 # - Designer: "design-api" with "requirements" (not "specification")
-                agent_tasks = [
+                all_tasks_2_4 = [
                     {
                         "agent_id": "planner-1",
                         "agent": "planner",
@@ -471,8 +517,8 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                     {
                         "agent_id": "architect-1",
                         "agent": "architect",
-                        "command": "design-system",  # FIXED: was "design"
-                        "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
+                        "command": "design-system",
+                        "args": {"requirements": enhanced_prompt},
                         "step_num": 3,
                         "step_name": "Design architecture",
                     },
@@ -480,12 +526,21 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                         "agent_id": "designer-1",
                         "agent": "designer",
                         "command": "design-api",
-                        "args": {"requirements": enhanced_prompt},  # FIXED: was "specification"
+                        "args": {"requirements": enhanced_prompt},
                         "step_num": 4,
                         "step_name": "Design API/data models",
                     },
                 ]
-            
+                agent_tasks = [
+                    t for t in all_tasks_2_4
+                    if (t["agent"] != "architect" or not skip_architect)
+                    and (t["agent"] != "designer" or not skip_designer)
+                ]
+                if skip_architect and on_step_complete:
+                    on_step_complete(3, "Design architecture", "skipped")
+                if skip_designer and on_step_complete:
+                    on_step_complete(4, "Design API/data models", "skipped")
+
                 # Validate agent tasks before execution (pre-execution contract validation)
                 validator = AgentContractValidator()
                 validation_result = validator.validate_tasks(agent_tasks)
