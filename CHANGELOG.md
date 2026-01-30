@@ -8,6 +8,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+(none)
+
+### Changed
+(none)
+
+### Documentation
+(none)
+
+## [3.5.33] - 2026-01-30
+
+### Added
 - **ENH-001-S2: Intent Detection System** - Implemented IntentDetector class for workflow type detection
   - `WorkflowType` enum with 4 workflow types (*build, *fix, *refactor, *review)
   - `DetectionResult` dataclass with immutable, validated results (confidence 0-100%, reasoning, ambiguity flag)
