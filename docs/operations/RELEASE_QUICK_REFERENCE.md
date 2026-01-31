@@ -61,10 +61,16 @@ git push origin main
 
 ## Workflow Dispatch (GitHub UI)
 
+**Release workflow:**
 1. Go to Actions → Release
 2. Click "Run workflow"
 3. Enter version: `3.0.2`
 4. Run workflow (release creation triggers PyPI publish automatically)
+
+**Publish to PyPI (manual re-run):** If a release exists but the version is missing on PyPI:
+1. Go to Actions → **Publish to PyPI on Release** → Run workflow
+2. Enter **tag_name** (e.g. `v3.5.38`) → Run
+3. Or from CLI: `gh workflow run "Publish to PyPI on Release" -f tag_name=v3.5.38`
 
 ## Common Commands
 
@@ -115,9 +121,11 @@ gh release view v3.0.2
 
 - **📘 Main Guide**: `docs/operations/RELEASE_GUIDE.md` - **Canonical release documentation**
 - **⚠️ Critical Warning**: `docs/operations/RELEASE_VERSION_TAG_WARNING.md` - Version tag requirements
-- **Release Workflow**: `.github/workflows/release.yml`
+- **Release Workflow**: `.github/workflows/release.yml` — tag push → validate → build → create GitHub release
+- **Publish to PyPI Workflow**: `.github/workflows/pypi-on-release.yml` — `release: published` or `workflow_dispatch` (input: tag_name) → build from tag → upload to PyPI
 - **Validation Script**: `scripts/validate_release_readiness.ps1`
 - **Release Script**: `scripts/create_github_release.ps1`
 - **Version Script**: `scripts/update_version.ps1`
+- **PyPI Upload Script**: `scripts/upload_to_pypi.ps1` — local upload (token from `.env` or `-Token`)
 
 

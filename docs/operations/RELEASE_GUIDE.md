@@ -33,7 +33,29 @@ The release process has been optimized with:
 - ✅ **Pre-release validation** - Full test suite, linting, type checking, security scans
 - ✅ **Package verification** - Automated package content validation
 - ✅ **CHANGELOG.md integration** - Automatic release notes extraction
-- ✅ **Optional PyPI publishing** - One-step distribution
+- ✅ **PyPI publishing** - Automatic on release; manual re-run via `workflow_dispatch` if needed
+
+## How the release and PyPI setup works
+
+Two GitHub Actions workflows run the pipeline:
+
+1. **Release** (`.github/workflows/release.yml`)
+   - **Triggers:** Push of a version tag (e.g. `v3.5.38`) or manual `workflow_dispatch` with version input.
+   - **Steps:** Checkout at tag → validate version in code → run tests → build sdist + wheel → create GitHub release (with notes from CHANGELOG) and attach artifacts.
+   - **Result:** A **published** GitHub release for that tag.
+
+2. **Publish to PyPI on Release** (`.github/workflows/pypi-on-release.yml`)
+   - **Triggers:**
+     - **Automatic:** `release: types: [published]` — runs when a release is published (e.g. right after the Release workflow creates it).
+     - **Manual:** `workflow_dispatch` with input **tag_name** (e.g. `v3.5.38`) — use when auto-publish failed or was skipped.
+   - **Steps:** Resolve tag (from event or input) → checkout that tag → build packages → upload to PyPI using `secrets.PYPI_API_TOKEN` (with `skip-existing`).
+   - **Requires:** Repository or **pypi** environment secret **PYPI_API_TOKEN**. If the **pypi** environment has required reviewers, approve the deployment when the run is waiting.
+
+**Manual PyPI publish (CLI):**
+```bash
+gh workflow run "Publish to PyPI on Release" -f tag_name=v3.5.38
+```
+**Manual PyPI publish (UI):** Actions → Publish to PyPI on Release → Run workflow → set **tag_name** (e.g. `v3.5.38`) → Run.
 
 ## Release Methods
 
@@ -431,5 +453,7 @@ If "it used to work" and new versions (e.g. 3.5.33) are not appearing on PyPI:
 - [CHANGELOG.md](../CHANGELOG.md) - Release history
 - [Version Update Script](../scripts/update_version.ps1) - Version management
 - [Release Script](../scripts/create_github_release.ps1) - Manual release script
+
+**Reference (Context7 MCP):** For GitHub Actions event and trigger details (e.g. `release: types: [published]`, `workflow_dispatch` with inputs, `gh workflow run`), use Context7 with library **GitHub Actions** (e.g. `/websites/github_en_actions`) and topics such as "workflow_dispatch trigger release event".
 
 
