@@ -1,0 +1,29 @@
+{
+  "evaluation_id": "eval-unknown",
+  "evaluation_date": null,
+  "total_recommendations": 1,
+  "priority_distribution": {
+    "critical": 0,
+    "high": 0,
+    "medium": 1,
+    "low": 0
+  },
+  "average_score": 5.0,
+  "recommendations": [
+    {
+      "id": "rec-0",
+      "description": "Command success rate is 0.0% (below 80% threshold)",
+      "priority": "medium",
+      "score": 5.0,
+      "factors": {
+        "impact_severity": 5.0,
+        "effort_complexity": 5.0,
+        "risk_level": 5.0,
+        "user_impact": 5.0,
+        "business_value": 5.0,
+        "code_quality_impact": 5.0
+      },
+      "rationale": "Moderate impact issue that can be addressed when resources allow"
+    }
+  ]
+}

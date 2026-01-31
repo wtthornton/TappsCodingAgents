@@ -48,6 +48,45 @@ This guide helps AI assistants (like Cursor AI) understand when to suggest Simpl
    - Why: Two-step workflow ensures quality analysis before fixes, with quality gates after fixes
    - Note: Workflow suggester automatically detects hybrid "review + fix" requests
 
+### ✨ NEW: Adaptive Checkpoint System
+
+**Note:** When suggesting workflows, inform users about adaptive checkpoints:
+
+**Example Updated Workflow Suggestion:**
+```
+User: "Add user authentication to my app"
+
+✅ UPDATED SUGGESTION (with checkpoints):
+🤖 Workflow Suggestion:
+
+"For new feature implementation, consider using:
+@simple-mode *build 'Add user authentication with login, logout, and session management'
+
+This workflow will:
+✅ Generate comprehensive tests automatically (80%+ coverage)
+✅ Enforce quality gates (75+ score required)
+✅ Create documentation artifacts
+✅ **Automatically optimize workflow** (checkpoints detect if simpler workflow is better)
+✅ **Skip optional steps** when quality is excellent (saves tokens)
+
+The system will prompt you at checkpoints if workflow switching would save time/tokens.
+
+Would you like me to proceed with the workflow?
+[Yes, use workflow] [No, direct edit]"
+```
+
+**Checkpoint Transparency:**
+When workflow switches occur:
+- User is prompted to confirm switch
+- Token/time savings are displayed
+- Confidence level (70-90%) is shown
+- Reason for recommendation is explained
+
+**What Checkpoints Do:**
+1. **Checkpoint 1 (After Enhance):** Early validation - catches obvious mismatches
+2. **Checkpoint 2 (After Planning):** Comprehensive analysis - detects workflow overkill
+3. **Checkpoint 3 (After Test):** Quality gate - skips optional steps when quality is high
+
 ### Handling External API Clients
 
 When users request work on external API clients (OAuth2, refresh tokens, third-party APIs):

@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-3.5.30-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.5.35-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -202,6 +202,12 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 - **Code Scoring System**: Objective quality metrics (complexity, security, maintainability)
 - **Tiered Context Injection**: 90%+ token savings with intelligent caching
+- **Adaptive Workflow Checkpoints** (v3.5.37+): Automatic workflow optimization
+  - 3 strategic checkpoints detect when workflows are overkill
+  - Switches to simpler workflows automatically (with user confirmation)
+  - Skips optional steps when quality is excellent (≥80)
+  - Saves 20K-40K tokens per optimization
+  - See [Checkpoint System Guide](docs/CHECKPOINT_SYSTEM_GUIDE.md)
 - **MCP Gateway**: Unified Model Context Protocol interface for tool access
   - **Context7 MCP Server**: Library documentation lookup (required, auto-configured)
   - **Playwright MCP Server**: Browser automation for E2E testing (optional, auto-detected)
@@ -220,7 +226,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 ## Current Status
 
-**Version** 3.5.30 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
+**Version** 3.5.35 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
 
 📋 [Changelog](CHANGELOG.md) · [Cursor AI Integration Plan](docs/CURSOR_AI_INTEGRATION_PLAN_2025.md) · [YAML Workflow Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)
 
@@ -244,10 +250,10 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **100+ Knowledge Files**: Across 13 knowledge domains
   - **Configuration-Only Experts**: YAML-based expert definition, no code classes required
   - **RAG Integration**: Simple file-based and vector-based RAG for knowledge retrieval
-- **Simple Mode** ✅ (10 orchestrators: build, review, fix, test, explore, refactor, plan-analysis, pr, epic, full; plus resume)
+- **Simple Mode** ✅ (15+ orchestrators: build, review, fix, test, explore, refactor, plan-analysis, pr, epic, full, enhance, breakdown, todo, brownfield, validate, resume)
 - **Scale-Adaptive Workflow Selection** ✅ (Project type auto-detection, workflow recommendation)
 - **State Management** ✅ (Advanced workflow state persistence with checkpointing, migration, versioning, resume)
-- **Analytics & Health** ✅ (Performance metrics, trends, system health monitoring, resource usage tracking)
+- **Analytics & Health** ✅ (CLI: `health check`, `health overview`, `health usage dashboard|agents|workflows|system|trends`; performance metrics, trends, system health monitoring)
 - **Governance & Safety** ✅ (Secrets/PII filtering, knowledge ingestion safety)
 - **Comprehensive test suite** ✅ (1200+ unit tests, integration tests, and E2E tests with parallel execution support - see `tests/`)
 

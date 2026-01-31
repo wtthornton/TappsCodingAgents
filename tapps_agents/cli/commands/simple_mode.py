@@ -394,6 +394,8 @@ def handle_simple_mode_build(args: object) -> None:
     fast_mode = getattr(args, "fast", False)
     preset_arg = getattr(args, "preset", None)
     auto_mode = getattr(args, "auto", False)
+    no_auto_checkpoint = getattr(args, "no_auto_checkpoint", False)
+    checkpoint_debug = getattr(args, "checkpoint_debug", False)
 
     # Auto-suggest preset from scope when neither --fast nor --preset set (SIMPLE_MODE_FEEDBACK_REVIEW)
     if not fast_mode and preset_arg is None and user_prompt:
@@ -446,7 +448,12 @@ def handle_simple_mode_build(args: object) -> None:
     intent = Intent(
         type=IntentType.BUILD,
         confidence=1.0,
-        parameters={"description": user_prompt, "file": target_file},
+        parameters={
+            "description": user_prompt,
+            "file": target_file,
+            "no_auto_checkpoint": no_auto_checkpoint,
+            "checkpoint_debug": checkpoint_debug,
+        },
         original_input=user_prompt,
     )
     
@@ -599,9 +606,19 @@ def handle_simple_mode_full(args: object) -> None:
     target_file = getattr(args, "file", None)
     user_prompt = getattr(args, "prompt", None)
     auto_mode = getattr(args, "auto", False)
-    
+    no_auto_checkpoint = getattr(args, "no_auto_checkpoint", False)
+    checkpoint_debug = getattr(args, "checkpoint_debug", False)
+
     # Execute with auto_mode
     executor = WorkflowExecutor(auto_detect=False, auto_mode=auto_mode)
+
+    # Pass checkpoint flags to executor
+    if no_auto_checkpoint or checkpoint_debug:
+        executor.parameters = executor.parameters or {}
+        if no_auto_checkpoint:
+            executor.parameters["no_auto_checkpoint"] = True
+        if checkpoint_debug:
+            executor.parameters["checkpoint_debug"] = True
     
     if user_prompt:
         executor.user_prompt = user_prompt

@@ -181,7 +181,7 @@ For detailed documentation, visit: https://github.com/your-repo/docs""",
   doctor                   Validate local environment and tools
   setup-experts            Interactive expert setup wizard
 
-ALSO: simple-mode status | cleanup workflow-docs | health check | beads ready | cursor verify
+ALSO: simple-mode status | cleanup workflow-docs | health check | health overview | health usage dashboard | beads ready | cursor verify
 
 WORKFLOW PRESETS:
   rapid / feature          Rapid development for sprint work and features

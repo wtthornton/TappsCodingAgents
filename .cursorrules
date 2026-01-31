@@ -9,6 +9,14 @@
 - `.cursor/rules/agent-capabilities.mdc` - Agent capabilities
 - `.cursor/rules/project-context.mdc` - Project context
 - `.cursor/rules/workflow-presets.mdc` - Workflow presets
+- `.cursor/rules/coding-style.mdc` - Coding style and quality
+- `.cursor/rules/cursor-mode-usage.mdc` - Cursor vs CLI usage
+- `.cursor/rules/git-workflow.mdc` - Commit and PR flow
+- `.cursor/rules/performance.mdc` - Context and MCP usage
+- `.cursor/rules/security.mdc` - Security guidelines
+- `.cursor/rules/testing.mdc` - TDD and coverage
+- `.cursor/rules/when-to-use.mdc` - When to use each capability
+- `.cursor/rules/project-profiling.mdc` - Project profiling
 
 This file is kept for backward compatibility but will be removed in a future version.
 See `docs/CURSOR_RULES_SETUP.md` for migration details.
@@ -176,5 +184,5 @@ This script updates version numbers in:
 1. Update `CHANGELOG.md` with release notes
 2. Commit changes
 3. Create and push git tag
-4. See `docs/RELEASE_GUIDE.md` for complete process
+4. See `docs/operations/RELEASE_GUIDE.md` for complete process
 

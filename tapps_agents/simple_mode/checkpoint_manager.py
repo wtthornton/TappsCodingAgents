@@ -374,6 +374,202 @@ class CheckpointManager:
             reason=reason,
         )
 
+    def analyze_early_checkpoint(
+        self,
+        workflow: WorkflowType,
+        enhanced_prompt: str,
+    ) -> CheckpointAnalysis:
+        """
+        Analyze checkpoint early (after Enhance step) using lightweight heuristics.
+
+        This is Checkpoint 1 - performed before Planning to catch obvious mismatches
+        early. Uses keyword/pattern matching on enhanced prompt text.
+
+        Args:
+            workflow: Current workflow being executed
+            enhanced_prompt: Enhanced prompt text from enhance step
+
+        Returns:
+            CheckpointAnalysis with mismatch detection (lower confidence than planning checkpoint)
+
+        Raises:
+            ValueError: If workflow is unknown
+
+        Performance:
+            Target: < 200ms (text analysis only, no I/O)
+
+        Examples:
+            >>> manager = CheckpointManager()
+            >>> prompt = "Fix typo in README.md - wrong word"
+            >>> analysis = manager.analyze_early_checkpoint("*full", prompt)
+            >>> analysis.mismatch_detected
+            True
+            >>> analysis.recommended_workflow
+            "*fix"
+        """
+        # Parameter validation
+        if workflow not in ("*full", "*build", "*fix", "*refactor"):
+            raise ValueError(f"Unknown workflow: {workflow}")
+
+        # Extract characteristics from enhanced prompt using heuristics
+        characteristics = self._analyze_prompt_text(enhanced_prompt)
+
+        # Detect workflow mismatch
+        mismatch_detected, recommended = self._detect_early_mismatch(
+            workflow, characteristics
+        )
+
+        # Calculate token/time savings (only have "enhance" completed)
+        completed_steps = ["enhance"]
+        token_savings, time_savings, steps_saved = self._calculate_savings(
+            workflow, recommended, completed_steps
+        )
+
+        # Generate reason
+        reason = self._generate_early_reason(workflow, recommended, characteristics)
+
+        # Get remaining steps
+        all_steps = self._get_workflow_steps(workflow)
+        remaining = tuple(s for s in all_steps if s not in completed_steps)
+
+        return CheckpointAnalysis(
+            mismatch_detected=mismatch_detected,
+            current_workflow=workflow,
+            recommended_workflow=recommended,
+            confidence=0.70,  # Lower confidence - only prompt analysis
+            detected_scope=characteristics["scope"],
+            detected_complexity=characteristics["complexity"],
+            story_points=characteristics["estimated_points"],
+            files_affected=characteristics["estimated_files"],
+            completed_steps=tuple(completed_steps),
+            remaining_steps=remaining,
+            token_savings=token_savings,
+            time_savings=time_savings,
+            steps_saved=steps_saved,
+            reason=reason,
+        )
+
+    def _analyze_prompt_text(self, prompt: str) -> dict[str, Any]:
+        """
+        Extract task characteristics from prompt text using heuristics.
+
+        Uses keyword matching and pattern recognition to estimate:
+        - Intent (bug_fix, feature, refactor)
+        - Complexity (low/medium/high)
+        - Scope (low/medium/high)
+
+        Args:
+            prompt: Enhanced prompt text
+
+        Returns:
+            Dict with scope, complexity, estimated_points, estimated_files, intent
+        """
+        prompt_lower = prompt.lower()
+
+        # Detect intent using keywords
+        bug_fix_keywords = ["fix", "bug", "error", "typo", "wrong", "broken", "issue", "crash", "failure"]
+        simple_keywords = ["add logging", "update comment", "change text", "rename", "delete", "remove"]
+        complex_keywords = ["implement", "architecture", "design", "refactor", "migrate", "integrate"]
+
+        is_bug_fix = any(kw in prompt_lower for kw in bug_fix_keywords)
+        is_simple = any(kw in prompt_lower for kw in simple_keywords)
+        is_complex = any(kw in prompt_lower for kw in complex_keywords)
+
+        # Estimate complexity
+        word_count = len(prompt.split())
+        if is_simple or word_count < 30:
+            complexity: ComplexityLevel = "low"
+            estimated_points = 3
+        elif is_complex or word_count > 100:
+            complexity = "high"
+            estimated_points = 21
+        else:
+            complexity = "medium"
+            estimated_points = 8
+
+        # Estimate scope (files affected)
+        # Look for mentions of multiple files, components, modules
+        multi_file_indicators = ["files", "components", "modules", "across", "system-wide", "multiple"]
+        has_multi_file = any(ind in prompt_lower for ind in multi_file_indicators)
+
+        if has_multi_file:
+            scope: ScopeLevel = "high"
+            estimated_files = 8
+        elif word_count > 80:
+            scope = "medium"
+            estimated_files = 5
+        else:
+            scope = "low"
+            estimated_files = 2
+
+        return {
+            "scope": scope,
+            "complexity": complexity,
+            "estimated_points": estimated_points,
+            "estimated_files": estimated_files,
+            "is_bug_fix": is_bug_fix,
+            "is_simple": is_simple,
+        }
+
+    def _detect_early_mismatch(
+        self,
+        workflow: WorkflowType,
+        characteristics: dict[str, Any],
+    ) -> tuple[bool, WorkflowType | None]:
+        """
+        Detect workflow mismatch from prompt characteristics.
+
+        Similar to _detect_workflow_mismatch but uses estimated values
+        from prompt analysis instead of planning artifacts.
+
+        Args:
+            workflow: Current workflow type
+            characteristics: Estimated characteristics from prompt
+
+        Returns:
+            Tuple of (mismatch_detected, recommended_workflow)
+        """
+        # Check if task is too simple for *full workflow
+        if workflow == "*full":
+            if characteristics["is_bug_fix"] and characteristics["complexity"] == "low":
+                # Bug fix with low complexity → recommend *fix
+                return (True, "*fix")
+            elif characteristics["complexity"] == "low":
+                # Low complexity non-bug → recommend *build
+                return (True, "*build")
+            elif characteristics["complexity"] == "medium" and characteristics["scope"] == "low":
+                # Medium complexity but low scope → recommend *build
+                return (True, "*build")
+
+        # No mismatch detected (or insufficient confidence)
+        return (False, None)
+
+    def _generate_early_reason(
+        self,
+        current_workflow: WorkflowType,
+        recommended_workflow: WorkflowType | None,
+        characteristics: dict[str, Any],
+    ) -> str:
+        """
+        Generate reason for early checkpoint recommendation.
+
+        Args:
+            current_workflow: Current workflow type
+            recommended_workflow: Recommended workflow (None if no mismatch)
+            characteristics: Estimated characteristics
+
+        Returns:
+            User-friendly explanation string
+        """
+        if not recommended_workflow:
+            return "Workflow appears appropriate based on prompt analysis."
+
+        intent_desc = "bug fix" if characteristics["is_bug_fix"] else "task"
+        return (
+            f"Prompt suggests simple {intent_desc} ({characteristics['complexity']} complexity). "
+            f"Consider {recommended_workflow} workflow instead of {current_workflow} for token savings."
+        )
+
     def _analyze_planning_artifacts(
         self, planning_results: PlanningResults
     ) -> dict[str, Any]:
@@ -564,6 +760,118 @@ class CheckpointManager:
             f"Task characteristics ({characteristics['complexity']} complexity, "
             f"{characteristics['scope']} scope, {characteristics['story_points']} story points) "
             f"suggest {recommended_workflow} workflow is more appropriate than {current_workflow}."
+        )
+
+    def analyze_quality_gate(
+        self,
+        workflow: WorkflowType,
+        completed_steps: list[str],
+        quality_score: float,
+        token_usage: int = 0,
+    ) -> CheckpointAnalysis:
+        """
+        Analyze quality gate checkpoint to suggest early termination.
+
+        This is Checkpoint 3 - performed after Review/Test steps to determine
+        if remaining optional steps (security, docs) can be skipped.
+
+        Args:
+            workflow: Current workflow being executed
+            completed_steps: List of completed steps
+            quality_score: Quality score from reviewer (0-100)
+            token_usage: Total tokens used so far (optional)
+
+        Returns:
+            CheckpointAnalysis suggesting early termination if quality is sufficient
+
+        Performance:
+            Target: < 100ms (simple calculation)
+
+        Examples:
+            >>> manager = CheckpointManager()
+            >>> analysis = manager.analyze_quality_gate(
+            ...     "*full",
+            ...     ["enhance", "plan", "architect", "design", "implement", "review", "test"],
+            ...     quality_score=85.0
+            ... )
+            >>> analysis.mismatch_detected  # Suggests skipping security/docs
+            True
+        """
+        # Parameter validation
+        if workflow not in ("*full", "*build", "*fix", "*refactor"):
+            raise ValueError(f"Unknown workflow: {workflow}")
+
+        # Quality gate thresholds
+        excellent_threshold = 80.0  # Can skip all optional steps
+        good_threshold = 75.0       # Can skip docs, keep security
+
+        # Get workflow steps
+        all_steps = self._get_workflow_steps(workflow)
+        remaining_steps = [s for s in all_steps if s not in completed_steps]
+
+        # Determine optional steps that can be skipped
+        optional_steps = []
+        if quality_score >= excellent_threshold:
+            # Excellent quality - can skip both security and document
+            optional_steps = ["security", "document"]
+        elif quality_score >= good_threshold:
+            # Good quality - can skip document but keep security
+            optional_steps = ["document"]
+
+        # Check if we can skip any remaining steps
+        skippable = [s for s in remaining_steps if s in optional_steps]
+
+        if not skippable:
+            # No steps can be skipped
+            return CheckpointAnalysis(
+                mismatch_detected=False,
+                current_workflow=workflow,
+                recommended_workflow=None,
+                confidence=0.90,  # High confidence from quality scores
+                detected_scope="medium",  # Not applicable for quality gate
+                detected_complexity="medium",  # Not applicable
+                story_points=8,  # Not applicable
+                files_affected=3,  # Not applicable
+                completed_steps=tuple(completed_steps),
+                remaining_steps=tuple(remaining_steps),
+                token_savings=0,
+                time_savings=0,
+                steps_saved=0,
+                reason=f"Quality score {quality_score:.1f} meets threshold but all remaining steps are required.",
+            )
+
+        # Calculate savings from skipping optional steps
+        token_savings = sum(self.token_estimates.get(step, 5000) for step in skippable)
+        time_savings = sum(self.time_estimates.get(step, 5) for step in skippable)
+        steps_saved = len(skippable)
+
+        # Generate reason
+        if quality_score >= excellent_threshold:
+            reason = (
+                f"Excellent quality score ({quality_score:.1f}) exceeds threshold ({excellent_threshold}). "
+                f"Can safely skip optional steps: {', '.join(skippable)}."
+            )
+        else:
+            reason = (
+                f"Good quality score ({quality_score:.1f}) exceeds threshold ({good_threshold}). "
+                f"Can skip documentation step."
+            )
+
+        return CheckpointAnalysis(
+            mismatch_detected=True,  # Suggests early termination
+            current_workflow=workflow,
+            recommended_workflow=None,  # Not switching workflows, just terminating early
+            confidence=0.90,
+            detected_scope="medium",
+            detected_complexity="medium",
+            story_points=8,
+            files_affected=3,
+            completed_steps=tuple(completed_steps),
+            remaining_steps=tuple([s for s in remaining_steps if s not in skippable]),
+            token_savings=token_savings,
+            time_savings=time_savings,
+            steps_saved=steps_saved,
+            reason=reason,
         )
 
     @staticmethod

@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-01-30T22:25:23.758237+00:00Z
-total_entries: 146
+last_updated: 2026-01-31T02:26:15.524710+00:00Z
+total_entries: 212
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -627,3 +627,285 @@ libraries:
     topics:
       best-practices:
         cached_at: 2026-01-30T22:25:15.249303+00:00Z
+  typing-extensions:
+    context7_id: /python/typing_extensions
+    topics:
+      overview:
+        cached_at: 2026-01-30T23:25:34.880650+00:00Z
+  analytics_dual_write:
+    context7_id: /websites/developer_adobe_analytics-apis_2_0
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:11.018474+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:08:16.346487+00:00Z
+  audit_logger:
+    context7_id: /0ldm0s/rat_logger
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:08:21.366126+00:00Z
+  auto_progression:
+    context7_id: /rsalmei/alive-progress
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:24.735660+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:09:39.836189+00:00Z
+  checkpoint_manager:
+    context7_id: /stephenstubbs/viewpoint
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:28.607870+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:09:44.195956+00:00Z
+  error_recovery:
+    context7_id: /tmiller1995/error-or
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:35.782353+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:09:55.782162+00:00Z
+  execution_graph:
+    context7_id: /receptron/graphai
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:39.632312+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:09:59.995861+00:00Z
+  graph_visualizer:
+    context7_id: /neo4j/python-graph-visualization
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:43.586715+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:10:08.520347+00:00Z
+  logging_helper:
+    context7_id: /websites/hexdocs_pm_logger_logger
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:08:47.453702+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:10:12.314034+00:00Z
+  parallel_executor:
+    context7_id: /flesler/parallel
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:08:51.811713+00:00Z
+  progress_monitor:
+    context7_id: /fortio/progressbar
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:08:55.422308+00:00Z
+  timeline:
+    context7_id: /samuelarbibe/dnd-timeline
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:09:00.068450+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:10:36.908935+00:00Z
+  validation:
+    context7_id: /websites/formvalidation_io
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:09:04.319669+00:00Z
+  acceptance_verifier:
+    context7_id: /primeintellect-ai/verifiers
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:09:08.985776+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:10:41.991881+00:00Z
+  cursor_skill_helper:
+    context7_id: /yuaotian/go-cursor-help
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:09:13.078696+00:00Z
+  execution_plan:
+    context7_id: /yetanotherclown/planck
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:09:17.918110+00:00Z
+  marker_writer:
+    context7_id: /websites/typewritermc
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:09:21.668978+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:10:51.572559+00:00Z
+  state_persistence_config:
+    context7_id: /arkensor/enfusionpersistenceframework
+    topics:
+      overview:
+        cached_at: 2026-01-31T00:09:26.548263+00:00Z
+      usage:
+        cached_at: 2026-01-31T00:11:04.037287+00:00Z
+  worktree_manager:
+    context7_id: /mark-hingston/treehouse-worktree
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:09:30.503402+00:00Z
+  agent_handlers:
+    context7_id: /ashishpatel26/500-ai-agents-projects
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T00:09:34.800142+00:00Z
+  file_utils:
+    context7_id: /legout/fsspec-utils
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T00:10:04.065847+00:00Z
+  manifest:
+    context7_id: /zyuenaerpa/embed-manifest
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T00:10:15.741954+00:00Z
+  observer:
+    context7_id: /websites/observeinc
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T00:10:19.734014+00:00Z
+  parser:
+    context7_id: /beatleader/beatleader-parser
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T00:10:23.878738+00:00Z
+  quality:
+    context7_id: /raiffeisen-dgtl/checkita-data-quality
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T00:10:28.195464+00:00Z
+  recommender:
+    context7_id: /recommenders-team/recommenders
+    topics:
+      examples:
+        cached_at: 2026-01-31T00:10:32.657219+00:00Z
+  event_bus:
+    context7_id: /otobus/event_bus
+    topics:
+      examples:
+        cached_at: 2026-01-31T00:10:46.773454+00:00Z
+  progress_logger:
+    context7_id: /oblador/react-native-progress
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T00:10:55.213144+00:00Z
+  skill_invoker:
+    context7_id: /invoke-ai/invokeai
+    topics:
+      examples:
+        cached_at: 2026-01-31T00:11:00.207136+00:00Z
+  hardware_profiler:
+    context7_id: /nohwnd/profiler
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:24:27.405886+00:00Z
+  resource_monitor:
+    context7_id: /biplobsd/running_services_monitor
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T02:24:33.189199+00:00Z
+  outcome_tracker:
+    context7_id: /offlegacy/event-tracker
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T02:24:37.203743+00:00Z
+  cache_router:
+    context7_id: /tanstack/router
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:24:41.431147+00:00Z
+  customization_loader:
+    context7_id: /xfl03/mccustomskinloader
+    topics:
+      overview:
+        cached_at: 2026-01-31T02:24:45.577100+00:00Z
+      usage:
+        cached_at: 2026-01-31T02:25:32.052848+00:00Z
+  error_envelope:
+    context7_id: /ivklgn/conway-errors
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:24:49.383130+00:00Z
+  role_loader:
+    context7_id: /stakater/reloader
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:24:54.726890+00:00Z
+  tiered_context:
+    context7_id: /pranavms13/deepcontext
+    topics:
+      overview:
+        cached_at: 2026-01-31T02:24:58.488991+00:00Z
+      usage:
+        cached_at: 2026-01-31T02:25:49.831153+00:00Z
+  unified_cache:
+    context7_id: /unifiedjs/unified
+    topics:
+      overview:
+        cached_at: 2026-01-31T02:25:02.431011+00:00Z
+      usage:
+        cached_at: 2026-01-31T02:25:53.800400+00:00Z
+  best_practice_consultant:
+    context7_id: /rolemodel/bestpractices
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:25:07.005727+00:00Z
+  capability_registry:
+    context7_id: /websites/toolregistry_ai
+    topics:
+      overview:
+        cached_at: 2026-01-31T02:25:10.522906+00:00Z
+      usage:
+        cached_at: 2026-01-31T02:25:59.119965+00:00Z
+  learning_confidence:
+    context7_id: /hapipal/confidence
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:25:14.839457+00:00Z
+  learning_dashboard:
+    context7_id: /blghtr/dashboard_lego
+    topics:
+      overview:
+        cached_at: 2026-01-31T02:25:18.333584+00:00Z
+      usage:
+        cached_at: 2026-01-31T02:26:03.507938+00:00Z
+  security_scanner:
+    context7_id: /websites/spamscanner_net
+    topics:
+      best-practices:
+        cached_at: 2026-01-31T02:25:23.222726+00:00Z
+  task_memory:
+    context7_id: /vanzan01/cursor-memory-bank
+    topics:
+      overview:
+        cached_at: 2026-01-31T02:25:26.604430+00:00Z
+  exceptions:
+    context7_id: /giorgi/entityframework.exceptions
+    topics:
+      examples:
+        cached_at: 2026-01-31T02:25:36.799593+00:00Z
+  output_formatter:
+    context7_id: /sql-formatter-org/sql-formatter
+    topics:
+      examples:
+        cached_at: 2026-01-31T02:25:40.586278+00:00Z
+  path_validator:
+    context7_id: /keats/validator
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T02:25:44.289980+00:00Z
+  learning_decision:
+    context7_id: /google/yggdrasil-decision-forests
+    topics:
+      common-mistakes:
+        cached_at: 2026-01-31T02:26:07.233304+00:00Z
+  learning_explainability:
+    context7_id: /evidentlyai/evidently
+    topics:
+      examples:
+        cached_at: 2026-01-31T02:26:11.641910+00:00Z
+  meta_learning:
+    context7_id: /jmejia8/metaheuristics.jl
+    topics:
+      examples:
+        cached_at: 2026-01-31T02:26:15.524696+00:00Z

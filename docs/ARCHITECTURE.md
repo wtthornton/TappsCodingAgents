@@ -1,22 +1,20 @@
 ---
-title: Architecture Index (BMAD Standard Path)
-version: 3.5.30
+title: Architecture Index
+version: 3.5.35
 status: active
 last_updated: 2026-01-20
-tags: [architecture, index, bmad, system-design, components]
+tags: [architecture, index, system-design, components]
 ---
 
-# Architecture (BMAD Standard Path)
+# Architecture
 
-BMAD expects an architecture document at `docs/architecture.md`.
+## Canonical source
 
-## Canonical Source (this repo)
+- **Architecture overview**: `docs/ARCHITECTURE.md` (this file)
 
-- **Architecture overview**: `docs/ARCHITECTURE.md`
+## Architecture shards
 
-## BMAD “Always-Loaded” Shards
-
-BMAD is configured (via `.bmad-core/core-config.yaml`) to always load lean architecture shards from:
+Lean, focused docs under `docs/architecture/` for small agent context:
 
 - **[Technology Stack](architecture/tech-stack.md)** - Technology stack overview, dependencies, and platform support
 - **[Source Tree](architecture/source-tree.md)** - Source code organization and module structure
@@ -24,11 +22,11 @@ BMAD is configured (via `.bmad-core/core-config.yaml`) to always load lean archi
 - **[Performance Guide](architecture/performance-guide.md)** - Performance optimization strategies and metrics
 - **[Testing Strategy](architecture/testing-strategy.md)** - Testing approach and coverage requirements
 
-These shard files exist to keep agent context small while remaining accurate. For comprehensive testing infrastructure documentation, see [Test Stack Documentation](test-stack.md).
+For comprehensive testing infrastructure documentation, see [Test Stack Documentation](test-stack.md).
 
 # Architecture Overview
 
-**Version**: 3.5.30  
+**Version**: 3.5.35  
 **Last Updated**: January 2026
 
 ## System Architecture

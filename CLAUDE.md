@@ -111,9 +111,9 @@ You can add `CLAUDE.local.md` for machine- or project-specific rules. It is load
 
 ### Version and Status
 
-**Version:** 3.5.30
+**Version:** 3.5.35
 **Status:** Active
-**Last Updated:** 2026-01-29
+**Last Updated:** 2026-01-30
 
 **Important:** Beads integration is **MANDATORY** for TappsCodingAgents development. See `docs/BEADS_GITHUB_BEST_PRACTICES.md` for complete workflow guide.
 
@@ -205,9 +205,80 @@ tapps-agents simple-mode full --prompt "Implement [enhancement description]" --a
 - **Security Score:** ≥ 8.5 (critical for framework security)
 - **Test Coverage:** ≥ 80% for core modules
 
+## Adaptive Workflow Checkpoints (v3.5.37+)
+
+**All workflows now include adaptive checkpoints that optimize execution based on task complexity and quality.**
+
+### How Checkpoints Work
+
+**3 Strategic Checkpoints:**
+
+1. **After Enhance** (Checkpoint 1)
+   - Early mismatch detection using prompt analysis
+   - Switches workflows before expensive Planning step
+   - **Confidence:** 70% (lower for early detection)
+   - **Example:** "*full" workflow for simple bug fix → switches to "*fix"
+   - **Saves:** Up to 40K tokens by switching early
+
+2. **After Planning** (Checkpoint 2)
+   - Comprehensive analysis using story points, files affected, complexity
+   - Detects when workflow is overkill for task complexity
+   - **Confidence:** 85% (high from planning data)
+   - **Example:** "*full" for 8-point task affecting 3 files → switches to "*build"
+   - **Saves:** 20K-40K tokens
+
+3. **After Test** (Checkpoint 3)
+   - Quality-based early termination
+   - Skips optional steps (security, docs) when quality is excellent
+   - **Confidence:** 90% (very high from quality metrics)
+   - **Example:** Code scores 85/100 → skips security scan and docs
+   - **Saves:** 12K-13K tokens
+
+### Checkpoint Decision Criteria
+
+**Checkpoint 1 (After Enhance):**
+- Bug fix keywords + low complexity → recommend `*fix`
+- Simple task (< 30 words, simple keywords) → recommend `*build`
+- Complex task indicators → continue with `*full`
+
+**Checkpoint 2 (After Planning):**
+- Story points ≤ 5 + files ≤ 3 → recommend `*fix`
+- Story points 8-13 + low scope → recommend `*build`
+- Story points > 13 OR high scope → continue with `*full`
+
+**Checkpoint 3 (Quality Gate):**
+- Quality score ≥ 80 → skip security AND docs
+- Quality score 75-79 → skip docs only
+- Quality score < 75 → complete all remaining steps
+
+### Configuration
+
+**Enabled by default** - Disable with:
+
+```bash
+# CLI
+tapps-agents simple-mode build --prompt "..." --no-auto-checkpoint
+
+# Config (.tapps-agents/config.yaml)
+simple_mode:
+  enable_checkpoints: false
+  checkpoint_confidence_threshold: 0.70
+```
+
+**Debug mode:**
+```bash
+tapps-agents simple-mode build --prompt "..." --checkpoint-debug
+```
+
+**See:** [Checkpoint System Guide](docs/CHECKPOINT_SYSTEM_GUIDE.md) for complete documentation
+
+---
+
 ## Workflow Presets - Choose the Right Level
 
 **TappsCodingAgents provides 4 workflow presets to match task complexity. Using the right preset saves time and tokens!**
+
+**Note:** With checkpoints enabled (default), workflows automatically adapt - you may get fewer steps than listed if task is simpler than expected.
 
 ### ⚡ Minimal (2 steps, ~5 min, ~15K tokens)
 

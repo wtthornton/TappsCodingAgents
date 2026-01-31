@@ -1140,6 +1140,16 @@ class SimpleModeConfig(BaseModel):
         le=50,
         description="Max number of libraries to warm in post-planning Context7 refresh (limits API use).",
     )
+    enable_checkpoints: bool = Field(
+        default=True,
+        description="Enable mid-execution workflow checkpoints (Checkpoint 1: After Enhance, Checkpoint 2: After Planning, Checkpoint 3: Quality Gate)",
+    )
+    checkpoint_confidence_threshold: float = Field(
+        default=0.70,
+        ge=0.0,
+        le=1.0,
+        description="Minimum confidence threshold for checkpoint recommendations (0.0-1.0)",
+    )
 
 
 class AutoEnhancementConfig(BaseModel):

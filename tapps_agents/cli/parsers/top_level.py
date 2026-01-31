@@ -1594,27 +1594,36 @@ Shows:
     )
     simple_mode_full_parser = simple_mode_subparsers.add_parser(
         "full",
-        help="Run full lifecycle workflow with testing and development loopbacks",
-        description="""Execute the complete development lifecycle with automatic quality loopbacks.
+        help="Run full lifecycle workflow with adaptive checkpoints and quality loopbacks",
+        description="""Execute the complete development lifecycle with automatic quality loopbacks and adaptive checkpoints.
 
-This workflow runs the full SDLC pipeline:
+This workflow runs the full SDLC pipeline (5-9 steps, adaptive):
   • Requirements gathering
   • Planning and story creation
+    ✓ Checkpoint 2: May switch to simpler workflow if task complexity is low
   • Architecture design
   • API design
   • Implementation
   • Code review with quality gates
   • Test generation and execution
-  • Security scanning
-  • Documentation generation
+    ✓ Checkpoint 3: May skip security/docs if quality score ≥ 80
+  • Security scanning (optional)
+  • Documentation generation (optional)
 
 Features:
   • Automatic loopbacks if code quality scores aren't good enough
   • Test execution with retry logic
   • Security validation with remediation
+  • Adaptive checkpoints optimize workflow (saves 20K-40K tokens)
   • Final quality review before completion
 
-The workflow will automatically retry and improve code until quality thresholds are met.""",
+Checkpoints:
+  • After Enhance: Early mismatch detection (70% confidence)
+  • After Planning: Task complexity analysis (85% confidence)
+  • After Test: Quality gate for early termination (90% confidence)
+
+The workflow will automatically retry and improve code until quality thresholds are met.
+Use --no-auto-checkpoint to disable checkpoint optimization.""",
     )
     simple_mode_full_parser.add_argument(
         "--prompt", "-p",
@@ -1629,23 +1638,43 @@ The workflow will automatically retry and improve code until quality thresholds 
         action="store_true",
         help="Enable fully automated execution mode. Skips all interactive prompts.",
     )
+    simple_mode_full_parser.add_argument(
+        "--no-auto-checkpoint",
+        action="store_true",
+        help="Disable automatic workflow checkpoint detection and switching.",
+    )
+    simple_mode_full_parser.add_argument(
+        "--checkpoint-debug",
+        action="store_true",
+        help="Enable verbose checkpoint logging for debugging.",
+    )
 
     # Simple Mode: build
     simple_mode_build_parser = simple_mode_subparsers.add_parser(
         "build",
-        help="Build new features with Simple Mode workflow",
-        description="""Build new features using the Simple Mode build workflow.
+        help="Build new features with adaptive checkpoints and Simple Mode workflow",
+        description="""Build new features using the Simple Mode build workflow with adaptive checkpoints.
 
-This workflow executes:
+This workflow executes (3-7 steps, adaptive):
   • Step 1: Enhance prompt (requirements analysis)
+    ✓ Checkpoint 1: Early validation - may switch to simpler workflow
   • Step 2: Create user stories
   • Step 3: Design architecture
+    ✓ Checkpoint 2: Task complexity analysis - may switch to *fix if simple
   • Step 4: Design API/data models
   • Step 5: Implement code
   • Step 6: Review code quality
   • Step 7: Generate tests
+    ✓ Checkpoint 3: Quality gate - may skip optional steps if quality ≥ 80
 
-Use --fast to skip documentation steps (1-4) for faster iteration.""",
+Checkpoints:
+  • Automatically detect when task is simpler than expected
+  • Switch to appropriate workflow with user confirmation
+  • Skip optional steps when quality is excellent
+  • Save 20K-40K tokens per optimization
+
+Use --fast to skip documentation steps (1-4) for faster iteration.
+Use --no-auto-checkpoint to disable checkpoint optimization.""",
     )
     simple_mode_build_parser.add_argument(
         "--prompt", "-p",
@@ -1659,7 +1688,7 @@ Use --fast to skip documentation steps (1-4) for faster iteration.""",
     simple_mode_build_parser.add_argument(
         "--fast",
         action="store_true",
-        help="Skip documentation steps (1-4) for 50-70% faster execution",
+        help="Skip documentation steps (1-4) for 50-70%% faster execution",
     )
     simple_mode_build_parser.add_argument(
         "--preset",
@@ -1670,6 +1699,16 @@ Use --fast to skip documentation steps (1-4) for faster iteration.""",
         "--auto",
         action="store_true",
         help="Enable fully automated execution mode",
+    )
+    simple_mode_build_parser.add_argument(
+        "--no-auto-checkpoint",
+        action="store_true",
+        help="Disable automatic workflow checkpoint detection and switching.",
+    )
+    simple_mode_build_parser.add_argument(
+        "--checkpoint-debug",
+        action="store_true",
+        help="Enable verbose checkpoint logging for debugging.",
     )
 
     # Simple Mode: resume

@@ -4,6 +4,13 @@
 
 TappsCodingAgents provides preset workflows that can be executed with simple one-word commands. These workflows automatically orchestrate multiple agents to complete common SDLC tasks.
 
+**NEW (v3.5.37+):** All workflows now include **adaptive checkpoints** that optimize execution:
+- **Checkpoint 1** (After Enhance): Early validation using prompt analysis
+- **Checkpoint 2** (After Planning): Task complexity analysis with workflow switching
+- **Checkpoint 3** (After Test): Quality-based early termination
+
+Workflows automatically adapt to task complexity, potentially using fewer steps than listed. See [Checkpoint System Guide](../docs/CHECKPOINT_SYSTEM_GUIDE.md) for details.
+
 ## Available Workflow Presets
 
 ### 1. Full SDLC Pipeline (`full` / `enterprise`)
@@ -12,22 +19,32 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 
 **Best for:** Complete software development lifecycle with all quality gates
 
-**Agent Sequence:**
-1. Analyst - Gather Requirements
-2. Planner - Create Stories
-3. Architect - Design System
-4. Designer - Api Design
-5. Implementer - Write Code
-6. Reviewer - Review Code
-7. Tester - Write Tests
-8. Ops - Security Scan
-9. Documenter - Generate Docs
-10. Orchestrator - Finalize
+**Typical Steps:** 5-10 (adaptive based on checkpoints)
+
+**Agent Sequence (with checkpoints):**
+1. Enhancer - Enhance Prompt
+   ✅ Checkpoint 1: Early mismatch detection (may switch workflow)
+2. Analyst - Gather Requirements
+3. Planner - Create Stories
+   ✅ Checkpoint 2: Task complexity analysis (may switch to *build or *fix)
+4. Architect - Design System
+5. Designer - Api Design
+6. Implementer - Write Code
+7. Reviewer - Review Code
+8. Tester - Write Tests
+   ✅ Checkpoint 3: Quality gate (may skip steps 9-10)
+9. Ops - Security Scan (optional if quality ≥ 80)
+10. Documenter - Generate Docs (optional if quality ≥ 75)
 
 **Quality Gates:**
 - Overall score: ≥70
 - Security: ≥7.0
 - Maintainability: ≥7.0
+
+**Checkpoint Optimization:**
+- May switch to `*build` if task complexity is medium (saves 20K-40K tokens)
+- May switch to `*fix` if task is simple bug fix (saves 30K-50K tokens)
+- May skip security + docs if quality score ≥ 80 (saves 12K-13K tokens)
 
 ### 2. Fix (`fix` / `maintenance` / `hotfix` / `urgent` / `refactor` / `quick-fix`)
 
@@ -35,17 +52,25 @@ TappsCodingAgents provides preset workflows that can be executed with simple one
 
 **Best for:** Debug, fix, and verify issues in existing code
 
-**Agent Sequence:**
+**Typical Steps:** 3-6 (adaptive based on checkpoints)
+
+**Agent Sequence (with checkpoints):**
 1. Enhancer - Enhance Prompt
+   ✅ Checkpoint 1: Early validation (confirms this is a fix, not a feature)
 2. Debugger - Analyze Error
 3. Implementer - Write Code
 4. Reviewer - Review Code
 5. Tester - Write Tests
-6. Orchestrator - Finalize
+   ✅ Checkpoint 3: Quality gate (may skip step 6 if quality ≥ 75)
+6. Orchestrator - Finalize (optional based on quality)
 
 **Quality Gates:**
 - Overall score: ≥65
 - Security: ≥6.5
+
+**Checkpoint Optimization:**
+- Checkpoint 1 may recommend staying with *fix for clear bug fixes
+- Checkpoint 3 may skip finalization steps if quality is excellent
 
 ### 3. Quality Improvement (`quality` / `improve`)
 

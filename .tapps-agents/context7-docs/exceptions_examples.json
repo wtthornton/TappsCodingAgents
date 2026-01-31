@@ -1,0 +1,12 @@
+{
+  "library": "exceptions",
+  "topic": "examples",
+  "documentation": {
+    "content": "## Handling UniqueConstraintException in EF Core (C#)\n\n```C#\nusing (var demoContext = new DemoContext())\n{\n    demoContext.Products.Add(new Product\n    {\n        Name = \"demo\",\n        Price = 10\n    });\n\n    demoContext.Products.Add(new Product\n    {\n        Name = \"demo\",\n        Price = 100\n    });\n\n    try\n    {\n        demoContext.SaveChanges();\n    }\n    catch (UniqueConstraintException e)\n    {\n        //Handle exception here\n        Console.WriteLine($\"Unique constraint {e.ConstraintName} violated. Duplicate value for {e.ConstraintProperties[0]}\");\n    }\n}\n```\n\n## Installing EntityFramework.Exceptions for MySql.Pomelo (Shell)\n\n```Shell\ndotnet add package EntityFrameworkCore.Exceptions.MySql.Pomelo\n```\n\n## Configuring DbContext with UseExceptionProcessor in OnConfiguring (C#)\n\n```C#\nclass DemoContext : DbContext\n{\n    public DbSet<Product> Products { get; set; }\n    public DbSet<ProductSale> ProductSale { get; set; }\n\n    protected override void OnModelCreating(ModelBuilder builder)\n    {\n        builder.Entity<Product>().HasIndex(u => u.Name).IsUnique();\n    }\n\n    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)\n    {\n        optionsBuilder.UseExceptionProcessor();\n    }\n}\n```\n\n## Installing EntityFramework.Exceptions for Sqlite (Shell)\n\n```Shell\ndotnet add package EntityFrameworkCore.Exceptions.Sqlite\n```\n\n## Installing EntityFramework.Exceptions for MySql (Shell)\n\n```Shell\ndotnet add package EntityFrameworkCore.Exceptions.MySql\n```\n\n## Configuring DbContext Pooling with UseExceptionProcessor (C#)\n\n```C#\n// Replace UseNpgsql with the sql flavor you're using\nbuilder.Services.AddDbContextPool<DemoContext>(options => options\n    .UseNpgsql(config.GetConnectionString(\"DemoConnection\"))\n    .UseExceptionProcessor());\n```\n\n## Installing EntityFramework.Exceptions for SQL Server (Shell)\n\n```Shell\ndotnet add package EntityFrameworkCore.Exceptions.SqlServer\n```\n\n## Installing EntityFramework.Exceptions for PostgreSQL (Shell)\n\n```Shell\ndotnet add package EntityFrameworkCore.Exceptions.PostgreSQL\n```\n\n## Installing EntityFramework.Exceptions for Oracle (Shell)\n\n```Shell\ndotnet add package EntityFrameworkCore.Exceptions.Oracle\n```\n",
+    "library": "exceptions",
+    "topic": "examples",
+    "source": "api"
+  },
+  "source": "api",
+  "saved_at": "2026-01-30T18:25:36.839366"
+}
