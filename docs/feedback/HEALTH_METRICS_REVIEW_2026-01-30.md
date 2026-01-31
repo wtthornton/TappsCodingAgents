@@ -17,7 +17,7 @@ Verification run: 2026-01-30 (and again post-implementation).
 | # | Recommendation | Status | Verified with tapps-agents |
 |---|----------------|--------|----------------------------|
 | **3.1** | Use execution metrics for "usage" when analytics empty | **Complete** | `health overview` shows "Top agents (30d): reviewer: 1 runs (100% ok)", "Top workflows (30d): w: 1 (100% ok)" |
-| **3.2** | Dual-write to analytics when recording executions | **Not done** | — |
+| **3.2** | Dual-write to analytics when recording executions | **Complete** | Step-level in `ExecutionMetricsCollector`/`EnhancedExecutionMetricsCollector`; workflow-level in `WorkflowExecutor`/`CursorWorkflowExecutor`. Config: `analytics.record_from_execution`. |
 | **3.3** | Outcomes fallback to execution metrics (review steps, gate_pass) | **Complete** | `health check` outcomes: status "degraded", score 75, message "Outcomes derived from execution metrics: 1 review steps, 100% passed gate" |
 | **3.4** | Overall status degraded when score ≥75 and only non-critical unhealthy | **Complete** | `health overview` shows **DEGRADED (86.2/100)** instead of UNHEALTHY |
 | **3.5** | KB / Context7 thresholds and messaging | **Not done** | — |
@@ -26,6 +26,7 @@ Verification run: 2026-01-30 (and again post-implementation).
 - **3.1:** `_usage_data_from_execution_metrics(project_root)` in `tapps_agents/cli/commands/health.py`; used in `handle_health_overview_command` when analytics has no runs.
 - **3.3:** Fallback in `OutcomeHealthCheck.run()` in `tapps_agents/health/checks/outcomes.py`; uses `ExecutionMetricsCollector`, filters review steps, returns degraded with gate_pass rate.
 - **3.4:** Logic in `get_overall_health()` in `tapps_agents/health/orchestrator.py`; critical checks = environment, execution; non-critical = outcomes, knowledge_base, context7_cache.
+- **3.2:** `tapps_agents/workflow/analytics_dual_write.py` (helpers); dual-write from `execution_metrics.py` and `metrics_enhancements.py` (step-level); from `executor.py` and `cursor_executor.py` (workflow completion). Config: `analytics.record_from_execution` in `core/config.py`. Documented in CONFIGURATION.md.
 
 **Review with tapps-agents (2026-01-30):**
 - **Reviewer review:** `tapps-agents reviewer review tapps_agents/cli/commands/health.py tapps_agents/health/checks/outcomes.py tapps_agents/health/orchestrator.py --format text` → **3/3 files successful**.

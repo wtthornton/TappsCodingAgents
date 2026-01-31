@@ -1130,6 +1130,16 @@ class SimpleModeConfig(BaseModel):
         default=False,
         description="Create 'latest' symlink to most recent workflow",
     )
+    context7_refresh_after_planning: bool = Field(
+        default=True,
+        description="After build planning (Step 2), refresh Context7 cache for libraries from the plan. Set false to disable.",
+    )
+    context7_refresh_max_libraries: int = Field(
+        default=10,
+        ge=1,
+        le=50,
+        description="Max number of libraries to warm in post-planning Context7 refresh (limits API use).",
+    )
 
 
 class AutoEnhancementConfig(BaseModel):
@@ -1295,6 +1305,15 @@ class ContextIntelligenceConfig(BaseModel):
     )
 
 
+class AnalyticsConfig(BaseModel):
+    """Configuration for analytics and dual-write from execution metrics."""
+
+    record_from_execution: bool = Field(
+        default=True,
+        description="When True, also write to .tapps-agents/analytics/ when recording execution metrics (step and workflow). Set False for metrics-only (no analytics).",
+    )
+
+
 class GuardrailConfig(BaseModel):
     """Security guardrails for subprocess and file writes (plan 2.2)."""
 
@@ -1363,6 +1382,10 @@ class ProjectConfig(BaseModel):
     workflow: WorkflowConfig = Field(
         default_factory=WorkflowConfig,
         description="Workflow execution configuration",
+    )
+    analytics: AnalyticsConfig = Field(
+        default_factory=AnalyticsConfig,
+        description="Analytics and dual-write from execution metrics (health usage, outcomes).",
     )
     guardrails: GuardrailConfig = Field(
         default_factory=GuardrailConfig,

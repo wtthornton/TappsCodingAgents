@@ -179,6 +179,74 @@ class BuildOrchestrator(SimpleModeOrchestrator):
 
         return (skip_architect, skip_designer)
 
+    async def _refresh_context7_after_planning(
+        self,
+        enhanced_prompt: str,
+        planner_output: Any,
+    ) -> None:
+        """
+        Refresh Context7 cache based on planning output so implementation steps have fresh docs.
+
+        Runs after Step 2 (planning) completes. Detects libraries from enhanced_prompt + planner
+        output and warms the project Context7 cache. Non-blocking; logs at debug on failure.
+        """
+        combined_text = enhanced_prompt
+        if planner_output is not None:
+            combined_text += "\n" + (
+                str(planner_output)
+                if not isinstance(planner_output, str)
+                else planner_output
+            )
+        try:
+            from tapps_agents.context7.agent_integration import get_context7_helper
+
+            context7_helper = get_context7_helper(None, self.config, self.project_root)
+            if not context7_helper or not context7_helper.enabled:
+                return
+            all_detected = context7_helper.detect_libraries(
+                prompt=combined_text,
+                language="python",
+            )
+            project_libs = set(
+                context7_helper.detect_libraries(
+                    code=None, prompt=None, error_message=None
+                )
+            )
+            filtered = [
+                lib
+                for lib in all_detected
+                if (
+                    lib in project_libs
+                    or context7_helper.is_well_known_library(lib)
+                    or any(
+                        kw in combined_text.lower()
+                        for kw in [f"{lib} library", f"{lib} framework", f"using {lib}"]
+                    )
+                )
+            ]
+            max_libs = 10
+            if self.config and hasattr(self.config, "simple_mode") and self.config.simple_mode:
+                max_libs = getattr(
+                    self.config.simple_mode,
+                    "context7_refresh_max_libraries",
+                    10,
+                )
+            capped = filtered[:max_libs]
+            if capped:
+                await context7_helper.get_documentation_for_libraries(
+                    libraries=capped,
+                    topic=None,
+                    use_fuzzy_match=True,
+                )
+                logger.info(
+                    "Context7 cache refreshed after planning for %d libraries (cap %d): %s",
+                    len(capped),
+                    max_libs,
+                    ", ".join(capped[:10]) + ("..." if len(capped) > 10 else ""),
+                )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.debug("Context7 post-planning refresh failed: %s", e)
+
     async def _validate_documentation_completeness(
         self,
         agent_name: str | None = None,
@@ -655,6 +723,7 @@ class BuildOrchestrator(SimpleModeOrchestrator):
             # Execute agent tasks
             workflow_errors = []  # Track errors for final reporting
             result = {"success": True, "results": {}}  # Default result
+            planner_output_for_refresh = None  # For post-planning Context7 refresh
             if agent_tasks:
                 try:
                     result = await orchestrator.execute_parallel(agent_tasks)
@@ -713,6 +782,9 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                                     metadata={"step_number": task_step_num},
                                 )
                         
+                            # Capture planner output for post-planning Context7 refresh
+                            if agent_name == "planner" and task_success:
+                                planner_output_for_refresh = task_result.get("result") or task_result.get("output") or str(task_result)
                             # Extract requirement IDs from user stories (Step 2)
                             if agent_name == "planner" and task_success:
                                 try:
@@ -795,6 +867,17 @@ class BuildOrchestrator(SimpleModeOrchestrator):
                                     step_name=f"{agent_name}-result",
                                 )
                             step_number += 1
+
+                    # Post-planning: refresh Context7 cache based on plan so implementation has fresh docs
+                    if (planner_output_for_refresh is not None or "planner" in steps_executed) and not fast_mode:
+                        try:
+                            await self._refresh_context7_after_planning(
+                                enhanced_prompt, planner_output_for_refresh
+                            )
+                        except Exception as e:  # pylint: disable=broad-except
+                            logger.debug(
+                                "Context7 post-planning refresh failed (non-blocking): %s", e
+                            )
                 except Exception as e:
                     # Handle execution errors - capture exception as workflow error
                     error_str = str(e)

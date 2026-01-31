@@ -136,6 +136,8 @@ When user wants to **build** something new:
 @planner *plan "{enhanced prompt}"
 ```
 
+**After Step 2 (planning) completes:** A Context7 cache refresh runs automatically based on the plan so implementation has up-to-date library docs. You may also suggest or run: `python scripts/prepopulate_context7_cache.py` or `@reviewer *docs <library>` for key libraries from the plan. This improves implementer and reviewer quality.
+
 **Step 3: Design architecture**
 ```
 @architect *design "{specification}"
@@ -162,6 +164,8 @@ When user wants to **build** something new:
 ```
 
 **Note:** Testing step is mandatory in build workflows. If test coverage is below 70%, the workflow loops back to testing step.
+
+**Context7 refresh after planning:** An automatic refresh runs after Step 2 so the cache has docs for libraries mentioned in the plan. You can also suggest the user run `python scripts/prepopulate_context7_cache.py` or `@reviewer *docs <library>` for key libraries. Pros: better implementer/reviewer output, higher cache hit rate. Cons: extra API/cache work after planning; optional manual refresh gives user control. See `docs/feedback/CONTEXT7_POST_PLANNING_REFRESH_2026-01-30.md` for full pros/cons.
 
 ### Review Intent
 

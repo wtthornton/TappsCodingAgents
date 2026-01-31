@@ -122,6 +122,22 @@ class ExecutionMetricsCollector:
         # Store to file
         self._store_metric(metric)
 
+        # Dual-write to analytics (best-effort; does not block)
+        try:
+            from .analytics_dual_write import record_agent_execution_to_analytics
+
+            agent_id = skill or command or "unknown"
+            record_agent_execution_to_analytics(
+                project_root=self.project_root,
+                agent_id=agent_id,
+                agent_name=agent_id,
+                duration_seconds=duration_ms / 1000.0,
+                success=(status == "success"),
+                timestamp=completed_at,
+            )
+        except Exception as e:  # pylint: disable=broad-except
+            logger.debug("Analytics dual-write (agent) failed: %s", e)
+
         # Add to cache
         self._recent_metrics.append(metric)
         if len(self._recent_metrics) > self._max_cache_size:

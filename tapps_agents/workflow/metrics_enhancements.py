@@ -243,6 +243,30 @@ class EnhancedExecutionMetricsCollector:
                 
                 self._stats["total_recorded"] += 1
 
+            # Dual-write to analytics (best-effort; does not block)
+            try:
+                from .analytics_dual_write import record_agent_execution_to_analytics
+
+                agent_id = skill or command or "unknown"
+                ts = None
+                if metric.completed_at:
+                    try:
+                        ts = datetime.fromisoformat(
+                            metric.completed_at.replace("Z", "+00:00")
+                        )
+                    except (ValueError, TypeError):
+                        pass
+                record_agent_execution_to_analytics(
+                    project_root=self.project_root,
+                    agent_id=agent_id,
+                    agent_name=agent_id,
+                    duration_seconds=duration_ms / 1000.0,
+                    success=(status == "success"),
+                    timestamp=ts,
+                )
+            except Exception as e:  # pylint: disable=broad-except
+                logger.debug("Analytics dual-write (agent) failed: %s", e)
+
             return metric
 
         except Exception as e:

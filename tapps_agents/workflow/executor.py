@@ -505,6 +505,26 @@ class WorkflowExecutor:
             
             # Generate timeline if workflow completed
             self._generate_timeline_if_complete(completed_step_ids)
+
+            # Dual-write workflow completion to analytics (best-effort)
+            if self.state.status in ("completed", "failed") and self.workflow:
+                try:
+                    from .analytics_dual_write import record_workflow_execution_to_analytics
+
+                    duration_sec = 0.0
+                    if self.state.started_at:
+                        end = datetime.now(timezone.utc)
+                        duration_sec = (end - self.state.started_at).total_seconds()
+                    record_workflow_execution_to_analytics(
+                        project_root=self.project_root,
+                        workflow_id=self.state.workflow_id,
+                        workflow_name=self.workflow.name or self.state.workflow_id,
+                        duration_seconds=duration_sec,
+                        steps=len(self.workflow.steps),
+                        success=(self.state.status == "completed"),
+                    )
+                except Exception:  # pylint: disable=broad-except
+                    pass
             
             return self.state
         finally:

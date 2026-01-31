@@ -70,6 +70,10 @@ scoring:
 # Note: MAL configuration has been removed. All LLM operations are handled by Cursor Skills.
 # Agents prepare instruction objects that are executed via Cursor Skills.
 
+# Analytics and dual-write from execution metrics (optional)
+analytics:
+  record_from_execution: true   # When true, also write to .tapps-agents/analytics/ when recording steps/workflows
+
 # Context7 integration (optional)
 context7:
   # Context7 settings (see below)
@@ -86,6 +90,12 @@ The `doctor` command reads `.tapps-agents/config.yaml` and reports mismatches (P
 - `tooling.targets.python`: the “pinned” Python version you expect for this repo/project.
 - `tooling.targets.python_requires`: the PEP 440 requires-python constraint (should match your packaging config).
 - `tooling.policy.external_tools_mode`: soft-degrade (warn/skip) vs hard-fail for missing tools.
+
+### Analytics (dual-write from execution metrics)
+
+When workflow steps or workflows complete, execution is recorded to `.tapps-agents/metrics/` (execution metrics). If **analytics dual-write** is enabled, the same data is also written to `.tapps-agents/analytics/history/` so that **health overview** (“usage” section) and **outcomes** checks have real data without relying only on execution-metrics fallback.
+
+- `analytics.record_from_execution`: When `true` (default), step completions and workflow completions are also recorded to analytics. Set to `false` if you want metrics-only (no analytics writes). Dual-write is best-effort: analytics failures do not block execution or metrics recording.
 
 ### Agent Configuration: Reviewer
 
