@@ -89,11 +89,11 @@ class BuildOrchestrator(SimpleModeOrchestrator):
     def _detect_framework_change(self, intent: Intent, parameters: dict[str, Any] | None = None) -> dict[str, Any]:
         """
         Detect if this build workflow involves framework changes (new agents, core changes, etc.).
-        
+
         Args:
             intent: Parsed user intent
             parameters: Additional parameters from user input
-            
+
         Returns:
             Dictionary with framework change detection results:
             - is_framework_change: bool
@@ -271,11 +271,11 @@ class BuildOrchestrator(SimpleModeOrchestrator):
     ) -> dict[str, bool]:
         """
         Validate that all documentation mentions new agents or framework changes.
-        
+
         Args:
             agent_name: Name of new agent (if applicable)
             framework_changes: Framework change detection results
-            
+
         Returns:
             Dictionary with validation results for each documentation file
         """
@@ -2078,10 +2078,10 @@ Your choice: [1/2/3]
 
     def _extract_implemented_files(self, result: dict[str, Any]) -> list[Path]:
         """Extract implemented file paths from implementation result.
-        
+
         Args:
             result: Implementation result dictionary
-            
+
         Returns:
             List of implemented file paths
         """
@@ -2142,10 +2142,10 @@ Your choice: [1/2/3]
 
     def _extract_test_files(self, tester_result: dict[str, Any]) -> list[Path]:
         """Extract test file paths from tester result.
-        
+
         Args:
             tester_result: Tester result dictionary
-            
+
         Returns:
             List of test file paths
         """
@@ -2478,7 +2478,7 @@ Your choice: [1/2/3]
         Returns:
             Step number to loop back to (1-7)
         """
-        gap_categories = set(gap.get("category", "") for gap in gaps)
+        gap_categories = {gap.get("category", "") for gap in gaps}
         gap_types = set()
         for gap in gaps:
             if "missing_types" in gap:
