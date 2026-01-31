@@ -344,6 +344,21 @@ If release tag already exists:
 
 **What changed (around 3.5.32):** PyPI publishing was moved from a **job inside** the Release workflow to a **separate** workflow, **Publish to PyPI on Release**, which runs when a release is **published** (`release: published`). It uses the same secret and environment as before, but runs as a different workflow.
 
+**Manual publish (quick fix):** If a release exists on GitHub but the version is missing on PyPI:
+
+1. **Re-run PyPI publish from Actions (recommended):**
+   - Go to **Actions** → **Publish to PyPI on Release** → **Run workflow**
+   - Enter the tag (e.g. `v3.5.38`) in **tag_name**, then run
+   - The workflow will build from that tag and upload to PyPI (uses `skip-existing`)
+
+2. **Publish from your machine (requires PyPI token):**
+   ```powershell
+   git checkout v3.5.38   # or your tag
+   python -m build
+   .\scripts\upload_to_pypi.ps1 -Repository pypi -SkipExisting
+   ```
+   Use token from `.env` (TWINE_PASSWORD or PYPI_API_TOKEN) or pass `-Token`.
+
 If "it used to work" and new versions (e.g. 3.5.33) are not appearing on PyPI:
 
 1. **Confirm the Release workflow completed**  
