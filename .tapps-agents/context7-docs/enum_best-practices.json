@@ -1,0 +1,12 @@
+{
+  "library": "enum",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## Package Installation\n\n```bash\ncomposer require spatie/enum\n```\n\n## Define a Basic Enum\n\n```php\nuse \\Spatie\\Enum\\Enum;\n\n/**\n * @method static self draft()\n * @method static self published()\n * @method static self archived()\n */\nclass StatusEnum extends Enum\n{\n}\n```\n\n## Getting Enum Values\n\n```php\n$status->value;\n```\n\n## Creating Enums from Values\n\n```php\n$status = StatusEnum::from('draft');\n\n$status = StatusEnum::tryFrom('draft');\n```\n\n## Retrieve Enum Value\n\n```php\n$status->value;\n```\n\n## Create Enum - PHP\n\n```php\nuse \\Spatie\\Enum\\Enum;\n\n/**\n * @method static self draft()\n * @method static self published()\n * @method static self archived()\n */\nclass StatusEnum extends Enum\n{\n}\n```\n\n## Customizing Enum Values with a Closure\n\n```php\nuse Closure;\n\n/**\n * @method static self DRAFT()\n * @method static self PUBLISHED()\n * @method static self ARCHIVED()\n */\nclass StatusEnum extends Enum\n{\n    protected static function values(): Closure\n    {\n        return function(string $name): string|int {\n            return mb_strtolower($name);\n        };\n    }\n}\n```\n\n## Using Enums in Methods\n\n```php\npublic function setStatus(StatusEnum $status): void\n{\n    $this->status = $status;\n}\n\n// ...\n\n$class->setStatus(StatusEnum::draft());\n```\n\n## Compare Enum with Multiple Values\n\n```php\n$status->equals(StatusEnum::draft(), StatusEnum::archived());\n```\n\n## Install Spatie Enum via Composer\n\n```bash\ncomposer require spatie/enum\n```",
+    "library": "enum",
+    "topic": "overview",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T18:31:24.838429"
+}

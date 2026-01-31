@@ -1,0 +1,12 @@
+{
+  "library": "evaluation_base",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## FormValidation API Documentation\n\n```APIDOC\nFormValidation API Documentation:\n\nGetting Started:\n  - Provides instructions on how to install and initialize FormValidation.\n  - Covers basic configuration and usage.\n\nValidators:\n  - Lists all available built-in validators (e.g., email, required, numeric, string).\n  - Explains how to use each validator with its specific options.\n  - Example: 'email' validator checks if the input value is a valid email address.\n\nPlugins:\n  - Details various plugins that extend FormValidation's functionality (e.g., Bootstrap, jQuery, Tailwind CSS).\n  - Explains how to enable and configure plugins.\n  - Example: Bootstrap plugin integrates FormValidation with Bootstrap's styling and feedback mechanisms.\n\nAPI:\n  - Describes the core FormValidation API methods for controlling validation.\n  - Methods include: validate(), reset(), revalidateField(), disable(), enable(), disableFields(), enableFields(), setStatus(), getStatus(), getFields(), getInvalidFields(), getValidFields(), getMessageContainer(), getMessage(), setLocale(), getLocale().\n  - Example: `formValidation.validate()` triggers validation for all fields in the form.\n\nEvents:\n  - Lists and describes the events emitted by FormValidation during its lifecycle.\n  - Events include: core.element.valid, core.element.invalid, core.field.valid, core.field.invalid, core.form.valid, core.form.invalid, core.validator.validated, core.validator.validating, core.plugin.load, core.plugin.installed.\n  - Example: Listening to `core.form.valid` event to perform an action when the entire form is valid.\n\nExamples:\n  - Provides practical examples of using FormValidation in different scenarios.\n  - Demonstrates common use cases and advanced configurations.\n```\n\n## Declarative Validation Rules with HTML Attributes\n\n```html\n<form id=\"registrationForm\">\n    <input \n        name=\"userName\" \n        data-fv-not-empty=\"true\" \n        data-fv-not-empty___message=\"The username is required\" \n        data-fv-string-length=\"true\" \n        data-fv-string-length___min=\"6\" \n        data-fv-string-length___message=\"The name must be more than 6 characters long\"\n    />\n</form>\n```",
+    "library": "validation",
+    "topic": "best-practices",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T18:31:18.687337"
+}

@@ -1,0 +1,12 @@
+{
+  "library": "ast_parser",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## Explore Advanced Parsers.jl Types and Functions\n\n```APIDOC\nParsers.Options:\n  Description: Configuration options for parsing operations, allowing customization of decimal separators, date formats, and more.\nParsers.xparse:\n  Description: An extended parsing function providing more granular control and detailed results.\nParsers.Result:\n  Description: A structure holding the outcome of a parsing operation, including the parsed value, number of bytes read, and return code.\nParsers.ReturnCode:\n  Description: An enumeration representing various return codes from parsing operations, indicating success, failure reasons, or specific conditions.\n```\n\n## Parse Basic Data Types with Parsers.jl\n\n```Julia\nusing Parsers\n\n# basic int/float parsing\nx = Parsers.parse(Int, \"101\")\ny = Parsers.parse(Float64, \"101.101\")\n\n# use comma as decimal\ny2 = Parsers.parse(Float64, \"101,101\", Parsers.Options(decimal=','))\n\n# Bool parsing\nz = Parsers.parse(Bool, \"true\")\n\n# Date/DateTime parsing\nusing Dates\na = Parsers.parse(Date, \"2018-01-01\")\n\n# custom dateformat\nb = Parsers.parse(Date, \"01/20/2018\", Parsers.Options(dateformat=\"mm/dd/yyyy\"))\n\n# will throw on invalid values\nParsers.parse(Int, \"abc\")\n\n# tryparse will return `nothing` on invalid values\ny = Parsers.tryparse(Int, \"abc\")\n```",
+    "library": "parsers",
+    "topic": "best-practices",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T18:27:07.029377"
+}

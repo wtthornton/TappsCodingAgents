@@ -1,0 +1,12 @@
+{
+  "library": "code_generator",
+  "topic": "examples",
+  "documentation": {
+    "content": "## Handle infeasible code generation configurations\n\n```JavaScript\ntry {\n    voucher_codes.generate({\n        count: 1000,\n        length: 2,\n        charset: \"0123456789\"\n    });\n} catch (e) {\n    console.log(\"Sorry, not possible.\");\n}\n```\n\n## Generating Patterned Voucher Codes - JavaScript\n\n```javascript\nvar patternCodes = voucher_codes.generate({ pattern: \"###-###-###\", count: 5 });\n```\n\n## Generate codes following a pattern\n\n```JavaScript\nvoucher_codes.generate({\n    pattern: \"##-###-##\",\n});\n```\n\n## Helper Function to Populate HTML List - JavaScript\n\n```javascript\nfunction fillList(listId, items) {\n  var list = document.getElementById(listId);\n  items.forEach(function(item) {\n    list.innerHTML += \"<li>\" + item + \"</li>\";\n  });\n}\n```\n\n## Displaying Generated Voucher Codes in HTML Lists - JavaScript\n\n```javascript\nfillList(\"basic-codes\", basicCodes);\nfillList(\"pattern-codes\", patternCodes);\n```\n\n## Generating Basic Voucher Codes - JavaScript\n\n```javascript\nvar basicCodes = voucher_codes.generate({ length: 6, count: 5 });\n```\n\n## Generate sequential codes from an offset\n\n```JavaScript\nvar sequenceOffset = 52;\n\nvoucher_codes.generate({\n    count: 3,\n    length: 2,\n    charset: \"0123456789\"\n}, sequenceOffset);\n```\n\n## Generate codes with prefix and postfix\n\n```JavaScript\nvoucher_codes.generate({\n    prefix: \"promo-\",\n    postfix: \"-2015\"\n});\n```\n\n## Run Tests - Voucher Code Generator JS - Shell\n\n```Shell\nnpm run test\n```\n\n## Generate basic coupon codes\n\n```JavaScript\nvoucher_codes.generate({\n    length: 8,\n    count: 5\n});\n```\n",
+    "library": "code_generator",
+    "topic": "examples",
+    "source": "api"
+  },
+  "source": "api",
+  "saved_at": "2026-01-30T18:31:02.155533"
+}

@@ -1,0 +1,12 @@
+{
+  "library": "visual_feedback",
+  "topic": "examples",
+  "documentation": {
+    "content": "## Userback API Generic Error Response\n\n```json\n{\n  \"message\": \"ValidationError\",\n  \"details\": {\n    \"email\": \"Email is required\"\n  }\n}\n```\n\n## Validation Error Response\n\n```json\n{\n  \"message\": \"Validation failed.\",\n  \"status\": 422,\n  \"details\": {\n    \"field\": \"email\",\n    \"error\": \"Must be a valid email address.\"\n  }\n}\n```\n\n## Filter Feedback by Multiple Conditions (REST)\n\n```REST\n//rest.userback.io/1.0/feedback?filter=voteCount gt 5 and feedbackType eq 'Bug'\n```\n\n## Example Feedback Response Structure (JSON)\n\n```json\n{\n  \"id\": 11,\n  \"name\": \"Example Feedback\",\n  \"isArchived\": false,\n  \"Screenshots\": [\n    {\n      \"id\": 481,\n      \"url\": \"https://www.example.com/screenshot.png\",\n      \"width\": 1024,\n      \"height\": 768\n    }\n  ],\n  \"Project\": {\n    \"id\": 54,\n    \"name\": \"My Example Project\"\n  }\n}\n```\n\n## Too Many Requests Error Response\n\n```json\n{\n  \"message\": \"Too many requests.\",\n  \"status\": 429,\n  \"details\": {}\n}\n```\n\n## Not Authorized Error Response\n\n```json\n{\n  \"message\": \"Unauthorized access.\",\n  \"status\": 401,\n  \"details\": {}\n}\n```\n\n## Userback API Feedback Response Example\n\n```json\n{\n  id: 11,\n  name: \"Example Feedback\",\n  isArchived: false,\n  ...\n\tScreenshots: [\n    {\n      id: 481,\n      url: 'https://www.example.com/screenshot.png',\n      width: 1024,\n      height: 768,\n    },\n    ...\n  ],\n  Project: {\n  \tid: 54,\n    name: \"My Example Project\"\n  }\n}\n```\n\n## User Identification Cheat Sheet\n\n```JavaScript\n// Identify user with ID and custom attributes\nUserback.identify('user_123', {\n  email: 'test@example.com',\n  plan: 'premium'\n});\n\n// Alias a user (if logged in later)\nUserback.alias('new_user_id');\n\n// Logout user\nUserback.logout();\n```\n\n## Create a Feedback\n\n```HTTP\nPOST /feedback\n```\n\n## Webhook Payload Example\n\n```JSON\n{\n  \"event\": \"feedback.created\",\n  \"data\": {\n    \"feedback_id\": \"60f7b3b3e1f8a4001f8e4f8a\",\n    \"project_id\": \"60f7b3b3e1f8a4001f8e4f8a\",\n    \"comment\": \"User reported a bug.\",\n    \"status\": \"open\",\n    \"created_at\": \"2023-10-27T10:00:00Z\"\n  }\n}\n```",
+    "library": "visual_feedback",
+    "topic": "common-mistakes",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T18:32:32.209580"
+}

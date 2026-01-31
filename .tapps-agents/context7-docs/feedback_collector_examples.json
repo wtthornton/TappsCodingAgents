@@ -1,0 +1,12 @@
+{
+  "library": "feedback_collector",
+  "topic": "examples",
+  "documentation": {
+    "content": "## Handle Errors with consumererror in Go\n\n```go\n// Error handling with consumererror\nfunc errorHandlingExample(ctx context.Context, td ptrace.Traces, next consumer.Traces) error {\n    err := next.ConsumeTraces(ctx, td)\n\n    if err != nil {\n        // Check if error is permanent (should not retry)\n        if consumererror.IsPermanent(err) {\n            fmt.Println(\"Permanent error - will not retry\")\n            return err\n        }\n\n        // Return permanent error explicitly\n        if isInvalidData(td) {\n            return consumererror.NewPermanent(fmt.Errorf(\"invalid trace data\"))\n        }\n\n        // Partial failure - some traces succeeded, some failed\n        failedTraces := ptrace.NewTraces()\n        // ... populate failedTraces with failed data\n        return consumererror.NewTraces(err, failedTraces)\n    }\n\n    return nil\n}\n\nfunc isInvalidData(td ptrace.Traces) bool {\n    // Validation logic\n    return false\n}\n\n```\n\n## Command Line Execution Demonstrating Null Map Error\n\n```bash\n./otelcorecol --config A.yaml --config B.yaml\n\n```\n\n## Error Output from Null Map Configuration Issue\n\n```text\nError: invalid configuration: service::pipelines::traces: references processor \"nop\" which is not configured\n2024/06/10 14:37:14 collector server run finished with error: invalid configuration: service::pipelines::traces: references processor \"nop\" which is not configured\n\n```",
+    "library": "feedback_collector",
+    "topic": "common-mistakes",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T18:27:16.389899"
+}

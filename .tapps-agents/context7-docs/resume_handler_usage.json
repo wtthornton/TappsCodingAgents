@@ -1,0 +1,12 @@
+{
+  "library": "resume_handler",
+  "topic": "usage",
+  "documentation": {
+    "content": "## Database Creation and User Management (MySQL)\n\n```SQL\nCREATE DATABASE core CHARACTER SET utf8 COLLATE utf8_general_ci;\n```\n\n## Database Creation and User Management (MySQL)\n\n```SQL\nMYSQL 5.0 : create user core_user@localhost;\nMYSQL 8.0 : CREATE USER core_user@localhost IDENTIFIED WITH mysql_native_password BY \"core_1234\";\n```\n\n## Database Creation and User Management (MySQL)\n\n```SQL\nMYSQL 5.0: GRANT ALL PRIVILEGES ON core_multisite.* To 'core_user'@'localhost' IDENTIFIED BY  'core_1234';\nMYSQL 8.0: GRANT ALL PRIVILEGES ON core.* To 'core_user'@'localhost' WITH GRANT OPTION\n```\n\n## Configuration and Admin User Creation\n\n```Bash\nphp bin/console config:import\n```\n\n## Configuration and Admin User Creation\n\n```Bash\nphp bin/console.php user:add-admin root bakiyucel38@gmail.com \"Murat Baki\" 1234\n```\n\n## Robots.txt Directives for BugDetector Core\n\n```robots.txt\nUser-agent: *\nCrawl-delay: 10\nAllow: *\nDisallow: /admin/*\nDisallow: /README.md\n```\n\n## Project Installation Steps\n\n```Bash\ncomposer install\n```\n\n## Project Installation Steps\n\n```Bash\ncp public_html/.htaccess_example public_html/.htaccess\n```\n\n## Git Commit Process\n\n```Bash\nphp bin/console config:export\n```\n\n## Code Standard Checks\n\n```Bash\nphpcs --standard=PSR12 <file>\n```\n\n## Code Standard Checks\n\n```Bash\nphpcbf --standard=PSR12 <file>\n```",
+    "library": "bug_finder",
+    "topic": "usage",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-01-30T18:32:23.142026"
+}

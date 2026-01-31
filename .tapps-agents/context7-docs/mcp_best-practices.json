@@ -1,0 +1,12 @@
+{
+  "library": "mcp",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## Requesting Available APIs from Claude\n\n```Natural Language\nCan you list what apis / functions are available for working with Photoshop / Premiere?\n```\n\n## Example Natural Language Prompts for Adobe Apps with Claude\n\n```Natural Language\nCreate a new Photoshop file with a blue background, that is 1080 width by 720 height at 300 dpi\n```\n\n## Example Natural Language Prompts for Adobe Apps with Claude\n\n```Natural Language\nCreate a new Photoshop file for an instagram post\n```\n\n## Example Natural Language Prompts for Adobe Apps with Claude\n\n```Natural Language\nCreate a double exposure image in Photoshop of a woman and a forest\n```\n\n## Example Natural Language Prompts for Adobe Apps with Claude\n\n```Natural Language\nGenerate an image of a forest, and then add a clipping mask to only show the center in a circle\n```\n\n## Example Natural Language Prompts for Adobe Apps with Claude\n\n```Natural Language\nMake something cool with photoshop\n```\n\n## Example Natural Language Prompts for Adobe Apps with Claude\n\n```Natural Language\nAdd cross fade transitions between all of the clips on the timeline in Premiere\n```\n\n## Set Up Node.js Command Proxy Server\n\n```Bash\n$cd adb-proxy-socket\n$npm install\n$node proxy.js\n```\n\n## Start MCP Development Server for Premiere\n\n```Shell\n$cd mcp\n$uv run mcp dev pr-mcp.py\n```\n\n## Install MCP Server for Premiere with Dependencies\n\n```Shell\nuv run mcp install --with fonttools --with python-socketio --with mcp --with requests --with websocket-client pr-mcp.py\n```\n\n## Start MCP Development Server for Photoshop\n\n```Shell\n$cd mcp\n$uv run mcp dev ps-mcp.py\n```\n\n## Install MCP Server for Photoshop with Dependencies\n\n```Shell\nuv run mcp install --with fonttools --with python-socketio --with mcp --with requests --with websocket-client ps-mcp.py\n```\n\n## Verify ADB-MCP Proxy Server Connection\n\n```plaintext\nadb-mcp Command proxy server running on ws://localhost:3001\nUser connected: Ud6L4CjMWGAeofYAAAAB\nClient Ud6L4CjMWGAeofYAAAAB registered for application: photoshop\n```\n",
+    "library": "mcp",
+    "topic": "best-practices",
+    "source": "api"
+  },
+  "source": "api",
+  "saved_at": "2026-01-30T18:28:46.496819"
+}

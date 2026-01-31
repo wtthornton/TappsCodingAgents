@@ -1,0 +1,189 @@
+---
+description: Quick reference for adaptive workflow checkpoints
+alwaysApply: false
+---
+
+# Checkpoint System Quick Reference
+
+**Version:** 3.5.37+ | **Status:** Enabled by default
+
+---
+
+## 3 Strategic Checkpoints
+
+### ✅ Checkpoint 1: After Enhance
+- **When:** After prompt enhancement, before Planning
+- **Confidence:** 70% (lower for early detection)
+- **Method:** Prompt text analysis using heuristics
+- **Decision:** Switch to simpler workflow if obvious mismatch
+- **Example:** "*full" for "Fix typo" → switches to "*fix"
+- **Saves:** Up to 40K tokens by switching early
+
+### ✅ Checkpoint 2: After Planning
+- **When:** After Planning step completes
+- **Confidence:** 85% (high from planning data)
+- **Method:** Story points, files affected, complexity analysis
+- **Decision:** Switch workflows if task is overkill
+- **Example:** "*full" for 8-point task → switches to "*build"
+- **Saves:** 20K-40K tokens
+
+### ✅ Checkpoint 3: After Test (Quality Gate)
+- **When:** After Review/Test steps complete
+- **Confidence:** 90% (very high from quality metrics)
+- **Method:** Quality score analysis
+- **Decision:** Skip optional steps based on quality
+- **Thresholds:**
+  - Quality ≥ 80 → Skip security AND docs
+  - Quality 75-79 → Skip docs only
+  - Quality < 75 → Complete all steps
+- **Saves:** 12K-13K tokens
+
+---
+
+## Decision Criteria
+
+### Checkpoint 1 (Prompt Analysis)
+```
+Bug fix keywords + low complexity → *fix
+Simple task (< 30 words, simple keywords) → *build
+Complex task indicators → continue with *full
+```
+
+### Checkpoint 2 (Planning Analysis)
+```
+Story points ≤ 5 + files ≤ 3 → *fix
+Story points 8-13 + low scope → *build
+Story points > 13 OR high scope → *full
+```
+
+### Checkpoint 3 (Quality Gate)
+```
+Quality ≥ 80 → Skip security + docs
+Quality 75-79 → Skip docs only
+Quality < 75 → Complete all steps
+```
+
+---
+
+## Workflow Adaptation
+
+### *full Workflow (5-9 steps, adaptive)
+```
+Enhance → [C1] → Plan → Architect → [C2] → Design →
+Implement → Review → Test → [C3] → Security* → Docs*
+         *optional if quality high
+```
+
+### *build Workflow (3-7 steps, adaptive)
+```
+Enhance → [C1] → Plan → Architect → [C2] → Design →
+Implement → Review → Test → [C3]
+```
+
+### *fix Workflow (3-6 steps, adaptive)
+```
+Enhance → [C1] → Debug → Implement → Review → Test → [C3]
+```
+
+---
+
+## Configuration
+
+### Disable Checkpoints
+
+**CLI:**
+```bash
+tapps-agents simple-mode build --prompt "..." --no-auto-checkpoint
+tapps-agents simple-mode full --prompt "..." --no-auto-checkpoint
+```
+
+**Config file** (`.tapps-agents/config.yaml`):
+```yaml
+simple_mode:
+  enable_checkpoints: false
+  checkpoint_confidence_threshold: 0.70
+```
+
+### Debug Mode
+```bash
+tapps-agents simple-mode build --prompt "..." --checkpoint-debug
+```
+
+---
+
+## Token Savings
+
+| Optimization | Typical Savings | When |
+|--------------|----------------|------|
+| C1: Early switch to *fix | 30K-50K tokens | *full → *fix |
+| C2: Switch to *build | 20K-40K tokens | *full → *build |
+| C2: Switch to *fix | 30K-40K tokens | *build → *fix |
+| C3: Skip security + docs | 12K-13K tokens | Quality ≥ 80 |
+| C3: Skip docs only | 6K-7K tokens | Quality 75-79 |
+
+**Average:** 20K-40K tokens saved per prevented mismatch
+
+---
+
+## User Experience
+
+### What Users See
+
+**At Checkpoint:**
+```
+✅ Planning Complete (Step 3/9)
+
+⚠️ Checkpoint: Task analysis suggests workflow mismatch
+- Completed: enhance, plan, architect (3 steps)
+- Remaining: design, implement, review, test, security, document (6 steps)
+
+Task characteristics from planning:
+- 3 files affected
+- 8 story points
+- medium complexity, low scope
+
+Recommendation: Switch to *build workflow
+- Saves: 2 steps, ~12,000 tokens, ~14 minutes
+- Reuses: Completed planning artifacts
+- Jumps to: design
+
+Options:
+1. Switch to *build workflow (recommended)
+2. Continue with *full (6 more steps)
+3. Cancel workflow
+
+Your choice: [1/2/3]
+```
+
+### Checkpoint Transparency
+- User is always prompted for confirmation
+- Token/time savings displayed
+- Confidence level shown (70-90%)
+- Reason explained clearly
+
+---
+
+## Quick Tips
+
+✅ **DO:**
+- Trust checkpoint recommendations (85%+ confidence)
+- Use `--no-auto-checkpoint` only when you specifically need full workflow
+- Review checkpoint logs to understand decisions
+
+❌ **DON'T:**
+- Disable checkpoints globally (use per-command flags instead)
+- Ignore checkpoint recommendations without reason
+- Assume workflows always run fixed number of steps
+
+---
+
+## Related Documentation
+
+- [Checkpoint System Guide](../docs/CHECKPOINT_SYSTEM_GUIDE.md) - Complete documentation
+- [Checkpoint Integration Guide](../docs/CHECKPOINT_INTEGRATION_GUIDE.md) - Integration details
+- [Simple Mode Rules](.cursor/rules/simple-mode.mdc) - Workflow execution rules
+
+---
+
+**Last Updated:** 2026-01-30
+**Version:** 3.5.37+

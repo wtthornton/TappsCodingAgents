@@ -1,0 +1,12 @@
+{
+  "library": "ast_parser",
+  "topic": "examples",
+  "documentation": {
+    "content": "## Example AST Structure from bash-parser (JavaScript)\n\n```js\n{\n\t\ttype: \"Script\",\n\t\tcommands: [\n\t\t\t{\n\t\t\t\ttype: \"SimpleCommand\",\n\t\t\t\tname: {\n\t\t\t\t\ttext: \"echo\",\n\t\t\t\t\ttype: \"Word\"\n\t\t\t\t},\n\t\t\t\tsuffix: [\n\t\t\t\t\t{\n\t\t\t\t\t\ttext: \"ciao\",\n\t\t\t\t\t\ttype: \"Word\"\n\t\t\t\t\t}\n\t\t\t\t]\n\t\t\t}\n\t\t]\n\t}\n```\n\n## Defining ArithmeticExpansion AST Node (JavaScript)\n\n```js\n{ type: 'ArithmeticExpansion',\n\texpression: string,\n\tresolved: boolean,\n\tarithmeticAST: Object,\n\tloc: {\n\t\tstart:Number,\n\t\tend:Number\n\t}\n}\n```\n\n## Defining CaseItem AST Node (JavaScript)\n\n```js\n{ type: 'CaseItem',\n\tpattern: Array<Word>,\n\tbody: CompoundList\n}\n```\n\n## Defining ParameterExpansion AST Node (JavaScript)\n\n```js\n{ type: 'ParameterExpansion',\n\tparameter: string,\n\tkind: ?string,\n\tword: ?string,\n\top: ?string,\n\tloc: {\n\t\tstart:Number,\n\t\tend:Number\n\t}\n}\n```\n\n## Defining While Statement AST Node (JavaScript)\n\n```js\n{ type: 'While',\n\tclause: CompoundList,\n\tdo: CompoundList\n}\n```\n\n## Defining the Case Statement AST Node in JavaScript\n\n```JavaScript\n{\n\ttype: 'Case',\n\tclause: Word,\n\tcases: Array<CaseItem>\n}\n```\n\n## Defining CommandExpansion AST Node (JavaScript)\n\n```js\n{ type: 'CommandExpansion',\n\tcommand: string,\n\tresolved: boolean,\n\tcommandAST: Object,\n\n\tloc: {\n\t\tstart:Number,\n\t\tend:Number\n\t}\n}\n```\n\n## Defining the LogicalExpression AST Node in JavaScript\n\n```JavaScript\n{\n\ttype: 'LogicalExpression',\n\top: string,\n\tleft: LogicalExpression |\n\t\t  Pipeline |\n\t\t  Command |\n\t\t  Function |\n\t\t  Subshell |\n\t\t  For |\n\t\t  Case |\n\t\t  If |\n\t\t  While |\n\t\t  Until,\n\tright: LogicalExpression |\n\t\t   Pipeline |\n\t\t   Command |\n\t\t   Function |\n\t\t   Subshell |\n\t\t   For |\n\t\t   Case |\n\t\t   If |\n\t\t   While |\n\t\t   Until\n}\n```\n\n## Defining If Statement AST Node (JavaScript)\n\n```js\n{ type: 'If',\n\tclause: CompoundList,\n\tthen: CompoundList,\n\telse: CompoundList\n}\n```\n\n## Parsing a Bash Command with bash-parser (JavaScript)\n\n```js\n  const parse = require('bash-parser');\n  const ast = parse('echo ciao');\n```\n",
+    "library": "ast_parser",
+    "topic": "examples",
+    "source": "api"
+  },
+  "source": "api",
+  "saved_at": "2026-01-30T18:27:10.684083"
+}

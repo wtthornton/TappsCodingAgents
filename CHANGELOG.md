@@ -16,6 +16,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 (none)
 
+## [3.5.37] - 2026-01-30
+
+### Documentation
+- **Adaptive Workflow Checkpoints** - Comprehensive documentation updates for checkpoint system (v3.5.37+)
+  - Updated `.cursor/rules/simple-mode.mdc` with checkpoint information and adaptive workflow descriptions
+  - Updated `CLAUDE.md` with complete "Adaptive Workflow Checkpoints" section
+  - Updated `docs/WORKFLOW_ENFORCEMENT_GUIDE.md` with checkpoint guidance for AI assistants
+  - Updated `.cursor/rules/workflow-presets.mdc` with checkpoint sequences and optimization details
+  - Updated `README.md` with checkpoint feature in Enhanced Features section
+  - Updated `build_orchestrator.py` docstrings with checkpoint information
+  - Updated CLI help text for `simple-mode build` and `simple-mode full` commands
+  - Created `.cursor/rules/checkpoint-quick-reference.mdc` as 1-page quick reference
+  - All workflow descriptions now reflect adaptive execution (3-7 steps for build, 5-9 for full)
+  - Token savings estimates documented (20K-40K tokens per optimization)
+  - Confidence levels documented (70% for Checkpoint 1, 85% for Checkpoint 2, 90% for Checkpoint 3)
+
+### Changed
+- Workflow step counts now described as ranges reflecting checkpoint optimization
+  - Build workflow: "3-7 steps (adaptive)" instead of fixed "7 steps"
+  - Full workflow: "5-9 steps (adaptive)" instead of fixed "9 steps"
+  - Fix workflow: "3-6 steps (adaptive)" instead of fixed "6 steps"
+
+## [3.5.36] - 2026-01-30
+
+### Added
+- **Checkpoint System Implementation** - All 3 checkpoints fully implemented and tested
+  - Checkpoint 1 (After Enhance): Early validation using prompt analysis
+  - Checkpoint 2 (After Planning): Task complexity analysis with workflow switching
+  - Checkpoint 3 (After Test): Quality gate for early termination
+  - 69/69 unit tests passing with 80%+ coverage
+  - Enabled by default with `--no-auto-checkpoint` flag to disable
+  - User-interactive workflow switching with clear prompts and savings estimates
+
 ## [3.5.35] - 2026-01-30
 
 ### Changed
