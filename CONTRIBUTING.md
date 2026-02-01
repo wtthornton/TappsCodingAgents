@@ -229,6 +229,9 @@ except AgentActivationError as e:
 - **Unit tests**: Test individual functions/classes
 - **Integration tests**: Test component interactions
 - **Test naming**: `test_<functionality>_<scenario>`
+- **Test file basenames**: Must be unique across the entire test suite to avoid pytest import conflicts
+  - ❌ Bad: Multiple files named `test_parallel_executor.py` in different directories
+  - ✅ Good: Use descriptive prefixes like `test_workflow_parallel_executor.py` and `test_reviewer_parallel_executor.py`
 
 ```python
 import pytest
