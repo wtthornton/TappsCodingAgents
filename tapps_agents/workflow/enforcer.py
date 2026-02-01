@@ -22,6 +22,8 @@ from pathlib import Path
 from typing import Literal, TypedDict
 
 from tapps_agents.core.llm_behavior import EnforcementConfig
+from tapps_agents.workflow.intent_detector import IntentDetector, WorkflowType
+from tapps_agents.workflow.message_formatter import MessageConfig, MessageFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +141,14 @@ class WorkflowEnforcer:
         else:
             # Load config from file
             self.config = self._load_config(config_path)
+
+        # Initialize intent detector and message formatter (ENH-001-S2, S3)
+        self._intent_detector = IntentDetector()
+        self._message_formatter = MessageFormatter(MessageConfig(
+            use_emoji=True,
+            show_benefits=self.config.suggest_workflows,
+            show_override=True,
+        ))
 
         logger.info(
             f"WorkflowEnforcer initialized with mode={self.config.mode}, "
@@ -322,55 +332,58 @@ class WorkflowEnforcer:
             - allow: Empty message
 
         Note:
-            Story 1 uses basic message templates.
-            Story 3 will add MessageFormatter for rich, context-aware messages.
+            Uses MessageFormatter (ENH-001-S3) for rich, context-aware messages.
+            Uses IntentDetector (ENH-001-S2) for workflow detection and confidence.
         """
         # Determine should_block flag
         should_block = action == "block" and self.config.block_direct_edits
 
-        # Generate message based on action
+        # Detect intent and get confidence (ENH-001-S2 integration)
+        detection_result = self._intent_detector.detect_workflow(
+            user_intent=user_intent,
+            file_path=file_path if file_path.exists() else None,
+        )
+        workflow = detection_result.workflow_type
+        confidence = detection_result.confidence
+
+        # Generate message using MessageFormatter (ENH-001-S3 integration)
         if action == "block":
             if self.config.suggest_workflows:
-                message = (
-                    f"⚠️ Direct file edit blocked: {file_path}\n\n"
-                    f"TappsCodingAgents workflows provide:\n"
-                    f"  • Automatic testing (80%+ coverage)\n"
-                    f"  • Quality gates (75+ score required)\n"
-                    f"  • Comprehensive documentation\n"
-                    f"  • Early bug detection\n\n"
-                    f"Suggested workflow:\n"
-                    f"  @simple-mode *build \"{user_intent or 'Implement feature'}\"\n\n"
-                    f"To bypass enforcement, use: --skip-enforcement flag"
+                message = self._message_formatter.format_blocking_message(
+                    workflow=workflow,
+                    user_intent=user_intent,
+                    file_path=file_path,
+                    confidence=confidence,
                 )
             else:
                 message = (
-                    f"⚠️ Direct file edit blocked: {file_path}\n"
+                    f"Direct file edit blocked: {file_path}\n"
                     f"Use --skip-enforcement flag to bypass."
                 )
         elif action == "warn":
             if self.config.suggest_workflows:
-                message = (
-                    f"💡 Consider using a workflow for: {file_path}\n"
-                    f"Suggested: @simple-mode *build \"{user_intent or 'Implement feature'}\"\n"
-                    f"(Proceeding with direct edit...)"
+                message = self._message_formatter.format_warning_message(
+                    workflow=workflow,
+                    user_intent=user_intent,
+                    confidence=confidence,
                 )
             else:
-                message = f"💡 Consider using a workflow for: {file_path}"
+                message = f"Consider using a workflow for: {file_path}"
         else:  # allow
-            message = ""
+            message = self._message_formatter.format_allow_message()
 
-        # Create decision
+        # Create decision with actual confidence from intent detection
         decision: EnforcementDecision = {
             "action": action,
             "message": message,
             "should_block": should_block,
-            "confidence": 0.0,  # Story 1: No intent detection yet
+            "confidence": confidence,
         }
 
         # Log decision
         logger.debug(
             f"Enforcement decision: action={action}, should_block={should_block}, "
-            f"file_path={file_path}, user_intent={user_intent[:100]}"
+            f"file_path={file_path}, workflow={workflow.value}, confidence={confidence:.1f}%"
         )
 
         return decision
