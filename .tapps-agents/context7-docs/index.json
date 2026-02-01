@@ -98,13 +98,6 @@
       "saved_at": "2026-01-24T12:14:39.610066",
       "source": "fuzzy_match"
     },
-    "coverage": {
-      "library": "coverage",
-      "topic": null,
-      "file_path": "coverage.json",
-      "saved_at": "2026-01-24T12:14:39.748045",
-      "source": "cache"
-    },
     "pytest-rich": {
       "library": "pytest-rich",
       "topic": null,
@@ -5281,13 +5274,6 @@
         ],
         "total_docs": 3
       },
-      "coverage": {
-        "topics": [
-          "best-practices",
-          "architecture"
-        ],
-        "total_docs": 3
-      },
       "pytest-rich": {
         "topics": [
           "best-practices",
@@ -5462,6 +5448,13 @@
           "architecture"
         ],
         "total_docs": 3
+      },
+      "coverage": {
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 2
       },
       "simple_mode": {
         "topics": [
@@ -7590,8 +7583,8 @@
         "types-pyyaml"
       ]
     },
-    "total_entries": 745,
-    "last_updated": "2026-01-30T18:32:58.929090"
+    "total_entries": 744,
+    "last_updated": "2026-02-01T19:52:44.357194"
   },
-  "last_updated": "2026-01-30T18:32:58.931021"
+  "last_updated": "2026-02-01T19:52:44.358083"
 }
