@@ -183,7 +183,7 @@ class TestInterceptCodeEditBlocking:
         assert decision["action"] == "block"
         assert decision["should_block"] is True
         assert len(decision["message"]) > 0
-        assert decision["confidence"] == 0.0  # Story 1
+        assert decision["confidence"] >= 0.0  # IntentDetector provides confidence
 
     def test_blocking_mode_message_includes_file_path(
         self, blocking_config: EnforcementConfig
@@ -515,7 +515,9 @@ class TestEnforcementDecision:
             is_new_file=False,
         )
 
-        assert decision["confidence"] == 0.0
+        # IntentDetector now provides actual confidence scores
+        assert decision["confidence"] >= 0.0
+        assert decision["confidence"] <= 100.0
 
 
 # ============================================================================
@@ -690,7 +692,9 @@ class TestIntegration:
         assert decision["action"] == "block"
         assert decision["should_block"] is True
         assert "workflow" in decision["message"].lower()
-        assert decision["confidence"] == 0.0
+        # IntentDetector now provides actual confidence scores
+        assert decision["confidence"] >= 0.0
+        assert decision["confidence"] <= 100.0
 
     def test_multiple_sequential_calls(self, blocking_config: EnforcementConfig) -> None:
         """Test multiple sequential calls to enforcer."""
