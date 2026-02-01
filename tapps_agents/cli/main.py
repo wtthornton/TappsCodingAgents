@@ -36,6 +36,7 @@ except (ImportError, AttributeError):
 from .commands import (
     analyst,
     architect,
+    cleanup_agent,
     debugger,
     designer,
     documenter,
@@ -58,6 +59,9 @@ from .feedback import FeedbackManager, ProgressMode, VerbosityLevel
 # Import all parser registration functions
 from .parsers import (
     analyst as analyst_parsers,
+)
+from .parsers import (
+    cleanup_agent as cleanup_agent_parsers,
 )
 from .parsers import (
     architect as architect_parsers,
@@ -307,6 +311,7 @@ def register_all_parsers(parser: argparse.ArgumentParser) -> None:
     ops_parsers.add_ops_parser(subparsers)
     enhancer_parsers.add_enhancer_parser(subparsers)
     evaluator_parsers.add_evaluator_parser(subparsers)
+    cleanup_agent_parsers.add_cleanup_agent_parser(subparsers)
 
     # Register top-level parsers
     top_level_parsers.add_top_level_parsers(subparsers)
@@ -334,6 +339,7 @@ def _get_agent_command_handlers() -> dict[str, Callable[[argparse.Namespace], No
         "ops": ops.handle_ops_command,
         "enhancer": enhancer.handle_enhancer_command,
         "evaluator": evaluator.handle_evaluator_command,
+        "cleanup-agent": cleanup_agent.handle_cleanup_agent_command,
     }
 
 
