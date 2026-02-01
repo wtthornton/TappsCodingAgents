@@ -576,6 +576,43 @@ class EvaluatorAgentConfig(BaseModel):
     )
 
 
+class CleanupAgentConfig(BaseModel):
+    """Configuration specific to Cleanup Agent"""
+
+    dry_run_default: bool = Field(
+        default=True,
+        description="Run in dry-run mode by default (preview changes without executing)"
+    )
+    backup_enabled: bool = Field(
+        default=True,
+        description="Create backups before destructive operations"
+    )
+    interactive_mode: bool = Field(
+        default=True,
+        description="Prompt for confirmation on risky operations"
+    )
+    default_pattern: str = Field(
+        default="*.md",
+        description="Default file pattern for analysis"
+    )
+    age_threshold_days: int = Field(
+        default=90,
+        ge=1,
+        le=365,
+        description="Days threshold for detecting outdated files"
+    )
+    similarity_threshold: float = Field(
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Content similarity threshold for detecting near-duplicates"
+    )
+    backup_dir: str = Field(
+        default=".cleanup-backups",
+        description="Directory for cleanup backups"
+    )
+
+
 class ExpertConfig(BaseModel):
     """Configuration for expert consultation system"""
 
@@ -696,6 +733,7 @@ class AgentsConfig(BaseModel):
         default_factory=OrchestratorAgentConfig
     )
     evaluator: EvaluatorAgentConfig = Field(default_factory=EvaluatorAgentConfig)
+    cleanup_agent: CleanupAgentConfig = Field(default_factory=CleanupAgentConfig)
 
 
 class CheckpointFrequencyConfig(BaseModel):
