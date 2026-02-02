@@ -1,6 +1,6 @@
 ---
 title: API Reference
-version: 3.5.38
+version: 3.5.39
 status: active
 last_updated: 2026-01-20
 tags: [api, reference, python, cli, agents, workflow]

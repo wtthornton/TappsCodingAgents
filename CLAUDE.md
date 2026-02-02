@@ -111,7 +111,7 @@ You can add `CLAUDE.local.md` for machine- or project-specific rules. It is load
 
 ### Version and Status
 
-**Version:** 3.5.38
+**Version:** 3.5.39
 **Status:** Active
 **Last Updated:** 2026-01-30
 

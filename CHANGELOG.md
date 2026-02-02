@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Documentation
 (none)
 
+## [3.5.39] - 2026-02-02
+
+### Fixed
+- **init --reset** – Workflow presets are now initialized before Cursor Rules so `workflow-presets.mdc` can be generated from YAML after reset (presets were previously restored after rules generation, causing "No workflow YAML files found").
+- **rules_generator** – When no workflow YAML files are found, log at warning level instead of error (init continues without workflow-presets.mdc in that case).
+
 ## [3.5.38] - 2026-01-30
 
 ### Changed

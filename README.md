@@ -3,7 +3,7 @@
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Status](https://img.shields.io/badge/status-production--ready-brightgreen.svg)](README.md)
-[![Version](https://img.shields.io/badge/version-3.5.38-blue.svg)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-3.5.39-blue.svg)](CHANGELOG.md)
 
 **A specification framework for defining, configuring, and orchestrating coding agents.**
 
@@ -64,7 +64,7 @@ If you're using **Cursor IDE**, get started quickly:
    # Install from PyPI (clean install, framework code only)
    pip install tapps-agents
    # or specific version:
-   pip install tapps-agents==3.5.38
+   pip install tapps-agents==3.5.39
    ```
    **Windows:** If `tapps-agents` is not found after install (user Scripts often not on PATH), use a project venv or run `python -m tapps_agents.cli` instead. See [Troubleshooting CLI installation](docs/TROUBLESHOOTING_CLI_INSTALLATION.md).
 
@@ -226,7 +226,7 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
 
 ## Current Status
 
-**Version** 3.5.38 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
+**Version** 3.5.39 · **Production ready** · All 7 Cursor AI integration phases complete · YAML-first architecture (Epics 6–10) · 14 workflow agents + Simple Mode · 16 built-in experts.
 
 📋 [Changelog](CHANGELOG.md) · [Cursor AI Integration Plan](docs/CURSOR_AI_INTEGRATION_PLAN_2025.md) · [YAML Workflow Design](docs/YAML_WORKFLOW_ARCHITECTURE_DESIGN.md)
 
@@ -572,7 +572,7 @@ See [Release Guide](docs/operations/RELEASE_GUIDE.md) for complete release proce
 ## Status
 
 **Phase**: ✅ **All 7 Phases Complete - Cursor AI Integration Plan 2025**  
-**Version**: 3.5.38  
+**Version**: 3.5.39  
 **Last Updated**: January 2026  
 **Cursor AI Integration**: ✅ Complete (Phases 1-7)  
 **Dependencies**: ✅ Updated to latest 2025 stable versions (pytest 9.x, ruff 0.14.8, mypy 1.19.0, etc.)

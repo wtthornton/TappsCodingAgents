@@ -1,6 +1,6 @@
 ---
 title: TappsCodingAgents Documentation Index
-version: 3.5.38
+version: 3.5.39
 status: active
 last_updated: 2026-01-20
 tags: [documentation, index, navigation]
@@ -233,5 +233,5 @@ Looking for something specific? Try these keywords:
 
 ---
 
-**Documentation Version**: 3.5.38  
+**Documentation Version**: 3.5.39  
 **Last Reviewed**: January 2026
