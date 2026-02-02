@@ -972,6 +972,11 @@ class WorkflowConfig(BaseModel):
         ge=1.0,
         description="Maximum time to wait for step completion (seconds)",
     )
+    duration_threshold_seconds: float = Field(
+        default=30.0,
+        ge=1.0,
+        description="Duration threshold for background agent routing (seconds). Tasks estimated to take longer use background agents.",
+    )
     state_persistence: StatePersistenceConfig = Field(
         default_factory=StatePersistenceConfig,
         description="State persistence and checkpointing configuration",
