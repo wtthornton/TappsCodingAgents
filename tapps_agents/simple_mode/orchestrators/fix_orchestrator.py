@@ -564,7 +564,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
             try:
                 # Generate commit message if not provided
                 if not commit_message:
-                    final_scores = review_results[-1]["result"].get("scores", {})
+                    final_scores = review_results[-1]["result"].get("scores", {}) if review_results else {}
                     overall_score = final_scores.get("overall_score", 0)
                     commit_message = (
                         f"Fix: {bug_description}\n\n"
