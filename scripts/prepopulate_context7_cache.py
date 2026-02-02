@@ -32,6 +32,8 @@ from tapps_agents.core.config import load_config
 
 # Common libraries to pre-populate (always cached)
 COMMON_LIBRARIES = [
+    # Python Packaging (PyPA guide: building, publishing, PyPI, GitHub Actions)
+    "packaging",
     # Python Web Frameworks
     "fastapi",
     "django",
@@ -70,6 +72,7 @@ COMMON_LIBRARIES = [
 
 # Common topics to cache for each library
 COMMON_TOPICS = {
+    "packaging": ["building", "publishing", "pypi", "github-actions", "pyproject"],
     "fastapi": ["routing", "dependency-injection", "middleware", "errors"],
     "pytest": ["fixtures", "parametrize", "markers", "async"],
     "sqlalchemy": ["models", "queries", "sessions", "relationships"],
