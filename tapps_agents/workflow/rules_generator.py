@@ -313,7 +313,13 @@ class CursorRulesGenerator:
         try:
             content = self.generate()
         except ValueError as e:
-            logger.error(f"Failed to generate rules: {e}")
+            msg = str(e)
+            if "No workflow YAML files found" in msg:
+                logger.warning(
+                    "Could not generate workflow-presets.mdc (no YAML found). %s", msg
+                )
+            else:
+                logger.error(f"Failed to generate rules: {e}")
             raise
 
         if not content or not content.strip():

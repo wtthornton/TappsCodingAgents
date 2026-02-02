@@ -2698,10 +2698,10 @@ def init_project(
     version_after = get_framework_version()
     results["version_after"] = version_after
 
-    # --- Step order (dependencies): tech_stack -> config -> MCP -> rules -> presets
+    # --- Step order (dependencies): tech_stack -> config -> MCP -> presets -> rules
     # -> skills -> customizations -> cursorignore -> tech_stack_config -> experts
     # -> cache (best-effort, non-blocking) -> validation
-    # MCP runs early so validation and npx/API-key checks surface before long steps.
+    # Presets before rules so workflow-presets.mdc can be generated from YAML (critical after reset).
 
     # Detect tech stack early (needed for template application)
     tech_stack = detect_tech_stack(project_root)
@@ -2759,14 +2759,8 @@ def init_project(
         mcp_status["project_local_config"] = mcp_path
         mcp_status["note"] = "Project-local `.cursor/mcp.json` was created. Context7 MCP server configured."
 
-    # Initialize Cursor Rules
-    if include_cursor_rules:
-        success, rule_paths = init_cursor_rules(project_root)
-        results["cursor_rules"] = success
-        if rule_paths:
-            results["files_created"].extend(rule_paths)
-
-    # Initialize workflow presets
+    # Initialize workflow presets before Cursor Rules so workflow-presets.mdc can be
+    # generated from YAML (required after init --reset when presets were just restored).
     if include_workflow_presets:
         success, preset_files = init_workflow_presets(project_root)
         results["workflow_presets"] = success
@@ -2774,6 +2768,13 @@ def init_project(
             results["files_created"].extend(
                 [f"workflows/presets/{f}" for f in preset_files]
             )
+
+    # Initialize Cursor Rules (depends on workflows/presets/*.yaml for workflow-presets.mdc)
+    if include_cursor_rules:
+        success, rule_paths = init_cursor_rules(project_root)
+        results["cursor_rules"] = success
+        if rule_paths:
+            results["files_created"].extend(rule_paths)
 
     # Initialize Skills for Cursor/Claude
     if include_skills:
