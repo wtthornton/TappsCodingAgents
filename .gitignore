@@ -132,6 +132,9 @@ docs/workflows/**/*-202*-*/
 .tapps-agents/events/
 .tapps-agents/benchmarks/
 .tapps-agents/capabilities/
+.tapps-agents/analytics/
+.tapps-agents/health/
+.tapps-agents/learning/
 
 # JSON artifact files (keep schemas and configs)
 *-output.json
