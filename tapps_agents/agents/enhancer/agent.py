@@ -1733,7 +1733,7 @@ Create a comprehensive, context-aware enhanced prompt that:
             
             try:
                 from ...core.mal import MAL, MALDisabledInCursorModeError
-                
+
                 mal_config = self.config.mal if self.config else None
                 if mal_config and mal_config.enabled:
                     mal = MAL(config=mal_config)
@@ -1770,7 +1770,7 @@ Create a comprehensive, context-aware enhanced prompt that:
                             "mode": "structured",
                         },
                     }
-            except MALDisabledInCursorModeError:
+            except (ImportError, ModuleNotFoundError):
                 # Should not happen in headless mode, but handle gracefully
                 logger.warning("MAL disabled error in headless mode")
                 return {

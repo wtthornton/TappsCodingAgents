@@ -120,24 +120,21 @@ class TestDirectExecutionFallback:
         with tempfile.TemporaryDirectory() as tmpdir:
             worktree_path = Path(tmpdir)
             fallback = DirectExecutionFallback()
-            
+
             # Create a test file in worktree
             test_file = worktree_path / "test.txt"
             test_file.write_text("test content")
-            
-            # Execute command that reads the file (Windows-compatible)
-            if platform.system() == "Windows":
-                # Windows: use type command
-                cmd = f"type test.txt"
-            else:
-                # Unix: use cat command
-                cmd = "cat test.txt"
+
+            # Use Python to read the file (cross-platform, works without shell)
+            # Note: When sandbox_subprocess=True, cwd is project_root, not worktree_path
+            # So we need to use absolute path to the file
+            cmd = f'{sys.executable} -c "print(open(r\'{test_file}\').read())"'
             result = await fallback.execute_command(
                 command=cmd,
                 worktree_path=worktree_path,
                 is_raw_cli=True,  # Skip Skill command conversion
             )
-            
+
             assert result["status"] == "completed"
             output = result["stdout"] + result["stderr"]
             assert "test content" in output
@@ -146,21 +143,16 @@ class TestDirectExecutionFallback:
     async def test_execute_command_with_environment(self):
         """Test executing command with custom environment."""
         import sys
-        import platform
         fallback = DirectExecutionFallback()
-        
-        if platform.system() == "Windows":
-            # Windows: use echo with environment variable
-            cmd = "echo %TEST_VAR%"
-        else:
-            # Unix: use echo with environment variable
-            cmd = "echo $TEST_VAR"
+
+        # Use Python to print environment variable (cross-platform, works without shell)
+        cmd = f'{sys.executable} -c "import os; print(os.environ.get(\'TEST_VAR\', \'\'))"'
         result = await fallback.execute_command(
             command=cmd,
             environment={"TEST_VAR": "test_value"},
             is_raw_cli=True,  # Skip Skill command conversion
         )
-        
+
         assert result["status"] == "completed"
         output = result["stdout"] + result["stderr"]
         assert "test_value" in output
@@ -191,19 +183,16 @@ class TestDirectExecutionFallback:
     async def test_execute_command_workflow_id_in_env(self):
         """Test that workflow_id is set in environment."""
         import sys
-        import platform
         fallback = DirectExecutionFallback()
-        
-        if platform.system() == "Windows":
-            cmd = "echo %TAPPS_AGENTS_WORKFLOW_ID%"
-        else:
-            cmd = "echo $TAPPS_AGENTS_WORKFLOW_ID"
+
+        # Use Python to print environment variable (cross-platform, works without shell)
+        cmd = f'{sys.executable} -c "import os; print(os.environ.get(\'TAPPS_AGENTS_WORKFLOW_ID\', \'\'))"'
         result = await fallback.execute_command(
             command=cmd,
             workflow_id="test-workflow-123",
             is_raw_cli=True,  # Skip Skill command conversion
         )
-        
+
         assert result["status"] == "completed"
         output = result["stdout"] + result["stderr"]
         assert "test-workflow-123" in output
@@ -212,19 +201,16 @@ class TestDirectExecutionFallback:
     async def test_execute_command_step_id_in_env(self):
         """Test that step_id is set in environment."""
         import sys
-        import platform
         fallback = DirectExecutionFallback()
-        
-        if platform.system() == "Windows":
-            cmd = "echo %TAPPS_AGENTS_STEP_ID%"
-        else:
-            cmd = "echo $TAPPS_AGENTS_STEP_ID"
+
+        # Use Python to print environment variable (cross-platform, works without shell)
+        cmd = f'{sys.executable} -c "import os; print(os.environ.get(\'TAPPS_AGENTS_STEP_ID\', \'\'))"'
         result = await fallback.execute_command(
             command=cmd,
             step_id="step-1",
             is_raw_cli=True,  # Skip Skill command conversion
         )
-        
+
         assert result["status"] == "completed"
         output = result["stdout"] + result["stderr"]
         assert "step-1" in output
@@ -233,18 +219,15 @@ class TestDirectExecutionFallback:
     async def test_execute_command_cursor_mode_in_env(self):
         """Test that TAPPS_AGENTS_MODE is set to cursor."""
         import sys
-        import platform
         fallback = DirectExecutionFallback()
-        
-        if platform.system() == "Windows":
-            cmd = "echo %TAPPS_AGENTS_MODE%"
-        else:
-            cmd = "echo $TAPPS_AGENTS_MODE"
+
+        # Use Python to print environment variable (cross-platform, works without shell)
+        cmd = f'{sys.executable} -c "import os; print(os.environ.get(\'TAPPS_AGENTS_MODE\', \'\'))"'
         result = await fallback.execute_command(
             command=cmd,
             is_raw_cli=True,  # Skip Skill command conversion
         )
-        
+
         assert result["status"] == "completed"
         output = result["stdout"] + result["stderr"]
         assert "cursor" in output.lower()
