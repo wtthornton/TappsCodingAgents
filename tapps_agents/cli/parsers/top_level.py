@@ -842,6 +842,11 @@ Example: tapps-agents generate-rules""",
         action="store_true",
         help="Preview what would be reset without actually making changes. Shows framework files that would be deleted and files that would be preserved.",
     )
+    init_parser.add_argument(
+        "--hooks",
+        action="store_true",
+        help="Create .tapps-agents/hooks.yaml from hook templates (all disabled) and .tapps-agents/context/ with template files. Without this, init creates minimal empty hooks.yaml only.",
+    )
 
     # Environment diagnostics
     doctor_parser = subparsers.add_parser(
@@ -1514,6 +1519,39 @@ Reports any missing components, configuration errors, or issues that would preve
         help='Arguments passed to bd (e.g. ready, create "Title" -p 0)',
     )
 
+    # Task management (task specs, hydration, run workflow from spec)
+    task_parser = subparsers.add_parser(
+        "task",
+        help="Task management: create, list, show, update, close, hydrate, dehydrate, run",
+        description="Manage task specs in .tapps-agents/task-specs/ and sync with Beads. Hydrate creates Beads issues from specs; dehydrate updates specs from Beads.",
+    )
+    task_subparsers = task_parser.add_subparsers(
+        dest="task_command",
+        help="Task subcommand",
+        required=True,
+    )
+    task_create_p = task_subparsers.add_parser("create", help="Create a task spec (and optionally Beads issue)")
+    task_create_p.add_argument("id", help="Task ID (e.g. enh-002-s1)")
+    task_create_p.add_argument("--title", "-t", required=True, help="Task title")
+    task_create_p.add_argument("--description", "-d", default="", help="Task description")
+    task_create_p.add_argument("--workflow", default="build", help="Workflow to run (default: build)")
+    task_create_p.add_argument("--beads", action="store_true", help="Also create Beads issue (hydrate)")
+    task_list_p = task_subparsers.add_parser("list", help="List task specs with optional status filter")
+    task_list_p.add_argument("--status", choices=["todo", "in-progress", "done", "blocked"], help="Filter by status")
+    task_list_p.add_argument("--format", choices=["json", "text"], default="text", help="Output format (default: text)")
+    task_show_p = task_subparsers.add_parser("show", help="Show a task spec and Beads status")
+    task_show_p.add_argument("id", help="Task ID")
+    task_update_p = task_subparsers.add_parser("update", help="Update task spec (e.g. status)")
+    task_update_p.add_argument("id", help="Task ID")
+    task_update_p.add_argument("--status", choices=["todo", "in-progress", "done", "blocked"], help="Set status")
+    task_close_p = task_subparsers.add_parser("close", help="Close task (set status to done)")
+    task_close_p.add_argument("id", help="Task ID")
+    task_hydrate_p = task_subparsers.add_parser("hydrate", help="Create Beads issues from task specs")
+    task_hydrate_p.add_argument("--force", action="store_true", help="Re-create or update Beads issues")
+    task_dehydrate_p = task_subparsers.add_parser("dehydrate", help="Update task specs from Beads status")
+    task_run_p = task_subparsers.add_parser("run", help="Run workflow from task spec and update spec on completion")
+    task_run_p.add_argument("id", help="Task ID")
+
     # Simple Mode commands
     simple_mode_parser = subparsers.add_parser(
         "simple-mode",
@@ -1761,6 +1799,65 @@ The workflow will resume from the last successfully completed step.""",
         nargs=argparse.REMAINDER,
         default=[],
         help="bd arguments: create 'Title', ready, close ID, dep add C P",
+    )
+
+    # Simple Mode: epic – execute Epic document
+    simple_mode_epic_parser = simple_mode_subparsers.add_parser(
+        "epic",
+        help="Execute Epic document – all stories in dependency order",
+        description="""Execute all stories in an Epic markdown document in dependency order.
+
+Loads the Epic document, resolves story dependencies (topological sort), and runs
+each story through the build workflow (enhance → plan → implement → review → test)
+with quality gates. Progress is tracked and a completion report is saved.""",
+    )
+    simple_mode_epic_parser.add_argument(
+        "epic_path",
+        nargs="?",
+        help="Path to Epic markdown file (e.g. stories/enh-002-critical-enhancements.md)",
+    )
+    simple_mode_epic_parser.add_argument(
+        "--quality-threshold",
+        type=float,
+        default=70.0,
+        help="Minimum quality score for stories (default: 70)",
+    )
+    simple_mode_epic_parser.add_argument(
+        "--critical-service-threshold",
+        type=float,
+        default=80.0,
+        help="Minimum quality for critical services (default: 80)",
+    )
+    simple_mode_epic_parser.add_argument(
+        "--auto",
+        action="store_true",
+        help="Fully automated execution (no interactive prompts)",
+    )
+    simple_mode_epic_parser.add_argument(
+        "--no-quality-gates",
+        action="store_true",
+        help="Skip quality gate enforcement",
+    )
+
+    # Simple Mode: epic-status – sync report status into epic .md
+    simple_mode_epic_status_parser = simple_mode_subparsers.add_parser(
+        "epic-status",
+        help="Update epic markdown with execution status from report JSON",
+        description="""Update the epic .md file with execution status from the last run.
+
+Reads stories/epic-N-report.json (or --report path) and adds or updates
+**Execution status:** done | failed for each story in the markdown.
+Run after 'simple-mode epic' to keep the epic document in sync with the report.""",
+    )
+    simple_mode_epic_status_parser.add_argument(
+        "epic_path",
+        nargs="?",
+        help="Path to Epic markdown file (e.g. stories/enh-002-critical-enhancements.md)",
+    )
+    simple_mode_epic_status_parser.add_argument(
+        "--report",
+        type=Path,
+        help="Path to epic-N-report.json (default: same dir as epic, epic-{N}-report.json)",
     )
 
     # Learning export commands

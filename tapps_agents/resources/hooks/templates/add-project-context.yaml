@@ -1,0 +1,8 @@
+# Inject project context on UserPromptSubmit (e.g. cat .tapps-agents/context/*).
+# Add files under .tapps-agents/context/ to provide extra context to the prompt.
+hooks:
+  UserPromptSubmit:
+    - name: add-project-context
+      command: "test -d .tapps-agents/context && cat .tapps-agents/context/*.md 2>/dev/null || true"
+      enabled: true
+      fail_on_error: false

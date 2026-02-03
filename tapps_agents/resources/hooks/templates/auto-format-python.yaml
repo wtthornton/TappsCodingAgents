@@ -1,0 +1,10 @@
+# Auto-format Python files after Write/Edit (ruff).
+# Enable and ensure ruff is installed: pip install ruff
+hooks:
+  PostToolUse:
+    - name: auto-format-python
+      command: "ruff format {{TAPPS_FILE_PATH}}"
+      enabled: true
+      matcher: "Write|Edit"
+      file_patterns: ["*.py"]
+      fail_on_error: false

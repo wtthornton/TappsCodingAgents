@@ -1,0 +1,7 @@
+# Log session end (optional debugging).
+hooks:
+  SessionEnd:
+    - name: session-end-log
+      command: "echo 'Session {{TAPPS_SESSION_ID}} ended'"
+      enabled: true
+      fail_on_error: false

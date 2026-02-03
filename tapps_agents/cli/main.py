@@ -51,6 +51,7 @@ from .commands import (
     planner,
     reviewer,
     simple_mode,
+    task as task_cmd,
     tester,
     top_level,
 )
@@ -367,6 +368,7 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "setup-experts": top_level.handle_setup_experts_command,
         "cursor": top_level.handle_cursor_command,
         "beads": top_level.handle_beads_command,
+        "task": task_cmd.handle_task_command,
         "continuous-bug-fix": top_level.handle_continuous_bug_fix_command,
         "bug-fix-continuous": top_level.handle_continuous_bug_fix_command,
         "brownfield": top_level.handle_brownfield_command,
@@ -498,14 +500,19 @@ def route_command(args: argparse.Namespace) -> None:
         args = enhance_prompt_if_needed(args, config.auto_enhancement)
     
     agent = args.agent
-    
+
     # Handle None case (show help)
     if agent is None:
         help_parser = create_root_parser()
         register_all_parsers(help_parser)
         _safe_print_help(help_parser)
         return
-    
+
+    # Session lifecycle: start on first CLI command, SessionEnd via atexit
+    from pathlib import Path
+    from ..session import ensure_session_started
+    ensure_session_started(Path.cwd())
+
     # Try agent command handlers first
     agent_handlers = _get_agent_command_handlers()
     if agent in agent_handlers:

@@ -1,0 +1,8 @@
+# Notify when workflow completes (e.g. desktop notification or webhook).
+# Customize command for your notification channel.
+hooks:
+  WorkflowComplete:
+    - name: notify-on-complete
+      command: "echo 'Workflow {{TAPPS_WORKFLOW_TYPE}} completed with status {{TAPPS_WORKFLOW_STATUS}}'"
+      enabled: true
+      fail_on_error: false

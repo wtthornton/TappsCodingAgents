@@ -1,0 +1,10 @@
+# Run security scan on edited files (e.g. bandit for Python).
+# Enable and ensure bandit is installed: pip install bandit
+hooks:
+  PostToolUse:
+    - name: security-scan-on-edit
+      command: "python -m bandit -q {{TAPPS_FILE_PATH}} 2>/dev/null || true"
+      enabled: true
+      matcher: "Write|Edit"
+      file_patterns: ["*.py"]
+      fail_on_error: false

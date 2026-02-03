@@ -1,0 +1,8 @@
+# Run quality checks when workflow completes (lint + tests).
+# Customize command for your project (e.g. pytest, npm test).
+hooks:
+  WorkflowComplete:
+    - name: quality-gate
+      command: "echo 'Quality gate: run pytest and ruff' && (ruff check . 2>/dev/null || true) && (pytest -q 2>/dev/null || true)"
+      enabled: true
+      fail_on_error: false

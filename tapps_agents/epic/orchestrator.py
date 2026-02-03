@@ -202,8 +202,7 @@ class EpicOrchestrator:
             workflow_yaml = self._create_story_workflow(story)
 
             # Parse and execute workflow
-            parser = WorkflowParser()
-            workflow = parser.parse_workflow(workflow_yaml)
+            workflow = WorkflowParser.parse_yaml(workflow_yaml)
 
             # Execute with quality gate loopback
             iteration = 0

@@ -258,15 +258,14 @@ class EpicParser:
         matches = re.finditer(story_pattern, stories_text, re.DOTALL)
 
         for match in matches:
-            # Handle both patterns
+            # Handle both patterns; body is always group 8: (alt1|alt2)(.+?)
             if match.group(2):  # Pattern 1: "1. **Story X.Y: Title**"
                 story_num = int(match.group(3))
                 title = match.group(4).strip()
-                body = match.group(5)
             else:  # Pattern 2: "**Story X.Y: Title**"
                 story_num = int(match.group(6))
                 title = match.group(7).strip()
-                body = match.group(8)
+            body = match.group(8)
 
             # Extract description (everything before acceptance criteria)
             desc_match = re.search(
@@ -380,7 +379,7 @@ class EpicParser:
         Topologically sort stories by dependencies.
 
         Returns:
-            List of stories in execution order
+            List of stories in execution order (dependencies first)
 
         Raises:
             ValueError: If circular dependencies detected
@@ -388,16 +387,20 @@ class EpicParser:
         graph = self.build_dependency_graph(epic)
         story_map = {s.story_id: s for s in epic.stories}
 
-        # Kahn's algorithm for topological sort
-        in_degree: dict[str, int] = {story.story_id: 0 for story in epic.stories}
+        # Kahn's algorithm: in_degree[story] = number of prerequisites
+        # graph[story] = deps means story depends on deps, so edges dep->story
+        in_degree: dict[str, int] = {
+            s.story_id: len(s.dependencies) for s in epic.stories
+        }
 
-        # Calculate in-degrees
-        for deps in graph.values():
+        # Reverse graph: for each dep, which stories depend on it
+        rev_graph: dict[str, list[str]] = {s.story_id: [] for s in epic.stories}
+        for story_id, deps in graph.items():
             for dep in deps:
-                if dep in in_degree:
-                    in_degree[dep] = in_degree.get(dep, 0) + 1
+                if dep in rev_graph:
+                    rev_graph[dep].append(story_id)
 
-        # Find nodes with no incoming edges
+        # Queue: stories with no prerequisites
         queue: list[str] = [sid for sid, degree in in_degree.items() if degree == 0]
         result: list[Story] = []
 
@@ -405,16 +408,17 @@ class EpicParser:
             story_id = queue.pop(0)
             result.append(story_map[story_id])
 
-            # Remove edges from this node
-            for dep in graph.get(story_id, []):
-                if dep in in_degree:
-                    in_degree[dep] -= 1
-                    if in_degree[dep] == 0:
-                        queue.append(dep)
+            # Decrement in_degree of stories that depended on this one
+            for dependent in rev_graph.get(story_id, []):
+                in_degree[dependent] -= 1
+                if in_degree[dependent] == 0:
+                    queue.append(dependent)
 
         # Check for circular dependencies
         if len(result) != len(epic.stories):
-            remaining = set(s.story_id for s in epic.stories) - set(s.story_id for s in result)
+            remaining = set(s.story_id for s in epic.stories) - set(
+                s.story_id for s in result
+            )
             raise ValueError(
                 f"Circular dependencies detected. Stories involved: {', '.join(remaining)}"
             )

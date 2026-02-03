@@ -44,9 +44,13 @@ def handle_simple_mode_command(args: object) -> None:
         handle_simple_mode_breakdown(args)
     elif command == "todo":
         handle_simple_mode_todo(args)
+    elif command == "epic":
+        handle_simple_mode_epic(args)
+    elif command == "epic-status":
+        handle_simple_mode_epic_status(args)
     else:
         feedback = get_feedback()
-        available_commands = ["on", "off", "status", "init", "configure", "progress", "full", "build", "resume", "enhance", "breakdown", "todo"]
+        available_commands = ["on", "off", "status", "init", "configure", "progress", "full", "build", "resume", "enhance", "breakdown", "todo", "epic", "epic-status"]
         command_list = ", ".join(available_commands)
         feedback.error(
             f"Invalid simple-mode command: {command or '(none provided)'}",
@@ -670,6 +674,168 @@ def handle_simple_mode_full(args: object) -> None:
         feedback.error(
             "Workflow execution error",
             error_code="workflow_execution_error",
+            context={"error": str(e)},
+            exit_code=1,
+        )
+
+
+def handle_simple_mode_epic(args: object) -> None:
+    """Handle simple-mode epic command - execute Epic document (all stories in dependency order)."""
+    feedback = get_feedback()
+    epic_path = getattr(args, "epic_path", None)
+
+    if not epic_path:
+        feedback.error(
+            "Epic path required",
+            error_code="epic_path_required",
+            remediation="Use: tapps-agents simple-mode epic <path> (e.g. stories/enh-002-critical-enhancements.md)",
+            exit_code=2,
+        )
+        return
+
+    feedback.start_operation("Executing Epic")
+    project_root = Path.cwd()
+    epic_path_resolved = Path(epic_path)
+    if not epic_path_resolved.is_absolute():
+        if (project_root / epic_path_resolved).exists():
+            epic_path_resolved = project_root / epic_path_resolved
+        elif (project_root / "docs" / "prd" / epic_path_resolved.name).exists():
+            epic_path_resolved = project_root / "docs" / "prd" / epic_path_resolved.name
+        else:
+            epic_path_resolved = project_root / epic_path_resolved
+
+    if not epic_path_resolved.exists():
+        feedback.error(
+            "Epic document not found",
+            error_code="epic_not_found",
+            context={"path": str(epic_path_resolved)},
+            remediation="Provide a valid path to an Epic markdown file",
+            exit_code=2,
+        )
+        return
+
+    quality_threshold = getattr(args, "quality_threshold", 70.0)
+    critical_threshold = getattr(args, "critical_service_threshold", 80.0)
+    auto_mode = getattr(args, "auto", False)
+    enforce_quality_gates = not getattr(args, "no_quality_gates", False)
+
+    from ...core.config import load_config
+    from ...simple_mode.intent_parser import Intent, IntentType
+    from ...simple_mode.orchestrators.epic_orchestrator import EpicOrchestrator
+
+    config = load_config()
+    orchestrator = EpicOrchestrator(
+        project_root=project_root,
+        config=config,
+    )
+
+    intent = Intent(
+        type=IntentType.EPIC,
+        confidence=1.0,
+        parameters={
+            "epic_path": str(epic_path_resolved),
+            "quality_threshold": quality_threshold,
+            "critical_service_threshold": critical_threshold,
+            "auto_mode": auto_mode,
+            "enforce_quality_gates": enforce_quality_gates,
+        },
+        original_input=str(epic_path_resolved),
+    )
+
+    feedback.clear_progress()
+    print(f"\n{'='*60}")
+    print("Epic Execution")
+    print(f"{'='*60}")
+    print(f"Epic: {epic_path_resolved}")
+    print(f"Quality threshold: {quality_threshold}")
+    print(f"Auto mode: {auto_mode}")
+    print()
+
+    try:
+        import asyncio
+        result = asyncio.run(orchestrator.execute(intent, intent.parameters))
+
+        if result.get("success", False):
+            feedback.success("Epic execution completed")
+            print("\n[OK] Epic execution completed!")
+            print(f"  Epic: {result.get('epic_number')} - {result.get('epic_title', '')}")
+            print(f"  Completion: {result.get('completion_percentage', 0):.1f}%")
+            print(f"  Done: {result.get('done_stories', 0)}/{result.get('total_stories', 0)} stories")
+            if result.get("failed_stories", 0) > 0:
+                print(f"  Failed: {result.get('failed_stories', 0)} stories")
+            report_path = result.get("report_path")
+            if report_path:
+                print(f"\nReport saved to: {report_path}")
+        else:
+            feedback.error(
+                "Epic execution failed",
+                error_code="epic_execution_failed",
+                context={"error": result.get("error", "Unknown error")},
+                exit_code=1,
+            )
+    except Exception as e:
+        feedback.error(
+            "Epic execution error",
+            error_code="epic_execution_error",
+            context={"error": str(e)},
+            exit_code=1,
+        )
+
+
+def handle_simple_mode_epic_status(args: object) -> None:
+    """Update epic markdown with execution status from report JSON."""
+    feedback = get_feedback()
+    epic_path = getattr(args, "epic_path", None)
+    report_path = getattr(args, "report", None)
+
+    if not epic_path:
+        feedback.error(
+            "Epic path required",
+            error_code="epic_path_required",
+            remediation="Use: tapps-agents simple-mode epic-status <path> (e.g. stories/enh-002-critical-enhancements.md)",
+            exit_code=2,
+        )
+        return
+
+    project_root = Path.cwd()
+    epic_path_resolved = Path(epic_path)
+    if not epic_path_resolved.is_absolute():
+        if (project_root / epic_path_resolved).exists():
+            epic_path_resolved = project_root / epic_path_resolved
+        elif (project_root / "docs" / "prd" / epic_path_resolved.name).exists():
+            epic_path_resolved = project_root / "docs" / "prd" / epic_path_resolved.name
+        else:
+            epic_path_resolved = project_root / epic_path_resolved
+
+    try:
+        from ...epic.markdown_sync import update_epic_markdown_from_report
+
+        update_epic_markdown_from_report(
+            epic_path_resolved,
+            report_path=report_path,
+            project_root=project_root,
+        )
+        feedback.success("Epic markdown updated with execution status")
+        print(f"\n[OK] Updated {epic_path_resolved} with status from report.")
+    except FileNotFoundError as e:
+        feedback.error(
+            "File not found",
+            error_code="epic_status_file_not_found",
+            context={"error": str(e)},
+            remediation="Run 'simple-mode epic <path>' first to generate the report, or pass --report <path>.",
+            exit_code=2,
+        )
+    except ValueError as e:
+        feedback.error(
+            "Invalid epic or report",
+            error_code="epic_status_invalid",
+            context={"error": str(e)},
+            exit_code=2,
+        )
+    except Exception as e:
+        feedback.error(
+            "Epic status update failed",
+            error_code="epic_status_update_failed",
             context={"error": str(e)},
             exit_code=1,
         )

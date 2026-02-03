@@ -845,6 +845,102 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
     return created, str(dest_file)
 
 
+def init_hooks_minimal(project_root: Path | None = None) -> tuple[bool, str | None]:
+    """
+    Create minimal empty hooks.yaml so hooks config exists but no hooks are enabled.
+
+    Used by standard `tapps-agents init` (no --hooks). Does not overwrite existing file.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+    config_dir = project_root / ".tapps-agents"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    hooks_file = config_dir / "hooks.yaml"
+    if hooks_file.exists():
+        return False, str(hooks_file)
+    hooks_file.write_text("hooks: {}\n", encoding="utf-8")
+    return True, str(hooks_file)
+
+
+def init_hooks_and_context(
+    project_root: Path | None = None,
+) -> tuple[bool, str | None, bool, list[str]]:
+    """
+    Create hooks.yaml from packaged templates (all hooks disabled) and .tapps-agents/context/.
+
+    Used by `tapps-agents init --hooks`. Merges all template YAMLs under
+    tapps_agents/resources/hooks/templates/*.yaml into one hooks.yaml with every hook
+    set to enabled: false. Also creates .tapps-agents/context/ with a README template.
+
+    Returns:
+        (hooks_created, hooks_path, context_created, files_created_list)
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+    files_created: list[str] = []
+    config_dir = project_root / ".tapps-agents"
+    config_dir.mkdir(parents=True, exist_ok=True)
+    hooks_file = config_dir / "hooks.yaml"
+
+    try:
+        from ..hooks.config import HOOK_EVENT_TYPES
+    except ImportError:
+        HOOK_EVENT_TYPES = frozenset(
+            {"UserPromptSubmit", "PostToolUse", "SessionStart", "SessionEnd", "WorkflowComplete"}
+        )
+
+    # Load and merge template YAMLs from packaged resources
+    merged: dict[str, list[dict[str, Any]]] = {}
+    templates_root = _resource_at("hooks", "templates")
+    if templates_root is not None and templates_root.is_dir():
+        for entry in templates_root.iterdir():
+            if not entry.name.endswith(".yaml") or not entry.is_file():
+                continue
+            try:
+                raw = yaml.safe_load(entry.read_bytes())
+                if not isinstance(raw, dict) or "hooks" not in raw:
+                    continue
+                for event_name, hook_list in raw["hooks"].items():
+                    if event_name not in HOOK_EVENT_TYPES:
+                        continue
+                    if not isinstance(hook_list, list):
+                        continue
+                    for item in hook_list:
+                        if not isinstance(item, dict):
+                            continue
+                        # Force disabled for init --hooks
+                        hook_copy = dict(item)
+                        hook_copy["enabled"] = False
+                        merged.setdefault(event_name, []).append(hook_copy)
+            except Exception as e:
+                logger.debug("Skip template %s: %s", entry.name, e)
+
+    out: dict[str, Any] = {"hooks": merged}
+    hooks_file.write_text(
+        yaml.safe_dump(out, sort_keys=False, default_flow_style=False),
+        encoding="utf-8",
+    )
+    hooks_created = True
+    files_created.append(".tapps-agents/hooks.yaml")
+
+    # Create .tapps-agents/context/ with template README
+    context_dir = config_dir / "context"
+    context_dir.mkdir(parents=True, exist_ok=True)
+    context_readme = context_dir / "README.md"
+    context_created = False
+    if not context_readme.exists():
+        context_readme.write_text(
+            "# Project context\n\n"
+            "Add markdown or text files here to inject project-specific context "
+            "into UserPromptSubmit (e.g. via a hook that cats these files).\n",
+            encoding="utf-8",
+        )
+        context_created = True
+        files_created.append(".tapps-agents/context/README.md")
+
+    return hooks_created, str(hooks_file), context_created, files_created
+
+
 def _ensure_set_bd_path_script(project_root: Path) -> tuple[bool, str | None]:
     """
     If tools/bd exists, ensure scripts/set_bd_path.ps1 exists (copy from resources if missing).
@@ -2611,6 +2707,7 @@ def init_project(
     backup_before_reset: bool = True,
     reset_mcp: bool = False,
     preserve_custom: bool = True,
+    include_hooks_templates: bool = False,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -2627,6 +2724,8 @@ def init_project(
         backup_before_reset: Whether to create backup before reset (default: True)
         reset_mcp: Whether to reset MCP config (default: False)
         preserve_custom: Whether to preserve custom Skills, Rules, and presets (default: True)
+        include_hooks_templates: If True, create hooks.yaml from templates and .tapps-agents/context/
+            (init --hooks). If False, create minimal empty hooks.yaml (standard init).
 
     Returns:
         Dictionary with initialization results
@@ -2654,6 +2753,8 @@ def init_project(
         "custom_presets_preserved": [],
         "version_before": None,
         "version_after": None,
+        "hooks": False,
+        "hooks_templates": False,
     }
     
     # Handle reset mode
@@ -2819,6 +2920,20 @@ def init_project(
         results["cursorignore"] = success
         if ignore_path:
             results["files_created"].append(ignore_path)
+
+    # Initialize hooks: minimal empty hooks.yaml (standard init) or from templates + context (init --hooks)
+    if include_hooks_templates:
+        hooks_created, hooks_path, context_created, hooks_files = init_hooks_and_context(project_root)
+        results["hooks"] = hooks_created
+        results["hooks_templates"] = True
+        results["context_created"] = context_created
+        if hooks_files:
+            results["files_created"].extend(hooks_files)
+    else:
+        success, hooks_path = init_hooks_minimal(project_root)
+        results["hooks"] = success
+        if success and hooks_path:
+            results["files_created"].append(".tapps-agents/hooks.yaml")
 
     # If tools/bd exists, ensure scripts/set_bd_path.ps1 (do not overwrite)
     set_bd_installed, set_bd_path = _ensure_set_bd_path_script(project_root)

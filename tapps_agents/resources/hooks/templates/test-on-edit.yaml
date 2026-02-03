@@ -1,0 +1,10 @@
+# Run tests for affected file after Edit/Write (e.g. pytest for Python).
+# Customize command for your test runner.
+hooks:
+  PostToolUse:
+    - name: test-on-edit
+      command: "pytest {{TAPPS_FILE_PATH}} -q 2>/dev/null || true"
+      enabled: true
+      matcher: "Write|Edit"
+      file_patterns: ["*.py"]
+      fail_on_error: false

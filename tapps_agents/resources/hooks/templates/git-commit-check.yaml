@@ -1,0 +1,7 @@
+# Run git status check after workflow completes (remind to commit).
+hooks:
+  WorkflowComplete:
+    - name: git-commit-check
+      command: "git status -sb 2>/dev/null || true"
+      enabled: true
+      fail_on_error: false

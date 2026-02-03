@@ -1,0 +1,10 @@
+# Auto-format JS/TS files after Write/Edit (prettier).
+# Enable and ensure prettier is available: npm install -D prettier
+hooks:
+  PostToolUse:
+    - name: auto-format-js
+      command: "npx prettier --write {{TAPPS_FILE_PATH}}"
+      enabled: true
+      matcher: "Write|Edit"
+      file_patterns: ["*.js", "*.ts", "*.jsx", "*.tsx", "*.json"]
+      fail_on_error: false

@@ -1,0 +1,8 @@
+# Update docs when workflow completes (e.g. sync API docs).
+# Customize command for your project.
+hooks:
+  WorkflowComplete:
+    - name: update-docs-on-complete
+      command: "echo 'Update docs: customize for your project (e.g. sphinx-build, mkdocs)'"
+      enabled: true
+      fail_on_error: false

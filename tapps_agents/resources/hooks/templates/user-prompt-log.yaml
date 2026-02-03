@@ -1,0 +1,7 @@
+# Log user prompt submit (optional debugging; avoid logging secrets).
+hooks:
+  UserPromptSubmit:
+    - name: user-prompt-log
+      command: "echo 'Prompt length:' $(echo -n '{{TAPPS_PROMPT}}' | wc -c)"
+      enabled: true
+      fail_on_error: false

@@ -1,0 +1,8 @@
+# Show Beads ready tasks at session start (bd ready).
+# Enable when using Beads for task tracking; ensure bd is on PATH.
+hooks:
+  SessionStart:
+    - name: show-beads-ready
+      command: "bd ready 2>/dev/null || true"
+      enabled: true
+      fail_on_error: false

@@ -1454,6 +1454,18 @@ def _print_init_results(results: dict[str, Any]) -> None:
         print("    - .cursorignore")
     else:
         print("  .cursorignore: Skipped or already exists")
+
+    if results.get("hooks"):
+        if results.get("hooks_templates"):
+            print("  Hooks: Created from templates (all disabled)")
+            print("    - .tapps-agents/hooks.yaml")
+            if results.get("context_created"):
+                print("    - .tapps-agents/context/")
+        else:
+            print("  Hooks: Minimal hooks.yaml created")
+            print("    - .tapps-agents/hooks.yaml")
+    else:
+        print("  Hooks: Skipped or already exists")
     
     # Show MCP config (will be shown in dedicated section)
     # MCP status is now shown in _print_mcp_status() function
@@ -2194,6 +2206,7 @@ def handle_init_command(args: object) -> None:
         backup_before_reset=not getattr(args, "no_backup", False),
         reset_mcp=getattr(args, "reset_mcp", False),
         preserve_custom=getattr(args, "preserve_custom", True),
+        include_hooks_templates=getattr(args, "hooks", False),
     )
     
     # Offer interactive Context7 setup if API key is missing

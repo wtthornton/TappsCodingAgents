@@ -61,6 +61,24 @@ class WorkflowParser:
         return WorkflowParser.parse(content, file_path=file_path)
 
     @staticmethod
+    def parse_yaml(yaml_string: str, file_path: Path | None = None) -> Workflow:
+        """
+        Parse workflow from a YAML string.
+
+        Use this when you have workflow content as a string (e.g. from
+        _create_story_workflow or in-memory YAML). For file paths use parse_file.
+
+        Args:
+            yaml_string: Workflow YAML as string
+            file_path: Optional path for error messages
+
+        Returns:
+            Parsed Workflow object
+        """
+        content = yaml.safe_load(yaml_string)
+        return WorkflowParser.parse(content, file_path=file_path)
+
+    @staticmethod
     def parse(content: Any, file_path: Path | None = None) -> Workflow:
         """
         Parse workflow content from dictionary.
