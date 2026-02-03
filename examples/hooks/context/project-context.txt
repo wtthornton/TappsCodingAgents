@@ -1,0 +1,7 @@
+# Example context file for .tapps-agents/context/
+# UserPromptSubmit hooks can read files from this directory to inject context
+# into the prompt or to log. This file is optional.
+
+Project: Example project for hooks
+Use: Add any project-specific notes here. Hook scripts can read this file
+     when running at UserPromptSubmit to enrich the prompt or for logging.

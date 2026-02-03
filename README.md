@@ -93,6 +93,8 @@ If you're using **Cursor IDE**, get started quickly:
    # cd /path/to/TappsCodingAgents && tapps-agents init
    ```
 
+   Optional: `tapps-agents init --hooks` creates `.tapps-agents/hooks.yaml` and `.tapps-agents/context/` from templates (all hooks disabled by default). Use `tapps-agents task create|list|run` for task specs and multi-session workflows; see [Task Management Guide](docs/TASK_MANAGEMENT_GUIDE.md).
+
    This installs:
    - ✅ **Cursor Skills** (`.claude/skills/`) - Use `@agent *command` in Cursor IDE
    - ✅ **Claude Desktop Commands** (`.claude/commands/`) - Use `@command` in Claude Desktop
@@ -212,6 +214,8 @@ See [Demo Plan](docs/DEMO_PLAN.md) for complete demo scenarios and instructions.
   - **Context7 MCP Server**: Library documentation lookup (required, auto-configured)
   - **Playwright MCP Server**: Browser automation for E2E testing (optional, auto-detected)
   - **Beads (bd)** (optional or required): Task tracking; `tapps-agents beads`; doctor reports bd status; init hints or mandates `bd init` when detected. Set `beads.required: true` to make workflows fail when bd unavailable. [Beads Integration](docs/BEADS_INTEGRATION.md)
+- **Hooks** (opt-in): Run shell commands at UserPromptSubmit, PostToolUse, SessionStart, SessionEnd, and WorkflowComplete. Configure in `.tapps-agents/hooks.yaml`; use `tapps-agents init --hooks` to create a template. [Hooks Guide](docs/HOOKS_GUIDE.md)
+- **Task management / multi-session**: Task specs in `.tapps-agents/task-specs/`, `tapps-agents task create|list|show|update|close|hydrate|dehydrate|run`, and hydration/dehydration for Beads. [Task Management Guide](docs/TASK_MANAGEMENT_GUIDE.md)
 - **YAML Workflow Definitions**: Declarative, version-controlled orchestration with strict schema enforcement
 - **Greenfield/Brownfield Workflows**: Context-appropriate workflows for project types
 - **YAML-First Architecture** ✅ (Epics 6-10 Complete):

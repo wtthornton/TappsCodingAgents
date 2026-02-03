@@ -106,6 +106,8 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Features & Capabilities
 - **[Beads Integration](BEADS_INTEGRATION.md)** - Optional task tracking (bd); epic sync, *build/*fix hooks; `tapps-agents beads`; doctor reports status; init hints `bd init`
+- **[Hooks Guide](HOOKS_GUIDE.md)** - Opt-in hooks at UserPromptSubmit, PostToolUse, SessionStart, SessionEnd, WorkflowComplete; `.tapps-agents/hooks.yaml`; `init --hooks`
+- **[Task Management Guide](TASK_MANAGEMENT_GUIDE.md)** - Task specs (`.tapps-agents/task-specs/`), hydration/dehydration, `tapps-agents task create|list|show|update|close|hydrate|dehydrate|run`; multi-session workflows
 - **[Setup, Init, and Doctor Recommendations](SETUP_INIT_DOCTOR_RECOMMENDATIONS.md)** - Issues and improvement recommendations for tapps-agents init, doctor, and Beads setup
 - **[Context7 Integration](context7/CONTEXT7_CACHE_OPTIMIZATION.md)** - KB-first caching, analytics, cross-reference resolution
 - **[Context7 Integration Patterns](context7/CONTEXT7_PATTERNS.md)** - Best practices and patterns for Context7 usage
@@ -150,6 +152,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **Review code quality** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *review <file>`
 - **Generate tests** → [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) → Use `@simple-mode *test <file>`
 - **Configure agents** → [Configuration Guide](CONFIGURATION.md)
+- **Run hooks or task commands** → [Hooks Guide](HOOKS_GUIDE.md), [Task Management Guide](TASK_MANAGEMENT_GUIDE.md); optional `tapps-agents init --hooks`; `tapps-agents task list|run <id>`
 - **Configure prompt enhancement (CLI auto_enhancement, workflow EnhancerHandler)** → [CONFIGURATION.md: auto_enhancement](CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement)
 - **Add custom experts** → [Expert Setup Wizard](EXPERT_SETUP_WIZARD.md)
 - **Understand the architecture** → [Architecture Overview](ARCHITECTURE.md)

@@ -1,0 +1,36 @@
+# Example hooks.yaml for .tapps-agents/
+# Copy to your project: .tapps-agents/hooks.yaml
+# Enable hooks by setting enabled: true. All are disabled by default.
+
+hooks:
+  UserPromptSubmit:
+    - name: user-prompt-log
+      command: echo "UserPromptSubmit: prompt length from env TAPPS_PROMPT"
+      enabled: false
+      fail_on_error: false
+
+  PostToolUse:
+    - name: format-python
+      command: echo "PostToolUse: file={TAPPS_FILE_PATH} tool={TAPPS_TOOL_NAME}"
+      enabled: false
+      matcher: "Write|Edit"
+      file_patterns: ["*.py"]
+      fail_on_error: false
+
+  SessionStart:
+    - name: session-start-log
+      command: echo "SessionStart: session={TAPPS_SESSION_ID}"
+      enabled: false
+      fail_on_error: false
+
+  SessionEnd:
+    - name: session-end-log
+      command: echo "SessionEnd: session={TAPPS_SESSION_ID}"
+      enabled: false
+      fail_on_error: false
+
+  WorkflowComplete:
+    - name: workflow-complete-log
+      command: echo "WorkflowComplete: {TAPPS_WORKFLOW_TYPE} {TAPPS_WORKFLOW_ID} status={TAPPS_WORKFLOW_STATUS}"
+      enabled: false
+      fail_on_error: false

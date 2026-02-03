@@ -404,6 +404,11 @@ tapps-agents simple-mode full --prompt "description" --auto
 
 **For complete command reference, see:** `.cursor/rules/command-reference.mdc`
 
+### Hooks and task management
+
+- **Hooks** (opt-in): Configure `.tapps-agents/hooks.yaml` to run shell commands at UserPromptSubmit, PostToolUse, SessionStart, SessionEnd, and WorkflowComplete. Use `tapps-agents init --hooks` to create a template. See [docs/HOOKS_GUIDE.md](docs/HOOKS_GUIDE.md).
+- **Task management**: Task specs in `.tapps-agents/task-specs/`; CLI: `tapps-agents task create <id> --title "..."`, `task list`, `task show <id>`, `task update <id> --status in-progress`, `task close <id>`, `task hydrate`, `task dehydrate`, `task run <id>`. See [docs/TASK_MANAGEMENT_GUIDE.md](docs/TASK_MANAGEMENT_GUIDE.md).
+
 ## Documentation
 
 **Key Documentation Files:**
@@ -412,6 +417,8 @@ tapps-agents simple-mode full --prompt "description" --auto
 - `docs/ARCHITECTURE.md` - System architecture overview
 - `docs/README.md` - Documentation index (and where to place new docs: canonical vs [docs/archive/](docs/archive/README.md))
 - `docs/CURSOR_SKILLS_INSTALLATION_GUIDE.md` - Skills setup guide
+- `docs/HOOKS_GUIDE.md` - Hooks (events, config, env vars, templates)
+- `docs/TASK_MANAGEMENT_GUIDE.md` - Task specs, hydration, task CLI
 
 **Expert System & Knowledge Base:**
 - `docs/expert-priority-guide.md` - Expert priority configuration guidelines

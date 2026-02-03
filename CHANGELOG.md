@@ -8,13 +8,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-(none)
+- **ENH-002 (Epic 2): Hooks and task management**
+  - **Hooks in base orchestrator (Story 2.5):** UserPromptSubmit before workflow, PostToolUse after implementer Write/Edit, WorkflowComplete in finally; opt-in via `.tapps-agents/hooks.yaml`.
+  - **HOOKS_GUIDE.md:** Five events, configuration, env vars, template library, troubleshooting, security.
+  - **TASK_MANAGEMENT_GUIDE.md:** Task specs (`.tapps-agents/task-specs/`), hydration/dehydration, task CLI (create, list, show, update, close, hydrate, dehydrate, run).
+  - **Integration tests:** `tests/integration/hooks/` for workflow hook invocation; **examples/hooks/** with sample hooks.yaml and context.
 
 ### Changed
-(none)
+- **Base orchestrator:** Optional hook manager; `_trigger_user_prompt_submit`, `_trigger_post_tool_use`, `_trigger_workflow_complete` (no-op when hooks disabled).
+- **Build orchestrator:** Fires UserPromptSubmit at start, PostToolUse per implemented file, WorkflowComplete in finally.
 
 ### Documentation
-(none)
+- **README.md, docs/README.md:** Hooks and task management sections with links to HOOKS_GUIDE and TASK_MANAGEMENT_GUIDE; quick start mentions `init --hooks` and task commands.
+- **CLAUDE.md:** Hooks and task management subsection; doc links for HOOKS_GUIDE and TASK_MANAGEMENT_GUIDE.
+- **docs/CONFIGURATION.md:** Hooks and session section (hooks.yaml, session lifecycle, hydration/dehydration).
 
 ## [3.5.39] - 2026-02-02
 

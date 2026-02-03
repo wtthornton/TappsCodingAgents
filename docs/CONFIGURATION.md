@@ -32,6 +32,12 @@ your-project/
 
 If no config file is found, the framework uses default values.
 
+### Hooks and session
+
+- **Hooks** are configured in **`.tapps-agents/hooks.yaml`** (not in `config.yaml`). If the file is missing, no hooks run. Use `tapps-agents init --hooks` to create a template file and `.tapps-agents/context/`. See [HOOKS_GUIDE.md](HOOKS_GUIDE.md).
+- **Session lifecycle**: SessionStart runs on the first CLI command; SessionEnd runs at process exit (atexit). Session state can be written under `.tapps-agents/sessions/` when configured. SessionStart/End can trigger task hydration/dehydration when Beads and task-specs are enabled; see [TASK_MANAGEMENT_GUIDE.md](TASK_MANAGEMENT_GUIDE.md) and [BEADS_INTEGRATION.md](BEADS_INTEGRATION.md).
+- **Hydration** (create Beads issues from task specs) and **dehydration** (update specs from Beads) are controlled by Beads config and optional SessionStart/SessionEnd hooks. Task CLI: `tapps-agents task hydrate`, `task dehydrate`, `task create|list|show|update|close|run`.
+
 ## Configuration Schema
 
 ### Root Configuration

@@ -769,6 +769,12 @@ Your choice: [1/2/3]
             except OSError as e:
                 logger.debug("beads: could not persist beads_issue_id for resume: %s", e)
 
+        # Hooks (opt-in): UserPromptSubmit before workflow execution
+        self._trigger_user_prompt_submit(original_description, "build")
+
+        # Track final status for WorkflowComplete hook (set in finally)
+        workflow_final_status = "failed"
+
         # Plan 2.3: branch for agent changes
         ho = getattr(self.config, "human_oversight", None) if self.config else None
         if ho and getattr(ho, "branch_for_agent_changes", True):
@@ -1265,6 +1271,15 @@ Your choice: [1/2/3]
                                     # Link to requirements (if we have any)
                                     for req_id in tracer.requirements.keys():
                                         tracer.add_trace(req_id, "code", file_path)
+                                # Hooks (opt-in): PostToolUse after implementer Write/Edit
+                                file_paths_str = [str(p) for p in implemented_files_list]
+                                for fp in implemented_files_list:
+                                    self._trigger_post_tool_use(
+                                        "Write",
+                                        str(fp),
+                                        file_paths_str,
+                                        workflow_id=workflow_id,
+                                    )
 
                             # Save checkpoint and documentation for each step
                             if checkpoint_manager:
@@ -1674,6 +1689,9 @@ Your choice: [1/2/3]
             aggregated_output = output_aggregator.aggregate()
             executable_instructions = output_aggregator.get_executable_instructions()
 
+            # Hooks: set final status for WorkflowComplete (fired in finally)
+            workflow_final_status = "completed" if overall_success else "failed"
+
             # Session handoff on run end (plan 2.1)
             try:
                 from datetime import datetime
@@ -1726,6 +1744,13 @@ Your choice: [1/2/3]
                 "output_summary": output_aggregator.format_summary(),
             }
         finally:
+            # Hooks (opt-in): WorkflowComplete after workflow ends
+            self._trigger_workflow_complete(
+                "build",
+                workflow_id,
+                workflow_final_status,
+                beads_issue_id=beads_issue_id,
+            )
             close_issue(self.project_root, beads_issue_id)
 
     def _enrich_implementer_context(

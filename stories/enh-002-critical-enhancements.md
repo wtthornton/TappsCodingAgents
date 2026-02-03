@@ -29,7 +29,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
 ### Phase 1: Foundation (2 weeks, 4 stories, 13 points)
 
 1. **Story 2.1: Hook configuration schema and loader**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S1  
    **Priority:** 0 (highest)  
@@ -54,7 +54,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 2. **Story 2.2: Hook executor with environment variables**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S2  
    **Priority:** 0  
@@ -78,7 +78,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 3. **Story 2.3: Hook event definitions**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S3  
    **Priority:** 0  
@@ -101,7 +101,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 4. **Story 2.4: Hook manager**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S4  
    **Priority:** 0  
@@ -127,7 +127,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
 ### Phase 2: Integration (2 weeks, 3 stories, 13 points)
 
 5. **Story 2.5: Integrate hooks into base orchestrator**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S5  
    **Priority:** 0  
@@ -152,7 +152,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 6. **Story 2.6: Session lifecycle hooks**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S6  
    **Priority:** 0  
@@ -177,7 +177,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 7. **Story 2.7: Hook templates and init integration**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S7  
    **Priority:** 1  
@@ -203,7 +203,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
 ### Phase 3: Beads Hydration (2 weeks, 4 stories, 16 points)
 
 8. **Story 2.8: Task spec schema and loader**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S8  
    **Priority:** 0  
@@ -227,7 +227,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 9. **Story 2.9: Hydration engine**
-**Execution status:** failed
+**Execution status:** done
 
    **Ref ID:** ENH-002-S9  
    **Priority:** 0  
@@ -251,7 +251,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
    - GitHub Issue: TBD
 
 10. **Story 2.10: Task management CLI**
-**Execution status:** failed
+**Execution status:** done
 
     **Ref ID:** ENH-002-S10  
     **Priority:** 0  
@@ -278,7 +278,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
     - GitHub Issue: TBD
 
 11. **Story 2.11: SessionStart/End hydration integration**
-**Execution status:** failed
+**Execution status:** done
 
     **Ref ID:** ENH-002-S11  
     **Priority:** 0  
@@ -304,7 +304,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
 ### Phase 4: Documentation (1 week, 4 stories, 8 points)
 
 12. **Story 2.12: Hooks guide documentation**
-**Execution status:** failed
+**Execution status:** done
 
     **Ref ID:** ENH-002-S12  
     **Priority:** 1  
@@ -327,7 +327,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
     - GitHub Issue: TBD
 
 13. **Story 2.13: Task management documentation**
-**Execution status:** failed
+**Execution status:** done
 
     **Ref ID:** ENH-002-S13  
     **Priority:** 1  
@@ -350,7 +350,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
     - GitHub Issue: TBD
 
 14. **Story 2.14: Update existing documentation**
-**Execution status:** failed
+**Execution status:** done
 
     **Ref ID:** ENH-002-S14  
     **Priority:** 1  
@@ -374,7 +374,7 @@ This Epic delivers the ENH-002 scope from the PRD at `.tapps-agents/context/enh-
     - GitHub Issue: TBD
 
 15. **Story 2.15: Integration tests and examples**
-**Execution status:** failed
+**Execution status:** done
 
     **Ref ID:** ENH-002-S15  
     **Priority:** 1  
