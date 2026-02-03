@@ -227,7 +227,7 @@ class ExternalAPIManager:
 
 ## OAuth2-Based External APIs
 
-Many SaaS APIs (Zoho, Okta, Salesforce, Site24x7) use OAuth2 refresh-token flows for long-lived API access without user re-authentication.
+Many SaaS APIs use OAuth2 refresh-token flows for long-lived API access without user re-authentication.
 
 ### Pattern: OAuth2 Refresh-Token Client
 
@@ -302,7 +302,7 @@ class OAuth2ExternalAPIClient:
     def _headers(self) -> dict[str, str]:
         """Get HTTP headers for authenticated requests."""
         token = self._get_access_token()
-        # Note: Some APIs use custom headers (e.g. Zoho uses "Zoho-oauthtoken")
+        # Note: Some APIs use custom headers
         # See api-security-patterns.md for custom header patterns
         return {
             "Authorization": f"Bearer {token}",  # Standard OAuth2
@@ -337,54 +337,29 @@ class OAuth2ExternalAPIClient:
         return resp.json()
 ```
 
-### Examples
+### Example Usage
 
-#### Zoho/Site24x7
 ```python
+# Configure with your API's specific endpoints
 client = OAuth2ExternalAPIClient(
-    client_id=os.environ["SITE24X7_CLIENT_ID"],
-    client_secret=os.environ["SITE24X7_CLIENT_SECRET"],
-    refresh_token=os.environ["SITE24X7_REFRESH_TOKEN"],
-    api_base_url="https://www.site24x7.com/api",
-    token_url="https://accounts.zoho.com/oauth/v2/token",
+    client_id=os.environ["API_CLIENT_ID"],
+    client_secret=os.environ["API_CLIENT_SECRET"],
+    refresh_token=os.environ["API_REFRESH_TOKEN"],
+    api_base_url="https://api.example.com/v1",
+    token_url="https://api.example.com/oauth/v2/token",
 )
 
-# Note: Zoho uses custom header "Zoho-oauthtoken" instead of "Bearer"
+# For APIs with custom header formats:
 # Override _headers() method for custom header format:
 def _headers(self) -> dict[str, str]:
     token = self._get_access_token()
     return {
-        "Authorization": f"Zoho-oauthtoken {token}",  # Custom header
+        "Authorization": f"CustomPrefix {token}",  # Custom header format
         "Accept": "application/json",
     }
 
-status = client.get("/current_status")
-```
-
-#### Okta
-```python
-client = OAuth2ExternalAPIClient(
-    client_id=os.environ["OKTA_CLIENT_ID"],
-    client_secret=os.environ["OKTA_CLIENT_SECRET"],
-    refresh_token=os.environ["OKTA_REFRESH_TOKEN"],
-    api_base_url=f"https://{org}.okta.com/api/v1",
-    token_url=f"https://{org}.okta.com/oauth2/v1/token",
-)
-
-users = client.get("/users")
-```
-
-#### Salesforce
-```python
-client = OAuth2ExternalAPIClient(
-    client_id=os.environ["SALESFORCE_CLIENT_ID"],
-    client_secret=os.environ["SALESFORCE_CLIENT_SECRET"],
-    refresh_token=os.environ["SALESFORCE_REFRESH_TOKEN"],
-    api_base_url="https://yourinstance.salesforce.com/services/data/v58.0",
-    token_url="https://login.salesforce.com/services/oauth2/token",
-)
-
-accounts = client.get("/sobjects/Account")
+# Make authenticated requests
+data = client.get("/resource")
 ```
 
 ### Best Practices for OAuth2 External APIs
@@ -413,15 +388,15 @@ accounts = client.get("/sobjects/Account")
    # Some providers have different endpoints for different regions
    REGIONS = {
        "us": {
-           "api_base_url": "https://www.site24x7.com/api",
-           "token_url": "https://accounts.zoho.com/oauth/v2/token",
+           "api_base_url": "https://api.example.com/v1",
+           "token_url": "https://auth.example.com/oauth/v2/token",
        },
        "eu": {
-           "api_base_url": "https://www.site24x7.eu/api",
-           "token_url": "https://accounts.zoho.eu/oauth/v2/token",
+           "api_base_url": "https://api.example.eu/v1",
+           "token_url": "https://auth.example.eu/oauth/v2/token",
        },
    }
-   
+
    client = OAuth2ExternalAPIClient(
        ...,
        **REGIONS["eu"],  # Use EU endpoints
@@ -429,7 +404,7 @@ accounts = client.get("/sobjects/Account")
    ```
 
 4. **Custom Header Formats:**
-   - Some APIs (Zoho, GitHub) use non-standard auth headers
+   - Some APIs use non-standard auth headers (e.g., GitHub's "Token" format)
    - Make header format configurable or override `_headers()` method
    - See `api-security-patterns.md` section "Custom Authentication Headers" for details
 

@@ -1,6 +1,8 @@
 # Research: Why TappsCodingAgents Did Not Help with the Site24x7 Client Task
 
-**Date:** 2026-01-24  
+> **Note:** This document contains historical research from a project-specific implementation (Site24x7/Zoho). These vendor-specific references have been removed from the base TappsCodingAgents framework. The patterns and recommendations here have been generalized and incorporated into the framework's OAuth2 and external API integration knowledge. This file is kept for historical reference.
+
+**Date:** 2026-01-24
 **Context:** User asked to "review this [Site24x7 API client code], compare it to what you have, and fix our code." The request involved a minimal Zoho OAuth2 refresh-token client for the Site24x7 API. This document explains why tapps-agents did not know about or effectively help with this problem, and provides actionable recommendations.
 
 ---

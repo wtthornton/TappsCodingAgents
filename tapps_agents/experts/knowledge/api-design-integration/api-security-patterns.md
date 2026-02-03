@@ -86,8 +86,8 @@ import requests
 class OAuth2RefreshTokenClient:
     """
     OAuth2 client using refresh-token flow for long-lived API access.
-    
-    This pattern is used by many SaaS APIs (Zoho, Okta, Salesforce) that require
+
+    This pattern is used by many SaaS APIs that require
     long-term access without user re-authentication.
     """
     
@@ -198,11 +198,11 @@ class OAuth2RefreshTokenClient:
 
 **Best Practices:**
 - **Refresh proactively:** Refresh tokens 60 seconds before expiry to avoid race conditions
-- **Handle both expiry formats:** Some providers use `expires_in_sec`, others use `expires_in` (Zoho uses both)
+- **Handle both expiry formats:** Some providers use `expires_in_sec`, others use `expires_in` (handle both field names)
 - **Cache access tokens:** Store tokens until near expiry to reduce API calls
 - **Secure storage:** Use environment variables or secret managers for refresh tokens (never hardcode)
 - **Error handling:** Handle token refresh failures gracefully (retry, exponential backoff)
-- **Multi-region support:** Some providers (e.g. Zoho) have different endpoints for EU/US regions
+- **Multi-region support:** Some providers have different endpoints for different data centers/regions
 
 **Example Usage:**
 ```python
@@ -211,8 +211,8 @@ client = OAuth2RefreshTokenClient(
     client_id=os.environ["OAUTH_CLIENT_ID"],
     client_secret=os.environ["OAUTH_CLIENT_SECRET"],
     refresh_token=os.environ["OAUTH_REFRESH_TOKEN"],
-    token_url="https://accounts.zoho.com/oauth/v2/token",
-    api_base_url="https://www.site24x7.com/api",
+    token_url="https://api.example.com/oauth/v2/token",
+    api_base_url="https://api.example.com/v1",
 )
 
 # Token refresh happens automatically
@@ -288,24 +288,24 @@ context.load_verify_locations('ca.crt')
 **Overview:** Some APIs use non-standard authentication headers instead of the standard `Authorization: Bearer <token>` format.
 
 **Common Custom Headers:**
-- `Authorization: Zoho-oauthtoken <token>` (Zoho/Site24x7)
 - `Authorization: Bearer <token>` (standard OAuth2)
 - `X-API-Key: <key>` (API key authentication)
 - `Authorization: Token <token>` (GitHub-style)
+- `Authorization: <custom-prefix> <token>` (vendor-specific formats)
 
 **Implementation:**
 ```python
 def _headers(self) -> dict[str, str]:
     """
     Get HTTP headers for authenticated requests.
-    
+
     Supports custom auth header formats based on API requirements.
     """
     token = self._get_access_token()
-    
-    # Custom header format (e.g. Zoho/Site24x7)
+
+    # Custom header format (vendor-specific)
     return {
-        "Authorization": f"Zoho-oauthtoken {token}",  # Custom header format
+        "Authorization": f"CustomPrefix {token}",  # Replace with API-specific format
         "Accept": "application/json",
     }
 
@@ -329,14 +329,14 @@ def _headers_standard(self) -> dict[str, str]:
 ```python
 class FlexibleOAuth2Client:
     """OAuth2 client that supports multiple auth header formats."""
-    
+
     def __init__(self, auth_header_format: str = "Bearer"):
         """
         Args:
-            auth_header_format: Header format - "Bearer", "Zoho-oauthtoken", "Token", etc.
+            auth_header_format: Header format - "Bearer", "Token", "CustomPrefix", etc.
         """
         self.auth_header_format = auth_header_format
-    
+
     def _headers(self) -> dict[str, str]:
         token = self._get_access_token()
         return {
@@ -345,7 +345,7 @@ class FlexibleOAuth2Client:
         }
 
 # Usage:
-zoho_client = FlexibleOAuth2Client(auth_header_format="Zoho-oauthtoken")
+custom_client = FlexibleOAuth2Client(auth_header_format="CustomPrefix")
 github_client = FlexibleOAuth2Client(auth_header_format="Token")
 standard_client = FlexibleOAuth2Client(auth_header_format="Bearer")
 ```

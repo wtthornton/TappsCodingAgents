@@ -47,7 +47,6 @@ class AdaptiveDomainDetector:
             "refresh token",
             "token expiry",
             "access token refresh",
-            "zoho-oauthtoken",
         ],
         "api-clients": [
             "api client",
@@ -89,7 +88,6 @@ class AdaptiveDomainDetector:
             r"access_token",
             r"token_url",
             r"expires_in",
-            r"Zoho-oauthtoken",
             r"Bearer\s+token",
         ],
         "api-clients": [

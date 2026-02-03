@@ -1,8 +1,8 @@
 # Recommendations for Projects Using TappsCodingAgents: External API Clients
 
-**Date:** 2026-01-24  
-**Audience:** Projects using TappsCodingAgents to build or review external API clients  
-**Context:** This document provides workarounds and best practices when tapps-agents doesn't have domain knowledge for your specific external API (e.g. Site24x7, Zoho, custom OAuth2 flows).
+**Date:** 2026-01-24
+**Audience:** Projects using TappsCodingAgents to build or review external API clients
+**Context:** This document provides workarounds and best practices when tapps-agents doesn't have domain knowledge for your specific external API (e.g. custom OAuth2 flows).
 
 ---
 
@@ -24,7 +24,7 @@ You want to: "Review this API client code, compare it to our existing patterns, 
    ```cursor
    @simple-mode *review <file>
    ```
-   - Save your code to a file first (e.g. `scripts/site24x7_client.py`)
+   - Save your code to a file first (e.g. `scripts/external_api_client.py`)
    - This provides quality scores and feedback
 
 2. **Then, fix based on review:**
@@ -37,7 +37,7 @@ You want to: "Review this API client code, compare it to our existing patterns, 
 #### Option B: Use Build Workflow for New Clients
 If the API client is a **new feature**:
 ```cursor
-@simple-mode *build "Create Site24x7 API client with Zoho OAuth2 refresh-token authentication"
+@simple-mode *build "Create external API client with OAuth2 refresh-token authentication"
 ```
 - This runs the full 7-step workflow (enhance → plan → architect → design → implement → review → test)
 - Provides comprehensive documentation and tests
@@ -63,14 +63,14 @@ If the API client is a **new feature**:
 ## 2. Handling External APIs Not in Expert Knowledge
 
 ### Problem
-Tapps-agents doesn't know about your specific external API (e.g. Site24x7, Zoho, custom OAuth2).
+Tapps-agents doesn't know about your specific external API (e.g. custom OAuth2 implementations).
 
 ### Solutions
 
 #### Option A: Provide Context in Your Prompt
 When using `*build` or `*enhance`, include API-specific details:
 ```cursor
-@simple-mode *build "Create Site24x7 API client using Zoho OAuth2 refresh-token flow. Auth header: 'Zoho-oauthtoken <access_token>'. Token endpoint: https://accounts.zoho.com/oauth/v2/token. API base: https://www.site24x7.com/api"
+@simple-mode *build "Create external API client using OAuth2 refresh-token flow. Auth header: 'Bearer <access_token>'. Token endpoint: https://api.example.com/oauth/token. API base: https://api.example.com/v1"
 ```
 
 #### Option B: Use Generic Patterns
@@ -83,7 +83,7 @@ Then manually adapt to your specific API's requirements.
 
 #### Option C: Create Project-Specific Expert Knowledge
 Add your API patterns to your project's expert knowledge:
-1. Create `.tapps-agents/experts/knowledge/api-integrations/site24x7.md`
+1. Create `.tapps-agents/experts/knowledge/api-integrations/my-api.md`
 2. Document your API's auth flow, endpoints, patterns
 3. Configure an expert in `.tapps-agents/experts.yaml` that uses this knowledge
 4. Agents will consult this project-specific expert
@@ -91,11 +91,11 @@ Add your API patterns to your project's expert knowledge:
 **Example expert config:**
 ```yaml
 experts:
-  - expert_id: "project-site24x7"
-    name: "Site24x7 Integration Expert"
+  - expert_id: "project-my-api"
+    name: "My API Integration Expert"
     primary_domain: "api-design-integration"
     knowledge_base:
-      - path: ".tapps-agents/experts/knowledge/api-integrations/site24x7.md"
+      - path: ".tapps-agents/experts/knowledge/api-integrations/my-api.md"
     weight: 0.8
 ```
 
@@ -109,12 +109,12 @@ You pasted code in chat and want to review/fix it, but `*review` and `*fix` expe
 ### Solutions
 
 #### Option A: Save to File First (Recommended)
-1. Create a file: `scripts/site24x7_client.py`
+1. Create a file: `scripts/external_api_client.py`
 2. Paste your code
 3. Then use workflows:
    ```cursor
-   @simple-mode *review scripts/site24x7_client.py
-   @simple-mode *fix scripts/site24x7_client.py "description"
+   @simple-mode *review scripts/external_api_client.py
+   @simple-mode *fix scripts/external_api_client.py "description"
    ```
 
 #### Option B: Use Build Workflow
@@ -125,7 +125,7 @@ If it's a new feature, use `*build` which can work with descriptions:
 
 #### Option C: Ask AI to Create File First
 ```cursor
-Create a file scripts/site24x7_client.py with this code: [paste]
+Create a file scripts/external_api_client.py with this code: [paste]
 ```
 Then proceed with review/fix workflows.
 
@@ -167,7 +167,7 @@ For complex tasks, use multiple workflows:
 ### Current Limitations
 - **No "compare to codebase"** - Tapps-agents cannot systematically compare your code to existing project patterns (yet)
 - **Limited OAuth2 refresh-token knowledge** - Framework experts cover authorization-code flow, not refresh-token flows
-- **No SaaS API docs** - Context7 is for libraries (FastAPI, requests), not external APIs (Site24x7, Zoho)
+- **No SaaS API docs** - Context7 is for libraries (FastAPI, requests), not external SaaS APIs
 - **Reviewer doesn't use API-design experts** - Review focuses on security, performance, code-quality; not API client patterns
 
 ### Workarounds
@@ -178,40 +178,40 @@ For complex tasks, use multiple workflows:
 
 ---
 
-## 6. Example: Site24x7 Client Workflow
+## 6. Example: External API Client Workflow
 
 ### Step-by-Step
 
 1. **Save code to file:**
    ```bash
-   # Create scripts/site24x7_client.py with your code
+   # Create scripts/external_api_client.py with your code
    ```
 
 2. **Review for quality:**
    ```cursor
-   @simple-mode *review scripts/site24x7_client.py
+   @simple-mode *review scripts/external_api_client.py
    ```
    - Get scores, linting, type checking
-   - Note: Won't have Site24x7-specific knowledge, but will catch general issues
+   - Note: Won't have API-specific knowledge, but will catch general issues
 
 3. **Enhance with project context:**
    ```cursor
-   @simple-mode *enhance "Improve Site24x7 client: add logging, modern type hints (str | None), input validation, better error handling. Match patterns from backup_client.py"
+   @simple-mode *enhance "Improve external API client: add logging, modern type hints (str | None), input validation, better error handling. Match patterns from backup_client.py"
    ```
 
 4. **Apply improvements:**
    ```cursor
-   @implementer *refactor scripts/site24x7_client.py "Apply enhancements: add logging, use str | None, validate inputs, improve error messages"
+   @implementer *refactor scripts/external_api_client.py "Apply enhancements: add logging, use str | None, validate inputs, improve error messages"
    ```
 
 5. **Generate tests:**
    ```cursor
-   @simple-mode *test scripts/site24x7_client.py
+   @simple-mode *test scripts/external_api_client.py
    ```
 
 6. **Final review:**
    ```cursor
-   @simple-mode *review scripts/site24x7_client.py
+   @simple-mode *review scripts/external_api_client.py
    ```
 
 ---

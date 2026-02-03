@@ -625,16 +625,16 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
     async def _detect_api_client_pattern(self, specification: str, context: str | None = None) -> bool:
         """
         Detect if specification/context indicates an HTTP/API client implementation.
-        
+
         Checks for common patterns that indicate API client code:
         - Keywords: "API client", "OAuth2", "refresh token", "external API", "HTTP client"
-        - Authentication patterns: "Bearer", "Zoho", "token", "authentication"
+        - Authentication patterns: "Bearer", "token", "authentication"
         - API patterns: "REST API", "API integration", "third-party API"
-        
+
         Args:
             specification: Code specification/description
             context: Optional context code
-            
+
         Returns:
             True if specification appears to be for an API client, False otherwise
         """
@@ -665,10 +665,6 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         # Authentication keywords
         auth_keywords = [
             "bearer",
-            "zoho",
-            "site24x7",
-            "okta",
-            "salesforce",
             "authentication",
             "authorization",
             "api key",

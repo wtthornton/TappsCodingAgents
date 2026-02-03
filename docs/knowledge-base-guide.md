@@ -24,10 +24,10 @@ This guide explains how to organize knowledge bases for maximum RAG (Retrieval-A
 - **Expert Effectiveness**: Well-organized knowledge leads to higher-quality expert responses
 - **Maintenance**: Clear organization makes knowledge easier to update and expand
 
-**Real-World Impact** (Site24x7 Project):
-- `oauth-patterns.md` prevented critical `Bearer` vs `Zoho-oauthtoken` authentication bug
-- `rate-limiting.md` provided correct backoff strategy, avoiding API throttling
-- `RAG_SUMMARY.md` optimization improved retrieval accuracy by 30%
+**Real-World Impact**:
+- `oauth-patterns.md` can prevent critical authentication header format bugs
+- `rate-limiting.md` provides correct backoff strategy, avoiding API throttling
+- `RAG_SUMMARY.md` optimization can improve retrieval accuracy by 30%
 
 ---
 
@@ -219,28 +219,28 @@ token-management.md (630 words, 3 sections)
 
 ## What This Domain Covers
 
-Knowledge about Site24x7 monitoring platform API integration, including authentication, monitor management, and reporting.
+Knowledge about external API integration, including authentication, resource management, and reporting.
 
 ## Key Topics
 
-- **Authentication**: OAuth2 with Zoho-specific headers
-- **Monitors**: CRUD operations, filtering, batch processing
+- **Authentication**: OAuth2 authentication flows
+- **Resources**: CRUD operations, filtering, batch processing
 - **Rate Limiting**: API limits, backoff strategies
-- **Reporting**: Report generation, data export
+- **Reporting**: Data retrieval, export
 
 ## Knowledge Base Structure
 
 - [api-overview.md](api-overview.md) - API architecture, base URLs
 - [oauth-patterns.md](oauth-patterns.md) - Authentication flows
-- [monitor-management.md](monitor-management.md) - Monitor CRUD operations
+- [resource-management.md](resource-management.md) - Resource CRUD operations
 - [rate-limiting.md](rate-limiting.md) - Rate limit handling
 - [troubleshooting.md](troubleshooting.md) - Common errors
 
 ## When to Consult This Expert
 
-- Implementing Site24x7 API integrations
+- Implementing external API integrations
 - Debugging OAuth authentication issues
-- Optimizing monitor queries and filtering
+- Optimizing resource queries and filtering
 - Handling rate limits and API errors
 
 ## Related Domains
@@ -283,38 +283,38 @@ Knowledge about Site24x7 monitoring platform API integration, including authenti
 - ❌ {Anti-pattern 2}: {why it's wrong}
 ```
 
-**Example** (Site24x7 OAuth):
+**Example** (OAuth2 Authentication):
 ```markdown
-# RAG Summary: Site24x7 OAuth Authentication
+# RAG Summary: OAuth2 Authentication
 
 ## Keywords
 
-site24x7, zoho-oauth, oauth2, authentication, access-token, refresh-token, zoho-oauthtoken, bearer-token, authorization-header, oauth-flow
+oauth2, authentication, access-token, refresh-token, bearer-token, authorization-header, oauth-flow, token-refresh
 
 ## Core Concepts
 
-- **Zoho OAuth**: Site24x7 uses Zoho OAuth2 with custom `Zoho-oauthtoken` header (NOT standard `Bearer`)
-- **Token Refresh**: Access tokens expire in 1 hour, refresh tokens are long-lived
-- **Scope Management**: Different scopes for monitors, reports, admin operations
+- **OAuth2 Flow**: Standard OAuth2 with refresh-token flow for long-lived access
+- **Token Refresh**: Access tokens expire after configured period, refresh tokens are long-lived
+- **Scope Management**: Different scopes for different API operations
 
 ## Common Queries
 
-- How to authenticate with Site24x7 API?
-- What header format does Site24x7 use for OAuth?
-- How to refresh expired Site24x7 access tokens?
-- Why am I getting 401 Unauthorized from Site24x7?
+- How to authenticate with OAuth2 API?
+- What header format should be used for OAuth2?
+- How to refresh expired access tokens?
+- Why am I getting 401 Unauthorized?
 
 ## Critical Patterns
 
-- **Custom Header**: Use `Zoho-oauthtoken: {access_token}`, NOT `Authorization: Bearer {access_token}`
-- **Token Refresh**: Refresh tokens before expiry (< 55 minutes) to avoid auth gaps
+- **Standard Header**: Use `Authorization: Bearer {access_token}` for standard OAuth2
+- **Token Refresh**: Refresh tokens before expiry to avoid auth gaps
 - **Error Handling**: Distinguish between invalid token (401) and expired token (401 with specific error)
 
 ## Anti-Patterns (What NOT to do)
 
-- ❌ Using `Bearer` token format: Site24x7 requires `Zoho-oauthtoken` header
 - ❌ Hardcoding tokens: Always use refresh flow, never hardcode access tokens
 - ❌ Ignoring token expiry: Implement proactive refresh, not reactive (after 401)
+- ❌ Skipping error handling: Always handle 401 responses appropriately
 ```
 
 #### 3. Topic Documents ({topic}-{type}.md)
@@ -479,7 +479,7 @@ def get_valid_token(self):
 ### What Made This Effective
 
 **1. oauth-patterns.md** (High Value):
-- Explicitly stated `Zoho-oauthtoken` vs `Bearer` difference
+- Explicitly stated custom auth header vs standard `Bearer` difference
 - Included code example with correct header format
 - Prevented critical authentication bug
 

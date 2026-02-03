@@ -275,22 +275,22 @@ experts:
 # .tapps-agents/experts.yaml
 experts:
   # Critical: OAuth authentication (must be correct)
-  - id: expert-site24x7-api-auth
-    name: Site24x7 API Authentication Expert
+  - id: expert-external-api-auth
+    name: External API Authentication Expert
     priority: 0.95
-    domains: [site24x7-auth, oauth2, zoho-oauth]
-    knowledge_base: .tapps-agents/knowledge/site24x7/auth
+    domains: [api-auth, oauth2]
+    knowledge_base: .tapps-agents/knowledge/external-api/auth
 
-  # Important: Monitor configuration (frequently used)
-  - id: expert-site24x7-monitors
-    name: Site24x7 Monitor Expert
+  # Important: Resource configuration (frequently used)
+  - id: expert-external-api-resources
+    name: External API Resource Expert
     priority: 0.90
-    domains: [site24x7-monitors, monitor-config]
-    knowledge_base: .tapps-agents/knowledge/site24x7/monitors
+    domains: [api-resources, resource-config]
+    knowledge_base: .tapps-agents/knowledge/external-api/resources
 
   # Supporting: Reporting (used occasionally)
-  - id: expert-site24x7-reports
-    name: Site24x7 Reporting Expert
+  - id: expert-external-api-reports
+    name: External API Reporting Expert
     priority: 0.80
     domains: [site24x7-reports, data-export]
     knowledge_base: .tapps-agents/knowledge/site24x7/reports

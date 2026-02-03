@@ -3218,16 +3218,16 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
     async def _detect_api_client_pattern(self, code: str) -> bool:
         """
         Detect if code appears to be an HTTP/API client.
-        
+
         Checks for common patterns that indicate API client code:
         - HTTP client libraries (requests, httpx)
-        - Authentication headers (Authorization, Bearer, Zoho-oauthtoken, X-API-Key)
+        - Authentication headers (Authorization, Bearer, X-API-Key)
         - Token management (refresh_token, access_token, token_url)
         - API client structure (class Client, get/post methods, api_base_url)
-        
+
         Args:
             code: Code content to analyze
-            
+
         Returns:
             True if code appears to be an API client, False otherwise
         """
@@ -3254,7 +3254,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         auth_indicators = [
             "authorization:",
             "bearer",
-            "zoho-oauthtoken",
             "x-api-key",
             "api_key",
             "api-key",

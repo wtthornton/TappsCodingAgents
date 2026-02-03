@@ -1,8 +1,8 @@
 # Recommendations for Improving TappsCodingAgents Framework
 
-**Date:** 2026-01-24  
-**Audience:** TappsCodingAgents framework developers and maintainers  
-**Context:** This document provides actionable recommendations for improving the framework based on gaps identified when handling external API client tasks (e.g. Site24x7, Zoho OAuth2 refresh-token flows).
+**Date:** 2026-01-24
+**Audience:** TappsCodingAgents framework developers and maintainers
+**Context:** This document provides actionable recommendations for improving the framework based on gaps identified when handling external API client tasks (e.g. OAuth2 refresh-token flows).
 
 ---
 
@@ -79,7 +79,7 @@ This document outlines **framework improvements** needed to better support exter
    
    **Best Practices:**
    - Refresh tokens proactively (e.g. 60 seconds before expiry) to avoid race conditions
-   - Handle both `expires_in` and `expires_in_sec` fields (Zoho uses both)
+   - Handle both `expires_in` and `expires_in_sec` fields (some providers use different field names)
    - Cache access tokens until near expiry
    - Use secure storage for refresh tokens (environment variables, secret managers)
    ```
@@ -87,18 +87,18 @@ This document outlines **framework improvements** needed to better support exter
 2. **Add Custom Auth Headers section:**
    ```markdown
    ### 5. Custom Authentication Headers
-   
+
    Some APIs use non-standard auth headers:
-   - `Authorization: Zoho-oauthtoken <token>` (Zoho/Site24x7)
    - `Authorization: Bearer <token>` (standard OAuth2)
    - `X-API-Key: <key>` (API key)
-   
+   - Custom formats like `Authorization: <custom-prefix> <token>` (vendor-specific)
+
    **Implementation:**
    ```python
    def _headers(self) -> dict[str, str]:
        token = self._get_access_token()
        return {
-           "Authorization": f"Zoho-oauthtoken {token}",  # Custom header
+           "Authorization": f"Bearer {token}",  # Standard OAuth2 header
            "Accept": "application/json",
        }
    ```
@@ -123,16 +123,16 @@ This document outlines **framework improvements** needed to better support exter
 1. **Add OAuth2-Based External APIs section:**
    ```markdown
    ## OAuth2-Based External APIs
-   
-   Many SaaS APIs (Zoho, Okta, Salesforce) use OAuth2 refresh-token flows.
-   
+
+   Many SaaS APIs use OAuth2 refresh-token flows for long-term API access.
+
    ### Pattern: OAuth2 Refresh-Token Client
-   
+
    ```python
    class OAuth2ExternalAPIClient:
        def __init__(self, client_id, client_secret, refresh_token, api_base_url, token_url):
            # ... (see api-security-patterns.md for full implementation)
-       
+
        def get(self, path: str, params: dict | None = None) -> dict:
            """Make authenticated GET request."""
            url = f"{self.api_base_url}/{path.lstrip('/')}"
@@ -145,18 +145,12 @@ This document outlines **framework improvements** needed to better support exter
            resp.raise_for_status()
            return resp.json()
    ```
-   
-   ### Examples
-   
-   - **Zoho/Site24x7:** `Authorization: Zoho-oauthtoken <token>`, token endpoint: `https://accounts.zoho.com/oauth/v2/token`
-   - **Okta:** `Authorization: Bearer <token>`, token endpoint: `https://<org>.okta.com/oauth2/v1/token`
-   - **Salesforce:** `Authorization: Bearer <token>`, token endpoint: `https://login.salesforce.com/services/oauth2/token`
    ```
 
 2. **Add to "Best Practices" section:**
    - Token refresh strategies (proactive vs reactive)
    - Error handling for token expiry
-   - Multi-region support (e.g. Zoho EU vs US endpoints)
+   - Multi-region support (e.g. different API endpoints per data center)
 
 **Files to Modify:**
 - `tapps_agents/experts/knowledge/api-design-integration/external-api-integration.md`
@@ -182,7 +176,7 @@ This document outlines **framework improvements** needed to better support exter
        """Detect if code appears to be an HTTP/API client."""
        api_client_indicators = [
            "requests.get", "requests.post", "httpx.Client", "httpx.AsyncClient",
-           "Authorization:", "Bearer", "Zoho-oauthtoken", "X-API-Key",
+           "Authorization:", "Bearer", "X-API-Key",
            "refresh_token", "access_token", "token_url", "api_base_url",
            "class.*Client", "def get(", "def post("
        ]
@@ -485,13 +479,13 @@ project_patterns:
 ## 5. Context7 and External APIs (Lower Priority)
 
 ### 5.1 Current State
-Context7 is **library**-oriented (FastAPI, requests, pytest). External SaaS APIs (Site24x7, Zoho) are not libraries.
+Context7 is **library**-oriented (FastAPI, requests, pytest). External SaaS APIs are not libraries.
 
 ### 5.2 Recommendation
 **Option A (Recommended):** Keep Context7 as-is for libraries. Rely on **expert knowledge** (Sections 1-2) for external APIs.
 
 **Option B (Future):** Allow "external API" as first-class concept:
-- Curated docs/links for common APIs (Zoho, Okta, Salesforce)
+- Curated docs/links for common OAuth2-based APIs
 - Wire into review/implement when relevant
 - Higher effort, only if many similar tasks emerge
 

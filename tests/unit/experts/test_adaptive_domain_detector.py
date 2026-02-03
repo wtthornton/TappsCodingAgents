@@ -20,7 +20,7 @@ def detector(tmp_path):
 @pytest.mark.asyncio
 async def test_detect_from_prompt(detector):
     """Test domain detection from prompt."""
-    prompt = "Create an OAuth2 refresh token client for Zoho API"
+    prompt = "Create an OAuth2 refresh token client for external API"
     suggestions = await detector.detect_domains(prompt=prompt)
     
     assert len(suggestions) > 0
