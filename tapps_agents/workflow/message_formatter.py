@@ -103,9 +103,10 @@ class MessageFormatter:
         """
         emoji = self._get_emoji("block") if self.config.use_emoji else ""
         intent_display = user_intent or "Implement feature"
+        path_display = Path(file_path).as_posix()
 
         lines = [
-            f"{emoji}Direct file edit blocked: {file_path}".strip(),
+            f"{emoji}Direct file edit blocked: {path_display}".strip(),
             "",
             f"Detected intent: {workflow.value} (confidence: {confidence:.0f}%)",
             "",

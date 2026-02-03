@@ -1,0 +1,12 @@
+{
+  "library": "maintainability_scorer",
+  "topic": "examples",
+  "documentation": {
+    "content": "## Start Monitoring Services with Docker Compose\n\n```bash\ndocker-compose up\n```\n\n## Automated Running of Selected Examples as Tests\n\n```python\n- automation of running selected examples as a test\n```\n\n## Run Evidently Metrics Calculation Script\n\n```python\npython evidently_metrics_calculation.py\n```\n\n## Grafana Integration Example for Evidently TestSuite\n\n```python\n# Example: Airflow integration with Evidently TestSuite\n# Example: Grafana integration with Evidently TestSuite\n```\n\n## Stop Monitoring Services with Docker Compose\n\n```bash\ndocker-compose down\n```\n\n## Upload Demo Project to Evidently UI\n\n```python\npython remote_demo_project.py\n```\n\n## Install Evidently Python Package\n\n```bash\npip install evidently\n```\n\n## Run Evidently UI Service using Docker\n\n```bash\nbash run_service.sh\n```\n\n## Run Evidently UI Service Locally\n\n```bash\nevidently ui\n```\n\n## Launch Evidently UI with Demo Projects (Shell)\n\n```shell\nuv run --with evidently evidently ui --demo-projects all\n```",
+    "library": "learning_explainability",
+    "topic": "examples",
+    "source": "fuzzy_match"
+  },
+  "source": "fuzzy_match",
+  "saved_at": "2026-02-03T09:49:28.398383"
+}

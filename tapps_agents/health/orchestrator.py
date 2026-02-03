@@ -175,9 +175,9 @@ class HealthOrchestrator:
 
         overall_score = weighted_score / total_weight if total_weight > 0 else 0.0
 
-        # Determine overall status
+        # Determine overall status (HM-001-S3: degraded when score >= 75 and only non-critical unhealthy)
         critical_checks = {"environment", "execution"}
-        non_critical_unhealthy_only = {"outcomes", "knowledge_base", "context7_cache"}
+        non_critical_checks = {"outcomes", "knowledge_base", "context7_cache", "automation"}
         unhealthy_checks = [
             name
             for name, result in results.items()
@@ -189,16 +189,19 @@ class HealthOrchestrator:
             if name in results
         )
 
+        status_reason: str | None = None
         if status_counts["unhealthy"] > 0:
             overall_status = "unhealthy"
-            # If score is high (>=75) and only non-critical checks are unhealthy, show degraded
             if (
                 overall_score >= 75.0
                 and critical_healthy
                 and unhealthy_checks
-                and all(c in non_critical_unhealthy_only for c in unhealthy_checks)
+                and all(c in non_critical_checks for c in unhealthy_checks)
             ):
                 overall_status = "degraded"
+                status_reason = (
+                    "Status degraded due to non-critical checks; core functionality is healthy"
+                )
         elif status_counts["degraded"] > 0:
             overall_status = "degraded"
         else:
@@ -243,12 +246,17 @@ class HealthOrchestrator:
             if rem not in prioritized_remediations:
                 prioritized_remediations.append(rem)
 
+        details: dict[str, Any] = {}
+        if status_reason:
+            details["status_reason"] = status_reason
+
         return {
             "status": overall_status,
             "score": overall_score,
             "message": f"Overall health: {overall_status} ({overall_score:.1f}/100)",
             "checks_count": len(results),
             "status_counts": status_counts,
+            "details": details,
             "checks": {
                 name: {
                     "status": result.status,

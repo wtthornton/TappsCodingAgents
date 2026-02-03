@@ -1,0 +1,12 @@
+{
+  "library": "maintainability_scorer",
+  "topic": "best-practices",
+  "documentation": {
+    "content": "## Node.js Usage (CommonJS)\n\n```JavaScript\nconst cvss = require('cvss4');\nconsole.log(cvss.calculateBaseScore('CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N'));\n```\n\n## Node.js Usage (ES Modules)\n\n```JavaScript\nimport { calculateBaseScore } from 'cvss4';\nconsole.log(calculateBaseScore('CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N'));\n```\n\n## Browser Usage (UMD)\n\n```HTML\n<script src=\"./node_modules/cvss4/dist/bundle.umd.js\"></script>\n<script>\n  alert(cvss.calculateBaseScore('CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N'));\n</script>\n```\n\n## CVSS Score Calculation API\n\n```APIDOC\ncalculateBaseScore(cvssString): number\n  Computes the Base Score of a CVSS vector string.\n  Example:\n  ```javascript\n  import { calculateBaseScore } from 'cvss4';\n  console.log(calculateBaseScore('CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:N/A:N'));\n  ```\n\ncalculateIss(metricsMap): number\n  Calculates the Impact Sub-Score (ISS).\n\ncalculateImpact(metricsMap, iss): number\n  Computes the Impact.\n\ncalculateExploitability(metricsMap): number\n  Computes the Exploitability.\n```\n\n## Install CVSS Library\n\n```Bash\nnpm install --save cvss4\n```\n\n## CVSS Humanization API\n\n```APIDOC\nhumanizeBaseMetric(metric: string): string\n  Converts an abbreviated metric name to its full form.\n  Example:\n  ```javascript\n  humanizeBaseMetric('C'); // Returns: 'Confidentiality'\n  ```\n\nhumanizeBaseMetricValue(value: string, metric: string): string\n  Converts an abbreviated metric value to its full form.\n  Example:\n  ```javascript\n  humanizeBaseMetricValue('N', 'AV'); // Returns: 'Network'\n  ```\n```\n\n## CVSS Validation API\n\n```APIDOC\nvalidate(cvssString): void\n  Validates the CVSS vector string. Throws an error if the string is invalid or unsupported.\n  Example:\n  ```javascript\n  import { validate } from 'cvss4';\n  validate('CVSS:3.1/AV:N/AC:L/PR:H/UI:N/S:U/C:L/I:L/A:N');\n  ```\n```\n\nContext7 cache for maintainability_scorer: cached at 2026-02-03T17:49:27.819973+00:00Z; consider refreshing if docs changed.",
+    "library": "maintainability_scorer",
+    "topic": "best-practices",
+    "source": "cache"
+  },
+  "source": "cache",
+  "saved_at": "2026-02-03T09:49:27.881126"
+}

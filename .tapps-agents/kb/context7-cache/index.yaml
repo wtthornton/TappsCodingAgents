@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-01-31T02:32:52.520698+00:00Z
-total_entries: 263
+last_updated: 2026-02-03T17:49:41.557431+00:00Z
+total_entries: 276
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -41,6 +41,8 @@ libraries:
     topics:
       overview:
         cached_at: 2026-01-07T03:25:58.991127+00:00Z
+      usage:
+        cached_at: 2026-02-03T17:49:23.249509+00:00Z
   cprofile:
     context7_id: /tolitius/cprop
     topics:
@@ -86,10 +88,14 @@ libraries:
       overview:
         cached_at: 2026-01-07T03:26:18.997714+00:00Z
   packaging:
-    context7_id: /forcedotcom/packaging
+    context7_id: /pypa/packaging.python.org
     topics:
       overview:
         cached_at: 2026-01-07T03:26:20.491123+00:00Z
+      building:
+        cached_at: 2026-02-02T19:38:13.302720+00:00Z
+      pypi:
+        cached_at: 2026-02-02T19:38:16.945490+00:00Z
   plotly:
     context7_id: /plotly/plotly.py
     topics:
@@ -146,6 +152,8 @@ libraries:
     topics:
       overview:
         cached_at: 2026-01-07T03:26:52.076685+00:00Z
+      usage:
+        cached_at: 2026-02-03T17:49:32.631712+00:00Z
   redis:
     context7_id: /websites/redis_io
     topics:
@@ -1137,3 +1145,42 @@ libraries:
     topics:
       common-mistakes:
         cached_at: 2026-01-31T02:32:52.520635+00:00Z
+  ruff_grouping:
+    context7_id: /astral-sh/ruff
+    topics:
+      overview:
+        cached_at: 2026-02-03T17:48:55.718162+00:00Z
+      usage:
+        cached_at: 2026-02-03T17:49:04.450852+00:00Z
+  scoped_mypy:
+    context7_id: /secdev/scapy
+    topics:
+      best-practices:
+        cached_at: 2026-02-03T17:48:59.596248+00:00Z
+  defusedxml:
+    context7_id: /dfxml-working-group/dfxml_python
+    topics:
+      overview:
+        cached_at: 2026-02-03T17:49:09.244186+00:00Z
+      usage:
+        cached_at: 2026-02-03T17:49:27.100456+00:00Z
+  issue_tracking:
+    context7_id: /websites/jetbrains_help_youtrack
+    topics:
+      best-practices:
+        cached_at: 2026-02-03T17:49:12.918617+00:00Z
+  maintainability_scorer:
+    context7_id: /rohitcoder/cvss
+    topics:
+      best-practices:
+        cached_at: 2026-02-03T17:49:16.669619+00:00Z
+  score_constants:
+    context7_id: /dfinity/stable-structures
+    topics:
+      examples:
+        cached_at: 2026-02-03T17:49:36.553333+00:00Z
+  tools:
+    context7_id: /lfkdsk/justwetools
+    topics:
+      examples:
+        cached_at: 2026-02-03T17:49:41.557386+00:00Z

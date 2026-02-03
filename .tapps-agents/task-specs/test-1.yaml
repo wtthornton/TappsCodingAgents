@@ -1,0 +1,15 @@
+task:
+  id: test-1
+  title: Test task
+  description: A test
+  type: story
+  priority: 0
+  story_points: null
+  epic: null
+  dependencies: []
+  github_issue: null
+  beads_issue: TappsCodingAgents-xrx
+  status: todo
+  workflow: build
+  files: []
+  tests: []

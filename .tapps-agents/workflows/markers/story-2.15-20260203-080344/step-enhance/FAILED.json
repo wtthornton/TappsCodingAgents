@@ -1,0 +1,17 @@
+{
+  "workflow_id": "story-2.15-20260203-080344",
+  "step_id": "enhance",
+  "agent": "enhancer",
+  "action": "enhance",
+  "status": "failed",
+  "timestamp": "2026-02-03T08:07:30.432705",
+  "error": "[Errno 22] Invalid argument",
+  "worktree_name": "workflow-story-2.15-20260203-080344-step-enhance-640d025e",
+  "worktree_path": "C:\\cursor\\TappsCodingAgents\\.tapps-agents\\worktrees\\workflow-story-2.15-20260203-080344-step-enhance-640d025e",
+  "duration_seconds": 2.454575,
+  "started_at": "2026-02-03T08:07:27.978130",
+  "error_type": "OSError",
+  "metadata": {
+    "marker_location": ".tapps-agents/workflows/markers/story-2.15-20260203-080344/step-enhance/FAILED.json"
+  }
+}

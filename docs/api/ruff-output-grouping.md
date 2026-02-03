@@ -33,98 +33,124 @@ Ruff output grouping provides a cleaner, more actionable way to view linting iss
 
 ## API Reference
 
-### `_group_ruff_issues_by_code(issues: list[dict]) -> dict`
+### `RuffGroupingParser` Class
 
 Groups Ruff issues by rule code for cleaner, more actionable reports.
 
+**Import:**
+```python
+from tapps_agents.agents.reviewer.tools.ruff_grouping import (
+    RuffGroupingParser,
+    RuffGroupingConfig,
+    GroupedRuffIssues,
+)
+```
+
+**Methods:**
+
+#### `parse_and_group(ruff_json: str) -> GroupedRuffIssues`
+
+Parses Ruff JSON output and groups issues by error code.
+
 **Parameters:**
-- `issues` (list[dict]): List of Ruff diagnostic dictionaries
+- `ruff_json` (str): JSON string from Ruff output (format: `--output-format=json`)
 
 **Returns:**
 ```python
-{
-    "total_count": int,  # Total number of issues
-    "groups": [
-        {
-            "code": str,           # Rule code (e.g., "UP006")
-            "count": int,          # Number of occurrences
-            "description": str,    # Issue description
-            "severity": str,       # "error", "warning", or "info"
-            "issues": list[dict]   # Original issue dictionaries
-        },
-        ...
-    ],
-    "summary": str  # Human-readable summary (e.g., "UP006 (17), UP045 (10)")
-}
+GroupedRuffIssues(
+    groups=dict[str, tuple[RuffIssue, ...]],  # Issues grouped by code
+    total_issues=int,                          # Total issue count
+    unique_codes=int,                          # Number of unique error codes
+    severity_summary=dict[str, int],           # Count by severity
+    fixable_count=int                          # Count of auto-fixable issues
+)
 ```
+
+#### `render_grouped(grouped: GroupedRuffIssues, format: str) -> str`
+
+Renders grouped issues in specified format.
+
+**Parameters:**
+- `grouped` (GroupedRuffIssues): Result from `parse_and_group()`
+- `format` (str): Output format - "markdown", "html", or "json"
+
+**Returns:**
+- `str`: Formatted output
 
 **Example:**
 ```python
-from tapps_agents.agents.reviewer.scoring import CodeScorer
+from tapps_agents.agents.reviewer.tools.ruff_grouping import RuffGroupingParser
 
-scorer = CodeScorer()
-issues = [
-    {"code": {"name": "UP006"}, "message": "Use dict instead of Dict", "location": {"row": 1}},
-    {"code": {"name": "UP006"}, "message": "Use list instead of List", "location": {"row": 2}},
-    {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 3}},
-]
+# Parse Ruff JSON output
+parser = RuffGroupingParser()
+ruff_json = '[{"code": {"name": "UP006"}, "message": "Use dict instead of Dict", "location": {"row": 1}}, {"code": {"name": "F401"}, "message": "Unused import", "location": {"row": 3}}]'
 
-grouped = scorer._group_ruff_issues_by_code(issues)
+grouped = parser.parse_and_group(ruff_json)
 
-print(f"Total issues: {grouped['total_count']}")  # 3
-print(f"Summary: {grouped['summary']}")            # "UP006 (2), F401 (1)"
+print(f"Total issues: {grouped.total_issues}")  # 2
+print(f"Unique codes: {grouped.unique_codes}")  # 2
+print(f"Fixable: {grouped.fixable_count}")      # Varies
 
-for group in grouped["groups"]:
-    print(f"{group['code']}: {group['count']} issues ({group['severity']})")
-    # UP006: 2 issues (info)
-    # F401: 1 issues (error)
+# Render as markdown
+markdown_output = parser.render_grouped(grouped, format="markdown")
+print(markdown_output)
+
+# Render as JSON
+json_output = parser.render_grouped(grouped, format="json")
 ```
 
 ---
 
 ## Integration
 
-### ReviewerAgent Linting Result
+### Using with ReviewerAgent
 
-The `run_linting` method now returns a `grouped` field in its result:
+The RuffGroupingParser can be used to post-process Ruff output from ReviewerAgent:
 
 ```python
 from tapps_agents.agents.reviewer.agent import ReviewerAgent
+from tapps_agents.agents.reviewer.tools.ruff_grouping import RuffGroupingParser
+import json
 
+# Run reviewer to get Ruff output
 reviewer = ReviewerAgent()
 result = reviewer.run_linting(file_path)
 
-# Access grouped issues
-print(result["grouped"]["summary"])  # "UP006 (17), UP045 (10), ..."
+# Get raw Ruff JSON output (if available)
+if result.get("ruff_json"):
+    parser = RuffGroupingParser()
+    grouped = parser.parse_and_group(result["ruff_json"])
 
-# Iterate over groups
-for group in result["grouped"]["groups"]:
-    print(f"\n{group['code']} ({group['count']} occurrences):")
-    print(f"  Severity: {group['severity']}")
-    print(f"  Description: {group['description']}")
+    # Render grouped output
+    markdown = parser.render_grouped(grouped, format="markdown")
+    print(markdown)
 
-    # Show first few issues
-    for issue in group["issues"][:3]:
-        print(f"  - Line {issue['location']['row']}: {issue['message']}")
+    # Access grouped data
+    for code, issues in grouped.groups.items():
+        print(f"\n{code}: {len(issues)} occurrences")
+        for issue in issues[:3]:  # Show first 3
+            print(f"  Line {issue.line}: {issue.message}")
 ```
 
-**Full Result Structure:**
+### Direct Usage with Ruff CLI
+
 ```python
-{
-    "file": str,
-    "linting_score": float,
-    "issues": list[dict],       # Original flat list
-    "issue_count": int,
-    "error_count": int,
-    "warning_count": int,
-    "fatal_count": int,
-    "grouped": {                # NEW: Grouped summary
-        "total_count": int,
-        "groups": [...],
-        "summary": str
-    },
-    "tool": "ruff"
-}
+import subprocess
+from tapps_agents.agents.reviewer.tools.ruff_grouping import RuffGroupingParser
+
+# Run Ruff and capture JSON output
+result = subprocess.run(
+    ["ruff", "check", "src/", "--output-format=json"],
+    capture_output=True,
+    text=True
+)
+
+# Parse and group
+parser = RuffGroupingParser()
+grouped = parser.parse_and_group(result.stdout)
+
+# Render
+print(parser.render_grouped(grouped, format="markdown"))
 ```
 
 ---

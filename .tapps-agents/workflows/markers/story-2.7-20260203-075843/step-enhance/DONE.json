@@ -1,0 +1,13 @@
+{
+  "workflow_id": "story-2.7-20260203-075843",
+  "step_id": "enhance",
+  "agent": "enhancer",
+  "action": "enhance",
+  "status": "completed",
+  "timestamp": "2026-02-03T07:59:54.936807",
+  "worktree_name": "workflow-story-2.7-20260203-075843-step-enhance-97f52735",
+  "worktree_path": "C:\\cursor\\TappsCodingAgents\\.tapps-agents\\worktrees\\workflow-story-2.7-20260203-075843-step-enhance-97f52735",
+  "duration_seconds": 65.427304,
+  "started_at": "2026-02-03T07:58:49.509503",
+  "completed_at": "2026-02-03T07:59:54.936807"
+}

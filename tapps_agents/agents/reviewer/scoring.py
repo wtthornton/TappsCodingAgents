@@ -964,9 +964,7 @@ class CodeScorer(BaseScorer):
 
         Phase 6.2: Modern Quality Analysis - mypy Integration
         Phase 5 (P1): Fixed to actually run mypy and return real scores (not static 5.0).
-
-        Returns:
-            Type checking score (0-10), where 10 = no issues, 0 = many issues
+        ENH-002-S2: Prefer ScopedMypyExecutor (--follow-imports=skip, <10s) with fallback to full mypy.
         """
         if not self.has_mypy:
             logger.debug("mypy not available - returning neutral score")
@@ -976,10 +974,25 @@ class CodeScorer(BaseScorer):
         if file_path.suffix != ".py":
             return 10.0  # Perfect score for non-Python files (can't type check)
 
+        # ENH-002-S2: Try scoped mypy first (faster)
         try:
-            # Phase 5 fix: Actually run mypy and parse errors
-            # Run mypy with show-error-codes for better error parsing
-            # Optimization (ENH-002): Scoped to single file with --no-incremental for 6x speedup
+            from .tools.scoped_mypy import ScopedMypyExecutor
+            executor = ScopedMypyExecutor()
+            result = executor.run_scoped_sync(file_path, timeout=10)
+            if result.files_checked == 1 or result.issues:
+                error_count = len(result.issues)
+                if error_count == 0:
+                    return 10.0
+                score = 10.0 - (error_count * 0.5)
+                logger.debug(
+                    "mypy (scoped) found %s errors for %s, score: %s/10",
+                    error_count, file_path, score,
+                )
+                return max(0.0, min(10.0, score))
+        except Exception as e:
+            logger.debug("scoped mypy not used, falling back to full mypy: %s", e)
+
+        try:
             result = subprocess.run(  # nosec B603
                 [
                     sys.executable,
@@ -988,63 +1001,44 @@ class CodeScorer(BaseScorer):
                     "--show-error-codes",
                     "--no-error-summary",
                     "--no-color-output",
-                    "--no-incremental",  # Skip cache for single-file check (faster)
+                    "--no-incremental",
                     str(file_path),
                 ],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=30,  # 30 second timeout (optimized from 60s for single file)
+                timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
-
-            # Phase 5 fix: Parse mypy output correctly
             if result.returncode == 0:
-                # No type errors found - return perfect score
-                logger.debug(f"mypy found no errors for {file_path}")
+                logger.debug("mypy found no errors for %s", file_path)
                 return 10.0
-
-            # mypy returns non-zero exit code when errors found
-            # mypy outputs errors to stdout (not stderr)
             output = result.stdout.strip()
             if not output:
-                # No output but non-zero return code - assume success
-                logger.debug(f"mypy returned non-zero but no output for {file_path}")
+                logger.debug("mypy returned non-zero but no output for %s", file_path)
                 return 10.0
-
-            # Parse mypy error output
-            # Format: filename:line: error: message [error-code]
-            # Or: filename:line:column: error: message [error-code]
             error_lines = [
                 line
                 for line in output.split("\n")
                 if "error:" in line.lower() and file_path.name in line
             ]
             error_count = len(error_lines)
-
             if error_count == 0:
-                # No errors found despite non-zero return code (e.g., config issues)
-                logger.debug(f"mypy returned non-zero but no parseable errors for {file_path}")
+                logger.debug("mypy returned non-zero but no parseable errors for %s", file_path)
                 return 10.0
-
-            # Phase 5 fix: Calculate score based on actual error count
-            # Formula: 10 - (errors * 0.5), but cap at 0.0
             score = 10.0 - (error_count * 0.5)
-            logger.debug(f"mypy found {error_count} errors for {file_path}, score: {score:.1f}/10")
+            logger.debug("mypy found %s errors for %s, score: %s/10", error_count, file_path, score)
             return max(0.0, min(10.0, score))
-
         except subprocess.TimeoutExpired:
-            logger.warning(f"mypy timed out for {file_path}")
-            return 5.0  # Neutral on timeout
+            logger.warning("mypy timed out for %s", file_path)
+            return 5.0
         except FileNotFoundError:
-            # mypy not found in PATH
-            logger.debug(f"mypy not found in PATH for {file_path}")
-            self.has_mypy = False  # Update availability flag
+            logger.debug("mypy not found in PATH for %s", file_path)
+            self.has_mypy = False
             return 5.0
         except Exception as e:
-            # Any other error
-            logger.warning(f"mypy failed for {file_path}: {e}", exc_info=True)
+            logger.warning("mypy failed for %s: %s", file_path, e, exc_info=True)
             return 5.0
 
     def get_mypy_errors(self, file_path: Path) -> list[dict[str, Any]]:
@@ -1052,15 +1046,30 @@ class CodeScorer(BaseScorer):
         Get detailed mypy type checking errors for a file.
 
         Phase 6.2: Modern Quality Analysis - mypy Integration
-
-        Returns:
-            List of error dictionaries with line, message, error_code, etc.
+        ENH-002-S2: Prefer ScopedMypyExecutor with fallback to full mypy.
         """
         if not self.has_mypy or file_path.suffix != ".py":
             return []
 
         try:
-            # Optimization (ENH-002): Scoped to single file with --no-incremental for 6x speedup
+            from .tools.scoped_mypy import ScopedMypyExecutor
+            executor = ScopedMypyExecutor()
+            result = executor.run_scoped_sync(file_path, timeout=10)
+            if result.files_checked == 1 or result.issues:
+                return [
+                    {
+                        "filename": str(i.file_path),
+                        "line": i.line,
+                        "message": i.message,
+                        "error_code": i.error_code,
+                        "severity": i.severity,
+                    }
+                    for i in result.issues
+                ]
+        except Exception:
+            pass
+
+        try:
             result = subprocess.run(  # nosec B603
                 [
                     sys.executable,
@@ -1068,32 +1077,22 @@ class CodeScorer(BaseScorer):
                     "mypy",
                     "--show-error-codes",
                     "--no-error-summary",
-                    "--no-incremental",  # Skip cache for single-file check (faster)
+                    "--no-incremental",
                     str(file_path),
                 ],
                 capture_output=True,
                 text=True,
                 encoding="utf-8",
                 errors="replace",
-                timeout=30,  # Optimized from 60s for single file
+                timeout=30,
                 cwd=file_path.parent if file_path.parent.exists() else None,
             )
-
-            if result.returncode == 0:
-                # No errors
+            if result.returncode == 0 or not result.stdout.strip():
                 return []
-
-            if not result.stdout.strip():
-                return []
-
-            # Parse mypy error output
-            # Format: filename:line: error: message [error-code]
             errors = []
             for line in result.stdout.strip().split("\n"):
                 if "error:" not in line.lower():
                     continue
-
-                # Parse line: "file.py:12: error: Missing return type [func-returns]"
                 parts = line.split(":", 3)
                 if len(parts) >= 4:
                     filename = parts[0]
@@ -1101,10 +1100,7 @@ class CodeScorer(BaseScorer):
                         line_num = int(parts[1])
                     except ValueError:
                         continue
-
                     error_msg = parts[3].strip()
-
-                    # Extract error code (if present)
                     error_code = None
                     if "[" in error_msg and "]" in error_msg:
                         start = error_msg.rfind("[")
@@ -1112,19 +1108,14 @@ class CodeScorer(BaseScorer):
                         if start < end:
                             error_code = error_msg[start + 1 : end]
                             error_msg = error_msg[:start].strip()
-
-                    errors.append(
-                        {
-                            "filename": filename,
-                            "line": line_num,
-                            "message": error_msg,
-                            "error_code": error_code,
-                            "severity": "error",
-                        }
-                    )
-
+                    errors.append({
+                        "filename": filename,
+                        "line": line_num,
+                        "message": error_msg,
+                        "error_code": error_code,
+                        "severity": "error",
+                    })
             return errors
-
         except (subprocess.TimeoutExpired, FileNotFoundError, Exception):
             return []
 

@@ -5207,6 +5207,447 @@
       "file_path": "evaluation_base.json",
       "saved_at": "2026-01-30T18:32:58.929077",
       "source": "fuzzy_match"
+    },
+    "ruff_grouping:best-practices": {
+      "library": "ruff_grouping",
+      "topic": "best-practices",
+      "file_path": "ruff_grouping_best-practices.json",
+      "saved_at": "2026-02-03T09:49:00.812040",
+      "source": "fuzzy_match"
+    },
+    "ruff_grouping:common-mistakes": {
+      "library": "ruff_grouping",
+      "topic": "common-mistakes",
+      "file_path": "ruff_grouping_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:01.032369",
+      "source": "fuzzy_match"
+    },
+    "ruff_grouping:usage": {
+      "library": "ruff_grouping",
+      "topic": "usage",
+      "file_path": "ruff_grouping_usage.json",
+      "saved_at": "2026-02-03T09:49:04.501385",
+      "source": "api"
+    },
+    "ruff_grouping:examples": {
+      "library": "ruff_grouping",
+      "topic": "examples",
+      "file_path": "ruff_grouping_examples.json",
+      "saved_at": "2026-02-03T09:49:04.671021",
+      "source": "fuzzy_match"
+    },
+    "scoped_mypy:best-practices": {
+      "library": "scoped_mypy",
+      "topic": "best-practices",
+      "file_path": "scoped_mypy_best-practices.json",
+      "saved_at": "2026-02-03T09:49:04.790927",
+      "source": "cache"
+    },
+    "scoped_mypy:common-mistakes": {
+      "library": "scoped_mypy",
+      "topic": "common-mistakes",
+      "file_path": "scoped_mypy_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:04.980500",
+      "source": "fuzzy_match"
+    },
+    "scoped_mypy:usage": {
+      "library": "scoped_mypy",
+      "topic": "usage",
+      "file_path": "scoped_mypy_usage.json",
+      "saved_at": "2026-02-03T09:49:05.133994",
+      "source": "fuzzy_match"
+    },
+    "scoped_mypy:examples": {
+      "library": "scoped_mypy",
+      "topic": "examples",
+      "file_path": "scoped_mypy_examples.json",
+      "saved_at": "2026-02-03T09:49:05.290474",
+      "source": "fuzzy_match"
+    },
+    "coverage:common-mistakes": {
+      "library": "coverage",
+      "topic": "common-mistakes",
+      "file_path": "coverage_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:19.750650",
+      "source": "fuzzy_match"
+    },
+    "coverage:usage": {
+      "library": "coverage",
+      "topic": "usage",
+      "file_path": "coverage_usage.json",
+      "saved_at": "2026-02-03T09:49:23.345810",
+      "source": "api"
+    },
+    "coverage:examples": {
+      "library": "coverage",
+      "topic": "examples",
+      "file_path": "coverage_examples.json",
+      "saved_at": "2026-02-03T09:49:23.578746",
+      "source": "fuzzy_match"
+    },
+    "defusedxml:best-practices": {
+      "library": "defusedxml",
+      "topic": "best-practices",
+      "file_path": "defusedxml_best-practices.json",
+      "saved_at": "2026-02-03T09:49:23.700666",
+      "source": "fuzzy_match"
+    },
+    "defusedxml:common-mistakes": {
+      "library": "defusedxml",
+      "topic": "common-mistakes",
+      "file_path": "defusedxml_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:23.820410",
+      "source": "fuzzy_match"
+    },
+    "defusedxml:usage": {
+      "library": "defusedxml",
+      "topic": "usage",
+      "file_path": "defusedxml_usage.json",
+      "saved_at": "2026-02-03T09:49:27.142468",
+      "source": "api"
+    },
+    "defusedxml:examples": {
+      "library": "defusedxml",
+      "topic": "examples",
+      "file_path": "defusedxml_examples.json",
+      "saved_at": "2026-02-03T09:49:27.302035",
+      "source": "fuzzy_match"
+    },
+    "issue_tracking:best-practices": {
+      "library": "issue_tracking",
+      "topic": "best-practices",
+      "file_path": "issue_tracking_best-practices.json",
+      "saved_at": "2026-02-03T09:49:27.387198",
+      "source": "cache"
+    },
+    "issue_tracking:common-mistakes": {
+      "library": "issue_tracking",
+      "topic": "common-mistakes",
+      "file_path": "issue_tracking_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:27.515714",
+      "source": "fuzzy_match"
+    },
+    "issue_tracking:usage": {
+      "library": "issue_tracking",
+      "topic": "usage",
+      "file_path": "issue_tracking_usage.json",
+      "saved_at": "2026-02-03T09:49:27.640741",
+      "source": "fuzzy_match"
+    },
+    "issue_tracking:examples": {
+      "library": "issue_tracking",
+      "topic": "examples",
+      "file_path": "issue_tracking_examples.json",
+      "saved_at": "2026-02-03T09:49:27.766875",
+      "source": "fuzzy_match"
+    },
+    "maintainability_scorer:best-practices": {
+      "library": "maintainability_scorer",
+      "topic": "best-practices",
+      "file_path": "maintainability_scorer_best-practices.json",
+      "saved_at": "2026-02-03T09:49:27.881577",
+      "source": "cache"
+    },
+    "maintainability_scorer:common-mistakes": {
+      "library": "maintainability_scorer",
+      "topic": "common-mistakes",
+      "file_path": "maintainability_scorer_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:28.026127",
+      "source": "fuzzy_match"
+    },
+    "maintainability_scorer:usage": {
+      "library": "maintainability_scorer",
+      "topic": "usage",
+      "file_path": "maintainability_scorer_usage.json",
+      "saved_at": "2026-02-03T09:49:28.212596",
+      "source": "fuzzy_match"
+    },
+    "maintainability_scorer:examples": {
+      "library": "maintainability_scorer",
+      "topic": "examples",
+      "file_path": "maintainability_scorer_examples.json",
+      "saved_at": "2026-02-03T09:49:28.398986",
+      "source": "fuzzy_match"
+    },
+    "performance_scorer:best-practices": {
+      "library": "performance_scorer",
+      "topic": "best-practices",
+      "file_path": "performance_scorer_best-practices.json",
+      "saved_at": "2026-02-03T09:49:28.602469",
+      "source": "fuzzy_match"
+    },
+    "performance_scorer:common-mistakes": {
+      "library": "performance_scorer",
+      "topic": "common-mistakes",
+      "file_path": "performance_scorer_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:28.795900",
+      "source": "fuzzy_match"
+    },
+    "performance_scorer:usage": {
+      "library": "performance_scorer",
+      "topic": "usage",
+      "file_path": "performance_scorer_usage.json",
+      "saved_at": "2026-02-03T09:49:29.000485",
+      "source": "fuzzy_match"
+    },
+    "performance_scorer:examples": {
+      "library": "performance_scorer",
+      "topic": "examples",
+      "file_path": "performance_scorer_examples.json",
+      "saved_at": "2026-02-03T09:49:29.157204",
+      "source": "fuzzy_match"
+    },
+    "radon:common-mistakes": {
+      "library": "radon",
+      "topic": "common-mistakes",
+      "file_path": "radon_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:29.521521",
+      "source": "fuzzy_match"
+    },
+    "radon:usage": {
+      "library": "radon",
+      "topic": "usage",
+      "file_path": "radon_usage.json",
+      "saved_at": "2026-02-03T09:49:32.672066",
+      "source": "api"
+    },
+    "radon:examples": {
+      "library": "radon",
+      "topic": "examples",
+      "file_path": "radon_examples.json",
+      "saved_at": "2026-02-03T09:49:32.834605",
+      "source": "fuzzy_match"
+    },
+    "score_constants:best-practices": {
+      "library": "score_constants",
+      "topic": "best-practices",
+      "file_path": "score_constants_best-practices.json",
+      "saved_at": "2026-02-03T09:49:32.958061",
+      "source": "fuzzy_match"
+    },
+    "score_constants:common-mistakes": {
+      "library": "score_constants",
+      "topic": "common-mistakes",
+      "file_path": "score_constants_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:33.177021",
+      "source": "fuzzy_match"
+    },
+    "score_constants:usage": {
+      "library": "score_constants",
+      "topic": "usage",
+      "file_path": "score_constants_usage.json",
+      "saved_at": "2026-02-03T09:49:33.385925",
+      "source": "fuzzy_match"
+    },
+    "score_constants:examples": {
+      "library": "score_constants",
+      "topic": "examples",
+      "file_path": "score_constants_examples.json",
+      "saved_at": "2026-02-03T09:49:36.613855",
+      "source": "api"
+    },
+    "score_validator:best-practices": {
+      "library": "score_validator",
+      "topic": "best-practices",
+      "file_path": "score_validator_best-practices.json",
+      "saved_at": "2026-02-03T09:49:36.808642",
+      "source": "fuzzy_match"
+    },
+    "score_validator:common-mistakes": {
+      "library": "score_validator",
+      "topic": "common-mistakes",
+      "file_path": "score_validator_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:37.004536",
+      "source": "fuzzy_match"
+    },
+    "score_validator:usage": {
+      "library": "score_validator",
+      "topic": "usage",
+      "file_path": "score_validator_usage.json",
+      "saved_at": "2026-02-03T09:49:37.206903",
+      "source": "fuzzy_match"
+    },
+    "score_validator:examples": {
+      "library": "score_validator",
+      "topic": "examples",
+      "file_path": "score_validator_examples.json",
+      "saved_at": "2026-02-03T09:49:37.391135",
+      "source": "fuzzy_match"
+    },
+    "scorer_registry:best-practices": {
+      "library": "scorer_registry",
+      "topic": "best-practices",
+      "file_path": "scorer_registry_best-practices.json",
+      "saved_at": "2026-02-03T09:49:37.543814",
+      "source": "fuzzy_match"
+    },
+    "scorer_registry:common-mistakes": {
+      "library": "scorer_registry",
+      "topic": "common-mistakes",
+      "file_path": "scorer_registry_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:37.686795",
+      "source": "fuzzy_match"
+    },
+    "scorer_registry:usage": {
+      "library": "scorer_registry",
+      "topic": "usage",
+      "file_path": "scorer_registry_usage.json",
+      "saved_at": "2026-02-03T09:49:37.816181",
+      "source": "fuzzy_match"
+    },
+    "scorer_registry:examples": {
+      "library": "scorer_registry",
+      "topic": "examples",
+      "file_path": "scorer_registry_examples.json",
+      "saved_at": "2026-02-03T09:49:37.975975",
+      "source": "fuzzy_match"
+    },
+    "tools:best-practices": {
+      "library": "tools",
+      "topic": "best-practices",
+      "file_path": "tools_best-practices.json",
+      "saved_at": "2026-02-03T09:49:38.105585",
+      "source": "fuzzy_match"
+    },
+    "tools:common-mistakes": {
+      "library": "tools",
+      "topic": "common-mistakes",
+      "file_path": "tools_common-mistakes.json",
+      "saved_at": "2026-02-03T09:49:38.236296",
+      "source": "fuzzy_match"
+    },
+    "tools:usage": {
+      "library": "tools",
+      "topic": "usage",
+      "file_path": "tools_usage.json",
+      "saved_at": "2026-02-03T09:49:38.373651",
+      "source": "fuzzy_match"
+    },
+    "tools:examples": {
+      "library": "tools",
+      "topic": "examples",
+      "file_path": "tools_examples.json",
+      "saved_at": "2026-02-03T09:49:41.606728",
+      "source": "api"
+    },
+    "dataclasses": {
+      "library": "dataclasses",
+      "topic": null,
+      "file_path": "dataclasses.json",
+      "saved_at": "2026-02-03T09:50:05.813930",
+      "source": "cache"
+    },
+    "dataclasses:best-practices": {
+      "library": "dataclasses",
+      "topic": "best-practices",
+      "file_path": "dataclasses_best-practices.json",
+      "saved_at": "2026-02-03T09:50:05.939004",
+      "source": "fuzzy_match"
+    },
+    "parallel_executor": {
+      "library": "parallel_executor",
+      "topic": null,
+      "file_path": "parallel_executor.json",
+      "saved_at": "2026-02-03T09:50:07.511529",
+      "source": "fuzzy_match"
+    },
+    "ruff_grouping": {
+      "library": "ruff_grouping",
+      "topic": null,
+      "file_path": "ruff_grouping.json",
+      "saved_at": "2026-02-03T09:50:07.627363",
+      "source": "cache"
+    },
+    "scoped_mypy": {
+      "library": "scoped_mypy",
+      "topic": null,
+      "file_path": "scoped_mypy.json",
+      "saved_at": "2026-02-03T09:50:07.908573",
+      "source": "fuzzy_match"
+    },
+    "coverage": {
+      "library": "coverage",
+      "topic": null,
+      "file_path": "coverage.json",
+      "saved_at": "2026-02-03T09:50:09.163144",
+      "source": "cache"
+    },
+    "defusedxml": {
+      "library": "defusedxml",
+      "topic": null,
+      "file_path": "defusedxml.json",
+      "saved_at": "2026-02-03T09:50:09.229747",
+      "source": "cache"
+    },
+    "issue_tracking": {
+      "library": "issue_tracking",
+      "topic": null,
+      "file_path": "issue_tracking.json",
+      "saved_at": "2026-02-03T09:50:09.396100",
+      "source": "fuzzy_match"
+    },
+    "maintainability_scorer": {
+      "library": "maintainability_scorer",
+      "topic": null,
+      "file_path": "maintainability_scorer.json",
+      "saved_at": "2026-02-03T09:50:09.568902",
+      "source": "fuzzy_match"
+    },
+    "performance_scorer": {
+      "library": "performance_scorer",
+      "topic": null,
+      "file_path": "performance_scorer.json",
+      "saved_at": "2026-02-03T09:50:09.769241",
+      "source": "fuzzy_match"
+    },
+    "score_constants": {
+      "library": "score_constants",
+      "topic": null,
+      "file_path": "score_constants.json",
+      "saved_at": "2026-02-03T09:50:09.939155",
+      "source": "fuzzy_match"
+    },
+    "score_validator": {
+      "library": "score_validator",
+      "topic": null,
+      "file_path": "score_validator.json",
+      "saved_at": "2026-02-03T09:50:10.107546",
+      "source": "fuzzy_match"
+    },
+    "scorer_registry": {
+      "library": "scorer_registry",
+      "topic": null,
+      "file_path": "scorer_registry.json",
+      "saved_at": "2026-02-03T09:50:10.266390",
+      "source": "fuzzy_match"
+    },
+    "tools": {
+      "library": "tools",
+      "topic": null,
+      "file_path": "tools.json",
+      "saved_at": "2026-02-03T09:50:10.436759",
+      "source": "fuzzy_match"
+    },
+    "validation": {
+      "library": "validation",
+      "topic": null,
+      "file_path": "validation.json",
+      "saved_at": "2026-02-03T09:50:10.584614",
+      "source": "fuzzy_match"
+    },
+    "common": {
+      "library": "common",
+      "topic": null,
+      "file_path": "common.json",
+      "saved_at": "2026-02-03T09:50:11.471668",
+      "source": "fuzzy_match"
+    },
+    "feedback": {
+      "library": "feedback",
+      "topic": null,
+      "file_path": "feedback.json",
+      "saved_at": "2026-02-03T09:50:11.608068",
+      "source": "fuzzy_match"
     }
   },
   "comprehensive_index": {
@@ -5298,9 +5739,12 @@
       "radon": {
         "topics": [
           "best-practices",
-          "architecture"
+          "architecture",
+          "common-mistakes",
+          "usage",
+          "examples"
         ],
-        "total_docs": 3
+        "total_docs": 6
       },
       "pip-audit": {
         "topics": [
@@ -5452,9 +5896,12 @@
       "coverage": {
         "topics": [
           "best-practices",
-          "architecture"
+          "architecture",
+          "common-mistakes",
+          "usage",
+          "examples"
         ],
-        "total_docs": 2
+        "total_docs": 6
       },
       "simple_mode": {
         "topics": [
@@ -5649,7 +6096,7 @@
           "usage",
           "examples"
         ],
-        "total_docs": 4
+        "total_docs": 5
       },
       "utils": {
         "topics": [
@@ -5703,7 +6150,7 @@
           "usage",
           "examples"
         ],
-        "total_docs": 4
+        "total_docs": 5
       },
       "continuous_bug_fix": {
         "topics": [
@@ -5941,7 +6388,7 @@
           "usage",
           "examples"
         ],
-        "total_docs": 4
+        "total_docs": 5
       },
       "parser": {
         "topics": [
@@ -6004,7 +6451,7 @@
           "usage",
           "examples"
         ],
-        "total_docs": 4
+        "total_docs": 5
       },
       "acceptance_verifier": {
         "topics": [
@@ -6860,6 +7307,102 @@
           "examples"
         ],
         "total_docs": 5
+      },
+      "ruff_grouping": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "scoped_mypy": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "defusedxml": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "issue_tracking": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "maintainability_scorer": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "performance_scorer": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "score_constants": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "score_validator": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "scorer_registry": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "tools": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
+      },
+      "dataclasses": {
+        "topics": [
+          "best-practices"
+        ],
+        "total_docs": 2
       }
     },
     "topics": {
@@ -7052,7 +7595,18 @@
         "resume_handler",
         "unified_cache_config",
         "visual_feedback",
-        "prompt_base"
+        "prompt_base",
+        "ruff_grouping",
+        "scoped_mypy",
+        "defusedxml",
+        "issue_tracking",
+        "maintainability_scorer",
+        "performance_scorer",
+        "score_constants",
+        "score_validator",
+        "scorer_registry",
+        "tools",
+        "dataclasses"
       ],
       "common-mistakes": [
         "__future__",
@@ -7215,7 +7769,19 @@
         "resume_handler",
         "unified_cache_config",
         "visual_feedback",
-        "prompt_base"
+        "prompt_base",
+        "ruff_grouping",
+        "scoped_mypy",
+        "coverage",
+        "defusedxml",
+        "issue_tracking",
+        "maintainability_scorer",
+        "performance_scorer",
+        "radon",
+        "score_constants",
+        "score_validator",
+        "scorer_registry",
+        "tools"
       ],
       "usage": [
         "__future__",
@@ -7379,7 +7945,19 @@
         "resume_handler",
         "unified_cache_config",
         "visual_feedback",
-        "prompt_base"
+        "prompt_base",
+        "ruff_grouping",
+        "scoped_mypy",
+        "coverage",
+        "defusedxml",
+        "issue_tracking",
+        "maintainability_scorer",
+        "performance_scorer",
+        "radon",
+        "score_constants",
+        "score_validator",
+        "scorer_registry",
+        "tools"
       ],
       "examples": [
         "__future__",
@@ -7542,7 +8120,19 @@
         "resume_handler",
         "unified_cache_config",
         "visual_feedback",
-        "prompt_base"
+        "prompt_base",
+        "ruff_grouping",
+        "scoped_mypy",
+        "coverage",
+        "defusedxml",
+        "issue_tracking",
+        "maintainability_scorer",
+        "performance_scorer",
+        "radon",
+        "score_constants",
+        "score_validator",
+        "scorer_registry",
+        "tools"
       ],
       "quality-standards": [
         "pytest"
@@ -7583,8 +8173,8 @@
         "types-pyyaml"
       ]
     },
-    "total_entries": 744,
-    "last_updated": "2026-02-01T19:52:44.357194"
+    "total_entries": 807,
+    "last_updated": "2026-02-03T09:50:11.608075"
   },
-  "last_updated": "2026-02-01T19:52:44.358083"
+  "last_updated": "2026-02-03T09:50:11.609068"
 }

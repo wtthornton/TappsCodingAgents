@@ -5,6 +5,7 @@ Health command handlers.
 from __future__ import annotations
 
 import json
+import logging
 import sys
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
@@ -557,7 +558,8 @@ def handle_health_overview_command(
     health_results = orchestrator.run_all_checks(save_metrics=True)
     overall = orchestrator.get_overall_health(health_results)
 
-    # 2. Usage (best-effort; prefer analytics, fallback to execution metrics)
+    # 2. Usage (best-effort; prefer analytics, fallback to execution metrics — HM-001-S1)
+    _log = logging.getLogger(__name__)
     usage_data = None
     try:
         usage_dashboard = AnalyticsDashboard()
@@ -565,6 +567,7 @@ def handle_health_overview_command(
     except Exception:
         pass
     # If analytics has no agent/workflow data, derive from execution metrics
+    fallback_used = False
     if usage_data:
         agents = usage_data.get("agents") or []
         workflows = usage_data.get("workflows") or []
@@ -572,9 +575,22 @@ def handle_health_overview_command(
             w.get("total_executions", 0) for w in workflows
         )
         if total_runs == 0:
-            usage_data = _usage_data_from_execution_metrics(project_root) or usage_data
+            fallback = _usage_data_from_execution_metrics(project_root)
+            if fallback:
+                fallback_used = True
+                usage_data = fallback
     else:
-        usage_data = _usage_data_from_execution_metrics(project_root) or usage_data
+        fallback = _usage_data_from_execution_metrics(project_root)
+        if fallback:
+            fallback_used = True
+            usage_data = fallback
+    if fallback_used and usage_data:
+        n_agents = len(usage_data.get("agents") or [])
+        n_workflows = len(usage_data.get("workflows") or [])
+        _log.info(
+            "Health overview: using execution metrics fallback (%s agents, %s workflows)",
+            n_agents, n_workflows,
+        )
 
     # 3. Build output
     feedback = get_feedback()
