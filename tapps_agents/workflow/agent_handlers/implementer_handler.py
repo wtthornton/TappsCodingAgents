@@ -202,9 +202,16 @@ class ImplementerHandler(AgentExecutionHandler):
         )
         self.state.variables["implementer_result"] = result
         self.state.variables["target_file"] = str(target_path)
-        
+
         created_artifacts: list[dict[str, Any]] = []
-        
+
+        # Add the target file as an artifact (for both new and existing files)
+        # This ensures workflow steps can track what was created/modified
+        if target_path.exists():
+            created_artifacts.append(
+                {"name": str(target_path.relative_to(self.project_root)), "path": str(target_path)}
+            )
+
         # Create fixed-code/ artifact if requested by preset (only for existing files)
         if file_exists and "fixed-code/" in (step.creates or []):
             fixed_dir = self.project_root / "fixed-code"
@@ -215,6 +222,6 @@ class ImplementerHandler(AgentExecutionHandler):
             created_artifacts.append(
                 {"name": "fixed-code/", "path": str(fixed_dir)}
             )
-        
+
         return created_artifacts
 
