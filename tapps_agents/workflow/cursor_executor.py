@@ -1360,73 +1360,144 @@ class CursorWorkflowExecutor:
 
         # Track step start time for duration calculation
         step_started_at = datetime.now()
-        
+
         # Use context manager for worktree lifecycle (guaranteed cleanup)
         async with self._worktree_context(step) as worktree_path:
             worktree_name = self._worktree_name_for_step(step.id)
-            
-            # Background Agent auto-execution removed - always use skill_invoker
+
+            # Try AgentHandlerRegistry first for context-aware execution (BUG-003 fix)
+            # Falls back to SkillInvoker if no handler found
+            from .agent_handlers import AgentHandlerRegistry
+
+            # Helper function to run agents (needed by handlers)
+            async def run_agent(agent: str, command: str, **kwargs: Any) -> dict[str, Any]:
+                """Run agent by importing and invoking its class."""
+                module = __import__(f"tapps_agents.agents.{agent}.agent", fromlist=["*"])
+                class_name = f"{agent.title()}Agent"
+                agent_cls = getattr(module, class_name)
+                instance = agent_cls()
+                await instance.activate(self.project_root)
+                try:
+                    return await instance.run(command, **kwargs)
+                finally:
+                    if hasattr(instance, 'close'):
+                        await instance.close()
+
+            # Create handler registry and try to find handler
+            registry = AgentHandlerRegistry.create_registry(
+                project_root=self.project_root,
+                state=self.state,
+                workflow=self.workflow,
+                run_agent_fn=run_agent,
+                executor=self,
+            )
+
+            handler = registry.find_handler(agent_name, action)
+
             try:
-                # Invoke Skill via SkillInvoker (direct execution or Cursor Skills)
                 from ..core.unicode_safe import safe_print
-                safe_print(f"\n[EXEC] Executing {agent_name}/{action}...", flush=True)
-                await self.skill_invoker.invoke_skill(
-                        agent_name=agent_name,
+
+                if handler:
+                    # Use handler for context-aware execution (e.g., ImplementerHandler)
+                    safe_print(f"\n[EXEC] Executing {agent_name}/{action} via handler...", flush=True)
+
+                    # Execute handler and get artifacts directly
+                    # Note: Handler execution happens in main working directory, not worktree
+                    # Worktree is only used for skill invocation fallback
+                    created_artifacts_list = await handler.execute(step, action, target_path)
+
+                    # Convert handler artifacts to dict format
+                    artifacts_dict: dict[str, dict[str, Any]] = {}
+                    for art in (created_artifacts_list or []):
+                        artifacts_dict[art["name"]] = art
+
+                    # Write success marker
+                    step_completed_at = datetime.now()
+                    duration = (step_completed_at - step_started_at).total_seconds()
+
+                    found_artifact_paths = [art["path"] for art in (created_artifacts_list or [])]
+
+                    marker_path = self.marker_writer.write_done_marker(
+                        workflow_id=self.state.workflow_id,
+                        step_id=step.id,
+                        agent=agent_name,
                         action=action,
-                        step=step,
-                        target_path=target_path,
+                        worktree_name=worktree_name,
+                        worktree_path=str(worktree_path),
+                        expected_artifacts=step.creates or [],
+                        found_artifacts=found_artifact_paths,
+                        duration_seconds=duration,
+                        started_at=step_started_at,
+                        completed_at=step_completed_at,
+                    )
+
+                    if self.logger:
+                        self.logger.debug(
+                            f"Handler execution complete for step {step.id}",
+                            marker_path=str(marker_path),
+                        )
+
+                    return artifacts_dict if artifacts_dict else None
+                else:
+                    # Fall back to SkillInvoker for steps without handlers
+                    safe_print(f"\n[EXEC] Executing {agent_name}/{action} via skill...", flush=True)
+                    await self.skill_invoker.invoke_skill(
+                            agent_name=agent_name,
+                            action=action,
+                            step=step,
+                            target_path=target_path,
+                            worktree_path=worktree_path,
+                            state=self.state,
+                        )
+                    # Skill invoker handles execution (direct execution or Cursor Skills)
+                    # Artifacts are extracted after completion
+
+                    # Extract artifacts from worktree (skill_invoker path only)
+                    artifacts = await self.worktree_manager.extract_artifacts(
                         worktree_path=worktree_path,
-                        state=self.state,
-                    )
-                # Skill invoker handles execution (direct execution or Cursor Skills)
-                # Artifacts are extracted after completion
-
-                # Extract artifacts from worktree
-                artifacts = await self.worktree_manager.extract_artifacts(
-                    worktree_path=worktree_path,
-                    step=step,
-                )
-
-                # Convert artifacts to dict format
-                artifacts_dict: dict[str, dict[str, Any]] = {}
-                found_artifact_paths = []
-                for artifact in artifacts:
-                    artifacts_dict[artifact.name] = {
-                        "name": artifact.name,
-                        "path": artifact.path,
-                        "status": artifact.status,
-                        "created_by": artifact.created_by,
-                        "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
-                        "metadata": artifact.metadata or {},
-                    }
-                    found_artifact_paths.append(artifact.path)
-
-                # Write DONE marker for successful completion
-                step_completed_at = datetime.now()
-                duration = (step_completed_at - step_started_at).total_seconds()
-                
-                marker_path = self.marker_writer.write_done_marker(
-                    workflow_id=self.state.workflow_id,
-                    step_id=step.id,
-                    agent=agent_name,
-                    action=action,
-                    worktree_name=worktree_name,
-                    worktree_path=str(worktree_path),
-                    expected_artifacts=step.creates or [],
-                    found_artifacts=found_artifact_paths,
-                    duration_seconds=duration,
-                    started_at=step_started_at,
-                    completed_at=step_completed_at,
-                )
-                
-                if self.logger:
-                    self.logger.debug(
-                        f"DONE marker written for step {step.id}",
-                        marker_path=str(marker_path),
+                        step=step,
                     )
 
-                # Worktree cleanup is handled by context manager
-                return artifacts_dict if artifacts_dict else None
+                    # Convert artifacts to dict format
+                    artifacts_dict: dict[str, dict[str, Any]] = {}
+                    found_artifact_paths = []
+                    for artifact in artifacts:
+                        artifacts_dict[artifact.name] = {
+                            "name": artifact.name,
+                            "path": artifact.path,
+                            "status": artifact.status,
+                            "created_by": artifact.created_by,
+                            "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
+                            "metadata": artifact.metadata or {},
+                        }
+                        found_artifact_paths.append(artifact.path)
+
+                    # Write DONE marker for successful completion
+                    step_completed_at = datetime.now()
+                    duration = (step_completed_at - step_started_at).total_seconds()
+
+                    marker_path = self.marker_writer.write_done_marker(
+                        workflow_id=self.state.workflow_id,
+                        step_id=step.id,
+                        agent=agent_name,
+                        action=action,
+                        worktree_name=worktree_name,
+                        worktree_path=str(worktree_path),
+                        expected_artifacts=step.creates or [],
+                        found_artifacts=found_artifact_paths,
+                        duration_seconds=duration,
+                        started_at=step_started_at,
+                        completed_at=step_completed_at,
+                    )
+
+                    if self.logger:
+                        self.logger.debug(
+                            f"DONE marker written for step {step.id}",
+                            marker_path=str(marker_path),
+                        )
+
+                    # Worktree cleanup is handled by context manager
+                    return artifacts_dict if artifacts_dict else None
                 
             except (TimeoutError, RuntimeError) as e:
                 # Write FAILED marker for timeout or execution errors
