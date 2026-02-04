@@ -1,0 +1,29 @@
+id: hm-001
+title: "HM-001: Health Metrics Pipeline Unification"
+description: |
+  Unify analytics and execution metrics pipelines with 4 stories:
+  S1-Analytics/artifacts preference, S2-Outcomes fallback (DONE),
+  S3-Unified data model, S4-Migration utilities.
+  Better system observability and outcome tracking.
+  Quality threshold ≥75, test coverage ≥80%.
+  Note: S2 already complete, focus on S1/S3/S4.
+
+type: epic
+priority: 0
+story_points: 13
+epic: HM-001
+dependencies: []
+github_issue: null
+beads_issue: null
+status: in-progress
+workflow: build
+
+files:
+  - tapps_agents/health/checks/outcomes.py
+  - tapps_agents/health/unified_model.py
+  - tapps_agents/health/migration.py
+
+tests:
+  - tests/health/test_outcomes.py
+  - tests/health/test_unified_model.py
+  - tests/health/test_migration.py

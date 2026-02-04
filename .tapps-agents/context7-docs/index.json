@@ -5648,6 +5648,27 @@
       "file_path": "feedback.json",
       "saved_at": "2026-02-03T09:50:11.608068",
       "source": "fuzzy_match"
+    },
+    "express": {
+      "library": "express",
+      "topic": null,
+      "file_path": "express.json",
+      "saved_at": "2026-02-03T16:31:24.933095",
+      "source": "fuzzy_match"
+    },
+    "node": {
+      "library": "node",
+      "topic": null,
+      "file_path": "node.json",
+      "saved_at": "2026-02-03T16:31:25.108772",
+      "source": "fuzzy_match"
+    },
+    "typescript": {
+      "library": "typescript",
+      "topic": null,
+      "file_path": "typescript.json",
+      "saved_at": "2026-02-03T16:31:39.962700",
+      "source": "api"
     }
   },
   "comprehensive_index": {
@@ -7403,6 +7424,18 @@
           "best-practices"
         ],
         "total_docs": 2
+      },
+      "express": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "node": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "typescript": {
+        "topics": [],
+        "total_docs": 1
       }
     },
     "topics": {
@@ -8173,8 +8206,8 @@
         "types-pyyaml"
       ]
     },
-    "total_entries": 807,
-    "last_updated": "2026-02-03T09:50:11.608075"
+    "total_entries": 810,
+    "last_updated": "2026-02-03T16:31:39.962708"
   },
-  "last_updated": "2026-02-03T09:50:11.609068"
+  "last_updated": "2026-02-03T16:31:39.963471"
 }

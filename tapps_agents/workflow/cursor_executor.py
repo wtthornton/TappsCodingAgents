@@ -256,7 +256,8 @@ class CursorWorkflowExecutor:
         # Always use direct execution via Skills (Background Agents removed)
         
         # Use consistent workflow_id format: {workflow.id}-{timestamp}
-        workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
+        # Include microseconds to ensure uniqueness for parallel workflows (BUG-001 fix)
+        workflow_id = f"{workflow.id}-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
 
         # Initialize logger with workflow_id for correlation
         self.logger = WorkflowLogger(workflow_id=workflow_id)

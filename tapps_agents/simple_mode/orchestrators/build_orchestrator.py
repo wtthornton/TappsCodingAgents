@@ -736,11 +736,11 @@ Your choice: [1/2/3]
         # Beads required: fail early if beads.required and bd unavailable
         if self.config:
             try:
-                from ..beads import require_beads
+                from tapps_agents.beads import require_beads
 
                 require_beads(self.config, self.project_root)
             except Exception as e:  # BeadsRequiredError
-                from tapps_agents.core.feedback import get_feedback
+                from tapps_agents.cli.feedback import get_feedback
 
                 get_feedback().error(str(e), context={"beads_required": True})
                 return {

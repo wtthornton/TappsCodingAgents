@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-02-03T17:49:41.557431+00:00Z
-total_entries: 276
+last_updated: 2026-02-04T00:31:39.924133+00:00Z
+total_entries: 277
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -1184,3 +1184,8 @@ libraries:
     topics:
       examples:
         cached_at: 2026-02-03T17:49:41.557386+00:00Z
+  typescript:
+    context7_id: /microsoft/typescript
+    topics:
+      overview:
+        cached_at: 2026-02-04T00:31:39.924117+00:00Z

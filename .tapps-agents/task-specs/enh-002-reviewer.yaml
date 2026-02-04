@@ -1,0 +1,32 @@
+task:
+  id: enh-002-reviewer
+  title: 'ENH-002: Reviewer Quality Tools'
+  description: 'Enhanced reviewer tools and quality analysis:
+
+    S1-Scoped mypy checking with file/module filtering,
+
+    S2-S4 Enhanced Ruff integration and code quality analysis.
+
+    Higher code quality scores and better tooling.
+
+    Quality threshold ≥75, test coverage ≥85%.
+
+    Note: Ruff grouping (S3) already complete, focus on scoped mypy and integration.
+
+    '
+  type: story
+  priority: 0
+  story_points: 8
+  epic: ENH-002
+  dependencies: []
+  github_issue: null
+  beads_issue: TappsCodingAgents-b04
+  status: todo
+  workflow: build
+  files:
+  - tapps_agents/agents/reviewer/tools/scoped_mypy.py
+  - tapps_agents/agents/reviewer/tools/ruff_grouping.py
+  - tapps_agents/agents/reviewer/agent.py
+  tests:
+  - tests/agents/reviewer/tools/test_scoped_mypy.py
+  - tests/agents/reviewer/tools/test_ruff_grouping.py

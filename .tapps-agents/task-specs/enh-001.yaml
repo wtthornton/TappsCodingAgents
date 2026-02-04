@@ -1,0 +1,34 @@
+task:
+  id: enh-001
+  title: 'ENH-001: Workflow Enforcement System'
+  description: 'Implement workflow enforcement system with 4 stories:
+
+    S1-Core enforcer (intercept edits), S2-Intent detection (build/fix/refactor/review),
+
+    S3-User messaging (clear benefits), S4-Configuration (blocking/warning/silent
+    modes).
+
+    Make LLMs use workflows by default with automatic validation and quality gates.
+
+    Quality threshold ≥75, test coverage ≥85%.
+
+    '
+  type: epic
+  priority: 0
+  story_points: 8
+  epic: EPIC-52
+  dependencies: []
+  github_issue: null
+  beads_issue: TappsCodingAgents-sof
+  status: todo
+  workflow: build
+  files:
+  - tapps_agents/workflow/enforcer.py
+  - tapps_agents/workflow/intent_detector.py
+  - tapps_agents/workflow/message_formatter.py
+  - tapps_agents/core/llm_behavior.py
+  tests:
+  - tests/test_workflow_enforcer.py
+  - tests/test_intent_detector.py
+  - tests/test_message_formatter.py
+  - tests/test_llm_behavior.py

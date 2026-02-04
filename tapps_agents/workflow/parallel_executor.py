@@ -127,19 +127,58 @@ class ParallelStepExecutor:
         """
         Find steps that are ready to execute (dependencies met).
 
+        This method respects the workflow's sequential 'next:' chain to prevent
+        premature step execution. A step is only ready if:
+        1. It's the 'next:' step from a completed step, OR it's the first step
+        2. All its artifact dependencies are met
+
+        This ensures workflows follow the intended sequence (enhance→planning→
+        implementation→review→testing→complete) instead of jumping to the final
+        step prematurely.
+
+        Fix for: Workflow Auto-Continuation Issue (BUG - Workflow stops after 1 step)
+        Root cause: Previous logic only checked artifact dependencies, allowing
+        'complete' step to execute immediately after 'enhance' because it had
+        no 'requires' dependencies.
+
         Args:
             workflow_steps: All workflow steps
             completed_step_ids: Set of completed step IDs
             running_step_ids: Set of currently running step IDs
             available_artifacts: Set of available artifact names (from state.artifacts)
-            Returns:
-                List of steps ready to execute
+
+        Returns:
+            List of steps ready to execute
         """
         ready: list[WorkflowStep] = []
         artifacts = available_artifacts or set()
 
+        # Build set of next steps from completed steps' next: fields
+        next_step_ids: set[str] = set()
+        for step in workflow_steps:
+            if step.id in completed_step_ids and step.next:
+                next_step_ids.add(step.next)
+
+        # If no completed steps yet, first step is ready
+        if not completed_step_ids:
+            first_step = workflow_steps[0] if workflow_steps else None
+            if first_step and first_step.id not in running_step_ids:
+                # Still check artifact dependencies for first step
+                if first_step.requires:
+                    all_met = all(req in artifacts for req in first_step.requires)
+                    if all_met:
+                        return [first_step]
+                else:
+                    return [first_step]
+            return []
+
+        # Find steps that are in the next_step_ids set (sequential progression)
         for step in workflow_steps:
             if step.id in completed_step_ids or step.id in running_step_ids:
+                continue
+
+            # Must be in the next_step_ids set (respects sequential workflow chain)
+            if step.id not in next_step_ids:
                 continue
 
             # Check if all required artifacts exist and are available
@@ -342,7 +381,7 @@ class ParallelStepExecutor:
                     tasks_map[task] = step
             
             # All tasks completed successfully - collect results
-            for task, step in tasks_map.items():
+            for task in tasks_map:
                 result = await task
                 results.append(result)
         
@@ -416,7 +455,7 @@ class ParallelStepExecutor:
             
             # Re-raise the first exception for upstream handling
             if eg.exceptions:
-                raise eg.exceptions[0]
+                raise eg.exceptions[0] from None
 
         # Sort by step.id for deterministic ordering
         results.sort(key=lambda r: r.step.id)
