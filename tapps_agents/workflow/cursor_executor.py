@@ -17,9 +17,10 @@ and direct execution for LLM operations.
 # - Performance: Skill invocation should complete in <5s for typical operations
 # - Must maintain backward compatibility with WorkflowExecutor workflow definitions
 
-# @note[2025-01-15]: Cursor-first runtime policy per ADR-002.
-# The framework operates in "tools-only" mode under Cursor, leveraging Cursor's LLM capabilities.
-# See docs/architecture/decisions/ADR-002-cursor-first-runtime.md
+# @note[2026-02-03]: Equal platform support policy per ADR-002.
+# The framework provides equal support for Claude Desktop, Cursor IDE, and Claude Code CLI.
+# Uses handler-first execution (AgentHandlerRegistry) before platform-specific features.
+# See docs/architecture/decisions/ADR-002-equal-platform-support.md
 
 from __future__ import annotations
 

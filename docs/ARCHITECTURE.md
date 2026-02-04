@@ -278,7 +278,7 @@ An always-on orchestrator that automatically detects project domains, creates an
 Major architectural decisions are documented as ADRs (Architecture Decision Records):
 
 - **[ADR-001: Instruction-Based Architecture](architecture/decisions/ADR-001-instruction-based-architecture.md)** - Agents prepare instruction objects for Cursor Skills execution
-- **[ADR-002: Cursor-First Runtime Policy](architecture/decisions/ADR-002-cursor-first-runtime.md)** - Framework runs tools-only, Cursor handles LLM operations
+- **[ADR-002: Equal Platform Support Policy](architecture/decisions/ADR-002-equal-platform-support.md)** - Framework provides equal support for Claude Desktop, Cursor IDE, and Claude Code CLI
 - **[ADR-003: Expert System Design](architecture/decisions/ADR-003-expert-system-design.md)** - Two-layer expert system (built-in + industry experts)
 - **[ADR-004: YAML-First Workflow Architecture](architecture/decisions/ADR-004-yaml-first-workflows.md)** - YAML as single source of truth with strict schema enforcement
 

@@ -99,7 +99,7 @@ This architecture provides several key benefits:
 
 ## Related ADRs
 
-- [ADR-002: Cursor-First Runtime Policy](ADR-002-cursor-first-runtime.md)
+- [ADR-002: Equal Platform Support Policy](ADR-002-equal-platform-support.md)
 
 ## References
 
