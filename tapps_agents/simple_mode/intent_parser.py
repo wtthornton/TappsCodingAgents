@@ -379,17 +379,42 @@ class IntentParser:
             intent_type = IntentType.UNKNOWN
             confidence = 0.0
 
-        # Detect "compare to codebase" intent
+        # Detect "compare to codebase" intent with enhanced semantics
         compare_to_codebase = False
         compare_phrases = [
+            # Direct compare phrases
             "compare to",
             "compare with",
-            "match our",
-            "align with",
-            "follow patterns",
-            "match patterns",
+            "compare against",
+            "compare this to",
+            "compare this with",
             "compare to codebase",
             "compare to our",
+            "compare to project",
+            # Match/align phrases
+            "match our",
+            "match the",
+            "match patterns",
+            "match codebase",
+            "align with",
+            "align to",
+            "follow patterns",
+            "follow our patterns",
+            "follow project patterns",
+            # Make match phrases (implicit compare)
+            "make match",
+            "make this match",
+            "make it match",
+            # Consistency phrases
+            "consistent with",
+            "consistency with",
+            "conform to",
+            "conform with",
+            # Standard phrases
+            "match standards",
+            "follow standards",
+            "meet standards",
+            "adhere to",
         ]
         if any(phrase in input_lower for phrase in compare_phrases):
             compare_to_codebase = True

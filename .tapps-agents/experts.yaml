@@ -37,3 +37,10 @@ experts:
     rag_enabled: true
     fine_tuned: false
 
+  # API Design & Integration Expert
+  - expert_id: expert-api-design
+    expert_name: API Design & Integration Expert
+    primary_domain: api-design-integration
+    rag_enabled: true
+    fine_tuned: false
+

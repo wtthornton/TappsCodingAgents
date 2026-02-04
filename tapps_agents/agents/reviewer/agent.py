@@ -3243,14 +3243,17 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "requests.put",
             "requests.delete",
             "httpx.client",
-            "httpx.asynccclient",
+            "httpx.asyncclient",
             "httpx.get",
             "httpx.post",
             "urllib.request",
             "urllib3",
+            "aiohttp",
+            "fetch(",  # JavaScript/TypeScript
+            "axios",   # JavaScript/TypeScript
         ]
-        
-        # Authentication indicators
+
+        # Authentication indicators (including OAuth2)
         auth_indicators = [
             "authorization:",
             "bearer",
@@ -3262,6 +3265,13 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "token_url",
             "client_id",
             "client_secret",
+            "oauth2",
+            "oauth",
+            "grant_type",
+            "authorization_code",
+            "client_credentials",
+            "jwt",
+            "id_token",
         ]
         
         # API client structure indicators
@@ -3269,14 +3279,25 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             "api_base_url",
             "base_url",
             "api_url",
+            "endpoint",
+            "/api/",
+            "rest",
+            "graphql",
             "class.*client",
+            "class.*api",
             "def get(",
             "def post(",
             "def put(",
             "def delete(",
+            "def patch(",
             "def _headers",
             "def _get_access_token",
             "def _refresh",
+            "@app.get",      # FastAPI
+            "@app.post",     # FastAPI
+            "@router",       # FastAPI router
+            "apiview",       # Django REST
+            "viewset",       # Django REST
         ]
         
         # Check for HTTP client usage
@@ -3288,8 +3309,21 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         # Check for API client structure
         has_structure = any(indicator in code_lower for indicator in structure_indicators)
         
-        # Code is likely an API client if it has HTTP client usage AND (auth OR structure)
-        return has_http_client and (has_auth or has_structure)
+        # Server-side REST framework indicators (FastAPI, Django REST, etc.)
+        server_api_indicators = [
+            "@app.get",
+            "@app.post",
+            "@router",
+            "apiview",
+            "viewset",
+        ]
+        has_server_api = any(indicator in code_lower for indicator in server_api_indicators)
+
+        # Code is likely an API client/server if:
+        # 1. Has HTTP client usage AND (auth OR structure), OR
+        # 2. Has auth AND structure (e.g., OAuth2 client without explicit http calls yet), OR
+        # 3. Has server-side REST framework patterns (FastAPI, Django REST)
+        return (has_http_client and (has_auth or has_structure)) or (has_auth and has_structure) or has_server_api
 
     def _score_yaml_file(self, file_path: Path, code: str) -> dict[str, Any]:
         """

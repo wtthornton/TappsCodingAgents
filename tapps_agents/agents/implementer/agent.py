@@ -646,13 +646,14 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
         if context:
             text_to_analyze += " " + context.lower()
         
-        # API client keywords
+        # API client keywords (enhanced)
         api_client_keywords = [
             "api client",
             "http client",
             "rest client",
             "oauth2",
             "oauth 2",
+            "oauth",
             "refresh token",
             "access token",
             "external api",
@@ -660,27 +661,52 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             "api integration",
             "rest api",
             "api wrapper",
+            "graphql client",
+            "graphql api",
+            "websocket client",
+            "mqtt client",
+            "grpc client",
         ]
-        
-        # Authentication keywords
+
+        # Authentication keywords (enhanced with OAuth2 patterns)
         auth_keywords = [
             "bearer",
+            "token",  # General token (covers access, refresh, bearer, etc.)
             "authentication",
             "authorization",
             "api key",
+            "api_key",
+            "apikey",
             "client_id",
             "client_secret",
             "token_url",
             "api_base_url",
+            "jwt",
+            "id_token",
+            "grant_type",
+            "authorization_code",
+            "client_credentials",
+            "credentials",  # General credentials
+            "auth",  # Short form
         ]
-        
-        # Structure keywords
+
+        # Structure keywords (enhanced with framework patterns)
         structure_keywords = [
             "class.*client",
             "get method",
             "post method",
+            "put method",
+            "delete method",
+            "patch method",
             "api endpoint",
+            "endpoint",  # General endpoint
+            "rest endpoint",
             "make request",
+            "http request",
+            "fastapi",
+            "django rest",
+            "api route",
+            "router",  # General router
         ]
         
         # Check for API client keywords

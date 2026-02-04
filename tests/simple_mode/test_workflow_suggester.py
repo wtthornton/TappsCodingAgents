@@ -445,3 +445,307 @@ class TestIntegration:
         # Detect intent
         intent, confidence = detect_primary_intent(prompt)
         assert intent in ("architectural", None)
+
+
+# ============================================================================
+# Test Enhanced Hybrid Detection (Phase 1 - workflow-suggester-001)
+# ============================================================================
+
+class TestEnhancedHybridDetection:
+    """Test enhanced hybrid 'review + fix' detection with pattern matching."""
+
+    # ========================================================================
+    # Test Explicit Hybrid Patterns
+    # ========================================================================
+
+    def test_hybrid_explicit_review_and_fix(self, suggester):
+        """Test explicit 'review and fix' pattern."""
+        suggestion = suggester.suggest_workflow("review this file and fix any issues")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.85
+        assert "review" in suggestion.workflow_command.lower()
+        assert "fix" in suggestion.workflow_command.lower()
+        assert "Then:" in suggestion.workflow_command
+
+    def test_hybrid_explicit_review_then_fix(self, suggester):
+        """Test explicit 'review then fix' pattern."""
+        suggestion = suggester.suggest_workflow("review the code then fix problems")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90  # Pattern match + keywords boost
+        assert len(suggestion.benefits) == 4
+
+    def test_hybrid_check_and_fix(self, suggester):
+        """Test 'check and fix' pattern with synonyms."""
+        suggestion = suggester.suggest_workflow("check the code quality and fix any problems")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+        assert suggestion.reason == "Review + fix hybrid request detected"
+
+    def test_hybrid_check_and_repair(self, suggester):
+        """Test 'check and repair' pattern with expanded fix keywords."""
+        suggestion = suggester.suggest_workflow("check this file and repair any issues")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+        # Verify expanded keywords ("repair") are detected
+
+    def test_hybrid_check_and_correct(self, suggester):
+        """Test 'check and correct' pattern with expanded fix keywords."""
+        suggestion = suggester.suggest_workflow("check the logic and correct any errors")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+        # Verify expanded keywords ("correct") are detected
+
+    # ========================================================================
+    # Test Compare + Fix Patterns
+    # ========================================================================
+
+    def test_hybrid_compare_and_fix(self, suggester):
+        """Test 'compare and fix' pattern."""
+        suggestion = suggester.suggest_workflow("compare to our patterns and fix issues")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.95  # compare_to_codebase flag + pattern + keywords
+        # Should have high confidence due to multiple signals
+
+    def test_hybrid_compare_then_fix(self, suggester):
+        """Test 'compare then fix' pattern."""
+        suggestion = suggester.suggest_workflow("compare this to codebase then fix")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.95
+
+    # ========================================================================
+    # Test Implicit Hybrid Patterns
+    # ========================================================================
+
+    def test_hybrid_make_match_and_fix(self, suggester):
+        """Test implicit 'make match and fix' pattern."""
+        suggestion = suggester.suggest_workflow("make this code match our standards and fix problems")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+
+    def test_hybrid_make_match_fix_implicit(self, suggester):
+        """Test implicit 'make match fix' without 'and'."""
+        suggestion = suggester.suggest_workflow("make this match our patterns fix it")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.85
+
+    def test_hybrid_inspect_and_correct(self, suggester):
+        """Test 'inspect and correct' pattern."""
+        suggestion = suggester.suggest_workflow("inspect the code and correct validation errors")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+
+    def test_hybrid_examine_and_repair(self, suggester):
+        """Test 'examine and repair' pattern."""
+        suggestion = suggester.suggest_workflow("examine this file and repair any bugs")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+
+    def test_hybrid_analyze_and_fix(self, suggester):
+        """Test 'analyze and fix' pattern."""
+        suggestion = suggester.suggest_workflow("analyze the performance and fix bottlenecks")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert suggestion.confidence >= 0.90
+
+    # ========================================================================
+    # Test Confidence Scoring
+    # ========================================================================
+
+    def test_hybrid_confidence_base(self, suggester):
+        """Test base confidence (no boosts)."""
+        # Simple hybrid without pattern match or compare flag
+        suggestion = suggester.suggest_workflow("review file and fix errors")
+
+        assert suggestion is not None
+        assert suggestion.confidence >= 0.85  # Base confidence
+
+    def test_hybrid_confidence_pattern_boost(self, suggester):
+        """Test confidence boost for pattern match."""
+        suggestion = suggester.suggest_workflow("review this code and fix any issues")
+
+        assert suggestion is not None
+        # Pattern match detected: +0.05 boost
+        assert suggestion.confidence >= 0.90
+
+    def test_hybrid_confidence_compare_boost(self, suggester):
+        """Test confidence boost for compare_to_codebase flag."""
+        suggestion = suggester.suggest_workflow("compare to our patterns and fix")
+
+        assert suggestion is not None
+        # compare_to_codebase flag + pattern match: +0.10 boost
+        assert suggestion.confidence >= 0.95
+
+    def test_hybrid_confidence_max_capped_at_1(self, suggester):
+        """Test confidence is capped at 1.0."""
+        # All signals: pattern + compare + intent type
+        suggestion = suggester.suggest_workflow("review this compare to codebase and fix issues")
+
+        assert suggestion is not None
+        assert suggestion.confidence <= 1.0  # Capped at 1.0
+        assert suggestion.confidence >= 0.95  # But should be very high
+
+    # ========================================================================
+    # Test Negative Cases (Should NOT Trigger Hybrid)
+    # ========================================================================
+
+    def test_single_review_no_hybrid(self, suggester):
+        """Test single 'review' intent does not trigger hybrid."""
+        suggestion = suggester.suggest_workflow("review this file")
+
+        if suggestion:
+            # Should be review, not hybrid
+            assert suggestion.workflow_type == "review"
+            assert "Then:" not in suggestion.workflow_command
+
+    def test_single_fix_no_hybrid(self, suggester):
+        """Test single 'fix' intent does not trigger hybrid."""
+        suggestion = suggester.suggest_workflow("fix the bug in auth.py")
+
+        if suggestion:
+            # Should be fix, not hybrid
+            assert suggestion.workflow_type == "fix"
+            assert "Then:" not in suggestion.workflow_command
+
+    def test_single_compare_no_hybrid(self, suggester):
+        """Test single 'compare' without fix does not trigger hybrid."""
+        suggestion = suggester.suggest_workflow("compare this to our patterns")
+
+        if suggestion:
+            # Should be review, not hybrid (no fix keyword)
+            assert suggestion.workflow_type == "review"
+            assert "Then:" not in suggestion.workflow_command
+
+    def test_build_with_fix_keyword_no_hybrid(self, suggester):
+        """Test build intent with 'fix' in description does not trigger hybrid."""
+        suggestion = suggester.suggest_workflow("build a system to fix user issues")
+
+        if suggestion:
+            # "fix" is part of feature description, not an action
+            # Should be build, not hybrid
+            assert suggestion.workflow_type == "build"
+
+    # ========================================================================
+    # Test Edge Cases
+    # ========================================================================
+
+    def test_hybrid_case_insensitive(self, suggester):
+        """Test hybrid detection is case-insensitive."""
+        suggestions = [
+            suggester.suggest_workflow("REVIEW this file AND FIX issues"),
+            suggester.suggest_workflow("Review This File and Fix Issues"),
+            suggester.suggest_workflow("review this file and fix issues"),
+        ]
+
+        for suggestion in suggestions:
+            assert suggestion is not None
+            assert suggestion.workflow_type == "review-then-fix"
+            # All should have same confidence
+            assert suggestion.confidence >= 0.85
+
+    def test_hybrid_with_extra_whitespace(self, suggester):
+        """Test hybrid detection with extra whitespace."""
+        suggestion = suggester.suggest_workflow("  review   this file    and   fix  issues  ")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+
+    def test_hybrid_multiline_input(self, suggester):
+        """Test hybrid detection with multiline input."""
+        suggestion = suggester.suggest_workflow(
+            "review this file\nand fix any issues found"
+        )
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+
+    def test_hybrid_with_file_path(self, suggester):
+        """Test hybrid detection with file path in prompt."""
+        suggestion = suggester.suggest_workflow(
+            "review src/auth.py and fix validation errors"
+        )
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+
+    # ========================================================================
+    # Test Real User Prompts (From Requirements)
+    # ========================================================================
+
+    @pytest.mark.parametrize("prompt,expected_hybrid", [
+        ("review this file and fix any issues", True),
+        ("check the code quality and repair any problems", True),
+        ("compare to codebase and fix", True),
+        ("make this match our patterns and fix it", True),
+        ("inspect and correct validation errors", True),
+        ("review this file", False),
+        ("fix the bug", False),
+        ("build new feature", False),
+    ])
+    def test_real_user_prompts(self, suggester, prompt, expected_hybrid):
+        """Test real user prompts from requirements."""
+        suggestion = suggester.suggest_workflow(prompt)
+
+        if expected_hybrid:
+            assert suggestion is not None
+            assert suggestion.workflow_type == "review-then-fix"
+            assert suggestion.confidence >= 0.6
+        else:
+            if suggestion:
+                assert suggestion.workflow_type != "review-then-fix"
+
+    # ========================================================================
+    # Test Backward Compatibility
+    # ========================================================================
+
+    def test_backward_compatibility_existing_hybrid(self, suggester):
+        """Test that existing hybrid detection still works."""
+        # Old test case from line 273
+        suggestion = suggester.suggest_workflow("Review this code and fix any issues")
+
+        assert suggestion is not None
+        assert suggestion.workflow_type == "review-then-fix"
+        assert "review" in suggestion.reason.lower()
+        assert suggestion.confidence >= 0.85
+
+    def test_backward_compatibility_benefits_unchanged(self, suggester):
+        """Test that hybrid suggestion benefits are unchanged."""
+        suggestion = suggester.suggest_workflow("review and fix this file")
+
+        assert suggestion is not None
+        assert len(suggestion.benefits) == 4
+        assert "Comprehensive quality analysis first" in suggestion.benefits
+        assert "Targeted fixes based on review feedback" in suggestion.benefits
+        assert "Quality gates after fixes" in suggestion.benefits
+        assert "Full traceability from review to fix" in suggestion.benefits
+
+    def test_backward_compatibility_command_format(self, suggester):
+        """Test that hybrid command format is unchanged."""
+        suggestion = suggester.suggest_workflow("review and fix")
+
+        assert suggestion is not None
+        assert '@simple-mode *review <file>' in suggestion.workflow_command
+        assert '@simple-mode *fix <file>' in suggestion.workflow_command
+        assert 'Then:' in suggestion.workflow_command

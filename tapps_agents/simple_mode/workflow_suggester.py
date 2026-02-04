@@ -463,16 +463,50 @@ class WorkflowSuggester:
         if intent.type == IntentType.UNKNOWN:
             return None
 
-        # Detect hybrid "review + fix" intent
+        # Detect hybrid "review + fix" intent with enhanced pattern matching
         user_input_lower = user_input.lower()
+
+        # Pattern-based detection for hybrid requests
+        HYBRID_PATTERNS = [
+            r"review.*(?:and|then).*fix",
+            r"check.*(?:and|then).*(?:fix|repair|correct)",
+            r"compare.*(?:and|then).*fix",
+            r"make.*match.*(?:and|then)?.*fix",
+            r"(?:inspect|examine|analyze).*(?:and|then).*(?:fix|repair|correct)",
+        ]
+        pattern_match = any(
+            re.search(pattern, user_input_lower)
+            for pattern in HYBRID_PATTERNS
+        )
+
+        # Boolean detection with expanded keywords
         has_review = (
             intent.type == IntentType.REVIEW
             or "review" in user_input_lower
             or intent.compare_to_codebase
+            or pattern_match  # Add pattern match signal
         )
-        has_fix = intent.type == IntentType.FIX or "fix" in user_input_lower
+        has_fix = (
+            intent.type == IntentType.FIX
+            or "fix" in user_input_lower
+            or "repair" in user_input_lower  # Expanded keyword
+            or "correct" in user_input_lower  # Expanded keyword
+        )
 
         if has_review and has_fix:
+            # Dynamic confidence scoring (0.85-1.0 range)
+            base_confidence = 0.85
+
+            # Boost confidence based on signal strength
+            if pattern_match:
+                base_confidence += 0.05  # Boost for pattern match
+            if intent.compare_to_codebase:
+                base_confidence += 0.05  # Boost for "compare to codebase" flag
+            if intent.type == IntentType.REVIEW or intent.type == IntentType.FIX:
+                base_confidence += 0.05  # Boost for explicit intent type match
+
+            confidence = min(base_confidence, 1.0)  # Cap at 1.0
+
             return WorkflowSuggestion(
                 workflow_command=(
                     '@simple-mode *review <file>  # Then: @simple-mode *fix <file> "issues from review"'
@@ -484,7 +518,7 @@ class WorkflowSuggester:
                     "Quality gates after fixes",
                     "Full traceability from review to fix",
                 ],
-                confidence=0.85,
+                confidence=confidence,
                 reason="Review + fix hybrid request detected",
             )
 
