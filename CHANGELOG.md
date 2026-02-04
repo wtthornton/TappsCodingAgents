@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.1] - 2026-02-04
+
+### Fixed
+- **CRITICAL: PyPI packaging - Resources not included in wheel**
+  - Fixed missing resources (Cursor rules, Claude skills, workflow presets) in PyPI distribution
+  - Root cause: Resource subdirectories lacked `__init__.py` files, preventing setuptools from treating them as packages
+  - Added `__init__.py` to all resource subdirectories (claude, cursor, workflows, hooks, scripts, customizations)
+  - Fixed MANIFEST.in `recursive-exclude` pattern that was excluding all files from resources/
+  - Fixed `.cursorignore` exclusion to allow packaged version in tapps_agents/resources/cursor/
+  - Updated pyproject.toml package-data configuration for explicit resource subpackage inclusion
+  - Verified: 122 resource files now included in wheel (previously 0)
+  - Impact: `tapps-agents init` will now work correctly after pip install from PyPI
+
+### Documentation
+- Document PyPI token location and publishing process (from 3.6.0 commits)
+- Update API.md with complete agent documentation (from 3.6.0 commits)
+
+### Chore
+- Update agent capabilities and task specs (from 3.6.0 commits)
+- Update context7 index and add health tests (from 3.6.0 commits)
+
 ## [3.6.0] - 2026-02-04
 
 ### Added

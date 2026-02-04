@@ -1,0 +1,1 @@
+"""Claude Desktop command definitions."""

@@ -1,0 +1,1 @@
+"""Cursor IDE integration resources."""

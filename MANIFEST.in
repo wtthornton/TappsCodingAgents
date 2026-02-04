@@ -1,7 +1,6 @@
 # Include package resources (required for runtime)
 # Resources include Cursor Skills, Rules, and workflow presets needed by the framework
 recursive-include tapps_agents/resources *
-recursive-exclude tapps_agents/resources __pycache__ *
 
 # Exclude development and test files
 global-exclude *.pyc
@@ -9,8 +8,6 @@ global-exclude __pycache__
 global-exclude *.pyo
 global-exclude *.pyd
 recursive-exclude tests *
-recursive-exclude .claude *
-recursive-exclude .cursor *
 recursive-exclude .ruff_cache *
 recursive-exclude billstest *
 recursive-exclude docs *
@@ -30,12 +27,12 @@ recursive-exclude .venv *
 recursive-exclude venv *
 recursive-exclude ENV *
 recursive-exclude env *
-# Exclude additional dot directories and files
+# Exclude additional dot directories and files (but NOT tapps_agents/resources/cursor/.cursorignore)
 recursive-exclude .git *
 recursive-exclude .github *
 recursive-exclude .tapps-agents *
-global-exclude .cursorignore
-global-exclude .cursorrules
+exclude .cursorignore
+exclude .cursorrules
 global-exclude .env
 global-exclude .env.*
 global-exclude .gitignore
