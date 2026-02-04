@@ -8,18 +8,18 @@ pydantic>=2.12.5
 httpx>=0.28.1
 pyyaml>=6.0.3
 aiohttp>=3.13.3
-psutil>=7.2.1
+psutil>=7.2.2
 
 # Code Analysis (for scoring)
 radon>=6.0.1
-bandit>=1.9.2
-coverage>=7.13.1
+bandit>=1.9.3
+coverage>=7.13.3
 
 # Reporting (plotly moved to [reporting] extra - pip install -e ".[reporting]")
 jinja2>=3.1.6
 
 # CLI UX (progress spinners/bars, live updates)
-rich>=14.2.0
+rich>=14.3.2
 
 # Dependency conflict resolution
 # Constrain packaging to avoid conflicts with transitive dependencies (e.g., langchain-core)
@@ -30,12 +30,12 @@ packaging>=23.2,<27
 aiofiles>=25.1.0
 
 # Development Tools (from dev extra)
-ruff>=0.14.13,<1.0
+ruff>=0.15.0,<1.0
 mypy>=1.19.1,<2.0
 types-PyYAML>=6.0.12.20250915
 
 # Testing
-pytest>=9.1.0
+pytest>=9.0.2
 pytest-asyncio>=1.3.0
 pytest-cov>=7.0.0
 pytest-mock>=3.15.1

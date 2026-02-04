@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0", "wheel"]
+requires = ["setuptools>=80.10.2", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -30,11 +30,11 @@ dependencies = [
     "httpx>=0.28.1",
     "pyyaml>=6.0.3",
     "aiohttp>=3.13.3",
-    "psutil>=7.2.1",
+    "psutil>=7.2.2",
     # Code Analysis (used by reviewer agent at runtime)
     "radon>=6.0.1",
-    "bandit>=1.9.2",
-    "coverage>=7.13.1",
+    "bandit>=1.9.3",
+    "coverage>=7.13.3",
     # Reporting (used by report generator)
     "jinja2>=3.1.6",
     # Dependency conflict resolution
@@ -42,7 +42,7 @@ dependencies = [
     # langchain-core 0.2.43 requires packaging>=23.2,<26
     "packaging>=23.2,<27",
     # CLI UX (progress spinners/bars, live updates)
-    "rich>=14.2.0",
+    "rich>=14.3.2",
     # Async I/O (async file operations for performance - optional with fallback)
     "aiofiles>=25.1.0",
 ]
@@ -50,7 +50,7 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     # Code Formatting & Linting (Ruff replaces Black - single tool for lint + format)
-    "ruff>=0.14.13,<1.0",
+    "ruff>=0.15.0,<1.0",
     # Type Checking
     "mypy>=1.19.1,<2.0",
     "types-PyYAML>=6.0.12.20250915",
