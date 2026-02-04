@@ -4,6 +4,7 @@
 
 **Primary Guides:**
 - **[RELEASE_GUIDE.md](RELEASE_GUIDE.md)** - **Canonical release process guide** (comprehensive)
+- **[PYPI_DEPLOYMENT_GUIDE.md](PYPI_DEPLOYMENT_GUIDE.md)** - **PyPI deployment guide** (credentials, upload script, troubleshooting)
 - **[DEPLOYMENT.md](DEPLOYMENT.md)** - **Canonical deployment guide** (installation & usage)
 - **[RELEASE_QUICK_REFERENCE.md](RELEASE_QUICK_REFERENCE.md)** - Quick command reference
 
@@ -33,6 +34,7 @@ Historical release documentation has been removed. All current release processes
 ## Quick Links
 
 - **How to create a release:** [RELEASE_GUIDE.md](RELEASE_GUIDE.md#method-2-manual-release-script-windows)
+- **How to deploy to PyPI:** [PYPI_DEPLOYMENT_GUIDE.md](PYPI_DEPLOYMENT_GUIDE.md)
 - **Version tag requirements:** [RELEASE_VERSION_TAG_WARNING.md](RELEASE_VERSION_TAG_WARNING.md)
 - **Quick commands:** [RELEASE_QUICK_REFERENCE.md](RELEASE_QUICK_REFERENCE.md)
 - **Troubleshooting:** [RELEASE_GUIDE.md](RELEASE_GUIDE.md#troubleshooting)
