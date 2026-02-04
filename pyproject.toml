@@ -130,6 +130,7 @@ exclude = [
   "MagicMock",
   "tapps_agents.egg-info",
   "reports",
+  "scripts",  # Maintenance scripts, not part of package
 ]
 
 [tool.ruff.lint]
