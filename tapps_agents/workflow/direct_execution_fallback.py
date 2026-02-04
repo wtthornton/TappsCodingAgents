@@ -257,8 +257,12 @@ class DirectExecutionFallback:
         if skill_command.startswith("@"):
             skill_command = skill_command[1:]
 
-        # Split into parts
-        parts = skill_command.split()
+        # Split into parts, preserving quoted strings
+        # Use shlex.split() to handle complex quotes properly
+        try:
+            parts = shlex.split(skill_command, posix=False)
+        except ValueError as e:
+            raise ValueError(f"Invalid skill command (malformed quotes): {skill_command}") from e
 
         if not parts:
             raise ValueError(f"Invalid skill command: {skill_command}")
@@ -282,7 +286,13 @@ class DirectExecutionFallback:
         if command_name:
             cli_parts.append(command_name)
 
-        cli_parts.extend(remaining_args)
+        # Safely quote arguments that may contain spaces or special characters
+        for arg in remaining_args:
+            # Check if arg needs quoting (contains spaces, quotes, or special chars)
+            if ' ' in arg or '"' in arg or "'" in arg:
+                cli_parts.append(shlex.quote(arg))
+            else:
+                cli_parts.append(arg)
 
         return " ".join(cli_parts)
 
