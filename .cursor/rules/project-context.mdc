@@ -156,9 +156,51 @@ TappsCodingAgents/
 **Q: "What experts are configured in this project?"**
 **A:** Explain `.tapps-agents/experts.yaml`, the 5 experts, how they're used internally
 
+## Environment Variables and Credentials
+
+### PyPI Publishing Credentials
+
+**Location:** `.env` file (git-ignored, in project root)
+
+The PyPI API token for publishing releases is stored in `.env`:
+
+```bash
+# PyPI / Twine (for publishing to PyPI)
+TWINE_PASSWORD=pypi-AgEIcHlwaS5vcmcC...
+```
+
+**Publishing to PyPI:**
+
+```bash
+# Method 1: Export from .env
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD=$(grep TWINE_PASSWORD .env | cut -d '=' -f2)
+python -m twine upload dist/tapps_agents-<version>*
+
+# Method 2: Use upload script
+.\scripts\upload_to_pypi.ps1 -Repository pypi
+```
+
+**Security Guidelines:**
+- `.env` file is in `.gitignore` - **NEVER commit it**
+- Token is specific to `tapps-agents` PyPI project
+- For CI/CD: Use GitHub Secrets, not `.env` file
+- Regenerate token if compromised: [pypi.org/manage/account/token/](https://pypi.org/manage/account/token/)
+
+**Other Environment Variables:**
+- `CONTEXT7_API_KEY` - Context7 API key for documentation lookup
+- `ANTHROPIC_API_KEY` - (Optional) For Anthropic models
+- `OPENAI_API_KEY` - (Optional) For OpenAI models
+
+**Setup:**
+1. Copy `.env.example` to `.env`
+2. Fill in required API keys
+3. Never commit `.env` to version control
+
 ## References
 
 - **Documentation index and placement**: `docs/README.md`, `docs/archive/README.md`
 - **User Guide**: `docs/guides/QUICK_START.md`, Simple Mode and workflow guides in `docs/`
 - **Framework Architecture**: `docs/ARCHITECTURE.md`
 - **Configuration**: `.tapps-agents/` directory
+- **Release Guide**: `docs/operations/RELEASE_GUIDE.md`

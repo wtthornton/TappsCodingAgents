@@ -464,7 +464,43 @@ This script updates version numbers in:
 1. Update `CHANGELOG.md` with release notes
 2. Commit changes
 3. Create and push git tag
-4. See `docs/operations/RELEASE_GUIDE.md` for complete process
+4. Build packages: `python -m build`
+5. Publish to PyPI (see PyPI Credentials below)
+6. See `docs/operations/RELEASE_GUIDE.md` for complete process
+
+### PyPI Credentials
+
+**PyPI Token Location:** `.env` file (git-ignored)
+
+The PyPI API token for publishing packages is stored in the `.env` file:
+
+```bash
+# PyPI / Twine (for publishing to PyPI)
+TWINE_PASSWORD=pypi-AgEIcHlwaS5vcmcC...
+```
+
+**To publish to PyPI:**
+
+```bash
+# Load environment variables from .env
+export TWINE_USERNAME=__token__
+export TWINE_PASSWORD=$(grep TWINE_PASSWORD .env | cut -d '=' -f2)
+
+# Upload to PyPI
+python -m twine upload dist/tapps_agents-<version>*
+```
+
+**Security Notes:**
+- `.env` file is in `.gitignore` - NEVER commit it
+- Token is project-specific and should be regenerated if compromised
+- Token has write access to `tapps-agents` package on PyPI
+- For CI/CD, use GitHub Secrets instead of `.env` file
+
+**Obtaining a new token:**
+1. Log in to [pypi.org](https://pypi.org)
+2. Go to Account Settings → API tokens
+3. Create token with scope limited to `tapps-agents` project
+4. Copy token to `.env` file as `TWINE_PASSWORD`
 
 ---
 
