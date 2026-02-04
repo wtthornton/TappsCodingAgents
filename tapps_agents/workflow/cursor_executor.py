@@ -1844,8 +1844,13 @@ class CursorWorkflowExecutor:
             self.save_state()
 
     def _normalize_action(self, action: str) -> str:
-        """Normalize action name."""
-        return action.replace("_", "-").lower()
+        """
+        Normalize action name to use underscores (Python convention).
+
+        Converts hyphens to underscores so workflow YAMLs can use either format,
+        but handlers always receive underscore format (e.g., "write_code").
+        """
+        return action.replace("-", "_").lower()
     
     def _get_step_params(self, step: WorkflowStep, target_path: Path | None) -> dict[str, Any]:
         """
