@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.0] - 2026-02-04
+
+### Added
+- **Context Window Optimization - Option 2: Token-Aware Workflow Artifact Injection**
+  - **ArtifactContextBuilder** (`tapps_agents/core/artifact_context_builder.py`) - Token-based artifact budgeting with intelligent prioritization
+    - Token estimation using tiktoken (with chars/4 fallback)
+    - Priority ordering: spec (1) → user_stories (2) → architecture (3) → api_design (4)
+    - Budget enforcement with truncation or template summarization
+    - Template summaries for each artifact type
+  - **Configuration options** in SimpleModeConfig:
+    - `artifact_context_budget_tokens`: Default 4000, range 1000-16000
+    - `artifact_summarization_enabled`: Default False (Phase 1 uses truncation)
+  - **Comprehensive test suite** (`tests/tapps_agents/core/test_artifact_context_builder.py`):
+    - 24 unit tests (22 passing, 2 skipped for tiktoken)
+    - Coverage: budget enforcement, priority ordering, truncation, summarization
+
+### Changed
+- **BuildOrchestrator._enrich_implementer_context** - Refactored to use token budgets instead of character limits
+  - Replaced hardcoded character limits (2000/3000) with configurable token-based budgets
+  - Uses ArtifactContextBuilder for intelligent artifact selection
+  - Reads configuration from `simple_mode.artifact_context_budget_tokens`
+  - Maintains backward compatibility with safe defaults
+
+### Fixed
+- **Context overflow prevention** - Addresses root cause of 53 failed workflows (from health metrics)
+  - Prevents context window overflow in implementer steps
+  - Smart prioritization ensures critical artifacts always included
+  - Configurable via `.tapps-agents/config.yaml`
+
+### Documentation
+- **CONFIGURATION.md** - Added artifact context budget configuration options
+- **docs/implementation/CONTEXT_WINDOW_OPTIMIZATION_STATUS.md** - Implementation status tracking
+- **docs/implementation/CONTEXT_WINDOW_OPTIMIZATION_IMPLEMENTATION_PLAN.md** - Complete implementation plan
+- **Option 1 deferred** - Documented deferral rationale (Option 2 sufficient for current needs)
+- **Option 3 under review** - Context7 strict usage and per-agent caps (future enhancement)
+
+### Impact
+- Prevents context overflow in implementer steps
+- Improves workflow success rate for large projects
+- Reduces token waste through intelligent prioritization
+- Configurable budget allows tuning per project size
+
+## [3.5.39] - 2026-02-02
+
 ### Added
 - **ENH-002 (Epic 2): Hooks and task management**
   - **Hooks in base orchestrator (Story 2.5):** UserPromptSubmit before workflow, PostToolUse after implementer Write/Edit, WorkflowComplete in finally; opt-in via `.tapps-agents/hooks.yaml`.
@@ -22,8 +66,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **README.md, docs/README.md:** Hooks and task management sections with links to HOOKS_GUIDE and TASK_MANAGEMENT_GUIDE; quick start mentions `init --hooks` and task commands.
 - **CLAUDE.md:** Hooks and task management subsection; doc links for HOOKS_GUIDE and TASK_MANAGEMENT_GUIDE.
 - **docs/CONFIGURATION.md:** Hooks and session section (hooks.yaml, session lifecycle, hydration/dehydration).
-
-## [3.5.39] - 2026-02-02
 
 ### Fixed
 - **init --reset** – Workflow presets are now initialized before Cursor Rules so `workflow-presets.mdc` can be generated from YAML after reset (presets were previously restored after rules generation, causing "No workflow YAML files found").

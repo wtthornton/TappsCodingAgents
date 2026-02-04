@@ -249,6 +249,8 @@ simple_mode:
   show_advanced_tips: true            # Show tips for advanced features
   max_history_entries: 10            # Maximum command history entries
   feedback_collection_enabled: true  # Enable anonymous feedback collection
+  artifact_context_budget_tokens: 4000  # Token budget for workflow artifacts (1000-16000)
+  artifact_summarization_enabled: false # Use template summaries when over budget (default: truncate)
 ```
 
 **Configuration Options:**
@@ -262,6 +264,8 @@ simple_mode:
 - `show_advanced_tips`: Show tips for advanced features as users progress
 - `max_history_entries`: Maximum number of command history entries to store (1-100)
 - `feedback_collection_enabled`: Enable anonymous feedback collection for UX improvements
+- `artifact_context_budget_tokens`: Token budget for workflow artifact context (spec, user_stories, architecture, api_design). Range: 1000-16000, default: 4000
+- `artifact_summarization_enabled`: Use template summaries when artifact budget is exceeded. If false (default), artifacts are truncated instead
 
 **Usage:**
 

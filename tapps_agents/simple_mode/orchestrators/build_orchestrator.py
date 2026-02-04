@@ -48,6 +48,7 @@ from pathlib import Path
 from typing import Any
 
 from tapps_agents.agents.enhancer.agent import EnhancerAgent
+from tapps_agents.core.artifact_context_builder import ArtifactContextBuilder
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
 from tapps_agents.simple_mode.documentation_manager import (
     WorkflowDocumentationManager,
@@ -1762,6 +1763,9 @@ Your choice: [1/2/3]
         """
         Enrich implementer context with previous step documentation.
 
+        Uses ArtifactContextBuilder to manage token budgets and prevent context overflow.
+        Artifacts are prioritized: spec → user_stories → architecture → api_design.
+
         Args:
             workflow_id: Workflow identifier
             doc_manager: Documentation manager instance (None if not enabled)
@@ -1786,32 +1790,61 @@ Your choice: [1/2/3]
             )
 
             # Read previous step documentation
-            # Step 1: Enhanced prompt
+            artifacts: list[tuple[str, str, int]] = []
+
+            # Step 1: Enhanced prompt (priority 1 - highest)
             step1_content = reader.read_step_documentation(1, "enhanced-prompt")
             if step1_content:
-                # Extract enhanced prompt from content (first 2000 chars or full content)
-                args["specification"] = step1_content[:2000] if len(step1_content) > 2000 else step1_content
+                artifacts.append(("specification", step1_content, 1))
                 logger.debug("Read enhanced prompt from step1-enhanced-prompt.md")
 
-            # Step 2: User stories
+            # Step 2: User stories (priority 2)
             step2_content = reader.read_step_documentation(2, "user-stories")
             if step2_content:
-                args["user_stories"] = step2_content[:3000] if len(step2_content) > 3000 else step2_content
+                artifacts.append(("user_stories", step2_content, 2))
                 logger.debug("Read user stories from step2-user-stories.md")
 
-            # Step 3: Architecture
+            # Step 3: Architecture (priority 3)
             step3_content = reader.read_step_documentation(3, "architecture")
             if step3_content:
-                args["architecture"] = step3_content[:3000] if len(step3_content) > 3000 else step3_content
+                artifacts.append(("architecture", step3_content, 3))
                 logger.debug("Read architecture from step3-architecture.md")
 
-            # Step 4: API Design
+            # Step 4: API Design (priority 4)
             step4_content = reader.read_step_documentation(4, "design")
             if step4_content:
-                args["api_design"] = step4_content[:3000] if len(step4_content) > 3000 else step4_content
+                artifacts.append(("api_design", step4_content, 4))
                 logger.debug("Read API design from step4-design.md")
 
-            logger.info(f"Enriched implementer context with {len([k for k in args.keys() if k != 'specification'])} previous step outputs")
+            # Build context with token budget enforcement
+            # Read from config or use defaults
+            token_budget = 4000  # Default
+            summarization_enabled = False  # Default
+
+            if self.config and hasattr(self.config, "simple_mode") and self.config.simple_mode:
+                token_budget = getattr(
+                    self.config.simple_mode,
+                    "artifact_context_budget_tokens",
+                    4000,
+                )
+                summarization_enabled = getattr(
+                    self.config.simple_mode,
+                    "artifact_summarization_enabled",
+                    False,
+                )
+
+            context_builder = ArtifactContextBuilder(
+                token_budget=token_budget,
+                use_tiktoken=True,
+                summarization_enabled=summarization_enabled,
+            )
+
+            args = context_builder.build_context(artifacts)
+
+            logger.info(
+                f"Enriched implementer context with {len([k for k in args.keys() if k != 'specification'])} "
+                f"previous step outputs (token-budgeted)"
+            )
 
         except Exception as e:
             logger.warning(f"Failed to enrich implementer context, using fallback: {e}")

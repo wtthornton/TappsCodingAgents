@@ -390,6 +390,29 @@ class Context7Config(BaseModel):
     )
     refresh: Context7RefreshConfig = Field(default_factory=Context7RefreshConfig)
 
+    # Option 3: Strict On-Demand Usage and Per-Agent Caps
+    require_topic: bool = Field(
+        default=True,
+        description="Require topic when fetching Context7 documentation (prevents 'whole library' fetches)"
+    )
+    allow_full_library_libraries: list[str] = Field(
+        default_factory=list,
+        description="Libraries allowed to fetch without topic (e.g., ['python-stdlib'])"
+    )
+    per_agent_max_tokens: dict[str, int] = Field(
+        default_factory=lambda: {
+            "architect": 4000,
+            "implementer": 3000,
+            "tester": 2500,
+            "reviewer": 3000,
+            "analyst": 2000,
+            "planner": 2000,
+            "designer": 3000,
+            "default": 2500,
+        },
+        description="Maximum Context7 tokens per agent per turn"
+    )
+
 
 class QualityToolsConfig(BaseModel):
     """Configuration for quality analysis tools (Phase 6 - 2025 Standards)"""
@@ -1192,6 +1215,16 @@ class SimpleModeConfig(BaseModel):
         ge=0.0,
         le=1.0,
         description="Minimum confidence threshold for checkpoint recommendations (0.0-1.0)",
+    )
+    artifact_context_budget_tokens: int = Field(
+        default=4000,
+        ge=1000,
+        le=16000,
+        description="Token budget for workflow artifact context (spec, user_stories, architecture, api_design)",
+    )
+    artifact_summarization_enabled: bool = Field(
+        default=False,
+        description="Use template summaries when artifact budget is exceeded (default: truncate)",
     )
 
 
