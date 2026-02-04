@@ -20,7 +20,7 @@ task:
   epic: ENH-002
   dependencies: []
   github_issue: null
-  beads_issue: TappsCodingAgents-392
+  beads_issue: TappsCodingAgents-4tt
   status: todo
   workflow: build
   files:
