@@ -5,7 +5,7 @@ Workflow models - Data structures for workflow definitions.
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 
 class WorkflowType(Enum):
@@ -93,6 +93,43 @@ class StepExecution:
     duration_seconds: float | None = None
     status: str = "running"  # running, completed, failed, skipped
     error: str | None = None
+
+
+@dataclass
+class StepResult:
+    """Result of step execution with proper error handling.
+
+    This class represents the outcome of executing a workflow step,
+    including success/failure status, error details, and artifacts created.
+    Used by CursorExecutor to properly track step outcomes and halt
+    workflows when required steps fail.
+    """
+
+    step_id: str
+    status: Literal["completed", "failed", "skipped"]
+    success: bool
+    duration: float
+    started_at: datetime
+    completed_at: datetime
+    error: str | None = None
+    error_traceback: str | None = None
+    artifacts: list[str] = field(default_factory=list)
+    skip_reason: str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dictionary for serialization."""
+        return {
+            "step_id": self.step_id,
+            "status": self.status,
+            "success": self.success,
+            "duration": self.duration,
+            "started_at": self.started_at.isoformat(),
+            "completed_at": self.completed_at.isoformat(),
+            "error": self.error,
+            "error_traceback": self.error_traceback,
+            "artifacts": self.artifacts,
+            "skip_reason": self.skip_reason,
+        }
 
 
 @dataclass

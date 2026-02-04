@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import os
+import traceback
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import asdict
@@ -52,7 +53,7 @@ from .event_bus import FileBasedEventBus
 from .events import EventType, WorkflowEvent
 from .logging_helper import WorkflowLogger
 from .marker_writer import MarkerWriter
-from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .models import Artifact, StepExecution, StepResult, Workflow, WorkflowState, WorkflowStep
 from .parallel_executor import ParallelStepExecutor
 from .progress_manager import ProgressUpdateManager
 from .skill_invoker import SkillInvoker
@@ -602,11 +603,74 @@ class CursorWorkflowExecutor:
 
                 # Execute ready steps in parallel
                 running_step_ids.update(step.id for step in ready_steps)
-                
+
+                # Store completed steps with their results for dependency validation (BUG-003B)
+                completed_step_results: dict[str, StepResult] = {}
+
                 async def execute_step_wrapper(step: WorkflowStep) -> dict[str, Any]:
-                    """Wrapper to adapt _execute_step_for_parallel to parallel executor interface."""
-                    artifacts = await self._execute_step_for_parallel(step=step, target_path=target_path)
-                    return artifacts or {}
+                    """Wrapper to adapt _execute_step_for_parallel to parallel executor interface (BUG-003B fix)."""
+                    # Validate dependencies before execution (BUG-003B)
+                    can_execute, skip_reason = self._can_execute_step(step, completed_step_results)
+
+                    if not can_execute:
+                        # Create skipped StepResult
+                        now = datetime.now()
+                        skipped_result = StepResult(
+                            step_id=step.id,
+                            status="skipped",
+                            success=False,
+                            duration=0.0,
+                            started_at=now,
+                            completed_at=now,
+                            skip_reason=skip_reason,
+                            artifacts=[],
+                        )
+                        completed_step_results[step.id] = skipped_result
+
+                        # Print skip message
+                        from ..core.unicode_safe import safe_print
+                        safe_print(f"\n⏭️  Skipping step '{step.id}': {skip_reason}\n")
+
+                        # Return empty artifacts (step was skipped)
+                        return {}
+
+                    # Execute step
+                    step_result = await self._execute_step_for_parallel(step=step, target_path=target_path)
+                    completed_step_results[step.id] = step_result
+
+                    # Check if step failed (BUG-003B)
+                    if not step_result.success:
+                        # Check if step is required
+                        is_required = step.condition == "required"
+
+                        if is_required:
+                            # Halt workflow for required step failure
+                            from ..core.unicode_safe import safe_print
+                            safe_print(
+                                f"\n❌ Workflow halted: Required step '{step.id}' failed\n"
+                                f"Error: {step_result.error}\n"
+                            )
+
+                            # Update workflow status
+                            if self.state:
+                                self.state.status = "blocked"
+                                self.state.error = step_result.error
+
+                        # Raise error to stop execution
+                        raise RuntimeError(step_result.error or "Step failed")
+
+                    # Convert StepResult artifacts (list of names) back to dict format for compatibility
+                    artifacts_dict: dict[str, dict[str, Any]] = {}
+                    for artifact_name in step_result.artifacts:
+                        artifacts_dict[artifact_name] = {
+                            "name": artifact_name,
+                            "path": artifact_name,
+                            "status": "complete",
+                            "created_by": step.id,
+                            "created_at": step_result.completed_at.isoformat(),
+                        }
+
+                    return artifacts_dict
 
                 try:
                     results = await self.parallel_executor.execute_parallel(
@@ -1325,11 +1389,14 @@ class CursorWorkflowExecutor:
 
     async def _execute_step_for_parallel(
         self, step: WorkflowStep, target_path: Path | None
-    ) -> dict[str, dict[str, Any]] | None:
+    ) -> StepResult:
         """
-        Execute a single workflow step using Cursor Skills and return artifacts (for parallel execution).
-        
-        This is similar to _execute_step but returns artifacts instead of updating state.
+        Execute a single workflow step using Cursor Skills and return result (BUG-003B fix).
+
+        This method now returns StepResult with proper error handling:
+        - success=True + artifacts on success
+        - success=False + error details on failure (no exception raised)
+
         State updates (step_execution tracking) are handled by ParallelStepExecutor.
         """
         if not self.state or not self.workflow:
@@ -1356,8 +1423,17 @@ class CursorWorkflowExecutor:
 
         # Handle completion/finalization steps that don't require agent execution
         if agent_name == "orchestrator" and action in ["finalize", "complete"]:
-            # Return empty artifacts for completion steps
-            return {}
+            # Return successful result for completion steps (no artifacts)
+            now = datetime.now()
+            return StepResult(
+                step_id=step.id,
+                status="completed",
+                success=True,
+                duration=0.0,
+                started_at=now,
+                completed_at=now,
+                artifacts=[],
+            )
 
         # Track step start time for duration calculation
         step_started_at = datetime.now()
@@ -1407,16 +1483,12 @@ class CursorWorkflowExecutor:
                     # Worktree is only used for skill invocation fallback
                     created_artifacts_list = await handler.execute(step, action, target_path)
 
-                    # Convert handler artifacts to dict format
-                    artifacts_dict: dict[str, dict[str, Any]] = {}
-                    for art in (created_artifacts_list or []):
-                        artifacts_dict[art["name"]] = art
-
                     # Write success marker
                     step_completed_at = datetime.now()
                     duration = (step_completed_at - step_started_at).total_seconds()
 
                     found_artifact_paths = [art["path"] for art in (created_artifacts_list or [])]
+                    artifact_names = [art["name"] for art in (created_artifacts_list or [])]
 
                     marker_path = self.marker_writer.write_done_marker(
                         workflow_id=self.state.workflow_id,
@@ -1438,7 +1510,16 @@ class CursorWorkflowExecutor:
                             marker_path=str(marker_path),
                         )
 
-                    return artifacts_dict if artifacts_dict else None
+                    # Return successful StepResult (BUG-003B fix)
+                    return StepResult(
+                        step_id=step.id,
+                        status="completed",
+                        success=True,
+                        duration=duration,
+                        started_at=step_started_at,
+                        completed_at=step_completed_at,
+                        artifacts=artifact_names,
+                    )
                 else:
                     # Fall back to SkillInvoker for steps without handlers
                     safe_print(f"\n[EXEC] Executing {agent_name}/{action} via skill...", flush=True)
@@ -1459,19 +1540,12 @@ class CursorWorkflowExecutor:
                         step=step,
                     )
 
-                    # Convert artifacts to dict format
-                    artifacts_dict: dict[str, dict[str, Any]] = {}
+                    # Extract artifact paths and names
                     found_artifact_paths = []
+                    artifact_names = []
                     for artifact in artifacts:
-                        artifacts_dict[artifact.name] = {
-                            "name": artifact.name,
-                            "path": artifact.path,
-                            "status": artifact.status,
-                            "created_by": artifact.created_by,
-                            "created_at": artifact.created_at.isoformat() if artifact.created_at else None,
-                            "metadata": artifact.metadata or {},
-                        }
                         found_artifact_paths.append(artifact.path)
+                        artifact_names.append(artifact.name)
 
                     # Write DONE marker for successful completion
                     step_completed_at = datetime.now()
@@ -1497,8 +1571,17 @@ class CursorWorkflowExecutor:
                             marker_path=str(marker_path),
                         )
 
+                    # Return successful StepResult (BUG-003B fix)
                     # Worktree cleanup is handled by context manager
-                    return artifacts_dict if artifacts_dict else None
+                    return StepResult(
+                        step_id=step.id,
+                        status="completed",
+                        success=True,
+                        duration=duration,
+                        started_at=step_started_at,
+                        completed_at=step_completed_at,
+                        artifacts=artifact_names,
+                    )
                 
             except (TimeoutError, RuntimeError) as e:
                 # Write FAILED marker for timeout or execution errors
@@ -1506,7 +1589,8 @@ class CursorWorkflowExecutor:
                 duration = (step_failed_at - step_started_at).total_seconds()
                 error_type = type(e).__name__
                 error_msg = str(e)
-                
+                error_tb = traceback.format_exc()
+
                 # Try to get completion status if available (for missing artifacts)
                 found_artifact_paths = []
                 try:
@@ -1518,7 +1602,7 @@ class CursorWorkflowExecutor:
                     found_artifact_paths = completion_status.get("found_artifacts", [])
                 except Exception:
                     pass
-                
+
                 marker_path = self.marker_writer.write_failed_marker(
                     workflow_id=self.state.workflow_id,
                     step_id=step.id,
@@ -1537,30 +1621,41 @@ class CursorWorkflowExecutor:
                         "marker_location": f".tapps-agents/workflows/markers/{self.state.workflow_id}/step-{step.id}/FAILED.json",
                     },
                 )
-                
+
                 if self.logger:
                     self.logger.warning(
                         f"FAILED marker written for step {step.id}",
                         marker_path=str(marker_path),
                         error=error_msg,
                     )
-                
+
                 # Include marker location in error message for better troubleshooting
                 from ..core.unicode_safe import safe_print
                 safe_print(
                     f"\n[INFO] Failure marker written to: {marker_path}",
                     flush=True,
                 )
-                
-                # Re-raise the exception
-                raise
+
+                # Return failed StepResult (BUG-003B fix - don't raise)
+                return StepResult(
+                    step_id=step.id,
+                    status="failed",
+                    success=False,
+                    duration=duration,
+                    started_at=step_started_at,
+                    completed_at=step_failed_at,
+                    error=error_msg,
+                    error_traceback=error_tb,
+                    artifacts=[],
+                )
             except Exception as e:
                 # Write FAILED marker for unexpected errors
                 step_failed_at = datetime.now()
                 duration = (step_failed_at - step_started_at).total_seconds()
                 error_type = type(e).__name__
                 error_msg = str(e)
-                
+                error_tb = traceback.format_exc()
+
                 marker_path = self.marker_writer.write_failed_marker(
                     workflow_id=self.state.workflow_id,
                     step_id=step.id,
@@ -1579,7 +1674,7 @@ class CursorWorkflowExecutor:
                         "marker_location": f".tapps-agents/workflows/markers/{self.state.workflow_id}/step-{step.id}/FAILED.json",
                     },
                 )
-                
+
                 if self.logger:
                     self.logger.error(
                         f"FAILED marker written for step {step.id} (unexpected error)",
@@ -1587,9 +1682,19 @@ class CursorWorkflowExecutor:
                         error=error_msg,
                         exc_info=True,
                     )
-                
-                # Re-raise the exception
-                raise
+
+                # Return failed StepResult (BUG-003B fix - don't raise)
+                return StepResult(
+                    step_id=step.id,
+                    status="failed",
+                    success=False,
+                    duration=duration,
+                    started_at=step_started_at,
+                    completed_at=step_failed_at,
+                    error=error_msg,
+                    error_traceback=error_tb,
+                    artifacts=[],
+                )
 
     @asynccontextmanager
     async def _worktree_context(
@@ -1842,6 +1947,42 @@ class CursorWorkflowExecutor:
 
         finally:
             self.save_state()
+
+    def _can_execute_step(
+        self,
+        step: WorkflowStep,
+        completed_steps: dict[str, StepResult]
+    ) -> tuple[bool, str]:
+        """
+        Check if step can execute based on dependencies (BUG-003B fix).
+
+        Validates that all required dependencies have been executed and succeeded.
+        If any dependency is missing or failed, the step cannot execute.
+
+        Args:
+            step: Step to check
+            completed_steps: Results of previously executed steps
+
+        Returns:
+            (can_execute, skip_reason) tuple:
+            - (True, "") if all dependencies met
+            - (False, reason) if dependencies not met
+
+        Example:
+            can_run, reason = self._can_execute_step(step, completed_steps)
+            if not can_run:
+                # Skip step with reason
+                skip_result = StepResult(status="skipped", skip_reason=reason, ...)
+        """
+        for dep in step.requires or []:
+            if dep not in completed_steps:
+                return False, f"Dependency '{dep}' not executed"
+
+            dep_result = completed_steps[dep]
+            if not dep_result.success:
+                return False, f"Dependency '{dep}' failed: {dep_result.error}"
+
+        return True, ""
 
     def _normalize_action(self, action: str) -> str:
         """

@@ -207,13 +207,21 @@ def _handle_run(args: object) -> None:
             spec = spec.model_copy(update={"status": "done"})
             save_task_spec(spec, root)
             print(f"Task {task_id} completed.")
+        elif final_state.status == "blocked":
+            # BUG-003B fix: Set status to "blocked" when workflow fails
+            spec = spec.model_copy(update={"status": "blocked"})
+            save_task_spec(spec, root)
+            print(f"Workflow blocked: {final_state.error or 'Required step failed'}", file=sys.stderr)
+            sys.exit(1)
         else:
+            # Other statuses (paused, etc.) - set to todo for retry
             spec = spec.model_copy(update={"status": "todo"})
             save_task_spec(spec, root)
             print(f"Workflow ended with status: {final_state.status}", file=sys.stderr)
             sys.exit(1)
     except Exception as e:
-        spec = spec.model_copy(update={"status": "todo"})
+        # BUG-003B fix: Set status to "blocked" on exception
+        spec = spec.model_copy(update={"status": "blocked"})
         save_task_spec(spec, root)
         print(f"Error running workflow: {e}", file=sys.stderr)
         sys.exit(1)
