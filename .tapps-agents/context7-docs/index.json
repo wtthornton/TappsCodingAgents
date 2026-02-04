@@ -5669,6 +5669,69 @@
       "file_path": "typescript.json",
       "saved_at": "2026-02-03T16:31:39.962700",
       "source": "api"
+    },
+    "generation": {
+      "library": "generation",
+      "topic": null,
+      "file_path": "generation.json",
+      "saved_at": "2026-02-04T10:33:28.747310",
+      "source": "fuzzy_match"
+    },
+    "py": {
+      "library": "py",
+      "topic": null,
+      "file_path": "py.json",
+      "saved_at": "2026-02-04T10:33:28.939029",
+      "source": "fuzzy_match"
+    },
+    "the": {
+      "library": "the",
+      "topic": null,
+      "file_path": "the.json",
+      "saved_at": "2026-02-04T10:33:29.105033",
+      "source": "fuzzy_match"
+    },
+    "go": {
+      "library": "go",
+      "topic": null,
+      "file_path": "go.json",
+      "saved_at": "2026-02-04T10:33:32.569782",
+      "source": "api"
+    },
+    "subscriber": {
+      "library": "subscriber",
+      "topic": null,
+      "file_path": "subscriber.json",
+      "saved_at": "2026-02-04T10:33:36.185383",
+      "source": "api"
+    },
+    "apidoc": {
+      "library": "apidoc",
+      "topic": null,
+      "file_path": "apidoc.json",
+      "saved_at": "2026-02-04T10:33:36.441833",
+      "source": "fuzzy_match"
+    },
+    "and": {
+      "library": "and",
+      "topic": null,
+      "file_path": "and.json",
+      "saved_at": "2026-02-04T10:45:50.082037",
+      "source": "fuzzy_match"
+    },
+    "and:best-practices": {
+      "library": "and",
+      "topic": "best-practices",
+      "file_path": "and_best-practices.json",
+      "saved_at": "2026-02-04T10:45:50.740955",
+      "source": "fuzzy_match"
+    },
+    "and:architecture": {
+      "library": "and",
+      "topic": "architecture",
+      "file_path": "and_architecture.json",
+      "saved_at": "2026-02-04T10:45:54.294488",
+      "source": "api"
     }
   },
   "comprehensive_index": {
@@ -7436,6 +7499,37 @@
       "typescript": {
         "topics": [],
         "total_docs": 1
+      },
+      "generation": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "py": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "the": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "go": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "subscriber": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "apidoc": {
+        "topics": [],
+        "total_docs": 1
+      },
+      "and": {
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       }
     },
     "topics": {
@@ -7639,7 +7733,8 @@
         "score_validator",
         "scorer_registry",
         "tools",
-        "dataclasses"
+        "dataclasses",
+        "and"
       ],
       "common-mistakes": [
         "__future__",
@@ -8203,11 +8298,12 @@
         "radon",
         "rich",
         "ruff",
-        "types-pyyaml"
+        "types-pyyaml",
+        "and"
       ]
     },
-    "total_entries": 810,
-    "last_updated": "2026-02-03T16:31:39.962708"
+    "total_entries": 819,
+    "last_updated": "2026-02-04T10:45:54.294507"
   },
-  "last_updated": "2026-02-03T16:31:39.963471"
+  "last_updated": "2026-02-04T10:45:54.296004"
 }

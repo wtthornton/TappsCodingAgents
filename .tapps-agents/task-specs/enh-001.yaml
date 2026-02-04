@@ -19,7 +19,7 @@ task:
   epic: EPIC-52
   dependencies: []
   github_issue: null
-  beads_issue: TappsCodingAgents-hw9
+  beads_issue: TappsCodingAgents-vw08
   status: todo
   workflow: build
   files:
