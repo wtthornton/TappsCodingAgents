@@ -8,7 +8,7 @@ import difflib
 import inspect
 import logging
 import shutil
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -370,7 +370,7 @@ Return only the optimized code, wrapped in ```python code blocks."""
             language = detector.detect_language(file_path_obj)
             
             # Use universal auto-detection hook for Context7 docs
-            focus_prompt = f"Improve code quality" + (f" focusing on {focus}" if focus else "")
+            focus_prompt = "Improve code quality" + (f" focusing on {focus}" if focus else "")
             context7_docs = await self._auto_fetch_context7_docs(
                 code=current_code,
                 prompt=focus_prompt,
@@ -433,12 +433,11 @@ Return only the improved code, wrapped in ```python code blocks."""
         )
 
         # Phase 7.1: Generate diff preview if requested or for auto-apply
-        diff_result = None
         if preview or auto_apply:
             # Note: In Cursor-first mode, actual code generation is done by Cursor AI.
             # The diff is generated from placeholder improved code for preview purposes.
             # When auto_apply is True, Cursor AI should use this as a signal to apply changes.
-            diff_result = self._generate_diff(
+            self._generate_diff(
                 current_code, 
                 current_code,  # Placeholder - actual improvement done by Cursor AI
                 str(file_path)

@@ -119,7 +119,7 @@ class ErrorHandler:
         Returns:
             ErrorCategory
         """
-        error_type = type(error).__name__
+        type(error).__name__
         error_msg = str(error).lower()
 
         # Network errors
@@ -222,7 +222,7 @@ class ErrorHandler:
         ]
 
         if fallback_available:
-            suggestions.append(f"Use offline mode (some features may be limited)")
+            suggestions.append("Use offline mode (some features may be limited)")
 
         return {
             "error": True,

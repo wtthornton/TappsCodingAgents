@@ -2,10 +2,8 @@
 Tests for Expert Synthesizer.
 """
 
-from pathlib import Path
 
 import pytest
-import yaml
 
 from tapps_agents.experts.expert_config import load_expert_configs
 from tapps_agents.experts.expert_synthesizer import ExpertSynthesizer

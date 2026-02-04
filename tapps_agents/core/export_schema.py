@@ -4,10 +4,8 @@ Export Schema
 Defines and validates export data format.
 """
 
-import json
 import logging
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)

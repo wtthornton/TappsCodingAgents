@@ -477,7 +477,7 @@ class CacheWarmer:
                     return (lib, "warmed", None)
                 else:
                     return (lib, "failed", result.error)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 return (lib, "failed", f"Timeout after {per_library_timeout}s")
             except Exception as e:
                 return (lib, "failed", str(e))

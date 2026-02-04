@@ -9,11 +9,9 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
 from tapps_agents.core.skill_loader import (
     CustomSkillLoader,
-    SkillMetadata,
     initialize_skill_registry,
 )
 

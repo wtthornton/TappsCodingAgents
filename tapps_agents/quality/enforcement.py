@@ -58,7 +58,7 @@ class QualityEnforcement:
             self.critical_service_threshold if is_critical else self.quality_threshold
         )
 
-        quality_gate = QualityGate(
+        QualityGate(
             thresholds=QualityThresholds(overall_min=threshold)
         )
 

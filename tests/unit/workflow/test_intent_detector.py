@@ -24,7 +24,6 @@ from __future__ import annotations
 import time
 import tracemalloc
 from pathlib import Path
-from typing import Any
 
 import pytest
 
@@ -33,7 +32,6 @@ from tapps_agents.workflow.intent_detector import (
     IntentDetector,
     WorkflowType,
 )
-
 
 # ============================================================================
 # FIXTURES
@@ -395,7 +393,7 @@ class TestContextAnalysis:
         self, detector: IntentDetector, new_file: Path
     ) -> None:
         """Test that context provides measurable confidence boost."""
-        result_no_context = detector.detect_workflow("feature")
+        detector.detect_workflow("feature")
         result_with_context = detector.detect_workflow("feature", file_path=new_file)
 
         # Context should provide some boost

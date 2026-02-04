@@ -2,8 +2,8 @@
 Tests for Adaptive Domain Detector
 """
 
+
 import pytest
-from pathlib import Path
 
 from tapps_agents.experts.adaptive_domain_detector import (
     AdaptiveDomainDetector,

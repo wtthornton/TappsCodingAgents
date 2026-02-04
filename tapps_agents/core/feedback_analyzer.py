@@ -9,7 +9,6 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from .evaluation_models import FeedbackRecord
 from .feedback_collector import FeedbackCollector
 
 logger = logging.getLogger(__name__)

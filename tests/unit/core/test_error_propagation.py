@@ -8,7 +8,6 @@ Story 19.2: Add Error Propagation Tests
 - Verify error envelope propagation
 """
 
-from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
@@ -17,6 +16,7 @@ from tapps_agents.core.exceptions import (
     AgentError,
     ConfigurationError,
 )
+
 # MALError and MAL removed - agents now return instruction objects
 
 pytestmark = pytest.mark.unit

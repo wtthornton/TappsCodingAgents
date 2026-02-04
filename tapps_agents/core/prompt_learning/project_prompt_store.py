@@ -3,7 +3,7 @@
 from pathlib import Path
 from typing import Any
 
-from ..storage_manager import PromptStorage, StorageManager
+from ..storage_manager import StorageManager
 
 
 class ProjectPromptStore:

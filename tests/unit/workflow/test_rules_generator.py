@@ -4,7 +4,6 @@ Tests for Cursor Rules Generator.
 Epic 8: Automated Documentation Generation
 """
 
-from pathlib import Path
 
 import pytest
 
@@ -52,7 +51,12 @@ class TestCursorRulesGenerator:
 
     def test_extract_quality_gates(self, tmp_path):
         """Test quality gate extraction from workflow."""
-        from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowSettings, WorkflowType
+        from tapps_agents.workflow.models import (
+            Workflow,
+            WorkflowSettings,
+            WorkflowStep,
+            WorkflowType,
+        )
 
         workflow = Workflow(
             id="test",

@@ -9,7 +9,7 @@ Tests cover:
 - Edge cases and error handling
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import UUID
 
 import pytest

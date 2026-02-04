@@ -6,7 +6,8 @@ Provides reusable error handling patterns to reduce code duplication.
 
 import asyncio
 import logging
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -90,7 +91,7 @@ class ErrorHandler:
         """
         try:
             return await asyncio.wait_for(operation(), timeout=timeout)
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger_func = getattr(logger, log_level, logger.warning)
             logger_func(f"{timeout_message} (timeout: {timeout}s)")
             return None

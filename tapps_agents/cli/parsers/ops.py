@@ -149,7 +149,7 @@ Use this to bootstrap infrastructure setup for your project.""",
         help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
-    audit_bundle_parser = ops_subparsers.add_parser(
+    ops_subparsers.add_parser(
         "audit-bundle",
         aliases=["*audit-bundle"],
         help="Opt-in bundle analysis for Node/React/Vue (§3.8); best-effort, does not block",

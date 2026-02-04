@@ -8,18 +8,21 @@ Verifies that:
 4. System gracefully handles quota errors
 """
 
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from pathlib import Path
 
 from tapps_agents.context7.agent_integration import Context7AgentHelper
 from tapps_agents.context7.backup_client import (
-    is_context7_quota_exceeded,
-    get_context7_quota_message,
     _mark_context7_quota_exceeded,
+    get_context7_quota_message,
+    is_context7_quota_exceeded,
 )
-from tapps_agents.context7.circuit_breaker import get_context7_circuit_breaker, CircuitState
-from tapps_agents.core.config import ProjectConfig, Context7Config
+from tapps_agents.context7.circuit_breaker import (
+    CircuitState,
+    get_context7_circuit_breaker,
+)
+from tapps_agents.core.config import Context7Config, ProjectConfig
 
 
 @pytest.fixture
@@ -143,7 +146,7 @@ class TestCircuitBreakerQuotaDetection:
             raise Exception("Context7 API quota exceeded: Monthly quota exceeded")
         
         # Call through circuit breaker
-        result = await cb.call(quota_error_func, fallback=None)
+        await cb.call(quota_error_func, fallback=None)
         
         # Verify: Circuit breaker should be open after quota error
         # (The exception is caught and circuit is opened)
@@ -229,7 +232,7 @@ async def test_integration_quota_fix(mock_config, reset_quota_state):
     
     print("\n✅ Integration test passed:")
     print(f"   - Quota check prevented {len(libraries)} API calls")
-    print(f"   - All libraries returned None (graceful degradation)")
+    print("   - All libraries returned None (graceful degradation)")
     print(f"   - Quota message preserved: {get_context7_quota_message()}")
 
 

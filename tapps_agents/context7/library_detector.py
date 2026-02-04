@@ -10,7 +10,6 @@ import json
 import logging
 import re
 from pathlib import Path
-from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -237,44 +236,10 @@ class LibraryDetector:
             "pickletools",
             "formatter",
             "msvcrt",
-            "winreg",
-            "winsound",
             "posixpath",
             "ntpath",
             "genericpath",
             "nt",
-            "posix",
-            "pwd",
-            "spwd",
-            "grp",
-            "crypt",
-            "termios",
-            "tty",
-            "pty",
-            "fcntl",
-            "pipes",
-            "resource",
-            "nis",
-            "syslog",
-            "optparse",
-            "imp",
-            "importlib",
-            "pkgutil",
-            "modulefinder",
-            "runpy",
-            "parser",
-            "ast",
-            "symtable",
-            "symbol",
-            "token",
-            "tokenize",
-            "keyword",
-            "tabnanny",
-            "py_compile",
-            "compileall",
-            "dis",
-            "pickletools",
-            "formatter",
         }
         return lib_name.lower() in stdlib_modules
 
@@ -709,7 +674,7 @@ class LibraryDetector:
             # Python
             "fastapi", "django", "flask", "pydantic", "sqlalchemy", "pytest",
             "requests", "httpx", "aiohttp", "click", "typer", "numpy", "pandas",
-            "openai", "anthropic", "yaml", "pyyaml", "pydantic", "marshmallow",
+            "openai", "anthropic", "yaml", "pyyaml", "marshmallow",
             # JavaScript/TypeScript
             "react", "vue", "angular", "express", "nextjs", "nuxt", "svelte",
             "typescript", "jest", "vitest", "playwright", "cypress", "selenium",
@@ -717,7 +682,7 @@ class LibraryDetector:
             # Node.js
             "node", "npm", "yarn", "pnpm",
             # Testing
-            "playwright", "puppeteer", "selenium", "cypress", "jest", "mocha",
+            "puppeteer", "mocha",
             # Config/Infra - These ARE valid libraries in Context7
             "config", "dotenv", "env",
         }

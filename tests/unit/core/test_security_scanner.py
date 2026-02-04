@@ -5,7 +5,6 @@ Tests security scanning functionality, Bandit integration, heuristic scanning,
 and safety checks for learning.
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest

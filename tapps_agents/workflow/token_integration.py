@@ -10,11 +10,14 @@ Usage:
     result = await workflow.execute_with_monitoring(workflow_def)
 """
 
-from typing import Any, Optional
-from pathlib import Path
 import logging
+from pathlib import Path
+from typing import Any
 
-from tapps_agents.core.token_monitor import TokenMonitor, TokenBudget, TokenMonitorResult
+from tapps_agents.core.token_monitor import (
+    TokenBudget,
+    TokenMonitor,
+)
 from tapps_agents.workflow.checkpoint import CheckpointManager
 
 logger = logging.getLogger(__name__)
@@ -42,7 +45,7 @@ class TokenAwareWorkflow:
         executor: Any,  # WorkflowExecutor
         token_budget: int = 200000,
         enable_auto_checkpoint: bool = True,
-        checkpoint_dir: Optional[Path] = None
+        checkpoint_dir: Path | None = None
     ):
         """Initialize token-aware workflow wrapper.
 

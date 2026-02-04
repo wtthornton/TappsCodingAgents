@@ -17,12 +17,11 @@ Usage:
 """
 
 import argparse
+import os
 import subprocess
 import sys
 import time
-import os
 from pathlib import Path
-from typing import Any
 
 
 class Colors:
@@ -167,12 +166,12 @@ def run_tests(
                 html_path = Path("htmlcov/index.html")
                 if html_path.exists():
                     print_colored(f"  [HTML] Report: {html_path.absolute()}", Colors.OKGREEN)
-                    print_colored(f"         Open with: start htmlcov/index.html", Colors.OKBLUE)
+                    print_colored("         Open with: start htmlcov/index.html", Colors.OKBLUE)
             if json_report:
                 json_path = Path("coverage.json")
                 if json_path.exists():
                     print_colored(f"  [JSON] Report: {json_path.absolute()}", Colors.OKGREEN)
-            print_colored(f"  [TERM] Terminal Report: (shown above)", Colors.OKGREEN)
+            print_colored("  [TERM] Terminal Report: (shown above)", Colors.OKGREEN)
         
         print()
         print_colored("=" * 80, Colors.HEADER)

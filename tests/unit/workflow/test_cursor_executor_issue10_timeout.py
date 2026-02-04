@@ -89,7 +89,7 @@ async def test_workflow_timeout_mechanism(
         async def mock_wait_for(coro, timeout):
             """Mock wait_for that raises TimeoutError."""
             await asyncio.sleep(0.01)  # Small delay to simulate execution
-            raise asyncio.TimeoutError("Workflow execution exceeded timeout")
+            raise TimeoutError("Workflow execution exceeded timeout")
 
         # Start workflow
         await executor.start(workflow=simple_workflow, user_prompt="Test")
@@ -212,7 +212,6 @@ async def test_workflow_completes_before_timeout(
         executor._finalize_run = AsyncMock(return_value=mock_state)
 
         # Mock the execution loop to complete immediately
-        original_run = executor.run
 
         async def quick_run(*args, **kwargs):
             # Simulate quick completion

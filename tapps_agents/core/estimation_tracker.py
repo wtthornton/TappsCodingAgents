@@ -4,7 +4,7 @@ Estimation Tracker - Tracks estimation accuracy and provides calibration.
 
 import json
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -169,7 +169,7 @@ class EstimationTracker:
             return
 
         try:
-            with open(self.storage_path, "r", encoding="utf-8") as f:
+            with open(self.storage_path, encoding="utf-8") as f:
                 data = json.load(f)
 
             self.records = [

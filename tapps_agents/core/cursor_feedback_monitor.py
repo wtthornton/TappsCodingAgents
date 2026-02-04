@@ -5,9 +5,9 @@ Monitors workspace files for feedback signals and tracks satisfaction.
 """
 
 import logging
-import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from .feedback_collector import FeedbackCollector
 

@@ -8,7 +8,6 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from tapps_agents.agents.implementer import ImplementerAgent
-from tapps_agents.core.instructions import CodeGenerationInstruction
 
 
 @pytest.mark.integration

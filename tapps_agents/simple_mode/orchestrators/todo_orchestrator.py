@@ -5,10 +5,7 @@ Forwards to Beads (bd): create, list, close, dep add. When bd not available, ret
 """
 
 import shlex
-from pathlib import Path
 from typing import Any
-
-from tapps_agents.core.config import ProjectConfig
 
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator

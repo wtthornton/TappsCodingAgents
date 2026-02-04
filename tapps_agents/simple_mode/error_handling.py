@@ -153,7 +153,7 @@ class SimpleModeErrorHandler:
             if context and "file_path" in context:
                 file_path = Path(context["file_path"])
                 if file_path.exists():
-                    safe_print(f"\n💡 File exists but may not be readable/writable")
+                    safe_print("\n💡 File exists but may not be readable/writable")
                     safe_print(f"   Path: {file_path}")
                     safe_print(f"   Try: chmod +rw {file_path}")
 

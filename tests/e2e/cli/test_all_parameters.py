@@ -5,19 +5,16 @@ This test suite systematically tests all commands with all their parameter combi
 to ensure complete coverage of the CLI interface.
 """
 
+
 import pytest
-from pathlib import Path
 
 from tests.e2e.cli.test_base import CLICommandTestBase
 from tests.e2e.cli.test_data_generators import (
-    create_test_file,
     generate_file_paths,
-    generate_test_project_structure,
 )
 from tests.e2e.cli.validation_helpers import (
-    assert_valid_json,
     assert_text_output,
-    assert_success_exit,
+    assert_valid_json,
 )
 
 

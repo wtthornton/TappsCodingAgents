@@ -5,7 +5,6 @@ Tests for the generic agent result caching system that provides 90%+ speedup
 for unchanged files by caching results based on file content hash.
 """
 
-import json
 import tempfile
 from pathlib import Path
 
@@ -61,13 +60,13 @@ class TestAgentResultCache:
     def test_init_creates_cache_dir(self, temp_cache_dir):
         """Test that __init__ creates the cache directory."""
         cache_dir = temp_cache_dir / "new_cache"
-        cache = AgentResultCache("test", cache_dir=cache_dir)
+        AgentResultCache("test", cache_dir=cache_dir)
         assert cache_dir.exists()
 
     def test_init_with_disabled_cache(self, temp_cache_dir):
         """Test that disabled cache doesn't create directory."""
         cache_dir = temp_cache_dir / "disabled_cache"
-        cache = AgentResultCache("test", cache_dir=cache_dir, enabled=False)
+        AgentResultCache("test", cache_dir=cache_dir, enabled=False)
         assert not cache_dir.exists()
 
     def test_init_default_ttl(self, cache):

@@ -2,7 +2,6 @@
 Tests for agent_base.py
 """
 
-import pytest
 
 from tapps_agents.core.agent_base import *
 

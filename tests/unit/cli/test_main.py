@@ -188,7 +188,7 @@ class TestRouteCommand:
         args.agent = None
 
         with patch("tapps_agents.cli.main.create_root_parser") as mock_parser:
-            with patch("tapps_agents.cli.main.register_all_parsers") as mock_register:
+            with patch("tapps_agents.cli.main.register_all_parsers"):
                 with patch("tapps_agents.core.config.load_config") as mock_config:
                     mock_config.return_value.auto_enhancement.enabled = False
                     mock_parser_instance = MagicMock()
@@ -216,7 +216,7 @@ class TestRouteCommand:
         args.agent = "unknown-agent"
 
         with patch("tapps_agents.cli.main.create_root_parser") as mock_parser:
-            with patch("tapps_agents.cli.main.register_all_parsers") as mock_register:
+            with patch("tapps_agents.cli.main.register_all_parsers"):
                 with patch("tapps_agents.core.config.load_config") as mock_config:
                     mock_config.return_value.auto_enhancement.enabled = False
                     mock_parser_instance = MagicMock()

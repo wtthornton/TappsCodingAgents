@@ -6,7 +6,6 @@ Epic 8 / Story 8.2: Real-Time Status Monitoring
 """
 
 import asyncio
-import json
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -370,7 +369,7 @@ class StatusFileMonitor:
         Returns:
             State dictionary or None if failed
         """
-        from .file_utils import safe_load_json, is_file_stable
+        from .file_utils import is_file_stable, safe_load_json
         
         # Skip files that are too new (likely still being written)
         if not is_file_stable(state_file, min_age_seconds=2.0):

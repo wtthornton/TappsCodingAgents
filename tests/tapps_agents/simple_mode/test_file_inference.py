@@ -1,8 +1,8 @@
 """Tests for file_inference module."""
 
-import os
-import pytest
 from pathlib import Path
+
+import pytest
 
 from tapps_agents.simple_mode.file_inference import TargetFileInferencer
 

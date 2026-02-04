@@ -34,14 +34,14 @@ def format_instruction(inst_dict: dict) -> str:
             lines.append(f"- **Command**: {inst_dict['command']}")
         if "prompt" in inst_dict:
             prompt_text = inst_dict["prompt"]
-            lines.append(f"- **Instruction Prompt**:")
+            lines.append("- **Instruction Prompt**:")
             # Format the prompt nicely, truncating if very long
             if len(prompt_text) > 800:
                 lines.append(f"  ```\n  {prompt_text[:800]}\n  ... (truncated)\n  ```")
             else:
                 lines.append(f"  ```\n  {prompt_text}\n  ```")
         if "parameters" in inst_dict and inst_dict["parameters"]:
-            lines.append(f"- **Parameters**:")
+            lines.append("- **Parameters**:")
             for key, value in inst_dict["parameters"].items():
                 if isinstance(value, str) and len(value) > 200:
                     lines.append(f"  - {key}: {value[:200]}...")

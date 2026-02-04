@@ -4,8 +4,7 @@ Tests for BuildOrchestrator context enrichment and resume capability.
 Tests reading previous step documentation and passing to implementer.
 """
 
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 import pytest
 

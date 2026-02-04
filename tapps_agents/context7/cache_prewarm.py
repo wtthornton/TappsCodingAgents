@@ -16,7 +16,7 @@ import re
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .agent_integration import Context7AgentHelper
@@ -72,13 +72,12 @@ class DependencyDetector:
         "requests", "httpx", "aiohttp", "click", "typer", "numpy", "pandas",
         "openai", "anthropic", "langchain", "celery", "redis", "dramatiq",
         "alembic", "asyncpg", "psycopg2", "boto3", "pillow", "jinja2",
-        "marshmallow", "attrs", "structlog", "loguru", "rich", "typer",
-        "playwright", "selenium", "beautifulsoup4", "scrapy", "lxml",
+        "marshmallow", "attrs", "structlog", "loguru", "rich", "playwright", "selenium", "beautifulsoup4", "scrapy", "lxml",
         # JavaScript/TypeScript
         "react", "vue", "angular", "svelte", "nextjs", "nuxt", "express",
         "nest", "fastify", "koa", "axios", "fetch", "lodash", "moment",
         "dayjs", "date-fns", "zod", "yup", "joi", "jest", "vitest",
-        "mocha", "chai", "cypress", "playwright", "puppeteer", "webpack",
+        "mocha", "chai", "cypress", "puppeteer", "webpack",
         "vite", "rollup", "esbuild", "tailwindcss", "styled-components",
         "emotion", "prisma", "typeorm", "sequelize", "mongoose", "graphql",
     }
@@ -395,7 +394,7 @@ class CachePrewarmer:
                         return (dep.name, "success")
                     else:
                         return (dep.name, "not_found")
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     return (dep.name, "timeout")
                 except Exception as e:
                     logger.debug(f"Pre-warm failed for {dep.name}: {e}")

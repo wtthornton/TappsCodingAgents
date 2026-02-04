@@ -88,7 +88,7 @@ def main():
             try:
                 key_manager.store_api_key("context7", context7_key, encrypt=True)
                 stored_keys.append("Context7")
-                print(f"[OK] Stored Context7 API key in encrypted storage")
+                print("[OK] Stored Context7 API key in encrypted storage")
             except Exception as e:
                 print(f"[ERROR] Failed to store Context7 key: {e}")
                 return 1
@@ -98,7 +98,7 @@ def main():
             try:
                 key_manager.store_api_key("github", github_key, encrypt=True)
                 stored_keys.append("GitHub")
-                print(f"[OK] Stored GitHub API key in encrypted storage")
+                print("[OK] Stored GitHub API key in encrypted storage")
             except Exception as e:
                 print(f"[ERROR] Failed to store GitHub key: {e}")
                 return 1
@@ -166,7 +166,7 @@ def main():
     if is_windows:
         # Create PowerShell script
         ps_script = project_root / "scripts" / "load_mcp_keys.ps1"
-        ps_content = f'''# Load MCP API Keys from Encrypted Storage
+        ps_content = '''# Load MCP API Keys from Encrypted Storage
 # Run this script before starting Cursor, or add it to your PowerShell profile
 
 $ErrorActionPreference = "Stop"
@@ -179,16 +179,16 @@ $env:PYTHONPATH = "$ProjectRoot"
 
 # Load keys using Python
 $context7_key = python -c "import sys; sys.path.insert(0, '$ProjectRoot'); from tapps_agents.context7.security import APIKeyManager; from pathlib import Path; km = APIKeyManager(Path('$ProjectRoot') / '.tapps-agents'); key = km.load_api_key('context7'); print(key if key else '')" 2>$null
-if ($context7_key) {{
+if ($context7_key) {
     $env:CONTEXT7_API_KEY = $context7_key
     Write-Host "[OK] Loaded Context7 API key" -ForegroundColor Green
-}}
+}
 
 $github_key = python -c "import sys; sys.path.insert(0, '$ProjectRoot'); from tapps_agents.context7.security import APIKeyManager; from pathlib import Path; km = APIKeyManager(Path('$ProjectRoot') / '.tapps-agents'); key = km.load_api_key('github'); print(key if key else '')" 2>$null
-if ($github_key) {{
+if ($github_key) {
     $env:GITHUB_PERSONAL_ACCESS_TOKEN = $github_key
     Write-Host "[OK] Loaded GitHub API key" -ForegroundColor Green
-}}
+}
 
 Write-Host ""
 Write-Host "Environment variables set. You can now start Cursor." -ForegroundColor Cyan
@@ -277,8 +277,8 @@ except Exception as e:
     print()
     print("Option 1: Use helper scripts (recommended)")
     if is_windows:
-        print(f"  PowerShell: . scripts/load_mcp_keys.ps1")
-    print(f"  Python: eval $(python scripts/load_mcp_keys.py)")
+        print("  PowerShell: . scripts/load_mcp_keys.ps1")
+    print("  Python: eval $(python scripts/load_mcp_keys.py)")
     print()
     print("Option 2: Set manually")
     print("  PowerShell: $env:CONTEXT7_API_KEY='...'")

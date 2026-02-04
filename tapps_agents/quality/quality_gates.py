@@ -33,7 +33,7 @@ class QualityThresholds:
     performance_min: float = 7.0
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "QualityThresholds":
+    def from_dict(cls, data: dict[str, Any]) -> QualityThresholds:
         """Create from dictionary."""
         return cls(
             overall_min=data.get("overall_min", 8.0),
@@ -128,7 +128,10 @@ class QualityGate:
             thresholds = self.thresholds
 
         # Lazy import to avoid circular dependency
-        from ..agents.reviewer.score_constants import ScoreNormalizer, extract_scores_normalized
+        from ..agents.reviewer.score_constants import (
+            ScoreNormalizer,
+            extract_scores_normalized,
+        )
         
         # Normalize all scores to consistent scales using score constants
         normalized_scores = extract_scores_normalized(scores)

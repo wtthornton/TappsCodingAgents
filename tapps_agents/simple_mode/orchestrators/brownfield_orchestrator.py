@@ -7,12 +7,11 @@ Provides Simple Mode integration for brownfield system analysis and expert creat
 """
 
 import logging
-from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.brownfield_review import BrownfieldReviewOrchestrator
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.context7.agent_integration import get_context7_helper
+from tapps_agents.core.brownfield_review import BrownfieldReviewOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -52,7 +51,7 @@ class BrownfieldOrchestrator(SimpleModeOrchestrator):
         auto = parameters.get("auto", True)  # Default to auto for Simple Mode
         dry_run = parameters.get("dry_run", False)
         include_context7 = not parameters.get("no_context7", False)
-        output_dir = parameters.get("output_dir")
+        parameters.get("output_dir")
         resume = parameters.get("resume", False)
         resume_from = parameters.get("resume_from") or parameters.get("resume_from_step")
 

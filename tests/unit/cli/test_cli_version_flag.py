@@ -11,8 +11,8 @@ pytestmark = pytest.mark.unit
 
 class TestCliVersionFlag:
     def test_cli_version_flag_prints_version_and_exits(self, capsys):
-        from tapps_agents.cli import main
         from tapps_agents import __version__ as actual_version
+        from tapps_agents.cli import main
 
         with patch("sys.argv", ["tapps_agents", "--version"]):
             with pytest.raises(SystemExit) as exc:

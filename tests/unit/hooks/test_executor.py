@@ -3,7 +3,6 @@ Unit tests for tapps_agents.hooks.executor: command execution, env vars, timeout
 """
 
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -33,7 +32,7 @@ class TestRunHook:
         hook = HookDefinition(name="env-test", command="echo $TAPPS_PROMPT")
         # On Windows cmd/PowerShell echo $TAPPS_PROMPT may not expand; use Python
         if sys.platform == "win32":
-            cmd = f'python -c "import os; print(os.environ.get(\\"TAPPS_PROMPT\\", \\"\\"))"'
+            cmd = 'python -c "import os; print(os.environ.get(\\"TAPPS_PROMPT\\", \\"\\"))"'
         else:
             cmd = 'python -c "import os; print(os.environ.get(\'TAPPS_PROMPT\', \'\'))"'
         hook = HookDefinition(name="env-test", command=cmd)

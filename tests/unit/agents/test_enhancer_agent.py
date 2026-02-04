@@ -258,7 +258,7 @@ class TestEnhancerAgentEnhanceStageCommand:
         await agent.activate(tmp_path)
         
         # Create a session first
-        session_id = agent._create_session("Test prompt", {})
+        agent._create_session("Test prompt", {})
         
         with patch.object(agent, '_stage_analysis', new_callable=AsyncMock) as mock_analysis:
             mock_analysis.return_value = {"intent": "test"}
@@ -275,7 +275,7 @@ class TestEnhancerAgentEnhanceStageCommand:
         await agent.activate(tmp_path)
         
         # Create a session first
-        session_id = agent._create_session("Test prompt", {})
+        agent._create_session("Test prompt", {})
         agent.current_session["stages"]["analysis"] = {"intent": "test"}
         
         with patch.object(agent, '_stage_requirements', new_callable=AsyncMock) as mock_req:
@@ -320,7 +320,7 @@ class TestEnhancerAgentHelperMethods:
         agent._save_session(session_id, agent.current_session)
         
         # Check if session file exists
-        session_file = tmp_path / ".tapps-agents" / "enhancement_sessions" / f"{session_id}.json"
+        tmp_path / ".tapps-agents" / "enhancement_sessions" / f"{session_id}.json"
         # May not exist if directory doesn't exist, but method should not error
         assert session_id is not None
 

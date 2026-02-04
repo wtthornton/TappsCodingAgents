@@ -20,7 +20,7 @@ from pathlib import Path
 from typing import Any
 
 from .confidence_metrics import ConfidenceMetricsTracker, get_tracker
-from .expert_engine import ExpertEngine, ExpertEngineMetrics
+from .expert_engine import ExpertEngine
 
 logger = logging.getLogger(__name__)
 
@@ -185,7 +185,7 @@ class MetricsStorage:
             return None
 
         try:
-            with open(self.current_metrics_file, "r", encoding="utf-8") as f:
+            with open(self.current_metrics_file, encoding="utf-8") as f:
                 data = json.load(f)
             return BusinessMetricsData.from_dict(data)
         except Exception as e:
@@ -242,7 +242,7 @@ class MetricsStorage:
         if not self.history_file.exists():
             return []
         try:
-            with open(self.history_file, "r", encoding="utf-8") as f:
+            with open(self.history_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return []
@@ -252,7 +252,7 @@ class MetricsStorage:
         if not self.correlations_file.exists():
             return {}
         try:
-            with open(self.correlations_file, "r", encoding="utf-8") as f:
+            with open(self.correlations_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
             return {}

@@ -618,7 +618,7 @@ TASKS:
 2. Task 2"""
 
         # Prepare instruction for Cursor Skills
-        instruction = GenericInstruction(
+        GenericInstruction(
             agent_name="planner",
             command="generate-story-details",
             prompt=prompt,
@@ -825,9 +825,9 @@ Format as JSON array with:
         if user_stories:
             for i, story in enumerate(user_stories, 1):
                 story_text = story.get("story", f"Story {i}")
-                user = story.get("user", "user")
-                goal = story.get("goal", "")
-                benefit = story.get("benefit", "")
+                story.get("user", "user")
+                story.get("goal", "")
+                story.get("benefit", "")
                 acceptance_criteria = story.get("acceptance_criteria", [])
                 story_points = story.get("story_points", 0)
                 

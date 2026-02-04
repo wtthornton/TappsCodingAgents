@@ -60,7 +60,7 @@ class DesignValidator:
             return result
 
         # Extract architecture components
-        components = architecture.get("components", [])
+        architecture.get("components", [])
         architecture_text = str(architecture).lower()
 
         # Check coverage
@@ -176,7 +176,7 @@ class DesignValidator:
             List of violation descriptions
         """
         violations = []
-        architecture_text = str(architecture).lower()
+        str(architecture).lower()
 
         # Check for pattern-specific violations
         if "layered" in patterns:

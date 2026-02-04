@@ -2,17 +2,14 @@
 Unit tests for meta-learning system.
 """
 
-import pytest
-from datetime import datetime, timedelta
 from unittest.mock import Mock
 
 from tapps_agents.core.meta_learning import (
-    LearningEffectivenessTracker,
-    LearningSession,
-    LearningSelfAssessor,
     AdaptiveLearningRate,
-    LearningStrategySelector,
+    LearningEffectivenessTracker,
+    LearningSelfAssessor,
     LearningStrategy,
+    LearningStrategySelector,
 )
 
 

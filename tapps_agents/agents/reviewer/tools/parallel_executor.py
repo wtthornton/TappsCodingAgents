@@ -14,10 +14,11 @@ Architecture:
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
-from enum import Enum
+from collections.abc import Callable
+from dataclasses import dataclass
+from enum import StrEnum
 from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Union
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +51,7 @@ class ToolExecutionConfig:
     timeout_seconds: int = 30
     max_concurrent_tools: int = 4
     fallback_to_sequential: bool = True
-    tool_timeouts: Optional[Dict[str, int]] = None
+    tool_timeouts: dict[str, int] | None = None
 
     def __post_init__(self):
         """Validate configuration values."""
@@ -87,7 +88,7 @@ class ToolExecutionConfig:
         return self.timeout_seconds
 
     @classmethod
-    def from_dict(cls, config_dict: Dict[str, Any]) -> "ToolExecutionConfig":
+    def from_dict(cls, config_dict: dict[str, Any]) -> "ToolExecutionConfig":
         """
         Create config from dictionary (loaded from YAML).
 
@@ -112,7 +113,7 @@ class ToolExecutionConfig:
         )
 
 
-class ToolStatus(str, Enum):
+class ToolStatus(StrEnum):
     """Status of tool execution."""
     SUCCESS = "success"
     TIMEOUT = "timeout"
@@ -162,10 +163,10 @@ class ToolResult:
     """
     tool: str
     status: ToolStatus
-    data: Optional[Any]
+    data: Any | None
     duration: float
-    error: Optional[str] = None
-    exit_code: Optional[int] = None
+    error: str | None = None
+    exit_code: int | None = None
 
     def is_success(self) -> bool:
         """Check if tool executed successfully."""
@@ -179,7 +180,7 @@ class ToolResult:
         """Check if tool failed with error."""
         return self.status == ToolStatus.ERROR
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
             "tool": self.tool,
@@ -225,8 +226,8 @@ class ParallelToolExecutor:
     async def execute_parallel(
         self,
         file_path: Path,
-        tool_runners: Optional[Dict[str, Callable]] = None,
-    ) -> List[ToolResult]:
+        tool_runners: dict[str, Callable] | None = None,
+    ) -> list[ToolResult]:
         """
         Execute all quality tools with parallel optimization.
 
@@ -301,8 +302,8 @@ class ParallelToolExecutor:
     async def _execute_parallel_batch(
         self,
         file_path: Path,
-        tool_runners: Optional[Dict[str, Callable]] = None,
-    ) -> List[ToolResult]:
+        tool_runners: dict[str, Callable] | None = None,
+    ) -> list[ToolResult]:
         """
         Execute independent tools concurrently.
 
@@ -342,8 +343,8 @@ class ParallelToolExecutor:
     async def _execute_sequential_batch(
         self,
         file_path: Path,
-        tool_runners: Optional[Dict[str, Callable]] = None,
-    ) -> List[ToolResult]:
+        tool_runners: dict[str, Callable] | None = None,
+    ) -> list[ToolResult]:
         """
         Execute context-dependent tools sequentially.
 
@@ -371,8 +372,8 @@ class ParallelToolExecutor:
     async def _execute_sequential(
         self,
         file_path: Path,
-        tool_runners: Optional[Dict[str, Callable]] = None,
-    ) -> List[ToolResult]:
+        tool_runners: dict[str, Callable] | None = None,
+    ) -> list[ToolResult]:
         """
         Fallback: Execute all tools sequentially.
 
@@ -402,7 +403,7 @@ class ParallelToolExecutor:
         self,
         tool_func: Callable[[Path], Any],
         file_path: Path,
-        tool_name: Optional[str] = None,
+        tool_name: str | None = None,
     ) -> ToolResult:
         """
         Execute single tool with timeout protection.
@@ -457,7 +458,7 @@ class ParallelToolExecutor:
                 exit_code=None,
             )
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             duration = time.time() - start_time
             error_msg = f"Timeout after {duration:.2f}s (limit: {timeout}s)"
 
@@ -526,8 +527,8 @@ class ParallelToolExecutor:
         )
 
     def _process_results(
-        self, results: List[Union[ToolResult, Exception]]
-    ) -> List[ToolResult]:
+        self, results: list[ToolResult | Exception]
+    ) -> list[ToolResult]:
         """
         Convert exceptions to error ToolResults.
 
@@ -565,7 +566,7 @@ class ParallelToolExecutor:
         return processed
 
     def _process_single_result(
-        self, result: Union[ToolResult, Exception]
+        self, result: ToolResult | Exception
     ) -> ToolResult:
         """
         Process single result (for sequential execution).

@@ -161,7 +161,7 @@ def _validate_background_agents_yaml(project_root: Path) -> DoctorFinding | None
         return DoctorFinding(
             severity="warn",
             code="BACKGROUND_AGENTS",
-            message=f"Background Agents: Config file has invalid YAML syntax",
+            message="Background Agents: Config file has invalid YAML syntax",
             remediation=(
                 f"YAML parsing error: {e}\n"
                 "Background Agents are optional and not part of the framework.\n"
@@ -172,7 +172,7 @@ def _validate_background_agents_yaml(project_root: Path) -> DoctorFinding | None
         return DoctorFinding(
             severity="warn",
             code="BACKGROUND_AGENTS",
-            message=f"Background Agents: Error reading config file",
+            message="Background Agents: Error reading config file",
             remediation=(
                 f"Error: {e}\n"
                 "Background Agents are optional and not part of the framework.\n"

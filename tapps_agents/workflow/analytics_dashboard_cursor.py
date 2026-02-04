@@ -84,12 +84,12 @@ class CursorAnalyticsDashboard:
         
         # Health Summary
         try:
-            from ...health.checks.automation import AutomationHealthCheck
+            from pathlib import Path
+
             from ...health.checks.environment import EnvironmentHealthCheck
             from ...health.checks.execution import ExecutionHealthCheck
             from ...health.orchestrator import HealthOrchestrator
             from ...health.registry import HealthCheckRegistry
-            from pathlib import Path
             
             registry = HealthCheckRegistry()
             project_root = Path.cwd()

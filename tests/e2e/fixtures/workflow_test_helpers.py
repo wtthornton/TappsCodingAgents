@@ -5,11 +5,10 @@ Provides reusable utilities for common workflow testing patterns.
 """
 
 import logging
-from typing import Any, Callable
 
 from tapps_agents.workflow.event_log import WorkflowEvent
 from tapps_agents.workflow.executor import WorkflowExecutor
-from tapps_agents.workflow.observer import EventFilter, WorkflowObserver
+from tapps_agents.workflow.observer import WorkflowObserver
 
 from .workflow_monitor import MonitoringConfig, WorkflowActivityMonitor
 

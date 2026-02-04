@@ -5,15 +5,10 @@ Phase 2.3: WebSocket & MQTT Protocol Support for HomeIQ
 """
 
 import re
-import sys
 from pathlib import Path
-from typing import Any
 
 # Use typing_extensions.TypedDict on Python < 3.12 for Pydantic compatibility
-if sys.version_info >= (3, 12):
-    from typing import TypedDict
-else:
-    from typing_extensions import TypedDict
+from typing import Any, TypedDict
 
 
 class MQTTReviewResult(TypedDict):

@@ -78,7 +78,6 @@ class ReactScorer(BaseScorer):
 
         # Phase 3.1: Use context-aware maintainability scorer
         from .maintainability_scorer import MaintainabilityScorer
-        from ...core.language_detector import Language
 
         maintainability_scorer = MaintainabilityScorer()
         maintainability_score = maintainability_scorer.calculate(
@@ -87,8 +86,8 @@ class ReactScorer(BaseScorer):
 
         # Enhance performance with React optimizations
         # Phase 3.2: Use context-aware performance scorer
-        from .performance_scorer import PerformanceScorer
         from ...core.language_detector import Language
+        from .performance_scorer import PerformanceScorer
 
         performance_scorer = PerformanceScorer()
         performance_score = performance_scorer.calculate(
@@ -123,8 +122,8 @@ class ReactScorer(BaseScorer):
         base_scores["metrics"] = metrics
 
         # Phase 3.3: Validate all scores before returning
-        from .score_validator import ScoreValidator
         from ...core.language_detector import Language
+        from .score_validator import ScoreValidator
 
         validator = ScoreValidator()
         validation_results = validator.validate_all_scores(

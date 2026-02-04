@@ -24,7 +24,8 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 # Setup Windows encoding compatibility
-from tapps_agents.core.unicode_safe import setup_windows_encoding, safe_print
+from tapps_agents.core.unicode_safe import safe_print, setup_windows_encoding
+
 setup_windows_encoding()
 
 from tapps_agents.context7.commands import Context7Commands

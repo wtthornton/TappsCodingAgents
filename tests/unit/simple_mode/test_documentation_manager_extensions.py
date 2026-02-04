@@ -4,8 +4,6 @@ Tests for WorkflowDocumentationManager extensions.
 Tests state serialization and workflow summarization.
 """
 
-import tempfile
-from pathlib import Path
 
 import pytest
 
@@ -88,7 +86,6 @@ class TestSaveStepState:
         """Test handling of YAML serialization errors."""
         # Setup: Mock yaml.dump to raise exception
         import yaml
-        original_dump = yaml.dump
 
         def failing_dump(*args, **kwargs):
             raise Exception("YAML serialization failed")

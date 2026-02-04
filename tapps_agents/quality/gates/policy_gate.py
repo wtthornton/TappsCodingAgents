@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any
 
 from .base import BaseGate, GateResult, GateSeverity
-from .exceptions import GateConfigurationError
 
 logger = logging.getLogger(__name__)
 

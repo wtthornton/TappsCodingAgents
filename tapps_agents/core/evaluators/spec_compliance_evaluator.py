@@ -167,7 +167,7 @@ class SpecComplianceEvaluator(BaseEvaluator):
                                     category=IssueCategory.CORRECTNESS,
                                     evidence=f"Low coverage for acceptance criteria: {criterion.get('description', '')[:100]}",
                                     repro=f"Verify acceptance criteria for story {story_id}",
-                                    suggested_fix=f"Implement acceptance criteria or add test coverage",
+                                    suggested_fix="Implement acceptance criteria or add test coverage",
                                     owner_step="testing",
                                     file_path=str(target_path),
                                     traceability={"story_id": story_id, "criterion_id": criterion.get("id")},

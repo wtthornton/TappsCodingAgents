@@ -4,7 +4,8 @@ Error recovery handler for workflow execution.
 Provides recovery options when workflow steps fail.
 """
 
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 
 class ErrorRecoveryHandler:
@@ -101,7 +102,7 @@ class ErrorRecoveryHandler:
         Returns:
             Recovery strategy: "retry", "skip", "continue", or "fail"
         """
-        error_type = type(error).__name__
+        type(error).__name__
         error_str = str(error).lower()
         
         # Network/timeout errors: retry

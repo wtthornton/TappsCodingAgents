@@ -13,7 +13,6 @@ import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 logger = logging.getLogger(__name__)
 
@@ -106,7 +105,7 @@ class CodeSnippetHandler:
     in the scratchpad directory, and prepares for workflow integration.
     """
 
-    def __init__(self, scratchpad_dir: Optional[Path] = None):
+    def __init__(self, scratchpad_dir: Path | None = None):
         """
         Initialize code snippet handler.
 
@@ -120,7 +119,6 @@ class CodeSnippetHandler:
         if scratchpad_dir is None:
             # Default Claude Code scratchpad location
             import tempfile
-            import os
 
             base_temp = Path(tempfile.gettempdir())
             claude_dir = base_temp / "claude"
@@ -150,7 +148,7 @@ class CodeSnippetHandler:
                 f"Could not create scratchpad directory {self.scratchpad_dir}: {e}"
             )
 
-    def detect_code_snippet(self, user_input: str) -> Optional[CodeSnippet]:
+    def detect_code_snippet(self, user_input: str) -> CodeSnippet | None:
         """
         Detect code snippet in user input.
 
@@ -261,7 +259,7 @@ class CodeSnippetHandler:
 
         return filename
 
-    def create_temp_file(self, snippet: CodeSnippet) -> Optional[TempFile]:
+    def create_temp_file(self, snippet: CodeSnippet) -> TempFile | None:
         """
         Create temporary file with code snippet content.
 
@@ -319,7 +317,7 @@ class CodeSnippetHandler:
     def detect_and_create_temp_file(
         self,
         user_input: str
-    ) -> Optional[TempFile]:
+    ) -> TempFile | None:
         """
         Detect code snippet and create temporary file in one step.
 
@@ -353,7 +351,7 @@ class CodeSnippetHandler:
 
 
 # Convenience function for workflow integration
-def detect_pasted_code(user_input: str) -> Optional[TempFile]:
+def detect_pasted_code(user_input: str) -> TempFile | None:
     """
     Detect pasted code and create temporary file.
 

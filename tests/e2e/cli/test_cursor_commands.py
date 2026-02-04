@@ -5,9 +5,9 @@ Validates Cursor integration verification (Skills, Rules, .cursorignore).
 """
 
 import json
-import pytest
 import shutil
-from pathlib import Path
+
+import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
 

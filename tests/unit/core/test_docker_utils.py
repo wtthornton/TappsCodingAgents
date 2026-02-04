@@ -8,8 +8,6 @@ PowerShell table format parsing issues.
 import json
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from tapps_agents.core.docker_utils import (
     get_container_status,
     run_docker_ps_json,

@@ -27,15 +27,16 @@ from __future__ import annotations
 import logging
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from functools import lru_cache
 from pathlib import Path
-from typing import ClassVar, Pattern
+from re import Pattern
+from typing import ClassVar
 
 logger = logging.getLogger(__name__)
 
 
-class WorkflowType(str, Enum):
+class WorkflowType(StrEnum):
     """
     Workflow types for intent detection.
 

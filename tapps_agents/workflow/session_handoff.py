@@ -9,7 +9,6 @@ Plan Phase 2.1.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -33,7 +32,7 @@ class SessionHandoff:
         return asdict(self)
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "SessionHandoff":
+    def from_dict(cls, data: dict[str, Any]) -> SessionHandoff:
         return cls(
             workflow_id=data["workflow_id"],
             session_ended_at=data["session_ended_at"],

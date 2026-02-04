@@ -13,7 +13,11 @@ from tapps_agents.cli.commands.top_level import (
     _is_ambiguous,
     handle_workflow_recommend_command,
 )
-from tapps_agents.workflow.detector import ProjectCharacteristics, ProjectType, WorkflowTrack
+from tapps_agents.workflow.detector import (
+    ProjectCharacteristics,
+    ProjectType,
+    WorkflowTrack,
+)
 from tapps_agents.workflow.recommender import WorkflowRecommendation
 
 

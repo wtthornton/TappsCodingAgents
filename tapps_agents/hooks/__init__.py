@@ -6,7 +6,6 @@ SessionEnd, WorkflowComplete. Configuration via .tapps-agents/hooks.yaml.
 """
 
 from .config import HookDefinition, HooksConfig, load_hooks_config
-from .executor import HookResult, run_hook
 from .events import (
     HookEventType,
     PostToolUseEvent,
@@ -15,6 +14,7 @@ from .events import (
     UserPromptSubmitEvent,
     WorkflowCompleteEvent,
 )
+from .executor import HookResult, run_hook
 from .manager import HookManager
 
 __all__ = [

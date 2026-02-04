@@ -199,15 +199,15 @@ class ScoreValidator:
 
         # Determine score category
         if normalized_score >= self.EXCELLENT_THRESHOLD:
-            quality_level = "excellent"
+            pass
         elif normalized_score >= self.GOOD_THRESHOLD:
-            quality_level = "good"
+            pass
         elif normalized_score >= self.ACCEPTABLE_THRESHOLD:
-            quality_level = "acceptable"
+            pass
         elif normalized_score >= self.POOR_THRESHOLD:
-            quality_level = "poor"
+            pass
         else:
-            quality_level = "critical"
+            pass
 
         # Extract breakdown from context if available
         breakdown = context.get("breakdown", {}) if context else {}

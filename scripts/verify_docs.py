@@ -12,7 +12,7 @@ Usage:
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Dict, Any
+from typing import Any
 from urllib.parse import urlparse
 
 try:
@@ -22,7 +22,7 @@ except ImportError:
     YAML_AVAILABLE = False
 
 
-def find_markdown_files(root: Path, exclude_patterns: List[str] = None) -> List[Path]:
+def find_markdown_files(root: Path, exclude_patterns: list[str] = None) -> list[Path]:
     """Find all Markdown files in the repository."""
     if exclude_patterns is None:
         exclude_patterns = [
@@ -44,7 +44,7 @@ def find_markdown_files(root: Path, exclude_patterns: List[str] = None) -> List[
     return sorted(markdown_files)
 
 
-def extract_markdown_links(content: str, file_path: Path) -> List[Tuple[str, str, int]]:
+def extract_markdown_links(content: str, file_path: Path) -> list[tuple[str, str, int]]:
     """
     Extract Markdown links from content.
     
@@ -66,7 +66,7 @@ def extract_markdown_links(content: str, file_path: Path) -> List[Tuple[str, str
     return links
 
 
-def extract_file_references(content: str, file_path: Path) -> List[Tuple[str, int]]:
+def extract_file_references(content: str, file_path: Path) -> list[tuple[str, int]]:
     """
     Extract file/path references from content.
     
@@ -112,7 +112,7 @@ def extract_file_references(content: str, file_path: Path) -> List[Tuple[str, in
     return references
 
 
-def resolve_link_target(target: str, source_file: Path, repo_root: Path) -> Tuple[Path, str]:
+def resolve_link_target(target: str, source_file: Path, repo_root: Path) -> tuple[Path, str]:
     """
     Resolve a link target to an actual file path.
     
@@ -156,7 +156,7 @@ def check_file_exists(file_path: Path, repo_root: Path) -> bool:
         return False
 
 
-def extract_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
+def extract_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """
     Extract YAML frontmatter from markdown content.
     
@@ -180,7 +180,7 @@ def extract_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
         return {}, content
 
 
-def validate_frontmatter(frontmatter: Dict[str, Any], file_path: Path) -> List[str]:
+def validate_frontmatter(frontmatter: dict[str, Any], file_path: Path) -> list[str]:
     """
     Validate frontmatter metadata against standards.
     
@@ -229,7 +229,7 @@ def validate_frontmatter(frontmatter: Dict[str, Any], file_path: Path) -> List[s
     return errors
 
 
-def verify_documentation(repo_root: Path = None, validate_metadata: bool = True) -> Tuple[int, List[str]]:
+def verify_documentation(repo_root: Path = None, validate_metadata: bool = True) -> tuple[int, list[str]]:
     """
     Verify documentation files for broken links, references, and metadata.
     

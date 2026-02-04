@@ -1,6 +1,5 @@
 """Tests for result_formatters module."""
 
-import pytest
 
 from tapps_agents.simple_mode.result_formatters import (
     FormatterRegistry,
@@ -15,9 +14,9 @@ from tapps_agents.simple_mode.step_results import (
     EnhancerStepResult,
     ImplementerStepResult,
     PlannerStepResult,
+    QAStepResult,
     ReviewerStepResult,
     StepStatus,
-    QAStepResult,
     VerificationStepResult,
 )
 

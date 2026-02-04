@@ -12,11 +12,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,7 @@ class StreamEvent:
             return f"  - {data.get('message', '...')}\n"
         
         elif event_type == StreamEventType.STEP_COMPLETE:
-            return f"  ✅ Completed\n"
+            return "  ✅ Completed\n"
         
         elif event_type == StreamEventType.STEP_ERROR:
             return f"  ❌ Error: {data.get('error', 'unknown')}\n"
@@ -110,7 +110,7 @@ class StreamEvent:
             return f"  ⚠️ Quality below threshold: {score:.1f}/{threshold:.1f}\n"
         
         elif event_type == StreamEventType.WORKFLOW_COMPLETE:
-            return f"\n## ✅ Workflow Complete!\n"
+            return "\n## ✅ Workflow Complete!\n"
         
         elif event_type == StreamEventType.WORKFLOW_ERROR:
             return f"\n## ❌ Workflow Failed: {data.get('error', 'unknown')}\n"
@@ -123,7 +123,7 @@ class StreamEvent:
             )
         
         elif event_type == StreamEventType.CHECKPOINT:
-            return f"  💾 Checkpoint saved\n"
+            return "  💾 Checkpoint saved\n"
         
         elif event_type == StreamEventType.RESUME_AVAILABLE:
             workflow_id = data.get("workflow_id", "")
@@ -176,7 +176,7 @@ class StreamingWorkflowExecutor:
         steps: list[dict[str, Any]],
         workflow_id: str | None = None,
         on_event: Callable[[StreamEvent], None] | None = None,
-    ) -> AsyncGenerator[StreamEvent, None]:
+    ) -> AsyncGenerator[StreamEvent]:
         """
         Execute workflow with streaming events.
         
@@ -191,7 +191,6 @@ class StreamingWorkflowExecutor:
         Yields:
             StreamEvent instances
         """
-        import uuid
         from .durable_state import DurableWorkflowState
         
         # Initialize durable state
@@ -310,7 +309,7 @@ class StreamingWorkflowExecutor:
                         {"step_index": i, "step_name": step_name},
                     )
                     
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 state.fail_step(f"Timeout after {step_timeout}s")
                 yield StreamEvent(
                     StreamEventType.STEP_TIMEOUT,
@@ -386,9 +385,9 @@ class StreamingWorkflowExecutor:
 
 
 async def format_streaming_response(
-    events: AsyncGenerator[StreamEvent, None],
+    events: AsyncGenerator[StreamEvent],
     format: str = "markdown",
-) -> AsyncGenerator[str, None]:
+) -> AsyncGenerator[str]:
     """
     Format streaming events for output.
     

@@ -5,21 +5,19 @@ Tests workflow mismatch detection, warning display, and user interaction.
 Target: ≥85% coverage of validation logic in nl_handler.py.
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
 from dataclasses import FrozenInstanceError
+from unittest.mock import Mock, patch
+
+import pytest
 
 pytestmark = pytest.mark.unit
 
+from tapps_agents.core.config import ProjectConfig
+from tapps_agents.simple_mode.intent_parser import IntentType
 from tapps_agents.simple_mode.nl_handler import (
     SimpleModeHandler,
     WorkflowMismatchWarning,
 )
-from tapps_agents.simple_mode.workflow_suggester import WORKFLOW_REQUIREMENTS
-from tapps_agents.simple_mode.intent_parser import IntentType
-from tapps_agents.core.config import ProjectConfig
-
 
 # ============================================================================
 # Test Fixtures

@@ -4,11 +4,11 @@ E2E tests for security validation.
 Tests secret redaction, input validation, and path traversal prevention.
 """
 
-import pytest
 import json
 
+import pytest
+
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_valid_json
 
 
 @pytest.mark.e2e_cli

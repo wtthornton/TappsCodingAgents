@@ -4,15 +4,13 @@ Feedback collector for Cursor IDE interactions.
 Monitors Cursor IDE interactions via file-based coordination.
 """
 
-import json
 import logging
 from datetime import datetime
 from pathlib import Path
-from typing import Any
 from uuid import uuid4
 
 from .evaluation_models import FeedbackRecord
-from .storage_manager import FeedbackStorage, StorageManager
+from .storage_manager import StorageManager
 
 logger = logging.getLogger(__name__)
 

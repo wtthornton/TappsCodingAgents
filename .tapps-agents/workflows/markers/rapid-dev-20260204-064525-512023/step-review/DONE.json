@@ -1,0 +1,13 @@
+{
+  "workflow_id": "rapid-dev-20260204-064525-512023",
+  "step_id": "review",
+  "agent": "reviewer",
+  "action": "review_code",
+  "status": "completed",
+  "timestamp": "2026-02-04T06:46:34.400948",
+  "worktree_name": "workflow-rapid-dev-20260204-064525-512023-step-review-d0564c5b",
+  "worktree_path": "c:\\cursor\\TappsCodingAgents\\.tapps-agents\\worktrees\\workflow-rapid-dev-20260204-064525-512023-step-review-d0564c5b",
+  "duration_seconds": 30.093996,
+  "started_at": "2026-02-04T06:46:04.306952",
+  "completed_at": "2026-02-04T06:46:34.400948"
+}

@@ -109,8 +109,11 @@ def test_network_error_request_id_format():
 
 def test_error_handling_with_missing_network():
     """Test error handling when network is required but unavailable."""
+    from tapps_agents.cli.command_classifier import (
+        CommandClassifier,
+        CommandNetworkRequirement,
+    )
     from tapps_agents.cli.network_detection import NetworkDetector
-    from tapps_agents.cli.command_classifier import CommandClassifier, CommandNetworkRequirement
     from tapps_agents.core.network_errors import NetworkRequiredError
     
     # Mock network unavailable

@@ -4,8 +4,9 @@ Tests for Context7 lookup module.
 Tests lookup workflows, query processing, and result formatting.
 """
 
+from unittest.mock import Mock, patch
+
 import pytest
-from unittest.mock import AsyncMock, Mock, patch
 
 from tapps_agents.context7.kb_cache import CacheEntry, KBCache
 from tapps_agents.context7.lookup import KBLookup, LookupResult

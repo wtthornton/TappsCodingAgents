@@ -14,11 +14,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import AsyncGenerator, Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
-from pathlib import Path
-from typing import Any, AsyncGenerator, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +145,7 @@ class StreamingWorkflowExecutor:
         self,
         step_executor: Callable[[dict[str, Any]], Any],
         on_event: Callable[[StreamEvent], None] | None = None,
-    ) -> AsyncGenerator[StreamEvent, None]:
+    ) -> AsyncGenerator[StreamEvent]:
         """
         Execute workflow with streaming events.
 
@@ -236,7 +236,7 @@ class StreamingWorkflowExecutor:
                     )
                     yield score_event
 
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 # Step timeout - pause and checkpoint
                 error_event = StreamEvent(
                     type=StreamEventType.STEP_ERROR,

@@ -2,10 +2,11 @@
 Tests for Outcome Tracker
 """
 
-import pytest
 from pathlib import Path
 
-from tapps_agents.core.outcome_tracker import CodeOutcome, OutcomeTracker
+import pytest
+
+from tapps_agents.core.outcome_tracker import OutcomeTracker
 
 
 @pytest.fixture
@@ -40,7 +41,7 @@ def test_track_initial_scores(tracker):
 
 def test_finalize_outcome(tracker):
     """Test finalizing outcome."""
-    outcome = tracker.track_initial_scores(
+    tracker.track_initial_scores(
         workflow_id="test-workflow-2",
         file_path=Path("test.py"),
         scores={"complexity_score": 6.0},

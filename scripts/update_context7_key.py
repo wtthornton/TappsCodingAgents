@@ -113,7 +113,7 @@ def test_api_key(api_key: str | None = None):
             if response.status_code == 200:
                 data = response.json()
                 if isinstance(data, list):
-                    print(f"[SUCCESS] API connection successful!")
+                    print("[SUCCESS] API connection successful!")
                     print(f"          Found {len(data)} library results")
                     if len(data) > 0:
                         print(f"          First: {data[0].get('id', 'N/A')}")

@@ -2,14 +2,13 @@
 Unit tests for Score Constants and Normalization.
 """
 
-import math
 import pytest
 
 from tapps_agents.agents.reviewer.score_constants import (
     ComplexityConstants,
-    SecurityConstants,
     ScoreNormalizer,
     ScoreScales,
+    SecurityConstants,
     extract_scores_normalized,
 )
 

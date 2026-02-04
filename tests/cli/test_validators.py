@@ -2,8 +2,9 @@
 Tests for CLI command validators.
 """
 
-import pytest
 from argparse import Namespace
+
+import pytest
 
 pytestmark = pytest.mark.unit
 

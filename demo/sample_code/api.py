@@ -1,14 +1,14 @@
 """Simple REST API example."""
 
-from typing import List, Dict
+
 
 class TaskAPI:
     """Task management API."""
     
     def __init__(self):
-        self.tasks: List[Dict] = []
+        self.tasks: list[dict] = []
     
-    def create_task(self, title: str, description: str) -> Dict:
+    def create_task(self, title: str, description: str) -> dict:
         """Create a new task."""
         task = {
             "id": len(self.tasks) + 1,
@@ -19,7 +19,7 @@ class TaskAPI:
         self.tasks.append(task)
         return task
     
-    def get_task(self, task_id: int) -> Dict:
+    def get_task(self, task_id: int) -> dict:
         """Get a task by ID."""
         for task in self.tasks:
             if task["id"] == task_id:

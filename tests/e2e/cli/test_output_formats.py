@@ -7,7 +7,7 @@ Tests json, text, markdown, html outputs for commands that support them.
 import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_valid_json, assert_text_output
+from tests.e2e.cli.validation_helpers import assert_text_output, assert_valid_json
 
 
 @pytest.mark.e2e_cli

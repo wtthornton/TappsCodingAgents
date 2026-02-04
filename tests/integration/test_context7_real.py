@@ -33,7 +33,9 @@ def check_mcp_tools_available(gateway: MCPGateway | None = None) -> tuple[bool, 
     - "local_gateway" if tools registered in local MCPGateway
     - "none" if not available
     """
-    from tapps_agents.context7.backup_client import check_mcp_tools_available as check_mcp
+    from tapps_agents.context7.backup_client import (
+        check_mcp_tools_available as check_mcp,
+    )
     return check_mcp(gateway)
 
 

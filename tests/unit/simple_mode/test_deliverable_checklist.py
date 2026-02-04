@@ -1,8 +1,5 @@
 """Tests for DeliverableChecklist."""
 
-import json
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import pytest
 

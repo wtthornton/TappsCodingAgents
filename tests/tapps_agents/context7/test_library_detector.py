@@ -2,7 +2,6 @@
 Tests for library_detector.py
 """
 
-import pytest
 
 from tapps_agents.context7.library_detector import *
 

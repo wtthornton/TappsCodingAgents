@@ -300,7 +300,7 @@ class CursorRulesGenerator:
 
         # Backup existing file
         if backup and output_path.exists():
-            backup_path = output_path.with_suffix(f".mdc.backup")
+            backup_path = output_path.with_suffix(".mdc.backup")
             try:
                 import shutil
 

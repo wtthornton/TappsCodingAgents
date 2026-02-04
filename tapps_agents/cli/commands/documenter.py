@@ -8,12 +8,12 @@ import asyncio
 from pathlib import Path
 
 from ...agents.documenter.agent import DocumenterAgent
-from ...core.agent_cache import get_agent_cache, AgentResultCache
+from ...core.agent_cache import AgentResultCache, get_agent_cache
 from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
-from .common import check_result_error, format_json_output
+from .common import check_result_error
 
 # Version for cache invalidation on agent updates
 DOCUMENTER_CACHE_VERSION = AgentResultCache.CACHE_VERSION
@@ -33,10 +33,10 @@ def handle_documenter_command(args: object) -> None:
         return
     
     # Check network requirement
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
     from ...core.network_errors import NetworkRequiredError
     from ..base import handle_network_error
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
     
     requirement = CommandClassifier.get_network_requirement("documenter", command)
     offline_mode = False

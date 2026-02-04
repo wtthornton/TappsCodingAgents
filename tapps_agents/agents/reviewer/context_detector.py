@@ -9,9 +9,8 @@ from __future__ import annotations
 import subprocess
 import sys
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 
 # Time thresholds for file age (in days)
 NEW_FILE_THRESHOLD_DAYS = 7  # Files created within 7 days are considered "new"

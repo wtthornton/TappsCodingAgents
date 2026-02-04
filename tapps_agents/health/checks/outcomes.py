@@ -42,9 +42,10 @@ class OutcomeHealthCheck(HealthCheck):
             Dictionary with review_executions_count, success_rate, and gate_pass_rate
         """
         try:
-            from datetime import UTC
-            from ...workflow.execution_metrics import ExecutionMetricsCollector
             import logging
+            from datetime import UTC
+
+            from ...workflow.execution_metrics import ExecutionMetricsCollector
 
             collector = ExecutionMetricsCollector(project_root=self.project_root)
 

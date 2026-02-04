@@ -5,9 +5,9 @@ Requires bd in tools/bd or on PATH. Run with: pytest -m integration tests/integr
 On some environments (e.g. Windows) bd or the CLI may block; the test is skipped then.
 """
 
-from pathlib import Path
 import subprocess
 import sys
+from pathlib import Path
 
 import pytest
 

@@ -7,7 +7,6 @@ and running demo scenarios in test contexts.
 
 import sys
 from pathlib import Path
-from typing import Any
 
 from tests.e2e.fixtures.cli_harness import CLIHarness, CLIResult
 

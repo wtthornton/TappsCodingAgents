@@ -1,7 +1,7 @@
 """Simple Mode workflows for specialized task execution."""
 
-from .validation_workflow import ValidationWorkflow, ValidationResult
-from .quick_wins_workflow import QuickWinsWorkflow, QuickWin, QuickWinsResult
+from .quick_wins_workflow import QuickWin, QuickWinsResult, QuickWinsWorkflow
+from .validation_workflow import ValidationResult, ValidationWorkflow
 
 __all__ = [
     "ValidationWorkflow",

@@ -8,7 +8,6 @@ UserStory (from PlanningArtifact) and Story (from Epic models).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -66,7 +65,7 @@ class Story(BaseModel):
     model_config = {"extra": "forbid"}
 
     @classmethod
-    def from_user_story(cls, user_story: "UserStory") -> Story:
+    def from_user_story(cls, user_story: UserStory) -> Story:
         """
         Convert from legacy UserStory (dataclass) to unified Story.
 
@@ -121,7 +120,7 @@ class Story(BaseModel):
         )
 
     @classmethod
-    def from_epic_story(cls, epic_story: "EpicStory") -> Story:
+    def from_epic_story(cls, epic_story: EpicStory) -> Story:
         """
         Convert from Epic.Story (dataclass) to unified Story.
 
@@ -143,5 +142,5 @@ class Story(BaseModel):
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .planning_artifact import UserStory  # noqa: F401
     from ..epic.models import Story as EpicStory  # noqa: F401
+    from .planning_artifact import UserStory  # noqa: F401

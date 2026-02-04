@@ -251,7 +251,7 @@ class TestStatePersistenceConfigManager:
         manager.config.cleanup.enabled = True
         manager.config.cleanup.keep_latest = 2
 
-        result = manager.execute_cleanup()
+        manager.execute_cleanup()
 
         # Should keep at least 2 files
         remaining = list(storage_path.glob("*.json"))

@@ -32,10 +32,9 @@ class DiagramGenerator:
         for i, component in enumerate(components):
             if isinstance(component, dict):
                 name = component.get("name", f"Component{i+1}")
-                comp_type = component.get("type", "component")
+                component.get("type", "component")
             else:
                 name = str(component)
-                comp_type = "component"
 
             # Mermaid node ID (sanitized)
             node_id = self._sanitize_id(name)
@@ -171,10 +170,9 @@ class DiagramGenerator:
         for i, component in enumerate(components):
             if isinstance(component, dict):
                 name = component.get("name", f"Component{i+1}")
-                comp_type = component.get("type", "component")
+                component.get("type", "component")
             else:
                 name = str(component)
-                comp_type = "component"
 
             diagram += f'component "{name}"\n'
 

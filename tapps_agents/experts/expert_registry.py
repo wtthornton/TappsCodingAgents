@@ -21,6 +21,7 @@ Manages expert instances and provides consultation services with weighted decisi
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -36,8 +37,6 @@ from .confidence_metrics import get_tracker
 from .domain_config import DomainConfig, DomainConfigParser
 from .expert_config import load_expert_configs
 from .weight_distributor import ExpertWeightMatrix
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -390,7 +389,9 @@ class ExpertRegistry:
                     
                     # Track expert consultation for adaptive learning
                     try:
-                        from ..experts.performance_tracker import ExpertPerformanceTracker
+                        from ..experts.performance_tracker import (
+                            ExpertPerformanceTracker,
+                        )
                         perf_tracker = ExpertPerformanceTracker(project_root=self.project_root)
                         perf_tracker.track_consultation(
                             expert_id=expert_id,

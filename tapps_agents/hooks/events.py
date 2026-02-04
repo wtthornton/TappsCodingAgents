@@ -9,11 +9,11 @@ SessionStart, SessionEnd, WorkflowComplete.
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class HookEventType(str, Enum):
+class HookEventType(StrEnum):
     """Supported hook event types."""
 
     USER_PROMPT_SUBMIT = "UserPromptSubmit"

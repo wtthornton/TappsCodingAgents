@@ -1,6 +1,6 @@
 """Windows compatibility check and fixes for TappsCodingAgents workflow execution."""
-import sys
 import os
+import sys
 from pathlib import Path
 
 

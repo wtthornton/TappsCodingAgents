@@ -4,7 +4,7 @@ Unit tests for LearningDataExporter
 import json
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -95,9 +95,9 @@ class TestLearningDataExporter:
 
     def test_init_without_components(self):
         """Test auto-initialization when components not provided."""
-        with patch("tapps_agents.core.learning_export.CapabilityRegistry") as mock_registry:
-            with patch("tapps_agents.core.learning_export.LearningDashboard") as mock_dashboard:
-                with patch("tapps_agents.core.learning_export.AnalyticsDashboard") as mock_analytics:
+        with patch("tapps_agents.core.learning_export.CapabilityRegistry"):
+            with patch("tapps_agents.core.learning_export.LearningDashboard"):
+                with patch("tapps_agents.core.learning_export.AnalyticsDashboard"):
                     exporter = LearningDataExporter(project_root=Path.cwd())
                     # Components should be initialized
                     assert exporter.capability_registry is not None or exporter.learning_dashboard is not None

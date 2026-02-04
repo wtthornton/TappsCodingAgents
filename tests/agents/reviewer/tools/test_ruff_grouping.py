@@ -3,11 +3,11 @@ Tests for RuffGroupingParser - ENH-002-S3.
 """
 
 import json
+
 import pytest
 
 from tapps_agents.agents.reviewer.tools.ruff_grouping import (
     GroupedRuffIssues,
-    RuffGroupingConfig,
     RuffGroupingParser,
     RuffIssue,
     RuffParsingError,

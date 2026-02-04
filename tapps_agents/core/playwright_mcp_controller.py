@@ -17,10 +17,11 @@ This controller enables direct use of Playwright MCP capabilities including:
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -65,19 +66,19 @@ class AccessibilitySnapshot:
     """Accessibility snapshot data."""
 
     content: str  # Snapshot markdown content
-    filename: Optional[str] = None  # Optional saved filename
+    filename: str | None = None  # Optional saved filename
 
 
 @dataclass
 class PerformanceMetrics:
     """Performance metrics from page load."""
 
-    lcp: Optional[float] = None  # Largest Contentful Paint (seconds)
-    fid: Optional[float] = None  # First Input Delay (milliseconds)
-    cls: Optional[float] = None  # Cumulative Layout Shift
-    fcp: Optional[float] = None  # First Contentful Paint (seconds)
-    load_time: Optional[float] = None  # Total load time (seconds)
-    dom_content_loaded: Optional[float] = None  # DOMContentLoaded time (seconds)
+    lcp: float | None = None  # Largest Contentful Paint (seconds)
+    fid: float | None = None  # First Input Delay (milliseconds)
+    cls: float | None = None  # Cumulative Layout Shift
+    fcp: float | None = None  # First Contentful Paint (seconds)
+    load_time: float | None = None  # Total load time (seconds)
+    dom_content_loaded: float | None = None  # DOMContentLoaded time (seconds)
     network_requests: int = 0  # Number of network requests
     failed_requests: int = 0  # Number of failed requests
 
@@ -92,7 +93,7 @@ class PlaywrightMCPController:
 
     def __init__(
         self,
-        mcp_tool_handler: Optional[Callable] = None,
+        mcp_tool_handler: Callable | None = None,
         use_fallback: bool = True,
         enable_network_recording: bool = False,
         enable_tracing: bool = False,
@@ -186,7 +187,7 @@ class PlaywrightMCPController:
         """
         if self.mode == MCPToolMode.DIRECT:
             try:
-                result = self._call_mcp_tool("browser_navigate", url=url)
+                self._call_mcp_tool("browser_navigate", url=url)
                 logger.info(f"Navigated to: {url} (MCP)")
                 return True
             except Exception as e:
@@ -205,7 +206,7 @@ class PlaywrightMCPController:
                 logger.error(f"Navigation failed: {e}")
                 return False
 
-    def snapshot(self, filename: Optional[str] = None) -> Optional[AccessibilitySnapshot]:
+    def snapshot(self, filename: str | None = None) -> AccessibilitySnapshot | None:
         """
         Get accessibility snapshot of current page.
 
@@ -380,11 +381,11 @@ class PlaywrightMCPController:
 
     def take_screenshot(
         self,
-        filename: Optional[str] = None,
+        filename: str | None = None,
         full_page: bool = False,
-        element: Optional[str] = None,
-        ref: Optional[str] = None,
-    ) -> Optional[str]:
+        element: str | None = None,
+        ref: str | None = None,
+    ) -> str | None:
         """
         Take a screenshot.
 
@@ -501,7 +502,7 @@ class PlaywrightMCPController:
         return requests
 
     def wait_for(
-        self, text: Optional[str] = None, text_gone: Optional[str] = None, time: Optional[float] = None
+        self, text: str | None = None, text_gone: str | None = None, time: float | None = None
     ) -> bool:
         """
         Wait for text to appear/disappear or time to pass.
@@ -548,7 +549,7 @@ class PlaywrightMCPController:
                 logger.error(f"Wait failed: {e}")
                 return False
 
-    def evaluate(self, function: str, element: Optional[str] = None, ref: Optional[str] = None) -> Any:
+    def evaluate(self, function: str, element: str | None = None, ref: str | None = None) -> Any:
         """
         Evaluate JavaScript expression on page or element.
 

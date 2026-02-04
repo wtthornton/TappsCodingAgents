@@ -8,7 +8,10 @@ Provides business domain knowledge through expert agents with:
 - Consultation interface for workflow agents
 """
 
+from .adaptive_domain_detector import AdaptiveDomainDetector, DomainSuggestion
+from .adaptive_voting import AdaptiveVotingEngine
 from .agent_integration import ExpertSupportMixin, create_agent_with_expert_support
+from .auto_generator import AutoExpertGenerator, GeneratedExpert
 from .base_expert import BaseExpert
 from .builtin_registry import BuiltinExpertRegistry
 from .domain_config import DomainConfig, DomainConfigParser
@@ -28,16 +31,28 @@ from .expert_engine import (
     KnowledgeWriteRequest,
 )
 from .expert_registry import TECHNICAL_DOMAINS, ConsultationResult, ExpertRegistry
+from .expert_suggester import ExpertSuggester, ExpertSuggestion
 from .expert_synthesizer import ExpertSynthesizer
 from .governance import (
     FilterResult,
     GovernanceLayer,
     GovernancePolicy,
 )
+from .knowledge_enhancer import KnowledgeEnhancer, KnowledgeGap, KnowledgeUpdate
+from .knowledge_freshness import (
+    KnowledgeFileMetadata,
+    KnowledgeFreshnessTracker,
+    get_freshness_tracker,
+)
 from .knowledge_ingestion import (
     IngestionResult,
     KnowledgeEntry,
     KnowledgeIngestionPipeline,
+)
+from .knowledge_validator import (
+    KnowledgeBaseValidator,
+    ValidationIssue,
+    ValidationResult,
 )
 from .observability import (
     ConsultationMetrics,
@@ -47,6 +62,7 @@ from .observability import (
     RAGMetrics,
     WeakArea,
 )
+from .performance_tracker import ExpertPerformance, ExpertPerformanceTracker
 from .rag_chunker import Chunk, Chunker
 from .rag_embedder import Embedder, SentenceTransformerEmbedder, create_embedder
 from .rag_evaluation import (
@@ -57,29 +73,17 @@ from .rag_evaluation import (
     create_default_evaluation_set,
 )
 from .rag_index import IndexMetadata, VectorIndex
+from .rag_metrics import (
+    RAGMetricsTracker,
+    RAGPerformanceMetrics,
+    RAGQueryMetrics,
+    RAGQueryTimer,
+    get_rag_metrics_tracker,
+)
 from .rag_safety import RAGSafetyHandler, create_safety_handler
 from .simple_rag import KnowledgeChunk, SimpleKnowledgeBase
 from .vector_rag import VectorKnowledgeBase
 from .weight_distributor import ExpertWeightMatrix, WeightDistributor
-from .knowledge_validator import KnowledgeBaseValidator, ValidationResult, ValidationIssue
-from .adaptive_domain_detector import AdaptiveDomainDetector, DomainSuggestion
-from .expert_suggester import ExpertSuggester, ExpertSuggestion
-from .auto_generator import AutoExpertGenerator, GeneratedExpert
-from .performance_tracker import ExpertPerformance, ExpertPerformanceTracker
-from .adaptive_voting import AdaptiveVotingEngine
-from .knowledge_enhancer import KnowledgeEnhancer, KnowledgeGap, KnowledgeUpdate
-from .rag_metrics import (
-    RAGMetricsTracker,
-    RAGQueryMetrics,
-    RAGPerformanceMetrics,
-    get_rag_metrics_tracker,
-    RAGQueryTimer,
-)
-from .knowledge_freshness import (
-    KnowledgeFreshnessTracker,
-    KnowledgeFileMetadata,
-    get_freshness_tracker,
-)
 
 __all__ = [
     "BaseExpert",

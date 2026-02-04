@@ -1,9 +1,10 @@
 """
 Tests for CLI help commands - verify they work offline and don't require agent activation.
 """
-import pytest
-from unittest.mock import patch, MagicMock, call
 import time
+from unittest.mock import MagicMock, patch
+
+import pytest
 
 from tapps_agents.cli.commands.enhancer import handle_enhancer_command
 from tapps_agents.cli.help.static_help import get_static_help

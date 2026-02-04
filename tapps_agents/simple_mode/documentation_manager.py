@@ -4,12 +4,11 @@ Workflow Documentation Manager - Organizes documentation by workflow ID.
 Manages workflow-specific documentation directories and file paths.
 """
 
+import logging
 import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-import logging
 
 try:
     import yaml

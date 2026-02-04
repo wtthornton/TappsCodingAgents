@@ -110,7 +110,7 @@ def main():
                 else:
                     return 1
             else:
-                print(f"[INFO] MCP config has direct API key value (not using env var)")
+                print("[INFO] MCP config has direct API key value (not using env var)")
                 print("This is less secure but will work.")
                 return 0
         else:

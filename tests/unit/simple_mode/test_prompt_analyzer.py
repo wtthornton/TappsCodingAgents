@@ -1,12 +1,11 @@
 """Unit tests for PromptAnalyzer."""
 
 import pytest
+
 from tapps_agents.simple_mode.prompt_analyzer import (
     PromptAnalyzer,
-    TaskIntent,
     PromptComplexity,
-    ExistingCodeReference,
-    PromptAnalysis,
+    TaskIntent,
 )
 
 

@@ -10,8 +10,12 @@ Tests all 13 agents with various parameter combinations to ensure:
 
 import pytest
 
-from tests.e2e.cli.test_base import CLICommandTestBase, ParameterizedCommandTest
-from tests.e2e.cli.validation_helpers import assert_valid_json, assert_text_output, assert_success_exit
+from tests.e2e.cli.test_base import CLICommandTestBase
+from tests.e2e.cli.validation_helpers import (
+    assert_success_exit,
+    assert_text_output,
+    assert_valid_json,
+)
 
 
 @pytest.mark.e2e_cli

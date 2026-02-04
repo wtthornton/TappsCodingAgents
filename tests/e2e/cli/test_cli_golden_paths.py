@@ -244,8 +244,8 @@ def test_cli_workflow_file_path_golden_path(cli_harness, test_project):
     - File path execution works correctly
     - Both relative and absolute paths are supported
     """
+
     import yaml
-    from pathlib import Path
 
     # Create a test workflow file
     workflows_dir = test_project / "workflows"
@@ -309,8 +309,8 @@ def test_cli_orchestrator_workflow_file_path_golden_path(cli_harness, test_proje
     - JSON contains workflow execution information
     - Supports both relative and absolute paths
     """
+
     import yaml
-    from pathlib import Path
 
     # Create a test workflow file
     workflows_dir = test_project / "workflows"

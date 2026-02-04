@@ -39,7 +39,7 @@ def run_command(cmd: list[str], description: str) -> bool:
         return False
     except FileNotFoundError:
         print(
-            f"ERROR: pip-compile not found. Install with: pip install pip-tools",
+            "ERROR: pip-compile not found. Install with: pip install pip-tools",
             file=sys.stderr,
         )
         return False
@@ -89,7 +89,7 @@ def main() -> int:
 
     if runtime_success and dev_success:
         print("\n[OK] Lock files generated successfully!")
-        print(f"\nGenerated files:")
+        print("\nGenerated files:")
         print(f"  - {runtime_lock.name} (runtime dependencies)")
         print(f"  - {dev_lock.name} (runtime + dev dependencies)")
         print("\nNote: Lock files should be committed to version control for reproducibility.")

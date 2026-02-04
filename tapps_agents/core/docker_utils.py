@@ -12,8 +12,6 @@ Issue 7: Docker ps Command - Agent Crash with Table Format
 
 import json
 import subprocess
-import sys
-from pathlib import Path
 from typing import Any
 
 

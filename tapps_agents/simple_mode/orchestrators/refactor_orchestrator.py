@@ -7,11 +7,10 @@ This orchestrator provides systematic code modernization with pattern detection,
 incremental refactoring, and safety checks to ensure behavior preservation.
 """
 
-from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -42,7 +41,7 @@ class RefactorOrchestrator(SimpleModeOrchestrator):
         modernize = parameters.get("modernize", False)
         refactor_target = parameters.get("description") or intent.original_input
 
-        from ..beads_hooks import create_refactor_issue, close_issue
+        from ..beads_hooks import close_issue, create_refactor_issue
 
         beads_issue_id: str | None = None
         if self.config:
@@ -69,7 +68,6 @@ class RefactorOrchestrator(SimpleModeOrchestrator):
             if pattern:
                 # Find files matching pattern
                 from pathlib import Path
-                import glob
             
                 pattern_files = list(Path(self.project_root).glob(pattern))
                 target_files.extend([str(f) for f in pattern_files])
@@ -145,7 +143,7 @@ See architect design results for modern patterns to apply.
 4. Verify behavior preservation
 """
 
-            plan_path = self.project_root / "docs" / "refactoring" / f"refactor-plan.md"
+            plan_path = self.project_root / "docs" / "refactoring" / "refactor-plan.md"
             plan_path.parent.mkdir(parents=True, exist_ok=True)
             plan_path.write_text(plan_content, encoding="utf-8")
 

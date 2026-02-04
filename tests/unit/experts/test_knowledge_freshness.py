@@ -11,7 +11,6 @@ import pytest
 
 from tapps_agents.experts.knowledge_freshness import (
     KnowledgeFreshnessTracker,
-    KnowledgeFileMetadata,
     get_freshness_tracker,
 )
 

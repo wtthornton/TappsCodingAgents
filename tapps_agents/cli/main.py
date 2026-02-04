@@ -51,9 +51,11 @@ from .commands import (
     planner,
     reviewer,
     simple_mode,
-    task as task_cmd,
     tester,
     top_level,
+)
+from .commands import (
+    task as task_cmd,
 )
 from .feedback import FeedbackManager, ProgressMode, VerbosityLevel
 
@@ -62,10 +64,10 @@ from .parsers import (
     analyst as analyst_parsers,
 )
 from .parsers import (
-    cleanup_agent as cleanup_agent_parsers,
+    architect as architect_parsers,
 )
 from .parsers import (
-    architect as architect_parsers,
+    cleanup_agent as cleanup_agent_parsers,
 )
 from .parsers import (
     debugger as debugger_parsers,
@@ -510,6 +512,7 @@ def route_command(args: argparse.Namespace) -> None:
 
     # Session lifecycle: start on first CLI command, SessionEnd via atexit
     from pathlib import Path
+
     from ..session import ensure_session_started
     ensure_session_started(Path.cwd())
 

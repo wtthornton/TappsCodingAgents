@@ -1,7 +1,7 @@
 """Test different Context7 API authentication methods."""
 
-import sys
 import os
+import sys
 
 if sys.platform == "win32":
     os.environ["PYTHONIOENCODING"] = "utf-8"

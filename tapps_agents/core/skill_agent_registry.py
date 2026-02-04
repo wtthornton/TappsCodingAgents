@@ -71,7 +71,7 @@ class SkillAgentRegistry:
 
         seen: set[tuple[str, str]] = set()
         out: list[tuple[str, str, str]] = []
-        for (agent, action), (skill_cmd, _) in SkillInvoker.COMMAND_MAPPING.items():
+        for (agent, _action), (skill_cmd, _) in SkillInvoker.COMMAND_MAPPING.items():
             key = (agent, skill_cmd)
             if key in seen:
                 continue

@@ -12,7 +12,6 @@ from pathlib import Path
 from typing import Any
 
 from .cursor_chat import ChatUpdateSender
-from .cursor_skill_helper import read_skill_metadata
 from .models import Workflow, WorkflowState
 from .progress_updates import (
     ProgressCalculator,

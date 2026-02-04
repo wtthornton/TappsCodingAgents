@@ -2,7 +2,6 @@
 Tests for deliverable_checklist.py
 """
 
-import pytest
 
 # Import module under test
 # NOTE: If this import fails, adjust the path based on your project structure

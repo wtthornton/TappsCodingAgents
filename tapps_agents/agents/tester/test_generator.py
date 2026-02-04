@@ -56,7 +56,7 @@ class TestGenerator:
         language = detection_result.language
 
         # Analyze code structure
-        analysis = self._analyze_code(code, code_path)
+        self._analyze_code(code, code_path)
 
         # Detect test framework based on language
         test_framework = self._detect_test_framework_for_language(language, code)

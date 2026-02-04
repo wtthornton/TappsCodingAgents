@@ -10,7 +10,7 @@ from ..command_classifier import CommandClassifier, CommandNetworkRequirement
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
 from ..network_detection import NetworkDetector
-from .common import check_result_error, format_json_output
+from .common import check_result_error
 
 
 async def implement_command(
@@ -97,9 +97,9 @@ async def implement_command(
             print(f"{'='*60}")
             print(f"\nInstruction prepared for: {result.get('file', 'N/A')}")
             if "skill_command" in result:
-                print(f"\n📋 To execute in Cursor IDE, use:")
+                print("\n📋 To execute in Cursor IDE, use:")
                 print(f"   {result['skill_command']}")
-                print(f"\n   Or use Simple Mode:")
+                print("\n   Or use Simple Mode:")
                 print(f"   @simple-mode *build \"{specification[:50]}...\"")
             if result.get("file_existed"):
                 print(f"\nFile existed: {result['file_existed']}")
@@ -189,8 +189,8 @@ async def refactor_command(
     file_path: str, instruction: str, output_format: str = "json", output_file: str | None = None
 ):
     """Refactor existing code file"""
-    from ..utils.output_handler import write_output
     from ..feedback import suggest_simple_mode
+    from ..utils.output_handler import write_output
     
     # Suggest using @simple-mode for better outcomes
     suggest_simple_mode("refactor", description=instruction[:50], file_path=file_path)

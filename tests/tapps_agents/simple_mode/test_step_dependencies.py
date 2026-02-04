@@ -5,7 +5,6 @@ import pytest
 from tapps_agents.simple_mode.step_dependencies import (
     STEP_BY_AGENT,
     STEP_BY_NUMBER,
-    WORKFLOW_STEPS,
     StepDefinition,
     StepDependencyManager,
     StepExecutionState,

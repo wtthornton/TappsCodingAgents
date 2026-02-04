@@ -4,11 +4,9 @@ Breakdown Orchestrator - *breakdown command. MCP_SYSTEMS_IMPROVEMENT_RECOMMENDAT
 Runs @planner *plan with a breakdown-oriented description (task list with deps).
 """
 
-from pathlib import Path
 from typing import Any
 
 from tapps_agents.agents.planner.agent import PlannerAgent
-from tapps_agents.core.config import ProjectConfig
 
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator

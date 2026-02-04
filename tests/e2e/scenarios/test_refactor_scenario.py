@@ -19,7 +19,10 @@ import pytest
 from tests.e2e.fixtures.dependency_validator import validate_workflow_file
 from tests.e2e.fixtures.scenario_templates import create_medium_scenario_template
 from tests.e2e.fixtures.scenario_validator import ScenarioValidator
-from tests.e2e.fixtures.workflow_monitor import MonitoringConfig, WorkflowActivityMonitor
+from tests.e2e.fixtures.workflow_monitor import (
+    MonitoringConfig,
+    WorkflowActivityMonitor,
+)
 from tests.e2e.fixtures.workflow_runner import WorkflowRunner
 
 

@@ -180,7 +180,7 @@ class OutcomeTracker:
 
         outcomes = []
         try:
-            with open(self.outcomes_file, "r", encoding="utf-8") as f:
+            with open(self.outcomes_file, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue

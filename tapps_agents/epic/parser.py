@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any
 
 from ..workflow.common_enums import Priority
-
 from .models import AcceptanceCriterion, EpicDocument, Story
 
 

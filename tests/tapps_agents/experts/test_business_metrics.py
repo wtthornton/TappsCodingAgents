@@ -2,10 +2,8 @@
 Tests for business_metrics.py
 """
 
-import json
 from datetime import datetime, timedelta
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 
@@ -13,7 +11,6 @@ from tapps_agents.experts.business_metrics import (
     AdoptionMetrics,
     BusinessMetricsCollector,
     BusinessMetricsData,
-    CodeQualityImprovement,
     EffectivenessMetrics,
     MetricsStorage,
     OperationalMetrics,

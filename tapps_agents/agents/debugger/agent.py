@@ -119,7 +119,7 @@ class DebuggerAgent(BaseAgent):
                     else:
                         # Use first 100 lines if no line specified
                         code_context = "\n".join(code.split("\n")[:100])
-                except (ValueError, OSError) as e:
+                except (ValueError, OSError):
                     # If validation fails or file can't be read, continue without file context
                     # The error analysis can still proceed with just the error message
                     pass

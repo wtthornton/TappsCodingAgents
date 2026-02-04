@@ -39,7 +39,6 @@ from tests.e2e.fixtures.workflow_runner import (
 )
 
 
-
 @pytest.fixture
 def e2e_correlation_id() -> str:
     """

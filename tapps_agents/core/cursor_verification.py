@@ -4,8 +4,6 @@ Cursor integration verification utilities
 import json
 from pathlib import Path
 
-import yaml
-
 
 def verify_cursor_integration(project_root: Path = None) -> tuple[bool, dict]:
     """

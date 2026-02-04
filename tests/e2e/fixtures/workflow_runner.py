@@ -10,10 +10,10 @@ Provides:
 - Real-time progress monitoring and hang detection
 """
 
-import asyncio
 import logging
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable, List
+from typing import Any
 
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import Workflow, WorkflowState

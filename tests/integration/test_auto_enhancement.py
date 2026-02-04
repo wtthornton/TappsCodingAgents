@@ -3,15 +3,16 @@ Integration tests for auto-enhancement in both Cursor and headless modes.
 """
 
 import os
-import pytest
 from argparse import Namespace
 from unittest.mock import AsyncMock, MagicMock, patch
+
+import pytest
 
 from tapps_agents.cli.utils.prompt_enhancer import (
     enhance_prompt_if_needed,
     should_enhance_prompt,
 )
-from tapps_agents.core.config import AutoEnhancementConfig, ProjectConfig
+from tapps_agents.core.config import AutoEnhancementConfig
 
 
 class TestAutoEnhancementIntegration:
@@ -84,7 +85,7 @@ class TestAutoEnhancementIntegration:
                 specification="login",
                 file_path="src/api/auth.py",
             )
-            result = enhance_prompt_if_needed(args, config)
+            enhance_prompt_if_needed(args, config)
             # Should have attempted enhancement
             assert mock_enhancer.run.called
 
@@ -114,7 +115,7 @@ class TestAutoEnhancementIntegration:
                 file_path="src/api/auth.py",
                 enhance=True,  # Force enhancement
             )
-            result = enhance_prompt_if_needed(args, config)
+            enhance_prompt_if_needed(args, config)
             # Should have attempted enhancement despite high quality
             assert mock_enhancer.run.called
 
@@ -145,7 +146,7 @@ class TestAutoEnhancementIntegration:
                 file_path="src/api/auth.py",
                 enhance_mode="quick",  # Override to quick
             )
-            result = enhance_prompt_if_needed(args, config)
+            enhance_prompt_if_needed(args, config)
             # Should use quick mode
             mock_enhancer.run.assert_called()
             call_args = mock_enhancer.run.call_args
@@ -210,7 +211,7 @@ class TestAutoEnhancementIntegration:
                 "tapps_agents.cli.utils.prompt_enhancer.EnhancerAgent"
             ) as mock_enhancer_class, patch(
                 "tapps_agents.agents.enhancer.agent.MAL"
-            ) as mock_mal_class:
+            ):
                 mock_enhancer = MagicMock()
                 mock_enhancer.activate = AsyncMock()
                 mock_enhancer.run = AsyncMock(
@@ -227,7 +228,7 @@ class TestAutoEnhancementIntegration:
                     specification="login",
                     file_path="src/api/auth.py",
                 )
-                result = enhance_prompt_if_needed(args, config)
+                enhance_prompt_if_needed(args, config)
                 # Should have attempted enhancement
                 assert mock_enhancer.run.called
         finally:
@@ -247,7 +248,7 @@ class TestAutoEnhancementIntegration:
         )
         
         # Test implementer (enabled)
-        args1 = Namespace(
+        Namespace(
             agent="implementer",
             command="implement",
             specification="login",
@@ -257,7 +258,7 @@ class TestAutoEnhancementIntegration:
         assert result1 is True
 
         # Test architect (disabled)
-        args2 = Namespace(
+        Namespace(
             agent="architect",
             command="design-system",
             requirements="Design system",

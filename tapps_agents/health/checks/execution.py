@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 from ...workflow.execution_metrics import ExecutionMetricsCollector
 from ..base import HealthCheck, HealthCheckResult
@@ -130,7 +129,7 @@ class ExecutionHealthCheck(HealthCheck):
             # Build remediation actions
             remediation = []
             if success_rate < 95.0:
-                remediation.append(f"Success rate below target (95%) - investigate failures")
+                remediation.append("Success rate below target (95%) - investigate failures")
             if error_categories:
                 top_error = max(error_categories.items(), key=lambda x: x[1])
                 remediation.append(

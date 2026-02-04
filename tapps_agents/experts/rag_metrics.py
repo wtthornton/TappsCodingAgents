@@ -4,14 +4,13 @@ RAG Performance Metrics
 Tracks RAG system performance including hit rates, latency, and query patterns.
 """
 
+import json
 import time
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-import json
 
 
 @dataclass

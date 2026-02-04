@@ -8,9 +8,9 @@ real authenticated API calls and checking the actual response.
 """
 
 import os
-import pytest
 
 import httpx
+import pytest
 
 pytestmark = pytest.mark.integration
 
@@ -34,7 +34,7 @@ def test_context7_api_key_verification():
     print(f"\n{'='*60}")
     print("Context7 API Key Verification Test")
     print(f"{'='*60}")
-    print(f"API Key Found: Yes")
+    print("API Key Found: Yes")
     print(f"Key Prefix: {api_key[:20]}...")
     print()
     
@@ -46,8 +46,8 @@ def test_context7_api_key_verification():
     API_URL = os.getenv("CONTEXT7_API_URL", "https://context7.com/api/v2")
     
     print(f"Making API call to: {API_URL}/search")
-    print(f"Query: react")
-    print(f"Auth Method: Authorization: Bearer CONTEXT7_API_KEY")
+    print("Query: react")
+    print("Auth Method: Authorization: Bearer CONTEXT7_API_KEY")
     print()
     
     try:
@@ -125,7 +125,7 @@ def test_context7_api_key_verification():
                         f"API key authentication failed."
                     )
                 else:
-                    print(f"[FAILED] Endpoint not found (404)")
+                    print("[FAILED] Endpoint not found (404)")
                     print(f"   Response: {response.text[:200]}")
                     pytest.fail(f"API endpoint not found - status {response.status_code}")
             else:
@@ -134,7 +134,7 @@ def test_context7_api_key_verification():
                 pytest.fail(f"API call failed with status {response.status_code}: {response.text[:200]}")
                 
     except httpx.ConnectError as e:
-        print(f"[FAILED] CONNECTION FAILED: Cannot reach Context7 API")
+        print("[FAILED] CONNECTION FAILED: Cannot reach Context7 API")
         print(f"   Error: {e}")
         print()
         print("   VERIFICATION RESULT:")
@@ -180,7 +180,7 @@ def test_context7_api_key_get_docs():
     print(f"API URL: {API_URL}")
     print(f"Library ID: {library_id}")
     print(f"Topic: {topic}")
-    print(f"Auth Method: Authorization: Bearer CONTEXT7_API_KEY")
+    print("Auth Method: Authorization: Bearer CONTEXT7_API_KEY")
     print()
     
     try:

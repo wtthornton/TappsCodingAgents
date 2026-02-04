@@ -4,7 +4,7 @@ Tests for Base Expert RAG improvements (defaults, metrics, freshness).
 
 import tempfile
 from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -20,7 +20,6 @@ class TestBaseExpertRAGDefaults:
     def temp_knowledge_dir(self):
         """Create temporary knowledge directory."""
         import shutil
-        import tempfile
 
         temp_dir = Path(tempfile.mkdtemp())
         knowledge_dir = temp_dir / "knowledge" / "security"

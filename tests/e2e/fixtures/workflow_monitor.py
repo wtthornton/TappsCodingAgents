@@ -7,16 +7,19 @@ for workflow execution in e2e tests.
 
 import logging
 import time
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from tapps_agents.workflow.event_log import WorkflowEvent
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import WorkflowState
 from tapps_agents.workflow.observer import WorkflowObserver
-from tapps_agents.workflow.progress_monitor import ProgressMetrics, WorkflowProgressMonitor
+from tapps_agents.workflow.progress_monitor import (
+    WorkflowProgressMonitor,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -220,7 +223,6 @@ class WorkflowActivityMonitor(BaseWorkflowObserver):
         Returns:
             True if step completed, False if timeout
         """
-        import time
         start_time = time.time()
         while time.time() - start_time < timeout:
             # Check if step completed
@@ -351,7 +353,7 @@ class WorkflowActivityMonitor(BaseWorkflowObserver):
         if not self.snapshots:
             return False, None
 
-        latest = self.snapshots[-1]
+        self.snapshots[-1]
         now = datetime.now()
 
         # Check total time

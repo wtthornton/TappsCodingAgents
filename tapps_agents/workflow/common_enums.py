@@ -4,10 +4,10 @@ Common Enums for Workflow Artifacts.
 Type-safe enums for status, priority, and other common fields across all artifacts.
 """
 
-from enum import Enum
+from enum import StrEnum
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """Priority level for stories, tasks, and artifacts."""
 
     HIGH = "high"
@@ -15,7 +15,7 @@ class Priority(str, Enum):
     LOW = "low"
 
 
-class ArtifactStatus(str, Enum):
+class ArtifactStatus(StrEnum):
     """Status of an artifact during workflow execution."""
 
     PENDING = "pending"
@@ -27,7 +27,7 @@ class ArtifactStatus(str, Enum):
     NOT_RUN = "not_run"
 
 
-class RiskLevel(str, Enum):
+class RiskLevel(StrEnum):
     """Risk level for stories, tasks, and features."""
 
     LOW = "low"
@@ -35,7 +35,7 @@ class RiskLevel(str, Enum):
     HIGH = "high"
 
 
-class StoryStatus(str, Enum):
+class StoryStatus(StrEnum):
     """Story execution status."""
 
     NOT_STARTED = "not_started"
@@ -45,7 +45,7 @@ class StoryStatus(str, Enum):
     FAILED = "failed"
 
 
-class OperationType(str, Enum):
+class OperationType(StrEnum):
     """Type of operation performed by an agent."""
 
     # Planning operations

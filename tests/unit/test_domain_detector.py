@@ -6,7 +6,11 @@ import json
 
 import pytest
 
-from tapps_agents.experts.domain_detector import DomainStackDetector, RepoSignal, StackDetectionResult
+from tapps_agents.experts.domain_detector import (
+    DomainStackDetector,
+    RepoSignal,
+    StackDetectionResult,
+)
 
 
 @pytest.fixture

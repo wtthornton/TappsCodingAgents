@@ -2,9 +2,10 @@
 Integration tests for Cursor integration verification
 """
 from pathlib import Path
+
 from tapps_agents.core.cursor_verification import (
-    verify_cursor_integration,
     format_verification_results,
+    verify_cursor_integration,
 )
 
 

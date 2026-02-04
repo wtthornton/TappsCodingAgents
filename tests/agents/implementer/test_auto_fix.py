@@ -11,11 +11,8 @@ Target Coverage: 80%+
 """
 
 import asyncio
-import hashlib
-import json
 import os
-import tempfile
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -35,7 +32,6 @@ from tapps_agents.agents.implementer.auto_fix import (
     ValidationManager,
     ValidationResult,
 )
-
 
 # ============================================================================
 # Fixtures
@@ -374,10 +370,10 @@ class TestBackupManager:
     def test_list_backups(self, backup_manager, test_file):
         """Test listing backups for a file."""
         # Create multiple backups
-        metadata1 = backup_manager.create_backup(test_file)
+        backup_manager.create_backup(test_file)
         import time
         time.sleep(1)  # Ensure different timestamps
-        metadata2 = backup_manager.create_backup(test_file)
+        backup_manager.create_backup(test_file)
 
         backups = backup_manager.list_backups(test_file)
 

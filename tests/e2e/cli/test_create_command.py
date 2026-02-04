@@ -7,7 +7,6 @@ Tests project creation with different descriptions and options.
 import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_success_exit
 
 
 @pytest.mark.e2e_cli

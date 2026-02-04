@@ -8,12 +8,11 @@ from unittest.mock import patch
 
 import pytest
 
-from tapps_agents.beads.specs import TaskSpec, save_task_spec
 from tapps_agents.beads.hydration import (
-    HydrationReport,
     dehydrate_from_beads,
     hydrate_to_beads,
 )
+from tapps_agents.beads.specs import TaskSpec, save_task_spec
 
 
 @pytest.mark.unit

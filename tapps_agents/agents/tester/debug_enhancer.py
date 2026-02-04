@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 # Import visual regression tester
 try:
-    from .visual_regression import VisualRegressionTester, VisualDiff
+    from .visual_regression import VisualDiff, VisualRegressionTester
 except ImportError:
     VisualRegressionTester = None
     VisualDiff = None

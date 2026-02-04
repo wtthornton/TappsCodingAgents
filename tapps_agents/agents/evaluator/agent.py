@@ -9,7 +9,11 @@ from typing import Any
 
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.external_feedback_models import ExternalFeedbackData, FeedbackContext, FeedbackMetrics
+from ...core.external_feedback_models import (
+    ExternalFeedbackData,
+    FeedbackContext,
+    FeedbackMetrics,
+)
 from ...core.external_feedback_storage import ExternalFeedbackStorage
 from .quality_analyzer import QualityAnalyzer
 from .report_generator import ReportGenerator

@@ -232,7 +232,7 @@ def format_markdown(data: dict[str, Any] | list[dict[str, Any]]) -> str:
             lines.append("")
         
         if "error" in data:
-            lines.append(f"## Error")
+            lines.append("## Error")
             lines.append(data["error"])
             lines.append("")
         
@@ -370,19 +370,19 @@ def format_html(data: dict[str, Any] | list[dict[str, Any]], title: str = "Quali
                 status = "Pass" if overall >= 70 else "Fail"
                 status_color = "#0a0" if overall >= 70 else "#a00"
                 
-                html_parts.append(f"<tr>")
+                html_parts.append("<tr>")
                 html_parts.append(f"<td>{file_path}</td>")
                 html_parts.append(f"<td><strong>{overall:.1f}</strong></td>")
                 html_parts.append(f"<td>{complexity:.1f}</td>")
                 html_parts.append(f"<td>{security:.1f}</td>")
                 html_parts.append(f"<td>{maintainability:.1f}</td>")
                 html_parts.append(f"<td style='color: {status_color}'><strong>{status}</strong></td>")
-                html_parts.append(f"</tr>")
+                html_parts.append("</tr>")
             elif "error" in item:
-                html_parts.append(f"<tr>")
+                html_parts.append("<tr>")
                 html_parts.append(f"<td>{file_path}</td>")
                 html_parts.append(f"<td colspan='5' class='error'>{item['error']}</td>")
-                html_parts.append(f"</tr>")
+                html_parts.append("</tr>")
         
         html_parts.append("</tbody>")
         html_parts.append("</table>")
@@ -390,7 +390,7 @@ def format_html(data: dict[str, Any] | list[dict[str, Any]], title: str = "Quali
         # Add detailed sections for each file
         for item in data:
             file_path = item.get('file', 'unknown')
-            html_parts.append(f"<div class='file-result'>")
+            html_parts.append("<div class='file-result'>")
             html_parts.append(f"<h2>{file_path}</h2>")
             
             if "scoring" in item:
@@ -438,7 +438,7 @@ def format_html(data: dict[str, Any] | list[dict[str, Any]], title: str = "Quali
     else:
         # Single result
         file_path = data.get('file', 'unknown')
-        html_parts.append(f"<div class='file-result'>")
+        html_parts.append("<div class='file-result'>")
         html_parts.append(f"<h2>{file_path}</h2>")
         
         if "scoring" in data:

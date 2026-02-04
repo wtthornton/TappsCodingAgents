@@ -8,12 +8,12 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-from ..core.outcome_tracker import CodeOutcome, OutcomeTracker
+from ..core.outcome_tracker import OutcomeTracker
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +199,7 @@ class ExpertPerformanceTracker:
         consultations = []
 
         try:
-            with open(self.performance_file, "r", encoding="utf-8") as f:
+            with open(self.performance_file, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue
@@ -223,7 +223,7 @@ class ExpertPerformanceTracker:
         expert_ids = set()
 
         try:
-            with open(self.performance_file, "r", encoding="utf-8") as f:
+            with open(self.performance_file, encoding="utf-8") as f:
                 for line in f:
                     if not line.strip():
                         continue

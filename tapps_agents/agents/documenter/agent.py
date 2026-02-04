@@ -383,9 +383,9 @@ class DocumenterAgent(BaseAgent):
                         )
                     
                     # Add agent to agent list if not present
-                    agent_title = agent_name.title()
+                    agent_name.title()
                     if f"- **Evaluation**: {agent_name}" not in readme_content and \
-                       f"- evaluator" not in readme_content.lower():
+                       "- evaluator" not in readme_content.lower():
                         # Find the last agent in the list and add after it
                         # Look for pattern like "- **Enhancement**: enhancer"
                         last_agent_pattern = r"(- \*\*[^\*]+\*\*: [^\n]+)"

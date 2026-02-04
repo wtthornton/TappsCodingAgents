@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .execution_plan import generate_execution_plan
-from .models import Artifact, StepExecution, Workflow, WorkflowState, WorkflowStep
+from .models import StepExecution, Workflow, WorkflowState, WorkflowStep
 
 
 class TaskManifestGenerator:
@@ -192,7 +192,7 @@ class TaskManifestGenerator:
             lines.append(f"  - **Consults**: {', '.join(step.consults)}")
 
         if step.gate:
-            lines.append(f"  - **Gate**: Quality gate configured")
+            lines.append("  - **Gate**: Quality gate configured")
 
         # Worktree info (if available in metadata)
         if step.metadata and step.metadata.get("worktree"):

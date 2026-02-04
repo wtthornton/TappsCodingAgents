@@ -6,7 +6,6 @@ Provides enhanced state persistence with validation, migration, versioning, and 
 
 from __future__ import annotations
 
-import gzip
 import hashlib
 import json
 import logging

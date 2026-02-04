@@ -10,7 +10,6 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -231,7 +230,7 @@ class NetworkRecorder:
             return None
 
         try:
-            with open(filename, "r", encoding="utf-8") as f:
+            with open(filename, encoding="utf-8") as f:
                 data = json.load(f)
             return NetworkRecording.from_dict(data)
         except Exception as e:
@@ -248,7 +247,7 @@ class NetworkRecorder:
         recordings = []
         for filename in self.recording_dir.glob("*.json"):
             try:
-                with open(filename, "r", encoding="utf-8") as f:
+                with open(filename, encoding="utf-8") as f:
                     data = json.load(f)
                 recordings.append(
                     {

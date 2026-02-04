@@ -4,11 +4,9 @@ Enhance Orchestrator - *enhance command. MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS
 Runs @enhancer *enhance (or *enhance-quick) with project context and Context7.
 """
 
-from pathlib import Path
 from typing import Any
 
 from tapps_agents.agents.enhancer.agent import EnhancerAgent
-from tapps_agents.core.config import ProjectConfig
 
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator

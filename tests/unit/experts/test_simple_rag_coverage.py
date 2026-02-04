@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from tapps_agents.experts.simple_rag import KnowledgeChunk, SimpleKnowledgeBase
+from tapps_agents.experts.simple_rag import SimpleKnowledgeBase
 
 pytestmark = pytest.mark.unit
 
@@ -405,7 +405,7 @@ Hi
         # Headers should get higher scores
         if results:
             # Check if any result contains headers
-            has_headers = any("#" in r.content for r in results)
+            any("#" in r.content for r in results)
             assert True  # Just verify it doesn't crash
 
     def test_context_lines_edge_cases(self, temp_knowledge_dir):

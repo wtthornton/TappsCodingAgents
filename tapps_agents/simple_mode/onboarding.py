@@ -10,11 +10,10 @@ Provides an interactive onboarding experience for new users, including:
 
 import sys
 from pathlib import Path
-from typing import Any
 
+from ..cli.feedback import get_feedback
 from ..core.config import ProjectConfig, load_config, save_config
 from ..core.project_type_detector import detect_project_type
-from ..cli.feedback import get_feedback
 
 
 class OnboardingWizard:

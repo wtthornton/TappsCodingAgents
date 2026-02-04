@@ -19,7 +19,7 @@ class KnowledgeNeedDetector:
         
         # Detect from current step
         agent = step_context.get("agent")
-        action = step_context.get("action")
+        step_context.get("action")
         
         if agent == "reviewer":
             needs.append(KnowledgeNeed(
@@ -62,7 +62,7 @@ class KnowledgeNeedDetector:
         needs = []
         
         # Detect from dependencies
-        dependencies = repo_signals.get("dependencies", [])
+        repo_signals.get("dependencies", [])
         frameworks = repo_signals.get("frameworks", [])
         
         for framework in frameworks:

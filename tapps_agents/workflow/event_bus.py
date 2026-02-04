@@ -68,7 +68,6 @@ class FileBasedEventBus:
             try:
                 if isinstance(handler, Callable):
                     # Check if handler is async
-                    import asyncio
                     import inspect
 
                     if inspect.iscoroutinefunction(handler):

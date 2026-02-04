@@ -9,7 +9,8 @@ from __future__ import annotations
 
 import logging
 import os
-from typing import Any, Callable, TypeVar
+from collections.abc import Callable
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -132,7 +133,7 @@ class OfflineMode:
             raise
 
 
-def skip_if_offline(func: Callable[..., T]) -> Callable[..., T | None]:
+def skip_if_offline[T](func: Callable[..., T]) -> Callable[..., T | None]:
     """
     Decorator that skips function execution if in offline mode.
     
@@ -147,7 +148,7 @@ def skip_if_offline(func: Callable[..., T]) -> Callable[..., T | None]:
     return wrapper
 
 
-def local_only(func: Callable[..., T]) -> Callable[..., T]:
+def local_only[T](func: Callable[..., T]) -> Callable[..., T]:
     """
     Decorator that marks a function as local-only (no network required).
     

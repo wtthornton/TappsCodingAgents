@@ -43,7 +43,7 @@ def validate_root_structure(project_root: Path) -> tuple[bool, list[str]]:
     warnings = []
     
     root_files = {f.name for f in project_root.iterdir() if f.is_file()}
-    root_dirs = {f.name for f in project_root.iterdir() if f.is_dir()}
+    {f.name for f in project_root.iterdir() if f.is_dir()}
     
     # Check for test files
     test_files = [f for f in root_files if f.startswith("test_") and f.endswith(".py")]

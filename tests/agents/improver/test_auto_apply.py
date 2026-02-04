@@ -14,14 +14,14 @@ Acceptance Criteria (from step2-user-stories.md):
 - TS-005: Handle no-change scenarios
 """
 
-import pytest
-from pathlib import Path
-from unittest.mock import patch, MagicMock, AsyncMock
-import tempfile
 import shutil
+import tempfile
+from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from tapps_agents.agents.improver.agent import ImproverAgent, DiffResult
+import pytest
 
+from tapps_agents.agents.improver.agent import DiffResult, ImproverAgent
 
 # =============================================================================
 # ACCEPTANCE CRITERIA TESTS - Mapped from Gherkin in step2-user-stories.md

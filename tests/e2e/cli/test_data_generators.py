@@ -162,7 +162,7 @@ def generate_parameter_combinations(
     combinations.append(base_params.copy())
     
     # Generate combinations with optional parameters
-    optional_keys = list(optional_params.keys())
+    list(optional_params.keys())
     
     # Single optional parameter combinations
     for key, values in optional_params.items():

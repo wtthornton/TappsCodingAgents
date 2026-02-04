@@ -13,11 +13,11 @@ from pathlib import Path
 from typing import Any
 
 from ...agents.reviewer.agent import ReviewerAgent
-from ...agents.reviewer.cache import get_reviewer_cache, ReviewerResultCache
+from ...agents.reviewer.cache import ReviewerResultCache, get_reviewer_cache
 from ..base import normalize_command, run_async_command
-from ..feedback import get_feedback, ProgressTracker
-from .common import check_result_error, format_json_output
-from ..formatters import format_json, format_markdown, format_html
+from ..feedback import get_feedback
+from ..formatters import format_html, format_json, format_markdown
+from .common import check_result_error
 
 # Use cache version from the cache module for consistency
 REVIEWER_CACHE_VERSION = ReviewerResultCache.CACHE_VERSION
@@ -227,10 +227,10 @@ async def review_command(
     
     Supports single file (backward compatible) or batch processing.
     """
+    from ...core.network_errors import NetworkRequiredError
+    from ..base import handle_network_error
     from ..command_classifier import CommandClassifier, CommandNetworkRequirement
     from ..network_detection import NetworkDetector
-    from ...core.network_errors import NetworkRequiredError, NetworkOptionalError
-    from ..base import handle_network_error
     
     feedback = get_feedback()
     output_format = _infer_output_format(output_format, output_file)
@@ -746,7 +746,6 @@ async def _process_file_batch(
     MAX_RETRIES = 3  # Maximum retry attempts for connection errors
     RETRY_BACKOFF_BASE = 2.0  # Exponential backoff base
     MAX_RETRY_BACKOFF = 10.0  # Maximum backoff time in seconds
-    RETRY_TIMEOUT = 120.0  # Timeout per retry attempt (2 minutes)
     
     # Track cache statistics for this batch
     cache_hits = 0
@@ -818,7 +817,7 @@ async def _process_file_batch(
                     
                     return (file_path, result)
                     
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     # Per-attempt timeout - treat as retryable connection issue
                     last_error = TimeoutError(f"Operation timed out after {RETRY_TIMEOUT}s")
                     if attempt < MAX_RETRIES:
@@ -1644,10 +1643,13 @@ def handle_reviewer_command(args: object) -> None:
                 )
             )
         elif command == "report":
-            from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-            from ..network_detection import NetworkDetector
             from ...core.network_errors import NetworkRequiredError
             from ..base import handle_network_error
+            from ..command_classifier import (
+                CommandClassifier,
+                CommandNetworkRequirement,
+            )
+            from ..network_detection import NetworkDetector
             
             requirement = CommandClassifier.get_network_requirement("reviewer", "report")
             if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
@@ -1717,10 +1719,13 @@ def handle_reviewer_command(args: object) -> None:
                     print(f"  Total duplicates: {len(result.get('duplicates', []))}")
         elif command == "analyze-project":
             # Project analysis may need network - check if required
-            from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-            from ..network_detection import NetworkDetector
             from ...core.network_errors import NetworkRequiredError
             from ..base import handle_network_error
+            from ..command_classifier import (
+                CommandClassifier,
+                CommandNetworkRequirement,
+            )
+            from ..network_detection import NetworkDetector
             
             requirement = CommandClassifier.get_network_requirement("reviewer", "analyze-project")
             if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
@@ -1749,10 +1754,13 @@ def handle_reviewer_command(args: object) -> None:
             feedback.output_result(result, message="Project analysis completed", compact=not verbose_output)
         elif command == "analyze-services":
             # Service analysis may need network - check if required
-            from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-            from ..network_detection import NetworkDetector
             from ...core.network_errors import NetworkRequiredError
             from ..base import handle_network_error
+            from ..command_classifier import (
+                CommandClassifier,
+                CommandNetworkRequirement,
+            )
+            from ..network_detection import NetworkDetector
             
             requirement = CommandClassifier.get_network_requirement("reviewer", "analyze-services")
             if requirement == CommandNetworkRequirement.REQUIRED and not NetworkDetector.is_network_available():
@@ -1784,7 +1792,7 @@ def handle_reviewer_command(args: object) -> None:
         elif command == "docs":
             run_async_command(
                 docs_command(
-                    library=getattr(args, "library"),
+                    library=args.library,
                     topic=getattr(args, "topic", None),
                     mode=getattr(args, "mode", "code"),
                     page=getattr(args, "page", 1),

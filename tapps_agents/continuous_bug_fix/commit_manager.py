@@ -6,9 +6,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..core.config import ProjectConfig, load_config
 from ..core.git_operations import commit_changes, get_current_branch, is_git_repository
-
 from .bug_finder import BugInfo
 
 logger = logging.getLogger(__name__)

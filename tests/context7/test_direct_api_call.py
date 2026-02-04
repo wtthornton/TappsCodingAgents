@@ -2,9 +2,9 @@
 Direct API call test - bypasses all quota checks to make actual API calls.
 """
 
-import sys
-import os
 import asyncio
+import os
+import sys
 from pathlib import Path
 
 # Fix Windows console encoding
@@ -64,12 +64,12 @@ async def make_direct_api_calls():
                 results = data if isinstance(data, list) else data.get("results", [])
                 if results:
                     match = results[0]
-                    print(f"✅ Call 1 SUCCESS")
-                    print(f"   Library: fastapi")
+                    print("✅ Call 1 SUCCESS")
+                    print("   Library: fastapi")
                     print(f"   Context7 ID: {match.get('id', 'N/A')}")
                     print(f"   Title: {match.get('title', 'N/A')}")
                 else:
-                    print(f"✅ Call 1 SUCCESS (no matches found)")
+                    print("✅ Call 1 SUCCESS (no matches found)")
                     print(f"   Response: {data}")
             elif response.status_code == 429:
                 error_data = response.json() if response.text else {}
@@ -105,12 +105,12 @@ async def make_direct_api_calls():
                 results = data if isinstance(data, list) else data.get("results", [])
                 if results:
                     match = results[0]
-                    print(f"✅ Call 2 SUCCESS")
-                    print(f"   Library: react")
+                    print("✅ Call 2 SUCCESS")
+                    print("   Library: react")
                     print(f"   Context7 ID: {match.get('id', 'N/A')}")
                     print(f"   Title: {match.get('title', 'N/A')}")
                 else:
-                    print(f"✅ Call 2 SUCCESS (no matches found)")
+                    print("✅ Call 2 SUCCESS (no matches found)")
             elif response.status_code == 429:
                 error_data = response.json() if response.text else {}
                 error_msg = error_data.get("message", "Quota exceeded")

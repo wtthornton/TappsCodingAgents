@@ -5,8 +5,8 @@ Test correct Context7 API endpoints:
 """
 
 import asyncio
-import sys
 import os
+import sys
 
 if sys.platform == "win32":
     os.environ["PYTHONIOENCODING"] = "utf-8"
@@ -48,7 +48,7 @@ async def test():
             print(f"SUCCESS! Found {len(results)} results")
             if results:
                 first = results[0]
-                print(f"  First match:")
+                print("  First match:")
                 print(f"    ID: {first.get('id', 'N/A')}")
                 print(f"    Title: {first.get('title', 'N/A')}")
         elif resp.status_code == 429:
@@ -70,7 +70,7 @@ async def test():
         print(f"Headers: ratelimit-remaining={resp2.headers.get('ratelimit-remaining', 'N/A')}")
         
         if resp2.status_code == 200:
-            print(f"SUCCESS! Got documentation")
+            print("SUCCESS! Got documentation")
             print(f"Response preview: {resp2.text[:300]}...")
         elif resp2.status_code == 429:
             print(f"QUOTA EXCEEDED: {resp2.text[:200]}")

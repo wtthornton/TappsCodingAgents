@@ -312,14 +312,14 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 code_analysis = self.test_generator._analyze_code(source_code, file_path)
                 
                 if integration:
-                    prompt = self.test_generator._build_integration_test_prompt(
+                    self.test_generator._build_integration_test_prompt(
                         code=source_code,
                         test_path=target_test_path,
                         context=None,
                         expert_guidance=expert_guidance,
                     )
                 else:
-                    prompt = self.test_generator._build_unit_test_prompt(
+                    self.test_generator._build_unit_test_prompt(
                         code=source_code,
                         analysis=code_analysis,
                         test_path=target_test_path,
@@ -560,7 +560,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 await implementer.activate(offline_mode=False)
                 
                 # Generate test code using implementer's generate_code
-                generate_result = await implementer.generate_code(
+                await implementer.generate_code(
                     specification=prompt,
                     file_path=str(test_path),
                     context=source_code,
@@ -796,9 +796,9 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             ]
             
             # Add import for the module being tested
-            lines.append(f"# Import module under test")
-            lines.append(f"# NOTE: If this import fails, adjust the path based on your project structure")
-            lines.append(f"# Common fixes:")
+            lines.append("# Import module under test")
+            lines.append("# NOTE: If this import fails, adjust the path based on your project structure")
+            lines.append("# Common fixes:")
             lines.append(f"#   - If src/ is not a package, remove 'src.' prefix: from {module_path.replace('src.', '', 1) if module_path.startswith('src.') else module_path} import *")
             lines.append(f"#   - Use explicit imports: from {module_path} import ClassName, function_name")
             lines.append(f"from {module_path} import *")
@@ -863,9 +863,9 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
                 "",
                 "import unittest",
                 "",
-                f"# Import module under test",
-                f"# NOTE: If this import fails, adjust the path based on your project structure",
-                f"# Common fixes:",
+                "# Import module under test",
+                "# NOTE: If this import fails, adjust the path based on your project structure",
+                "# Common fixes:",
                 f"#   - If src/ is not a package, remove 'src.' prefix: from {module_path.replace('src.', '', 1) if module_path.startswith('src.') else module_path} import *",
                 f"#   - Use explicit imports: from {module_path} import ClassName, function_name",
                 f"from {module_path} import *",

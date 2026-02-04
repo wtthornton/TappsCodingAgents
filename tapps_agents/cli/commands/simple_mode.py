@@ -3,7 +3,6 @@ Simple Mode command handlers.
 """
 
 import sys
-import yaml
 from pathlib import Path
 
 from ...core.config import ProjectConfig, load_config, save_config
@@ -235,10 +234,11 @@ def handle_simple_mode_enhance(args: object) -> None:
         feedback.error("Prompt required", error_code="prompt_required", remediation='Use: tapps-agents simple-mode enhance --prompt "your prompt"', exit_code=2)
         return
     feedback.start_operation("Enhance prompt")
+    import asyncio
+
+    from ...core.config import load_config
     from ...simple_mode.intent_parser import Intent, IntentType
     from ...simple_mode.orchestrators.enhance_orchestrator import EnhanceOrchestrator
-    from ...core.config import load_config
-    import asyncio
 
     config = load_config()
     intent = Intent(type=IntentType.ENHANCE, confidence=1.0, parameters={"prompt": str(prompt).strip(), "quick": getattr(args, "quick", False)}, original_input=prompt)
@@ -263,10 +263,13 @@ def handle_simple_mode_breakdown(args: object) -> None:
         feedback.error("Prompt required", error_code="prompt_required", remediation='Use: tapps-agents simple-mode breakdown --prompt "your goal"', exit_code=2)
         return
     feedback.start_operation("Breakdown tasks")
-    from ...simple_mode.intent_parser import Intent, IntentType
-    from ...simple_mode.orchestrators.breakdown_orchestrator import BreakdownOrchestrator
-    from ...core.config import load_config
     import asyncio
+
+    from ...core.config import load_config
+    from ...simple_mode.intent_parser import Intent, IntentType
+    from ...simple_mode.orchestrators.breakdown_orchestrator import (
+        BreakdownOrchestrator,
+    )
 
     config = load_config()
     intent = Intent(type=IntentType.BREAKDOWN, confidence=1.0, parameters={"prompt": str(prompt).strip()}, original_input=prompt)
@@ -288,8 +291,8 @@ def handle_simple_mode_resume(args: object) -> None:
     feedback = get_feedback()
     feedback.start_operation("Resuming Workflow")
 
-    from ...simple_mode.orchestrators.resume_orchestrator import ResumeOrchestrator
     from ...simple_mode.intent_parser import IntentParser
+    from ...simple_mode.orchestrators.resume_orchestrator import ResumeOrchestrator
 
     # Check for --list flag
     list_workflows = getattr(args, "list", False)
@@ -372,8 +375,8 @@ def handle_simple_mode_build(args: object) -> None:
     feedback.start_operation("Starting Simple Mode Build Workflow")
     
     # Validate arguments before execution
-    from ..validators.command_validator import CommandValidator
     from ..utils.error_formatter import ErrorFormatter
+    from ..validators.command_validator import CommandValidator
     
     validator = CommandValidator()
     validation_result = validator.validate_build_command(args)
@@ -448,7 +451,7 @@ def handle_simple_mode_build(args: object) -> None:
             # Continue with original path - let workflow executor handle it
     
     # Create intent
-    parser = IntentParser()
+    IntentParser()
     intent = Intent(
         type=IntentType.BUILD,
         confidence=1.0,
@@ -628,7 +631,7 @@ def handle_simple_mode_full(args: object) -> None:
         executor.user_prompt = user_prompt
     
     # Check runtime mode
-    from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
+    from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
     runtime_mode = detect_runtime_mode()
     
     # Stop spinner before async execution (spinner may interfere with async)

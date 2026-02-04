@@ -27,7 +27,7 @@ def main():
         print("Set it with: $env:CONTEXT7_API_KEY='your-key'")
         return 1
     
-    print(f"[OK] API Key Found")
+    print("[OK] API Key Found")
     print(f"     Prefix: {api_key[:20]}...")
     print()
     
@@ -37,10 +37,10 @@ def main():
     # - Auth: Authorization: Bearer CONTEXT7_API_KEY
     
     API_URL = "https://context7.com/api/v2"
-    print(f"Testing Context7 API:")
+    print("Testing Context7 API:")
     print(f"  URL: {API_URL}/search")
-    print(f"  Query: react")
-    print(f"  Auth: Authorization: Bearer CONTEXT7_API_KEY")
+    print("  Query: react")
+    print("  Auth: Authorization: Bearer CONTEXT7_API_KEY")
     print()
     
     try:
@@ -87,7 +87,7 @@ def main():
                 print(f"Response: {response.text[:200]}")
                 return 1
             elif response.status_code == 404:
-                print(f"[RESULT] Endpoint returned 404")
+                print("[RESULT] Endpoint returned 404")
                 print(f"Response: {response.text[:200]}")
                 print()
                 print("VERIFICATION RESULT:")
@@ -123,7 +123,7 @@ def main():
                 return 1
                 
     except httpx.ConnectError as e:
-        print(f"[FAILED] Cannot connect to Context7 API")
+        print("[FAILED] Cannot connect to Context7 API")
         print(f"Error: {e}")
         print()
         print("This could mean:")

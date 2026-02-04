@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -104,9 +103,9 @@ def load_policies(project_root: Path | None = None) -> Policies:
 
 
 def apply_quality_policy(
-    thresholds: "QualityThresholds",
+    thresholds: QualityThresholds,
     project_root: Path | None = None,
-) -> "QualityThresholds":
+) -> QualityThresholds:
     """
     Apply policies.quality as lower bounds: thresholds never go below policy minimums.
 

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Any
 
 from .outcome_tracker import CodeOutcome, OutcomeTracker
 
@@ -165,7 +164,7 @@ class IterationReducer:
                 "missing docstrings",
             ]
 
-        code_lower = code.lower()
+        code.lower()
 
         if "missing type hints" in patterns:
             if "def " in code and ":" in code:

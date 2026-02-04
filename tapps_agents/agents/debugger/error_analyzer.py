@@ -77,7 +77,7 @@ class ErrorAnalyzer:
             ErrorAnalysisInstruction object for Cursor Skills execution
         """
         # Extract error info for context lines
-        error_info = self._parse_error(error_message, stack_trace)
+        self._parse_error(error_message, stack_trace)
         context_lines = 50  # Default context lines
 
         return ErrorAnalysisInstruction(
@@ -420,18 +420,18 @@ class ErrorAnalyzer:
         message_lower = error_message.lower()
 
         if "attributeerror" in error_type.lower():
-            return f"The object does not have the attribute being accessed. This often happens when the object type is different than expected or the attribute name is misspelled."
+            return "The object does not have the attribute being accessed. This often happens when the object type is different than expected or the attribute name is misspelled."
         elif "nameerror" in error_type.lower():
-            return f"A variable or function name is being used before it's defined or imported."
+            return "A variable or function name is being used before it's defined or imported."
         elif "typeerror" in error_type.lower():
-            return f"An operation or function is being applied to an object of an inappropriate type."
+            return "An operation or function is being applied to an object of an inappropriate type."
         elif "keyerror" in error_type.lower():
-            return f"A dictionary key is being accessed that doesn't exist in the dictionary."
+            return "A dictionary key is being accessed that doesn't exist in the dictionary."
         elif "indexerror" in error_type.lower():
-            return f"A list/array index is out of range, either negative or beyond the length of the sequence."
+            return "A list/array index is out of range, either negative or beyond the length of the sequence."
         elif "file not found" in message_lower:
-            return f"The specified file or directory path does not exist or is incorrect."
+            return "The specified file or directory path does not exist or is incorrect."
         elif "connection" in message_lower:
-            return f"A network connection cannot be established or has been lost."
+            return "A network connection cannot be established or has been lost."
         else:
             return f"An error of type {error_type} occurred. Review the error message and stack trace for details."

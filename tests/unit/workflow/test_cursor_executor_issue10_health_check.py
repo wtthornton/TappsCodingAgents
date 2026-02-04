@@ -13,7 +13,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
-from tapps_agents.workflow.models import StepExecution, Workflow, WorkflowStep, WorkflowType
+from tapps_agents.workflow.models import (
+    StepExecution,
+    Workflow,
+    WorkflowStep,
+    WorkflowType,
+)
 
 
 @pytest.fixture

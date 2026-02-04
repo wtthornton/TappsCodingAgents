@@ -13,10 +13,9 @@ from .client import (
     resolve_bd_path,
     run_bd,
 )
+from .hydration import HydrationReport, dehydrate_from_beads, hydrate_to_beads
 from .parse import parse_bd_id_from_stdout
 from .specs import TaskSpec, load_task_spec, load_task_specs, save_task_spec
-
-from .hydration import HydrationReport, dehydrate_from_beads, hydrate_to_beads
 
 __all__ = [
     "BeadsRequiredError",

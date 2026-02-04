@@ -7,10 +7,8 @@ from tapps_agents.simple_mode.agent_contracts import (
     ARCHITECT_CONTRACT,
     DESIGNER_CONTRACT,
     IMPLEMENTER_CONTRACT,
-    AgentContract,
     AgentContractValidator,
     CommandContract,
-    ValidationResult,
 )
 
 

@@ -11,8 +11,8 @@ from pathlib import Path
 import pytest
 
 from tapps_agents.cli.streaming_progress import (
-    ProgressUpdate,
     FileResult,
+    ProgressUpdate,
     StreamingBatchProcessor,
     process_files_with_streaming,
 )

@@ -10,10 +10,10 @@ import pytest
 
 from tapps_agents.experts.rag_metrics import (
     RAGMetricsTracker,
-    RAGQueryMetrics,
     RAGPerformanceMetrics,
-    get_rag_metrics_tracker,
+    RAGQueryMetrics,
     RAGQueryTimer,
+    get_rag_metrics_tracker,
 )
 
 pytestmark = pytest.mark.unit

@@ -54,7 +54,6 @@ class TestNormalizePath:
         file_path.touch()
         
         # Windows absolute path format
-        windows_path = f"C:\\{file_path}"
         # Simulate Windows path by using actual resolved path
         absolute_path = str(file_path.resolve())
         

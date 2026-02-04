@@ -60,7 +60,7 @@ class HooksConfig(BaseModel):
     model_config = {"extra": "forbid"}
 
     @model_validator(mode="after")
-    def validate_event_names(self) -> "HooksConfig":
+    def validate_event_names(self) -> HooksConfig:
         """Ensure only supported event names are used."""
         for event_name in self.hooks:
             if event_name not in HOOK_EVENT_TYPES:

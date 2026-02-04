@@ -21,10 +21,10 @@ Usage:
         print(result["message"])
 """
 
-from dataclasses import dataclass, field
-from typing import Literal, Optional
-from datetime import datetime
 import logging
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Literal
 
 logger = logging.getLogger(__name__)
 
@@ -105,7 +105,7 @@ class TokenMonitorResult:
     percentage: float
     threshold: ThresholdLevel
     threshold_changed: bool
-    message: Optional[str]
+    message: str | None
     should_checkpoint: bool
     timestamp: datetime = field(default_factory=datetime.now)
 
@@ -302,7 +302,7 @@ class TokenMonitor:
 
         return status
 
-    def reset(self, new_total: Optional[int] = None) -> None:
+    def reset(self, new_total: int | None = None) -> None:
         """Reset token monitor.
 
         Args:

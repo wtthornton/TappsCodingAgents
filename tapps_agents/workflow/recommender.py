@@ -7,7 +7,6 @@ Phase 5.2: Enhanced with preset alias support, YAML validation, and caching
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 import yaml
 
@@ -353,7 +352,7 @@ class WorkflowRecommender:
             return False, "File does not exist"
         
         try:
-            workflow = WorkflowParser.parse_file(workflow_path)
+            WorkflowParser.parse_file(workflow_path)
             return True, None
         except Exception as e:
             return False, f"Invalid workflow file: {str(e)}"

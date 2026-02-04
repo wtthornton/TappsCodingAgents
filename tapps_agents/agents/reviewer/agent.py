@@ -10,10 +10,15 @@ from typing import Any
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...core.instructions import GenericInstruction
+from ...core.language_detector import Language
 from ...experts.agent_integration import ExpertSupportMixin
 from ..ops.dependency_analyzer import DependencyAnalyzer
-from ...core.language_detector import Language
 from .aggregator import QualityAggregator
+from .docker_compose_validator import DockerComposeValidator
+from .dockerfile_validator import DockerfileValidator
+from .influxdb_validator import InfluxDBValidator
+from .library_patterns import LibraryPatternRegistry
+from .mqtt_validator import MQTTValidator
 from .progressive_review import (
     ProgressiveReview,
     ProgressiveReviewPolicy,
@@ -27,13 +32,8 @@ from .report_generator import ReportGenerator
 from .scoring import CodeScorer
 from .service_discovery import ServiceDiscovery
 from .typescript_scorer import TypeScriptScorer
-from .influxdb_validator import InfluxDBValidator
+from .validation import validate_boolean, validate_file_path_input, validate_inputs
 from .websocket_validator import WebSocketValidator
-from .mqtt_validator import MQTTValidator
-from .docker_compose_validator import DockerComposeValidator
-from .dockerfile_validator import DockerfileValidator
-from .library_patterns import LibraryPatternRegistry
-from .validation import validate_file_path_input, validate_inputs, validate_boolean
 
 logger = logging.getLogger(__name__)
 
@@ -532,7 +532,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             else:
                 results["type_checking"] = type_check_result
                 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Parallel quality tools timed out for {file_path}")
             results["timeout"] = True
             results["error"] = f"Quality tools exceeded timeout of {tool_timeout * 2}s"
@@ -714,7 +714,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 ),
                 timeout=operation_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.error(
                 f"Review operation timed out after {operation_timeout}s for {file_path}"
             )
@@ -1127,7 +1127,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                             asyncio.gather(*coroutines, return_exceptions=True),
                             timeout=30.0  # 30s total timeout for all libraries
                         )
-                    except asyncio.TimeoutError:
+                    except TimeoutError:
                         # If Context7 hangs, log and continue without it
                         logger.warning(
                             f"Context7 library verification timed out after 30s for {len(libraries_used)} libraries. "
@@ -1170,7 +1170,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     # #endregion
                     context7_verification.update(dict(results))
                     logger.debug(f"E2: Verified {len(libraries_used)} libraries with Context7")
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.warning(f"Library verification timed out for {len(libraries_used)} libraries")
                     # Mark all as failed
                     for lib in libraries_used:
@@ -1259,7 +1259,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     adaptive_weights = await self.adaptive_scorer.get_adaptive_weights()
                     if adaptive_weights:
                         # Update scorer with adaptive weights
-                        from ...core.config import ScoringWeightsConfig
                         adaptive_weights_config = self.adaptive_scorer.get_weights_config()
                         # Update scorer weights (if scorer supports it)
                         if hasattr(self.scorer, 'weights'):
@@ -1288,7 +1287,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                         asyncio.to_thread(scorer.score_file, file_path, code),
                         timeout=tool_timeout,
                     )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(
                     f"Scoring timed out after {tool_timeout}s for {file_path}. "
                     f"Using fallback scores."
@@ -1333,7 +1332,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                         dependency_security * 0.3
                     )
                     scores["dependency_security_score"] = dependency_security
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.debug(f"Dependency security check timed out for {file_path}")
                     # Continue without dependency security penalty
                 except Exception as e:
@@ -1781,8 +1780,8 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         not here (this just prepares the instruction). See retry_handler.py for
         retry decorator usage.
         """
+        from ...core.runtime_mode import RuntimeMode, detect_runtime_mode
         from .feedback_generator import FeedbackGenerator
-        from ...core.runtime_mode import detect_runtime_mode, RuntimeMode
 
         # Generate language-aware prompt using FeedbackGenerator
         prompt = FeedbackGenerator.generate_prompt(
@@ -1990,7 +1989,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 self._lint_file_internal(file_path, isolated=isolated),
                 timeout=tool_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Linting timed out after {tool_timeout}s for {file_path}")
             return {
                 "file": str(file_path),
@@ -2128,9 +2127,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         Returns:
             List of diagnostic dictionaries from ruff
         """
+        import json
         import subprocess
         import sys
-        import json
         
         try:
             result = subprocess.run(  # nosec B603
@@ -2243,7 +2242,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 self._type_check_file_internal(file_path),
                 timeout=tool_timeout,
             )
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Type checking timed out after {tool_timeout}s for {file_path}")
             return {
                 "file": str(file_path),

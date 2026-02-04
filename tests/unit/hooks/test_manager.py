@@ -3,7 +3,6 @@ Unit tests for tapps_agents.hooks.manager: registration, triggering, matcher log
 """
 
 import sys
-from pathlib import Path
 
 import pytest
 

@@ -11,11 +11,11 @@ Usage:
 """
 
 import ast
+import json
 import re
 import sys
 from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional
-import json
+from typing import Any
 
 # Try to import yaml for frontmatter extraction
 try:
@@ -25,7 +25,7 @@ except ImportError:
     YAML_AVAILABLE = False
 
 
-def find_markdown_files(root: Path, exclude_patterns: List[str] = None) -> List[Path]:
+def find_markdown_files(root: Path, exclude_patterns: list[str] = None) -> list[Path]:
     """Find all Markdown files in the repository."""
     if exclude_patterns is None:
         exclude_patterns = [
@@ -49,7 +49,7 @@ def find_markdown_files(root: Path, exclude_patterns: List[str] = None) -> List[
     return sorted(markdown_files)
 
 
-def extract_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
+def extract_frontmatter(content: str) -> tuple[dict[str, Any], str]:
     """
     Extract YAML frontmatter from markdown content.
     
@@ -76,7 +76,7 @@ def extract_frontmatter(content: str) -> Tuple[Dict[str, Any], str]:
         return {}, content
 
 
-def extract_python_code_blocks(content: str, file_path: Path) -> List[Tuple[str, int, str]]:
+def extract_python_code_blocks(content: str, file_path: Path) -> list[tuple[str, int, str]]:
     """
     Extract Python code blocks from Markdown content.
     
@@ -114,7 +114,7 @@ def extract_python_code_blocks(content: str, file_path: Path) -> List[Tuple[str,
     return code_blocks
 
 
-def validate_syntax(code: str, file_path: Path, line_num: int) -> Tuple[bool, Optional[str]]:
+def validate_syntax(code: str, file_path: Path, line_num: int) -> tuple[bool, str | None]:
     """
     Validate Python code syntax.
     
@@ -135,8 +135,8 @@ def execute_code_block(
     code: str, 
     file_path: Path, 
     line_num: int,
-    allowed_imports: List[str] = None
-) -> Tuple[bool, Optional[str], Optional[Any]]:
+    allowed_imports: list[str] = None
+) -> tuple[bool, str | None, Any | None]:
     """
     Execute a Python code block in a controlled environment.
     
@@ -198,7 +198,7 @@ def test_documentation_file(
     file_path: Path,
     repo_root: Path,
     execute: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Test code examples in a single documentation file.
     
@@ -253,7 +253,7 @@ def test_documentation_file(
         "errors": []
     }
     
-    for code, line_num, context in code_blocks:
+    for code, line_num, _context in code_blocks:
         # Validate syntax
         is_valid, error_msg = validate_syntax(code, file_path, line_num)
         
@@ -288,8 +288,8 @@ def test_documentation_file(
 def run_doc_tests(
     repo_root: Path = None,
     execute: bool = False,
-    target_file: Optional[Path] = None
-) -> Dict[str, Any]:
+    target_file: Path | None = None
+) -> dict[str, Any]:
     """
     Run doc-tests on all or a specific documentation file.
     

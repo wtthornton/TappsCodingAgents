@@ -8,18 +8,16 @@ Tests for improved content extraction methods including:
 - Enhanced best practices, mistakes, and examples extraction
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, MagicMock
 
 pytestmark = pytest.mark.unit
 
 from tapps_agents.agents.reviewer.context7_enhancer import (
     Context7ReviewEnhancer,
-    LibraryRecommendation,
-    PatternGuidance,
 )
 from tapps_agents.context7.agent_integration import Context7AgentHelper
-
 
 # Sample test data
 SAMPLE_MARKDOWN_WITH_SECTIONS = """# Library Documentation
@@ -467,7 +465,7 @@ class TestErrorHandling:
         """Test extraction handles None gracefully."""
         # Should not crash
         try:
-            practices = enhancer._extract_best_practices(None)  # type: ignore
+            enhancer._extract_best_practices(None)  # type: ignore
         except (AttributeError, TypeError):
             pass  # Expected to fail gracefully or raise appropriate error
 

@@ -11,7 +11,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from tapps_agents.cli.commands.planner import list_stories_command
-from tapps_agents.cli.commands.reviewer import help_command, review_command, score_command
+from tapps_agents.cli.commands.reviewer import (
+    help_command,
+    review_command,
+    score_command,
+)
 
 pytestmark = pytest.mark.unit
 

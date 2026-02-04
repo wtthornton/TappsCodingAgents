@@ -76,7 +76,7 @@ def test_identify_weak_areas(temp_project):
     system = ObservabilitySystem(project_root=temp_project)
 
     # Add low-quality metrics
-    for i in range(5):
+    for _i in range(5):
         system.record_consultation(
             expert_id="expert-python",
             domain="python",

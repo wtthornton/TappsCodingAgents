@@ -6,8 +6,6 @@ This test verifies that:
 2. Validation correctly reports installed files
 3. CLI output distinguishes Rules from Skills
 """
-import tempfile
-from pathlib import Path
 
 import pytest
 

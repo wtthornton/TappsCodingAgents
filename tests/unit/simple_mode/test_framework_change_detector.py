@@ -4,7 +4,6 @@ Unit tests for Framework Change Detector.
 Tests agent directory scanning, CLI registration detection, and change detection.
 """
 
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -12,7 +11,6 @@ import pytest
 from tapps_agents.simple_mode.framework_change_detector import (
     AgentInfo,
     FrameworkChangeDetector,
-    FrameworkChanges,
 )
 
 pytestmark = pytest.mark.unit

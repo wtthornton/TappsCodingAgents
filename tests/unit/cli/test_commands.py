@@ -5,8 +5,6 @@ Tests command execution, error handling, output formatting, and agent integratio
 Extends existing tests with additional coverage.
 """
 
-import json
-from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -1099,7 +1097,11 @@ class TestMainCLI:
 
     def test_route_command_reviewer(self):
         """Test route_command with reviewer."""
-        from tapps_agents.cli.main import create_root_parser, register_all_parsers, route_command
+        from tapps_agents.cli.main import (
+            create_root_parser,
+            register_all_parsers,
+            route_command,
+        )
         
         parser = create_root_parser()
         register_all_parsers(parser)
@@ -1111,7 +1113,11 @@ class TestMainCLI:
 
     def test_route_command_workflow(self):
         """Test route_command with workflow."""
-        from tapps_agents.cli.main import create_root_parser, register_all_parsers, route_command
+        from tapps_agents.cli.main import (
+            create_root_parser,
+            register_all_parsers,
+            route_command,
+        )
         
         parser = create_root_parser()
         register_all_parsers(parser)

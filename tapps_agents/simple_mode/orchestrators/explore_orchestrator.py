@@ -10,8 +10,8 @@ find relevant code, and trace execution flows without making modifications.
 from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -71,7 +71,6 @@ class ExploreOrchestrator(SimpleModeOrchestrator):
         # If specific find pattern is provided, search for it
         if find_pattern:
             # Use glob to find relevant files
-            import glob
             
             pattern_files = list(Path(self.project_root).glob(f"**/*{find_pattern}*"))
             discovery_result = {
@@ -86,7 +85,6 @@ class ExploreOrchestrator(SimpleModeOrchestrator):
             }
         else:
             # General exploration - find files matching query keywords
-            import glob
             
             # Search for common patterns in query
             keywords = query.lower().split()
@@ -126,7 +124,6 @@ class ExploreOrchestrator(SimpleModeOrchestrator):
         trace_result = None
         if trace_pattern:
             # Find files related to trace pattern
-            import glob
             
             trace_keywords = trace_pattern.lower().split()
             trace_files = set()

@@ -9,12 +9,11 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from .base import BaseGate, GateResult, GateSeverity
-from .exceptions import MissingContextError
 
 logger = logging.getLogger(__name__)
 

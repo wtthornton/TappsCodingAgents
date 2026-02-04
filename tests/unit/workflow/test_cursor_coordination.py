@@ -8,14 +8,13 @@ and properly redact secrets.
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
 from tapps_agents.workflow.cursor_skill_helper import (
+    check_skill_completion,
     create_skill_command_file,
     create_skill_execution_instructions,
-    check_skill_completion,
 )
 
 pytestmark = pytest.mark.unit

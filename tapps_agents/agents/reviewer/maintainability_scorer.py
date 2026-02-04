@@ -173,7 +173,7 @@ class PythonMaintainabilityStrategy(MaintainabilityStrategy):
                     metric_value=float(len(line)),
                     threshold=float(MAX_LINE_LENGTH),
                     severity="low",
-                    suggestion=f"Break long line into multiple lines or extract to variable"
+                    suggestion="Break long line into multiple lines or extract to variable"
                 ))
 
         # Check for missing type hints in function signatures

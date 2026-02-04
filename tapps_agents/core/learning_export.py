@@ -16,8 +16,8 @@ from typing import Any
 
 from .analytics_dashboard import AnalyticsDashboard
 from .capability_registry import CapabilityRegistry
-from .learning_dashboard import LearningDashboard
 from .export_schema import ExportSchema
+from .learning_dashboard import LearningDashboard
 
 logger = logging.getLogger(__name__)
 

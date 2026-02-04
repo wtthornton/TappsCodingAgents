@@ -164,10 +164,10 @@ class AgentResultCache:
         """
         if isinstance(file_path, list):
             file_hash = self._multi_file_hash(file_path)
-            normalized_path = ",".join(sorted(str(p.resolve()) for p in file_path))
+            ",".join(sorted(str(p.resolve()) for p in file_path))
         else:
             file_hash = self._file_hash(file_path)
-            normalized_path = str(file_path.resolve()).replace("\\", "/")
+            str(file_path.resolve()).replace("\\", "/")
         
         return f"{self.agent_name}:{command}:{file_hash}:{version}"
     

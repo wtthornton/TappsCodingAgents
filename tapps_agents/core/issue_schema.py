@@ -10,7 +10,6 @@ from typing import Any
 
 from .evaluation_models import Issue, IssueManifest
 
-
 # JSON Schema for Issue
 ISSUE_SCHEMA = {
     "type": "object",
@@ -133,7 +132,7 @@ def export_issues_json(manifest: IssueManifest, file_path: Path) -> None:
 
 def import_issues_json(file_path: Path) -> IssueManifest:
     """Import issues from JSON file."""
-    with open(file_path, "r", encoding="utf-8") as f:
+    with open(file_path, encoding="utf-8") as f:
         data = json.load(f)
     return IssueManifest.from_dict(data)
 

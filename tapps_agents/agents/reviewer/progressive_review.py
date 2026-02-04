@@ -11,7 +11,7 @@ Based on: .bmad-core/tasks/progressive-code-review.md
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +20,7 @@ import yaml
 logger = logging.getLogger(__name__)
 
 
-class ReviewDecision(str, Enum):
+class ReviewDecision(StrEnum):
     """Progressive review decision types."""
 
     PASS = "PASS"
@@ -28,7 +28,7 @@ class ReviewDecision(str, Enum):
     BLOCK = "BLOCK"
 
 
-class Severity(str, Enum):
+class Severity(StrEnum):
     """Issue severity levels."""
 
     HIGH = "high"

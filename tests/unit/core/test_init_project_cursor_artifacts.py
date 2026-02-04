@@ -45,7 +45,7 @@ class TestInitProjectCursorArtifacts:
         assert any(p.is_dir() for p in skills_dir.iterdir())
 
         # Background agents config - no longer installed (feature removed)
-        bg_config = tmp_path / ".cursor" / "background-agents.yaml"
+        tmp_path / ".cursor" / "background-agents.yaml"
         # Note: Background agents feature was removed, so this file should not exist
         # The test name is kept for historical reference but behavior has changed
 
@@ -55,7 +55,7 @@ class TestInitProjectCursorArtifacts:
 
     def test_init_project_does_not_install_background_agents_by_default(self, tmp_path: Path):
         """Test that background agents are NOT installed by default (opt-in behavior)."""
-        results = init_project(
+        init_project(
             project_root=tmp_path,
             include_cursor_rules=True,
             include_workflow_presets=False,

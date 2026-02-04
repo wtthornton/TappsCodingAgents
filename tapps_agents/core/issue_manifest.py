@@ -216,7 +216,7 @@ class IssueManifestManager:
 """
         
         summary = self.get_summary()
-        html += f"<h2>Summary</h2><ul>"
+        html += "<h2>Summary</h2><ul>"
         html += f"<li><strong>Total Issues</strong>: {summary['total']}</li>"
         html += f"<li><strong>Critical</strong>: {summary['critical_count']}</li>"
         html += f"<li><strong>High</strong>: {summary['high_count']}</li>"

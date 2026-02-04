@@ -7,7 +7,10 @@ Aggregates outputs from multiple agents and steps in Simple Mode workflows.
 from typing import Any
 
 from tapps_agents.core.instructions import GenericInstruction
-from tapps_agents.core.output_formatter import AgentOutput, OutputFormat, OutputFormatter
+from tapps_agents.core.output_formatter import (
+    OutputFormat,
+    OutputFormatter,
+)
 
 
 class SimpleModeOutputAggregator:
@@ -294,7 +297,7 @@ class SimpleModeOutputAggregator:
                     lines.append(f"  - ... and {len(step['file_paths']) - 3} more")
             
             if "instruction" in step and step.get("auto_executable"):
-                lines.append(f"- **Auto-Executable:** Yes")
+                lines.append("- **Auto-Executable:** Yes")
                 if "skill_command" in step["instruction"]:
                     lines.append(f"  - Skill Command: `{step['instruction']['skill_command']}`")
             lines.append("")

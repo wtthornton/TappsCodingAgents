@@ -15,10 +15,11 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...utils.project_cleanup_agent import (
     AnalysisReport,
-    CleanupAgent as CleanupAgentUtil,
     CleanupPlan,
-    ExecutionReport,
     ProjectAnalyzer,
+)
+from ...utils.project_cleanup_agent import (
+    CleanupAgent as CleanupAgentUtil,
 )
 
 

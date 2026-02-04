@@ -1,8 +1,8 @@
 """Test the fixed Context7 API authentication."""
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 
 if sys.platform == "win32":
@@ -18,10 +18,12 @@ sys.path.insert(0, str(project_root))
 
 # Reset quota state before testing
 from tapps_agents.context7 import backup_client as bc
+
 bc._CONTEXT7_QUOTA_EXCEEDED = False
 bc._CONTEXT7_QUOTA_MESSAGE = None
 
 from tapps_agents.context7.circuit_breaker import get_context7_circuit_breaker
+
 get_context7_circuit_breaker().reset()
 
 from tapps_agents.context7.backup_client import call_context7_resolve_with_fallback

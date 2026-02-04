@@ -4,7 +4,6 @@ Unit tests for Context7 Cross-Reference Resolver.
 Tests cross-reference resolution, link detection, and cache integration.
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest

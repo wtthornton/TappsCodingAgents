@@ -6,17 +6,15 @@ Tests gate evaluation in real workflow contexts and error handling.
 
 import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from tapps_agents.quality.gates.approval_gate import ApprovalGate
-from tapps_agents.quality.gates.base import BaseGate
 from tapps_agents.quality.gates.policy_gate import PolicyGate
 from tapps_agents.quality.gates.registry import GateRegistry
 from tapps_agents.quality.gates.security_gate import SecurityGate
 from tapps_agents.workflow.gate_integration import GateIntegration
-from tapps_agents.workflow.models import WorkflowStep, WorkflowState
+from tapps_agents.workflow.models import WorkflowState, WorkflowStep
 
 
 @pytest.fixture

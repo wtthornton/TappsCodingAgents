@@ -156,7 +156,7 @@ class TraceabilityMatrix:
     @classmethod
     def load(cls, file_path: Path) -> "TraceabilityMatrix":
         """Load traceability matrix from file."""
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
 
         matrix = cls()

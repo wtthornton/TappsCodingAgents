@@ -2,12 +2,15 @@
 Unit tests for ExpertConfigGenerator
 """
 
+from pathlib import Path
+
 import pytest
 import yaml
-from pathlib import Path
-from unittest.mock import Mock, patch
 
-from tapps_agents.core.expert_config_generator import ExpertConfigGenerator, ExpertConfig
+from tapps_agents.core.expert_config_generator import (
+    ExpertConfig,
+    ExpertConfigGenerator,
+)
 from tapps_agents.experts.domain_detector import DomainMapping
 
 

@@ -39,7 +39,7 @@ class TestExceptionNaming:
         }
 
         shadowing = []
-        for name, exc_class in custom_exceptions.items():
+        for name, _exc_class in custom_exceptions.items():
             if name in STDLIB_EXCEPTIONS:
                 shadowing.append(name)
 
@@ -67,7 +67,7 @@ class TestCentralizedValidation:
     def test_base_agent_has_validate_path(self):
         """Test that BaseAgent has _validate_path method."""
         assert hasattr(BaseAgent, "_validate_path")
-        assert callable(getattr(BaseAgent, "_validate_path"))
+        assert callable(BaseAgent._validate_path)
 
     def test_path_validator_exists(self):
         """Test that PathValidator class exists."""

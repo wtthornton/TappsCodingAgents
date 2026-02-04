@@ -6,10 +6,8 @@ Defines data structures for health check metrics and provides storage utilities.
 
 from __future__ import annotations
 
-import json
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from .base import HealthCheckResult
@@ -99,7 +97,7 @@ def calculate_trend(
     sorted_metrics = sorted(metrics, key=lambda m: m.timestamp)
 
     # Get metrics within window
-    cutoff_date = datetime.now(UTC)
+    datetime.now(UTC)
     # Simple approximation - in production would parse timestamps
     recent_metrics = sorted_metrics[-window_days:] if len(sorted_metrics) > window_days else sorted_metrics
 

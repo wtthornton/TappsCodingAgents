@@ -13,10 +13,11 @@ from __future__ import annotations
 
 import asyncio
 import time
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 T = TypeVar("T")
 
@@ -273,7 +274,7 @@ class StreamingBatchProcessor:
         # Final progress update
         if progress_callback:
             elapsed = time.time() - start_time
-            successful = sum(1 for r in results if r.success)
+            sum(1 for r in results if r.success)
             progress_callback(ProgressUpdate(
                 current=total,
                 total=total,

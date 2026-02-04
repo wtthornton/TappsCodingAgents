@@ -2,11 +2,10 @@
 Unit tests for prompt enhancement middleware.
 """
 
-import asyncio
+from argparse import Namespace
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from argparse import Namespace
 
 from tapps_agents.cli.utils.prompt_enhancer import (
     assess_prompt_quality,

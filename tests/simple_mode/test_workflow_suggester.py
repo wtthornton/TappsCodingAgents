@@ -5,13 +5,14 @@ Tests semantic intent detection, weighted signal scoring, and workflow
 requirement validation. Target: ≥85% coverage.
 """
 
-import pytest
 import re
-from typing import Any
+
+import pytest
 
 pytestmark = pytest.mark.unit
 
 from tapps_agents.simple_mode.workflow_suggester import (
+    _COMPILED_PATTERNS,
     COMPLEXITY_ORDER,
     SCOPE_ORDER,
     SIGNAL_DEFINITIONS,
@@ -20,10 +21,7 @@ from tapps_agents.simple_mode.workflow_suggester import (
     calculate_confidence,
     detect_primary_intent,
     score_signals,
-    _COMPILED_PATTERNS,
 )
-from tapps_agents.simple_mode.intent_parser import IntentType
-
 
 # ============================================================================
 # Test Fixtures
@@ -361,9 +359,9 @@ class TestConstants:
         assert "enhancement" in SIGNAL_DEFINITIONS
         assert "architectural" in SIGNAL_DEFINITIONS
 
-        for category, signals in SIGNAL_DEFINITIONS.items():
+        for _category, signals in SIGNAL_DEFINITIONS.items():
             assert isinstance(signals, dict)
-            for tier_name, tier in signals.items():
+            for _tier_name, tier in signals.items():
                 assert "patterns" in tier
                 assert "weight" in tier
                 assert isinstance(tier["patterns"], list)
@@ -377,7 +375,7 @@ class TestConstants:
         assert "*fix" in WORKFLOW_REQUIREMENTS
         assert "*refactor" in WORKFLOW_REQUIREMENTS
 
-        for workflow, reqs in WORKFLOW_REQUIREMENTS.items():
+        for _workflow, reqs in WORKFLOW_REQUIREMENTS.items():
             assert "steps" in reqs
             assert "description" in reqs
             assert isinstance(reqs["steps"], int)
@@ -401,7 +399,7 @@ class TestConstants:
         assert "bug_fix" in _COMPILED_PATTERNS
 
         for category in _COMPILED_PATTERNS:
-            for tier_name, patterns in _COMPILED_PATTERNS[category].items():
+            for _tier_name, patterns in _COMPILED_PATTERNS[category].items():
                 assert isinstance(patterns, list)
                 for pattern in patterns:
                     assert isinstance(pattern, re.Pattern)

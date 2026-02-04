@@ -7,7 +7,6 @@ Large outputs can cause Cursor to crash with "Connection Error".
 import json
 from typing import Any
 
-
 # Keys that should be removed in compact mode (verbose debug data)
 DEBUG_KEYS = {
     "context7_debug",

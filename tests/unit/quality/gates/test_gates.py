@@ -2,10 +2,7 @@
 Tests for pluggable gates.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from tapps_agents.quality.gates.approval_gate import ApprovalGate
 from tapps_agents.quality.gates.base import BaseGate, GateResult, GateSeverity
@@ -283,7 +280,7 @@ def test_gate_registry_evaluation_error():
 def test_gate_integration_invalid_step():
     """Test gate integration with invalid step configuration."""
     from tapps_agents.workflow.gate_integration import GateIntegration
-    from tapps_agents.workflow.models import WorkflowStep, WorkflowState
+    from tapps_agents.workflow.models import WorkflowStep
     
     integration = GateIntegration()
     

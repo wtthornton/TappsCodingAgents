@@ -5,7 +5,7 @@ Provides aggregated metrics and dashboard data for the learning system.
 """
 
 import logging
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 from typing import Any
 
 logger = logging.getLogger(__name__)

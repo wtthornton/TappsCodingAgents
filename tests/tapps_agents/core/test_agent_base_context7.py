@@ -4,9 +4,9 @@ Tests for Context7 enhancements in agent_base.py
 Tests the _auto_fetch_context7_docs method and Context7 integration.
 """
 
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
-from unittest.mock import AsyncMock, MagicMock, patch
-from pathlib import Path
 
 from tapps_agents.core.agent_base import BaseAgent
 from tapps_agents.core.config import ProjectConfig
@@ -158,7 +158,7 @@ class TestAutoFetchContext7Docs:
         })
         agent.context7 = mock_helper
         
-        result = await agent._auto_fetch_context7_docs(code="import fastapi")
+        await agent._auto_fetch_context7_docs(code="import fastapi")
         
         # Should only fetch once per library
         call_args = mock_helper.get_documentation_for_libraries.call_args

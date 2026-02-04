@@ -2,8 +2,9 @@
 Integration tests for negative feedback learning system.
 """
 
-import pytest
 from unittest.mock import Mock
+
+import pytest
 
 from tapps_agents.core.agent_learning import AgentLearner
 from tapps_agents.core.capability_registry import CapabilityRegistry

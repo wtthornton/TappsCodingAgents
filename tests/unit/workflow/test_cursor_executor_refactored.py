@@ -6,15 +6,14 @@ Tests the run() method, step execution, and artifact extraction.
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from datetime import datetime
-
 from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
-from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowState
+from tapps_agents.workflow.models import Workflow, WorkflowState, WorkflowStep
 
 pytestmark = pytest.mark.unit
 
@@ -100,7 +99,7 @@ class TestCursorExecutorRun:
             with patch("asyncio.wait_for") as mock_wait:
                 mock_wait.return_value = mock_state
                 
-                result = await mock_executor.run(workflow=mock_workflow, max_steps=0)
+                await mock_executor.run(workflow=mock_workflow, max_steps=0)
                 
                 # Verify workflow was set
                 assert mock_executor.workflow == mock_workflow
@@ -130,7 +129,7 @@ class TestCursorExecutorRun:
             with patch("asyncio.wait_for", new_callable=AsyncMock) as mock_wait:
                 mock_wait.return_value = mock_state
                 
-                result = await mock_executor.run(workflow=None, max_steps=0)
+                await mock_executor.run(workflow=None, max_steps=0)
                 
                 # Verify existing workflow was used
                 assert mock_executor.workflow == mock_workflow
@@ -181,7 +180,7 @@ class TestCursorExecutorStepExecution:
             return _fake_cm()
 
         with patch.object(mock_executor, "_worktree_context", fake_worktree_context):
-            result = await mock_executor._execute_step_for_parallel(step=step, target_path=None)
+            await mock_executor._execute_step_for_parallel(step=step, target_path=None)
             
             mock_executor.skill_invoker.invoke_skill.assert_called_once()
             mock_executor.worktree_manager.extract_artifacts.assert_called_once()

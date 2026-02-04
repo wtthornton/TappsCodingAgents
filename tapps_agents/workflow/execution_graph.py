@@ -12,13 +12,13 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
+from ..core.exceptions import WorkflowNotFoundError
 from .event_log import WorkflowEventLog
 from .exceptions import (
     EmptyWorkflowError,
     GraphGenerationError,
     InvalidTraceError,
 )
-from ..core.exceptions import WorkflowNotFoundError
 
 logger = logging.getLogger(__name__)
 
@@ -119,7 +119,7 @@ class ExecutionGraph:
         # Add nodes with styling
         for node in self.nodes:
             label = node.label.replace('"', "'")
-            shape = self._get_mermaid_shape(node.status)
+            self._get_mermaid_shape(node.status)
             lines.append(f'    {node.id}["{label}"]')
         
         # Add edges

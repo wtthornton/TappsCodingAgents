@@ -8,17 +8,17 @@ Provides consistent output formatting across all agents with support for:
 - Structured output base class
 """
 
-from abc import ABC, abstractmethod
+import json
+from abc import ABC
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
-import json
 import yaml
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     """Supported output formats."""
 
     JSON = "json"

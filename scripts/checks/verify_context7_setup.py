@@ -7,9 +7,9 @@ Usage:
     2. Run: python scripts/checks/verify_context7_setup.py
 """
 
+import asyncio
 import os
 import sys
-import asyncio
 from pathlib import Path
 
 # Add project root to path (script lives in scripts/checks/)
@@ -40,11 +40,11 @@ print("-" * 70)
 
 try:
     from tapps_agents.context7.backup_client import (
+        call_context7_get_docs_with_fallback,
+        call_context7_resolve_with_fallback,
         check_context7_api_available,
         check_mcp_tools_available,
         create_fallback_http_client,
-        call_context7_resolve_with_fallback,
-        call_context7_get_docs_with_fallback,
     )
     
     print(f"✅ MCP Tools Available: {check_mcp_tools_available()}")
@@ -82,7 +82,7 @@ try:
         
         if response.status_code == 200:
             results = response.json()
-            print(f"✅ API Key is VALID!")
+            print("✅ API Key is VALID!")
             print(f"   Found {len(results)} results for 'react'")
             if results:
                 first = results[0]
@@ -160,12 +160,12 @@ try:
     result = asyncio.run(pre_populate_context7_cache(Path("."), libraries=["react", "fastapi", "pytest"]))
     
     if result.get("success"):
-        print(f"✅ Cache pre-population SUCCESS!")
+        print("✅ Cache pre-population SUCCESS!")
         print(f"   Cached: {result.get('cached', 0)}")
         print(f"   Failed: {result.get('failed', 0)}")
         print(f"   Total: {result.get('total', 0)}")
     else:
-        print(f"❌ Cache pre-population FAILED")
+        print("❌ Cache pre-population FAILED")
         print(f"   Error: {result.get('error', 'Unknown error')}")
         if result.get("errors"):
             print(f"   First error: {result['errors'][0]}")

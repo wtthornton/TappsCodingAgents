@@ -4,7 +4,7 @@ Custom exceptions for workflow observability features.
 Extends the base TappsAgentsError hierarchy for observability-specific errors.
 """
 
-from ..core.exceptions import TappsAgentsError, WorkflowError, WorkflowNotFoundError
+from ..core.exceptions import TappsAgentsError
 
 
 class ObservabilityError(TappsAgentsError):

@@ -9,7 +9,6 @@ import pytest
 from tapps_agents.agents.reviewer.tools.scoped_mypy import (
     MypyIssue,
     MypyResult,
-    MypyTimeoutError,
     ScopedMypyConfig,
     ScopedMypyExecutor,
 )

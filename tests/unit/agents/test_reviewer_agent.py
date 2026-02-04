@@ -6,7 +6,6 @@ using real CodeScorer instances. Agents now return instruction objects
 instead of calling LLMs directly.
 """
 
-import json
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
@@ -155,6 +154,7 @@ class TestReviewerAgentErrorHandling:
     async def test_review_command_scorer_error(self, sample_python_file):
         """Test review command handles scorer errors from real CodeScorer."""
         from unittest.mock import patch
+
         from tapps_agents.agents.reviewer.scoring import ScorerFactory
         
         agent = ReviewerAgent()
@@ -207,7 +207,7 @@ class TestReviewerAgentLintCommand:
         non_existent = tmp_path / "nonexistent.py"
         
         with pytest.raises(FileNotFoundError):
-            result = await agent.run("lint", file=str(non_existent))
+            await agent.run("lint", file=str(non_existent))
 
     @pytest.mark.asyncio
     async def test_lint_command_missing_file_param(self):
@@ -265,7 +265,7 @@ class TestReviewerAgentTypeCheckCommand:
         non_existent = tmp_path / "nonexistent.py"
         
         with pytest.raises(FileNotFoundError):
-            result = await agent.run("type-check", file=str(non_existent))
+            await agent.run("type-check", file=str(non_existent))
 
     @pytest.mark.asyncio
     async def test_type_check_command_missing_file_param(self):

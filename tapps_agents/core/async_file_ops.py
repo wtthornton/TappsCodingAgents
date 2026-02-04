@@ -14,8 +14,8 @@ from __future__ import annotations
 
 import hashlib
 import logging
+from collections.abc import AsyncIterator
 from pathlib import Path
-from typing import AsyncIterator
 
 logger = logging.getLogger(__name__)
 
@@ -74,7 +74,7 @@ class AsyncFileOps:
             OSError: If file cannot be read
         """
         if AIOFILES_AVAILABLE:
-            async with aiofiles.open(file_path, "r", encoding=encoding) as f:
+            async with aiofiles.open(file_path, encoding=encoding) as f:
                 return await f.read()
         else:
             # Synchronous fallback
@@ -281,12 +281,12 @@ class AsyncFileOps:
             Lines from the file (with newlines stripped)
         """
         if AIOFILES_AVAILABLE:
-            async with aiofiles.open(file_path, "r", encoding=encoding) as f:
+            async with aiofiles.open(file_path, encoding=encoding) as f:
                 async for line in f:
                     yield line.rstrip("\n\r")
         else:
             # Synchronous fallback
-            with open(file_path, "r", encoding=encoding) as f:
+            with open(file_path, encoding=encoding) as f:
                 for line in f:
                     yield line.rstrip("\n\r")
     

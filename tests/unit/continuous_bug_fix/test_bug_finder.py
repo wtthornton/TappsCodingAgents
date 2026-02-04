@@ -2,13 +2,12 @@
 Unit tests for BugFinder.
 """
 
-from pathlib import Path
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tapps_agents.continuous_bug_fix.bug_finder import BugFinder, BugInfo
-from tapps_agents.core.config import ProjectConfig, load_config
+from tapps_agents.continuous_bug_fix.bug_finder import BugFinder
+from tapps_agents.core.config import load_config
 
 pytestmark = pytest.mark.unit
 

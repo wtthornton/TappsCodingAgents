@@ -6,6 +6,9 @@ Defines versioned JSON schema for planning results from Foreground Agents.
 
 from __future__ import annotations
 
+# Legacy UserStory dataclass - kept for backward compatibility during migration
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from datetime import datetime
 from typing import Any
 
@@ -15,9 +18,6 @@ from .common_enums import ArtifactStatus, OperationType, Priority
 from .metadata_models import ArtifactMetadata, PlanDetails
 from .story_models import Story
 
-
-# Legacy UserStory dataclass - kept for backward compatibility during migration
-from dataclasses import dataclass, field as dataclass_field
 
 @dataclass
 class UserStory:

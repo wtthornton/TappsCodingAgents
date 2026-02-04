@@ -2,15 +2,16 @@
 Unit tests for BrownfieldReviewOrchestrator
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, Mock, patch
 
+import pytest
+
+from tapps_agents.core.brownfield_analyzer import BrownfieldAnalysisResult
 from tapps_agents.core.brownfield_review import (
     BrownfieldReviewOrchestrator,
     BrownfieldReviewResult,
 )
-from tapps_agents.core.brownfield_analyzer import BrownfieldAnalysisResult
 from tapps_agents.core.expert_config_generator import ExpertConfig
 from tapps_agents.experts.knowledge_ingestion import IngestionResult
 
@@ -32,7 +33,6 @@ def mock_context7_helper():
 @pytest.fixture
 def sample_analysis_result(sample_project_root):
     """Create a sample analysis result."""
-    from datetime import datetime
     from tapps_agents.experts.domain_detector import DomainMapping
     
     return BrownfieldAnalysisResult(

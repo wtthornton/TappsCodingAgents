@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .client import is_available, run_bd
 from .parse import parse_bd_id_from_stdout
-from .specs import TaskSpec, load_task_specs, save_task_spec
+from .specs import load_task_specs, save_task_spec
 
 logger = logging.getLogger(__name__)
 

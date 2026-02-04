@@ -9,16 +9,15 @@ from __future__ import annotations
 import json
 import logging
 import re
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
-from typing import Any
 
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger(__name__)
 
 
-class Language(str, Enum):
+class Language(StrEnum):
     """Supported programming languages."""
 
     PYTHON = "python"
@@ -169,7 +168,7 @@ class LanguageDetector:
 
     def _detect_from_content(self, content: str, file_path: Path) -> LanguageDetectionResult:
         """Detect language from file content (fallback method)."""
-        content_lower = content.lower()
+        content.lower()
 
         # TypeScript/JavaScript patterns
         if re.search(r"\b(import|export)\s+.*from\s+['\"]", content):

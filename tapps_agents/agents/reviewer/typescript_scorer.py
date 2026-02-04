@@ -10,7 +10,7 @@ import json
 import re
 import shutil
 import subprocess  # nosec B404 - used with fixed args, no shell
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
@@ -339,8 +339,8 @@ class TypeScriptScorer(BaseScorer):
 
         # Maintainability Score (0-10, higher is better)
         # Phase 3.1: Use context-aware maintainability scorer
-        from .maintainability_scorer import MaintainabilityScorer
         from ...core.language_detector import Language
+        from .maintainability_scorer import MaintainabilityScorer
 
         maintainability_scorer = MaintainabilityScorer()
         language = (
@@ -386,8 +386,8 @@ class TypeScriptScorer(BaseScorer):
         ) * 10  # Scale to 0-100
 
         # Phase 3.3: Validate all scores before returning
-        from .score_validator import ScoreValidator
         from ...core.language_detector import Language
+        from .score_validator import ScoreValidator
 
         validator = ScoreValidator()
         language = (

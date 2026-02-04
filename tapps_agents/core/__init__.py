@@ -36,6 +36,7 @@ from .adaptive_cache_config import (
     AdaptiveCacheSettings,
     ConfigurationChange,
 )
+from .adaptive_scoring import AdaptiveScoringEngine
 from .agent_base import BaseAgent
 from .agent_learning import (
     AgentLearner,
@@ -88,6 +89,7 @@ from .hardware_profiler import (
     HardwareProfile,
     HardwareProfiler,
 )
+from .iteration_reducer import IterationPattern, IterationReducer
 from .knowledge_graph import (
     GraphQuery,
     KnowledgeGraph,
@@ -111,6 +113,7 @@ from .learning_export import (
     LearningDataExporter,
 )
 from .learning_integration import LearningAwareMixin
+from .llm_communicator import LLMCommunicator, LLMHint
 from .long_duration_support import (
     DurabilityGuarantee,
     DurabilityLevel,
@@ -121,6 +124,9 @@ from .long_duration_support import (
     ProgressTracker,
 )
 from .memory_integration import MemoryAwareMixin, MemoryContextInjector, MemoryUpdater
+from .outcome_tracker import CodeOutcome, OutcomeTracker
+from .predictive_gates import FirstPassPrediction, PredictiveQualityGates
+from .prompt_quality import PromptQualityAnalyzer, PromptQualityScore
 from .resource_aware_executor import (
     AutoPause,
     ExecutionConfig,
@@ -166,12 +172,6 @@ from .visual_feedback import (
 from .visual_feedback import (
     RenderingMode as VisualRenderingMode,
 )
-from .outcome_tracker import CodeOutcome, OutcomeTracker
-from .adaptive_scoring import AdaptiveScoringEngine
-from .llm_communicator import LLMCommunicator, LLMHint
-from .predictive_gates import FirstPassPrediction, PredictiveQualityGates
-from .prompt_quality import PromptQualityAnalyzer, PromptQualityScore
-from .iteration_reducer import IterationPattern, IterationReducer
 
 __all__ = [
     "BaseAgent",

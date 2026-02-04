@@ -6,9 +6,9 @@ non-score keys like "metrics".
 """
 
 import pytest
+
 from tapps_agents.agents.reviewer.score_validator import ScoreValidator
 from tapps_agents.core.language_detector import Language
-
 
 pytestmark = pytest.mark.unit
 

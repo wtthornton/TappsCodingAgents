@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 TappsCodingAgents Interactive Demo Script
 
@@ -7,11 +6,10 @@ This script guides users through a hands-on demo of TappsCodingAgents.
 """
 
 import os
-import sys
-import subprocess
 import shutil
+import subprocess
+import sys
 from pathlib import Path
-from typing import Optional
 
 # Fix Windows encoding issues
 if sys.platform == 'win32':
@@ -818,7 +816,7 @@ def demo_workflow_execution(demo_dir: Path):
         print(f"\n📄 YAML Workflow File: {workflow_file}")
         print("\nShowing first 30 lines of the YAML workflow:")
         print("-" * 70)
-        with open(workflow_file, 'r', encoding='utf-8') as f:
+        with open(workflow_file, encoding='utf-8') as f:
             lines = f.readlines()[:30]
             for line in lines:
                 print(line.rstrip())
@@ -850,15 +848,15 @@ def demo_workflow_execution(demo_dir: Path):
     # Run workflow with a simple prompt
     prompt = "Create a simple greeting function that takes a name and returns a personalized greeting"
     
-    print(f"\n🚀 Executing YAML Workflow:")
-    print(f"   Workflow: rapid-dev (from workflows/presets/rapid-dev.yaml)")
+    print("\n🚀 Executing YAML Workflow:")
+    print("   Workflow: rapid-dev (from workflows/presets/rapid-dev.yaml)")
     print(f"   Prompt: {prompt}")
-    print(f"   Mode: Headless (use --cursor-mode for Cursor Skills)")
+    print("   Mode: Headless (use --cursor-mode for Cursor Skills)")
     print("\n[WORKFLOW STARTING]")
     print("=" * 70)
     
     # Stream output in real-time to show progress indicators
-    result = run_command(
+    run_command(
         cli_cmd + ["workflow", "rapid", "--prompt", prompt],
         check=False,
         stream=True  # Stream output to see progress indicators in real-time

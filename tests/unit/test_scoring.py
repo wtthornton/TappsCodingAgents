@@ -140,7 +140,7 @@ class TestCodeScorer:
         # Compare with simple code to ensure maintainable code scores higher
         simple_file = tmp_path / "simple.py"
         simple_file.write_text(SIMPLE_CODE)
-        simple_result = scorer.score_file(simple_file, SIMPLE_CODE)
+        scorer.score_file(simple_file, SIMPLE_CODE)
         
         # Maintainable code (with docs, type hints, error handling) should score reasonably well
         # Note: Simple code might score similarly or even higher due to lower complexity

@@ -9,7 +9,6 @@ This module provides standardized patterns for:
 """
 import argparse
 import asyncio
-import json
 import os
 import sys
 from collections.abc import Callable
@@ -358,7 +357,6 @@ def get_verbosity_level() -> str:
     Returns:
         Verbosity level: "quiet", "normal", or "verbose"
     """
-    from .feedback import VerbosityLevel
     verbosity = FeedbackManager.get_verbosity()
     return verbosity.value
 
@@ -429,11 +427,11 @@ class HelpfulArgumentParser(argparse.ArgumentParser):
                     print("="*70)
                     print(f"\nUnrecognized arguments: {', '.join(unrecognized)}")
                     print("\nHint: The command accepts multiple files. Try one of these:")
-                    print(f"  1. Specify files as positional arguments:")
+                    print("  1. Specify files as positional arguments:")
                     print(f"     tapps-agents reviewer score {' '.join(unrecognized)}")
-                    print(f"  2. Use a glob pattern:")
-                    print(f"     tapps-agents reviewer score --pattern '**/*.py'")
-                    print(f"  3. Process files one at a time:")
+                    print("  2. Use a glob pattern:")
+                    print("     tapps-agents reviewer score --pattern '**/*.py'")
+                    print("  3. Process files one at a time:")
                     for arg in unrecognized[:3]:  # Show first 3
                         print(f"     tapps-agents reviewer score {arg}")
                     if len(unrecognized) > 3:

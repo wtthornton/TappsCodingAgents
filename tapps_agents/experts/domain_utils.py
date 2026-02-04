@@ -5,7 +5,6 @@ Utility functions for domain name handling.
 import re
 from urllib.parse import urlparse
 
-
 # Known domain-to-directory name mappings for built-in experts
 # Maps expert domain names to their actual knowledge base directory names
 # This handles cases where domain names don't match directory names

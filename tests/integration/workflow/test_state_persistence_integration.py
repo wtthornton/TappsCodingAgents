@@ -181,7 +181,7 @@ class TestWorkflowResumeIntegration:
         )
 
         step = WorkflowStep(id="step-1", agent="implementer", action="implement", metadata={})
-        workflow_path = temp_dir / "workflow.yaml"
+        temp_dir / "workflow.yaml"
 
         # Test EVERY_STEP
         config = CheckpointConfig(frequency=CheckpointFrequency.EVERY_STEP)

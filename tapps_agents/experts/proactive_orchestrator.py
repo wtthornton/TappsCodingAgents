@@ -3,7 +3,7 @@
 import logging
 from typing import Any
 
-from .expert_engine import ExpertEngine, ExpertRoutingPlan, KnowledgeNeed
+from .expert_engine import ExpertEngine, ExpertRoutingPlan
 
 logger = logging.getLogger(__name__)
 

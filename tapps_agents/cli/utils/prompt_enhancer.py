@@ -7,11 +7,9 @@ before they reach individual agents, ensuring high-quality code generation.
 
 import asyncio
 from argparse import Namespace
-from typing import Any
 
 from ...agents.enhancer.agent import EnhancerAgent
 from ...core.config import AutoEnhancementConfig, load_config
-
 
 # Mapping of agent.command -> prompt argument name. Value None means do not enhance.
 # Intentional exclusions: (debugger, debug) — error text must stay exact;

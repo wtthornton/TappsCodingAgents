@@ -144,7 +144,7 @@ class PerformanceProfileEvaluator(BaseEvaluator):
                 if re.search(query_pattern, code, re.IGNORECASE):
                     # Potential N+1 pattern
                     issue = Issue(
-                        id=f"perf_n_plus_one_query",
+                        id="perf_n_plus_one_query",
                         severity=IssueSeverity.MEDIUM,
                         category=IssueCategory.PERFORMANCE,
                         evidence="Potential N+1 query pattern: database queries inside loops",

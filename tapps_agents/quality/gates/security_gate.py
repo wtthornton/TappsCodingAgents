@@ -10,10 +10,9 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ..secret_scanner import SecretScanner
 from ...experts.governance import GovernanceLayer, GovernancePolicy
+from ..secret_scanner import SecretScanner
 from .base import BaseGate, GateResult, GateSeverity
-from .exceptions import MissingContextError
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +135,7 @@ class SecurityGate(BaseGate):
         elif details["credentials_found"]:
             severity = GateSeverity.ERROR
             passed = False
-            message = f"Security gate failed: Credentials detected"
+            message = "Security gate failed: Credentials detected"
         elif issues:
             severity = GateSeverity.WARNING
             passed = True  # Warnings don't block

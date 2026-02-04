@@ -5,15 +5,15 @@ Enables workflow recovery by loading saved state and continuing execution.
 """
 
 import logging
-from pathlib import Path
 from typing import Any
 
+from tapps_agents.workflow.models import WorkflowState
 from tapps_agents.workflow.step_checkpoint import (
-    StepCheckpointManager,
     CheckpointNotFoundError,
     CheckpointValidationError,
+    StepCheckpointManager,
 )
-from tapps_agents.workflow.models import WorkflowState
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -195,7 +195,6 @@ class ResumeOrchestrator(SimpleModeOrchestrator):
         # Create WorkflowState from checkpoint
         # Note: This is a simplified version - full implementation would
         # load complete state from state files
-        from datetime import datetime
 
         workflow_state = WorkflowState(
             workflow_id=workflow_id,

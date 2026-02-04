@@ -1,14 +1,13 @@
 """Tests for WorkflowDocumentationManager."""
 
 import sys
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
 
 from tapps_agents.simple_mode.documentation_manager import (
-    WorkflowDocumentationManager,
     DocumentationError,
+    WorkflowDocumentationManager,
 )
 
 

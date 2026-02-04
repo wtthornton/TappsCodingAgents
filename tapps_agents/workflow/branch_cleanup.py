@@ -9,15 +9,13 @@ from __future__ import annotations
 
 import fnmatch
 import logging
-import re
 import shutil
 import subprocess  # nosec B404 - fixed args, no shell
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any
 
-from ..core.config import BranchCleanupConfig, ProjectConfig, load_config
+from ..core.config import BranchCleanupConfig, load_config
 
 logger = logging.getLogger(__name__)
 
@@ -176,7 +174,7 @@ class BranchCleanupService:
         Returns:
             True if branch matches any pattern
         """
-        for pattern_type, pattern in self.config.patterns.items():
+        for _pattern_type, pattern in self.config.patterns.items():
             if fnmatch.fnmatch(branch_name, pattern):
                 return True
         return False
@@ -237,7 +235,7 @@ class BranchCleanupService:
         for branch_name in branches:
             # Check if branch matches patterns
             matches = False
-            for pattern_type, pattern in patterns.items():
+            for _pattern_type, pattern in patterns.items():
                 if fnmatch.fnmatch(branch_name, pattern):
                     matches = True
                     break
@@ -263,7 +261,7 @@ class BranchCleanupService:
             # 2. No associated worktree
             # 3. Meets retention age (if configured)
             if not has_worktree and is_old_enough:
-                reason = f"No associated worktree"
+                reason = "No associated worktree"
                 if metadata.age_days is not None:
                     reason += f", age: {metadata.age_days:.1f} days"
                 if self.config.retention_days > 0:

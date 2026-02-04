@@ -8,7 +8,11 @@ from unittest.mock import patch
 
 import pytest
 
-from tapps_agents.cli.main import create_root_parser, register_all_parsers, route_command
+from tapps_agents.cli.main import (
+    create_root_parser,
+    register_all_parsers,
+    route_command,
+)
 
 
 @pytest.mark.integration
@@ -37,10 +41,10 @@ def test_cli_session_lifecycle_session_state_in_process(tmp_path: Path) -> None:
     """
     import json
 
+    from tapps_agents.hooks.config import HooksConfig
+    from tapps_agents.hooks.manager import HookManager
     from tapps_agents.session import ensure_session_started, get_session_id
     from tapps_agents.session.manager import _reset_state_for_testing
-    from tapps_agents.hooks.manager import HookManager
-    from tapps_agents.hooks.config import HooksConfig
 
     sessions_dir = tmp_path / ".tapps-agents" / "sessions"
     sessions_dir.mkdir(parents=True)
@@ -63,12 +67,12 @@ def test_session_lifecycle_hydration_on_start_when_configured(tmp_path: Path) ->
     """
     When task-specs dir exists and hydration not disabled, SessionStart runs hydrate_to_beads.
     """
+    from tapps_agents.beads.hydration import HydrationReport
     from tapps_agents.session.manager import (
         _reset_state_for_testing,
-        _session_hydration_enabled,
         _run_session_start_hydration,
+        _session_hydration_enabled,
     )
-    from tapps_agents.beads.hydration import HydrationReport
 
     (tmp_path / ".tapps-agents" / "task-specs").mkdir(parents=True)
     _reset_state_for_testing()
@@ -90,6 +94,7 @@ def test_session_lifecycle_hydration_on_start_when_configured(tmp_path: Path) ->
 def test_session_hydration_disabled_by_env(tmp_path: Path) -> None:
     """When TAPPS_SESSION_HYDRATION=0, hydration is disabled."""
     import os
+
     from tapps_agents.session.manager import _session_hydration_enabled
 
     (tmp_path / ".tapps-agents" / "task-specs").mkdir(parents=True)

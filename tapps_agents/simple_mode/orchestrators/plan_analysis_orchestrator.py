@@ -10,8 +10,8 @@ changes without executing any modifications (read-only mode).
 from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -49,7 +49,6 @@ class PlanAnalysisOrchestrator(SimpleModeOrchestrator):
         )
 
         # Mark as read-only operation
-        read_only = True
 
         agent_tasks = []
 
@@ -79,7 +78,6 @@ class PlanAnalysisOrchestrator(SimpleModeOrchestrator):
         exploration_results = None
         if explore:
             # Find files related to exploration query
-            import glob
             
             explore_keywords = explore.lower().split()
             found_files = set()

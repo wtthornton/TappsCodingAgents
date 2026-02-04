@@ -6,7 +6,6 @@ Checks Context7 knowledge base cache effectiveness and performance.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta
 from pathlib import Path
 
 from ...context7.analytics import Analytics

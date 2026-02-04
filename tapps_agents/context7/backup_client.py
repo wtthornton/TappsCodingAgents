@@ -12,8 +12,8 @@ Pattern:
 import logging
 import os
 import time
-import urllib.parse
-from typing import Any, Callable
+from collections.abc import Callable
+from typing import Any
 
 import httpx
 
@@ -60,7 +60,6 @@ def _ensure_context7_api_key() -> str | None:
         API key string if available, None otherwise
     """
     # #region agent log
-    from ..core.debug_logger import write_debug_log
     write_debug_log(
         {
             "sessionId": "debug-session",
@@ -220,7 +219,6 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
         Tuple of (resolve_library_client, get_docs_client) or (None, None) if API key not available
     """
     # #region agent log
-    from ..core.debug_logger import write_debug_log
     write_debug_log(
         {
             "sessionId": "debug-session",
@@ -376,7 +374,10 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                     # CRITICAL FIX: Open circuit breaker immediately on quota error
                     # This prevents subsequent parallel calls from attempting API requests
                     try:
-                        from .circuit_breaker import get_context7_circuit_breaker, CircuitState
+                        from .circuit_breaker import (
+                            CircuitState,
+                            get_context7_circuit_breaker,
+                        )
                         circuit_breaker = get_context7_circuit_breaker()
                         # Force open circuit breaker immediately (bypass threshold)
                         if hasattr(circuit_breaker, '_stats'):
@@ -384,8 +385,8 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                             circuit_breaker._stats.last_failure_time = time.time()
                             circuit_breaker._stats.last_state_change = time.time()
                             logger.warning(
-                                f"Context7 circuit breaker opened immediately due to quota error (429). "
-                                f"Subsequent requests will be rejected without API calls."
+                                "Context7 circuit breaker opened immediately due to quota error (429). "
+                                "Subsequent requests will be rejected without API calls."
                             )
                     except Exception as cb_error:
                         logger.debug(f"Could not open circuit breaker on quota error: {cb_error}")
@@ -588,7 +589,10 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                     # CRITICAL FIX: Open circuit breaker immediately on quota error
                     # This prevents subsequent parallel calls from attempting API requests
                     try:
-                        from .circuit_breaker import get_context7_circuit_breaker, CircuitState
+                        from .circuit_breaker import (
+                            CircuitState,
+                            get_context7_circuit_breaker,
+                        )
                         circuit_breaker = get_context7_circuit_breaker()
                         # Force open circuit breaker immediately (bypass threshold)
                         if hasattr(circuit_breaker, '_stats'):
@@ -596,8 +600,8 @@ def create_fallback_http_client() -> tuple[Callable[[str], dict[str, Any]], Call
                             circuit_breaker._stats.last_failure_time = time.time()
                             circuit_breaker._stats.last_state_change = time.time()
                             logger.warning(
-                                f"Context7 circuit breaker opened immediately due to quota error (429). "
-                                f"Subsequent requests will be rejected without API calls."
+                                "Context7 circuit breaker opened immediately due to quota error (429). "
+                                "Subsequent requests will be rejected without API calls."
                             )
                     except Exception as cb_error:
                         logger.debug(f"Could not open circuit breaker on quota error: {cb_error}")
@@ -660,7 +664,6 @@ def get_context7_client_with_fallback(
     # Only the AI assistant (via Cursor chat) can use MCP tools directly
     from ..core.runtime_mode import is_cursor_mode
     # #region agent log
-    from ..core.debug_logger import write_debug_log
     write_debug_log(
         {
             "sessionId": "debug-session",
@@ -769,7 +772,6 @@ async def call_context7_resolve_with_fallback(
     """
     gateway, use_mcp, mcp_source, resolve_client, _ = get_context7_client_with_fallback(mcp_gateway)
     # #region agent log
-    from ..core.debug_logger import write_debug_log
     write_debug_log(
         {
             "sessionId": "debug-session",

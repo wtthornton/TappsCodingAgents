@@ -9,7 +9,6 @@ from __future__ import annotations
 import logging
 import sys
 from pathlib import Path
-from typing import Union
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +20,7 @@ __all__ = [
 ]
 
 
-def normalize_path(path: Union[str, Path], project_root: Path) -> str:
+def normalize_path(path: str | Path, project_root: Path) -> str:
     """
     Normalize path to relative format for CLI commands.
     
@@ -86,7 +85,7 @@ def normalize_path(path: Union[str, Path], project_root: Path) -> str:
     return str(path_obj)
 
 
-def ensure_relative_path(path: Union[str, Path], project_root: Path) -> str:
+def ensure_relative_path(path: str | Path, project_root: Path) -> str:
     """
     Ensure path is relative to project root, raising error if outside.
     
@@ -109,7 +108,7 @@ def ensure_relative_path(path: Union[str, Path], project_root: Path) -> str:
     """
     normalized = normalize_path(path, project_root)
     path_obj = Path(normalized)
-    project_root_obj = Path(project_root).resolve()
+    Path(project_root).resolve()
     
     # Check if still absolute (means it's outside project root)
     if path_obj.is_absolute():
@@ -121,7 +120,7 @@ def ensure_relative_path(path: Union[str, Path], project_root: Path) -> str:
     return normalized
 
 
-def normalize_for_cli(path: Union[str, Path], project_root: Path) -> str:
+def normalize_for_cli(path: str | Path, project_root: Path) -> str:
     """
     Normalize path for CLI command execution (most permissive).
     
@@ -146,7 +145,7 @@ def normalize_for_cli(path: Union[str, Path], project_root: Path) -> str:
     return normalized.replace("\\", "/") if sys.platform == "win32" else normalized
 
 
-def normalize_project_root(project_root: Union[str, Path]) -> Path:
+def normalize_project_root(project_root: str | Path) -> Path:
     """
     Normalize project root path for consistent handling.
     

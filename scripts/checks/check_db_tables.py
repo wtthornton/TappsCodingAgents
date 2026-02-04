@@ -21,12 +21,12 @@ for table in tables:
     
     # Check if it's pattern or synergy related
     if 'pattern' in table_name.lower() or 'synerg' in table_name.lower():
-        print(f"  *** PATTERN/SYNERGY TABLE ***")
+        print("  *** PATTERN/SYNERGY TABLE ***")
         # Get sample data
         cursor.execute(f"SELECT * FROM {table_name} LIMIT 3")
         rows = cursor.fetchall()
         if rows:
-            print(f"  Sample data (first 3 rows):")
+            print("  Sample data (first 3 rows):")
             for i, row in enumerate(rows, 1):
                 print(f"    Row {i}: {row[:5] if len(row) > 5 else row}...")  # Show first 5 columns
 

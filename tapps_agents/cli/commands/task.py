@@ -9,7 +9,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-from ..feedback import get_feedback
 from .common import format_json_output
 
 
@@ -41,8 +40,8 @@ def _project_root() -> Path:
 
 
 def _handle_create(args: object) -> None:
-    from ...beads.specs import TaskSpec, save_task_spec
     from ...beads.hydration import hydrate_to_beads
+    from ...beads.specs import TaskSpec, save_task_spec
 
     task_id = getattr(args, "id", "").strip()
     title = getattr(args, "title", "").strip()

@@ -2,22 +2,20 @@
 Tests for execution graph generator.
 """
 
-import json
-from datetime import datetime, UTC
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
 
 from tapps_agents.core.exceptions import WorkflowNotFoundError
-from tapps_agents.workflow.event_log import WorkflowEvent, WorkflowEventLog
+from tapps_agents.workflow.event_log import WorkflowEventLog
+from tapps_agents.workflow.exceptions import EmptyWorkflowError
 from tapps_agents.workflow.execution_graph import (
     ExecutionGraph,
     ExecutionGraphGenerator,
     GraphEdge,
     GraphNode,
 )
-from tapps_agents.workflow.exceptions import EmptyWorkflowError
 
 
 @pytest.fixture

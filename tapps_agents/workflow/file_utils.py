@@ -4,12 +4,12 @@ File utilities for atomic writing and safe reading of JSON files.
 Provides utilities to prevent race conditions when reading/writing state files.
 """
 
-import json
 import gzip
+import json
+import logging
 import time
 from pathlib import Path
 from typing import Any
-import logging
 
 logger = logging.getLogger(__name__)
 

@@ -6,12 +6,11 @@ Enables resume capability by saving workflow progress after each step.
 
 import hashlib
 import json
+import logging
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-
-import logging
 
 from .file_utils import atomic_write_json
 from .models import Artifact

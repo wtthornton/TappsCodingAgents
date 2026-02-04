@@ -7,8 +7,8 @@ under .tapps-agents/sessions/.
 """
 
 from .manager import (
-    get_session_id,
     ensure_session_started,
+    get_session_id,
     register_session_end_atexit,
 )
 

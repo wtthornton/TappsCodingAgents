@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any
 
 from .business_metrics import (
-    BusinessMetricsData,
     MetricsStorage,
     ROIMetrics,
 )
@@ -258,9 +257,9 @@ class ReportGenerator:
 
     def _write_weekly_report_markdown(self, f: Any, report: WeeklyReport) -> None:
         """Write weekly report in Markdown format."""
-        f.write(f"# Weekly Business Metrics Report\n\n")
+        f.write("# Weekly Business Metrics Report\n\n")
         f.write(f"**Period:** {report.period_start.date()} to {report.period_end.date()}\n\n")
-        f.write(f"## Summary\n\n")
+        f.write("## Summary\n\n")
         f.write(f"- **Total Consultations:** {report.total_consultations}\n")
         f.write(f"- **Average Confidence:** {report.avg_confidence:.2%}\n")
         f.write(f"- **Confidence Trend:** {report.confidence_trend}\n")
@@ -268,19 +267,19 @@ class ReportGenerator:
         f.write(f"- **Estimated Time Saved:** {report.estimated_time_saved_hours:.1f} hours\n")
         f.write(f"- **ROI:** {report.roi_percentage:.1f}%\n\n")
 
-        f.write(f"## Top Experts\n\n")
+        f.write("## Top Experts\n\n")
         for expert_id, count in report.top_experts[:5]:
             f.write(f"- **{expert_id}**: {count} consultations\n")
 
-        f.write(f"\n## Top Domains\n\n")
+        f.write("\n## Top Domains\n\n")
         for domain, count in report.top_domains[:5]:
             f.write(f"- **{domain}**: {count} consultations\n")
 
     def _write_roi_report_markdown(self, f: Any, report: ROIReport) -> None:
         """Write ROI report in Markdown format."""
-        f.write(f"# ROI Analysis Report\n\n")
+        f.write("# ROI Analysis Report\n\n")
         f.write(f"**Period:** {report.period_start.date()} to {report.period_end.date()}\n\n")
-        f.write(f"## Summary\n\n")
+        f.write("## Summary\n\n")
         f.write(f"- **Total Consultations:** {report.total_consultations}\n")
         f.write(f"- **Total Cost:** ${report.total_cost:.2f}\n")
         f.write(f"- **Total Value:** ${report.total_value:.2f}\n")
@@ -288,7 +287,7 @@ class ReportGenerator:
         f.write(f"- **ROI per Consultation:** ${report.roi_per_consultation:.2f}\n\n")
 
         if report.breakdown_by_expert:
-            f.write(f"## ROI by Expert\n\n")
+            f.write("## ROI by Expert\n\n")
             for expert_id, roi in list(report.breakdown_by_expert.items())[:10]:
                 f.write(f"### {expert_id}\n\n")
                 f.write(f"- Consultations: {roi.total_consultations}\n")

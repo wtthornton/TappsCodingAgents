@@ -7,7 +7,7 @@ Tests workflow state list, show, cleanup, and resume operations.
 import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_success_exit, assert_valid_json
+from tests.e2e.cli.validation_helpers import assert_success_exit
 
 
 @pytest.mark.e2e_cli

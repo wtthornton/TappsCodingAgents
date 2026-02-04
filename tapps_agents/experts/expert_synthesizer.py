@@ -1,9 +1,7 @@
 """Expert synthesizer for auto-creating project experts."""
 
 import logging
-import re
 from pathlib import Path
-from typing import Any
 
 import yaml
 

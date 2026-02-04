@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import asyncio
 import logging
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ def retry_on_connection_error(
     return decorator
 
 
-async def retry_operation(
+async def retry_operation[T](
     operation: Callable[[], T],
     max_retries: int = 3,
     backoff_factor: float = 2.0,

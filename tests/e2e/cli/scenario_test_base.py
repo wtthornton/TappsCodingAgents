@@ -5,12 +5,13 @@ Provides utilities for testing complex scenarios that involve
 multiple commands and artifact verification.
 """
 
-import pytest
 from pathlib import Path
 from typing import Any
 
+import pytest
+
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_file_exists, assert_file_content
+from tests.e2e.cli.validation_helpers import assert_file_exists
 
 
 class ScenarioTestBase(CLICommandTestBase):

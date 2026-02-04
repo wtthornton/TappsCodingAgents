@@ -10,12 +10,12 @@ Usage:
 """
 
 import ast
+import json
 import re
 import sys
-from pathlib import Path
-from typing import List, Tuple, Dict, Any, Optional, Set
 from datetime import datetime
-import json
+from pathlib import Path
+from typing import Any
 
 # Try to import yaml for frontmatter extraction
 try:
@@ -30,9 +30,9 @@ class CodeAnalyzer:
     
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
-        self.public_apis: Dict[str, List[Dict[str, Any]]] = {}
+        self.public_apis: dict[str, list[dict[str, Any]]] = {}
     
-    def extract_public_apis(self, file_path: Path) -> List[Dict[str, Any]]:
+    def extract_public_apis(self, file_path: Path) -> list[dict[str, Any]]:
         """Extract public functions and classes from a Python file."""
         # Safety: Limit file size to prevent memory issues (10MB max)
         max_file_size = 10 * 1024 * 1024  # 10MB
@@ -45,7 +45,7 @@ class CodeAnalyzer:
                 
             content = file_path.read_text(encoding="utf-8")
             tree = ast.parse(content)
-        except (SyntaxError, UnicodeDecodeError, OSError) as e:
+        except (SyntaxError, UnicodeDecodeError, OSError):
             return []
         
         apis = []
@@ -96,7 +96,7 @@ class CodeAnalyzer:
         
         return signature
     
-    def analyze_codebase(self, include_patterns: List[str] = None) -> Dict[str, List[Dict[str, Any]]]:
+    def analyze_codebase(self, include_patterns: list[str] = None) -> dict[str, list[dict[str, Any]]]:
         """Analyze entire codebase for public APIs."""
         if include_patterns is None:
             include_patterns = ["tapps_agents/**/*.py"]
@@ -134,10 +134,10 @@ class DocAnalyzer:
     
     def __init__(self, repo_root: Path):
         self.repo_root = repo_root
-        self.api_references: Set[str] = set()
-        self.file_references: Set[str] = set()
+        self.api_references: set[str] = set()
+        self.file_references: set[str] = set()
     
-    def extract_api_references(self, content: str) -> Set[str]:
+    def extract_api_references(self, content: str) -> set[str]:
         """Extract API references from documentation content."""
         references = set()
         
@@ -220,7 +220,7 @@ class DocAnalyzer:
         
         return False
     
-    def extract_file_references(self, content: str) -> Set[str]:
+    def extract_file_references(self, content: str) -> set[str]:
         """Extract file path references from documentation."""
         file_refs = set()
         
@@ -250,7 +250,7 @@ class DocAnalyzer:
         
         return file_refs
     
-    def analyze_documentation(self, doc_files: List[Path]) -> Dict[str, Any]:
+    def analyze_documentation(self, doc_files: list[Path]) -> dict[str, Any]:
         """Analyze documentation files for API and file references."""
         all_api_refs = set()
         all_file_refs = set()
@@ -302,7 +302,7 @@ class SyncChecker:
         self.code_analyzer = CodeAnalyzer(repo_root)
         self.doc_analyzer = DocAnalyzer(repo_root)
     
-    def find_documentation_files(self) -> List[Path]:
+    def find_documentation_files(self) -> list[Path]:
         """Find all documentation files."""
         doc_files = []
         max_files = 1000  # Safety limit to prevent memory issues
@@ -334,7 +334,7 @@ class SyncChecker:
         
         return sorted(set(doc_files))
     
-    def check_file_references(self, strict: bool = False) -> List[Dict[str, Any]]:
+    def check_file_references(self, strict: bool = False) -> list[dict[str, Any]]:
         """Check if file references in docs exist."""
         doc_files = self.find_documentation_files()
         doc_analysis = self.doc_analyzer.analyze_documentation(doc_files)
@@ -373,7 +373,7 @@ class SyncChecker:
         
         return issues
     
-    def check_api_documentation(self, strict: bool = False) -> List[Dict[str, Any]]:
+    def check_api_documentation(self, strict: bool = False) -> list[dict[str, Any]]:
         """Check if public APIs are documented."""
         # Analyze codebase
         code_apis = self.code_analyzer.analyze_codebase()
@@ -435,7 +435,7 @@ class SyncChecker:
         
         return issues
     
-    def check_sync(self, strict: bool = False) -> Dict[str, Any]:
+    def check_sync(self, strict: bool = False) -> dict[str, Any]:
         """Run all synchronization checks."""
         file_issues = self.check_file_references(strict)
         api_issues = self.check_api_documentation(strict)

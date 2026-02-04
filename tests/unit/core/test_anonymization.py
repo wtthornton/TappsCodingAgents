@@ -1,8 +1,6 @@
 """
 Unit tests for AnonymizationPipeline
 """
-import json
-from unittest.mock import MagicMock
 
 import pytest
 

@@ -6,7 +6,6 @@ for executing Epic stories in dependency order.
 """
 
 from ..workflow.common_enums import StoryStatus
-
 from .models import AcceptanceCriterion, EpicDocument, Story
 from .orchestrator import EpicOrchestrator
 from .parser import EpicParser

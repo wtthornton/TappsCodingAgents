@@ -8,7 +8,7 @@ import asyncio
 
 import pytest
 
-from tapps_agents.workflow.models import StepExecution, WorkflowStep, WorkflowState
+from tapps_agents.workflow.models import StepExecution, WorkflowStep
 from tapps_agents.workflow.parallel_executor import (
     ParallelStepExecutor,
 )

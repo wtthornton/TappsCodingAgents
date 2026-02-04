@@ -6,11 +6,11 @@ Provides data models for structured issues, evaluation results, and prompt track
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class IssueSeverity(str, Enum):
+class IssueSeverity(StrEnum):
     """Issue severity levels."""
 
     CRITICAL = "critical"
@@ -19,7 +19,7 @@ class IssueSeverity(str, Enum):
     LOW = "low"
 
 
-class IssueCategory(str, Enum):
+class IssueCategory(StrEnum):
     """Issue categories."""
 
     SECURITY = "security"

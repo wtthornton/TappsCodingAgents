@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any
 
 from ..core.config import ProjectConfig, load_config
-
 from .bug_finder import BugFinder, BugInfo
 from .bug_fix_coordinator import BugFixCoordinator
 from .commit_manager import CommitManager

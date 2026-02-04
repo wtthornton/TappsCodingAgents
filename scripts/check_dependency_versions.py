@@ -9,19 +9,11 @@ versions available on PyPI. Provides a report of packages that need upgrading.
 import re
 import subprocess
 import sys
-from pathlib import Path
-from typing import Any
 
 # Use tomllib for Python 3.11+, tomli for older versions
-if sys.version_info >= (3, 11):
-    import tomllib  # type: ignore
-else:
-    try:
-        import tomli as tomllib  # type: ignore
-    except ImportError:
-        print("ERROR: Need tomli package for Python < 3.11", file=sys.stderr)
-        print("Install with: pip install tomli", file=sys.stderr)
-        sys.exit(1)
+import tomllib
+from pathlib import Path
+from typing import Any
 
 
 def get_latest_version(package: str) -> tuple[str | None, str | None]:
@@ -134,7 +126,7 @@ def compare_versions(current: str, latest: str) -> tuple[bool, str]:
         current_parts += [0] * (max_len - len(current_parts))
         latest_parts += [0] * (max_len - len(latest_parts))
         
-        for c, l in zip(current_parts, latest_parts):
+        for c, l in zip(current_parts, latest_parts, strict=False):
             if l > c:
                 return True, "Newer version available"
             elif c > l:

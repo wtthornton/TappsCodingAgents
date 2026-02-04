@@ -7,7 +7,6 @@ Manages registration and discovery of health checks.
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from .base import HealthCheck, HealthCheckResult
 

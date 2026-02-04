@@ -104,7 +104,7 @@ async def test_initialize_run_validates_first_step_ready(
     executor.start = AsyncMock(return_value=MagicMock())
 
     # Should succeed and log that first step is ready
-    result = await executor._initialize_run(workflow=workflow, target_file=None)
+    await executor._initialize_run(workflow=workflow, target_file=None)
 
     # Verify logger was called with first step info
     assert mock_logger.info.called
@@ -197,7 +197,7 @@ async def test_initialize_run_handles_target_file(
     executor.start = AsyncMock(return_value=mock_state)
 
     target_file = "src/main.py"
-    result = await executor._initialize_run(workflow=workflow, target_file=target_file)
+    await executor._initialize_run(workflow=workflow, target_file=target_file)
 
     # Verify target file was set in state variables
     assert "target_file" in mock_state.variables

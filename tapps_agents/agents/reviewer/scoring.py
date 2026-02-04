@@ -240,8 +240,8 @@ class CodeScorer(BaseScorer):
 
         # Performance Score (0-10, higher is better)
         # Phase 3.2: Use context-aware performance scorer
-        from .performance_scorer import PerformanceScorer
         from ...core.language_detector import Language
+        from .performance_scorer import PerformanceScorer
 
         performance_scorer = PerformanceScorer()
         scores["performance_score"] = performance_scorer.calculate(
@@ -314,8 +314,8 @@ class CodeScorer(BaseScorer):
         ) * 10  # Scale from 0-10 weighted sum to 0-100
 
         # Phase 3.3: Validate all scores before returning
-        from .score_validator import ScoreValidator
         from ...core.language_detector import Language
+        from .score_validator import ScoreValidator
 
         validator = ScoreValidator()
         validation_results = validator.validate_all_scores(
@@ -434,8 +434,8 @@ class CodeScorer(BaseScorer):
         Phase 3.1: Enhanced with context-aware scoring using MaintainabilityScorer.
         Phase 2 (P0): Maintainability issues are captured separately via get_maintainability_issues().
         """
-        from .maintainability_scorer import MaintainabilityScorer
         from ...core.language_detector import Language
+        from .maintainability_scorer import MaintainabilityScorer
 
         # Use context-aware maintainability scorer
         scorer = MaintainabilityScorer()
@@ -456,8 +456,8 @@ class CodeScorer(BaseScorer):
         Returns:
             List of maintainability issues with details
         """
-        from .maintainability_scorer import MaintainabilityScorer
         from ...core.language_detector import Language
+        from .maintainability_scorer import MaintainabilityScorer
 
         scorer = MaintainabilityScorer()
         return scorer.get_issues(code, Language.PYTHON, file_path=file_path, context=None)
@@ -643,11 +643,12 @@ class CodeScorer(BaseScorer):
         Returns:
             List of performance issues with line numbers
         """
-        from .issue_tracking import PerformanceIssue
         import ast
 
+        from .issue_tracking import PerformanceIssue
+
         issues: list[PerformanceIssue] = []
-        code_lines = code.splitlines()
+        code.splitlines()
 
         try:
             tree = ast.parse(code)

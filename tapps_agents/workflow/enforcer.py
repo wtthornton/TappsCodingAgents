@@ -22,7 +22,7 @@ from pathlib import Path
 from typing import Literal, TypedDict
 
 from tapps_agents.core.llm_behavior import EnforcementConfig
-from tapps_agents.workflow.intent_detector import IntentDetector, WorkflowType
+from tapps_agents.workflow.intent_detector import IntentDetector
 from tapps_agents.workflow.message_formatter import MessageConfig, MessageFormatter
 
 logger = logging.getLogger(__name__)

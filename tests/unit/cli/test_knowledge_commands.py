@@ -8,7 +8,6 @@ from pathlib import Path
 import pytest
 
 from tapps_agents.cli.commands.knowledge import KnowledgeCommand
-from tapps_agents.experts.builtin_registry import BuiltinExpertRegistry
 
 pytestmark = pytest.mark.unit
 

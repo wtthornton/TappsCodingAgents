@@ -12,9 +12,9 @@ import pytest
 
 from tapps_agents.core.agent_learning import AgentLearner
 from tapps_agents.core.capability_registry import CapabilityRegistry
-from tapps_agents.experts.expert_registry import ExpertRegistry
 from tapps_agents.core.hardware_profiler import HardwareProfile
 from tapps_agents.core.task_memory import TaskMemorySystem
+from tapps_agents.experts.expert_registry import ExpertRegistry
 
 logger = logging.getLogger(__name__)
 
@@ -276,7 +276,7 @@ def explained_function():
     \"\"\"A function for explainability testing.\"\"\"
     return True
 """
-        result = await agent_learner.learn_from_task(
+        await agent_learner.learn_from_task(
             capability_id="explainability_test",
             task_id="task_explain",
             code=code,

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import sys
 from pathlib import Path
 from typing import Any
 
@@ -133,51 +132,37 @@ class BatchReviewWorkflow:
         errors: list[str] = []
 
         # Use TaskGroup for structured concurrency (Python 3.11+)
-        if sys.version_info >= (3, 11):
-            tasks_map: dict[asyncio.Task[ServiceReviewResult], Service] = {}
-            try:
-                async with asyncio.TaskGroup() as tg:
-                    # Create tasks for all services
-                    for service in services:
-                        task = tg.create_task(
-                            self._review_single_service(
-                                service, include_scoring, include_llm_feedback
-                            )
+        tasks_map: dict[asyncio.Task[ServiceReviewResult], Service] = {}
+        try:
+            async with asyncio.TaskGroup() as tg:
+                # Create tasks for all services
+                for service in services:
+                    task = tg.create_task(
+                        self._review_single_service(
+                            service, include_scoring, include_llm_feedback
                         )
-                        tasks_map[task] = service
+                    )
+                    tasks_map[task] = service
 
-                # All tasks completed successfully - collect results
-                for task, service in tasks_map.items():
-                    result = await task
-                    results.append(result)
+            # All tasks completed successfully - collect results
+            for task, service in tasks_map.items():
+                result = await task
+                results.append(result)
 
-            except* Exception as eg:  # ExceptionGroup (Python 3.11+)
-                # Handle exception group from TaskGroup
-                # TaskGroup automatically cancels all tasks if any task raises an exception
-                for task, service in tasks_map.items():
-                    if task.done():
-                        try:
-                            result = await task
-                            results.append(result)
-                        except Exception as e:
-                            logger.error(
-                                f"Exception in completed task for service {service.name}: {e}",
-                                exc_info=True,
-                            )
-                            errors.append(f"{service.name}: {str(e)}")
-                            results.append(
-                                ServiceReviewResult(
-                                    service_name=service.name,
-                                    service_path=str(service.path),
-                                    language=service.language.value,
-                                    passed=False,
-                                    overall_score=0.0,
-                                    error=str(e),
-                                )
-                            )
-                    else:
-                        # Task was cancelled by TaskGroup
-                        errors.append(f"{service.name}: Task cancelled")
+        except* Exception as eg:  # ExceptionGroup (Python 3.11+)
+            # Handle exception group from TaskGroup
+            # TaskGroup automatically cancels all tasks if any task raises an exception
+            for task, service in tasks_map.items():
+                if task.done():
+                    try:
+                        result = await task
+                        results.append(result)
+                    except Exception as e:
+                        logger.error(
+                            f"Exception in completed task for service {service.name}: {e}",
+                            exc_info=True,
+                        )
+                        errors.append(f"{service.name}: {str(e)}")
                         results.append(
                             ServiceReviewResult(
                                 service_name=service.name,
@@ -185,35 +170,12 @@ class BatchReviewWorkflow:
                                 language=service.language.value,
                                 passed=False,
                                 overall_score=0.0,
-                                error="Task cancelled due to another service's failure",
+                                error=str(e),
                             )
                         )
-                
-                # Add exception group errors
-                for exc in eg.exceptions:
-                    logger.error(f"TaskGroup exception: {exc}", exc_info=True)
-                    errors.append(f"TaskGroup error: {str(exc)}")
-        else:
-            # Fallback for Python < 3.11: use asyncio.gather with semaphore
-            semaphore = asyncio.Semaphore(self.max_parallel)
-
-            async def review_with_semaphore(service: Service) -> ServiceReviewResult:
-                async with semaphore:
-                    return await self._review_single_service(
-                        service, include_scoring, include_llm_feedback
-                    )
-
-            tasks = [review_with_semaphore(service) for service in services]
-            gathered_results = await asyncio.gather(*tasks, return_exceptions=True)
-
-            for i, result in enumerate(gathered_results):
-                if isinstance(result, Exception):
-                    service = services[i]
-                    logger.error(
-                        f"Exception during review for service {service.name}: {result}",
-                        exc_info=True,
-                    )
-                    errors.append(f"{service.name}: {str(result)}")
+                else:
+                    # Task was cancelled by TaskGroup
+                    errors.append(f"{service.name}: Task cancelled")
                     results.append(
                         ServiceReviewResult(
                             service_name=service.name,
@@ -221,11 +183,14 @@ class BatchReviewWorkflow:
                             language=service.language.value,
                             passed=False,
                             overall_score=0.0,
-                            error=str(result),
+                            error="Task cancelled due to another service's failure",
                         )
                     )
-                else:
-                    results.append(result)
+            
+            # Add exception group errors
+            for exc in eg.exceptions:
+                logger.error(f"TaskGroup exception: {exc}", exc_info=True)
+                errors.append(f"TaskGroup error: {str(exc)}")
 
         return self._aggregate_results(results, errors)
 
@@ -309,7 +274,7 @@ class BatchReviewWorkflow:
                     ),
                     timeout=self.review_timeout,
                 )
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.error(
                     f"Review timeout ({self.review_timeout}s) exceeded for service {service.name}"
                 )

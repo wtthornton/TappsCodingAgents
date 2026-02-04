@@ -4,9 +4,10 @@ Unit tests for execution metrics collection.
 
 from __future__ import annotations
 
-import pytest
-from pathlib import Path
 from datetime import UTC, datetime
+from pathlib import Path
+
+import pytest
 
 from tapps_agents.workflow.execution_metrics import (
     ExecutionMetric,

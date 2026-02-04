@@ -13,6 +13,7 @@ from typing import Any
 from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
 from ...core.unified_state import UnifiedStateManager
 from ...core.worktree import WorktreeManager
+
 # Background Agent API removed
 
 

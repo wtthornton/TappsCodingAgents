@@ -4,7 +4,6 @@ A/B testing framework for prompt variations.
 
 import logging
 import random
-from typing import Any
 
 from ..prompt_base import PromptABTester, PromptOutcome, PromptVariation
 

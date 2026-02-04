@@ -16,11 +16,12 @@ import logging
 import os
 import tempfile
 from collections import OrderedDict
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -367,7 +368,7 @@ class AsyncLRUCache:
                         self._write_queue.get(),
                         timeout=self._persist_interval
                     )
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
                 
                 # Process write task
@@ -606,11 +607,11 @@ class ParallelResolver:
                         on_success(library, result)
                     return library, result
                     
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.debug(f"Timeout resolving {library} after {self.per_library_timeout}s")
                     self.circuit_breaker.record_failure()
                     if on_failure:
-                        on_failure(library, asyncio.TimeoutError(f"Timeout after {self.per_library_timeout}s"))
+                        on_failure(library, TimeoutError(f"Timeout after {self.per_library_timeout}s"))
                     return library, None
                     
                 except Exception as e:

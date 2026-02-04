@@ -5,11 +5,11 @@ These models define the structure for feedback submitted by external projects
 about TappsCodingAgents performance.
 """
 
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import uuid4
 
-from pydantic import BaseModel, Field, field_validator, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class FeedbackContext(BaseModel):

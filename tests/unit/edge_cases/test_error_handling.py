@@ -8,14 +8,13 @@ Tests error handling for:
 - Resource exhaustion (memory, disk space)
 """
 
-import os
 import tempfile
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
-from tapps_agents.core.error_envelope import ErrorEnvelope, ErrorEnvelopeBuilder
+from tapps_agents.core.error_envelope import ErrorEnvelopeBuilder
 from tapps_agents.workflow.error_recovery import ErrorAnalyzer, ErrorType
 
 pytestmark = pytest.mark.unit
@@ -28,7 +27,7 @@ class TestNetworkErrorHandling:
         """Test detection of connection errors."""
         analyzer = ErrorAnalyzer()
         error = ConnectionError("Connection refused")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -39,7 +38,7 @@ class TestNetworkErrorHandling:
         """Test detection of timeout errors."""
         analyzer = ErrorAnalyzer()
         error = TimeoutError("Request timed out")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -101,7 +100,7 @@ class TestFileSystemErrorHandling:
         """Test detection of file not found errors."""
         analyzer = ErrorAnalyzer()
         error = FileNotFoundError("File not found: test.py")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -111,7 +110,7 @@ class TestFileSystemErrorHandling:
         """Test detection of permission denied errors."""
         analyzer = ErrorAnalyzer()
         error = PermissionError("Permission denied")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -179,7 +178,7 @@ class TestInvalidInputHandling:
         """Test detection of invalid input errors."""
         analyzer = ErrorAnalyzer()
         error = ValueError("Invalid input: expected int, got str")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -249,7 +248,7 @@ class TestResourceExhaustion:
         """Test handling of memory errors."""
         analyzer = ErrorAnalyzer()
         error = MemoryError("Out of memory")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -364,7 +363,7 @@ class TestExecutionErrors:
         """Test handling of syntax errors."""
         analyzer = ErrorAnalyzer()
         error = SyntaxError("Invalid syntax")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -375,7 +374,7 @@ class TestExecutionErrors:
         """Test handling of import errors."""
         analyzer = ErrorAnalyzer()
         error = ImportError("No module named 'nonexistent'")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         
@@ -386,7 +385,7 @@ class TestExecutionErrors:
         """Test handling of runtime errors."""
         analyzer = ErrorAnalyzer()
         error = RuntimeError("Runtime error occurred")
-        envelope = ErrorEnvelopeBuilder.from_exception(error)
+        ErrorEnvelopeBuilder.from_exception(error)
         
         analysis = analyzer.analyze(error)
         

@@ -4,7 +4,6 @@ Unit tests for Governance & Safety Layer.
 Tests content filtering, secret detection, PII detection, and knowledge entry validation.
 """
 
-from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest

@@ -94,8 +94,8 @@ def _run_session_start_hydration(project_root: Path, *, show_ready: bool = False
     if not _session_hydration_enabled(project_root):
         return
     try:
-        from tapps_agents.beads.hydration import hydrate_to_beads
         from tapps_agents.beads.client import is_available, run_bd
+        from tapps_agents.beads.hydration import hydrate_to_beads
 
         if not is_available(project_root):
             return

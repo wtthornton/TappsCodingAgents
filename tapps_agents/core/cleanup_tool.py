@@ -293,9 +293,9 @@ class CleanupTool:
                 "errors": list[str],
             }
         """
-        import sys
-        import shutil
         import logging
+        import shutil
+        import sys
 
         logger = logging.getLogger(__name__)
 

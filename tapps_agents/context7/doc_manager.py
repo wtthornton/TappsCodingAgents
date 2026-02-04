@@ -157,7 +157,7 @@ class Context7DocManager:
             "last_updated": datetime.now().isoformat(),
         }
         
-        for key, info in self.index.items():
+        for _key, info in self.index.items():
             library = info["library"]
             topic = info.get("topic")
             

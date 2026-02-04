@@ -591,7 +591,7 @@ class TestImplementerAgentReviewIntegration:
             mock_reviewer.activate = AsyncMock()
             mock_reviewer_class.return_value = mock_reviewer
             
-            result = await agent._review_code(code, file_path)
+            await agent._review_code(code, file_path)
             
             assert mock_reviewer_class.called
             assert agent.reviewer is not None

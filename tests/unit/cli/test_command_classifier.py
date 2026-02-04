@@ -1,7 +1,6 @@
 """
 Unit tests for command classification system.
 """
-import pytest
 
 from tapps_agents.cli.command_classifier import (
     CommandClassifier,

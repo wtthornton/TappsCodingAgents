@@ -4,17 +4,18 @@ Base classes for CLI command testing.
 Provides common setup, teardown, and utilities for CLI tests.
 """
 
-import pytest
 from pathlib import Path
 from typing import Any
 
-from tests.e2e.fixtures.cli_harness import CLIHarness, CLIResult
+import pytest
+
 from tests.e2e.cli.validation_helpers import (
-    assert_success_exit,
-    assert_valid_json,
-    assert_text_output,
     assert_file_exists,
+    assert_success_exit,
+    assert_text_output,
+    assert_valid_json,
 )
+from tests.e2e.fixtures.cli_harness import CLIHarness, CLIResult
 
 
 class CLICommandTestBase:

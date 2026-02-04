@@ -164,7 +164,7 @@ class TestRequirementsWorkflowE2E:
             await planner.close()
         
         # Step 3: Verify files were created
-        requirements_file = tmp_path / "requirements.md"
+        tmp_path / "requirements.md"
         # Requirements file may or may not exist depending on mode
         # (Cursor mode returns instructions, CLI mode creates files)
         

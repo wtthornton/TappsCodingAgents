@@ -2,7 +2,6 @@
 Unit tests for Ops Agent.
 """
 
-import json
 from unittest.mock import AsyncMock, patch
 
 import pytest

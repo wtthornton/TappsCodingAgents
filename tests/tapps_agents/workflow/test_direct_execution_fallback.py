@@ -2,7 +2,6 @@
 Tests for direct_execution_fallback.py
 """
 
-import asyncio
 import tempfile
 from pathlib import Path
 
@@ -67,7 +66,6 @@ class TestDirectExecutionFallback:
         
         # Use a simple command that should succeed (Windows-compatible)
         # Use echo or a simple Python command without nested quotes
-        import sys
         import platform
         if platform.system() == "Windows":
             # Windows: use echo command
@@ -95,7 +93,6 @@ class TestDirectExecutionFallback:
         fallback = DirectExecutionFallback()
         
         # Use a command that should fail (Windows-compatible)
-        import sys
         import platform
         if platform.system() == "Windows":
             # Windows: use exit command
@@ -116,7 +113,6 @@ class TestDirectExecutionFallback:
     async def test_execute_command_with_worktree_path(self):
         """Test executing command in specific worktree path."""
         import sys
-        import platform
         with tempfile.TemporaryDirectory() as tmpdir:
             worktree_path = Path(tmpdir)
             fallback = DirectExecutionFallback()

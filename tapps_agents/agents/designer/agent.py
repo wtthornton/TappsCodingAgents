@@ -706,7 +706,7 @@ Format as structured JSON with detailed design system specification."""
 
         try:
             # Prepare instruction for Cursor Skills
-            instruction = GenericInstruction(
+            GenericInstruction(
                 agent_name="designer",
                 command="create-design-system",
                 prompt=prompt,

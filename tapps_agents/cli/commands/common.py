@@ -1,9 +1,7 @@
 """
 Shared command utilities for output formatting and error handling
 """
-import json
 import os
-import sys
 from typing import Any
 
 from ..command_classifier import CommandNetworkRequirement

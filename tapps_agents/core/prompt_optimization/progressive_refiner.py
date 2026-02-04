@@ -5,7 +5,6 @@ Implements incremental improvements without catastrophic forgetting.
 """
 
 import logging
-from typing import Any
 from uuid import uuid4
 
 from ..evaluation_models import PromptVersion

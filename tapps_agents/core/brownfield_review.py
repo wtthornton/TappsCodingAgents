@@ -174,7 +174,7 @@ class BrownfieldReviewOrchestrator:
                     )
                     for k, v in state.get("rag_results", {}).items()
                 }
-                logger.info(f"Loaded RAG results from saved state")
+                logger.info("Loaded RAG results from saved state")
 
         except Exception as e:
             error_msg = f"Brownfield review failed: {e}"
@@ -472,7 +472,7 @@ class BrownfieldReviewOrchestrator:
             return None
 
         try:
-            with open(self.state_file, "r", encoding="utf-8") as f:
+            with open(self.state_file, encoding="utf-8") as f:
                 return json.load(f)
         except Exception as e:
             logger.warning(f"Failed to load state: {e}")

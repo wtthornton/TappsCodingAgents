@@ -3,7 +3,6 @@ Ops Agent - Security scanning, compliance checks, deployment, and infrastructure
 """
 
 import inspect
-import json
 from pathlib import Path
 from typing import Any
 
@@ -177,7 +176,7 @@ Return findings in JSON format:
 }}"""
 
             # Prepare instruction for Cursor Skills
-            instruction = GenericInstruction(
+            GenericInstruction(
                 agent_name="ops",
                 command="analyze-security",
                 prompt=prompt,
@@ -314,7 +313,7 @@ Return findings in JSON format:
 }}"""
 
         # Prepare instruction for Cursor Skills
-        instruction = GenericInstruction(
+        GenericInstruction(
             agent_name="ops",
             command="check-compliance",
             prompt=prompt,

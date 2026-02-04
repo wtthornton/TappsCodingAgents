@@ -9,8 +9,7 @@ Tests cover:
 - File system operations
 """
 
-from datetime import datetime, UTC, timedelta
-from pathlib import Path
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -71,7 +70,7 @@ class TestExternalFeedbackStorage:
 
         import json
 
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             data = json.load(f)
 
         assert data["feedback_id"] == sample_feedback.feedback_id

@@ -14,18 +14,18 @@ Acceptance Criteria (from step2-user-stories.md):
 - TS-004: Each score includes explanation, reason, recommendations
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
 
 from tapps_agents.agents.reviewer.typescript_scorer import (
-    TypeScriptScorer,
-    SecurityIssue,
-    ScoreExplanation,
     DANGEROUS_PATTERNS,
     REACT_SECURITY_PATTERNS,
+    ScoreExplanation,
+    SecurityIssue,
+    TypeScriptScorer,
 )
-
 
 # =============================================================================
 # ACCEPTANCE CRITERIA TESTS - Mapped from Gherkin in step2-user-stories.md

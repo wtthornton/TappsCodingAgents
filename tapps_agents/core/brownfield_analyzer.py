@@ -13,8 +13,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..core.project_profile import load_project_profile
 from ..experts.domain_detector import DomainMapping, DomainStackDetector
-from ..core.project_profile import ProjectProfile, load_project_profile
 
 logger = logging.getLogger(__name__)
 

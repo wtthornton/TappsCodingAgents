@@ -1,11 +1,11 @@
 """Check if background agents are running and start them if needed."""
-import os
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
 
 from tapps_agents.workflow.background_agent_api import BackgroundAgentAPI
+
 from tapps_agents.core.runtime_mode import is_cursor_mode
 
 print("=" * 70)

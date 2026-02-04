@@ -4,8 +4,6 @@ Tests for WorkflowDocumentationReader.
 Tests reading step documentation and state from .md files.
 """
 
-import tempfile
-from pathlib import Path
 
 import pytest
 

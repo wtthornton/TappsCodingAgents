@@ -11,9 +11,7 @@ planning time and token usage.
 """
 
 from dataclasses import dataclass
-from typing import Literal, Optional
-from pathlib import Path
-import re
+from typing import Literal
 
 PresetType = Literal["minimal", "standard", "comprehensive", "full-sdlc"]
 
@@ -88,7 +86,7 @@ class PresetRecommender:
     def recommend(
         self,
         prompt: str,
-        file_context: Optional[dict] = None
+        file_context: dict | None = None
     ) -> PresetRecommendation:
         """Analyze task and recommend preset.
 
@@ -163,7 +161,7 @@ class PresetRecommender:
     def _analyze_complexity(
         self,
         prompt: str,
-        context: Optional[dict]
+        context: dict | None
     ) -> float:
         """Score task complexity 1-10."""
         score = 5.0  # Baseline
@@ -202,7 +200,7 @@ class PresetRecommender:
     def _analyze_risk(
         self,
         prompt: str,
-        context: Optional[dict]
+        context: dict | None
     ) -> float:
         """Score task risk 1-10."""
         score = 5.0  # Baseline
@@ -255,7 +253,7 @@ class PresetRecommender:
 
 def recommend_preset(
     prompt: str,
-    file_context: Optional[dict] = None
+    file_context: dict | None = None
 ) -> PresetRecommendation:
     """Convenience function to recommend preset.
 

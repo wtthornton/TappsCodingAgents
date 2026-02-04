@@ -11,14 +11,12 @@ Tests cover:
 - Strict vs non-strict mode
 """
 
-from pathlib import Path
 
 import pytest
 
 from tapps_agents.workflow.parser import WorkflowParser
 from tapps_agents.workflow.schema_validator import (
     SchemaVersion,
-    ValidationError,
     WorkflowSchemaValidator,
 )
 

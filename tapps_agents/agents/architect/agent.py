@@ -975,7 +975,7 @@ Format as structured JSON with boundary and interface definitions."""
             if diagram_type == "component":
                 diagram_code = generator.generate_plantuml_component_diagram(architecture)
             else:
-                return {"error": f"PlantUML only supports component diagrams currently"}
+                return {"error": "PlantUML only supports component diagrams currently"}
 
         else:
             return {"error": f"Unsupported format: {format_type}. Use: mermaid, plantuml"}

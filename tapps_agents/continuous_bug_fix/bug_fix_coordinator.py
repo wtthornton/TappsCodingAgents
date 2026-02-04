@@ -9,7 +9,6 @@ from typing import Any
 from ..core.config import ProjectConfig, load_config
 from ..simple_mode.intent_parser import Intent, IntentType
 from ..simple_mode.orchestrators.fix_orchestrator import FixOrchestrator
-
 from .bug_finder import BugInfo
 
 logger = logging.getLogger(__name__)

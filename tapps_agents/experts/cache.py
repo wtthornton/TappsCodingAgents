@@ -10,13 +10,13 @@ reducing token usage and improving response time.
 - Track hit/miss statistics
 """
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta
-from pathlib import Path
-from typing import Any, Optional
 import hashlib
 import json
 import logging
+from dataclasses import dataclass
+from datetime import datetime, timedelta
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -72,7 +72,7 @@ class ExpertCache:
 
     def __init__(
         self,
-        cache_dir: Optional[Path] = None,
+        cache_dir: Path | None = None,
         ttl_hours: int = 24,
         enable_disk_cache: bool = True
     ):
@@ -101,7 +101,7 @@ class ExpertCache:
         self,
         query: str,
         domain: str
-    ) -> Optional[CachedExpertResponse]:
+    ) -> CachedExpertResponse | None:
         """Get cached response for query.
 
         Args:

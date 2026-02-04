@@ -1,19 +1,15 @@
 """Tests for step_results module."""
 
-import pytest
 
 from tapps_agents.simple_mode.step_results import (
     ArchitectStepResult,
     BaseStepResult,
     DesignerStepResult,
     EnhancerStepResult,
-    ImplementerStepResult,
     PlannerStepResult,
     ReviewerStepResult,
     StepResultParser,
     StepStatus,
-    QAStepResult,
-    VerificationStepResult,
 )
 
 

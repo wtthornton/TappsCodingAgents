@@ -3,16 +3,14 @@ Learning export command handlers
 """
 import sys
 from pathlib import Path
-from typing import Any
 
-from ...core.learning_export import LearningDataExporter
-from ...core.learning_dashboard import LearningDashboard
 from ...core.capability_registry import CapabilityRegistry
-from ...core.analytics_dashboard import AnalyticsDashboard
+from ...core.learning_dashboard import LearningDashboard
+from ...core.learning_export import LearningDataExporter
 from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
-from .common import check_result_error, format_json_output
+from .common import check_result_error
 
 
 def handle_learning_command(args: object) -> None:

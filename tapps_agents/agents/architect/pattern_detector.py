@@ -8,7 +8,6 @@ Service+Repository, Clean/Hexagonal, CQRS, Microservices, Event Sourcing.
 from pathlib import Path
 from typing import Any
 
-
 # (pattern_name, list of dir/file signatures; any match adds evidence)
 _PATTERN_SIGS: list[tuple[str, list[list[str]]]] = [
     ("Layered", [["handlers", "middleware"], ["api", "services", "models"], ["controllers", "services", "repositories"]]),

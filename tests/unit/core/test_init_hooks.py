@@ -1,8 +1,9 @@
 """Unit tests for init hook helpers (init_hooks_minimal, init_hooks_and_context)."""
-import pytest
 from pathlib import Path
 
-from tapps_agents.core.init_project import init_hooks_minimal, init_hooks_and_context
+import pytest
+
+from tapps_agents.core.init_project import init_hooks_and_context, init_hooks_minimal
 
 
 @pytest.mark.unit
@@ -74,6 +75,6 @@ def test_init_hooks_and_context_hooks_yaml_has_all_hooks_disabled(tmp_path: Path
     hooks_file = tmp_path / ".tapps-agents" / "hooks.yaml"
     data = yaml.safe_load(hooks_file.read_text())
     assert "hooks" in data
-    for event_name, hook_list in data["hooks"].items():
+    for _event_name, hook_list in data["hooks"].items():
         for hook in hook_list:
             assert hook.get("enabled") is False, f"Hook {hook.get('name')} should be disabled"

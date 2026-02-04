@@ -9,9 +9,7 @@ Supports:
 
 import ast
 import logging
-import re
 from pathlib import Path
-from typing import Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -82,7 +80,7 @@ class LibraryDetector:
         Returns:
             List of library names (deduplicated)
         """
-        libraries: Set[str] = set()
+        libraries: set[str] = set()
         
         try:
             tree = ast.parse(code)
@@ -115,7 +113,7 @@ class LibraryDetector:
         Returns:
             List of library names (deduplicated)
         """
-        libraries: Set[str] = set()
+        libraries: set[str] = set()
         
         # If file_path is a file, use it directly
         # If it's a directory, look for requirements.txt in it
@@ -129,7 +127,7 @@ class LibraryDetector:
             return []
         
         try:
-            with open(req_file, "r", encoding="utf-8") as f:
+            with open(req_file, encoding="utf-8") as f:
                 for line in f:
                     package = self._parse_requirements_line(line)
                     if package and self._should_include(package):
@@ -149,7 +147,7 @@ class LibraryDetector:
         Returns:
             List of library names (deduplicated)
         """
-        libraries: Set[str] = set()
+        libraries: set[str] = set()
         
         # If file_path is a file, look for pyproject.toml in parent
         # If it's a directory, look for pyproject.toml in it
@@ -185,7 +183,7 @@ class LibraryDetector:
             # Check [tool.poetry.dependencies] (Poetry)
             if "tool" in data and "poetry" in data["tool"]:
                 if "dependencies" in data["tool"]["poetry"]:
-                    for dep_name, dep_spec in data["tool"]["poetry"]["dependencies"].items():
+                    for dep_name, _dep_spec in data["tool"]["poetry"]["dependencies"].items():
                         if dep_name != "python" and self._should_include(dep_name):
                             libraries.add(dep_name)
             
@@ -205,7 +203,7 @@ class LibraryDetector:
         Returns:
             List of library names (deduplicated, merged from all sources)
         """
-        all_libraries: Set[str] = set()
+        all_libraries: set[str] = set()
         
         # Detect from code if enabled
         if self.detection_depth in ("code", "both"):
@@ -237,7 +235,7 @@ class LibraryDetector:
         
         return True
     
-    def _parse_requirements_line(self, line: str) -> Optional[str]:
+    def _parse_requirements_line(self, line: str) -> str | None:
         """
         Parse a single line from requirements.txt.
         
@@ -270,7 +268,7 @@ class LibraryDetector:
         
         return package if package else None
     
-    def _parse_dependency_spec(self, spec: str) -> Optional[str]:
+    def _parse_dependency_spec(self, spec: str) -> str | None:
         """
         Parse a dependency specification from pyproject.toml.
         

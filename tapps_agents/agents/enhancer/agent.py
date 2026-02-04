@@ -741,25 +741,6 @@ class EnhancerAgent(BaseAgent):
             except Exception as e:
                 logger.debug(f"C1: Library detection failed: {e}")
 
-        analysis_prompt = f"""Analyze the following prompt and extract:
-1. Intent (feature, bug fix, refactor, documentation, etc.)
-2. Detected domains (security, user-management, payments, etc.)
-3. Estimated scope (small: 1-2 files, medium: 3-5 files, large: 6+ files)
-4. Recommended workflow type (greenfield, brownfield, quick-fix)
-5. Key technologies mentioned
-6. Complexity level (low, medium, high)
-
-Prompt: {prompt}
-
-Provide structured JSON response with the following format:
-{{
-  "intent": "feature",
-  "scope": "medium",
-  "workflow_type": "greenfield",
-  "domains": ["security", "user-management"],
-  "technologies": ["Python", "FastAPI"],
-  "complexity": "medium"
-}}"""
 
         # Perform analysis using analyst agent (now has analyze-prompt command)
         try:
@@ -841,9 +822,9 @@ Provide structured JSON response with the following format:
         Detects domains and suggests expert consultations for adaptive learning.
         """
         try:
+            from ...core.llm_communicator import LLMCommunicator
             from ...experts.adaptive_domain_detector import AdaptiveDomainDetector
             from ...experts.expert_suggester import ExpertSuggester
-            from ...core.llm_communicator import LLMCommunicator
 
             # Initialize components
             project_root = self._project_root or Path.cwd()

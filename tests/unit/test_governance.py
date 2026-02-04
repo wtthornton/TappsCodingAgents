@@ -2,14 +2,17 @@
 Tests for Governance & Safety Layer.
 """
 
-from pathlib import Path
 import tempfile
+from pathlib import Path
 
 from tapps_agents.experts.governance import (
     GovernanceLayer,
     GovernancePolicy,
 )
-from tapps_agents.experts.knowledge_ingestion import KnowledgeEntry, KnowledgeIngestionPipeline
+from tapps_agents.experts.knowledge_ingestion import (
+    KnowledgeEntry,
+    KnowledgeIngestionPipeline,
+)
 
 
 def test_governance_layer_initialization():

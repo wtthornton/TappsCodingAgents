@@ -75,7 +75,7 @@ def write_debug_log(
         
         return True
         
-    except (OSError, IOError) as e:
+    except OSError as e:
         # Silently ignore - debug logs are non-critical
         # Only log to Python logger at debug level (not stderr)
         logger.debug(f"Debug log write failed (non-critical): {e}")
@@ -119,6 +119,6 @@ def ensure_debug_log_directory(project_root: Path | None = None) -> bool:
         cursor_dir = validator.project_root / ".cursor"
         cursor_dir.mkdir(parents=True, exist_ok=True)
         return True
-    except (OSError, IOError) as e:
+    except OSError as e:
         logger.debug(f"Failed to create .cursor directory: {e}")
         return False

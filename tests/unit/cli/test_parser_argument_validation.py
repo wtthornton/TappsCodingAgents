@@ -8,7 +8,6 @@ This helps catch issues where documentation shows arguments that don't exist in 
 import argparse
 import re
 from pathlib import Path
-from typing import Any
 
 import pytest
 

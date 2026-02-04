@@ -12,7 +12,6 @@ from typing import Any, Literal, TypedDict
 
 from ..simple_mode.intent_parser import IntentParser, IntentType
 
-
 # ============================================================================
 # Type Definitions
 # ============================================================================
@@ -547,7 +546,7 @@ class WorkflowSuggester:
                 "reason": "Bug fix or error resolution detected",
             },
             IntentType.REVIEW: {
-                "command": f'@simple-mode *review <file>',
+                "command": '@simple-mode *review <file>',
                 "type": "review",
                 "benefits": [
                     "Comprehensive quality scores (5 metrics)",
@@ -557,7 +556,7 @@ class WorkflowSuggester:
                 "reason": "Code review request detected",
             },
             IntentType.TEST: {
-                "command": f'@simple-mode *test <file>',
+                "command": '@simple-mode *test <file>',
                 "type": "test",
                 "benefits": [
                     "Comprehensive test generation",
@@ -567,7 +566,7 @@ class WorkflowSuggester:
                 "reason": "Test generation request detected",
             },
             IntentType.REFACTOR: {
-                "command": f'@simple-mode *refactor <file>',
+                "command": '@simple-mode *refactor <file>',
                 "type": "refactor",
                 "benefits": [
                     "Pattern detection and modernization",
@@ -614,9 +613,9 @@ class WorkflowSuggester:
             "",
             f"For {suggestion.reason}, consider using:",
             "",
-            f"```",
+            "```",
             f"{suggestion.workflow_command}",
-            f"```",
+            "```",
             "",
             "**Benefits:**",
         ]

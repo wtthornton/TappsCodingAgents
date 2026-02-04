@@ -1,19 +1,14 @@
 """Tests for StepCheckpointManager."""
 
-import json
 from datetime import datetime
-from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
 from tapps_agents.workflow.step_checkpoint import (
-    StepCheckpointManager,
-    StepCheckpoint,
     CheckpointNotFoundError,
-    CheckpointValidationError,
+    StepCheckpoint,
+    StepCheckpointManager,
 )
-from tapps_agents.workflow.models import Artifact
 
 
 @pytest.fixture

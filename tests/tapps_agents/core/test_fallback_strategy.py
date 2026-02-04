@@ -2,7 +2,6 @@
 Tests for fallback_strategy.py
 """
 
-import tempfile
 from pathlib import Path
 
 import pytest

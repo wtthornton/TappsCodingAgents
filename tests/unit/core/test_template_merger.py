@@ -189,7 +189,7 @@ class TestConditionalBlockProcessing:
         content = "{{#if enabled}}content{{/if}}"
         variables = {"enabled": True}
         trace = TemplateTrace()
-        result = _process_conditional_blocks(content, variables, trace)
+        _process_conditional_blocks(content, variables, trace)
         
         assert len(trace.conditionals_evaluated) == 1
         assert trace.conditionals_evaluated[0].variable_path == "enabled"

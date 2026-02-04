@@ -25,22 +25,21 @@ Usage:
 
 import asyncio
 import hashlib
-import json
 import re
 import shutil
 import zipfile
 from abc import ABC, abstractmethod
-from datetime import datetime, timedelta
-from enum import Enum
+from datetime import datetime
+from difflib import SequenceMatcher
+from enum import StrEnum
 from pathlib import Path
-from typing import Dict, List, Optional, Set
+from typing import Optional
 
 import aiofiles
-from difflib import SequenceMatcher
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field
 
 try:
-    from git import Repo, InvalidGitRepositoryError
+    from git import InvalidGitRepositoryError, Repo
     GIT_AVAILABLE = True
 except ImportError:
     GIT_AVAILABLE = False
@@ -50,7 +49,7 @@ except ImportError:
 # Data Models (Pydantic)
 # =============================================================================
 
-class ActionType(str, Enum):
+class ActionType(StrEnum):
     """Types of cleanup actions."""
     DELETE = "delete"
     MOVE = "move"
@@ -61,7 +60,7 @@ class ActionType(str, Enum):
         return self.value
 
 
-class SafetyLevel(str, Enum):
+class SafetyLevel(StrEnum):
     """Safety level for cleanup actions."""
     SAFE = "safe"
     MODERATE = "moderate"
@@ -76,7 +75,7 @@ class SafetyLevel(str, Enum):
         return self in (SafetyLevel.MODERATE, SafetyLevel.RISKY)
 
 
-class FileCategory(str, Enum):
+class FileCategory(StrEnum):
     """File categories for cleanup."""
     KEEP = "keep"
     ARCHIVE = "archive"
@@ -91,7 +90,7 @@ class FileCategory(str, Enum):
 class DuplicateGroup(BaseModel):
     """Group of files with identical content."""
     hash: str = Field(..., description="SHA256 hash of file content", min_length=64, max_length=64)
-    files: List[Path] = Field(..., description="List of file paths with identical content", min_length=2)
+    files: list[Path] = Field(..., description="List of file paths with identical content", min_length=2)
     size: int = Field(..., description="File size in bytes", ge=0)
     recommendation: str = Field(..., description="Recommended action for this group")
 
@@ -103,7 +102,7 @@ class DuplicateGroup(BaseModel):
         return self.files[0]
 
     @property
-    def duplicates(self) -> List[Path]:
+    def duplicates(self) -> list[Path]:
         """Return files to delete/merge (all except first)."""
         return self.files[1:]
 
@@ -143,9 +142,9 @@ class AnalysisReport(BaseModel):
     """Analysis report of project structure."""
     total_files: int = Field(..., description="Total number of files analyzed", ge=0)
     total_size: int = Field(..., description="Total size of all files in bytes", ge=0)
-    duplicates: List[DuplicateGroup] = Field(default_factory=list, description="Groups of duplicate files")
-    outdated_files: List[OutdatedFile] = Field(default_factory=list, description="Files not modified recently")
-    naming_issues: List[NamingIssue] = Field(default_factory=list, description="Files with naming convention violations")
+    duplicates: list[DuplicateGroup] = Field(default_factory=list, description="Groups of duplicate files")
+    outdated_files: list[OutdatedFile] = Field(default_factory=list, description="Files not modified recently")
+    naming_issues: list[NamingIssue] = Field(default_factory=list, description="Files with naming convention violations")
     timestamp: datetime = Field(default_factory=datetime.now, description="When analysis was performed")
     scan_path: Path = Field(..., description="Root path that was analyzed")
 
@@ -192,8 +191,8 @@ class AnalysisReport(BaseModel):
 class CleanupAction(BaseModel):
     """Individual cleanup action."""
     action_type: ActionType = Field(..., description="Type of action")
-    source_files: List[Path] = Field(..., description="Source file(s) for this action", min_length=1)
-    target_path: Optional[Path] = Field(None, description="Target path (for MOVE/RENAME actions)")
+    source_files: list[Path] = Field(..., description="Source file(s) for this action", min_length=1)
+    target_path: Path | None = Field(None, description="Target path (for MOVE/RENAME actions)")
     rationale: str = Field(..., description="Explanation for this action", min_length=10)
     priority: int = Field(..., description="Priority level (1=low, 2=medium, 3=high)", ge=1, le=3)
     safety_level: SafetyLevel = Field(..., description="Risk assessment for this action")
@@ -209,9 +208,9 @@ class CleanupAction(BaseModel):
 
 class CleanupPlan(BaseModel):
     """Complete cleanup plan with prioritized actions."""
-    actions: List[CleanupAction] = Field(..., description="List of cleanup actions to perform")
-    priorities: Dict[str, int] = Field(default_factory=dict, description="Action counts by priority")
-    dependencies: Dict[str, List[str]] = Field(default_factory=dict, description="Action dependencies")
+    actions: list[CleanupAction] = Field(..., description="List of cleanup actions to perform")
+    priorities: dict[str, int] = Field(default_factory=dict, description="Action counts by priority")
+    dependencies: dict[str, list[str]] = Field(default_factory=dict, description="Action dependencies")
     estimated_savings: int = Field(..., description="Total estimated space savings in bytes", ge=0)
     estimated_file_reduction: float = Field(..., description="Estimated file reduction percentage", ge=0.0, le=100.0)
     created_at: datetime = Field(default_factory=datetime.now, description="When plan was created")
@@ -253,10 +252,10 @@ class OperationResult(BaseModel):
     """Result of a single cleanup operation."""
     operation_id: str = Field(..., description="Unique operation ID")
     action_type: ActionType = Field(..., description="Type of action performed")
-    source_files: List[Path] = Field(..., description="Source file(s)")
-    target_path: Optional[Path] = Field(None, description="Target path (if applicable)")
+    source_files: list[Path] = Field(..., description="Source file(s)")
+    target_path: Path | None = Field(None, description="Target path (if applicable)")
     status: str = Field(..., description="Operation status", pattern="^(SUCCESS|FAILED|SKIPPED)$")
-    error_message: Optional[str] = Field(None, description="Error message if operation failed")
+    error_message: str | None = Field(None, description="Error message if operation failed")
     references_updated: int = Field(0, description="Number of cross-references updated", ge=0)
     timestamp: datetime = Field(default_factory=datetime.now, description="When operation was performed")
 
@@ -270,12 +269,12 @@ class OperationResult(BaseModel):
 
 class ExecutionReport(BaseModel):
     """Complete execution report."""
-    operations: List[OperationResult] = Field(..., description="List of operation results")
+    operations: list[OperationResult] = Field(..., description="List of operation results")
     files_modified: int = Field(..., description="Total number of files modified", ge=0)
     files_deleted: int = Field(0, description="Number of files deleted", ge=0)
     files_moved: int = Field(0, description="Number of files moved", ge=0)
     files_renamed: int = Field(0, description="Number of files renamed", ge=0)
-    backup_location: Optional[Path] = Field(None, description="Path to backup archive")
+    backup_location: Path | None = Field(None, description="Path to backup archive")
     started_at: datetime = Field(..., description="Execution start time")
     completed_at: datetime = Field(..., description="Execution completion time")
     dry_run: bool = Field(False, description="Whether this was a dry-run")
@@ -337,7 +336,7 @@ class ProjectAnalyzer:
         """
         self.project_root = project_root.resolve()
         self._validate_path(self.project_root)
-        self._repo: Optional['Repo'] = None
+        self._repo: Repo | None = None
         if GIT_AVAILABLE:
             try:
                 self._repo = Repo(self.project_root)
@@ -351,7 +350,7 @@ class ProjectAnalyzer:
         if not path.is_dir():
             raise ValueError(f"Path is not a directory: {path}")
 
-    async def scan_directory_structure(self, path: Path, pattern: str = "*.md") -> List[Path]:
+    async def scan_directory_structure(self, path: Path, pattern: str = "*.md") -> list[Path]:
         """Scan directory for files matching pattern.
 
         Args:
@@ -362,9 +361,9 @@ class ProjectAnalyzer:
             List of file paths matching pattern
         """
         self._validate_path(path)
-        files: List[Path] = []
+        files: list[Path] = []
 
-        def scan_sync(directory: Path) -> List[Path]:
+        def scan_sync(directory: Path) -> list[Path]:
             """Synchronous scan helper."""
             return list(directory.rglob(pattern))
 
@@ -392,7 +391,7 @@ class ProjectAnalyzer:
 
         return sha256.hexdigest()
 
-    async def detect_duplicates(self, files: List[Path]) -> List[DuplicateGroup]:
+    async def detect_duplicates(self, files: list[Path]) -> list[DuplicateGroup]:
         """Detect duplicate files by content hash.
 
         Args:
@@ -401,14 +400,14 @@ class ProjectAnalyzer:
         Returns:
             List of duplicate groups
         """
-        hash_map: Dict[str, List[Path]] = {}
+        hash_map: dict[str, list[Path]] = {}
 
         # Calculate hashes concurrently
         tasks = [self.hash_file(f) for f in files]
         hashes = await asyncio.gather(*tasks)
 
         # Group files by hash
-        for file, file_hash in zip(files, hashes):
+        for file, file_hash in zip(files, hashes, strict=False):
             hash_map.setdefault(file_hash, []).append(file)
 
         # Create duplicate groups (only groups with 2+ files)
@@ -425,7 +424,7 @@ class ProjectAnalyzer:
 
         return sorted(duplicates, key=lambda g: g.savings, reverse=True)
 
-    def analyze_naming_patterns(self, files: List[Path]) -> List[NamingIssue]:
+    def analyze_naming_patterns(self, files: list[Path]) -> list[NamingIssue]:
         """Analyze file naming patterns and detect violations.
 
         Args:
@@ -468,7 +467,7 @@ class ProjectAnalyzer:
 
         return issues
 
-    def detect_outdated_files(self, files: List[Path], age_threshold_days: int = 90) -> List[OutdatedFile]:
+    def detect_outdated_files(self, files: list[Path], age_threshold_days: int = 90) -> list[OutdatedFile]:
         """Detect files that haven't been modified recently.
 
         Args:
@@ -529,7 +528,7 @@ class ProjectAnalyzer:
         # Use filesystem modification time
         return datetime.fromtimestamp(file.stat().st_mtime)
 
-    def _count_references(self, target_file: Path, all_files: List[Path]) -> int:
+    def _count_references(self, target_file: Path, all_files: list[Path]) -> int:
         """Count references to target file in other files.
 
         Args:
@@ -623,13 +622,13 @@ class CleanupPlanner:
         except Exception:
             return 0.0
 
-    def categorize_files(self) -> Dict[FileCategory, List[Path]]:
+    def categorize_files(self) -> dict[FileCategory, list[Path]]:
         """Categorize files based on analysis results.
 
         Returns:
             Dictionary mapping categories to file lists
         """
-        categories: Dict[FileCategory, List[Path]] = {
+        categories: dict[FileCategory, list[Path]] = {
             FileCategory.KEEP: [],
             FileCategory.ARCHIVE: [],
             FileCategory.DELETE: [],
@@ -652,7 +651,7 @@ class CleanupPlanner:
 
         return categories
 
-    def prioritize_actions(self, actions: List[CleanupAction]) -> List[CleanupAction]:
+    def prioritize_actions(self, actions: list[CleanupAction]) -> list[CleanupAction]:
         """Prioritize actions by safety and impact.
 
         Args:
@@ -674,7 +673,7 @@ class CleanupPlanner:
         Returns:
             Cleanup plan with prioritized actions
         """
-        actions: List[CleanupAction] = []
+        actions: list[CleanupAction] = []
 
         # Generate actions for duplicates
         for group in self.analysis.duplicates:
@@ -834,7 +833,6 @@ class ReferenceUpdater:
             Number of references updated
         """
         references_updated = 0
-        old_name = old_path.name
 
         # Scan all text files in project
         text_extensions = {'.md', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.txt', '.rst'}
@@ -928,7 +926,7 @@ class DeleteStrategy(CleanupStrategy):
 class RenameStrategy(CleanupStrategy):
     """Strategy for renaming files."""
 
-    def __init__(self, repo: Optional['Repo'] = None, project_root: Optional[Path] = None):
+    def __init__(self, repo: Optional['Repo'] = None, project_root: Path | None = None):
         """Initialize rename strategy.
 
         Args:
@@ -990,7 +988,7 @@ class RenameStrategy(CleanupStrategy):
 class MoveStrategy(CleanupStrategy):
     """Strategy for moving files."""
 
-    def __init__(self, repo: Optional['Repo'] = None, project_root: Optional[Path] = None):
+    def __init__(self, repo: Optional['Repo'] = None, project_root: Path | None = None):
         """Initialize move strategy.
 
         Args:
@@ -1063,7 +1061,7 @@ class CleanupExecutor:
             except Exception:
                 pass
 
-        self.strategies: Dict[ActionType, CleanupStrategy] = {
+        self.strategies: dict[ActionType, CleanupStrategy] = {
             ActionType.DELETE: DeleteStrategy(),
             ActionType.RENAME: RenameStrategy(repo, self.project_root),
             ActionType.MOVE: MoveStrategy(repo, self.project_root)
@@ -1109,7 +1107,7 @@ class CleanupExecutor:
             Execution report
         """
         started_at = datetime.now()
-        operations: List[OperationResult] = []
+        operations: list[OperationResult] = []
         backup_location = None
 
         # Create backup if requested and not dry-run

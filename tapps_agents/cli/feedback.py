@@ -231,7 +231,7 @@ class ProgressTracker:
         self,
         total_steps: int,
         operation_name: str = "Operation",
-        feedback_manager: "FeedbackManager | None" = None,
+        feedback_manager: FeedbackManager | None = None,
     ):
         """
         Initialize progress tracker.
@@ -313,7 +313,7 @@ class ProgressTracker:
 class FeedbackManager:
     """Manages CLI feedback output with verbosity control."""
     
-    _instance: "FeedbackManager | None" = None
+    _instance: FeedbackManager | None = None
     _verbosity: VerbosityLevel = VerbosityLevel.NORMAL
     _format_type: str = "text"
     _progress_mode: ProgressMode = ProgressMode.AUTO
@@ -330,7 +330,7 @@ class FeedbackManager:
         self._heartbeat: Any | None = None  # ProgressHeartbeat instance
         
     @classmethod
-    def get_instance(cls) -> "FeedbackManager":
+    def get_instance(cls) -> FeedbackManager:
         """Get or create singleton instance."""
         if cls._instance is None:
             cls._instance = cls()
@@ -592,7 +592,7 @@ class FeedbackManager:
                 mode = ProgressMode.PLAIN
 
         # Plain text fallback - use ASCII-safe characters for Windows compatibility
-        from ..core.unicode_safe import safe_print, safe_format_progress_bar
+        from ..core.unicode_safe import safe_format_progress_bar, safe_print
 
         spinner = self._plain_spinner.next()
         if show_progress_bar and percentage is not None:
@@ -707,14 +707,14 @@ class FeedbackManager:
                 print("\n" + "=" * 80, file=sys.stderr)
                 print("⚠️  CURSOR AI: EXECUTION REQUIRED", file=sys.stderr)
                 print("=" * 80, file=sys.stderr)
-                print(f"\nThis command returned an instruction object that YOU MUST EXECUTE.", file=sys.stderr)
-                print(f"\nDO NOT just return this JSON - you must:", file=sys.stderr)
+                print("\nThis command returned an instruction object that YOU MUST EXECUTE.", file=sys.stderr)
+                print("\nDO NOT just return this JSON - you must:", file=sys.stderr)
                 print(f"  1. Read the file: {file_path}", file=sys.stderr)
-                print(f"  2. Extract the 'prompt' field from the instruction object below", file=sys.stderr)
-                print(f"  3. Use that prompt as your directive to improve/refactor/optimize the code", file=sys.stderr)
-                print(f"  4. Actually edit the file with improvements", file=sys.stderr)
-                print(f"  5. Explain what improvements you made and why", file=sys.stderr)
-                print(f"\nThe instruction is in: data.instruction.prompt", file=sys.stderr)
+                print("  2. Extract the 'prompt' field from the instruction object below", file=sys.stderr)
+                print("  3. Use that prompt as your directive to improve/refactor/optimize the code", file=sys.stderr)
+                print("  4. Actually edit the file with improvements", file=sys.stderr)
+                print("  5. Explain what improvements you made and why", file=sys.stderr)
+                print("\nThe instruction is in: data.instruction.prompt", file=sys.stderr)
                 print(f"Execute using: @{agent_name} *{command} or follow the prompt directly.", file=sys.stderr)
                 print("=" * 80 + "\n", file=sys.stderr)
                 sys.stderr.flush()

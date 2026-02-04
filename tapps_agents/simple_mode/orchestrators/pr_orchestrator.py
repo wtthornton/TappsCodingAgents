@@ -7,13 +7,12 @@ This orchestrator helps create pull requests with auto-generated descriptions,
 quality scores, and links to workflow documentation.
 """
 
-from pathlib import Path
-from typing import Any
-import subprocess
 import json
+import subprocess
+from typing import Any
 
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 

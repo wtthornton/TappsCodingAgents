@@ -5,7 +5,6 @@ Provides test templates and automatic test file generation.
 """
 
 from pathlib import Path
-from typing import Any
 
 from .code_generator import CodeGenerator
 

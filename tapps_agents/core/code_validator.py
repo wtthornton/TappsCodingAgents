@@ -6,10 +6,8 @@ parsers (Python ast.parse, TypeScript compiler, etc.).
 """
 
 import ast
-import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 
 @dataclass
@@ -239,7 +237,6 @@ class CodeValidator:
 
         error_msg = str(error.msg) if error.msg else ""
         error_line = error.lineno
-        error_offset = error.offset
 
         # Common fixes
         suggestions = []

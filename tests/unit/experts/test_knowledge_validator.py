@@ -10,8 +10,6 @@ import pytest
 
 from tapps_agents.experts.knowledge_validator import (
     KnowledgeBaseValidator,
-    ValidationIssue,
-    ValidationResult,
 )
 
 pytestmark = pytest.mark.unit

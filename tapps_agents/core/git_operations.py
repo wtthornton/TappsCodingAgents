@@ -10,7 +10,6 @@ import os
 import shutil
 import subprocess
 import sys
-from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any
 
@@ -232,7 +231,7 @@ def commit_changes(
             _run_git_command(["add", "-A"], cwd=path, check=True)
 
         # Commit
-        commit_result = _run_git_command(
+        _run_git_command(
             ["commit", "-m", message], cwd=path, check=True
         )
 
@@ -323,7 +322,7 @@ def push_changes(
             push_args.append("--force")
         push_args.extend(["origin", branch])
 
-        push_result = _run_git_command(push_args, cwd=path, check=True)
+        _run_git_command(push_args, cwd=path, check=True)
 
         logger.info(f"Pushed changes to remote branch '{branch}'")
 

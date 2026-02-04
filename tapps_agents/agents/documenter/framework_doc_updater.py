@@ -10,7 +10,6 @@ import re
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any
 
 from ...simple_mode.framework_change_detector import AgentInfo
 
@@ -169,7 +168,7 @@ class FrameworkDocUpdater:
             agent_entry = f"- `@{agent_name}` - {agent_info.purpose or agent_name.title()} Agent"
             insertion_index = None
 
-            for i, match in enumerate(matches):
+            for _i, match in enumerate(matches):
                 existing_agent = match.group(2)
                 if agent_name < existing_agent:
                     insertion_index = match.start()
@@ -252,7 +251,7 @@ class FrameworkDocUpdater:
                 agent_matches = list(re.finditer(agent_list_pattern, subcommands_section))
                 insertion_index = None
 
-                for i, agent_match in enumerate(agent_matches):
+                for _i, agent_match in enumerate(agent_matches):
                     existing_agent = agent_match.group(1)
                     if agent_name < existing_agent:
                         insertion_index = agent_match.start()
@@ -364,7 +363,7 @@ class FrameworkDocUpdater:
                 agent_matches = list(re.finditer(agent_list_pattern, agents_section))
                 insertion_index = None
 
-                for i, agent_match in enumerate(agent_matches):
+                for _i, agent_match in enumerate(agent_matches):
                     existing_agent = agent_match.group(1).lower()
                     if agent_name.lower() < existing_agent:
                         insertion_index = agent_match.start()

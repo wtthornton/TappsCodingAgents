@@ -4,22 +4,15 @@ Integration tests for observability features.
 Tests end-to-end observability functionality with real workflow execution.
 """
 
-import json
 from pathlib import Path
-from unittest.mock import patch
 
 import pytest
 
-from tapps_agents.workflow.event_log import WorkflowEvent, WorkflowEventLog
+from tapps_agents.core.exceptions import WorkflowNotFoundError
+from tapps_agents.workflow.event_log import WorkflowEventLog
 from tapps_agents.workflow.execution_graph import ExecutionGraphGenerator
 from tapps_agents.workflow.execution_metrics import ExecutionMetricsCollector
 from tapps_agents.workflow.observability_dashboard import ObservabilityDashboard
-from tapps_agents.workflow.exceptions import (
-    EmptyWorkflowError,
-    GraphGenerationError,
-    InvalidTraceError,
-)
-from tapps_agents.core.exceptions import WorkflowNotFoundError
 
 
 @pytest.fixture
@@ -113,9 +106,8 @@ def test_end_to_end_dashboard_generation(test_workflow_state, tmp_path: Path):
 
 def test_gate_evaluation_in_workflow_context(tmp_path: Path):
     """Test gate evaluation in actual workflow context."""
-    from tapps_agents.quality.gates.registry import get_gate_registry
     from tapps_agents.workflow.gate_integration import GateIntegration
-    from tapps_agents.workflow.models import WorkflowStep, WorkflowState
+    from tapps_agents.workflow.models import WorkflowState, WorkflowStep
     
     integration = GateIntegration()
     
@@ -162,7 +154,9 @@ def test_error_propagation_through_workflow_system(test_workflow_state):
 
 def test_cli_command_error_handling(tmp_path: Path):
     """Test CLI command error handling."""
-    from tapps_agents.cli.commands.observability import handle_observability_graph_command
+    from tapps_agents.cli.commands.observability import (
+        handle_observability_graph_command,
+    )
     
     # Test with invalid workflow_id
     with pytest.raises(SystemExit):

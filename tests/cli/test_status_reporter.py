@@ -2,9 +2,7 @@
 Tests for StatusReporter.
 """
 
-import sys
 import time
-from io import StringIO
 
 import pytest
 

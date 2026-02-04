@@ -7,7 +7,6 @@ Tests all Simple Mode commands that were missing from coverage.
 import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_success_exit, assert_valid_json
 
 
 @pytest.mark.e2e_cli

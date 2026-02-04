@@ -20,8 +20,7 @@ NOTE: This file contains legacy tests. New comprehensive tests are organized in:
 import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_valid_json, assert_success_exit
-
+from tests.e2e.cli.validation_helpers import assert_valid_json
 
 # Fixtures and test project setup are now handled by CLICommandTestBase
 

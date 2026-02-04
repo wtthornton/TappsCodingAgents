@@ -15,7 +15,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Literal
 
@@ -24,7 +24,7 @@ from tapps_agents.workflow.intent_detector import WorkflowType
 logger = logging.getLogger(__name__)
 
 
-class OutputFormat(str, Enum):
+class OutputFormat(StrEnum):
     """Output format for messages."""
 
     CLI = "cli"

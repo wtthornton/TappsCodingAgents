@@ -4,7 +4,6 @@ Unit tests for Documentation Validator.
 Tests documentation completeness validation and consistency checks.
 """
 
-from pathlib import Path
 
 import pytest
 

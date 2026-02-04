@@ -16,10 +16,10 @@ pytestmark = pytest.mark.unit
 
 from tapps_agents.workflow.intent_detector import WorkflowType
 from tapps_agents.workflow.message_formatter import (
+    WORKFLOW_BENEFITS,
     MessageConfig,
     MessageFormatter,
     OutputFormat,
-    WORKFLOW_BENEFITS,
 )
 
 

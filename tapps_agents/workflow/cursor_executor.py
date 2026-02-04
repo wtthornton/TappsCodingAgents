@@ -53,7 +53,14 @@ from .event_bus import FileBasedEventBus
 from .events import EventType, WorkflowEvent
 from .logging_helper import WorkflowLogger
 from .marker_writer import MarkerWriter
-from .models import Artifact, StepExecution, StepResult, Workflow, WorkflowState, WorkflowStep
+from .models import (
+    Artifact,
+    StepExecution,
+    StepResult,
+    Workflow,
+    WorkflowState,
+    WorkflowStep,
+)
 from .parallel_executor import ParallelStepExecutor
 from .progress_manager import ProgressUpdateManager
 from .skill_invoker import SkillInvoker
@@ -281,8 +288,8 @@ class CursorWorkflowExecutor:
 
         # Beads: create workflow issue when enabled (store for close in run finally)
         try:
-            from ..core.config import load_config
             from ..beads import require_beads
+            from ..core.config import load_config
             from ..simple_mode.beads_hooks import create_workflow_issue
 
             config = load_config(self.project_root / ".tapps-agents" / "config.yaml")

@@ -13,7 +13,6 @@ import yaml
 
 from tapps_agents.core.llm_behavior import EnforcementConfig
 
-
 pytestmark = pytest.mark.unit
 
 

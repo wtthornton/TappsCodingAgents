@@ -9,7 +9,6 @@ from pathlib import Path
 from typing import Any
 
 from tapps_agents.epic import EpicOrchestrator as CoreEpicOrchestrator
-from tapps_agents.epic.parser import EpicParser
 
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator

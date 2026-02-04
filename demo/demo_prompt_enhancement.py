@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
 TappsCodingAgents Prompt Enhancement Demo
 
@@ -12,8 +11,8 @@ Usage:
     python demo/demo_prompt_enhancement.py "Create a user authentication system"
 """
 
-import sys
 import io
+import sys
 from pathlib import Path
 
 # Fix Windows encoding issues

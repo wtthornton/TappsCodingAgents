@@ -183,7 +183,7 @@ class DesignPatternLibrary:
         if not pattern:
             return {"error": f"Pattern not found: {pattern_name}"}
 
-        arch_text = str(architecture).lower()
+        str(architecture).lower()
         compliance_score = 100.0
         violations = []
         matches = []

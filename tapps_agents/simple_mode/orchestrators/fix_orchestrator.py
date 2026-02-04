@@ -10,16 +10,16 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.config import ProjectConfig, load_config
+from tapps_agents.core.config import load_config
 from tapps_agents.core.git_operations import (
     commit_changes,
     create_and_checkout_branch,
     create_pull_request,
-    get_current_branch,
     push_changes,
 )
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
 from tapps_agents.quality.quality_gates import QualityGate, QualityThresholds
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -155,7 +155,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
         target_file = files[0] if files else None
         bug_description = error_message or intent.original_input
 
-        from ..beads_hooks import create_fix_issue, close_issue
+        from ..beads_hooks import close_issue, create_fix_issue
 
         beads_issue_id: str | None = None
         if self.config:
@@ -266,7 +266,7 @@ class FixOrchestrator(SimpleModeOrchestrator):
 
         # Extract fix suggestion from debugger analysis
         # debug_command returns: {"type": "debug", "analysis": {...}, "suggestions": [...], "fix_examples": [...]}
-        debugger_analysis = debugger_result.get("result", {}).get("analysis", {})
+        debugger_result.get("result", {}).get("analysis", {})
         suggestions = debugger_result.get("result", {}).get("suggestions", [])
         fix_examples = debugger_result.get("result", {}).get("fix_examples", [])
         

@@ -10,9 +10,10 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
-from dataclasses import dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 logger = logging.getLogger(__name__)
 
@@ -199,7 +200,7 @@ class CircuitBreaker:
                 await self._record_success()
             return result
 
-        except asyncio.TimeoutError:
+        except TimeoutError:
             async with self._lock:
                 await self._record_failure()
             logger.debug(

@@ -5,15 +5,13 @@ Observability command handlers.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 from ...workflow.event_log import WorkflowEventLog
 from ...workflow.execution_metrics import ExecutionMetricsCollector
-from ...workflow.observability_dashboard import ObservabilityDashboard
 from ...workflow.graph_visualizer import GraphVisualizer
+from ...workflow.observability_dashboard import ObservabilityDashboard
 from ..feedback import get_feedback
-from .common import format_json_output
 
 
 def handle_observability_dashboard_command(

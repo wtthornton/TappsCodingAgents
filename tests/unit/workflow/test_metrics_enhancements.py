@@ -4,14 +4,13 @@ Unit tests for enhanced execution metrics collection.
 
 from __future__ import annotations
 
-import pytest
-from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+import pytest
+
 from tapps_agents.workflow.metrics_enhancements import (
-    ExecutionMetric,
     EnhancedExecutionMetricsCollector,
-    VALID_STATUSES,
+    ExecutionMetric,
 )
 
 

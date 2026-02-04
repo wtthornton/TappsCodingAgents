@@ -236,7 +236,7 @@ def main():
             log_debug("E", "debug_mcp_error.py:main", "Package test timeout", {
                 "package": package_name
             })
-            print(f"[WARN] Package test timed out (may still be valid)")
+            print("[WARN] Package test timed out (may still be valid)")
         except Exception as e:
             log_debug("E", "debug_mcp_error.py:main", "Package test exception", {
                 "package": package_name,
@@ -266,11 +266,11 @@ def main():
     print("Summary")
     print("=" * 70)
     print(f"Config file: {mcp_file}")
-    print(f"JSON valid: Yes")
-    print(f"Context7 configured: Yes")
+    print("JSON valid: Yes")
+    print("Context7 configured: Yes")
     print(f"API key present: {'Yes' if api_key else 'No'}")
     print(f"API key format: {'Placeholder' if api_key and api_key.startswith('${') else 'Direct value'}")
-    print(f"npx available: Yes")
+    print("npx available: Yes")
     print(f"Package: {package_name or 'Unknown'}")
     print()
     print("Check Cursor's MCP output panel for detailed error messages:")

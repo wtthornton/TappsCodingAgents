@@ -7,7 +7,7 @@ Replaces score-only gates with issue + verification outcome gates.
 import logging
 from typing import Any
 
-from ..core.evaluation_models import IssueManifest, IssueSeverity
+from ..core.evaluation_models import IssueManifest
 from ..quality.quality_gates import QualityGate, QualityGateResult, QualityThresholds
 
 logger = logging.getLogger(__name__)

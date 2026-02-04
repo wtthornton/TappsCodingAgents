@@ -7,7 +7,7 @@ Implements bounded loopback protocol with structured fix plans.
 import logging
 from typing import Any
 
-from ..core.evaluation_models import Issue, IssueManifest, IssueSeverity
+from ..core.evaluation_models import Issue, IssueManifest
 
 logger = logging.getLogger(__name__)
 

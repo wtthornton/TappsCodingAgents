@@ -7,11 +7,7 @@ Tests core logic for:
 - ProgressiveReviewRollup aggregation
 """
 
-import tempfile
 from datetime import datetime
-from pathlib import Path
-
-import pytest
 
 from tapps_agents.agents.reviewer.progressive_review import (
     ProgressiveReview,

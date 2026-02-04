@@ -80,9 +80,9 @@ def calculate_fibonacci(n: int) -> int:
         """Test that learned patterns persist across sessions."""
         from tapps_agents.core.agent_learning import AgentLearner
         from tapps_agents.core.capability_registry import CapabilityRegistry
-        from tapps_agents.experts.expert_registry import ExpertRegistry
         from tapps_agents.core.hardware_profiler import HardwareProfile
         from tapps_agents.core.task_memory import TaskMemorySystem
+        from tapps_agents.experts.expert_registry import ExpertRegistry
 
         # Session 1: Learn patterns
         registry1 = CapabilityRegistry()

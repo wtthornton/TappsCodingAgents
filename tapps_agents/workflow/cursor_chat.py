@@ -7,7 +7,7 @@ Epic 8 / Story 8.3: Cursor Chat Integration
 
 import logging
 
-from ..core.unicode_safe import safe_print, _unicode_to_ascii
+from ..core.unicode_safe import safe_print
 from .progress_updates import ProgressUpdate
 
 logger = logging.getLogger(__name__)

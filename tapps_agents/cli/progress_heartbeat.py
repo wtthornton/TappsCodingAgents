@@ -8,7 +8,7 @@ ensuring users know the system is still working.
 import asyncio
 import threading
 import time
-from typing import Callable, Optional
+from collections.abc import Callable
 
 from .feedback import FeedbackManager, get_feedback
 
@@ -26,7 +26,7 @@ class ProgressHeartbeat:
         message: str = "Working...",
         start_delay: float = 2.0,
         update_interval: float = 1.0,
-        feedback_manager: Optional[FeedbackManager] = None,
+        feedback_manager: FeedbackManager | None = None,
     ):
         """
         Initialize progress heartbeat.
@@ -42,9 +42,9 @@ class ProgressHeartbeat:
         self.update_interval = update_interval
         self.feedback = feedback_manager or get_feedback()
         self._running = False
-        self._thread: Optional[threading.Thread] = None
-        self._start_time: Optional[float] = None
-        self._last_update: Optional[float] = None
+        self._thread: threading.Thread | None = None
+        self._start_time: float | None = None
+        self._last_update: float | None = None
         self._update_count = 0
         
     def start(self) -> None:
@@ -129,7 +129,7 @@ class AsyncProgressHeartbeat:
         message: str = "Working...",
         start_delay: float = 2.0,
         update_interval: float = 1.0,
-        feedback_manager: Optional[FeedbackManager] = None,
+        feedback_manager: FeedbackManager | None = None,
     ):
         """
         Initialize async progress heartbeat.
@@ -144,9 +144,9 @@ class AsyncProgressHeartbeat:
         self.start_delay = start_delay
         self.update_interval = update_interval
         self.feedback = feedback_manager or get_feedback()
-        self._task: Optional[asyncio.Task] = None
+        self._task: asyncio.Task | None = None
         self._running = False
-        self._start_time: Optional[float] = None
+        self._start_time: float | None = None
         
     async def start(self) -> None:
         """Start the heartbeat indicator."""

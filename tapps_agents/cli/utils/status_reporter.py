@@ -7,7 +7,6 @@ SIMPLE_MODE_FEEDBACK_REVIEW: includes elapsed time and estimated remaining (info
 
 import sys
 import time
-from typing import Any
 
 
 def _format_elapsed(seconds: float) -> str:

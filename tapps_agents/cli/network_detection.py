@@ -8,7 +8,6 @@ Following 2025 best practices:
 """
 import logging
 import socket
-from typing import Any
 
 try:
     import httpx

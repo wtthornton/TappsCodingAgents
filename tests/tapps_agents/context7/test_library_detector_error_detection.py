@@ -4,8 +4,6 @@ Tests for error message library detection in library_detector.py
 Tests the detect_from_error method (Enhancement 5).
 """
 
-import pytest
-from pathlib import Path
 
 from tapps_agents.context7.library_detector import LibraryDetector
 

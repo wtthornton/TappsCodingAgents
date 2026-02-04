@@ -7,14 +7,14 @@ Tests complete demo scenarios as integration tests.
 import pytest
 
 from tests.e2e.cli.scenario_test_base import ScenarioTestBase
+from tests.e2e.cli.validation_helpers import assert_valid_json
 from tests.e2e.fixtures.demo_helpers import (
-    create_test_project,
     create_test_code_files,
-    run_code_scoring_demo,
+    create_test_project,
     run_code_review_demo,
+    run_code_scoring_demo,
     run_quality_tools_demo,
 )
-from tests.e2e.cli.validation_helpers import assert_valid_json, assert_success_exit
 
 
 @pytest.mark.e2e_cli
@@ -57,7 +57,7 @@ class TestDemoScenarios(ScenarioTestBase):
         demo_dir = self.test_project / "demo_scenario"
         demo_dir.mkdir(exist_ok=True)
         project_path = create_test_project(demo_dir)
-        test_files = create_test_code_files(project_path)
+        create_test_code_files(project_path)
         src_dir = project_path / "src"
         
         # Run quality tools (linting, type checking)

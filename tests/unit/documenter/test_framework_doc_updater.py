@@ -4,7 +4,6 @@ Unit tests for Framework Documentation Updater.
 Tests documentation file updates for README.md, API.md, ARCHITECTURE.md, and agent-capabilities.mdc.
 """
 
-from pathlib import Path
 
 import pytest
 

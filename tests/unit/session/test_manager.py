@@ -7,7 +7,7 @@ import json
 import os
 import uuid
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -19,7 +19,6 @@ from tapps_agents.session.manager import (
     _reset_state_for_testing,
     _write_session_state,
 )
-
 
 pytestmark = pytest.mark.unit
 

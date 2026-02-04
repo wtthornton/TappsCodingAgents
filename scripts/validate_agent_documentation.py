@@ -215,7 +215,7 @@ def print_report(results: dict[str, Any], verbose: bool = False) -> None:
     
     # Command Reference Check
     cmd_ref = results["command_reference"]
-    print(f"Command Reference (.cursor/rules/command-reference.mdc):")
+    print("Command Reference (.cursor/rules/command-reference.mdc):")
     print(f"  File exists: {cmd_ref['file_exists']}")
     print(f"  Agents documented: {len(cmd_ref['agents_found'])}/{summary['total_agents']}")
     if cmd_ref["agents_missing"]:
@@ -224,7 +224,7 @@ def print_report(results: dict[str, Any], verbose: bool = False) -> None:
     
     # Agent Capabilities Check
     agent_cap = results["agent_capabilities"]
-    print(f"Agent Capabilities (.cursor/rules/agent-capabilities.mdc):")
+    print("Agent Capabilities (.cursor/rules/agent-capabilities.mdc):")
     print(f"  File exists: {agent_cap['file_exists']}")
     print(f"  Agents documented: {len(agent_cap['agents_found'])}/{summary['total_agents']}")
     if agent_cap["agents_missing"]:
@@ -233,7 +233,7 @@ def print_report(results: dict[str, Any], verbose: bool = False) -> None:
     
     # CLI Integration Check
     cli = results["cli_integration"]
-    print(f"CLI Integration:")
+    print("CLI Integration:")
     print(f"  Agents with parsers: {len(cli['agents_with_parsers'])}/{summary['total_agents']}")
     if cli["agents_without_parsers"]:
         print(f"  Missing parsers: {', '.join(cli['agents_without_parsers'])}")

@@ -52,7 +52,7 @@ class PythonValidator(BaseValidator):
             
             # Check for Python-specific issues
             # Missing docstrings
-            if "def " in code and not '"""' in code[:500] and not "'''" in code[:500]:
+            if "def " in code and '"""' not in code[:500] and "'''" not in code[:500]:
                 issue = Issue(
                     id=f"python_missing_docstring_{target_path.name}",
                     severity=IssueSeverity.LOW,

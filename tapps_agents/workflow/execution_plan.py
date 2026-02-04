@@ -9,7 +9,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from .models import Workflow, WorkflowStep
+from .models import Workflow
 
 
 def generate_execution_plan(workflow: Workflow) -> dict[str, Any]:

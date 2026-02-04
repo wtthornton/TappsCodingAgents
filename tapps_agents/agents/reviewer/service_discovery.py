@@ -11,7 +11,7 @@ import json
 import logging
 import re
 from dataclasses import dataclass, field
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -20,7 +20,7 @@ from ...core.language_detector import Language, LanguageDetector
 logger = logging.getLogger(__name__)
 
 
-class Priority(str, Enum):
+class Priority(StrEnum):
     """Service priority levels for phased review."""
 
     CRITICAL = "critical"

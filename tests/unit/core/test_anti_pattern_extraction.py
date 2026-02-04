@@ -2,16 +2,13 @@
 Unit tests for anti-pattern extraction functionality.
 """
 
-import pytest
-from unittest.mock import Mock, patch
 
 from tapps_agents.core.agent_learning import (
     AntiPatternExtractor,
-    NegativeFeedbackHandler,
-    FailureModeAnalyzer,
     CodePattern,
+    FailureModeAnalyzer,
+    NegativeFeedbackHandler,
 )
-from tapps_agents.core.security_scanner import SecurityScanner
 
 
 class TestAntiPatternExtractor:

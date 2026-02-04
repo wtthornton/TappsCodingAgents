@@ -3,14 +3,16 @@ Tests for observability dashboard.
 """
 
 import json
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 from tapps_agents.workflow.event_log import WorkflowEventLog
-from tapps_agents.workflow.execution_metrics import ExecutionMetric, ExecutionMetricsCollector
+from tapps_agents.workflow.execution_metrics import (
+    ExecutionMetricsCollector,
+)
 from tapps_agents.workflow.observability_dashboard import ObservabilityDashboard
 
 
@@ -218,7 +220,6 @@ def test_dashboard_corrupt_metrics(dashboard):
 def test_export_otel_missing_trace(dashboard):
     """Test OpenTelemetry export when trace is missing."""
     with patch.object(dashboard.event_log, "get_execution_trace", side_effect=FileNotFoundError()):
-        from tapps_agents.workflow.exceptions import OpenTelemetryExportError
         from tapps_agents.core.exceptions import WorkflowNotFoundError
         
         with pytest.raises(WorkflowNotFoundError):

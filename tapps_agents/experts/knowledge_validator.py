@@ -273,7 +273,7 @@ class KnowledgeBaseValidator:
         matches = link_pattern.finditer(content)
 
         for match in matches:
-            link_text = match.group(1)
+            match.group(1)
             link_target = match.group(2)
 
             # Skip external links

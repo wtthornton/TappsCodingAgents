@@ -6,7 +6,6 @@ and before/after comparisons for Simple Mode operations.
 """
 
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
 from ..cli.feedback import get_feedback

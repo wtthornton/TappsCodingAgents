@@ -5,10 +5,9 @@ Adjusts expert voting weights based on performance data.
 """
 
 import logging
-from typing import Any
 
 from .performance_tracker import ExpertPerformance, ExpertPerformanceTracker
-from .weight_distributor import ExpertWeightMatrix, WeightDistributor
+from .weight_distributor import ExpertWeightMatrix
 
 logger = logging.getLogger(__name__)
 

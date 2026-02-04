@@ -4,18 +4,15 @@ Storage manager for Tier 1 Enhancement infrastructure.
 Provides file-based storage for feedback, learned prompts, and evaluation results.
 """
 
-import hashlib
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from .storage_models import (
     CleanupPolicy,
-    StorageMetadata,
     StoragePath,
-    VersionInfo,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,7 +73,7 @@ class FeedbackStorage:
         if not file_path.exists():
             raise FileNotFoundError(f"Feedback file not found: {file_path}")
         
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return json.load(f)
 
     def list_feedback(self, agent_name: str | None = None) -> list[Path]:
@@ -215,7 +212,7 @@ class PromptStorage:
         if not file_path.exists():
             raise FileNotFoundError(f"Prompt file not found: {file_path}")
         
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return json.load(f)
 
     def list_versions(self, prompt_type: str) -> list[str]:
@@ -304,7 +301,7 @@ class EvaluationStorage:
         if not file_path.exists():
             raise FileNotFoundError(f"Evaluation file not found: {file_path}")
         
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, encoding="utf-8") as f:
             return json.load(f)
 
     def list_evaluations(self, limit: int | None = None) -> list[Path]:

@@ -21,7 +21,7 @@ import os
 import subprocess  # nosec B404 - fixed args, no shell
 import sys
 from dataclasses import asdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -330,8 +330,8 @@ class WorkflowExecutor:
 
         # Beads: create workflow issue when enabled (store for close in execute finally)
         try:
-            from ..core.config import load_config
             from ..beads import require_beads
+            from ..core.config import load_config
             from ..simple_mode.beads_hooks import create_workflow_issue
 
             config = load_config(self.project_root / ".tapps-agents" / "config.yaml")
@@ -509,11 +509,13 @@ class WorkflowExecutor:
             # Dual-write workflow completion to analytics (best-effort)
             if self.state.status in ("completed", "failed") and self.workflow:
                 try:
-                    from .analytics_dual_write import record_workflow_execution_to_analytics
+                    from .analytics_dual_write import (
+                        record_workflow_execution_to_analytics,
+                    )
 
                     duration_sec = 0.0
                     if self.state.started_at:
-                        end = datetime.now(timezone.utc)
+                        end = datetime.now(UTC)
                         duration_sec = (end - self.state.started_at).total_seconds()
                     record_workflow_execution_to_analytics(
                         project_root=self.project_root,
@@ -919,7 +921,7 @@ class WorkflowExecutor:
             "command": result.step.action,
             "step_id": result.step.id,
             "workflow_id": self.state.workflow_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         if result.artifacts and isinstance(result.artifacts, dict):
             for art_name, art_data in result.artifacts.items():
@@ -1427,7 +1429,7 @@ class WorkflowExecutor:
             base_kwargs["target_file"] = str(target_path)
 
         # Get inputs from previous steps
-        enhanced_kwargs = output_passer.prepare_agent_inputs(
+        output_passer.prepare_agent_inputs(
             step_id=step.id,
             agent_name=agent_name,
             command=action,

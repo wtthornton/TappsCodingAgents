@@ -524,15 +524,15 @@ class LearningImpactReporter:
 
         # Markdown format
         lines = [
-            f"# Learning Impact Report",
-            f"",
+            "# Learning Impact Report",
+            "",
             f"**Capability**: {report['capability_id']}",
             f"**Timestamp**: {report['timestamp']}",
             f"**Overall Improvement**: {report['overall_improvement']:.2f}",
             f"**Effectiveness**: {report['effectiveness']:.2f}",
-            f"",
-            f"## Improvements",
-            f"",
+            "",
+            "## Improvements",
+            "",
         ]
 
         for metric, data in report["improvements"].items():
@@ -563,7 +563,7 @@ class LearningImpactReporter:
         total_weight = 0.0
         weighted_sum = 0.0
 
-        for metric, data in improvements.items():
+        for _metric, data in improvements.items():
             # Weight by improvement magnitude
             weight = abs(data["improvement"])
             total_weight += weight

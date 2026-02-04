@@ -4,6 +4,7 @@ Pluggable Gates System
 Provides pluggable gate interface for security, policy, and approval gates.
 """
 
+from .approval_gate import ApprovalGate
 from .base import BaseGate, GateResult, GateSeverity
 from .exceptions import (
     CircularGateDependencyError,
@@ -13,10 +14,9 @@ from .exceptions import (
     GateTimeoutError,
     MissingContextError,
 )
-from .security_gate import SecurityGate
 from .policy_gate import PolicyGate
-from .approval_gate import ApprovalGate
 from .registry import GateRegistry, get_gate_registry
+from .security_gate import SecurityGate
 
 __all__ = [
     "BaseGate",

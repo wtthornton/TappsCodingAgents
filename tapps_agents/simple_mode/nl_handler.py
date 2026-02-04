@@ -23,7 +23,7 @@ users from running inappropriate workflows.
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any
 
 from tapps_agents.core.config import ProjectConfig, load_config
 
@@ -281,7 +281,7 @@ class SimpleModeHandler:
 
                 if auto_mode:
                     choice = "N"  # Default to cancel in auto mode
-                    logger.info(f"Auto mode: defaulting to 'N' for workflow mismatch")
+                    logger.info("Auto mode: defaulting to 'N' for workflow mismatch")
                 else:
                     choice = self._prompt_user_choice(warning, workflow)
 
@@ -386,7 +386,7 @@ class SimpleModeHandler:
         """
         # Skip validation if force flag is set
         if force:
-            logger.info(f"Validation bypassed via --force flag")
+            logger.info("Validation bypassed via --force flag")
             return None
 
         # Validate workflow name

@@ -186,7 +186,7 @@ More different content.
         kb = SimpleKnowledgeBase(temp_knowledge_dir)
 
         query = "authentication content"
-        chunks = kb.search(query, max_results=10)
+        kb.search(query, max_results=10)
 
         # Create chunks manually for testing deduplication
         test_chunks = [

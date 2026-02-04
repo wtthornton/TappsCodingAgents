@@ -10,12 +10,12 @@ preventing token exhaustion and enabling long-running workflows.
 - Support auto-checkpointing at thresholds
 """
 
-from dataclasses import dataclass, asdict
-from pathlib import Path
-from datetime import datetime
-from typing import Any, Optional
 import json
 import logging
+from dataclasses import asdict, dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ Resources:
 class CheckpointManager:
     """Manage workflow checkpoints."""
 
-    def __init__(self, checkpoint_dir: Optional[Path] = None):
+    def __init__(self, checkpoint_dir: Path | None = None):
         """Initialize checkpoint manager.
 
         Args:
@@ -240,7 +240,7 @@ class CheckpointManager:
 def create_checkpoint(
     workflow_state: dict[str, Any],
     reason: str = "user_request",
-    checkpoint_dir: Optional[Path] = None
+    checkpoint_dir: Path | None = None
 ) -> WorkflowCheckpoint:
     """Convenience function to create checkpoint.
 

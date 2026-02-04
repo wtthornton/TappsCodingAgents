@@ -9,16 +9,6 @@ from .coverage_analyzer import (
     CoverageMetrics,
     CoverageReport,
 )
-from .quality_gates import (
-    QualityGate,
-    QualityGateResult,
-    QualityThresholds,
-)
-from .secret_scanner import (
-    SecretFinding,
-    SecretScanner,
-    SecretScanResult,
-)
 
 # Pluggable gates system
 from .gates import (
@@ -30,6 +20,16 @@ from .gates import (
     PolicyGate,
     SecurityGate,
     get_gate_registry,
+)
+from .quality_gates import (
+    QualityGate,
+    QualityGateResult,
+    QualityThresholds,
+)
+from .secret_scanner import (
+    SecretFinding,
+    SecretScanner,
+    SecretScanResult,
 )
 
 __all__ = [

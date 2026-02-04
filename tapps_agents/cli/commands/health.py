@@ -4,24 +4,22 @@ Health command handlers.
 
 from __future__ import annotations
 
-import json
 import logging
-import sys
 from collections import defaultdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 from ...health.checks.automation import AutomationHealthCheck
+from ...health.checks.context7_cache import Context7CacheHealthCheck
 from ...health.checks.environment import EnvironmentHealthCheck
 from ...health.checks.execution import ExecutionHealthCheck
-from ...health.checks.context7_cache import Context7CacheHealthCheck
 from ...health.checks.knowledge_base import KnowledgeBaseHealthCheck
 from ...health.checks.outcomes import OutcomeHealthCheck
 from ...health.collector import HealthMetricsCollector
 from ...health.dashboard import HealthDashboard
 from ...health.orchestrator import HealthOrchestrator
 from ...health.registry import HealthCheckRegistry
-from ..feedback import get_feedback, ProgressTracker
+from ..feedback import get_feedback
 from .common import format_json_output
 
 
@@ -381,12 +379,12 @@ def handle_health_metrics_command(
         print("=" * 70)
         print(f"Total checks: {summary['total_checks']}")
         print(f"Average score: {summary['average_score']:.1f}/100")
-        print(f"\nBy status:")
+        print("\nBy status:")
         for status_name, count in summary["by_status"].items():
             print(f"  {status_name}: {count}")
 
         if summary["by_check"]:
-            print(f"\nBy check:")
+            print("\nBy check:")
             for check_name, check_data in summary["by_check"].items():
                 print(f"  {check_name}:")
                 print(f"    Count: {check_data['count']}")
@@ -395,7 +393,7 @@ def handle_health_metrics_command(
                 print(f"    Latest score: {check_data['latest_score']:.1f}/100")
 
         if metrics:
-            print(f"\nRecent metrics (showing up to 10):")
+            print("\nRecent metrics (showing up to 10):")
             for metric in metrics[:10]:
                 print(f"  {metric.check_name}: {metric.status} ({metric.score:.1f}/100) - {metric.timestamp}")
 
@@ -445,7 +443,7 @@ def handle_health_trends_command(
         print(f"Score change: {trends['score_change']:+.1f} points")
 
         if trends["status_changes"]:
-            print(f"\nStatus changes:")
+            print("\nStatus changes:")
             for status, change in trends["status_changes"].items():
                 if change != 0:
                     print(f"  {status}: {change:+d}")

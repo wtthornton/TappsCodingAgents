@@ -13,8 +13,8 @@ making this Cursor-first compatible. In Cursor mode, instructions are converted 
 from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -42,7 +42,7 @@ class ReviewOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         files = parameters.get("files", [])
 
-        from ..beads_hooks import create_review_issue, close_issue
+        from ..beads_hooks import close_issue, create_review_issue
 
         beads_issue_id: str | None = None
         if self.config:
@@ -99,7 +99,7 @@ class ReviewOrchestrator(SimpleModeOrchestrator):
                 
                 # Generate tests if coverage is below threshold
                 if coverage_below_threshold and target_file:
-                    test_file_path = Path(target_file)
+                    Path(target_file)
                     
                     # Add tester task to generate tests
                     agent_tasks.append(

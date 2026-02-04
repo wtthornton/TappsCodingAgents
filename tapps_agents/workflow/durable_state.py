@@ -10,16 +10,16 @@ Durable Workflow State Machine - Event-sourced workflow execution with checkpoin
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
 import uuid
-from dataclasses import asdict, dataclass, field
+from collections.abc import Callable
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ class EventStore:
             return []
         
         events = []
-        with open(events_file, "r", encoding="utf-8") as f:
+        with open(events_file, encoding="utf-8") as f:
             for line in f:
                 line = line.strip()
                 if line:

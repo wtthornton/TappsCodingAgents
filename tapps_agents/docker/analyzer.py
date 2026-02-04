@@ -5,7 +5,6 @@ Analyzes Dockerfiles for common issues (Python path, WORKDIR, COPY order).
 """
 
 import logging
-import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -114,10 +113,8 @@ class DockerfileAnalyzer:
                 )
 
         # Issue: Incorrect PYTHONPATH
-        pythonpath_set = False
         for i, line in enumerate(lines, 1):
             if "PYTHONPATH" in line and "=" in line:
-                pythonpath_set = True
                 # Check if PYTHONPATH is set incorrectly
                 if "/app" not in line and "/src" not in line:
                     issues.append(
@@ -144,7 +141,7 @@ class DockerfileAnalyzer:
                                 line_number=workdir_line,
                                 description="WORKDIR may not match source structure",
                                 severity="critical",
-                                suggested_fix=f"Set WORKDIR to match source structure or adjust PYTHONPATH",
+                                suggested_fix="Set WORKDIR to match source structure or adjust PYTHONPATH",
                                 confidence=0.85,
                             )
                         )

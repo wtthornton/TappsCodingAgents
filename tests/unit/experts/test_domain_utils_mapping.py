@@ -4,7 +4,10 @@ Tests for domain-to-directory name mapping.
 
 import pytest
 
-from tapps_agents.experts.domain_utils import DOMAIN_TO_DIRECTORY_MAP, sanitize_domain_for_path
+from tapps_agents.experts.domain_utils import (
+    DOMAIN_TO_DIRECTORY_MAP,
+    sanitize_domain_for_path,
+)
 
 pytestmark = pytest.mark.unit
 

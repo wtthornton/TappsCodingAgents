@@ -4,9 +4,10 @@ Docker Compose Validator - Validates Docker Compose configurations
 Phase 3.3: Microservices & FastAPI Patterns for HomeIQ
 """
 
-import yaml
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 
 class DockerComposeValidator:
@@ -48,7 +49,7 @@ class DockerComposeValidator:
         health_checks = {}
         
         try:
-            with open(compose_file, 'r', encoding='utf-8') as f:
+            with open(compose_file, encoding='utf-8') as f:
                 compose_data = yaml.safe_load(f)
         except Exception as e:
             return {

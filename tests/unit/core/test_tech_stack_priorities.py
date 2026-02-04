@@ -8,8 +8,8 @@ import pytest
 
 from tapps_agents.core.tech_stack_priorities import (
     FRAMEWORK_PRIORITY_MAPPINGS,
-    get_priority_for_framework,
     get_priorities_for_frameworks,
+    get_priority_for_framework,
     get_supported_frameworks,
     normalize_framework_name,
 )

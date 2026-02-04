@@ -6,8 +6,8 @@ import pytest
 
 from tapps_agents.experts.expert_engine import (
     ExpertEngine,
-    KnowledgeNeed,
     ExpertRoutingPlan,
+    KnowledgeNeed,
 )
 from tapps_agents.experts.expert_registry import ExpertRegistry
 

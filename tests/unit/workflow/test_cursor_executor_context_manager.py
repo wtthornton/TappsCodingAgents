@@ -14,7 +14,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 
 from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
-from tapps_agents.workflow.models import Workflow, WorkflowStep, WorkflowState, WorkflowType
+from tapps_agents.workflow.models import (
+    WorkflowState,
+    WorkflowStep,
+)
 
 pytestmark = pytest.mark.unit
 
@@ -80,11 +83,9 @@ async def test_worktree_context_creates_and_cleans_up(mock_executor, sample_step
 @pytest.mark.asyncio
 async def test_worktree_context_cleans_up_on_exception(mock_executor, sample_step):
     """Test that worktree is cleaned up even when exception occurs."""
-    worktree_path = None
     
     try:
-        async with mock_executor._worktree_context(sample_step) as wt_path:
-            worktree_path = wt_path
+        async with mock_executor._worktree_context(sample_step):
             # Simulate an exception
             raise RuntimeError("Simulated error")
     except RuntimeError:
@@ -149,8 +150,9 @@ async def test_worktree_context_handles_cleanup_failure(mock_executor, sample_st
 async def test_worktree_context_copies_artifacts(mock_executor, sample_step):
     """Test that worktree context copies artifacts from previous steps."""
     # Add some artifacts to state
-    from tapps_agents.workflow.models import Artifact
     from datetime import datetime
+
+    from tapps_agents.workflow.models import Artifact
     
     artifact = Artifact(
         name="previous-artifact",
@@ -161,7 +163,7 @@ async def test_worktree_context_copies_artifacts(mock_executor, sample_step):
     )
     mock_executor.state.artifacts["previous-artifact"] = artifact
     
-    async with mock_executor._worktree_context(sample_step) as wt_path:
+    async with mock_executor._worktree_context(sample_step):
         # Verify artifacts were copied
         mock_executor.worktree_manager.copy_artifacts.assert_called_once()
         call_args = mock_executor.worktree_manager.copy_artifacts.call_args
@@ -172,7 +174,7 @@ async def test_worktree_context_copies_artifacts(mock_executor, sample_step):
 @pytest.mark.asyncio
 async def test_worktree_context_uses_correct_worktree_name(mock_executor, sample_step):
     """Test that worktree context uses correct worktree name."""
-    async with mock_executor._worktree_context(sample_step) as wt_path:
+    async with mock_executor._worktree_context(sample_step):
         # Verify worktree name is based on step ID
         call_args = mock_executor.worktree_manager.create_worktree.call_args
         worktree_name = call_args.args[0] if call_args.args else call_args.kwargs.get("worktree_name")

@@ -14,7 +14,6 @@ from typing import Any
 
 from .approval_gate import ApprovalGate
 from .base import BaseGate
-from .exceptions import GateNotFoundError
 from .policy_gate import PolicyGate
 from .security_gate import SecurityGate
 

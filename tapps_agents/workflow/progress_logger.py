@@ -6,7 +6,6 @@ Provides simple, human-readable progress tracking alongside comprehensive struct
 """
 
 from pathlib import Path
-from typing import Any
 
 
 class ProgressLogger:

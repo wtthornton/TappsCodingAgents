@@ -10,7 +10,10 @@ from pathlib import Path
 
 import pytest
 
-from tests.e2e.fixtures.workflow_monitor import MonitoringConfig, WorkflowActivityMonitor
+from tests.e2e.fixtures.workflow_monitor import (
+    MonitoringConfig,
+    WorkflowActivityMonitor,
+)
 from tests.e2e.fixtures.workflow_runner import WorkflowRunner
 
 logger = logging.getLogger(__name__)

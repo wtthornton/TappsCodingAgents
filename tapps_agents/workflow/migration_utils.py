@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 T = TypeVar("T", bound=BaseModel)
 
 
-def migrate_artifact_from_dataclass(
+def migrate_artifact_from_dataclass[T: BaseModel](
     data: dict[str, Any],
     artifact_type: type[T],
 ) -> T:

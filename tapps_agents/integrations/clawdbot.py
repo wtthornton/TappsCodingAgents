@@ -208,8 +208,8 @@ class ClawdbotIntegration:
         Returns:
             DomainResult with detected domains and confidence
         """
-        from ..experts.domain_detector import DomainStackDetector
         from ..experts.adaptive_domain_detector import AdaptiveDomainDetector
+        from ..experts.domain_detector import DomainStackDetector
         
         domains = []
         signals = []

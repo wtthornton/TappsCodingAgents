@@ -7,7 +7,8 @@ result formatting. Converts raw agent outputs to readable markdown.
 
 from __future__ import annotations
 
-from typing import Any, Callable, Protocol
+from collections.abc import Callable
+from typing import Protocol
 
 from .step_results import (
     ArchitectStepResult,
@@ -16,9 +17,9 @@ from .step_results import (
     EnhancerStepResult,
     ImplementerStepResult,
     PlannerStepResult,
+    QAStepResult,
     ReviewerStepResult,
     StepStatus,
-    QAStepResult,
     VerificationStepResult,
 )
 

@@ -4,11 +4,10 @@ Test Orchestrator - Coordinates test generation workflow.
 Coordinates: Tester
 """
 
-from pathlib import Path
 from typing import Any
 
-from tapps_agents.core.config import ProjectConfig
 from tapps_agents.core.multi_agent_orchestrator import MultiAgentOrchestrator
+
 from ..intent_parser import Intent
 from .base import SimpleModeOrchestrator
 
@@ -36,7 +35,7 @@ class TestOrchestrator(SimpleModeOrchestrator):
         parameters = parameters or {}
         files = parameters.get("files", [])
 
-        from ..beads_hooks import create_test_issue, close_issue
+        from ..beads_hooks import close_issue, create_test_issue
 
         beads_issue_id: str | None = None
         if self.config:

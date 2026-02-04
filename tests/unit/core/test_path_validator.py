@@ -8,12 +8,13 @@ Tests cover:
 - File size limits
 """
 
-import pytest
 from pathlib import Path
 
+import pytest
+
 from tapps_agents.core.path_validator import (
-    PathValidator,
     PathValidationError,
+    PathValidator,
     reset_path_validator,
 )
 
@@ -319,8 +320,9 @@ class TestRedactionSecurity:
 
     def test_workflow_logger_redacts_sensitive_data(self):
         """Test that WorkflowLogger redacts sensitive data."""
-        from tapps_agents.workflow.logging_helper import WorkflowLogger
         import logging
+
+        from tapps_agents.workflow.logging_helper import WorkflowLogger
 
         logger = WorkflowLogger(logging.getLogger("test"))
 

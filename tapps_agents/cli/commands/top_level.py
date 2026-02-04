@@ -22,9 +22,10 @@ from .reviewer import score_command
 def handle_create_command(args: object) -> None:
     """Handle create command"""
     import os
+
+    from ...core.unicode_safe import safe_print
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
-    from ...core.unicode_safe import safe_print
 
     feedback = get_feedback()
     loader = PresetLoader()
@@ -605,11 +606,11 @@ def _handle_autonomous_workflow_execution(
     target_file: str | None,
 ) -> None:
     """Handle autonomous execution loop (2025 architecture)."""
-    from datetime import datetime
     from pathlib import Path
+
+    from ...core.unicode_safe import safe_print
     from ...workflow.parser import WorkflowParser
     from ...workflow.progress_logger import ProgressLogger
-    from ...core.unicode_safe import safe_print
     
     autonomous = getattr(args, "autonomous", False)
     max_iterations = getattr(args, "max_iterations", 10)
@@ -691,13 +692,13 @@ def _handle_autonomous_workflow_execution(
         
         # Check status and decide next action
         if final_state.status == "completed":
-            safe_print(f"[OK] Workflow completed successfully")
+            safe_print("[OK] Workflow completed successfully")
             break
         elif final_state.status == "failed":
             safe_print(f"[FAIL] Workflow failed: {final_state.error}")
             # Phase 1: retry if iterations remain (can enhance with smart retry logic later)
         elif final_state.status == "running":
-            safe_print(f"[INFO] Workflow interrupted, will resume next iteration")
+            safe_print("[INFO] Workflow interrupted, will resume next iteration")
         
         iteration += 1
     
@@ -738,11 +739,12 @@ def _print_autonomous_summary(
 
 def handle_workflow_command(args: object) -> None:
     """Handle workflow command"""
+    import os
+
+    from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
+    from ...core.unicode_safe import safe_print
     from ...workflow.executor import WorkflowExecutor
     from ...workflow.preset_loader import PresetLoader
-    from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
-    from ...core.unicode_safe import safe_print
-    import os
 
     feedback = get_feedback()
     preset_name = getattr(args, "preset", None)
@@ -1023,7 +1025,7 @@ def handle_workflow_command(args: object) -> None:
         print()
         
         # Check runtime mode and warn user
-        from ...core.runtime_mode import is_cursor_mode, detect_runtime_mode
+        from ...core.runtime_mode import detect_runtime_mode, is_cursor_mode
         runtime_mode = detect_runtime_mode()
         
         print("Executing workflow steps...")
@@ -1568,7 +1570,7 @@ def _print_validation_results(validation: dict[str, Any]) -> None:
         rules_expected = len(rules_info.get("expected_rules", []))
         status = "[OK]" if rules_found == rules_expected else "[!]"
         print(f"    {status} Framework Files (Cursor Rules): {rules_found}/{rules_expected}")
-        print(f"        Location: .cursor/rules/*.mdc")
+        print("        Location: .cursor/rules/*.mdc")
         if rules_found < rules_expected:
             print(f"        Note: {rules_expected - rules_found} rule file(s) missing")
 
@@ -1580,15 +1582,15 @@ def _print_validation_results(validation: dict[str, Any]) -> None:
 
         if skills_found == 0:
             print(f"    [!] Cursor Skills: {skills_found}/{skills_expected} (optional)")
-            print(f"        Location: .claude/skills/*/SKILL.md")
-            print(f"        To install: Run 'tapps-agents init' (without --reset)")
+            print("        Location: .claude/skills/*/SKILL.md")
+            print("        To install: Run 'tapps-agents init' (without --reset)")
         elif skills_found < skills_expected:
             print(f"    [!] Cursor Skills: {skills_found}/{skills_expected} (optional)")
-            print(f"        Location: .claude/skills/*/SKILL.md")
+            print("        Location: .claude/skills/*/SKILL.md")
             print(f"        Note: {skills_expected - skills_found} skill(s) missing")
         else:
             print(f"    [OK] Cursor Skills: {skills_found}/{skills_expected}")
-            print(f"        Location: .claude/skills/*/SKILL.md")
+            print("        Location: .claude/skills/*/SKILL.md")
     
 
 
@@ -2026,6 +2028,7 @@ def handle_init_command(args: object) -> None:
                 pass
     
     from pathlib import Path
+
     from ...core.init_project import (
         detect_existing_installation,
         detect_project_root,
@@ -2138,7 +2141,7 @@ def handle_init_command(args: object) -> None:
         if len(framework_files) > 20:
             print(f"  ... and {len(framework_files) - 20} more")
         
-        print(f"\nCustom files that would be preserved:")
+        print("\nCustom files that would be preserved:")
         if custom_skills:
             print(f"  Custom Skills ({len(custom_skills)}): {', '.join(custom_skills)}")
         if custom_rules:
@@ -2240,6 +2243,7 @@ def handle_init_command(args: object) -> None:
     # Run deferred cache pre-population (after core init so user sees success first)
     if results.get("cache_requested"):
         import asyncio
+
         from ...core.init_project import pre_populate_context7_cache
         try:
             proot = Path(results["project_root"])
@@ -2340,6 +2344,7 @@ def _update_cursorignore_patterns(project_root: Path | str) -> dict[str, Any]:
 def handle_generate_rules_command(args: object) -> None:
     """Handle generate-rules command"""
     from pathlib import Path
+
     from ...workflow.rules_generator import CursorRulesGenerator
 
     logger_instance = logging.getLogger(__name__)
@@ -2393,6 +2398,7 @@ def handle_commands_command(args: object) -> None:
 def _handle_commands_list(args: object) -> None:
     """List (command, skill, execution_path) from SkillAgentRegistry. Optionally write COMMAND_INDEX.md."""
     from pathlib import Path
+
     from ...core.skill_agent_registry import get_registry
     root = Path.cwd()
     reg = get_registry(root)
@@ -2454,9 +2460,9 @@ def handle_doctor_command(args: object) -> None:
         
         try:
             from ...health.checks.context7_cache import Context7CacheHealthCheck
-            from ...health.registry import HealthCheckRegistry
-            from ...health.orchestrator import HealthOrchestrator
             from ...health.collector import HealthMetricsCollector
+            from ...health.orchestrator import HealthOrchestrator
+            from ...health.registry import HealthCheckRegistry
             
             project_root = Path.cwd()
             registry = HealthCheckRegistry()
@@ -2656,7 +2662,6 @@ def handle_setup_experts_command(args: object) -> None:
 def handle_workflow_state_list_command(args: object) -> None:
     """Handle 'workflow state list' command (Epic 12)"""
     import json
-    from datetime import datetime
     from pathlib import Path
 
     from ...workflow.state_manager import AdvancedStateManager
@@ -2831,7 +2836,6 @@ def handle_cleanup_workflow_docs_command(args: object) -> None:
 
 def handle_cleanup_sessions_command(args: object) -> None:
     """Handle 'cleanup sessions' command (enhancer + SessionManager)."""
-    from pathlib import Path
 
     from ...core.cleanup_tool import CleanupTool
     from ...core.session_manager import SessionManager
@@ -3124,7 +3128,7 @@ def handle_workflow_resume_command(args: object) -> None:
             return
         
         if executor.state.status == "failed":
-            print(f"\nWarning: Workflow previously failed. Resuming from failure point.", file=sys.stderr)
+            print("\nWarning: Workflow previously failed. Resuming from failure point.", file=sys.stderr)
             print(f"Previous error: {executor.state.error or 'Unknown error'}", file=sys.stderr)
             # Reset status to running to allow resume
             executor.state.status = "running"
@@ -3184,13 +3188,13 @@ def handle_workflow_resume_command(args: object) -> None:
             print("\nWorkflow can be resumed again with: tapps-agents workflow resume")
             
     except FileNotFoundError as e:
-        print(f"Error: No workflow state found to resume", file=sys.stderr)
+        print("Error: No workflow state found to resume", file=sys.stderr)
         if workflow_id:
             print(f"  Workflow ID: {workflow_id}", file=sys.stderr)
         print(f"  Details: {e}", file=sys.stderr)
         sys.exit(1)
     except ValueError as e:
-        print(f"Error: Invalid workflow state or configuration", file=sys.stderr)
+        print("Error: Invalid workflow state or configuration", file=sys.stderr)
         print(f"  Details: {e}", file=sys.stderr)
         sys.exit(1)
     except Exception as e:
@@ -3246,6 +3250,7 @@ def handle_beads_command(args: object) -> None:
 def handle_continuous_bug_fix_command(args: object) -> None:
     """Handle continuous-bug-fix command"""
     import asyncio
+
     from ...continuous_bug_fix.continuous_bug_fixer import ContinuousBugFixer
     from ...core.config import load_config
 
@@ -3317,8 +3322,8 @@ def handle_brownfield_command(args: object) -> None:
     """Handle brownfield review command."""
     import logging
 
-    from ...core.brownfield_review import BrownfieldReviewOrchestrator
     from ...context7.agent_integration import get_context7_helper
+    from ...core.brownfield_review import BrownfieldReviewOrchestrator
     from ...core.config import load_config
 
     logger = logging.getLogger(__name__)
@@ -3388,7 +3393,6 @@ def handle_brownfield_command(args: object) -> None:
 
         # Output result
         if feedback.format_type == "json":
-            import json
 
             result_dict = {
                 "analysis": {
@@ -3478,8 +3482,8 @@ def _format_continuous_bug_fix_text_output(result: dict[str, Any], feedback: Any
 
 def handle_knowledge_command(args: object) -> None:
     """Handle knowledge base management commands."""
-    from .knowledge import KnowledgeCommand
     from ..feedback import get_feedback
+    from .knowledge import KnowledgeCommand
     
     feedback = get_feedback()
     command = getattr(args, "knowledge_command", None)
@@ -3503,7 +3507,7 @@ def handle_knowledge_command(args: object) -> None:
             print(f"Valid Files: {summary['valid_files']}")
             print(f"Invalid Files: {summary['invalid_files']}")
             print(f"Total Issues: {summary['total_issues']}")
-            print(f"\nIssues by Severity:")
+            print("\nIssues by Severity:")
             for severity, count in summary["issues_by_severity"].items():
                 print(f"  {severity.capitalize()}: {count}")
             
@@ -3532,10 +3536,10 @@ def handle_knowledge_command(args: object) -> None:
             print(f"Cache Hit Rate: {metrics['cache_hit_rate']:.1%}")
             print(f"Average Results: {metrics['avg_results']:.1f}")
             print(f"Average Similarity: {metrics['avg_similarity']:.3f}")
-            print(f"\nBackend Usage:")
+            print("\nBackend Usage:")
             for backend, count in metrics["backend_usage"].items():
                 print(f"  {backend}: {count}")
-            print(f"\nSimilarity Distribution:")
+            print("\nSimilarity Distribution:")
             for level, count in metrics["similarity_distribution"].items():
                 print(f"  {level}: {count}")
             
@@ -3564,18 +3568,18 @@ def handle_knowledge_command(args: object) -> None:
             
             if result.get("scan_results"):
                 scan_res = result["scan_results"]
-                print(f"\nScan Results:")
+                print("\nScan Results:")
                 print(f"  Scanned: {scan_res['scanned']}")
                 print(f"  Updated: {scan_res['updated']}")
                 print(f"  New Files: {scan_res['new_files']}")
             
             if result.get("stale_files"):
-                print(f"\nStale Files (showing first 10):")
+                print("\nStale Files (showing first 10):")
                 for stale in result["stale_files"]:
                     print(f"  {stale['file']}: last updated {stale['last_updated']}")
             
             if result.get("deprecated_files"):
-                print(f"\nDeprecated Files:")
+                print("\nDeprecated Files:")
                 for dep in result["deprecated_files"]:
                     print(f"  {dep['file']}: deprecated {dep['deprecation_date']}")
                     if dep.get("replacement"):

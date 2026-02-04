@@ -2,17 +2,13 @@
 Unit tests for learning explainability system.
 """
 
-import pytest
-from datetime import datetime
-from unittest.mock import Mock
 
+from tapps_agents.core.agent_learning import CodePattern
 from tapps_agents.core.learning_explainability import (
     DecisionReasoningLogger,
-    DecisionLog,
-    PatternSelectionExplainer,
     LearningImpactReporter,
+    PatternSelectionExplainer,
 )
-from tapps_agents.core.agent_learning import CodePattern
 
 
 class TestDecisionReasoningLogger:

@@ -2,7 +2,6 @@
 Tests for conftest.py
 """
 
-import pytest
 
 from tests.conftest import *
 

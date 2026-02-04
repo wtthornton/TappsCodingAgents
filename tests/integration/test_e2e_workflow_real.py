@@ -12,8 +12,6 @@ They test:
 import pytest
 
 from tapps_agents.agents.reviewer.agent import ReviewerAgent
-from tapps_agents.core.config import ProjectConfig
-
 
 pytestmark = pytest.mark.integration
 

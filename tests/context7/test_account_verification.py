@@ -4,8 +4,8 @@ This will show up in your Context7 dashboard as 2 requests.
 """
 
 import asyncio
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Fix Windows console encoding for emojis
@@ -21,19 +21,19 @@ if sys.platform == "win32":
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+# Reset quota state for fresh test
+import tapps_agents.context7.backup_client as bc_module
 from tapps_agents.context7.backup_client import (
     call_context7_resolve_with_fallback,
-    call_context7_get_docs_with_fallback,
     is_context7_quota_exceeded,
 )
 
-# Reset quota state for fresh test
-import tapps_agents.context7.backup_client as bc_module
 bc_module._CONTEXT7_QUOTA_EXCEEDED = False
 bc_module._CONTEXT7_QUOTA_MESSAGE = None
 
 # Reset circuit breaker
 from tapps_agents.context7.circuit_breaker import get_context7_circuit_breaker
+
 cb = get_context7_circuit_breaker()
 cb.reset()
 from tapps_agents.mcp.gateway import MCPGateway
@@ -80,12 +80,12 @@ async def make_test_calls():
                 if matches:
                     match = matches[0]
                     lib_id = match.get("id") or match.get("library_id")
-                    print(f"✅ Call 1 SUCCESS")
-                    print(f"   Library: fastapi")
+                    print("✅ Call 1 SUCCESS")
+                    print("   Library: fastapi")
                     print(f"   Context7 ID: {lib_id}")
                     print(f"   Title: {match.get('title', 'N/A')}")
                 else:
-                    print(f"✅ Call 1 SUCCESS (no matches found)")
+                    print("✅ Call 1 SUCCESS (no matches found)")
             else:
                 error = resolve_result.get("error", "Unknown error")
                 print(f"❌ Call 1 FAILED: {error}")
@@ -106,12 +106,12 @@ async def make_test_calls():
                 if matches:
                     match = matches[0]
                     lib_id = match.get("id") or match.get("library_id")
-                    print(f"✅ Call 2 SUCCESS")
-                    print(f"   Library: react")
+                    print("✅ Call 2 SUCCESS")
+                    print("   Library: react")
                     print(f"   Context7 ID: {lib_id}")
                     print(f"   Title: {match.get('title', 'N/A')}")
                 else:
-                    print(f"✅ Call 2 SUCCESS (no matches found)")
+                    print("✅ Call 2 SUCCESS (no matches found)")
             else:
                 error = resolve_result2.get("error", "Unknown error")
                 print(f"❌ Call 2 FAILED: {error}")

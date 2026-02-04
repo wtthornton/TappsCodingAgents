@@ -5,8 +5,9 @@ Extends coverage for init variants that were previously untested.
 Requires tapps_agents on PYTHONPATH (pytest pythonpath or harness default_env).
 """
 
-import pytest
 from pathlib import Path
+
+import pytest
 
 from tests.e2e.fixtures.cli_harness import CLIHarness, CLIResult
 

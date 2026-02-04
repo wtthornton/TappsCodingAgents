@@ -15,7 +15,10 @@ from typing import Any
 import yaml
 
 from ..experts.domain_detector import DomainMapping
-from ..experts.expert_config import ExpertConfigModel, ExpertsConfig, load_expert_configs
+from ..experts.expert_config import (
+    ExpertsConfig,
+    load_expert_configs,
+)
 
 logger = logging.getLogger(__name__)
 

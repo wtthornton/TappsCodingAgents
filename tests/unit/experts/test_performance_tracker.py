@@ -2,11 +2,12 @@
 Tests for Expert Performance Tracker
 """
 
-import pytest
 from pathlib import Path
 
-from tapps_agents.experts.performance_tracker import ExpertPerformanceTracker
+import pytest
+
 from tapps_agents.core.outcome_tracker import OutcomeTracker
+from tapps_agents.experts.performance_tracker import ExpertPerformanceTracker
 
 
 @pytest.fixture

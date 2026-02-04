@@ -19,10 +19,8 @@ from tapps_agents.simple_mode.checkpoint_manager import (
     CheckpointAnalysis,
     CheckpointManager,
     PlanningResults,
-    SwitchResult,
     WorkflowSwitcher,
 )
-
 
 # ============================================================================
 # Test Fixtures
@@ -510,7 +508,7 @@ class TestWorkflowSwitcher:
         new_dir = tmp_path / "new_checkpoints"
         assert not new_dir.exists()
 
-        switcher = WorkflowSwitcher(new_dir)
+        WorkflowSwitcher(new_dir)
 
         assert new_dir.exists()
         assert new_dir.is_dir()
@@ -784,8 +782,10 @@ class TestBuildOrchestratorCheckpointIntegration:
     @pytest.fixture
     def mock_orchestrator(self, tmp_path: Path):
         """Create a mock BuildOrchestrator for testing."""
-        from tapps_agents.simple_mode.orchestrators.build_orchestrator import BuildOrchestrator
         from tapps_agents.core.config import ProjectConfig, SimpleModeConfig
+        from tapps_agents.simple_mode.orchestrators.build_orchestrator import (
+            BuildOrchestrator,
+        )
 
         config = ProjectConfig()
         config.simple_mode = SimpleModeConfig(
@@ -1001,7 +1001,6 @@ class TestBuildOrchestratorCheckpointIntegration:
         completed_steps = ["enhance", "plan"]
 
         # Mock restore_artifacts to return None (no artifacts found)
-        from tapps_agents.simple_mode.checkpoint_manager import WorkflowSwitcher
 
         async def mock_execute(intent, params, fast_mode=False):
             return {"success": True}
@@ -1102,7 +1101,6 @@ class TestBuildOrchestratorCheckpointIntegration:
         self, mock_orchestrator
     ):
         """Test that --checkpoint-debug flag enables debug logging."""
-        import logging
 
         parameters = {"checkpoint_debug": True}
 
@@ -1136,7 +1134,9 @@ class TestBuildOrchestratorCheckpointIntegration:
     ):
         """Test switching to *fix workflow."""
         from tapps_agents.simple_mode.intent_parser import Intent, IntentType
-        from tapps_agents.simple_mode.orchestrators.fix_orchestrator import FixOrchestrator
+        from tapps_agents.simple_mode.orchestrators.fix_orchestrator import (
+            FixOrchestrator,
+        )
 
         analysis = CheckpointAnalysis(
             mismatch_detected=True,

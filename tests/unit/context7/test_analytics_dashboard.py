@@ -4,8 +4,7 @@ Unit tests for Context7 Analytics Dashboard.
 Tests dashboard metrics collection, skill usage tracking, and performance monitoring.
 """
 
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 

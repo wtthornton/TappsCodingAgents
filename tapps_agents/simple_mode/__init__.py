@@ -14,19 +14,11 @@ showcasing the power of the framework.
 - Step dependency management
 """
 
+# 2025: Workflow documentation quality modules
+from .agent_contracts import AGENT_CONTRACTS, AgentContractValidator
+from .file_inference import TargetFileInferencer
 from .intent_parser import Intent, IntentParser, IntentType
 from .nl_handler import SimpleModeHandler
-from .streaming import (
-    StreamEvent,
-    StreamEventType,
-    StreamingWorkflowExecutor,
-    create_streaming_response,
-    format_streaming_response,
-)
-
-# 2025: Workflow documentation quality modules
-from .agent_contracts import AgentContractValidator, AGENT_CONTRACTS
-from .file_inference import TargetFileInferencer
 from .result_formatters import FormatterRegistry, format_step_result
 from .step_dependencies import (
     StepDependencyManager,
@@ -37,6 +29,13 @@ from .step_results import (
     BaseStepResult,
     StepResultParser,
     StepStatus,
+)
+from .streaming import (
+    StreamEvent,
+    StreamEventType,
+    StreamingWorkflowExecutor,
+    create_streaming_response,
+    format_streaming_response,
 )
 
 __all__ = [

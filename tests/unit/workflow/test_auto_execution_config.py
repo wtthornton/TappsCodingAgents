@@ -4,16 +4,17 @@ Unit tests for auto-execution configuration management.
 
 from __future__ import annotations
 
-import pytest
 from pathlib import Path
+
+import pytest
 import yaml
 
 from tapps_agents.workflow.auto_execution_config import (
     AutoExecutionConfig,
     AutoExecutionConfigManager,
-    RetryConfig,
-    PollingConfig,
     FeatureFlags,
+    PollingConfig,
+    RetryConfig,
 )
 
 
@@ -119,7 +120,7 @@ def test_config_manager_save(tmp_path: Path):
     manager.save(config)
 
     assert config_path.exists()
-    with open(config_path, "r") as f:
+    with open(config_path) as f:
         data = yaml.safe_load(f)
         assert data["auto_execution"]["enabled"] is True
 

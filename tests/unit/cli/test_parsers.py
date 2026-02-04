@@ -9,7 +9,6 @@ Tests all parser modules to ensure they:
 """
 
 import argparse
-from unittest.mock import patch
 
 import pytest
 

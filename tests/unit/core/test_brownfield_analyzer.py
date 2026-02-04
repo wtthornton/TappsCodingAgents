@@ -2,12 +2,20 @@
 Unit tests for BrownfieldAnalyzer
 """
 
-import pytest
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
-from tapps_agents.core.brownfield_analyzer import BrownfieldAnalyzer, BrownfieldAnalysisResult
-from tapps_agents.experts.domain_detector import DomainStackDetector, DomainMapping, StackDetectionResult
+import pytest
+
+from tapps_agents.core.brownfield_analyzer import (
+    BrownfieldAnalysisResult,
+    BrownfieldAnalyzer,
+)
+from tapps_agents.experts.domain_detector import (
+    DomainMapping,
+    DomainStackDetector,
+    StackDetectionResult,
+)
 
 
 @pytest.fixture

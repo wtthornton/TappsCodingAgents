@@ -15,19 +15,11 @@ Exit codes:
 
 import ast
 import sys
-from pathlib import Path
-from typing import Any
 
 # Use tomllib for Python 3.11+, tomli for older versions
-if sys.version_info >= (3, 11):
-    import tomllib  # type: ignore
-else:
-    try:
-        import tomli as tomllib  # type: ignore
-    except ImportError:
-        print("ERROR: Need tomli package for Python < 3.11", file=sys.stderr)
-        print("Install with: pip install tomli", file=sys.stderr)
-        sys.exit(1)
+import tomllib
+from pathlib import Path
+from typing import Any
 
 
 def read_pyproject_toml(project_root: Path) -> dict[str, Any]:

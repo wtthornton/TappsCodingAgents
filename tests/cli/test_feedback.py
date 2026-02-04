@@ -2,7 +2,6 @@
 Tests for CLI feedback system.
 """
 import json
-import sys
 from io import StringIO
 from unittest.mock import patch
 
@@ -165,7 +164,7 @@ class TestFeedbackManager:
         feedback.format_type = "text"
         
         with patch('sys.stderr', new=StringIO()) as stderr, \
-             patch('sys.stdout', new=StringIO()) as stdout:
+             patch('sys.stdout', new=StringIO()):
             feedback.output_result({"key": "value"}, message="Done")
             assert "Done" in stderr.getvalue()
 
@@ -190,7 +189,7 @@ class TestProgressTracker:
         with patch('sys.stderr', new=StringIO()) as stderr:
             tracker.update(1, "Step 1")
             # Progress should be shown (throttled, but initial update should work)
-            output = stderr.getvalue()
+            stderr.getvalue()
             # May be empty due to throttling, but should not error
     
     def test_progress_tracker_complete(self):
@@ -272,7 +271,7 @@ class TestStreamSeparation:
         feedback.format_type = "json"
         
         with patch('sys.stdout', new=StringIO()) as stdout, \
-             patch('sys.stderr', new=StringIO()) as stderr:
+             patch('sys.stderr', new=StringIO()):
             feedback.output_result({"result": "data"})
             assert stdout.getvalue() != ""
             # In quiet mode, stderr should be minimal

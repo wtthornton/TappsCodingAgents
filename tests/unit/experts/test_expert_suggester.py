@@ -2,8 +2,8 @@
 Tests for Expert Suggester
 """
 
+
 import pytest
-from pathlib import Path
 
 from tapps_agents.experts.adaptive_domain_detector import DomainSuggestion
 from tapps_agents.experts.expert_suggester import ExpertSuggester

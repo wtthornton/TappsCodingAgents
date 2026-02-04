@@ -12,14 +12,12 @@ from __future__ import annotations
 
 import shutil
 import subprocess
-import tempfile
 from pathlib import Path
 
 import pytest
 
 from tapps_agents.core.config import BranchCleanupConfig, ProjectConfig, WorkflowConfig
 from tapps_agents.workflow.branch_cleanup import BranchCleanupService
-from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
 from tapps_agents.workflow.worktree_manager import WorktreeManager
 
 pytestmark = pytest.mark.integration
@@ -78,7 +76,6 @@ async def test_workflow_step_cleanup_deletes_branch(tmp_path: Path) -> None:
     
     # Simulate workflow step completion - remove worktree with branch cleanup enabled
     # This mimics what CursorWorkflowExecutor does
-    from tapps_agents.core.config import load_config
     
     # Mock the config to return our test config
     import tapps_agents.core.config as config_module
@@ -106,7 +103,7 @@ async def test_workflow_cleanup_respects_config_disabled(tmp_path: Path) -> None
     repo = _init_git_repo(tmp_path)
     
     # Create config with branch cleanup disabled
-    config = ProjectConfig(
+    ProjectConfig(
         workflow=WorkflowConfig(
             branch_cleanup=BranchCleanupConfig(
                 enabled=False,  # Disabled
@@ -287,7 +284,7 @@ async def test_branch_cleanup_retention_days(tmp_path: Path) -> None:
     # Actually, if retention_days is set, branches older than that are considered for cleanup
     # So a new branch should not be cleaned up if retention_days > 0
     
-    branch_names = [b.branch_name for b in orphaned]
+    [b.branch_name for b in orphaned]
     # New branch should not be cleaned up immediately with 365 day retention
     # (Note: exact behavior depends on implementation - this tests the filtering)
 

@@ -138,7 +138,7 @@ class TestCoverageStrategy(BaseMetricStrategy):
         # Look for test files in common locations
         file_name = file_path.name.lower()
         file_stem = file_path.stem.lower()
-        parent_dir = file_path.parent.name.lower()
+        file_path.parent.name.lower()
 
         # Check if this IS a test file
         if any(

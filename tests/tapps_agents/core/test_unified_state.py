@@ -5,7 +5,6 @@ Tests for unified_state.py
 import json
 import tempfile
 import time
-from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest

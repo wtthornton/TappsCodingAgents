@@ -7,8 +7,8 @@ Provides common fixtures used across all CLI test files:
 - test_file: Test Python file in project
 """
 
+
 import pytest
-from pathlib import Path
 
 from tests.e2e.fixtures.cli_harness import CLIHarness
 

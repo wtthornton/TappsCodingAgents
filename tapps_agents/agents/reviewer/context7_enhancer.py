@@ -7,7 +7,6 @@ Provides library-specific recommendations and pattern guidance from Context7.
 import asyncio
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from ...context7.agent_integration import Context7AgentHelper
 from .pattern_detector import PatternMatch
@@ -95,14 +94,14 @@ class Context7ReviewEnhancer:
                 timeout=self.timeout * len(libraries)  # Total timeout for all lookups
             )
             
-            for lib, result in zip(libraries, results):
+            for lib, result in zip(libraries, results, strict=False):
                 if isinstance(result, Exception):
                     logger.warning(f"Context7 lookup failed for library {lib}: {result}")
                     continue
                 
                 if result:
                     recommendations[lib] = result
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Context7 lookup timeout for libraries: {libraries}")
         except Exception as e:
             logger.warning(f"Context7 lookup error: {e}")
@@ -136,7 +135,7 @@ class Context7ReviewEnhancer:
                 )
                 if result:
                     guidance[pattern.pattern_name] = result
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.warning(f"Context7 lookup timeout for pattern: {pattern.pattern_name}")
             except Exception as e:
                 logger.warning(f"Context7 lookup error for pattern {pattern.pattern_name}: {e}")
@@ -146,7 +145,7 @@ class Context7ReviewEnhancer:
     async def _lookup_library_docs(
         self,
         library: str
-    ) -> Optional[LibraryRecommendation]:
+    ) -> LibraryRecommendation | None:
         """
         Lookup library documentation from Context7.
         
@@ -181,7 +180,7 @@ class Context7ReviewEnhancer:
                     )
                     if docs and docs.get("content"):
                         all_content.append(docs["content"])
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     logger.debug(f"Context7 lookup timeout for {library} topic {topic}")
                 except Exception as e:
                     logger.debug(f"Context7 lookup error for {library} topic {topic}: {e}")
@@ -223,7 +222,7 @@ class Context7ReviewEnhancer:
             
             return recommendation
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Context7 lookup timeout for library: {library}")
             return None
         except Exception as e:
@@ -233,7 +232,7 @@ class Context7ReviewEnhancer:
     async def _lookup_pattern_docs(
         self,
         pattern: PatternMatch
-    ) -> Optional[PatternGuidance]:
+    ) -> PatternGuidance | None:
         """
         Lookup pattern guidance from Context7.
         
@@ -289,7 +288,7 @@ class Context7ReviewEnhancer:
             
             return guidance
             
-        except asyncio.TimeoutError:
+        except TimeoutError:
             logger.warning(f"Context7 lookup timeout for pattern: {pattern.pattern_name}")
             return None
         except Exception as e:
@@ -437,7 +436,7 @@ class Context7ReviewEnhancer:
         self, 
         content: str, 
         keywords: list[str]
-    ) -> Optional[tuple[int, int]]:
+    ) -> tuple[int, int] | None:
         """
         Find section by header keywords.
         

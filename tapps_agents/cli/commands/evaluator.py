@@ -68,13 +68,12 @@ def handle_evaluator_command(args: object) -> None:
             
             # Parse feedback data from args or file
             import json as json_lib
-            from pathlib import Path
             
             file_path = getattr(args, "file", None)
             if file_path:
                 # Load from file
                 try:
-                    with open(file_path, "r", encoding="utf-8") as f:
+                    with open(file_path, encoding="utf-8") as f:
                         file_data = json_lib.load(f)
                     
                     performance_ratings = file_data.get("performance_ratings", {})
@@ -185,7 +184,7 @@ def handle_evaluator_command(args: object) -> None:
         # Format output based on command type
         if command == "submit-feedback":
             if result.get("success"):
-                feedback.output_result(f"Feedback submitted successfully")
+                feedback.output_result("Feedback submitted successfully")
                 feedback.output_result(f"Feedback ID: {result.get('feedback_id', 'N/A')}")
                 if result.get("file_path"):
                     feedback.output_result(f"Saved to: {result['file_path']}")

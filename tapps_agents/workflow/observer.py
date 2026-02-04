@@ -8,8 +8,8 @@ Allows real-time subscription to workflow events without polling.
 import logging
 import threading
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
 
 from .event_log import WorkflowEvent
 

@@ -4,8 +4,8 @@ Expert and RAG Review Script
 Reviews all experts and RAG knowledge bases to ensure correctness and completeness.
 """
 
-import sys
 import os
+import sys
 from pathlib import Path
 
 # Set UTF-8 encoding for Windows console
@@ -70,7 +70,7 @@ def review_experts_and_rag():
         rag_enabled = expert.rag_enabled
 
         # Verify expert ID pattern
-        expected_id = f"expert-{domain.replace('-', '-')}"
+        f"expert-{domain.replace('-', '-')}"
         id_matches = expert_id.startswith("expert-")
 
         status = "[OK]" if kb_exists and kb_file_count > 0 and rag_enabled else "[WARN]"
@@ -138,7 +138,7 @@ def review_experts_and_rag():
                 orphaned.append(kb_dir.name)
 
         if orphaned:
-            print(f"[WARN] Orphaned knowledge directories (no matching expert):")
+            print("[WARN] Orphaned knowledge directories (no matching expert):")
             for orphan in orphaned:
                 print(f"  - {orphan}/")
             print("  Note: These may be legacy directories or need expert configuration")
@@ -156,14 +156,14 @@ def review_experts_and_rag():
     extra_domains = expert_domains - technical_domains
 
     if missing_domains:
-        print(f"[ERROR] Domains in TECHNICAL_DOMAINS but no expert:")
+        print("[ERROR] Domains in TECHNICAL_DOMAINS but no expert:")
         for domain in missing_domains:
             print(f"  - {domain}")
     else:
         print("[OK] All TECHNICAL_DOMAINS have experts")
 
     if extra_domains:
-        print(f"[WARN] Experts with domains not in TECHNICAL_DOMAINS:")
+        print("[WARN] Experts with domains not in TECHNICAL_DOMAINS:")
         for domain in extra_domains:
             expert = next(e for e in experts if e.primary_domain == domain)
             print(f"  - {domain} ({expert.expert_id})")

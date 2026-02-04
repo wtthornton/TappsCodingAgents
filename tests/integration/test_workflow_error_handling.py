@@ -11,12 +11,17 @@ Tests verify that:
 
 from __future__ import annotations
 
-import pytest
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from tapps_agents.workflow.models import StepResult, Workflow, WorkflowStep, WorkflowSettings
-from tapps_agents.workflow.cursor_executor import CursorWorkflowExecutor
+import pytest
+
+from tapps_agents.workflow.models import (
+    StepResult,
+    Workflow,
+    WorkflowSettings,
+    WorkflowStep,
+)
 
 
 @pytest.mark.integration

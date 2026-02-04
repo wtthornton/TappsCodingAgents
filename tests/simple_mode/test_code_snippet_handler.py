@@ -5,9 +5,8 @@ Tests code snippet detection, temp file creation, language detection,
 and workflow integration. Target: ≥80% coverage.
 """
 
-import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -15,13 +14,11 @@ pytestmark = pytest.mark.unit
 
 from tapps_agents.simple_mode.code_snippet_handler import (
     LANGUAGE_EXTENSIONS,
-    MARKDOWN_CODE_FENCE_PATTERN,
     CodeSnippet,
     CodeSnippetHandler,
     TempFile,
     detect_pasted_code,
 )
-
 
 # ============================================================================
 # Test Fixtures

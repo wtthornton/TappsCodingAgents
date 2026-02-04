@@ -5,7 +5,6 @@ import socket
 from unittest.mock import MagicMock, patch
 
 import httpx
-import pytest
 
 from tapps_agents.cli.network_detection import NetworkDetector
 

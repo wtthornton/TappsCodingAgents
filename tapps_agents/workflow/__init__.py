@@ -33,9 +33,11 @@ from .durable_state import (
     DurableWorkflowState,
     EventStore,
     EventType,
-    WorkflowEvent as DurableWorkflowEvent,
     get_durable_state,
     resume_workflow,
+)
+from .durable_state import (
+    WorkflowEvent as DurableWorkflowEvent,
 )
 from .enhancement_artifact import EnhancementArtifact, EnhancementStage
 from .event_log import WorkflowEvent, WorkflowEventLog
@@ -50,7 +52,6 @@ from .exceptions import (
 from .execution_graph import ExecutionGraph, ExecutionGraphGenerator
 from .executor import WorkflowExecutor
 from .graph_visualizer import GraphVisualizer
-from .observability_dashboard import ObservabilityDashboard
 from .logging_helper import WorkflowLogger
 from .messaging import (
     FileMessageBus,
@@ -66,6 +67,7 @@ from .models import (
     WorkflowStep,
     WorkflowType,
 )
+from .observability_dashboard import ObservabilityDashboard
 from .ops_artifact import (
     ComplianceCheck,
     DeploymentStep,

@@ -7,7 +7,10 @@ Tests workflow, init, score, doctor, create, simple-mode, health, analytics, etc
 import pytest
 
 from tests.e2e.cli.test_base import CLICommandTestBase
-from tests.e2e.cli.validation_helpers import assert_valid_json, assert_text_output, assert_success_exit
+from tests.e2e.cli.validation_helpers import (
+    assert_success_exit,
+    assert_valid_json,
+)
 
 
 @pytest.mark.e2e_cli

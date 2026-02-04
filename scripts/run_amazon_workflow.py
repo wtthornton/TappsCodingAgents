@@ -1,8 +1,8 @@
 """Execute full SDLC workflow for Amazon HTML page creation."""
 import asyncio
-import sys
-import os
 import logging
+import os
+import sys
 from pathlib import Path
 
 # Windows compatibility: Set UTF-8 encoding for console output
@@ -75,7 +75,7 @@ async def main():
             print(f"\n{'='*60}")
             print("Workflow completed successfully!")
             print(f"{'='*60}")
-            print(f"\nArtifacts created:")
+            print("\nArtifacts created:")
             for name, artifact in result.artifacts.items():
                 print(f"  - {name}: {artifact.path}")
         elif result.status == "failed":

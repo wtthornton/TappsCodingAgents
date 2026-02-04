@@ -5,10 +5,9 @@ Performance-optimized with:
 - Result caching for generate-tests (90%+ speedup on unchanged files)
 """
 import asyncio
-from pathlib import Path
 
 from ...agents.tester.agent import TesterAgent
-from ...core.agent_cache import get_agent_cache, AgentResultCache
+from ...core.agent_cache import AgentResultCache, get_agent_cache
 from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
@@ -33,10 +32,10 @@ def handle_tester_command(args: object) -> None:
         return
     
     # Check network requirement
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
     from ...core.network_errors import NetworkRequiredError
     from ..base import handle_network_error
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
     
     requirement = CommandClassifier.get_network_requirement("tester", command)
     offline_mode = False

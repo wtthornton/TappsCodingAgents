@@ -13,7 +13,6 @@ from typing import TYPE_CHECKING, Any
 from ...context7.agent_integration import Context7AgentHelper, get_context7_helper
 from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
-from ...core.instructions import CodeGenerationInstruction
 from ...experts.agent_integration import ExpertSupportMixin
 from .code_generator import CodeGenerator
 

@@ -4,17 +4,14 @@ Unit tests for workflow resume command handler.
 Tests the handle_workflow_resume_command function and related CLI functionality.
 """
 
-import json
-import sys
 from pathlib import Path
-from unittest.mock import MagicMock, Mock, patch
+from unittest.mock import Mock, patch
 
 import pytest
 
 from tapps_agents.cli.commands.top_level import handle_workflow_resume_command
 from tapps_agents.workflow.executor import WorkflowExecutor
 from tapps_agents.workflow.models import WorkflowState
-from tapps_agents.workflow.parser import WorkflowParser
 
 pytestmark = pytest.mark.unit
 
@@ -82,7 +79,7 @@ workflow:
             mock_run.return_value = final_state
 
             # Capture stdout
-            with patch("sys.stdout") as mock_stdout, patch("sys.exit") as mock_exit:
+            with patch("sys.stdout"), patch("sys.exit") as mock_exit:
                 handle_workflow_resume_command(mock_args)
 
                 # Verify run_async_command was called
@@ -208,7 +205,7 @@ workflow:
         # Create executor and start workflow
         executor1 = WorkflowExecutor(project_root=tmp_path, auto_detect=False)
         executor1.load_workflow(tmp_workflow_file)
-        state1 = executor1.start()
+        executor1.start()
         # Mark as completed
         executor1.state.status = "completed"
         executor1.save_state()
@@ -243,7 +240,7 @@ workflow:
         # Create executor and start workflow
         executor1 = WorkflowExecutor(project_root=tmp_path, auto_detect=False)
         executor1.load_workflow(tmp_workflow_file)
-        state1 = executor1.start()
+        executor1.start()
         executor1.save_state()
 
         # Delete workflow file
@@ -395,7 +392,7 @@ workflow:
         # Create executor and start workflow
         executor1 = WorkflowExecutor(project_root=tmp_path, auto_detect=False)
         executor1.load_workflow(tmp_workflow_file)
-        state1 = executor1.start()
+        executor1.start()
         executor1.save_state()
 
         # Mock execute to raise exception

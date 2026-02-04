@@ -513,7 +513,7 @@ class Context7AgentHelper:
             # Node.js
             "node", "npm", "yarn", "pnpm",
             # Testing
-            "playwright", "puppeteer", "selenium", "cypress", "jest", "mocha",
+            "puppeteer", "mocha",
             # Config/Infra (valid libraries in Context7)
             "config", "dotenv", "env",
         }
@@ -633,7 +633,10 @@ class Context7AgentHelper:
         # CRITICAL FIX: Check quota BEFORE starting parallel execution
         # This prevents making multiple API calls when quota is already exceeded
         try:
-            from .backup_client import is_context7_quota_exceeded, get_context7_quota_message
+            from .backup_client import (
+                get_context7_quota_message,
+                is_context7_quota_exceeded,
+            )
             if is_context7_quota_exceeded():
                 quota_msg = get_context7_quota_message() or "Monthly quota exceeded"
                 logger.warning(
@@ -672,7 +675,7 @@ class Context7AgentHelper:
                     timeout=per_library_timeout,
                 )
                 return (lib, result)
-            except asyncio.TimeoutError:
+            except TimeoutError:
                 logger.debug(f"Context7 lookup timeout for {lib} ({per_library_timeout}s)")
                 return (lib, None)
             except Exception as e:

@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import subprocess
 import sys
-from pathlib import Path
 
 
 def _check_py_313_windows() -> tuple[bool, str | None]:
@@ -55,7 +54,7 @@ def main() -> int:
     # Not 3.13+
     try:
         print("[FAIL] Python 3.13+ required")
-        print(f"  Required: Python 3.13+")
+        print("  Required: Python 3.13+")
         print(f"  Detected: Python {cur.major}.{cur.minor}.{cur.micro}")
         print("")
         print("Solutions:")

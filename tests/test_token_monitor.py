@@ -1,12 +1,6 @@
 """Tests for token monitoring system."""
 
-import pytest
-from tapps_agents.core.token_monitor import (
-    TokenBudget,
-    TokenMonitor,
-    TokenMonitorResult,
-    create_monitor
-)
+from tapps_agents.core.token_monitor import TokenBudget, TokenMonitor, create_monitor
 
 
 class TestTokenBudget:

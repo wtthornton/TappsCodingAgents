@@ -9,7 +9,6 @@ Supported patterns:
 
 import re
 from dataclasses import dataclass
-from typing import Optional
 
 logger = __import__("logging").getLogger(__name__)
 
@@ -96,7 +95,7 @@ class PatternDetector:
         
         return patterns
     
-    def detect_rag_pattern(self, code: str) -> Optional[PatternMatch]:
+    def detect_rag_pattern(self, code: str) -> PatternMatch | None:
         """
         Detect RAG (Retrieval Augmented Generation) system patterns.
         
@@ -124,7 +123,7 @@ class PatternDetector:
             line_numbers=line_numbers
         )
     
-    def detect_multi_agent_pattern(self, code: str) -> Optional[PatternMatch]:
+    def detect_multi_agent_pattern(self, code: str) -> PatternMatch | None:
         """
         Detect multi-agent system patterns.
         
@@ -151,7 +150,7 @@ class PatternDetector:
             line_numbers=line_numbers
         )
     
-    def detect_weighted_decision_pattern(self, code: str) -> Optional[PatternMatch]:
+    def detect_weighted_decision_pattern(self, code: str) -> PatternMatch | None:
         """
         Detect weighted decision-making patterns.
         
@@ -196,11 +195,11 @@ class PatternDetector:
         for indicator in indicators:
             # Create regex pattern with word boundaries to avoid false positives
             if self.case_sensitive:
-                pattern = rf'\b{re.escape(indicator)}\b'
+                rf'\b{re.escape(indicator)}\b'
             else:
-                pattern = rf'\b{re.escape(indicator)}\b'
-                code_lower = code.lower()
-                indicator_lower = indicator.lower()
+                rf'\b{re.escape(indicator)}\b'
+                code.lower()
+                indicator.lower()
             
             # Search for indicator
             for line_num, line in enumerate(lines, start=1):

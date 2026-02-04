@@ -147,7 +147,7 @@ Examples:
     )
 
     # Short aliases
-    full_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "full",
         help="Full SDLC Pipeline (enterprise, complete lifecycle)",
         description="""Complete software development lifecycle workflow for enterprise projects.
@@ -159,7 +159,7 @@ gates and compliance checks. Best for greenfield projects or major features.
 Example: tapps-agents workflow full --prompt "Build a microservices e-commerce platform" --auto""",
         parents=[common_workflow_args],
     )
-    rapid_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "rapid",
         help="Rapid Development (feature, sprint work)",
         description="""Fast-paced development workflow for sprint work and feature development.
@@ -170,7 +170,7 @@ and uses lighter review processes. Best for well-understood features and tight d
 Example: tapps-agents workflow rapid --prompt "Add user profile editing" --auto""",
         parents=[common_workflow_args],
     )
-    fix_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "fix",
         help="Maintenance & Bug Fixing (refactor, technical debt)",
         description="""Workflow focused on bug fixes, refactoring, and technical debt reduction.
@@ -181,7 +181,7 @@ duplication detection and quality improvement steps. Best for maintenance work.
 Example: tapps-agents workflow fix --file src/buggy_module.py --auto""",
         parents=[common_workflow_args],
     )
-    quality_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "quality",
         help="Quality Improvement (code review cycle)",
         description="""Comprehensive code quality improvement workflow.
@@ -193,7 +193,7 @@ Example: tapps-agents workflow quality --file src/legacy_code.py --auto""",
         parents=[common_workflow_args],
     )
     # Simple Mode workflow aliases
-    new_feature_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "new-feature",
         help="Simple New Feature (build new features quickly)",
         description="""Simplified workflow for building new features with automatic quality checks.
@@ -204,7 +204,7 @@ Quality gates: Overall ≥65, Security ≥6.5
 Example: tapps-agents workflow new-feature --prompt "Add user authentication" --auto""",
         parents=[common_workflow_args],
     )
-    improve_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "improve",
         help="Simple Improve Quality (code quality improvement)",
         description="""Simplified workflow for improving code quality through review and refactoring.
@@ -215,7 +215,7 @@ Quality gates: Overall ≥75, Maintainability ≥8.0
 Example: tapps-agents workflow improve --file src/legacy_code.py --auto""",
         parents=[common_workflow_args],
     )
-    hotfix_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "hotfix",
         help="Quick Fix (urgent, production bugs)",
         description="""Minimal workflow for urgent production bug fixes.
@@ -255,7 +255,7 @@ Example: tapps-agents workflow hotfix --file example_bug.py --auto""",
     )
 
     # List command
-    list_parser = workflow_subparsers.add_parser(
+    workflow_subparsers.add_parser(
         "list",
         help="List all available workflow presets with descriptions",
         description="""Display all available workflow presets with detailed descriptions.
@@ -1548,7 +1548,7 @@ Reports any missing components, configuration errors, or issues that would preve
     task_close_p.add_argument("id", help="Task ID")
     task_hydrate_p = task_subparsers.add_parser("hydrate", help="Create Beads issues from task specs")
     task_hydrate_p.add_argument("--force", action="store_true", help="Re-create or update Beads issues")
-    task_dehydrate_p = task_subparsers.add_parser("dehydrate", help="Update task specs from Beads status")
+    task_subparsers.add_parser("dehydrate", help="Update task specs from Beads status")
     task_run_p = task_subparsers.add_parser("run", help="Run workflow from task spec and update spec on completion")
     task_run_p.add_argument("id", help="Task ID")
 
@@ -1574,11 +1574,11 @@ Use natural language commands instead of agent-specific syntax.""",
     )
 
     # Simple Mode: on/off
-    simple_mode_on_parser = simple_mode_subparsers.add_parser(
+    simple_mode_subparsers.add_parser(
         "on",
         help="Enable Simple Mode",
     )
-    simple_mode_off_parser = simple_mode_subparsers.add_parser(
+    simple_mode_subparsers.add_parser(
         "off",
         help="Disable Simple Mode",
     )
@@ -1592,7 +1592,7 @@ Use natural language commands instead of agent-specific syntax.""",
         default="text",
         help="Output format (default: text)",
     )
-    simple_mode_init_parser = simple_mode_subparsers.add_parser(
+    simple_mode_subparsers.add_parser(
         "init",
         help="Initialize Simple Mode with guided onboarding",
         description="""Run the Simple Mode onboarding wizard to get started quickly.
@@ -1605,7 +1605,7 @@ The wizard will:
   • Celebrate your success! 🎉
 """,
     )
-    simple_mode_configure_parser = simple_mode_subparsers.add_parser(
+    simple_mode_subparsers.add_parser(
         "configure",
         aliases=["config"],
         help="Configure Simple Mode settings interactively",
@@ -1617,7 +1617,7 @@ The wizard will guide you through:
   • Advanced options
 """,
     )
-    simple_mode_progress_parser = simple_mode_subparsers.add_parser(
+    simple_mode_subparsers.add_parser(
         "progress",
         help="Show your Simple Mode learning progression",
         description="""Display your learning progression, usage statistics, and unlocked features.

@@ -428,7 +428,7 @@ def _sync_directory_files(directory: Path, file_paths: list[str]) -> None:
             if file_path.exists():
                 with open(file_path, 'r+b') as f:
                     os.fsync(f.fileno())
-        except (OSError, IOError):
+        except OSError:
             pass  # Best effort, continue with remaining files
 
 
@@ -508,7 +508,7 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
         generator.write(output_path=rules_path, backup=False)
         if rules_path.exists() and str(rules_path) not in copied_rules:
             copied_rules.append(str(rules_path))
-            logger.debug(f"Generated workflow-presets.mdc from YAML files")
+            logger.debug("Generated workflow-presets.mdc from YAML files")
     except ValueError as e:
         # ValueError means no workflows found - this is expected in some cases
         logger.debug(f"Could not generate workflow-presets.mdc (no workflows found): {e}")
@@ -995,7 +995,7 @@ def normalize_config_encoding(file_path: Path) -> tuple[bool, str | None]:
     
     try:
         # Read with utf-8-sig to strip any BOM
-        with open(file_path, "r", encoding="utf-8-sig") as f:
+        with open(file_path, encoding="utf-8-sig") as f:
             content = f.read()
         
         # Check if file had BOM by comparing raw bytes
@@ -1094,8 +1094,8 @@ def validate_mcp_config(mcp_config_path: Path) -> dict[str, Any]:
             if not os.getenv(var_name):
                 result["valid"] = False
                 result["issues"].append(
-                    f"CONTEXT7_API_KEY environment variable not set. "
-                    f"MCP server will not work without this."
+                    "CONTEXT7_API_KEY environment variable not set. "
+                    "MCP server will not work without this."
                 )
                 result["recommendations"].append(
                     f"Set {var_name} environment variable or update MCP config with direct value"
@@ -1996,14 +1996,14 @@ async def pre_populate_context7_cache(
         Dictionary with pre-population results
     """
     try:
-        from tapps_agents.context7.commands import Context7Commands
-        from tapps_agents.core.config import load_config
-        
         # Load API key from encrypted storage if not in environment
         # This ensures cache pre-population works even when run outside Cursor
         # #region agent log
         import json
         from datetime import datetime
+
+        from tapps_agents.context7.commands import Context7Commands
+        from tapps_agents.core.config import load_config
         try:
             log_path = project_root / ".cursor" / "debug.log"
             log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2032,7 +2032,7 @@ async def pre_populate_context7_cache(
                         "data": {"error": str(e), "traceback": traceback.format_exc()},
                         "timestamp": int(datetime.now().timestamp() * 1000)
                     }) + "\n")
-            except (OSError, IOError):  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
+            except OSError:  # Only catch file I/O errors, not KeyboardInterrupt/SystemExit
                 pass
         # #endregion
         if not os.getenv("CONTEXT7_API_KEY"):
@@ -2196,7 +2196,6 @@ async def pre_populate_context7_cache(
 
         # Use CacheWarmer for staleness-aware pre-loading
         # CacheWarmer automatically checks staleness and skips fresh entries
-        cache_warmer = context7_commands.cache_warmer
         
         # Common topics to cache for popular libraries
         common_topics_map = {

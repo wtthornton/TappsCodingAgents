@@ -63,7 +63,7 @@ class ExternalFeedbackStorage:
         except Exception as e:
             if temp_path.exists():
                 temp_path.unlink()
-            raise IOError(f"Failed to save feedback: {e}") from e
+            raise OSError(f"Failed to save feedback: {e}") from e
 
         return file_path
 
@@ -84,7 +84,7 @@ class ExternalFeedbackStorage:
             return None
 
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = json.load(f)
             return ExternalFeedbackData.from_dict(data)
         except Exception as e:
@@ -121,7 +121,7 @@ class ExternalFeedbackStorage:
         feedback_files = list(self.feedback_dir.glob("feedback-*.json"))
         for file_path in feedback_files:
             try:
-                with open(file_path, "r", encoding="utf-8") as f:
+                with open(file_path, encoding="utf-8") as f:
                     data = json.load(f)
                 feedback = ExternalFeedbackData.from_dict(data)
 

@@ -5,7 +5,7 @@ Comprehensive unit tests for ExpertSetupWizard.
 import shutil
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import patch
 
 import pytest
 import yaml
@@ -101,9 +101,9 @@ class TestConfigDirectory:
     def test_ensure_config_dir_idempotent(self, wizard):
         """Test _ensure_config_dir is idempotent."""
         wizard._ensure_config_dir()
-        first_time = wizard.config_dir.stat().st_mtime
+        wizard.config_dir.stat().st_mtime
         wizard._ensure_config_dir()
-        second_time = wizard.config_dir.stat().st_mtime
+        wizard.config_dir.stat().st_mtime
         # Should not raise error and should be idempotent
         assert wizard.config_dir.exists()
 

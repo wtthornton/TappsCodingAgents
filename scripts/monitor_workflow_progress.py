@@ -13,12 +13,11 @@ Usage:
 import json
 import sys
 import time
-from pathlib import Path
 from datetime import datetime
-from typing import Optional
+from pathlib import Path
 
 
-def find_latest_workflow_state(state_dir: Path) -> Optional[Path]:
+def find_latest_workflow_state(state_dir: Path) -> Path | None:
     """Find the latest workflow state file."""
     last_file = state_dir / "last.json"
     if last_file.exists():
@@ -46,7 +45,7 @@ def find_latest_workflow_state(state_dir: Path) -> Optional[Path]:
     return max(state_files, key=lambda p: p.stat().st_mtime)
 
 
-def load_workflow_state(state_file: Path) -> Optional[dict]:
+def load_workflow_state(state_file: Path) -> dict | None:
     """Load workflow state from file."""
     try:
         with open(state_file) as f:
@@ -105,11 +104,11 @@ def format_progress(state: dict) -> str:
     return "\n".join(lines)
 
 
-def monitor_workflow(workflow_id: Optional[str] = None, interval: float = 2.0):
+def monitor_workflow(workflow_id: str | None = None, interval: float = 2.0):
     """Monitor workflow progress."""
     from tapps_agents.core.config import load_config
     
-    config = load_config()
+    load_config()
     project_root = Path.cwd()
     state_dir = project_root / ".tapps-agents" / "workflow-state"
     

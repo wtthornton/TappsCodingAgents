@@ -6,7 +6,6 @@ Replaces invalid characters (hyphens, special chars) with valid Python identifie
 """
 
 import re
-from pathlib import Path
 
 
 class ModulePathSanitizer:
@@ -118,9 +117,9 @@ class ModulePathSanitizer:
         from_pattern = r"(from\s+)([^\s]+)(\s+import)"
         match = re.search(from_pattern, import_stmt)
         if match:
-            prefix = match.group(1)
+            match.group(1)
             module_path = match.group(2)
-            suffix = match.group(3)
+            match.group(3)
             sanitized_path = self.sanitize_module_path(module_path)
             return import_stmt.replace(module_path, sanitized_path)
 
@@ -128,7 +127,7 @@ class ModulePathSanitizer:
         import_pattern = r"(import\s+)([^\s]+)(?:\s|$)"
         match = re.search(import_pattern, import_stmt)
         if match:
-            prefix = match.group(1)
+            match.group(1)
             module_path = match.group(2)
             sanitized_path = self.sanitize_module_path(module_path)
             return import_stmt.replace(module_path, sanitized_path)

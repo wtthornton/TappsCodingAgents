@@ -9,11 +9,11 @@ This script:
 4. Restarts the container if needed
 """
 
+import os
 import subprocess
 import sys
-import os
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
 # Windows encoding fix
 if sys.platform == "win32":
@@ -80,7 +80,7 @@ def read_file_from_container(container_name: str, file_path: str) -> str:
     
     try:
         # Read with UTF-8 encoding and error handling
-        with open(temp_file, 'r', encoding='utf-8', errors='replace') as f:
+        with open(temp_file, encoding='utf-8', errors='replace') as f:
             content = f.read()
         return content
     finally:
@@ -133,7 +133,7 @@ def inject_fix(content: str) -> str:
     if not fix_script_path.exists():
         raise FileNotFoundError(f"Fix script not found: {fix_script_path}")
     
-    with open(fix_script_path, 'r', encoding='utf-8') as f:
+    with open(fix_script_path, encoding='utf-8') as f:
         fix_script = f.read()
     
     # First, inject the fix script at the beginning
@@ -333,7 +333,7 @@ def patch_container(container_name: str = 'ai-automation-ui') -> None:
         
         # Create backup
         print("[BACKUP] Creating backup...")
-        backup_path = create_backup(container_name, js_file)
+        create_backup(container_name, js_file)
         
         # Read current content
         print("[READ] Reading file content...")
@@ -356,7 +356,7 @@ def patch_container(container_name: str = 'ai-automation-ui') -> None:
             # Also inject the fix script at the beginning
             fix_script_path = Path(__file__).parent / 'fix-collada-loader.js'
             if fix_script_path.exists():
-                with open(fix_script_path, 'r', encoding='utf-8') as f:
+                with open(fix_script_path, encoding='utf-8') as f:
                     fix_script = f.read()
                 patched_content = (
                     '// PATCHED PROXY SET TRAP\n' +

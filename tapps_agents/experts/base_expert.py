@@ -340,7 +340,7 @@ class BaseExpert(BaseAgent):
         """
         if self.rag_enabled and self.knowledge_base:
             from ..core.config import get_expert_config
-            from .rag_metrics import get_rag_metrics_tracker, RAGQueryTimer
+            from .rag_metrics import RAGQueryTimer, get_rag_metrics_tracker
 
             expert_config = get_expert_config()
             

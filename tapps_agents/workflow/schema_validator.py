@@ -6,12 +6,12 @@ Epic 5 / Story 5.1: YAML Workflow Parser & Validator
 """
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
 
-class SchemaVersion(str, Enum):
+class SchemaVersion(StrEnum):
     """Supported workflow schema versions."""
 
     V1_0 = "1.0"

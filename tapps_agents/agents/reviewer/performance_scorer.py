@@ -62,7 +62,6 @@ class PythonPerformanceStrategy(PerformanceStrategy):
             tree = ast.parse(code)
 
             # Check for caching patterns
-            has_cache = False
             for node in ast.walk(tree):
                 if isinstance(node, ast.Call):
                     if isinstance(node.func, ast.Attribute):
@@ -71,25 +70,20 @@ class PythonPerformanceStrategy(PerformanceStrategy):
                             and node.func.value.id == "functools"
                             and node.func.attr in ["lru_cache", "cache"]
                         ):
-                            has_cache = True
                             optimizations.append("caching")
                     elif isinstance(node.func, ast.Name):
                         if node.func.id in ["lru_cache", "cache"]:
-                            has_cache = True
                             optimizations.append("caching")
 
             # Check for async/await patterns
-            has_async = False
             for node in ast.walk(tree):
                 if isinstance(node, ast.FunctionDef) and node.args:
                     if any("async" in str(kwarg) for kwarg in node.args.kwonlyargs):
                         pass  # async keyword
                 if isinstance(node, ast.FunctionDef) and hasattr(node, "async_"):
                     if node.async_:
-                        has_async = True
                         optimizations.append("async_patterns")
                 elif isinstance(node, ast.AsyncFunctionDef):
-                    has_async = True
                     optimizations.append("async_patterns")
 
             # Check for generators (lazy evaluation)
@@ -221,8 +215,8 @@ class TypeScriptPerformanceStrategy(PerformanceStrategy):
 
         # Check for efficient type definitions (type vs interface)
         # Prefer type for unions/intersections, interface for objects
-        type_defs = len(re.findall(r"\btype\s+\w+\s*=", code))
-        interface_defs = len(re.findall(r"\binterface\s+\w+", code))
+        len(re.findall(r"\btype\s+\w+\s*=", code))
+        len(re.findall(r"\binterface\s+\w+", code))
 
         # Check for const enums (compile-time optimization)
         if re.search(r"\bconst\s+enum\b", code):

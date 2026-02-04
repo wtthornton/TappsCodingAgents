@@ -12,13 +12,12 @@ Tests the _check_context7_cache_status() function with various scenarios:
 
 from __future__ import annotations
 
-from pathlib import Path
 from unittest.mock import Mock, patch
 
 import pytest
 
 from tapps_agents.core.config import ProjectConfig
-from tapps_agents.core.doctor import DoctorFinding, _check_context7_cache_status
+from tapps_agents.core.doctor import _check_context7_cache_status
 
 pytestmark = pytest.mark.unit
 

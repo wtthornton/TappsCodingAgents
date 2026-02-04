@@ -11,19 +11,13 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import requests  # type: ignore[import-untyped]
-
 logger = logging.getLogger(__name__)
 
 from ..core.skill_integration import (
     get_skill_integration_manager,
 )
-from .cursor_skill_helper import (
-    create_skill_command_file,
-    create_skill_execution_instructions,
-)
-from .models import Artifact, WorkflowState, WorkflowStep
 from .direct_execution_fallback import DirectExecutionFallback
+from .models import Artifact, WorkflowState, WorkflowStep
 
 
 class SkillInvoker:
@@ -532,14 +526,12 @@ class SkillInvoker:
             Result dictionary with execution status and details
         """
         # Extract agent name and action from command
-        agent_name = None
-        action = None
         if command.startswith("@"):
             parts = command.split()
             if parts:
-                agent_name = parts[0][1:]  # Remove "@"
+                parts[0][1:]  # Remove "@"
                 if len(parts) > 1:
-                    action = parts[1]
+                    parts[1]
 
         # Background Agent API removed - always use direct execution fallback
         import logging

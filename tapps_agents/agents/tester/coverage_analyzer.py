@@ -108,7 +108,7 @@ class CoverageAnalyzer:
             # Extract line coverage
             executed_lines = file_data.get("executed_lines", [])
             missing_lines = file_data.get("missing_lines", [])
-            excluded_lines = file_data.get("excluded_lines", [])
+            file_data.get("excluded_lines", [])
 
             total_file_lines = len(executed_lines) + len(missing_lines)
             covered_file_lines = len(executed_lines)
@@ -126,7 +126,7 @@ class CoverageAnalyzer:
                 covered_branches += covered_file_branches
 
                 # Identify uncovered branches
-                for branch_id, branch_info in branch_data.items():
+                for _branch_id, branch_info in branch_data.items():
                     if not branch_info.get("covered", False):
                         gaps.append(
                             CoverageGap(

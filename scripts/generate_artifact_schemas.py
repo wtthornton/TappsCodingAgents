@@ -22,6 +22,7 @@ if sys.platform == "win32":
         pass
 
 # Import all artifact models
+from tapps_agents.epic.models import AcceptanceCriterion, EpicDocument, Story
 from tapps_agents.workflow.code_artifact import CodeArtifact, CodeChange
 from tapps_agents.workflow.context_artifact import (
     ContextArtifact,
@@ -34,6 +35,12 @@ from tapps_agents.workflow.enhancement_artifact import (
     EnhancementArtifact,
     EnhancementStage,
 )
+from tapps_agents.workflow.metadata_models import (
+    PlanDetails,
+    RetryPolicy,
+    TaskInputs,
+    TaskResults,
+)
 from tapps_agents.workflow.ops_artifact import (
     ComplianceCheck,
     DeploymentStep,
@@ -44,19 +51,12 @@ from tapps_agents.workflow.ops_artifact import (
 from tapps_agents.workflow.planning_artifact import PlanningArtifact
 from tapps_agents.workflow.quality_artifact import QualityArtifact, ToolResult
 from tapps_agents.workflow.review_artifact import ReviewArtifact, ReviewComment
+from tapps_agents.workflow.story_models import Story as UnifiedStory
 from tapps_agents.workflow.testing_artifact import (
     CoverageSummary,
     TestingArtifact,
     TestResult,
 )
-from tapps_agents.epic.models import AcceptanceCriterion, EpicDocument, Story
-from tapps_agents.workflow.metadata_models import (
-    PlanDetails,
-    RetryPolicy,
-    TaskInputs,
-    TaskResults,
-)
-from tapps_agents.workflow.story_models import Story as UnifiedStory
 
 
 def generate_schema_file(

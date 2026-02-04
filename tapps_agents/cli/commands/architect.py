@@ -8,7 +8,7 @@ from ..base import normalize_command
 from ..feedback import get_feedback
 from ..help.static_help import get_static_help
 from ..utils.agent_lifecycle import safe_close_agent_sync
-from .common import check_result_error, format_json_output
+from .common import check_result_error
 
 
 def handle_architect_command(args: object) -> None:
@@ -25,10 +25,10 @@ def handle_architect_command(args: object) -> None:
         return
     
     # Check network requirement
-    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
-    from ..network_detection import NetworkDetector
     from ...core.network_errors import NetworkRequiredError
     from ..base import handle_network_error
+    from ..command_classifier import CommandClassifier, CommandNetworkRequirement
+    from ..network_detection import NetworkDetector
     
     requirement = CommandClassifier.get_network_requirement("architect", command)
     offline_mode = False

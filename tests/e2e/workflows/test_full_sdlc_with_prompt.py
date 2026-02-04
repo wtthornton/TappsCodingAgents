@@ -10,19 +10,18 @@ from pathlib import Path
 
 import pytest
 
-from tapps_agents.workflow.executor import WorkflowExecutor
-from tapps_agents.workflow.models import WorkflowState
 from tests.e2e.fixtures.sdlc_validators import (
     SDLCPhaseValidator,
     assert_architecture_includes,
     assert_html_has_animations,
     assert_html_has_dark_theme,
-    assert_quality_gate_passed,
     assert_requirements_contain,
 )
-from tests.e2e.fixtures.workflow_monitor import MonitoringConfig, WorkflowActivityMonitor, create_progress_logger_callback
+from tests.e2e.fixtures.workflow_monitor import (
+    MonitoringConfig,
+    WorkflowActivityMonitor,
+)
 from tests.e2e.fixtures.workflow_runner import WorkflowRunner
-from tests.e2e.fixtures.workflow_test_helpers import WorkflowTestHelper
 
 logger = logging.getLogger(__name__)
 

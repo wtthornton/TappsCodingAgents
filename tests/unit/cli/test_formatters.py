@@ -5,7 +5,6 @@ Tests JSON, Markdown, and HTML output formatting functions.
 """
 
 import json
-from pathlib import Path
 
 import pytest
 

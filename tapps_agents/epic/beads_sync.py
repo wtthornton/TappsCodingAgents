@@ -11,7 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from ..beads import parse_bd_id_from_stdout
-from .models import EpicDocument, Story
+from .models import EpicDocument
 
 logger = logging.getLogger(__name__)
 

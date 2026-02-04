@@ -141,7 +141,7 @@ class KBLookup:
         self, 
         library: str, 
         topic: str | None, 
-        start_time: "datetime",
+        start_time: datetime,
         max_stale_days: int = 30
     ) -> LookupResult | None:
         """
@@ -350,7 +350,7 @@ class KBLookup:
                     # Try to process in background if event loop is available
                     import asyncio
                     try:
-                        loop = asyncio.get_running_loop()
+                        asyncio.get_running_loop()
                         # Event loop is running, create task for background processing
                         asyncio.create_task(
                             self._process_refresh_queue_async(max_items=1)
@@ -476,7 +476,10 @@ class KBLookup:
         # CRITICAL FIX: Check quota BEFORE making API calls
         # This prevents unnecessary API calls when quota is already exceeded
         try:
-            from .backup_client import is_context7_quota_exceeded, get_context7_quota_message
+            from .backup_client import (
+                get_context7_quota_message,
+                is_context7_quota_exceeded,
+            )
             if is_context7_quota_exceeded():
                 quota_msg = get_context7_quota_message() or "Monthly quota exceeded"
                 response_time = (datetime.now(UTC) - start_time).total_seconds() * 1000

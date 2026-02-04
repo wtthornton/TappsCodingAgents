@@ -12,7 +12,6 @@ import sys
 import pytest
 import yaml
 
-
 pytestmark = pytest.mark.integration
 
 

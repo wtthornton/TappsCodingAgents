@@ -12,10 +12,10 @@ This module provides a single source of truth for runtime mode detection.
 from __future__ import annotations
 
 import os
-from enum import Enum
+from enum import StrEnum
 
 
-class RuntimeMode(str, Enum):
+class RuntimeMode(StrEnum):
     CURSOR = "cursor"
     HEADLESS = "headless"
 

@@ -5,7 +5,6 @@ Correlates prompt variations with review quality and measures impact.
 """
 
 import logging
-from collections import defaultdict
 from typing import Any
 
 from ..prompt_base import PromptOutcome, PromptVariation
@@ -97,7 +96,7 @@ class CorrelationAnalyzer:
             if vid in outcomes and outcomes[vid].success_rate() > 0.7
         ]
         
-        failed = [
+        [
             (vid, outcomes[vid])
             for vid in variations.keys()
             if vid in outcomes and outcomes[vid].success_rate() < 0.4

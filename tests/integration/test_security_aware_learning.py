@@ -2,8 +2,9 @@
 Integration tests for security-aware learning system.
 """
 
+from unittest.mock import Mock
+
 import pytest
-from unittest.mock import Mock, patch, MagicMock
 
 from tapps_agents.core.agent_learning import AgentLearner, PatternExtractor
 from tapps_agents.core.capability_registry import CapabilityRegistry

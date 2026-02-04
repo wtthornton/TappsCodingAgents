@@ -5,11 +5,10 @@ These helpers provide simple, non-mocked validation functions
 for testing CLI command outputs and behavior.
 """
 
-import json
 from pathlib import Path
 from typing import Any
 
-from tests.e2e.fixtures.cli_harness import CLIResult, assert_json_output, assert_success
+from tests.e2e.fixtures.cli_harness import CLIResult
 
 
 def assert_exit_code(result: CLIResult, expected: int) -> None:

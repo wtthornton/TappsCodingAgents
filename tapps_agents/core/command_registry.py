@@ -7,9 +7,8 @@ for command discovery and error handling.
 
 from collections import defaultdict
 from dataclasses import dataclass
-from typing import Any
-
 from difflib import get_close_matches
+from typing import Any
 
 
 @dataclass

@@ -8,13 +8,13 @@ Uses Python 3.13+ patterns including union types and modern type hints.
 from __future__ import annotations
 
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, Field, model_validator
 
 
-class StepStatus(str, Enum):
+class StepStatus(StrEnum):
     """Step execution status."""
 
     SUCCESS = "success"

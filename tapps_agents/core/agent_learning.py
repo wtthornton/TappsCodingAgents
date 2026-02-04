@@ -130,7 +130,7 @@ class PatternExtractor:
         # Security check before extraction
         security_result = self.security_scanner.scan_code(code=code)
         security_score = security_result["security_score"]
-        vulnerabilities = security_result["vulnerabilities"]
+        security_result["vulnerabilities"]
         is_safe = security_result.get("is_safe", True)
 
         # Only extract if security score meets threshold
