@@ -498,9 +498,10 @@ class SkillInvoker:
                 # Convert dict to compact JSON string (no newlines, no spaces)
                 # Use separators to ensure single-line output for shell safety
                 json_str = json.dumps(value, separators=(',', ':'))
-                # Use shlex.quote() for proper shell escaping
-                import shlex
-                parts.append(f"--{key} {shlex.quote(json_str)}")
+                # Escape backslashes and double quotes for Windows cmd compatibility
+                # Then wrap in double quotes (Windows-compatible)
+                escaped = json_str.replace('\\', '\\\\').replace('"', '\\"')
+                parts.append(f'--{key} "{escaped}"')
             else:
                 parts.append(f"--{key} {value}")
 
@@ -622,7 +623,8 @@ class SkillInvoker:
             params["target"] = str(target_path)
         
         # Add context as JSON string for Skills to parse
-        params["context"] = json.dumps(skill_context.to_dict())
+        # Use compact format (no newlines, no spaces) for shell safety
+        params["context"] = json.dumps(skill_context.to_dict(), separators=(',', ':'))
 
         # Build command string using custom Skill name
         command_str = self._build_command(
