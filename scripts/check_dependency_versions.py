@@ -47,7 +47,7 @@ def get_latest_version(package: str) -> tuple[str | None, str | None]:
         
         # Try to parse from "Available versions: x.y.z, ..."
         if "Available versions:" in result.stdout:
-            versions_line = [l for l in lines if "Available versions:" in l]
+            versions_line = [line for line in lines if "Available versions:" in line]
             if versions_line:
                 versions_text = versions_line[0].split("Available versions:")[-1].strip()
                 # First version is usually the latest
@@ -125,11 +125,11 @@ def compare_versions(current: str, latest: str) -> tuple[bool, str]:
         max_len = max(len(current_parts), len(latest_parts))
         current_parts += [0] * (max_len - len(current_parts))
         latest_parts += [0] * (max_len - len(latest_parts))
-        
-        for c, l in zip(current_parts, latest_parts, strict=False):
-            if l > c:
+
+        for current, latest in zip(current_parts, latest_parts, strict=False):
+            if latest > current:
                 return True, "Newer version available"
-            elif c > l:
+            elif current > latest:
                 return False, "Current is newer (unlikely, check manually)"
         
         return False, "Versions match"

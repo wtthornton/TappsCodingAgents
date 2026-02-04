@@ -19,7 +19,7 @@ from typing import Any
 
 # Try to import yaml for frontmatter extraction
 try:
-    import yaml
+    import yaml  # noqa: F401 - Used to check availability
     YAML_AVAILABLE = True
 except ImportError:
     YAML_AVAILABLE = False
