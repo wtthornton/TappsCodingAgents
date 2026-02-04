@@ -259,8 +259,9 @@ class DirectExecutionFallback:
 
         # Split into parts, preserving quoted strings
         # Use shlex.split() to handle complex quotes properly
+        # Use posix=True to properly handle quote removal (even on Windows)
         try:
-            parts = shlex.split(skill_command, posix=False)
+            parts = shlex.split(skill_command, posix=True)
         except ValueError as e:
             # Provide helpful error message with truncated command
             cmd_preview = skill_command[:200] + "..." if len(skill_command) > 200 else skill_command
