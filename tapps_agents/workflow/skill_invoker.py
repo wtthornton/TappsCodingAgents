@@ -495,8 +495,12 @@ class SkillInvoker:
                 else:
                     parts.append(f"--{key} {value}")
             elif isinstance(value, dict):
-                # Convert dict to JSON string
-                parts.append(f'--{key} \'{json.dumps(value)}\'')
+                # Convert dict to compact JSON string (no newlines, no spaces)
+                # Use separators to ensure single-line output for shell safety
+                json_str = json.dumps(value, separators=(',', ':'))
+                # Use shlex.quote() for proper shell escaping
+                import shlex
+                parts.append(f"--{key} {shlex.quote(json_str)}")
             else:
                 parts.append(f"--{key} {value}")
 

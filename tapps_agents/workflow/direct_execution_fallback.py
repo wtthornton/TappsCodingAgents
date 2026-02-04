@@ -262,7 +262,9 @@ class DirectExecutionFallback:
         try:
             parts = shlex.split(skill_command, posix=False)
         except ValueError as e:
-            raise ValueError(f"Invalid skill command (malformed quotes): {skill_command}") from e
+            # Provide helpful error message with truncated command
+            cmd_preview = skill_command[:200] + "..." if len(skill_command) > 200 else skill_command
+            raise ValueError(f"Invalid skill command (malformed quotes): {cmd_preview}") from e
 
         if not parts:
             raise ValueError(f"Invalid skill command: {skill_command}")
