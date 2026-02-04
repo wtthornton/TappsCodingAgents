@@ -212,6 +212,14 @@ class ImplementerHandler(AgentExecutionHandler):
                 {"name": str(target_path.relative_to(self.project_root)), "path": str(target_path)}
             )
 
+            # Also add "src/" artifact for workflow compatibility
+            # Many workflow presets expect "src/" as a generic source code artifact
+            # We use the parent directory of the target file as "src/"
+            src_dir = target_path.parent
+            created_artifacts.append(
+                {"name": "src/", "path": str(src_dir)}
+            )
+
         # Create fixed-code/ artifact if requested by preset (only for existing files)
         if file_exists and "fixed-code/" in (step.creates or []):
             fixed_dir = self.project_root / "fixed-code"
