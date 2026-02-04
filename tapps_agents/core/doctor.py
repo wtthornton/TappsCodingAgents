@@ -870,7 +870,7 @@ def collect_doctor_report(
                 )
             )
 
-    # --- Beads (bd) status check (optional task tracking) ---
+    # --- Beads (bd) status check (required by default) ---
     try:
         from ..beads import is_available, is_ready, resolve_bd_path, run_bd
 
@@ -962,7 +962,7 @@ def collect_doctor_report(
                     DoctorFinding(
                         severity="ok",
                         code="BEADS",
-                        message="Beads (bd): Not found (optional). See docs/BEADS_INTEGRATION.md.",
+                        message="Beads (bd): Not found (Beads disabled in config). See docs/BEADS_INTEGRATION.md.",
                     )
                 )
     except Exception:
@@ -970,7 +970,7 @@ def collect_doctor_report(
             DoctorFinding(
                 severity="ok",
                 code="BEADS",
-                message="Beads (bd): Not checked (optional). See docs/BEADS_INTEGRATION.md.",
+                message="Beads (bd): Not checked (error or Beads disabled). See docs/BEADS_INTEGRATION.md.",
             )
         )
 

@@ -1,6 +1,6 @@
 # Beads (bd) Integration
 
-Optional integration with [Beads (bd)](https://github.com/steveyegge/beads) for dependency-aware task tracking and agent memory. Beads stores a task graph in `.beads/` (git-backed). TappsCodingAgents can sync epics to bd, close issues when stories complete, and optionally create/close issues for *build and *fix workflows.
+Integration with [Beads (bd)](https://github.com/steveyegge/beads) for dependency-aware task tracking and agent memory. Beads is **required by default**; set `beads.enabled: false` to disable. Beads stores a task graph in `.beads/` (git-backed). TappsCodingAgents can sync epics to bd, close issues when stories complete, and optionally create/close issues for *build and *fix workflows.
 
 ---
 
@@ -14,7 +14,7 @@ Use Beads when:
 - You run long-horizon or multi-session work (epics, large builds).
 - You want `bd ready` to drive or verify "what to do next."
 
-Use `*epic` and `*build` as today; Beads is an optional layer on top.
+Use `*epic` and `*build` as today; Beads is the default task-tracking layer.
 
 ---
 
@@ -32,7 +32,7 @@ In `.tapps-agents/config.yaml`:
 ```yaml
 beads:
   enabled: true           # Master switch. Set to false to disable all Beads use.
-  required: false         # When true, workflows fail if bd unavailable or .beads not initialized
+  required: true          # When true, workflows fail if bd unavailable or .beads not initialized (default)
   sync_epic: true         # Sync epic to bd (create issues + deps) before *epic
   hooks_simple_mode: true # Create/close bd issues at start/end of *build and *fix
   hooks_workflow: true    # Create/close for CLI `workflow` runs (WorkflowExecutor, CursorWorkflowExecutor)
@@ -45,7 +45,7 @@ beads:
   Must be `true` for any Beads behavior. Default `true` when bd is installed; set to `false` to opt out of all Beads use.
 
 - **`beads.required`**  
-  When `true`, workflows (*build, *fix, *epic, CLI workflow, *todo) fail if bd is unavailable or `.beads` is not initialized. Default `false` for backward compatibility.
+  When `true`, workflows (*build, *fix, *epic, CLI workflow, *todo) fail if bd is unavailable or `.beads` is not initialized. Default `true` (Beads is required). Set `beads.required: false` to make Beads optional.
 
 - **`beads.sync_epic`**  
   When `enabled` and `sync_epic` are true, `load_epic` syncs the Epic to bd: one issue per story, `bd dep add` from `Story.dependencies`, and optionally a parent Epic issue (see Epic sync). `bd ready` can then drive or verify execution order.

@@ -1,5 +1,5 @@
 """
-Beads (bd) integration: optional task-tracking for agents.
+Beads (bd) integration: task-tracking for agents (required by default).
 
 Use is_available(project_root) before run_bd. See docs/BEADS_INTEGRATION.md.
 Task specs: .tapps-agents/task-specs/ for hydration/dehydration.

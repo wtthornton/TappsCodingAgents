@@ -1130,7 +1130,7 @@ class BeadsConfig(BaseModel):
         description="Enable Beads (bd) integration. When false, all beads features are no-ops.",
     )
     required: bool = Field(
-        default=False,
+        default=True,
         description="When true, workflows fail if bd is unavailable or .beads not initialized.",
     )
     sync_epic: bool = Field(
