@@ -176,9 +176,44 @@ else:
 - ✅ Task workflows (HM-001, etc.) now work correctly
 - ✅ Falls back gracefully for steps without handlers
 
+## Fix Part 2: Action Normalization ✅
+
+**Problem Discovered During Verification:**
+Even with handler-first execution implemented, handlers were not being matched!
+
+**Root Cause:**
+The `_normalize_action()` function was converting underscores TO hyphens:
+```python
+# WRONG (before commit 67f141d)
+return action.replace("_", "-").lower()  # write_code → write-code
+```
+
+This caused:
+1. Workflow YAML: `action: write_code` (underscore)
+2. Normalization converts to: "write-code" (hyphen)
+3. Handler checks for: `action in {"write_code", "fix", "implement"}`
+4. No match! Falls back to skill invocation
+
+**Solution (Commit 67f141d):**
+Changed normalization to convert hyphens TO underscores:
+```python
+# CORRECT (after commit 67f141d)
+return action.replace("-", "_").lower()  # write-code → write_code
+```
+
+Now:
+- Workflow YAMLs can use either "write_code" or "write-code"
+- After normalization, both become "write_code"
+- Handlers receive underscore format and match successfully
+
+**Verification:**
+- Test script confirmed both formats normalize correctly
+- Both "write_code" and "write-code" now match handlers
+
 **Verification Needed:**
 - Run `tapps-agents task run hm-001` to verify implementation creates correct files
 - Check that review step receives src/ artifacts as expected
+- Verify "via handler" message appears in execution logs
 
 ---
 
