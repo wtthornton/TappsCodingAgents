@@ -4,6 +4,8 @@ Tests for ArtifactContextBuilder - Token-aware artifact injection with budgeting
 
 import pytest
 
+pytestmark = pytest.mark.unit
+
 from tapps_agents.core.artifact_context_builder import (
     ArtifactContextBuilder,
     ArtifactEntry,

@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-02-04T18:45:54.221234+00:00Z
-total_entries: 280
+last_updated: 2026-02-05T01:22:24.476174+00:00Z
+total_entries: 281
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -1204,3 +1204,8 @@ libraries:
     topics:
       architecture:
         cached_at: 2026-02-04T18:45:54.221220+00:00Z
+  tiktoken:
+    context7_id: /openai/tiktoken
+    topics:
+      best-practices:
+        cached_at: 2026-02-05T01:22:24.476156+00:00Z

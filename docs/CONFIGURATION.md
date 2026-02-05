@@ -103,6 +103,18 @@ When workflow steps or workflows complete, execution is recorded to `.tapps-agen
 
 - `analytics.record_from_execution`: When `true` (default), step completions and workflow completions are also recorded to analytics. Set to `false` if you want metrics-only (no analytics writes). Dual-write is best-effort: analytics failures do not block execution or metrics recording.
 
+### Progress display format (workflow summary)
+
+Workflow completion summaries use a **phase-grid** layout by default (icons, progress bars, TOTAL line). This appears whenever workflows run—a visual indicator that TappsCodingAgents is active. Controlled by environment variables (and optionally future config keys):
+
+- **`TAPPS_PROGRESS_DISPLAY_FORMAT`** — `phasegrid` (default) | `legacy` | `plain`
+  - `phasegrid`: Prepend a phase grid (Unicode bars and icons) before the legacy block. **Default for all projects with TappsCodingAgents installed.**
+  - `legacy`: Current markdown summary only (no phase grid).
+  - `plain`: Same phase grid with ASCII-safe bars and labels (for Windows/CI).
+- **`TAPPS_PROGRESS`** — When set to `plain`, workflow summary uses ASCII-safe progress output (no emoji/Unicode blocks) even if format is `phasegrid`.
+
+See [Progress display format](guides/progress-display-format.md) and [implementation plan](implementation/PROGRESS_DISPLAY_FORMAT_IMPLEMENTATION_PLAN.md).
+
 ### Agent Configuration: Reviewer
 
 ```yaml

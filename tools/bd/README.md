@@ -67,3 +67,7 @@ See [docs/COMMUNITY_TOOLS.md](docs/COMMUNITY_TOOLS.md) for a curated list of com
 
 * [Installing](docs/INSTALLING.md) | [Agent Workflow](AGENT_INSTRUCTIONS.md) | [Sync Branch Mode](docs/PROTECTED_BRANCHES.md) | [Troubleshooting](docs/TROUBLESHOOTING.md) | [FAQ](docs/FAQ.md)
 * [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/steveyegge/beads)
+
+---
+
+**TappsCodingAgents:** This copy is upgraded and tested with **Beads v0.49.0**. To upgrade on Windows, run `.\scripts\upgrade_beads.ps1` from the project root. See [docs/BEADS_INTEGRATION.md](../../docs/BEADS_INTEGRATION.md).

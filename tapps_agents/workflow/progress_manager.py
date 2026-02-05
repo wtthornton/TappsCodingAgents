@@ -60,7 +60,14 @@ class ProgressUpdateManager:
         self.generator = ProgressUpdateGenerator(self.calculator, enable_visual=enable_visual)
         self.queue = UpdateQueue(min_interval_seconds=2.0, max_updates_per_minute=30)
         self.chat_sender = ChatUpdateSender(enable_updates=enable_updates)
-        self.summary_generator = WorkflowSummaryGenerator(project_root=project_root, enable_visual=enable_visual)
+        progress_display_format = os.getenv("TAPPS_PROGRESS_DISPLAY_FORMAT", "phasegrid").lower()
+        use_unicode_progress = os.getenv("TAPPS_PROGRESS", "auto").lower() != "plain"
+        self.summary_generator = WorkflowSummaryGenerator(
+            project_root=project_root,
+            enable_visual=enable_visual,
+            progress_display_format=progress_display_format,
+            use_unicode_progress=use_unicode_progress,
+        )
         self.visual = VisualFeedbackGenerator(enable_visual=enable_visual)
 
         # Status monitoring

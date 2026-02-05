@@ -3,30 +3,106 @@ Workflow Summary and Completion Reporting
 
 Generates comprehensive summaries when workflows complete.
 Epic 8 / Story 8.5: Progress Summary and Completion
+Progress Display Format: phase-grid layout when progress_display_format is 'phasegrid'.
 """
 
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..core.progress_display import generate_status_report
 from .models import Workflow, WorkflowState
-from .step_details import format_duration
+from .step_details import (
+    calculate_step_duration,
+    format_duration,
+    get_step_status_emoji,
+)
 from .visual_feedback import VisualFeedbackGenerator
+
+
+def workflow_state_to_phases(
+    workflow: Workflow,
+    state: WorkflowState,
+) -> list[dict[str, Any]]:
+    """
+    Build a list of phase dicts for progress_display.generate_status_report.
+
+    One phase per workflow step; percentage/status/icon from state and
+    step_executions. Optional sub_items: duration, artifact count.
+
+    Args:
+        workflow: Workflow definition
+        state: Current workflow state
+
+    Returns:
+        List of dicts with name, percentage, status, icon, optional sub_items
+    """
+    phases: list[dict[str, Any]] = []
+    exec_by_step = {e.step_id: e for e in state.step_executions}
+
+    for i, step in enumerate(workflow.steps):
+        name = f"Phase {i}: {step.id}"
+        exec_record = exec_by_step.get(step.id)
+        sub_items: list[str] = []
+
+        if exec_record:
+            status_lower = (exec_record.status or "running").lower()
+            if status_lower in ("completed", "skipped"):
+                percentage = 100.0
+                status_label = "COMPLETE" if status_lower == "completed" else "SKIPPED"
+            elif status_lower == "failed":
+                percentage = 100.0
+                status_label = "FAILED"
+            else:
+                percentage = 0.0
+                status_label = "IN PROGRESS"
+
+            icon = get_step_status_emoji(exec_record.status)
+            dur = calculate_step_duration(exec_record)
+            if dur is not None:
+                sub_items.append(f"Duration: {format_duration(dur)}")
+        else:
+            percentage = 0.0
+            status_label = "PENDING"
+            icon = "\u23f3"  # ⏳
+
+        phase: dict[str, Any] = {
+            "name": name,
+            "percentage": percentage,
+            "status": status_label,
+            "icon": icon,
+        }
+        if sub_items:
+            phase["sub_items"] = sub_items
+        phases.append(phase)
+
+    return phases
 
 
 class WorkflowSummaryGenerator:
     """Generates workflow completion summaries."""
 
-    def __init__(self, project_root: Path | None = None, enable_visual: bool = True):
+    def __init__(
+        self,
+        project_root: Path | None = None,
+        enable_visual: bool = True,
+        progress_display_format: str = "phasegrid",
+        use_unicode_progress: bool = True,
+    ):
         """
         Initialize summary generator.
 
         Args:
             project_root: Project root directory for relative paths
             enable_visual: Whether to enable visual enhancements (Epic 11)
+            progress_display_format: 'phasegrid' (default) | 'legacy' | 'plain'. When
+                'phasegrid' or 'plain', format_summary_for_chat includes the phase grid.
+            use_unicode_progress: When False, use ASCII bars and icons (e.g. --progress plain)
         """
         self.project_root = Path(project_root) if project_root else Path.cwd()
         self.visual = VisualFeedbackGenerator(enable_visual=enable_visual)
+        self.progress_display_format = progress_display_format
+        self.use_unicode_progress = use_unicode_progress
 
     def generate_summary(
         self, workflow: Workflow, state: WorkflowState
@@ -70,6 +146,9 @@ class WorkflowSummaryGenerator:
         """
         Format summary as markdown for Cursor chat.
 
+        When progress_display_format is 'homeiq' or 'plain', prepends the
+        HomeIQ-style phase grid (Progress Summary) before the legacy block.
+
         Args:
             workflow: Workflow definition
             state: Final workflow state
@@ -79,6 +158,18 @@ class WorkflowSummaryGenerator:
         """
         summary = self.generate_summary(workflow, state)
         lines = []
+
+        if self.progress_display_format in ("phasegrid", "plain"):
+            phases = workflow_state_to_phases(workflow, state)
+            use_unicode = self.use_unicode_progress and self.progress_display_format == "phasegrid"
+            progress_block = generate_status_report(
+                phases,
+                title="Progress Summary",
+                use_unicode=use_unicode,
+                show_total=True,
+            )
+            lines.append(progress_block)
+            lines.append("")
 
         # Header
         status_emoji = self._get_status_emoji(summary["status"])

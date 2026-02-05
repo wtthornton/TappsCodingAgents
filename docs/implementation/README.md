@@ -7,3 +7,4 @@ For current behavior and guides, see the [Documentation Index](../README.md).
 ## Implementation plans (forward-looking)
 
 - **[CONTEXT_WINDOW_OPTIMIZATION_IMPLEMENTATION_PLAN.md](CONTEXT_WINDOW_OPTIMIZATION_IMPLEMENTATION_PLAN.md)** — Options 1–3: tiered context + token budgets, token-aware artifact injection + summarization, Context7 on-demand + per-agent caps.
+- **[PROGRESS_DISPLAY_FORMAT_IMPLEMENTATION_PLAN.md](PROGRESS_DISPLAY_FORMAT_IMPLEMENTATION_PLAN.md)** — Phase-grid progress display (icons, Unicode bars, phase grid, sub-items) for workflow and multi-phase status; core formatter, workflow integration, config.

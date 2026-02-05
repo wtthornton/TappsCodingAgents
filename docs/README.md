@@ -106,6 +106,7 @@ Welcome to the documentation for TappsCodingAgents.
 
 ### Features & Capabilities
 - **[Beads Integration](BEADS_INTEGRATION.md)** - Optional task tracking (bd); epic sync, *build/*fix hooks; `tapps-agents beads`; doctor reports status; init hints `bd init`
+- **[Beads: Issues and Enhancements](BEADS_ISSUES_AND_ENHANCEMENTS.md)** - Known issues and suggested enhancements after upgrading to Beads v0.49.0
 - **[Hooks Guide](HOOKS_GUIDE.md)** - Opt-in hooks at UserPromptSubmit, PostToolUse, SessionStart, SessionEnd, WorkflowComplete; `.tapps-agents/hooks.yaml`; `init --hooks`
 - **[Task Management Guide](TASK_MANAGEMENT_GUIDE.md)** - Task specs (`.tapps-agents/task-specs/`), hydration/dehydration, `tapps-agents task create|list|show|update|close|hydrate|dehydrate|run`; multi-session workflows
 - **[Setup, Init, and Doctor Recommendations](SETUP_INIT_DOCTOR_RECOMMENDATIONS.md)** - Issues and improvement recommendations for tapps-agents init, doctor, and Beads setup
@@ -118,6 +119,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **Health & Usage** - CLI: `tapps-agents health overview` (1000-foot view), `health usage dashboard|agents|workflows|system|trends`; performance metrics, trends, agent/workflow statistics. Implementation: `tapps_agents/health/`, `tapps_agents/core/analytics_dashboard.py`
 - **[Health Monitoring](../tapps_agents/health/)** - System health checks, resource usage tracking
 - **[State Management](CHECKPOINT_RESUME_GUIDE.md)** - Workflow state persistence, resume, cleanup
+- **[Progress Display Format](guides/progress-display-format.md)** - Phase-grid progress format (default; icons, bars, phase grid) for workflow status; [implementation plan](implementation/PROGRESS_DISPLAY_FORMAT_IMPLEMENTATION_PLAN.md)
 - **[Governance & Safety](../tapps_agents/experts/governance.py)** - Secrets/PII filtering, knowledge ingestion safety
 
 ### Standards & Guidelines
@@ -233,6 +235,7 @@ Looking for something specific? Try these keywords:
 - **"deployment"** → [Deployment Guide](operations/DEPLOYMENT.md)
 - **"troubleshooting"** → [Troubleshooting Guide](TROUBLESHOOTING.md)
 - **"standards"** → [AI Comment Guidelines](AI_COMMENT_GUIDELINES.md), [Documentation Metadata Standards](DOCUMENTATION_METADATA_STANDARDS.md), [Coding Standards](architecture/coding-standards.md)
+- **"progress" / "progress display"** → [Progress Display Format](guides/progress-display-format.md), [Progress Display Implementation Plan](implementation/PROGRESS_DISPLAY_FORMAT_IMPLEMENTATION_PLAN.md)
 
 ---
 

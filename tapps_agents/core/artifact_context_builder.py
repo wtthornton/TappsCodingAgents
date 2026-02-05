@@ -62,10 +62,10 @@ class ArtifactContextBuilder:
         self.summarization_enabled = summarization_enabled
         self._tiktoken_encoder = None
 
-        # Try to load tiktoken if requested
+        # Try to load tiktoken if requested (optional dependency)
         if use_tiktoken:
             try:
-                import tiktoken
+                import tiktoken  # type: ignore[import-untyped]
                 self._tiktoken_encoder = tiktoken.get_encoding("cl100k_base")
                 logger.debug("Using tiktoken for token estimation")
             except ImportError:
@@ -261,14 +261,8 @@ class ArtifactContextBuilder:
                         )
                 else:
                     # Truncate to fit remaining budget
-                    # Estimate characters for remaining tokens (inverse of estimation)
-                    if self._tiktoken_encoder:
-                        # With tiktoken, we need to truncate and re-encode iteratively
-                        # For simplicity, use chars/4 estimate to get approximate length
-                        target_chars = int(remaining_budget * 4 / 1.1)
-                    else:
-                        target_chars = int(remaining_budget * 4 / 1.1)
-
+                    # Use chars/4 estimate for target length (inverse of estimation)
+                    target_chars = int(remaining_budget * 4 / 1.1)
                     truncated = entry.content[:target_chars]
                     # Clean up - don't truncate mid-sentence if possible
                     last_period = truncated.rfind('.')
