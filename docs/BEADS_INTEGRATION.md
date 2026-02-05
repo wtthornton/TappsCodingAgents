@@ -22,6 +22,7 @@ Use `*epic` and `*build` as today; Beads is the default task-tracking layer.
 
 - **Upstream:** [Beads – Installation](https://github.com/steveyegge/beads#-installation) (Homebrew, npm, Go, Windows install.ps1).
 - **This repo:** If the project includes `tools/bd/` (e.g. `tools/bd/bd.exe` on Windows), use that. Add `tools/bd` to PATH to run `bd` directly, or use `scripts/set_bd_path.ps1` if present (`. .\scripts\set_bd_path.ps1` or `.\scripts\set_bd_path.ps1 -Persist`). Run `bd init` or `bd init --stealth` once at project root (see [tools/README.md](../tools/README.md)). `tapps-agents init` may create `scripts/set_bd_path.ps1` when `tools/bd` exists.
+- **Upgrading (Windows):** To upgrade to the latest production Beads (e.g. v0.49.0), run `.\scripts\upgrade_beads.ps1`. If `bd.exe` is in use, the script saves the new binary as `bd.exe.new`; close any process using bd (Cursor, terminals), then run: `Remove-Item -Force tools\bd\bd.exe; Move-Item -Force tools\bd\bd.exe.new tools\bd\bd.exe`. TappsCodingAgents is tested with Beads v0.49.0.
 
 ---
 

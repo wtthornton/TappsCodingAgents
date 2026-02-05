@@ -47,6 +47,7 @@ reports/
 # Beads (bd) - local task graph, stealth mode uses .git/info/exclude; this backs it up
 .beads/
 tools/bd/*.zip
+tools/bd/*.new
 
 # TappsCodingAgents
 .tapps-agents/config.yaml

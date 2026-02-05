@@ -1,46 +1,80 @@
-# TappsCodingAgents Industry Experts Configuration
-# .tapps-agents/experts.yaml
-
 experts:
-  # AI Agent Framework Expert
-  - expert_id: expert-ai-frameworks
-    expert_name: AI Agent Framework Expert
-    primary_domain: ai-agent-framework
-    rag_enabled: true
-    fine_tuned: false
-
-  # Code Quality & Analysis Expert
-  - expert_id: expert-code-quality
-    expert_name: Code Quality & Analysis Expert
-    primary_domain: code-quality-analysis
-    rag_enabled: true
-    fine_tuned: false
-
-  # Software Architecture Expert
-  - expert_id: expert-software-architecture
-    expert_name: Software Architecture Expert
-    primary_domain: software-architecture
-    rag_enabled: true
-    fine_tuned: false
-
-  # Development Workflow Expert
-  - expert_id: expert-devops
-    expert_name: Development Workflow Expert
-    primary_domain: development-workflow
-    rag_enabled: true
-    fine_tuned: false
-
-  # Documentation & Knowledge Management Expert
-  - expert_id: expert-documentation
-    expert_name: Documentation & Knowledge Management Expert
-    primary_domain: documentation-knowledge-management
-    rag_enabled: true
-    fine_tuned: false
-
-  # API Design & Integration Expert
-  - expert_id: expert-api-design
-    expert_name: API Design & Integration Expert
-    primary_domain: api-design-integration
-    rag_enabled: true
-    fine_tuned: false
-
+- expert_id: expert-ai-frameworks
+  expert_name: AI Agent Framework Expert
+  primary_domain: ai-agent-framework
+  rag_enabled: true
+  fine_tuned: false
+- expert_id: expert-code-quality
+  expert_name: Code Quality & Analysis Expert
+  primary_domain: code-quality-analysis
+  rag_enabled: true
+  fine_tuned: false
+- expert_id: expert-software-architecture
+  expert_name: Software Architecture Expert
+  primary_domain: software-architecture
+  rag_enabled: true
+  fine_tuned: false
+- expert_id: expert-devops
+  expert_name: Development Workflow Expert
+  primary_domain: development-workflow
+  rag_enabled: true
+  fine_tuned: false
+- expert_id: expert-documentation
+  expert_name: Documentation & Knowledge Management Expert
+  primary_domain: documentation-knowledge-management
+  rag_enabled: true
+  fine_tuned: false
+- expert_id: expert-api-design
+  expert_name: API Design & Integration Expert
+  primary_domain: api-design-integration
+  rag_enabled: true
+  fine_tuned: false
+- expert_id: expert-docs-python-packaging-build-and-publish
+  expert_name: Docs - Python Packaging Build And Publish Expert
+  primary_domain: docs
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\docs\python-packaging-build-and-publish.md
+  consultation_triggers:
+  - python-packaging-build-and-publish
+  - publishing
+  - python
+  - docs
+  - section
+  - packaging
+  - concepts
+  - building
+  - overview
+  - context7
+- expert_id: expert-general-project-overview
+  expert_name: General - Project Overview Expert
+  primary_domain: general
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\general\project-overview.md
+  consultation_triggers:
+  - important
+  - notes
+  - overview
+  - project
+  - concepts
+  - context
+  - general
+  - project-overview
+- expert_id: expert-testing-testing-guide
+  expert_name: Testing - Testing Guide Expert
+  primary_domain: testing
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\testing\testing-guide.md
+  consultation_triggers:
+  - conventions
+  - overview
+  - testing-guide
+  - coverage
+  - guide
+  - testing
+  priority: 0.8500000000000001

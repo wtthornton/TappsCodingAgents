@@ -29,6 +29,48 @@ This file serves as the master rule file for Claude Code and other AI coding too
 3. **Follow workflow enforcement**: Use workflows for feature development, bug fixes, reviews
 4. **Respect quality gates**: Tests, reviews, and documentation are mandatory
 
+## ⚠️ CRITICAL: Workflow Enforcement for Claude Code CLI
+
+**If you are Claude Code CLI (not Cursor IDE), you MUST use tapps-agents CLI for framework development:**
+
+### When to Use tapps-agents CLI
+
+| Code Location | Requirement | Command |
+|---------------|-------------|---------|
+| **`tapps_agents/` package** | **MANDATORY** | `tapps-agents simple-mode full --prompt "..." --auto` |
+| **Framework tests** | **MANDATORY** | `tapps-agents simple-mode test --file <path>` |
+| **Framework docs** | **MANDATORY** | `tapps-agents simple-mode review --file <path>` |
+| **User project code** | Recommended | `tapps-agents simple-mode build --prompt "..."` |
+
+### Why This Matters
+
+**Framework development REQUIRES workflows because:**
+1. ✅ **Dogfooding** - Framework must develop itself
+2. ✅ **Quality Gates** - Automatic review, scoring (≥75), loopback
+3. ✅ **Validation** - Proves workflows work in production
+4. ✅ **Traceability** - Complete artifacts (plan, design, review)
+5. ✅ **Best Practices** - Follows our own documented patterns
+
+### Pre-Edit Checklist (MANDATORY)
+
+**Before ANY direct file edits, check:**
+
+- [ ] **Is this framework code?** (`tapps_agents/` package)
+  - ✅ YES → STOP. Use `tapps-agents simple-mode full --prompt "..." --auto`
+  - ❌ NO → Continue with checklist
+
+- [ ] **Is this a feature/bug fix?**
+  - Consider: `tapps-agents simple-mode build --prompt "..."`
+  - Benefits: Tests, quality gates, documentation
+
+- [ ] **Is this a review task?**
+  - Use: `tapps-agents reviewer review --file <path> --score`
+
+**Direct edits are ONLY acceptable for:**
+- Documentation typos
+- Simple configuration changes
+- User explicitly requests direct edit after workflow suggestion
+
 ## Detailed Rules
 
 This file references detailed rules in `.cursor/rules/` to keep the master file lean while providing comprehensive guidance.
@@ -375,6 +417,77 @@ tapps-agents simple-mode full --prompt "description" --auto
 **💡 Tip:** Not sure which preset? Use **standard** (default) for most tasks. The system will warn if a different preset is more appropriate.
 
 ---
+
+## Project Initialization
+
+**For users setting up a new project with TappsCodingAgents:**
+
+### First-Time Setup
+
+```bash
+# Navigate to your project directory
+cd /path/to/your/project
+
+# Initialize TappsCodingAgents (auto-detects tech stack, populates cache, generates experts)
+tapps-agents init --auto-experts
+
+# Or with hooks templates
+tapps-agents init --hooks
+```
+
+### What `init` Does Automatically (Phases 1-3)
+
+The init process now includes automatic configuration:
+
+1. **✅ Configuration Validation** (Phase 1)
+   - Validates `.tapps-agents/` structure
+   - Auto-creates missing directories
+   - Checks YAML syntax and required fields
+
+2. **✅ Tech Stack Detection** (Phase 1)
+   - Scans project files (requirements.txt, package.json, etc.)
+   - Detects languages, frameworks, libraries
+   - Generates `.tapps-agents/tech-stack.yaml`
+
+3. **✅ Context7 Cache Population** (Phase 2)
+   - Reads libraries from tech-stack.yaml
+   - Pre-populates documentation cache
+   - Async concurrent fetching (5 max concurrent)
+
+4. **✅ Expert Auto-Generation** (Phase 3)
+   - Scans `.tapps-agents/knowledge/` for markdown files
+   - Generates experts following `expert-{domain}-{topic}` convention
+   - Adds to `experts.yaml` with priority 0.70-0.90
+
+### Upgrade Existing Installation
+
+```bash
+# Reset framework files to latest version (preserves custom files)
+tapps-agents init --reset
+
+# Reset and also update MCP config
+tapps-agents init --reset --reset-mcp
+```
+
+### Manual Expert Generation
+
+```bash
+# Generate experts from knowledge base
+python -m tapps_agents.core.generators.expert_generator --auto
+
+# Force regeneration even if experts exist
+python -m tapps_agents.core.generators.expert_generator --auto --force
+```
+
+### Validation
+
+```bash
+# Validate project configuration
+python -m tapps_agents.core.validators.config_validator --auto-fix
+
+# Check setup health
+tapps-agents health overview
+```
 
 ## Common Commands
 

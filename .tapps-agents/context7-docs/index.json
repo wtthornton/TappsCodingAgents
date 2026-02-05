@@ -5732,6 +5732,41 @@
       "file_path": "and_architecture.json",
       "saved_at": "2026-02-04T10:45:54.294488",
       "source": "api"
+    },
+    "tiktoken:best-practices": {
+      "library": "tiktoken",
+      "topic": "best-practices",
+      "file_path": "tiktoken_best-practices.json",
+      "saved_at": "2026-02-04T17:22:26.579060",
+      "source": "cache"
+    },
+    "tiktoken:common-mistakes": {
+      "library": "tiktoken",
+      "topic": "common-mistakes",
+      "file_path": "tiktoken_common-mistakes.json",
+      "saved_at": "2026-02-04T17:22:26.812519",
+      "source": "fuzzy_match"
+    },
+    "tiktoken:usage": {
+      "library": "tiktoken",
+      "topic": "usage",
+      "file_path": "tiktoken_usage.json",
+      "saved_at": "2026-02-04T17:22:27.100303",
+      "source": "fuzzy_match"
+    },
+    "tiktoken:examples": {
+      "library": "tiktoken",
+      "topic": "examples",
+      "file_path": "tiktoken_examples.json",
+      "saved_at": "2026-02-04T17:22:27.521416",
+      "source": "fuzzy_match"
+    },
+    "tiktoken": {
+      "library": "tiktoken",
+      "topic": null,
+      "file_path": "tiktoken.json",
+      "saved_at": "2026-02-04T21:24:00.291555",
+      "source": "fuzzy_match"
     }
   },
   "comprehensive_index": {
@@ -7530,6 +7565,15 @@
           "architecture"
         ],
         "total_docs": 3
+      },
+      "tiktoken": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 5
       }
     },
     "topics": {
@@ -7734,7 +7778,8 @@
         "scorer_registry",
         "tools",
         "dataclasses",
-        "and"
+        "and",
+        "tiktoken"
       ],
       "common-mistakes": [
         "__future__",
@@ -7909,7 +7954,8 @@
         "score_constants",
         "score_validator",
         "scorer_registry",
-        "tools"
+        "tools",
+        "tiktoken"
       ],
       "usage": [
         "__future__",
@@ -8085,7 +8131,8 @@
         "score_constants",
         "score_validator",
         "scorer_registry",
-        "tools"
+        "tools",
+        "tiktoken"
       ],
       "examples": [
         "__future__",
@@ -8260,7 +8307,8 @@
         "score_constants",
         "score_validator",
         "scorer_registry",
-        "tools"
+        "tools",
+        "tiktoken"
       ],
       "quality-standards": [
         "pytest"
@@ -8302,8 +8350,8 @@
         "and"
       ]
     },
-    "total_entries": 819,
-    "last_updated": "2026-02-04T10:45:54.294507"
+    "total_entries": 824,
+    "last_updated": "2026-02-04T21:24:00.291566"
   },
-  "last_updated": "2026-02-04T10:45:54.296004"
+  "last_updated": "2026-02-04T21:24:00.292828"
 }

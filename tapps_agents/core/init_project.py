@@ -18,6 +18,7 @@ import yaml
 
 from .config import get_default_config
 from .tech_stack_priorities import get_priorities_for_frameworks
+from .init_autofill import detect_tech_stack_enhanced
 
 logger = logging.getLogger(__name__)
 
@@ -2707,6 +2708,8 @@ def init_project(
     reset_mcp: bool = False,
     preserve_custom: bool = True,
     include_hooks_templates: bool = False,
+    auto_experts: bool = False,
+    use_enhanced_detection: bool = True,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -2725,6 +2728,8 @@ def init_project(
         preserve_custom: Whether to preserve custom Skills, Rules, and presets (default: True)
         include_hooks_templates: If True, create hooks.yaml from templates and .tapps-agents/context/
             (init --hooks). If False, create minimal empty hooks.yaml (standard init).
+        auto_experts: Whether to auto-generate experts from knowledge base (Phase 3)
+        use_enhanced_detection: Whether to use enhanced tech stack detection from init_autofill module
 
     Returns:
         Dictionary with initialization results
@@ -2804,7 +2809,30 @@ def init_project(
     # Presets before rules so workflow-presets.mdc can be generated from YAML (critical after reset).
 
     # Detect tech stack early (needed for template application)
-    tech_stack = detect_tech_stack(project_root)
+    if use_enhanced_detection:
+        logger.info("Using enhanced tech stack detection from init_autofill module")
+        tech_stack_result = detect_tech_stack_enhanced(
+            project_root=project_root,
+            generate_yaml=True,  # Generate tech-stack.yaml for Phase 2
+        )
+        if tech_stack_result["success"]:
+            tech_stack = {
+                "languages": tech_stack_result["languages"],
+                "libraries": tech_stack_result["libraries"],
+                "frameworks": tech_stack_result["frameworks"],
+                "domains": tech_stack_result["domains"],
+            }
+            results["tech_stack_yaml"] = tech_stack_result.get("tech_stack_yaml")
+            logger.info(f"Enhanced detection: {len(tech_stack['languages'])} languages, "
+                       f"{len(tech_stack['libraries'])} libraries, "
+                       f"{len(tech_stack['frameworks'])} frameworks")
+        else:
+            logger.warning(f"Enhanced tech stack detection failed: {tech_stack_result.get('error')}. "
+                          "Falling back to simple detection.")
+            tech_stack = detect_tech_stack(project_root)
+    else:
+        tech_stack = detect_tech_stack(project_root)
+
     results["tech_stack"] = tech_stack
     
     # Initialize project config (with template application)
@@ -2957,6 +2985,31 @@ def init_project(
     results["experts_scaffold"] = experts_scaffold
     if experts_scaffold.get("created"):
         results["files_created"].extend(experts_scaffold["created"])
+
+    # Auto-generate experts from knowledge base (Phase 3.1)
+    if auto_experts:
+        logger.info("Auto-generating experts from knowledge base (Phase 3.1)")
+        try:
+            from .init_autofill import generate_experts_from_knowledge
+
+            expert_result = generate_experts_from_knowledge(
+                project_root=project_root,
+                auto_mode=True,  # Non-interactive
+                skip_existing=True,  # Don't overwrite existing experts
+            )
+
+            results["auto_experts"] = expert_result
+            if expert_result["success"]:
+                logger.info(f"Generated {expert_result['generated']} experts, "
+                           f"skipped {expert_result['skipped']} existing experts")
+            else:
+                logger.warning(f"Expert auto-generation failed: {expert_result.get('error')}")
+        except Exception as e:
+            logger.error(f"Failed to auto-generate experts: {e}")
+            results["auto_experts"] = {
+                "success": False,
+                "error": str(e),
+            }
 
     # Defer cache pre-population to CLI so core init completes first and cache runs
     # after "Init complete" (non-blocking from the user's view of core success).
