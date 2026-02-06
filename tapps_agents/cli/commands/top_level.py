@@ -3587,4 +3587,150 @@ def handle_knowledge_command(args: object) -> None:
     
     else:
         print(f"Unknown knowledge command: {command}", file=sys.stderr)
+
+
+def handle_rag_command(args: object) -> None:
+    """Handle RAG synchronization commands."""
+    from ..feedback import get_feedback
+    from .rag import RagCommand
+
+    feedback = get_feedback()
+    command = getattr(args, "rag_command", None)
+    output_format = getattr(args, "format", "text")
+    feedback.format_type = output_format
+
+    project_root = getattr(args, "project_root", None)
+    rag_cmd = RagCommand(project_root=project_root)
+
+    if command == "sync":
+        dry_run = getattr(args, "dry_run", False)
+        auto_apply = getattr(args, "auto_apply", False)
+        report_only = getattr(args, "report_only", False)
+
+        result = rag_cmd.sync(
+            dry_run=dry_run,
+            auto_apply=auto_apply,
+            report_only=report_only,
+        )
+
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            status = result["status"]
+            report = result.get("report", {})
+
+            print("\n" + "=" * 70)
+            print("RAG Knowledge Synchronization")
+            print("=" * 70)
+
+            if status == "no_changes":
+                print("\n✅ No changes detected")
+                print(f"Total files scanned: {report.get('total_files', 0)}")
+
+            elif status in ("report_generated", "confirmation_required"):
+                print(f"\n📋 Change Report Generated")
+                print(f"Total files affected: {report.get('total_files', 0)}")
+                print(f"Total changes: {report.get('total_changes', 0)}")
+
+                if report.get("renames"):
+                    print(f"\nPackage Renames ({len(report['renames'])}):")
+                    for rename in report["renames"][:10]:
+                        print(f"  - {rename['old_name']} → {rename['new_name']} (confidence: {rename['confidence']:.0%})")
+
+                if report.get("stale_refs"):
+                    print(f"\nStale References ({len(report['stale_refs'])}):")
+                    for ref in report["stale_refs"][:10]:
+                        print(f"  - {ref['file_path']}:{ref['line_number']}")
+                        print(f"    Old: {ref['old_import']}")
+                        if ref.get("suggested_import"):
+                            print(f"    Suggested: {ref['suggested_import']}")
+
+                if status == "confirmation_required":
+                    print(f"\n{result.get('message', '')}")
+
+            elif status in ("dry_run_success", "changes_applied"):
+                print(f"\n✅ {'Dry run completed' if 'dry_run' in status else 'Changes applied'}")
+                print(f"Total files affected: {report.get('total_files', 0)}")
+                print(f"Total changes: {report.get('total_changes', 0)}")
+
+            elif status in ("dry_run_failed", "changes_failed"):
+                print(f"\n❌ {'Dry run failed' if 'dry_run' in status else 'Failed to apply changes'}")
+
+            elif status == "error":
+                print(f"\n❌ Error: {result.get('error', 'Unknown error')}")
+
+    elif command == "generate-overview":
+        output_file = getattr(args, "output", None)
+        force = getattr(args, "force", False)
+
+        result = rag_cmd.generate_overview(
+            output_file=output_file,
+            force=force,
+        )
+
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            if result["status"] == "success":
+                print("\n" + "=" * 70)
+                print("Project Overview Generation")
+                print("=" * 70)
+                print(f"\n✅ Overview generated: {result['output_file']}")
+                print(f"Updated: {'Yes' if result['updated'] else 'No (already up-to-date)'}")
+                print(f"Length: {result['overview_length']} characters")
+            else:
+                print(f"\n❌ Error: {result.get('error', 'Unknown error')}")
+
+    elif command == "detect-architecture":
+        result = rag_cmd.detect_architecture()
+
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            if result["status"] == "success":
+                print("\n" + "=" * 70)
+                print("Architecture Pattern Detection")
+                print("=" * 70)
+
+                for pattern in result["patterns"]:
+                    print(f"\n{pattern['pattern'].title()}")
+                    print(f"  Confidence: {pattern['confidence']:.0%}")
+                    if pattern.get("indicators"):
+                        print("  Indicators:")
+                        for indicator in pattern["indicators"]:
+                            print(f"    - {indicator}")
+            else:
+                print(f"\n❌ Error: {result.get('error', 'Unknown error')}")
+
+    elif command == "extract-metadata":
+        result = rag_cmd.extract_metadata()
+
+        if output_format == "json":
+            format_json_output(result)
+        else:
+            if result["status"] == "success":
+                metadata = result["metadata"]
+                print("\n" + "=" * 70)
+                print("Project Metadata")
+                print("=" * 70)
+                print(f"\nName: {metadata['name']}")
+                print(f"Version: {metadata['version']}")
+                if metadata.get("description"):
+                    print(f"Description: {metadata['description']}")
+                if metadata.get("authors"):
+                    print("\nAuthors:")
+                    for author in metadata["authors"]:
+                        print(f"  - {author}")
+                if metadata.get("license"):
+                    print(f"\nLicense: {metadata['license']}")
+                if metadata.get("python_version"):
+                    print(f"Python Version: {metadata['python_version']}")
+                if metadata.get("dependencies"):
+                    dep_count = len(metadata["dependencies"])
+                    print(f"\nDependencies: {dep_count}")
+            else:
+                print(f"\n❌ Error: {result.get('error', 'Unknown error')}")
+
+    else:
+        print(f"Unknown rag command: {command}", file=sys.stderr)
         sys.exit(1)

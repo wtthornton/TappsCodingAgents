@@ -1735,6 +1735,23 @@ def get_builtin_expert_libraries() -> list[str]:
         "pandas",  # Data analysis
         "numpy",  # Numerical computing
         "pydantic",  # Data validation
+        # CLI & Terminal (CLI Design Expert — Phase 1, 6)
+        "click",  # CLI framework (used by tapps-agents)
+        "rich",  # Terminal UI, tables, progress bars
+        "typer",  # Modern CLI framework (Click-based)
+        # Concurrency & Parallel Execution (Phase 3)
+        "asyncio",  # Async/await concurrency (stdlib)
+        "anyio",  # Async compatibility layer
+        # Configuration & Serialization (Phase 1, 4, 6)
+        "pyyaml",  # YAML parsing/generation
+        "jsonschema",  # JSON Schema validation (Phase 7)
+        "tomli",  # TOML parsing (pyproject.toml)
+        # Graph Algorithms (Phase 3 — topological sort)
+        "networkx",  # Graph library (topological sort, dependency resolution)
+        # Template Rendering (Phase 4 — session handoff)
+        "jinja2",  # Template engine
+        # File System Monitoring
+        "watchdog",  # File system monitoring
     }
     return sorted(list(expert_libraries))
 

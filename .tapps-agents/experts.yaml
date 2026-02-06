@@ -77,4 +77,99 @@ experts:
   - coverage
   - guide
   - testing
-  priority: 0.8500000000000001
+  priority: 0.85
+- expert_id: expert-concurrency-asyncio-parallel
+  expert_name: Concurrency & Asyncio Parallel Patterns Expert
+  primary_domain: concurrency
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\concurrency\asyncio-parallel-patterns.md
+  consultation_triggers:
+  - asyncio
+  - parallel
+  - concurrency
+  - wave
+  - wavefront
+  - semaphore
+  - gather
+  - topological
+  - dependency
+  - bounded
+  priority: 0.90
+- expert_id: expert-claude-code-integration
+  expert_name: Claude Code CLI Integration Expert
+  primary_domain: claude-code
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\claude-code\claude-code-integration.md
+  consultation_triggers:
+  - claude-code
+  - subagent
+  - agent-teams
+  - agent-sdk
+  - headless
+  - settings.json
+  - permissions
+  - persistent-memory
+  - model-routing
+  - haiku
+  - sonnet
+  - opus
+  - context-fork
+  priority: 0.90
+- expert_id: expert-workflow-intent-parsing
+  expert_name: Intent Parsing & Workflow Auto-Selection Expert
+  primary_domain: workflow
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\workflow\intent-parsing-auto-selection.md
+  consultation_triggers:
+  - intent
+  - intent-parser
+  - auto-select
+  - workflow-suggestion
+  - detect-intent
+  - routing
+  - taxonomy
+  - keyword
+  - natural-language
+  priority: 0.85
+- expert_id: expert-workflow-state-persistence
+  expert_name: State Persistence & Session Handoff Expert
+  primary_domain: workflow
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\workflow\state-persistence-session-handoff.md
+  consultation_triggers:
+  - state-persistence
+  - session-handoff
+  - epic-state
+  - resume
+  - checkpoint
+  - jsonl
+  - memory
+  - handoff
+  - serialize
+  priority: 0.85
+- expert_id: expert-cli-design-patterns
+  expert_name: CLI Design Patterns Expert
+  primary_domain: cli
+  rag_enabled: true
+  fine_tuned: false
+  knowledge_files:
+  - .tapps-agents\knowledge\cli\cli-design-patterns.md
+  consultation_triggers:
+  - cli
+  - click
+  - rich
+  - subcommand
+  - command-line
+  - terminal
+  - output-format
+  - progress-bar
+  - status
+  priority: 0.80
