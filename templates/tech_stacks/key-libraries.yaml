@@ -1,0 +1,33 @@
+# Key Libraries Tech Stack Template
+# Use when tech-stack detection is empty or minimal, to seed Context7 cache
+# Copy this block into .tapps-agents/tech-stack.yaml (or merge with existing)
+# Template version: 1.0
+
+# Context7: highest-priority libraries for cache population
+# cache_manager reads: context7_priority, libraries, frameworks
+context7_priority:
+  - pytest
+  - fastapi
+  - pydantic
+  - httpx
+  - sqlalchemy
+  - requests
+  - aiohttp
+  - playwright
+  - rich
+
+# Optional: add if not auto-detected
+libraries:
+  - pytest
+  - pydantic
+  - httpx
+  - requests
+frameworks:
+  - fastapi
+
+# Minimal expert priorities for generic Python projects
+expert_priorities:
+  expert-api-design: 0.9
+  expert-testing: 0.95
+  expert-code-quality: 0.85
+  expert-security: 0.8

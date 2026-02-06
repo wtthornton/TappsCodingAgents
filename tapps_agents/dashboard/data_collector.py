@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import UTC, datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -50,7 +50,7 @@ def _read_jsonl(path: Path, limit: int = 1000) -> list[dict]:
     return entries
 
 
-def _read_json(path: Path) -> dict | None:
+def _read_json(path: Path) -> Any:
     if not path.exists():
         return None
     try:
@@ -190,7 +190,9 @@ class DashboardDataCollector:
         }
 
         def _do():
-            from tapps_agents.experts.performance_tracker import ExpertPerformanceTracker
+            from tapps_agents.experts.performance_tracker import (
+                ExpertPerformanceTracker,
+            )
 
             ept = ExpertPerformanceTracker(project_root=self.project_root)
             all_perf = ept.get_all_performance(days=self.days)
@@ -332,7 +334,9 @@ class DashboardDataCollector:
         }
 
         def _do():
-            from tapps_agents.workflow.execution_metrics import ExecutionMetricsCollector
+            from tapps_agents.workflow.execution_metrics import (
+                ExecutionMetricsCollector,
+            )
 
             emc = ExecutionMetricsCollector(project_root=self.project_root)
             metrics = emc.get_metrics(limit=500)
@@ -360,16 +364,16 @@ class DashboardDataCollector:
 
             # Compute dimension averages from execution skill summary
             skill_summary = emc.get_summary_by_skill()
-            for _skill, info in skill_summary.items():
+            for info in skill_summary.values():
                 if info.get("average_duration_ms"):
                     scores.append(info.get("gate_pass_rate", 0))
 
             avg_score = sum(scores) / len(scores) if scores else 0
 
             # Quality dimensions — read from recent reviewer outputs
-            dimensions = {
-                "complexity": 0, "security": 0, "maintainability": 0,
-                "test_coverage": 0, "performance": 0, "structure": 0, "devex": 0,
+            dimensions: dict[str, float] = {
+                "complexity": 0.0, "security": 0.0, "maintainability": 0.0,
+                "test_coverage": 0.0, "performance": 0.0, "structure": 0.0, "devex": 0.0,
             }
             review_dir = self.tapps_dir / "workflow-state"
             if review_dir.exists():
@@ -522,7 +526,7 @@ class DashboardDataCollector:
     # ── adaptive learning ─────────────────────────────────────────────
 
     def collect_learning(self) -> dict[str, Any]:
-        default = {
+        default: dict[str, Any] = {
             "first_pass_trend": [],
             "auto_generated_experts": [],
             "weight_adjustments": [],

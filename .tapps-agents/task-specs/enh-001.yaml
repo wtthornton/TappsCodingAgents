@@ -19,7 +19,7 @@ task:
   epic: EPIC-52
   dependencies: []
   github_issue: null
-  beads_issue: TappsCodingAgents-95ir
+  beads_issue: TappsCodingAgents-vzhf
   status: todo
   workflow: build
   files:
