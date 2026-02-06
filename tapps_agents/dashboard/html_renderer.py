@@ -215,7 +215,7 @@ class HTMLRenderer:
             ("health", "Health"),
         ]
         items = "".join(
-            f'<div class="tab{"  active" if i == 0 else ""}" data-tab="{tid}">{label}</div>'
+            f'<div class="tab{" active" if i == 0 else ""}" data-tab="{tid}">{label}</div>'
             for i, (tid, label) in enumerate(tabs)
         )
         return f'<div class="tabs">{items}</div>'

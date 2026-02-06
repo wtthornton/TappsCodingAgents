@@ -152,11 +152,15 @@ class DashboardDataCollector:
 
             agents = []
             for ap in agent_perf:
+                # success_rate from AnalyticsDashboard is 0.0-1.0; convert to percentage
+                raw_rate = ap.get("success_rate", 0)
+                # average_duration from AnalyticsDashboard is in seconds; convert to ms
+                raw_dur = ap.get("average_duration", 0)
                 agents.append({
                     "name": ap.get("agent_name", ap.get("agent_id", "unknown")),
                     "executions": ap.get("total_executions", 0),
-                    "success_rate": ap.get("success_rate", 0),
-                    "avg_duration_ms": ap.get("average_duration", 0),
+                    "success_rate": round(raw_rate * 100, 1),
+                    "avg_duration_ms": round(raw_dur * 1000, 1),
                     "last_run": ap.get("last_execution", ""),
                     "trend": ap.get("trend", []),
                 })
@@ -199,13 +203,13 @@ class DashboardDataCollector:
                     "quality_impact": round(perf.code_quality_improvement, 2),
                     "domains": perf.domain_coverage,
                 })
-                if perf.avg_confidence > 0:
+                if perf.consultations > 0:
                     confidences.append(perf.avg_confidence)
 
             active = sum(1 for e in experts if e["consultations"] > 0)
             avg_conf = sum(confidences) / len(confidences) if confidences else 0
 
-            # Confidence distribution
+            # Confidence distribution (all consulted experts)
             dist = {"low": 0, "medium": 0, "high": 0, "very_high": 0}
             for c in confidences:
                 if c < 0.5:
@@ -391,15 +395,50 @@ class DashboardDataCollector:
             ad = AnalyticsDashboard(analytics_dir=self.tapps_dir / "analytics")
             wf_perf = ad.get_workflow_performance()
 
-            workflows = []
+            # Aggregate workflows by name so duplicate IDs are merged
+            by_name: dict[str, dict] = {}
             for wp in wf_perf:
+                name = wp.get("workflow_name", wp.get("workflow_id", "unknown"))
+                # success_rate from AnalyticsDashboard is 0.0-1.0; convert to %
+                raw_rate = wp.get("success_rate", 0)
+                # average_duration is in seconds; convert to ms
+                raw_dur = wp.get("average_duration", 0)
+                execs = wp.get("total_executions", 0)
+                if name not in by_name:
+                    by_name[name] = {
+                        "name": name,
+                        "executions": 0,
+                        "success_sum": 0.0,
+                        "dur_sum": 0.0,
+                        "dur_count": 0,
+                        "steps_sum": 0.0,
+                        "steps_count": 0,
+                        "last_run": "",
+                    }
+                entry = by_name[name]
+                entry["executions"] += execs
+                entry["success_sum"] += raw_rate * execs
+                if raw_dur > 0:
+                    entry["dur_sum"] += raw_dur * 1000 * execs
+                    entry["dur_count"] += execs
+                steps = wp.get("average_steps", 0)
+                if steps > 0:
+                    entry["steps_sum"] += steps * execs
+                    entry["steps_count"] += execs
+                lr = wp.get("last_execution", "")
+                if lr > entry["last_run"]:
+                    entry["last_run"] = lr
+
+            workflows = []
+            for entry in by_name.values():
+                execs = entry["executions"]
                 workflows.append({
-                    "name": wp.get("workflow_name", wp.get("workflow_id", "unknown")),
-                    "executions": wp.get("total_executions", 0),
-                    "success_rate": wp.get("success_rate", 0),
-                    "avg_duration_ms": wp.get("average_duration", 0),
-                    "avg_steps": wp.get("average_steps", 0),
-                    "last_run": wp.get("last_execution", ""),
+                    "name": entry["name"],
+                    "executions": execs,
+                    "success_rate": round(entry["success_sum"] / execs * 100, 1) if execs else 0,
+                    "avg_duration_ms": round(entry["dur_sum"] / entry["dur_count"], 1) if entry["dur_count"] else 0,
+                    "avg_steps": round(entry["steps_sum"] / entry["steps_count"], 1) if entry["steps_count"] else 0,
+                    "last_run": entry["last_run"],
                 })
 
             total = sum(w["executions"] for w in workflows)
