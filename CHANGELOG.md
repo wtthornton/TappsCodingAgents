@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.4] - 2026-02-06
+
 ### Added
 - **Performance Insight Dashboard** (`tapps-agents dashboard`) - Self-contained HTML dashboard with full insight into tapps-agents performance
   - 8 tabs: Agents, Experts, Cache/RAG, Quality, Workflows, Learning, Health, Event Stream

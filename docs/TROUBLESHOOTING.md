@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-**Version**: 3.6.3  
+**Version**: 3.6.4  
 **Last Updated**: January 2026
 
 ## Installation

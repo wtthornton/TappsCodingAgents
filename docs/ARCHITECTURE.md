@@ -1,6 +1,6 @@
 ---
 title: Architecture Index
-version: 3.6.3
+version: 3.6.4
 status: active
 last_updated: 2026-02-05
 tags: [architecture, index, system-design, components]
@@ -26,7 +26,7 @@ For comprehensive testing infrastructure documentation, see [Test Stack Document
 
 # Architecture Overview
 
-**Version**: 3.6.3
+**Version**: 3.6.4
 **Last Updated**: February 2026
 
 ## System Architecture
