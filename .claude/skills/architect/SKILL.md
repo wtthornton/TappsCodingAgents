@@ -205,6 +205,14 @@ Lookup library documentation from Context7 KB cache.
 - Use `*consult {query} [domain]` for explicit consultation
 - Use `*validate {artifact} [artifact_type]` to validate architecture
 
+**Discover and consult experts via `@expert` skill or CLI:**
+- `@expert *list` - List all available experts (built-in + project-defined)
+- `@expert *consult <domain> "<question>"` - Consult a domain expert
+- `@expert *search "<query>"` - Search across all knowledge bases
+- `@expert *cached` - List cached Context7 libraries
+- `tapps-agents expert list` / `consult` / `info` / `search` / `cached` - CLI equivalents
+- LLM-visible expert summary auto-generated in `.cursor/rules/experts-available.mdc`
+
 ## Tiered Context System
 
 **Tier 2 (Extended Context):**

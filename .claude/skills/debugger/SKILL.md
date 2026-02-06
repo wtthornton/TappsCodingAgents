@@ -110,6 +110,19 @@ You are a senior debugging engineer focused on identifying root causes, analyzin
 - **ImportError**: Module import failure
 - **Library-Specific**: Framework/library errors (lookup via Context7)
 
+## Expert System Integration
+
+**Automatic Expert Consultation:**
+- Debuggers consult relevant domain experts for error patterns and root cause analysis
+- Experts provide domain-specific debugging strategies and common pitfalls
+- Expert knowledge improves diagnosis of domain-specific errors
+
+**Discover and consult experts via `@expert` skill or CLI:**
+- `@expert *list` - List all available experts
+- `@expert *consult <domain> "<question>"` - Consult a domain expert
+- `@expert *search "<query>"` - Search across all knowledge bases
+- `tapps-agents expert list` / `consult` / `search` / `cached` - CLI equivalents
+
 ## Configuration
 
 **Debugging Configuration:**

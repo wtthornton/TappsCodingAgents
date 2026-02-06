@@ -1838,6 +1838,17 @@ with quality gates. Progress is tracked and a completion report is saved.""",
         action="store_true",
         help="Skip quality gate enforcement",
     )
+    simple_mode_epic_parser.add_argument(
+        "--approved",
+        action="store_true",
+        help="Skip approval prompt (for CI/automation)",
+    )
+    simple_mode_epic_parser.add_argument(
+        "--story-workflow-mode",
+        choices=["story-only", "full"],
+        default=None,
+        help="Story workflow mode: 'story-only' (implement->review->test) or 'full' (enhance->plan->implement->review->test). Default from config.",
+    )
 
     # Simple Mode: epic-status – sync report status into epic .md
     simple_mode_epic_status_parser = simple_mode_subparsers.add_parser(
@@ -1975,4 +1986,197 @@ This command will prepare submission package and provide instructions for manual
     learning_submit_parser.add_argument(
         "--export-file",
         help="Path to export file (default: latest export)",
+    )
+
+    # ── Epic standalone commands (Phase 1.2) ─────────────────────────
+    epic_parser = subparsers.add_parser(
+        "epic",
+        help="Epic management: status, approve, pause",
+        description="""Manage Epics: view status, approve for execution, pause running Epics.
+
+Examples:
+  tapps-agents epic status docs/prd/epic-51.md
+  tapps-agents epic status --all
+  tapps-agents epic approve docs/prd/epic-51.md""",
+    )
+    epic_subparsers = epic_parser.add_subparsers(
+        dest="epic_command",
+        help="Epic command",
+    )
+
+    # epic status
+    epic_status_parser = epic_subparsers.add_parser(
+        "status",
+        help="Show Epic execution status",
+        description="Show story table with status, completion %, and timestamps.",
+    )
+    epic_status_parser.add_argument(
+        "epic_path",
+        nargs="?",
+        help="Path to Epic markdown file",
+    )
+    epic_status_parser.add_argument(
+        "--all",
+        action="store_true",
+        help="List all Epics with persisted state",
+    )
+    epic_status_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # epic approve
+    epic_approve_parser = epic_subparsers.add_parser(
+        "approve",
+        help="Pre-approve an Epic for execution",
+        description="Write an approval marker so subsequent epic runs skip the approval prompt.",
+    )
+    epic_approve_parser.add_argument(
+        "epic_path",
+        help="Path to Epic markdown file",
+    )
+
+    # epic pause
+    epic_pause_parser = epic_subparsers.add_parser(
+        "pause",
+        help="Pause a running Epic and write handoff",
+        description="Save current state and write a session handoff file for resumption.",
+    )
+    epic_pause_parser.add_argument(
+        "epic_path",
+        help="Path to Epic markdown file",
+    )
+
+    # ── Cleanup: epic-state (Phase 1.3) ──────────────────────────────
+    epic_state_cleanup_parser = cleanup_subparsers.add_parser(
+        "epic-state",
+        help="Clean up old epic state files",
+        description="""Clean up old epic state files from .tapps-agents/epic-state/.
+
+Removes or archives state JSON, memory JSONL, and handoff MD files based on age and completion status.""",
+    )
+    epic_state_cleanup_parser.add_argument(
+        "--retention-days",
+        type=int,
+        default=30,
+        help="Remove state files older than N days (default: 30)",
+    )
+    epic_state_cleanup_parser.add_argument(
+        "--remove-completed",
+        action="store_true",
+        help="Also remove state for completed Epics regardless of age",
+    )
+    epic_state_cleanup_parser.add_argument(
+        "--archive",
+        action="store_true",
+        help="Archive instead of delete (move to .tapps-agents/archives/epic-state/)",
+    )
+    epic_state_cleanup_parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without making them",
+    )
+
+    # ── Expert commands (Phase 8.3) ──────────────────────────────────
+    expert_parser = subparsers.add_parser(
+        "expert",
+        help="Expert system: list, consult, search, info, cached",
+        description="""Discover and consult the expert system.
+
+Examples:
+  tapps-agents expert list
+  tapps-agents expert consult security "How should I handle JWT refresh tokens?"
+  tapps-agents expert info expert-security-owasp
+  tapps-agents expert search "authentication best practices"
+  tapps-agents expert cached --library fastapi""",
+    )
+    expert_subparsers = expert_parser.add_subparsers(
+        dest="expert_command",
+        help="Expert command",
+    )
+
+    # expert list
+    expert_list_parser = expert_subparsers.add_parser(
+        "list",
+        help="List all available experts",
+    )
+    expert_list_parser.add_argument(
+        "--domain",
+        help="Filter by domain",
+    )
+    expert_list_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # expert consult
+    expert_consult_parser = expert_subparsers.add_parser(
+        "consult",
+        help="Consult an expert domain",
+    )
+    expert_consult_parser.add_argument(
+        "domain",
+        help="Expert domain to consult (e.g., security, performance)",
+    )
+    expert_consult_parser.add_argument(
+        "question",
+        help="Question for the expert",
+    )
+    expert_consult_parser.add_argument(
+        "--format",
+        choices=["text", "json", "markdown"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # expert info
+    expert_info_parser = expert_subparsers.add_parser(
+        "info",
+        help="Show detailed info about a specific expert",
+    )
+    expert_info_parser.add_argument(
+        "expert_id",
+        help="Expert ID (e.g., expert-security-owasp)",
+    )
+    expert_info_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # expert search
+    expert_search_parser = expert_subparsers.add_parser(
+        "search",
+        help="Search across all expert knowledge bases",
+    )
+    expert_search_parser.add_argument(
+        "query",
+        help="Search query",
+    )
+    expert_search_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
+    )
+
+    # expert cached
+    expert_cached_parser = expert_subparsers.add_parser(
+        "cached",
+        help="List cached Context7 libraries",
+    )
+    expert_cached_parser.add_argument(
+        "--library",
+        help="Show cached topics for a specific library",
+    )
+    expert_cached_parser.add_argument(
+        "--format",
+        choices=["text", "json"],
+        default="text",
+        help="Output format (default: text)",
     )

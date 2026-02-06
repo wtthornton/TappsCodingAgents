@@ -151,11 +151,13 @@ of a brownfield project's current state and recommended improvements** → `work
 ## Integration
 
 These workflows integrate with:
-- ✅ Expert consultation (domain experts)
+- ✅ Expert consultation (domain experts via `@expert *consult`)
 - ✅ Quality gates (scoring thresholds)
 - ✅ Context tiers (token optimization)
 - ✅ Multi-agent orchestration
 - ✅ Git worktree isolation
+- ✅ Epic orchestration (story-only or full workflow per story)
+- ✅ Parallel story execution (wave-based with dependency ordering)
 
 ## List All Presets
 

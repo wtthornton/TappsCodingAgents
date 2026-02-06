@@ -28,7 +28,7 @@ TappsCodingAgents provides **two unified interfaces** for accessing specialized 
 ## Prerequisites
 
 1. **Cursor AI IDE** (latest version with Skills support)
-2. **Python 3.13+** installed (recommended: latest stable Python)
+2. **Python 3.12+** installed (recommended: latest stable Python)
 3. **TappsCodingAgents** installed (see [Quick Start Guide](guides/QUICK_START.md))
 4. **Context7 API Key** (optional, for library documentation)
 

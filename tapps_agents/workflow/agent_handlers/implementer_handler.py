@@ -24,6 +24,31 @@ class ImplementerHandler(AgentExecutionHandler):
             and action in {"write_code", "fix", "implement"}
         )
     
+    def _resolve_spec(self) -> str:
+        """
+        Resolve the best available specification from workflow state variables.
+
+        Fallback order: user_prompt -> enhanced_prompt -> description -> story_description.
+        Acceptance criteria are appended when present.
+
+        Returns:
+            Resolved specification string (may be empty).
+        """
+        for key in ("user_prompt", "enhanced_prompt", "description", "story_description"):
+            value = self.state.variables.get(key, "")
+            if value and value.strip():
+                spec = value.strip()
+                # Append acceptance criteria when available (Epic story-only context)
+                ac = self.state.variables.get("acceptance_criteria", "")
+                if ac and ac.strip():
+                    spec += f"\n\nAcceptance Criteria:\n{ac.strip()}"
+                # Append prior work context when available (Epic memory)
+                prior_work = self.state.variables.get("epic_prior_work", "")
+                if prior_work and prior_work.strip():
+                    spec += f"\n\nPrior Work Context:\n{prior_work.strip()}"
+                return spec
+        return ""
+
     async def execute(
         self,
         step: WorkflowStep,
@@ -32,12 +57,12 @@ class ImplementerHandler(AgentExecutionHandler):
     ) -> list[dict[str, Any]]:
         """
         Execute implementer step.
-        
+
         Args:
             step: Workflow step definition
             action: Normalized action name
             target_path: Target file path
-            
+
         Returns:
             List of created artifacts
         """
@@ -48,7 +73,7 @@ class ImplementerHandler(AgentExecutionHandler):
             or (isinstance(workflow_type, str) and workflow_type.lower() == "greenfield")
             or (hasattr(workflow_type, "value") and workflow_type.value == "greenfield")
         )
-        user_prompt = self.state.variables.get("user_prompt", "")
+        user_prompt = self._resolve_spec()
         
         created_artifacts: list[dict[str, Any]] = []
         

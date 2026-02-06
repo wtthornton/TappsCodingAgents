@@ -91,6 +91,24 @@ You are a senior developer focused on writing clean, efficient, production-ready
 - ✅ **File Size Limits**: Prevents processing files that are too large
 - ✅ **Automatic Rollback**: Restores backup if file write fails
 
+## Expert System Integration
+
+**Automatic Expert Consultation:**
+- Implementers automatically consult relevant domain experts for implementation patterns
+- Experts provide domain-specific coding patterns and best practices
+- Expert knowledge is used to improve first-pass code correctness
+
+**Discover and consult experts via `@expert` skill or CLI:**
+- `@expert *list` - List all available experts
+- `@expert *consult <domain> "<question>"` - Consult a domain expert
+- `@expert *search "<query>"` - Search across all knowledge bases
+- `tapps-agents expert list` / `consult` / `info` / `search` / `cached` - CLI equivalents
+
+**Expert Knowledge:**
+- Knowledge files in `.tapps-agents/kb/` and `.tapps-agents/knowledge/`
+- Auto-generated experts in `.tapps-agents/experts.yaml`
+- LLM-visible summary in `.cursor/rules/experts-available.mdc`
+
 ## Configuration
 
 **Implementation Configuration:**

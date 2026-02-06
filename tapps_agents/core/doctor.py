@@ -288,6 +288,243 @@ def _check_context7_cache_status(
         )
 
 
+def _check_claude_code_integration(project_root: Path) -> list[DoctorFinding]:
+    """
+    Check Claude Code CLI integration status (informational, non-blocking).
+
+    Validates:
+    - .claude/settings.json exists and contains valid JSON
+    - Permissions include tapps-agents commands
+    - TAPPS_AGENTS_MODE environment variable is set
+    - .claude/agents/ directory exists with subagent files
+    - Claude Code CLI is installed (shutil.which("claude"))
+
+    Args:
+        project_root: Project root directory
+
+    Returns:
+        List of DoctorFinding objects with Claude Code status
+    """
+    import os
+
+    findings: list[DoctorFinding] = []
+
+    # 1. Check Claude Code CLI installation
+    claude_on_path = shutil.which("claude") is not None
+    if claude_on_path:
+        version_out = _run_version_cmd(["claude", "--version"])
+        version_info = f" ({version_out})" if version_out else ""
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="CLAUDE_CODE_CLI",
+                message=f"Claude Code CLI: Installed{version_info}",
+            )
+        )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="CLAUDE_CODE_CLI",
+                message="Claude Code CLI: Not found on PATH (optional)",
+                remediation=(
+                    "Install Claude Code CLI for terminal-based AI development.\n"
+                    "See https://docs.anthropic.com/en/docs/claude-code for installation instructions."
+                ),
+            )
+        )
+
+    # 2. Check .claude/settings.json exists and is valid JSON
+    settings_file = project_root / ".claude" / "settings.json"
+    settings_local_file = project_root / ".claude" / "settings.local.json"
+    settings_data: dict | None = None
+
+    if settings_file.exists():
+        try:
+            content = settings_file.read_text(encoding="utf-8")
+            settings_data = json.loads(content)
+            if not isinstance(settings_data, dict):
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="CLAUDE_CODE_SETTINGS",
+                        message="Claude Code Settings: .claude/settings.json exists but root is not a JSON object",
+                        remediation=(
+                            "The .claude/settings.json file should contain a JSON object at the root level.\n"
+                            "Example: {\"permissions\": {\"allow\": []}}"
+                        ),
+                    )
+                )
+                settings_data = None
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="CLAUDE_CODE_SETTINGS",
+                        message="Claude Code Settings: .claude/settings.json found (valid JSON)",
+                    )
+                )
+        except json.JSONDecodeError as e:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CLAUDE_CODE_SETTINGS",
+                    message="Claude Code Settings: .claude/settings.json has invalid JSON",
+                    remediation=f"JSON parse error: {e}\nFix the JSON syntax in .claude/settings.json.",
+                )
+            )
+        except Exception as e:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CLAUDE_CODE_SETTINGS",
+                    message=f"Claude Code Settings: Error reading .claude/settings.json ({e})",
+                )
+            )
+    elif settings_local_file.exists():
+        # settings.local.json exists but settings.json does not
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="CLAUDE_CODE_SETTINGS",
+                message="Claude Code Settings: .claude/settings.local.json found (no shared settings.json)",
+                remediation=(
+                    "Only .claude/settings.local.json exists (git-ignored, machine-specific).\n"
+                    "Create .claude/settings.json for shared team settings if needed."
+                ),
+            )
+        )
+        # Try to load local settings for permissions check
+        try:
+            content = settings_local_file.read_text(encoding="utf-8")
+            settings_data = json.loads(content)
+            if not isinstance(settings_data, dict):
+                settings_data = None
+        except Exception:
+            settings_data = None
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="CLAUDE_CODE_SETTINGS",
+                message="Claude Code Settings: No .claude/settings.json found (optional)",
+                remediation=(
+                    "Create .claude/settings.json to configure Claude Code permissions and behavior.\n"
+                    "Example: {\"permissions\": {\"allow\": [\"Bash(tapps-agents:*)\"]}}"
+                ),
+            )
+        )
+
+    # 3. Check permissions include tapps-agents commands
+    if settings_data is not None:
+        permissions = settings_data.get("permissions", {})
+        allow_list = permissions.get("allow", [])
+        if isinstance(allow_list, list):
+            tapps_commands = [
+                entry for entry in allow_list
+                if isinstance(entry, str) and "tapps-agents" in entry
+            ]
+            if tapps_commands:
+                findings.append(
+                    DoctorFinding(
+                        severity="ok",
+                        code="CLAUDE_CODE_PERMISSIONS",
+                        message=f"Claude Code Permissions: {len(tapps_commands)} tapps-agents permission(s) configured",
+                    )
+                )
+            else:
+                findings.append(
+                    DoctorFinding(
+                        severity="warn",
+                        code="CLAUDE_CODE_PERMISSIONS",
+                        message="Claude Code Permissions: No tapps-agents commands in allow list",
+                        remediation=(
+                            "Add tapps-agents commands to .claude/settings.json permissions.allow:\n"
+                            '  "Bash(tapps-agents:*)" - allows all tapps-agents CLI commands\n'
+                            '  "Bash(tapps-agents simple-mode:*)" - allows simple-mode commands\n'
+                            "This lets Claude Code run tapps-agents workflows without manual approval."
+                        ),
+                    )
+                )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CLAUDE_CODE_PERMISSIONS",
+                    message="Claude Code Permissions: permissions.allow is not a list",
+                    remediation=(
+                        "The permissions.allow field should be a list of permission strings.\n"
+                        'Example: {"permissions": {"allow": ["Bash(tapps-agents:*)"]}}'
+                    ),
+                )
+            )
+    # If settings_data is None, we already reported the settings file issue above
+
+    # 4. Check TAPPS_AGENTS_MODE environment variable
+    tapps_mode = os.environ.get("TAPPS_AGENTS_MODE")
+    if tapps_mode:
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="CLAUDE_CODE_ENV",
+                message=f"Claude Code Env: TAPPS_AGENTS_MODE={tapps_mode}",
+            )
+        )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="CLAUDE_CODE_ENV",
+                message="Claude Code Env: TAPPS_AGENTS_MODE not set (optional)",
+                remediation=(
+                    "Set TAPPS_AGENTS_MODE environment variable to configure agent behavior.\n"
+                    "Common values: 'cli' (for Claude Code CLI), 'cursor' (for Cursor IDE).\n"
+                    "Set in shell profile or .env file."
+                ),
+            )
+        )
+
+    # 5. Check .claude/agents/ directory with subagent files
+    agents_dir = project_root / ".claude" / "agents"
+    if agents_dir.exists() and agents_dir.is_dir():
+        agent_files = list(agents_dir.glob("*.md"))
+        if agent_files:
+            agent_names = [f.stem for f in agent_files]
+            findings.append(
+                DoctorFinding(
+                    severity="ok",
+                    code="CLAUDE_CODE_AGENTS",
+                    message=f"Claude Code Agents: {len(agent_files)} subagent(s) found ({', '.join(agent_names)})",
+                )
+            )
+        else:
+            findings.append(
+                DoctorFinding(
+                    severity="warn",
+                    code="CLAUDE_CODE_AGENTS",
+                    message="Claude Code Agents: .claude/agents/ exists but no .md agent files found",
+                    remediation=(
+                        "Add subagent definition files (.md) to .claude/agents/.\n"
+                        "Run 'tapps-agents init' to generate default subagent definitions."
+                    ),
+                )
+            )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="CLAUDE_CODE_AGENTS",
+                message="Claude Code Agents: .claude/agents/ directory not found (optional)",
+                remediation=(
+                    "Create .claude/agents/ with subagent .md files for Claude Code team workflows.\n"
+                    "Run 'tapps-agents init' to set up Claude Code integration files."
+                ),
+            )
+        )
+
+    return findings
+
+
 def collect_doctor_report(
     *,
     project_root: Path | None = None,
@@ -1093,6 +1330,9 @@ def collect_doctor_report(
         # Git not available or error - already reported in tool checks above
         pass
     
+    # --- Claude Code Integration checks (informational) ---
+    findings.extend(_check_claude_code_integration(root))
+
     # --- Write permissions check ---
     try:
         test_file = root / ".tapps-agents" / ".doctor_write_test"

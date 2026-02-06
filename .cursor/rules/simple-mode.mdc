@@ -440,6 +440,7 @@ AI: [MUST use] @simple-mode *full "Add Context7 integration to all SDLC agents"
 | `@ops` | Security scanning and deployment |
 | `@orchestrator` | YAML workflow coordination |
 | `@evaluator` | Framework effectiveness evaluation |
+| `@expert` | Expert discovery and consultation |
 
 ## Examples
 

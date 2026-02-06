@@ -26,6 +26,7 @@ class IntentType(Enum):
     PR = "pr"
     REQUIREMENTS = "requirements"
     BROWNFIELD = "brownfield"
+    FULL = "full"  # Phase 5: explicit *full (Full SDLC)
     ENHANCE = "enhance"  # §3.4: first-class *enhance
     BREAKDOWN = "breakdown"  # §3.4: first-class *breakdown
     TODO = "todo"  # §3.5: *todo (Beads-backed)
@@ -46,6 +47,8 @@ class Intent:
         """Get the sequence of agents for this intent."""
         if self.type == IntentType.BUILD:
             return ["planner", "architect", "designer", "implementer"]
+        elif self.type == IntentType.FULL:
+            return ["enhancer", "planner", "architect", "designer", "implementer", "reviewer", "tester"]
         elif self.type == IntentType.REVIEW:
             return ["reviewer", "improver"]
         elif self.type == IntentType.FIX:
@@ -354,6 +357,34 @@ class IntentParser:
             rest = re.sub(r"^(@simple-mode\s*)?\*todo\s*", "", input_text.strip(), flags=re.I).strip()
             parameters["todo_rest"] = rest
             return Intent(type=IntentType.TODO, confidence=1.0, parameters=parameters, original_input=input_text)
+
+        # Phase 5.2.1: Explicit *build, *fix, *full, *review, *test parsing
+        # These must match before keyword scoring to avoid mis-routing
+        _explicit_cmds: list[tuple[str, IntentType]] = [
+            ("*build", IntentType.BUILD),
+            ("*fix", IntentType.FIX),
+            ("*full", IntentType.FULL),
+            ("*review", IntentType.REVIEW),
+            ("*test", IntentType.TEST),
+        ]
+        stripped = input_text.strip()
+        for prefix, intent_type in _explicit_cmds:
+            if stripped.startswith(prefix) or stripped.startswith(f"@simple-mode {prefix}"):
+                prompt_body = re.sub(
+                    rf"^(@simple-mode\s*)?\{re.escape(prefix)}\s*",
+                    "",
+                    stripped,
+                    flags=re.I,
+                ).strip()
+                if prompt_body:
+                    parameters["prompt"] = prompt_body
+                    parameters["description"] = prompt_body
+                return Intent(
+                    type=intent_type,
+                    confidence=1.0,
+                    parameters=parameters,
+                    original_input=input_text,
+                )
 
         # Score each intent type
         scores = {

@@ -36,6 +36,9 @@ TappsCodingAgents adds the most value when you use **orchestrated workflows** (m
 | **Check environment** | `tapps-agents doctor` | Tier 3 |
 | **Security audit** | `@ops *audit-security` or `@simple-mode *security-review` | Tier 3 |
 | **Execute an Epic** | `@simple-mode *epic <epic-doc.md>` | Tier 3 |
+| **Consult an expert** | `@expert *consult <domain> "<question>"` or `tapps-agents expert consult` | Tier 3 |
+| **List/search experts** | `@expert *list` / `@expert *search "<query>"` | Tier 3 |
+| **Check Epic progress** | `tapps-agents epic status [--epic-id <id>]` | Tier 3 |
 
 ---
 
@@ -91,6 +94,8 @@ Use when the task clearly matches, or when a Tier 1–2 workflow doesn’t fit.
 | **`tapps-agents doctor`** | **Environment and integration checks.** Use after setup, when something breaks, or in CI to validate tooling. |
 | **`tapps-agents cursor verify`** | **Check that Cursor Rules and Skills** are installed and valid. Use after init or when @-commands don’t work. |
 | **`tapps-agents workflow fix`**, **`quality`** | **CLI: bug fixes, maintenance, quality sprints, or hotfixes** when not using Cursor chat. (`hotfix` is an alias for `fix`.) |
+| **`@expert *list`**, **`*consult`**, **`*search`** | **Discover and consult domain experts.** Use when you need domain-specific guidance before implementation. Also available via CLI: `tapps-agents expert list/consult/search/cached`. |
+| **`tapps-agents epic status`**, **`approve`**, **`pause`** | **Epic lifecycle management.** Check progress, approve for execution, or pause with session handoff. |
 
 ---
 

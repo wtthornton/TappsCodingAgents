@@ -384,12 +384,30 @@ def _handle_cleanup_command(args: argparse.Namespace) -> None:
         top_level.handle_cleanup_workflow_docs_command(args)
     elif cleanup_type == "sessions":
         top_level.handle_cleanup_sessions_command(args)
+    elif cleanup_type == "epic-state":
+        from .commands.epic import handle_cleanup_epic_state_command
+        handle_cleanup_epic_state_command(args)
     elif cleanup_type == "all":
         top_level.handle_cleanup_all_command(args)
+        # Also cleanup epic-state as part of "all"
+        from .commands.epic import handle_cleanup_epic_state_command
+        handle_cleanup_epic_state_command(args)
     else:
         print(f"Unknown cleanup type: {cleanup_type}", file=sys.stderr)
         print("Use 'tapps-agents cleanup --help' for available cleanup operations", file=sys.stderr)
         sys.exit(1)
+
+
+def _handle_epic_command(args: argparse.Namespace) -> None:
+    """Handle epic command with sub-commands."""
+    from .commands.epic import handle_epic_command
+    handle_epic_command(args)
+
+
+def _handle_expert_command(args: argparse.Namespace) -> None:
+    """Handle expert command with sub-commands."""
+    from .commands.expert import handle_expert_command
+    handle_expert_command(args)
 
 
 def _handle_observability_command(args: argparse.Namespace) -> None:
@@ -536,6 +554,8 @@ def route_command(args: argparse.Namespace) -> None:
         "simple-mode": simple_mode.handle_simple_mode_command,
         "learning": learning.handle_learning_command,
         "knowledge": top_level.handle_knowledge_command,
+        "epic": _handle_epic_command,
+        "expert": _handle_expert_command,
     }
     
     if agent in special_handlers:

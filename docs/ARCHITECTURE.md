@@ -1,8 +1,8 @@
 ---
 title: Architecture Index
-version: 3.5.39
+version: 3.6.1
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-05
 tags: [architecture, index, system-design, components]
 ---
 
@@ -26,8 +26,8 @@ For comprehensive testing infrastructure documentation, see [Test Stack Document
 
 # Architecture Overview
 
-**Version**: 3.5.39  
-**Last Updated**: January 2026
+**Version**: 3.6.1
+**Last Updated**: February 2026
 
 ## System Architecture
 
@@ -63,7 +63,7 @@ Agents are invoked:
 
 Experts live under `tapps_agents/experts/`.
 
-- **Built-in experts** (16): framework-provided technical domains (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning) with 100 knowledge files.
+- **Built-in experts** (16): framework-provided technical domains (Security, Performance, Testing, Data Privacy, Accessibility, UX, Code Quality, Software Architecture, DevOps, Documentation, AI Frameworks, Observability, API Design, Cloud Infrastructure, Database, Agent Learning) with 119 knowledge files across 16 domains.
 - **Industry experts** (project-defined): configured in `.tapps-agents/experts.yaml` and optionally backed by a file-based knowledge base under `.tapps-agents/knowledge/<domain>/*.md`.
 
 ### 3) Instruction-Based Architecture
@@ -190,6 +190,35 @@ Simple Mode lives under `tapps_agents/simple_mode/` and provides natural languag
 
 See [Simple Mode Guide](SIMPLE_MODE_GUIDE.md) for usage documentation.
 
+### 5.2) Epic Orchestration
+
+Epic orchestration lives under `tapps_agents/epic/` and provides multi-story execution with dependency resolution.
+
+**Key Modules:**
+- `orchestrator.py`: Epic orchestration engine with parallel wave execution
+- `state_manager.py`: Atomic state persistence (JSON + JSONL append-only memory)
+- `parser.py`: Epic document parsing (markdown with story extraction)
+- `models.py`: Epic and story data models
+- `beads_sync.py`: Beads task tracking integration
+- `markdown_sync.py`: Markdown progress synchronization
+
+**Features:**
+- Wave-based parallel story execution with topological dependency sorting
+- Atomic state writes with content checksums for drift detection
+- Story handoff artifacts between dependent stories
+- Configurable via `EpicConfig` on `ProjectConfig` (story_workflow_mode, max_parallel_stories, parallel_strategy)
+- Agent-teams stub for Claude Code CLI integration (falls back to asyncio)
+
+**Configuration** (in `.tapps-agents/config.yaml`):
+```yaml
+epic:
+  story_workflow_mode: "full"  # or "story-only"
+  max_parallel_stories: 3
+  parallel_strategy: "asyncio"  # or "agent-teams"
+  detect_file_overlap: true
+  memory_last_k: 5
+```
+
 ### 6) Project Profiling
 
 Project profiling lives in `tapps_agents/core/project_profile.py` and persists to:
@@ -272,6 +301,27 @@ An always-on orchestrator that automatically detects project domains, creates an
 - **Observability & Quality Improvement**: Metrics tracking (expert confidence, RAG quality, Context7 KB hit rate) with scheduled KB maintenance jobs
 
 **Status**: Design phase - See [SDLC Improvements Analysis](../SDLC_ISSUES_AND_IMPROVEMENTS_ANALYSIS.md) and [Epic 2: Dynamic Expert & RAG Engine](prd/epic-2-dynamic-expert-rag-engine.md)
+
+### 12) Claude Code Integration
+
+Claude Code integration provides subagents and settings for the Claude Code CLI.
+
+**Resources** (packaged in `tapps_agents/resources/claude/`):
+- `agents/`: 6 subagent definitions (code-reviewer, debugger-agent, researcher, epic-orchestrator, story-executor, security-auditor)
+- `settings.json`: Project-level Claude Code settings template
+- `settings.local.json.example`: Local overrides template
+
+**Installed to** (by `tapps-agents init`):
+- `.claude/agents/`: 6 subagent `.md` files
+- `.claude/settings.json`: Permissions and environment configuration
+- `.claude/settings.local.json`: Optional local overrides (git-ignored)
+
+**Doctor Checks** (`tapps_agents/core/doctor.py`):
+- `CLAUDE_CODE_CLI`: Checks for `claude` CLI binary
+- `CLAUDE_CODE_SETTINGS`: Validates settings files exist
+- `CLAUDE_CODE_PERMISSIONS`: Checks configured permissions
+- `CLAUDE_CODE_ENV`: Checks `TAPPS_AGENTS_MODE` environment variable
+- `CLAUDE_CODE_AGENTS`: Checks for subagent `.md` files
 
 ## Architecture Decisions
 

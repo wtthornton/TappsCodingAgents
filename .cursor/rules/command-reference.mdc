@@ -82,7 +82,7 @@ When you run `tapps-agents init` on any project (new or existing), it:
    - `command-reference.mdc` - This file (complete command reference)
    - `cursor-mode-usage.mdc` - Cursor vs CLI usage (when to use @simple-mode vs tapps-agents workflow)
 
-2. **Cursor Skills** (`.claude/skills/`) - 14 agent skills + simple-mode skill:
+2. **Cursor Skills** (`.claude/skills/`) - 22 skills (14 agents + simple-mode + expert + patterns + utilities):
    - Enables `@agent-name *command` syntax in Cursor chat
    - Each skill defines agent capabilities, tools, and instructions
    - Skills are model-agnostic (use Cursor's configured LLM)
@@ -360,6 +360,79 @@ tapps-agents workflow rapid --skip-steps "enhance,planning" --prompt "Add user a
 tapps-agents workflow rapid --cli-mode --auto --prompt "Add user auth"
 ```
 
+### `epic` - Epic Management Commands
+**Purpose:** Manage Epic execution state, approval, and session handoff
+
+**CLI Syntax:**
+```bash
+tapps-agents epic status [--epic-id <id>] [--all] [--format json|text]
+tapps-agents epic approve --epic-id <id>
+tapps-agents epic pause [--epic-id <id>]
+```
+
+**Subcommands:**
+- `status` - Show Epic execution status (stories, completion %, progress)
+  - `--epic-id`: Filter to specific Epic
+  - `--all`: List all Epic states
+  - `--format`: Output format
+- `approve` - Mark an Epic as approved for execution
+  - `--epic-id` (required): Epic to approve
+- `pause` - Pause Epic execution and write session handoff
+  - `--epic-id`: Epic to pause (latest if omitted)
+
+**Epic Execution via Simple Mode:**
+```bash
+# Execute an Epic with story-only workflow (pre-approved stories)
+tapps-agents simple-mode epic docs/prd/epic-51.md --approved --story-workflow-mode story-only
+
+# Full workflow per story
+tapps-agents simple-mode epic docs/prd/epic-51.md --story-workflow-mode full
+```
+
+**Epic State Cleanup:**
+```bash
+tapps-agents cleanup epic-state [--retention-days 30] [--remove-completed] [--archive] [--dry-run]
+```
+
+**When to Use:**
+- **status**: Check progress of an in-flight Epic
+- **approve**: Approve an Epic before execution (required unless `--approved` flag)
+- **pause**: Save handoff context for session continuation
+
+### `expert` - Expert System Commands
+**Purpose:** Discover, consult, and search project experts and knowledge bases
+
+**CLI Syntax:**
+```bash
+tapps-agents expert list [--domain <domain>] [--format json|text]
+tapps-agents expert consult --domain <domain> --question "<question>" [--format json|text]
+tapps-agents expert info --expert-id <id> [--format json|text]
+tapps-agents expert search --query "<query>" [--format json|text]
+tapps-agents expert cached [--library <name>] [--format json|text]
+```
+
+**Subcommands:**
+- `list` - List all available experts (built-in + project-defined)
+- `consult` - Consult an expert domain with a question
+- `info` - Show detailed info about a specific expert
+- `search` - Search across all knowledge base files
+- `cached` - List cached Context7 libraries with sizes
+
+**Cursor Skill Syntax:**
+```cursor
+@expert *list
+@expert *consult security "OAuth2 best practices"
+@expert *info expert-id
+@expert *search "authentication patterns"
+@expert *cached
+```
+
+**When to Use:**
+- **list**: Discover what experts are available for your project
+- **consult**: Get domain-specific guidance before implementation
+- **search**: Find relevant knowledge across all expert knowledge bases
+- **cached**: Check what Context7 library documentation is available
+
 ### `cleanup` - Cleanup TappsCodingAgents Artifacts
 **Purpose:** Clean up various TappsCodingAgents artifacts to free disk space and reduce IDE clutter
 
@@ -521,7 +594,7 @@ tapps-agents cursor check [--format json|text]  # alias
 - **Pre-commit checks**: Validate setup before committing integration files
 
 **What It Checks:**
-- **Cursor Skills** (`.claude/skills/`) - Validates all 14 agent skills + simple-mode are present
+- **Cursor Skills** (`.claude/skills/`) - Validates all 22 skills are present
   - Checks directory structure
   - Verifies YAML frontmatter in SKILL.md files
   - Reports missing skills

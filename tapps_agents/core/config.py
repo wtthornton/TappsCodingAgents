@@ -738,6 +738,74 @@ class ExpertConfig(BaseModel):
         return self
 
 
+class EpicConfig(BaseModel):
+    """Configuration for Epic execution (story workflow, parallel, memory)."""
+
+    story_workflow_mode: str = Field(
+        default="story-only",
+        description="Default workflow mode for Epic stories: 'story-only' (implement->review->test) or 'full' (enhance->plan->implement->review->test)",
+    )
+    max_parallel_stories: int = Field(
+        default=3,
+        ge=1,
+        le=10,
+        description="Maximum stories to run in parallel within a wave",
+    )
+    parallel_strategy: str = Field(
+        default="sequential",
+        description="Parallel execution strategy: 'sequential' | 'asyncio' | 'agent-teams'",
+    )
+    detect_file_overlap: bool = Field(
+        default=True,
+        description="Detect file overlap between parallel stories; fall back to sequential on overlap",
+    )
+    strict_parallel: bool = Field(
+        default=True,
+        description="When True, force sequential on file overlap (safe default). When False, warn only.",
+    )
+    memory_last_k: int = Field(
+        default=5,
+        ge=1,
+        le=20,
+        description="Number of prior story summaries to inject into implementer context",
+    )
+    auto_handoff: bool = Field(
+        default=True,
+        description="Automatically write handoff file on pause or session end",
+    )
+
+
+class ClaudeCodeConfig(BaseModel):
+    """Configuration for Claude Code CLI integration (Phase 7)."""
+
+    auto_configure: bool = Field(
+        default=True,
+        description="Auto-configure .claude/settings.json during init when Claude Code is detected",
+    )
+    enable_subagents: bool = Field(
+        default=True,
+        description="Enable framework subagent definitions in .claude/agents/",
+    )
+    model_routing: dict[str, str] = Field(
+        default_factory=lambda: {
+            "research": "haiku",
+            "implementation": "sonnet",
+            "architecture": "inherit",
+            "review": "sonnet",
+            "security": "sonnet",
+        },
+        description="Model routing per task type (haiku/sonnet/opus/inherit)",
+    )
+    agent_teams: dict[str, Any] = Field(
+        default_factory=lambda: {
+            "enabled": False,
+            "teammate_model": "sonnet",
+            "require_plan_approval": False,
+        },
+        description="Agent Teams configuration (experimental, requires CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1)",
+    )
+
+
 class AgentsConfig(BaseModel):
     """Configuration for all agents"""
 
@@ -1226,6 +1294,10 @@ class SimpleModeConfig(BaseModel):
         default=False,
         description="Use template summaries when artifact budget is exceeded (default: truncate)",
     )
+    auto_select_workflow: bool = Field(
+        default=False,
+        description="When True, auto-select workflow from prompt without suggestion UI (Phase 5.2.4)",
+    )
 
 
 class AutoEnhancementConfig(BaseModel):
@@ -1522,6 +1594,14 @@ class ProjectConfig(BaseModel):
     cleanup: CleanupConfig = Field(
         default_factory=CleanupConfig,
         description="Cleanup operations configuration",
+    )
+    epic: EpicConfig = Field(
+        default_factory=EpicConfig,
+        description="Epic execution configuration (story workflow, parallel, memory)",
+    )
+    claude_code: ClaudeCodeConfig = Field(
+        default_factory=ClaudeCodeConfig,
+        description="Claude Code CLI integration configuration (Phase 7)",
     )
 
     model_config = {

@@ -1,8 +1,8 @@
 ---
 title: Quick Start Guide
-version: 3.5.39
+version: 3.6.1
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-05
 tags: [quick-start, getting-started, setup]
 ---
 
@@ -12,14 +12,14 @@ Get up and running with TappsCodingAgents in about 5–10 minutes.
 
 ## 1. Install
 
-Requires **Python 3.13+** (`python --version`).
+Requires **Python 3.12+** (`python --version`).
 
 **For consuming projects (recommended):**
 ```bash
 # Install from PyPI (clean install, framework code only)
 pip install tapps-agents
 # or specific version:
-pip install tapps-agents==3.5.39
+pip install tapps-agents==3.6.1
 ```
 
 **For framework development (contributors):**
@@ -27,8 +27,8 @@ pip install tapps-agents==3.5.39
 # Clone repository and install in editable mode
 git clone https://github.com/wtthornton/TappsCodingAgents.git
 cd TappsCodingAgents
-python3.13 -m pip install -e .
-# Windows: py -3.13 -m pip install -e .
+python3 -m pip install -e .
+# Windows: py -3.12 -m pip install -e .
 ```
 
 After installing: `tapps-agents doctor` or `python -m tapps_agents.cli doctor` to verify.
@@ -38,16 +38,16 @@ After installing: `tapps-agents doctor` or `python -m tapps_agents.cli doctor` t
 On Windows, a user-level `pip install` often puts the `tapps-agents` script in a Scripts folder that is not on PATH. Use a project venv (recommended) or `python -m tapps_agents.cli`; see [Troubleshooting CLI installation](../TROUBLESHOOTING_CLI_INSTALLATION.md).
 
 ```powershell
-py -3.13 --version
+py -3.12 --version
 # Recommended: use a project venv so tapps-agents is on PATH
-py -3.13 -m venv .venv
+py -3.12 -m venv .venv
 .venv\Scripts\activate
 pip install tapps-agents
 tapps-agents init
 
 # Or without venv (use module if command not found):
 # pip install tapps-agents
-py -3.13 -m tapps_agents.cli init
+py -3.12 -m tapps_agents.cli init
 ```
 
 ### Linux/macOS
@@ -59,7 +59,7 @@ pip install tapps-agents
 # For development:
 # git clone https://github.com/wtthornton/TappsCodingAgents.git
 # cd TappsCodingAgents
-# python3.13 -m pip install -e .
+# python3 -m pip install -e .
 python3.13 -m tapps_agents.cli init
 ```
 

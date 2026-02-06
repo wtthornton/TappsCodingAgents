@@ -1,8 +1,8 @@
 ---
 title: Source Tree Organization
-version: 1.0.0
+version: 3.6.1
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-05
 tags: [architecture, source-tree, organization]
 ---
 
@@ -105,13 +105,25 @@ agents/
 - `expert_engine.py`: Expert consultation engine
 - `simple_rag.py`: File-based RAG
 - `vector_rag.py`: Vector-based RAG
-- `knowledge/`: Knowledge files (117 markdown files across domains)
+- `knowledge/`: Knowledge files (119 markdown files across 16 domains)
 
 **Built-in Experts (16):**
 - Security, Performance, Testing, Data Privacy, Accessibility, UX
 - Code Quality, Software Architecture, DevOps, Documentation
 - AI Frameworks, Observability, API Design, Cloud Infrastructure
 - Database, Agent Learning
+
+### Epic Orchestration (`tapps_agents/epic/`)
+
+**Purpose**: Multi-story epic execution with dependency resolution
+
+**Key Modules:**
+- `orchestrator.py`: Epic orchestration engine with parallel wave execution
+- `state_manager.py`: Atomic state persistence (JSON + JSONL append-only memory)
+- `parser.py`: Epic document parsing (markdown with story extraction)
+- `models.py`: Epic and story data models
+- `beads_sync.py`: Beads task tracking integration
+- `markdown_sync.py`: Markdown progress synchronization
 
 ### Context7 Integration (`tapps_agents/context7/`)
 
@@ -223,11 +235,12 @@ tests/
 **Structure:**
 ```
 .cursor/
-├── rules/            # Cursor Rules (8 .mdc files)
+├── rules/            # Cursor Rules (15 .mdc files)
 └── mcp.json         # MCP server configuration
 
 .claude/
-└── skills/           # Cursor Skills (14 agent skills + simple-mode)
+├── skills/           # Cursor Skills (22 skills)
+└── agents/           # Claude Code subagents (6 .md files)
 ```
 
 ## Documentation: `docs/`
@@ -274,5 +287,5 @@ docs/
 
 ---
 
-**Last Updated:** 2026-01-20  
+**Last Updated:** 2026-02-05
 **Maintained By:** TappsCodingAgents Team

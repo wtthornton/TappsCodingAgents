@@ -2712,6 +2712,178 @@ def rollback_init_reset(project_root: Path, backup_path: Path) -> dict[str, Any]
     return result
 
 
+def _detect_claude_code() -> bool:
+    """Detect if Claude Code CLI is available."""
+    import shutil
+    return shutil.which("claude") is not None
+
+
+def _init_claude_code_settings(
+    project_root: Path, results: dict[str, Any], reset_mode: bool
+) -> None:
+    """Phase 7.8: Create .claude/settings.json and settings.local.json.example."""
+    settings_path = project_root / ".claude" / "settings.json"
+    local_example = project_root / ".claude" / "settings.local.json.example"
+    agents_dir = project_root / ".claude" / "agents"
+
+    claude_available = _detect_claude_code()
+    results["claude_code_available"] = claude_available
+
+    if not claude_available and not settings_path.exists():
+        logger.info("Claude Code CLI not detected — skipping .claude/settings.json")
+        return
+
+    # Create settings.json (do not overwrite on reset — user data)
+    if not settings_path.exists():
+        import json as _json
+        settings_path.parent.mkdir(parents=True, exist_ok=True)
+        settings = {
+            "$schema": "https://json.schemastore.org/claude-code-settings.json",
+            "permissions": {
+                "allow": [
+                    "Read",
+                    "Grep",
+                    "Glob",
+                    "Bash(tapps-agents *)",
+                    "Bash(python -m tapps_agents *)",
+                    "Bash(pytest *)",
+                    "Bash(ruff *)",
+                    "Bash(mypy *)",
+                    "Bash(bd *)",
+                    "Bash(git diff *)",
+                    "Bash(git log *)",
+                    "Bash(git status *)",
+                ],
+                "deny": [
+                    "Read(./.env)",
+                    "Read(./.env.*)",
+                    "Read(./secrets/**)",
+                ],
+            },
+            "env": {
+                "TAPPS_AGENTS_MODE": "claude-code",
+                "CONTEXT7_KB_CACHE": ".tapps-agents/kb/context7-cache",
+            },
+            "enableAllProjectMcpServers": True,
+        }
+        settings_path.write_text(
+            _json.dumps(settings, indent=2), encoding="utf-8"
+        )
+        results["claude_code_settings"] = True
+        logger.info("Created .claude/settings.json")
+
+    # Create settings.local.json.example (always reset)
+    if not local_example.exists() or reset_mode:
+        import json as _json
+        example = {
+            "$schema": "https://json.schemastore.org/claude-code-settings.json",
+            "env": {
+                "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1",
+                "ANTHROPIC_API_KEY": "sk-ant-...",
+            },
+            "permissions": {
+                "defaultMode": "acceptEdits",
+            },
+        }
+        local_example.write_text(
+            _json.dumps(example, indent=2), encoding="utf-8"
+        )
+
+    # Ensure .gitignore entries
+    gitignore = project_root / ".gitignore"
+    if gitignore.exists():
+        content = gitignore.read_text(encoding="utf-8")
+        additions = []
+        for entry in [".claude/settings.local.json", ".claude/agent-memory/", ".claude/agent-memory-local/"]:
+            if entry not in content:
+                additions.append(entry)
+        if additions:
+            with open(gitignore, "a", encoding="utf-8") as f:
+                f.write("\n# Claude Code local settings\n")
+                for a in additions:
+                    f.write(f"{a}\n")
+
+
+def _init_experts_available_rule(project_root: Path, results: dict[str, Any]) -> None:
+    """Phase 8.1: Generate .cursor/rules/experts-available.mdc dynamically."""
+    import yaml as _yaml
+
+    rule_path = project_root / ".cursor" / "rules" / "experts-available.mdc"
+    rule_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Collect experts from experts.yaml
+    experts_yaml = project_root / ".tapps-agents" / "experts.yaml"
+    expert_rows: list[str] = []
+    if experts_yaml.exists():
+        try:
+            data = _yaml.safe_load(experts_yaml.read_text(encoding="utf-8")) or {}
+            for name, config in data.items():
+                if isinstance(config, dict):
+                    domain = config.get("domain", "general")
+                    triggers = ", ".join(config.get("triggers", [])[:5])
+                    kf = len(config.get("knowledge_files", []))
+                    expert_rows.append(f"| {name} | {domain} | {triggers} | {kf} |")
+        except Exception:
+            pass
+
+    # Collect cached libraries
+    cache_dir = project_root / ".tapps-agents" / "kb" / "context7-cache"
+    if not cache_dir.exists():
+        cache_dir = project_root / ".tapps-agents" / "context7-docs"
+    cached_libs: list[str] = []
+    if cache_dir.exists():
+        for f in sorted(cache_dir.glob("*.json")):
+            cached_libs.append(f.stem)
+
+    # Generate rule content
+    lines = [
+        "---",
+        "description: Available experts and cached libraries (auto-generated by init)",
+        "globs: []",
+        "alwaysApply: true",
+        "---",
+        "",
+        "# Available Experts",
+        "",
+        "## How to Consult Experts",
+        "",
+        "Use `@expert *list` to see all available experts.",
+        "Use `@expert *consult \"<question>\" --domain <domain>` for domain expert knowledge.",
+        "Use `@expert *cached` to list cached library documentation.",
+        "CLI: `tapps-agents expert list|consult|info|search|cached`",
+        "",
+    ]
+
+    if expert_rows:
+        lines.extend([
+            "## Configured Experts",
+            "",
+            "| Expert | Domain | Triggers | Knowledge Files |",
+            "|--------|--------|----------|-----------------|",
+            *expert_rows,
+            "",
+        ])
+    else:
+        lines.extend([
+            "## Configured Experts",
+            "",
+            "No project experts configured. Run `tapps-agents setup-experts init` to auto-generate.",
+            "",
+        ])
+
+    if cached_libs:
+        lines.extend([
+            "## Context7 Cached Libraries",
+            "",
+            f"The following libraries have cached documentation: {', '.join(cached_libs[:30])}",
+            "",
+        ])
+
+    rule_path.write_text("\n".join(lines), encoding="utf-8")
+    results["experts_available_rule"] = True
+    logger.info("Generated .cursor/rules/experts-available.mdc")
+
+
 def init_project(
     project_root: Path | None = None,
     include_cursor_rules: bool = True,
@@ -2978,6 +3150,17 @@ def init_project(
         results["hooks"] = success
         if success and hooks_path:
             results["files_created"].append(".tapps-agents/hooks.yaml")
+
+    # Phase 1.1: Create .tapps-agents/epic-state/ directory
+    epic_state_dir = project_root / ".tapps-agents" / "epic-state"
+    epic_state_dir.mkdir(parents=True, exist_ok=True)
+    results["epic_state_dir"] = True
+
+    # Phase 7.8: Claude Code settings configuration
+    _init_claude_code_settings(project_root, results, reset_mode)
+
+    # Phase 8.1: Generate experts-available.mdc rule
+    _init_experts_available_rule(project_root, results)
 
     # If tools/bd exists, ensure scripts/set_bd_path.ps1 (do not overwrite)
     set_bd_installed, set_bd_path = _ensure_set_bd_path_script(project_root)

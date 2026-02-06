@@ -56,8 +56,8 @@ user_role: senior-developer
 # Tooling targets/policy (optional, used by `doctor`)
 tooling:
   targets:
-    python: 3.13.3
-    python_requires: ">=3.13"
+    python: 3.12.0
+    python_requires: ">=3.12"
     os_targets: ["windows", "linux"]
   policy:
     external_tools_mode: soft   # soft=warn/skip, hard=fail

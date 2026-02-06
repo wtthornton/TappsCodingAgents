@@ -12,7 +12,7 @@ TappsCodingAgents is a Python package that you typically run as a CLI tool again
 
 ## Prerequisites
 
-- Python 3.13+ (recommended: latest stable Python)
+- Python 3.12+ (recommended: latest stable Python)
 - pip
 - (Optional, headless only) Ollama for local LLM execution via MAL
 
@@ -70,7 +70,7 @@ See `docs/CONFIGURATION.md`.
 If you want a containerized environment to run the CLI:
 
 ```dockerfile
-FROM python:3.13-slim
+FROM python:3.12-slim
 WORKDIR /app
 COPY . /app
 RUN pip install -e .
@@ -134,7 +134,7 @@ Before deploying to production, ensure:
 
 ### Required Components
 
-- **Python 3.13+**: Framework requires Python 3.13 or later
+- **Python 3.12+**: Framework requires Python 3.12 or later
 - **Core Agents**: All 13 workflow agents are required for full functionality
 - **Workflow Engine**: Required for workflow execution
 

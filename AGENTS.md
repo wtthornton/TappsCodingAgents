@@ -214,6 +214,23 @@ Use these only for targeted, single-purpose operations:
 @tester *run-tests
 ```
 
+### Expert System
+```cursor
+@expert *list                              # List all available experts
+@expert *consult <domain> "<question>"     # Consult a domain expert
+@expert *info <expert-id>                  # Show expert details
+@expert *search "<query>"                  # Search knowledge bases
+@expert *cached                            # List cached Context7 libraries
+```
+
+### Epic Management (CLI)
+```bash
+tapps-agents epic status [--epic-id <id>]  # Show Epic progress
+tapps-agents epic approve --epic-id <id>   # Approve Epic for execution
+tapps-agents epic pause [--epic-id <id>]   # Pause and write handoff
+tapps-agents cleanup epic-state            # Clean up old Epic states
+```
+
 **For complete command reference, see:** `.cursor/rules/command-reference.mdc`
 
 ### Beads (bd) – Task Tracking

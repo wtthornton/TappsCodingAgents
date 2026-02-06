@@ -153,9 +153,9 @@ You can add `CLAUDE.local.md` for machine- or project-specific rules. It is load
 
 ### Version and Status
 
-**Version:** 3.5.39
+**Version:** 3.6.1
 **Status:** Active
-**Last Updated:** 2026-01-30
+**Last Updated:** 2026-02-05
 
 **Important:** Beads integration is **MANDATORY** for TappsCodingAgents development. See `docs/BEADS_GITHUB_BEST_PRACTICES.md` for complete workflow guide.
 
@@ -503,6 +503,7 @@ tapps-agents health overview
 @simple-mode *breakdown "prompt"     # Task breakdown
 @simple-mode *todo <bd args>         # Beads todo (e.g. ready, create "Title")
 @simple-mode *full "description"      # Full 9-step SDLC (framework development)
+@simple-mode *epic <epic-doc.md>      # Execute Epic (stories in dependency order)
 ```
 
 ### Individual Agents (Advanced)
@@ -513,6 +514,23 @@ tapps-agents health overview
 @implementer *implement "desc" <file> # Code generation
 @tester *test <file>                  # Test generation
 @debugger *debug "error" --file <file> # Error analysis
+```
+
+### Expert System
+
+```cursor
+@expert *list                              # List all available experts
+@expert *consult <domain> "<question>"     # Consult a domain expert
+@expert *search "<query>"                  # Search knowledge bases
+@expert *cached                            # List cached Context7 libraries
+```
+
+### Epic Management (CLI)
+
+```bash
+tapps-agents epic status [--epic-id <id>]  # Show Epic progress
+tapps-agents epic approve --epic-id <id>   # Approve Epic for execution
+tapps-agents epic pause [--epic-id <id>]   # Pause and write handoff
 ```
 
 **For complete command reference, see:** `.cursor/rules/command-reference.mdc`
@@ -545,8 +563,8 @@ tapps-agents health overview
 
 ## Configuration
 
-**Skills:** `.claude/skills/` (14 agent skills + simple-mode)  
-**Rules:** `.cursor/rules/` (8 rule files)  
+**Skills:** `.claude/skills/` (22 skills: 14 agents + simple-mode + expert + patterns + utilities)
+**Rules:** `.cursor/rules/` (15 rule files)
 **Background Agents:** `.cursor/background-agents.yaml`  
 **Indexing:** `.cursorignore` (performance optimization)  
 **auto_enhancement and PROMPT_ARGUMENT_MAP:** [docs/CONFIGURATION.md](docs/CONFIGURATION.md#automatic-prompt-enhancement-auto_enhancement) — CLI prompt enhancement; workflow EnhancerHandler for full-sdlc (optional enhance), rapid-dev, Epic.
@@ -617,6 +635,6 @@ python -m twine upload dist/tapps_agents-<version>*
 
 ---
 
-**Last Updated:** 2026-01-20  
-**Maintained By:** TappsCodingAgents Team  
+**Last Updated:** 2026-02-05
+**Maintained By:** TappsCodingAgents Team
 **Compatible With:** Claude Code, Cursor IDE, and other AI coding tools

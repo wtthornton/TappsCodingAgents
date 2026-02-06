@@ -1,8 +1,8 @@
 ---
 title: Technology Stack
-version: 1.0.0
+version: 3.6.1
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-05
 tags: [architecture, tech-stack, dependencies]
 ---
 
@@ -12,7 +12,7 @@ This document provides an overview of the technology stack used in TappsCodingAg
 
 ## Runtime
 
-- **Python**: 3.13+ (required)
+- **Python**: 3.12+ (required; 3.13 recommended)
 - **Package Manager**: pip (with pyproject.toml as authoritative source)
 - **Build System**: setuptools
 
@@ -20,41 +20,40 @@ This document provides an overview of the technology stack used in TappsCodingAg
 
 ### Essential Libraries
 
-- **pydantic** (≥2.12.0): Data validation and settings management
-- **httpx** (≥0.28.0): Async HTTP client for API calls
+- **pydantic** (≥2.12.5): Data validation and settings management
+- **httpx** (≥0.28.1): Async HTTP client for API calls
 - **pyyaml** (≥6.0.3): YAML parsing for workflow definitions
-- **aiohttp** (≥3.13.2): Async HTTP server/client (alternative to httpx)
-- **psutil** (≥7.1.0): System and process utilities
-- **rich** (≥14.1.0): CLI UX (progress spinners, live updates)
-- **aiofiles** (≥24.1.0): Async file operations (optional with fallback)
+- **aiohttp** (≥3.13.3): Async HTTP server/client (alternative to httpx)
+- **psutil** (≥7.2.2): System and process utilities
+- **rich** (≥14.3.2): CLI UX (progress spinners, live updates)
+- **aiofiles** (≥25.1.0): Async file operations (optional with fallback)
 
 ### Code Analysis (Runtime)
 
 - **radon** (≥6.0.1): Code complexity analysis
-- **bandit** (≥1.9.2): Security vulnerability scanning
-- **coverage** (≥7.13.0): Code coverage analysis
+- **bandit** (≥1.9.3): Security vulnerability scanning
+- **coverage** (≥7.13.3): Code coverage analysis
 
 ### Reporting
 
 - **jinja2** (≥3.1.6): Template engine for report generation
-- **plotly** (≥6.5.0): Interactive charts and graphs
+- **plotly** (≥6.5.2): Interactive charts and graphs (optional reporting extra)
 
 ### Dependency Management
 
-- **packaging** (≥23.2,<25): Version and dependency management
+- **packaging** (≥23.2,<27): Version and dependency management
   - Constrained to avoid conflicts with transitive dependencies (e.g., langchain-core)
 
 ## Development Dependencies
 
 ### Code Formatting
 
-- **black** (≥25.12.0): Code formatter (88 character line length)
-- **ruff** (≥0.14.10,<1.0): Fast Python linter (10-100x faster than alternatives)
+- **ruff** (≥0.15.0,<1.0): Fast Python linter and formatter (10-100x faster than alternatives)
 
 ### Type Checking
 
 - **mypy** (≥1.19.1,<2.0): Static type checker
-- **types-PyYAML** (≥6.0.12): Type stubs for PyYAML
+- **types-PyYAML** (≥6.0.12.20250915): Type stubs for PyYAML
 
 ### Testing
 
@@ -67,10 +66,6 @@ This document provides an overview of the technology stack used in TappsCodingAg
 - **pytest-sugar** (≥1.1.1): Enhanced terminal output
 - **pytest-html** (≥4.1.1): HTML test reports
 - **pytest-rich** (≥0.2.0): Rich output for pytest
-
-### Code Quality (Optional)
-
-- **pylint** (≥4.0.4): Code quality analysis (for maintainability scoring)
 
 ### Security & Dependency Management
 
@@ -148,5 +143,5 @@ This document provides an overview of the technology stack used in TappsCodingAg
 
 ---
 
-**Last Updated:** 2026-01-20  
+**Last Updated:** 2026-02-05
 **Maintained By:** TappsCodingAgents Team

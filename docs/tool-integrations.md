@@ -31,13 +31,15 @@ TappsCodingAgents is designed to work with multiple AI coding tools and developm
 
 | Feature | Cursor | Claude Code CLI | VS Code + Continue | Codespaces | Claude.ai Web |
 |---------|--------|-----------------|-------------------|------------|---------------|
-| Cursor Skills | ✅ Full | ❌ No | ❌ No | ✅ Full | ❌ No |
+| Cursor Skills | ✅ Full | ✅ Full (via .claude/skills/) | ❌ No | ✅ Full | ❌ No |
 | CLI Commands | ✅ Yes | ✅ Yes | ✅ Yes | ✅ Yes | ❌ No |
 | Expert System | ✅ Full | ✅ Full | ⚠️ Partial | ✅ Full | ⚠️ Limited |
-| Workflows | ✅ Full | ✅ Full | ⚠️ Manual | ✅ Full | ❌ No |
+| Workflows | ✅ Full | ✅ Full (automatic orchestration) | ⚠️ Manual | ✅ Full | ❌ No |
+| Subagents | ✅ Background Agents | ✅ Native (.claude/agents/) | ❌ No | ✅ Yes | ❌ No |
+| Epic Orchestration | ✅ Full | ✅ Full (parallel waves) | ⚠️ CLI only | ✅ Full | ❌ No |
 | Knowledge Base | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ❌ No |
 | File Access | ✅ Full | ✅ Full | ✅ Full | ✅ Full | ⚠️ Limited |
-| Performance | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
+| Performance | ⭐⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ | ⭐⭐ |
 
 **Recommendation**: Use **Cursor IDE** for the best experience. Use **Claude Code CLI** for terminal-focused workflows.
 
@@ -137,19 +139,22 @@ tapps-agents tester test src/auth.py
 
 ### Overview
 
-Claude Code CLI is Anthropic's official command-line interface for Claude. TappsCodingAgents works well with Claude Code for terminal-focused workflows.
+Claude Code CLI is Anthropic's official command-line interface for Claude. TappsCodingAgents has **full integration** with Claude Code, including Skills, subagents, and automatic orchestration.
 
 **Why Claude Code CLI**:
 - ✅ Terminal-native (no IDE required)
 - ✅ Full CLI command support
-- ✅ Expert system works fully
+- ✅ **Skills support** (via `.claude/skills/` - same as Cursor)
+- ✅ **Native subagents** (`.claude/agents/` for parallel execution)
+- ✅ **Automatic workflow orchestration** (same as Cursor)
+- ✅ Expert system works fully (including `@expert` skill)
+- ✅ **Epic orchestration** with parallel story execution
 - ✅ Good for remote/SSH workflows
 - ✅ Cross-platform (Windows, Mac, Linux)
 
 **Limitations**:
-- ❌ No Cursor Skills (must use CLI commands)
-- ⚠️ Manual workflow steps (no automatic orchestration)
-- ⚠️ Less integrated experience (context switching)
+- ⚠️ No IDE integration (terminal-only experience)
+- ⚠️ No visual diff or inline code changes
 
 ### Setup
 
@@ -173,85 +178,115 @@ cd your-project
 tapps-agents init
 ```
 
-**4. (Optional) Add CLAUDE.md**:
+**4. Auto-Configure Claude Code Settings**:
 ```bash
-# Copy project rules to CLAUDE.md for Claude Code context
-cp .cursor/rules/*.mdc docs/rules/
+# tapps-agents init automatically detects Claude Code and configures:
+# - .claude/settings.json (permissions, env, MCP)
+# - .claude/agents/ (subagent definitions)
+# - .claude/skills/ (all agent skills)
+tapps-agents init
 ```
 
 ### Usage
 
-#### Via Claude Code Chat
+#### Via Claude Code Chat (Skills - Same as Cursor)
 
 ```bash
 # Start Claude Code session
-claude-code
+claude
 
-# In chat, reference tapps-agents:
-> Use tapps-agents to review this file: src/auth.py
-
-# Claude Code will execute:
-tapps-agents reviewer review src/auth.py
+# Use Skills directly in Claude Code (same syntax as Cursor):
+@simple-mode *build "Add user authentication"
+@reviewer *review src/auth.py
+@tester *test src/auth.py
+@expert *list
+@expert *consult security "OAuth2 best practices"
 ```
+
+#### Via Claude Code Subagents
+
+Claude Code natively supports subagents defined in `.claude/agents/`:
+- **story-executor** (sonnet): Execute individual stories from Epics
+- **code-reviewer** (sonnet): Parallel code review
+- **researcher** (haiku): Fast codebase exploration
+- **epic-orchestrator**: Multi-story Epic execution
+- **debugger-agent** (sonnet): Error analysis
+- **security-auditor** (sonnet): Security-focused review
 
 #### Via Direct CLI
 
 ```bash
-# Bypass Claude Code, use tapps-agents directly
+# Use tapps-agents CLI commands directly
 tapps-agents reviewer review src/auth.py
 tapps-agents tester test src/auth.py
 tapps-agents simple-mode build --prompt "Add user authentication"
+
+# Epic commands
+tapps-agents simple-mode epic docs/prd/epic-51.md --approved --story-workflow-mode story-only
+tapps-agents epic status --epic-id my-epic
+tapps-agents epic approve --epic-id my-epic
+
+# Expert commands
+tapps-agents expert list
+tapps-agents expert consult --domain security --question "OAuth2 patterns"
+tapps-agents expert search --query "authentication"
+tapps-agents expert cached
 ```
 
 ### Features
 
 **Expert System**:
 - ✅ Automatic expert consultation
-- ✅ Passive notifications
+- ✅ `@expert` skill for interactive use
 - ✅ Knowledge base RAG
 - ✅ Expert history tracking
+- ✅ CLI expert commands (list, consult, info, search, cached)
 
 **Workflows**:
-- ⚠️ Manual workflow execution (no automatic orchestration)
+- ✅ **Full automatic orchestration** (same as Cursor via Skills)
 - ✅ CLI commands for all agents
-- ⚠️ Must run steps manually
+- ✅ Epic orchestration with parallel story waves
+- ✅ Story-only workflow mode for pre-approved stories
+- ✅ State persistence, resume, and handoff across sessions
 
 **Code Quality**:
-- ✅ Code review via CLI
+- ✅ Code review via CLI and Skills
 - ✅ Quality gates enforced
 - ✅ Security scanning
 - ✅ Test coverage reports
 
+**Subagents**:
+- ✅ Native Claude Code subagents (`.claude/agents/`)
+- ✅ Model routing (haiku for research, sonnet for implementation)
+- ✅ Persistent project memory across sessions
+
 ### Workflow Execution
 
-**Cursor** (Automatic):
-```cursor
+**Claude Code** (Automatic - Same as Cursor):
+```bash
+# Skills-based - all steps execute automatically
 @simple-mode *build "Add user authentication"
 # All 7 steps execute automatically
+
+# Full SDLC
+@simple-mode *full "Implement new authentication system"
+
+# Epic execution with parallel stories
+@simple-mode *epic docs/prd/epic-51.md
 ```
 
-**Claude Code** (Manual):
+**Claude Code CLI** (Direct):
 ```bash
-# Step 1: Enhance prompt
-tapps-agents enhancer enhance "Add user authentication"
-
-# Step 2: Gather requirements
-tapps-agents analyst requirements "Add user authentication"
-
-# Step 3: Create plan
-tapps-agents planner plan "Add user authentication"
-
-# ... continue manually for all 7 steps
+# Workflow presets (automated)
+tapps-agents simple-mode build --prompt "Add user authentication" --auto
+tapps-agents simple-mode full --prompt "Build API" --auto
+tapps-agents workflow rapid --prompt "Add feature" --auto
 ```
-
-**Tip**: Use shell scripts to automate multi-step workflows in Claude Code.
 
 ### Limitations
 
-- ❌ No automatic workflow orchestration
-- ⚠️ Must manually execute each step
-- ⚠️ More context switching (terminal vs IDE)
-- ⚠️ No Skills support (CLI only)
+- ⚠️ No IDE integration (terminal-only, no inline diff)
+- ⚠️ No visual code navigation
 
 ---
 
@@ -681,8 +716,9 @@ knowledge base setup. This isn't available in the web interface.
 **Use Claude Code CLI if**:
 - ✅ You prefer terminal-based workflows
 - ✅ You're working via SSH
-- ✅ You want fine-grained control
-- ✅ You don't need automatic orchestration
+- ✅ You want fine-grained control with full orchestration
+- ✅ You need subagent-based parallel execution
+- ✅ You want persistent memory across sessions
 
 **Use VS Code + Continue if**:
 - ✅ You're already a VS Code user
@@ -709,18 +745,21 @@ knowledge base setup. This isn't available in the web interface.
 ### From Cursor to Claude Code CLI
 
 **What Changes**:
-- ❌ No `@simple-mode` commands
-- ✅ Use `tapps-agents simple-mode` CLI
-- ⚠️ Manual workflow steps
+- ✅ Same `@simple-mode` commands work in Claude Code
+- ✅ Same `.claude/skills/` are used
+- ✅ Additional subagents available (`.claude/agents/`)
+- ⚠️ No IDE integration (inline diff, visual navigation)
 
 **Migration**:
 ```bash
 # Cursor (before)
 @simple-mode *build "Add authentication"
 
-# Claude Code CLI (after)
-tapps-agents simple-mode build --prompt "Add authentication"
-# Manually execute each step
+# Claude Code CLI (same syntax works!)
+@simple-mode *build "Add authentication"
+
+# Or use CLI directly
+tapps-agents simple-mode build --prompt "Add authentication" --auto
 ```
 
 ### From VS Code + Continue to Cursor
@@ -868,6 +907,7 @@ tapps-agents init
 ---
 
 **Version History**:
+- **1.1.0** (2026-02-05): Updated Claude Code CLI section with full Skills, subagents, Epic orchestration, and expert system integration
 - **1.0.0** (2026-01-28): Initial release based on Site24x7 feedback
 
 **Maintainer**: TappsCodingAgents Team
