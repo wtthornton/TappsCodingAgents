@@ -54,6 +54,7 @@ tools/bd/*.new
 .tapps-agents/sessions/
 .tapps-agents/sessions/*.json
 .tapps-agents/kb/
+.tapps-agents/context7-docs/
 .tapps-agents/cache/
 .tapps-agents/progress/
 .tapps-agents/workflow-state/

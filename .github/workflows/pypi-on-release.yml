@@ -22,7 +22,7 @@ concurrency:
 
 permissions:
   contents: read
-  id-token: write
+  id-token: write  # Required for PyPI OIDC Trusted Publishing
 
 env:
   PYTHON_VERSION: "3.13"
@@ -50,46 +50,133 @@ jobs:
               echo "ERROR: Manual run requires 'tag_name' input (e.g. v3.5.38)"
               exit 1
             fi
-            echo "tag_name=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+            TAG="${{ github.event.inputs.tag_name }}"
           else
-            echo "tag_name=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+            TAG="${{ github.event.release.tag_name }}"
           fi
-          echo "Publishing tag: $(cat $GITHUB_OUTPUT | grep tag_name | cut -d= -f2-)"
-      - name: Checkout release tag
+          echo "tag_name=$TAG" >> $GITHUB_OUTPUT
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Publishing tag: $TAG (version: $VERSION)"
+
+      - name: Try downloading artifacts from Release workflow
+        id: download
+        uses: actions/download-artifact@v4
+        with:
+          name: dist-packages
+          path: dist/
+        continue-on-error: true
+
+      - name: Fallback - build from tag if artifacts unavailable
+        if: steps.download.outcome == 'failure'
+        run: |
+          echo "::notice::Release artifacts not available, building from tag checkout"
+        # Only checkout and build if artifacts were not found
+      - name: Checkout release tag (fallback)
+        if: steps.download.outcome == 'failure'
         uses: actions/checkout@v4
         with:
           ref: ${{ steps.tag.outputs.tag_name }}
           fetch-depth: 0
 
-      - name: Set up Python
+      - name: Set up Python (fallback)
+        if: steps.download.outcome == 'failure'
         uses: actions/setup-python@v5
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: 'pip'
 
-      - name: Install build tools
+      - name: Install build tools (fallback)
+        if: steps.download.outcome == 'failure'
         run: |
           python -m pip install --upgrade pip
-          python -m pip install build twine
+          python -m pip install build
 
-      - name: Build packages
+      - name: Build packages (fallback)
+        if: steps.download.outcome == 'failure'
         run: |
           rm -rf dist build *.egg-info
           find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
           python -m build
 
+      - name: Verify packages exist
+        run: |
+          echo "Packages to publish:"
+          ls -lh dist/
+          SDIST=$(ls dist/*.tar.gz 2>/dev/null | head -1)
+          WHEEL=$(ls dist/*.whl 2>/dev/null | head -1)
+          if [ -z "$SDIST" ] || [ -z "$WHEEL" ]; then
+            echo "ERROR: Missing required packages (need both .tar.gz and .whl)"
+            exit 1
+          fi
+
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
           packages-dir: dist/
-          password: ${{ secrets.PYPI_API_TOKEN }}
-          skip-existing: true
+          attestations: true
+          # Uses OIDC Trusted Publishing — no token/password needed.
+          # Configure at: https://pypi.org/manage/project/tapps-agents/settings/publishing/
+          # Add a trusted publisher with:
+          #   Owner: wtthornton
+          #   Repository: TappsCodingAgents
+          #   Workflow: pypi-on-release.yml
+          #   Environment: pypi
+
+      - name: Post-publish smoke test
+        run: |
+          echo "Waiting for PyPI index to propagate..."
+          sleep 45
+
+          # Install in isolated venv to avoid conflicts
+          python -m venv /tmp/smoke-test-venv
+          . /tmp/smoke-test-venv/bin/activate
+
+          VERSION="${{ steps.tag.outputs.version }}"
+          MAX_RETRIES=3
+          RETRY_DELAY=30
+
+          for i in $(seq 1 $MAX_RETRIES); do
+            echo "Attempt $i/$MAX_RETRIES: pip install tapps-agents==$VERSION"
+            if pip install "tapps-agents==$VERSION" 2>&1; then
+              echo "Install succeeded"
+              break
+            fi
+            if [ $i -lt $MAX_RETRIES ]; then
+              echo "Not yet available, waiting ${RETRY_DELAY}s..."
+              sleep $RETRY_DELAY
+            else
+              echo "::warning::Package not yet available on PyPI after $MAX_RETRIES attempts. This may be a propagation delay — verify manually."
+              exit 0  # Don't fail the workflow for propagation delays
+            fi
+          done
+
+          # Verify import and version
+          INSTALLED_VERSION=$(python -c "from tapps_agents import __version__; print(__version__)")
+          echo "Installed version: $INSTALLED_VERSION"
+          if [ "$INSTALLED_VERSION" != "$VERSION" ]; then
+            echo "::error::Version mismatch! Expected $VERSION, got $INSTALLED_VERSION"
+            exit 1
+          fi
+
+          # Verify CLI entry point
+          if command -v tapps-agents >/dev/null 2>&1; then
+            echo "CLI entry point 'tapps-agents' is available"
+          else
+            echo "::warning::CLI entry point 'tapps-agents' not found in PATH (may need shell restart)"
+          fi
+
+          deactivate
+          rm -rf /tmp/smoke-test-venv
 
       - name: PyPI Summary
         run: |
           echo "## Published to PyPI" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "**Tag:** ${{ steps.tag.outputs.tag_name }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Package:** [tapps-agents](https://pypi.org/project/tapps-agents/)" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ steps.tag.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Package:** [tapps-agents on PyPI](https://pypi.org/project/tapps-agents/${{ steps.tag.outputs.version }}/)" >> $GITHUB_STEP_SUMMARY
+          echo "**Authentication:** OIDC Trusted Publishing" >> $GITHUB_STEP_SUMMARY
+          echo "**Provenance:** SLSA attestations enabled" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "Install with: \`pip install tapps-agents\`" >> $GITHUB_STEP_SUMMARY
+          echo "Install with: \`pip install tapps-agents==${{ steps.tag.outputs.version }}\`" >> $GITHUB_STEP_SUMMARY

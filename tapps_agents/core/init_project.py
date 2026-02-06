@@ -2258,6 +2258,31 @@ async def pre_populate_context7_cache(
             # The backup_client will handle fallback automatically
             pass
 
+        # Try Context7 bundle copy when cache is empty (offline / no-API support)
+        # When tapps-agents[context7-bundle] or tapps-agents-context7-bundle is installed
+        try:
+            from ..context7.bundle_loader import try_copy_context7_bundle
+
+            kb_loc = None
+            if config.context7:
+                kb = getattr(config.context7, "knowledge_base", None)
+                kb_loc = getattr(kb, "location", None) if kb else None
+            cache_root = (
+                (project_root / kb_loc)
+                if isinstance(kb_loc, str)
+                else project_root / ".tapps-agents" / "kb" / "context7-cache"
+            )
+            bundle_result = try_copy_context7_bundle(
+                project_root=project_root, cache_root=cache_root
+            )
+            if bundle_result.get("success"):
+                logger.info(
+                    f"Context7 bundle copied ({bundle_result.get('copied', 0)} items) "
+                    f"from {bundle_result.get('source', 'bundle')}"
+                )
+        except Exception as e:
+            logger.debug(f"Context7 bundle copy skipped: {e}")
+
         # Auto-detect libraries if not provided
         project_libraries = []
         if libraries is None:
@@ -2849,11 +2874,9 @@ def _init_claude_code_settings(
     claude_available = _detect_claude_code()
     results["claude_code_available"] = claude_available
 
-    if not claude_available and not settings_path.exists():
-        logger.info("Claude Code CLI not detected — skipping .claude/settings.json")
-        return
-
-    # Create settings.json (do not overwrite on reset — user data)
+    # Create settings.json by default when .claude/ exists (e.g. after skills install),
+    # so Cursor+Claude users get tapps-agents in the allow list without manual setup.
+    # Do not overwrite on reset — user data.
     if not settings_path.exists():
         import json as _json
         settings_path.parent.mkdir(parents=True, exist_ok=True)
@@ -2864,6 +2887,7 @@ def _init_claude_code_settings(
                     "Read",
                     "Grep",
                     "Glob",
+                    "Bash(tapps-agents:*)",
                     "Bash(tapps-agents *)",
                     "Bash(python -m tapps_agents *)",
                     "Bash(pytest *)",

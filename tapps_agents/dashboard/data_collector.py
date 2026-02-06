@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime, timezone
+from datetime import UTC, datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -19,17 +19,17 @@ logger = logging.getLogger(__name__)
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
-def _safe(fn, default=None):
+def _safe(fn, default: Any = None):
     """Call *fn* and swallow exceptions, returning *default* on failure."""
     try:
         return fn()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         logger.debug("Dashboard data collection error: %s", exc)
         return default
 
 
 def _ts() -> str:
-    return datetime.now(tz=timezone.utc).isoformat()
+    return datetime.now(tz=UTC).isoformat()
 
 
 def _read_jsonl(path: Path, limit: int = 1000) -> list[dict]:
@@ -45,7 +45,7 @@ def _read_jsonl(path: Path, limit: int = 1000) -> list[dict]:
                     entries.append(json.loads(line))
                     if len(entries) >= limit:
                         break
-    except Exception:  # noqa: BLE001
+    except Exception:
         pass
     return entries
 
@@ -55,7 +55,7 @@ def _read_json(path: Path) -> dict | None:
         return None
     try:
         return json.loads(path.read_text(encoding="utf-8"))
-    except Exception:  # noqa: BLE001
+    except Exception:
         return None
 
 
@@ -93,7 +93,7 @@ class DashboardDataCollector:
         try:
             from tapps_agents import __version__
             version = __version__
-        except Exception:  # noqa: BLE001
+        except Exception:
             pass
         return {
             "project_name": self.project_root.name,
@@ -113,17 +113,20 @@ class DashboardDataCollector:
             hmc = HealthMetricsCollector(project_root=self.project_root)
             summary = hmc.get_summary(days=self.days)
 
+            # HealthMetricsCollector returns "by_check" (dict keyed by check name),
+            # not "checks" (list). Adapt to list format for dashboard rendering.
             checks = []
-            for item in summary.get("checks", []):
+            by_check = summary.get("by_check", {})
+            for check_name, info in by_check.items():
                 checks.append({
-                    "name": item.get("check_name", item.get("name", "unknown")),
-                    "status": item.get("status", "unknown"),
-                    "score": item.get("score", 0),
-                    "details": item.get("details", {}),
-                    "remediation": item.get("remediation", []),
+                    "name": check_name,
+                    "status": info.get("latest_status", "unknown"),
+                    "score": info.get("latest_score", info.get("average_score", 0)),
+                    "details": {"count": info.get("count", 0), "avg_score": info.get("average_score", 0)},
+                    "remediation": [],
                 })
 
-            overall = summary.get("overall_score", 0)
+            overall = summary.get("average_score", summary.get("overall_score", 0))
             if not overall and checks:
                 scores = [c["score"] for c in checks if c["score"]]
                 overall = sum(scores) / len(scores) if scores else 0
@@ -275,13 +278,13 @@ class DashboardDataCollector:
                     "total_tokens": cm.total_tokens,
                     "total_size_bytes": cm.total_size_bytes,
                 }
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
 
             # Per-library breakdown
             libraries = []
             idx = mm.load_cache_index()
-            for lib_name, lib_info in idx.libraries.items():
+            for lib_name in idx.libraries:
                 meta = mm.load_library_metadata(lib_name)
                 if meta:
                     libraries.append({
@@ -297,9 +300,9 @@ class DashboardDataCollector:
             # Skill usage
             skill_usage: list[dict] = []
             su_path = cache_root / "dashboard" / "skill-usage.json"
-            su_data = _read_json(su_path)
-            if su_data and isinstance(su_data, list):
-                skill_usage = su_data
+            su_raw = _read_json(su_path)
+            if isinstance(su_raw, list):
+                skill_usage = su_raw
 
             # RAG quality from business metrics
             rag_score = 0
@@ -363,11 +366,32 @@ class DashboardDataCollector:
 
             avg_score = sum(scores) / len(scores) if scores else 0
 
-            # Quality dimensions — try reading from recent reviewer outputs
+            # Quality dimensions — read from recent reviewer outputs
             dimensions = {
                 "complexity": 0, "security": 0, "maintainability": 0,
                 "test_coverage": 0, "performance": 0, "structure": 0, "devex": 0,
             }
+            review_dir = self.tapps_dir / "workflow-state"
+            if review_dir.exists():
+                dim_sums: dict[str, float] = {k: 0.0 for k in dimensions}
+                dim_counts: dict[str, int] = {k: 0 for k in dimensions}
+                review_files = sorted(review_dir.glob("**/review*.json"), reverse=True)[:50]
+                for rf in review_files:
+                    rd = _read_json(rf)
+                    if not rd:
+                        continue
+                    dim_scores = rd.get("scores", rd.get("dimensions", {}))
+                    for dim in dimensions:
+                        # Try both "complexity" and "complexity_score" keys
+                        val = dim_scores.get(dim, dim_scores.get(f"{dim}_score", 0))
+                        if val and isinstance(val, (int, float)):
+                            if val <= 10:
+                                val = val * 10  # Normalize 0-10 to 0-100
+                            dim_sums[dim] += val
+                            dim_counts[dim] += 1
+                for dim in dimensions:
+                    if dim_counts[dim] > 0:
+                        dimensions[dim] = round(dim_sums[dim] / dim_counts[dim], 1)
 
             return {
                 "gate_pass_rate": round(pass_rate, 1),
@@ -465,8 +489,22 @@ class DashboardDataCollector:
                             "stories_done": done,
                             "updated_at": state.get("updated_at", ""),
                         })
-            except Exception:  # noqa: BLE001
+            except Exception:
                 pass
+
+            # Infer preset distribution from workflow names
+            preset_dist = {"minimal": 0, "standard": 0, "comprehensive": 0, "full_sdlc": 0}
+            for w in workflows:
+                wname = w["name"].lower()
+                execs = w["executions"]
+                if "full" in wname or "sdlc" in wname:
+                    preset_dist["full_sdlc"] += execs
+                elif "comprehensive" in wname:
+                    preset_dist["comprehensive"] += execs
+                elif "minimal" in wname or "fix" in wname:
+                    preset_dist["minimal"] += execs
+                else:
+                    preset_dist["standard"] += execs
 
             return {
                 "summary": {
@@ -475,7 +513,7 @@ class DashboardDataCollector:
                     "avg_duration_ms": round(avg_dur, 1),
                 },
                 "workflows": workflows,
-                "preset_distribution": {"minimal": 0, "standard": 0, "comprehensive": 0, "full_sdlc": 0},
+                "preset_distribution": preset_dist,
                 "epics": epics,
             }
 
@@ -518,18 +556,51 @@ class DashboardDataCollector:
                     "date": entry.get("timestamp", ""),
                 })
 
+            # Auto-generated experts from experts.yaml
+            auto_experts: list[dict] = []
+            experts_yaml = self.tapps_dir / "experts.yaml"
+            if experts_yaml.exists():
+                try:
+                    import yaml
+                    with experts_yaml.open(encoding="utf-8") as ef:
+                        experts_data = yaml.safe_load(ef) or {}
+                    for eid, einfo in experts_data.get("experts", {}).items():
+                        if isinstance(einfo, dict) and einfo.get("auto_generated"):
+                            auto_experts.append({
+                                "id": eid,
+                                "domain": einfo.get("domain", ""),
+                                "created_at": einfo.get("created_at", ""),
+                            })
+                except Exception:
+                    pass
+
+            # KB growth — count files per date from kb/ directory
+            kb_growth: list[dict] = []
+            kb_dir = self.tapps_dir / "kb"
+            if kb_dir.exists():
+                from collections import Counter
+                date_counts: Counter[str] = Counter()
+                for kf in kb_dir.rglob("*.json"):
+                    try:
+                        mtime = datetime.fromtimestamp(kf.stat().st_mtime, tz=UTC)
+                        date_counts[mtime.strftime("%Y-%m-%d")] += 1
+                    except OSError:
+                        pass
+                for d in sorted(date_counts):
+                    kb_growth.append({"date": d, "entries": date_counts[d]})
+
             return {
                 "first_pass_trend": first_pass,
-                "auto_generated_experts": [],
+                "auto_generated_experts": auto_experts,
                 "weight_adjustments": adjustments,
-                "kb_growth": [],
+                "kb_growth": kb_growth,
             }
 
         return _safe(_do, default)
 
     # ── events ────────────────────────────────────────────────────────
 
-    def collect_events(self, limit: int = 500) -> list[dict]:
+    def collect_events(self, limit: int = 100) -> list[dict]:
         def _do():
             events_dir = self.tapps_dir / "events"
             if not events_dir.exists():

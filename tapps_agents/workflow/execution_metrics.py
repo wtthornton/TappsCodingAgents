@@ -8,8 +8,9 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 from dataclasses import asdict, dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -67,6 +68,7 @@ class ExecutionMetricsCollector:
         # In-memory cache for recent metrics
         self._recent_metrics: list[ExecutionMetric] = []
         self._max_cache_size = 100
+        self._write_lock = threading.Lock()
 
     def record_execution(
         self,
@@ -136,7 +138,7 @@ class ExecutionMetricsCollector:
                 timestamp=completed_at,
             )
         except Exception as e:  # pylint: disable=broad-except
-            logger.debug("Analytics dual-write (agent) failed: %s", e)
+            logger.warning("Analytics dual-write (agent) failed: %s", e)
 
         # Add to cache
         self._recent_metrics.append(metric)
@@ -148,16 +150,24 @@ class ExecutionMetricsCollector:
     def _store_metric(self, metric: ExecutionMetric) -> None:
         """Store metric to file."""
         try:
-            # Store in daily files for easier management
-            date_str = datetime.now(UTC).strftime("%Y-%m-%d")
+            # Use metric's started_at for file naming (not current time)
+            try:
+                metric_date = datetime.fromisoformat(
+                    metric.started_at.replace("Z", "+00:00")
+                )
+                date_str = metric_date.strftime("%Y-%m-%d")
+            except (ValueError, AttributeError):
+                date_str = datetime.now(UTC).strftime("%Y-%m-%d")
+
             metrics_file = self.metrics_dir / f"executions_{date_str}.jsonl"
 
-            # Append to file (JSONL format)
-            with open(metrics_file, "a", encoding="utf-8") as f:
-                f.write(json.dumps(metric.to_dict()) + "\n")
+            # Append to file (JSONL format, thread-safe)
+            with self._write_lock, open(metrics_file, "a", encoding="utf-8") as f:
+                    f.write(json.dumps(metric.to_dict()) + "\n")
+                    f.flush()
 
         except Exception as e:
-            logger.error(f"Failed to store metric: {e}")
+            logger.error("Failed to store metric: %s", e)
 
     def get_metrics(
         self,
@@ -224,10 +234,9 @@ class ExecutionMetricsCollector:
         metrics: list[ExecutionMetric] = []
         exclude_ids = exclude_ids or set()
 
-        # Get all metrics files, sorted by date (newest first)
+        # Get all metrics files, sorted by filename date (newest first)
         metrics_files = sorted(
             self.metrics_dir.glob("executions_*.jsonl"),
-            key=lambda p: p.stat().st_mtime,
             reverse=True,
         )
 
@@ -260,7 +269,10 @@ class ExecutionMetricsCollector:
                                 continue
 
                             metrics.append(metric)
-                        except Exception:
+                        except json.JSONDecodeError as e:
+                            logger.warning("Corrupted JSON in %s: %s", metrics_file, e)
+                            continue
+                        except (KeyError, ValueError, TypeError):
                             continue
 
             except Exception as e:
@@ -275,7 +287,7 @@ class ExecutionMetricsCollector:
         Returns:
             Dictionary with summary statistics
         """
-        all_metrics = self.get_metrics(limit=1000)
+        all_metrics = self.get_metrics(limit=10000)
 
         if not all_metrics:
             return {
@@ -337,4 +349,23 @@ class ExecutionMetricsCollector:
                 rec["gate_pass_rate"] = gate_ok / len(with_gate) if with_gate else 0.0
             out[skill_name] = rec
         return out
+
+    def cleanup_old_metrics(self, days_to_keep: int = 90) -> int:
+        """Delete JSONL files older than retention period.
+
+        Returns:
+            Number of files deleted.
+        """
+        cutoff = (datetime.now(UTC) - timedelta(days=days_to_keep)).strftime("%Y-%m-%d")
+        deleted = 0
+        for metrics_file in self.metrics_dir.glob("executions_*.jsonl"):
+            try:
+                date_str = metrics_file.stem.replace("executions_", "")
+                if date_str < cutoff:
+                    metrics_file.unlink()
+                    deleted += 1
+                    logger.info("Deleted old metrics file: %s", metrics_file.name)
+            except (ValueError, OSError) as e:
+                logger.warning("Could not delete %s: %s", metrics_file, e)
+        return deleted
 

@@ -30,10 +30,14 @@ If the tag shows the wrong version, see [Version Mismatch in Tag](#version-misma
 
 The release process has been optimized with:
 - ✅ **Automated GitHub Actions workflow** - Cross-platform, no manual intervention
-- ✅ **Pre-release validation** - Full test suite, linting, type checking, security scans
+- ✅ **Pre-release validation** - Full test suite, linting, type checking, security gate
+- ✅ **Security gate** - Critical vulnerabilities block release; non-critical produce warnings
 - ✅ **Package verification** - Automated package content validation
 - ✅ **CHANGELOG.md integration** - Automatic release notes extraction
-- ✅ **PyPI publishing** - Automatic on release; manual re-run via `workflow_dispatch` if needed
+- ✅ **PyPI Trusted Publishing** - OIDC authentication (no API token needed in CI)
+- ✅ **SLSA provenance** - Build attestations for supply chain security
+- ✅ **Post-publish smoke test** - Automatic install verification from PyPI
+- ✅ **Artifact reuse** - PyPI publishes same packages attached to GitHub release
 
 ## How the release and PyPI setup works
 
@@ -48,8 +52,10 @@ Two GitHub Actions workflows run the pipeline:
    - **Triggers:**
      - **Automatic:** `release: types: [published]` — runs when a release is published (e.g. right after the Release workflow creates it).
      - **Manual:** `workflow_dispatch` with input **tag_name** (e.g. `v3.5.38`) — use when auto-publish failed or was skipped.
-   - **Steps:** Resolve tag (from event or input) → checkout that tag → build packages → upload to PyPI using `secrets.PYPI_API_TOKEN` (with `skip-existing`).
-   - **Requires:** Repository or **pypi** environment secret **PYPI_API_TOKEN**. If the **pypi** environment has required reviewers, approve the deployment when the run is waiting.
+   - **Steps:** Try downloading build artifacts from Release workflow → fallback: checkout tag and build → publish to PyPI via OIDC Trusted Publishing → smoke test (install from PyPI and verify).
+   - **Authentication:** Uses OIDC Trusted Publishing (no API token secret needed). Configure at: https://pypi.org/manage/project/tapps-agents/settings/publishing/
+   - **Provenance:** SLSA build attestations are generated automatically.
+   - **Requires:** Trusted publisher configured on PyPI for this repo/workflow/environment. If the **pypi** environment has required reviewers, approve the deployment when the run is waiting.
 
 **Manual PyPI publish (CLI):**
 ```bash
@@ -89,14 +95,17 @@ gh workflow run "Publish to PyPI on Release" -f tag_name=v3.5.38
 
 4. **GitHub Actions Automatically:**
    - ✅ Validates version consistency
-   - ✅ Runs full test suite
+   - ✅ Runs full test suite (75% coverage required)
    - ✅ Runs linting and type checking
-   - ✅ Performs security scan
+   - ✅ Security gate (blocks on critical vulns, warns on others)
    - ✅ Builds packages (sdist + wheel)
    - ✅ Verifies package contents
    - ✅ Extracts release notes from CHANGELOG.md
    - ✅ Creates GitHub release with packages attached
-- **Publish to PyPI on Release** workflow runs on `release: published` and publishes to PyPI (stable releases only).
+   - ✅ **Publish to PyPI on Release** workflow auto-triggers:
+     - Publishes to PyPI via OIDC Trusted Publishing (no token)
+     - Generates SLSA provenance attestations
+     - Smoke tests the published package (install + version check)
 
 **View Release:**
 - GitHub: https://github.com/wtthornton/TappsCodingAgents/releases/tag/v3.0.2
@@ -247,9 +256,11 @@ Release notes are automatically extracted from CHANGELOG.md. Use this format:
 ## Package Verification
 
 The release process automatically verifies packages contain:
-- ✅ Required files: `tapps_agents/`, `pyproject.toml`, `setup.py`
+- ✅ Required files: `tapps_agents/`, `pyproject.toml`
 - ✅ Resources: `tapps_agents/resources/`
 - ❌ Excluded files: `tests/`, `docs/`, `scripts/`, etc.
+
+**Note:** `setup.py` has been removed. `pyproject.toml` is the sole source of package metadata.
 
 ## PyPI Publishing
 
@@ -276,9 +287,24 @@ pip install --index-url https://test.pypi.org/simple/ tapps-agents
 .\scripts\upload_to_pypi.ps1 -Repository pypi -Token $env:TWINE_PASSWORD
 ```
 
-### PyPI Token Setup
+### PyPI Authentication
 
-**Best practice (keep token out of GitHub):** Store the token locally only.
+#### CI/CD: OIDC Trusted Publishing (Recommended)
+
+GitHub Actions uses **OIDC Trusted Publishing** — no API token secret is needed.
+
+**One-time setup on PyPI:**
+1. Go to https://pypi.org/manage/project/tapps-agents/settings/publishing/
+2. Add a new trusted publisher:
+   - **Owner:** `wtthornton`
+   - **Repository:** `TappsCodingAgents`
+   - **Workflow name:** `pypi-on-release.yml`
+   - **Environment:** `pypi`
+3. That's it. The workflow authenticates automatically via OIDC.
+
+#### Local: API Token (for manual uploads)
+
+For manual uploads from your machine, you still need a PyPI API token:
 
 1. **Create API token:** https://pypi.org/manage/account/token/
 2. **Store in local `.env` (recommended):**
@@ -291,7 +317,6 @@ pip install --index-url https://test.pypi.org/simple/ tapps-agents
    $env:TWINE_PASSWORD = "pypi-your-token-here"
    .\scripts\upload_to_pypi.ps1 -Repository pypi
    ```
-4. **GitHub Actions:** Use repository or environment secret `PYPI_API_TOKEN` for CI/CD only; do not put production tokens in code or in repo.
 
 ## Troubleshooting
 
@@ -389,21 +414,21 @@ If "it used to work" and new versions (e.g. 3.5.33) are not appearing on PyPI:
 2. **Confirm the release was created and published**  
    [Releases](https://github.com/wtthornton/TappsCodingAgents/releases) — the version should exist and be **Published** (not Draft).
 
-3. **Check "Publish to PyPI on Release"**  
-   Actions → **Publish to PyPI on Release**.  
-   - **No run for that tag:** The `release: published` event may not have fired (e.g. release is draft). Publish the release or re-run the Release workflow.  
-   - **Run is "Waiting for approval":** The **pypi** environment has required reviewers. Approve the deployment in the run, or remove the protection in Settings → Environments → pypi.  
-   - **Run failed (e.g. "Invalid or non-existent authentication"):** The workflow uses `secrets.PYPI_API_TOKEN` and the **pypi** environment. Add or fix the token:  
-     - **Settings → Secrets and variables → Actions:** add **PYPI_API_TOKEN** (repository secret), **or**  
-     - **Settings → Environments → pypi → Environment secrets:** add **PYPI_API_TOKEN**.  
-     Ensure the token is a PyPI API token with upload scope (create at https://pypi.org/manage/account/token/).
+3. **Check "Publish to PyPI on Release"**
+   Actions → **Publish to PyPI on Release**.
+   - **No run for that tag:** The `release: published` event may not have fired (e.g. release is draft). Publish the release or re-run the Release workflow.
+   - **Run is "Waiting for approval":** The **pypi** environment has required reviewers. Approve the deployment in the run, or remove the protection in Settings → Environments → pypi.
+   - **Run failed (OIDC authentication error):** The workflow uses OIDC Trusted Publishing. Verify the trusted publisher is configured on PyPI:
+     - Go to https://pypi.org/manage/project/tapps-agents/settings/publishing/
+     - Ensure a trusted publisher exists with Owner: `wtthornton`, Repository: `TappsCodingAgents`, Workflow: `pypi-on-release.yml`, Environment: `pypi`
+     - If the trusted publisher is missing, add it (see [PyPI Authentication](#pypi-authentication) above).
 
 4. **Manual upload (one-off):** From repo root with token in `.env` or `$env:TWINE_PASSWORD`:  
    `python -m build` then `.\scripts\upload_to_pypi.ps1 -Repository pypi -SkipExisting`
 
-**Token issues (general):**
-- Verify token is valid and has upload permissions
-- Check token format: should start with `pypi-`
+**Authentication issues (general):**
+- CI/CD uses OIDC Trusted Publishing (no token needed). Verify the trusted publisher config on PyPI.
+- Local manual uploads require a PyPI API token (should start with `pypi-`).
 
 **Package already exists:**
 - Use `--skip-existing` flag (automatic in workflow)

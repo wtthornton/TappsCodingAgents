@@ -83,6 +83,10 @@ dependency-analysis = [
     # This will install packaging>=25 and may cause conflicts with langchain-core.
     "pipdeptree>=2.30.0",
 ]
+# Optional: pre-fetched Context7 cache for offline / no-API environments
+# Reserved for future tapps-agents-context7-bundle package
+# pip install tapps-agents[context7-bundle] (when bundle package exists)
+context7-bundle = []
 
 [project.urls]
 Homepage = "https://github.com/wtthornton/TappsCodingAgents"

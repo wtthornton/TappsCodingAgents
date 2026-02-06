@@ -74,8 +74,7 @@ try {
     # Define required files/directories
     $requiredItems = @(
         "tapps_agents",
-        "pyproject.toml",
-        "setup.py"
+        "pyproject.toml"
     )
     
     # Define excluded patterns (should NOT be in package)

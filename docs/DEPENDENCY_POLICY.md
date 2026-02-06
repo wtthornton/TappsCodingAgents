@@ -7,7 +7,7 @@
 1. **Runtime dependencies** – Declared in `[project].dependencies`
 2. **Optional extras** – Use `[project.optional-dependencies]` for optional features
 3. **requirements.txt** – Convenience artifact only; must match pyproject.toml (runtime + dev)
-4. **setup.py** – Must NOT define `install_requires`; dependencies come from pyproject.toml
+4. **No setup.py** – Removed; `pyproject.toml` is the sole source of package metadata
 
 ## Optional Extras
 
@@ -21,7 +21,7 @@
 
 Run `python scripts/validate_dependencies.py` to verify:
 
-- setup.py does not define install_requires
+- setup.py is not present (removed in favor of pyproject.toml)
 - requirements.txt matches pyproject.toml
 
 ## Related

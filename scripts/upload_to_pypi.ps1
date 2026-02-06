@@ -44,14 +44,14 @@ if (-not $Token -and -not $env:TWINE_PASSWORD -and (Test-Path $envFile)) {
 # Check if dist folder exists and has files
 if (-not (Test-Path "dist")) {
     Write-Host "ERROR: dist/ folder not found!" -ForegroundColor Red
-    Write-Host "Run 'python setup.py sdist bdist_wheel' first to build packages." -ForegroundColor Yellow
+    Write-Host "Run 'python -m build' first to build packages." -ForegroundColor Yellow
     exit 1
 }
 
 $distFiles = Get-ChildItem -Path "dist" -File
 if ($distFiles.Count -eq 0) {
     Write-Host "ERROR: No files found in dist/ folder!" -ForegroundColor Red
-    Write-Host "Run 'python setup.py sdist bdist_wheel' first to build packages." -ForegroundColor Yellow
+    Write-Host "Run 'python -m build' first to build packages." -ForegroundColor Yellow
     exit 1
 }
 

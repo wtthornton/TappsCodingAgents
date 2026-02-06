@@ -2,6 +2,8 @@
 
 This directory contains domain-specific knowledge files for your business experts.
 
+**Last updated**: 2026-02. Keep content current; remove or replace outdated material.
+
 ## Directory Structure
 
 Organize knowledge by domain:

@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import logging
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -29,7 +29,7 @@ class ExpertPerformance:
     code_quality_improvement: float = 0.0  # Delta in scores
     domain_coverage: list[str] = field(default_factory=list)
     weaknesses: list[str] = field(default_factory=list)
-    last_updated: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    last_updated: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 class ExpertPerformanceTracker:
@@ -81,7 +81,7 @@ class ExpertPerformanceTracker:
             "domain": domain,
             "confidence": confidence,
             "query": query,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
         try:
@@ -195,7 +195,7 @@ class ExpertPerformanceTracker:
         if not self.performance_file.exists():
             return []
 
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         consultations = []
 
         try:
@@ -219,7 +219,7 @@ class ExpertPerformanceTracker:
         if not self.performance_file.exists():
             return set()
 
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days)
         expert_ids = set()
 
         try:

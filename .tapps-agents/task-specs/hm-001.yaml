@@ -20,7 +20,7 @@ task:
   epic: HM-001
   dependencies: []
   github_issue: null
-  beads_issue: TappsCodingAgents-v3dr
+  beads_issue: TappsCodingAgents-428y
   status: todo
   workflow: build
   files:

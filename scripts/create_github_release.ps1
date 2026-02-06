@@ -194,14 +194,8 @@ if (-not $SkipBuild) {
             exit 1
         }
     } else {
-        # Fallback to setuptools
-        Write-Host "  Using setuptools (fallback)..." -ForegroundColor Gray
-        Write-Host "  WARNING: Consider installing 'build' module: pip install build" -ForegroundColor Yellow
-        python setup.py sdist bdist_wheel
-        if ($LASTEXITCODE -ne 0) {
-            Write-Host "ERROR: Build failed!" -ForegroundColor Red
-            exit 1
-        }
+        Write-Host "ERROR: 'build' module not found. Install it: pip install build" -ForegroundColor Red
+        exit 1
     }
     
     Write-Host "  Build complete" -ForegroundColor Green

@@ -7,9 +7,10 @@ Supports real-time metrics, historical trends, and performance analytics.
 
 import json
 import logging
+import threading
 from collections import defaultdict
 from dataclasses import asdict, dataclass
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -116,6 +117,7 @@ class AnalyticsCollector:
         self.metrics_file = self.analytics_dir / "metrics.json"
         self.history_dir = self.analytics_dir / "history"
         self.history_dir.mkdir(parents=True, exist_ok=True)
+        self._write_lock = threading.Lock()
 
     def record_agent_execution(
         self,
@@ -127,7 +129,7 @@ class AnalyticsCollector:
     ):
         """Record an agent execution."""
         if timestamp is None:
-            timestamp = datetime.now()
+            timestamp = datetime.now(UTC)
 
         record = {
             "agent_id": agent_id,
@@ -137,14 +139,15 @@ class AnalyticsCollector:
             "timestamp": timestamp.isoformat(),
         }
 
-        # Append to history
+        # Append to history (thread-safe)
         history_file = (
             self.history_dir / f"agents-{timestamp.strftime('%Y-%m-%d')}.jsonl"
         )
-        with open(history_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps(record) + "\n")
+        with self._write_lock, open(history_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+                f.flush()
 
-        logger.debug(f"Recorded agent execution: {agent_id}")
+        logger.debug("Recorded agent execution: %s", agent_id)
 
     def record_workflow_execution(
         self,
@@ -157,7 +160,7 @@ class AnalyticsCollector:
     ):
         """Record a workflow execution."""
         if timestamp is None:
-            timestamp = datetime.now()
+            timestamp = datetime.now(UTC)
 
         record = {
             "workflow_id": workflow_id,
@@ -168,14 +171,15 @@ class AnalyticsCollector:
             "timestamp": timestamp.isoformat(),
         }
 
-        # Append to history
+        # Append to history (thread-safe)
         history_file = (
             self.history_dir / f"workflows-{timestamp.strftime('%Y-%m-%d')}.jsonl"
         )
-        with open(history_file, "a", encoding="utf-8") as f:
-            f.write(json.dumps(record) + "\n")
+        with self._write_lock, open(history_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(record) + "\n")
+                f.flush()
 
-        logger.debug(f"Recorded workflow execution: {workflow_id}")
+        logger.debug("Recorded workflow execution: %s", workflow_id)
 
     def get_agent_metrics(
         self, agent_id: str | None = None, days: int = 30
@@ -200,9 +204,11 @@ class AnalyticsCollector:
             }
         )
 
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+
         # Read history files
-        for day_offset in range(days):
-            date = (datetime.now() - timedelta(days=day_offset)).strftime("%Y-%m-%d")
+        for day_offset in range(days + 1):
+            date = (datetime.now(UTC) - timedelta(days=day_offset)).strftime("%Y-%m-%d")
             history_file = self.history_dir / f"agents-{date}.jsonl"
 
             if not history_file.exists():
@@ -210,9 +216,23 @@ class AnalyticsCollector:
 
             with open(history_file, encoding="utf-8") as f:
                 for line in f:
-                    record = json.loads(line.strip())
+                    try:
+                        record = json.loads(line.strip())
+                    except json.JSONDecodeError as e:
+                        logger.warning("Corrupted JSON in %s: %s", history_file, e)
+                        continue
 
-                    if agent_id and record["agent_id"] != agent_id:
+                    if agent_id and record.get("agent_id") != agent_id:
+                        continue
+
+                    # Filter by actual record timestamp
+                    try:
+                        exec_time = datetime.fromisoformat(record["timestamp"])
+                        if exec_time.tzinfo is None:
+                            exec_time = exec_time.replace(tzinfo=UTC)
+                        if exec_time < cutoff:
+                            continue
+                    except (KeyError, ValueError):
                         continue
 
                     agent_key = record["agent_id"]
@@ -221,14 +241,14 @@ class AnalyticsCollector:
                     )
                     agent_data[agent_key]["total"] += 1
 
-                    if record["success"]:
+                    if record.get("success"):
                         agent_data[agent_key]["successful"] += 1
                     else:
                         agent_data[agent_key]["failed"] += 1
 
-                    agent_data[agent_key]["durations"].append(record["duration"])
+                    if "duration" in record:
+                        agent_data[agent_key]["durations"].append(record["duration"])
 
-                    exec_time = datetime.fromisoformat(record["timestamp"])
                     if (
                         agent_data[agent_key]["last_execution"] is None
                         or exec_time > agent_data[agent_key]["last_execution"]
@@ -286,9 +306,11 @@ class AnalyticsCollector:
             }
         )
 
+        cutoff = datetime.now(UTC) - timedelta(days=days)
+
         # Read history files
-        for day_offset in range(days):
-            date = (datetime.now() - timedelta(days=day_offset)).strftime("%Y-%m-%d")
+        for day_offset in range(days + 1):
+            date = (datetime.now(UTC) - timedelta(days=day_offset)).strftime("%Y-%m-%d")
             history_file = self.history_dir / f"workflows-{date}.jsonl"
 
             if not history_file.exists():
@@ -296,9 +318,23 @@ class AnalyticsCollector:
 
             with open(history_file, encoding="utf-8") as f:
                 for line in f:
-                    record = json.loads(line.strip())
+                    try:
+                        record = json.loads(line.strip())
+                    except json.JSONDecodeError as e:
+                        logger.warning("Corrupted JSON in %s: %s", history_file, e)
+                        continue
 
-                    if workflow_id and record["workflow_id"] != workflow_id:
+                    if workflow_id and record.get("workflow_id") != workflow_id:
+                        continue
+
+                    # Filter by actual record timestamp
+                    try:
+                        exec_time = datetime.fromisoformat(record["timestamp"])
+                        if exec_time.tzinfo is None:
+                            exec_time = exec_time.replace(tzinfo=UTC)
+                        if exec_time < cutoff:
+                            continue
+                    except (KeyError, ValueError):
                         continue
 
                     workflow_key = record["workflow_id"]
@@ -307,15 +343,16 @@ class AnalyticsCollector:
                     )
                     workflow_data[workflow_key]["total"] += 1
 
-                    if record["success"]:
+                    if record.get("success"):
                         workflow_data[workflow_key]["successful"] += 1
                     else:
                         workflow_data[workflow_key]["failed"] += 1
 
-                    workflow_data[workflow_key]["durations"].append(record["duration"])
-                    workflow_data[workflow_key]["steps"].append(record["steps"])
+                    if "duration" in record:
+                        workflow_data[workflow_key]["durations"].append(record["duration"])
+                    if "steps" in record:
+                        workflow_data[workflow_key]["steps"].append(record["steps"])
 
-                    exec_time = datetime.fromisoformat(record["timestamp"])
                     if (
                         workflow_data[workflow_key]["last_execution"] is None
                         or exec_time > workflow_data[workflow_key]["last_execution"]
@@ -364,10 +401,14 @@ class AnalyticsCollector:
             List of TrendData
         """
         trends: dict[str, TrendData] = {}
+        # Track sums and counts for correct averaging
+        trend_sums: dict[str, dict[str, float]] = {}
+        trend_counts: dict[str, dict[str, int]] = {}
+        seen_intervals: dict[str, set[str]] = {}
 
         # Aggregate data by interval
-        for day_offset in range(days):
-            date = (datetime.now() - timedelta(days=day_offset)).strftime("%Y-%m-%d")
+        for day_offset in range(days + 1):
+            date = (datetime.now(UTC) - timedelta(days=day_offset)).strftime("%Y-%m-%d")
 
             if metric_type.startswith("agent_"):
                 history_file = self.history_dir / f"agents-{date}.jsonl"
@@ -381,8 +422,15 @@ class AnalyticsCollector:
 
             with open(history_file, encoding="utf-8") as f:
                 for line in f:
-                    record = json.loads(line.strip())
-                    timestamp = datetime.fromisoformat(record["timestamp"])
+                    try:
+                        record = json.loads(line.strip())
+                    except json.JSONDecodeError:
+                        continue
+
+                    try:
+                        timestamp = datetime.fromisoformat(record["timestamp"])
+                    except (KeyError, ValueError):
+                        continue
 
                     # Determine interval key
                     if interval == "hour":
@@ -396,21 +444,21 @@ class AnalyticsCollector:
 
                     # Extract metric value
                     if metric_type == "agent_duration":
-                        value = record["duration"]
+                        value = record.get("duration", 0)
                         metric_name = "agent_duration"
                     elif metric_type == "workflow_duration":
-                        value = record["duration"]
+                        value = record.get("duration", 0)
                         metric_name = "workflow_duration"
                     elif metric_type == "agent_success_rate":
-                        value = 1.0 if record["success"] else 0.0
+                        value = 1.0 if record.get("success") else 0.0
                         metric_name = "agent_success_rate"
                     elif metric_type == "workflow_success_rate":
-                        value = 1.0 if record["success"] else 0.0
+                        value = 1.0 if record.get("success") else 0.0
                         metric_name = "workflow_success_rate"
                     else:
                         continue
 
-                    # Initialize trend if needed
+                    # Initialize tracking structures if needed
                     if metric_name not in trends:
                         trends[metric_name] = TrendData(
                             metric_name=metric_name,
@@ -418,19 +466,48 @@ class AnalyticsCollector:
                             values=[],
                             unit="seconds" if "duration" in metric_name else "rate",
                         )
+                        trend_sums[metric_name] = {}
+                        trend_counts[metric_name] = {}
+                        seen_intervals[metric_name] = set()
 
-                    # Add to trend (aggregate by interval)
-                    if interval_key not in [t for t in trends[metric_name].timestamps]:
+                    # Aggregate by interval using correct sum/count averaging
+                    if interval_key not in seen_intervals[metric_name]:
+                        seen_intervals[metric_name].add(interval_key)
                         trends[metric_name].timestamps.append(interval_key)
+                        trend_sums[metric_name][interval_key] = value
+                        trend_counts[metric_name][interval_key] = 1
                         trends[metric_name].values.append(value)
                     else:
-                        # Average with existing value
+                        trend_sums[metric_name][interval_key] += value
+                        trend_counts[metric_name][interval_key] += 1
                         idx = trends[metric_name].timestamps.index(interval_key)
                         trends[metric_name].values[idx] = (
-                            trends[metric_name].values[idx] + value
-                        ) / 2
+                            trend_sums[metric_name][interval_key]
+                            / trend_counts[metric_name][interval_key]
+                        )
 
         return list(trends.values())
+
+    def cleanup_old_history(self, days_to_keep: int = 90) -> int:
+        """Delete history files older than retention period.
+
+        Returns:
+            Number of files deleted.
+        """
+        cutoff = (datetime.now(UTC) - timedelta(days=days_to_keep)).strftime("%Y-%m-%d")
+        deleted = 0
+        for pattern in ("agents-*.jsonl", "workflows-*.jsonl"):
+            for history_file in self.history_dir.glob(pattern):
+                try:
+                    # Extract date from filename (e.g. agents-2026-02-06.jsonl)
+                    date_str = history_file.stem.split("-", 1)[1]
+                    if date_str < cutoff:
+                        history_file.unlink()
+                        deleted += 1
+                        logger.info("Deleted old history file: %s", history_file.name)
+                except (ValueError, IndexError, OSError) as e:
+                    logger.warning("Could not process %s: %s", history_file, e)
+        return deleted
 
     def get_system_metrics(self) -> SystemMetrics:
         """
@@ -445,18 +522,19 @@ class AnalyticsCollector:
 
         # Get workflow metrics
         workflow_metrics = self.get_workflow_metrics(days=1)
-        completed_today = sum(
-            1 for w in workflow_metrics if w.successful_executions > 0
-        )
-        failed_today = sum(1 for w in workflow_metrics if w.failed_executions > 0)
-        active_workflows = len(
-            [
-                w
-                for w in workflow_metrics
-                if w.last_execution
-                and (datetime.now() - w.last_execution).total_seconds() < 3600
-            ]
-        )
+        completed_today = sum(w.successful_executions for w in workflow_metrics)
+        failed_today = sum(w.failed_executions for w in workflow_metrics)
+
+        now = datetime.now(UTC)
+        active_workflows = 0
+        for w in workflow_metrics:
+            if not w.last_execution:
+                continue
+            last_exec = w.last_execution
+            if last_exec.tzinfo is None:
+                last_exec = last_exec.replace(tzinfo=UTC)
+            if (now - last_exec).total_seconds() < 3600:
+                active_workflows += 1
 
         avg_duration = (
             sum(w.average_duration for w in workflow_metrics) / len(workflow_metrics)
@@ -473,13 +551,13 @@ class AnalyticsCollector:
             cpu_usage = resource_metrics.cpu_percent
             memory_usage = resource_metrics.memory_percent
             disk_usage = resource_metrics.disk_percent
-        except Exception:
+        except (ImportError, AttributeError, RuntimeError):
             cpu_usage = 0.0
             memory_usage = 0.0
             disk_usage = 0.0
 
         return SystemMetrics(
-            timestamp=datetime.now(),
+            timestamp=datetime.now(UTC),
             total_agents=total_agents,
             active_workflows=active_workflows,
             completed_workflows_today=completed_today,
@@ -534,7 +612,7 @@ class AnalyticsDashboard:
                     for t in self.collector.get_trends("workflow_success_rate", days=30)
                 ],
             },
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
     def get_agent_performance(

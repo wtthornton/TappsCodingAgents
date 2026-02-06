@@ -126,10 +126,49 @@ jobs:
           retention-days: 90
 
       - name: Security scan
+        id: security_scan
         run: |
           pip install pip-audit
-          pip-audit --desc --format json --output pip-audit-report.json || true
-        continue-on-error: true
+          # Run pip-audit and capture exit code
+          pip-audit --desc --format json --output pip-audit-report.json 2>&1 || AUDIT_EXIT=$?
+          AUDIT_EXIT=${AUDIT_EXIT:-0}
+
+          if [ "$AUDIT_EXIT" -eq 0 ]; then
+            echo "severity=none" >> $GITHUB_OUTPUT
+            echo "No vulnerabilities found"
+          else
+            # Parse JSON report to check for critical/high severity vulnerabilities
+            CRITICAL_COUNT=$(python -c "
+          import json, sys
+          try:
+              with open('pip-audit-report.json') as f:
+                  data = json.load(f)
+              vulns = data if isinstance(data, list) else data.get('dependencies', [])
+              critical = 0
+              for dep in vulns:
+                  for v in dep.get('vulns', []):
+                      desc = v.get('description', '').lower()
+                      fix = v.get('fix_versions', [])
+                      vuln_id = v.get('id', '')
+                      # Count as critical if description mentions critical/high or has GHSA/CVE with no fix
+                      if 'critical' in desc or (not fix and vuln_id.startswith(('GHSA', 'CVE'))):
+                          critical += 1
+              print(critical)
+          except Exception:
+              print(0)
+          ")
+
+            echo "Found vulnerabilities (critical/high count: $CRITICAL_COUNT)"
+
+            if [ "$CRITICAL_COUNT" -gt 0 ]; then
+              echo "severity=critical" >> $GITHUB_OUTPUT
+              echo "::error::Security scan found $CRITICAL_COUNT critical vulnerability(ies). Release blocked."
+              exit 1
+            else
+              echo "severity=warn" >> $GITHUB_OUTPUT
+              echo "::warning::Security scan found non-critical vulnerabilities. Review pip-audit-report.json artifact."
+            fi
+          fi
 
       - name: Upload security report
         if: always()

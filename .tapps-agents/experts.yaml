@@ -35,7 +35,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\docs\python-packaging-build-and-publish.md
+  - .tapps-agents/knowledge/docs/python-packaging-build-and-publish.md
   consultation_triggers:
   - python-packaging-build-and-publish
   - publishing
@@ -53,7 +53,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\general\project-overview.md
+  - .tapps-agents/knowledge/general/project-overview.md
   consultation_triggers:
   - important
   - notes
@@ -69,7 +69,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\testing\testing-guide.md
+  - .tapps-agents/knowledge/testing/testing-guide.md
   consultation_triggers:
   - conventions
   - overview
@@ -84,7 +84,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\concurrency\asyncio-parallel-patterns.md
+  - .tapps-agents/knowledge/concurrency/asyncio-parallel-patterns.md
   consultation_triggers:
   - asyncio
   - parallel
@@ -103,7 +103,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\claude-code\claude-code-integration.md
+  - .tapps-agents/knowledge/claude-code/claude-code-integration.md
   consultation_triggers:
   - claude-code
   - subagent
@@ -125,7 +125,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\workflow\intent-parsing-auto-selection.md
+  - .tapps-agents/knowledge/workflow/intent-parsing-auto-selection.md
   consultation_triggers:
   - intent
   - intent-parser
@@ -143,7 +143,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\workflow\state-persistence-session-handoff.md
+  - .tapps-agents/knowledge/workflow/state-persistence-session-handoff.md
   consultation_triggers:
   - state-persistence
   - session-handoff
@@ -161,7 +161,7 @@ experts:
   rag_enabled: true
   fine_tuned: false
   knowledge_files:
-  - .tapps-agents\knowledge\cli\cli-design-patterns.md
+  - .tapps-agents/knowledge/cli/cli-design-patterns.md
   consultation_triggers:
   - cli
   - click

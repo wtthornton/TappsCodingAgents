@@ -22,7 +22,6 @@
 
 # Configuration and setup
 /pyproject.toml @wtthornton
-/setup.py @wtthornton
 /requirements.txt @wtthornton
 
 # GitHub workflows

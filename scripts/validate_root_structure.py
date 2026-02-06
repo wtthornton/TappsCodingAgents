@@ -15,7 +15,6 @@ ALLOWED_ROOT_FILES = {
     "CONTRIBUTING.md",
     "SECURITY.md",
     "pyproject.toml",
-    "setup.py",
     "requirements.txt",
     "pytest.ini",
     "MANIFEST.in",
@@ -57,8 +56,8 @@ def validate_root_structure(project_root: Path) -> tuple[bool, list[str]]:
         if matching:
             warnings.append(f"Files matching '{pattern}' in root: {', '.join(matching)}")
     
-    # Check for Python scripts (except setup.py)
-    python_scripts = [f for f in root_files if f.endswith(".py") and f != "setup.py"]
+    # Check for Python scripts in root
+    python_scripts = [f for f in root_files if f.endswith(".py")]
     if python_scripts:
         warnings.append(f"Python scripts in root (consider moving to scripts/): {', '.join(python_scripts)}")
     

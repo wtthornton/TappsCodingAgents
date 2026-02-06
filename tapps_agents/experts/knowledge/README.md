@@ -2,6 +2,8 @@
 
 This directory contains knowledge bases for built-in framework experts. These knowledge bases provide technical domain expertise that ships with the TappsCodingAgents framework.
 
+**Last reviewed**: 2026-02. Keep content current with latest practices; remove or replace deprecated material.
+
 ## Structure
 
 Each expert has its own subdirectory containing markdown knowledge files:
@@ -168,7 +170,7 @@ To add knowledge to a built-in expert:
 ## Knowledge Base Best Practices
 
 - **Be specific**: Include concrete examples and patterns
-- **Be current**: Keep knowledge up to date with latest practices
+- **Be current**: Keep knowledge up to date with latest practices (review annually; 2026 baseline)
 - **Be comprehensive**: Cover common scenarios and edge cases
 - **Be structured**: Use headers and sections for easy navigation
 - **Be actionable**: Provide clear guidance and checklists

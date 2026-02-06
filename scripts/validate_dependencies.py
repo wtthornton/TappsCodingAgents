@@ -5,15 +5,13 @@ Dependency Drift Validation Script
 Validates that dependency sources are consistent with pyproject.toml (the authoritative source).
 
 This script ensures:
-1. setup.py does not define dependencies (they should come from pyproject.toml)
-2. requirements.txt (if present) matches the expected dependency set from pyproject.toml
+1. requirements.txt (if present) matches the expected dependency set from pyproject.toml
 
 Exit codes:
   0: All checks passed
   1: Drift detected or validation failed
 """
 
-import ast
 import sys
 
 # Use tomllib for Python 3.11+, tomli for older versions
@@ -41,43 +39,22 @@ def get_dependencies_from_pyproject(pyproject: dict[str, Any]) -> tuple[list[str
     return dependencies, optional_deps
 
 
-def check_setup_py(project_root: Path) -> tuple[bool, str]:
+def check_no_setup_py(project_root: Path) -> tuple[bool, str]:
     """
-    Check that setup.py doesn't define install_requires.
+    Verify that setup.py does not exist (removed in favor of pyproject.toml).
 
     Returns:
         (is_valid, message)
     """
     setup_py_path = project_root / "setup.py"
     if not setup_py_path.exists():
-        return True, "setup.py not found (OK - not required)"
+        return True, "setup.py not present (OK - pyproject.toml is authoritative)"
 
-    try:
-        with setup_py_path.open(encoding="utf-8") as f:
-            content = f.read()
-            tree = ast.parse(content, filename=str(setup_py_path))
-    except Exception as e:
-        return False, f"Failed to parse setup.py: {e}"
-
-    # Check for install_requires in setup() call
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == "setup":
-            for keyword in node.keywords:
-                if keyword.arg == "install_requires":
-                    # Check if it's an empty list or None (which is OK)
-                    if isinstance(keyword.value, (ast.List, ast.Tuple)):
-                        if len(keyword.value.elts) == 0:
-                            return True, "setup.py has empty install_requires (OK)"
-                    elif isinstance(keyword.value, ast.Constant) and keyword.value.value is None:
-                        return True, "setup.py has None install_requires (OK)"
-                    # If it has actual dependencies, that's a problem
-                    return False, (
-                        "setup.py defines install_requires. "
-                        "Dependencies must come from pyproject.toml only. "
-                        "See docs/DEPENDENCY_POLICY.md"
-                    )
-
-    return True, "setup.py does not define install_requires (OK)"
+    return False, (
+        "setup.py exists but should be removed. "
+        "pyproject.toml is the single source of truth for package metadata. "
+        "See docs/DEPENDENCY_POLICY.md"
+    )
 
 
 def normalize_dependency_spec(dep: str) -> str:
@@ -155,9 +132,9 @@ def main() -> int:
     print(f"Found {len(dependencies)} runtime dependencies in pyproject.toml")
     print(f"Found {len(optional_deps)} optional dependency groups")
 
-    # Check setup.py
-    print("\nChecking setup.py...")
-    setup_valid, setup_msg = check_setup_py(project_root)
+    # Check that setup.py does not exist
+    print("\nChecking for setup.py...")
+    setup_valid, setup_msg = check_no_setup_py(project_root)
     print(f"  {setup_msg}")
     if not setup_valid:
         print("  [FAIL] FAILED", file=sys.stderr)

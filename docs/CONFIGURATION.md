@@ -2,7 +2,7 @@
 title: Configuration Guide
 version: 3.3.0
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-06
 tags: [configuration, setup, yaml, pydantic, settings]
 ---
 
@@ -222,6 +222,37 @@ context7:
     auto_queue: true
     auto_process_on_startup: false
 ```
+
+**Context7 cache**: The only supported cache location is `knowledge_base.location` (default `.tapps-agents/kb/context7-cache`). Legacy flat JSON exports (e.g. `context7-docs/`) are not used by the framework; delete them if present. Cache is populated by init (from `tech-stack.yaml`) or by agent lookups. Entries respect `ttl_seconds` (default 30 days); use `tapps-agents health check` to inspect cache status.
+
+#### Recommended key libraries (tech-stack seed)
+
+For projects with empty or minimal tech-stack detection, add a copy-paste snippet to `.tapps-agents/tech-stack.yaml` to prioritize high-value library docs:
+
+```yaml
+# .tapps-agents/tech-stack.yaml
+# Add or merge this block to prioritize Context7 cache population
+
+context7_priority:
+  - pytest
+  - fastapi
+  - pydantic
+  - httpx
+  - sqlalchemy
+  - requests
+  - aiohttp
+  - playwright
+
+# Or add to libraries / frameworks if not auto-detected:
+libraries:
+  - pytest
+  - pydantic
+  - httpx
+frameworks:
+  - fastapi
+```
+
+Init merges `context7_priority` (highest) with `libraries`, `frameworks`, and built-in expert libraries. See [Context7 and RAG Shipping Recommendations](CONTEXT7_AND_RAG_SHIPPING_RECOMMENDATIONS.md).
 
 ### Quality Tools Configuration (Phase 6)
 

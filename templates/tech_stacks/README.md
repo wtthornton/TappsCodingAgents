@@ -83,6 +83,7 @@ Defines default test framework configuration for the tech stack.
 
 ## Available Templates
 
+- **key-libraries.yaml**: Recommended key libraries for Context7 cache when tech-stack is empty or minimal. Copy to `.tapps-agents/tech-stack.yaml` or merge `context7_prepop` / `context7_priority` for quick cache seeding.
 - **fastapi.yaml**: FastAPI/async Python API projects
 - **nextjs.yaml**: Next.js fullstack React projects
 - **django.yaml**: Django web framework projects

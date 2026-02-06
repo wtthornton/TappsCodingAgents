@@ -2,6 +2,27 @@
 
 ## Recent Reviews
 
+### 2026-02-06: Dashboard Data Collectors Deep Review
+**Full Report:** `dashboard-collectors-review-2026-02-06.md`
+
+**Critical Findings:**
+1. **Field Name Mismatch:** HealthMetricsCollector.get_summary() returns "by_check" but DashboardDataCollector expects "checks" → dashboard shows no health checks
+2. **Timezone Bug:** ExpertPerformanceTracker uses deprecated `datetime.utcnow()` instead of `datetime.now(UTC)` → incorrect date filtering
+3. **Math Error:** AnalyticsCollector.get_trends() incorrect averaging (divides by 2 repeatedly instead of summing and dividing by count) → wrong trend data
+4. **Code Duplication:** `_calculate_overall_score()` duplicated in ExpertPerformanceTracker and OutcomeTracker → maintenance burden
+5. **Race Condition:** AnalyticsCollector appends to files without locking → possible JSON corruption
+
+**Pattern Strengths:**
+- Fault-tolerant design (collectors return defaults on error)
+- Good separation of concerns (each collector has single responsibility)
+- UTC timezone awareness in most places
+
+**Common Issues Detected:**
+- Inefficient file I/O (loads entire files into memory, then reverses)
+- No retention policy (metrics accumulate forever)
+- Silent error swallowing (broad except with debug-level logging)
+- Missing input validation in dual-write functions
+
 ### 2026-02-06: TappsCodingAgents Framework Comprehensive Review
 **Full Report:** `comprehensive-review-2026-02-06.md`
 
@@ -77,6 +98,7 @@
 
 For future TappsCodingAgents reviews:
 
+### General
 - [ ] MRO issue resolved or worked around?
 - [ ] Error handling uses ErrorEnvelope?
 - [ ] Path validation uses centralized PathValidator?
@@ -87,6 +109,17 @@ For future TappsCodingAgents reviews:
 - [ ] Methods under 50 lines (or well-justified)?
 - [ ] Help method follows standard format?
 - [ ] Expert/Context7 integration follows standard pattern?
+
+### Data Collectors (Analytics/Metrics)
+- [ ] Uses `datetime.now(UTC)` not `datetime.utcnow()` (deprecated in 3.12+)?
+- [ ] Field names match what consumers expect?
+- [ ] Aggregation math is correct (sum then divide, not recursive averaging)?
+- [ ] File I/O uses efficient patterns (deque, file seeking, not load-all-then-reverse)?
+- [ ] Concurrent writes use file locking or atomic operations?
+- [ ] Input validation on all external data?
+- [ ] Errors logged at appropriate level (not all DEBUG)?
+- [ ] Retention policy for old data?
+- [ ] No code duplication of score/metric calculations?
 
 ## Known Pre-existing Test Failures
 

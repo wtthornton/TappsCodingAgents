@@ -8,6 +8,7 @@ Context7 Integration - Real-time library documentation with KB-first caching.
 """
 
 from .agent_integration import Context7AgentHelper, get_context7_helper
+from .bundle_loader import try_copy_context7_bundle
 from .analytics import Analytics, CacheMetrics, LibraryMetrics
 from .async_cache import (
     AsyncCacheEntry,

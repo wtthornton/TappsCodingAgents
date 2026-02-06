@@ -31,8 +31,7 @@ The root directory should contain **only essential project files**:
 - `CHANGELOG.md` - Version history
 - `CONTRIBUTING.md` - Contribution guidelines
 - `SECURITY.md` - Security policy
-- `pyproject.toml` - Python package configuration
-- `setup.py` - Package setup (legacy support)
+- `pyproject.toml` - Python package configuration (sole source of package metadata)
 - `requirements.txt` - Python dependencies
 - `pytest.ini` - Pytest configuration
 - `MANIFEST.in` - Package manifest
@@ -49,7 +48,7 @@ The following files should be moved to appropriate directories:
   - Example: `RELEASE_NOTES_v3.5.28.md` → `docs/releases/RELEASE_NOTES_v3.5.28.md`
 
 - **Python scripts** → `scripts/`
-  - Pattern: `*.py` (except `setup.py`)
+  - Pattern: `*.py`
   - Example: `site24x7_client.py` → `scripts/site24x7_client.py`
 
 - **Test files** → `tests/`

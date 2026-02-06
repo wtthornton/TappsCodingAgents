@@ -460,7 +460,7 @@ def _check_claude_code_integration(project_root: Path) -> list[DoctorFinding]:
             )
     # If settings_data is None, we already reported the settings file issue above
 
-    # 4. Check TAPPS_AGENTS_MODE environment variable
+    # 4. Check TAPPS_AGENTS_MODE environment variable (default: infer from runtime)
     tapps_mode = os.environ.get("TAPPS_AGENTS_MODE")
     if tapps_mode:
         findings.append(
@@ -471,15 +471,21 @@ def _check_claude_code_integration(project_root: Path) -> list[DoctorFinding]:
             )
         )
     else:
+        from .runtime_mode import detect_runtime_mode
+        inferred = detect_runtime_mode().value
         findings.append(
             DoctorFinding(
-                severity="warn",
+                severity="ok",
                 code="CLAUDE_CODE_ENV",
-                message="Claude Code Env: TAPPS_AGENTS_MODE not set (optional)",
+                message=(
+                    f"Claude Code Env: TAPPS_AGENTS_MODE not set (inferred: {inferred}). "
+                    "Set in .env or shell to override."
+                ),
                 remediation=(
-                    "Set TAPPS_AGENTS_MODE environment variable to configure agent behavior.\n"
-                    "Common values: 'cli' (for Claude Code CLI), 'cursor' (for Cursor IDE).\n"
-                    "Set in shell profile or .env file."
+                    "Optional: set TAPPS_AGENTS_MODE in .env or shell. "
+                    "Use 'cursor' when using Claude (or any model) inside Cursor IDE; "
+                    "use 'cli' only when running in terminal/Claude Code CLI with no Cursor. "
+                    "When unset, mode is inferred from environment."
                 ),
             )
         )
