@@ -105,6 +105,9 @@ This creates `.tapps-agents/config.yaml` with project configuration.
 tapps-agents simple-mode build --prompt "Add user authentication"
 tapps-agents reviewer review src/auth.py
 tapps-agents tester test src/auth.py
+
+# Performance dashboard
+tapps-agents dashboard
 ```
 
 ### Features
@@ -231,6 +234,10 @@ tapps-agents expert list
 tapps-agents expert consult --domain security --question "OAuth2 patterns"
 tapps-agents expert search --query "authentication"
 tapps-agents expert cached
+
+# Performance dashboard
+tapps-agents dashboard
+tapps-agents dashboard --no-open --days 14
 ```
 
 ### Features

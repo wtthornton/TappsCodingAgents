@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Performance Insight Dashboard** (`tapps-agents dashboard`) - Self-contained HTML dashboard with full insight into tapps-agents performance
+  - 8 tabs: Agents, Experts, Cache/RAG, Quality, Workflows, Learning, Health, Event Stream
+  - Pure-Python SVG charts (ring gauges, bar charts, sparklines, radar charts)
+  - Dark theme, sortable tables, embedded JSON data, recommendations engine
+  - Zero external dependencies, <500KB output
+  - CLI flags: `--no-open`, `--output`, `--days`, `--verbose`
+  - New module: `tapps_agents/dashboard/` (generator, data_collector, html_renderer, svg_charts)
+  - 71 tests covering all dashboard components
+
 ## [3.6.3] - 2026-02-06
 
 ### Fixed

@@ -250,6 +250,7 @@ Use **bd** for dependency-aware task tracking and agent memory. On this project 
 **When the user asks for feedback on how well tapps-agents helps (e.g. "provide feedback on how well tapps-agents helps you as an LLM"), the feedback report or document MUST include health metrics.**
 
 - Run `tapps-agents health overview` (or `tapps-agents health usage dashboard`) and include the output or a summary in the feedback report.
+- Run `tapps-agents dashboard` to generate the full Performance Insight Dashboard (self-contained HTML with agent, expert, cache, quality, workflow, learning, and health metrics).
 - This gives a 1000-foot view of subsystem health and usage so the feedback is actionable and comparable across sessions.
 - See `docs/feedback/README.md` for where to place feedback docs; see `.cursor/rules/project-context.mdc` for the same guideline in rules.
 

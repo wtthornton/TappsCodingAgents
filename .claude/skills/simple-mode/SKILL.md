@@ -567,7 +567,7 @@ Beads-backed todo; forwards to `bd` when available. Examples: `@simple-mode *tod
 
 ### `*help`
 
-Show Simple Mode help. Commands: *build, *review, *fix, *test, *explore, *refactor, *plan-analysis, *pr, *enhance, *breakdown, *todo, *full, *epic, *status, *resume. See .cursor/rules/command-reference.mdc for *test-coverage, *fix-tests, *microservice, *docker-fix, *integrate-service.
+Show Simple Mode help. Commands: *build, *review, *fix, *test, *explore, *refactor, *plan-analysis, *pr, *enhance, *breakdown, *todo, *full, *epic, *dashboard, *status, *resume. See .cursor/rules/command-reference.mdc for *test-coverage, *fix-tests, *microservice, *docker-fix, *integrate-service.
 
 ### `*resume` [workflow_id]
 
@@ -576,6 +576,20 @@ Resume a failed or paused workflow. Use `@simple-mode *resume --list` to list re
 ### `*status`
 
 Check Simple Mode status.
+
+### `*dashboard [--no-open] [--days N]`
+
+Generate the Performance Insight Dashboard (self-contained HTML). Opens in browser by default.
+
+**Example:**
+```
+@simple-mode *dashboard
+@simple-mode *dashboard --no-open --days 14
+```
+
+**Execution:**
+1. Invoke `tapps-agents dashboard` with provided flags
+2. Report output path and key metrics summary
 
 ## Example Conversations
 

@@ -80,6 +80,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Release Guide](operations/RELEASE_GUIDE.md)** - Version and release process
 - **[Release Quick Reference](operations/RELEASE_QUICK_REFERENCE.md)** | **[Release Version Tag Warning](operations/RELEASE_VERSION_TAG_WARNING.md)**
 - **[Package Distribution Guide](operations/PACKAGE_DISTRIBUTION_GUIDE.md)** - PyPI and distribution
+- **[Context7 and RAG Shipping Recommendations](CONTEXT7_AND_RAG_SHIPPING_RECOMMENDATIONS.md)** - Whether to ship cache/RAG in the package vs. init (smaller install)
 - **[Troubleshooting Guide](TROUBLESHOOTING.md)** - Includes Playwright MCP troubleshooting
 - **[Path Normalization Guide](PATH_NORMALIZATION_GUIDE.md)** - Cross-platform path handling, Windows absolute path conversion
 - **[Checkpoint & Resume Guide](CHECKPOINT_RESUME_GUIDE.md)** - State persistence and workflow resumption
@@ -117,6 +118,7 @@ Welcome to the documentation for TappsCodingAgents.
 - **[MCP Systems Improvement Recommendations](MCP_SYSTEMS_IMPROVEMENT_RECOMMENDATIONS.md)** - Actions from competing systems to make TappsCodingAgents far ahead (MCP server, 7-category scoring, npm audit, *enhance/*breakdown, etc.)
 - **[MCP Standards Compliance](MCP_STANDARDS.md)** - JSON-RPC 2.0 and JSON Schema 2020-12 compliance
 - **Health & Usage** - CLI: `tapps-agents health overview` (1000-foot view), `health usage dashboard|agents|workflows|system|trends`; performance metrics, trends, agent/workflow statistics. Implementation: `tapps_agents/health/`, `tapps_agents/core/analytics_dashboard.py`
+- **[Performance Insight Dashboard](../tapps_agents/dashboard/)** - Self-contained HTML dashboard: `tapps-agents dashboard` generates a single-file report with agent, expert, cache/RAG, quality, workflow, learning, and health metrics. Inline SVG charts, dark theme, sortable tables, recommendations engine. Implementation: `tapps_agents/dashboard/`
 - **[Health Monitoring](../tapps_agents/health/)** - System health checks, resource usage tracking
 - **[State Management](CHECKPOINT_RESUME_GUIDE.md)** - Workflow state persistence, resume, cleanup
 - **[Progress Display Format](guides/progress-display-format.md)** - Phase-grid progress format (default; icons, bars, phase grid) for workflow status; [implementation plan](implementation/PROGRESS_DISPLAY_FORMAT_IMPLEMENTATION_PLAN.md)

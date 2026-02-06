@@ -512,6 +512,27 @@ python -m tapps_agents.cli enhancer enhance-stage requirements --session-id <ses
 
 ---
 
+## Performance Insight Dashboard
+
+**Not an agent**, but a top-level CLI command that aggregates metrics from all subsystems into a self-contained HTML report.
+
+**Command:** `tapps-agents dashboard [--no-open] [--output <path>] [--days <n>] [--verbose]`
+
+**What it covers:**
+- Agent execution counts, success rates, and trends
+- Expert consultation frequency, confidence scores, and ROI
+- Context7 cache hit rates, library usage, and RAG quality
+- Quality gate pass rates, dimension scores, and recent failures
+- Workflow success rates, preset distribution, and Epic progress
+- Learning system trends (first-pass rate, weight adjustments, KB growth)
+- Health check status across all subsystems
+- Event stream (recent workflow events)
+- Recommendations engine (actionable suggestions based on data)
+
+**When to use:** To get a visual overview of how well tapps-agents is performing in a project. Complements `health overview` (text) with charts, tables, and drill-down tabs.
+
+---
+
 ## Agent Selection Guide
 
 ### Analyst Agent

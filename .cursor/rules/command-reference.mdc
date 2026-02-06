@@ -519,6 +519,43 @@ tapps-agents health trends [--check-name <name>] [--days <n>]
 - `health overview`: Single rolled-up report for feedback or status at a glance (include in feedback reports per project-context.mdc)
 - `health usage dashboard`: View agent/workflow metrics (replaces `tapps-agents analytics`)
 
+### `dashboard` - Performance Insight Dashboard
+**Purpose:** Generate a self-contained HTML dashboard with full insight into tapps-agents performance across all subsystems (agents, experts, cache/RAG, quality, workflows, learning, health).
+
+**CLI Syntax:**
+```bash
+tapps-agents dashboard [--no-open] [--output <path>] [--days <n>] [--verbose]
+```
+
+**Parameters:**
+- `--no-open`: Generate without opening in browser
+- `--output` / `-o`: Custom output path (default: `.tapps-agents/dashboard/dashboard.html`)
+- `--days`: Number of days to include in metrics (default: 30)
+- `--verbose`: Show detailed generation progress
+
+**Examples:**
+```bash
+# Generate and open dashboard
+tapps-agents dashboard
+
+# Generate for last 14 days without opening
+tapps-agents dashboard --no-open --days 14
+
+# Save to custom path
+tapps-agents dashboard -o reports/dashboard.html
+```
+
+**When to Use:**
+- Review overall tapps-agents performance in a project
+- Include in feedback reports (visual complement to `health overview`)
+- Identify underperforming agents or experts
+- Check cache hit rates and RAG quality
+- Track quality gate pass rates and workflow success
+
+**Difference from `health` commands:**
+- `health overview`: Text-based summary of subsystem health (quick, terminal output)
+- `dashboard`: Rich HTML with charts, tables, recommendations (comprehensive, browser-based)
+
 ### `score` - Quick Code Scoring
 **Purpose:** Fast code quality scoring (shortcut for `reviewer score`)
 

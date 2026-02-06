@@ -266,6 +266,23 @@ By default it stores history in:
 
 - `.tapps-agents/analytics/history/*.jsonl`
 
+### 9.1) Performance Insight Dashboard
+
+A self-contained HTML dashboard providing full visual insight into tapps-agents performance. Generated via `tapps-agents dashboard`.
+
+**Module:** `tapps_agents/dashboard/`
+
+- `generator.py`: Main orchestrator — collects data, renders HTML, writes output, opens browser
+- `data_collector.py`: Gathers metrics from all subsystems (health, agents, experts, cache, quality, workflows, learning, events)
+- `html_renderer.py`: Renders a single-file HTML page with dark theme, 8 tabs, inline CSS/JS
+- `svg_charts.py`: Pure-Python SVG chart generators (ring gauge, bar chart, sparkline, radar, horizontal bar, status badge, number pill)
+
+**Output:** `.tapps-agents/dashboard/dashboard.html` (default), <500KB, zero external dependencies
+
+**CLI:** `tapps-agents dashboard [--no-open] [--output <path>] [--days <n>] [--verbose]`
+
+**Difference from Analytics Dashboard (9):** Analytics Dashboard is text/JSON terminal output for quick checks. Performance Insight Dashboard is a rich HTML report with charts, tables, and a recommendations engine.
+
 ### 10) SDLC Quality Engine (Planned)
 
 The SDLC Quality Engine transforms the workflow system from a linear pipeline with score-only gates into a self-correcting quality engine.

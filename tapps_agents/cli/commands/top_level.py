@@ -3732,3 +3732,33 @@ def handle_rag_command(args: object) -> None:
     else:
         print(f"Unknown rag command: {command}", file=sys.stderr)
         sys.exit(1)
+
+
+def handle_dashboard_command(args: object) -> None:
+    """Handle dashboard generation command."""
+    from pathlib import Path
+
+    from ...dashboard.generator import DashboardGenerator
+
+    feedback = get_feedback()
+
+    output = getattr(args, "output", None)
+    days = getattr(args, "days", 30)
+    no_open = getattr(args, "no_open", False)
+    verbose = getattr(args, "verbose", False)
+
+    output_path = Path(output) if output else None
+
+    feedback.info(f"Generating dashboard ({days}-day window)...")
+
+    try:
+        gen = DashboardGenerator(project_root=Path.cwd())
+        result_path = gen.generate(
+            output_path=output_path,
+            days=days,
+            open_browser=not no_open,
+            verbose=verbose,
+        )
+        feedback.success(f"Dashboard generated: {result_path}")
+    except Exception as e:
+        feedback.error(f"Dashboard generation failed: {e}", exit_code=1)

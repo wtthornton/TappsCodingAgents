@@ -213,6 +213,7 @@ Use explicit commands for guaranteed workflow execution:
 | `*breakdown "prompt"` | Task breakdown | BreakdownOrchestrator |
 | `*todo <bd args>` | Beads-backed todo | TodoOrchestrator |
 | `*build-fix`, `*fix-tests`, `*test-coverage`, `*security-review`, `*update-docs`, `*update-codemaps`, `*microservice`, `*docker-fix`, `*integrate-service` | Specialized workflows | See command-reference.mdc |
+| `*dashboard [--no-open] [--days N]` | Performance Insight Dashboard | DashboardGenerator |
 | `*help` | Show help | - |
 | `*resume` [workflow_id] | Resume failed/paused workflow | ResumeOrchestrator |
 | `*status` | Check status | - |

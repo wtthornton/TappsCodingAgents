@@ -506,6 +506,15 @@ tapps-agents health overview
 @simple-mode *epic <epic-doc.md>      # Execute Epic (stories in dependency order)
 ```
 
+### Performance Dashboard
+
+```bash
+tapps-agents dashboard                    # Generate & open HTML dashboard
+tapps-agents dashboard --no-open          # Generate without opening browser
+tapps-agents dashboard --days 14          # Last 14 days of metrics
+tapps-agents dashboard -o report.html     # Custom output path
+```
+
 ### Individual Agents (Advanced)
 
 ```cursor

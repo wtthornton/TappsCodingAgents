@@ -65,6 +65,8 @@ Execution graphs are automatically generated when workflows complete. Graphs are
 
 ## Observability Dashboard
 
+> **Note:** This is the **workflow observability** dashboard (`tapps-agents observability dashboard`) which focuses on individual workflow execution traces, metrics correlation, and OpenTelemetry export. For the **project-wide performance** dashboard with agent, expert, cache, quality, and learning metrics, use `tapps-agents dashboard` (see [Performance Insight Dashboard](../tapps_agents/dashboard/)).
+
 The observability dashboard correlates:
 - **Metrics**: Execution duration, retry counts, success rates
 - **Traces**: Step-by-step execution flow with timing

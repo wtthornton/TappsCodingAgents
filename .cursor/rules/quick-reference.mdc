@@ -272,6 +272,18 @@ python -m tapps_agents.cli tester generate-tests <file.py>
 python -m tapps_agents.cli tester run-tests
 ```
 
+### Performance Dashboard
+```bash
+# Generate and open HTML performance dashboard
+tapps-agents dashboard
+
+# Generate without opening browser
+tapps-agents dashboard --no-open
+
+# Last 14 days, custom output
+tapps-agents dashboard --days 14 -o reports/dashboard.html
+```
+
 ### Environment & Setup
 ```bash
 # Check environment status

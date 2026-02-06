@@ -376,6 +376,7 @@ def _get_top_level_command_handlers() -> dict[str, Callable[[argparse.Namespace]
         "continuous-bug-fix": top_level.handle_continuous_bug_fix_command,
         "bug-fix-continuous": top_level.handle_continuous_bug_fix_command,
         "brownfield": top_level.handle_brownfield_command,
+        "dashboard": top_level.handle_dashboard_command,
     }
 
 

@@ -2079,6 +2079,47 @@ Removes or archives state JSON, memory JSONL, and handoff MD files based on age 
         help="Preview changes without making them",
     )
 
+    # ── Performance Insight Dashboard ─────────────────────────────────
+    dashboard_parser = subparsers.add_parser(
+        "dashboard",
+        help="Generate interactive HTML performance dashboard",
+        description="""Generate a self-contained HTML dashboard showing metrics from all
+tapps-agents subsystems: agents, experts, cache/RAG, quality gates,
+workflows, adaptive learning, and health checks.
+
+The dashboard is a single HTML file with no external dependencies that
+opens in your default browser.
+
+Examples:
+  tapps-agents dashboard                     # Generate and open
+  tapps-agents dashboard --no-open           # Generate only
+  tapps-agents dashboard --days 60           # 60-day time range
+  tapps-agents dashboard --output report.html""",
+    )
+    dashboard_parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Generate dashboard without opening in browser",
+    )
+    dashboard_parser.add_argument(
+        "--output",
+        "-o",
+        type=str,
+        default=None,
+        help="Output file path (default: .tapps-agents/dashboard/dashboard.html)",
+    )
+    dashboard_parser.add_argument(
+        "--days",
+        type=int,
+        default=30,
+        help="Number of days of data to include (default: 30)",
+    )
+    dashboard_parser.add_argument(
+        "--verbose",
+        action="store_true",
+        help="Include full event stream data (increases file size)",
+    )
+
     # ── Expert commands (Phase 8.3) ──────────────────────────────────
     expert_parser = subparsers.add_parser(
         "expert",
