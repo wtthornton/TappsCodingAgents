@@ -91,7 +91,7 @@ async def plan_command(description: str, output_format: str = "json"):
     except Exception as e:
         # Catch any unexpected exceptions
         logger.error(f"Unexpected error in plan_command: {e}", exc_info=True)
-        feedback.error(f"Failed to create plan: {str(e)}")
+        feedback.error(f"Failed to create plan: {e!s}")
         if output_format == "json":
             feedback.output_result({"error": str(e), "error_type": "unexpected_error"})
     finally:

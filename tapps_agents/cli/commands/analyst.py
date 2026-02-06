@@ -151,9 +151,7 @@ def handle_analyst_command(args: object) -> None:
                 summary["output_file"] = result["output_file"]
             if command == "gather-requirements" and "requirements" in result:
                 reqs = result["requirements"]
-                if isinstance(reqs, list):
-                    summary["requirements_count"] = len(reqs)
-                elif isinstance(reqs, dict):
+                if isinstance(reqs, list) or isinstance(reqs, dict):
                     summary["requirements_count"] = len(reqs)
             if command == "stakeholder-analysis" and "stakeholders" in result:
                 summary["stakeholders_count"] = len(result["stakeholders"]) if isinstance(result["stakeholders"], list) else 0

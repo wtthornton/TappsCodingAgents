@@ -197,20 +197,30 @@ When running multiple tools (e.g., in `*review` command):
 
 ### Context7 Integration
 
-**KB-First Caching:**
+**Official Context7 workflow (required order):**
+1. **resolve-library-id** — Resolve library name to a Context7-compatible library ID (e.g. `/vercel/next.js`). Call this first; do not call get-library-docs without a resolved ID.
+2. **get-library-docs** — Fetch documentation using the resolved ID, with optional `topic` and `tokens` for relevance and size control.
+
+**KB-First Caching (RAG):**
 - Cache location: `.tapps-agents/kb/context7-cache`
-- Auto-refresh: Enabled (stale entries refreshed automatically)
+- Auto-refresh: Enabled (stale entries refreshed in background)
 - Lookup workflow:
   1. Check KB cache first (fast, <0.15s)
-  2. If cache miss: Try fuzzy matching
-  3. If still miss: Fetch from Context7 API
+  2. If cache miss: Try fuzzy matching on cached entries
+  3. If still miss: Resolve library ID (resolve-library-id), then fetch docs (get-library-docs)
   4. Store in cache for future use
 
+**Best practices (Context7 API guide):**
+- **Cache responses** — All fetched docs are stored in KB cache to reduce redundant API calls.
+- **Specific queries** — Use the `topic` parameter (e.g. `best-practices`, `routing`, `hooks`) for better relevance.
+- **Rate limits** — Quota and rate-limit handling are built in; avoid unnecessary repeated lookups.
+- **Library ID** — Always use the resolved Context7 ID when fetching docs; never skip resolve for API/MCP calls.
+
 **Usage:**
-- When reviewing code with library imports, automatically lookup library docs
-- Use cached documentation to verify API usage correctness
-- Check for security issues in cached library docs
-- Reference related libraries from cross-references
+- When reviewing code with library imports, automatically lookup library docs via the KB-first flow above.
+- Use cached documentation to verify API usage correctness.
+- Check for security issues in cached library docs.
+- Reference related libraries from cross-references.
 
 **Example:**
 ```python
@@ -317,7 +327,7 @@ Each quality tool should format output as:
 - **Security Priority**: Always flag security issues, even if score passes
 - **Actionable**: Every issue should have a clear fix recommendation
 - **Format**: Use numbered lists when showing multiple items
-- **Context7**: Always check KB cache before making library-related recommendations
+- **Context7**: Use official workflow: resolve-library-id first, then get-library-docs; check KB cache before API/MCP calls
 
 ## Integration
 

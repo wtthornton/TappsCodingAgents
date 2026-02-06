@@ -213,8 +213,8 @@ class EnhancerAgent(BaseAgent):
         elif command == "enhance":
             prompt = kwargs.get("prompt", "")
             output_format = kwargs.get("output_format", "markdown")
-            output_file = kwargs.get("output_file", None)
-            config_path = kwargs.get("config_path", None)
+            output_file = kwargs.get("output_file")
+            config_path = kwargs.get("config_path")
 
             return await self._enhance_full(
                 prompt, output_format, output_file, config_path
@@ -223,14 +223,14 @@ class EnhancerAgent(BaseAgent):
         elif command == "enhance-quick":
             prompt = kwargs.get("prompt", "")
             output_format = kwargs.get("output_format", "markdown")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._enhance_quick(prompt, output_format, output_file)
 
         elif command == "enhance-stage":
             stage = kwargs.get("stage", "")
             prompt = kwargs.get("prompt", "")
-            session_id = kwargs.get("session_id", None)
+            session_id = kwargs.get("session_id")
 
             return await self._enhance_stage(stage, prompt, session_id)
 
@@ -632,9 +632,7 @@ class EnhancerAgent(BaseAgent):
 
         try:
             handler: Any = stage_handlers[stage]
-            if stage == "expert_suggestions":
-                result = await handler(prompt, session["stages"].get("analysis", {}))
-            elif stage == "requirements":
+            if stage == "expert_suggestions" or stage == "requirements":
                 result = await handler(prompt, session["stages"].get("analysis", {}))
             elif stage == "architecture":
                 result = await handler(
@@ -712,17 +710,11 @@ class EnhancerAgent(BaseAgent):
                     
                     for lib in all_detected:
                         # Always include if it's in project dependencies
-                        if lib in project_libs:
-                            filtered_libraries.append(lib)
-                        # Include if explicitly mentioned with library keywords
-                        elif any(keyword in prompt_lower for keyword in [
+                        if lib in project_libs or any(keyword in prompt_lower for keyword in [
                             f"{lib} library", f"{lib} framework", f"{lib} package",
                             f"using {lib}", f"with {lib}", f"import {lib}",
                             f"{lib} docs", f"{lib} documentation"
-                        ]):
-                            filtered_libraries.append(lib)
-                        # Include well-known libraries if detected
-                        elif self.context7.is_well_known_library(lib):
+                        ]) or self.context7.is_well_known_library(lib):
                             filtered_libraries.append(lib)
                     
                     detected_libraries = filtered_libraries
@@ -1772,7 +1764,7 @@ Create a comprehensive, context-aware enhanced prompt that:
             except Exception as e:
                 logger.error(f"Synthesis failed: {e}", exc_info=True)
                 return {
-                    "error": f"Synthesis failed: {str(e)}",
+                    "error": f"Synthesis failed: {e!s}",
                     "format": output_format,
                     "metadata": {
                         "original_prompt": prompt,
@@ -1901,7 +1893,7 @@ Create a comprehensive, context-aware enhanced prompt that:
             except Exception as e:
                 # If anything fails, return error string
                 seen.discard(obj_id)
-                return f"<serialization error: {str(e)}>"
+                return f"<serialization error: {e!s}>"
         
         try:
             serializable_obj = _make_serializable(obj)
@@ -1909,7 +1901,7 @@ Create a comprehensive, context-aware enhanced prompt that:
         except Exception as e:
             logger.error(f"Failed to serialize session: {e}")
             # Last resort: return minimal error representation
-            return json.dumps({"error": f"Serialization failed: {str(e)}"}, indent=indent)
+            return json.dumps({"error": f"Serialization failed: {e!s}"}, indent=indent)
 
     def _save_session(self, session_id: str, session: dict[str, Any]):
         """Save session to disk."""

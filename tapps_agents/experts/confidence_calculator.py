@@ -208,7 +208,7 @@ class ConfidenceCalculator:
         # Check deployment type alignment
         if project_profile.deployment_type:
             deployment = project_profile.deployment_type.lower()
-            if deployment == "cloud" and any(
+            if (deployment == "cloud" and any(
                 word in combined_answer
                 for word in [
                     "cloud",
@@ -219,23 +219,19 @@ class ConfidenceCalculator:
                     "docker",
                     "container",
                 ]
-            ):
-                score += 0.1
-            elif deployment == "local" and any(
+            )) or (deployment == "local" and any(
                 word in combined_answer
                 for word in ["local", "development", "dev environment"]
-            ):
-                score += 0.1
-            elif deployment == "enterprise" and any(
+            )) or (deployment == "enterprise" and any(
                 word in combined_answer
                 for word in ["enterprise", "scalable", "production", "infrastructure"]
-            ):
+            )):
                 score += 0.1
 
         # Check security level alignment
         if project_profile.security_level:
             security = project_profile.security_level.lower()
-            if security in ["high", "critical"] and any(
+            if (security in ["high", "critical"] and any(
                 word in combined_answer
                 for word in [
                     "security",
@@ -244,11 +240,9 @@ class ConfidenceCalculator:
                     "authentication",
                     "authorization",
                 ]
-            ):
-                score += 0.05
-            elif security == "standard" and any(
+            )) or (security == "standard" and any(
                 word in combined_answer for word in ["security", "best practice"]
-            ):
+            )):
                 score += 0.05
 
         # Check compliance alignment

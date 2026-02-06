@@ -8,11 +8,11 @@ from .servers.git import GitMCPServer
 from .tool_registry import ToolCategory, ToolRegistry
 
 __all__ = [
-    "MCPGateway",
-    "ToolRegistry",
-    "ToolCategory",
-    "FilesystemMCPServer",
-    "GitMCPServer",
     "AnalysisMCPServer",
     "Context7MCPServer",
+    "FilesystemMCPServer",
+    "GitMCPServer",
+    "MCPGateway",
+    "ToolCategory",
+    "ToolRegistry",
 ]

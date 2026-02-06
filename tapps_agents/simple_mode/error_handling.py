@@ -101,7 +101,7 @@ class SimpleModeErrorHandler:
                 safe_print(f"  • {key}: {value}")
 
         if original_exception:
-            safe_print(f"\nTechnical details: {str(original_exception)}")
+            safe_print(f"\nTechnical details: {original_exception!s}")
 
         safe_print(f"\n💡 {suggestion}")
 

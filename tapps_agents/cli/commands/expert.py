@@ -9,7 +9,6 @@ import logging
 from pathlib import Path
 from typing import Any
 
-from ...core.config import load_config
 from ...core.unicode_safe import safe_print
 
 logger = logging.getLogger(__name__)

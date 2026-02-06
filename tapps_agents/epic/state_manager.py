@@ -237,27 +237,27 @@ class EpicStateManager:
 
         lines = [
             f"# Epic {epic_id} Session Handoff",
-            f"",
+            "",
             f"**Generated:** {datetime.now().isoformat()}",
             f"**Epic:** {state.get('epic_title', epic_id)}",
             f"**Progress:** {len(done)}/{len(stories)} stories complete",
-            f"",
+            "",
         ]
 
         if last_done:
             files = ", ".join(last_done.get("artifacts", [])[:5]) or "none"
             lines.extend([
-                f"## Last Completed",
+                "## Last Completed",
                 f"- Story {last_done.get('story_id', '?')}: {last_done.get('title', '')}",
                 f"- Files: {files}",
-                f"",
+                "",
             ])
 
         if next_pending:
             lines.extend([
-                f"## Next Up",
+                "## Next Up",
                 f"- Story {next_pending.get('story_id', '?')}: {next_pending.get('title', '')}",
-                f"",
+                "",
             ])
 
         if failed:

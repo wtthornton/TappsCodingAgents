@@ -11,7 +11,6 @@ From: docs/INIT_AUTOFILL_DETAILED_REQUIREMENTS.md
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import yaml
 
@@ -23,9 +22,9 @@ class KnowledgeFileAnalysis:
     domain: str
     topic: str
     description: str
-    consultation_triggers: List[str] = field(default_factory=list)
+    consultation_triggers: list[str] = field(default_factory=list)
     priority: float = 0.80
-    concepts: List[str] = field(default_factory=list)
+    concepts: list[str] = field(default_factory=list)
 
 
 @dataclass
@@ -36,8 +35,8 @@ class ExpertConfig:
     primary_domain: str
     rag_enabled: bool = True
     fine_tuned: bool = False
-    knowledge_files: List[str] = field(default_factory=list)
-    consultation_triggers: List[str] = field(default_factory=list)
+    knowledge_files: list[str] = field(default_factory=list)
+    consultation_triggers: list[str] = field(default_factory=list)
     priority: float = 0.80
 
 
@@ -55,9 +54,9 @@ class ExpertGenerator:
 
     def __init__(
         self,
-        project_root: Optional[Path] = None,
-        knowledge_base_dir: Optional[Path] = None,
-        experts_yaml_path: Optional[Path] = None,
+        project_root: Path | None = None,
+        knowledge_base_dir: Path | None = None,
+        experts_yaml_path: Path | None = None,
     ):
         """Initialize expert generator.
 
@@ -121,7 +120,7 @@ class ExpertGenerator:
             concepts=concepts,
         )
 
-    def check_expert_exists(self, domain: str) -> Optional[Dict]:
+    def check_expert_exists(self, domain: str) -> dict | None:
         """Check if expert covering domain already exists.
 
         Args:
@@ -134,7 +133,7 @@ class ExpertGenerator:
             return None
 
         try:
-            with open(self.experts_yaml_path, "r", encoding="utf-8") as f:
+            with open(self.experts_yaml_path, encoding="utf-8") as f:
                 experts_data = yaml.safe_load(f) or {}
         except Exception:
             return None
@@ -204,7 +203,7 @@ class ExpertGenerator:
         # Load existing experts
         if self.experts_yaml_path.exists():
             try:
-                with open(self.experts_yaml_path, "r", encoding="utf-8") as f:
+                with open(self.experts_yaml_path, encoding="utf-8") as f:
                     experts_data = yaml.safe_load(f) or {}
             except Exception as e:
                 raise ValueError(f"Failed to load {self.experts_yaml_path}: {e}")
@@ -219,7 +218,7 @@ class ExpertGenerator:
 
         # Confirmation prompt (unless auto_mode)
         if confirm and not auto_mode:
-            print(f"\n[EXPERT GENERATOR] Propose adding expert:")
+            print("\n[EXPERT GENERATOR] Propose adding expert:")
             print(f"  ID: {config.expert_id}")
             print(f"  Name: {config.expert_name}")
             print(f"  Domain: {config.primary_domain}")
@@ -269,7 +268,7 @@ class ExpertGenerator:
         self,
         auto_mode: bool = False,
         skip_existing: bool = True,
-    ) -> Dict:
+    ) -> dict:
         """Scan knowledge base and generate experts.
 
         Args:
@@ -379,7 +378,7 @@ class ExpertGenerator:
 
         return "Knowledge base content"
 
-    def _extract_triggers(self, content: str, domain: str, topic: str) -> List[str]:
+    def _extract_triggers(self, content: str, domain: str, topic: str) -> list[str]:
         """Extract consultation triggers from content keywords."""
         triggers = set()
 
@@ -403,7 +402,7 @@ class ExpertGenerator:
         # Limit to 10 most relevant triggers
         return list(triggers)[:10]
 
-    def _extract_concepts(self, content: str) -> List[str]:
+    def _extract_concepts(self, content: str) -> list[str]:
         """Extract key concepts from content."""
         concepts = set()
 
@@ -466,7 +465,7 @@ def main() -> None:
     )
 
     if result["success"]:
-        print(f"\n[OK] Expert generation complete!")
+        print("\n[OK] Expert generation complete!")
         print(f"  Total Files: {result['total_files']}")
         print(f"  Generated: {result['generated']}")
         print(f"  Skipped: {result['skipped']}")

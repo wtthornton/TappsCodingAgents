@@ -11,13 +11,10 @@ From: docs/INIT_AUTOFILL_DETAILED_REQUIREMENTS.md
 import asyncio
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import yaml
 
 from tapps_agents.context7.commands import Context7Commands
-from tapps_agents.context7.kb_cache import KBCache
-from tapps_agents.context7.refresh_queue import RefreshQueue, RefreshTask
 from tapps_agents.core.config import load_config
 
 
@@ -26,7 +23,7 @@ class FetchResult:
     """Result of a library fetch operation."""
     library: str
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
     duration_ms: float = 0.0
 
 
@@ -37,7 +34,7 @@ class QueueStatus:
     in_progress: int = 0
     completed: int = 0
     failed: int = 0
-    pending_libraries: List[str] = field(default_factory=list)
+    pending_libraries: list[str] = field(default_factory=list)
 
 
 class Context7CacheManager:
@@ -54,9 +51,9 @@ class Context7CacheManager:
 
     def __init__(
         self,
-        project_root: Optional[Path] = None,
+        project_root: Path | None = None,
         config = None,
-        context7_commands: Optional[Context7Commands] = None,
+        context7_commands: Context7Commands | None = None,
     ):
         """Initialize Context7 cache manager.
 
@@ -84,7 +81,7 @@ class Context7CacheManager:
             # Set minimal attributes for disabled state
             self.kb_cache = None
             self.refresh_queue = None
-            self._fetch_results: Dict[str, FetchResult] = {}
+            self._fetch_results: dict[str, FetchResult] = {}
             return
 
         # Get references to Context7 components
@@ -92,7 +89,7 @@ class Context7CacheManager:
         self.refresh_queue = self.context7_commands.refresh_queue
 
         # Track fetch results
-        self._fetch_results: Dict[str, FetchResult] = {}
+        self._fetch_results: dict[str, FetchResult] = {}
 
     def check_library_cached(self, library: str, topic: str = "overview") -> bool:
         """Check if library is in Context7 cache.
@@ -112,7 +109,7 @@ class Context7CacheManager:
     def queue_library_fetch(
         self,
         library: str,
-        topic: Optional[str] = None,
+        topic: str | None = None,
         priority: int = 5,
         reason: str = "auto-population"
     ) -> None:
@@ -137,11 +134,11 @@ class Context7CacheManager:
 
     async def fetch_libraries_async(
         self,
-        libraries: List[str],
-        topics: Optional[List[str]] = None,
+        libraries: list[str],
+        topics: list[str] | None = None,
         force: bool = False,
         max_concurrent: int = 5
-    ) -> Dict[str, bool]:
+    ) -> dict[str, bool]:
         """Fetch multiple libraries asynchronously.
 
         Args:
@@ -206,7 +203,7 @@ class Context7CacheManager:
 
         return {lib: success for lib, success in results}
 
-    def get_fetch_queue_status(self) -> Dict:
+    def get_fetch_queue_status(self) -> dict:
         """Get status of current fetch queue.
 
         Returns:
@@ -264,10 +261,10 @@ class Context7CacheManager:
 
     async def scan_and_populate_from_tech_stack(
         self,
-        tech_stack_file: Optional[Path] = None,
+        tech_stack_file: Path | None = None,
         skip_cached: bool = True,
         max_concurrent: int = 5
-    ) -> Dict:
+    ) -> dict:
         """Scan tech-stack.yaml and populate missing libraries.
 
         Args:
@@ -296,7 +293,7 @@ class Context7CacheManager:
 
         # Load tech-stack.yaml
         try:
-            with open(tech_stack_file, "r", encoding="utf-8") as f:
+            with open(tech_stack_file, encoding="utf-8") as f:
                 tech_stack_data = yaml.safe_load(f) or {}
         except Exception as e:
             return {
@@ -351,6 +348,7 @@ class Context7CacheManager:
 async def main() -> None:
     """CLI entry point for Context7 cache management."""
     import argparse
+
     from tapps_agents.core.unicode_safe import safe_print, setup_windows_encoding
 
     setup_windows_encoding()
@@ -379,7 +377,7 @@ async def main() -> None:
 
         if status.get("fetch_statistics"):
             stats = status["fetch_statistics"]
-            safe_print(f"\nFetch Statistics:")
+            safe_print("\nFetch Statistics:")
             safe_print(f"  Total Fetched: {stats['total_fetched']}")
             safe_print(f"  Successful: {stats['successful']}")
             safe_print(f"  Failed: {stats['failed']}")
@@ -390,7 +388,7 @@ async def main() -> None:
         result = await cache_manager.scan_and_populate_from_tech_stack()
 
         if result["success"]:
-            safe_print(f"\n[OK] Cache population complete!")
+            safe_print("\n[OK] Cache population complete!")
             safe_print(f"  Total Libraries: {result['total_libraries']}")
             safe_print(f"  Already Cached: {result['already_cached']}")
             safe_print(f"  Fetched: {result['fetched']}")

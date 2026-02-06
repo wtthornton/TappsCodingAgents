@@ -322,9 +322,9 @@ class EvaluatorAgent(BaseAgent):
                 "file_path": str(file_path),
             }
         except ValueError as e:
-            return {"error": f"Validation error: {str(e)}"}
+            return {"error": f"Validation error: {e!s}"}
         except Exception as e:
-            return {"error": f"Failed to submit feedback: {str(e)}"}
+            return {"error": f"Failed to submit feedback: {e!s}"}
 
     async def _handle_get_feedback(self, feedback_id: str) -> dict[str, Any]:
         """

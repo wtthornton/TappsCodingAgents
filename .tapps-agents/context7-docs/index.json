@@ -5767,6 +5767,55 @@
       "file_path": "tiktoken.json",
       "saved_at": "2026-02-04T21:24:00.291555",
       "source": "fuzzy_match"
+    },
+    "beads_sync:best-practices": {
+      "library": "beads_sync",
+      "topic": "best-practices",
+      "file_path": "beads_sync_best-practices.json",
+      "saved_at": "2026-02-06T00:38:42.202496",
+      "source": "fuzzy_match"
+    },
+    "beads_sync:common-mistakes": {
+      "library": "beads_sync",
+      "topic": "common-mistakes",
+      "file_path": "beads_sync_common-mistakes.json",
+      "saved_at": "2026-02-06T00:38:45.638313",
+      "source": "api"
+    },
+    "beads_sync:usage": {
+      "library": "beads_sync",
+      "topic": "usage",
+      "file_path": "beads_sync_usage.json",
+      "saved_at": "2026-02-06T00:38:45.775602",
+      "source": "fuzzy_match"
+    },
+    "beads_sync:examples": {
+      "library": "beads_sync",
+      "topic": "examples",
+      "file_path": "beads_sync_examples.json",
+      "saved_at": "2026-02-06T00:38:49.134312",
+      "source": "api"
+    },
+    "node:best-practices": {
+      "library": "node",
+      "topic": "best-practices",
+      "file_path": "node_best-practices.json",
+      "saved_at": "2026-02-06T07:31:38.417538",
+      "source": "fuzzy_match"
+    },
+    "node:architecture": {
+      "library": "node",
+      "topic": "architecture",
+      "file_path": "node_architecture.json",
+      "saved_at": "2026-02-06T07:31:38.669019",
+      "source": "fuzzy_match"
+    },
+    "javascript": {
+      "library": "javascript",
+      "topic": null,
+      "file_path": "javascript.json",
+      "saved_at": "2026-02-06T07:31:48.923126",
+      "source": "fuzzy_match"
     }
   },
   "comprehensive_index": {
@@ -7528,8 +7577,11 @@
         "total_docs": 1
       },
       "node": {
-        "topics": [],
-        "total_docs": 1
+        "topics": [
+          "best-practices",
+          "architecture"
+        ],
+        "total_docs": 3
       },
       "typescript": {
         "topics": [],
@@ -7574,6 +7626,19 @@
           "examples"
         ],
         "total_docs": 5
+      },
+      "beads_sync": {
+        "topics": [
+          "best-practices",
+          "common-mistakes",
+          "usage",
+          "examples"
+        ],
+        "total_docs": 4
+      },
+      "javascript": {
+        "topics": [],
+        "total_docs": 1
       }
     },
     "topics": {
@@ -7779,7 +7844,9 @@
         "tools",
         "dataclasses",
         "and",
-        "tiktoken"
+        "tiktoken",
+        "beads_sync",
+        "node"
       ],
       "common-mistakes": [
         "__future__",
@@ -7955,7 +8022,8 @@
         "score_validator",
         "scorer_registry",
         "tools",
-        "tiktoken"
+        "tiktoken",
+        "beads_sync"
       ],
       "usage": [
         "__future__",
@@ -8132,7 +8200,8 @@
         "score_validator",
         "scorer_registry",
         "tools",
-        "tiktoken"
+        "tiktoken",
+        "beads_sync"
       ],
       "examples": [
         "__future__",
@@ -8308,7 +8377,8 @@
         "score_validator",
         "scorer_registry",
         "tools",
-        "tiktoken"
+        "tiktoken",
+        "beads_sync"
       ],
       "quality-standards": [
         "pytest"
@@ -8347,11 +8417,12 @@
         "rich",
         "ruff",
         "types-pyyaml",
-        "and"
+        "and",
+        "node"
       ]
     },
-    "total_entries": 824,
-    "last_updated": "2026-02-04T21:24:00.291566"
+    "total_entries": 831,
+    "last_updated": "2026-02-06T07:31:48.923134"
   },
-  "last_updated": "2026-02-04T21:24:00.292828"
+  "last_updated": "2026-02-06T07:31:48.924261"
 }

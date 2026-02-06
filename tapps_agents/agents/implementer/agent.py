@@ -291,7 +291,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 context7_docs=context7_docs if context7_docs else None,
             )
         except Exception as e:
-            return {"error": f"Failed to prepare code generation instruction: {str(e)}"}
+            return {"error": f"Failed to prepare code generation instruction: {e!s}"}
 
         # Return instruction object for Cursor Skills execution
         skill_command = instruction.to_skill_command()
@@ -404,7 +404,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
                 result["expert_guidance"] = expert_guidance
             return result
         except Exception as e:
-            return {"error": f"Failed to prepare code generation instruction: {str(e)}"}
+            return {"error": f"Failed to prepare code generation instruction: {e!s}"}
 
     async def refactor(
         self, file_path: str, instruction: str, preview: bool = False
@@ -537,7 +537,7 @@ class ImplementerAgent(BaseAgent, ExpertSupportMixin):
             return review_result
         except Exception as e:
             # Review failed, but don't block if it's just an error
-            return {"error": f"Review failed: {str(e)}"}
+            return {"error": f"Review failed: {e!s}"}
         finally:
             # Clean up temp file
             if tmp_file_path.exists():

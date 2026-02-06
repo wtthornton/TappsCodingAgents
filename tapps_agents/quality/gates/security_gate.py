@@ -100,7 +100,7 @@ class SecurityGate(BaseGate):
                 return GateResult(
                     passed=False,
                     severity=GateSeverity.ERROR,
-                    message=f"Security gate evaluation failed: {str(e)}",
+                    message=f"Security gate evaluation failed: {e!s}",
                     details={"error": str(e)},
                 )
 

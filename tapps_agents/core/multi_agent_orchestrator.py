@@ -241,7 +241,7 @@ class MultiAgentOrchestrator:
         agent_name = task.get("agent", "unknown")
         command = task.get("command", "unknown")
         args = task.get("args", {})
-        target = task.get("target", None)
+        target = task.get("target")
 
         # Import agent dynamically
         try:

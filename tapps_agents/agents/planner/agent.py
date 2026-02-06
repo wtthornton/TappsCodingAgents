@@ -218,7 +218,7 @@ class PlannerAgent(BaseAgent):
         elif command == "trace-stories":
             stories = kwargs.get("stories", [])
             test_cases = kwargs.get("test_cases", [])
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._trace_stories(stories, test_cases, output_file)
 
@@ -339,7 +339,7 @@ Format your response as structured text."""
             }
         except (ConnectionError, TimeoutError, OSError) as e:
             # Network-related errors
-            error_msg = f"Network error: {str(e)}"
+            error_msg = f"Network error: {e!s}"
             logger.error(f"Network error generating plan: {e}", exc_info=True)
             # Fallback to instruction if analyst fails
             prompt = f"""You are a software planning expert. Analyze the following requirement and create a detailed plan.
@@ -374,7 +374,7 @@ Format your response as structured text."""
             }
         except Exception as e:
             # All other errors
-            error_msg = f"Error generating plan: {str(e)}"
+            error_msg = f"Error generating plan: {e!s}"
             logger.error(f"Error generating plan: {e}", exc_info=True)
             # Fallback to instruction if analyst fails
             prompt = f"""You are a software planning expert. Analyze the following requirement and create a detailed plan.

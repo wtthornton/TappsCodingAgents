@@ -140,7 +140,7 @@ class KnowledgeIngestionPipeline:
                 self._store_knowledge_entries(entries)
             except Exception as e:
                 entries_failed += 1
-                errors.append(f"{source_type}: {str(e)}")
+                errors.append(f"{source_type}: {e!s}")
 
         return IngestionResult(
             source_type="project",
@@ -275,7 +275,7 @@ class KnowledgeIngestionPipeline:
 
             except Exception as e:
                 entries_failed += 1
-                errors.append(f"{library}: {str(e)}")
+                errors.append(f"{library}: {e!s}")
 
         return IngestionResult(
             source_type="context7",
@@ -353,7 +353,7 @@ class KnowledgeIngestionPipeline:
                 self._store_knowledge_entries(entries)
             except Exception as e:
                 entries_failed += 1
-                errors.append(f"{source_path}: {str(e)}")
+                errors.append(f"{source_path}: {e!s}")
 
         return IngestionResult(
             source_type="operational",

@@ -784,7 +784,7 @@ class Context7Commands:
                     populated += 1
 
                 except Exception as e:
-                    errors.append(f"{library}/{topic}: {str(e)}")
+                    errors.append(f"{library}/{topic}: {e!s}")
 
         return {
             "success": populated > 0,

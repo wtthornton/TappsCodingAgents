@@ -167,7 +167,7 @@ class CredentialValidator:
                 valid=False,
                 error=str(e),
                 actionable_message=(
-                    f"Failed to test Context7 credentials: {str(e)}\n"
+                    f"Failed to test Context7 credentials: {e!s}\n"
                     "Please check:\n"
                     "1. MCP Gateway is properly configured\n"
                     "2. Context7 MCP server is running\n"

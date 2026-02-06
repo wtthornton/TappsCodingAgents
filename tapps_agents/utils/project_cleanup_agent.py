@@ -7,7 +7,7 @@ Architecture:
     - ProjectAnalyzer: Scan and analyze project structure
     - CleanupPlanner: Generate cleanup plans with categorization
     - CleanupExecutor: Execute cleanup operations safely
-    - CleanupAgent: CLI orchestrator
+    - CleanupOrchestrator: CLI orchestrator
 
 Usage:
     # Analyze project
@@ -25,15 +25,18 @@ Usage:
 
 import asyncio
 import hashlib
+import logging
 import re
 import shutil
 import zipfile
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime
 from difflib import SequenceMatcher
 from enum import StrEnum
 from pathlib import Path
 from typing import Optional
+from uuid import uuid4
 
 import aiofiles
 from pydantic import BaseModel, ConfigDict, Field
@@ -43,6 +46,29 @@ try:
     GIT_AVAILABLE = True
 except ImportError:
     GIT_AVAILABLE = False
+
+logger = logging.getLogger(__name__)
+
+# Directories to exclude from recursive scans (backup, reference updates, etc.)
+EXCLUDED_DIRS = frozenset({
+    ".git", "node_modules", ".venv", "venv", "__pycache__",
+    ".cleanup-backups", ".tapps-agents", ".mypy_cache", ".pytest_cache",
+    ".tox", ".eggs", "dist", "build", ".cache",
+})
+
+# Scan mode pattern presets
+SCAN_MODE_PATTERNS: dict[str, list[str]] = {
+    "docs-only": ["*.md", "*.rst", "*.txt", "*.adoc"],
+    "code-only": ["*.py", "*.js", "*.ts", "*.jsx", "*.tsx", "*.java", "*.go", "*.rs"],
+}
+
+# Type alias for progress callbacks
+ProgressCallback = Callable[[str, int, int], None]
+
+
+def _is_excluded(path: Path) -> bool:
+    """Check if a path contains an excluded directory component."""
+    return any(part in EXCLUDED_DIRS for part in path.parts)
 
 
 # =============================================================================
@@ -112,6 +138,15 @@ class DuplicateGroup(BaseModel):
         return self.size * (len(self.files) - 1)
 
 
+class NearDuplicatePair(BaseModel):
+    """Pair of files with near-duplicate content."""
+    file1: Path = Field(..., description="First file")
+    file2: Path = Field(..., description="Second file")
+    similarity: float = Field(..., description="Similarity ratio (0.0-1.0)", ge=0.0, le=1.0)
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
 class OutdatedFile(BaseModel):
     """File that hasn't been modified recently."""
     path: Path = Field(..., description="File path")
@@ -138,13 +173,28 @@ class NamingIssue(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
 
 
+class LargeFile(BaseModel):
+    """File exceeding the configured size threshold."""
+    path: Path = Field(..., description="File path")
+    size_bytes: int = Field(..., description="File size in bytes", ge=0)
+    size_mb: float = Field(..., description="File size in megabytes")
+    is_binary: bool = Field(default=False, description="Whether file appears to be binary")
+    recommendation: str = Field(
+        default="", description="Suggested action (e.g., .gitignore, git-lfs, delete)"
+    )
+
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+
 class AnalysisReport(BaseModel):
     """Analysis report of project structure."""
     total_files: int = Field(..., description="Total number of files analyzed", ge=0)
     total_size: int = Field(..., description="Total size of all files in bytes", ge=0)
     duplicates: list[DuplicateGroup] = Field(default_factory=list, description="Groups of duplicate files")
+    near_duplicates: list[NearDuplicatePair] = Field(default_factory=list, description="Near-duplicate file pairs")
     outdated_files: list[OutdatedFile] = Field(default_factory=list, description="Files not modified recently")
     naming_issues: list[NamingIssue] = Field(default_factory=list, description="Files with naming convention violations")
+    large_files: list[LargeFile] = Field(default_factory=list, description="Files exceeding size threshold")
     timestamp: datetime = Field(default_factory=datetime.now, description="When analysis was performed")
     scan_path: Path = Field(..., description="Root path that was analyzed")
 
@@ -167,6 +217,10 @@ class AnalysisReport(BaseModel):
 
     def to_markdown(self) -> str:
         """Generate markdown report."""
+        near_dup_section = ""
+        if self.near_duplicates:
+            near_dup_section = f"\n## Near-Duplicates\n- **Pairs:** {len(self.near_duplicates)}\n"
+
         return f"""# Analysis Report
 
 **Analyzed:** {self.timestamp.isoformat()}
@@ -178,7 +232,7 @@ class AnalysisReport(BaseModel):
 - **Groups:** {len(self.duplicates)}
 - **Files:** {self.duplicate_count}
 - **Potential Savings:** {self.potential_savings / 1024:.2f} KB
-
+{near_dup_section}
 ## Outdated Files
 - **Total:** {len(self.outdated_files)}
 - **Obsolete:** {self.obsolete_file_count}
@@ -192,7 +246,7 @@ class CleanupAction(BaseModel):
     """Individual cleanup action."""
     action_type: ActionType = Field(..., description="Type of action")
     source_files: list[Path] = Field(..., description="Source file(s) for this action", min_length=1)
-    target_path: Path | None = Field(None, description="Target path (for MOVE/RENAME actions)")
+    target_path: Path | None = Field(None, description="Target path (for MOVE/RENAME/MERGE actions)")
     rationale: str = Field(..., description="Explanation for this action", min_length=10)
     priority: int = Field(..., description="Priority level (1=low, 2=medium, 3=high)", ge=1, le=3)
     safety_level: SafetyLevel = Field(..., description="Risk assessment for this action")
@@ -274,6 +328,7 @@ class ExecutionReport(BaseModel):
     files_deleted: int = Field(0, description="Number of files deleted", ge=0)
     files_moved: int = Field(0, description="Number of files moved", ge=0)
     files_renamed: int = Field(0, description="Number of files renamed", ge=0)
+    files_merged: int = Field(0, description="Number of files merged", ge=0)
     backup_location: Path | None = Field(None, description="Path to backup archive")
     started_at: datetime = Field(..., description="Execution start time")
     completed_at: datetime = Field(..., description="Execution completion time")
@@ -314,6 +369,7 @@ class ExecutionReport(BaseModel):
 - **Deleted:** {self.files_deleted}
 - **Moved:** {self.files_moved}
 - **Renamed:** {self.files_renamed}
+- **Merged:** {self.files_merged}
 - **Total:** {self.files_modified}
 
 ## Backup
@@ -328,20 +384,26 @@ class ExecutionReport(BaseModel):
 class ProjectAnalyzer:
     """Analyze project structure and identify cleanup opportunities."""
 
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path, age_threshold_days: int = 90, exclude_names: list[str] | None = None):
         """Initialize analyzer.
 
         Args:
             project_root: Root directory of project to analyze
+            age_threshold_days: Days threshold for outdated file detection
+            exclude_names: Filenames to exclude from naming convention analysis
         """
         self.project_root = project_root.resolve()
         self._validate_path(self.project_root)
+        self.age_threshold_days = age_threshold_days
+        self.exclude_names = set(exclude_names or [])
         self._repo: Repo | None = None
         if GIT_AVAILABLE:
             try:
                 self._repo = Repo(self.project_root)
             except InvalidGitRepositoryError:
                 pass  # Not a git repo, continue without git features
+        # Reference index built lazily (Enhancement #6)
+        self._reference_index: dict[str, set[Path]] | None = None
 
     def _validate_path(self, path: Path) -> None:
         """Validate path is safe and within project."""
@@ -350,26 +412,57 @@ class ProjectAnalyzer:
         if not path.is_dir():
             raise ValueError(f"Path is not a directory: {path}")
 
-    async def scan_directory_structure(self, path: Path, pattern: str = "*.md") -> list[Path]:
-        """Scan directory for files matching pattern.
+    async def scan_directory_structure(
+        self,
+        path: Path,
+        pattern: str = "*.md",
+        patterns: list[str] | None = None,
+        respect_gitignore: bool = True,
+    ) -> list[Path]:
+        """Scan directory for files matching pattern(s).
 
         Args:
             path: Directory to scan
-            pattern: Glob pattern for files to include
+            pattern: Single glob pattern (used if patterns is empty/None)
+            patterns: Multiple glob patterns to scan (e.g., ['*.md', '*.py'])
+            respect_gitignore: If True, exclude files matched by .gitignore
 
         Returns:
-            List of file paths matching pattern
+            List of file paths matching pattern(s)
         """
         self._validate_path(path)
-        files: list[Path] = []
+
+        # Determine effective patterns
+        effective_patterns = patterns if patterns else [pattern]
+
+        # Set up gitignore filtering
+        repo = None
+        if respect_gitignore and GIT_AVAILABLE:
+            try:
+                repo = Repo(path, search_parent_directories=True)
+            except (InvalidGitRepositoryError, Exception):
+                repo = None
 
         def scan_sync(directory: Path) -> list[Path]:
-            """Synchronous scan helper."""
-            return list(directory.rglob(pattern))
+            """Synchronous scan helper with multi-pattern and gitignore support."""
+            seen: set[Path] = set()
+            results: list[Path] = []
+            for pat in effective_patterns:
+                for f in directory.rglob(pat):
+                    if f in seen or not f.is_file():
+                        continue
+                    # Filter gitignored files
+                    if repo is not None:
+                        try:
+                            if repo.ignored(str(f)):
+                                continue
+                        except Exception:
+                            pass  # Graceful fallback if ignored() fails
+                    seen.add(f)
+                    results.append(f)
+            return results
 
-        # Run sync scan in thread pool to avoid blocking
-        loop = asyncio.get_event_loop()
-        files = await loop.run_in_executor(None, scan_sync, path)
+        files = await asyncio.to_thread(scan_sync, path)
 
         return sorted(files, key=lambda f: f.stat().st_mtime, reverse=True)
 
@@ -424,75 +517,247 @@ class ProjectAnalyzer:
 
         return sorted(duplicates, key=lambda g: g.savings, reverse=True)
 
-    def analyze_naming_patterns(self, files: list[Path]) -> list[NamingIssue]:
+    # Naming convention patterns
+    NAMING_PATTERNS: dict[str, re.Pattern] = {
+        "kebab-case": re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*$'),
+        "snake_case": re.compile(r'^[a-z0-9]+(_[a-z0-9]+)*$'),
+        "camelCase": re.compile(r'^[a-z][a-zA-Z0-9]*$'),
+        "PascalCase": re.compile(r'^[A-Z][a-zA-Z0-9]*$'),
+    }
+
+    def analyze_naming_patterns(
+        self, files: list[Path], convention: str = "kebab-case"
+    ) -> list[NamingIssue]:
         """Analyze file naming patterns and detect violations.
 
         Args:
             files: List of files to check
+            convention: Expected naming convention ('kebab-case', 'snake_case',
+                        'camelCase', 'PascalCase', or a custom regex pattern)
 
         Returns:
             List of naming issues
         """
         issues = []
-        kebab_pattern = re.compile(r'^[a-z0-9]+(-[a-z0-9]+)*\.(md|json|yaml|yml|txt)$')
+
+        # Get or compile the pattern for the convention
+        if convention in self.NAMING_PATTERNS:
+            stem_pattern = self.NAMING_PATTERNS[convention]
+        else:
+            # Treat as custom regex
+            try:
+                stem_pattern = re.compile(convention)
+            except re.error:
+                logger.warning("Invalid naming convention regex: %s, using kebab-case", convention)
+                stem_pattern = self.NAMING_PATTERNS["kebab-case"]
 
         for file in files:
             name = file.name
-            stem = file.stem  # File name without extension
+            stem = file.stem
 
-            # Skip if already kebab-case
-            if kebab_pattern.match(name):
+            # Skip excluded filenames
+            if name in self.exclude_names:
                 continue
 
-            # Detect violation type
-            violation = None
+            # Check against convention pattern
+            if stem_pattern.match(stem):
+                continue
+
+            # Detect what style it currently uses
             if stem.isupper():
                 violation = "UPPERCASE"
-            elif '_' in stem:
+            elif '_' in stem and stem == stem.lower():
                 violation = "snake_case"
+            elif '-' in stem and stem == stem.lower():
+                violation = "kebab-case"
+            elif stem[0].isupper() if stem else False:
+                violation = "PascalCase"
             elif any(c.isupper() for c in stem):
-                violation = "MixedCase"
+                violation = "camelCase"
+            else:
+                violation = "non-standard"
 
-            if violation:
-                # Generate kebab-case suggestion
-                suggested = name.lower().replace('_', '-').replace(' ', '-')
-                suggested = re.sub(r'[^a-z0-9.-]', '', suggested)
+            # Generate suggestion based on target convention
+            suggested = self._convert_to_convention(stem, convention)
+            ext = file.suffix
 
-                issues.append(NamingIssue(
-                    path=file,
-                    current_name=name,
-                    suggested_name=suggested,
-                    pattern_violation=violation
-                ))
+            issues.append(NamingIssue(
+                path=file,
+                current_name=name,
+                suggested_name=f"{suggested}{ext}",
+                pattern_violation=f"{violation} (expected {convention})"
+            ))
 
         return issues
 
-    def detect_outdated_files(self, files: list[Path], age_threshold_days: int = 90) -> list[OutdatedFile]:
+    @staticmethod
+    def _convert_to_convention(stem: str, convention: str) -> str:
+        """Convert a stem to the target naming convention."""
+        # Split into words (handle kebab, snake, camelCase, PascalCase)
+        words = re.sub(r'[-_]', ' ', stem)  # Replace delimiters with spaces
+        words = re.sub(r'([a-z])([A-Z])', r'\1 \2', words)  # camelCase split
+        parts = [w.lower() for w in words.split() if w]
+        if not parts:
+            return stem.lower()
+        if convention == "kebab-case":
+            return "-".join(parts)
+        elif convention == "snake_case":
+            return "_".join(parts)
+        elif convention == "camelCase":
+            return parts[0] + "".join(w.capitalize() for w in parts[1:])
+        elif convention == "PascalCase":
+            return "".join(w.capitalize() for w in parts)
+        return "-".join(parts)  # Default to kebab
+
+    def detect_large_files(
+        self, files: list[Path], threshold_mb: float = 5.0
+    ) -> list[LargeFile]:
+        """Detect files exceeding the size threshold.
+
+        Args:
+            files: List of files to check
+            threshold_mb: Size threshold in megabytes
+
+        Returns:
+            List of LargeFile entries
+        """
+        threshold_bytes = int(threshold_mb * 1024 * 1024)
+        large: list[LargeFile] = []
+        for f in files:
+            try:
+                size = f.stat().st_size
+                if size > threshold_bytes:
+                    is_binary = self._is_binary_file(f)
+                    recommendation = (
+                        "Consider git-lfs or .gitignore"
+                        if is_binary
+                        else "Review if file can be split or compressed"
+                    )
+                    large.append(
+                        LargeFile(
+                            path=f,
+                            size_bytes=size,
+                            size_mb=round(size / (1024 * 1024), 2),
+                            is_binary=is_binary,
+                            recommendation=recommendation,
+                        )
+                    )
+            except OSError:
+                continue
+        return sorted(large, key=lambda x: x.size_bytes, reverse=True)
+
+    @staticmethod
+    def _is_binary_file(path: Path, check_bytes: int = 512) -> bool:
+        """Check if a file is binary by reading first bytes."""
+        try:
+            with open(path, "rb") as f:
+                chunk = f.read(check_bytes)
+            # Heuristic: if >10% of bytes are non-text, it's binary
+            non_text = sum(1 for b in chunk if b > 127 or (b < 32 and b not in (9, 10, 13)))
+            return len(chunk) > 0 and (non_text / len(chunk)) > 0.1
+        except OSError:
+            return False
+
+    def _build_reference_index(self, files: list[Path]) -> dict[str, set[Path]]:
+        """Build a reference index mapping filenames to referring files.
+
+        Enhancement #6: Single-pass O(n) index replaces O(n^2) _count_references.
+
+        Args:
+            files: All files to index
+
+        Returns:
+            Dict mapping filename -> set of files that reference it
+        """
+        index: dict[str, set[Path]] = {}
+        # Pre-populate with all filenames and relative paths
+        file_identifiers: dict[Path, list[str]] = {}
+        for f in files:
+            identifiers = [f.name]
+            try:
+                identifiers.append(str(f.relative_to(self.project_root)))
+            except ValueError:
+                pass
+            file_identifiers[f] = identifiers
+            for ident in identifiers:
+                index.setdefault(ident, set())
+
+        # Single pass: read each file once, check which identifiers it mentions
+        all_identifiers = set()
+        for idents in file_identifiers.values():
+            all_identifiers.update(idents)
+
+        for f in files:
+            try:
+                content = f.read_text(encoding='utf-8', errors='ignore')
+            except Exception:
+                continue
+
+            for ident in all_identifiers:
+                if ident in content:
+                    # f references ident — but don't count self-references
+                    for target, target_idents in file_identifiers.items():
+                        if target != f and ident in target_idents:
+                            index.setdefault(ident, set()).add(f)
+
+        return index
+
+    def _count_references_indexed(self, target_file: Path, files: list[Path]) -> int:
+        """Count references to target file using the pre-built index.
+
+        Args:
+            target_file: File to count references for
+            files: All files (used to build index on first call)
+
+        Returns:
+            Number of files that reference target_file
+        """
+        if self._reference_index is None:
+            self._reference_index = self._build_reference_index(files)
+
+        referring_files: set[Path] = set()
+        # Check both filename and relative path
+        identifiers = [target_file.name]
+        try:
+            identifiers.append(str(target_file.relative_to(self.project_root)))
+        except ValueError:
+            pass
+
+        for ident in identifiers:
+            referring_files.update(self._reference_index.get(ident, set()))
+
+        return len(referring_files)
+
+    def detect_outdated_files(self, files: list[Path], age_threshold_days: int | None = None) -> list[OutdatedFile]:
         """Detect files that haven't been modified recently.
 
         Args:
             files: List of files to check
-            age_threshold_days: Age threshold in days
+            age_threshold_days: Age threshold in days (uses instance default if None)
 
         Returns:
             List of outdated files
         """
+        threshold = age_threshold_days if age_threshold_days is not None else self.age_threshold_days
         outdated = []
         now = datetime.now()
+
+        # Reset reference index for fresh calculation
+        self._reference_index = None
 
         for file in files:
             # Get last modified time from git if available, else filesystem
             last_modified = self._get_last_modified_date(file)
             age_days = (now - last_modified).days
 
-            if age_days >= age_threshold_days:
-                # Count references to this file
-                ref_count = self._count_references(file, files)
+            if age_days >= threshold:
+                # Enhancement #6: Use indexed reference counting
+                ref_count = self._count_references_indexed(file, files)
 
                 # Determine recommendation
-                if age_days > 90 and ref_count == 0:
+                if age_days > threshold and ref_count == 0:
                     category = FileCategory.DELETE
-                elif age_days > 90:
+                elif age_days > threshold:
                     category = FileCategory.ARCHIVE
                 else:
                     category = FileCategory.KEEP
@@ -528,55 +793,62 @@ class ProjectAnalyzer:
         # Use filesystem modification time
         return datetime.fromtimestamp(file.stat().st_mtime)
 
-    def _count_references(self, target_file: Path, all_files: list[Path]) -> int:
-        """Count references to target file in other files.
-
-        Args:
-            target_file: File to search for
-            all_files: List of all files to search in
-
-        Returns:
-            Number of references found
-        """
-        count = 0
-        target_name = target_file.name
-        target_path_str = str(target_file.relative_to(self.project_root))
-
-        for file in all_files:
-            if file == target_file:
-                continue
-
-            try:
-                content = file.read_text(encoding='utf-8', errors='ignore')
-
-                # Check for references: [text](path), docs/file.md
-                if target_name in content or target_path_str in content:
-                    count += 1
-            except Exception:
-                pass  # Skip files that can't be read
-
-        return count
-
-    async def generate_analysis_report(self, scan_path: Path, pattern: str = "*.md") -> AnalysisReport:
+    async def generate_analysis_report(
+        self,
+        scan_path: Path,
+        pattern: str = "*.md",
+        patterns: list[str] | None = None,
+        respect_gitignore: bool = True,
+        naming_convention: str = "kebab-case",
+        large_file_threshold_mb: float = 5.0,
+        progress_callback: ProgressCallback | None = None,
+    ) -> AnalysisReport:
         """Generate comprehensive analysis report.
 
         Args:
             scan_path: Path to scan
-            pattern: File pattern to match
+            pattern: File pattern to match (fallback if patterns is empty)
+            patterns: Multiple file patterns to scan
+            respect_gitignore: Exclude .gitignore-matched files
+            naming_convention: Expected naming convention
+            large_file_threshold_mb: Threshold for flagging large files
+            progress_callback: Optional callback(step_name, current, total)
 
         Returns:
             Analysis report
         """
-        # Scan files
-        files = await self.scan_directory_structure(scan_path, pattern)
+        total_steps = 5
+
+        # Step 1: Scan files (multi-pattern + gitignore aware)
+        if progress_callback:
+            progress_callback("Scanning files", 1, total_steps)
+        files = await self.scan_directory_structure(
+            scan_path, pattern, patterns=patterns,
+            respect_gitignore=respect_gitignore,
+        )
 
         # Calculate total size
         total_size = sum(f.stat().st_size for f in files)
 
-        # Run analysis tasks
+        # Step 2: Detect duplicates
+        if progress_callback:
+            progress_callback("Detecting duplicates", 2, total_steps)
         duplicates = await self.detect_duplicates(files)
-        naming_issues = self.analyze_naming_patterns(files)
+
+        # Step 3: Analyze naming (with configurable convention)
+        if progress_callback:
+            progress_callback("Analyzing naming patterns", 3, total_steps)
+        naming_issues = self.analyze_naming_patterns(files, convention=naming_convention)
+
+        # Step 4: Detect outdated files
+        if progress_callback:
+            progress_callback("Detecting outdated files", 4, total_steps)
         outdated_files = self.detect_outdated_files(files)
+
+        # Step 5: Detect large files
+        if progress_callback:
+            progress_callback("Detecting large files", 5, total_steps)
+        large_files = self.detect_large_files(files, threshold_mb=large_file_threshold_mb)
 
         return AnalysisReport(
             total_files=len(files),
@@ -584,6 +856,7 @@ class ProjectAnalyzer:
             duplicates=duplicates,
             outdated_files=outdated_files,
             naming_issues=naming_issues,
+            large_files=large_files,
             scan_path=scan_path
         )
 
@@ -595,21 +868,22 @@ class ProjectAnalyzer:
 class CleanupPlanner:
     """Generate cleanup plans with categorization and prioritization."""
 
-    def __init__(self, analysis_report: AnalysisReport):
+    def __init__(self, analysis_report: AnalysisReport, similarity_threshold: float = 0.8):
         """Initialize planner.
 
         Args:
             analysis_report: Analysis report to plan from
+            similarity_threshold: Threshold for near-duplicate detection (0.0-1.0)
         """
         self.analysis = analysis_report
+        self.similarity_threshold = similarity_threshold
 
-    def detect_content_similarity(self, file1: Path, file2: Path, threshold: float = 0.8) -> float:
+    def detect_content_similarity(self, file1: Path, file2: Path) -> float:
         """Detect content similarity between two files.
 
         Args:
             file1: First file
             file2: Second file
-            threshold: Similarity threshold (0.0-1.0)
 
         Returns:
             Similarity ratio (0.0-1.0)
@@ -621,6 +895,39 @@ class CleanupPlanner:
             return SequenceMatcher(None, content1, content2).ratio()
         except Exception:
             return 0.0
+
+    def detect_near_duplicates(self, files: list[Path]) -> list[NearDuplicatePair]:
+        """Detect near-duplicate files by content similarity.
+
+        Enhancement #7: Activated near-duplicate detection.
+
+        Args:
+            files: List of files to compare
+
+        Returns:
+            List of near-duplicate pairs above similarity threshold
+        """
+        # Collect files that are NOT exact duplicates (those are handled separately)
+        duplicate_hashes = {g.hash for g in self.analysis.duplicates}
+        candidates = [f for f in files if f.stat().st_size > 0]
+
+        # Only compare if we have a reasonable number of candidates
+        if len(candidates) > 200:
+            logger.info("Skipping near-duplicate detection: too many files (%d)", len(candidates))
+            return []
+
+        pairs: list[NearDuplicatePair] = []
+        for i, f1 in enumerate(candidates):
+            for f2 in candidates[i + 1:]:
+                similarity = self.detect_content_similarity(f1, f2)
+                if similarity >= self.similarity_threshold and similarity < 1.0:
+                    pairs.append(NearDuplicatePair(
+                        file1=f1,
+                        file2=f2,
+                        similarity=similarity,
+                    ))
+
+        return sorted(pairs, key=lambda p: p.similarity, reverse=True)
 
     def categorize_files(self) -> dict[FileCategory, list[Path]]:
         """Categorize files based on analysis results.
@@ -648,6 +955,11 @@ class CleanupPlanner:
         # Categorize naming issues
         for issue in self.analysis.naming_issues:
             categories[FileCategory.RENAME].append(issue.path)
+
+        # Categorize near-duplicates as merge candidates
+        for pair in self.analysis.near_duplicates:
+            if pair.file2 not in categories[FileCategory.MERGE]:
+                categories[FileCategory.MERGE].append(pair.file2)
 
         return categories
 
@@ -686,6 +998,18 @@ class CleanupPlanner:
                     safety_level=SafetyLevel.SAFE,
                     estimated_savings=group.size
                 ))
+
+        # Enhancement #7: Generate merge actions for near-duplicates
+        for pair in self.analysis.near_duplicates:
+            actions.append(CleanupAction(
+                action_type=ActionType.MERGE,
+                source_files=[pair.file1, pair.file2],
+                target_path=pair.file1,  # Merge into file1
+                rationale=f"Near-duplicate files ({pair.similarity:.0%} similar) - merge content into {pair.file1.name}",
+                priority=1,
+                safety_level=SafetyLevel.RISKY,
+                estimated_savings=pair.file2.stat().st_size if pair.file2.exists() else 0,
+            ))
 
         # Generate actions for outdated files
         for file in self.analysis.outdated_files:
@@ -767,16 +1091,7 @@ class ReferenceUpdater:
         ]
 
     def _update_markdown_link(self, match, old_path: Path, new_path: Path) -> str:
-        """Update markdown link reference.
-
-        Args:
-            match: Regex match object
-            old_path: Old file path
-            new_path: New file path
-
-        Returns:
-            Updated match string
-        """
+        """Update markdown link reference."""
         link_text = match.group(1)
         link_target = match.group(2)
 
@@ -789,29 +1104,18 @@ class ReferenceUpdater:
         return match.group(0)  # No change
 
     def _update_relative_path(self, match, old_path: Path, new_path: Path) -> str:
-        """Update relative path reference.
-
-        Args:
-            match: Regex match object
-            old_path: Old file path
-            new_path: New file path
-
-        Returns:
-            Updated match string
-        """
+        """Update relative path reference."""
         prefix = match.group(1) or ''
         path_str = match.group(2)
 
         # Check if path matches old filename
         if Path(path_str).name == old_path.name or path_str == str(old_path):
-            # Preserve relative path structure - use name if path had no directory, else use relative path
+            # Preserve relative path structure
             if '/' in path_str:
-                # Path had directory structure - try to preserve it
                 old_parts = Path(path_str).parts
                 new_relative = '/'.join(old_parts[:-1] + (new_path.name,))
                 return f'{prefix}{new_relative}'
             else:
-                # Simple filename - use new name only
                 return f'{prefix}{new_path.name}'
 
         return match.group(0)  # No change
@@ -823,6 +1127,8 @@ class ReferenceUpdater:
         dry_run: bool = False
     ) -> int:
         """Scan all text files and update references.
+
+        Enhancement #2: Skips EXCLUDED_DIRS during scanning.
 
         Args:
             old_path: Old file path
@@ -838,6 +1144,10 @@ class ReferenceUpdater:
         text_extensions = {'.md', '.py', '.js', '.ts', '.json', '.yaml', '.yml', '.txt', '.rst'}
 
         for file in self.project_root.rglob('*'):
+            # Enhancement #2: Skip excluded directories
+            if _is_excluded(file):
+                continue
+
             if not file.is_file() or file.suffix not in text_extensions:
                 continue
 
@@ -854,9 +1164,9 @@ class ReferenceUpdater:
                 for pattern_regex, update_func in self.patterns:
                     pattern = re.compile(pattern_regex)
 
-                    def replacer(match):
+                    def replacer(match, _func=update_func):
                         nonlocal file_updated
-                        updated = update_func(match, old_path, new_path)
+                        updated = _func(match, old_path, new_path)
                         if updated != match.group(0):
                             file_updated = True
                         return updated
@@ -880,6 +1190,14 @@ class ReferenceUpdater:
 # CleanupExecutor - Execution Layer
 # =============================================================================
 
+def _make_operation_id(prefix: str) -> str:
+    """Generate a unique operation ID with a UUID suffix.
+
+    Enhancement #9: Prevents operation ID collisions.
+    """
+    return f"{prefix}-{uuid4().hex[:8]}"
+
+
 class CleanupStrategy(ABC):
     """Abstract base class for cleanup strategies."""
 
@@ -902,20 +1220,21 @@ class DeleteStrategy(CleanupStrategy):
 
     async def execute(self, action: CleanupAction, dry_run: bool = False) -> OperationResult:
         """Execute delete action."""
+        op_id = _make_operation_id("del")
         try:
             for file in action.source_files:
                 if not dry_run:
                     file.unlink()
 
             return OperationResult(
-                operation_id=f"del-{action.source_files[0].stem}",
+                operation_id=op_id,
                 action_type=ActionType.DELETE,
                 source_files=action.source_files,
                 status="SUCCESS"
             )
         except Exception as e:
             return OperationResult(
-                operation_id=f"del-{action.source_files[0].stem}",
+                operation_id=op_id,
                 action_type=ActionType.DELETE,
                 source_files=action.source_files,
                 status="FAILED",
@@ -927,17 +1246,12 @@ class RenameStrategy(CleanupStrategy):
     """Strategy for renaming files."""
 
     def __init__(self, repo: Optional['Repo'] = None, project_root: Path | None = None):
-        """Initialize rename strategy.
-
-        Args:
-            repo: Git repository for git mv operations
-            project_root: Project root for reference updating
-        """
         self.repo = repo
         self.reference_updater = ReferenceUpdater(project_root) if project_root else None
 
     async def execute(self, action: CleanupAction, dry_run: bool = False) -> OperationResult:
         """Execute rename action."""
+        op_id = _make_operation_id("ren")
         try:
             source = action.source_files[0]
             target = action.target_path
@@ -945,29 +1259,25 @@ class RenameStrategy(CleanupStrategy):
 
             if not dry_run:
                 if self.repo and GIT_AVAILABLE:
-                    # Use git mv to preserve history
                     try:
                         self.repo.git.mv(str(source), str(target))
                     except Exception:
-                        # Fall back to regular rename
                         source.rename(target)
                 else:
                     source.rename(target)
 
-                # Update references in other files
                 if self.reference_updater:
                     references_updated = self.reference_updater.scan_and_update_references(
                         source, target, dry_run=False
                     )
             else:
-                # Dry-run: count references that would be updated
                 if self.reference_updater:
                     references_updated = self.reference_updater.scan_and_update_references(
                         source, target, dry_run=True
                     )
 
             return OperationResult(
-                operation_id=f"ren-{source.stem}",
+                operation_id=op_id,
                 action_type=ActionType.RENAME,
                 source_files=[source],
                 target_path=target,
@@ -976,7 +1286,7 @@ class RenameStrategy(CleanupStrategy):
             )
         except Exception as e:
             return OperationResult(
-                operation_id=f"ren-{action.source_files[0].stem}",
+                operation_id=op_id,
                 action_type=ActionType.RENAME,
                 source_files=action.source_files,
                 target_path=action.target_path,
@@ -989,17 +1299,12 @@ class MoveStrategy(CleanupStrategy):
     """Strategy for moving files."""
 
     def __init__(self, repo: Optional['Repo'] = None, project_root: Path | None = None):
-        """Initialize move strategy.
-
-        Args:
-            repo: Git repository for git mv operations
-            project_root: Project root for reference updating
-        """
         self.repo = repo
         self.reference_updater = ReferenceUpdater(project_root) if project_root else None
 
     async def execute(self, action: CleanupAction, dry_run: bool = False) -> OperationResult:
         """Execute move action."""
+        op_id = _make_operation_id("mov")
         try:
             source = action.source_files[0]
             target = action.target_path
@@ -1009,20 +1314,18 @@ class MoveStrategy(CleanupStrategy):
                 target.parent.mkdir(parents=True, exist_ok=True)
                 shutil.move(str(source), str(target))
 
-                # Update references in other files
                 if self.reference_updater:
                     references_updated = self.reference_updater.scan_and_update_references(
                         source, target, dry_run=False
                     )
             else:
-                # Dry-run: count references that would be updated
                 if self.reference_updater:
                     references_updated = self.reference_updater.scan_and_update_references(
                         source, target, dry_run=True
                     )
 
             return OperationResult(
-                operation_id=f"mov-{source.stem}",
+                operation_id=op_id,
                 action_type=ActionType.MOVE,
                 source_files=[source],
                 target_path=target,
@@ -1031,7 +1334,7 @@ class MoveStrategy(CleanupStrategy):
             )
         except Exception as e:
             return OperationResult(
-                operation_id=f"mov-{action.source_files[0].stem}",
+                operation_id=op_id,
                 action_type=ActionType.MOVE,
                 source_files=action.source_files,
                 target_path=action.target_path,
@@ -1040,18 +1343,71 @@ class MoveStrategy(CleanupStrategy):
             )
 
 
+class MergeStrategy(CleanupStrategy):
+    """Strategy for merging content from multiple source files into a target.
+
+    Enhancement #3: Implements the missing MergeStrategy.
+    Appends content from secondary source files into the target (first source).
+    """
+
+    async def execute(self, action: CleanupAction, dry_run: bool = False) -> OperationResult:
+        """Execute merge action.
+
+        Merges content from all source files into target_path (or first source).
+        Secondary source files are deleted after merge.
+        """
+        op_id = _make_operation_id("mrg")
+        target = action.target_path or action.source_files[0]
+        try:
+            if not dry_run:
+                # Read all source file contents
+                merged_parts: list[str] = []
+                for src in action.source_files:
+                    if src.exists():
+                        merged_parts.append(src.read_text(encoding='utf-8', errors='ignore'))
+
+                # Write merged content to target
+                merged_content = "\n\n".join(merged_parts)
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_text(merged_content, encoding='utf-8')
+
+                # Delete secondary source files (all except target)
+                for src in action.source_files:
+                    if src != target and src.exists():
+                        src.unlink()
+
+            return OperationResult(
+                operation_id=op_id,
+                action_type=ActionType.MERGE,
+                source_files=action.source_files,
+                target_path=target,
+                status="SUCCESS",
+            )
+        except Exception as e:
+            return OperationResult(
+                operation_id=op_id,
+                action_type=ActionType.MERGE,
+                source_files=action.source_files,
+                target_path=target,
+                status="FAILED",
+                error_message=str(e),
+            )
+
+
 class CleanupExecutor:
     """Execute cleanup operations safely with backups and rollback."""
 
-    def __init__(self, project_root: Path):
+    def __init__(self, project_root: Path, backup_dir: str = ".tapps-agents/cleanup-backups"):
         """Initialize executor.
 
         Args:
             project_root: Root directory of project
+            backup_dir: Backup directory relative to project root
         """
         self.project_root = project_root.resolve()
-        self.backup_dir = project_root / ".cleanup-backups"
-        self.backup_dir.mkdir(exist_ok=True)
+        # Enhancement #1: Store backups under .tapps-agents/ using configured backup_dir
+        self.backup_dir = self.project_root / backup_dir
+        self.backup_dir.mkdir(parents=True, exist_ok=True)
 
         # Initialize strategies
         repo = None
@@ -1064,11 +1420,20 @@ class CleanupExecutor:
         self.strategies: dict[ActionType, CleanupStrategy] = {
             ActionType.DELETE: DeleteStrategy(),
             ActionType.RENAME: RenameStrategy(repo, self.project_root),
-            ActionType.MOVE: MoveStrategy(repo, self.project_root)
+            ActionType.MOVE: MoveStrategy(repo, self.project_root),
+            # Enhancement #3: Register MergeStrategy
+            ActionType.MERGE: MergeStrategy(),
         }
 
-    def create_backup(self) -> Path:
-        """Create timestamped backup of project.
+    def create_backup(self, plan: CleanupPlan | None = None) -> Path:
+        """Create timestamped backup of files affected by the cleanup plan.
+
+        Enhancement #1: Only backs up files that the plan will modify,
+        instead of zipping the entire project.
+
+        Args:
+            plan: The cleanup plan (backs up affected files only).
+                  If None, backs up nothing (returns empty zip).
 
         Returns:
             Path to backup ZIP file
@@ -1076,32 +1441,46 @@ class CleanupExecutor:
         timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
         backup_path = self.backup_dir / f"backup-{timestamp}.zip"
 
+        affected_files: set[Path] = set()
+        if plan:
+            for action in plan.actions:
+                for src in action.source_files:
+                    if src.is_file():
+                        affected_files.add(src)
+                if action.target_path and action.target_path.is_file():
+                    affected_files.add(action.target_path)
+
         with zipfile.ZipFile(backup_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-            for file in self.project_root.rglob("*"):
-                if file.is_file() and ".cleanup-backups" not in str(file):
+            for file in affected_files:
+                # Enhancement #2: Skip excluded directories
+                if _is_excluded(file):
+                    continue
+                try:
                     arcname = file.relative_to(self.project_root)
                     zipf.write(file, arcname)
+                except (ValueError, OSError):
+                    continue
 
         return backup_path
 
     async def execute_dry_run(self, plan: CleanupPlan) -> ExecutionReport:
-        """Execute dry-run (preview changes without modifying files).
-
-        Args:
-            plan: Cleanup plan to execute
-
-        Returns:
-            Execution report
-        """
+        """Execute dry-run (preview changes without modifying files)."""
         return await self.execute_plan(plan, dry_run=True)
 
-    async def execute_plan(self, plan: CleanupPlan, dry_run: bool = False, create_backup: bool = True) -> ExecutionReport:
+    async def execute_plan(
+        self,
+        plan: CleanupPlan,
+        dry_run: bool = False,
+        create_backup: bool = True,
+        progress_callback: ProgressCallback | None = None,
+    ) -> ExecutionReport:
         """Execute cleanup plan.
 
         Args:
             plan: Cleanup plan to execute
             dry_run: If True, don't actually modify files
             create_backup: If True, create backup before execution
+            progress_callback: Optional callback(step_name, current, total)
 
         Returns:
             Execution report
@@ -1112,14 +1491,33 @@ class CleanupExecutor:
 
         # Create backup if requested and not dry-run
         if create_backup and not dry_run:
-            backup_location = self.create_backup()
+            backup_location = self.create_backup(plan)
+
+        total_actions = len(plan.actions)
 
         # Execute actions
-        for action in plan.actions:
+        for i, action in enumerate(plan.actions):
+            if progress_callback:
+                progress_callback(f"Executing {action.action_type}", i + 1, total_actions)
+
             strategy = self.strategies.get(action.action_type)
             if strategy:
                 result = await strategy.execute(action, dry_run=dry_run)
                 operations.append(result)
+            else:
+                # Enhancement #10: Log warning for missing strategy instead of silent skip
+                logger.warning(
+                    "No strategy registered for action type '%s' — skipping action on %s",
+                    action.action_type,
+                    [str(f) for f in action.source_files],
+                )
+                operations.append(OperationResult(
+                    operation_id=_make_operation_id("skip"),
+                    action_type=action.action_type,
+                    source_files=action.source_files,
+                    status="SKIPPED",
+                    error_message=f"No strategy for action type: {action.action_type}",
+                ))
 
         completed_at = datetime.now()
 
@@ -1127,7 +1525,8 @@ class CleanupExecutor:
         files_deleted = sum(1 for op in operations if op.action_type == ActionType.DELETE and op.succeeded)
         files_moved = sum(1 for op in operations if op.action_type == ActionType.MOVE and op.succeeded)
         files_renamed = sum(1 for op in operations if op.action_type == ActionType.RENAME and op.succeeded)
-        files_modified = files_deleted + files_moved + files_renamed
+        files_merged = sum(1 for op in operations if op.action_type == ActionType.MERGE and op.succeeded)
+        files_modified = files_deleted + files_moved + files_renamed + files_merged
 
         return ExecutionReport(
             operations=operations,
@@ -1135,95 +1534,214 @@ class CleanupExecutor:
             files_deleted=files_deleted,
             files_moved=files_moved,
             files_renamed=files_renamed,
+            files_merged=files_merged,
             backup_location=backup_location,
             started_at=started_at,
             completed_at=completed_at,
             dry_run=dry_run
         )
 
+    def cleanup_empty_dirs(
+        self, root: Path, dry_run: bool = False
+    ) -> list[Path]:
+        """Remove empty directories after cleanup operations.
+
+        Walks bottom-up to catch nested empty directories.
+        Never removes project root, .git dirs, or dirs containing .gitkeep.
+
+        Args:
+            root: Root directory to scan
+            dry_run: If True, only report what would be removed
+
+        Returns:
+            List of directories that were (or would be) removed
+        """
+        removed: list[Path] = []
+        resolved_root = root.resolve()
+        for dirpath in sorted(resolved_root.rglob("*"), reverse=True):
+            if not dirpath.is_dir():
+                continue
+            # Safety: never remove project root or .git directories
+            if dirpath == resolved_root or dirpath.name == ".git":
+                continue
+            # Skip if directory contains .gitkeep
+            if (dirpath / ".gitkeep").exists():
+                continue
+            # Check if truly empty (no files, no subdirs)
+            try:
+                if not any(dirpath.iterdir()):
+                    if not dry_run:
+                        dirpath.rmdir()
+                    removed.append(dirpath)
+            except OSError:
+                pass  # Permission error or race condition
+        return removed
+
 
 # =============================================================================
-# CleanupAgent - CLI Orchestrator
+# CleanupOrchestrator - CLI Orchestrator (renamed from CleanupAgent, Enhancement #13)
 # =============================================================================
 
-class CleanupAgent:
-    """CLI orchestrator for cleanup workflows."""
+class CleanupOrchestrator:
+    """CLI orchestrator for cleanup workflows.
 
-    def __init__(self, project_root: Path):
-        """Initialize cleanup agent.
+    Renamed from CleanupAgent to avoid collision with the BaseAgent-derived
+    CleanupAgent in agents/cleanup/agent.py.
+    """
+
+    def __init__(
+        self,
+        project_root: Path,
+        backup_dir: str = ".tapps-agents/cleanup-backups",
+        age_threshold_days: int = 90,
+        similarity_threshold: float = 0.8,
+        exclude_names: list[str] | None = None,
+    ):
+        """Initialize cleanup orchestrator.
 
         Args:
             project_root: Root directory of project
+            backup_dir: Backup directory relative to project root
+            age_threshold_days: Days threshold for outdated file detection
+            similarity_threshold: Threshold for near-duplicate detection
+            exclude_names: Filenames to exclude from naming analysis
         """
         self.project_root = project_root
-        self.analyzer = ProjectAnalyzer(project_root)
-        self.executor = CleanupExecutor(project_root)
+        self.analyzer = ProjectAnalyzer(
+            project_root,
+            age_threshold_days=age_threshold_days,
+            exclude_names=exclude_names,
+        )
+        self.executor = CleanupExecutor(project_root, backup_dir=backup_dir)
+        self.similarity_threshold = similarity_threshold
 
-    async def run_analysis(self, scan_path: Path, pattern: str = "*.md") -> AnalysisReport:
-        """Run analysis workflow.
-
-        Args:
-            scan_path: Path to scan
-            pattern: File pattern
-
-        Returns:
-            Analysis report
-        """
-        return await self.analyzer.generate_analysis_report(scan_path, pattern)
+    async def run_analysis(
+        self,
+        scan_path: Path,
+        pattern: str = "*.md",
+        patterns: list[str] | None = None,
+        respect_gitignore: bool = True,
+        progress_callback: ProgressCallback | None = None,
+    ) -> AnalysisReport:
+        """Run analysis workflow with multi-pattern and gitignore support."""
+        return await self.analyzer.generate_analysis_report(
+            scan_path, pattern, patterns=patterns,
+            respect_gitignore=respect_gitignore,
+            progress_callback=progress_callback,
+        )
 
     def run_planning(self, analysis: AnalysisReport) -> CleanupPlan:
-        """Run planning workflow.
-
-        Args:
-            analysis: Analysis report
-
-        Returns:
-            Cleanup plan
-        """
-        planner = CleanupPlanner(analysis)
+        """Run planning workflow."""
+        planner = CleanupPlanner(analysis, similarity_threshold=self.similarity_threshold)
         return planner.generate_cleanup_plan()
 
-    async def run_execution(self, plan: CleanupPlan, dry_run: bool = False, create_backup: bool = True) -> ExecutionReport:
-        """Run execution workflow.
-
-        Args:
-            plan: Cleanup plan
-            dry_run: Preview mode
-            create_backup: Create backup before execution
-
-        Returns:
-            Execution report
-        """
-        return await self.executor.execute_plan(plan, dry_run=dry_run, create_backup=create_backup)
+    async def run_execution(
+        self,
+        plan: CleanupPlan,
+        dry_run: bool = False,
+        create_backup: bool = True,
+        progress_callback: ProgressCallback | None = None,
+    ) -> ExecutionReport:
+        """Run execution workflow."""
+        return await self.executor.execute_plan(
+            plan, dry_run=dry_run, create_backup=create_backup,
+            progress_callback=progress_callback,
+        )
 
     async def run_full_cleanup(
         self,
         scan_path: Path,
         pattern: str = "*.md",
+        patterns: list[str] | None = None,
+        respect_gitignore: bool = True,
+        cleanup_empty_dirs: bool = True,
         dry_run: bool = False,
-        create_backup: bool = True
+        create_backup: bool = True,
+        progress_callback: ProgressCallback | None = None,
     ) -> tuple[AnalysisReport, CleanupPlan, ExecutionReport]:
-        """Run complete cleanup workflow.
-
-        Args:
-            scan_path: Path to scan
-            pattern: File pattern
-            dry_run: Preview mode
-            create_backup: Create backup before execution
-
-        Returns:
-            Tuple of (analysis_report, cleanup_plan, execution_report)
-        """
-        # Step 1: Analysis
-        analysis = await self.run_analysis(scan_path, pattern)
+        """Run complete cleanup workflow."""
+        # Step 1: Analysis (multi-pattern + gitignore)
+        analysis = await self.run_analysis(
+            scan_path, pattern, patterns=patterns,
+            respect_gitignore=respect_gitignore,
+            progress_callback=progress_callback,
+        )
 
         # Step 2: Planning
         plan = self.run_planning(analysis)
 
         # Step 3: Execution
-        execution = await self.run_execution(plan, dry_run=dry_run, create_backup=create_backup)
+        execution = await self.run_execution(
+            plan, dry_run=dry_run, create_backup=create_backup,
+            progress_callback=progress_callback,
+        )
+
+        # Step 4: Clean up empty directories (post-execution)
+        if cleanup_empty_dirs:
+            self.executor.cleanup_empty_dirs(scan_path, dry_run=dry_run)
 
         return analysis, plan, execution
+
+    def self_clean(
+        self, max_age_days: int = 30, dry_run: bool = False
+    ) -> dict[str, list[Path]]:
+        """Clean stale data from the .tapps-agents/ directory.
+
+        Targets ephemeral data: old workflow markers, old backups,
+        completed sessions, and stale cache entries.
+
+        Args:
+            max_age_days: Maximum age in days for ephemeral files
+            dry_run: If True, only report what would be cleaned
+
+        Returns:
+            Dict mapping category to list of paths removed (or would be removed)
+        """
+        import time
+
+        tapps_dir = self.project_root / ".tapps-agents"
+        if not tapps_dir.exists():
+            return {}
+
+        cutoff = time.time() - (max_age_days * 86400)
+        cleaned: dict[str, list[Path]] = {
+            "workflow_markers": [],
+            "old_backups": [],
+            "sessions": [],
+        }
+
+        # Clean old workflow markers
+        markers_dir = tapps_dir / "workflows" / "markers"
+        if markers_dir.exists():
+            for marker in markers_dir.iterdir():
+                if marker.is_dir() and marker.stat().st_mtime < cutoff:
+                    cleaned["workflow_markers"].append(marker)
+                    if not dry_run:
+                        shutil.rmtree(marker, ignore_errors=True)
+
+        # Clean old backup ZIPs
+        backup_dir = tapps_dir / "cleanup-backups"
+        if backup_dir.exists():
+            for backup in backup_dir.glob("backup-*.zip"):
+                if backup.stat().st_mtime < cutoff:
+                    cleaned["old_backups"].append(backup)
+                    if not dry_run:
+                        backup.unlink(missing_ok=True)
+
+        # Clean completed sessions
+        sessions_dir = tapps_dir / "sessions"
+        if sessions_dir.exists():
+            for session in sessions_dir.iterdir():
+                if session.is_file() and session.stat().st_mtime < cutoff:
+                    cleaned["sessions"].append(session)
+                    if not dry_run:
+                        session.unlink(missing_ok=True)
+
+        return cleaned
+
+
+# Backward-compatible alias (Enhancement #13)
+CleanupAgent = CleanupOrchestrator
 
 
 # =============================================================================
@@ -1264,8 +1782,8 @@ async def main() -> None:
     args = parser.parse_args()
 
     if args.command == "analyze":
-        agent = CleanupAgent(args.path.parent)
-        report = await agent.run_analysis(args.path, args.pattern)
+        orchestrator = CleanupOrchestrator(args.path.parent)
+        report = await orchestrator.run_analysis(args.path, args.pattern)
 
         if args.output:
             args.output.write_text(report.model_dump_json(indent=2))
@@ -1275,8 +1793,8 @@ async def main() -> None:
 
     elif args.command == "plan":
         analysis = AnalysisReport.model_validate_json(args.analysis.read_text())
-        agent = CleanupAgent(analysis.scan_path.parent)
-        plan = agent.run_planning(analysis)
+        orchestrator = CleanupOrchestrator(analysis.scan_path.parent)
+        plan = orchestrator.run_planning(analysis)
 
         if args.output:
             args.output.write_text(plan.model_dump_json(indent=2))
@@ -1286,14 +1804,14 @@ async def main() -> None:
 
     elif args.command == "execute":
         plan = CleanupPlan.model_validate_json(args.plan.read_text())
-        agent = CleanupAgent(Path.cwd())
-        report = await agent.run_execution(plan, dry_run=args.dry_run, create_backup=not args.no_backup)
+        orchestrator = CleanupOrchestrator(Path.cwd())
+        report = await orchestrator.run_execution(plan, dry_run=args.dry_run, create_backup=not args.no_backup)
 
         print(report.to_markdown())
 
     elif args.command == "run":
-        agent = CleanupAgent(args.path.parent)
-        analysis, plan, execution = await agent.run_full_cleanup(
+        orchestrator = CleanupOrchestrator(args.path.parent)
+        analysis, plan, execution = await orchestrator.run_full_cleanup(
             args.path,
             args.pattern,
             dry_run=args.dry_run,

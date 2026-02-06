@@ -9,7 +9,7 @@ From: docs/INIT_AUTOFILL_DETAILED_REQUIREMENTS.md
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List, Optional
+
 import yaml
 from yaml import YAMLError
 
@@ -19,8 +19,8 @@ class ValidationError:
     """Validation error with file, line, and message."""
     file: str
     message: str
-    line: Optional[int] = None
-    column: Optional[int] = None
+    line: int | None = None
+    column: int | None = None
 
     def __str__(self) -> str:
         """Format error message."""
@@ -37,7 +37,7 @@ class ValidationWarning:
     """Validation warning with file and message."""
     file: str
     message: str
-    line: Optional[int] = None
+    line: int | None = None
 
     def __str__(self) -> str:
         """Format warning message."""
@@ -51,16 +51,16 @@ class ValidationWarning:
 class ValidationResult:
     """Result of configuration validation."""
     valid: bool
-    errors: List[ValidationError] = field(default_factory=list)
-    warnings: List[ValidationWarning] = field(default_factory=list)
-    suggestions: List[str] = field(default_factory=list)
+    errors: list[ValidationError] = field(default_factory=list)
+    warnings: list[ValidationWarning] = field(default_factory=list)
+    suggestions: list[str] = field(default_factory=list)
 
-    def add_error(self, file: str, message: str, line: Optional[int] = None, column: Optional[int] = None) -> None:
+    def add_error(self, file: str, message: str, line: int | None = None, column: int | None = None) -> None:
         """Add validation error."""
         self.errors.append(ValidationError(file=file, message=message, line=line, column=column))
         self.valid = False
 
-    def add_warning(self, file: str, message: str, line: Optional[int] = None) -> None:
+    def add_warning(self, file: str, message: str, line: int | None = None) -> None:
         """Add validation warning."""
         self.warnings.append(ValidationWarning(file=file, message=message, line=line))
 
@@ -100,7 +100,7 @@ class ConfigValidator:
     Supports auto-fix for common issues when --fix flag is provided.
     """
 
-    def __init__(self, project_root: Optional[Path] = None, auto_fix: bool = False):
+    def __init__(self, project_root: Path | None = None, auto_fix: bool = False):
         """Initialize validator.
 
         Args:
@@ -161,7 +161,7 @@ class ConfigValidator:
 
         # Parse YAML
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         except YAMLError as e:
             result.add_error(
@@ -256,7 +256,7 @@ class ConfigValidator:
 
         # Read file
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
             result.add_error(file="domains.md", message=f"Failed to read file: {e}")
@@ -295,7 +295,7 @@ class ConfigValidator:
 
         # Parse YAML
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         except YAMLError as e:
             result.add_error(
@@ -349,7 +349,7 @@ class ConfigValidator:
 
         # Parse YAML
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
+            with open(file_path, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         except YAMLError as e:
             result.add_error(
@@ -389,7 +389,7 @@ class ConfigValidator:
 
         # Parse experts.yaml
         try:
-            with open(experts_file, "r", encoding="utf-8") as f:
+            with open(experts_file, encoding="utf-8") as f:
                 data = yaml.safe_load(f)
         except Exception:
             # If parsing fails, it will be caught by validate_experts_yaml

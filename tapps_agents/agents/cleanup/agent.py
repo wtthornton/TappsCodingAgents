@@ -15,11 +15,9 @@ from ...core.agent_base import BaseAgent
 from ...core.config import ProjectConfig, load_config
 from ...utils.project_cleanup_agent import (
     AnalysisReport,
+    CleanupOrchestrator,
     CleanupPlan,
     ProjectAnalyzer,
-)
-from ...utils.project_cleanup_agent import (
-    CleanupAgent as CleanupAgentUtil,
 )
 
 
@@ -53,22 +51,40 @@ class CleanupAgent(BaseAgent):
         self.backup_enabled = cleanup_config.backup_enabled if cleanup_config else True
         self.interactive_mode = cleanup_config.interactive_mode if cleanup_config else True
 
+        # Enhancement #4: Extract config values to pass through to engine
+        self._backup_dir = cleanup_config.backup_dir if cleanup_config else ".tapps-agents/cleanup-backups"
+        self._age_threshold_days = cleanup_config.age_threshold_days if cleanup_config else 90
+        self._similarity_threshold = cleanup_config.similarity_threshold if cleanup_config else 0.8
+        self._default_pattern = cleanup_config.default_pattern if cleanup_config else "*.md"
+        self._exclude_names = list(cleanup_config.exclude_names) if cleanup_config else None
+
         # Utility components (lazily initialized)
-        self._util: CleanupAgentUtil | None = None
+        self._util: CleanupOrchestrator | None = None
         self._analyzer: ProjectAnalyzer | None = None
 
-    def _get_util(self, project_root: Path | None = None) -> CleanupAgentUtil:
-        """Get or create the cleanup utility instance."""
+    def _get_util(self, project_root: Path | None = None) -> CleanupOrchestrator:
+        """Get or create the cleanup orchestrator instance."""
         root = project_root or self._project_root or Path.cwd()
         if self._util is None or self._util.project_root != root:
-            self._util = CleanupAgentUtil(root)
+            # Enhancement #4: Pass config values through to orchestrator
+            self._util = CleanupOrchestrator(
+                root,
+                backup_dir=self._backup_dir,
+                age_threshold_days=self._age_threshold_days,
+                similarity_threshold=self._similarity_threshold,
+                exclude_names=self._exclude_names,
+            )
         return self._util
 
     def _get_analyzer(self, project_root: Path | None = None) -> ProjectAnalyzer:
         """Get or create the analyzer instance."""
         root = project_root or self._project_root or Path.cwd()
         if self._analyzer is None or self._analyzer.project_root != root:
-            self._analyzer = ProjectAnalyzer(root)
+            self._analyzer = ProjectAnalyzer(
+                root,
+                age_threshold_days=self._age_threshold_days,
+                exclude_names=self._exclude_names,
+            )
         return self._analyzer
 
     def get_commands(self) -> list[dict[str, str]]:
@@ -114,7 +130,7 @@ class CleanupAgent(BaseAgent):
     async def analyze_command(
         self,
         path: str | Path | None = None,
-        pattern: str = "*.md",
+        pattern: str | None = None,
         output: str | Path | None = None,
     ) -> dict[str, Any]:
         """
@@ -122,7 +138,7 @@ class CleanupAgent(BaseAgent):
 
         Args:
             path: Path to analyze (defaults to project docs/)
-            pattern: File pattern to match (default: *.md)
+            pattern: File pattern to match (default from config)
             output: Optional output file for analysis report
 
         Returns:
@@ -130,6 +146,8 @@ class CleanupAgent(BaseAgent):
         """
         project_root = self._project_root or Path.cwd()
         scan_path = Path(path) if path else project_root / "docs"
+        # Enhancement #4: Use config default_pattern
+        file_pattern = pattern or self._default_pattern
 
         if not scan_path.exists():
             return {
@@ -140,7 +158,7 @@ class CleanupAgent(BaseAgent):
 
         try:
             util = self._get_util(project_root)
-            report = await util.run_analysis(scan_path, pattern)
+            report = await util.run_analysis(scan_path, file_pattern)
 
             result = {
                 "type": "analyze",
@@ -154,6 +172,7 @@ class CleanupAgent(BaseAgent):
                     "outdated_files": len(report.outdated_files),
                     "obsolete_files": report.obsolete_file_count,
                     "naming_issues": len(report.naming_issues),
+                    "near_duplicates": len(report.near_duplicates),
                     "timestamp": report.timestamp.isoformat(),
                     "scan_path": str(report.scan_path),
                 },
@@ -180,7 +199,7 @@ class CleanupAgent(BaseAgent):
         self,
         analysis_file: str | Path | None = None,
         path: str | Path | None = None,
-        pattern: str = "*.md",
+        pattern: str | None = None,
         output: str | Path | None = None,
     ) -> dict[str, Any]:
         """
@@ -196,6 +215,7 @@ class CleanupAgent(BaseAgent):
             Cleanup plan with prioritized actions
         """
         project_root = self._project_root or Path.cwd()
+        file_pattern = pattern or self._default_pattern
 
         try:
             # Load analysis or run fresh
@@ -211,7 +231,7 @@ class CleanupAgent(BaseAgent):
             else:
                 scan_path = Path(path) if path else project_root / "docs"
                 util = self._get_util(project_root)
-                analysis = await util.run_analysis(scan_path, pattern)
+                analysis = await util.run_analysis(scan_path, file_pattern)
 
             # Generate plan
             util = self._get_util(project_root)
@@ -264,7 +284,7 @@ class CleanupAgent(BaseAgent):
         self,
         plan_file: str | Path | None = None,
         path: str | Path | None = None,
-        pattern: str = "*.md",
+        pattern: str | None = None,
         dry_run: bool | None = None,
         backup: bool | None = None,
     ) -> dict[str, Any]:
@@ -282,6 +302,7 @@ class CleanupAgent(BaseAgent):
             Execution report with results
         """
         project_root = self._project_root or Path.cwd()
+        file_pattern = pattern or self._default_pattern
 
         # Use defaults if not specified
         if dry_run is None:
@@ -304,7 +325,7 @@ class CleanupAgent(BaseAgent):
                 # Run analysis and planning first
                 scan_path = Path(path) if path else project_root / "docs"
                 util = self._get_util(project_root)
-                analysis = await util.run_analysis(scan_path, pattern)
+                analysis = await util.run_analysis(scan_path, file_pattern)
                 plan = util.run_planning(analysis)
 
             # Execute plan
@@ -322,6 +343,7 @@ class CleanupAgent(BaseAgent):
                     "files_deleted": report.files_deleted,
                     "files_moved": report.files_moved,
                     "files_renamed": report.files_renamed,
+                    "files_merged": report.files_merged,
                     "files_modified": report.files_modified,
                     "duration_seconds": report.duration_seconds,
                     "backup_location": str(report.backup_location) if report.backup_location else None,
@@ -345,7 +367,7 @@ class CleanupAgent(BaseAgent):
     async def run_full_cleanup_command(
         self,
         path: str | Path | None = None,
-        pattern: str = "*.md",
+        pattern: str | None = None,
         dry_run: bool | None = None,
         backup: bool | None = None,
     ) -> dict[str, Any]:
@@ -363,6 +385,7 @@ class CleanupAgent(BaseAgent):
         """
         project_root = self._project_root or Path.cwd()
         scan_path = Path(path) if path else project_root / "docs"
+        file_pattern = pattern or self._default_pattern
 
         # Use defaults if not specified
         if dry_run is None:
@@ -381,7 +404,7 @@ class CleanupAgent(BaseAgent):
             util = self._get_util(project_root)
             analysis, plan, execution = await util.run_full_cleanup(
                 scan_path,
-                pattern,
+                file_pattern,
                 dry_run=dry_run,
                 create_backup=backup,
             )
@@ -395,6 +418,7 @@ class CleanupAgent(BaseAgent):
                     "duplicates": analysis.duplicate_count,
                     "outdated": len(analysis.outdated_files),
                     "naming_issues": len(analysis.naming_issues),
+                    "near_duplicates": len(analysis.near_duplicates),
                 },
                 "plan": {
                     "total_actions": len(plan.actions),

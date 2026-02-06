@@ -52,12 +52,14 @@ def _mark_context7_quota_exceeded(message: str) -> None:
 def _ensure_context7_api_key() -> str | None:
     """
     Ensure Context7 API key is available in environment.
-    
+
     Checks environment variable first, then loads from encrypted storage if needed.
     Automatically sets the environment variable if loaded from storage.
-    
+
     Returns:
-        API key string if available, None otherwise
+        API key string if available, None otherwise.
+        Note: APIKeyManager.load_api_key now returns SecretStr; this
+        function unwraps it via .get_secret_value() for HTTP usage.
     """
     # #region agent log
     write_debug_log(
@@ -94,7 +96,8 @@ def _ensure_context7_api_key() -> str | None:
         from .security import APIKeyManager
         
         key_manager = APIKeyManager()
-        api_key = key_manager.load_api_key("context7")
+        secret = key_manager.load_api_key("context7")
+        api_key = secret.get_secret_value() if secret else None
         # #region agent log
         write_debug_log(
             {
@@ -102,7 +105,7 @@ def _ensure_context7_api_key() -> str | None:
                 "runId": "run1",
                 "hypothesisId": "A",
                 "message": "Loaded from encrypted storage",
-                "data": {"api_key_loaded": api_key is not None, "key_length": len(api_key) if api_key else 0},
+                "data": {"api_key_loaded": secret is not None, "key_length": len(api_key) if api_key else 0},
             },
             location="backup_client.py:_ensure_context7_api_key:storage_load",
         )

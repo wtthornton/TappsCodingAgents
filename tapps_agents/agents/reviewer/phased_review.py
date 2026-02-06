@@ -252,7 +252,7 @@ class PhasedReviewStrategy:
                     phase_result.status = "failed"
                     phase_result.error = str(e)
                 progress.status = "failed"
-                progress.error = f"Phase {phase_name} failed: {str(e)}"
+                progress.error = f"Phase {phase_name} failed: {e!s}"
                 self.save_progress(progress)
                 raise
 

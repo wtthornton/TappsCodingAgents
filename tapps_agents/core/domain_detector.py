@@ -22,7 +22,7 @@ class DomainDetector:
         # Detect from framework files
         if (project_root / "django").exists() or any(p.name == "django" for p in project_root.glob("*/settings.py")):
             domains.append("django")
-        if (project_root / "react").exists() or (project_root / "src").exists() and any(p.suffix in [".tsx", ".jsx"] for p in (project_root / "src").glob("**/*")):
+        if (project_root / "react").exists() or ((project_root / "src").exists() and any(p.suffix in [".tsx", ".jsx"] for p in (project_root / "src").glob("**/*"))):
             domains.append("react")
         
         return list(set(domains))  # Deduplicate

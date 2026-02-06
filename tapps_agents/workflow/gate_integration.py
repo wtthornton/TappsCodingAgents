@@ -158,7 +158,7 @@ class GateIntegration:
             return {
                 "all_passed": False,
                 "gate_results": {},
-                "failures": [{"gate": "evaluation", "message": f"Gate evaluation failed: {str(e)}", "severity": "error"}],
+                "failures": [{"gate": "evaluation", "message": f"Gate evaluation failed: {e!s}", "severity": "error"}],
                 "warnings": [],
             }
 

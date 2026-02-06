@@ -221,7 +221,7 @@ class CircuitBreaker:
                 is_quota_error = (
                     "quota exceeded" in error_msg
                     or "429" in error_msg
-                    or error_type == "CircuitBreakerOpen" and "quota" in error_msg
+                    or (error_type == "CircuitBreakerOpen" and "quota" in error_msg)
                 )
                 
                 if is_quota_error:

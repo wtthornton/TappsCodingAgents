@@ -12,6 +12,9 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
+# Maximum file size for RAG knowledge files (10 MB)
+MAX_RAG_FILE_SIZE = 10 * 1024 * 1024
+
 
 @dataclass
 class KnowledgeChunk:
@@ -65,6 +68,13 @@ class SimpleKnowledgeBase:
                     continue
 
             try:
+                # Skip files exceeding size limit to prevent OOM
+                if md_file.stat().st_size > MAX_RAG_FILE_SIZE:
+                    logger.warning(
+                        "Knowledge file %s exceeds size limit (%d > %d), skipping",
+                        md_file, md_file.stat().st_size, MAX_RAG_FILE_SIZE,
+                    )
+                    continue
                 content = md_file.read_text(encoding="utf-8")
                 self.files[md_file] = content
             except Exception:

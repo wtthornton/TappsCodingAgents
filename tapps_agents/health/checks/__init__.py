@@ -13,9 +13,9 @@ from .outcomes import OutcomeHealthCheck
 
 __all__ = [
     "AutomationHealthCheck",
+    "Context7CacheHealthCheck",
     "EnvironmentHealthCheck",
     "ExecutionHealthCheck",
-    "Context7CacheHealthCheck",
     "KnowledgeBaseHealthCheck",
     "OutcomeHealthCheck",
 ]

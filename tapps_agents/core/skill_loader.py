@@ -98,9 +98,7 @@ class SkillRegistry:
         """
         skills = []
         for skill in self._skills.values():
-            if skill.is_builtin and include_builtin:
-                skills.append(skill)
-            elif skill.is_custom and include_custom:
+            if (skill.is_builtin and include_builtin) or (skill.is_custom and include_custom):
                 skills.append(skill)
         return skills
 

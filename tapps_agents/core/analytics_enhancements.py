@@ -549,7 +549,7 @@ class MetricsAggregator:
         by_day: dict[str, list[dict[str, Any]]] = defaultdict(list)
         
         for m in metrics:
-            if "last_execution" in m and m["last_execution"]:
+            if m.get("last_execution"):
                 try:
                     exec_time = datetime.fromisoformat(m["last_execution"].replace("Z", "+00:00"))
                     day_key = exec_time.strftime("%Y-%m-%d")

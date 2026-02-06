@@ -127,7 +127,7 @@ class QualityArtifact(BaseModel):
 
         # Convert status string to enum
         status = ArtifactStatus.PENDING
-        if "status" in data and data["status"]:
+        if data.get("status"):
             try:
                 status = ArtifactStatus(data["status"].lower())
             except ValueError:

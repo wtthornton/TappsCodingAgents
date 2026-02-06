@@ -7,6 +7,8 @@ import os
 import sys
 from collections.abc import Callable
 
+from .exit_codes import ExitCode
+
 # Try to import version, with fallback to importlib.metadata
 try:
     from .. import __version__ as PACKAGE_VERSION
@@ -395,7 +397,7 @@ def _handle_cleanup_command(args: argparse.Namespace) -> None:
     else:
         print(f"Unknown cleanup type: {cleanup_type}", file=sys.stderr)
         print("Use 'tapps-agents cleanup --help' for available cleanup operations", file=sys.stderr)
-        sys.exit(1)
+        sys.exit(ExitCode.GENERAL_ERROR)
 
 
 def _handle_epic_command(args: argparse.Namespace) -> None:
@@ -442,7 +444,7 @@ def _handle_observability_command(args: argparse.Namespace) -> None:
         handler()
     else:
         print(f"Unknown observability subcommand: {command}")
-        sys.exit(1)
+        sys.exit(ExitCode.GENERAL_ERROR)
 
 
 def _handle_health_command(args: argparse.Namespace) -> None:
@@ -611,7 +613,7 @@ def _safe_print_help(parser: argparse.ArgumentParser) -> None:
             # Last resort: print basic error message
             print("Help text unavailable due to encoding issues.", file=sys.stderr)
             print(f"Error: {e}", file=sys.stderr)
-            sys.exit(1)
+            sys.exit(ExitCode.GENERAL_ERROR)
 
 
 def main() -> None:
@@ -648,7 +650,7 @@ def main() -> None:
             # --help was used, argparse already printed help, but we need to ensure encoding
             # If we get here, argparse.print_help() was called internally
             # The encoding setup at the start should have handled it, but exit cleanly
-            sys.exit(0)
+            sys.exit(ExitCode.SUCCESS)
         else:
             # Parse error - argparse already printed error message
             # Ensure encoding was set up, then exit with error code

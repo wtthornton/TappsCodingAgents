@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic import SecretStr
 
 try:
     from cryptography.fernet import Fernet
@@ -192,15 +193,15 @@ class APIKeyManager:
             # Best-effort only (Windows may not support chmod).
             logger.debug("chmod not supported for keys file", exc_info=True)
 
-    def load_api_key(self, key_name: str) -> str | None:
+    def load_api_key(self, key_name: str) -> SecretStr | None:
         """
-        Load an API key.
+        Load an API key wrapped in SecretStr for safe handling.
 
         Args:
             key_name: Name of the key
 
         Returns:
-            API key value or None if not found
+            SecretStr wrapping the API key, or None if not found
         """
         keys = self.load_all_keys()
 
@@ -211,11 +212,12 @@ class APIKeyManager:
 
         if key_data.get("encrypted"):
             try:
-                return self.decrypt_api_key(key_data["value"])
+                return SecretStr(self.decrypt_api_key(key_data["value"]))
             except Exception:
                 return None
         else:
-            return key_data.get("value")
+            value = key_data.get("value")
+            return SecretStr(value) if value else None
 
     def load_all_keys(self) -> dict[str, Any]:
         """Load all stored API keys."""

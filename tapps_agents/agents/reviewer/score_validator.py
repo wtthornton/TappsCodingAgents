@@ -198,13 +198,7 @@ class ScoreValidator:
         normalized_score = score / 10.0 if category == "overall" else score
 
         # Determine score category
-        if normalized_score >= self.EXCELLENT_THRESHOLD:
-            pass
-        elif normalized_score >= self.GOOD_THRESHOLD:
-            pass
-        elif normalized_score >= self.ACCEPTABLE_THRESHOLD:
-            pass
-        elif normalized_score >= self.POOR_THRESHOLD:
+        if normalized_score >= self.EXCELLENT_THRESHOLD or normalized_score >= self.GOOD_THRESHOLD or normalized_score >= self.ACCEPTABLE_THRESHOLD or normalized_score >= self.POOR_THRESHOLD:
             pass
         else:
             pass

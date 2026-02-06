@@ -146,7 +146,7 @@ class NLPWorkflowExecutor:
             error = self.error_handler.handle_error(ParseErrorType.PARSING_ERROR)
             return {
                 "success": False,
-                "error": f"{self.error_handler.format_error(error)}\n\nException: {str(e)}",
+                "error": f"{self.error_handler.format_error(error)}\n\nException: {e!s}",
                 "error_type": "execution_error",
             }
 

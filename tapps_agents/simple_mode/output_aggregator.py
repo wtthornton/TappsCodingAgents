@@ -104,7 +104,7 @@ class SimpleModeOutputAggregator:
             }
 
             # Extract artifacts
-            if "metadata" in step and step["metadata"]:
+            if step.get("metadata"):
                 if "artifacts" in step["metadata"]:
                     summary["artifacts"] = step["metadata"]["artifacts"]
                 if "file_paths" in step["metadata"]:
@@ -192,10 +192,10 @@ class SimpleModeOutputAggregator:
 
         for step in aggregated["steps"]:
             # Collect artifacts
-            if "artifacts" in step and step["artifacts"]:
+            if step.get("artifacts"):
                 all_artifacts.extend(step["artifacts"])
             
-            if "file_paths" in step and step["file_paths"]:
+            if step.get("file_paths"):
                 for file_path in step["file_paths"]:
                     if "test" in str(file_path).lower():
                         test_files.append(file_path)
@@ -280,7 +280,7 @@ class SimpleModeOutputAggregator:
             lines.append(f"### {status_icon} Step {step['step_number']}: {step['step_name']}")
             lines.append(f"- **Agent:** {step['agent']}")
             
-            if "artifacts" in step and step["artifacts"]:
+            if step.get("artifacts"):
                 lines.append(f"- **Artifacts:** {len(step['artifacts'])} created")
                 # Show first 3 artifact paths
                 for artifact in step["artifacts"][:3]:
@@ -288,7 +288,7 @@ class SimpleModeOutputAggregator:
                 if len(step["artifacts"]) > 3:
                     lines.append(f"  - ... and {len(step['artifacts']) - 3} more")
             
-            if "file_paths" in step and step["file_paths"]:
+            if step.get("file_paths"):
                 lines.append(f"- **Files:** {len(step['file_paths'])} created")
                 # Show first 3 file paths
                 for file_path in step["file_paths"][:3]:

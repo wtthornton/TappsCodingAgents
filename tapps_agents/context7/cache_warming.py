@@ -156,7 +156,7 @@ class CacheWarmer:
                     dev_deps = data.get("devDependencies", {})
                     all_deps = {**deps, **dev_deps}
                     # Extract common library names
-                    for dep_name in all_deps.keys():
+                    for dep_name in all_deps:
                         # Normalize names (e.g., @types/react -> react)
                         normalized = dep_name.replace("@types/", "").replace("@", "")
                         libraries.add(normalized)
@@ -287,7 +287,7 @@ class CacheWarmer:
                     else:
                         errors.append(f"{library}/{topic}: {result.error}")
                 except Exception as e:
-                    errors.append(f"{library}/{topic}: {str(e)}")
+                    errors.append(f"{library}/{topic}: {e!s}")
 
         return {
             "success": warmed > 0,

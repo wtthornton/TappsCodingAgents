@@ -19,15 +19,15 @@ from .manager import HookManager
 
 __all__ = [
     "HookDefinition",
-    "HookManager",
-    "HooksConfig",
-    "HookResult",
-    "load_hooks_config",
-    "run_hook",
     "HookEventType",
+    "HookManager",
+    "HookResult",
+    "HooksConfig",
     "PostToolUseEvent",
     "SessionEndEvent",
     "SessionStartEvent",
     "UserPromptSubmitEvent",
     "WorkflowCompleteEvent",
+    "load_hooks_config",
+    "run_hook",
 ]

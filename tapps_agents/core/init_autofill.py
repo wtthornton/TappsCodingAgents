@@ -11,12 +11,12 @@ Provides high-level functions for use by tapps-agents init and init --reset.
 import asyncio
 import logging
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any
 
-from tapps_agents.core.validators.config_validator import ConfigValidator
-from tapps_agents.core.detectors.tech_stack_detector import TechStackDetector
 from tapps_agents.core.context7.cache_manager import Context7CacheManager
+from tapps_agents.core.detectors.tech_stack_detector import TechStackDetector
 from tapps_agents.core.generators.expert_generator import ExpertGenerator
+from tapps_agents.core.validators.config_validator import ConfigValidator
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ def validate_project_configuration(
     project_root: Path,
     auto_fix: bool = True,
     verbose: bool = False
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Validate project configuration using Phase 1 ConfigValidator.
 
     Args:
@@ -60,7 +60,7 @@ def detect_tech_stack_enhanced(
     project_root: Path,
     generate_yaml: bool = True,
     max_files: int = 10000,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Detect tech stack using Phase 1 TechStackDetector.
 
     Args:
@@ -109,10 +109,10 @@ def detect_tech_stack_enhanced(
 
 async def populate_context7_cache(
     project_root: Path,
-    tech_stack_file: Optional[Path] = None,
+    tech_stack_file: Path | None = None,
     skip_cached: bool = True,
     max_concurrent: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Populate Context7 cache using Phase 2 Context7CacheManager.
 
     Args:
@@ -162,7 +162,7 @@ def generate_experts_from_knowledge(
     project_root: Path,
     auto_mode: bool = True,
     skip_existing: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Generate experts from knowledge base using Phase 3.1 ExpertGenerator.
 
     Args:
@@ -205,7 +205,7 @@ async def run_init_autofill(
     skip_cached_libraries: bool = True,
     skip_existing_experts: bool = True,
     verbose: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run complete init autofill process (Phases 1-3).
 
     This is the main integration function that orchestrates all three phases:
@@ -306,7 +306,7 @@ async def run_init_autofill(
 def run_init_autofill_sync(
     project_root: Path,
     **kwargs
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Synchronous wrapper for run_init_autofill.
 
     Use this from CLI or non-async code.

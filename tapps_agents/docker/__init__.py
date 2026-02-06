@@ -6,5 +6,5 @@ from .analyzer import DockerfileAnalyzer
 from .debugger import ContainerDebugger
 from .error_patterns import ErrorPatternDatabase
 
-__all__ = ["DockerfileAnalyzer", "ContainerDebugger", "ErrorPatternDatabase"]
+__all__ = ["ContainerDebugger", "DockerfileAnalyzer", "ErrorPatternDatabase"]
 

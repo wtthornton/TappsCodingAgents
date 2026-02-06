@@ -89,11 +89,11 @@ class OrchestratorAgent(BaseAgent):
         elif command == "*help":
             return self._help()
         elif command == "*validate-workflow-artifacts":
-            requirements = kwargs.get("requirements", None)
-            stories = kwargs.get("stories", None)
-            architecture = kwargs.get("architecture", None)
-            api_design = kwargs.get("api_design", None)
-            implementation_files = kwargs.get("implementation_files", None)
+            requirements = kwargs.get("requirements")
+            stories = kwargs.get("stories")
+            architecture = kwargs.get("architecture")
+            api_design = kwargs.get("api_design")
+            implementation_files = kwargs.get("implementation_files")
 
             # Load from files if paths provided
             if isinstance(requirements, str):
@@ -293,7 +293,7 @@ class OrchestratorAgent(BaseAgent):
                 "message": f"Workflow '{workflow.name}' started from {workflow_file_path}",
             }
         except Exception as e:
-            return {"error": f"Failed to execute workflow from file: {str(e)}"}
+            return {"error": f"Failed to execute workflow from file: {e!s}"}
 
     async def _start_workflow(self, workflow_id: str) -> dict[str, Any]:
         """Start a workflow."""
@@ -322,7 +322,7 @@ class OrchestratorAgent(BaseAgent):
                 "message": f"Workflow '{workflow.name}' started",
             }
         except Exception as e:
-            return {"error": f"Failed to start workflow: {str(e)}"}
+            return {"error": f"Failed to start workflow: {e!s}"}
 
     async def _get_workflow_status(self) -> dict[str, Any]:
         """Get current workflow status."""
@@ -369,7 +369,7 @@ class OrchestratorAgent(BaseAgent):
                 ),
             }
         except Exception as e:
-            return {"error": f"Failed to skip step: {str(e)}"}
+            return {"error": f"Failed to skip step: {e!s}"}
 
     async def _resume_workflow(self) -> dict[str, Any]:
         """Resume an interrupted workflow."""
@@ -396,7 +396,7 @@ class OrchestratorAgent(BaseAgent):
         except FileNotFoundError as e:
             return {"error": str(e)}
         except Exception as e:
-            return {"error": f"Failed to resume workflow: {str(e)}"}
+            return {"error": f"Failed to resume workflow: {e!s}"}
 
     async def _make_gate_decision(
         self, condition: str | None, scoring_data: dict[str, Any]

@@ -227,7 +227,7 @@ class ErrorHandler:
         return {
             "error": True,
             "error_type": "ServiceUnavailableError",
-            "error_message": f"{service_name} is not available: {str(error)}",
+            "error_message": f"{service_name} is not available: {error!s}",
             "category": "service_unavailable",
             "recoverable": True,
             "suggestions": suggestions,

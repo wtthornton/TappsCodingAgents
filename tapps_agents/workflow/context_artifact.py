@@ -186,7 +186,7 @@ class ContextArtifact(BaseModel):
 
         # Convert project_profile from dict to ProjectProfile object
         project_profile = None
-        if "project_profile" in data and data["project_profile"]:
+        if data.get("project_profile"):
             profile_data = data["project_profile"]
             if isinstance(profile_data, dict):
                 project_profile = ProjectProfile(**profile_data)
@@ -195,7 +195,7 @@ class ContextArtifact(BaseModel):
 
         # Convert status string to enum
         status = ArtifactStatus.PENDING
-        if "status" in data and data["status"]:
+        if data.get("status"):
             try:
                 status = ArtifactStatus(data["status"].lower())
             except ValueError:

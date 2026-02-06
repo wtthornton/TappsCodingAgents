@@ -11,11 +11,11 @@ from .orchestrator import EpicOrchestrator
 from .parser import EpicParser
 
 __all__ = [
-    "EpicParser",
+    "AcceptanceCriterion",
     "EpicDocument",
+    "EpicOrchestrator",
+    "EpicParser",
     "Story",
     "StoryStatus",
-    "AcceptanceCriterion",
-    "EpicOrchestrator",
 ]
 

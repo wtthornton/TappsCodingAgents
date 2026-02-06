@@ -77,9 +77,7 @@ class SkillAgentRegistry:
                 continue
             seen.add(key)
             ent = self._entries.get(agent)
-            if ent and ent.is_orchestrator:
-                ep = "orchestrator"
-            elif agent in ORCHESTRATOR_SKILLS:
+            if (ent and ent.is_orchestrator) or agent in ORCHESTRATOR_SKILLS:
                 ep = "orchestrator"
             elif agent in AGENTS_WITH_HANDLERS:
                 ep = "workflow"

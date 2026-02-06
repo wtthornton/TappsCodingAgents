@@ -8,22 +8,22 @@ From: docs/INIT_AUTOFILL_DETAILED_REQUIREMENTS.md
 """
 
 import ast
+import re
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set
-import re
+
 import tomli
 
 
 @dataclass
 class TechStack:
     """Detected tech stack."""
-    languages: List[str] = field(default_factory=list)
-    libraries: List[str] = field(default_factory=list)
-    frameworks: List[str] = field(default_factory=list)
-    domains: List[str] = field(default_factory=list)
-    context7_priority: List[str] = field(default_factory=list)
+    languages: list[str] = field(default_factory=list)
+    libraries: list[str] = field(default_factory=list)
+    frameworks: list[str] = field(default_factory=list)
+    domains: list[str] = field(default_factory=list)
+    context7_priority: list[str] = field(default_factory=list)
 
 
 class TechStackDetector:
@@ -109,7 +109,7 @@ class TechStackDetector:
         "devops": ["docker", "kubernetes", "terraform", "ansible"],
     }
 
-    def __init__(self, project_root: Optional[Path] = None, max_files: int = 1000):
+    def __init__(self, project_root: Path | None = None, max_files: int = 1000):
         """Initialize tech stack detector.
 
         Args:
@@ -118,10 +118,10 @@ class TechStackDetector:
         """
         self.project_root = project_root or Path.cwd()
         self.max_files = max_files
-        self._detected_languages: Set[str] = set()
-        self._detected_libraries: Set[str] = set()
-        self._detected_frameworks: Set[str] = set()
-        self._detected_domains: Set[str] = set()
+        self._detected_languages: set[str] = set()
+        self._detected_libraries: set[str] = set()
+        self._detected_frameworks: set[str] = set()
+        self._detected_domains: set[str] = set()
 
     def detect_all(self) -> TechStack:
         """Detect complete tech stack.
@@ -146,7 +146,7 @@ class TechStackDetector:
             context7_priority=context7_priority
         )
 
-    def detect_languages(self) -> List[str]:
+    def detect_languages(self) -> list[str]:
         """Detect programming languages from file extensions.
 
         Returns:
@@ -176,7 +176,7 @@ class TechStackDetector:
         self._detected_languages = {lang for lang, count in language_counts.items() if count >= 3}
         return sorted(self._detected_languages)
 
-    def detect_libraries(self) -> List[str]:
+    def detect_libraries(self) -> list[str]:
         """Extract libraries from dependency files.
 
         Parses:
@@ -212,7 +212,7 @@ class TechStackDetector:
 
         return sorted(self._detected_libraries)
 
-    def detect_frameworks(self) -> List[str]:
+    def detect_frameworks(self) -> list[str]:
         """Detect frameworks from code imports using AST parsing.
 
         For Python files, uses AST to parse import statements.
@@ -251,7 +251,7 @@ class TechStackDetector:
 
         return sorted(self._detected_frameworks)
 
-    def detect_domains(self) -> List[str]:
+    def detect_domains(self) -> list[str]:
         """Infer domains from dependencies and structure.
 
         Uses domain patterns to map libraries/frameworks to domains.
@@ -277,7 +277,7 @@ class TechStackDetector:
 
         return sorted(self._detected_domains)
 
-    def generate_tech_stack_yaml(self) -> Dict:
+    def generate_tech_stack_yaml(self) -> dict:
         """Generate complete tech-stack.yaml configuration.
 
         Returns:
@@ -422,7 +422,7 @@ class TechStackDetector:
             if pattern in module_lower:
                 self._detected_frameworks.add(framework)
 
-    def _determine_context7_priority(self) -> List[str]:
+    def _determine_context7_priority(self) -> list[str]:
         """Determine Context7 priority list (most important libraries).
 
         Returns libraries in priority order:
@@ -445,8 +445,9 @@ class TechStackDetector:
 def main() -> None:
     """CLI entry point for tech stack detection."""
     import argparse
-    import yaml
     from datetime import datetime
+
+    import yaml
 
     parser = argparse.ArgumentParser(description="Detect project tech stack")
     parser.add_argument("--project-root", type=Path, help="Project root directory")

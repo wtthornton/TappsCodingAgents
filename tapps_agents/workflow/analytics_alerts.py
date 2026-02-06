@@ -172,9 +172,7 @@ class AnalyticsAlertManager:
             
             # Check condition
             triggered = False
-            if condition.condition == "below" and current_value < condition.threshold:
-                triggered = True
-            elif condition.condition == "above" and current_value > condition.threshold:
+            if (condition.condition == "below" and current_value < condition.threshold) or (condition.condition == "above" and current_value > condition.threshold):
                 triggered = True
             
             if triggered:

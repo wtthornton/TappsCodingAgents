@@ -5,10 +5,11 @@ Commands for synchronizing RAG knowledge files with codebase changes.
 
 import logging
 from pathlib import Path
-from typing import Optional
 
+from tapps_agents.core.generators.project_overview_generator import (
+    ProjectOverviewGenerator,
+)
 from tapps_agents.core.sync.rag_synchronizer import RagSynchronizer
-from tapps_agents.core.generators.project_overview_generator import ProjectOverviewGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ logger = logging.getLogger(__name__)
 class RagCommand:
     """RAG knowledge synchronization commands."""
 
-    def __init__(self, project_root: Optional[Path] = None):
+    def __init__(self, project_root: Path | None = None):
         """Initialize RAG command.
 
         Args:
@@ -140,7 +141,7 @@ class RagCommand:
 
     def generate_overview(
         self,
-        output_file: Optional[Path] = None,
+        output_file: Path | None = None,
         force: bool = False,
     ) -> dict:
         """Generate project overview from metadata and architecture.

@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-02-05T01:22:24.476174+00:00Z
-total_entries: 281
+last_updated: 2026-02-06T08:38:49.094709+00:00Z
+total_entries: 283
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -1209,3 +1209,10 @@ libraries:
     topics:
       best-practices:
         cached_at: 2026-02-05T01:22:24.476156+00:00Z
+  beads_sync:
+    context7_id: /steveyegge/beads
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-06T08:38:45.604468+00:00Z
+      examples:
+        cached_at: 2026-02-06T08:38:49.094692+00:00Z

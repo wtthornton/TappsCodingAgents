@@ -13,9 +13,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 __all__ = [
-    "normalize_path",
     "ensure_relative_path",
     "normalize_for_cli",
+    "normalize_path",
     "normalize_project_root",
 ]
 

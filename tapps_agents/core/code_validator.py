@@ -151,7 +151,7 @@ class CodeValidator:
         except Exception as e:
             return ValidationResult(
                 is_valid=False,
-                error_message=f"Unexpected error during validation: {str(e)}",
+                error_message=f"Unexpected error during validation: {e!s}",
                 error_type=type(e).__name__,
                 language="python",
             )

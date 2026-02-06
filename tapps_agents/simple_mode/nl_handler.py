@@ -341,7 +341,7 @@ class SimpleModeHandler:
             logger.error(f"Orchestrator execution failed: {e}", exc_info=True)
             return {
                 "success": False,
-                "error": f"Execution failed: {str(e)}",
+                "error": f"Execution failed: {e!s}",
                 "intent": intent.type.value,
             }
 

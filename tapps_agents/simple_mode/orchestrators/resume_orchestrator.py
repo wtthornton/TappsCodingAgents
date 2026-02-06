@@ -100,7 +100,7 @@ class ResumeOrchestrator(SimpleModeOrchestrator):
 
         except CheckpointNotFoundError as e:
             raise WorkflowNotFoundError(
-                f"Workflow not found: {workflow_id}. {str(e)}"
+                f"Workflow not found: {workflow_id}. {e!s}"
             ) from e
 
     def list_available_workflows(self) -> list[dict[str, Any]]:

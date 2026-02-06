@@ -355,7 +355,7 @@ class WorkflowRecommender:
             WorkflowParser.parse_file(workflow_path)
             return True, None
         except Exception as e:
-            return False, f"Invalid workflow file: {str(e)}"
+            return False, f"Invalid workflow file: {e!s}"
 
     def list_available_workflows(self) -> list[dict[str, str]]:
         """

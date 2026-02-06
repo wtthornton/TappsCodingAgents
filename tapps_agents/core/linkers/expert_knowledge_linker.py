@@ -14,7 +14,6 @@ Phase: 3.2 - Expert-Knowledge Linking
 import logging
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set
 
 import yaml
 
@@ -26,9 +25,9 @@ class OrphanFile:
     """Represents an orphan knowledge file not linked to any expert."""
 
     filepath: Path
-    domain: Optional[str] = None
-    topic: Optional[str] = None
-    suggested_experts: List[str] = field(default_factory=list)
+    domain: str | None = None
+    topic: str | None = None
+    suggested_experts: list[str] = field(default_factory=list)
     reason: str = ""
 
 
@@ -38,11 +37,11 @@ class LinkingResult:
 
     total_knowledge_files: int = 0
     linked_files: int = 0
-    orphan_files: List[OrphanFile] = field(default_factory=list)
+    orphan_files: list[OrphanFile] = field(default_factory=list)
     experts_analyzed: int = 0
-    suggestions: Dict[str, List[str]] = field(default_factory=dict)
+    suggestions: dict[str, list[str]] = field(default_factory=dict)
     success: bool = True
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class ExpertKnowledgeLinker:
@@ -60,8 +59,8 @@ class ExpertKnowledgeLinker:
     def __init__(
         self,
         project_root: Path,
-        knowledge_base_dir: Optional[Path] = None,
-        experts_file: Optional[Path] = None,
+        knowledge_base_dir: Path | None = None,
+        experts_file: Path | None = None,
     ):
         """Initialize the expert-knowledge linker.
 
@@ -74,10 +73,10 @@ class ExpertKnowledgeLinker:
         self.knowledge_base_dir = knowledge_base_dir or self.project_root / ".tapps-agents" / "knowledge"
         self.experts_file = experts_file or self.project_root / ".tapps-agents" / "experts.yaml"
 
-        self.experts: Dict[str, Dict] = {}
-        self.linked_files: Set[Path] = set()
+        self.experts: dict[str, dict] = {}
+        self.linked_files: set[Path] = set()
 
-    def load_experts(self) -> Dict[str, Dict]:
+    def load_experts(self) -> dict[str, dict]:
         """Load expert configurations from experts.yaml.
 
         Returns:
@@ -91,7 +90,7 @@ class ExpertKnowledgeLinker:
             raise FileNotFoundError(f"Experts file not found: {self.experts_file}")
 
         try:
-            with open(self.experts_file, 'r', encoding='utf-8') as f:
+            with open(self.experts_file, encoding='utf-8') as f:
                 data = yaml.safe_load(f) or {}
 
             experts_list = data.get('experts', [])
@@ -113,7 +112,7 @@ class ExpertKnowledgeLinker:
         except Exception as e:
             raise ValueError(f"Failed to load experts: {e}")
 
-    def get_linked_knowledge_files(self) -> Set[Path]:
+    def get_linked_knowledge_files(self) -> set[Path]:
         """Get all knowledge files currently linked to experts.
 
         Returns:
@@ -143,7 +142,7 @@ class ExpertKnowledgeLinker:
         self.linked_files = linked
         return linked
 
-    def scan_knowledge_base(self) -> List[Path]:
+    def scan_knowledge_base(self) -> list[Path]:
         """Scan knowledge base directory for all markdown files.
 
         Returns:
@@ -161,7 +160,7 @@ class ExpertKnowledgeLinker:
 
         return markdown_files
 
-    def find_orphan_files(self) -> List[OrphanFile]:
+    def find_orphan_files(self) -> list[OrphanFile]:
         """Find knowledge files not linked to any expert.
 
         Returns:
@@ -191,7 +190,7 @@ class ExpertKnowledgeLinker:
 
         return orphans
 
-    def _extract_domain_topic(self, filepath: Path) -> tuple[Optional[str], Optional[str]]:
+    def _extract_domain_topic(self, filepath: Path) -> tuple[str | None, str | None]:
         """Extract domain and topic from knowledge file path.
 
         Args:
@@ -218,9 +217,9 @@ class ExpertKnowledgeLinker:
     def _suggest_experts_for_file(
         self,
         filepath: Path,
-        domain: Optional[str],
-        topic: Optional[str]
-    ) -> List[str]:
+        domain: str | None,
+        topic: str | None
+    ) -> list[str]:
         """Suggest experts that might match this knowledge file.
 
         Args:
@@ -257,14 +256,14 @@ class ExpertKnowledgeLinker:
 
         return suggestions
 
-    def suggest_knowledge_file_additions(self) -> Dict[str, List[str]]:
+    def suggest_knowledge_file_additions(self) -> dict[str, list[str]]:
         """Suggest knowledge_files to add to each expert.
 
         Returns:
             Dictionary mapping expert_id to list of suggested knowledge file paths
         """
         orphans = self.find_orphan_files()
-        suggestions: Dict[str, List[str]] = {}
+        suggestions: dict[str, list[str]] = {}
 
         for orphan in orphans:
             for expert_id in orphan.suggested_experts:
@@ -376,14 +375,14 @@ def main():
         print(json.dumps(output, indent=2))
     else:
         # Text format
-        print(f"\n=== Expert-Knowledge Linking Analysis ===")
+        print("\n=== Expert-Knowledge Linking Analysis ===")
         print(f"Total knowledge files: {result.total_knowledge_files}")
         print(f"Linked files: {result.linked_files}")
         print(f"Orphan files: {len(result.orphan_files)}")
         print(f"Experts analyzed: {result.experts_analyzed}")
 
         if result.orphan_files:
-            print(f"\n--- Orphan Knowledge Files ---")
+            print("\n--- Orphan Knowledge Files ---")
             for orphan in result.orphan_files:
                 print(f"\n{orphan.filepath}")
                 print(f"  Domain: {orphan.domain or 'Unknown'}")
@@ -391,10 +390,10 @@ def main():
                 if orphan.suggested_experts:
                     print(f"  Suggested experts: {', '.join(orphan.suggested_experts)}")
                 else:
-                    print(f"  No expert suggestions")
+                    print("  No expert suggestions")
 
         if result.suggestions:
-            print(f"\n--- Suggestions for Experts ---")
+            print("\n--- Suggestions for Experts ---")
             for expert_id, files in result.suggestions.items():
                 print(f"\n{expert_id}:")
                 for filepath in files:

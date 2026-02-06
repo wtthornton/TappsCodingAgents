@@ -249,6 +249,6 @@ def handle_evaluator_command(args: object) -> None:
                 format_json_output(result, feedback)
                 
     except Exception as e:
-        feedback.output_error(f"Evaluation failed: {str(e)}")
+        feedback.output_error(f"Evaluation failed: {e!s}")
     finally:
         safe_close_agent_sync(evaluator)

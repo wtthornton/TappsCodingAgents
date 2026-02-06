@@ -95,7 +95,7 @@ class ValidateOrchestrator(SimpleModeOrchestrator):
         except Exception as e:
             return {
                 "success": False,
-                "error": f"Validation workflow failed: {str(e)}",
+                "error": f"Validation workflow failed: {e!s}",
                 "workflow": "validation"
             }
         finally:

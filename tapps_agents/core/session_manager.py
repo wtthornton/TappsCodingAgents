@@ -79,7 +79,7 @@ class AgentSession:
         data["checkpoints"] = [
             TaskCheckpoint.from_dict(cp) for cp in data.get("checkpoints", [])
         ]
-        if "resource_usage" in data and data["resource_usage"]:
+        if data.get("resource_usage"):
             from .resource_monitor import ResourceMetrics
 
             data["resource_usage"] = ResourceMetrics(**data["resource_usage"])

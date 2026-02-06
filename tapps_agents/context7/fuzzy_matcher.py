@@ -5,8 +5,23 @@ Provides fuzzy matching capabilities to handle variations in library/topic queri
 improving cache hit rates when exact matches aren't available.
 """
 
+import logging
 from dataclasses import dataclass
 from typing import Any
+
+logger = logging.getLogger(__name__)
+
+# Known language associations for common libraries
+LIBRARY_LANGUAGE_HINTS: dict[str, str] = {
+    "react": "javascript", "vue": "javascript", "angular": "javascript",
+    "express": "javascript", "next": "javascript", "nuxt": "javascript",
+    "django": "python", "flask": "python", "fastapi": "python",
+    "sqlalchemy": "python", "pydantic": "python", "pytest": "python",
+    "rails": "ruby", "sinatra": "ruby",
+    "gin": "go", "echo": "go", "fiber": "go",
+    "actix": "rust", "tokio": "rust", "rocket": "rust",
+    "spring": "java", "quarkus": "java",
+}
 
 fuzz: Any | None = None
 process: Any | None = None
@@ -211,6 +226,7 @@ class FuzzyMatcher:
         topic_query: str,
         available_entries: list[tuple[str, str]],  # List of (library, topic) tuples
         max_results: int = 5,
+        project_language: str | None = None,
     ) -> list[FuzzyMatch]:
         """
         Find library/topic entries that match both queries using fuzzy matching.
@@ -220,6 +236,8 @@ class FuzzyMatcher:
             topic_query: Topic name to search for
             available_entries: List of (library, topic) tuples
             max_results: Maximum number of results to return
+            project_language: If set, demote matches whose library is associated
+                with a different language (e.g. reject JS libs in a Python project)
 
         Returns:
             List of FuzzyMatch objects, sorted by combined score (highest first)
@@ -243,15 +261,26 @@ class FuzzyMatcher:
                 elif topic_score >= self.threshold and lib_score < self.threshold:
                     match_type = "topic"
 
-                matches.append(
-                    FuzzyMatch(
-                        library=library,
-                        topic=topic,
-                        score=combined_score,
-                        original_query=f"{library_query}/{topic_query}",
-                        match_type=match_type,
+                # Language verification: penalise cross-language matches
+                if project_language and project_language != "unknown":
+                    lib_lang = _infer_library_language(library)
+                    if lib_lang and lib_lang != project_language:
+                        logger.debug(
+                            "Demoting fuzzy match %s/%s: library language %s != project %s",
+                            library, topic, lib_lang, project_language,
+                        )
+                        combined_score *= 0.5  # Heavy penalty
+
+                if combined_score >= self.threshold:
+                    matches.append(
+                        FuzzyMatch(
+                            library=library,
+                            topic=topic,
+                            score=combined_score,
+                            original_query=f"{library_query}/{topic_query}",
+                            match_type=match_type,
+                        )
                     )
-                )
 
         # Sort by score (descending) and return top N
         matches.sort(key=lambda x: x.score, reverse=True)
@@ -367,3 +396,15 @@ class FuzzyMatcher:
 
         out = sorted(best.values(), key=lambda x: x.score, reverse=True)
         return out[:max_results]
+
+
+def _infer_library_language(library_name: str) -> str | None:
+    """Infer the programming language a library belongs to from its name.
+
+    Returns the language string (e.g. "python") or None if unknown.
+    """
+    normalised = library_name.lower().replace("-", "").replace("_", "")
+    for hint, lang in LIBRARY_LANGUAGE_HINTS.items():
+        if hint in normalised:
+            return lang
+    return None

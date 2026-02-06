@@ -13,9 +13,9 @@ from tapps_agents.core.sync.rag_synchronizer import (
 )
 
 __all__ = [
+    'BackupManifest',
+    'ChangeReport',
     'RagSynchronizer',
     'Rename',
     'StaleReference',
-    'ChangeReport',
-    'BackupManifest',
 ]

@@ -147,7 +147,7 @@ class TestingArtifact(BaseModel):
 
         # Convert coverage from dict to CoverageSummary object
         coverage = None
-        if "coverage" in data and data["coverage"]:
+        if data.get("coverage"):
             coverage_data = data["coverage"]
             if isinstance(coverage_data, dict):
                 coverage = CoverageSummary(**coverage_data)
@@ -156,7 +156,7 @@ class TestingArtifact(BaseModel):
 
         # Convert status string to enum
         status = ArtifactStatus.PENDING
-        if "status" in data and data["status"]:
+        if data.get("status"):
             try:
                 status = ArtifactStatus(data["status"].lower())
             except ValueError:

@@ -371,7 +371,11 @@ class CodeScorer(BaseScorer):
             return 10.0  # Syntax errors = max complexity
 
     def _calculate_security(self, file_path: Path | None, code: str) -> float:
-        """Calculate security score (0-10 scale, higher is better)"""
+        """Calculate security score (0-10 scale, higher is better).
+
+        When Bandit is unavailable or raises (e.g. file/system error), returns 4.0
+        to indicate security could not be assessed rather than a neutral pass.
+        """
         # Validate inputs
         validate_code_input(code, method_name="_calculate_security")
         if file_path is not None and not isinstance(file_path, Path):
@@ -419,13 +423,14 @@ class CodeScorer(BaseScorer):
             score = 10.0 - (high_severity * 3.0 + medium_severity * 1.0)
             return max(0.0, score)
         except (FileNotFoundError, PermissionError, ValueError) as e:
-            # Specific exceptions for file/system errors
-            logger.warning(f"Security scoring failed for {file_path}: {e}")
-            return 5.0  # Default neutral on error
+            logger.warning("Security scoring failed for %s: %s", file_path, e)
+            return 4.0  # Could not assess; use lower default than neutral
         except Exception as e:
-            # Catch-all for unexpected errors (should be rare)
-            logger.warning(f"Unexpected error during security scoring for {file_path}: {e}", exc_info=True)
-            return 5.0  # Default neutral on error
+            logger.warning(
+                "Unexpected error during security scoring for %s: %s",
+                file_path, e, exc_info=True,
+            )
+            return 4.0  # Could not assess; use lower default than neutral
 
     def _calculate_maintainability(self, code: str) -> float:
         """

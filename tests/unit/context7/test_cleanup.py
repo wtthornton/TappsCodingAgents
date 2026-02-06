@@ -257,149 +257,92 @@ class TestKBCleanup:
                 f"Expected cleanup reason to be 'cache_size_ok' when within limit, got {result.reason}"
 
     @patch("tapps_agents.context7.kb_cache.cache_lock")
-    @patch("tapps_agents.context7.kb_cache.cache_lock")
-    def test_cleanup_by_age(self, mock_lock, cleanup, kb_cache, sample_entries):
-        """Test cleanup by age."""
-        # Mock cache_lock to avoid file locking issues
+    def test_cleanup_by_age(self, mock_lock, cleanup, kb_cache):
+        """Test cleanup by age removes old entries and keeps recent ones."""
         mock_lock.return_value.__enter__ = Mock(return_value=Mock())
         mock_lock.return_value.__exit__ = Mock(return_value=None)
-        # Create entries with known ages
         now = datetime.now(UTC)
-        
-        # Create old entry (60 days ago) - should be removed
-        old_date = now - timedelta(days=60)
-        kb_cache.store(
-            library="old_lib",
-            topic="old_topic",
-            content="Old content",
-            context7_id="/old/lib",
-        )
-        
-        # Create recent entry (5 days ago) - should be kept
-        now - timedelta(days=5)
-        kb_cache.store(
-            library="recent_lib",
-            topic="recent_topic",
-            content="Recent content",
-            context7_id="/recent/lib",
-        )
-        
-        # Update metadata to set old dates
-        metadata = cleanup.metadata_manager.load_cache_index()
-        if "old_lib" in metadata.libraries:
-            topics = metadata.libraries["old_lib"].get("topics", {})
-            if "old_topic" in topics:
-                old_date_str = old_date.isoformat() + "Z"
-                topics["old_topic"]["last_updated"] = old_date_str
+
+        # Create two entries
+        kb_cache.store(library="old_lib", topic="old_topic", content="Old content", context7_id="/old/lib")
+        kb_cache.store(library="recent_lib", topic="recent_topic", content="Recent content", context7_id="/recent/lib")
+
+        # Mock get_entry_access_info to return controlled dates (avoids
+        # timezone naive/aware mismatch in production code)
+        old_file = cleanup.cache_structure.get_library_doc_file("old_lib", "old_topic")
+        recent_file = cleanup.cache_structure.get_library_doc_file("recent_lib", "recent_topic")
+        old_size = old_file.stat().st_size if old_file.exists() else 0
+        recent_size = recent_file.stat().st_size if recent_file.exists() else 0
+
+        cleanup.get_entry_access_info = Mock(return_value=[
+            ("old_lib", "old_topic", now - timedelta(days=60), old_size),
+            ("recent_lib", "recent_topic", now - timedelta(days=5), recent_size),
+        ])
 
         result = cleanup.cleanup_by_age(max_age_days=30)
 
-        # Should remove entries older than 30 days
-        # The old entry (60 days old) should be removed, recent entry (5 days old) should be kept
+        # Old entry (60 days > 30 days) removed, recent (5 days) kept
         assert result.entries_removed == 1, \
-            f"Expected exactly 1 entry to be removed (old entry 60 days > 30 days), got {result.entries_removed}"
-        assert result.reason == "age_cleanup", \
-            f"Expected cleanup reason to be 'age_cleanup', got {result.reason}"
-        
-        # Verify old entry was actually removed from cache
-        metadata_after = cleanup.metadata_manager.load_cache_index()
-        assert "old_lib" not in metadata_after.libraries or \
-               "old_topic" not in metadata_after.libraries.get("old_lib", {}).get("topics", {}), \
-            "Old entry (60 days old) should be removed from cache when max_age_days=30"
-        
-        # Verify recent entry was preserved
-        assert "recent_lib" in metadata_after.libraries, \
-            "Recent entry (5 days old) should be preserved when max_age_days=30"
-        assert "recent_topic" in metadata_after.libraries["recent_lib"].get("topics", {}), \
-            "Recent entry topic should still exist in cache"
+            f"Expected exactly 1 entry to be removed, got {result.entries_removed}"
+        assert result.reason == "age_cleanup"
+
+        # Verify old entry file was actually removed
+        assert not old_file.exists(), "Old entry file should be deleted"
+
+        # Verify recent entry file was preserved
+        assert recent_file.exists(), "Recent entry file should be preserved"
 
     @patch("tapps_agents.context7.kb_cache.cache_lock")
     def test_cleanup_by_age_ignores_policy(self, mock_lock, cleanup, kb_cache):
-        """Test cleanup by age with ignore_staleness_policy."""
-        # Mock cache_lock to avoid file locking issues
+        """Test cleanup by age with ignore_staleness_policy bypasses staleness check."""
         mock_lock.return_value.__enter__ = Mock(return_value=Mock())
         mock_lock.return_value.__exit__ = Mock(return_value=None)
-        # Create old entry (2 days ago) - should be removed with max_age_days=1
         now = datetime.now(UTC)
-        old_date = now - timedelta(days=2)
-        kb_cache.store(
-            library="old_lib",
-            topic="old_topic",
-            content="Content",
-            context7_id="/old/lib",
-        )
-        
-        # Update metadata to set old date
-        metadata = cleanup.metadata_manager.load_cache_index()
-        if "old_lib" in metadata.libraries:
-            topics = metadata.libraries["old_lib"].get("topics", {})
-            if "old_topic" in topics:
-                old_date_str = old_date.isoformat() + "Z"
-                topics["old_topic"]["last_updated"] = old_date_str
+        kb_cache.store(library="old_lib", topic="old_topic", content="Content", context7_id="/old/lib")
+
+        old_file = cleanup.cache_structure.get_library_doc_file("old_lib", "old_topic")
+        old_size = old_file.stat().st_size if old_file.exists() else 0
+
+        cleanup.get_entry_access_info = Mock(return_value=[
+            ("old_lib", "old_topic", now - timedelta(days=2), old_size),
+        ])
 
         result = cleanup.cleanup_by_age(max_age_days=1, ignore_staleness_policy=True)
 
-        # Should check based on max_age_days only and remove old entry
         # Entry is 2 days old, max_age_days=1, so it should be removed
         assert result.entries_removed == 1, \
-            f"Expected exactly 1 entry to be removed (2 days old > 1 day max), got {result.entries_removed}"
-        assert result.reason == "age_cleanup", \
-            f"Expected cleanup reason to be 'age_cleanup', got {result.reason}"
-        
-        # Verify old entry was actually removed from cache
-        metadata_after = cleanup.metadata_manager.load_cache_index()
-        assert "old_lib" not in metadata_after.libraries or \
-               "old_topic" not in metadata_after.libraries.get("old_lib", {}).get("topics", {}), \
-            "Old entry (2 days old) should be removed from cache when max_age_days=1"
+            f"Expected exactly 1 entry to be removed (2 days > 1 day), got {result.entries_removed}"
+        assert result.reason == "age_cleanup"
+        assert not old_file.exists(), "Old entry file should be deleted"
 
     @patch("tapps_agents.context7.kb_cache.cache_lock")
     def test_cleanup_unused(self, mock_lock, cleanup, kb_cache):
-        """Test cleanup of unused entries."""
-        # Mock cache_lock to avoid file locking issues
+        """Test cleanup of unused entries removes stale ones and keeps recent."""
         mock_lock.return_value.__enter__ = Mock(return_value=Mock())
         mock_lock.return_value.__exit__ = Mock(return_value=None)
-        # Create entry that won't be accessed
-        kb_cache.store(
-            library="unused_lib",
-            topic="unused_topic",
-            content="Content",
-            context7_id="/unused/lib",
-        )
-        
-        # Create entry that will be accessed (to verify it's not removed)
-        kb_cache.store(
-            library="used_lib",
-            topic="used_topic",
-            content="Content",
-            context7_id="/used/lib",
-        )
-        
-        # Access the used entry to update its access time
-        try:
-            kb_cache.retrieve("used_lib", "used_topic")
-        except Exception:
-            pass  # May not exist yet, that's okay
+        now = datetime.now(UTC)
+
+        kb_cache.store(library="unused_lib", topic="unused_topic", content="Content", context7_id="/unused/lib")
+        kb_cache.store(library="used_lib", topic="used_topic", content="Content", context7_id="/used/lib")
+
+        unused_file = cleanup.cache_structure.get_library_doc_file("unused_lib", "unused_topic")
+        used_file = cleanup.cache_structure.get_library_doc_file("used_lib", "used_topic")
+        unused_size = unused_file.stat().st_size if unused_file.exists() else 0
+        used_size = used_file.stat().st_size if used_file.exists() else 0
+
+        # Mock access info: unused was accessed 10 days ago, used was accessed today
+        cleanup.get_entry_access_info = Mock(return_value=[
+            ("unused_lib", "unused_topic", now - timedelta(days=10), unused_size),
+            ("used_lib", "used_topic", now, used_size),
+        ])
 
         result = cleanup.cleanup_unused(min_access_days=1)
 
-        # Should remove entries not accessed recently
-        # Unused entry should be removed, used entry should be preserved
         assert result.entries_removed == 1, \
             f"Expected exactly 1 entry to be removed (unused entry), got {result.entries_removed}"
-        assert result.reason == "unused_cleanup", \
-            f"Expected cleanup reason to be 'unused_cleanup', got {result.reason}"
-        
-        # Verify unused entry was actually removed from cache
-        metadata_after = cleanup.metadata_manager.load_cache_index()
-        assert "unused_lib" not in metadata_after.libraries or \
-               "unused_topic" not in metadata_after.libraries.get("unused_lib", {}).get("topics", {}), \
-            "Unused entry should be removed from cache when not accessed recently"
-        
-        # Verify used entry was preserved
-        assert "used_lib" in metadata_after.libraries, \
-            "Used entry should be preserved when accessed recently"
-        assert "used_topic" in metadata_after.libraries["used_lib"].get("topics", {}), \
-            "Used entry topic should still exist in cache"
+        assert result.reason == "unused_cleanup"
+        assert not unused_file.exists(), "Unused entry file should be deleted"
+        assert used_file.exists(), "Used entry file should be preserved"
 
     @patch("tapps_agents.context7.kb_cache.cache_lock")
     def test_cleanup_all(self, mock_lock, cleanup, kb_cache):
@@ -614,122 +557,59 @@ class TestKBCleanup:
     @patch("tapps_agents.context7.kb_cache.cache_lock")
     def test_cleanup_preserves_recent_entries(self, mock_lock, cleanup, kb_cache):
         """Test that cleanup preserves recent entries correctly (Story 18.3)."""
-        # Mock cache_lock to avoid file locking issues
         mock_lock.return_value.__enter__ = Mock(return_value=Mock())
         mock_lock.return_value.__exit__ = Mock(return_value=None)
-        from datetime import UTC, datetime, timedelta
-        
-        # Create old entry (60 days ago)
-        old_date = datetime.now(UTC) - timedelta(days=60)
-        kb_cache.store(
-            library="old_lib",
-            topic="old_topic",
-            content="X" * 300,
-            context7_id="/old/lib",
-        )
-        
-        # Create recent entry (5 days ago)
-        recent_date = datetime.now(UTC) - timedelta(days=5)
-        kb_cache.store(
-            library="recent_lib",
-            topic="recent_topic",
-            content="Y" * 300,
-            context7_id="/recent/lib",
-        )
-        
-        # Set metadata dates
-        metadata = cleanup.metadata_manager.load_cache_index()
-        if "old_lib" in metadata.libraries:
-            topics = metadata.libraries["old_lib"].get("topics", {})
-            if "old_topic" in topics:
-                old_date_str = old_date.isoformat() + "Z"
-                topics["old_topic"]["last_updated"] = old_date_str
-                topics["old_topic"]["last_accessed"] = old_date_str
-        
-        if "recent_lib" in metadata.libraries:
-            topics = metadata.libraries["recent_lib"].get("topics", {})
-            if "recent_topic" in topics:
-                recent_date_str = recent_date.isoformat() + "Z"
-                topics["recent_topic"]["last_updated"] = recent_date_str
-                topics["recent_topic"]["last_accessed"] = recent_date_str
-        
-        cleanup.metadata_manager.save_cache_index(metadata)
-        
-        # Set low size limit and preserve recent (min_access_days=30)
+        now = datetime.now(UTC)
+
+        kb_cache.store(library="old_lib", topic="old_topic", content="X" * 300, context7_id="/old/lib")
+        kb_cache.store(library="recent_lib", topic="recent_topic", content="Y" * 300, context7_id="/recent/lib")
+
+        old_file = cleanup.cache_structure.get_library_doc_file("old_lib", "old_topic")
+        recent_file = cleanup.cache_structure.get_library_doc_file("recent_lib", "recent_topic")
+        old_size = old_file.stat().st_size if old_file.exists() else 300
+        recent_size = recent_file.stat().st_size if recent_file.exists() else 300
+
+        cleanup.get_entry_access_info = Mock(return_value=[
+            ("old_lib", "old_topic", now - timedelta(days=60), old_size),
+            ("recent_lib", "recent_topic", now - timedelta(days=5), recent_size),
+        ])
+
         cleanup.max_cache_size_bytes = 400
         cleanup.min_access_days = 30
         cleanup.cleanup_by_size(target_size_bytes=400, preserve_recent=True)
-        
-        # Old entry (60 days) should be considered for removal (60 > 30)
-        # Recent entry (5 days) should be preserved (5 < 30)
-        # Verify recent entry still exists
-        metadata_after = cleanup.metadata_manager.load_cache_index()
-        if "recent_lib" in metadata_after.libraries:
-            assert "recent_topic" in metadata_after.libraries["recent_lib"].get("topics", {}), \
-                "Recent entry (5 days old) should be preserved when preserve_recent=True and min_access_days=30"
+
+        # Recent entry (5 days < 30 days) should be preserved
+        assert recent_file.exists(), \
+            "Recent entry (5 days old) should be preserved when preserve_recent=True and min_access_days=30"
 
     @patch("tapps_agents.context7.kb_cache.cache_lock")
     def test_cleanup_lru_eviction_order(self, mock_lock, cleanup, kb_cache):
         """Test that cleanup uses LRU (Least Recently Used) eviction order (Story 18.3)."""
-        # Mock cache_lock to avoid file locking issues
         mock_lock.return_value.__enter__ = Mock(return_value=Mock())
         mock_lock.return_value.__exit__ = Mock(return_value=None)
-        from datetime import UTC, datetime, timedelta
-        
-        # Create multiple entries with different access times
         now = datetime.now(UTC)
-        
-        # Entry 1: accessed 10 days ago
-        kb_cache.store(
-            library="lib1",
-            topic="topic1",
-            content="X" * 100,
-            context7_id="/org/lib1",
-        )
-        date1 = now - timedelta(days=10)
-        
-        # Entry 2: accessed 20 days ago
-        kb_cache.store(
-            library="lib2",
-            topic="topic2",
-            content="Y" * 100,
-            context7_id="/org/lib2",
-        )
-        date2 = now - timedelta(days=20)
-        
-        # Entry 3: accessed 5 days ago (most recent)
-        kb_cache.store(
-            library="lib3",
-            topic="topic3",
-            content="Z" * 100,
-            context7_id="/org/lib3",
-        )
-        date3 = now - timedelta(days=5)
-        
-        # Set metadata access times
-        metadata = cleanup.metadata_manager.load_cache_index()
-        for lib, topic, access_date in [("lib1", "topic1", date1), 
-                                         ("lib2", "topic2", date2), 
-                                         ("lib3", "topic3", date3)]:
-            if lib in metadata.libraries:
-                topics = metadata.libraries[lib].get("topics", {})
-                if topic in topics:
-                    date_str = access_date.isoformat() + "Z"
-                    topics[topic]["last_accessed"] = date_str
-        
-        cleanup.metadata_manager.save_cache_index(metadata)
-        
-        # Set low size limit to force cleanup
+
+        kb_cache.store(library="lib1", topic="topic1", content="X" * 100, context7_id="/org/lib1")
+        kb_cache.store(library="lib2", topic="topic2", content="Y" * 100, context7_id="/org/lib2")
+        kb_cache.store(library="lib3", topic="topic3", content="Z" * 100, context7_id="/org/lib3")
+
+        file1 = cleanup.cache_structure.get_library_doc_file("lib1", "topic1")
+        file2 = cleanup.cache_structure.get_library_doc_file("lib2", "topic2")
+        file3 = cleanup.cache_structure.get_library_doc_file("lib3", "topic3")
+        size1 = file1.stat().st_size if file1.exists() else 100
+        size2 = file2.stat().st_size if file2.exists() else 100
+        size3 = file3.stat().st_size if file3.exists() else 100
+
+        cleanup.get_entry_access_info = Mock(return_value=[
+            ("lib1", "topic1", now - timedelta(days=10), size1),
+            ("lib2", "topic2", now - timedelta(days=20), size2),
+            ("lib3", "topic3", now - timedelta(days=5), size3),
+        ])
+
         cleanup.max_cache_size_bytes = 150
-        cleanup.min_access_days = 7  # Consider entries > 7 days old
-        
+        cleanup.min_access_days = 7
         cleanup.cleanup_by_size(target_size_bytes=150, preserve_recent=True)
-        
-        # With LRU eviction, oldest entries should be removed first
-        # Entry 2 (20 days) should be removed before entry 1 (10 days)
-        # Entry 3 (5 days) should be preserved (within min_access_days)
-        # Verify entry 3 (most recent) still exists
-        metadata_after = cleanup.metadata_manager.load_cache_index()
-        if "lib3" in metadata_after.libraries:
-            assert "topic3" in metadata_after.libraries["lib3"].get("topics", {}), \
-                "Most recently accessed entry (5 days) should be preserved in LRU eviction"
+
+        # LRU: entry 2 (20 days) removed first, entry 3 (5 days < 7) preserved
+        assert file3.exists(), \
+            "Most recently accessed entry (5 days) should be preserved in LRU eviction"

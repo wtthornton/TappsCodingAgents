@@ -462,5 +462,4 @@ def reset_agent_cache(agent_name: str) -> None:
     Args:
         agent_name: Name of the agent
     """
-    if agent_name in _agent_caches:
-        del _agent_caches[agent_name]
+    _agent_caches.pop(agent_name, None)

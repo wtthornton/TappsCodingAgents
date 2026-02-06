@@ -44,9 +44,7 @@ def handle_create_command(args: object) -> None:
     # Cursor-first default:
     # - Workflows need Cursor Skills to produce artifacts for LLM-driven steps.
     # - Users can still force headless mode by setting TAPPS_AGENTS_MODE=headless explicitly.
-    if cursor_mode_flag:
-        os.environ["TAPPS_AGENTS_MODE"] = "cursor"
-    elif "TAPPS_AGENTS_MODE" not in os.environ:
+    if cursor_mode_flag or "TAPPS_AGENTS_MODE" not in os.environ:
         os.environ["TAPPS_AGENTS_MODE"] = "cursor"
 
     if feedback.verbosity.value != "quiet":
@@ -109,7 +107,7 @@ def handle_create_command(args: object) -> None:
                 workflow = executor.load_workflow(workflow_file_path)
             except Exception as e:
                 feedback.error(
-                    f"Failed to load workflow from file: {str(e)}",
+                    f"Failed to load workflow from file: {e!s}",
                     error_code="workflow_load_error",
                     context={"file": str(workflow_file_path)},
                     exit_code=3,
@@ -922,7 +920,7 @@ def handle_workflow_command(args: object) -> None:
                 workflow = executor.load_workflow(workflow_file_path)
             except Exception as e:
                 feedback.error(
-                    f"Failed to load workflow from file: {str(e)}",
+                    f"Failed to load workflow from file: {e!s}",
                     error_code="workflow_load_error",
                     context={"file": str(workflow_file_path)},
                     exit_code=1,
@@ -945,7 +943,7 @@ def handle_workflow_command(args: object) -> None:
                     sys.exit(1)
             except Exception as e:
                 feedback.error(
-                    f"Failed to load preset: {str(e)}",
+                    f"Failed to load preset: {e!s}",
                     error_code="preset_load_error",
                     context={"preset": preset_name},
                     exit_code=1,
@@ -3628,7 +3626,7 @@ def handle_rag_command(args: object) -> None:
                 print(f"Total files scanned: {report.get('total_files', 0)}")
 
             elif status in ("report_generated", "confirmation_required"):
-                print(f"\n📋 Change Report Generated")
+                print("\n📋 Change Report Generated")
                 print(f"Total files affected: {report.get('total_files', 0)}")
                 print(f"Total changes: {report.get('total_changes', 0)}")
 

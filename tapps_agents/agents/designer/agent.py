@@ -119,7 +119,7 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
         elif command == "design-api":
             requirements = kwargs.get("requirements", "")
             api_type = kwargs.get("api_type", "REST")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
             generate_doc = kwargs.get("generate_doc", False) or kwargs.get("generate-doc", False)
             generate_code = kwargs.get("generate_code", False) or kwargs.get("generate-code", False)
             code_language = kwargs.get("code_language", "typescript") or kwargs.get("code-language", "typescript")
@@ -188,7 +188,7 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
         elif command == "design-data-model":
             requirements = kwargs.get("requirements", "")
             data_source = kwargs.get("data_source", "")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
             generate_code = kwargs.get("generate_code", False) or kwargs.get("generate-code", False)
             code_language = kwargs.get("code_language", "typescript") or kwargs.get("code-language", "typescript")
 
@@ -244,14 +244,14 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
         elif command == "design-ui":
             feature_description = kwargs.get("feature_description", "")
             user_stories = kwargs.get("user_stories", [])
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._design_ui(feature_description, user_stories, output_file)
 
         elif command == "create-wireframe":
             screen_description = kwargs.get("screen_description", "")
             wireframe_type = kwargs.get("wireframe_type", "page")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._create_wireframe(
                 screen_description, wireframe_type, output_file
@@ -260,7 +260,7 @@ class DesignerAgent(BaseAgent, ExpertSupportMixin):
         elif command == "define-design-system":
             project_description = kwargs.get("project_description", "")
             brand_guidelines = kwargs.get("brand_guidelines", "")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._define_design_system(
                 project_description, brand_guidelines, output_file
@@ -391,7 +391,7 @@ Format as structured JSON with OpenAPI-style specification."""
                 "skill_command": instruction.to_skill_command(),
             }
         except Exception as e:
-            return {"error": f"Failed to design API: {str(e)}"}
+            return {"error": f"Failed to design API: {e!s}"}
 
     async def _design_data_model(
         self,
@@ -487,7 +487,7 @@ Format as structured JSON with detailed data model specification."""
                 "skill_command": instruction.to_skill_command(),
             }
         except Exception as e:
-            return {"error": f"Failed to design data model: {str(e)}"}
+            return {"error": f"Failed to design data model: {e!s}"}
 
     async def _design_ui(
         self,
@@ -580,7 +580,7 @@ Format as structured JSON with detailed UI/UX specification."""
                 "skill_command": instruction.to_skill_command(),
             }
         except Exception as e:
-            return {"error": f"Failed to design UI: {str(e)}"}
+            return {"error": f"Failed to design UI: {e!s}"}
 
     async def _create_wireframe(
         self,
@@ -634,7 +634,7 @@ Format as structured content."""
                 "skill_command": instruction.to_skill_command(),
             }
         except Exception as e:
-            return {"error": f"Failed to create wireframe: {str(e)}"}
+            return {"error": f"Failed to create wireframe: {e!s}"}
 
     async def _define_design_system(
         self,
@@ -726,7 +726,7 @@ Format as structured JSON with detailed design system specification."""
 
             return {"success": True, "design_system": design_system}
         except Exception as e:
-            return {"error": f"Failed to define design system: {str(e)}"}
+            return {"error": f"Failed to define design system: {e!s}"}
 
     async def _evaluate_design(self, design: dict[str, Any]) -> dict[str, Any]:
         """Evaluate design quality and completeness."""

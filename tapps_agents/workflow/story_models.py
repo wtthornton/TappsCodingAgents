@@ -142,5 +142,5 @@ class Story(BaseModel):
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..epic.models import Story as EpicStory  # noqa: F401
-    from .planning_artifact import UserStory  # noqa: F401
+    from ..epic.models import Story as EpicStory
+    from .planning_artifact import UserStory

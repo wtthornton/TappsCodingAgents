@@ -109,7 +109,7 @@ async def refresh_stale_documentation(
         # Don't fail startup if refresh fails
         return {
             "success": False,
-            "message": f"Startup refresh failed: {str(e)}",
+            "message": f"Startup refresh failed: {e!s}",
             "refreshed": 0,
             "error": str(e),
         }

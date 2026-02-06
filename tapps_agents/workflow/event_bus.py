@@ -62,8 +62,8 @@ class FileBasedEventBus:
                 exc_info=True,
             )
 
-        # Notify in-process subscribers
-        handlers = self.subscribers.get(event.event_type, [])
+        # Notify in-process subscribers (copy list to avoid mutation during iteration)
+        handlers = list(self.subscribers.get(event.event_type, []))
         for handler in handlers:
             try:
                 if isinstance(handler, Callable):

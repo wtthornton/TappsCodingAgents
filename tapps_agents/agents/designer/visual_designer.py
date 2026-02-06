@@ -508,7 +508,7 @@ class VisualDesignerAgent(DesignerAgent):
             user_stories = kwargs.get("user_stories", [])
             max_iterations = kwargs.get("max_iterations", 5)
             quality_threshold = kwargs.get("quality_threshold", 0.8)
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._visual_design(
                 feature_description,

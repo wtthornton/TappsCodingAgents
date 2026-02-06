@@ -188,7 +188,7 @@ class TesterAgent(BaseAgent, ExpertSupportMixin):
             # Extract test framework docs if available
             if context7_docs:
                 # First try exact match with detected framework
-                if test_framework in context7_docs and context7_docs[test_framework]:
+                if context7_docs.get(test_framework):
                     framework_docs = context7_docs[test_framework]
                 else:
                     # Look for any test framework in the detected libraries

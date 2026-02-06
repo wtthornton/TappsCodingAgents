@@ -69,9 +69,7 @@ class StreamEvent:
             return f"  {icon} {self.message}\n"
         elif self.type == StreamEventType.STEP_ERROR:
             return f"  {icon} **Error**: {self.message}\n"
-        elif self.type == StreamEventType.WORKFLOW_COMPLETE:
-            return f"\n{icon} **{self.message}**\n"
-        elif self.type == StreamEventType.WORKFLOW_ERROR:
+        elif self.type == StreamEventType.WORKFLOW_COMPLETE or self.type == StreamEventType.WORKFLOW_ERROR:
             return f"\n{icon} **{self.message}**\n"
         elif self.type == StreamEventType.WORKFLOW_PAUSED:
             return f"\n{icon} **Paused**: {self.message}\n"

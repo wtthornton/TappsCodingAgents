@@ -2,4 +2,4 @@
 
 from .workflow_metrics_tracker import WorkflowMetrics, WorkflowMetricsTracker
 
-__all__ = ["WorkflowMetricsTracker", "WorkflowMetrics"]
+__all__ = ["WorkflowMetrics", "WorkflowMetricsTracker"]

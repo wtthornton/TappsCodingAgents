@@ -14,11 +14,11 @@ from .registry import HealthCheckRegistry
 
 __all__ = [
     "HealthCheck",
+    "HealthCheckRegistry",
     "HealthCheckResult",
+    "HealthDashboard",
     "HealthMetric",
     "HealthMetricsCollector",
-    "HealthDashboard",
     "HealthOrchestrator",
-    "HealthCheckRegistry",
 ]
 

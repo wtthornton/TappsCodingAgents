@@ -8,10 +8,14 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
+from typing import Any
 
 from .cache_locking import cache_lock, get_cache_lock_file
 from .cache_structure import CacheStructure
 from .metadata import MetadataManager
+
+# Maximum file size for cache reads (10 MB)
+MAX_CACHE_FILE_SIZE = 10 * 1024 * 1024
 
 
 @dataclass
@@ -26,6 +30,7 @@ class CacheEntry:
     snippet_count: int = 0
     token_count: int = 0
     cached_at: str | None = None
+    fetched_at: str | None = None
     cache_hits: int = 0
 
     def to_dict(self) -> dict:
@@ -39,8 +44,21 @@ class CacheEntry:
             "snippet_count": self.snippet_count,
             "token_count": self.token_count,
             "cached_at": self.cached_at,
+            "fetched_at": self.fetched_at,
             "cache_hits": self.cache_hits,
         }
+
+    def is_expired(self, ttl_seconds: int) -> bool:
+        """Check if entry has exceeded its TTL."""
+        ts = self.fetched_at or self.cached_at
+        if not ts:
+            return False
+        try:
+            fetched = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+            age = datetime.now(UTC) - fetched
+            return age.total_seconds() > ttl_seconds
+        except (ValueError, TypeError):
+            return False
 
     def to_markdown(self) -> str:
         """Convert cache entry to markdown format."""
@@ -193,24 +211,44 @@ class KBCache:
             self.metadata_manager = metadata_manager
             raise
 
-    def get(self, library: str, topic: str) -> CacheEntry | None:
+    def get(
+        self, library: str, topic: str, ttl_seconds: int | None = None
+    ) -> CacheEntry | None:
         """
         Retrieve cached entry.
 
         Args:
             library: Library name
             topic: Topic name
+            ttl_seconds: If set, return None for entries older than this (seconds).
+                Defaults to None (no expiry check).
 
         Returns:
-            CacheEntry if found, None otherwise
+            CacheEntry if found and not expired, None otherwise
         """
         doc_file = self.cache_structure.get_library_doc_file(library, topic)
         if not doc_file.exists():
             return None
 
         try:
+            # Check file size before reading to prevent OOM
+            if doc_file.stat().st_size > MAX_CACHE_FILE_SIZE:
+                import logging
+                logging.getLogger(__name__).warning(
+                    f"Cache file {doc_file} exceeds size limit "
+                    f"({doc_file.stat().st_size} > {MAX_CACHE_FILE_SIZE}), skipping"
+                )
+                return None
             content = doc_file.read_text(encoding="utf-8")
             entry = CacheEntry.from_markdown(library, topic, content)
+
+            # TTL expiry check
+            if ttl_seconds is not None and entry.is_expired(ttl_seconds):
+                import logging
+                logging.getLogger(__name__).debug(
+                    "Cache entry %s/%s expired (ttl=%ds)", library, topic, ttl_seconds
+                )
+                return None
 
             # Update metadata (increment hits, update last accessed)
             self.metadata_manager.update_library_metadata(
@@ -220,6 +258,32 @@ class KBCache:
             return entry
         except Exception:
             return None
+
+    def get_cache_stats(self) -> dict[str, Any]:
+        """Return cache size, entry count, and capacity info.
+
+        Useful for monitoring and deciding when to trigger cleanup.
+        """
+        index = self.metadata_manager.load_cache_index()
+        entry_count = index.total_entries
+
+        # Calculate total size from cached files
+        total_size = 0
+        if self.cache_structure:
+            for lib_data in index.libraries.values():
+                for topic_name in (lib_data.get("topics") or {}):
+                    lib_name = next(
+                        (k for k, v in index.libraries.items() if v is lib_data), ""
+                    )
+                    doc = self.cache_structure.get_library_doc_file(lib_name, topic_name)
+                    if doc.exists():
+                        total_size += doc.stat().st_size
+
+        return {
+            "entry_count": entry_count,
+            "size_bytes": total_size,
+            "size_mb": round(total_size / (1024 * 1024), 2),
+        }
 
     def store(
         self,
@@ -259,6 +323,7 @@ class KBCache:
             # Estimate token count (rough approximation: 1 token ≈ 4 characters)
             token_count = len(content) // 4
 
+            now_iso = datetime.now(UTC).isoformat() + "Z"
             entry = CacheEntry(
                 library=library,
                 topic=topic,
@@ -267,7 +332,8 @@ class KBCache:
                 trust_score=trust_score,
                 snippet_count=snippet_count or 0,
                 token_count=token_count,
-                cached_at=datetime.now(UTC).isoformat() + "Z",
+                cached_at=now_iso,
+                fetched_at=now_iso,
                 cache_hits=0,
             )
 
@@ -294,7 +360,7 @@ class KBCache:
                 except Exception as e:
                     import logging
                     logger = logging.getLogger(__name__)
-                    logger.debug(f"Failed to update library metadata: {e}")
+                    logger.warning(f"Failed to update library metadata for {library}: {e}")
 
                 # Update cache index (non-critical, continue if fails)
                 try:
@@ -304,7 +370,7 @@ class KBCache:
                 except Exception as e:
                     import logging
                     logger = logging.getLogger(__name__)
-                    logger.debug(f"Failed to update cache index: {e}")
+                    logger.warning(f"Failed to update cache index for {library}/{topic}: {e}")
         except RuntimeError as e:
             # Cache lock acquisition failed - log and continue without caching
             # This allows the operation to continue even if cache write fails

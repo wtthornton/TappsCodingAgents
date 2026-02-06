@@ -219,7 +219,7 @@ class GateRegistry:
                 results["all_passed"] = False
                 results["failures"].append({
                     "gate": gate_name,
-                    "message": f"Gate evaluation exception: {str(e)}",
+                    "message": f"Gate evaluation exception: {e!s}",
                     "severity": "error",
                 })
 

@@ -12,8 +12,8 @@ from .proactive_bug_finder import ProactiveBugFinder
 
 __all__ = [
     "BugFinder",
-    "BugInfo",
     "BugFixCoordinator",
+    "BugInfo",
     "CommitManager",
     "ContinuousBugFixer",
     "ProactiveBugFinder",

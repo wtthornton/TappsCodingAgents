@@ -130,7 +130,7 @@ class PlanningArtifact(BaseModel):
 
         # Convert plan dict to PlanDetails if present
         plan = None
-        if "plan" in data and data["plan"]:
+        if data.get("plan"):
             plan_data = data["plan"]
             if isinstance(plan_data, dict):
                 plan = PlanDetails(**plan_data)
@@ -139,7 +139,7 @@ class PlanningArtifact(BaseModel):
 
         # Convert status string to enum
         status = ArtifactStatus.PENDING
-        if "status" in data and data["status"]:
+        if data.get("status"):
             try:
                 status = ArtifactStatus(data["status"].lower())
             except ValueError:
@@ -147,7 +147,7 @@ class PlanningArtifact(BaseModel):
 
         # Convert operation_type string to enum
         operation_type = None
-        if "operation_type" in data and data["operation_type"]:
+        if data.get("operation_type"):
             try:
                 operation_type = OperationType(data["operation_type"].lower().replace("-", "_"))
             except ValueError:

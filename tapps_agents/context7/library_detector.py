@@ -301,7 +301,7 @@ class LibraryDetector:
                     deps = data.get("dependencies", {})
                     dev_deps = data.get("devDependencies", {})
                     all_deps = {**deps, **dev_deps}
-                    for dep_name in all_deps.keys():
+                    for dep_name in all_deps:
                         # Normalize names (e.g., @types/react -> react)
                         normalized = dep_name.replace("@types/", "").replace("@", "")
                         libraries.add(normalized)
@@ -633,11 +633,7 @@ class LibraryDetector:
                 # This filters out local directory imports like "from config import ..."
                 # UNLESS they're also actual dependencies
                 normalized = self._normalize_library_name(lib)
-                if normalized and normalized in project_libraries:
-                    other_libraries.add(normalized)
-                # But if it's a well-known library, include it anyway
-                # (prompt/error detection will handle explicit mentions)
-                elif normalized and self._is_well_known_library(normalized):
+                if (normalized and normalized in project_libraries) or (normalized and self._is_well_known_library(normalized)):
                     other_libraries.add(normalized)
 
         # From prompt (explicit mentions - higher confidence)

@@ -10,7 +10,6 @@ import json
 import logging
 from pathlib import Path
 
-from ...core.config import load_config
 from ...core.unicode_safe import safe_print
 from ...epic.state_manager import EpicStateManager
 

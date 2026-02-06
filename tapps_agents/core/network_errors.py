@@ -60,7 +60,7 @@ class NetworkError(Exception):
         parts.append(f"Connection failed during '{self.operation_name}' operation.")
         
         if self.original_error:
-            parts.append(f"Error: {str(self.original_error)}")
+            parts.append(f"Error: {self.original_error!s}")
         
         parts.append(f"Request ID: {self.request_id}")
         

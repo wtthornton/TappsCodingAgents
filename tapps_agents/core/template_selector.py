@@ -63,13 +63,13 @@ def normalize_framework_name(framework: str) -> str:
         return normalized
     
     # Try case-insensitive match
-    for key in FRAMEWORK_TEMPLATE_MAP.keys():
+    for key in FRAMEWORK_TEMPLATE_MAP:
         if key.lower() == normalized.lower():
             return key
     
     # Try partial match (e.g., "Fast API" -> "FastAPI")
     normalized_lower = normalized.lower().replace(" ", "").replace("-", "").replace("_", "")
-    for key in FRAMEWORK_TEMPLATE_MAP.keys():
+    for key in FRAMEWORK_TEMPLATE_MAP:
         key_normalized = key.lower().replace(" ", "").replace("-", "").replace("_", "")
         if key_normalized == normalized_lower or normalized_lower in key_normalized:
             return key

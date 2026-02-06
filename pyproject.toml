@@ -135,10 +135,21 @@ exclude = [
 
 [tool.ruff.lint]
 # Start with a pragmatic, high-signal rule set; tighten over time during the marathon.
-select = ["E", "F", "I", "UP", "B"]
+select = ["E", "F", "I", "UP", "B", "SIM", "RUF", "PTH", "ASYNC", "PERF"]
 ignore = [
   # Let Ruff format handle line-length; long strings/URLs are often intentional.
   "E501",
+  # PTH123: builtin-open — 288 occurrences, incremental migration only
+  "PTH123",
+  # PERF401: manual-list-comprehension — style preference, low priority
+  "PERF401",
+  # SIM102: collapsible-if — often less readable when collapsed
+  "SIM102",
+  # ASYNC240/230: blocking calls in async — requires aiofiles migration (deferred)
+  "ASYNC240",
+  "ASYNC230",
+  # RUF012: mutable-class-default — Pydantic models intentionally use these
+  "RUF012",
 ]
 
 [tool.ruff.lint.per-file-ignores]
@@ -159,7 +170,7 @@ warn_return_any = false
 warn_unreachable = true
 no_implicit_optional = true
 disallow_untyped_defs = false
-check_untyped_defs = false
+check_untyped_defs = true
 ignore_missing_imports = true
 exclude = "(^build/|^dist/|^htmlcov/|^MagicMock/|^reports/|^tapps_agents\\.egg-info/)"
 

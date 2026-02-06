@@ -506,7 +506,7 @@ class WorkflowSchemaValidator:
         if not self.strict:
             return errors
 
-        for field_name in data.keys():
+        for field_name in data:
             if field_name not in allowed_fields:
                 errors.append(
                     ValidationError(

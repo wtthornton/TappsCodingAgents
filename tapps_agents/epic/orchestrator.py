@@ -9,7 +9,6 @@ import json
 import logging
 import os
 import shutil
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -415,8 +414,16 @@ class EpicOrchestrator:
                 result["status"] = "failed"
                 result["error"] = "Quality gates failed after max iterations"
 
-        except Exception as e:
+        except (OSError, RuntimeError, ValueError, KeyError) as e:
             logger.error(f"Error executing story {story.story_id}: {e}", exc_info=True)
+            story.status = StoryStatus.FAILED
+            result["status"] = "failed"
+            result["error"] = str(e)
+        except Exception as e:
+            logger.error(
+                f"Unexpected error executing story {story.story_id}: {type(e).__name__}: {e}",
+                exc_info=True,
+            )
             story.status = StoryStatus.FAILED
             result["status"] = "failed"
             result["error"] = str(e)
@@ -767,7 +774,10 @@ class EpicOrchestrator:
 
     async def _check_quality_gates(self, story: Story) -> dict[str, Any]:
         """
-        Check quality gates for a story.
+        Check quality gates for a story using actual review scores.
+
+        Extracts reviewer scores from the workflow executor state and
+        evaluates them against configured quality thresholds.
 
         Args:
             story: Story to check
@@ -775,6 +785,8 @@ class EpicOrchestrator:
         Returns:
             Quality gate result with scores and pass/fail status
         """
+        from ..quality.quality_gates import QualityGate, QualityThresholds
+
         # Determine threshold (critical services get higher threshold)
         threshold = (
             self.critical_service_threshold
@@ -782,21 +794,51 @@ class EpicOrchestrator:
             else self.quality_threshold
         )
 
-        # TODO: Actually run quality checks on generated code
-        # In the future, this would:
-        # 1. Use QualityGate with proper thresholds
-        # 2. Analyze the actual code created for this story
-        # 3. Get real scores from ReviewerAgent
-        # For now, return a placeholder result
+        thresholds = QualityThresholds(
+            overall_min=threshold / 10.0,  # Convert 0-100 to 0-10 scale
+            security_min=7.0 if not self._is_critical_service(story) else 8.5,
+        )
+
+        quality_gate = QualityGate(thresholds=thresholds)
+
+        # Try to extract reviewer scores from workflow state
+        if self.workflow_executor and self.workflow_executor.state:
+            state_vars = self.workflow_executor.state.variables
+
+            # Check for gate_last result (set by executor after review step)
+            gate_last = state_vars.get("gate_last", {})
+            if gate_last:
+                return {
+                    "passed": gate_last.get("passed", False),
+                    "overall_score": gate_last.get("scoring", {}).get(
+                        "overall_score", 0
+                    ),
+                    "scores": gate_last.get("scoring", {}),
+                    "gate_result": gate_last.get("gate_result", {}),
+                }
+
+            # Fallback: use reviewer_result directly
+            reviewer_result = state_vars.get("reviewer_result", {})
+            if reviewer_result:
+                gate_result = quality_gate.evaluate_from_review_result(
+                    reviewer_result, thresholds
+                )
+                return {
+                    "passed": gate_result.passed,
+                    "overall_score": gate_result.scores.get("overall_score", 0),
+                    "scores": gate_result.scores,
+                    "gate_result": gate_result.to_dict(),
+                }
+
+        # No review data available — fail if quality gates are enforced
+        logger.warning(
+            f"Story {story.story_id}: No reviewer scores available for quality gate evaluation"
+        )
         return {
-            "passed": True,  # Placeholder
-            "overall_score": threshold + 5,  # Placeholder
-            "scores": {
-                "complexity": 8.0,
-                "security": 8.0,
-                "maintainability": 8.0,
-                "test_coverage": 85.0,
-            },
+            "passed": not self.enforce_quality_gates,
+            "overall_score": 0,
+            "scores": {},
+            "error": "No reviewer scores available",
         }
 
     def _is_critical_service(self, story: Story) -> bool:

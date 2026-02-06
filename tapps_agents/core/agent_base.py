@@ -73,6 +73,7 @@ class BaseAgent(ABC):
         self._unified_cache: Any | None = None  # Optional unified cache instance
         self._project_root: Path | None = None  # Cached project root
         self._cached_commands: list[dict[str, str]] | None = None  # Cached command list
+        super().__init__()
 
     async def activate(self, project_root: Path | None = None, offline_mode: bool = False):
         """
@@ -552,9 +553,9 @@ class BaseAgent(ABC):
 
         # Create a user-friendly message
         if isinstance(error, Context7UnavailableError):
-            message = f"{dependency_name} is not available: {str(error)}"
+            message = f"{dependency_name} is not available: {error!s}"
         else:
-            message = f"{dependency_name} operation failed: {str(error)}"
+            message = f"{dependency_name} operation failed: {error!s}"
 
         envelope = ErrorEnvelope(
             code=f"{dependency_name.lower()}_unavailable",
@@ -625,10 +626,7 @@ class BaseAgent(ABC):
         
         for lib in all_detected:
             # Always include if it's in project dependencies
-            if lib in project_libs:
-                filtered_libraries.append(lib)
-            # Include if explicitly mentioned or well-known
-            elif (context7_helper.is_well_known_library(lib) or
+            if lib in project_libs or (context7_helper.is_well_known_library(lib) or
                   any(keyword in prompt_lower for keyword in [
                       f"{lib} library", f"{lib} framework", f"using {lib}"
                   ])):

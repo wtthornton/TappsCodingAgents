@@ -13,7 +13,6 @@ from .progressive_review import (
 )
 
 __all__ = [
-    "ReviewerAgent",
     "ProgressiveReview",
     "ProgressiveReviewPolicy",
     "ProgressiveReviewRollup",
@@ -21,5 +20,6 @@ __all__ = [
     "ReviewDecision",
     "ReviewFinding",
     "ReviewMetrics",
+    "ReviewerAgent",
     "Severity",
 ]

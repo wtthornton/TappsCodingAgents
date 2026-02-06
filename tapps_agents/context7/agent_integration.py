@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from ..core.config import ProjectConfig
+from ..core.path_validator import PathValidationError
 from ..mcp.gateway import MCPGateway
 from .analytics import Analytics
 from .cache_structure import CacheStructure
@@ -179,7 +180,12 @@ class Context7AgentHelper:
             loc = getattr(kb, "location", None) if kb is not None else None
             if not isinstance(loc, str):
                 loc = ".tapps-agents/kb/context7-cache"
-            cache_root = project_root / loc
+            cache_root = (project_root / loc).resolve()
+            project_resolved = project_root.resolve()
+            if not str(cache_root).startswith(str(project_resolved)):
+                raise PathValidationError(
+                    f"Cache root {cache_root} escapes project boundary {project_resolved}"
+                )
             self.cache_structure = CacheStructure(cache_root)
             self.cache_structure.initialize()
 

@@ -92,13 +92,13 @@ class CorrelationAnalyzer:
         # Group by success rate
         successful = [
             (vid, outcomes[vid])
-            for vid in variations.keys()
+            for vid in variations
             if vid in outcomes and outcomes[vid].success_rate() > 0.7
         ]
         
         [
             (vid, outcomes[vid])
-            for vid in variations.keys()
+            for vid in variations
             if vid in outcomes and outcomes[vid].success_rate() < 0.4
         ]
         

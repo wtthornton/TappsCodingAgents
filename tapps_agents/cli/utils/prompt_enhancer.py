@@ -134,7 +134,7 @@ def assess_prompt_quality(prompt: str, config: AutoEnhancementConfig) -> float:
         spec_indicators += 2  # bullets or numbered list
     if "acceptance criteria" in pl or "acceptance criterion" in pl:
         spec_indicators += 2
-    if "user story" in pl or "as a " in pl and " i want " in pl:
+    if "user story" in pl or ("as a " in pl and " i want " in pl):
         spec_indicators += 2
     if any(w in pl for w in (" shall ", " must ", " should ")):
         spec_indicators += 2

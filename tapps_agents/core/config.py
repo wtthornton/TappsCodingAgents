@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
 class ScoringWeightsConfig(BaseModel):
@@ -337,6 +337,21 @@ class Context7KnowledgeBaseConfig(BaseModel):
     fuzzy_match_threshold: float = Field(
         default=0.7, ge=0.0, le=1.0, description="Fuzzy match confidence threshold"
     )
+    ttl_seconds: int = Field(
+        default=2592000, ge=0, description="Cache entry TTL in seconds (0=disabled, default 30 days)"
+    )
+    max_entries: int | None = Field(
+        default=10000, ge=1, description="Maximum number of cache entries (None=unlimited)"
+    )
+    max_cache_size_bytes: int = Field(
+        default=104857600, ge=0, description="Maximum cache size in bytes (default 100MB)"
+    )
+    enable_auto_cleanup: bool = Field(
+        default=True, description="Trigger cleanup automatically when cache exceeds thresholds"
+    )
+    auto_cleanup_threshold: float = Field(
+        default=0.9, ge=0.0, le=1.0, description="Cleanup when cache reaches this fraction of max size"
+    )
 
 
 class Context7RefreshConfig(BaseModel):
@@ -631,8 +646,55 @@ class CleanupAgentConfig(BaseModel):
         description="Content similarity threshold for detecting near-duplicates"
     )
     backup_dir: str = Field(
-        default=".cleanup-backups",
-        description="Directory for cleanup backups"
+        default=".tapps-agents/cleanup-backups",
+        description="Directory for cleanup backups (relative to project root)"
+    )
+    exclude_names: list[str] = Field(
+        default_factory=lambda: [
+            "README.md", "CHANGELOG.md", "LICENSE", "CONTRIBUTING.md",
+            "CODE_OF_CONDUCT.md", "AGENTS.md", "CLAUDE.md",
+        ],
+        description="Filenames to exclude from naming convention analysis"
+    )
+    # Phase 4.1: Multi-pattern scanning
+    patterns: list[str] = Field(
+        default_factory=list,
+        description="Multiple file patterns to scan (e.g., ['*.md', '*.py', '*.json']). "
+        "When empty, falls back to default_pattern.",
+    )
+    scan_mode: str = Field(
+        default="all",
+        description="Scan mode: 'all' (all patterns), 'docs-only' (*.md, *.rst, *.txt), "
+        "'code-only' (*.py, *.js, *.ts, etc.)",
+    )
+    # Phase 4.2: .gitignore-aware scanning
+    respect_gitignore: bool = Field(
+        default=True,
+        description="Exclude files matched by .gitignore from scanning",
+    )
+    # Phase 4.3: Empty directory cleanup
+    cleanup_empty_dirs: bool = Field(
+        default=True,
+        description="Remove empty directories after cleanup operations",
+    )
+    # Phase 4.4: Large file detection
+    large_file_threshold_mb: float = Field(
+        default=5.0,
+        ge=0.1,
+        description="Threshold in MB for flagging large files",
+    )
+    # Phase 4.5: Configurable naming conventions
+    naming_convention: str = Field(
+        default="kebab-case",
+        description="Expected naming convention: 'kebab-case', 'snake_case', "
+        "'camelCase', 'PascalCase', or a custom regex pattern",
+    )
+    # Phase 4.6: Self-cleanup
+    self_clean_max_age_days: int = Field(
+        default=30,
+        ge=1,
+        description="Max age in days for .tapps-agents/ ephemeral data "
+        "(workflow markers, old backups, completed sessions)",
     )
 
 
@@ -1604,10 +1666,7 @@ class ProjectConfig(BaseModel):
         description="Claude Code CLI integration configuration (Phase 7)",
     )
 
-    model_config = {
-        "extra": "ignore",  # Ignore unknown fields
-        "validate_assignment": True,
-    }
+    model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
 
 def load_config(config_path: Path | None = None) -> ProjectConfig:

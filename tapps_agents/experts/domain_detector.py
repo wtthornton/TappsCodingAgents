@@ -454,13 +454,7 @@ class DomainStackDetector:
         # Pattern matching for dependencies
         if signal.signal_type == "dependency":
             # Framework detection
-            if "react" in value_lower:
-                domains["user-experience"] = signal.confidence
-                domains["testing"] = signal.confidence * 0.8
-            elif "vue" in value_lower:
-                domains["user-experience"] = signal.confidence
-                domains["testing"] = signal.confidence * 0.8
-            elif "angular" in value_lower:
+            if "react" in value_lower or "vue" in value_lower or "angular" in value_lower:
                 domains["user-experience"] = signal.confidence
                 domains["testing"] = signal.confidence * 0.8
             elif "django" in value_lower:
@@ -476,22 +470,14 @@ class DomainStackDetector:
                 domains["database-data-management"] = signal.confidence * 0.8
 
             # Database detection
-            if any(db in value_lower for db in ["postgres", "psycopg", "pg"]):
-                domains["database-data-management"] = signal.confidence
-            elif "mysql" in value_lower or "mariadb" in value_lower:
-                domains["database-data-management"] = signal.confidence
-            elif "mongodb" in value_lower or "pymongo" in value_lower:
+            if any(db in value_lower for db in ["postgres", "psycopg", "pg"]) or "mysql" in value_lower or "mariadb" in value_lower or "mongodb" in value_lower or "pymongo" in value_lower:
                 domains["database-data-management"] = signal.confidence
             elif "redis" in value_lower:
                 domains["database-data-management"] = signal.confidence
                 domains["performance"] = signal.confidence * 0.8
 
             # Testing framework detection
-            if "pytest" in value_lower:
-                domains["testing"] = signal.confidence
-            elif "jest" in value_lower:
-                domains["testing"] = signal.confidence
-            elif "junit" in value_lower:
+            if "pytest" in value_lower or "jest" in value_lower or "junit" in value_lower:
                 domains["testing"] = signal.confidence
             elif "cypress" in value_lower:
                 domains["testing"] = signal.confidence

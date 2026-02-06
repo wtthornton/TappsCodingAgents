@@ -6,8 +6,8 @@ from .filesystem import FilesystemMCPServer
 from .git import GitMCPServer
 
 __all__ = [
-    "FilesystemMCPServer",
-    "GitMCPServer",
     "AnalysisMCPServer",
     "Context7MCPServer",
+    "FilesystemMCPServer",
+    "GitMCPServer",
 ]

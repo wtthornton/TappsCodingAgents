@@ -105,3 +105,45 @@ class ProjectProfileError(TappsAgentsError):
     """Raised when project profile operations fail."""
 
     pass
+
+
+class CacheError(TappsAgentsError):
+    """Base exception for cache-related errors."""
+
+    pass
+
+
+class CacheWriteError(CacheError):
+    """Raised when cache write operations fail."""
+
+    pass
+
+
+class CacheCorruptionError(CacheError):
+    """Raised when cache data is corrupt or invalid."""
+
+    pass
+
+
+class EventBusError(TappsAgentsError):
+    """Raised when event bus operations fail."""
+
+    pass
+
+
+class QualityGateError(TappsAgentsError):
+    """Raised when quality gate evaluation fails."""
+
+    pass
+
+
+class EpicError(TappsAgentsError):
+    """Base exception for Epic orchestration errors."""
+
+    pass
+
+
+class EpicExecutionError(EpicError):
+    """Raised when Epic story execution fails."""
+
+    pass

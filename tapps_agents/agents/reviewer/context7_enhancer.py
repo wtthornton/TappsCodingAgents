@@ -163,8 +163,8 @@ class Context7ReviewEnhancer:
                 return cached
         
         try:
-            # Use Context7AgentHelper to lookup docs
-            # Try multiple topics to get comprehensive information
+            # Use Context7AgentHelper to lookup docs (KB-first: cache → resolve-library-id → get-library-docs).
+            # Topic parameter improves relevance (Context7 API guide: "Use topic for better documentation matching").
             topics = ["best-practices", "common-mistakes", "usage", "examples"]
             
             all_content = []

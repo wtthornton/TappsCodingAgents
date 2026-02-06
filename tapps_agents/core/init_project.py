@@ -17,8 +17,8 @@ from typing import Any
 import yaml
 
 from .config import get_default_config
-from .tech_stack_priorities import get_priorities_for_frameworks
 from .init_autofill import detect_tech_stack_enhanced
+from .tech_stack_priorities import get_priorities_for_frameworks
 
 logger = logging.getLogger(__name__)
 
@@ -1536,7 +1536,7 @@ def init_tech_stack_config(
     }
 
     # Add expert priorities if available
-    if "expert_priorities" in tech_stack and tech_stack["expert_priorities"]:
+    if tech_stack.get("expert_priorities"):
         # Merge with existing priorities, preserving user overrides
         default_priorities = tech_stack["expert_priorities"]
         existing_priorities = existing_config.get("expert_priorities", {})
@@ -1635,7 +1635,7 @@ def detect_tech_stack(project_root: Path) -> dict[str, Any]:
                 deps = data.get("dependencies", {})
                 dev_deps = data.get("devDependencies", {})
                 all_deps = {**deps, **dev_deps}
-                for dep_name in all_deps.keys():
+                for dep_name in all_deps:
                     normalized = dep_name.replace("@types/", "").replace("@", "")
                     tech_stack["libraries"].add(normalized)
         except Exception:
@@ -2272,10 +2272,10 @@ async def pre_populate_context7_cache(
                             f"{library}/{topic}: Context7 MCP server import error (non-critical)"
                         )
                     else:
-                        errors.append(f"{library}/{topic}: ImportError - {str(e)}")
+                        errors.append(f"{library}/{topic}: ImportError - {e!s}")
                 except Exception as e:
                     fail_count += 1
-                    errors.append(f"{library}/{topic}: Exception - {str(e)}")
+                    errors.append(f"{library}/{topic}: Exception - {e!s}")
 
         # Determine overall error message
         error_msg = None

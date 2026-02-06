@@ -868,7 +868,7 @@ async def _process_file_batch(
             # All retries exhausted
             circuit_breaker.record_failure()
             return (file_path, {
-                "error": f"Failed after {MAX_RETRIES} attempts: {str(last_error)}",
+                "error": f"Failed after {MAX_RETRIES} attempts: {last_error!s}",
                 "file": str(file_path),
                 "retryable": True,
                 "attempts": MAX_RETRIES,

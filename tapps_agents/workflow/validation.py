@@ -190,7 +190,7 @@ class ValidatorRegistry:
                 results.append(
                     ValidationResult(
                         passed=False,
-                        errors=[f"Validator exception: {str(e)}"],
+                        errors=[f"Validator exception: {e!s}"],
                         warnings=[],
                     )
                 )

@@ -162,7 +162,7 @@ class BatchReviewWorkflow:
                             f"Exception in completed task for service {service.name}: {e}",
                             exc_info=True,
                         )
-                        errors.append(f"{service.name}: {str(e)}")
+                        errors.append(f"{service.name}: {e!s}")
                         results.append(
                             ServiceReviewResult(
                                 service_name=service.name,
@@ -190,7 +190,7 @@ class BatchReviewWorkflow:
             # Add exception group errors
             for exc in eg.exceptions:
                 logger.error(f"TaskGroup exception: {exc}", exc_info=True)
-                errors.append(f"TaskGroup error: {str(exc)}")
+                errors.append(f"TaskGroup error: {exc!s}")
 
         return self._aggregate_results(results, errors)
 
@@ -211,7 +211,7 @@ class BatchReviewWorkflow:
                 )
                 results.append(result)
             except Exception as e:
-                errors.append(f"{service.name}: {str(e)}")
+                errors.append(f"{service.name}: {e!s}")
                 results.append(
                     ServiceReviewResult(
                         service_name=service.name,

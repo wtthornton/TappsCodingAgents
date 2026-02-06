@@ -119,7 +119,7 @@ class AnalystAgent(BaseAgent):
         elif command == "gather-requirements":
             description = kwargs.get("description", "")
             context = kwargs.get("context", "")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._gather_requirements(description, context, output_file)
 
@@ -189,7 +189,7 @@ class AnalystAgent(BaseAgent):
         elif command == "trace-requirements":
             requirements = kwargs.get("requirements", {})
             stories = kwargs.get("stories", [])
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._trace_requirements(requirements, stories, output_file)
 
@@ -225,7 +225,7 @@ class AnalystAgent(BaseAgent):
                 else:
                     return {"error": f"New requirements file not found: {new_requirements}"}
 
-            traceability_file = kwargs.get("traceability_file", None)
+            traceability_file = kwargs.get("traceability_file")
             return await self._analyze_change_impact(old_requirements, new_requirements, traceability_file)
 
         else:
@@ -333,7 +333,7 @@ Format as structured JSON with sections."""
 
             return {"success": True, "requirements": requirements}
         except Exception as e:
-            return {"error": f"Failed to gather requirements: {str(e)}"}
+            return {"error": f"Failed to gather requirements: {e!s}"}
     
     def _format_requirements_markdown(
         self,

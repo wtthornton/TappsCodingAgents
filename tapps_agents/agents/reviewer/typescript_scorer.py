@@ -484,9 +484,7 @@ class TypeScriptScorer(BaseScorer):
 
                 for keyword in decision_keywords:
                     # Count occurrences (rough estimate)
-                    if f" {keyword} " in f" {stripped} ":
-                        complexity += 1
-                    elif f" {keyword}(" in f" {stripped} ":
+                    if f" {keyword} " in f" {stripped} " or f" {keyword}(" in f" {stripped} ":
                         complexity += 1
 
             # Scale to 0-10 (max complexity ~50 = 10)
@@ -939,9 +937,7 @@ class TypeScriptScorer(BaseScorer):
         
         # Check if this is a React file
         is_react = False
-        if file_path and file_path.suffix in [".tsx", ".jsx"]:
-            is_react = True
-        elif "react" in code.lower() or "import React" in code:
+        if (file_path and file_path.suffix in [".tsx", ".jsx"]) or "react" in code.lower() or "import React" in code:
             is_react = True
         
         # Detect general JavaScript/TypeScript patterns

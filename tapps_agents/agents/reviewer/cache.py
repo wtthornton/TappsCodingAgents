@@ -25,15 +25,16 @@ logger = logging.getLogger(__name__)
 class ReviewerResultCache:
     """
     Cache reviewer command results based on file content hash.
-    
-    Features:
-    - Content-based cache keys (invalidates on file changes)
-    - Version-aware caching (invalidates on command version changes)
-    - TTL-based expiration (configurable)
-    - Atomic file operations (thread-safe)
-    
-    Cache Key Format: {file_path}:{content_hash}:{command}:{version}
-    
+
+    Semantics:
+    - Cache key: file_path + content_hash (SHA-256 of file body) + command + version.
+      Key format: {file_path}:{content_hash}:{command}:{version}.
+    - TTL: Entries expire after ttl_seconds (default 3600). Expired entries are
+      treated as miss on get.
+    - Version invalidation: Bumping CACHE_VERSION invalidates all existing entries
+      (new keys no longer match).
+    - Thread-safe: Uses atomic file writes (write to temp then rename).
+
     Example:
         cache = ReviewerResultCache()
         

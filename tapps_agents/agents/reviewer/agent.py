@@ -343,7 +343,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             except RuntimeError as e:
                 # Handle scorer errors and other runtime errors
                 return {
-                    "error": f"Review failed: {str(e)}",
+                    "error": f"Review failed: {e!s}",
                     "suggestion": "Check that quality tools (Ruff, mypy) are installed and configured correctly",
                 }
             except TimeoutError as e:
@@ -808,142 +808,50 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
         }
 
         # E2: Context7 API verification and best practices validation
+        # Reuse helper from context7_enhancer when available (set in activate()); fallback to get_context7_helper.
+        context7_helper = (
+            getattr(self.context7_enhancer, "context7_helper", None)
+            if self.context7_enhancer
+            else None
+        )
+        if not context7_helper:
+            try:
+                from ...context7.agent_integration import get_context7_helper
+                context7_helper = get_context7_helper(
+                    self, self.config, self._project_root
+                )
+            except Exception as e:
+                logger.debug("Context7 helper not available: %s", e)
+                context7_helper = None
+
         context7_verification = {}
         libraries_used = []
-        
-        # Get Context7 helper if available
-        # Ensure MCP gateway is initialized (required for Context7 MCP integration)
-        if self.mcp_gateway is None:
-            try:
-                # Initialize MCP gateway if not already initialized
-                # This ensures Context7 can use MCP tools via Cursor
-                from ...mcp.gateway import MCPGateway
-                self.mcp_gateway = MCPGateway()
-                logger.debug("E2: MCP gateway initialized for Context7")
-            except Exception as e:
-                logger.debug(f"MCP gateway initialization failed: {e}")
-        
-        context7_helper = None
-        # #region agent log
-        from ...core.debug_logger import write_debug_log
-        write_debug_log(
-            {
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "C",
-                "message": "About to create Context7 helper",
-                "data": {
-                    "config_exists": self.config is not None,
-                    "project_root": str(self._project_root) if self._project_root else None,
-                    "mcp_gateway": self.mcp_gateway is not None,
-                },
-            },
-            project_root=self._project_root,
-            location="reviewer/agent.py:review_file:before_helper_creation",
-        )
-        # #endregion
-        try:
-            from ...context7.agent_integration import get_context7_helper
-            logger.info(f"E2: Attempting to create Context7 helper (config={self.config is not None}, project_root={self._project_root})")
-            context7_helper = get_context7_helper(self, self.config, self._project_root)
-            # #region agent log
-            write_debug_log(
-                {
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "C",
-                    "message": "Context7 helper created",
-                    "data": {"helper_created": context7_helper is not None, "helper_enabled": context7_helper.enabled if context7_helper else False, "has_library_detector": context7_helper.library_detector is not None if context7_helper else False},
-                },
-                project_root=self._project_root,
-                location="reviewer/agent.py:review_file:after_helper_creation",
-            )
-            # #endregion
-            if context7_helper:
-                logger.info(f"E2: Context7 helper initialized, enabled={context7_helper.enabled}, has_library_detector={context7_helper.library_detector is not None}")
-            else:
-                logger.warning("E2: Context7 helper is None - get_context7_helper returned None")
-        except Exception as e:
-            logger.error(f"E2: Context7 helper creation failed: {e}", exc_info=True)
-            import traceback
-            logger.error(f"E2: Traceback: {traceback.format_exc()}")
-            # #region agent log
-            write_debug_log(
-                {
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "E",
-                    "message": "Context7 helper creation exception",
-                    "data": {"error": str(e), "error_type": type(e).__name__},
-                },
-                project_root=self._project_root,
-                location="reviewer/agent.py:review_file:helper_creation_error",
-            )
-            # #endregion
-        
         if context7_helper and context7_helper.enabled:
-            logger.info(f"E2: Context7 helper enabled, library detector: {context7_helper.library_detector is not None}")
+            logger.debug(
+                "Context7 enabled, library_detector=%s",
+                context7_helper.library_detector is not None,
+            )
             try:
                 # E2: Detect libraries ONLY from code (not project files)
                 # This ensures we only verify libraries actually used in the code
                 language_str = file_type.lower()  # "python", "typescript", etc.
-                logger.info(f"E2: Detecting libraries from code (language: {language_str}, code length: {len(code) if code else 0})")
-                # #region agent log
-                write_debug_log(
-                    {
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "D",
-                        "message": "About to detect libraries",
-                        "data": {"has_code": code is not None, "code_length": len(code) if code else 0, "has_detector": context7_helper.library_detector is not None, "language": language_str},
-                    },
-                    project_root=self._project_root,
-                    location="reviewer/agent.py:review_file:before_library_detection",
-                )
-                # #endregion
                 if code and context7_helper.library_detector:
                     libraries_used = context7_helper.library_detector.detect_from_code(
                         code=code,
                         language=language_str
                     )
-                    # #region agent log
-                    write_debug_log(
-                        {
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "D",
-                            "message": "Library detection completed",
-                            "data": {"libraries_found": len(libraries_used), "libraries": libraries_used},
-                        },
-                        project_root=self._project_root,
-                        location="reviewer/agent.py:review_file:after_library_detection",
+                    logger.debug(
+                        "Library detection: %d libraries found: %s",
+                        len(libraries_used),
+                        libraries_used,
                     )
-                    # #endregion
-                    logger.info(f"E2: Library detection completed: {len(libraries_used)} libraries found: {libraries_used}")
                 else:
                     libraries_used = []
-                    if not code:
-                        logger.warning("E2: No code provided, skipping library detection")
-                    if not context7_helper.library_detector:
-                        logger.warning("E2: Library detector not available in Context7 helper")
             except Exception as e:
-                logger.error(f"E2: Library detection failed: {e}", exc_info=True)
+                logger.debug("Library detection failed: %s", e)
                 libraries_used = []
-            
+
             if libraries_used:
-                # #region agent log
-                write_debug_log(
-                    {
-                        "sessionId": "debug-session",
-                        "runId": "run1",
-                        "hypothesisId": "F",
-                        "message": "Entering if libraries_used block",
-                        "data": {"libraries_used": libraries_used, "libraries_count": len(libraries_used)},
-                    },
-                    project_root=self._project_root,
-                    location="reviewer/agent.py:review_file:inside_if_libraries_used",
-                )
-                # #endregion
                 try:
                     # Pre-process code once for efficient string matching
                     code_lower = code.lower() if code else ""
@@ -951,96 +859,27 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     # Verify all libraries in parallel for better performance
                     async def verify_library(lib: str) -> tuple[str, dict[str, Any]]:
                         """Verify a single library with parallel doc fetches."""
-                        # #region agent log
-                        write_debug_log(
-                            {
-                                "sessionId": "debug-session",
-                                "runId": "run1",
-                                "hypothesisId": "E",
-                                "message": "verify_library called",
-                                "data": {"library": lib},
-                            },
-                            project_root=self._project_root,
-                            location="reviewer/agent.py:verify_library:entry",
-                        )
-                        # #endregion
                         try:
-                            # Run both doc fetches in parallel for each library
-                            # #region agent log
-                            write_debug_log(
-                                {
-                                    "sessionId": "debug-session",
-                                    "runId": "run1",
-                                    "hypothesisId": "E",
-                                    "message": "About to call get_documentation",
-                                    "data": {"library": lib, "helper_enabled": context7_helper.enabled if context7_helper else False},
-                                },
-                                project_root=self._project_root,
-                                location="reviewer/agent.py:verify_library:before_get_docs",
-                            )
-                            # #endregion
-                            # Add timeout to each get_documentation call to prevent hanging
-                            # Use asyncio.wait_for with a reasonable timeout
                             lib_docs_task = asyncio.wait_for(
                                 context7_helper.get_documentation(
                                     library=lib,
-                                    topic=None,  # Get full API reference
+                                    topic=None,
                                     use_fuzzy_match=True
                                 ),
-                                timeout=15.0  # 15s timeout per call
+                                timeout=15.0,
                             )
-                            # #region agent log
-                            write_debug_log(
-                                {
-                                    "sessionId": "debug-session",
-                                    "runId": "run1",
-                                    "hypothesisId": "E",
-                                    "message": "First get_documentation call returned (coroutine created)",
-                                    "data": {"library": lib},
-                                },
-                                project_root=self._project_root,
-                                location="reviewer/agent.py:verify_library:after_first_get_docs",
-                            )
-                            # #endregion
                             best_practices_task = asyncio.wait_for(
                                 context7_helper.get_documentation(
                                     library=lib,
                                     topic="best-practices",
                                     use_fuzzy_match=True
                                 ),
-                                timeout=15.0  # 15s timeout per call
+                                timeout=15.0,
                             )
-                            # #region agent log
-                            write_debug_log(
-                                {
-                                    "sessionId": "debug-session",
-                                    "runId": "run1",
-                                    "hypothesisId": "E",
-                                    "message": "About to await asyncio.gather",
-                                    "data": {"library": lib},
-                                },
-                                project_root=self._project_root,
-                                location="reviewer/agent.py:verify_library:before_gather",
-                            )
-                            # #endregion
                             lib_docs, best_practices = await asyncio.gather(
                                 lib_docs_task, best_practices_task,
                                 return_exceptions=True  # Don't fail all if one fails
                             )
-                            # #region agent log
-                            write_debug_log(
-                                {
-                                    "sessionId": "debug-session",
-                                    "runId": "run1",
-                                    "hypothesisId": "E",
-                                    "message": "asyncio.gather completed",
-                                    "data": {"library": lib, "lib_docs_success": lib_docs is not None if not isinstance(lib_docs, Exception) else False},
-                                },
-                                project_root=self._project_root,
-                                location="reviewer/agent.py:verify_library:after_gather",
-                            )
-                            # #endregion
-                            
                             # Handle exceptions gracefully
                             if isinstance(lib_docs, Exception):
                                 logger.debug(f"Failed to fetch docs for {lib}: {lib_docs}")
@@ -1069,59 +908,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                             })
                     
                     # Verify all libraries in parallel with timeout protection
-                    # #region agent log
-                    write_debug_log(
-                        {
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "E",
-                            "message": "About to verify all libraries",
-                            "data": {"libraries": libraries_used, "count": len(libraries_used)},
-                        },
-                        project_root=self._project_root,
-                        location="reviewer/agent.py:review_file:before_verify_all",
-                    )
-                    # #endregion
-                    # #region agent log
-                    write_debug_log(
-                        {
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "E",
-                            "message": "About to create coroutines",
-                            "data": {"libraries": libraries_used},
-                        },
-                        project_root=self._project_root,
-                        location="reviewer/agent.py:review_file:before_create_coroutines",
-                    )
-                    # #endregion
                     coroutines = [verify_library(lib) for lib in libraries_used]
-                    # #region agent log
-                    write_debug_log(
-                        {
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "E",
-                            "message": "Coroutines created",
-                            "data": {"coroutine_count": len(coroutines)},
-                        },
-                        project_root=self._project_root,
-                        location="reviewer/agent.py:review_file:after_create_coroutines",
-                    )
-                    # #endregion
-                    # #region agent log
-                    write_debug_log(
-                        {
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "E",
-                            "message": "About to call asyncio.gather",
-                            "data": {"coroutine_count": len(coroutines)},
-                        },
-                        project_root=self._project_root,
-                        location="reviewer/agent.py:review_file:before_gather",
-                    )
-                    # #endregion
                     try:
                         results = await asyncio.wait_for(
                             asyncio.gather(*coroutines, return_exceptions=True),
@@ -1130,22 +917,9 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     except TimeoutError:
                         # If Context7 hangs, log and continue without it
                         logger.warning(
-                            f"Context7 library verification timed out after 30s for {len(libraries_used)} libraries. "
-                            f"Continuing review without Context7 verification."
+                            "Context7 library verification timed out after 30s for %d libraries.",
+                            len(libraries_used),
                         )
-                        # #region agent log
-                        write_debug_log(
-                            {
-                                "sessionId": "debug-session",
-                                "runId": "run1",
-                                "hypothesisId": "E",
-                                "message": "Context7 verification timed out",
-                                "data": {"libraries": libraries_used},
-                            },
-                            project_root=self._project_root,
-                            location="reviewer/agent.py:review_file:timeout",
-                        )
-                        # #endregion
                         # Mark all as failed due to timeout
                         results = []
                         for lib in libraries_used:
@@ -1155,19 +929,6 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                                 "api_mentioned": False,
                                 "error": "timeout"
                             }))
-                    # #region agent log
-                    write_debug_log(
-                        {
-                            "sessionId": "debug-session",
-                            "runId": "run1",
-                            "hypothesisId": "E",
-                            "message": "All libraries verified",
-                            "data": {"results_count": len(results)},
-                        },
-                        project_root=self._project_root,
-                        location="reviewer/agent.py:review_file:after_verify_all",
-                    )
-                    # #endregion
                     context7_verification.update(dict(results))
                     logger.debug(f"E2: Verified {len(libraries_used)} libraries with Context7")
                 except TimeoutError:
@@ -1184,42 +945,15 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                 except Exception as e:
                     logger.debug(f"E2: Context7 API verification failed: {e}")
         
-        # Store Context7 verification results (always store, even if empty, for debugging)
+        # Store Context7 verification results (always store, even if empty)
         result["context7_verification"] = context7_verification
         result["libraries_detected"] = libraries_used
-        # #region agent log
-        write_debug_log(
-            {
-                "sessionId": "debug-session",
-                "runId": "run1",
-                "hypothesisId": "F",
-                "message": "Storing Context7 results in result dict",
-                "data": {"libraries_detected_count": len(libraries_used), "libraries_detected": libraries_used, "context7_verification_count": len(context7_verification), "result_keys": list(result.keys())},
-            },
-            project_root=self._project_root,
-            location="reviewer/agent.py:review_file:store_results",
-        )
-        # #endregion
-        # Add debug info if Context7 was attempted
         if context7_helper:
             result["context7_debug"] = {
                 "helper_enabled": context7_helper.enabled,
                 "has_library_detector": context7_helper.library_detector is not None,
                 "mcp_gateway_available": self.mcp_gateway is not None,
             }
-            # #region agent log
-            write_debug_log(
-                {
-                    "sessionId": "debug-session",
-                    "runId": "run1",
-                    "hypothesisId": "F",
-                    "message": "Stored context7_debug in result",
-                    "data": {"context7_debug": result.get("context7_debug", {})},
-                },
-                project_root=self._project_root,
-                location="reviewer/agent.py:review_file:store_debug",
-            )
-            # #endregion
 
         # Enhancement 4: Proactive Context7 suggestions based on library-specific patterns
         # Use extensible pattern registry instead of hard-coded logic
@@ -2960,9 +2694,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
                     line = issue.get("line", None)
 
                 # Determine severity based on error type
-                if code.startswith("F") or fatal_count > 0:
-                    severity = Severity.HIGH
-                elif code.startswith("E") or error_count > 0:
+                if code.startswith("F") or fatal_count > 0 or code.startswith("E") or error_count > 0:
                     severity = Severity.HIGH
                 elif code.startswith("W"):
                     severity = Severity.MEDIUM
@@ -3467,7 +3199,7 @@ class ReviewerAgent(BaseAgent, ExpertSupportMixin):
             )
             return {
                 "success": False,
-                "error": f"Failed to retrieve documentation: {str(e)}",
+                "error": f"Failed to retrieve documentation: {e!s}",
                 "library": library,
                 "topic": topic,
             }

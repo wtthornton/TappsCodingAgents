@@ -256,3 +256,18 @@ class MetadataManager:
             topic: Topic name
         """
         self.update_cache_index(library, topic, remove=True)
+
+    def get_total_entries(self) -> int:
+        """Return the total number of cached entries."""
+        return self.load_cache_index().total_entries
+
+    def get_total_size(self) -> int:
+        """Return approximate total size of all cached doc files in bytes."""
+        total = 0
+        index = self.load_cache_index()
+        for lib_name, lib_data in index.libraries.items():
+            for topic_name in (lib_data.get("topics") or {}):
+                doc = self.cache_structure.get_library_doc_file(lib_name, topic_name)
+                if doc.exists():
+                    total += doc.stat().st_size
+        return total

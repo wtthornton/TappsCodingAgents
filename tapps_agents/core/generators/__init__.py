@@ -8,25 +8,25 @@ This package contains modules for auto-generating configuration:
 """
 
 from tapps_agents.core.generators.expert_generator import (
+    ExpertConfig,
     ExpertGenerator,
     KnowledgeFileAnalysis,
-    ExpertConfig,
 )
 from tapps_agents.core.generators.project_overview_generator import (
-    ProjectOverviewGenerator,
-    ProjectMetadata,
     ArchitecturePattern,
     ArchitectureType,
     ComponentMap,
+    ProjectMetadata,
+    ProjectOverviewGenerator,
 )
 
 __all__ = [
-    "ExpertGenerator",
-    "KnowledgeFileAnalysis",
-    "ExpertConfig",
-    "ProjectOverviewGenerator",
-    "ProjectMetadata",
     "ArchitecturePattern",
     "ArchitectureType",
     "ComponentMap",
+    "ExpertConfig",
+    "ExpertGenerator",
+    "KnowledgeFileAnalysis",
+    "ProjectMetadata",
+    "ProjectOverviewGenerator",
 ]

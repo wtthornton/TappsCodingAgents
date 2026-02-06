@@ -153,7 +153,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
         elif command == "design-system":
             requirements = kwargs.get("requirements", "")
             context = kwargs.get("context", "")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
             generate_doc = kwargs.get("generate_doc", False) or kwargs.get("generate-doc", False)
             generate_code = kwargs.get("generate_code", False) or kwargs.get("generate-code", False)
             code_language = kwargs.get("code_language", "python") or kwargs.get("code-language", "python")
@@ -233,7 +233,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
         elif command == "create-diagram":
             architecture_description = kwargs.get("architecture_description", "")
             diagram_type = kwargs.get("diagram_type", "component")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             return await self._create_diagram(
                 architecture_description, diagram_type, output_file
@@ -347,7 +347,7 @@ class ArchitectAgent(BaseAgent, ExpertSupportMixin):
             architecture = kwargs.get("architecture", {})
             diagram_type = kwargs.get("diagram_type", "component")
             format_type = kwargs.get("format", "mermaid")
-            output_file = kwargs.get("output_file", None)
+            output_file = kwargs.get("output_file")
 
             if isinstance(architecture, str):
                 arch_path = Path(architecture)
@@ -734,7 +734,7 @@ Format as structured JSON with technology recommendations."""
                 "skill_command": instruction.to_skill_command(),
             }
         except Exception as e:
-            return {"error": f"Failed to select technology: {str(e)}"}
+            return {"error": f"Failed to select technology: {e!s}"}
 
     async def _design_security(
         self, system_description: str, threat_model: str = ""
@@ -813,7 +813,7 @@ Format as structured JSON with detailed security architecture."""
                 }
             return result
         except Exception as e:
-            return {"error": f"Failed to design security: {str(e)}"}
+            return {"error": f"Failed to design security: {e!s}"}
 
     async def _define_boundaries(
         self, system_description: str, context: str = ""
@@ -859,7 +859,7 @@ Format as structured JSON with boundary and interface definitions."""
                 "skill_command": instruction.to_skill_command(),
             }
         except Exception as e:
-            return {"error": f"Failed to define boundaries: {str(e)}"}
+            return {"error": f"Failed to define boundaries: {e!s}"}
 
     async def _evaluate_architecture(self, architecture: dict[str, Any]) -> dict[str, Any]:
         """Evaluate architecture quality and completeness."""

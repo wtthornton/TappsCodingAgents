@@ -10,7 +10,7 @@ import hashlib
 import json
 import logging
 from dataclasses import asdict, dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -280,7 +280,7 @@ class AdvancedStateManager:
                 ]
                 handoff = SessionHandoff(
                     workflow_id=state.workflow_id,
-                    session_ended_at=datetime.now(timezone.utc).isoformat(),
+                    session_ended_at=datetime.now(UTC).isoformat(),
                     summary=f"Workflow {state.status}. Completed steps: {len(done)}.",
                     done=done,
                     decisions=[],

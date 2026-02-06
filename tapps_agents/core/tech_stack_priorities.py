@@ -193,14 +193,14 @@ def normalize_framework_name(framework: str) -> str | None:
         return framework_normalized
     
     # Try case-insensitive match
-    for key in FRAMEWORK_PRIORITY_MAPPINGS.keys():
+    for key in FRAMEWORK_PRIORITY_MAPPINGS:
         if key.lower() == framework_normalized.lower():
             return key
     
     # Try partial match (e.g., "React.js" -> "React")
     # Only if framework_normalized is not empty
     framework_lower = framework_normalized.lower()
-    for key in FRAMEWORK_PRIORITY_MAPPINGS.keys():
+    for key in FRAMEWORK_PRIORITY_MAPPINGS:
         if key.lower() in framework_lower or framework_lower in key.lower():
             return key
     

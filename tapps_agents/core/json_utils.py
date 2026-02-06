@@ -94,7 +94,7 @@ def safe_json_dumps(obj: Any, indent: int = 2, ensure_ascii: bool = False) -> st
             # If anything fails, return error string
             seen.discard(obj_id)
             logger.debug(f"Serialization error for object {type(o).__name__}: {e}")
-            return f"<serialization error: {str(e)}>"
+            return f"<serialization error: {e!s}>"
     
     try:
         serializable_obj = _make_serializable(obj)
@@ -102,7 +102,7 @@ def safe_json_dumps(obj: Any, indent: int = 2, ensure_ascii: bool = False) -> st
     except Exception as e:
         logger.error(f"Failed to serialize object to JSON: {e}")
         # Last resort: return minimal error representation
-        return json.dumps({"error": f"Serialization failed: {str(e)}"}, indent=indent)
+        return json.dumps({"error": f"Serialization failed: {e!s}"}, indent=indent)
 
 
 def safe_json_dump(obj: Any, fp: Any, indent: int = 2, ensure_ascii: bool = False) -> None:
