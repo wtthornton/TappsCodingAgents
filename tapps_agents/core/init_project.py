@@ -11,6 +11,7 @@ import os
 import re
 import shutil
 import subprocess
+import time
 from pathlib import Path
 from typing import Any
 
@@ -21,6 +22,43 @@ from .init_autofill import detect_tech_stack_enhanced
 from .tech_stack_priorities import get_priorities_for_frameworks
 
 logger = logging.getLogger(__name__)
+
+
+def _safe_rmtree(path: Path, max_retries: int = 3) -> bool:
+    """
+    Remove directory with retries. Handles Windows file locks (WinError 5).
+
+    Args:
+        path: Directory path to remove
+        max_retries: Number of retry attempts with backoff
+
+    Returns:
+        True if removed, False on persistent PermissionError/OSError
+    """
+    for attempt in range(max_retries):
+        try:
+            if path.exists():
+                shutil.rmtree(path)
+            return True
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                time.sleep(0.5 * (attempt + 1))
+            else:
+                logger.warning(
+                    "Could not remove %s (access denied, possibly locked by IDE): %s",
+                    path,
+                    e,
+                )
+                return False
+        except FileNotFoundError:
+            return True  # Already gone
+        except OSError as e:
+            if attempt < max_retries - 1:
+                time.sleep(0.5 * (attempt + 1))
+            else:
+                logger.warning("Could not remove %s: %s", path, e)
+                return False
+    return False
 
 
 def _convert_paths_to_strings(obj: Any) -> Any:
@@ -627,7 +665,7 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
 
     copied: list[str] = []
     if packaged_skills is not None:
-        # Copy each skill folder (idempotent).
+        # Copy each skill folder (idempotent). P2b: copy-then-swap - never leave empty dir.
         for skill_dir in packaged_skills.iterdir():
             if not skill_dir.is_dir():
                 continue
@@ -636,28 +674,57 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
             skill_md = dest_dir / "SKILL.md"
             if dest_dir.exists() and skill_md.exists():
                 continue  # Skip if complete skill already exists
-            # Copy/overwrite if missing or incomplete
-            if dest_dir.exists():
-                shutil.rmtree(dest_dir)  # Remove incomplete directory
-            created = _copy_traversable_tree(skill_dir, dest_dir)
-            if created:
+            # Copy to temp first, then swap (P2b: copy-then-swap)
+            dest_new = project_skills_dir / (skill_dir.name + ".tapps-new")
+            try:
+                if dest_new.exists():
+                    _safe_rmtree(dest_new)
+                created = _copy_traversable_tree(skill_dir, dest_new)
+                if not created:
+                    continue
+                # Remove old dir and rename new into place
+                if dest_dir.exists():
+                    if not _safe_rmtree(dest_dir):
+                        logger.warning(
+                            "Skipping skill %s - directory could not be removed "
+                            "(close Cursor/IDE and retry init --reset)",
+                            dest_dir.name,
+                        )
+                        _safe_rmtree(dest_new)
+                        continue
+                dest_new.rename(dest_dir)
                 copied.append(str(dest_dir))
+            except OSError as e:
+                logger.warning("Skipping skill %s: %s", skill_dir.name, e)
+                _safe_rmtree(dest_new)
     else:
         if source_dir.exists():
-            # Copy each skill folder (idempotent).
+            # Copy each skill folder (idempotent). P2b: copy-then-swap for non-packaged path.
             for skill_dir in source_dir.iterdir():
                 if not skill_dir.is_dir():
                     continue
                 dest_dir = project_skills_dir / skill_dir.name
-                # Check if skill directory exists and has SKILL.md
                 skill_md = dest_dir / "SKILL.md"
                 if dest_dir.exists() and skill_md.exists():
-                    continue  # Skip if complete skill already exists
-                # Copy/overwrite if missing or incomplete
-                if dest_dir.exists():
-                    shutil.rmtree(dest_dir)  # Remove incomplete directory
-                shutil.copytree(skill_dir, dest_dir)
-                copied.append(str(dest_dir))
+                    continue
+                dest_new = project_skills_dir / (skill_dir.name + ".tapps-new")
+                try:
+                    if dest_new.exists():
+                        _safe_rmtree(dest_new)
+                    shutil.copytree(skill_dir, dest_new)
+                    if dest_dir.exists():
+                        if not _safe_rmtree(dest_dir):
+                            logger.warning(
+                                "Skipping skill %s - directory could not be removed",
+                                dest_dir.name,
+                            )
+                            _safe_rmtree(dest_new)
+                            continue
+                    dest_new.rename(dest_dir)
+                    copied.append(str(dest_dir))
+                except OSError as e:
+                    logger.warning("Skipping skill %s: %s", skill_dir.name, e)
+                    _safe_rmtree(dest_new)
 
     return len(copied) > 0, copied
 
@@ -2477,6 +2544,49 @@ def detect_existing_installation(project_root: Path) -> dict[str, Any]:
     return result
 
 
+def _validate_packaged_presets(project_root: Path) -> tuple[bool, list[str]]:
+    """
+    Validate packaged workflow presets parse correctly (P2a: pre-reset validation).
+
+    Returns:
+        (all_valid, list of error messages)
+    """
+    errors: list[str] = []
+    preset_items: list[tuple[str, Any]] = []
+    packaged = _resource_at("workflows", "presets")
+    if packaged is not None and packaged.is_dir():
+        for p in packaged.iterdir():
+            name = getattr(p, "name", "")
+            if name.endswith(".yaml") and name in FRAMEWORK_WORKFLOW_PRESETS:
+                preset_items.append((name, p))
+    else:
+        current_file = Path(__file__)
+        framework_root = current_file.parent.parent.parent
+        presets_dir = framework_root / "workflows" / "presets"
+        if presets_dir.exists():
+            for path in presets_dir.glob("*.yaml"):
+                if path.name in FRAMEWORK_WORKFLOW_PRESETS:
+                    preset_items.append((path.name, path))
+    if not preset_items:
+        return True, []
+    try:
+        from tapps_agents.workflow.parser import WorkflowParser
+
+        parser = WorkflowParser()
+        for name, item in preset_items:
+            try:
+                if hasattr(item, "read_bytes"):
+                    content = item.read_bytes()
+                    parser.parse_yaml(content.decode("utf-8"), file_path=Path(name))
+                elif isinstance(item, Path) and item.exists():
+                    parser.parse_file(item)
+            except Exception as e:
+                errors.append(f"{name}: {e}")
+    except ImportError:
+        return True, []
+    return len(errors) == 0, errors
+
+
 def identify_framework_files(project_root: Path) -> dict[str, Any]:
     """
     Identify framework-managed files vs user-added files.
@@ -2591,25 +2701,28 @@ def create_backup(
         "preserved": [],
     }
     
-    # Backup framework files
+    # Backup framework files (P0b: existence check before operations)
     for file_path in framework_files:
         try:
+            if not file_path.exists():
+                continue  # Already gone, skip
             # Calculate relative path from project root
             rel_path = file_path.relative_to(project_root)
             backup_path = backup_dir / rel_path
             backup_path.parent.mkdir(parents=True, exist_ok=True)
-            
-            if file_path.exists():
-                if file_path.is_file():
-                    shutil.copy2(file_path, backup_path)
-                elif file_path.is_dir():
-                    shutil.copytree(file_path, backup_path, dirs_exist_ok=True)
-                
-                manifest["files"].append({
-                    "original_path": str(rel_path),
-                    "backup_path": str(backup_path.relative_to(backup_dir)),
-                    "action": "reset",
-                })
+
+            if file_path.is_file():
+                shutil.copy2(file_path, backup_path)
+            elif file_path.is_dir():
+                shutil.copytree(file_path, backup_path, dirs_exist_ok=True)
+
+            manifest["files"].append({
+                "original_path": str(rel_path),
+                "backup_path": str(backup_path.relative_to(backup_dir)),
+                "action": "reset",
+            })
+        except FileNotFoundError:
+            pass  # File disappeared, skip
         except Exception as e:
             logger.warning(f"Failed to backup {file_path}: {e}")
     
@@ -2649,8 +2762,15 @@ def cleanup_framework_files(
                     file_path.unlink()
                     deleted.append(str(file_path.relative_to(project_root)))
                 elif file_path.is_dir():
-                    shutil.rmtree(file_path)
-                    deleted.append(str(file_path.relative_to(project_root)))
+                    if _safe_rmtree(file_path):
+                        deleted.append(str(file_path.relative_to(project_root)))
+                    else:
+                        logger.warning(
+                            "Could not delete %s (access denied, skip)",
+                            file_path.relative_to(project_root),
+                        )
+        except FileNotFoundError:
+            pass  # Already gone
         except Exception as e:
             logger.warning(f"Failed to delete {file_path}: {e}")
     
@@ -2701,7 +2821,7 @@ def rollback_init_reset(project_root: Path, backup_path: Path) -> dict[str, Any]
                     shutil.copy2(backup_file_path, original_path)
                 elif backup_file_path.is_dir():
                     if original_path.exists():
-                        shutil.rmtree(original_path)
+                        _safe_rmtree(original_path)
                     shutil.copytree(backup_file_path, original_path)
                 
                 result["restored_files"].append(original_rel)
@@ -2952,10 +3072,18 @@ def init_project(
     
     # Handle reset mode
     if reset_mode:
+        # P2a: Pre-reset preset validation - catch schema issues before destructive ops
+        valid, preset_errors = _validate_packaged_presets(project_root)
+        if not valid and preset_errors:
+            logger.warning(
+                "Packaged workflow presets have validation errors (will overwrite): %s",
+                "; ".join(preset_errors[:3]),
+            )
+
         # Get version before reset
         version_before = get_framework_version()
         results["version_before"] = version_before
-        
+
         # Detect existing installation
         detection = detect_existing_installation(project_root)
         if not detection["installed"]:

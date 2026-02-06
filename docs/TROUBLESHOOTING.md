@@ -1,6 +1,6 @@
 # Troubleshooting Guide
 
-**Version**: 3.6.2  
+**Version**: 3.6.3  
 **Last Updated**: January 2026
 
 ## Installation
@@ -145,6 +145,27 @@ python -m pytest -q
 ```
 
 (And ensure you installed dependencies in your venv.)
+
+## Init and Reset (Windows)
+
+### Access Denied / WinError 5 when running `init --reset`
+
+**Problem:** `tapps-agents init --reset` fails with `PermissionError: [WinError 5] Access is denied` on files in `.cursor/rules/` or `.claude/skills/`.
+
+**Cause:** Cursor IDE, antivirus, or another process has files in those directories open or locked. On Windows, open files cannot be deleted or overwritten.
+
+**Solution:**
+
+1. **Close Cursor IDE** (or at least close all tabs under `.cursor` and `.claude`), then run from an **external terminal** (PowerShell or cmd outside Cursor):
+   ```bash
+   python -m tapps_agents.cli init --reset --yes
+   ```
+
+2. **Ensure no other process** (antivirus, backup, indexing) is locking `.cursor` or `.claude` before retrying.
+
+3. **Retry:** The framework now uses safe remove with retries. If some directories still cannot be removed, the process will skip them and continue; re-run init after closing Cursor.
+
+**Prevention:** Run `init --reset` from an external terminal rather than Cursor's integrated terminal when upgrading framework files.
 
 ## Unicode Encoding Errors on Windows
 

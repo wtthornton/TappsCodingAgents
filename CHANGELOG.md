@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.3] - 2026-02-06
+
+### Fixed
+- **init --reset Windows robustness** - Addresses Access Denied (WinError 5) and File Not Found issues
+  - **Safe rmtree**: `_safe_rmtree()` with retries and backoff; skips locked files instead of crashing
+  - **Graceful handling of missing files**: Existence checks before delete/backup; FileNotFoundError handling
+  - **Copy-then-swap for skills**: Copy to `.tapps-new` first, then swap; never leaves empty skill dirs
+- **Pre-reset preset validation**: Validates packaged workflow presets before destructive reset ops
+- **Documentation**: Add "Init and Reset (Windows)" section to TROUBLESHOOTING.md
+
 ## [3.6.2] - 2026-02-06
 
 ### Documentation
