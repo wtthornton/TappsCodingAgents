@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.6.2] - 2026-02-06
+
+### Documentation
+- Update version references across all documentation files
+- Sync version in README, docs/README.md, docs/API.md, docs/ARCHITECTURE.md, docs/PROJECT_CONTEXT.md, docs/TROUBLESHOOTING.md
+- Version management script updates core files and .framework-version
+
 ## [3.6.1] - 2026-02-04
 
 ### Fixed
