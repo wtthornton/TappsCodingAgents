@@ -2,7 +2,7 @@
 title: Performance Guide
 version: 1.0.0
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-06
 tags: [architecture, performance, optimization]
 ---
 
@@ -40,7 +40,7 @@ This document provides performance guidelines and optimization strategies for Ta
 - Thread-safe in-memory cache with O(1) operations
 - Background write queue for non-blocking disk persistence
 - Atomic file rename pattern (no file locking needed)
-- `CacheStats` for monitoring hit rates and performance
+- `CacheMetrics` for monitoring hit rates and performance
 
 **Usage:**
 ```python
@@ -100,11 +100,11 @@ result = await breaker.execute(operation)
 
 **Monitoring:**
 ```python
-from tapps_agents.context7.analytics import CacheStats
+from tapps_agents.context7.analytics import CacheMetrics
 
-stats = CacheStats()
-print(f"Hit rate: {stats.hit_rate:.2%}")
-print(f"Avg response time: {stats.avg_response_time:.2f}ms")
+metrics = CacheMetrics()
+print(f"Hit rate: {metrics.hit_rate:.2%}")
+print(f"Avg response time: {metrics.avg_response_time:.2f}ms")
 ```
 
 ### Workflow Performance
@@ -212,5 +212,5 @@ Before deploying code:
 
 ---
 
-**Last Updated:** 2026-01-20  
+**Last Updated:** 2026-02-06
 **Maintained By:** TappsCodingAgents Team

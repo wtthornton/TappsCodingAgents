@@ -2,7 +2,7 @@
 title: Coding Standards
 version: 1.0.0
 status: active
-last_updated: 2026-01-20
+last_updated: 2026-02-06
 tags: [architecture, coding-standards, style-guide]
 ---
 
@@ -23,10 +23,10 @@ This document defines the coding standards and conventions for TappsCodingAgents
 **Always use type hints for all function signatures:**
 
 ```python
-from typing import Dict, List, Optional, Any
 from pathlib import Path
+from typing import Any
 
-def process_file(file_path: Path, options: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def process_file(file_path: Path, options: dict[str, Any] | None = None) -> dict[str, Any]:
     """Process a file and return results."""
     pass
 ```
@@ -34,8 +34,9 @@ def process_file(file_path: Path, options: Optional[Dict[str, Any]] = None) -> D
 **Type Hint Requirements:**
 - All public functions must have type hints
 - All class methods must have type hints
-- Use `Optional[T]` for nullable types
-- Use `Union[T, U]` for multiple types (or `T | U` in Python 3.10+)
+- Use `T | None` for nullable types (Python 3.12+ native syntax)
+- Use `T | U` for union types (Python 3.12+ native syntax)
+- Use lowercase generics: `dict`, `list`, `tuple`, `set` (not `Dict`, `List`, etc.)
 - Use `Any` sparingly (prefer specific types)
 
 ### Docstrings
@@ -43,7 +44,7 @@ def process_file(file_path: Path, options: Optional[Dict[str, Any]] = None) -> D
 **Use Google-style docstrings:**
 
 ```python
-def calculate_score(code: str, weights: Dict[str, float]) -> float:
+def calculate_score(code: str, weights: dict[str, float]) -> float:
     """
     Calculate code quality score.
     
@@ -274,5 +275,5 @@ async def process_files(files: List[Path]) -> List[Result]:
 
 ---
 
-**Last Updated:** 2026-01-20  
+**Last Updated:** 2026-02-06
 **Maintained By:** TappsCodingAgents Team

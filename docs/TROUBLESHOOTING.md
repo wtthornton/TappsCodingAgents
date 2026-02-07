@@ -163,7 +163,7 @@ python -m pytest -q
 
 2. **Ensure no other process** (antivirus, backup, indexing) is locking `.cursor` or `.claude` before retrying.
 
-3. **Retry:** The framework now uses safe remove with retries. If some directories still cannot be removed, the process will skip them and continue; re-run init after closing Cursor.
+3. **Retry:** The framework now uses safe remove with retries and, for skills, a rename-with-retry plus copy fallback. If a skill (e.g. architect) still fails with "Access is denied" on rename, it will be skipped; copy the skill manually from the backup (e.g. `.tapps-agents/backups/init-reset-<timestamp>/.claude/skills/architect` → `.claude/skills/architect`) or close Cursor and re-run `init --reset --yes`.
 
 **Prevention:** Run `init --reset` from an external terminal rather than Cursor's integrated terminal when upgrading framework files.
 

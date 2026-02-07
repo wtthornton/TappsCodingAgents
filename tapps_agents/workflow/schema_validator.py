@@ -334,9 +334,16 @@ class WorkflowSchemaValidator:
                     )
                 )
 
-        # Validate condition
+        # Validate condition (step-level only; gate.condition is an expression string)
         condition = step_data.get("condition", "required")
         valid_conditions = ["required", "optional", "conditional"]
+        # Allow boolean for backward compatibility (True -> required, False -> optional)
+        if isinstance(condition, bool):
+            condition = "required" if condition else "optional"
+        if condition not in valid_conditions and isinstance(condition, str):
+            # Allow expression-style strings (e.g. gate conditions at step level)
+            if "==" in condition or ">=" in condition or "<=" in condition or ">" in condition or "<" in condition:
+                condition = "conditional"
         if condition not in valid_conditions:
             errors.append(
                 ValidationError(

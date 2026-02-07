@@ -1,6 +1,6 @@
 version: '1.0'
-last_updated: 2026-02-06T23:33:45.097297+00:00Z
-total_entries: 288
+last_updated: 2026-02-07T01:00:09.035750+00:00Z
+total_entries: 330
 libraries:
   aiohttp:
     context7_id: /aio-libs/aiohttp
@@ -1226,3 +1226,192 @@ libraries:
         cached_at: 2026-02-06T08:38:45.604468+00:00Z
       examples:
         cached_at: 2026-02-06T08:38:49.094692+00:00Z
+  codecs:
+    context7_id: /w3c/webcodecs
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:47:59.317234+00:00Z
+  StringIO:
+    context7_id: /billing-io/docs.billing.io
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:50:59.613672+00:00Z
+      usage:
+        cached_at: 2026-02-07T00:51:17.221359+00:00Z
+  annotationlib:
+    context7_id: /openannotation/annotator
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:51:28.120284+00:00Z
+      usage:
+        cached_at: 2026-02-07T00:52:04.197293+00:00Z
+  _socket:
+    context7_id: /cycoresystems/audiosocket
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:51:55.807895+00:00Z
+  threadpool:
+    context7_id: /bshoshany/thread-pool
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:52:39.494785+00:00Z
+  ipaddress:
+    context7_id: /seancfoley/ipaddress
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:52:50.278297+00:00Z
+  impl:
+    context7_id: /ispc/ispc
+    topics:
+      examples:
+        cached_at: 2026-02-07T00:53:23.838476+00:00Z
+  multidict:
+    context7_id: /websites/edrdg_jmdict
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:53:39.281205+00:00Z
+      usage:
+        cached_at: 2026-02-07T00:54:36.386060+00:00Z
+  web_app:
+    context7_id: /brarbrb/whatsapp_webapp_-django-
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:53:49.907243+00:00Z
+      usage:
+        cached_at: 2026-02-07T00:54:52.222504+00:00Z
+  web_request:
+    context7_id: /uptimerobot/request
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:53:59.880324+00:00Z
+  yarl:
+    context7_id: /websites/yarl_aio-libs_en
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:54:08.623807+00:00Z
+  client_exceptions:
+    context7_id: /exceptionless/exceptionless.go
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:54:18.292061+00:00Z
+  _cookie_helpers:
+    context7_id: /mherod/get-cookie
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:54:26.487150+00:00Z
+  typedefs:
+    context7_id: /tharropoulos/typesense-ts
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:54:42.246103+00:00Z
+  web_exceptions:
+    context7_id: /giorgi/entityframework.exceptions
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:54:58.505972+00:00Z
+  helpers:
+    context7_id: /wallstop/unity-helpers
+    topics:
+      examples:
+        cached_at: 2026-02-07T00:55:20.929387+00:00Z
+  cookiejar:
+    context7_id: /3846masa/axios-cookiejar-support
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:55:41.283382+00:00Z
+  ssl:
+    context7_id: /azjezz/psl
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:55:49.475026+00:00Z
+  _websocket:
+    context7_id: /robtaussig/react-use-websocket
+    topics:
+      usage:
+        cached_at: 2026-02-07T00:56:03.121085+00:00Z
+  attr:
+    context7_id: /python-attrs/attrs
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:56:10.008329+00:00Z
+  client_middlewares:
+    context7_id: /truelayer/reqwest-middleware
+    topics:
+      examples:
+        cached_at: 2026-02-07T00:56:19.647264+00:00Z
+  client_reqrep:
+    context7_id: /swarm-code/ceregrep-client
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:56:25.489123+00:00Z
+  http_websocket:
+    context7_id: /vi/websocat
+    topics:
+      examples:
+        cached_at: 2026-02-07T00:56:42.021821+00:00Z
+  payload:
+    context7_id: /websites/payloadcms
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:56:56.724517+00:00Z
+      usage:
+        cached_at: 2026-02-07T00:57:15.549048+00:00Z
+  base_protocol:
+    context7_id: /base/base-mcp
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:57:04.365357+00:00Z
+  streams:
+    context7_id: /streamelements/docs
+    topics:
+      usage:
+        cached_at: 2026-02-07T00:57:29.531430+00:00Z
+  formdata:
+    context7_id: /data-driven-forms/react-forms
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:57:44.016248+00:00Z
+  async_timeout:
+    context7_id: /wahern/timeout
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:58:16.315208+00:00Z
+  backports:
+    context7_id: /bendechrai/devports
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:58:23.890916+00:00Z
+  brotlicffi:
+    context7_id: /bottlenoselabs/c2ffi
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:58:31.871084+00:00Z
+      usage:
+        cached_at: 2026-02-07T00:59:08.456473+00:00Z
+  brotli:
+    context7_id: /google/brotli
+    topics:
+      examples:
+        cached_at: 2026-02-07T00:58:59.241059+00:00Z
+  compression:
+    context7_id: /mw99/datacompression
+    topics:
+      common-mistakes:
+        cached_at: 2026-02-07T00:59:16.749367+00:00Z
+  aiohappyeyeballs:
+    context7_id: /websites/api-sports_io_basketball_v1
+    topics:
+      overview:
+        cached_at: 2026-02-07T00:59:34.614664+00:00Z
+      usage:
+        cached_at: 2026-02-07T01:00:09.035683+00:00Z
+  log:
+    context7_id: /palkan/logidze
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:59:46.393521+00:00Z
+  calendar:
+    context7_id: /werner-scholtz/kalender
+    topics:
+      best-practices:
+        cached_at: 2026-02-07T00:59:56.679686+00:00Z

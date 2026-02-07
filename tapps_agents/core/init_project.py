@@ -61,6 +61,52 @@ def _safe_rmtree(path: Path, max_retries: int = 3) -> bool:
     return False
 
 
+def _safe_rename(src: Path, dst: Path, max_retries: int = 3) -> bool:
+    """
+    Rename src to dst with retries. On Windows WinError 5 (access denied),
+    falls back to copy-then-remove so the skill is still installed.
+
+    Args:
+        src: Source path (e.g. skill.tapps-new)
+        dst: Destination path (e.g. skill)
+        max_retries: Number of retry attempts with backoff before fallback
+
+    Returns:
+        True if rename or fallback succeeded, False otherwise
+    """
+    for attempt in range(max_retries):
+        try:
+            if dst.exists():
+                if not _safe_rmtree(dst):
+                    return False
+            src.rename(dst)
+            return True
+        except PermissionError as e:
+            if attempt < max_retries - 1:
+                time.sleep(0.5 * (attempt + 1))
+            else:
+                logger.warning(
+                    "Rename %s -> %s failed (access denied): %s. Trying copy fallback.",
+                    src,
+                    dst,
+                    e,
+                )
+                try:
+                    shutil.copytree(src, dst, dirs_exist_ok=True)
+                    _safe_rmtree(src)
+                    return True
+                except OSError as fallback_e:
+                    logger.warning("Copy fallback failed: %s", fallback_e)
+                    return False
+        except OSError as e:
+            if attempt < max_retries - 1:
+                time.sleep(0.5 * (attempt + 1))
+            else:
+                logger.warning("Rename %s -> %s failed: %s", src, dst, e)
+                return False
+    return False
+
+
 def _convert_paths_to_strings(obj: Any) -> Any:
     """
     Recursively convert Path objects to strings for YAML serialization.
@@ -692,7 +738,14 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
                         )
                         _safe_rmtree(dest_new)
                         continue
-                dest_new.rename(dest_dir)
+                if not _safe_rename(dest_new, dest_dir):
+                    logger.warning(
+                        "Skipping skill %s - could not rename into place "
+                        "(close Cursor/IDE and retry init --reset)",
+                        dest_dir.name,
+                    )
+                    _safe_rmtree(dest_new)
+                    continue
                 copied.append(str(dest_dir))
             except OSError as e:
                 logger.warning("Skipping skill %s: %s", skill_dir.name, e)
@@ -720,7 +773,13 @@ def init_claude_skills(project_root: Path | None = None, source_dir: Path | None
                             )
                             _safe_rmtree(dest_new)
                             continue
-                    dest_new.rename(dest_dir)
+                    if not _safe_rename(dest_new, dest_dir):
+                        logger.warning(
+                            "Skipping skill %s - could not rename into place",
+                            dest_dir.name,
+                        )
+                        _safe_rmtree(dest_new)
+                        continue
                     copied.append(str(dest_dir))
                 except OSError as e:
                     logger.warning("Skipping skill %s: %s", skill_dir.name, e)

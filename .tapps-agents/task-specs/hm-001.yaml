@@ -20,8 +20,8 @@ task:
   epic: HM-001
   dependencies: []
   github_issue: null
-  beads_issue: TappsCodingAgents-byo5
-  status: todo
+  beads_issue: TappsCodingAgents-dz1z
+  status: in-progress
   workflow: build
   files:
   - tapps_agents/health/checks/outcomes.py
