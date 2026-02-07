@@ -21,7 +21,7 @@ task:
   dependencies: []
   github_issue: null
   beads_issue: TappsCodingAgents-dz1z
-  status: in-progress
+  status: todo
   workflow: build
   files:
   - tapps_agents/health/checks/outcomes.py
