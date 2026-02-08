@@ -6,31 +6,27 @@ This directory contains end-to-end tests for workflow execution, covering preset
 
 ### Test Files
 
-- `test_full_sdlc_workflow.py` - Tests for the full SDLC preset workflow
-- `test_quality_workflow.py` - Tests for the quality improvement preset workflow
-- `test_quick_fix_workflow.py` - Tests for the quick-fix preset workflow
-- `test_workflow_failure_resume.py` - Tests for workflow failure and resume functionality
+- `test_preset_workflows.py` - Parameterized parse/start/short-run for all presets (fix, full-sdlc, quality, rapid-dev)
+- `test_quick_fix_workflow.py` - Fix preset workflow (parse, init, mocked run, step order, full run)
+- `test_workflow_failure_resume.py` - Workflow state persistence and resume
+- `test_agent_behavior_in_workflows.py` - Agent behavior during workflow execution
+- `test_state_persistence_e2e.py` - State persistence and checkpointing
+
+See [E2E Testing Plan](../../../docs/planning/E2E_TESTING_PLAN.md) for scope and removed tests.
 
 ## Test Coverage
 
-### Tier-1 Preset Workflows
+### Preset Workflows (test_preset_workflows.py)
 
-The tests cover the most important preset workflows:
+Parameterized over presets: **fix**, **full-sdlc**, **quality**, **rapid-dev**. For each:
 
-1. **Full SDLC** (`full-sdlc.yaml`)
-   - Complete software development lifecycle
-   - All quality gates enabled
-   - Multiple steps with dependencies
+1. **Parse** – Load YAML, assert id, name, and steps.
+2. **Start** – Executor start, assert running state.
+3. **Run limited** – `run_workflow(max_steps=2)` with mocks; quality uses `target_file="main.py"`.
 
-2. **Quality** (`quality.yaml`)
-   - Code quality improvement cycle
-   - Review and improvement steps
-   - Quality gate routing
+### Fix Workflow (test_quick_fix_workflow.py)
 
-3. **Quick Fix** (`quick-fix.yaml`)
-   - Fast bug fix workflow
-   - Minimal overhead
-   - Gate routing for review loop
+Uses preset **fix** (formerly quick-fix): parsing, initialization, mocked execution, step order, full run (relaxed completion).
 
 ### Test Types
 

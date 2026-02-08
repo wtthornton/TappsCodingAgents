@@ -570,6 +570,22 @@ def init_cursor_rules(project_root: Path | None = None, source_dir: Path | None 
 
     for rule_name in rules_to_copy:
         dest_rule = project_rules_dir / rule_name
+        # project-context.mdc: install framework variant or user variant based on project type; always overwrite
+        if rule_name == "project-context.mdc":
+            source_name = "project-context.mdc" if is_framework_directory(project_root) else "project-context-user.mdc"
+            if packaged_rules is not None:
+                source_rule = packaged_rules / source_name
+                if source_rule.exists():
+                    dest_rule.write_bytes(source_rule.read_bytes())
+                    if str(dest_rule) not in copied_rules:
+                        copied_rules.append(str(dest_rule))
+            else:
+                source_rule = source_dir / source_name
+                if source_rule.exists():
+                    shutil.copy2(source_rule, dest_rule)
+                    if str(dest_rule) not in copied_rules:
+                        copied_rules.append(str(dest_rule))
+            continue
         if dest_rule.exists():
             continue
 
@@ -970,6 +986,142 @@ def init_cursorignore(project_root: Path | None = None, source_file: Path | None
             created = True  # Mark as created if we modified it
 
     return created, str(dest_file)
+
+
+def _agents_md_placeholders(project_root: Path, tech_stack: dict[str, Any] | None) -> dict[str, str]:
+    """Build placeholder values for AGENTS.md template from project root and optional tech_stack."""
+    project_name = project_root.name or "This project"
+    tech = tech_stack or {}
+    languages = tech.get("languages") or []
+    frameworks = tech.get("frameworks") or []
+    # Tech stack summary for AGENTS.md (comma-separated languages and frameworks)
+    parts = []
+    if languages:
+        parts.extend(languages if isinstance(languages[0], str) else [str(x) for x in languages])
+    if frameworks:
+        parts.extend(frameworks if isinstance(frameworks[0], str) else [str(x) for x in frameworks])
+    tech_stack_summary = ", ".join(parts) if parts else "Not detected (edit AGENTS.md as needed)."
+    # Default to Python-style commands; override if Node/JS detected
+    install_cmd = "pip install -e ."
+    test_cmd = "pytest -v"
+    lint_cmd = "ruff check . && ruff format --check ."
+    if "javascript" in languages or "typescript" in languages or "node" in str(frameworks).lower():
+        install_cmd = "pnpm install"
+        test_cmd = "pnpm test"
+        lint_cmd = "pnpm lint"
+    elif "node" in str(languages).lower():
+        install_cmd = "npm install"
+        test_cmd = "npm test"
+        lint_cmd = "npm run lint"
+    return {
+        "PROJECT_NAME": project_name,
+        "TECH_STACK_SUMMARY": tech_stack_summary,
+        "INSTALL_CMD": install_cmd,
+        "TEST_CMD": test_cmd,
+        "LINT_CMD": lint_cmd,
+    }
+
+
+def init_agents_md(
+    project_root: Path | None = None,
+    tech_stack: dict[str, Any] | None = None,
+) -> tuple[bool, str | None]:
+    """
+    Create or refresh AGENTS.md at project root from the framework template.
+
+    AGENTS.md is an open format (see https://agents.md/) for guiding AI coding agents.
+    Always overwrites existing AGENTS.md with the template (framework-managed).
+
+    Args:
+        project_root: Project root directory (defaults to cwd).
+        tech_stack: Optional detected tech stack (languages, frameworks) used to fill install/test/lint commands.
+
+    Returns:
+        (success, path) — path is relative or absolute string; None on failure.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    dest_file = project_root / "AGENTS.md"
+
+    packaged = _resource_at("AGENTS.md.template")
+    if packaged is not None and packaged.exists() and not packaged.is_dir():
+        try:
+            template_text = packaged.read_bytes().decode("utf-8")
+        except Exception as e:
+            logger.warning("Could not read AGENTS.md.template: %s", e)
+            return False, None
+    else:
+        # Fallback: framework source checkout
+        current_file = Path(__file__)
+        template_path = current_file.parent.parent / "resources" / "AGENTS.md.template"
+        if not template_path.exists():
+            logger.warning("AGENTS.md.template not found in package or at %s", template_path)
+            return False, None
+        try:
+            template_text = template_path.read_text(encoding="utf-8")
+        except Exception as e:
+            logger.warning("Could not read AGENTS.md.template: %s", e)
+            return False, None
+
+    placeholders = _agents_md_placeholders(project_root, tech_stack)
+    content = template_text
+    for key, value in placeholders.items():
+        content = content.replace("{{" + key + "}}", value)
+
+    try:
+        dest_file.write_text(content, encoding="utf-8")
+        return True, str(dest_file)
+    except OSError as e:
+        logger.warning("Could not write AGENTS.md: %s", e)
+        return False, None
+
+
+def init_claude_md(
+    project_root: Path | None = None,
+    tech_stack: dict[str, Any] | None = None,
+) -> tuple[bool, str | None]:
+    """
+    Create or overwrite CLAUDE.md at project root from the framework template.
+
+    CLAUDE.md is auto-loaded by Claude Code; it points to AGENTS.md for primary context.
+
+    Args:
+        project_root: Project root directory (defaults to cwd).
+        tech_stack: Optional (unused in template; kept for API consistency).
+
+    Returns:
+        (success, path) — path is relative or absolute string; None on failure.
+    """
+    if project_root is None:
+        project_root = Path.cwd()
+
+    dest_file = project_root / "CLAUDE.md"
+    packaged = _resource_at("CLAUDE.md.template")
+    if packaged is not None and packaged.exists() and not packaged.is_dir():
+        try:
+            template_text = packaged.read_bytes().decode("utf-8")
+        except Exception as e:
+            logger.warning("Could not read CLAUDE.md.template: %s", e)
+            return False, None
+    else:
+        current_file = Path(__file__)
+        template_path = current_file.parent.parent / "resources" / "CLAUDE.md.template"
+        if not template_path.exists():
+            logger.warning("CLAUDE.md.template not found at %s", template_path)
+            return False, None
+        try:
+            template_text = template_path.read_text(encoding="utf-8")
+        except Exception as e:
+            logger.warning("Could not read CLAUDE.md.template: %s", e)
+            return False, None
+
+    try:
+        dest_file.write_text(template_text, encoding="utf-8")
+        return True, str(dest_file)
+    except OSError as e:
+        logger.warning("Could not write CLAUDE.md: %s", e)
+        return False, None
 
 
 def init_hooks_minimal(project_root: Path | None = None) -> tuple[bool, str | None]:
@@ -2623,8 +2775,11 @@ def detect_existing_installation(project_root: Path) -> dict[str, Any]:
             result["presets_exist"] = True
             result["indicators"].append("workflows/presets/ (framework presets)")
             result["installed"] = True
-    
-    
+
+    if (project_root / "AGENTS.md").exists():
+        result["indicators"].append("AGENTS.md (project root)")
+        result["installed"] = True
+
     return result
 
 
@@ -2749,7 +2904,17 @@ def identify_framework_files(project_root: Path) -> dict[str, Any]:
                 result["framework_files"].append(mcp_file)
         except Exception:
             pass
-    
+
+    # AGENTS.md at project root is framework-managed (created/overwritten by init and init --reset)
+    agents_md_file = project_root / "AGENTS.md"
+    if agents_md_file.exists():
+        result["framework_files"].append(agents_md_file)
+
+    # CLAUDE.md at project root is framework-managed when present (created by init with include_claude_md)
+    claude_md_file = project_root / "CLAUDE.md"
+    if claude_md_file.exists():
+        result["framework_files"].append(claude_md_file)
+
     return result
 
 
@@ -3102,6 +3267,7 @@ def init_project(
     include_hooks_templates: bool = False,
     auto_experts: bool = False,
     use_enhanced_detection: bool = True,
+    include_claude_md: bool = True,
 ):
     """
     Initialize a new project with TappsCodingAgents setup.
@@ -3122,6 +3288,7 @@ def init_project(
             (init --hooks). If False, create minimal empty hooks.yaml (standard init).
         auto_experts: Whether to auto-generate experts from knowledge base (Phase 3)
         use_enhanced_detection: Whether to use enhanced tech stack detection from init_autofill module
+        include_claude_md: Whether to create CLAUDE.md at project root for Claude Code (default: True)
 
     Returns:
         Dictionary with initialization results
@@ -3151,6 +3318,8 @@ def init_project(
         "version_after": None,
         "hooks": False,
         "hooks_templates": False,
+        "agents_md": False,
+        "claude_md": False,
     }
     
     # Handle reset mode
@@ -3347,6 +3516,31 @@ def init_project(
         results["cursorignore"] = success
         if ignore_path:
             results["files_created"].append(ignore_path)
+
+    # Initialize AGENTS.md at project root (open format for coding agents; see https://agents.md/)
+    # Always create/overwrite AGENTS.md from template (framework-managed).
+    success, agents_md_path = init_agents_md(
+        project_root,
+        tech_stack=results.get("tech_stack"),
+    )
+    results["agents_md"] = success
+    if success and agents_md_path:
+        try:
+            rel = str(Path(agents_md_path).relative_to(project_root))
+        except ValueError:
+            rel = agents_md_path
+        results["files_created"].append(rel)
+
+    # Initialize CLAUDE.md at project root for Claude Code (optional; points to AGENTS.md)
+    if include_claude_md:
+        claude_ok, claude_path = init_claude_md(project_root, tech_stack=results.get("tech_stack"))
+        results["claude_md"] = claude_ok
+        if claude_ok and claude_path:
+            try:
+                rel = str(Path(claude_path).relative_to(project_root))
+            except ValueError:
+                rel = claude_path
+            results["files_created"].append(rel)
 
     # Initialize hooks: minimal empty hooks.yaml (standard init) or from templates + context (init --hooks)
     if include_hooks_templates:

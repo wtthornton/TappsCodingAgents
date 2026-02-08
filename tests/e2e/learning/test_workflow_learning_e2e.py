@@ -25,7 +25,7 @@ class TestWorkflowLearningE2E:
         """Path to a simple workflow for learning tests."""
         # Use quality workflow as it has multiple steps
         return (
-            Path(__file__).parent.parent.parent.parent.parent
+            Path(__file__).parent.parent.parent.parent
             / "workflows"
             / "presets"
             / "quality.yaml"

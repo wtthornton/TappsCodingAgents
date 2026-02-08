@@ -148,3 +148,53 @@ def generate_status_report(
         lines.append(f"TOTAL: {overall_pct:.1f}% complete ({completed_count}/{total} phases)")
 
     return "\n".join(lines)
+
+
+def phases_from_step_dicts(
+    steps: list[dict],
+    *,
+    name_key: str = "step_name",
+    name_prefix: str = "Phase",
+    success_key: str = "success",
+    index_key: str | None = "step_number",
+) -> list[dict]:
+    """
+    Build a list of phase dicts for generate_status_report from step-like dicts.
+
+    Used by Simple Mode and Epic completion to show phase-grid without
+    a full Workflow/WorkflowState. Each step dict should have:
+    - name_key: display name (e.g. step_name or title)
+    - success_key: bool (True = COMPLETE, False = FAILED)
+    - optional index_key: for ordering (e.g. step_number); otherwise 1-based index.
+
+    Args:
+        steps: List of dicts with at least name_key and success_key.
+        name_key: Key for phase label (e.g. "step_name", "title").
+        name_prefix: Prefix for label (e.g. "Phase", "Story").
+        success_key: Key for success boolean.
+        index_key: Optional key for phase index; if None, use 1-based index.
+
+    Returns:
+        List of dicts with name, percentage, status, icon for generate_status_report.
+    """
+    phases: list[dict] = []
+    for i, step in enumerate(steps):
+        idx = step.get(index_key, i + 1) if index_key else (i + 1)
+        label = step.get(name_key, "?")
+        name = f"{name_prefix} {idx}: {label}" if name_prefix else str(label)
+        success = step.get(success_key, False)
+        if success:
+            percentage = 100.0
+            status_label = "COMPLETE"
+            icon = "\u2705"  # ✅
+        else:
+            percentage = 100.0
+            status_label = "FAILED"
+            icon = "\u274c"  # ❌
+        phases.append({
+            "name": name,
+            "percentage": percentage,
+            "status": status_label,
+            "icon": icon,
+        })
+    return phases

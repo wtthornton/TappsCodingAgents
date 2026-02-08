@@ -720,6 +720,26 @@ def collect_doctor_report(
         )
     )
 
+    # --- AGENTS.md (recommended for AI coding agents) ---
+    agents_md_file = root / "AGENTS.md"
+    if agents_md_file.exists():
+        findings.append(
+            DoctorFinding(
+                severity="ok",
+                code="AGENTS_MD",
+                message="AGENTS.md: Present at project root (primary context for AI coding agents)",
+            )
+        )
+    else:
+        findings.append(
+            DoctorFinding(
+                severity="warn",
+                code="AGENTS_MD",
+                message="AGENTS.md: Not found at project root",
+                remediation="Run tapps-agents init to create AGENTS.md and full setup. See https://agents.md/.",
+            )
+        )
+
     # --- Skills & Agents (plan 1.2) ---
     try:
         from .skill_agent_registry import get_registry

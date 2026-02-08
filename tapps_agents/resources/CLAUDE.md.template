@@ -1,0 +1,7 @@
+# Claude Code – Project context
+
+Primary project context: see **AGENTS.md** at project root.
+
+- Setup: see AGENTS.md for install, test, and lint commands.
+- TappsCodingAgents: run `tapps-agents init` to set up; run `tapps-agents --help` for commands.
+- Use `.cursor/rules/` and `tapps-agents` or @simple-mode for workflows.

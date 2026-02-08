@@ -1,0 +1,54 @@
+# AGENTS.md
+
+This file is the main context for AI coding agents working on this project. For TappsCodingAgents users, see `.cursor/rules/` for workflow and quality rules, `.tapps-agents/config.yaml` for configuration, and `tapps-agents --help` for commands.
+
+This file helps AI coding agents work on this project. It follows the [AGENTS.md open format](https://agents.md/)—a standard place for context and instructions that any coding agent (Cursor, GitHub Copilot, Aider, etc.) can use.
+
+**Project:** {{PROJECT_NAME}}
+
+**Tech stack (detected):** {{TECH_STACK_SUMMARY}}
+
+## Setup commands
+
+- Install dependencies: `{{INSTALL_CMD}}`
+- Run tests: `{{TEST_CMD}}`
+- Lint / format: `{{LINT_CMD}}`
+
+Adjust the commands above to match your project (e.g. `pip install -e .`, `pnpm install`, `npm ci`).
+
+## Testing instructions
+
+- Tests live in `tests/` (or your project’s test directory). Run the test command before committing.
+- Fix any test or type errors until the suite is green.
+- Add or update tests for the code you change when adding or changing behavior.
+
+## Project structure
+
+- `src/` or project root – Application source code
+- `tests/` – Unit and integration tests
+- `docs/` – Documentation (if present)
+- `.tapps-agents/` – TappsCodingAgents config, experts, and workflow state (if using TappsCodingAgents)
+
+## Code style
+
+- Follow the project’s existing style and conventions.
+- Use the project’s linter and formatter (see Lint command above); fix reported issues before committing.
+
+## Git / PR workflow
+
+- Run tests (and lint if applicable) before committing.
+- Use clear commit messages and PR titles.
+
+## Boundaries
+
+- **Always:** Run tests before committing; follow existing code style; keep secrets out of code and commits.
+- **Ask first:** Large refactors, new dependencies, schema or config changes, deployment-related changes.
+- **Never:** Commit secrets, API keys, or credentials; modify production config or secrets; delete critical project files without confirmation.
+
+## TappsCodingAgents (optional)
+
+This project can use [TappsCodingAgents](https://pypi.org/project/tapps-agents/) for workflow agents and Cursor integration. If installed and initialized (`tapps-agents init`):
+
+- Prefer `@simple-mode *build "description"` for new features.
+- Use `@simple-mode *fix <file> "description"` for bug fixes and `@simple-mode *review <file>` for code review.
+- See `.cursor/rules/` and `tapps-agents --help` for full commands and workflows.

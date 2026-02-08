@@ -58,7 +58,15 @@ def verify_cursor_integration(project_root: Path = None) -> tuple[bool, dict]:
     results["components"]["cursorrules"] = cursorrules_result
     if not cursorrules_result["valid"]:
         results["warnings"].extend(cursorrules_result["warnings"])  # Optional file
-    
+
+    # AGENTS.md at project root (recommended; does not affect validation)
+    agents_md_file = project_root / "AGENTS.md"
+    results["components"]["agents_md"] = {
+        "valid": True,  # Optional file - do not fail verification
+        "present": agents_md_file.exists(),
+        "recommendation": "AGENTS.md is the primary context for AI coding agents (see https://agents.md/). Run tapps-agents init to create it.",
+    }
+
     return results["valid"], results
 
 
@@ -263,8 +271,11 @@ def format_verification_results(results: dict, format: str = "text") -> str:
             rules_found = component_result.get("rules_found", [])
             expected = component_result.get("expected_rules", [])
             lines.append(f"   Found: {len(rules_found)}/{len(expected)} rules")
-        
-        # Background Agents removed - no longer verified
+        elif component_name == "agents_md":
+            if component_result.get("present", False):
+                lines.append(f"   {check} AGENTS.md present at project root")
+            else:
+                lines.append(f"   {warning} AGENTS.md not found (recommended: run tapps-agents init)")
         
         lines.append("")
     

@@ -1466,7 +1466,19 @@ def _print_init_results(results: dict[str, Any]) -> None:
             print("    - .tapps-agents/hooks.yaml")
     else:
         print("  Hooks: Skipped or already exists")
-    
+
+    if results.get("agents_md"):
+        print("  AGENTS.md: Created")
+        print("    - AGENTS.md (project root)")
+    else:
+        print("  AGENTS.md: Not created (template or write error)")
+
+    if results.get("claude_md"):
+        print("  CLAUDE.md: Created")
+        print("    - CLAUDE.md (project root)")
+    elif "claude_md" in results:
+        print("  CLAUDE.md: Skipped (use init without --no-claude-md to create)")
+
     # Show MCP config (will be shown in dedicated section)
     # MCP status is now shown in _print_mcp_status() function
     
@@ -2208,6 +2220,7 @@ def handle_init_command(args: object) -> None:
         reset_mcp=getattr(args, "reset_mcp", False),
         preserve_custom=getattr(args, "preserve_custom", True),
         include_hooks_templates=getattr(args, "hooks", False),
+        include_claude_md=not getattr(args, "no_claude_md", False),
     )
     
     # Offer interactive Context7 setup if API key is missing

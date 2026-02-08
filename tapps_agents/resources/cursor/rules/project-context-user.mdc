@@ -1,0 +1,16 @@
+---
+description: Project context for user projects using TappsCodingAgents. Read AGENTS.md first; use .cursor/rules and tapps-agents for workflows.
+globs: []
+alwaysApply: true
+---
+
+# Project Context (User Project)
+
+Read **AGENTS.md** at the project root first for:
+- Project context, setup commands, and boundaries
+- Build, test, and lint commands
+- Code style and Git/PR workflow
+
+Use **`.cursor/rules/`** for workflow and quality rules and **`tapps-agents`** CLI or **@simple-mode** for workflows (e.g. `@simple-mode *build "description"`, `@simple-mode *review <file>`).
+
+See `tapps-agents --help` and the command reference in `.cursor/rules/` for full options.

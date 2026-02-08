@@ -368,4 +368,3 @@ class ExecutionMetricsCollector:
             except (ValueError, OSError) as e:
                 logger.warning("Could not delete %s: %s", metrics_file, e)
         return deleted
-

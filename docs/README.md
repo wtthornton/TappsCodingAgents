@@ -35,6 +35,8 @@ Welcome to the documentation for TappsCodingAgents.
 - **[Epic Workflow Guide](EPIC_WORKFLOW_GUIDE.md)** - Execute Epic documents with story dependency resolution
 - **[Current Defaults](CURRENT_DEFAULTS.md)** - What happens by default (no surprises)
 - **[Configuration Guide](CONFIGURATION.md)** - Complete configuration reference
+- **[Init and reset behavior](INIT_AND_RESET_BEHAVIOR.md)** - What happens on first init, later init, and init --reset (matrix and how it fits together)
+- **[AGENTS.md Guide](AGENTS_MD_GUIDE.md)** - AGENTS.md as central agent entry point; CLAUDE.md optional
 - **[Model Selection](MODEL_SELECTION.md)** - model_profile resolution and overrides
 - **[API Reference](API.md)** - Python API + CLI overview
 

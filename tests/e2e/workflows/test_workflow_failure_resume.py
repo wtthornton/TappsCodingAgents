@@ -19,7 +19,7 @@ class TestWorkflowFailureResume:
     @pytest.fixture
     def workflow_path(self) -> Path:
         """Path to quick-fix workflow YAML (simple workflow for failure testing)."""
-        return Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "quick-fix.yaml"
+        return Path(__file__).parent.parent.parent.parent / "workflows" / "presets" / "fix.yaml"
 
     @pytest.mark.asyncio
     async def test_state_persistence_on_failure(
@@ -48,7 +48,7 @@ class TestWorkflowFailureResume:
             state_data = json.load(f)
 
         assert "workflow_id" in state_data
-        assert state_data["workflow_id"].startswith("quick-fix")
+        assert state_data["workflow_id"].startswith("fix")
 
     @pytest.mark.asyncio
     async def test_state_loading(
@@ -218,4 +218,4 @@ class TestWorkflowFailureResume:
         for state_path in [state_path1, state_path2]:
             with open(state_path, encoding="utf-8") as f:
                 state_data = json.load(f)
-            assert state_data["workflow_id"].startswith("quick-fix")
+            assert state_data["workflow_id"].startswith("fix")

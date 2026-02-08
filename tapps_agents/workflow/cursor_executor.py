@@ -594,7 +594,7 @@ class CursorWorkflowExecutor:
                 and self.workflow
                 and self.state.status == "running"
             ):
-                if steps_executed >= max_steps:
+                if max_steps is not None and steps_executed >= max_steps:
                     self._handle_max_steps_exceeded(max_steps)
                     break
 

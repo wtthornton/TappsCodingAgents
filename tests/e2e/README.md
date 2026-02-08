@@ -3,6 +3,7 @@
 This directory contains end-to-end tests for TappsCodingAgents, organized by test type.
 
 **📖 Quick Links:**
+- **[E2E Testing Plan](../../docs/planning/E2E_TESTING_PLAN.md)** - Current e2e strategy, scope, and preset coverage
 - **[Test Suite Overview](../README.md)** - All test types (unit, integration, E2E)
 - **[Marker Taxonomy](MARKER_TAXONOMY.md)** - Complete marker reference and execution matrix
 - **[CI/CD Execution Guide](CI_CD_EXECUTION.md)** - CI/CD integration and execution strategies
@@ -43,7 +44,11 @@ def test_workflow_parsing(e2e_project):
 
 ### Workflow Tests (`workflows/`)
 
-Tests that validate workflow execution end-to-end.
+Tests that validate workflow execution end-to-end. See [E2E Testing Plan](../../docs/planning/E2E_TESTING_PLAN.md) for scope.
+
+- **Preset workflows** (`test_preset_workflows.py`) – Parse, start, and short run (max_steps=2) for fix, full-sdlc, quality, rapid-dev.
+- **Fix workflow** (`test_quick_fix_workflow.py`) – Full fix preset tests (parse, init, mocked run, step order, full run).
+- **Failure/resume** (`test_workflow_failure_resume.py`) – State persistence and resume.
 
 **Marker:** `@pytest.mark.e2e_workflow`
 

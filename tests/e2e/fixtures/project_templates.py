@@ -39,9 +39,15 @@ if __name__ == "__main__":
 """
     )
 
-    # Create .tapps-agents directory structure
+    # Create .tapps-agents directory structure and config so workflow executor
+    # does not require Beads (bd) in e2e tests
     config_dir = project_path / ".tapps-agents"
     config_dir.mkdir(exist_ok=True)
+    config_file = config_dir / "config.yaml"
+    config_file.write_text(
+        "# E2E test project: disable Beads so tests run without bd init\nbeads:\n  enabled: false\n  required: false\n",
+        encoding="utf-8",
+    )
 
     return project_path
 
@@ -117,9 +123,15 @@ def test_divide_by_zero():
 """
     )
 
-    # Create .tapps-agents directory structure
+    # Create .tapps-agents directory structure and config so workflow executor
+    # does not require Beads (bd) in e2e tests
     config_dir = project_path / ".tapps-agents"
     config_dir.mkdir(exist_ok=True)
+    config_file = config_dir / "config.yaml"
+    config_file.write_text(
+        "# E2E test project: disable Beads so tests run without bd init\nbeads:\n  enabled: false\n  required: false\n",
+        encoding="utf-8",
+    )
 
     # Create basic README
     readme = project_path / "README.md"
@@ -271,9 +283,15 @@ def test_load_nonexistent_config():
 """
     )
 
-    # Create .tapps-agents directory structure
+    # Create .tapps-agents directory structure and config so workflow executor
+    # does not require Beads (bd) in e2e tests
     config_dir = project_path / ".tapps-agents"
     config_dir.mkdir(exist_ok=True)
+    config_file = config_dir / "config.yaml"
+    config_file.write_text(
+        "# E2E test project: disable Beads so tests run without bd init\nbeads:\n  enabled: false\n  required: false\n",
+        encoding="utf-8",
+    )
 
     # Create workflow-state directory
     workflow_state_dir = config_dir / "workflow-state"

@@ -847,6 +847,11 @@ Example: tapps-agents generate-rules""",
         action="store_true",
         help="Create .tapps-agents/hooks.yaml from hook templates (all disabled) and .tapps-agents/context/ with template files. Without this, init creates minimal empty hooks.yaml only.",
     )
+    init_parser.add_argument(
+        "--no-claude-md",
+        action="store_true",
+        help="Skip creating CLAUDE.md at project root. CLAUDE.md is auto-loaded by Claude Code and points to AGENTS.md.",
+    )
 
     # Environment diagnostics
     doctor_parser = subparsers.add_parser(
