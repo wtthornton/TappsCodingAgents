@@ -5,9 +5,14 @@ Executes all stories in an Epic document in dependency order with progress track
 """
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
+from tapps_agents.core.progress_display import (
+    generate_status_report,
+    phases_from_step_dicts,
+)
 from tapps_agents.epic import EpicOrchestrator as CoreEpicOrchestrator
 
 from ..intent_parser import Intent
@@ -99,6 +104,43 @@ class EpicOrchestrator(SimpleModeOrchestrator):
             # Save report
             report_path = orchestrator.save_report()
 
+            # Phase-grid (process visuals) for Epic completion
+            phase_grid = ""
+            if report.get("stories"):
+                steps_for_phases = [
+                    {
+                        "step_number": i + 1,
+                        "step_name": s["story_id"],
+                        "success": s.get("status") == "done",
+                    }
+                    for i, s in enumerate(report["stories"])
+                ]
+                phases = phases_from_step_dicts(
+                    steps_for_phases,
+                    name_key="step_name",
+                    name_prefix="Story",
+                    success_key="success",
+                    index_key="step_number",
+                )
+                use_unicode = os.environ.get("TAPPS_PROGRESS", "auto").lower() != "plain"
+                phase_grid = generate_status_report(
+                    phases,
+                    title="Epic Progress Summary",
+                    use_unicode=use_unicode,
+                    show_total=True,
+                )
+            output_summary_lines = [
+                f"# Epic {epic.epic_number} Complete: {epic.title}",
+                "",
+                f"- **Completion:** {report['completion_percentage']:.1f}%",
+                f"- **Stories done:** {report['done_stories']}/{report['total_stories']}",
+                f"- **Failed:** {report['failed_stories']}",
+                f"- **Report:** `{report_path}`",
+                "",
+            ]
+            if phase_grid:
+                output_summary_lines = [phase_grid, ""] + output_summary_lines
+
             return {
                 "success": True,
                 "epic_number": epic.epic_number,
@@ -110,6 +152,8 @@ class EpicOrchestrator(SimpleModeOrchestrator):
                 "is_complete": report["is_complete"],
                 "report_path": str(report_path),
                 "report": report,
+                "phase_grid": phase_grid,
+                "output_summary": "\n".join(output_summary_lines),
             }
 
         except Exception as e:

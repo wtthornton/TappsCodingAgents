@@ -4,12 +4,17 @@ Output Aggregation for Simple Mode.
 Aggregates outputs from multiple agents and steps in Simple Mode workflows.
 """
 
+import os
 from typing import Any
 
 from tapps_agents.core.instructions import GenericInstruction
 from tapps_agents.core.output_formatter import (
     OutputFormat,
     OutputFormatter,
+)
+from tapps_agents.core.progress_display import (
+    generate_status_report,
+    phases_from_step_dicts,
 )
 
 
@@ -168,7 +173,31 @@ class SimpleModeOutputAggregator:
 
     def _format_markdown_summary(self, aggregated: dict[str, Any]) -> str:
         """Format summary as Markdown with comprehensive artifact summary."""
-        lines = [
+        # Phase-grid (process visuals) at top when steps are present
+        lines: list[str] = []
+        if aggregated.get("steps"):
+            steps_for_phases = [
+                {"step_number": s["step_number"], "step_name": s["step_name"], "success": s["success"]}
+                for s in aggregated["steps"]
+            ]
+            phases = phases_from_step_dicts(
+                steps_for_phases,
+                name_key="step_name",
+                name_prefix="Phase",
+                success_key="success",
+                index_key="step_number",
+            )
+            use_unicode = os.environ.get("TAPPS_PROGRESS", "auto").lower() != "plain"
+            phase_grid = generate_status_report(
+                phases,
+                title="Progress Summary",
+                use_unicode=use_unicode,
+                show_total=True,
+            )
+            lines.append(phase_grid)
+            lines.append("")
+            lines.append("")
+        lines.extend([
             f"# ✅ Workflow Summary: {aggregated['workflow_type'].title()}",
             "",
             f"**Workflow ID:** `{aggregated['workflow_id']}`",
@@ -180,7 +209,7 @@ class SimpleModeOutputAggregator:
             f"- **Failed Steps:** {aggregated['summary']['failed_steps']}",
             f"- **Success Rate:** {aggregated['summary']['success_rate']:.1f}%",
             "",
-        ]
+        ])
 
         # Collect all artifacts and metrics
         all_artifacts = []
