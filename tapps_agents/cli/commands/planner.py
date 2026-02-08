@@ -165,6 +165,74 @@ async def create_story_command(
         await planner.close()
 
 
+async def evaluate_plan_command(file_path: str, output_format: str = "json"):
+    """Evaluate implementation plan (phases, tasks, completion criteria)."""
+    from pathlib import Path
+    feedback = get_feedback()
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    if not path.exists():
+        feedback.error(f"File not found: {path}")
+        if output_format == "json":
+            feedback.output_result({"error": f"File not found: {path}"})
+        return
+    planner = PlannerAgent()
+    try:
+        await planner.activate(offline_mode=True)
+        result = await planner.run("evaluate-plan", file=str(path))
+        check_result_error(result)
+        if output_format == "json":
+            feedback.output_result(result, message="Implementation plan evaluation complete")
+        else:
+            feedback.success("Implementation plan evaluation complete")
+            print(f"Overall: {result.get('overall', 0):.1f}/100")
+            print(f"Phases: {result.get('phase_score', 0):.1f}  Tasks: {result.get('task_score', 0):.1f}  Completion: {result.get('completion_score', 0):.1f}")
+            if result.get("issues"):
+                print("\nIssues:"); [print(f"  - {i}") for i in result["issues"]]
+            if result.get("recommendations"):
+                print("\nRecommendations:"); [print(f"  - {r}") for r in result["recommendations"]]
+    finally:
+        await planner.close()
+
+
+async def evaluate_epic_command(file_path: str, output_format: str = "json"):
+    """Evaluate Epic document quality (structure, story breakdown, dependencies)."""
+    from pathlib import Path
+    feedback = get_feedback()
+    feedback.format_type = output_format
+    path = Path(file_path)
+    if not path.is_absolute():
+        path = Path.cwd() / path
+    if not path.exists():
+        feedback.error(f"Epic file not found: {path}")
+        if output_format == "json":
+            feedback.output_result({"error": f"File not found: {path}"})
+        return
+    planner = PlannerAgent()
+    try:
+        await planner.activate(offline_mode=True)
+        result = await planner.run("evaluate-epic", file=str(path))
+        check_result_error(result)
+        if output_format == "json":
+            feedback.output_result(result, message="Epic evaluation complete")
+        else:
+            feedback.success("Epic evaluation complete")
+            print(f"Overall: {result.get('overall', 0):.1f}/100")
+            print(f"Overview: {result.get('overview_score', 0):.1f}  Story breakdown: {result.get('story_breakdown_score', 0):.1f}")
+            print(f"Dependencies: {result.get('dependency_score', 0):.1f}  Acceptance criteria: {result.get('acceptance_criteria_score', 0):.1f}")
+            if result.get("issues"):
+                print("\nIssues:")
+                for i in result["issues"]:
+                    print(f"  - {i}")
+            if result.get("recommendations"):
+                print("\nRecommendations:")
+                for r in result["recommendations"]:
+                    print(f"  - {r}")
+    finally:
+        await planner.close()
+
+
 async def list_stories_command(
     epic: str | None = None,
     status: str | None = None,
@@ -224,6 +292,20 @@ def handle_planner_command(args: object) -> None:
                 list_stories_command(
                     epic=getattr(args, "epic", None),
                     status=getattr(args, "status", None),
+                    output_format=getattr(args, "format", "json"),
+                )
+            )
+        elif command == "evaluate-epic":
+            asyncio.run(
+                evaluate_epic_command(
+                    file_path=getattr(args, "file", "") or "",
+                    output_format=getattr(args, "format", "json"),
+                )
+            )
+        elif command in ("evaluate-plan", "evaluate-implementation-plan"):
+            asyncio.run(
+                evaluate_plan_command(
+                    file_path=getattr(args, "file", "") or "",
                     output_format=getattr(args, "format", "json"),
                 )
             )

@@ -9,7 +9,7 @@ Tracks confidence metrics for expert consultations to enable:
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -29,6 +29,8 @@ class ConfidenceMetric:
     num_experts: int
     primary_expert: str
     query_preview: str  # First 100 chars of query
+    expert_ids: list[str] = field(default_factory=list)
+    selection_reason: str = "unknown"
 
 
 class ConfidenceMetricsTracker:
@@ -64,6 +66,8 @@ class ConfidenceMetricsTracker:
         num_experts: int,
         primary_expert: str,
         query: str,
+        expert_ids: list[str] | None = None,
+        selection_reason: str = "unknown",
     ) -> None:
         """
         Record a confidence metric.
@@ -77,6 +81,8 @@ class ConfidenceMetricsTracker:
             num_experts: Number of experts consulted
             primary_expert: Primary expert ID
             query: Consultation query
+            expert_ids: Optional list of expert IDs consulted
+            selection_reason: Why experts were selected (weight_matrix, domain_match_*, fallback_*)
         """
         metric = ConfidenceMetric(
             timestamp=datetime.now(),
@@ -89,6 +95,8 @@ class ConfidenceMetricsTracker:
             num_experts=num_experts,
             primary_expert=primary_expert,
             query_preview=query[:100],
+            expert_ids=expert_ids or [],
+            selection_reason=selection_reason,
         )
 
         self.metrics.append(metric)
@@ -187,6 +195,8 @@ class ConfidenceMetricsTracker:
                     num_experts=m["num_experts"],
                     primary_expert=m["primary_expert"],
                     query_preview=m["query_preview"],
+                    expert_ids=m.get("expert_ids") or [],
+                    selection_reason=m.get("selection_reason", "unknown"),
                 )
                 for m in data.get("metrics", [])
             ]
@@ -212,6 +222,8 @@ class ConfidenceMetricsTracker:
                         "num_experts": m.num_experts,
                         "primary_expert": m.primary_expert,
                         "query_preview": m.query_preview,
+                        "expert_ids": m.expert_ids,
+                        "selection_reason": m.selection_reason,
                     }
                     for m in self.metrics[-1000:]  # Keep last 1000 metrics
                 ]

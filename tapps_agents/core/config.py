@@ -785,6 +785,12 @@ class ExpertConfig(BaseModel):
         description="Approximate weight for supporting experts in agreement calculation",
     )
 
+    # History logging (per-consultation "why" to expert-history.jsonl)
+    history_logging: bool = Field(
+        default=False,
+        description="When True, log each expert consultation with reasoning to .tapps-agents/expert-history.jsonl",
+    )
+
     @model_validator(mode="after")
     def validate_weights_sum(self):
         """Ensure confidence weights sum to approximately 1.0"""

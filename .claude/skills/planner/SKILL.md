@@ -73,6 +73,28 @@ Create a plan for a feature or requirement.
 - References planning patterns and best practices
 - Uses cached documentation for similar features
 
+### `*evaluate-epic {file path}`
+
+Evaluate an Epic markdown document for structure, story breakdown, and dependencies.
+
+**Example:**
+```
+@planner *evaluate-epic docs/planning/EPIC-53-REVIEWER-AND-PLANNING-IMPROVEMENTS.md
+```
+
+**Output:** overview_score, story_breakdown_score, dependency_score, acceptance_criteria_score, overall, issues, recommendations.
+
+### `*evaluate-plan {file path}`
+
+Evaluate an implementation plan markdown document for phases, tasks, and completion criteria.
+
+**Example:**
+```
+@planner *evaluate-plan docs/planning/REVIEWER_AND_PLANNING_IMPROVEMENTS_IMPLEMENTATION_PLAN.md
+```
+
+**Output:** phase_score, task_score, completion_score, overall, issues, recommendations.
+
 ### `*create-story {description} [--user] [--priority] [--points]`
 
 Generate a user story from description.

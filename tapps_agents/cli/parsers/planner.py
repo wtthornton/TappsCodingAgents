@@ -139,6 +139,39 @@ Example:
         help="Include all verbose debug data in output. By default, output is compacted to prevent Cursor terminal overflow.",
     )
 
+    evaluate_epic_parser = planner_subparsers.add_parser(
+        "evaluate-epic",
+        aliases=["*evaluate-epic"],
+        help="Evaluate Epic document quality",
+        description="""Evaluate an Epic markdown document for structure, story breakdown, and dependencies.
+
+Returns scores for: overview, story breakdown, dependencies, acceptance criteria.
+
+Example:
+  tapps-agents planner evaluate-epic docs/planning/EPIC-53-REVIEWER-AND-PLANNING-IMPROVEMENTS.md
+  tapps-agents planner evaluate-epic docs/prd/epic-51.md --format text""",
+    )
+    evaluate_epic_parser.add_argument(
+        "file",
+        help="Path to Epic markdown file (e.g. docs/planning/EPIC-53.md)",
+    )
+    evaluate_epic_parser.add_argument(
+        "--format", choices=["json", "text", "markdown"], default="json",
+        help="Output format (default: json)",
+    )
+
+    evaluate_plan_parser = planner_subparsers.add_parser(
+        "evaluate-plan",
+        aliases=["*evaluate-plan", "evaluate-implementation-plan", "*evaluate-implementation-plan"],
+        help="Evaluate implementation plan (phases, tasks, completion)",
+        description="""Evaluate an implementation plan markdown for phases, tasks, and completion criteria.
+
+Example:
+  tapps-agents planner evaluate-plan docs/planning/REVIEWER_AND_PLANNING_IMPROVEMENTS_IMPLEMENTATION_PLAN.md""",
+    )
+    evaluate_plan_parser.add_argument("file", help="Path to implementation plan markdown file")
+    evaluate_plan_parser.add_argument("--format", choices=["json", "text"], default="json", help="Output format")
+
     planner_subparsers.add_parser(
         "help", aliases=["*help"], help="Show planner commands"
     )

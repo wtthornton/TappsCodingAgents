@@ -312,13 +312,15 @@ class ExpertRegistry:
         # Determine expert priority based on domain type
         is_technical_domain = domain in TECHNICAL_DOMAINS
 
-        # Collect expert IDs to consult
-        expert_ids_to_consult = []
+        # Collect expert IDs to consult and reason for selection (for metrics)
+        expert_ids_to_consult: list[str] = []
+        selection_reason = "unknown"
 
         # If weight matrix is available and not prioritizing built-in explicitly, use it
         if self.weight_matrix and not prioritize_builtin:
             primary_expert_id = self.weight_matrix.get_primary_expert(domain)
             if primary_expert_id:
+                selection_reason = "weight_matrix"
                 if include_all:
                     # Consult all experts in weight matrix
                     expert_ids_to_consult = list(self.weight_matrix.experts)
@@ -330,16 +332,19 @@ class ExpertRegistry:
         if not expert_ids_to_consult:
             if prioritize_builtin and is_technical_domain:
                 # Technical domain: built-in experts have authority
+                selection_reason = "domain_match_builtin"
                 expert_ids_to_consult = self._get_experts_for_domain(
                     domain, prioritize_builtin=True
                 )
             elif not is_technical_domain:
                 # Business domain: customer experts have authority
+                selection_reason = "domain_match_customer"
                 expert_ids_to_consult = self._get_experts_for_domain(
                     domain, prioritize_builtin=False
                 )
             else:
                 # Technical domain without prioritize_builtin: use built-in experts
+                selection_reason = "domain_match_builtin"
                 expert_ids_to_consult = self._get_experts_for_domain(
                     domain, prioritize_builtin=True
                 )
@@ -348,8 +353,10 @@ class ExpertRegistry:
         if not expert_ids_to_consult:
             # Fallback: get any available experts
             if is_technical_domain:
+                selection_reason = "fallback_builtin"
                 expert_ids_to_consult = list(self.builtin_experts.keys())
             else:
+                selection_reason = "fallback_all"
                 expert_ids_to_consult = list(self.customer_experts.keys()) + list(
                     self.builtin_experts.keys()
                 )
@@ -398,10 +405,30 @@ class ExpertRegistry:
                             domain=domain,
                             confidence=confidence,
                             query=query,
+                            expert_ids=expert_ids_to_consult,
+                            selection_reason=selection_reason,
                         )
                     except Exception as e:
                         # Don't fail consultation if tracking fails
                         logger.debug(f"Failed to track expert consultation: {e}")
+
+                    # Optional: log to expert-history.jsonl when history_logging is enabled
+                    try:
+                        expert_config = get_expert_config()
+                        if getattr(expert_config, "history_logging", False):
+                            from .history_logger import HistoryLogger
+                            history_file = self.project_root / ".tapps-agents" / "expert-history.jsonl"
+                            history_logger = HistoryLogger(history_file=history_file)
+                            history_logger.log_consultation(
+                                expert_id=expert_id,
+                                domain=domain,
+                                consulted=True,
+                                confidence=confidence,
+                                reasoning=selection_reason,
+                                context_summary=None,
+                            )
+                    except Exception as e:
+                        logger.debug(f"Failed to log consultation to history: {e}")
             except Exception as e:
                 # Log error but continue with other experts
                 responses.append({"expert_id": expert_id, "error": str(e)})
@@ -482,6 +509,8 @@ class ExpertRegistry:
                     num_experts=len(expert_ids_to_consult),
                     primary_expert=primary_expert_id or "unknown",
                     query=query,
+                    expert_ids=expert_ids_to_consult,
+                    selection_reason=selection_reason,
                 )
             except Exception as e:
                 # Silently fail if tracking fails (non-critical)

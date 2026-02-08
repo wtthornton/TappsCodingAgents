@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-02-07
+
+### Added
+- **EPIC-53: Reviewer and Planning Improvements**
+  - Expert selection metrics: `expert_ids` and `selection_reason` recorded per consultation (weight_matrix, domain_match_*, fallback_*)
+  - Dashboard Experts tab: selection reason distribution, recent consultations table, high-fallback-rate recommendation
+  - MarkdownPlanningScorer: structure/completeness/traceability/format scores for PRDs, implementation plans, epics
+  - EpicEvaluator: Planner `*evaluate-epic` for epic structure, story breakdown, dependencies
+  - ImplementationPlanEvaluator: Planner `*evaluate-plan` for phases, tasks, completion checklist
+  - HistoryLogger wiring: optional per-consultation logging with reasoning via `expert_system.history_logging` config
+
 ## [3.6.4] - 2026-02-06
 
 ### Added

@@ -87,6 +87,14 @@ class PlannerAgent(BaseAgent):
                 "command": "*calibrate-estimates",
                 "description": "Get calibrated estimates based on historical accuracy",
             },
+            {
+                "command": "*evaluate-epic",
+                "description": "Evaluate Epic document quality (structure, story breakdown, dependencies)",
+            },
+            {
+                "command": "*evaluate-plan",
+                "description": "Evaluate implementation plan (phases, tasks, completion criteria)",
+            },
         ]
 
     async def run(self, command: str, **kwargs) -> dict[str, Any]:
@@ -188,6 +196,20 @@ class PlannerAgent(BaseAgent):
             epic_filter = kwargs.get("epic")
             status_filter = kwargs.get("status")
             return await self.list_stories(epic=epic_filter, status=status_filter)
+
+        elif command == "evaluate-epic":
+            path_or_content = kwargs.get("file") or kwargs.get("path") or kwargs.get("epic") or kwargs.get("content")
+            if not path_or_content:
+                return {"error": "Usage: *evaluate-epic <file path or epic content>"}
+            result = self._evaluate_epic(path_or_content)
+            return result
+
+        elif command in ("evaluate-plan", "evaluate-implementation-plan"):
+            path_or_content = kwargs.get("file") or kwargs.get("path") or kwargs.get("plan")
+            if not path_or_content:
+                return {"error": "Usage: *evaluate-plan <file path to implementation plan>"}
+            result = self._evaluate_implementation_plan(path_or_content)
+            return result
 
         elif command == "evaluate-stories":
             stories = kwargs.get("stories", [])
@@ -923,6 +945,64 @@ Each story is saved as a Markdown file with YAML frontmatter.
 """
 
         return {"type": "help", "content": content}
+
+    def _evaluate_epic(self, path_or_content: str | Path) -> dict[str, Any]:
+        """Evaluate Epic document quality. Accepts file path or epic content string."""
+        from ...core.epic_evaluator import EpicEvaluator
+
+        if isinstance(path_or_content, Path):
+            path = path_or_content
+        else:
+            path = Path(path_or_content)
+        # If it looks like a path and exists, read file; otherwise treat as content
+        if path.suffix in (".md", ".markdown", ".txt") or "/" in str(path_or_content) or "\\" in str(path_or_content):
+            resolved = (self._project_root / path) if not path.is_absolute() else path
+            if resolved.exists():
+                content = resolved
+            else:
+                content = path_or_content
+        else:
+            content = path_or_content
+
+        evaluator = EpicEvaluator()
+        score = evaluator.evaluate(content)
+
+        return {
+            "overview_score": round(score.overview_score, 1),
+            "story_breakdown_score": round(score.story_breakdown_score, 1),
+            "dependency_score": round(score.dependency_score, 1),
+            "acceptance_criteria_score": round(score.acceptance_criteria_score, 1),
+            "overall": round(score.overall, 1),
+            "issues": score.issues,
+            "recommendations": score.recommendations,
+        }
+
+    def _evaluate_implementation_plan(self, path_or_content: str | Path) -> dict[str, Any]:
+        """Evaluate implementation plan document. Accepts file path."""
+        from ...core.epic_evaluator import ImplementationPlanEvaluator
+
+        if isinstance(path_or_content, Path):
+            path = path_or_content
+        else:
+            path = Path(path_or_content)
+        if path.suffix in (".md", ".markdown", ".txt") or "/" in str(path_or_content) or "\\" in str(path_or_content):
+            resolved = (self._project_root / path) if not path.is_absolute() else path
+            if resolved.exists():
+                content = resolved
+            else:
+                return {"error": f"Implementation plan file not found: {path}"}
+        else:
+            return {"error": "Usage: *evaluate-plan <file path to implementation plan>"}
+        evaluator = ImplementationPlanEvaluator()
+        score = evaluator.evaluate(content)
+        return {
+            "phase_score": round(score.phase_score, 1),
+            "task_score": round(score.task_score, 1),
+            "completion_score": round(score.completion_score, 1),
+            "overall": round(score.overall, 1),
+            "issues": score.issues,
+            "recommendations": score.recommendations,
+        }
 
     async def _evaluate_stories(self, stories: list[dict[str, Any]]) -> dict[str, Any]:
         """Evaluate story quality using INVEST criteria."""

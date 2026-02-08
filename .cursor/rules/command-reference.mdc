@@ -71,7 +71,9 @@ When you run `tapps-agents init` on any project (new or existing), it:
 
 **What it installs:**
 
-1. **Cursor Rules** (`.cursor/rules/`) - rule files including:
+1. **AGENTS.md** (project root) – Primary entry point for AI coding agents; created/overwritten on every init and on init --reset. See [agents.md](https://agents.md/).
+
+2. **Cursor Rules** (`.cursor/rules/`) - rule files including:
    - `workflow-presets.mdc` - Workflow preset documentation (auto-generated from YAML)
    - `quick-reference.mdc` - Quick command reference
    - `agent-capabilities.mdc` - Agent capability descriptions
@@ -82,7 +84,7 @@ When you run `tapps-agents init` on any project (new or existing), it:
    - `command-reference.mdc` - This file (complete command reference)
    - `cursor-mode-usage.mdc` - Cursor vs CLI usage (when to use @simple-mode vs tapps-agents workflow)
 
-2. **Cursor Skills** (`.claude/skills/`) - 22 skills (14 agents + simple-mode + expert + patterns + utilities):
+3. **Cursor Skills** (`.claude/skills/`) - 22 skills (14 agents + simple-mode + expert + patterns + utilities):
    - Enables `@agent-name *command` syntax in Cursor chat
    - Each skill defines agent capabilities, tools, and instructions
    - Skills are model-agnostic (use Cursor's configured LLM)
@@ -114,41 +116,42 @@ When you run `tapps-agents init` on any project (new or existing), it:
        - Natural language commands (e.g., `@simple-mode Build a feature`)
      - **Simple Mode is enabled by default** in config after `init`
 
-3. **Configuration** (`.tapps-agents/config.yaml`):
+4. **Configuration** (`.tapps-agents/config.yaml`):
    - Framework settings and agent configurations
    - Tech stack detection results
    - Quality thresholds and automation settings
 
-5. **Workflow Presets** (`workflows/presets/`):
+6. **Workflow Presets** (`workflows/presets/`):
    - 5 workflow preset YAML files: full-sdlc, rapid-dev, fix, quality, brownfield-analysis
    - Can be customized per project
 
-6. **MCP Config** (`.cursor/mcp.json`):
+7. **MCP Config** (`.cursor/mcp.json`):
    - Context7 MCP server configuration for library documentation lookup
    - Enables `@reviewer *docs <library>` commands
 
-7. **Context7 Cache**:
+8. **Context7 Cache**:
    - Pre-populated with project dependencies + built-in expert libraries
    - Speeds up library documentation lookups
    - Can be skipped with `--no-cache` if Context7 not configured
 
-8. **`.cursorignore`**:
+9. **`.cursorignore`**:
    - Performance optimization patterns
    - Excludes large/generated files from Cursor indexing
    - Auto-updated with TappsCodingAgents patterns (backups, archives, artifacts)
    - Preserves existing user patterns
 
-9. **Framework version** (`.tapps-agents/.framework-version`):
+10. **Framework version** (`.tapps-agents/.framework-version`):
    - Stores installed package version; written on init and init --reset
    - Used for upgrade detection and backup manifest (version_before / version_after)
 
-10. **Beads (bd) support**:
+11. **Beads (bd) support**:
    - When `tools/bd` exists (bd.exe or bd), init ensures `scripts/set_bd_path.ps1` exists (does not overwrite)
    - After init, if `.beads` is missing, init prints a hint: run `bd init` or `bd init --stealth`, then `bd doctor --fix`. When `beads.required` is true, init prints a REQUIRED message; workflows will fail until Beads is initialized.
    - Use `tapps-agents doctor` for Beads status (enabled, required, sync_epic, hooks_*); doctor fails when beads.required and bd missing or not initialized; see docs/BEADS_INTEGRATION.md
 
 **init --reset behavior:**
-- Detects existing installation; identifies framework-managed files (rules, skills, presets, .cursorignore, MCP if Context7)
+- Detects existing installation; identifies framework-managed files (rules, skills, presets, .cursorignore, MCP if Context7, AGENTS.md)
+- AGENTS.md is deleted and recreated from the framework template.
 - Creates backup under `.tapps-agents/backups/init-reset-<timestamp>` with manifest (framework_version_before, files)
 - Deletes framework files; preserves custom Skills, Rules, presets, and user data (config, experts, knowledge, worktrees)
 - Re-runs full init; updates backup manifest with framework_version_after; writes `.tapps-agents/.framework-version`
@@ -1052,6 +1055,36 @@ tapps-agents planner create-story "<title>" [--epic <epic>] [--priority <priorit
 ```bash
 tapps-agents planner list-stories [--epic <epic>] [--format json|text]
 ```
+
+#### `*evaluate-epic` / `evaluate-epic` (Dual-Mode)
+**Purpose:** Evaluate Epic markdown document for structure, story breakdown, and dependencies
+
+**CLI Syntax:**
+```bash
+tapps-agents planner evaluate-epic <file> [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@planner *evaluate-epic <file path>
+```
+
+**Output:** overview_score, story_breakdown_score, dependency_score, acceptance_criteria_score, overall, issues, recommendations.
+
+#### `*evaluate-plan` / `evaluate-plan` / `evaluate-implementation-plan` (Dual-Mode)
+**Purpose:** Evaluate implementation plan document for phases, tasks, and completion criteria
+
+**CLI Syntax:**
+```bash
+tapps-agents planner evaluate-plan <file> [--format json|text]
+```
+
+**Cursor Syntax:**
+```cursor
+@planner *evaluate-plan <file path>
+```
+
+**Output:** phase_score, task_score, completion_score, overall, issues, recommendations.
 
 ### Architect Agent (`@architect`)
 

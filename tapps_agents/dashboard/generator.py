@@ -68,6 +68,20 @@ def _generate_recommendations(data: dict[str, Any]) -> list[dict[str, str]]:
             "message": "No expert consultations recorded. Ensure the expert system is enabled.",
         })
 
+    # High fallback rate in expert selection (PRD: fallback_builtin + fallback_all > 30%)
+    reason_dist = data.get("experts", {}).get("selection_reason_distribution", {})
+    total_sel = sum(reason_dist.values())
+    if total_sel > 0:
+        fallback_count = reason_dist.get("fallback_builtin", 0) + reason_dist.get("fallback_all", 0)
+        if fallback_count / total_sel > 0.30:
+            recs.append({
+                "tab": "experts",
+                "message": (
+                    "High fallback rate in expert selection. "
+                    "Check domain config and weight matrix."
+                ),
+            })
+
     # Cache hit rate
     hit_rate = data.get("cache", {}).get("summary", {}).get("hit_rate", 100)
     if 0 < hit_rate < 50:

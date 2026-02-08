@@ -187,6 +187,8 @@ class DashboardDataCollector:
             "experts": [],
             "confidence_distribution": {"low": 0, "medium": 0, "high": 0, "very_high": 0},
             "roi": {"time_saved_hours": 0, "bugs_prevented": 0, "roi_percentage": 0},
+            "selection_reason_distribution": {},
+            "recent_consultations": [],
         }
 
         def _do():
@@ -238,11 +240,38 @@ class DashboardDataCollector:
                     "roi_percentage": roi_data.get("roi_percentage", 0),
                 }
 
+            # Expert selection metrics: reason distribution + last 20 consultations
+            selection_reason_distribution: dict[str, int] = {}
+            recent_consultations: list[dict[str, Any]] = []
+            cm_path = self.tapps_dir / "confidence_metrics.json"
+            cm_data = _read_json(cm_path)
+            if cm_data:
+                metrics_list = cm_data.get("metrics", [])
+                for m in metrics_list:
+                    reason = m.get("selection_reason", "unknown")
+                    selection_reason_distribution[reason] = selection_reason_distribution.get(reason, 0) + 1
+                # Last 20 by timestamp (metrics are stored newest last in the slice, so take last 20)
+                sorted_metrics = sorted(
+                    metrics_list,
+                    key=lambda x: x.get("timestamp", ""),
+                    reverse=True,
+                )[:20]
+                for m in sorted_metrics:
+                    recent_consultations.append({
+                        "timestamp": m.get("timestamp", ""),
+                        "agent_id": m.get("agent_id", ""),
+                        "domain": m.get("domain", ""),
+                        "expert_ids": m.get("expert_ids", []),
+                        "selection_reason": m.get("selection_reason", "unknown"),
+                    })
+
             return {
                 "summary": {"total": len(experts), "active": active, "avg_confidence": round(avg_conf, 3)},
                 "experts": experts,
                 "confidence_distribution": dist,
                 "roi": roi,
+                "selection_reason_distribution": selection_reason_distribution,
+                "recent_consultations": recent_consultations,
             }
 
         return _safe(_do, default)

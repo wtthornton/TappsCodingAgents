@@ -171,6 +171,15 @@ class ScorerRegistry:
         except ImportError:
             # React scorer not available - skip silently
             pass
+
+        # Register Markdown planning doc scorer
+        try:
+            from .markdown_planning_scorer import MarkdownPlanningScorer
+
+            if not cls.is_registered(Language.MARKDOWN):
+                cls.register(Language.MARKDOWN, MarkdownPlanningScorer, override=False)
+        except ImportError:
+            pass
     
     @classmethod
     def get_scorer(cls, language: Language, config: ProjectConfig | None = None) -> BaseScorer:
@@ -268,7 +277,12 @@ class ScorerRegistry:
                     eslint_config=eslint_config, tsconfig_path=tsconfig_path
                 )
         
-        # Pattern 2: (weights, ruff_enabled, mypy_enabled, ...) - Python scorer
+        # Pattern 2: Markdown planning scorer (no config)
+        elif language == Language.MARKDOWN:
+            from .markdown_planning_scorer import MarkdownPlanningScorer
+            return MarkdownPlanningScorer()
+
+        # Pattern 3: (weights, ruff_enabled, mypy_enabled, ...) - Python scorer
         elif language == Language.PYTHON:
             from .scoring import CodeScorer
             

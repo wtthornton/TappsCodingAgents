@@ -66,6 +66,8 @@ class ExpertPerformanceTracker:
         domain: str,
         confidence: float,
         query: str | None = None,
+        expert_ids: list[str] | None = None,
+        selection_reason: str | None = None,
     ) -> None:
         """
         Track expert consultation.
@@ -75,6 +77,8 @@ class ExpertPerformanceTracker:
             domain: Domain consulted
             confidence: Confidence score (0.0-1.0)
             query: Optional query text
+            expert_ids: Optional list of expert IDs consulted in this consultation
+            selection_reason: Why experts were selected (weight_matrix, domain_match_*, fallback_*)
         """
         consultation_data = {
             "expert_id": expert_id,
@@ -83,6 +87,10 @@ class ExpertPerformanceTracker:
             "query": query,
             "timestamp": datetime.now(UTC).isoformat(),
         }
+        if expert_ids is not None:
+            consultation_data["expert_ids"] = expert_ids
+        if selection_reason is not None:
+            consultation_data["selection_reason"] = selection_reason
 
         try:
             with open(self.performance_file, "a", encoding="utf-8") as f:

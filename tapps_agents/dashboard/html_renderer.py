@@ -273,6 +273,8 @@ class HTMLRenderer:
         experts = experts_data.get("experts", [])
         dist = experts_data.get("confidence_distribution", {})
         roi = experts_data.get("roi", {})
+        reason_dist = experts_data.get("selection_reason_distribution", {})
+        recent = experts_data.get("recent_consultations", [])
         recs = [r for r in data.get("recommendations", []) if r.get("tab") == "experts"]
 
         rows = ""
@@ -304,6 +306,40 @@ class HTMLRenderer:
             f'ROI: <b>{roi.get("roi_percentage", 0):.0f}%</b></p></div>'
         )
 
+        # Selection reason distribution (table)
+        reason_order = ["weight_matrix", "domain_match_builtin", "domain_match_customer", "fallback_builtin", "fallback_all"]
+        reason_rows = ""
+        for r in reason_order:
+            cnt = reason_dist.get(r, 0)
+            if cnt > 0 or r in reason_dist:
+                reason_rows += f"<tr><td class=\"text-dim\">{_esc(r)}</td><td class=\"num\">{cnt}</td></tr>"
+        for r, cnt in sorted(reason_dist.items(), key=lambda x: -x[1]):
+            if r not in reason_order:
+                reason_rows += f"<tr><td class=\"text-dim\">{_esc(r)}</td><td class=\"num\">{cnt}</td></tr>"
+        selection_section = (
+            f'<div class="card"><h3>Selection Reason Distribution</h3>'
+            f'<table><thead><tr><th>Reason</th><th>Count</th></tr></thead><tbody>{reason_rows or "<tr><td class=\"text-dim\">No data yet</td><td>0</td></tr>"}</tbody></table></div>'
+        )
+
+        # Recent consultations (last 20)
+        recent_rows = ""
+        for c in recent[:20]:
+            ts = c.get("timestamp", "")[:19] if c.get("timestamp") else ""
+            expert_ids = c.get("expert_ids", [])
+            experts_str = ", ".join(expert_ids[:3]) + ("..." if len(expert_ids) > 3 else "")
+            recent_rows += (
+                f"<tr><td class=\"text-dim\">{_esc(ts)}</td>"
+                f"<td>{_esc(c.get('agent_id', ''))}</td>"
+                f"<td>{_esc(c.get('domain', ''))}</td>"
+                f"<td class=\"text-dim\">{_esc(experts_str)}</td>"
+                f"<td>{_esc(c.get('selection_reason', 'unknown'))}</td></tr>"
+            )
+        recent_section = (
+            f'<div class="card"><h3>Recent Consultations</h3>'
+            f'<table><thead><tr><th>Timestamp</th><th>Agent</th><th>Domain</th><th>Experts</th><th>Selection Reason</th></tr></thead>'
+            f'<tbody>{recent_rows or "<tr><td colspan=\"5\" class=\"text-dim\">No consultations yet</td></tr>"}</tbody></table></div>'
+        )
+
         return (
             f'<div id="tab-experts" class="tab-content">'
             f"{self._render_recs(recs)}"
@@ -316,7 +352,11 @@ class HTMLRenderer:
             f"</tr></thead><tbody>{rows}</tbody></table></div></div>"
             f'<div style="min-width:340px"><div class="card">'
             f"<h3>Confidence Distribution</h3>{dist_chart}</div>"
-            f"{roi_html}</div></div></div>"
+            f"{roi_html}</div></div>"
+            f'<div class="flex" style="margin-top:16px">'
+            f'<div class="grow">{selection_section}</div>'
+            f'<div class="grow">{recent_section}</div></div>'
+            f"</div>"
         )
 
     # ── cache tab ─────────────────────────────────────────────────────

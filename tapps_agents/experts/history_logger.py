@@ -107,7 +107,7 @@ class HistoryLogger:
 
     def _append_entry(self, entry: ConsultationEntry):
         """Append entry to JSONL file."""
-        with open(self.history_file, "a") as f:
+        with open(self.history_file, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry.to_dict()) + "\n")
 
     def get_recent(self, limit: int = 10) -> list[ConsultationEntry]:
@@ -124,7 +124,7 @@ class HistoryLogger:
             return []
 
         entries = []
-        with open(self.history_file) as f:
+        with open(self.history_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line.strip())
@@ -152,7 +152,7 @@ class HistoryLogger:
             return []
 
         entries = []
-        with open(self.history_file) as f:
+        with open(self.history_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line.strip())
@@ -185,7 +185,7 @@ class HistoryLogger:
         skipped = 0
         expert_counts: dict[str, int] = {}
 
-        with open(self.history_file) as f:
+        with open(self.history_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line.strip())
@@ -216,12 +216,12 @@ class HistoryLogger:
             output_file: Path to output JSON file
         """
         if not self.history_file.exists():
-            with open(output_file, "w") as f:
+            with open(output_file, "w", encoding="utf-8") as f:
                 json.dump([], f)
             return
 
         entries = []
-        with open(self.history_file) as f:
+        with open(self.history_file, encoding="utf-8") as f:
             for line in f:
                 try:
                     data = json.loads(line.strip())
@@ -229,7 +229,7 @@ class HistoryLogger:
                 except Exception:
                     continue
 
-        with open(output_file, "w") as f:
+        with open(output_file, "w", encoding="utf-8") as f:
             json.dump(entries, f, indent=2)
 
     def rotate(self, keep_recent: int = 1000):
@@ -246,7 +246,7 @@ class HistoryLogger:
 
         # Write to temporary file
         temp_file = self.history_file.with_suffix(".tmp")
-        with open(temp_file, "w") as f:
+        with open(temp_file, "w", encoding="utf-8") as f:
             for entry in reversed(entries):  # Reverse to restore chronological order
                 f.write(json.dumps(entry.to_dict()) + "\n")
 
